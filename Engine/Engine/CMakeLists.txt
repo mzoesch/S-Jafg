@@ -61,7 +61,7 @@ if(_guard)
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
     DisableAllWarningsForTarget(FastNoise) # FastNoise2 is an alias of FastNoise
-    target_link_libraries(${_scoped_module_name} PRIVATE FastNoise2)
+    target_link_libraries(${_scoped_module_name} PUBLIC FastNoise2)
 
     ###############################################################################
     # Freetype
@@ -82,9 +82,13 @@ if(_guard)
         GIT_REPOSITORY      https://github.com/glfw/glfw.git
         GIT_TAG             master
         )
-    find_package(Vulkan REQUIRED)
     FetchContent_MakeAvailable(FetchContent_Glfw3)
-    target_link_libraries(${_scoped_module_name} PUBLIC glfw ${GLFW_LIBRARIES} Vulkan::Vulkan)
+    target_link_libraries(${_scoped_module_name} PUBLIC glfw ${GLFW_LIBRARIES})
+
+    ###############################################################################
+    # Vulkan
+    find_package(Vulkan REQUIRED)
+    target_link_libraries(${_scoped_module_name} PUBLIC Vulkan::Vulkan)
 
     ###############################################################################
     # Sqlite3
@@ -95,7 +99,7 @@ if(_guard)
         GIT_TAG             trunk
         )
     FetchContent_MakeAvailable(FetchContent_Sqlite3)
-    target_link_libraries(${_scoped_module_name} PRIVATE jafg_sqlite3_amalgamation)
+    target_link_libraries(${_scoped_module_name} PUBLIC jafg_sqlite3_amalgamation)
 
     ###############################################################################
     # Vma

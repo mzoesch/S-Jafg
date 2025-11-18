@@ -27,6 +27,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace
 {
@@ -38,6 +39,7 @@ struct Vertex
 {
     glm::vec2 pos;
     glm::vec3 color;
+    glm::vec2 texCoord;
 
     static vk::VertexInputBindingDescription getBindingDescription()
     {
@@ -48,25 +50,35 @@ struct Vertex
             };
     }
 
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
+    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
         return {
             vk::VertexInputAttributeDescription{
                 .location = 0, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, pos)
                 },
             vk::VertexInputAttributeDescription{
                 .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)
+                },
+            vk::VertexInputAttributeDescription{
+                .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, texCoord)
                 }
         };
     }
 };
-
 static_assert(std::is_standard_layout_v<Vertex>);
 
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+static_assert(std::is_standard_layout_v<UniformBufferObject>);
+
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{ 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{ 0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}},
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
     };
 
 const std::vector<uint16_t> indices = {
@@ -260,10 +272,17 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
 {
     this->VkCreateSwapchain();
     this->VkCreateImageViews();
+    this->VkCreateDescriptorSetLayout();
     this->VkCreateGraphicsPipeline();
     this->VkCreateCommandPool();
+    this->VkCreateTextureImage();
+    this->VkCreateTextureImageView();
+    this->VkCreateTextureSampler();
     this->VkCreateVertexBuffer();
     this->VkCreateIndexBuffer();
+    this->VkCreateUniformBuffers();
+    this->VkCreateDescriptorPool();
+    this->VkCreateDescriptorSets();
     this->VkCreateCommandBuffers();
     this->VkCreateSynchObjects();
 
@@ -342,6 +361,8 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     {
         panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", static_cast<u32>(Result) )
     }
+
+    this->VkUpdateUniformBuffers(this->VkFlightSyncFrameIndex);
 
     Frontend.GetVkDevice().resetFences(*this->VkFlightFences[this->VkFlightSyncFrameIndex]);
 
@@ -899,22 +920,13 @@ void Jafg::LSurfaceGlfw3::VkCreateImageViews()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan image views for swapchain images.")
 
-    this->VkSwapchainImageViews.clear();
+    auto& Frontend = this->GetFrontend();
 
-    vk::ImageViewCreateInfo CreateInfo{
-        .viewType = vk::ImageViewType::e2D,
-        .format = this->VkMySwapchainSurfaceFormat.format,
-        .components = { vk::ComponentSwizzle::eIdentity,
-                        vk::ComponentSwizzle::eIdentity,
-                        vk::ComponentSwizzle::eIdentity,
-                        vk::ComponentSwizzle::eIdentity },
-        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
-        };
+    this->VkSwapchainImageViews.clear();
 
     for (const auto& SwapchainImage : this->VkSwapchainImages)
     {
-        CreateInfo.image = SwapchainImage;
-        this->VkSwapchainImageViews.emplace_back(vk::raii::ImageView{ this->GetFrontend().GetVkDevice(), CreateInfo });
+        this->VkSwapchainImageViews.emplace_back(Frontend.CreateImageView(SwapchainImage, this->VkMySwapchainSurfaceFormat.format));
         continue;
     }
 
@@ -923,9 +935,24 @@ void Jafg::LSurfaceGlfw3::VkCreateImageViews()
     return;
 }
 
+void Jafg::LSurfaceGlfw3::VkCreateDescriptorSetLayout()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor set layout for surface.")
+
+    std::array Bindings = {
+          vk::DescriptorSetLayoutBinding{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr }
+        , vk::DescriptorSetLayoutBinding{ 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr }
+        };
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{.bindingCount = Bindings.size(), .pBindings = Bindings.data()};
+    VkMyDescriptorSetLayout = vk::raii::DescriptorSetLayout(this->GetFrontend().GetVkDevice(), layoutInfo);
+
+    return;
+}
+
 void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
 {
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan graphics pipeline for Glfw3 surface.")
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan graphics pipeline for surface.")
 
     vk::raii::ShaderModule ShaderModule = this->CreateShaderModule(Finder::ReadFileAsBinary("Content/Shaders/Spir-V/Test.spv"));
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
@@ -951,7 +978,7 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
     vk::PipelineViewportStateCreateInfo      viewportState{.viewportCount = 1, .scissorCount = 1};
 
     vk::PipelineRasterizationStateCreateInfo rasterizer{.depthClampEnable = vk::False, .rasterizerDiscardEnable = vk::False,
-        .polygonMode = vk::PolygonMode::eFill, .cullMode = vk::CullModeFlagBits::eBack, .frontFace = vk::FrontFace::eClockwise,
+        .polygonMode = vk::PolygonMode::eFill, .cullMode = vk::CullModeFlagBits::eBack, .frontFace = vk::FrontFace::eCounterClockwise,
         .depthBiasEnable = vk::False, .depthBiasSlopeFactor = 1.0f, .lineWidth = 1.0f};
 
     vk::PipelineMultisampleStateCreateInfo multisampling{.rasterizationSamples = vk::SampleCountFlagBits::e1, .sampleShadingEnable = vk::False};
@@ -963,7 +990,11 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
     TArray<vk::DynamicState> dynamicStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
     vk::PipelineDynamicStateCreateInfo dynamicState{ .dynamicStateCount = static_cast<u32>(dynamicStates.size()), .pDynamicStates = dynamicStates.data() };
 
-    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{.setLayoutCount = 0, .pushConstantRangeCount = 0};
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
+        .setLayoutCount = 1,
+        .pSetLayouts = &*this->VkMyDescriptorSetLayout,
+        .pushConstantRangeCount = 0
+        };
 
     this->VkMyPipelineLayout = vk::raii::PipelineLayout(this->GetFrontend().GetVkDevice(), pipelineLayoutInfo);
 
@@ -1177,7 +1208,7 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
         vk::AccessFlagBits2::eColorAttachmentWrite,                 // dstAccessMask
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
         vk::PipelineStageFlagBits2::eColorAttachmentOutput          // dstStage
-    );
+        );
 
     vk::ClearValue clearColor = vk::ClearValue( vk::ClearColorValue( std::array<f32,4>{ 0.0f, 0.0f, 0.0f, 1.0f } ) );
     vk::RenderingAttachmentInfo attachmentInfo = {
@@ -1195,12 +1226,15 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
         };
 
     TargetBuffer.beginRendering(renderingInfo);
+
     TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
+
     TargetBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
     TargetBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
 
     TargetBuffer.bindVertexBuffers(0, this->VertexBuffer.Buffer, {0});
-    TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexType::eUint16);
+    TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(::indices)::value_type>::value);
+    TargetBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->VkMyPipelineLayout, 0 , *this->VkDescriptorSets[this->VkFlightSyncFrameIndex], nullptr);
     TargetBuffer.drawIndexed(::indices.size(), 1, 0, 0, 0);
 
     TargetBuffer.endRendering();
@@ -1271,6 +1305,55 @@ u32 Jafg::LSurfaceGlfw3::FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags 
     }
 
     panic( "Failed to find suitable memory type." )
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan texture image for surface.")
+
+    int texWidth, texHeight, _;
+    stbi_uc* pixels = stbi_load("Content/Textures/statue-1275469.jpg", &texWidth, &texHeight, &_, STBI_rgb_alpha);
+    vk::DeviceSize imageSize = texWidth * texHeight * 4;
+
+    if (!pixels) {
+        char const* error = stbi_failure_reason();
+        panicMsgf("Failed to load texture image [Content/Textures/statue-1275469.jpg]. Reason: {}", error)
+    }
+
+    this->TextureImage = this->GetFrontend().VkStage2dImage(texWidth, texHeight, 4, pixels, this->VkMyCommandPool);
+    stbi_image_free(pixels);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateTextureImageView()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan texture image view for surface.")
+
+    this->TextureImageView = this->GetFrontend().CreateImageView(this->TextureImage.Image, vk::Format::eR8G8B8A8Srgb);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan texture sampler for surface.")
+
+    auto& Frontend = this->GetFrontend();
+
+    vk::PhysicalDeviceProperties Properties = Frontend.GetVkPhysicalDevice().getProperties();
+    vk::SamplerCreateInfo SamplerInfo{.magFilter = vk::Filter::eLinear, .minFilter = vk::Filter::eLinear,  .mipmapMode = vk::SamplerMipmapMode::eLinear,
+        .addressModeU = vk::SamplerAddressMode::eRepeat, .addressModeV = vk::SamplerAddressMode::eRepeat, .addressModeW = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias = 0.0f,
+        .anisotropyEnable = vk::True, .maxAnisotropy = Properties.limits.maxSamplerAnisotropy,
+        .compareEnable = vk::False, .compareOp = vk::CompareOp::eAlways,
+        .minLod = 0.0f, .maxLod = 0.0f,
+        .borderColor = vk::BorderColor::eIntOpaqueBlack,
+        };
+
+    this->TextureSampler = vk::raii::Sampler(Frontend.GetVkDevice(), SamplerInfo);
+
+    return;
 }
 
 void Jafg::LSurfaceGlfw3::VkCreateVertexBuffer()
@@ -1353,6 +1436,96 @@ void Jafg::LSurfaceGlfw3::VkCreateIndexBuffer()
         indices.data(),
         this->VkMyCommandPool
         );
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateUniformBuffers()
+{
+    LOG_VERBOSE(LogTemporal, "Creating Vulkan uniform buffers for surface.")
+
+    this->UniformBuffers.clear();
+
+    auto& Frontend = this->GetFrontend();
+
+    for (LSize Idx{ 0 }; Idx < ::VkMyMaxFramesInFlight; ++Idx)
+    {
+        this->UniformBuffers.emplace_back(Frontend.VkCreateMappedBuffer(vk::BufferCreateInfo{
+                .size = sizeof(UniformBufferObject),
+                .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+                }
+            , vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+            ));
+    }
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateDescriptorPool()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor pool for surface.")
+
+    std::array PoolSize = {
+        vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, ::VkMyMaxFramesInFlight),
+        vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, ::VkMyMaxFramesInFlight)
+        };
+
+    vk::DescriptorPoolCreateInfo poolInfo{
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = ::VkMyMaxFramesInFlight,
+        .poolSizeCount = static_cast<u32>(PoolSize.size()),
+        .pPoolSizes = PoolSize.data()
+        };
+
+    this->VkMyDescriptorPool = vk::raii::DescriptorPool(this->GetFrontend().GetVkDevice(), poolInfo);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateDescriptorSets()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor sets for surface.")
+
+    auto& Frontend = this->GetFrontend();
+
+    std::vector<vk::DescriptorSetLayout> layouts(VkMyMaxFramesInFlight, *VkMyDescriptorSetLayout);
+    vk::DescriptorSetAllocateInfo        allocInfo{.descriptorPool = this->VkMyDescriptorPool,
+        .descriptorSetCount = static_cast<uint32_t>(layouts.size()), .pSetLayouts = layouts.data()};
+
+    this->VkDescriptorSets = Frontend.GetVkDevice().allocateDescriptorSets(allocInfo);
+
+    for (size_t i = 0; i < VkMyMaxFramesInFlight; i++)
+    {
+        vk::DescriptorBufferInfo bufferInfo{.buffer = UniformBuffers[i].Buffer, .offset = 0, .range = sizeof(UniformBufferObject)};
+        vk::DescriptorImageInfo imageInfo{ .sampler = this->TextureSampler, .imageView = this->TextureImageView, .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal};
+
+        std::array DescriptorWrites = {
+            vk::WriteDescriptorSet{ .dstSet = VkDescriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &bufferInfo },
+            vk::WriteDescriptorSet{ .dstSet = VkDescriptorSets[i], .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler, .pImageInfo = &imageInfo }
+            };
+
+        Frontend.GetVkDevice().updateDescriptorSets(DescriptorWrites, {});
+    }
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkUpdateUniformBuffers(uint32_t currentImage)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto  currentTime = std::chrono::high_resolution_clock::now();
+    float time        = std::chrono::duration<float>(currentTime - startTime).count();
+
+    UniformBufferObject ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view  = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj  = glm::perspective(glm::radians(45.0f), static_cast<float>(this->VkMySwapchainExtent.width) / static_cast<float>(this->VkMySwapchainExtent.height), 0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
+
+    std::memcpy(this->UniformBuffers[currentImage].Data, &ubo, sizeof(ubo));
 
     return;
 }

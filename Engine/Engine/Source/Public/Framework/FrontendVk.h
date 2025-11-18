@@ -27,16 +27,40 @@ public:
 
     FORCEINLINE auto const& GetVma() const noexcept { return this->VmaMyAllocator; }
 
+    ENGINE_API vk::raii::CommandBuffer VkBeginSingleTimeCommands(vk::CommandPool Pool) const;
+    ENGINE_API void VkEndSingleTimeCommands(vk::CommandBuffer CommandBuffer) const;
+
+    ENGINE_API LVmaBuffer VkCreateBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO);
+    ENGINE_API LVmaDetailedBuffer VkCreateDetailedBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO);
+    ENGINE_API LVmaMappedBuffer VkCreateMappedBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaAllocationCreateFlags VmaFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO);
+
     ENGINE_API void VkCopyBuffer(vk::CommandPool Pool, vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::BufferCopy BufferCopy) const;
 
-    ENGINE_API LVmaBuffer VkStageData(vk::BufferCopy BufferCopy, void const* Data, vk::BufferUsageFlags Usage, vk::CommandPool Pool /* just temp... */);
+    //# TODO: VkCreateStagingBuffer function.
 
+    ENGINE_API  LVmaBuffer VkStageData(vk::BufferCopy BufferCopy, void const* Data, vk::BufferUsageFlags Usage, vk::CommandPool Pool /* just temp... */);
     FORCEINLINE LVmaBuffer VkStageVertexBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
         vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer
         ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
     FORCEINLINE LVmaBuffer VkStageIndexBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
         vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer
         ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
+    FORCEINLINE LVmaBuffer VkStageUniformBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
+        vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer
+        ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
+
+    ENGINE_API LVmaImage VkStage2dImage(
+          i32 texWidth, i32 texHeight, i32 texChannels
+        , stbi_uc* pixels
+        , vk::CommandPool Pool /* just temp... */
+        );
+
+    ENGINE_API void CopyBufferToImage(vk::Buffer Buffer, vk::Image Image, u32 Width, u32 Height, vk::CommandPool Pool /* just temp... */);
+    ENGINE_API LVmaImage VkCreateDeviceLocalImage(vk::ImageCreateInfo const& InInfo, vk::MemoryPropertyFlags Properties = vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    ENGINE_API void VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, vk::CommandPool Pool /* just temp... */);
+
+    ENGINE_API vk::raii::ImageView CreateImageView(vk::Image Image, vk::Format Format);
 
 private:
 
@@ -84,6 +108,7 @@ private:
         vk::KHRCreateRenderpass2ExtensionName,
         };
     vk::raii::Device VkMyDevice{ nullptr };
+
     u32 VkMyGraphicsQueueFamilyIndex{ 0 };
     u32 VkMyPresentQueueFamilyIndex{ 0 };
     vk::raii::Queue VkMyGraphicsQueue{ nullptr };

@@ -173,10 +173,12 @@ Jafg::LEngine& Jafg::LSurfaceBase::GetEngine() const noexcept
 
 Jafg::LLocalEgo& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
 {
-    return this->GetEngine().GetLocalEgo();
+    check( GEngine && "Absence of GEngine while a surface exists is undefined behavior." )
+    return GEngine->GetLocalEgo();
 }
 
 Jafg::LFrontend& Jafg::LSurfaceBase::GetFrontend() const noexcept
 {
-    return this->GetLocalEgo().GetFrontend();
+    check( GEngine && "Absence of GEngine while a surface exists is undefined behavior." )
+    return GEngine->GetLocalEgo().GetFrontend();
 }

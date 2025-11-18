@@ -88,6 +88,7 @@ private:
     vk::PresentModeKHR ChooseVkSwapPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes) const;
     vk::Extent2D ChooseVkSwapExtent(vk::SurfaceCapabilitiesKHR const& Capabilities) const;
     void VkCreateImageViews();
+    void VkCreateDescriptorSetLayout();
     void VkCreateGraphicsPipeline();
     vk::raii::ShaderModule CreateShaderModule(TArray<u8> const& Code) const;
     void VkCreateCommandPool();
@@ -149,10 +150,13 @@ private:
     vk::raii::SwapchainKHR VkMySwapchain{ nullptr };
     TArray<vk::Image> VkSwapchainImages;
     TArray<vk::raii::ImageView> VkSwapchainImageViews;
+    vk::raii::DescriptorSetLayout VkMyDescriptorSetLayout{ nullptr };
     vk::raii::PipelineLayout VkMyPipelineLayout{ nullptr };
     vk::raii::Pipeline VkMyPipeline{ nullptr };
     vk::raii::CommandPool VkMyCommandPool{ nullptr };
     std::vector<vk::raii::CommandBuffer> VkCommandBuffers;
+    vk::raii::DescriptorPool VkMyDescriptorPool{ nullptr };
+    TArray<vk::raii::DescriptorSet> VkDescriptorSets;
     u32 VkFlightSyncFrameIndex{ 0 };
     u32 VkSemaphoreSyncIndex{ 0 };
     TArray<vk::raii::Semaphore> VkPresentSemaphores;
@@ -162,8 +166,21 @@ private:
     LVmaBuffer VertexBuffer;
     LVmaBuffer IndexBuffer;
 
+    TArray<LVmaMappedBuffer> UniformBuffers;
+
+    LVmaImage TextureImage;
+    vk::raii::ImageView TextureImageView{ nullptr };
+    vk::raii::Sampler TextureSampler{ nullptr };
+
+    void VkCreateTextureImage();
+    void VkCreateTextureImageView();
+    void VkCreateTextureSampler();
     void VkCreateVertexBuffer();
     void VkCreateIndexBuffer();
+    void VkCreateUniformBuffers();
+    void VkCreateDescriptorPool();
+    void VkCreateDescriptorSets();
+    void VkUpdateUniformBuffers(uint32_t currentImage);
 };
 
 } /* ~Namespace Jafg */

@@ -16,6 +16,8 @@
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace
 {
 
@@ -61,21 +63,42 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
 }
 #endif /* !IN_SHIPPING */
 
-void Jafg::LVmaBuffer::FreeImpl() noexcept
+void Jafg::FreeVmaAllocation(VkBuffer Buffer, VmaAllocation Allocation)
 {
     if (GEngine)
     {
         vmaDestroyBuffer(
             GEngine->GetLocalEgo().GetFrontend().GetVma(),
-            this->Buffer,
-            this->Allocation
+            Buffer,
+            Allocation
             );
     }
     else if constexpr (IS_COMPILED_LOG(LogVulkan, Warning))
     {
-        if (this->Buffer || this->Allocation)
+        if (Buffer || Allocation)
         {
             LOG_WARNING(LogVulkan, "VMA Buffer leaked during LVmaBuffer destruction.")
+        }
+    }
+
+    return;
+}
+
+void Jafg::FreeVmaImage(VkImage Image, VmaAllocation Allocation)
+{
+    if (GEngine)
+    {
+        vmaDestroyImage(
+            GEngine->GetLocalEgo().GetFrontend().GetVma(),
+            Image,
+            Allocation
+            );
+    }
+    else if constexpr (IS_COMPILED_LOG(LogVulkan, Warning))
+    {
+        if (Image || Allocation)
+        {
+            LOG_WARNING(LogVulkan, "VMA Image leaked during LVkImage destruction.")
         }
     }
 
@@ -118,7 +141,11 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         LOG_VERBOSE(LogSurface, "Using Win32 platform.")
     }
 
-    LOG_VERBOSE(LogVulkan, "Initializing Vk.")
+    LOG_VERBOSE(LogVulkan, "Initializing vulkan.")
+
+    LOG_VERBOSE(LogVulkan, "Setting up Vulkan dynamic dispatch loader.")
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+
     this->FetchAndCheckInstanceExtensions();
     this->FetchAndCheckInstanceLayers();
     this->CreateInstance();
@@ -126,11 +153,18 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     this->SetupDebugUtilsMessenger();
 #endif /* !IN_SHIPPING */
 
+    LOG_VERBOSE(LogVulkan, "Initializing Vulkan dispatch loader with instance.")
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->VkMyInstance);
+
     LFrontendBase::Initialize(Outer);
     check( this->GetSurfaces().empty() == false )
 
     this->PickPhysicalDevice();
     this->CreateLogicalDevice();
+
+    LOG_VERBOSE(LogVulkan, "Initializing Vulkan dispatch loader with device.")
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->VkMyDevice);
+
     this->CreateVma();
 
     for (auto& Surface : this->GetSurfaces())
@@ -155,25 +189,117 @@ void Jafg::LFrontendVk::TearDown()
     return;
 }
 
+vk::raii::CommandBuffer Jafg::LFrontendVk::VkBeginSingleTimeCommands(vk::CommandPool Pool) const
+{
+    vk::CommandBufferAllocateInfo allocInfo{
+        .commandPool = Pool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+        };
+
+    vk::raii::CommandBuffer commandBuffer = std::move(this->VkMyDevice.allocateCommandBuffers(allocInfo).front());
+
+    vk::CommandBufferBeginInfo beginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit };
+    commandBuffer.begin(beginInfo);
+
+    return commandBuffer;
+}
+
+void Jafg::LFrontendVk::VkEndSingleTimeCommands(vk::CommandBuffer CommandBuffer) const
+{
+    CommandBuffer.end();
+
+    vk::SubmitInfo submitInfo{ .commandBufferCount = 1, .pCommandBuffers = &CommandBuffer };
+    this->VkMyGraphicsQueue.submit(submitInfo, nullptr);
+    this->VkMyGraphicsQueue.waitIdle();
+
+    return;
+}
+
+Jafg::LVmaBuffer Jafg::LFrontendVk::VkCreateBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */)
+{
+    VkBuffer Buffer;
+    VmaAllocation Allocation;
+    VmaAllocationCreateInfo AllocationCreateInfo{
+        .usage = Usage,
+        .requiredFlags = static_cast<VkMemoryPropertyFlags>(Flags),
+        };
+
+    auto Res = vmaCreateBuffer(
+        this->VmaMyAllocator,
+        CreateInfo,
+        &AllocationCreateInfo,
+        &Buffer,
+        &Allocation,
+        nullptr
+        );
+    check( Res == VK_SUCCESS )
+
+    return LVmaBuffer{ Buffer, Allocation };
+}
+
+Jafg::LVmaDetailedBuffer Jafg::LFrontendVk::VkCreateDetailedBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */)
+{
+    VkBuffer Buffer;
+    VmaAllocation Allocation;
+    VmaAllocationCreateInfo AllocationCreateInfo{
+        .usage = Usage,
+        .requiredFlags = static_cast<VkMemoryPropertyFlags>(Flags),
+        };
+
+    VmaAllocationInfo Info{};
+    auto Res = vmaCreateBuffer(
+        this->VmaMyAllocator,
+        CreateInfo,
+        &AllocationCreateInfo,
+        &Buffer,
+        &Allocation,
+        &Info
+        );
+    check( Res == VK_SUCCESS )
+
+    return LVmaDetailedBuffer{ Buffer, Allocation, std::move(Info) };
+}
+
+Jafg::LVmaMappedBuffer Jafg::LFrontendVk::VkCreateMappedBuffer(
+      vk::BufferCreateInfo CreateInfo
+    , vk::MemoryPropertyFlags Flags
+    , VmaAllocationCreateFlags VmaFlags /* = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT */
+    , VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */
+    )
+{
+    VkBuffer Buffer;
+    VmaAllocation Allocation;
+    VmaAllocationCreateInfo AllocationCreateInfo{
+        .flags = VmaFlags,
+        .usage = Usage,
+        .requiredFlags = static_cast<VkMemoryPropertyFlags>(Flags),
+        };
+
+    VmaAllocationInfo Info{};
+    auto Res = vmaCreateBuffer(
+        this->VmaMyAllocator,
+        CreateInfo,
+        &AllocationCreateInfo,
+        &Buffer,
+        &Allocation,
+        &Info
+        );
+    check( Res == VK_SUCCESS )
+    check( Info.pMappedData )
+
+    return LVmaMappedBuffer{ Buffer, Allocation, Info.pMappedData };
+}
+
 // TODO: Pool for this only.
 // https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html
 void Jafg::LFrontendVk::VkCopyBuffer(vk::CommandPool Pool, vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::BufferCopy BufferCopy) const
 {
     check( SrcBuffer && DstBuffer )
 
-    vk::CommandBufferAllocateInfo AllocInfo{
-        .commandPool = Pool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1
-        };
-
-    vk::raii::CommandBuffer CommandCopyBuffer = std::move(this->GetVkDevice().allocateCommandBuffers(AllocInfo).front());
-    CommandCopyBuffer.begin(vk::CommandBufferBeginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
-    CommandCopyBuffer.copyBuffer(SrcBuffer, DstBuffer, BufferCopy);
-    CommandCopyBuffer.end();
-
-    this->VkMyGraphicsQueue.submit(vk::SubmitInfo{ .commandBufferCount = 1, .pCommandBuffers = &*CommandCopyBuffer }, nullptr);
-    this->VkMyGraphicsQueue.waitIdle();
+    auto Buffer = this->VkBeginSingleTimeCommands(Pool);
+    Buffer.copyBuffer(SrcBuffer, DstBuffer, BufferCopy);
+    this->VkEndSingleTimeCommands(Buffer);
 
     return;
 }
@@ -238,6 +364,139 @@ Jafg::LVmaBuffer Jafg::LFrontendVk::VkStageData(vk::BufferCopy BufferCopy, void 
     vmaDestroyBuffer(this->VmaMyAllocator, StagingBuffer, StagingAllocation);
 
     return LVmaBuffer{ DeviceBuffer, DeviceAllocation };
+}
+
+Jafg::LVmaImage Jafg::LFrontendVk::VkStage2dImage(i32 texWidth, i32 texHeight, i32 texChannels, stbi_uc* pixels, vk::CommandPool Pool)
+{
+    check( pixels )
+
+    vk::DeviceSize ImageSize{ static_cast<vk::DeviceSize>(texWidth) * static_cast<vk::DeviceSize>(texHeight) * static_cast<vk::DeviceSize>(texChannels) };
+
+    LVmaMappedBuffer StagingBuffer = this->VkCreateMappedBuffer(
+            vk::BufferCreateInfo{
+                .size = ImageSize,
+                .usage = vk::BufferUsageFlagBits::eTransferSrc
+            },
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+            );
+    std::memcpy(StagingBuffer.Data, pixels, static_cast<size_t>(ImageSize));
+
+    vk::ImageCreateInfo ImageCreateInfo{
+        .flags = {},
+        .imageType = vk::ImageType::e2D,
+        .format = vk::Format::eR8G8B8A8Srgb,
+        .extent = { static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = vk::SampleCountFlagBits::e1,
+        .tiling = vk::ImageTiling::eOptimal,
+        .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+        .sharingMode = vk::SharingMode::eExclusive,
+        };
+
+    LVmaImage Image = this->VkCreateDeviceLocalImage(ImageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    this->VkTransitionImageLayout(Image.Image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, Pool);
+    this->CopyBufferToImage(StagingBuffer.Buffer, Image.Image, texWidth, texHeight, Pool);
+    this->VkTransitionImageLayout(Image.Image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, Pool);
+
+    return Image;
+}
+
+void Jafg::LFrontendVk::CopyBufferToImage(vk::Buffer Buffer, vk::Image Image, u32 Width, u32 Height, vk::CommandPool Pool)
+{
+    auto CommandBuffer = this->VkBeginSingleTimeCommands(Pool);
+
+    vk::BufferImageCopy Region{
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {Width, Height, 1}
+        };
+
+    CommandBuffer.copyBufferToImage(Buffer, Image, vk::ImageLayout::eTransferDstOptimal, Region);
+
+    this->VkEndSingleTimeCommands(CommandBuffer);
+
+    return;
+}
+
+Jafg::LVmaImage Jafg::LFrontendVk::VkCreateDeviceLocalImage(vk::ImageCreateInfo const& InInfo, vk::MemoryPropertyFlags Properties)
+{
+    VkImage Image;
+    VmaAllocation Allocation;
+    VmaAllocationCreateInfo AllocationCreateInfo{
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        .requiredFlags = static_cast<VkMemoryPropertyFlags>(Properties),
+        };
+
+    auto Res = this->VmaMyAllocator->CreateImage(
+        InInfo,
+        &AllocationCreateInfo,
+        nullptr,
+        &Image,
+        &Allocation,
+        nullptr
+        );
+    check( Res == VK_SUCCESS )
+
+    return { Image, Allocation };
+}
+
+void Jafg::LFrontendVk::VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, vk::CommandPool Pool)
+{
+    auto Buffer = this->VkBeginSingleTimeCommands(Pool);
+
+    vk::ImageMemoryBarrier Barrier{
+        .oldLayout = OldLayout,
+        .newLayout = NewLayout,
+        .image = Image,
+        .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
+        };
+
+    vk::PipelineStageFlags SourceStage;
+    vk::PipelineStageFlags DestinationStage;
+
+    if (OldLayout == vk::ImageLayout::eUndefined && NewLayout == vk::ImageLayout::eTransferDstOptimal)
+    {
+        Barrier.srcAccessMask = {};
+        Barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+        SourceStage      = vk::PipelineStageFlagBits::eTopOfPipe;
+        DestinationStage = vk::PipelineStageFlagBits::eTransfer;
+    }
+    else if (OldLayout == vk::ImageLayout::eTransferDstOptimal && NewLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+    {
+        Barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        Barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        SourceStage      = vk::PipelineStageFlagBits::eTransfer;
+        DestinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
+    else
+    {
+        panicMsgf( "Unsupported layout transition [{} => {}].", vk::to_string(OldLayout), vk::to_string(NewLayout) )
+    }
+
+    Buffer.pipelineBarrier(SourceStage, DestinationStage, {}, {}, nullptr, Barrier);
+
+    this->VkEndSingleTimeCommands(Buffer);
+
+    return;
+}
+
+vk::raii::ImageView Jafg::LFrontendVk::CreateImageView(vk::Image Image, vk::Format Format)
+{
+    vk::ImageViewCreateInfo CreateInfo{
+        .image = Image,
+        .viewType = vk::ImageViewType::e2D,
+        .format = Format,
+        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+        };
+
+    return vk::raii::ImageView{ this->VkMyDevice, CreateInfo };
 }
 
 void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()
@@ -516,7 +775,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         , vk::PhysicalDeviceVulkan13Features
         , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
         > FeaturesChain = {
-        {}, // vk::PhysicalDeviceFeatures2
+        {.features = { .samplerAnisotropy = VK_TRUE } }, // vk::PhysicalDeviceFeatures2
         {.shaderDrawParameters = VK_TRUE }, // vk::PhysicalDeviceVulkan11Features
         {.synchronization2 = VK_TRUE, .dynamicRendering = VK_TRUE}, // vk::PhysicalDeviceVulkan13Features
         {.extendedDynamicState = VK_TRUE} // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
@@ -647,7 +906,8 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::RankPhysicalDevi
             });
         });
 
-        bSupportsRequiredFeatures = Features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters
+        bSupportsRequiredFeatures = Features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy
+                                 && Features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters
                                  && Features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
                                  && Features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
 
