@@ -1,12 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
-
 #if PLATFORM_WINDOWS
 
 #include "Widgets/InterfaceTypes.h"
 #include "Platform/PlatformMisc.h"
-#include "System/Path.h"
 
 #include <cfgmgr32.h> /* MAX_DEVICE_ID_LEN */
 
@@ -22,24 +19,24 @@ namespace
 typedef std::map<std::wstring, std::wstring> DevNameToDevId;          /* DeviceName -> DeviceId */
 typedef std::map<std::wstring, std::pair<int, int> > PhyMonitorSizes; /* DeviceId -> (width, height) */
 
-/** Get a handle for the primary physical monitor.*/
-NOINLINE UNUSED HMONITOR GetPrimaryMonitorHandle()
+//# Get a handle for the primary physical monitor.
+UNUSED NOINLINE HMONITOR GetPrimaryMonitorHandle()
 {
     return MonitorFromPoint(POINT{0, 0}, MONITOR_DEFAULTTOPRIMARY);
 }
 
-/**
- * Tries to retrieve the monitor sizes using the SetupAPI and the EDID data in the w registry.
- *
- * @return The monitor sizes in millimeter.
- */
+//#
+//# Tries to retrieve the monitor sizes using the SetupAPI and the EDID data in the w registry.
+//#
+//# @return The monitor sizes in millimeter.
+//#
 NOINLINE PhyMonitorSizes FindMonitorSizesFromEdid()
 {
     PhyMonitorSizes ScreenSizes;
 
     constexpr GUID GuidDevInterfaceMonitor =
     {
-        0xe6f07b5f, 0xee97, 0x4a90, 0xb0, 0x76, 0x33, 0xf5, 0x7b, 0xf4, 0xea, 0xa7
+        0xe6f07b5f, 0xee97, 0x4a90, { 0xb0, 0x76, 0x33, 0xf5, 0x7b, 0xf4, 0xea, 0xa7, },
     };
     const HDEVINFO HDevInfo = SetupDiGetClassDevs(&GuidDevInterfaceMonitor, nullptr, nullptr, DIGCF_DEVICEINTERFACE);
 
@@ -171,10 +168,8 @@ NOINLINE bool CaseInsensitiveComparison(const std::wstring& Str1, const std::wst
     return true;
 }
 
-/**
- * @author https://github.com/texus
- */
-Jafg::LViewportSize GetMonitorSizeInMillimeter(const HMONITOR HMonitor)
+//# @author https://github.com/texus
+LIntVector2 GetMonitorSizeInMillimeter(const HMONITOR HMonitor)
 {
     const PhyMonitorSizes& sizesById = FindMonitorSizesFromEdid();
     const DevNameToDevId& deviceIdsByName = GetDeviceNamesToIdMap();
@@ -183,13 +178,13 @@ Jafg::LViewportSize GetMonitorSizeInMillimeter(const HMONITOR HMonitor)
     MonInfo.cbSize = sizeof(MonInfo);
     if (!GetMonitorInfoW(HMonitor, &MonInfo))
     {
-        return { };
+        return {};
     }
 
     const auto DeviceIdIt = deviceIdsByName.find(MonInfo.szDevice);
     if (DeviceIdIt == deviceIdsByName.end())
     {
-        return { };
+        return {};
     }
 
     const std::wstring& DeviceId = DeviceIdIt->second;
@@ -203,10 +198,10 @@ Jafg::LViewportSize GetMonitorSizeInMillimeter(const HMONITOR HMonitor)
             continue;
         }
 
-        return Jafg::LViewportSize(Size.first, Size.second);
+        return { Size.first, Size.second };
     }
 
-    return { };
+    return {};
 }
 
 BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT LprcMonitor, LPARAM DwData)
@@ -223,16 +218,16 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
         Viewport.WidthPx  = Maths::Absolute(info.rcMonitor.left - info.rcMonitor.right);
         Viewport.HeightPx = Maths::Absolute(info.rcMonitor.top  - info.rcMonitor.bottom);
 
-        const LViewportSize Size = GetMonitorSizeInMillimeter(HMonitor);
+        const LIntVector2 Size = GetMonitorSizeInMillimeter(HMonitor);
         Viewport.WidthMm  = Size.X;
         Viewport.HeightMm = Size.Y;
 
-        Viewport.Name = LString::SprintF("[{}] Generic Pnp Monitor ({}x{}px)",
-            GPlatformMisc->PhysicalViewports.GetSize(),
+        Viewport.Name = Lal::SprintF("[{}] Generic Pnp Monitor ({}x{}px)",
+            GPlatformMisc->PhysicalViewports.size(),
             Viewport.WidthPx, Viewport.HeightPx
-        );
+            );
 
-        GPlatformMisc->PhysicalViewports.Add(Viewport);
+        GPlatformMisc->PhysicalViewports.emplace_back(std::move(Viewport));
 
         return TRUE;
     }
@@ -244,43 +239,20 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LString Jafg::PlatformMisc::GetEngineRootDirImpl()
+LPath Jafg::PlatformMisc::Private::GetRealEngineRootDirImpl()
 {
-    LPath RealRootDir = PlatformMisc::GetRealEngineRootDir();
-    RealRootDir.PopSubPaths(4);
-    return RealRootDir.MoveOut();
-}
+    TCHAR Buffer[LAL_PLATFORM_MAX_PATH] = { 0 };
+    GetModuleFileName(nullptr, Buffer, LAL_PLATFORM_MAX_PATH);
 
-Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
-{
-    TCHAR Buffer[PLATFORM_MAX_PATH] = { 0 };
-    GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);
-
-#if LAL_WITH_MSVC
-    const std::wstring WFromBuffer = Buffer;
-#elif WITH_GCC
-    #ifdef UNICODE
-        const std::wstring WFromBuffer = Buffer;
-    #else /* UNICODE */
-        const std::wstring WFromBuffer = LPlatformTypes::CStr2Ws(reinterpret_cast<const char *>(*&Buffer));
-    #endif /* !UNICODE */
-#else /* WITH_GCC */
-    #error "Missing implementation for this platform."
-#endif /* !WITH_GCC */
-
-    const std::wstring::size_type Position = WFromBuffer.find_last_of(LITERAL_WIDE("\\/"));
-    const std::wstring WideEngineRootDir = WFromBuffer.substr(0, Position);
-    const LStringLegacy EngineRootDir = LPlatformTypes::Ws2S(WideEngineRootDir);
-
-    LPath Path = LPath(EngineRootDir.c_str());
-    Path.Normalize();
-
-    return { Path.MoveOut() };
+    LPath Path{ Buffer };
+    Path = Path.lexically_normal();
+    Path = Path.remove_filename();
+    return Path.lexically_normal();
 }
 
 i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
 {
-    return GetSystemMetrics(SM_CMONITORS);
+    return ::GetSystemMetrics(SM_CMONITORS);
 }
 
 bool Jafg::PlatformMisc::SetPhysicalViewports()

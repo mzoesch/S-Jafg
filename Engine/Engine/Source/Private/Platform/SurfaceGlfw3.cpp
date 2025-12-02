@@ -167,11 +167,13 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
 
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
 
+#if PLATFORM_LINUX
     // TODO Do we need this still??
     if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
     {
         this->SetPlatformSupportsRepeatedKey(false);
     }
+#endif /* PLATFORM_LINUX */
 
     if (this->GetHumanReadableName() == "Transient")
     {

@@ -27,15 +27,6 @@
             }
         },
         {
-            "name": "Wasm",
-            "inherits": "base",
-            "hidden": true,
-            "cacheVariables": {
-                "JAFG_TARGET_PLATFORM": "Wasm",
-                "JAFG_TARGET_ARCHITECTURE": "x86"
-            }
-        },
-        {
             "name": "Debug",
             "inherits": "base",
             "hidden": true,
@@ -193,46 +184,6 @@
         {
             "name": "Windows | TestUnit-Sanitized",
             "inherits": ["Windows", "TestUnit", "Debug", "Sanitized"]
-        },
-
-
-        {
-            "name": "Wasm | Client-Shipping",
-            "inherits": ["Wasm", "Client", "Shipping"]
-        },
-        {
-            "name": "Wasm | Client-Development",
-            "inherits": ["Wasm", "Client", "Development"]
-        },
-        {
-            "name": "Wasm | Client-Debug",
-            "inherits": ["Wasm", "Client", "Debug"]
-        },
-
-        {
-            "name": "Wasm | Daemon-Shipping",
-            "inherits": ["Wasm", "Daemon", "Shipping"]
-        },
-        {
-            "name": "Wasm | Daemon-Development",
-            "inherits": ["Wasm", "Daemon", "Development"]
-        },
-        {
-            "name": "Wasm | Daemon-Debug",
-            "inherits": ["Wasm", "Daemon", "Debug"]
-        },
-
-        {
-            "name": "Wasm | TestUnit-Shipping",
-            "inherits": ["Wasm", "TestUnit", "Shipping"]
-        },
-        {
-            "name": "Wasm | TestUnit-Development",
-            "inherits": ["Wasm", "TestUnit", "Development"]
-        },
-        {
-            "name": "Wasm | TestUnit-Debug",
-            "inherits": ["Wasm", "TestUnit", "Debug"]
         }
     ]
 }

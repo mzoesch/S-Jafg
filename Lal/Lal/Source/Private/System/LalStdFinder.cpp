@@ -258,7 +258,7 @@ void Finder::MakeFileBackup(const LPath& File, const bool bMakeIfSame /* = false
 
         LPath Target { File };
         Target.append(Extension);
-        Target += Lal::SprintF("{}", Count);
+        Target.append(std::format("{}", Count));
 
         LPath Previous;
         if (Count == 1)
@@ -269,7 +269,7 @@ void Finder::MakeFileBackup(const LPath& File, const bool bMakeIfSame /* = false
         {
             Previous.assign(File);
             Previous.append(Extension);
-            Previous += Lal::SprintF("{}", Count - 1);
+            Previous.append(std::format("{}", Count - 1));
         }
 
         if (DoesFileExist(Previous))
@@ -364,11 +364,20 @@ TArray<LString> Finder::FindFilesRecursively
             continue;
         }
 
+#if LAL_PLATFORM_USES_UTF8
         if (Regex == "*" || std::regex_match(P.path().native(), Pattern))
+#else /* LAL_PLATFORM_USES_UTF8 */
+        LString PFromNative = Lal::Utf16ToUtf8(P.path().native().c_str(), P.path().native().size());
+        if (Regex == "*" || std::regex_match(PFromNative, Pattern))
+#endif /* LAL_PLATFORM_USES_UTF8 */
         {
             if (bKeepExtension)
             {
+#if LAL_PLATFORM_USES_UTF8
                 Out.emplace_back(LString{ P.path().native().begin().base(), P.path().native().size() });
+#else /* LAL_PLATFORM_USES_UTF8 */
+                Out.emplace_back(std::move(PFromNative));
+#endif /* LAL_PLATFORM_USES_UTF8 */
             }
             else
             {

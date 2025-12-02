@@ -884,16 +884,16 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 {
     this->FetchedSaves->clear();
 
-    TArray<LString> SavesPaths { Finder::GetSavesDir() };
+    TArray<LPath> SavesPaths{ Finder::GetSavesDir() };
     SavesPaths.append_range(GetDefault<JUserPreferences>()->AdditionalSavesSearchPaths);
 
     TArray<LString> Candidats;
 
-    for (const LString& SavePath: SavesPaths)
+    for (auto const& SavePath: SavesPaths)
     {
-        if (const LPath AsPath{ SavePath.begin(), SavePath.end() }; Finder::DoesDirectoryExist(AsPath))
+        if (Finder::DoesDirectoryExist(SavePath))
         {
-            for (TArray<LString> New = Finder::FindFilesRecursivelyByName(AsPath, "sqlite3.db"); LString& X : New)
+            for (TArray<LString> New = Finder::FindFilesRecursivelyByName(SavePath, "sqlite3.db"); LString& X : New)
             {
                 if (algo::contains(Candidats, X))
                 {

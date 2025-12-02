@@ -6,6 +6,8 @@ message(STATUS "ENGINE_ROOT: ${JAFG_ENGINE_ROOT}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
 
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${JAFG_ENGINE_ROOT}/msys64/ucrt64")
+
 ###############################################################################
 # Ensure the compiler.
 ###############################################################################
@@ -16,8 +18,9 @@ if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
         message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the Clang toolchain.")
     endif()
 elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the MSVC toolchain.")
+    string(REGEX MATCH ".*clang\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
+    if(NOT REGREX_MATCHED)
+        message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the Clang toolchain.")
     endif()
 elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM)
     string(REGEX MATCH ".*em\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
@@ -57,7 +60,7 @@ function(UpdateSubmodules)
     endif()
 
     if(result)
-        message(FATAL_ERROR "Git submodule fetcher quit with exit code [${result}].")
+        message(WARNING "Git submodule fetcher quit with exit code [${result}].")
     else()
         message(STATUS "Git submodule fetcher quit with exit code [${result}].")
     endif()

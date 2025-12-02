@@ -22,7 +22,7 @@ void Lal::LOnPlatformBreakLinux::ExitQuietly()
 
 void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
 (
-    const LPrimitivePlatformTypesGeneric::LChar* InMessage
+    const LPrimitivePlatformTypesGeneric::LJafgChar* InMessage
 )
 {
     //
@@ -182,9 +182,9 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
 
 void Lal::LOnPlatformBreakLinux::OnProgramPanic
 (
-    const LPrimitivePlatformTypesGeneric::LChar* InBaseMessage,
-    const LPrimitivePlatformTypesGeneric::LChar* InFile,
-    const LPrimitivePlatformTypesGeneric::u64    InLine
+    const LPrimitivePlatformTypesGeneric::LJafgChar* InBaseMessage,
+    const LPrimitivePlatformTypesGeneric::LJafgChar* InFile,
+    const LPrimitivePlatformTypesGeneric::u64        InLine
 )
 {
     std::ostringstream Stream;
@@ -202,9 +202,9 @@ namespace Lal::Hal
 
 void SleepNoStats(const f64 InSeconds)
 {
-    if (const i32 Milli { static_cast<i32>(InSeconds * LAL_S2MUS_D) }; Milli > 0)
+    if (const i32 Micro{ static_cast<i32>(InSeconds * LAL_S2MUS_D) }; Micro > 0)
     {
-        usleep(Milli);
+        usleep(Micro);
     }
     else
     {

@@ -2,63 +2,100 @@
 
 #if PLATFORM_WINDOWS
 
-#include "Hal/PlatformWin.h"
+#include "AbsoluteMinimalCore.h"
 
-void LWinPlatformBreakDefines::OnProgramPanic(
-    const std::string& InMessage,
-    const std::string& InFile,
-    const LWinPlatformTypes::i32 InLine
-)
+void Lal::LOnPlatformBreakWindows::ExitQuietly()
 {
-    const std::string  InCaption     = "Jafg panicked";
-    const std::wstring InCaptionWide = std::wstring(InCaption.begin(), InCaption.end());
-
-    std::string InMessageWithAdditionalInfo;
-    InMessageWithAdditionalInfo += "Jafg entered an one-way enclosing block inside a critical control path and panicked.\n\n";
-    InMessageWithAdditionalInfo += "File: ";
-    InMessageWithAdditionalInfo += InFile;
-    InMessageWithAdditionalInfo += "\nLine: ";
-    InMessageWithAdditionalInfo += std::to_string(InLine);
-    InMessageWithAdditionalInfo += "\n\nExpression: ";
-    InMessageWithAdditionalInfo += InMessage;
-
-    const std::wstring InMessageWide = std::wstring(InMessageWithAdditionalInfo.begin(), InMessageWithAdditionalInfo.end());
-
-#if IN_SHIPPING
-    /*
-     * We only need this in shipping because abort will ask the debugger, if attached, to load the memory dump.
-     */
-    MessageBox(nullptr, InMessageWide.c_str(), InCaptionWide.c_str(), MB_ICONERROR | MB_OK);
-#endif /* IN_SHIPPING */
-
-    /*
-         * To we actually want to call abort?
-         * Maybe we want to call a delegate here to allow for a custom panic handler for the most
-         * critical systems before aborting.
-         * E.g., close SQL handlers. Nothing would be more stupid if the program crashes
-         * and our db is corrupted. At least for the user.
-         */
-    abort();
+    ::_Exit(EXIT_FAILURE);
 }
 
-namespace Jafg::PlatformHal
+void Lal::LOnPlatformBreakWindows::OnProgramPanicImpl
+(
+    LPrimitivePlatformTypesGeneric::LJafgChar const* InMessage
+)
+{
+    // TODO: Stop threads.
+
+#if WITH_LOCAL_LAYER
+    if (JafgCore::bGSuppressCrashDialog == false && Lal::Hal::IsTracerPidValidVerySlow() == false)
+    {
+        const LWString Caption{ LITERAL_WIDE("Jafg panicked; We are fucked.") };
+        const auto Message{ Lal::Utf8ToUtf16(InMessage) };
+
+        MessageBox(
+            nullptr,
+            Message.c_str(),
+            Caption.c_str(),
+            MB_ICONERROR | MB_OK
+            );
+    }
+    else
+    {
+        LOG_VERBOSE(LogJafgInternal, "Suppressed jafg crash dialog window.")
+    }
+#endif /* WITH_LOCAL_LAYER */
+
+    // TODO: Stacktrace
+
+    // Flush, because some streams may be buffered and missing while aborting.
+    Lal::FlushOutStreams();
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // The final absolute end.
+    if (Hal::IsTracerPidValidVerySlow())
+    {
+        //# The last resort if the program is being debugged. This is the end.
+        LAL_PLATFORM_BREAK()
+    }
+
+    LOnPlatformBreakWindows::ExitQuietly();
+}
+
+void Lal::LOnPlatformBreakWindows::OnProgramPanic
+(
+    LPrimitivePlatformTypesGeneric::LJafgChar const* InBaseMessage,
+    LPrimitivePlatformTypesGeneric::LJafgChar const* InFile,
+    LPrimitivePlatformTypesGeneric::u64       const  InLine
+)
+{
+    std::ostringstream Stream;
+    Stream << "Fuck. Jafg entered an one-way enclosing block inside a critical control path and lost the war of being a good boy." << "\n\n"
+           << InBaseMessage << "\n\n"
+           << "~File: " << InFile << "\n"
+           << "~Line: " << InLine
+           ;
+
+    LOnPlatformBreakWindows::OnProgramPanicImpl(Stream.str().c_str());
+}
+
+namespace Lal::Hal
 {
 
 void SleepNoStats(const double InSeconds)
 {
-    const DWORD Milli = static_cast<DWORD>(InSeconds * JAFG_S2MS_D);
-
-    if (Milli > 0)
+    if (const DWORD Milli{ static_cast<DWORD>(InSeconds * LAL_S2MS_D) }; Milli > 0)
     {
         ::Sleep(Milli);
     }
+    else
     {
-        ::SwitchToThread();
+        YieldThread();
     }
 
     return;
 }
 
-} /* ~Namespace Jafg::PlatformHal */
+void YieldThread()
+{
+    ::SwitchToThread();
+    return;
+}
+
+bool IsTracerPidValidVerySlow()
+{
+    return ::IsDebuggerPresent();
+}
+
+} /* ~Namespace Lal::Hal */
 
 #endif /* PLATFORM_WINDOWS */

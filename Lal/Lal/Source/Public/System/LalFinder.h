@@ -2,6 +2,13 @@
 
 #pragma once
 
+#if PLATFORM_WINDOWS /* Just some windows nonsense... */
+    #ifdef CreateFile
+        #pragma push_macro( "CreateFile" )
+        #undef CreateFile
+    #endif /* CreateFile */
+#endif /* PLATFORM_WINDOWS */
+
 //#
 //# Functions in this namespace will panic if something goes wrong unless stated otherwise.
 //#

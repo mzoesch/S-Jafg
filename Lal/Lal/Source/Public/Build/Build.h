@@ -198,3 +198,11 @@
 #endif /* !LAL_DO_ENSURES */
 
 #define PRIVATE_LAL_BUILD_H_INCLUDED                                            1
+
+#if LAL_WITH_MSVC
+    #if IN_DEBUG
+        #ifndef _DEBUG
+            #define _DEBUG
+        #endif /* _DEBUG */
+    #endif /* IN_DEBUG */
+#endif /* LAL_WITH_MSVC */

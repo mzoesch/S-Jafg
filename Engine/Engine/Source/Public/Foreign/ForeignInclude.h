@@ -30,7 +30,34 @@
     }
 
 #define PRIVATE_JAFG_PLUGINS_WIN_NATIVE_CALLS(InPluginLifetime) \
-    USE_WIN_MAIN_DLL - currently not implemented.
+    BOOL APIENTRY DllMain(                                      \
+        _In_ HMODULE hModule,                                   \
+        _In_ DWORD   ul_reason_for_call,                        \
+        _In_ LPVOID  lpReserved                                 \
+        )                                                       \
+    {                                                           \
+        switch (ul_reason_for_call)                             \
+        {                                                       \
+        case DLL_PROCESS_ATTACH:                                \
+        {                                                       \
+            InPluginLifetime::OnNativeStartup();                \
+            break;                                              \
+        }                                                       \
+        case DLL_PROCESS_DETACH:                                \
+        {                                                       \
+            if (lpReserved != nullptr)                          \
+            {                                                   \
+                /* do not do cleanup if process                 \
+                   termination scenario */                      \
+                break;                                          \
+            }                                                   \
+            InPluginLifetime::OnNativeShutdown();               \
+            break;                                              \
+        }                                                       \
+        }                                                       \
+                                                                \
+        return TRUE;                                            \
+    }
 
 #if PLATFORM_LINUX
     #define PRIVATE_JAFG_PLUGINS_NATIVE_CALLS(InPluginLifetime)   \

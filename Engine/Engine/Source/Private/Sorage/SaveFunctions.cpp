@@ -2,6 +2,7 @@
 
 #include "Storage/SaveFunctions.h"
 #include "sqlite3.h"
+#include "Serialization/MySqlite3.h"
 
 #define STORAGE_NAME "sqlite3.db"
 
@@ -37,7 +38,7 @@ struct LSql3Con final
 
     LSql3Con(const LPath& InPath, LString* OutError /* = nullptr */)
     {
-        if (const int Rc = sqlite3_open((InPath / STORAGE_NAME).c_str(), &this->Db); Rc)
+        if (auto Rc{ Sqlite3Bindings::native_open((InPath / STORAGE_NAME).c_str(), &this->Db) }; Rc)
         {
             if (OutError)
             {

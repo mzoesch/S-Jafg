@@ -12,20 +12,6 @@
 namespace Jafg
 {
 
-LLoadedPlugin::~LLoadedPlugin()
-{
-    if (this->IsLoaded())
-    {
-        //#
-        //# If this ever triggers - we are fucked. The plugin probably has handles all over the place.
-        //#
-        LOG_WARNING(LogForeign, "Plugin [{}] was not closed before destruction.", this->GetIdentifier())
-        this->CloseLibrary(EPluginShutdownReason::Unspecified);
-    }
-
-    return;
-}
-
 EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 {
     check( Tasks::IsOnMasterThread() )
@@ -93,34 +79,6 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
     this->Lifetime->OnStartup();
 
     return EPluginLoadReturnCode::Success;
-}
-
-void LLoadedPlugin::PrepareLibraryClose(const EPluginShutdownReason::Type InReason)
-{
-    check( Tasks::IsOnMasterThread() )
-
-    if (this->IsLoaded() == false)
-    {
-        LOG_ERROR(LogForeign, "Plugin [{}] is not loaded.", this->GetAbsolutePath())
-        return;
-    }
-
-    if (this->Fetched.bDynUnloadable == false)
-    {
-        LOG_ERROR(LogForeign, "Plugin [{}] is not marked as unloadable.", this->GetAbsolutePath())
-        return;
-    }
-
-    if (this->Lifetime.get() != nullptr)
-    {
-        this->Lifetime->OnPrepareShutdown(InReason);
-    }
-    else
-    {
-        LOG_ERROR(LogForeign, "Lifetime [{}] is invalid.", this->GetAbsolutePath())
-    }
-
-    return;
 }
 
 EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownReason::Type InReason)

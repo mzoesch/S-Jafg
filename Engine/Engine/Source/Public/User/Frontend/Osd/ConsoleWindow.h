@@ -15,7 +15,7 @@ class WVRegion;
 class WConsoleStdIn;
 
 DECLARE_JAFG_WIDGET()
-class WConsoleWindow final : public WFloatingWindow
+class ENGINE_API WConsoleWindow final : public WFloatingWindow
 {
     GENERATED_CLASS_BODY()
 

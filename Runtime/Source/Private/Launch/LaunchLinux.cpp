@@ -80,7 +80,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     i32 ErrorLevel { 0 };
 
     TArray<LString> Arguments;
-    for (i32 Idx { 1 }; Idx < ArgC; ++Idx)
+    for (i32 Idx{ 1 }; Idx < ArgC; ++Idx)
     {
         Arguments.emplace_back(ArgV[Idx]);
     }

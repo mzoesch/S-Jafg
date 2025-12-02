@@ -124,13 +124,6 @@ struct LPrimitivePlatformTypesGeneric
     #endif /* !(PLATFORM_WINDOWS || PLATFORM_LINUX) */
 #endif /* PLATFORM_DESKTOP */
 
-#ifndef LAL_PLATFORM_WINDOWS_WITH_GCC
-    #define LAL_PLATFORM_WINDOWS_WITH_GCC                               0
-#endif /* !LAL_PLATFORM_WINDOWS_WITH_GCC */
-#ifndef LAL_PLATFORM_WINDOWS_WITH_MSVC
-    #define LAL_PLATFORM_WINDOWS_WITH_MSVC                              0
-#endif /* !LAL_PLATFORM_WINDOWS_WITH_MSVC */
-
 #ifndef LAL_WITH_GCC
     #define LAL_WITH_GCC                                                0
 #endif /* !LAL_WITH_GCC */
@@ -140,10 +133,28 @@ struct LPrimitivePlatformTypesGeneric
 #ifndef LAL_WITH_CLANG
     #define LAL_WITH_CLANG                                              0
 #endif /* !LAL_WITH_CLANG */
-
 #if !LAL_WITH_GCC && !LAL_WITH_MSVC && !LAL_WITH_CLANG
     #error "No compiler spcified."
 #endif /* LAL_WITH_GCC || LAL_WITH_MSVC || LAL_WITH_CLANG */
+#if (LAL_WITH_GCC + LAL_WITH_MSVC + LAL_WITH_CLANG) > 1
+    #error "Multiple compilers specified."
+#endif /* (LAL_WITH_GCC + LAL_WITH_MSVC + LAL_WITH_CLANG) > 1 */
+
+#if LAL_WITH_GCC
+    #if !(__GNUC__)
+        #error "LAL_WITH_GCC is set but compiler is not GCC."
+    #endif /* !(__GNUC__ && !(__clang__)) */
+#endif /* LAL_WITH_GCC */
+#if LAL_WITH_MSVC
+    #if !(defined(_MSC_VER))
+        #error "LAL_WITH_MSVC is set but compiler is not MSVC."
+    #endif /* !(defined(_MSC_VER)) */
+#endif /* LAL_WITH_MSVC */
+#if LAL_WITH_CLANG
+    #if !(__clang__)
+    #error "LAL_WITH_CLANG is set but compiler is not Clang."
+    #endif /* !(__clang__) */
+#endif /* LAL_WITH_CLANG */
 
 //# Whether the platform uses the Posix Api.
 #ifndef LAL_PLATFORM_USES_POSIX
@@ -339,12 +350,12 @@ struct LPrimitivePlatformTypesGeneric
 #if !(LAL_PLATFORM_USES_UTF8 || LAL_PLATFORM_USES_UTF16 || LAL_PLATFORM_USES_UTF32)
     #error "No native characther endocing specified."
 #endif /* !(LAL_PLATFORM_USES_UTF8 || LAL_PLATFORM_USES_UTF16 || LAL_PLATFORM_USES_UTF32) */
-#if IN_DEBUG
+#if LAL_PLATFORM_USES_UTF8
     #if LAL_PLATFORM_USES_UTF16 || LAL_PLATFORM_USES_UTF32
         #error "Multiple native characther endocing specified."
     #endif /* LAL_PLATFORM_USES_UTF16 || LAL_PLATFORM_USES_UTF32 */
 #endif /* LAL_PLATFORM_USES_UTF8 */
-#if PLATFORM_WASM
+#if LAL_PLATFORM_USES_UTF16
     #if LAL_PLATFORM_USES_UTF8 || LAL_PLATFORM_USES_UTF32
         #error "Multiple native characther endocing specified."
     #endif /* LAL_PLATFORM_USES_UTF32 */
@@ -518,6 +529,14 @@ typedef LAL_MAX_ALIGN_TYPE                                              LMaxAlig
 //# The actual used primitive platform types. This is always valid.
 typedef LAL_PLATFORM_TYPES_STRUCT                                       LPlatformTypes;
 
+#ifndef LAL_PLATFORM_U64_SIZET_EQ
+    #define LAL_PLATFORM_U64_SIZET_EQ                                   0
+#endif /* !LAL_PLATFORM_U64_SIZET_EQ */
+
+#ifndef LAL_PLATFORM_U32_SIZET_EQ
+    #define LAL_PLATFORM_U32_SIZET_EQ                                   0
+#endif /* !LAL_PLATFORM_U32_SIZET_EQ */
+
 namespace Private
 {
 
@@ -625,10 +644,10 @@ template <typename T>
 concept IsOnProgramPanicValid = requires
     (
         T t,
-        LPlatformTypes::LChar* InBaseMessage,
-        LPlatformTypes::LChar* InMessage,
-        LPlatformTypes::LChar* InFile,
-        LPlatformTypes::u64    InLine
+        LPlatformTypes::LJafgChar* InBaseMessage,
+        LPlatformTypes::LJafgChar* InMessage,
+        LPlatformTypes::LJafgChar* InFile,
+        LPlatformTypes::u64        InLine
     )
 {
     { t.ExitQuietly() } -> std::same_as<void>;
@@ -637,6 +656,13 @@ concept IsOnProgramPanicValid = requires
 };
 
 static_assert(IsOnProgramPanicValid<LOnPlatformBreak>);
+
+#if LAL_PLATFORM_U64_SIZET_EQ
+    static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::LSize>);
+#endif /* LAL_PLATFORM_U64_SIZET_EQ */
+#if LAL_PLATFORM_U32_SIZET_EQ
+    static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::LSize>);
+#endif /* LAL_PLATFORM_U32_SIZET_EQ */
 
 } /* ~Namespace Lal */
 

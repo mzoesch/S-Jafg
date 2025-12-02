@@ -49,7 +49,7 @@ public:
 } /* ~Namespace Jafg */
 
 template <>
-struct std::formatter<Jafg::LEnginePath> : std::formatter<std::string_view>
+struct std::formatter<Jafg::LEnginePath> : std::formatter<std::string>
 {
     FORCEINLINE auto format
     (
@@ -57,6 +57,7 @@ struct std::formatter<Jafg::LEnginePath> : std::formatter<std::string_view>
         std::format_context& InContext
     ) const -> std::format_context::iterator
     {
-        return std::formatter<std::string_view>::format(std::string_view{std::to_address(Path.native().begin()), Path.native().size()}, InContext);
+        const LString PathStr{ Path.string() };
+        return std::formatter<std::string>::format(PathStr, InContext);
     }
 };

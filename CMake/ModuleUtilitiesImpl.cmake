@@ -170,23 +170,28 @@ function(_jafg_add_module_impl
         target_compile_definitions(${module_name} PRIVATE
             PLATFORM_WINDOWS=1
             )
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            target_compile_definitions(${module_name} PRIVATE
-                LAL_PLATFORM_WINDOWS_WITH_MSVC=1
-                )
-        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            target_compile_definitions(${module_name} PRIVATE
-                LAL_PLATFORM_WINDOWS_WITH_GCC=1
-            )
-        else()
-            message(FATAL_ERROR "Compiler not supported for Windows: [${CMAKE_CXX_COMPILER_ID}].")
-        endif()
     elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM)
         target_compile_definitions(${module_name} PRIVATE
-            PLATFORM_WASM=1
+                PLATFORM_WASM=1
             )
     else()
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_PLATFORM [${JAFG_TARGET_PLATFORM}].")
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        target_compile_definitions(${module_name} PRIVATE
+            LAL_WITH_MSVC=1
+            )
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_definitions(${module_name} PRIVATE
+            LAL_WITH_GCC=1
+            )
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_definitions(${module_name} PRIVATE
+            LAL_WITH_CLANG=1
+            )
+    else()
+        message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
     endif()
 
     target_compile_definitions(${module_name} PRIVATE
@@ -240,9 +245,9 @@ function(_jafg_add_module_impl
             -Wall -Wextra -Wpedantic    # Enable many warnings.
             # -Weverything <-- To much for now.
             )
-        target_link_options(${module_name} PRIVATE
-            -rdynamic
-            )
+#        target_link_options(${module_name} PRIVATE
+#            -rdynamic
+#            )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_options(${module_name} PRIVATE
             /nologo                     # Annoying as shit.

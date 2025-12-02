@@ -108,6 +108,10 @@ public:
     LSimplePath(TStringType&& Source, format f = auto_format) : TSuper(static_cast<TEscalatedStringType>(Source), f) { }
     LSimplePath(TStringType const& Source, format f = auto_format) : TSuper(static_cast<TEscalatedStringType>(Source), f) { }
 
+#if !LAL_PLATFORM_USES_UTF8
+    LSimplePath(_LString const& Source, format f = auto_format) : TSuper(static_cast<_LString::TSuper>(Source), f) { }
+#endif /* !LAL_PLATFORM_USES_UTF8 */
+
     LSimplePath& operator=(path const& Path) { return static_cast<LSimplePath&>(TSuper::operator=(Path)); }
     LSimplePath& operator=(path&& Path) noexcept { return static_cast<LSimplePath&>(TSuper::operator=(std::move(Path))); }
     LSimplePath& operator=(TStringType&& Source) { return *this = LSimplePath{std::move(Source)}; }
@@ -128,6 +132,11 @@ public:
     {
         return *this = path(__first, __last);
     }
+
+#if !LAL_PLATFORM_USES_UTF8
+    LSimplePath& operator=(_LString const& Source) { return *this = static_cast<_LString::TSuper>(Source); }
+    LSimplePath& assign(_LString const& Source) { return *this = static_cast<_LString::TSuper>(Source); }
+#endif /* !LAL_PLATFORM_USES_UTF8 */
 
     LSimplePath& operator/=(path const& Other) { return static_cast<LSimplePath&>(TSuper::operator/=(Other)); }
     LSimplePath& operator/=(LSimplePath const& Other) { return static_cast<LSimplePath&>(TSuper::operator/=(static_cast<const path&>(Other))); }
@@ -153,6 +162,11 @@ public:
         TSuper::append(__first, __last);
         return *this;
     }
+
+#if !LAL_PLATFORM_USES_UTF8
+    LSimplePath& operator/=(_LString const& Other) { TSuper::operator/=(static_cast<const _LString::TSuper&>(Other)); return *this; }
+    LSimplePath& append(_LString const& Other) { TSuper::append(static_cast<const _LString::TSuper&>(Other)); return *this; }
+#endif /* !LAL_PLATFORM_USES_UTF8 */
 
     LSimplePath& operator+=(path const& __x) { TSuper::operator+=(__x); return *this; }
     LSimplePath& operator+=(string_type const& __x) { TSuper::operator+=(__x); return *this; }
@@ -180,6 +194,11 @@ public:
         TSuper::concat(__first, __last);
         return *this;
     }
+
+#if !LAL_PLATFORM_USES_UTF8
+    LSimplePath& operator+=(_LString const& __x) { return TSuper::operator+=(static_cast<_LString::TSuper const&>(__x)), *this; }
+    LSimplePath& concat(_LString const& __x) { TSuper::concat(static_cast<_LString::TSuper const&>(__x)); return *this; }
+#endif /* !LAL_PLATFORM_USES_UTF8 */
 
     LSimplePath& make_preferred() { TSuper::make_preferred(); return *this; }
     LSimplePath& remove_filename() { TSuper::remove_filename(); return *this; }
@@ -210,8 +229,7 @@ public:
 #if LAL_WITH_CLANG && defined(_GLIBCXX_USE_CHAR8_T)
     __attribute__((__abi_tag__("__u8")))
 #endif /* LAL_WITH_CLANG && _GLIBCXX_USE_CHAR8_T */
-    _Lu8String  u8string() const = delete; // TODO: Support this.
-
+    _Lu8String  u8string() const { return string<_Lu8String::value_type, _Lu8String::traits_type, _Lu8String::allocator_type>(); }
     _Lu16String u16string() const { return string<_Lu16String::value_type, _Lu16String::traits_type, _Lu16String::allocator_type>(); }
     _Lu32String u32string() const { return string<_Lu32String::value_type, _Lu32String::traits_type, _Lu32String::allocator_type>(); }
 
@@ -356,6 +374,91 @@ using LPath = Lal::_LPath;
 template<typename T>
 using TOptional = std::optional<T>;
 
+namespace Lal
+{
+
+FORCEINLINE LWString Utf8ToUtf16(LString const& Utf8) noexcept;
+FORCEINLINE LWString Utf8ToUtf16(LString::value_type const* Ptr, LSize Size) noexcept;
+
+FORCEINLINE LString Utf16ToUtf8(LWString const& Utf16) noexcept;
+FORCEINLINE LString Utf16ToUtf8(LWString::value_type const* Ptr, LSize Size) noexcept;
+
+FORCEINLINE LWString Utf8ToUtf16(LString const& Utf8) noexcept
+{
+    return Utf8ToUtf16(Utf8.data(), Utf8.size());
+}
+
+FORCEINLINE LWString Utf8ToUtf16(LString::value_type const* Ptr, LSize Size) noexcept
+{
+    if (Size == 0)
+    {
+        return {};
+    }
+
+    auto RequiredSize = MultiByteToWideChar(
+        CP_UTF8,
+        0,
+        Ptr,
+        Size,
+        nullptr,
+        0
+        );
+
+    LWString Utf16(RequiredSize, LITERAL_WIDE('\0'));
+
+    MultiByteToWideChar(
+        CP_UTF8,
+        0,
+        Ptr,
+        Size,
+        &Utf16[0],
+        RequiredSize
+        );
+
+    return Utf16;
+}
+
+FORCEINLINE LString Utf16ToUtf8(LWString const& Utf16) noexcept
+{
+    return Utf16ToUtf8(Utf16.data(), Utf16.size());
+}
+
+FORCEINLINE LString Utf16ToUtf8(LWString::value_type const* Ptr, LSize Size) noexcept
+{
+    if (Size == 0)
+    {
+        return {};
+    }
+
+    auto RequiredSize = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        Ptr,
+        Size,
+        nullptr,
+        0,
+        nullptr,
+        nullptr
+        );
+
+    LString Utf8(RequiredSize, '\0');
+
+    WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        Ptr,
+        Size,
+        &Utf8[0],
+        RequiredSize,
+        nullptr,
+        nullptr
+        );
+
+    return Utf8;
+}
+
+} /* ~Namespace Lal */
+
 template<>
 struct std::formatter<LString> : std::formatter<std::string_view>
 {
@@ -370,7 +473,7 @@ struct std::formatter<LString> : std::formatter<std::string_view>
 };
 
 template<>
-struct std::formatter<LPath> : std::formatter<std::string_view>
+struct std::formatter<LPath> : std::formatter<std::string>
 {
     FORCEINLINE auto format
     (
@@ -378,6 +481,7 @@ struct std::formatter<LPath> : std::formatter<std::string_view>
         std::format_context& InContext
     ) const -> std::format_context::iterator
     {
-        return std::formatter<std::string_view>::format(std::string_view{std::to_address(Path.native().begin()), Path.native().size()}, InContext);
+        const LString PathStr{ Path.string() };
+        return std::formatter<std::string>::format(PathStr, InContext);
     }
 };

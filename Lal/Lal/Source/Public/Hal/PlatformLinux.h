@@ -10,9 +10,13 @@
     #error "Wanted to override generic platform types with Linux specific types, but platform is not Linux."
 #endif /* !PLATFORM_LINUX */
 
-#if __cplusplus < PRIVATE_LAL_CPLUSPLUS
-    #error "Program requires at least Config/.__cplusplus."
-#endif /* __cplusplus < 202002L */
+#ifndef __cplusplus
+    #error "No cpp standard specified."
+#else /* !__cplusplus */
+    #if __cplusplus < PRIVATE_LAL_CPLUSPLUS
+        #error "Program requires at least Config/.__cplusplus."
+    #endif /* __cplusplus < PRIVATE_LAL_CPLUSPLUS */
+#endif /* __cplusplus */
 
 namespace Lal
 {
@@ -52,10 +56,6 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 
 } /* extern "C" */
 
-#ifndef LAL_WITH_CLANG
-    #define LAL_WITH_CLANG                                              1
-#endif /* !LAL_WITH_CLANG */
-
 #if !LAL_WITH_CLANG
     #error "Linux only supports clang as a valid compiler for the moment."
 #endif /* !LAL_WITH_CLANG */
@@ -82,78 +82,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 -----------------------------------------------------------------------------*/
 
 #if LAL_DO_COMPILER_DIAGNOSTIC_SETUP
-    //
-    // Customize clang warnings.
-    // @see https://clang.llvm.org/docs/DiagnosticsReference.html
-    //
-
-    /*-----------------------------------------------------------------------------
-        Raise.
-    -----------------------------------------------------------------------------*/
-    #pragma clang diagnostic error "-Wbraced-scalar-init"
-    #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
-    #pragma clang diagnostic error "-Wc99-designator"
-    #pragma clang diagnostic error "-Wdangling-else"
-    #pragma clang diagnostic error "-Wdeprecated-literal-operator"
-    #pragma clang diagnostic error "-Wdynamic-class-memaccess"
-    #pragma clang diagnostic error "-Wextra-qualification"
-    #pragma clang diagnostic error "-Wextra-semi"
-    #pragma clang diagnostic error "-Wextra-tokens"
-    #pragma clang diagnostic error "-Winconsistent-missing-override"
-    #pragma clang diagnostic error "-Winline-new-delete"
-    #pragma clang diagnostic error "-Winvalid-noreturn"
-    #pragma clang diagnostic error "-Wkeyword-macro"
-    #pragma clang diagnostic error "-Wlogical-op-parentheses"
-    #pragma clang diagnostic error "-Wmacro-redefined"
-    #pragma clang diagnostic error "-Wmismatched-new-delete"
-    #pragma clang diagnostic error "-Wmismatched-tags"
-    #pragma clang diagnostic error "-Wnontrivial-memcall"
-    #pragma clang diagnostic error "-Wnull-character"
-    #pragma clang diagnostic error "-Wnull-pointer-subtraction"
-    #pragma clang diagnostic error "-Wparentheses"
-    #pragma clang diagnostic error "-Wpessimizing-move"
-    #pragma clang diagnostic error "-Wpragmas"
-    #pragma clang diagnostic error "-Wreorder-init-list"
-    #pragma clang diagnostic error "-Wreturn-stack-address"
-    #pragma clang diagnostic error "-Wreturn-type"
-    #pragma clang diagnostic error "-Wsign-compare"
-    #pragma clang diagnostic error "-Wswitch"
-    #pragma clang diagnostic error "-Wundefined-inline"
-    #pragma clang diagnostic error "-Wunknown-pragmas"
-    #pragma clang diagnostic error "-Wunknown-warning-option"
-    #pragma clang diagnostic error "-Wunused-comparison"
-    #pragma clang diagnostic error "-Wunused-lambda-capture"
-    #pragma clang diagnostic error "-Wunused-result"
-
-    /*-----------------------------------------------------------------------------
-        Ignore.
-    -----------------------------------------------------------------------------*/
-    #pragma clang diagnostic ignored "-Wcomment"
-    #pragma clang diagnostic ignored "-Wcomments"
-    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-    #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-    #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
-    #pragma clang diagnostic ignored "-Wmissing-field-initializers"
-    #pragma clang diagnostic ignored "-Wnested-anon-types"
-    #pragma clang diagnostic ignored "-Wnullability-extension"
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-
-    /*-----------------------------------------------------------------------------
-        Shipping only.
-    -----------------------------------------------------------------------------*/
-    #if LAL_DO_ENABLE_SHIPPING_WARNINGS
-        #pragma clang diagnostic warning "-Wundefined-var-template"
-        #pragma clang diagnostic warning "-Wunused-but-set-variable"
-        #pragma clang diagnostic warning "-Wunused-private-field"
-        #pragma clang diagnostic warning "-Wunused-function"
-        #pragma clang diagnostic warning "-Wunused-variable"
-    #else /* LAL_DO_ENABLE_SHIPPING_WARNINGS */
-        #pragma clang diagnostic ignored "-Wundefined-var-template"
-        #pragma clang diagnostic ignored "-Wunused-but-set-variable"
-        #pragma clang diagnostic ignored "-Wunused-private-field"
-        #pragma clang diagnostic ignored "-Wunused-function"
-        #pragma clang diagnostic ignored "-Wunused-variable"
-    #endif /* !LAL_DO_ENABLE_SHIPPING_WARNINGS */
+    #include "Definitions/PushCommonClangDiagnostics.h"
 #endif /* LAL_DO_COMPILER_DIAGNOSTIC_SETUP */
 
 
@@ -295,15 +224,15 @@ struct LOnPlatformBreakLinux final
     [[noreturn]] NOINLINE
     static void OnProgramPanicImpl
     (
-        const LPrimitivePlatformTypesGeneric::LChar* InMessage
+        LPrimitivePlatformTypesGeneric::LJafgChar const* InMessage
     );
 
     [[noreturn]] NOINLINE
     static void OnProgramPanic
     (
-        const LPrimitivePlatformTypesGeneric::LChar* InBaseMessage,
-        const LPrimitivePlatformTypesGeneric::LChar* InFile,
-        const LPrimitivePlatformTypesGeneric::u64    InLine
+        LPrimitivePlatformTypesGeneric::LJafgChar const* InBaseMessage,
+        LPrimitivePlatformTypesGeneric::LJafgChar const* InFile,
+        LPrimitivePlatformTypesGeneric::u64       const  InLine
     );
 };
 

@@ -189,4 +189,14 @@ if(_guard)
             DESTINATION      "${CASCADIA_MONO_DIR}"
             )
     endif()
+
+    ###############################################################################
+    # Libs
+    if(JAFG_TARGET_PLATFORM STREQUAL "Windows")
+        message(STATUS "Including Windows libs...")
+        target_link_libraries(${_scoped_module_name} PRIVATE
+            ws2_32
+            setupapi
+            )
+    endif()
 endif()

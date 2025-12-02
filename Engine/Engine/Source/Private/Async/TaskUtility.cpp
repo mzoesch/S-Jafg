@@ -141,7 +141,8 @@ FORCEINLINE void RenameMe(const LString& InDisplayName)
     jassert( InDisplayName.size() * sizeof(LString::value_type) < 16 && "Thread name may not exceed 16 bytes." )
 
 #if PLATFORM_WINDOWS
-    ::SetThreadDescription(::GetCurrentThread(), InDisplayName.ToPtr());
+    LWString WideDisplayName = Lal::Utf8ToUtf16(InDisplayName);
+    ::SetThreadDescription(::GetCurrentThread(), WideDisplayName.c_str());
     LOG_VERBOSE(LogTaskUtility, "Renamed thread to [{}].", InDisplayName)
 #elif PLATFORM_LINUX
     pthread_setname_np(pthread_self(), InDisplayName.c_str());

@@ -4,32 +4,6 @@
 
 #include "Platform/PlatformMisc.h"
 
-namespace
-{
-
-} /* ~Namespace <Anonymous> */
-
-LPath Jafg::PlatformMisc::Private::GetEngineRootDirImpl()
-{
-    LPath RealRootDir { PlatformMisc::GetRealEngineRootDir() };
-
-    while (RealRootDir.empty() == false)
-    {
-        if (Finder::DoesFileExist(RealRootDir / "jafg.jafgworkspace"))
-        {
-            break;
-        }
-
-        RealRootDir.assign(RealRootDir.parent_path());
-
-        continue;
-    }
-
-    jassert( RealRootDir.empty() == false && "Failed to find engine root directory." )
-
-    return RealRootDir;
-}
-
 LPath Jafg::PlatformMisc::Private::GetRealEngineRootDirImpl()
 {
     char Buffer[LAL_PLATFORM_MAX_PATH] = { 0 };
