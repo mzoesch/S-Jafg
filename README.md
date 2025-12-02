@@ -14,7 +14,7 @@ As of now, it runs natively on Windows and Linux.
 - Currently only [Wayland](https://wayland.freedesktop.org/) backends are supported (with [wayland development software kit](https://wiki.archlinux.org/title/Wayland)).
 - Install Clang, CMake, and Vulkan:
    ```bash
-    pacman -S clang cmake toolchain vulkan-icd-loader vulkan-tools
+    pacman -S clang cmake vulkan-icd-loader vulkan-tools
    ```
 - Follow the instructions for _Build and Run_.
 ### Common
