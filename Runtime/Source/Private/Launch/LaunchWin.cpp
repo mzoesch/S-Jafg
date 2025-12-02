@@ -15,18 +15,6 @@
     #endif /* IN_DEBUG */
 #endif /* LAL_WITH_MSVC */
 
-#if WITH_TESTS
-    extern EPlatformExit::Type TestAnsiMain(char* CmdLine);
-    extern EPlatformExit::Type TestWideMain(wchar_t* CmdLine);
-
-    #ifdef UNICODE
-        #define TestMain        TestWideMain
-    #else /* UNICODE */
-        #define TestMain        TestAnsiMain
-    #endif /* !UNICODE */
-
-#endif /* WITH_TESTS */
-
 using namespace Jafg;
 
 extern EPlatformExit::Type GuardedMain();
