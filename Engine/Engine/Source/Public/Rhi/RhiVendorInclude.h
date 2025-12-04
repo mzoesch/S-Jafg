@@ -41,3 +41,5 @@
 #if PLATFORM_USES_WEBGL_TWO
     #include <GLES3/gl3.h>
 #endif /* PLATFORM_USES_WEBGL_TWO */
+
+#include "tiny_obj_loader.h"

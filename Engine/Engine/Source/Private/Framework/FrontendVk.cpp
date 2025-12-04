@@ -4,6 +4,8 @@
 #include <vulkan/vulkan.h>
 
 #define VMA_IMPLEMENTATION
+#define TINYOBJLOADER_IMPLEMENTATION
+
 #include "Framework/FrontendVk.h"
 
 #include <GLFW/glfw3.h>
@@ -11,7 +13,6 @@
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
-
 
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
@@ -160,6 +161,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     check( this->GetSurfaces().empty() == false )
 
     this->PickPhysicalDevice();
+    this->PickMaxMsaaSamples();
     this->CreateLogicalDevice();
 
     LOG_VERBOSE(LogVulkan, "Initializing Vulkan dispatch loader with device.")
@@ -366,7 +368,25 @@ Jafg::LVmaBuffer Jafg::LFrontendVk::VkStageData(vk::BufferCopy BufferCopy, void 
     return LVmaBuffer{ DeviceBuffer, DeviceAllocation };
 }
 
-Jafg::LVmaImage Jafg::LFrontendVk::VkStage2dImage(i32 texWidth, i32 texHeight, i32 texChannels, stbi_uc* pixels, vk::CommandPool Pool)
+Jafg::LVmaImage Jafg::LFrontendVk::VkCreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo)
+{
+    VkImage Image;
+    VmaAllocation Allocation;
+
+    auto Res = this->VmaMyAllocator->CreateImage(
+        Info,
+        &AllocationCreateInfo,
+        nullptr,
+        &Image,
+        &Allocation,
+        nullptr
+        );
+    check( Res == VK_SUCCESS )
+
+    return LVmaImage{ Image, Allocation };
+}
+
+Jafg::LVmaImage Jafg::LFrontendVk::VkStage2dImage(i32 texWidth, i32 texHeight, i32 texChannels, stbi_uc* pixels, u32 MipLevels, vk::CommandPool Pool)
 {
     check( pixels )
 
@@ -386,19 +406,20 @@ Jafg::LVmaImage Jafg::LFrontendVk::VkStage2dImage(i32 texWidth, i32 texHeight, i
         .imageType = vk::ImageType::e2D,
         .format = vk::Format::eR8G8B8A8Srgb,
         .extent = { static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
-        .mipLevels = 1,
+        .mipLevels = MipLevels,
         .arrayLayers = 1,
         .samples = vk::SampleCountFlagBits::e1,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         .sharingMode = vk::SharingMode::eExclusive,
+        .initialLayout = vk::ImageLayout::eUndefined,
         };
 
     LVmaImage Image = this->VkCreateDeviceLocalImage(ImageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-    this->VkTransitionImageLayout(Image.Image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, Pool);
+    this->VkTransitionImageLayout(Image.Image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, MipLevels, Pool);
     this->CopyBufferToImage(StagingBuffer.Buffer, Image.Image, texWidth, texHeight, Pool);
-    this->VkTransitionImageLayout(Image.Image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, Pool);
+    this->VkTransitionImageLayout(Image.Image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, MipLevels, Pool);
 
     return Image;
 }
@@ -445,7 +466,8 @@ Jafg::LVmaImage Jafg::LFrontendVk::VkCreateDeviceLocalImage(vk::ImageCreateInfo 
     return { Image, Allocation };
 }
 
-void Jafg::LFrontendVk::VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, vk::CommandPool Pool)
+void Jafg::LFrontendVk::VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, u32 MipLevels
+    , vk::CommandPool Pool)
 {
     auto Buffer = this->VkBeginSingleTimeCommands(Pool);
 
@@ -453,7 +475,13 @@ void Jafg::LFrontendVk::VkTransitionImageLayout(vk::Image Image, vk::ImageLayout
         .oldLayout = OldLayout,
         .newLayout = NewLayout,
         .image = Image,
-        .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = MipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+            }
         };
 
     vk::PipelineStageFlags SourceStage;
@@ -487,16 +515,71 @@ void Jafg::LFrontendVk::VkTransitionImageLayout(vk::Image Image, vk::ImageLayout
     return;
 }
 
-vk::raii::ImageView Jafg::LFrontendVk::CreateImageView(vk::Image Image, vk::Format Format)
+vk::raii::ImageView Jafg::LFrontendVk::CreateImageView(vk::Image Image, vk::Format Format, vk::ImageAspectFlags AspectFlags, u32 MipLevels)
 {
     vk::ImageViewCreateInfo CreateInfo{
         .image = Image,
         .viewType = vk::ImageViewType::e2D,
         .format = Format,
-        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+        .subresourceRange = {
+            .aspectMask = AspectFlags,
+            .baseMipLevel = 0,
+            .levelCount = MipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+            }
         };
 
     return vk::raii::ImageView{ this->VkMyDevice, CreateInfo };
+}
+
+vk::Format Jafg::LFrontendVk::FindSupportedFormat(TArray<vk::Format> const& Candidates, vk::ImageTiling Tiling,
+        vk::FormatFeatureFlags Features) const
+{
+    for (const auto format : Candidates)
+    {
+        vk::FormatProperties props = this->VkMyPhysicalDevice.getFormatProperties(format);
+
+        if (Tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & Features) == Features) {
+            return format;
+        }
+        if (Tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & Features) == Features) {
+            return format;
+        }
+
+        continue;
+    }
+
+    panic( "Failed to find supported format." )
+}
+
+vk::Format Jafg::LFrontendVk::FindDepthFormat() const
+{
+    return this->FindSupportedFormat(
+     {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
+         vk::ImageTiling::eOptimal,
+         vk::FormatFeatureFlagBits::eDepthStencilAttachment
+     );
+}
+
+bool Jafg::LFrontendVk::HasStencilComponent(vk::Format Format) const
+{
+    return Format == vk::Format::eD32SfloatS8Uint || Format == vk::Format::eD24UnormS8Uint;
+}
+
+vk::SampleCountFlagBits Jafg::LFrontendVk::CalculateMaxUsableSampleCount() const
+{
+    vk::PhysicalDeviceProperties physicalDeviceProperties = this->VkMyPhysicalDevice.getProperties();
+
+    vk::SampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+    if (counts & vk::SampleCountFlagBits::e64) { return vk::SampleCountFlagBits::e64; }
+    if (counts & vk::SampleCountFlagBits::e32) { return vk::SampleCountFlagBits::e32; }
+    if (counts & vk::SampleCountFlagBits::e16) { return vk::SampleCountFlagBits::e16; }
+    if (counts & vk::SampleCountFlagBits::e8)  { return vk::SampleCountFlagBits::e8; }
+    if (counts & vk::SampleCountFlagBits::e4)  { return vk::SampleCountFlagBits::e4; }
+    if (counts & vk::SampleCountFlagBits::e2)  { return vk::SampleCountFlagBits::e2; }
+
+    return vk::SampleCountFlagBits::e1;
 }
 
 void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()
@@ -696,6 +779,14 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
     LOG_VERBOSE(LogVulkan, "Selected physical device [{}].",
         reinterpret_cast<void const*>(&*this->VkMyPhysicalDevice)
         )
+
+    return;
+}
+
+void Jafg::LFrontendVk::PickMaxMsaaSamples()
+{
+    this->VkMsaaSamples = this->CalculateMaxUsableSampleCount();
+    LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", static_cast<u32>(this->VkMsaaSamples))
 
     return;
 }

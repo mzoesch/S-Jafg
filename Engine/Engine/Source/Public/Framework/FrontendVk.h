@@ -49,18 +49,34 @@ public:
         vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer
         ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
 
+    ENGINE_API LVmaImage VkCreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo);
+
     ENGINE_API LVmaImage VkStage2dImage(
           i32 texWidth, i32 texHeight, i32 texChannels
         , stbi_uc* pixels
+        , u32 MipLevels
         , vk::CommandPool Pool /* just temp... */
         );
 
     ENGINE_API void CopyBufferToImage(vk::Buffer Buffer, vk::Image Image, u32 Width, u32 Height, vk::CommandPool Pool /* just temp... */);
     ENGINE_API LVmaImage VkCreateDeviceLocalImage(vk::ImageCreateInfo const& InInfo, vk::MemoryPropertyFlags Properties = vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-    ENGINE_API void VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, vk::CommandPool Pool /* just temp... */);
+    ENGINE_API void VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, u32 MipLevels
+        , vk::CommandPool Pool /* just temp... */);
 
-    ENGINE_API vk::raii::ImageView CreateImageView(vk::Image Image, vk::Format Format);
+    ENGINE_API vk::raii::ImageView CreateImageView(vk::Image Image, vk::Format Format, vk::ImageAspectFlags AspectFlags, u32 MipLevels);
+
+    ENGINE_API vk::Format FindSupportedFormat(
+          TArray<vk::Format> const& Candidates
+        , vk::ImageTiling Tiling
+        , vk::FormatFeatureFlags Features
+        ) const;
+    ENGINE_API vk::Format FindDepthFormat() const;
+
+    ENGINE_API bool HasStencilComponent(vk::Format Format) const;
+
+    vk::SampleCountFlagBits CalculateMaxUsableSampleCount() const;
+    FORCEINLINE vk::SampleCountFlagBits GetMaxMsaaSamples() const noexcept { return this->VkMsaaSamples; }
 
 private:
 
@@ -71,6 +87,7 @@ private:
     void SetupDebugUtilsMessenger();
 #endif /* !IN_SHIPPING */
     void PickPhysicalDevice();
+    void PickMaxMsaaSamples();
     void CreateLogicalDevice();
     void CreateVma();
 
@@ -115,6 +132,8 @@ private:
     vk::raii::Queue VkMyPresentQueue{ nullptr };
 
     VmaAllocator VmaMyAllocator{ nullptr };
+
+    vk::SampleCountFlagBits VkMsaaSamples = vk::SampleCountFlagBits::e1;
 };
 
 } /* ~Namespace Jafg */

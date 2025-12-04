@@ -14,6 +14,16 @@ struct GLFWcursor;
 
 #include "Rhi/VkCommon.h"
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/vec4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/hash.hpp>
+
 namespace Jafg
 {
 
@@ -23,6 +33,54 @@ namespace Private
 struct LGlfw3Bridge;
 
 } /* ~Namespace Jafg::Private */
+
+struct Vertex
+{
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+
+    static vk::VertexInputBindingDescription getBindingDescription()
+    {
+        return {
+            .binding = 0,
+            .stride = sizeof(Vertex),
+            .inputRate = vk::VertexInputRate::eVertex
+            };
+    }
+
+    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
+        return {
+            vk::VertexInputAttributeDescription{
+                .location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, pos)
+                },
+            vk::VertexInputAttributeDescription{
+                .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)
+                },
+            vk::VertexInputAttributeDescription{
+                .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, texCoord)
+                }
+        };
+    }
+
+    bool operator==(const Vertex &other) const
+    {
+        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+    }
+};
+
+} /* ~Namespace Jafg */
+
+template <>
+struct std::hash<Jafg::Vertex>
+{
+    size_t operator()(Jafg::Vertex const &vertex) const noexcept
+    {
+        return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+    }
+};
+
+namespace Jafg {
 
 class LSurfaceGlfw3 final : public LSurfaceBase
 {
@@ -111,13 +169,14 @@ private:
     void RecordCommandBuffer(u32 ImageIndex);
 
     void TransitionImageLayout(
-        u32 ImageIndex,
+        vk::Image Image,
         vk::ImageLayout OldLayout,
         vk::ImageLayout NewLayout,
         vk::AccessFlags2 SrcAccessMask,
         vk::AccessFlags2 DstAccessMask,
-        vk::PipelineStageFlags2 SrcStage,
-        vk::PipelineStageFlags2 DstStage
+        vk::PipelineStageFlags2 SrcStageMask,
+        vk::PipelineStageFlags2 DstStageMask,
+        vk::ImageAspectFlags AspectMask
         );
 
     u32 FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags Properties) const;
@@ -172,15 +231,31 @@ private:
     vk::raii::ImageView TextureImageView{ nullptr };
     vk::raii::Sampler TextureSampler{ nullptr };
 
+    LVmaImage DepthImage;
+    vk::raii::ImageView DepthImageView{ nullptr };
+
+    std::vector<Vertex> Vertices;
+    std::vector<u32> Indices;
+
+    u32 MipLevels = INDEX_NONE;
+
+    LVmaImage ColorImage;
+    vk::raii::ImageView ColorImageView{ nullptr };
+
+    void VkCreateColorResources();
+    void VkCreateDepthResources();
     void VkCreateTextureImage();
     void VkCreateTextureImageView();
     void VkCreateTextureSampler();
+    void VkLoadModel();
     void VkCreateVertexBuffer();
     void VkCreateIndexBuffer();
     void VkCreateUniformBuffers();
     void VkCreateDescriptorPool();
     void VkCreateDescriptorSets();
     void VkUpdateUniformBuffers(uint32_t currentImage);
+
+    void VkGenerateMipMaps(vk::Image, vk::Format Format, i32 Width, i32 Height, u32 MipLevels);
 };
 
 } /* ~Namespace Jafg */

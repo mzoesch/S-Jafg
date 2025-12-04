@@ -157,6 +157,17 @@ if(_guard)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_httplib_SOURCE_DIR})
 
     ###############################################################################
+    # tinyobjloader
+    message(STATUS "Fetching tinyobjloader...")
+    FetchContent_Declare(
+        FetchContent_tinyobjloader
+        GIT_REPOSITORY          https://github.com/tinyobjloader/tinyobjloader
+        GIT_TAG                 release
+        )
+    FetchContent_MakeAvailable(FetchContent_tinyobjloader)
+    target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_tinyobjloader_SOURCE_DIR})
+
+    ###############################################################################
     # Tracked vendors
     message(STATUS "Including tracked vendors...")
     target_include_directories(${_scoped_module_name} PRIVATE

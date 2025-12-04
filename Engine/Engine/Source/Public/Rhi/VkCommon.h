@@ -29,6 +29,8 @@ struct LVmaBuffer
     {
         if (this != &Other)
         {
+            Jafg::FreeVmaAllocation(this->Buffer, this->Allocation);
+
             this->Buffer = Other.Buffer;
             this->Allocation = Other.Allocation;
 
@@ -81,6 +83,8 @@ struct LVmaDetailedBuffer
     {
         if (this != &Other)
         {
+            Jafg::FreeVmaAllocation(this->Buffer, this->Allocation);
+
             this->Buffer = Other.Buffer;
             this->Allocation = Other.Allocation;
             this->Info = std::move(Other.Info);
@@ -138,6 +142,8 @@ struct LVmaMappedBuffer
     {
         if (this != &Other)
         {
+            Jafg::FreeVmaAllocation(this->Buffer, this->Allocation);
+
             this->Buffer = Other.Buffer;
             this->Allocation = Other.Allocation;
             this->Data = Other.Data;
@@ -202,6 +208,8 @@ struct LVmaImage
     {
         if (this != &Other)
         {
+            Jafg::FreeVmaImage(this->Image, this->Allocation);
+
             this->Image = Other.Image;
             this->Allocation = Other.Allocation;
 

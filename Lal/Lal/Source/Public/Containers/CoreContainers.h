@@ -377,6 +377,7 @@ using TOptional = std::optional<T>;
 namespace Lal
 {
 
+#if PLATFORM_WINDOWS
 FORCEINLINE LWString Utf8ToUtf16(LString const& Utf8) noexcept;
 FORCEINLINE LWString Utf8ToUtf16(LString::value_type const* Ptr, LSize Size) noexcept;
 
@@ -456,6 +457,7 @@ FORCEINLINE LString Utf16ToUtf8(LWString::value_type const* Ptr, LSize Size) noe
 
     return Utf8;
 }
+#endif /* PLATFORM_WINDOWS */
 
 } /* ~Namespace Lal */
 

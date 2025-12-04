@@ -21,13 +21,8 @@
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/vec4.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+const std::string MODEL_PATH = "Content/viking_room.obj";
+const std::string TEXTURE_PATH = "Content/viking_room.png";
 
 namespace
 {
@@ -35,55 +30,32 @@ constexpr i32 VkMyMaxFramesInFlight{ 2 };
 
 } /* ~Namespace <Anonymous> */
 
-struct Vertex
-{
-    glm::vec2 pos;
-    glm::vec3 color;
-    glm::vec2 texCoord;
-
-    static vk::VertexInputBindingDescription getBindingDescription()
-    {
-        return {
-            .binding = 0,
-            .stride = sizeof(Vertex),
-            .inputRate = vk::VertexInputRate::eVertex
-            };
-    }
-
-    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
-        return {
-            vk::VertexInputAttributeDescription{
-                .location = 0, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, pos)
-                },
-            vk::VertexInputAttributeDescription{
-                .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)
-                },
-            vk::VertexInputAttributeDescription{
-                .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, texCoord)
-                }
-        };
-    }
-};
-static_assert(std::is_standard_layout_v<Vertex>);
+static_assert(std::is_standard_layout_v<Jafg::Vertex>);
 
 struct UniformBufferObject
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
 };
 static_assert(std::is_standard_layout_v<UniformBufferObject>);
 
-const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-    };
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0
-    };
+// const std::vector<Vertex> vertices = {
+//     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+//     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+//     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+//     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+//
+//     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+//     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+//     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+//     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+//     };
+//
+// const std::vector<uint16_t> indices = {
+//     0, 1, 2, 2, 3, 0,
+//     4, 5, 6, 6, 7, 4
+//     };
 
 namespace Jafg::Private
 {
@@ -277,9 +249,12 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->VkCreateDescriptorSetLayout();
     this->VkCreateGraphicsPipeline();
     this->VkCreateCommandPool();
+    this->VkCreateColorResources();
+    this->VkCreateDepthResources();
     this->VkCreateTextureImage();
     this->VkCreateTextureImageView();
     this->VkCreateTextureSampler();
+    this->VkLoadModel();
     this->VkCreateVertexBuffer();
     this->VkCreateIndexBuffer();
     this->VkCreateUniformBuffers();
@@ -928,7 +903,7 @@ void Jafg::LSurfaceGlfw3::VkCreateImageViews()
 
     for (const auto& SwapchainImage : this->VkSwapchainImages)
     {
-        this->VkSwapchainImageViews.emplace_back(Frontend.CreateImageView(SwapchainImage, this->VkMySwapchainSurfaceFormat.format));
+        this->VkSwapchainImageViews.emplace_back(Frontend.CreateImageView(SwapchainImage, this->VkMySwapchainSurfaceFormat.format, vk::ImageAspectFlagBits::eColor, 1));
         continue;
     }
 
@@ -955,6 +930,8 @@ void Jafg::LSurfaceGlfw3::VkCreateDescriptorSetLayout()
 void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan graphics pipeline for surface.")
+
+    auto& Frontend = this->GetFrontend();
 
     vk::raii::ShaderModule ShaderModule = this->CreateShaderModule(Finder::ReadFileAsBinary("Content/Shaders/Spir-V/Test.spv"));
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
@@ -983,7 +960,20 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
         .polygonMode = vk::PolygonMode::eFill, .cullMode = vk::CullModeFlagBits::eBack, .frontFace = vk::FrontFace::eCounterClockwise,
         .depthBiasEnable = vk::False, .depthBiasSlopeFactor = 1.0f, .lineWidth = 1.0f};
 
-    vk::PipelineMultisampleStateCreateInfo multisampling{.rasterizationSamples = vk::SampleCountFlagBits::e1, .sampleShadingEnable = vk::False};
+    vk::PipelineMultisampleStateCreateInfo multisampling{
+        .rasterizationSamples = Frontend.GetMaxMsaaSamples(),
+
+        // TODO: Enable sample shading? we have to enable the device feature sampleRateShading in the logical device first.
+        .sampleShadingEnable = vk::False // enable sample shading in the pipeline
+        // .minSampleShading = .2f, // min fraction for sample shading; closer to one is smoother
+        };
+
+    vk::PipelineDepthStencilStateCreateInfo depthStencil{
+        .depthTestEnable       = vk::True,
+        .depthWriteEnable      = vk::True,
+        .depthCompareOp        = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable     = vk::False};
 
     vk::PipelineColorBlendAttachmentState colorBlendAttachment{.blendEnable    = vk::False,
         .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
@@ -1010,18 +1000,24 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
     //     };
 
     vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
-        {.stageCount          = 2,
-         .pStages             = shaderStages,
-         .pVertexInputState   = &vertexInputInfo,
-         .pInputAssemblyState = &inputAssembly,
-         .pViewportState      = &viewportState,
-         .pRasterizationState = &rasterizer,
-         .pMultisampleState   = &multisampling,
-         .pColorBlendState    = &colorBlending,
-         .pDynamicState       = &dynamicState,
-         .layout              = this->VkMyPipelineLayout,
-         .renderPass          = nullptr},
-        {.colorAttachmentCount = 1, .pColorAttachmentFormats = &this->VkMySwapchainSurfaceFormat.format}};
+        {
+            .stageCount          = 2,
+            .pStages             = shaderStages,
+            .pVertexInputState   = &vertexInputInfo,
+            .pInputAssemblyState = &inputAssembly,
+            .pViewportState      = &viewportState,
+            .pRasterizationState = &rasterizer,
+            .pMultisampleState   = &multisampling,
+            .pDepthStencilState  = &depthStencil,
+            .pColorBlendState    = &colorBlending,
+            .pDynamicState       = &dynamicState,
+            .layout              = this->VkMyPipelineLayout,
+            .renderPass          = nullptr},
+        {
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &this->VkMySwapchainSurfaceFormat.format,
+            .depthAttachmentFormat = Frontend.FindDepthFormat(),
+        }};
 
     this->VkMyPipeline = vk::raii::Pipeline{
         this->GetFrontend().GetVkDevice(),
@@ -1171,6 +1167,8 @@ void Jafg::LSurfaceGlfw3::VkRecreateSwapchain()
     this->VkCleanSwapchain();
     this->VkCreateSwapchain();
     this->VkCreateImageViews();
+    this->VkCreateColorResources();
+    this->VkCreateDepthResources();
     this->VkCreateSynchObjects();
 
     return;
@@ -1203,28 +1201,65 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
     TargetBuffer.begin({});
 
     TransitionImageLayout(
-        ImageIndex,
+        this->VkSwapchainImages[ImageIndex],
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
         {},                                                         // srcAccessMask (no need to wait for previous operations)
         vk::AccessFlagBits2::eColorAttachmentWrite,                 // dstAccessMask
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput          // dstStage
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // dstStage
+        vk::ImageAspectFlagBits::eColor                             // aspectMask
+        );
+
+    TransitionImageLayout(
+        this->ColorImage.Image,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::ImageAspectFlagBits::eColor
+        );
+
+    TransitionImageLayout(
+        this->DepthImage.Image,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eDepthAttachmentOptimal,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        vk::ImageAspectFlagBits::eDepth
         );
 
     vk::ClearValue clearColor = vk::ClearValue( vk::ClearColorValue( std::array<f32,4>{ 0.0f, 0.0f, 0.0f, 1.0f } ) );
-    vk::RenderingAttachmentInfo attachmentInfo = {
-        .imageView = this->VkSwapchainImageViews[ImageIndex],
+    vk::ClearValue clearDepth = vk::ClearValue{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0} };
+
+    vk::RenderingAttachmentInfo colorAttachmentInfo = {
+        .imageView = this->ColorImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .resolveMode = vk::ResolveModeFlagBits::eAverage,
+        .resolveImageView = this->VkSwapchainImageViews[ImageIndex],
+        .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
         .clearValue = clearColor
-    };
+        };
+    vk::RenderingAttachmentInfo depthAttachmentInfo = {
+        .imageView   = this->DepthImageView,
+        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .loadOp      = vk::AttachmentLoadOp::eClear,
+        .storeOp     = vk::AttachmentStoreOp::eDontCare,
+        .clearValue  = clearDepth
+        };
+
     vk::RenderingInfo renderingInfo = {
         .renderArea = { .offset = { 0, 0 }, .extent = this->VkMySwapchainExtent },
         .layerCount = 1,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &attachmentInfo
+        .pColorAttachments = &colorAttachmentInfo,
+        .pDepthAttachment = &depthAttachmentInfo
         };
 
     TargetBuffer.beginRendering(renderingInfo);
@@ -1235,20 +1270,21 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
     TargetBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
 
     TargetBuffer.bindVertexBuffers(0, this->VertexBuffer.Buffer, {0});
-    TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(::indices)::value_type>::value);
+    TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
     TargetBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->VkMyPipelineLayout, 0 , *this->VkDescriptorSets[this->VkFlightSyncFrameIndex], nullptr);
-    TargetBuffer.drawIndexed(::indices.size(), 1, 0, 0, 0);
+    TargetBuffer.drawIndexed(this->Indices.size(), 1, 0, 0, 0);
 
     TargetBuffer.endRendering();
 
     TransitionImageLayout(
-        ImageIndex,
+        this->VkSwapchainImages[ImageIndex],
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
         vk::AccessFlagBits2::eColorAttachmentWrite,                 // srcAccessMask
         {},                                                         // dstAccessMask
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
-        vk::PipelineStageFlagBits2::eBottomOfPipe                   // dstStage
+        vk::PipelineStageFlagBits2::eBottomOfPipe,                  // dstStage
+        vk::ImageAspectFlagBits::eColor                               // aspectMask
         );
 
     TargetBuffer.end();
@@ -1256,9 +1292,9 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout,
-                                                vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask, vk::PipelineStageFlags2 SrcStage,
-                                                vk::PipelineStageFlags2 DstStage)
+void Jafg::LSurfaceGlfw3::TransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout,
+                                                vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask, vk::PipelineStageFlags2 SrcStageMask,
+                                                vk::PipelineStageFlags2 DstStageMask, vk::ImageAspectFlags AspectMask)
 {
     // LOG_TRACE(LogVulkan, "Transitioning image layout for swapchain image [{}] from [{}] to [{}].",
     //     ImageIndex,
@@ -1267,17 +1303,17 @@ void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout 
     //     )
 
     vk::ImageMemoryBarrier2 Barrier = {
-        .srcStageMask = SrcStage,
+        .srcStageMask = SrcStageMask,
         .srcAccessMask = SrcAccessMask,
-        .dstStageMask = DstStage,
+        .dstStageMask = DstStageMask,
         .dstAccessMask = DstAccessMask,
         .oldLayout = OldLayout,
         .newLayout = NewLayout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = this->VkSwapchainImages[ImageIndex],
+        .image = Image,
         .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .aspectMask = AspectMask,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
@@ -1309,12 +1345,72 @@ u32 Jafg::LSurfaceGlfw3::FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags 
     panic( "Failed to find suitable memory type." )
 }
 
+void Jafg::LSurfaceGlfw3::VkCreateColorResources()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan color resources for surface.")
+
+    auto& Frontend = this->GetFrontend();
+
+    vk::Format ColorFormat = this->VkMySwapchainSurfaceFormat.format;
+
+    vk::ImageCreateInfo ImageCreateInfo{
+        .imageType = vk::ImageType::e2D,
+        .format = ColorFormat,
+        .extent = vk::Extent3D{ this->VkMySwapchainExtent.width, this->VkMySwapchainExtent.height, 1 },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = Frontend.GetMaxMsaaSamples(),
+        .tiling = vk::ImageTiling::eOptimal,
+        .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
+        .sharingMode = vk::SharingMode::eExclusive,
+        .initialLayout = vk::ImageLayout::eUndefined,
+        };
+    VmaAllocationCreateInfo AllocationCreateInfo{
+        .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+        };
+    this->ColorImage = Frontend.VkCreateImage(ImageCreateInfo, AllocationCreateInfo);
+    this->ColorImageView = Frontend.CreateImageView(this->ColorImage.Image, ColorFormat, vk::ImageAspectFlagBits::eColor, 1);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateDepthResources()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan depth resources for surface.")
+
+    auto& Frontend = this->GetFrontend();
+
+    vk::Format DepthFormat = Frontend.FindDepthFormat();
+
+    this->DepthImage = Frontend.VkCreateDeviceLocalImage(
+        vk::ImageCreateInfo{
+            .imageType = vk::ImageType::e2D,
+            .format = DepthFormat,
+            .extent = vk::Extent3D{ this->VkMySwapchainExtent.width, this->VkMySwapchainExtent.height, 1 },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = Frontend.GetMaxMsaaSamples(),
+            .tiling = vk::ImageTiling::eOptimal,
+            .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
+            .sharingMode = vk::SharingMode::eExclusive,
+            .initialLayout = vk::ImageLayout::eUndefined,
+            }
+        );
+
+    this->DepthImageView = Frontend.CreateImageView(this->DepthImage.Image, DepthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+
+    return;
+}
+
 void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan texture image for surface.")
 
+    auto& Frontend = this->GetFrontend();
+
     int texWidth, texHeight, _;
-    stbi_uc* pixels = stbi_load("Content/Textures/statue-1275469.jpg", &texWidth, &texHeight, &_, STBI_rgb_alpha);
+    // stbi_uc* pixels = stbi_load("Content/Textures/statue-1275469.jpg", &texWidth, &texHeight, &_, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &_, STBI_rgb_alpha);
     vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
@@ -1322,8 +1418,53 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
         panicMsgf("Failed to load texture image [Content/Textures/statue-1275469.jpg]. Reason: {}", error)
     }
 
-    this->TextureImage = this->GetFrontend().VkStage2dImage(texWidth, texHeight, 4, pixels, this->VkMyCommandPool);
+    this->MipLevels = static_cast<u32>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+    LOG_VERBOSE(LogVulkan, "Texture image will have [{}] mip levels.", this->MipLevels)
+
+    LVmaMappedBuffer StatingBuffer = Frontend.VkCreateMappedBuffer(
+        vk::BufferCreateInfo{
+            .size = imageSize,
+            .usage = vk::BufferUsageFlagBits::eTransferSrc,
+            },
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+        );
+
+    std::memcpy(StatingBuffer.Data, pixels, static_cast<size_t>(imageSize));
     stbi_image_free(pixels);
+
+    vk::ImageCreateInfo TextureImageCreateInfo{
+        .flags = {},
+        .imageType = vk::ImageType::e2D,
+        .format = vk::Format::eR8G8B8A8Srgb,
+        .extent = vk::Extent3D{ static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
+        .mipLevels = MipLevels,
+        .arrayLayers = 1,
+        .samples = vk::SampleCountFlagBits::e1,
+        .tiling = vk::ImageTiling::eOptimal,
+        .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+        .sharingMode = vk::SharingMode::eExclusive,
+        .initialLayout = vk::ImageLayout::eUndefined,
+        };
+    VmaAllocationCreateInfo TextureImageAllocationCreateInfo{
+        .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+        };
+    this->TextureImage = Frontend.VkCreateImage(TextureImageCreateInfo, TextureImageAllocationCreateInfo);
+
+    Frontend.VkTransitionImageLayout(this->TextureImage.Image,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, MipLevels, this->VkMyCommandPool);
+    Frontend.CopyBufferToImage(
+        StatingBuffer.Buffer,
+        this->TextureImage.Image,
+        static_cast<u32>(texWidth),
+        static_cast<u32>(texHeight),
+        this->VkMyCommandPool
+        );
+
+    this->VkGenerateMipMaps(
+        this->TextureImage.Image, vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, this->MipLevels
+        );
+
+    // Frontend.VkTransitionImageLayout(this->TextureImage.Image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, MipLevels, this->VkMyCommandPool);
 
     return;
 }
@@ -1332,7 +1473,7 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImageView()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan texture image view for surface.")
 
-    this->TextureImageView = this->GetFrontend().CreateImageView(this->TextureImage.Image, vk::Format::eR8G8B8A8Srgb);
+    this->TextureImageView = this->GetFrontend().CreateImageView(this->TextureImage.Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, this->MipLevels);
 
     return;
 }
@@ -1349,11 +1490,66 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
         .mipLodBias = 0.0f,
         .anisotropyEnable = vk::True, .maxAnisotropy = Properties.limits.maxSamplerAnisotropy,
         .compareEnable = vk::False, .compareOp = vk::CompareOp::eAlways,
-        .minLod = 0.0f, .maxLod = 0.0f,
+        .minLod = 0.0f, // increase for worse texture quality
+        .maxLod = VK_LOD_CLAMP_NONE,
         .borderColor = vk::BorderColor::eIntOpaqueBlack,
         };
 
     this->TextureSampler = vk::raii::Sampler(Frontend.GetVkDevice(), SamplerInfo);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkLoadModel()
+{
+    LOG_VERBOSE(LogTemporal, "Loading model for surface.")
+
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+        LOG_WARNING(LogFrontEnd, "{}", warn)
+        LOG_ERROR(LogFrontEnd, "{}", err)
+        panic( "Failed to load model." )
+    }
+    if (!warn.empty()) {
+        LOG_WARNING(LogFrontEnd, "{}", warn)
+    }
+    if (!err.empty()) {
+        LOG_ERROR(LogFrontEnd, "{}", err)
+        panic( "Failed to load model." )
+    }
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices;
+
+    for (const auto &shape : shapes)
+    {
+        for (const auto &index : shape.mesh.indices)
+        {
+            Vertex vertex{};
+
+            vertex.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]};
+
+            vertex.texCoord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
+
+            vertex.color = {1.0f, 1.0f, 1.0f};
+
+            if (!uniqueVertices.contains(vertex))
+            {
+                uniqueVertices[vertex] = static_cast<uint32_t>(this->Vertices.size());
+                this->Vertices.push_back(vertex);
+            }
+
+            Indices.push_back(uniqueVertices[vertex]);
+        }
+    }
 
     return;
 }
@@ -1363,8 +1559,8 @@ void Jafg::LSurfaceGlfw3::VkCreateVertexBuffer()
     LOG_VERBOSE(LogTemporal, "Creating Vulkan vertex buffer for surface.")
 
     this->VertexBuffer = this->GetFrontend().VkStageVertexBuffer(
-        vk::BufferCopy{ 0, 0, sizeof(vertices[0]) * vertices.size()},
-        ::vertices.data(),
+        vk::BufferCopy{ 0, 0, sizeof(this->Vertices[0]) * this->Vertices.size()},
+        this->Vertices.data(),
         this->VkMyCommandPool
         );
 
@@ -1434,8 +1630,8 @@ void Jafg::LSurfaceGlfw3::VkCreateIndexBuffer()
     LOG_VERBOSE(LogTemporal, "Creating Vulkan index buffer for surface.")
 
     this->IndexBuffer = this->GetFrontend().VkStageIndexBuffer(
-        vk::BufferCopy{ 0, 0, sizeof(indices[0]) * indices.size()},
-        indices.data(),
+        vk::BufferCopy{ 0, 0, sizeof(this->Indices[0]) * this->Indices.size()},
+        this->Indices.data(),
         this->VkMyCommandPool
         );
 
@@ -1528,6 +1724,77 @@ void Jafg::LSurfaceGlfw3::VkUpdateUniformBuffers(uint32_t currentImage)
     ubo.proj[1][1] *= -1;
 
     std::memcpy(this->UniformBuffers[currentImage].Data, &ubo, sizeof(ubo));
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkGenerateMipMaps(vk::Image Image, vk::Format Format, i32 Width, i32 Height, u32 _MipLevels)
+{
+    auto& Frontend = this->GetFrontend();
+
+    vk::FormatProperties formatProperties = Frontend.GetVkPhysicalDevice().getFormatProperties(Format);
+    if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
+    {
+        panic( "texture image format does not support linear blitting. ")
+    }
+
+    vk::raii::CommandBuffer commandBuffer = Frontend.VkBeginSingleTimeCommands(this->VkMyCommandPool);
+
+    vk::ImageMemoryBarrier barrier          = {.srcAccessMask = vk::AccessFlagBits::eTransferWrite,
+        .dstAccessMask = vk::AccessFlagBits::eTransferRead, .oldLayout = vk::ImageLayout::eTransferDstOptimal,
+        .newLayout = vk::ImageLayout::eTransferSrcOptimal, .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored, .image = Image};
+    barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount     = 1;
+    barrier.subresourceRange.levelCount     = 1;
+
+    int32_t mipWidth  = Width;
+    int32_t mipHeight = Height;
+
+    for (uint32_t i = 1; i < _MipLevels; i++)
+    {
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
+        barrier.newLayout                     = vk::ImageLayout::eTransferSrcOptimal;
+        barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
+        barrier.dstAccessMask                 = vk::AccessFlagBits::eTransferRead;
+
+        commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
+
+        vk::ArrayWrapper1D<vk::Offset3D, 2> offsets, dstOffsets;
+        offsets[0]          = vk::Offset3D(0, 0, 0);
+        offsets[1]          = vk::Offset3D(mipWidth, mipHeight, 1);
+        dstOffsets[0]       = vk::Offset3D(0, 0, 0);
+        dstOffsets[1]       = vk::Offset3D(mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1);
+        vk::ImageBlit blit  = {.srcSubresource = {}, .srcOffsets = offsets, .dstSubresource = {}, .dstOffsets = dstOffsets};
+        blit.srcSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i - 1, 0, 1);
+        blit.dstSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i, 0, 1);
+
+        commandBuffer.blitImage(Image, vk::ImageLayout::eTransferSrcOptimal, Image, vk::ImageLayout::eTransferDstOptimal, {blit}, vk::Filter::eLinear);
+
+        barrier.oldLayout     = vk::ImageLayout::eTransferSrcOptimal;
+        barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, barrier);
+
+        if (mipWidth > 1)
+            mipWidth /= 2;
+        if (mipHeight > 1)
+            mipHeight /= 2;
+    }
+
+    barrier.subresourceRange.baseMipLevel = _MipLevels - 1;
+    barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
+    barrier.newLayout                     = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
+    barrier.dstAccessMask                 = vk::AccessFlagBits::eShaderRead;
+
+    commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, barrier);
+
+    Frontend.VkEndSingleTimeCommands(commandBuffer);
 
     return;
 }
