@@ -21,8 +21,8 @@
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
 
-const std::string MODEL_PATH = "Content/viking_room.obj";
-const std::string TEXTURE_PATH = "Content/viking_room.png";
+const std::string MODEL_PATH = "Content/Models/viking_room.obj";
+const std::string TEXTURE_PATH = "Content/Textures/viking_room.png";
 
 namespace
 {

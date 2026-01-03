@@ -69,6 +69,12 @@ LString const& Jafg::BuildInfo::GetJafgTargetPlatform()
     return Platform;
 }
 
+LString const& Jafg::BuildInfo::GetJafgTargetArchitecture()
+{
+    static LString Architecture{ PRIVATE_ENGINE_TARGET_ARCHITECTURE };
+    return Architecture;
+}
+
 LString const& Jafg::BuildInfo::GetJafgTargetType()
 {
 #if AS_CLIENT && !DO_TEST_UNITS

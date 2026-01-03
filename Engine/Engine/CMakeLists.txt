@@ -57,7 +57,7 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_FastNoise2
         GIT_REPOSITORY      https://github.com/Auburn/FastNoise2.git
-        GIT_TAG             master
+        GIT_TAG             v0.10.0-alpha
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
     DisableAllWarningsForTarget(FastNoise) # FastNoise2 is an alias of FastNoise
@@ -151,7 +151,7 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_httplib
         GIT_REPOSITORY          https://github.com/yhirose/cpp-httplib
-        GIT_TAG                 master
+        GIT_TAG                 v0.28.0
         )
     FetchContent_MakeAvailable(FetchContent_httplib)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_httplib_SOURCE_DIR})
@@ -166,6 +166,35 @@ if(_guard)
         )
     FetchContent_MakeAvailable(FetchContent_tinyobjloader)
     target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_tinyobjloader_SOURCE_DIR})
+
+    ###############################################################################
+    # slangc
+    message(STATUS "Fetching slang...")
+    set(SLANGC_VERSION "2025.24.2")
+    function(_DownalodSlangc _os _archive _url)
+        if(NOT EXISTS "${_archive}")
+            message(STATUS "Downloading Slang from [${_url}] to [${_archive}]...")
+            file(DOWNLOAD
+                "${_url}"
+                "${_archive}"
+                SHOW_PROGRESS
+                STATUS DOWNLOAD_STATUS
+                )
+            list(GET DOWNLOAD_STATUS 0 DOWNLOAD_RESULT)
+            if(NOT DOWNLOAD_RESULT EQUAL 0)
+                message(FATAL_ERROR "Failed to download slang from [${_url}].")
+            endif()
+            file(MAKE_DIRECTORY "${JAFG_ENGINE_ROOT}/Content/.Slang${_os}")
+            execute_process(
+                COMMAND ${CMAKE_COMMAND} -E tar xzf "${_archive}"
+                WORKING_DIRECTORY "${JAFG_ENGINE_ROOT}/Content/.Slang${_os}"
+                )
+        else()
+            message(STATUS "Slangc archive already exists at [${_archive}].")
+        endif()
+    endfunction()
+    _DownalodSlangc("Windows_x86_64" "${CMAKE_BINARY_DIR}/windows-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
+    _DownalodSlangc("Linux_x86_64" "${CMAKE_BINARY_DIR}/linux-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
 
     ###############################################################################
     # Tracked vendors

@@ -9,6 +9,15 @@
 namespace Jafg
 {
 
+struct LSlangCompilationRequest
+{
+    LPath In;
+    LPath Out;
+    LString Target{ "spirv" };
+    LString Profile{ "spirv_1_5" };
+    TArray<LString> EntryPoints;
+};
+
 class LFrontendVk final : public LFrontendBase
 {
 public:
@@ -77,6 +86,9 @@ public:
 
     vk::SampleCountFlagBits CalculateMaxUsableSampleCount() const;
     FORCEINLINE vk::SampleCountFlagBits GetMaxMsaaSamples() const noexcept { return this->VkMsaaSamples; }
+
+    ENGINE_API i64 HandleCompilationRequest_viaSlang(LSlangCompilationRequest const& Request);
+    ENGINE_API i64 HandleCompilationRequest_viaSlang(LPath const& Slang, LSlangCompilationRequest const& Request);
 
 private:
 

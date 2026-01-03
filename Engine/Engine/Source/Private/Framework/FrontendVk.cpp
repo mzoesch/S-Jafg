@@ -14,6 +14,7 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
+#include "Build/EngineBuildInfo.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 
@@ -168,6 +169,15 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->VkMyDevice);
 
     this->CreateVma();
+
+    LSlangCompilationRequest Req{};
+    Req.In = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Slang/Test.slang" };
+    Req.Out = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Spir-V/Test.spv" };
+    Req.EntryPoints.reflexive_emplace_back("vertMain").emplace_back("fragMain");
+    if (auto Rc{ this->HandleCompilationRequest_viaSlang(Req) }; Rc != 0)
+    {
+        panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )
+    }
 
     for (auto& Surface : this->GetSurfaces())
     {
@@ -580,6 +590,48 @@ vk::SampleCountFlagBits Jafg::LFrontendVk::CalculateMaxUsableSampleCount() const
     if (counts & vk::SampleCountFlagBits::e2)  { return vk::SampleCountFlagBits::e2; }
 
     return vk::SampleCountFlagBits::e1;
+}
+
+i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LSlangCompilationRequest const& Request)
+{
+    return this->HandleCompilationRequest_viaSlang(
+        Lal::SprintF("Content/.Slang{}_{}/bin/slangc{}",
+            BuildInfo::GetJafgTargetPlatform(),
+            BuildInfo::GetJafgTargetArchitecture(),
+#if PLATFORM_WINDOWS
+            ".exe"
+#else /* PLATFORM_WINDOWS */
+            ""
+#endif /* !PLATFORM_WINDOWS */
+            ),
+        Request
+        );
+}
+
+i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LPath const& Slang, LSlangCompilationRequest const& Request)
+{
+    std::ostringstream SS;
+    SS << Slang.string();
+    SS << " " << Request.In.string();
+    SS << " -o " << Request.Out.string();
+    SS << " -target " << Request.Target;
+    SS << " -profile " << Request.Profile;
+    SS << " -emit-spirv-directly";
+    if (Request.EntryPoints.empty() == false)
+    {
+        SS << " -fvk-use-entrypoint-name";
+        for (auto const& EntryPoint : Request.EntryPoints)
+        {
+            SS << " -entry " << EntryPoint;
+        }
+    }
+
+    Finder::CreateDirectories(Request.Out.parent_path());
+
+    LString CommandLine{ SS.str() };
+    LOG_VERBOSE(LogSystem, "Executing: [{}].", CommandLine)
+
+    return static_cast<i64>(std::system(CommandLine.c_str()));
 }
 
 void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()

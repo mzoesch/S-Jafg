@@ -34,6 +34,7 @@ NOINLINE ENGINE_API LString const& GetCompilerVersion();
 NOINLINE ENGINE_API LString const& GetCxxStandard();
 
 NOINLINE ENGINE_API LString const& GetJafgTargetPlatform();
+NOINLINE ENGINE_API LString const& GetJafgTargetArchitecture();
 NOINLINE ENGINE_API LString const& GetJafgTargetType();
 NOINLINE ENGINE_API LString const& GetJafgTargetConfig();
 
