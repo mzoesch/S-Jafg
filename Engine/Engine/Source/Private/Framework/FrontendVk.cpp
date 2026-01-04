@@ -17,6 +17,7 @@
 #include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
+#include "User/UserPreferences.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -25,6 +26,7 @@ namespace
 
 constexpr i32 GlfwContextVersionMajor{ 3 };
 constexpr i32 GlfwContextVersionMinor{ 3 };
+constexpr u32 VulkanApiVersion{ vk::ApiVersion14 };
 
 } /* ~Namespace <Anonymous> */
 
@@ -645,15 +647,15 @@ bool Jafg::LFrontendVk::HasStencilComponent(vk::Format Format) const
 
 vk::SampleCountFlagBits Jafg::LFrontendVk::CalculateMaxUsableSampleCount() const
 {
-    vk::PhysicalDeviceProperties physicalDeviceProperties = this->VkMyPhysicalDevice.getProperties();
+    vk::PhysicalDeviceProperties PhysicalDeviceProperties{ this->VkMyPhysicalDevice.getProperties() };
 
-    vk::SampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-    if (counts & vk::SampleCountFlagBits::e64) { return vk::SampleCountFlagBits::e64; }
-    if (counts & vk::SampleCountFlagBits::e32) { return vk::SampleCountFlagBits::e32; }
-    if (counts & vk::SampleCountFlagBits::e16) { return vk::SampleCountFlagBits::e16; }
-    if (counts & vk::SampleCountFlagBits::e8)  { return vk::SampleCountFlagBits::e8; }
-    if (counts & vk::SampleCountFlagBits::e4)  { return vk::SampleCountFlagBits::e4; }
-    if (counts & vk::SampleCountFlagBits::e2)  { return vk::SampleCountFlagBits::e2; }
+    vk::SampleCountFlags Counts{ PhysicalDeviceProperties.limits.framebufferColorSampleCounts & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts };
+    if (Counts & vk::SampleCountFlagBits::e64) { return vk::SampleCountFlagBits::e64; }
+    if (Counts & vk::SampleCountFlagBits::e32) { return vk::SampleCountFlagBits::e32; }
+    if (Counts & vk::SampleCountFlagBits::e16) { return vk::SampleCountFlagBits::e16; }
+    if (Counts & vk::SampleCountFlagBits::e8)  { return vk::SampleCountFlagBits::e8; }
+    if (Counts & vk::SampleCountFlagBits::e4)  { return vk::SampleCountFlagBits::e4; }
+    if (Counts & vk::SampleCountFlagBits::e2)  { return vk::SampleCountFlagBits::e2; }
 
     return vk::SampleCountFlagBits::e1;
 }
@@ -799,7 +801,7 @@ void Jafg::LFrontendVk::CreateInstance()
         .applicationVersion = VK_MAKE_VERSION( PRIVATE_ENGINE_VERSION_MAJOR, PRIVATE_ENGINE_VERSION_MINOR, PRIVATE_ENGINE_VERSION_PATCH ),
         .pEngineName = "Jafg Engine",
         .engineVersion = VK_MAKE_VERSION( PRIVATE_ENGINE_VERSION_MAJOR, PRIVATE_ENGINE_VERSION_MINOR, PRIVATE_ENGINE_VERSION_PATCH ),
-        .apiVersion = vk::ApiVersion14
+        .apiVersion = ::VulkanApiVersion
         };
 
     TArray<char const*> RequiredInstanceExtensions_c_str; RequiredInstanceExtensions_c_str.reserve(this->RequiredInstanceExtensions.size());
@@ -862,7 +864,9 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
 {
     LOG_VERBOSE(LogVulkan, "Picking Vulkan physical device.")
 
-    this->AvailablePhysicalDevices = vk::raii::PhysicalDevices{ this->VkMyInstance };
+    this->VkMyPhysicalDevice = nullptr;
+
+    this->AvailablePhysicalDevices = this->VkMyInstance.enumeratePhysicalDevices();
 
     if (this->AvailablePhysicalDevices.empty())
     {
@@ -874,10 +878,9 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
     for (auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
     {
         auto Properties = PhysicalDevice.getProperties();
-        LOG_VERBOSE(LogVulkan, "    [{}] rated [{}]: {} (API v{}.{}.{}), Driver v{}.{}.{}",
-            reinterpret_cast<void const*>(&*PhysicalDevice),
-            Rating,
+        LOG_VERBOSE(LogVulkan, "    [{}] rated [{}]: API v{}.{}.{}, Driver v{}.{}.{}",
             LStringView{Properties.deviceName},
+            Rating,
             VK_VERSION_MAJOR(Properties.apiVersion),
             VK_VERSION_MINOR(Properties.apiVersion),
             VK_VERSION_PATCH(Properties.apiVersion),
@@ -893,10 +896,45 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
         panicMsgf( "Failed to find a suitable physical device." )
     }
 
-    this->VkMyPhysicalDevice = RankedPhysicalDevices.rbegin()->second;
-    LOG_VERBOSE(LogVulkan, "Selected physical device [{}].",
-        reinterpret_cast<void const*>(&*this->VkMyPhysicalDevice)
-        )
+    if (const auto Prefs{ GetDefault<JUserPreferences>() }; Prefs->PreferredPhysicalDevice.empty() == false)
+    {
+        for (auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
+        {
+            auto Properties = PhysicalDevice.getProperties();
+            if (Prefs->PreferredPhysicalDevice == Properties.deviceName)
+            {
+                if (Rating == 0)
+                {
+                    LOG_WARNING(LogVulkan, "Preferred physical device [{}] found but is no longer suitable. Clearing user prefs and falling back to best rated device.",
+                        Prefs->PreferredPhysicalDevice
+                        )
+                    GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice.clear();
+                }
+                else
+                {
+                    this->VkMyPhysicalDevice = PhysicalDevice;
+                    LOG_VERBOSE(LogVulkan, "Selected preferred (by user) physical device [{}].",
+                        LStringView{Properties.deviceName}
+                        )
+                }
+                break;
+            }
+            continue;
+        }
+
+        LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Clearing user prefs and falling back to best rated device.",
+            Prefs->PreferredPhysicalDevice
+            )
+        GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice.clear();
+    }
+
+    if (!*this->VkMyPhysicalDevice)
+    {
+        this->VkMyPhysicalDevice = RankedPhysicalDevices.rbegin()->second;
+        LOG_VERBOSE(LogVulkan, "Selected physical device [{}].",
+            LStringView{this->VkMyPhysicalDevice.getProperties().deviceName}
+            )
+    }
 
     return;
 }
@@ -913,22 +951,22 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan logical device.")
 
+    // TODO: This is no longer a requirement, right??
     check( this->GetSurfaceCount() == 1 && "To create a logical device, exactly one surface is required at this time." )
 
-    std::vector<vk::QueueFamilyProperties> QueueFamilyProperties = this->VkMyPhysicalDevice.getQueueFamilyProperties();
-
-    auto GraphicsQueueFamilyProperty = algo::find_if(QueueFamilyProperties,  [](auto const& Qfp)
+    auto QueueFamilyProperties{ this->VkMyPhysicalDevice.getQueueFamilyProperties() };
+    auto GraphicsQueueFamilyProperty{ algo::find_if(QueueFamilyProperties, [](auto const& Qfp)
     {
         return (Qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
-    });
+    })};
     if (GraphicsQueueFamilyProperty == QueueFamilyProperties.end())
     {
         panic( "Failed to find a suitable graphics queue family." )
     }
-    u32 GraphicsQueueFamilyIndex = static_cast<u32>(algo::distance(QueueFamilyProperties.begin(), GraphicsQueueFamilyProperty));
-    if (GraphicsQueueFamilyIndex == QueueFamilyProperties.size())
+    u32 GraphicsQueueFamilyIndex{ static_cast<u32>(algo::distance(QueueFamilyProperties.begin(), GraphicsQueueFamilyProperty)) };
+    if (LAL_UNLIKELY(GraphicsQueueFamilyIndex == QueueFamilyProperties.size()))
     {
-        panic( "Failed to find a suitable graphics queue family index." )
+        panic( "Failed to find a suitable graphics queue family." )
     }
 
     /* We prefer a combined graphics+present queue (because performance), but also separate ones are ok. */
@@ -939,7 +977,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
     if (PresentQueueFamilyIndex == QueueFamilyProperties.size())
     {
         /* Now try really hard to find a combined queue. */
-        for (LSize Idx{ 0 }; Idx < QueueFamilyProperties.size(); ++Idx)
+        for (auto Idx{ 0uz }; Idx < QueueFamilyProperties.size(); ++Idx)
         {
             if (   (QueueFamilyProperties[Idx].queueFlags & vk::QueueFlagBits::eGraphics)
                 && this->VkMyPhysicalDevice.getSurfaceSupportKHR(static_cast<u32>( Idx ), *this->GetSurfaces().front()->GetVkSurface())
@@ -956,7 +994,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         /* Yikes, ig we now have to tile this. */
         if (PresentQueueFamilyIndex == QueueFamilyProperties.size())
         {
-            for (LSize Idx{ 0 }; Idx < QueueFamilyProperties.size(); ++Idx)
+            for (auto Idx{ 0uz }; Idx < QueueFamilyProperties.size(); ++Idx)
             {
                 if (this->VkMyPhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *this->GetSurfaces().front()->GetVkSurface()))
                 {
@@ -983,11 +1021,11 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         , vk::PhysicalDeviceVulkan11Features
         , vk::PhysicalDeviceVulkan13Features
         , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
-        > FeaturesChain = {
-        {.features = { .samplerAnisotropy = VK_TRUE } }, // vk::PhysicalDeviceFeatures2
-        {.shaderDrawParameters = VK_TRUE }, // vk::PhysicalDeviceVulkan11Features
-        {.synchronization2 = VK_TRUE, .dynamicRendering = VK_TRUE}, // vk::PhysicalDeviceVulkan13Features
-        {.extendedDynamicState = VK_TRUE} // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        > FeaturesChain{
+        {.features = { .samplerAnisotropy = VK_TRUE } }, /* vk::PhysicalDeviceFeatures2 */
+        {.shaderDrawParameters = VK_TRUE }, /* vk::PhysicalDeviceVulkan11Features */
+        {.synchronization2 = VK_TRUE, .dynamicRendering = VK_TRUE}, /* vk::PhysicalDeviceVulkan13Features */
+        {.extendedDynamicState = VK_TRUE} /* vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT */
         };
 
     f32 QueuePriority{ 1.0f };

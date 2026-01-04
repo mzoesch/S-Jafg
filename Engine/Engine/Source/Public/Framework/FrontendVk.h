@@ -145,7 +145,7 @@ private:
 
     VmaAllocator VmaMyAllocator{ nullptr };
 
-    vk::SampleCountFlagBits VkMsaaSamples = vk::SampleCountFlagBits::e1;
+    vk::SampleCountFlagBits VkMsaaSamples{ vk::SampleCountFlagBits::e1 };
 };
 
 } /* ~Namespace Jafg */

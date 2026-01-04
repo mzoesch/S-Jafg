@@ -41,6 +41,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
+    LString PreferredPhysicalDevice{ "" };
+
+    CLASS_FIELD(Config)
     LPreferenceBool bVSyncEnabled{ true };
     //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
     CLASS_FIELD(Config)
