@@ -1143,9 +1143,10 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         Info["CompilerVersion"] = BuildInfo::GetCompilerVersion();
         Info["CxxStandard"] = BuildInfo::GetCxxStandard();
 
-        Info["TargetPlatform"] = BuildInfo::GetJafgTargetPlatform();
-        Info["TargetType"] = BuildInfo::GetJafgTargetType();
-        Info["TargetConfig"] = BuildInfo::GetJafgTargetConfig();
+        Info["TargetPlatform"] = PlatformMisc::GetTargetPlatform();
+        Info["TargetArchitecture"] = PlatformMisc::GetTargetArchitecture();
+        Info["TargetType"] = PlatformMisc::GetTargetType();
+        Info["TargetConfig"] = PlatformMisc::GetTargetConfiguration();
         Info["bEverRender"] = GEngine->CanEverRender();
 
         Info["Uptime"] = Application::GetCurrentFrameTime();

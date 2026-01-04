@@ -80,7 +80,8 @@ struct std::hash<Jafg::Vertex>
     }
 };
 
-namespace Jafg {
+namespace Jafg
+{
 
 class LSurfaceGlfw3 final : public LSurfaceBase
 {
@@ -92,7 +93,7 @@ public:
 
     static_assert(std::is_same_v<LSurfaceGlfw3, LSurface>);
 
-    ENGINE_API LSurfaceGlfw3();
+    ENGINE_API LSurfaceGlfw3(LSurfaceCreateInfo const& Info);
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceGlfw3)
     ENGINE_API virtual ~LSurfaceGlfw3() override;
 
@@ -115,7 +116,11 @@ public:
 
     ENGINE_API  virtual bool CanVSync() const override;
     ENGINE_API  virtual void SetVSync(const bool bEnabled) override;
-    FORCEINLINE virtual bool IsVSync() const override { return this->bVSync; }
+    FORCEINLINE virtual bool IsVSync() const noexcept override { return this->bVSync; }
+
+    ENGINE_API  virtual bool CanResize() const override;
+    ENGINE_API  virtual void SetResizable(const bool bInResizable) override;
+    FORCEINLINE virtual bool IsResizable() const noexcept override { return this->bResizable; }
 
     FORCEINLINE bool IsFirstMouseCallback() const noexcept { return this->bFirstMouseCallback; }
     FORCEINLINE f64  GetLastMouseX() const noexcept { return this->LastMouseX; }
@@ -185,6 +190,7 @@ private:
     GLFWwindow* Handle{ nullptr };
 
     bool bVSync{ false };
+    bool bResizable{ false };
 
     bool bFirstMouseCallback{ true };
     f64 LastMouseX{ 0.0 };

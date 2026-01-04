@@ -13,11 +13,21 @@
 #include "User/Input/UserInput.h"
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
+#include "Platform/PlatformMisc.h"
 
 void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
 {
     check( this->Surfaces.empty() )
-    this->Surfaces.emplace_back(std::make_unique<LSurface>());
+
+    LSurfaceCreateInfo Info{
+#if !IN_SHIPPING
+        /* For development purposes, we want a smaller window as it does not cover so much space. */
+        .DesiredDimensionsPx = { 855, 475 },
+#endif /* !IN_SHIPPING */
+        .HumanReadableName = "Jafg - @mzoesch",
+        };
+
+    this->Surfaces.emplace_back(std::make_unique<LSurface>(Info));
 
     this->FocusedSurface = this->Surfaces.size() - 1;
     check( this->IsFocusedSurfaceValid() )

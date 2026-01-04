@@ -15,6 +15,45 @@ class LUserInput;
 class LViewport;
 class WUserWidget;
 
+//# Represents an external physical monitor.
+struct LPhysicalViewport
+{
+    void* Identifier{ nullptr };
+
+    // Physical size in millimeters.
+    LIntVector2 SizeMm;
+    // Virtual size in pixels.
+    LIntVector2 WorkareaPx;
+    // Offset of the workarea in pixels.
+    LIntVector2 WorkareaOffsetPx;
+
+    // Scale of content.
+    LVector2 ContentScale;
+
+    //# If multiple monitors of the same name exist, this prefix can help to distinguish them.
+    LString Prefix;
+    //# Name of the monitor.
+    LString Name;
+
+    //# Whether this is the primary monitor.
+    //# ??? Just fucking ignore that. For windows yay; for x11 yay; for wayland hell nah.
+    // bool bPrimary{ false };
+
+    // In this order: RGB.
+    LIntVector Bits;
+
+    i32 RefreshRateHz{ 0 };
+
+    FORCEINLINE LString ToHumanReadableName() const
+    {
+        return Lal::SprintF("{}{} ({}x{}px)",
+            this->Prefix,
+            this->Name,
+            this->WorkareaPx.X, this->WorkareaPx.Y
+            );
+    }
+};
+
 //#
 //# The frontend is owned by the local ego and shares its lifetime.
 //# The frontend is the main hub for all user interface elements. Create frontend subsystems to automatically
@@ -35,6 +74,8 @@ public:
 
     ENGINE_API LEngine&   GetEngine() const noexceptcheck;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexceptcheck;
+
+    FORCEINLINE auto GetPhysicalViewports() const noexcept -> TArray<LPhysicalViewport> const& { return this->UsablePhysicalViewports; }
 
     FORCEINLINE LSize GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
     FORCEINLINE TArray<TUnique<LSurface>>& GetSurfaces() noexcept { return this->Surfaces; }
@@ -94,6 +135,17 @@ public:
     FORCEINLINE bool FocusWidget(LSurface* Context, WNode* InNode) { check( Context ) return this->FocusWidget(&Context->GetViewport(), InNode); }
     FORCEINLINE bool FocusWidgetChecked(LSurface* Context, WNode* InNode) { check( Context ) return this->FocusWidgetChecked(&Context->GetViewport(), InNode); }
     FORCEINLINE bool FocusWidgetAsserted(LSurface* Context, WNode* InNode) { check( Context ) return this->FocusWidgetAsserted(&Context->GetViewport(), InNode); }
+
+protected:
+
+    //#
+    //# Represents all physical viewports that may be used by this frontend.
+    //# There may be more physical viewports available on the platform, but these have some restrictions that prevent
+    //# their use for us.
+    //#
+    //# Some monitors may become unusable over time (for example, if they are disconnected).
+    //#
+    TArray<LPhysicalViewport> UsablePhysicalViewports;
 
 private:
 

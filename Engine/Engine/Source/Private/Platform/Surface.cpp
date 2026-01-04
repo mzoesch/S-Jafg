@@ -6,27 +6,6 @@
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
 
-Jafg::LSurfaceBase::LSurfaceBase() noexcept
-    : SurfaceViewport{*this->AsSurface()}
-{
-    this->SurfaceViewport.Initialize();
-
-    LOG_VERBOSE(LogSurface, "Created surface viewport.")
-    LOG_INFO(LogSurface, "Platform stats:")
-    LOG_INFO(LogSurface, " - Physical monitors({}).", GPlatformMisc->NumberOfPhysicalViewports)
-    for (auto const& Viewport : GPlatformMisc->PhysicalViewports)
-    {
-        LOG_INFO(LogSurface, "  - {}", Viewport.ToString())
-    }
-
-    return;
-}
-
-Jafg::LSurfaceBase::~LSurfaceBase()
-{
-    this->SurfaceViewport.TearDown();
-}
-
 void Jafg::LSurfaceBase::Tick()
 {
 #if PLATFORM_LINUX

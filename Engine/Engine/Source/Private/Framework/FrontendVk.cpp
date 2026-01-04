@@ -14,11 +14,19 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include "Build/EngineBuildInfo.h"
+#include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
+namespace
+{
+
+constexpr i32 GlfwContextVersionMajor{ 3 };
+constexpr i32 GlfwContextVersionMinor{ 3 };
+
+} /* ~Namespace <Anonymous> */
 
 namespace
 {
@@ -115,19 +123,20 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     check( Tasks::IsOnMasterThread() )
 
+    // TODO: Do we want to use this sometimes/always? Or make a user flag for this??
+    // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
     if (!glfwInit())
     {
         panic( "Failed to initialize glfw." )
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, ::GlfwContextVersionMajor);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, ::GlfwContextVersionMinor);
 
     glfwSetErrorCallback(::GlfwErrorCallback);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     const i32 Platform{ glfwGetPlatform() };
     if (Platform == GLFW_PLATFORM_WAYLAND)
@@ -141,6 +150,63 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     if (Platform == GLFW_PLATFORM_WIN32)
     {
         LOG_VERBOSE(LogSurface, "Using Win32 platform.")
+    }
+
+    i32 MonitorCount{ 0 };
+    auto Monitors{ glfwGetMonitors(&MonitorCount) };
+    if (MonitorCount < 1)
+    {
+        panic( "No suitable physical monitors detected." )
+    }
+    auto* PrimaryMonitor{ glfwGetPrimaryMonitor() };
+    if (PrimaryMonitor == nullptr)
+    {
+        LOG_VERBOSE(LogSurface, "No primary monitor detected, picking first available monitor as primary.")
+        /* Just pick the first one. */
+        PrimaryMonitor = Monitors[0];
+        check( PrimaryMonitor )
+    }
+    LOG_VERBOSE(LogSurface, "Found [{}] physical monitors connected.", MonitorCount)
+    for (auto MonitorIndex{ 0uz }; MonitorIndex < static_cast<LSize>(MonitorCount); ++MonitorIndex)
+    {
+        GLFWmonitor* Monitor{ Monitors[MonitorIndex] };
+        check( Monitor )
+
+        LPhysicalViewport Pv{};
+        Pv.Identifier = Monitor;
+        glfwGetMonitorPhysicalSize(Monitor, &Pv.SizeMm.X, &Pv.SizeMm.Y);
+        glfwGetMonitorContentScale(Monitor, &Pv.ContentScale.X, &Pv.ContentScale.Y);
+        glfwGetMonitorWorkarea(Monitor,
+            &Pv.WorkareaOffsetPx.X, &Pv.WorkareaOffsetPx.Y,
+            &Pv.WorkareaPx.X, &Pv.WorkareaPx.Y
+            );
+        Pv.Prefix = Lal::SprintF("{}-", MonitorIndex);
+        Pv.Name = glfwGetMonitorName(Monitor);
+        // if (Monitor == PrimaryMonitor)
+        // {
+        //     Pv.bPrimary = true;
+        // }
+        // else
+        // {
+        //     check( Pv.bPrimary == false )
+        // }
+
+        GLFWvidmode const* VidMode{ glfwGetVideoMode(Monitor) };
+        check( VidMode )
+        Pv.Bits.X = VidMode->redBits;
+        Pv.Bits.Y = VidMode->greenBits;
+        Pv.Bits.Z = VidMode->blueBits;
+
+        Pv.RefreshRateHz = VidMode->refreshRate;
+
+        LOG_VERBOSE(LogSurface, " - Physical Monitor [{}{}]: {}x{}px @ {}hz, {}x{}mm, RGB=[{}|{}|{}]",
+            Pv.Prefix, Pv.Name,
+            Pv.WorkareaPx.X, Pv.WorkareaPx.Y,
+            Pv.RefreshRateHz,
+            Pv.SizeMm.X, Pv.SizeMm.Y,
+            Pv.Bits.X, Pv.Bits.Y, Pv.Bits.Z
+            )
+        this->UsablePhysicalViewports.emplace_back(std::move(Pv));
     }
 
     LOG_VERBOSE(LogVulkan, "Initializing vulkan.")
@@ -596,8 +662,8 @@ i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LSlangCompilationReques
 {
     return this->HandleCompilationRequest_viaSlang(
         Lal::SprintF("Content/.Slang{}_{}/bin/slangc{}",
-            BuildInfo::GetJafgTargetPlatform(),
-            BuildInfo::GetJafgTargetArchitecture(),
+            PlatformMisc::GetTargetPlatform(),
+            PlatformMisc::GetTargetArchitecture(),
 #if PLATFORM_WINDOWS
             ".exe"
 #else /* PLATFORM_WINDOWS */

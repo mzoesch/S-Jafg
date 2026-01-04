@@ -24,6 +24,19 @@ namespace Jafg
 
 class APersonaController;
 
+struct LSurfaceCreateInfo
+{
+    bool bFullScreen           = false;
+    bool bResizable            = true;
+    bool bBorderless           = false;
+    // bool bUseNativeResolution  = true;
+    // TODO: Desired monitor?
+
+    // Supported are the minimal dimensions of 640x475 px up to the maximum for "normal" use cases.
+    LIntVector2 DesiredDimensionsPx{ 1280, 720 };
+    LString HumanReadableName{ "Transient" };
+};
+
 //#
 //# Interface for a generic surface that the RHI may use to draw on.
 //#
@@ -31,11 +44,15 @@ class LSurfaceBase
 {
 public:
 
-    LSurfaceBase() noexcept;
+    LSurfaceBase(LSurfaceCreateInfo const& Info) noexcept
+        : SurfaceViewport{*this->AsSurface()}
+    {
+        LOG_VERBOSE(LogSurface, "Creating surface [{}].", Info.HumanReadableName)
 
+        this->HumanReadableName = Info.HumanReadableName;
+    }
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceBase)
-
-    virtual ~LSurfaceBase();
+    virtual ~LSurfaceBase() = default;
 
     template <class T = LSurfaceBase>
     NODISCARD FORCEINLINE T* As();
@@ -73,9 +90,13 @@ public:
     NODISCARD virtual auto GetDimensions() const -> TIntVector2<i32>  = 0;
 
     //# Whether the current surface does ever support VSync.
-    NODISCARD virtual bool CanVSync() const              = 0;
+    NODISCARD virtual bool CanVSync() const = 0;
               virtual void SetVSync(const bool bEnabled) = 0;
-    NODISCARD virtual bool IsVSync() const               = 0;
+    NODISCARD virtual bool IsVSync() const noexcept = 0;
+
+    NODISCARD virtual bool CanResize() const = 0;
+              virtual void SetResizable(const bool bInResizable) = 0;
+    NODISCARD virtual bool IsResizable() const noexcept = 0;
 
     FORCEINLINE void AddKeyDown(const LKey InKey);
     FORCEINLINE void AddKeyDown(const LKey InKey, const f32 InValue);

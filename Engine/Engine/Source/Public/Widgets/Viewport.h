@@ -44,9 +44,8 @@ public:
 
     explicit LViewport(LSurface& Owner) noexcept : Surface(Owner) { }
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
-    ~LViewport() = default;
+    ~LViewport() { this->TearDown(); }
 
-    void Initialize() noexcept { }
     void ClearInvalidWidgets();
     void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);

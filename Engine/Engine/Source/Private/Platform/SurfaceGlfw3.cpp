@@ -131,7 +131,8 @@ struct LGlfw3Bridge final
 
 } /* ~Namespace Jafg::Private */
 
-Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
+Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
+    : Super{Info}
 {
     STAT_CYCLE_FUNCTION()
 
@@ -140,22 +141,43 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
 
 #if PLATFORM_LINUX
-    // TODO Do we need this still??
+    // TODO: Do we need this still??
     if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
     {
         this->SetPlatformSupportsRepeatedKey(false);
     }
 #endif /* PLATFORM_LINUX */
 
-    if (this->GetHumanReadableName() == "Transient")
+    check( Info.bFullScreen == false && "Full screen windows are not yet supported." )
+
+    if (this->CanResize())
     {
-        this->SetHumanReadableName("Jafg - @mzoesch");
+        this->bResizable = Info.bResizable;
+        glfwWindowHint(GLFW_RESIZABLE, Info.bResizable ? GLFW_TRUE : GLFW_FALSE);
     }
+    else
+    {
+        check( this->IsResizable() == false )
+        if (Info.bResizable)
+        {
+            LOG_WARNING(LogSurface, "The surface [{}] does not support resizing, ignoring request.", this->GetHumanReadableName())
+        }
+    }
+
+    // glfwWindowHint(GLFW_DECORATED, Info.bBorderless ? GLFW_FALSE : GLFW_TRUE);
+    check( Info.bBorderless == false && "Borderless windows are not yet supported." )
 
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
-        // Min 640 475 - Default 1280 720
-        this->Handle = glfwCreateWindow(855, 475, this->GetHumanReadableName().c_str(), nullptr, nullptr);
+        this->Handle = glfwCreateWindow(
+            Info.DesiredDimensionsPx.X, Info.DesiredDimensionsPx.Y,
+            this->GetHumanReadableName().c_str(),
+            nullptr, nullptr
+            );
+        // glfwGetWindowAttrib
+        // glfwGetWindowSize
+        // glfwGetFramebufferSize
+        // monitor_monitors
     }
     if (this->Handle == nullptr)
     {
@@ -180,17 +202,8 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
     glfwSetInputMode(this->Handle, GLFW_STICKY_KEYS, GLFW_TRUE);
     glfwSetInputMode(this->Handle, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
-    if (GEngine)
-    {
-        this->SetVSync(GetDefault<JUserPreferences>());
-    }
-    else
-    {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this](void)
-        {
-            this->SetVSync(GetDefault<JUserPreferences>()->bVSyncEnabled);
-        });
-    }
+    check( GEngine )
+    this->SetVSync(GetDefault<JUserPreferences>()->bVSyncEnabled);
 
 #if PLATFORM_WINDOWS
     const HWND NativeWindowHandle = glfwGetWin32Window(this->Handle);
@@ -199,19 +212,21 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
 #else /* PLATFORM_WINDOWS */
     const u32 PlatformDpi = 96; // Sketchy
 #endif /* !PLATFORM_WINDOWS */
+    // TODO: Update this when the window is moved to another monitor with different DPI.
     this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
-    const LIntVector2 WindowDimensions = this->GetDimensions();
+    auto WindowDimensions{ this->GetDimensions() };
     LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.X, WindowDimensions.Y, PlatformDpi)
 
     this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
 
+    auto& Instance{ this->GetFrontend().GetVkInstance() };
     VkSurfaceKHR CSurface;
-    if (glfwCreateWindowSurface(*this->GetFrontend().GetVkInstance(), this->Handle, nullptr, &CSurface) != VK_SUCCESS)
+    if (glfwCreateWindowSurface(*Instance, this->Handle, nullptr, &CSurface) != VK_SUCCESS)
     {
         panic( "Failed to create Vulkan window surface." )
     }
     check( CSurface )
-    this->VkMySurface = vk::raii::SurfaceKHR{ this->GetFrontend().GetVkInstance(), CSurface };
+    this->VkMySurface = vk::raii::SurfaceKHR{Instance, CSurface};
 
     return;
 }
@@ -548,7 +563,6 @@ LIntVector2 Jafg::LSurfaceGlfw3::GetDimensions() const
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    // glfwMakeContextCurrent(this->Handle);
 
     /*
      * Do we want to cache this value?
@@ -569,7 +583,7 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
 
-    if (this->bVSync == bEnabled)
+    if (this->IsVSync() == bEnabled)
     {
         return;
     }
@@ -578,6 +592,28 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 
     // glfwMakeContextCurrent(this->Handle);
     // glfwSwapInterval(this->bVSync ? 1 : 0);
+
+    return;
+}
+
+bool Jafg::LSurfaceGlfw3::CanResize() const
+{
+    return true;
+}
+
+void Jafg::LSurfaceGlfw3::SetResizable(const bool bInResizable)
+{
+    checkSlow( this->Handle )
+    checkSlow( Tasks::IsOnMasterThread() )
+
+    if (this->IsResizable() == bInResizable)
+    {
+        return;
+    }
+
+    this->bResizable = bInResizable;
+
+    glfwSetWindowAttrib(this->Handle, GLFW_RESIZABLE, this->IsResizable() ? GLFW_TRUE : GLFW_FALSE);
 
     return;
 }

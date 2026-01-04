@@ -281,17 +281,13 @@ EPlatformExit::Type GuardedMain()
 
 #endif /* !WITH_TESTS */
 
-    PlatformMisc::Private::InvalidateCachedValues();
-
-#if PLATFORM_DESKTOP
     std::filesystem::current_path(PlatformMisc::GetEngineRootDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
     Finder::CreateDirectories(Finder::GetSavesDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
-#endif /* PLATFORM_DESKTOP */
 
     LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", PlatformMisc::GetEngineRootDir())
-    LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", PlatformMisc::GetRealEngineRootDir())
+    LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", PlatformMisc::GetSelfProcDir())
 
 #if WITH_TESTS
     return Tester::LTestFramework{}.RunRegisteredTests();
