@@ -18,6 +18,7 @@
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
+#include "Rhi/VkAl.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -74,6 +75,34 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
     return VK_FALSE;
 }
 #endif /* !IN_SHIPPING */
+
+void Jafg::Detail::FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation Allocation) noexcept
+{
+    if (LAL_LIKELY(GEngine))
+    {
+        static VmaAllocator Vma{ nullptr };
+        if (LAL_LIKELY(Vma))
+        {
+            check( GEngine->GetLocalEgo().GetFrontend().GetVma() == Vma )
+        }
+        else
+        {
+            Vma = GEngine->GetLocalEgo().GetFrontend().GetVma();
+        }
+
+        checkSlow( Vma )
+        vmaDestroyBuffer(Vma, Handle, Allocation);
+    }
+    else if constexpr (IS_COMPILED_LOG(LogVulkan, Warning))
+    {
+        if (Handle || Allocation)
+        {
+            LOG_WARNING(LogVulkan, "VMA Device Buffer leaked during device buffer destruction.")
+        }
+    }
+
+    return;
+}
 
 void Jafg::FreeVmaAllocation(VkBuffer Buffer, VmaAllocation Allocation)
 {
@@ -242,6 +271,13 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     Req.In = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Slang/Test.slang" };
     Req.Out = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Spir-V/Test.spv" };
     Req.EntryPoints.reflexive_emplace_back("vertMain").emplace_back("fragMain");
+    if (auto Rc{ this->HandleCompilationRequest_viaSlang(Req) }; Rc != 0)
+    {
+        panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )
+    }
+
+    Req.In = LPath{ "Content/Shaders/Slang/VisualBox.slang" };
+    Req.Out = LPath{ "Content/Shaders/Spir-V/VisualBox.spv" };
     if (auto Rc{ this->HandleCompilationRequest_viaSlang(Req) }; Rc != 0)
     {
         panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )

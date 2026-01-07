@@ -159,44 +159,44 @@ struct LWidgetSize2 final
     }
 };
 
-FORCEINLINE constexpr LWidgetSize1 operator ""_spt(unsigned long long Value)
-{
-    return LWidgetSize1{ EWidgetSize::StaticPoints, static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize1 operator ""_spt(long double Value)
-{
-    return LWidgetSize1{ EWidgetSize::StaticPoints, static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize1 operator ""_pt(unsigned long long Value)
-{
-    return LWidgetSize1{ EWidgetSize::Points, static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize1 operator ""_pt(long double Value)
-{
-    return LWidgetSize1{ EWidgetSize::Points, static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize2 operator ""_spt2(unsigned long long Value)
-{
-    return LWidgetSize2{ EWidgetSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize2 operator ""_spt2(long double Value)
-{
-    return LWidgetSize2{ EWidgetSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize2 operator ""_pt2(unsigned long long Value)
-{
-    return LWidgetSize2{ EWidgetSize::Points, static_cast<f32>(Value), static_cast<f32>(Value) };
-}
-
-FORCEINLINE constexpr LWidgetSize2 operator ""_pt2(long double Value)
-{
-    return LWidgetSize2{ EWidgetSize::Points, static_cast<f32>(Value), static_cast<f32>(Value) };
-}
-
 } /* ~Namespace Jafg. */
+
+FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_spt(unsigned long long Value)
+{
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_spt(long double Value)
+{
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_pt(unsigned long long Value)
+{
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::Points, static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_pt(long double Value)
+{
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::Points, static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_spt2(unsigned long long Value)
+{
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_spt2(long double Value)
+{
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_pt2(unsigned long long Value)
+{
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::Points, static_cast<f32>(Value), static_cast<f32>(Value) };
+}
+
+FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_pt2(long double Value)
+{
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::Points, static_cast<f32>(Value), static_cast<f32>(Value) };
+}

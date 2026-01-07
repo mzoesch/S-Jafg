@@ -21,6 +21,8 @@
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
 
+#include "Rhi/VkAl.h"
+
 const std::string MODEL_PATH = "Content/Models/viking_room.obj";
 const std::string TEXTURE_PATH = "Content/Textures/viking_room.png";
 
@@ -39,6 +41,9 @@ struct UniformBufferObject
     alignas(16) glm::mat4 proj;
 };
 static_assert(std::is_standard_layout_v<UniformBufferObject>);
+static TUnique<vk::raii::Pipeline> VkTestPipeline;
+static Jafg::LVmaBuffer VkTestVertexBuffer;
+static Jafg::LVmaBuffer VkTestIndexBuffer;
 
 // const std::vector<Vertex> vertices = {
 //     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
@@ -56,6 +61,46 @@ static_assert(std::is_standard_layout_v<UniformBufferObject>);
 //     0, 1, 2, 2, 3, 0,
 //     4, 5, 6, 6, 7, 4
 //     };
+
+struct LRhiVertex2D
+{
+    glm::vec2 Position;
+
+    constexpr static std::array<vk::VertexInputBindingDescription, 1> const& GetBindingDescriptions()
+    {
+        static std::array<vk::VertexInputBindingDescription, 1> Desc{vk::VertexInputBindingDescription {
+            .binding = 0,
+            .stride = sizeof(LRhiVertex2D),
+            .inputRate = vk::VertexInputRate::eVertex
+            }};
+
+        return Desc;
+    }
+
+    constexpr static std::array<vk::VertexInputAttributeDescription, 1> const& GetAttributeDescriptions()
+    {
+        static std::array<vk::VertexInputAttributeDescription, 1> Desc{vk::VertexInputAttributeDescription{
+            .location = 0,
+            .binding = 0,
+            .format = vk::Format::eR32G32Sfloat,
+            .offset = offsetof(LRhiVertex2D, Position)
+            }};
+
+        return Desc;
+    }
+};
+static_assert(Jafg::CDeviceVertexInput<LRhiVertex2D>);
+static std::vector<LRhiVertex2D> QuadVertices{
+    {{-0.5f, -0.5f}},
+    {{ 0.5f, -0.5f}},
+    {{ 0.5f,  0.5f}},
+    {{-0.5f,  0.5f}}
+    };
+static std::vector<uint16_t> QuadIndices{
+    0, 2, 1, 2, 0, 3
+    };
+
+static void TestPipeline(Jafg::LSurface const& Surface);
 
 namespace Jafg::Private
 {
@@ -240,6 +285,10 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 
     this->VertexBuffer.Free();
 
+    VkTestPipeline.reset();
+    VkTestVertexBuffer.Free();
+    VkTestIndexBuffer.Free();
+
     if (this->Cursor)
     {
         LOG_VERBOSE(LogSurface, "Destroying glfw cursor.")
@@ -277,6 +326,8 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->VkCreateDescriptorSets();
     this->VkCreateCommandBuffers();
     this->VkCreateSynchObjects();
+
+    TestPipeline(*this);
 
     return;
 }
@@ -1066,6 +1117,29 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
     return;
 }
 
+static void TestPipeline(Jafg::LSurface const& Surface)
+{
+    using namespace Jafg;
+    LOG_VERBOSE(LogVulkan, "Creating test pipeline...")
+
+    auto& Frontend{ Surface.GetFrontend() };
+
+    VkTestPipeline = std::make_unique<vk::raii::Pipeline>(
+        LDevicePipelineFactory{Surface}
+        .Shader("Content/Shaders/Spir-V/VisualBox.spv",
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
+        .VertexInput<LRhiVertex2D>()
+        .Build());
+
+    VkTestVertexBuffer = Frontend.VkStageVertexBuffer(vk::BufferCopy{0, 0, sizeof(QuadVertices[0]) * QuadVertices.size()}
+        , QuadVertices.data(), Surface.GetVkCommandPool());
+
+    VkTestIndexBuffer = Frontend.VkStageIndexBuffer(vk::BufferCopy{0, 0, sizeof(QuadIndices[0]) * QuadIndices.size()}
+        , QuadIndices.data(), Surface.GetVkCommandPool());
+
+    return;
+}
+
 vk::raii::ShaderModule Jafg::LSurfaceGlfw3::CreateShaderModule(TArray<u8> const& Code) const
 {
     vk::ShaderModuleCreateInfo createInfo{
@@ -1232,47 +1306,42 @@ void Jafg::LSurfaceGlfw3::VkCreateBuffer(
 
 void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
 {
-    auto& TargetBuffer = this->VkCommandBuffers[this->VkFlightSyncFrameIndex];
+    auto const& TargetBuffer{ this->VkCommandBuffers[this->VkFlightSyncFrameIndex] };
 
     TargetBuffer.begin({});
 
     TransitionImageLayout(
-        this->VkSwapchainImages[ImageIndex],
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        {},                                                         // srcAccessMask (no need to wait for previous operations)
-        vk::AccessFlagBits2::eColorAttachmentWrite,                 // dstAccessMask
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // dstStage
-        vk::ImageAspectFlagBits::eColor                             // aspectMask
+        this->VkSwapchainImages[ImageIndex],                // Image
+        vk::ImageLayout::eUndefined,                        // OldLayout
+        vk::ImageLayout::eColorAttachmentOptimal,           // NewLayout
+        {},                                                 // SrcAccessMask (no need to wait for previous operations)
+        vk::AccessFlagBits2::eColorAttachmentWrite,         // DstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // SrcStageMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // DstStageMask
+        vk::ImageAspectFlagBits::eColor                     // AspectMask
         );
 
     TransitionImageLayout(
         this->ColorImage.Image,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
+        vk::AccessFlagBits2::eColorAttachmentWrite, vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::ImageAspectFlagBits::eColor
         );
 
     TransitionImageLayout(
         this->DepthImage.Image,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eDepthAttachmentOptimal,
-        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite, vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
         vk::ImageAspectFlagBits::eDepth
         );
 
-    vk::ClearValue clearColor = vk::ClearValue( vk::ClearColorValue( std::array<f32,4>{ 0.0f, 0.0f, 0.0f, 1.0f } ) );
-    vk::ClearValue clearDepth = vk::ClearValue{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0} };
+    constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
+    constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
 
-    vk::RenderingAttachmentInfo colorAttachmentInfo = {
+    vk::RenderingAttachmentInfo ColorAttachmentInfo{
         .imageView = this->ColorImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .resolveMode = vk::ResolveModeFlagBits::eAverage,
@@ -1280,35 +1349,39 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
         .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = clearColor
+        .clearValue = ClearColor
         };
-    vk::RenderingAttachmentInfo depthAttachmentInfo = {
+    vk::RenderingAttachmentInfo DepthAttachmentInfo{
         .imageView   = this->DepthImageView,
         .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
         .loadOp      = vk::AttachmentLoadOp::eClear,
         .storeOp     = vk::AttachmentStoreOp::eDontCare,
-        .clearValue  = clearDepth
+        .clearValue  = ClearDepth
         };
 
-    vk::RenderingInfo renderingInfo = {
+    vk::RenderingInfo RenderingInfo{
         .renderArea = { .offset = { 0, 0 }, .extent = this->VkMySwapchainExtent },
         .layerCount = 1,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachmentInfo,
-        .pDepthAttachment = &depthAttachmentInfo
+        .pColorAttachments = &ColorAttachmentInfo,
+        .pDepthAttachment = &DepthAttachmentInfo
         };
 
-    TargetBuffer.beginRendering(renderingInfo);
-
-    TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
+    TargetBuffer.beginRendering(RenderingInfo);
 
     TargetBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
     TargetBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
 
+    TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
     TargetBuffer.bindVertexBuffers(0, this->VertexBuffer.Buffer, {0});
     TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
     TargetBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->VkMyPipelineLayout, 0 , *this->VkDescriptorSets[this->VkFlightSyncFrameIndex], nullptr);
     TargetBuffer.drawIndexed(this->Indices.size(), 1, 0, 0, 0);
+
+    TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *VkTestPipeline);
+    TargetBuffer.bindVertexBuffers(0, VkTestVertexBuffer.Buffer, {0});
+    TargetBuffer.bindIndexBuffer(VkTestIndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(QuadIndices)::value_type>::value);
+    TargetBuffer.drawIndexed(QuadIndices.size(), 1, 0, 0, 0);
 
     TargetBuffer.endRendering();
 
@@ -1328,9 +1401,13 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::TransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout,
-                                                vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask, vk::PipelineStageFlags2 SrcStageMask,
-                                                vk::PipelineStageFlags2 DstStageMask, vk::ImageAspectFlags AspectMask)
+void Jafg::LSurfaceGlfw3::TransitionImageLayout(
+    vk::Image Image,
+    vk::ImageLayout OldLayout, vk::ImageLayout NewLayout,
+    vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask,
+    vk::PipelineStageFlags2 SrcStageMask, vk::PipelineStageFlags2 DstStageMask,
+    vk::ImageAspectFlags AspectMask
+    )
 {
     // LOG_TRACE(LogVulkan, "Transitioning image layout for swapchain image [{}] from [{}] to [{}].",
     //     ImageIndex,
