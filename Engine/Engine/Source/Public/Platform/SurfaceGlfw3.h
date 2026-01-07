@@ -129,7 +129,14 @@ public:
     FORCEINLINE GLFWcursor* GetNativeCursorHandleDangerous() const { return this->Cursor; }
     FORCEINLINE GLFWwindow* GetNativeHandleDangerous() const { return this->Handle; }
 
-    FORCEINLINE vk::raii::SurfaceKHR const& GetVkSurface() const { return this->VkMySurface; }
+    FORCEINLINE auto const& GetVkSurface() const { return this->VkMySurface; }
+
+    FORCEINLINE auto const& GetVkSwapchainSurfaceFormat() const { return this->VkMySwapchainSurfaceFormat; }
+    FORCEINLINE auto const& GetVkSwapchainPresentMode() const { return this->VkMySwapchainPresentMode; }
+    FORCEINLINE auto const& GetVkSwapchainExtent() const { return this->VkMySwapchainExtent; }
+    FORCEINLINE auto const& GetVkSwapchain() const { return this->VkMySwapchain; }
+
+    FORCEINLINE auto const& GetVkCommandPool() const { return this->VkMyCommandPool; }
 
 private:
 
@@ -209,10 +216,12 @@ private:
 #endif /* PLATFORM_LINUX */
 
     vk::raii::SurfaceKHR VkMySurface{ nullptr };
+
     vk::SurfaceFormatKHR VkMySwapchainSurfaceFormat{ vk::Format::eUndefined };
     vk::PresentModeKHR VkMySwapchainPresentMode;
     vk::Extent2D VkMySwapchainExtent;
     vk::raii::SwapchainKHR VkMySwapchain{ nullptr };
+
     TArray<vk::Image> VkSwapchainImages;
     TArray<vk::raii::ImageView> VkSwapchainImageViews;
     vk::raii::DescriptorSetLayout VkMyDescriptorSetLayout{ nullptr };
@@ -253,10 +262,12 @@ private:
     void VkCreateTextureImage();
     void VkCreateTextureImageView();
     void VkCreateTextureSampler();
+
     void VkLoadModel();
     void VkCreateVertexBuffer();
     void VkCreateIndexBuffer();
     void VkCreateUniformBuffers();
+
     void VkCreateDescriptorPool();
     void VkCreateDescriptorSets();
     void VkUpdateUniformBuffers(uint32_t currentImage);
