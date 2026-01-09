@@ -61,8 +61,7 @@ struct LLevel final
 
     LString Identifier;
 
-    EInputMode::Type InputMode{ EInputMode::None };
-    bool bShowMouseCursor{ true };
+    EInputMode::Type InputMode{ EInputMode::None | EInputMode::ShowMouseCursor };
 
     Lal::LLinearColor BackgroundColor;
     bool bCreateSkybox{ false };

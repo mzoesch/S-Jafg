@@ -84,9 +84,9 @@ public:
 
     FORCEINLINE constexpr void SetPlaceholderColor(const Lal::LColor& InColor) noexcept { this->PlaceholderColor = InColor; }
     FORCEINLINE constexpr void SetCaretColor(const Lal::LColor& InColor) noexcept { this->CaretBrush.Tint = InColor; }
-    FORCEINLINE constexpr void SetCaretSize(const LVector2& InSize) noexcept { this->CaretBrush.Size = InSize; }
-    FORCEINLINE constexpr void SetCaretHOffset(const f32 InOffset) noexcept { this->CaretBrush.HOffset = InOffset; }
-    FORCEINLINE constexpr void SetCaretBlinkerSpeed(const f32 InSpeed) noexcept { this->CaretBrush.CaretBlinkerSpeed = InSpeed; }
+    FORCEINLINE constexpr void SetCaretSize(const LVector2D& InSize) noexcept { this->CaretBrush.Size = InSize; }
+    FORCEINLINE constexpr void SetCaretHOffset(const f64 InOffset) noexcept { this->CaretBrush.HOffset = InOffset; }
+    FORCEINLINE constexpr void SetCaretBlinkerSpeed(const f64 InSpeed) noexcept { this->CaretBrush.CaretBlinkerSpeed = InSpeed; }
 
     FORCEINLINE constexpr void SetBrush(const LEditableTextBoxBrush& InBrush) noexcept;
     FORCEINLINE constexpr void SetBrush(LEditableTextBoxBrush&& InBrush) noexcept;
@@ -96,9 +96,9 @@ public:
     FORCEINLINE constexpr const LCaretBrush& GetCaretBrush() const noexcept { return this->CaretBrush; }
     FORCEINLINE constexpr const Lal::LColor& GetPlaceholderColor() const noexcept { return this->PlaceholderColor; }
     FORCEINLINE constexpr const Lal::LColor& GetCaretColor() const noexcept { return this->CaretBrush.Tint; }
-    FORCEINLINE constexpr const LVector2& GetCaretSize() const noexcept { return this->CaretBrush.Size; }
-    FORCEINLINE constexpr f32 GetCaretHOffset() const noexcept { return this->CaretBrush.HOffset; }
-    FORCEINLINE constexpr f32 GetCaretBlinkerSpeed() const noexcept { return this->CaretBrush.CaretBlinkerSpeed; }
+    FORCEINLINE constexpr const LVector2D& GetCaretSize() const noexcept { return this->CaretBrush.Size; }
+    FORCEINLINE constexpr f64 GetCaretHOffset() const noexcept { return this->CaretBrush.HOffset; }
+    FORCEINLINE constexpr f64 GetCaretBlinkerSpeed() const noexcept { return this->CaretBrush.CaretBlinkerSpeed; }
 
     //# @return The actual caret that was set.
     i32 SetCaretCursor(const i32 InCaretCursor);

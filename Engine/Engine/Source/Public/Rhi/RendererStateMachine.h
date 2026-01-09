@@ -15,7 +15,7 @@ namespace RendererStateMachine
 void PrepareForPerspectivePainting();
 void PrepareForOrthographicPainting();
 
-void ClipOrthographic(const LViewport& InViewport, LVector2&& InLocation, const LVector2& InSize);
+void ClipOrthographic(const LViewport& InViewport, LVector2D&& InLocation, const LVector2D& InSize);
 void DisableClipOrthographic();
 
 } /* ~Namespace RendererStateMachine */

@@ -33,7 +33,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {},
             [](LViewport& Viewport, LInputActionValue&)
             {
-                Viewport.GetSurface().SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
+                Viewport.GetSurface().SetInputMode(EInputMode::UserInterface | EInputMode::ShowMouseCursor);
                 Viewport.AddWidget<WConsoleWindow>();
             });
 

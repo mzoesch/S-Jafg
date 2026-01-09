@@ -47,6 +47,19 @@ FORCEINLINE f32 LexToFloat(EApplicationScale::Type Scale) noexcept
     return 1.0f;
 }
 
+FORCEINLINE f64 LexToDouble(EApplicationScale::Type Scale) noexcept
+{
+    switch (Scale)
+    {
+    case EApplicationScale::Single: return 1.0;
+    case EApplicationScale::Double: return 2.0;
+    case EApplicationScale::Triple: return 3.0;
+    default:                        checkNoEntry()
+    }
+
+    return 1.0;
+}
+
 } /* ~Namespace Jafg */
 
 ENUM_CLASS_SERIALIZATION_FUNCTIONS(Jafg::EPolygonMode::Type)

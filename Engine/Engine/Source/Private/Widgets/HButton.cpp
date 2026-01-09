@@ -9,7 +9,7 @@ Jafg::WHButton::WHButton(LCxxObjectInitializer const& CxxObjectInitializer)
     return;
 }
 
-Jafg::LCursorReply Jafg::WHButton::SweepMouse(LViewport& Context, const LVector2& InLocation)
+Jafg::LCursorReply Jafg::WHButton::SweepMouse(LViewport& Context, const LVector2D& InLocation)
 {
     return Super::SweepMouse(Context, InLocation);
 }

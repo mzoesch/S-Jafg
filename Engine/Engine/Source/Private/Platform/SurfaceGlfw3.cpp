@@ -22,17 +22,16 @@
 #include "Stats/Stats.h"
 
 #include "Rhi/VkAl.h"
+#include "TempModel.h"
+#include "Rhi/StaticMesh.h"
+
+static Jafg::LStaticMesh VkTestMesh{"Content/Models/viking_room.obj"};
+static Jafg::LDevicePipeline VkTestMeshPipeline{nullptr};
 
 const std::string MODEL_PATH = "Content/Models/viking_room.obj";
 const std::string TEXTURE_PATH = "Content/Textures/viking_room.png";
 
-namespace
-{
-constexpr i32 VkMyMaxFramesInFlight{ 2 };
-
-} /* ~Namespace <Anonymous> */
-
-static_assert(std::is_standard_layout_v<Jafg::Vertex>);
+static_assert(std::is_standard_layout_v<Jafg::LStaticMesh::LVertex>);
 
 struct UniformBufferObject
 {
@@ -41,9 +40,9 @@ struct UniformBufferObject
     alignas(16) glm::mat4 proj;
 };
 static_assert(std::is_standard_layout_v<UniformBufferObject>);
-static TUnique<vk::raii::Pipeline> VkTestPipeline;
-static Jafg::LVmaBuffer VkTestVertexBuffer;
-static Jafg::LVmaBuffer VkTestIndexBuffer;
+static Jafg::LDevicePipeline VkTestPipeline;
+static Jafg::LDeviceBuffer VkTestVertexBuffer;
+static Jafg::LDeviceBuffer VkTestIndexBuffer;
 
 // const std::vector<Vertex> vertices = {
 //     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
@@ -66,9 +65,9 @@ struct LRhiVertex2D
 {
     glm::vec2 Position;
 
-    constexpr static std::array<vk::VertexInputBindingDescription, 1> const& GetBindingDescriptions()
+    static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
     {
-        static std::array<vk::VertexInputBindingDescription, 1> Desc{vk::VertexInputBindingDescription {
+        static std::array<vk::VertexInputBindingDescription, 1> Desc{vk::VertexInputBindingDescription{
             .binding = 0,
             .stride = sizeof(LRhiVertex2D),
             .inputRate = vk::VertexInputRate::eVertex
@@ -77,7 +76,7 @@ struct LRhiVertex2D
         return Desc;
     }
 
-    constexpr static std::array<vk::VertexInputAttributeDescription, 1> const& GetAttributeDescriptions()
+    static std::array<vk::VertexInputAttributeDescription, 1> const& AttributeDescriptions() noexcept
     {
         static std::array<vk::VertexInputAttributeDescription, 1> Desc{vk::VertexInputAttributeDescription{
             .location = 0,
@@ -91,10 +90,10 @@ struct LRhiVertex2D
 };
 static_assert(Jafg::CDeviceVertexInput<LRhiVertex2D>);
 static std::vector<LRhiVertex2D> QuadVertices{
-    {{-0.5f, -0.5f}},
-    {{ 0.5f, -0.5f}},
-    {{ 0.5f,  0.5f}},
-    {{-0.5f,  0.5f}}
+    {{-0.9f, -0.9f}},
+    {{-0.3f, -0.9f}},
+    {{-0.3f, -0.3f}},
+    {{-0.9f, -0.3f}}
     };
 static std::vector<uint16_t> QuadIndices{
     0, 2, 1, 2, 0, 3
@@ -129,21 +128,21 @@ struct LGlfw3Bridge final
     static void CharCallback(::GLFWwindow* Window, const u32 Codepoint)
     {
         LOG_WARNING(LogSurface, "Codepoint: {}", Codepoint)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
     }
 
     static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
     {
         LOG_WARNING(LogSurface, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
     }
 
     static void CursorPosCallback(::GLFWwindow* Window, const f64 XPos, const f64 YPos)
     {
         // LOG_TRACE(LogSurface, "XPos: {}, YPos: {}", XPos, YPos)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
     }
 
@@ -154,22 +153,21 @@ struct LGlfw3Bridge final
 
     static void CursorEnterCallback(::GLFWwindow* Window, const i32 Entered)
     {
-        LOG_WARNING(LogSurface, "Entered: {}", Entered)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
     }
 
     static void FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height)
     {
         // LOG_TRACE(LogSurface, "Width: {}, Height: {}", Width, Height)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
     }
 
     static void ScrollCallback(::GLFWwindow* Window, const f64 XOffset, const f64 YOffset)
     {
         LOG_WARNING(LogSurface, "XOffset: {}, YOffset: {}", XOffset, YOffset)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
     }
 };
@@ -178,6 +176,10 @@ struct LGlfw3Bridge final
 
 Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     : Super{Info}
+    , Vk_ImageAvailableSemaphores{vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}}
+    , Vk_RenderSemaphores{vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}}
+    , Vk_FlightFences{vk::raii::Fence{nullptr}, vk::raii::Fence{nullptr}, vk::raii::Fence{nullptr}}
+    , Vk_CommandBuffers{vk::raii::CommandBuffer{nullptr}, vk::raii::CommandBuffer{nullptr}, vk::raii::CommandBuffer{nullptr}}
 {
     STAT_CYCLE_FUNCTION()
 
@@ -195,7 +197,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
 
     check( Info.bFullScreen == false && "Full screen windows are not yet supported." )
 
-    if (this->CanResize())
+    if (this->CanEverResize())
     {
         this->bResizable = Info.bResizable;
         glfwWindowHint(GLFW_RESIZABLE, Info.bResizable ? GLFW_TRUE : GLFW_FALSE);
@@ -271,7 +273,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
         panic( "Failed to create Vulkan window surface." )
     }
     check( CSurface )
-    this->VkMySurface = vk::raii::SurfaceKHR{Instance, CSurface};
+    this->Vk_Surface = vk::raii::SurfaceKHR{Instance, CSurface};
 
     return;
 }
@@ -283,9 +285,10 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
         this->GetFrontend().GetVkDevice().waitIdle();
     }
 
-    this->VertexBuffer.Free();
+    VkTestPipeline.Free();
+    VkTestMesh.FreeFromDevice();
+    VkTestMeshPipeline.Free();
 
-    VkTestPipeline.reset();
     VkTestVertexBuffer.Free();
     VkTestIndexBuffer.Free();
 
@@ -306,26 +309,55 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
     return;
 }
 
+struct LVkTestMeshPipelineLayout
+{
+    static std::array<vk::DescriptorSetLayoutBinding, 2> const& Bindings() noexcept
+    {
+        static std::array<vk::DescriptorSetLayoutBinding, 2> Bindings{
+            vk::DescriptorSetLayoutBinding{
+                .binding = 0, .descriptorType = vk::DescriptorType::eUniformBuffer, .descriptorCount = 1, .stageFlags = vk::ShaderStageFlagBits::eVertex, .pImmutableSamplers = nullptr
+                },
+            vk::DescriptorSetLayoutBinding{
+                .binding = 1, .descriptorType = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 1, .stageFlags = vk::ShaderStageFlagBits::eFragment, .pImmutableSamplers = nullptr
+                },
+            };
+
+        return Bindings;
+    }
+
+};
+static_assert(Jafg::CDeviceLayout<LVkTestMeshPipelineLayout>);
+
 void Jafg::LSurfaceGlfw3::LateSetupVk()
 {
-    this->VkCreateSwapchain();
-    this->VkCreateImageViews();
-    this->VkCreateDescriptorSetLayout();
-    this->VkCreateGraphicsPipeline();
-    this->VkCreateCommandPool();
-    this->VkCreateColorResources();
-    this->VkCreateDepthResources();
+    this->Vk_CreateCommandPool();
+    this->Vk_CreateSwapchain();
+    this->Vk_CreateCommandBuffers();
+
+    if (VkTestMesh.ReloadModel() != EStaticMeshResult::Success)
+    {
+        panic( "Failed to load test static mesh model." )
+    }
+
+    VkTestMesh.UploadVertices();
+    VkTestMeshPipeline = LDevicePipelineFactory{*this}
+        .Shader("Content/Shaders/Spir-V/Test.spv", vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
+        .VertexInput<LStaticMesh::LVertex>()
+        .Layout<LVkTestMeshPipelineLayout>()
+        .Build();
+
+
+
+
+
+
     this->VkCreateTextureImage();
-    this->VkCreateTextureImageView();
     this->VkCreateTextureSampler();
-    this->VkLoadModel();
-    this->VkCreateVertexBuffer();
-    this->VkCreateIndexBuffer();
+
+
     this->VkCreateUniformBuffers();
     this->VkCreateDescriptorPool();
     this->VkCreateDescriptorSets();
-    this->VkCreateCommandBuffers();
-    this->VkCreateSynchObjects();
 
     TestPipeline(*this);
 
@@ -338,7 +370,7 @@ void Jafg::LSurfaceGlfw3::OnClear()
     checkSlow( Tasks::IsOnMasterThread() )
     // glfwMakeContextCurrent(this->Handle);
 
-    Super::OnClear();
+    this->GetViewport().OnClear();
 
     return;
 }
@@ -352,24 +384,27 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     check( this->Handle )
     check( Tasks::IsOnRendererThread() )
 
-    check( this->VkCommandBuffers.size() == ::VkMyMaxFramesInFlight )
-    check( this->VkPresentSemaphores.size() == this->VkSwapchainImages.size() )
-    check( this->VkRenderSemaphores.size() == this->VkSwapchainImages.size() )
-    check( this->VkFlightFences.size() == ::VkMyMaxFramesInFlight )
+    check( this->Vk_LastFrameInFlightIndex < Jafg::Vk_DesiredMaxFramesInFlight )
+
+    check( this->Vk_CommandBuffers.size() == this->Vk_GetNumberOfFramesInFlight() )
 
     auto& Frontend{ this->GetFrontend() };
 
-    while (vk::Result::eTimeout == Frontend.GetVkDevice().waitForFences(*this->VkFlightFences[this->VkFlightSyncFrameIndex], vk::True, UINT64_MAX))
+    this->Vk_CurrentFrameInFlightIndex = (this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlight();
+
+    while (vk::Result::eTimeout == Frontend.GetVkDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX))
         ;
 
-    auto [Result, ImageIndex] = this->VkMySwapchain.acquireNextImage(
-        std::numeric_limits<u64>::max(), this->VkPresentSemaphores[this->VkSemaphoreSyncIndex], nullptr
+    auto [Result, ImageIndex] = this->Vk_VkMySwapchain.acquireNextImage(
+        std::numeric_limits<u64>::max(), this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex], nullptr
         );
+    check( ImageIndex < this->Vk_SwapchainImageViews.size() )
 
     if (Result == vk::Result::eErrorOutOfDateKHR)
     {
         LOG_VERBOSE(LogSurface, "Swapchain is out of date. Recreating swapchain.")
-        this->VkRecreateSwapchain();
+        this->Vk_CurrentFrameInFlightIndex.reset();
+        this->Vk_CreateSwapchain();
         return;
     }
 
@@ -381,12 +416,13 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         {
             LOG_VERBOSE(LogSurface,
                 "Applying pending resize to surface [{}x{}].",
-                this->PendingWidth,
-                this->PendingHeight
+                this->PendingResizeExtent.X,
+                this->PendingResizeExtent.Y
                 )
 
             LOG_VERBOSE(LogSurface, "Recreating swapchain due to suboptimal state and pending resize.")
-            this->VkRecreateSwapchain();
+            this->Vk_CurrentFrameInFlightIndex.reset();
+            this->Vk_CreateSwapchain();
             check( this->bPendingResize == false )
             return;
         }
@@ -394,7 +430,8 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     else if (Result == vk::Result::eSuboptimalKHR)
     {
         LOG_VERBOSE(LogSurface, "Swapchain is suboptimal. Recreating swapchain.")
-        this->VkRecreateSwapchain();
+        this->Vk_CurrentFrameInFlightIndex.reset();
+        this->Vk_CreateSwapchain();
         return;
     }
 
@@ -405,28 +442,159 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", static_cast<u32>(Result) )
     }
 
-    this->VkUpdateUniformBuffers(this->VkFlightSyncFrameIndex);
+    Frontend.GetVkDevice().resetFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
 
-    Frontend.GetVkDevice().resetFences(*this->VkFlightFences[this->VkFlightSyncFrameIndex]);
+    auto& CommandBuffer{ this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex] };
+    CommandBuffer.reset();
+    CommandBuffer.begin({});
 
-    this->VkCommandBuffers[this->VkFlightSyncFrameIndex].reset();
-    this->RecordCommandBuffer(ImageIndex);
+    Vk_TransitionImageLayout({
+        .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .srcAccessMask = {},
+        .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+        .oldLayout = vk::ImageLayout::eUndefined,
+        .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = this->Vk_SwapchainImages[ImageIndex],
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        });
+
+    Vk_TransitionImageLayout({
+        .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+        .oldLayout = vk::ImageLayout::eUndefined,
+        .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = this->Vk_ColorImage.Buffer,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        });
+
+    Vk_TransitionImageLayout({
+        .srcStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        .srcAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        .dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        .oldLayout = vk::ImageLayout::eUndefined,
+        .newLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = this->Vk_DepthImage.Buffer,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eDepth,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        });
+
+    constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
+    constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
+
+    vk::RenderingAttachmentInfo ColorAttachmentInfo{
+        .imageView = this->Vk_ColorImageView,
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .resolveMode = vk::ResolveModeFlagBits::eAverage,
+        .resolveImageView = this->Vk_SwapchainImageViews[ImageIndex],
+        .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = ClearColor
+        };
+    vk::RenderingAttachmentInfo DepthAttachmentInfo{
+        .imageView   = this->Vk_DepthImageView,
+        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .loadOp      = vk::AttachmentLoadOp::eClear,
+        .storeOp     = vk::AttachmentStoreOp::eDontCare,
+        .clearValue  = ClearDepth
+        };
+
+    vk::RenderingInfo RenderingInfo{
+        .renderArea = { .offset = { 0, 0 }, .extent = this->Vk_SwapchainExtent },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &ColorAttachmentInfo,
+        .pDepthAttachment = &DepthAttachmentInfo
+        };
+
+    CommandBuffer.beginRendering(RenderingInfo);
+
+    CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->Vk_SwapchainExtent.width), static_cast<f32>(this->Vk_SwapchainExtent.height), 0.0f, 1.0f));
+    CommandBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->Vk_SwapchainExtent ) );
+
+    this->VkUpdateUniformBuffers(*this->Vk_CurrentFrameInFlightIndex);
+    CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *::VkTestMeshPipeline.Pipeline);
+    CommandBuffer.bindVertexBuffers(0, VkTestMesh.VertexBuffer.Buffer, {0});
+    CommandBuffer.bindIndexBuffer(VkTestMesh.IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(VkTestMesh.Indices)::value_type>::value);
+    CommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *::VkTestMeshPipeline.PipelineLayout, 0 , *this->VkDescriptorSets[*this->Vk_CurrentFrameInFlightIndex], nullptr);
+    CommandBuffer.drawIndexed(VkTestMesh.Indices.size(), 1, 0, 0, 0);
+
+    CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *VkTestPipeline.Pipeline);
+    CommandBuffer.bindVertexBuffers(0, VkTestVertexBuffer.Buffer, {0});
+    CommandBuffer.bindIndexBuffer(VkTestIndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(QuadIndices)::value_type>::value);
+    CommandBuffer.drawIndexed(QuadIndices.size(), 1, 0, 0, 0);
+
+    this->GetViewport().Draw();
+
+    CommandBuffer.endRendering();
+
+    Vk_TransitionImageLayout({
+        .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eBottomOfPipe,
+        .dstAccessMask = {},
+        .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .newLayout = vk::ImageLayout::ePresentSrcKHR,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = this->Vk_SwapchainImages[ImageIndex],
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        });
+
+    CommandBuffer.end();
 
     vk::PipelineStageFlags DstStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
     const vk::SubmitInfo SubmitInfo{
-        .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkPresentSemaphores[this->VkSemaphoreSyncIndex],
+        .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex],
         .pWaitDstStageMask = &DstStageMask,
-        .commandBufferCount = 1, .pCommandBuffers = &*this->VkCommandBuffers[this->VkFlightSyncFrameIndex],
-        .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->VkRenderSemaphores[ImageIndex]
+        .commandBufferCount = 1, .pCommandBuffers = &*CommandBuffer,
+        .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->Vk_RenderSemaphores[ImageIndex]
         };
-    Frontend.GetVkGraphicsQueue().submit(SubmitInfo, *this->VkFlightFences[this->VkFlightSyncFrameIndex]);
+    Frontend.GetVkGraphicsQueue().submit(SubmitInfo, *this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
 
     const vk::PresentInfoKHR PresentInfo{
-        .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkRenderSemaphores[ImageIndex],
-        .swapchainCount = 1, .pSwapchains = &*this->VkMySwapchain,
+        .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_RenderSemaphores[ImageIndex],
+        .swapchainCount = 1, .pSwapchains = &*this->Vk_VkMySwapchain,
         .pImageIndices = &ImageIndex
         };
     Result = Frontend.GetVkGraphicsQueue().presentKHR(PresentInfo);
+
+    this->Vk_LastFrameInFlightIndex = *this->Vk_CurrentFrameInFlightIndex;
+    this->Vk_CurrentFrameInFlightIndex.reset();
+
     switch (Result)
     {
     case vk::Result::eSuccess:
@@ -440,15 +608,10 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     }
     default:
     {
-        LOG_WARNING(LogVulkan, "vk::Queue::presentKHR returned unexpected vk::Result [{}].", static_cast<u32>(Result))
+        LOG_WARNING(LogVulkan, "vk::Queue::presentKHR returned unexpected vk::Result [{}].", vk::to_string(Result))
         break;
     }
     }
-
-    Super::OnUpdate();
-
-    this->VkSemaphoreSyncIndex = (this->VkSemaphoreSyncIndex + 1) % this->VkPresentSemaphores.size();
-    this->VkFlightSyncFrameIndex = (this->VkFlightSyncFrameIndex + 1) % ::VkMyMaxFramesInFlight;
 
     return;
 }
@@ -524,15 +687,17 @@ void Jafg::LSurfaceGlfw3::PollEvents()
     return;
 }
 
-void Jafg::LSurfaceGlfw3::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
+void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode::Type InMode) noexcept
 {
-    Super::SetInputMode(InMode, bInShowCursor);
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
+    check( this->Handle )
+    check( Tasks::IsOnMasterThread() )
 
-    if (this->bShowCursor)
+    this->InputMode = InMode;
+
+    if (this->IsShowMouseCursor() == false)
     {
-        this->bFirstMouseCallback = true;
+        this->MouseLocation.reset();
+        this->LastMouseLocation.reset();
     }
 
     // glfwMakeContextCurrent(this->Handle);
@@ -541,10 +706,10 @@ void Jafg::LSurfaceGlfw3::SetInputMode(const EInputMode::Type InMode, const bool
     return;
 }
 
-void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
+void Jafg::LSurfaceGlfw3::_SetMouseCursor(const EMouseCursor::Type InCursor)
 {
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
+    check( Tasks::IsOnMasterThread() )
+    check( this->Handle )
     // glfwMakeContextCurrent(this->Handle);
 
     if (this->Cursor)
@@ -610,29 +775,10 @@ void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
     return;
 }
 
-LIntVector2 Jafg::LSurfaceGlfw3::GetDimensions() const
-{
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-
-    /*
-     * Do we want to cache this value?
-     * How long does it take to get the window size?
-     */
-    i32 Width, Height;
-    glfwGetWindowSize(this->Handle, &Width, &Height);
-    return LIntVector2{Width, Height};
-}
-
-bool Jafg::LSurfaceGlfw3::CanVSync() const
-{
-    return true;
-}
-
 void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 {
-    checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
+    checkSlow( this->Handle )
 
     if (this->IsVSync() == bEnabled)
     {
@@ -641,39 +787,52 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 
     this->bVSync = bEnabled;
 
+    /* TODO: How to handle this?? */
+
     // glfwMakeContextCurrent(this->Handle);
     // glfwSwapInterval(this->bVSync ? 1 : 0);
 
     return;
 }
 
-bool Jafg::LSurfaceGlfw3::CanResize() const
+void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
 {
-    return true;
-}
+    check( Tasks::IsOnMasterThread() )
+    check( this->Handle )
 
-void Jafg::LSurfaceGlfw3::SetResizable(const bool bInResizable)
-{
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-
-    if (this->IsResizable() == bInResizable)
+    if (this->IsResizable() == bResizable)
     {
         return;
     }
 
-    this->bResizable = bInResizable;
+    this->bResizable = bResizable;
+    check( this->IsResizable() == bResizable )
 
+    LOG_VERBOSE(LogSurface, "Setting window resizeability to [{}].", this->IsResizable() ? "true" : "false")
     glfwSetWindowAttrib(this->Handle, GLFW_RESIZABLE, this->IsResizable() ? GLFW_TRUE : GLFW_FALSE);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier)
+{
+    check( this->Vk_CurrentFrameInFlightIndex.has_value() )
+
+    vk::DependencyInfo DependencyInfo{
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &Barrier
+        };
+
+    this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex].pipelineBarrier2(DependencyInfo);
 
     return;
 }
 
 void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Height)
 {
-    this->PendingWidth = Width;
-    this->PendingHeight = Height;
     this->bPendingResize = true;
+    this->PendingResizeExtent = LUIntVector2(static_cast<u32>(Width), static_cast<u32>(Height));
 
     /*
      * One-point-five-second delay when making changes to the viewport. We might want to change this later depending
@@ -685,38 +844,36 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
     return;
 }
 
-void Jafg::LSurfaceGlfw3::MouseCallback(const double XPos, const double YPos)
+void Jafg::LSurfaceGlfw3::MouseCallback(const f64 XPos, const f64 YPos)
 {
-    this->MouseLocation = LVector2(static_cast<float>(XPos), static_cast<float>(YPos));
+    check( this->bIsMouseInsideSurface )
 
+    this->MouseLocation = LVector2D{XPos, YPos};
+
+    // TODO: Do not parse mouse location data when mouse cursor is shown. Only for now. In the future we will handle these cases in the LUserInput.
     if (this->IsShowMouseCursor())
     {
+        check( this->LastMouseLocation.has_value() == false )
         return;
     }
 
-    if (algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseX, &LRawInput::Key))
+    if (   algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseX, &LRawInput::Key)
+        || algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseY, &LRawInput::Key))
     {
         return;
     }
-    if (algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseY, &LRawInput::Key))
+
+    if (this->LastMouseLocation.has_value() == false)
     {
+        this->LastMouseLocation = LVector2D{XPos, YPos};
         return;
     }
 
-    if (this->bFirstMouseCallback)
-    {
-        this->LastMouseX = XPos;
-        this->LastMouseY = YPos;
-        this->bFirstMouseCallback = false;
-    }
+    const LVector2D Offset{XPos - this->LastMouseLocation->X, this->LastMouseLocation->Y - YPos};
+    this->LastMouseLocation = LVector2D{XPos, YPos};
 
-    const double XOffset = static_cast<double>(XPos) - this->LastMouseX;
-    const double YOffset = this->LastMouseY - static_cast<double>(YPos);
-    this->LastMouseX = XPos;
-    this->LastMouseY = YPos;
-
-    this->AddKeyDown(EKeys::MouseX, static_cast<float>(YOffset));
-    this->AddKeyDown(EKeys::MouseY, static_cast<float>(XOffset));
+    this->AddKeyDown(EKeys::MouseX, static_cast<f32>(Offset.Y));
+    this->AddKeyDown(EKeys::MouseY, static_cast<f32>(Offset.X));
 
     return;
 }
@@ -744,13 +901,15 @@ void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOff
 
 void Jafg::LSurfaceGlfw3::MouseEnterCallback(const i32 Entered)
 {
+    this->LastMouseLocation.reset();
+
     if (Entered == GLFW_TRUE)
     {
-        this->bMouseLocationIsMeaningful = true;
+        this->bIsMouseInsideSurface = true;
     }
     else
     {
-        this->bMouseLocationIsMeaningful = false;
+        this->bIsMouseInsideSurface = false;
     }
 
     return;
@@ -832,90 +991,216 @@ void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInputGlfw3(const i32 InKey)
 }
 #endif /* PLATFORM_LINUX */
 
-void Jafg::LSurfaceGlfw3::VkCreateSwapchain()
+void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 {
+    LOG_VERBOSE(LogVulkan, "Creating command pool for surface.")
+
+    vk::CommandPoolCreateInfo PoolInfo{
+        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = this->GetFrontend().GetVkGraphicsQueueFamilyIndex()
+        };
+
+    this->Vk_CommandPool = vk::raii::CommandPool{this->GetFrontend().GetVkDevice(), PoolInfo};
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
+{
+    STAT_CYCLE_FUNCTION()
+
     LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
 
-    auto& Frontend = this->GetFrontend();
+    auto& Frontend{ this->GetFrontend() };
 
-    auto SurfaceCapabilities = Frontend.GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(this->VkMySurface);
-    auto AvailableFormats = Frontend.GetVkPhysicalDevice().getSurfaceFormatsKHR(this->VkMySurface);
-    auto AvailablePresentModes = Frontend.GetVkPhysicalDevice().getSurfacePresentModesKHR(this->VkMySurface);
+    {
+        LIntVector2 _FramebufferSize;
+        glfwGetFramebufferSize(this->Handle, &_FramebufferSize.X, &_FramebufferSize.Y);
+        if (_FramebufferSize.X == 0 || _FramebufferSize.Y == 0)
+        {
+            LOG_VERBOSE(LogSurface, "Waiting for non-zero dimensions to recreate swapchain.")
+            STAT_QUICK_CYCLE_START("GlfwWaitEventsForNonZeroFramebufferSize")
+            while (_FramebufferSize.X == 0 || _FramebufferSize.Y == 0)
+            {
+                glfwWaitEvents();
+                glfwGetFramebufferSize(this->Handle, &_FramebufferSize.X, &_FramebufferSize.Y);
+                continue;
+            }
+        }
+    }
 
-    this->VkMySwapchainSurfaceFormat = this->ChooseVkSwapSurfaceFormatKHR(AvailableFormats);
-    this->VkMySwapchainPresentMode = this->ChooseVkSwapPresentModeKHR(Frontend.GetVkPhysicalDevice().getSurfacePresentModesKHR(this->VkMySurface));
-    this->VkMySwapchainExtent = this->ChooseVkSwapExtent(SurfaceCapabilities);
+    {
+        STAT_QUICK_CYCLE_START("VkDevice.waitIdle")
+        Frontend.GetVkDevice().waitIdle();
+    }
 
-    LOG_VERBOSE(LogVulkan, "Preferred surface format: Format [{}], Color Space [{}]",
-        vk::to_string(this->VkMySwapchainSurfaceFormat.format),
-        vk::to_string(this->VkMySwapchainSurfaceFormat.colorSpace)
+    this->Vk_SwapchainImageViews.clear();
+    this->Vk_SwapchainImages.clear();
+    this->Vk_VkMySwapchain = nullptr;
+    for (auto& PresentSemaphore : this->Vk_ImageAvailableSemaphores) { PresentSemaphore = nullptr; }
+    for (auto& RenderSemaphore : this->Vk_RenderSemaphores) { RenderSemaphore = nullptr; }
+    for (auto& FlightFence : this->Vk_FlightFences) { FlightFence = nullptr; }
+
+    this->Vk_SurfaceCapabilities = Frontend.GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(this->Vk_Surface);
+    LOG_VERBOSE(LogVulkan, "Surface capabilities: "
+                           "minImageCount [{}], maxImageCount [{}], currentExtent [{}x{}], "
+                           "minImageExtent [{}x{}], maxImageExtent [{}x{}], maxImageArrayLayers [{}], "
+                           "supportedTransforms [{}], currentTransform [{}], supportedCompositeAlpha [{}], "
+                           "supportedUsageFlags [{}]",
+        this->Vk_SurfaceCapabilities.minImageCount,
+        this->Vk_SurfaceCapabilities.maxImageCount,
+        this->Vk_SurfaceCapabilities.currentExtent.width,
+        this->Vk_SurfaceCapabilities.currentExtent.height,
+        this->Vk_SurfaceCapabilities.minImageExtent.width,
+        this->Vk_SurfaceCapabilities.minImageExtent.height,
+        this->Vk_SurfaceCapabilities.maxImageExtent.width,
+        this->Vk_SurfaceCapabilities.maxImageExtent.height,
+        this->Vk_SurfaceCapabilities.maxImageArrayLayers,
+        vk::to_string(this->Vk_SurfaceCapabilities.supportedTransforms),
+        vk::to_string(this->Vk_SurfaceCapabilities.currentTransform),
+        vk::to_string(this->Vk_SurfaceCapabilities.supportedCompositeAlpha),
+        vk::to_string(this->Vk_SurfaceCapabilities.supportedUsageFlags)
         )
-    LOG_VERBOSE(LogVulkan, "Preferred present mode: [{}]", vk::to_string(this->VkMySwapchainPresentMode))
-    LOG_VERBOSE(LogVulkan, "Swapchain extent: [{}x{}]",
-        this->VkMySwapchainExtent.width,
-        this->VkMySwapchainExtent.height
-        )
 
-    u32 MinImageCount = Maths::Max(3u, SurfaceCapabilities.minImageCount); /* Default to triple buffering. */
-    MinImageCount = (SurfaceCapabilities.maxImageCount > 0 && MinImageCount > SurfaceCapabilities.maxImageCount)
-        ? SurfaceCapabilities.maxImageCount
-        : MinImageCount;
+    this->Vk_AvailableSurfaceFormats = Frontend.GetVkPhysicalDevice().getSurfaceFormatsKHR(this->Vk_Surface);
+    LOG_VERBOSE(LogVulkan, "Available surface formats:")
+    for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
+    {
+        LOG_VERBOSE(LogVulkan, "    Format [{}], Color Space [{}]",
+            vk::to_string(SurfaceFormat.format),
+            vk::to_string(SurfaceFormat.colorSpace)
+            )
+    }
+
+    this->Vk_AvailablePresentModes = Frontend.GetVkPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface);
+    LOG_VERBOSE(LogVulkan, "Available present modes:")
+    for (auto const& PresentMode : this->Vk_AvailablePresentModes)
+    {
+        LOG_VERBOSE(LogVulkan, "    Present Mode [{}]", vk::to_string(PresentMode))
+    }
+
+    {
+        auto AvailableFormat{this->Vk_GetSwapchainSurfaceFormatKHR(this->Vk_AvailableSurfaceFormats, this->Vk_DesiredSurfaceFormat)};
+        if (AvailableFormat.has_value() == false)
+        {
+            /* TODO: Is this even a fatal error?? Should we just use a non-optimal format then?! */
+            panicMsgf(
+                "Desired surface format [format={}, colorSpace={}] is not available on the current platform.",
+                vk::to_string(this->Vk_DesiredSurfaceFormat.format),
+                vk::to_string(this->Vk_DesiredSurfaceFormat.colorSpace)
+                )
+        }
+        this->Vk_SurfaceFormat = AvailableFormat.value();
+    }
+
+    {
+        auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(this->Vk_AvailablePresentModes, this->Vk_DesiredPresentMode)};
+        if (AvailablePresentMode.has_value() == false)
+        {
+            // We may always use FIFO as the std guarantees its existence.
+            // https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html
+            LOG_WARNING(LogVulkan,
+                "Desired present mode [{}] is not available on the current platform. Falling back to FIFO.",
+                vk::to_string(this->Vk_DesiredPresentMode)
+                )
+            this->Vk_PresentMode = vk::PresentModeKHR::eFifo;
+        }
+        else
+        {
+            this->Vk_PresentMode = AvailablePresentMode.value();
+        }
+    }
+
+    {
+        glfwGetWindowFrameSize(this->Handle
+            , &this->WindowFrameSizeTopLeft.X, &this->WindowFrameSizeTopLeft.Y
+            , &this->WindowFrameSizeBottomRight.X, &this->WindowFrameSizeBottomRight.Y);
+        glfwGetWindowSize(this->Handle, &this->WindowSize.X, &this->WindowSize.Y);
+        glfwGetFramebufferSize(this->Handle, &this->FramebufferSize.X, &this->FramebufferSize.Y);
+        if (this->Vk_SurfaceCapabilities.currentExtent.width
+            == std::numeric_limits<decltype(this->Vk_SurfaceCapabilities.currentExtent.width)>::max())
+        {
+            this->Vk_SwapchainExtent = {
+                Maths::Clamp<decltype(vk::Extent2D::width)>(this->FramebufferSize.X, this->Vk_SurfaceCapabilities.minImageExtent.width, this->Vk_SurfaceCapabilities.maxImageExtent.width),
+                Maths::Clamp<decltype(vk::Extent2D::height)>(this->FramebufferSize.Y, this->Vk_SurfaceCapabilities.minImageExtent.height, this->Vk_SurfaceCapabilities.maxImageExtent.height)
+                };
+        }
+    }
+
+    LOG_VERBOSE(LogVulkan, "Using surface format [format={}, colorSpace={}].",
+        vk::to_string(this->Vk_SurfaceFormat.format), vk::to_string(this->Vk_SurfaceFormat.colorSpace)
+        )
+    LOG_VERBOSE(LogVulkan, "Using present mode [{}].", vk::to_string(this->Vk_PresentMode))
+    LOG_VERBOSE(LogVulkan, "Using swapchain extent [{}x{}].", this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height)
+    if (   (static_cast<u32>(this->FramebufferSize.X) != this->Vk_SwapchainExtent.width)
+        || (static_cast<u32>(this->FramebufferSize.Y) != this->Vk_SwapchainExtent.height))
+    {
+        LOG_WARNING(LogVulkan,
+            "Framebuffer size [{}x{}] does not match clamped swapchain extent [{}x{}].",
+            this->FramebufferSize.X, this->FramebufferSize.Y,
+            this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height
+            )
+    }
 
     vk::SwapchainCreateInfoKHR SwapChainCreateInfo{
         .flags = vk::SwapchainCreateFlagsKHR{},
-        .surface = this->VkMySurface,
-        .minImageCount = MinImageCount,
-        .imageFormat = this->VkMySwapchainSurfaceFormat.format,
-        .imageColorSpace = this->VkMySwapchainSurfaceFormat.colorSpace,
-        .imageExtent =  this->VkMySwapchainExtent,
+        .surface = this->Vk_Surface,
+        .minImageCount = Maths::Clamp<u32>(Jafg::Vk_DesiredMaxFramesInFlight, this->Vk_SurfaceCapabilities.minImageCount, this->Vk_SurfaceCapabilities.maxImageCount),
+        .imageFormat = this->Vk_SurfaceFormat.format,
+        .imageColorSpace = this->Vk_SurfaceFormat.colorSpace,
+        .imageExtent =  this->Vk_SwapchainExtent,
         .imageArrayLayers = 1,
         .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
         .imageSharingMode = vk::SharingMode::eExclusive,
-        .preTransform = SurfaceCapabilities.currentTransform,
+        .queueFamilyIndexCount = 0, /* Optional */
+        .pQueueFamilyIndices = nullptr, /* Optional */
+        .preTransform = this->Vk_SurfaceCapabilities.currentTransform,
         .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
-        .presentMode = this->VkMySwapchainPresentMode,
-        .clipped = VK_TRUE,
+        .presentMode = this->Vk_PresentMode,
+        .clipped = vk::True,
         .oldSwapchain = VK_NULL_HANDLE
         };
 
-    u32 QueueFamilyIndices[] = {Frontend.GetVkGraphicsQueueFamilyIndex(), Frontend.GetVkPresentQueueFamilyIndex()};
-    if (Frontend.GetVkGraphicsQueue() != Frontend.GetVkPresentQueue())
+    const u32 QueueFamilyIndices[] {Frontend.GetVkGraphicsQueueFamilyIndex(), Frontend.GetVkPresentQueueFamilyIndex()};
+    if (Frontend.GetVkGraphicsQueue() == Frontend.GetVkPresentQueue())
+    {
+        LOG_VERBOSE(LogVulkan, "Using exclusive image sharing mode for swapchain as graphics and present queues are the same.")
+    }
+    else
     {
         LOG_VERBOSE(LogVulkan, "Using concurrent image sharing mode for swapchain as graphics and present queues differ.")
         SwapChainCreateInfo.imageSharingMode = vk::SharingMode::eConcurrent; /* TODO: Not optimal performance wise. But we can fix this later. */
         SwapChainCreateInfo.queueFamilyIndexCount = 2;
         SwapChainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
     }
-    else
+
+    this->Vk_VkMySwapchain = vk::raii::SwapchainKHR{Frontend.GetVkDevice(), SwapChainCreateInfo};
     {
-        LOG_VERBOSE(LogVulkan, "Using exclusive image sharing mode for swapchain as graphics and present queues are the same.")
-        SwapChainCreateInfo.imageSharingMode = vk::SharingMode::eExclusive;
-        SwapChainCreateInfo.queueFamilyIndexCount = 0; /* Optional */
-        SwapChainCreateInfo.pQueueFamilyIndices = nullptr; /* Optional */
+        for (const auto Images{ this->Vk_VkMySwapchain.getImages() }; auto Image : Images)
+        {
+            this->Vk_SwapchainImages.push_back(Image);
+        }
+        LOG_VERBOSE(LogVulkan, "Created swapchain with [{}] images.", this->Vk_SwapchainImages.size())
     }
 
-    this->VkMySwapchain = vk::raii::SwapchainKHR{ Frontend.GetVkDevice(), SwapChainCreateInfo };
-    this->VkSwapchainImages = this->VkMySwapchain.getImages();
-
-    this->GetViewport().ChangeDimensions(LIntVector2{
-        static_cast<i32>(this->VkMySwapchainExtent.width),
-        static_cast<i32>(this->VkMySwapchainExtent.height)
-        });
-
-
     this->bPendingResize = false;
+    this->PendingResizeExtent = LUIntVector2::ZeroVector;
     this->PendingTimeForResizeApply = 0.0f;
-    this->PendingWidth = 0;
-    this->PendingHeight = 0;
+
+    this->__Vk_CreateImageViews();
+    this->__Vk_CreateColorResources();
+    this->__Vk_CreateDepthResources();
+    this->__Vk_CreateSynchObjects();
 
     return;
 }
 
-vk::SurfaceFormatKHR Jafg::LSurfaceGlfw3::ChooseVkSwapSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats) const
+TOptional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats, vk::SurfaceFormatKHR DesiredSurfaceFormat)
 {
     for (auto const& AvailableFormat : AvailableFormats)
     {
-        if (AvailableFormat.format == vk::Format::eB8G8R8A8Srgb && AvailableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+        if (   AvailableFormat.format == DesiredSurfaceFormat.format
+            && AvailableFormat.colorSpace == DesiredSurfaceFormat.colorSpace)
         {
             return AvailableFormat;
         }
@@ -923,11 +1208,10 @@ vk::SurfaceFormatKHR Jafg::LSurfaceGlfw3::ChooseVkSwapSurfaceFormatKHR(std::vect
         continue;
     }
 
-    LOG_WARNING(LogVulkan, "Preferred swap surface format not found. Using first available format.")
-    return AvailableFormats[0];
+    return {};
 }
 
-vk::PresentModeKHR Jafg::LSurfaceGlfw3::ChooseVkSwapPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes) const
+TOptional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes, vk::PresentModeKHR DesiredPresentMode)
 {
     // VK_PRESENT_MODE_IMMEDIATE_KHR: Images submitted by your application are transferred to the
     //                                screen right away, which may result in tearing.
@@ -962,514 +1246,45 @@ vk::PresentModeKHR Jafg::LSurfaceGlfw3::ChooseVkSwapPresentModeKHR(std::vector<v
     return vk::PresentModeKHR::eFifo;
 }
 
-vk::Extent2D Jafg::LSurfaceGlfw3::ChooseVkSwapExtent(vk::SurfaceCapabilitiesKHR const& Capabilities) const
+void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()
 {
-    if (Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+    LOG_VERBOSE(LogVulkan, "Creating image views from swapchain images from surface [{}].", this->GetHumanReadableName())
+
+    auto& Frontend{ this->GetFrontend() };
+
+    check( this->Vk_SwapchainImageViews.empty() )
+
+    for (auto const& SwapchainImage : this->Vk_SwapchainImages)
     {
-        return Capabilities.currentExtent;
+        this->Vk_SwapchainImageViews.emplace_back(Frontend.CreateImageView({
+            .image = SwapchainImage,
+            .viewType = vk::ImageViewType::e2D,
+            .format = this->Vk_SurfaceFormat.format,
+            .subresourceRange = {
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1
+                }
+            }));
     }
 
-    i32 Width;
-    i32 Height;
-    glfwGetFramebufferSize(this->Handle, &Width, &Height);
-
-    return
-    {
-        Maths::Clamp<u32>(Width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width),
-        Maths::Clamp<u32>(Height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height)
-    };
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateImageViews()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan image views for swapchain images.")
-
-    auto& Frontend = this->GetFrontend();
-
-    this->VkSwapchainImageViews.clear();
-
-    for (const auto& SwapchainImage : this->VkSwapchainImages)
-    {
-        this->VkSwapchainImageViews.emplace_back(Frontend.CreateImageView(SwapchainImage, this->VkMySwapchainSurfaceFormat.format, vk::ImageAspectFlagBits::eColor, 1));
-        continue;
-    }
-
-    LOG_VERBOSE(LogVulkan, "Created {} Vulkan image views for swapchain images.", this->VkSwapchainImageViews.size())
+    LOG_VERBOSE(LogVulkan, "Created [{}] image views from swapchain images.", this->Vk_SwapchainImageViews.size())
 
     return;
 }
 
-void Jafg::LSurfaceGlfw3::VkCreateDescriptorSetLayout()
+void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
 {
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor set layout for surface.")
+    LOG_VERBOSE(LogVulkan, "Creating color resources for surface [{}].", this->GetHumanReadableName())
 
-    std::array Bindings = {
-          vk::DescriptorSetLayoutBinding{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr }
-        , vk::DescriptorSetLayoutBinding{ 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr }
-        };
-
-    vk::DescriptorSetLayoutCreateInfo layoutInfo{.bindingCount = Bindings.size(), .pBindings = Bindings.data()};
-    VkMyDescriptorSetLayout = vk::raii::DescriptorSetLayout(this->GetFrontend().GetVkDevice(), layoutInfo);
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan graphics pipeline for surface.")
-
-    auto& Frontend = this->GetFrontend();
-
-    vk::raii::ShaderModule ShaderModule = this->CreateShaderModule(Finder::ReadFileAsBinary("Content/Shaders/Spir-V/Test.spv"));
-    vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
-        .stage = vk::ShaderStageFlagBits::eVertex,
-        .module = ShaderModule,
-        .pName = "vertMain"
-        };
-    vk::PipelineShaderStageCreateInfo fragShaderStageInfo{
-        .stage = vk::ShaderStageFlagBits::eFragment,
-        .module = ShaderModule,
-        .pName = "fragMain"
-        };
-    vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-
-    auto BindingDescription = Vertex::getBindingDescription();
-    auto AttributeDescriptions = Vertex::getAttributeDescriptions();
-
-    vk::PipelineVertexInputStateCreateInfo   vertexInputInfo {
-        .vertexBindingDescriptionCount = 1, .pVertexBindingDescriptions = &BindingDescription,
-        .vertexAttributeDescriptionCount = AttributeDescriptions.size(), .pVertexAttributeDescriptions = AttributeDescriptions.data()
-        };
-    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
-    vk::PipelineViewportStateCreateInfo      viewportState{.viewportCount = 1, .scissorCount = 1};
-
-    vk::PipelineRasterizationStateCreateInfo rasterizer{.depthClampEnable = vk::False, .rasterizerDiscardEnable = vk::False,
-        .polygonMode = vk::PolygonMode::eFill, .cullMode = vk::CullModeFlagBits::eBack, .frontFace = vk::FrontFace::eCounterClockwise,
-        .depthBiasEnable = vk::False, .depthBiasSlopeFactor = 1.0f, .lineWidth = 1.0f};
-
-    vk::PipelineMultisampleStateCreateInfo multisampling{
-        .rasterizationSamples = Frontend.GetMaxMsaaSamples(),
-
-        // TODO: Enable sample shading? we have to enable the device feature sampleRateShading in the logical device first.
-        .sampleShadingEnable = vk::False // enable sample shading in the pipeline
-        // .minSampleShading = .2f, // min fraction for sample shading; closer to one is smoother
-        };
-
-    vk::PipelineDepthStencilStateCreateInfo depthStencil{
-        .depthTestEnable       = vk::True,
-        .depthWriteEnable      = vk::True,
-        .depthCompareOp        = vk::CompareOp::eLess,
-        .depthBoundsTestEnable = vk::False,
-        .stencilTestEnable     = vk::False};
-
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment{.blendEnable    = vk::False,
-        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
-    vk::PipelineColorBlendStateCreateInfo colorBlending{.logicOpEnable = vk::False, .logicOp = vk::LogicOp::eCopy, .attachmentCount = 1, .pAttachments = &colorBlendAttachment};
-
-    TArray<vk::DynamicState> dynamicStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-    vk::PipelineDynamicStateCreateInfo dynamicState{ .dynamicStateCount = static_cast<u32>(dynamicStates.size()), .pDynamicStates = dynamicStates.data() };
-
-    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
-        .setLayoutCount = 1,
-        .pSetLayouts = &*this->VkMyDescriptorSetLayout,
-        .pushConstantRangeCount = 0
-        };
-
-    this->VkMyPipelineLayout = vk::raii::PipelineLayout(this->GetFrontend().GetVkDevice(), pipelineLayoutInfo);
-
-    // vk::SubpassDependency Dependency{
-    //     .srcSubpass =  VK_SUBPASS_EXTERNAL,
-    //     .dstSubpass = 0,
-    //     .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     .srcAccessMask = {},
-    //     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
-    //     };
-
-    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
-        {
-            .stageCount          = 2,
-            .pStages             = shaderStages,
-            .pVertexInputState   = &vertexInputInfo,
-            .pInputAssemblyState = &inputAssembly,
-            .pViewportState      = &viewportState,
-            .pRasterizationState = &rasterizer,
-            .pMultisampleState   = &multisampling,
-            .pDepthStencilState  = &depthStencil,
-            .pColorBlendState    = &colorBlending,
-            .pDynamicState       = &dynamicState,
-            .layout              = this->VkMyPipelineLayout,
-            .renderPass          = nullptr},
-        {
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &this->VkMySwapchainSurfaceFormat.format,
-            .depthAttachmentFormat = Frontend.FindDepthFormat(),
-        }};
-
-    this->VkMyPipeline = vk::raii::Pipeline{
-        this->GetFrontend().GetVkDevice(),
-        nullptr,
-        pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
-        };
-
-    LOG_VERBOSE(LogVulkan, "Created Vulkan graphics pipeline for surface.")
-
-    return;
-}
-
-static void TestPipeline(Jafg::LSurface const& Surface)
-{
-    using namespace Jafg;
-    LOG_VERBOSE(LogVulkan, "Creating test pipeline...")
-
-    auto& Frontend{ Surface.GetFrontend() };
-
-    VkTestPipeline = std::make_unique<vk::raii::Pipeline>(
-        LDevicePipelineFactory{Surface}
-        .Shader("Content/Shaders/Spir-V/VisualBox.spv",
-            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-        .VertexInput<LRhiVertex2D>()
-        .Build());
-
-    VkTestVertexBuffer = Frontend.VkStageVertexBuffer(vk::BufferCopy{0, 0, sizeof(QuadVertices[0]) * QuadVertices.size()}
-        , QuadVertices.data(), Surface.GetVkCommandPool());
-
-    VkTestIndexBuffer = Frontend.VkStageIndexBuffer(vk::BufferCopy{0, 0, sizeof(QuadIndices[0]) * QuadIndices.size()}
-        , QuadIndices.data(), Surface.GetVkCommandPool());
-
-    return;
-}
-
-vk::raii::ShaderModule Jafg::LSurfaceGlfw3::CreateShaderModule(TArray<u8> const& Code) const
-{
-    vk::ShaderModuleCreateInfo createInfo{
-        .codeSize = Code.size() * sizeof(char),
-        .pCode = reinterpret_cast<u32 const*>(Code.data())
-        };
-
-    return vk::raii::ShaderModule{ this->GetFrontend().GetVkDevice(), createInfo };
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateCommandPool()
-{
-    LOG_VERBOSE(LogVulkan, "Creating vk command pool for surface.")
-
-    vk::CommandPoolCreateInfo PoolInfo{
-        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-        .queueFamilyIndex = this->GetFrontend().GetVkGraphicsQueueFamilyIndex()
-        };
-
-    this->VkMyCommandPool = vk::raii::CommandPool{ this->GetFrontend().GetVkDevice(), PoolInfo };
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateCommandBuffers()
-{
-    LOG_VERBOSE(LogVulkan, "Creating [{}] vulkan command buffers for surface.", ::VkMyMaxFramesInFlight)
-
-    this->VkCommandBuffers.clear();
-
-    vk::CommandBufferAllocateInfo Info{
-        .commandPool = this->VkMyCommandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = ::VkMyMaxFramesInFlight
-        };
-
-    this->VkCommandBuffers = vk::raii::CommandBuffers(this->GetFrontend().GetVkDevice(), Info);
-    check( this->VkCommandBuffers.size() == ::VkMyMaxFramesInFlight )
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateSynchObjects()
-{
-    LOG_VERBOSE(LogVulkan, "Creating [{}+2*{}] vulkan synchronization objects for surface.", ::VkMyMaxFramesInFlight, this->VkSwapchainImages.size())
-
-    this->VkPresentSemaphores.clear();
-    this->VkRenderSemaphores.clear();
-    this->VkFlightFences.clear();
-
-    auto& Device = this->GetFrontend().GetVkDevice();
-
-    for (LSize Idx{ 0 }; Idx < this->VkSwapchainImages.size(); ++Idx)
-    {
-        this->VkPresentSemaphores.emplace_back(Device, vk::SemaphoreCreateInfo{});
-        this->VkRenderSemaphores.emplace_back(Device, vk::SemaphoreCreateInfo{});
-        continue;
-    }
-
-    for (LSize Idx{ 0 }; Idx < ::VkMyMaxFramesInFlight; ++Idx)
-    {
-        this->VkFlightFences.emplace_back(Device, vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled });
-        continue;
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCleanSwapchain()
-{
-    LOG_TRACE(LogVulkan, "Cleaning up Vulkan swapchain for surface.")
-
-    this->VkSwapchainImageViews.clear();
-    this->VkMySwapchain = nullptr;
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::WaitForSemaphore(vk::raii::Semaphore const& Semaphore)
-{
-    vk::SemaphoreWaitInfo WaitInfo{
-        .semaphoreCount = 1,
-        .pSemaphores = &*Semaphore,
-        .pValues = nullptr
-        };
-
-    if (this->GetFrontend().GetVkDevice().waitSemaphores(WaitInfo, std::numeric_limits<u64>::max()) != vk::Result::eSuccess)
-    {
-        panic("Failed to wait for semaphore.")
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::WaitForSemaphores(TArray<vk::raii::Semaphore> const& Semaphores)
-{
-    for (const auto& Semaphore : Semaphores)
-    {
-        this->WaitForSemaphore(Semaphore);
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkRecreateSwapchain()
-{
-    STAT_CYCLE_FUNCTION()
-
-    i32 Width{ 0 };
-    i32 Height{ 0 };
-    glfwGetFramebufferSize(this->Handle, &Width, &Height);
-    if (Width == 0 || Height == 0)
-    {
-        LOG_VERBOSE(LogSurface, "Waiting for non-zero dimensions to recreate vulkan swapchain for surface.")
-        STAT_QUICK_CYCLE_START("GlfwWaitEventsForNonZeroFramebufferSize")
-        while (Width == 0 || Height == 0)
-        {
-            glfwGetFramebufferSize(this->Handle, &Width, &Height);
-            glfwWaitEvents();
-        }
-    }
-
-    {
-        STAT_QUICK_CYCLE_START("VkDevice.waitIdle")
-        this->GetFrontend().GetVkDevice().waitIdle();
-
-        check( this->VkFlightFences.size() == ::VkMyMaxFramesInFlight )
-        check( this->VkPresentSemaphores.size() == this->VkSwapchainImages.size() )
-        check( this->VkRenderSemaphores.size() == this->VkSwapchainImages.size() )
-
-        // this->WaitForSemaphores(this->VkPresentSemaphores);
-        // this->WaitForSemaphores(this->VkRenderSemaphores);
-    }
-
-    this->VkCleanSwapchain();
-    this->VkCreateSwapchain();
-    this->VkCreateImageViews();
-    this->VkCreateColorResources();
-    this->VkCreateDepthResources();
-    this->VkCreateSynchObjects();
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateBuffer(
-      vk::DeviceSize Size
-    , vk::BufferUsageFlags Usage
-    , vk::MemoryPropertyFlags Properties
-    , vk::raii::Buffer& Buffer
-    , vk::raii::DeviceMemory& BufferMemory
-    )
-{
-    auto& Frontend = this->GetFrontend();
-
-    vk::BufferCreateInfo bufferInfo{ .size = Size, .usage = Usage, .sharingMode = vk::SharingMode::eExclusive };
-    Buffer = vk::raii::Buffer(Frontend.GetVkDevice(), bufferInfo);
-    vk::MemoryRequirements memRequirements = Buffer.getMemoryRequirements();
-    vk::MemoryAllocateInfo allocInfo{ .allocationSize = memRequirements.size, .memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, Properties) };
-    BufferMemory = vk::raii::DeviceMemory(Frontend.GetVkDevice(), allocInfo);
-    Buffer.bindMemory(*BufferMemory, 0);
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
-{
-    auto const& TargetBuffer{ this->VkCommandBuffers[this->VkFlightSyncFrameIndex] };
-
-    TargetBuffer.begin({});
-
-    TransitionImageLayout(
-        this->VkSwapchainImages[ImageIndex],                // Image
-        vk::ImageLayout::eUndefined,                        // OldLayout
-        vk::ImageLayout::eColorAttachmentOptimal,           // NewLayout
-        {},                                                 // SrcAccessMask (no need to wait for previous operations)
-        vk::AccessFlagBits2::eColorAttachmentWrite,         // DstAccessMask
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // SrcStageMask
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // DstStageMask
-        vk::ImageAspectFlagBits::eColor                     // AspectMask
-        );
-
-    TransitionImageLayout(
-        this->ColorImage.Image,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
-        vk::AccessFlagBits2::eColorAttachmentWrite, vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::ImageAspectFlagBits::eColor
-        );
-
-    TransitionImageLayout(
-        this->DepthImage.Image,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal,
-        vk::AccessFlagBits2::eDepthStencilAttachmentWrite, vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-        vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
-        vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
-        vk::ImageAspectFlagBits::eDepth
-        );
-
-    constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
-    constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
-
-    vk::RenderingAttachmentInfo ColorAttachmentInfo{
-        .imageView = this->ColorImageView,
-        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-        .resolveMode = vk::ResolveModeFlagBits::eAverage,
-        .resolveImageView = this->VkSwapchainImageViews[ImageIndex],
-        .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = ClearColor
-        };
-    vk::RenderingAttachmentInfo DepthAttachmentInfo{
-        .imageView   = this->DepthImageView,
-        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
-        .loadOp      = vk::AttachmentLoadOp::eClear,
-        .storeOp     = vk::AttachmentStoreOp::eDontCare,
-        .clearValue  = ClearDepth
-        };
-
-    vk::RenderingInfo RenderingInfo{
-        .renderArea = { .offset = { 0, 0 }, .extent = this->VkMySwapchainExtent },
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &ColorAttachmentInfo,
-        .pDepthAttachment = &DepthAttachmentInfo
-        };
-
-    TargetBuffer.beginRendering(RenderingInfo);
-
-    TargetBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
-    TargetBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
-
-    TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
-    TargetBuffer.bindVertexBuffers(0, this->VertexBuffer.Buffer, {0});
-    TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
-    TargetBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->VkMyPipelineLayout, 0 , *this->VkDescriptorSets[this->VkFlightSyncFrameIndex], nullptr);
-    TargetBuffer.drawIndexed(this->Indices.size(), 1, 0, 0, 0);
-
-    TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *VkTestPipeline);
-    TargetBuffer.bindVertexBuffers(0, VkTestVertexBuffer.Buffer, {0});
-    TargetBuffer.bindIndexBuffer(VkTestIndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(QuadIndices)::value_type>::value);
-    TargetBuffer.drawIndexed(QuadIndices.size(), 1, 0, 0, 0);
-
-    TargetBuffer.endRendering();
-
-    TransitionImageLayout(
-        this->VkSwapchainImages[ImageIndex],
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::AccessFlagBits2::eColorAttachmentWrite,                 // srcAccessMask
-        {},                                                         // dstAccessMask
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
-        vk::PipelineStageFlagBits2::eBottomOfPipe,                  // dstStage
-        vk::ImageAspectFlagBits::eColor                               // aspectMask
-        );
-
-    TargetBuffer.end();
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::TransitionImageLayout(
-    vk::Image Image,
-    vk::ImageLayout OldLayout, vk::ImageLayout NewLayout,
-    vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask,
-    vk::PipelineStageFlags2 SrcStageMask, vk::PipelineStageFlags2 DstStageMask,
-    vk::ImageAspectFlags AspectMask
-    )
-{
-    // LOG_TRACE(LogVulkan, "Transitioning image layout for swapchain image [{}] from [{}] to [{}].",
-    //     ImageIndex,
-    //     vk::to_string(OldLayout),
-    //     vk::to_string(NewLayout)
-    //     )
-
-    vk::ImageMemoryBarrier2 Barrier = {
-        .srcStageMask = SrcStageMask,
-        .srcAccessMask = SrcAccessMask,
-        .dstStageMask = DstStageMask,
-        .dstAccessMask = DstAccessMask,
-        .oldLayout = OldLayout,
-        .newLayout = NewLayout,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = Image,
-        .subresourceRange = {
-            .aspectMask = AspectMask,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-            }
-        };
-    vk::DependencyInfo DependencyInfo = {
-        .dependencyFlags = {},
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &Barrier
-        };
-
-    this->VkCommandBuffers[this->VkFlightSyncFrameIndex].pipelineBarrier2(DependencyInfo);
-
-    return;
-}
-
-u32 Jafg::LSurfaceGlfw3::FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags Properties) const
-{
-    vk::PhysicalDeviceMemoryProperties MemProperties = this->GetFrontend().GetVkPhysicalDevice().getMemoryProperties();
-    for (u32 Idx{ 0 }; Idx < MemProperties.memoryTypeCount; ++Idx)
-    {
-        if ((TypeFilter & (1 << Idx)) && (MemProperties.memoryTypes[Idx].propertyFlags & Properties) == Properties)
-        {
-            return Idx;
-        }
-    }
-
-    panic( "Failed to find suitable memory type." )
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateColorResources()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan color resources for surface.")
-
-    auto& Frontend = this->GetFrontend();
-
-    vk::Format ColorFormat = this->VkMySwapchainSurfaceFormat.format;
+    auto& Frontend{ this->GetFrontend() };
 
     vk::ImageCreateInfo ImageCreateInfo{
         .imageType = vk::ImageType::e2D,
-        .format = ColorFormat,
-        .extent = vk::Extent3D{ this->VkMySwapchainExtent.width, this->VkMySwapchainExtent.height, 1 },
+        .format = this->Vk_SurfaceFormat.format,
+        .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = Frontend.GetMaxMsaaSamples(),
@@ -1481,25 +1296,25 @@ void Jafg::LSurfaceGlfw3::VkCreateColorResources()
     VmaAllocationCreateInfo AllocationCreateInfo{
         .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
         };
-    this->ColorImage = Frontend.VkCreateImage(ImageCreateInfo, AllocationCreateInfo);
-    this->ColorImageView = Frontend.CreateImageView(this->ColorImage.Image, ColorFormat, vk::ImageAspectFlagBits::eColor, 1);
+
+    this->Vk_ColorImage = Frontend.VkCreateImage(ImageCreateInfo, AllocationCreateInfo);
+    this->Vk_ColorImageView = Frontend.CreateImageView2D(this->Vk_ColorImage.Buffer, this->Vk_SurfaceFormat.format, vk::ImageAspectFlagBits::eColor, 1);
 
     return;
 }
 
-void Jafg::LSurfaceGlfw3::VkCreateDepthResources()
+void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
 {
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan depth resources for surface.")
+    LOG_VERBOSE(LogVulkan, "Creating depth resources for surface [{}].", this->GetHumanReadableName())
 
-    auto& Frontend = this->GetFrontend();
+    auto& Frontend{ this->GetFrontend() };
+    const vk::Format DepthFormat{ Frontend.FindDepthFormat() };
 
-    vk::Format DepthFormat = Frontend.FindDepthFormat();
-
-    this->DepthImage = Frontend.VkCreateDeviceLocalImage(
+    this->Vk_DepthImage = Frontend.VkCreateDeviceLocalImage(
         vk::ImageCreateInfo{
             .imageType = vk::ImageType::e2D,
             .format = DepthFormat,
-            .extent = vk::Extent3D{ this->VkMySwapchainExtent.width, this->VkMySwapchainExtent.height, 1 },
+            .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
             .mipLevels = 1,
             .arrayLayers = 1,
             .samples = Frontend.GetMaxMsaaSamples(),
@@ -1510,7 +1325,82 @@ void Jafg::LSurfaceGlfw3::VkCreateDepthResources()
             }
         );
 
-    this->DepthImageView = Frontend.CreateImageView(this->DepthImage.Image, DepthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    this->Vk_DepthImageView = Frontend.CreateImageView2D(this->Vk_DepthImage.Buffer, DepthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
+{
+    LOG_VERBOSE(LogVulkan, "Creating [{}+2*{}] vulkan synchronization objects for surface [{}].",
+        this->Vk_GetNumberOfFramesInFlight(), this->Vk_SwapchainImages.size(), this->GetHumanReadableName()
+        )
+
+    auto& Device{ this->GetFrontend().GetVkDevice() };
+
+    for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        this->Vk_ImageAvailableSemaphores[Idx] = vk::raii::Semaphore{Device, vk::SemaphoreCreateInfo{}};
+        this->Vk_RenderSemaphores[Idx] = vk::raii::Semaphore{Device, vk::SemaphoreCreateInfo{}};
+
+        this->Vk_FlightFences[Idx] = vk::raii::Fence{Device, vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled }};
+
+        continue;
+    }
+
+    this->Vk_LastFrameInFlightIndex = 0;
+    check( this->Vk_CurrentFrameInFlightIndex.has_value() == false )
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
+{
+    LOG_VERBOSE(LogVulkan, "Creating [{}] vulkan command buffers for surface.", this->Vk_GetNumberOfFramesInFlight())
+
+    vk::CommandBufferAllocateInfo Info{
+        .commandPool = this->Vk_CommandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlight())
+        };
+
+    auto CommandBuffers{ vk::raii::CommandBuffers(this->GetFrontend().GetVkDevice(), Info) };
+    check( this->Vk_CommandBuffers.size() == CommandBuffers.size() )
+    for (auto Idx{ 0uz }; Idx < CommandBuffers.size(); ++Idx)
+    {
+        this->Vk_CommandBuffers[Idx] = std::move(CommandBuffers[Idx]);
+    }
+
+    return;
+}
+
+
+
+
+
+
+
+static void TestPipeline(Jafg::LSurface const& Surface)
+{
+    using namespace Jafg;
+    LOG_VERBOSE(LogVulkan, "Creating test pipeline...")
+
+    auto& Frontend{ Surface.GetFrontend() };
+
+    VkTestPipeline = LDevicePipelineFactory{Surface}
+        .Shader("Content/Shaders/Spir-V/VisualBox.spv",
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
+        .VertexInput<LRhiVertex2D>()
+        .Build();
+
+    VkTestVertexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
+        .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadVertices[0]) * QuadVertices.size()},
+        .Data = QuadVertices.data()
+        }));
+    VkTestIndexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Index({
+        .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadIndices[0]) * QuadIndices.size()},
+        .Data = QuadIndices.data()
+        }));
 
     return;
 }
@@ -1534,7 +1424,7 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
     this->MipLevels = static_cast<u32>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
     LOG_VERBOSE(LogVulkan, "Texture image will have [{}] mip levels.", this->MipLevels)
 
-    LVmaMappedBuffer StatingBuffer = Frontend.VkCreateMappedBuffer(
+    auto StatingBuffer = Frontend.Vk_CreateMappedBuffer(
         vk::BufferCreateInfo{
             .size = imageSize,
             .usage = vk::BufferUsageFlagBits::eTransferSrc,
@@ -1563,30 +1453,25 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
         };
     this->TextureImage = Frontend.VkCreateImage(TextureImageCreateInfo, TextureImageAllocationCreateInfo);
 
-    Frontend.VkTransitionImageLayout(this->TextureImage.Image,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, MipLevels, this->VkMyCommandPool);
+    Frontend.VkTransitionImageLayout(this->TextureImage.Buffer,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, MipLevels, this->Vk_CommandPool);
     Frontend.CopyBufferToImage(
         StatingBuffer.Buffer,
-        this->TextureImage.Image,
+        this->TextureImage.Buffer,
         static_cast<u32>(texWidth),
         static_cast<u32>(texHeight),
-        this->VkMyCommandPool
+        this->Vk_CommandPool
         );
 
     this->VkGenerateMipMaps(
-        this->TextureImage.Image, vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, this->MipLevels
+        this->TextureImage.Buffer, vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, this->MipLevels
         );
 
-    // Frontend.VkTransitionImageLayout(this->TextureImage.Image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, MipLevels, this->VkMyCommandPool);
+    // Frontend.VkTransitionImageLayout(this->TextureImage.Image, vk::ImageLayout::eTransferDstOptimal,
+    //      vk::ImageLayout::eShaderReadOnlyOptimal, MipLevels, this->VkMyCommandPool);
 
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateTextureImageView()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan texture image view for surface.")
-
-    this->TextureImageView = this->GetFrontend().CreateImageView(this->TextureImage.Image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, this->MipLevels);
+    this->TextureImageView = this->GetFrontend().CreateImageView2D(this->TextureImage.Buffer,
+        vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, this->MipLevels);
 
     return;
 }
@@ -1613,144 +1498,6 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
     return;
 }
 
-void Jafg::LSurfaceGlfw3::VkLoadModel()
-{
-    LOG_VERBOSE(LogTemporal, "Loading model for surface.")
-
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
-        LOG_WARNING(LogFrontEnd, "{}", warn)
-        LOG_ERROR(LogFrontEnd, "{}", err)
-        panic( "Failed to load model." )
-    }
-    if (!warn.empty()) {
-        LOG_WARNING(LogFrontEnd, "{}", warn)
-    }
-    if (!err.empty()) {
-        LOG_ERROR(LogFrontEnd, "{}", err)
-        panic( "Failed to load model." )
-    }
-
-    std::unordered_map<Vertex, uint32_t> uniqueVertices;
-
-    for (const auto &shape : shapes)
-    {
-        for (const auto &index : shape.mesh.indices)
-        {
-            Vertex vertex{};
-
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]};
-
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
-
-            vertex.color = {1.0f, 1.0f, 1.0f};
-
-            if (!uniqueVertices.contains(vertex))
-            {
-                uniqueVertices[vertex] = static_cast<uint32_t>(this->Vertices.size());
-                this->Vertices.push_back(vertex);
-            }
-
-            Indices.push_back(uniqueVertices[vertex]);
-        }
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateVertexBuffer()
-{
-    LOG_VERBOSE(LogTemporal, "Creating Vulkan vertex buffer for surface.")
-
-    this->VertexBuffer = this->GetFrontend().VkStageVertexBuffer(
-        vk::BufferCopy{ 0, 0, sizeof(this->Vertices[0]) * this->Vertices.size()},
-        this->Vertices.data(),
-        this->VkMyCommandPool
-        );
-
-    // auto& Frontend = this->GetFrontend();
-    // auto  Vma = Frontend.GetVma();
-    //
-    //
-    // vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-    //
-    // // --- Staging buffer (CPU visible) ---
-    // VkBuffer StagingBuffer;
-    // VmaAllocation StagingAllocation;
-    // VmaAllocationCreateInfo StagingAllocationCreateInfo{
-    //     .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-    //     .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
-    //     };
-    // vk::BufferCreateInfo StagingBufferCreateInfo{
-    //     .size = bufferSize,
-    //     .usage = vk::BufferUsageFlagBits::eTransferSrc,
-    //     .sharingMode = vk::SharingMode::eExclusive
-    //     };
-    //
-    // VmaAllocationInfo stagingAllocResult{};
-    // if (auto Res = vmaCreateBuffer(
-    //     Vma,
-    //     &*StagingBufferCreateInfo,
-    //     &StagingAllocationCreateInfo,
-    //     &StagingBuffer,
-    //     &StagingAllocation,
-    //     &stagingAllocResult
-    //     ); Res != VK_SUCCESS)
-    // {
-    //     panic("Failed to create vertex staging buffer.")
-    // }
-    // check( stagingAllocResult.pMappedData )
-    // std::memcpy(stagingAllocResult.pMappedData, vertices.data(), static_cast<size_t>(bufferSize));
-    //
-    // // --- Device local buffer (GPU only) ---
-    // VkBuffer vertexBuffer;
-    // VmaAllocation vertexAllocation;
-    // VmaAllocationCreateInfo vertexAllocInfo = {};
-    // vertexAllocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-    // vertexAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    //
-    // VkBufferCreateInfo vertexBufferInfo = {};
-    // vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    // vertexBufferInfo.size = bufferSize;
-    // vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    //
-    // vmaCreateBuffer(Vma, &vertexBufferInfo, &vertexAllocInfo, &vertexBuffer, &vertexAllocation, nullptr);
-    //
-    // // --- Copy from staging to device local ---
-    // Frontend.VkCopyBuffer(*this->VkMyCommandPool, StagingBuffer, vertexBuffer, vk::BufferCopy{ 0, 0, bufferSize });
-    //
-    // // --- Cleanup staging buffer ---
-    // vmaDestroyBuffer(Vma, StagingBuffer, StagingAllocation);
-    //
-    // // Store VMA handles for later destruction
-    // this->VkMyVertexBuffer = vertexBuffer;
-    // this->VmaMyVertexBufferAllocation = vertexAllocation;
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateIndexBuffer()
-{
-    LOG_VERBOSE(LogTemporal, "Creating Vulkan index buffer for surface.")
-
-    this->IndexBuffer = this->GetFrontend().VkStageIndexBuffer(
-        vk::BufferCopy{ 0, 0, sizeof(this->Indices[0]) * this->Indices.size()},
-        this->Indices.data(),
-        this->VkMyCommandPool
-        );
-
-    return;
-}
-
 void Jafg::LSurfaceGlfw3::VkCreateUniformBuffers()
 {
     LOG_VERBOSE(LogTemporal, "Creating Vulkan uniform buffers for surface.")
@@ -1759,9 +1506,9 @@ void Jafg::LSurfaceGlfw3::VkCreateUniformBuffers()
 
     auto& Frontend = this->GetFrontend();
 
-    for (LSize Idx{ 0 }; Idx < ::VkMyMaxFramesInFlight; ++Idx)
+    for (LSize Idx{ 0 }; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
     {
-        this->UniformBuffers.emplace_back(Frontend.VkCreateMappedBuffer(vk::BufferCreateInfo{
+        this->UniformBuffers.emplace_back(Frontend.Vk_CreateMappedBuffer(vk::BufferCreateInfo{
                 .size = sizeof(UniformBufferObject),
                 .usage = vk::BufferUsageFlagBits::eUniformBuffer,
                 }
@@ -1777,14 +1524,14 @@ void Jafg::LSurfaceGlfw3::VkCreateDescriptorPool()
     LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor pool for surface.")
 
     std::array PoolSize = {
-        vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, ::VkMyMaxFramesInFlight),
-        vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, ::VkMyMaxFramesInFlight)
+        vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, this->Vk_GetNumberOfFramesInFlight()),
+        vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, this->Vk_GetNumberOfFramesInFlight())
         };
 
     vk::DescriptorPoolCreateInfo poolInfo{
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = ::VkMyMaxFramesInFlight,
-        .poolSizeCount = static_cast<u32>(PoolSize.size()),
+        .maxSets = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlight()),
+        .poolSizeCount = static_cast<uint32_t>(PoolSize.size()),
         .pPoolSizes = PoolSize.data()
         };
 
@@ -1799,13 +1546,13 @@ void Jafg::LSurfaceGlfw3::VkCreateDescriptorSets()
 
     auto& Frontend = this->GetFrontend();
 
-    std::vector<vk::DescriptorSetLayout> layouts(VkMyMaxFramesInFlight, *VkMyDescriptorSetLayout);
+    std::vector<vk::DescriptorSetLayout> layouts(this->Vk_GetNumberOfFramesInFlight(), *VkTestMeshPipeline.DescriptorSetLayout);
     vk::DescriptorSetAllocateInfo        allocInfo{.descriptorPool = this->VkMyDescriptorPool,
         .descriptorSetCount = static_cast<uint32_t>(layouts.size()), .pSetLayouts = layouts.data()};
 
     this->VkDescriptorSets = Frontend.GetVkDevice().allocateDescriptorSets(allocInfo);
 
-    for (size_t i = 0; i < VkMyMaxFramesInFlight; i++)
+    for (size_t i = 0; i < this->Vk_GetNumberOfFramesInFlight(); i++)
     {
         vk::DescriptorBufferInfo bufferInfo{.buffer = UniformBuffers[i].Buffer, .offset = 0, .range = sizeof(UniformBufferObject)};
         vk::DescriptorImageInfo imageInfo{ .sampler = this->TextureSampler, .imageView = this->TextureImageView, .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal};
@@ -1833,7 +1580,7 @@ void Jafg::LSurfaceGlfw3::VkUpdateUniformBuffers(uint32_t currentImage)
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view  = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj  = glm::perspective(glm::radians(45.0f), static_cast<float>(this->VkMySwapchainExtent.width) / static_cast<float>(this->VkMySwapchainExtent.height), 0.1f, 10.0f);
+    ubo.proj  = glm::perspective(glm::radians(45.0f), static_cast<float>(this->Vk_SwapchainExtent.width) / static_cast<float>(this->Vk_SwapchainExtent.height), 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
     std::memcpy(this->UniformBuffers[currentImage].Data, &ubo, sizeof(ubo));
@@ -1851,7 +1598,7 @@ void Jafg::LSurfaceGlfw3::VkGenerateMipMaps(vk::Image Image, vk::Format Format, 
         panic( "texture image format does not support linear blitting. ")
     }
 
-    vk::raii::CommandBuffer commandBuffer = Frontend.VkBeginSingleTimeCommands(this->VkMyCommandPool);
+    vk::raii::CommandBuffer commandBuffer = Frontend.VkBeginSingleTimeCommands(this->Vk_CommandPool);
 
     vk::ImageMemoryBarrier barrier          = {.srcAccessMask = vk::AccessFlagBits::eTransferWrite,
         .dstAccessMask = vk::AccessFlagBits::eTransferRead, .oldLayout = vk::ImageLayout::eTransferDstOptimal,

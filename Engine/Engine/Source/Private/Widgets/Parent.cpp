@@ -86,7 +86,7 @@ void Jafg::WParent::Draw(LViewport& Context) const
     return;
 }
 
-Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2& InLocation)
+Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2D& InLocation)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
@@ -109,7 +109,7 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2&
     return Super::SweepMouse(Context, InLocation);
 }
 
-Jafg::LReply Jafg::WParent::SweepFocusTest(const LViewport& Context, const LVector2& InLocation)
+Jafg::LReply Jafg::WParent::SweepFocusTest(const LViewport& Context, const LVector2D& InLocation)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {

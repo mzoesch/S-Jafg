@@ -65,6 +65,93 @@ public:
     }
 };
 
+/* TODO: C++26 introduces a better option for this. So remove this class then. Just temp. */
+template<typename _Tp, std::size_t _Nm> requires(std::is_default_constructible_v<_Tp>)
+class TMySimpleFixedArray
+{
+public:
+
+    inline void push_back(_Tp const& Value) noexcept
+    {
+        LAL_FWD_CHECK([_Size = this->Size]{ return _Size < _Nm; })
+        this->Data[this->Size++] = Value;
+    }
+
+    inline void push_back(_Tp&& Value) noexcept
+    {
+        LAL_FWD_CHECK([_Size = this->Size]{ return _Size < _Nm; })
+        this->Data[this->Size++] = std::move(Value);
+    }
+
+    inline bool empty() noexcept
+    {
+        return this->Size == 0;
+    }
+
+    inline void clear() noexcept
+    {
+        for (LSize Idx{ 0 }; Idx < this->Size; ++Idx)
+        {
+            this->Data[Idx] = _Tp{};
+            continue;
+        }
+
+        this->Size = 0;
+
+        return;
+    }
+
+    [[nodiscard]] inline _Tp* data() noexcept
+    {
+        return this->Data.data();
+    }
+
+    [[nodiscard]] inline _Tp const* data() const noexcept
+    {
+        return this->Data.data();
+    }
+
+    [[nodiscard]] inline _Tp* begin() noexcept
+    {
+        return this->Data.data();
+    }
+
+    [[nodiscard]] inline _Tp const* begin() const noexcept
+    {
+        return this->Data.data();
+    }
+
+    [[nodiscard]] inline _Tp* end() noexcept
+    {
+        return this->Data.data() + this->Size;
+    }
+
+    [[nodiscard]] inline _Tp const* end() const noexcept
+    {
+        return this->Data.data() + this->Size;
+    }
+
+    [[nodiscard]] inline _Tp& operator[](LSize Index) noexcept
+    {
+        LAL_FWD_CHECK([_Size = this->Size, Index]{ return Index < _Size; })
+        return this->Data[Index];
+    }
+
+    [[nodiscard]] inline _Tp const& operator[](LSize Index) const noexcept
+    {
+        LAL_FWD_CHECK([_Size = this->Size, Index]{ return Index < _Size; })
+        return this->Data[Index];
+    }
+
+    [[nodiscard]] inline LSize size() const noexcept
+    {
+        return this->Size;
+    }
+
+    std::array<_Tp, _Nm> Data;
+    LSize Size{ 0 };
+};
+
 template<typename _CharT, typename _Traits = std::char_traits<_CharT>, typename _Alloc = std::allocator<_CharT>>
 class TSimpleString : public std::basic_string<_CharT, _Traits, _Alloc>
 {
@@ -356,6 +443,9 @@ using TSet = std::set<T, TCompare, TAlloc>;
 
 template<typename T, typename Alloc = std::allocator<T>>
 using TArray = Lal::TSimpleArray<T, Alloc>;
+
+template<typename _Tp, std::size_t _Nm>
+using TStackArray = Lal::TMySimpleFixedArray<_Tp, _Nm>;
 
 using LString = Lal::_LString;
 using LWString = Lal::_LWString;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Lal.afx"
+#include "Rhi/VkForward.h"
 #include "Rhi/RhiVendorInclude.h"
 
 //#
@@ -22,21 +23,23 @@ namespace Detail
 {
 
 ENGINE_API void FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation Allocation) noexcept;
+ENGINE_API void FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allocation) noexcept;
 
 } /* ~Namespace Jafg::Detail */
 
-//# A buffer located on the device.
-struct LDeviceBuffer
+//# A generic buffer located on the device.
+template<typename T>
+struct TGenericDeviceBuffer
 {
-    constexpr LDeviceBuffer() noexcept : Buffer{nullptr}, Allocation{nullptr} {}
-    constexpr LDeviceBuffer(vk::Buffer InBuffer, LDeviceAllocation InAllocation) noexcept : Buffer{InBuffer}, Allocation{InAllocation} {}
-    PROHIBIT_COPY(LDeviceBuffer)
-    constexpr LDeviceBuffer(LDeviceBuffer&& Other) noexcept : Buffer{ Other.Buffer }, Allocation{ Other.Allocation }
+    constexpr TGenericDeviceBuffer() noexcept : Buffer{nullptr}, Allocation{nullptr} {}
+    constexpr TGenericDeviceBuffer(T InBuffer, LDeviceAllocation InAllocation) noexcept : Buffer{InBuffer}, Allocation{InAllocation} {}
+    PROHIBIT_COPY(TGenericDeviceBuffer)
+    constexpr TGenericDeviceBuffer(TGenericDeviceBuffer&& Other) noexcept : Buffer{ Other.Buffer }, Allocation{ Other.Allocation }
     {
         Other.Buffer = nullptr;
         Other.Allocation = nullptr;
     }
-    LDeviceBuffer& operator=(LDeviceBuffer&& Other) noexcept
+    TGenericDeviceBuffer& operator=(TGenericDeviceBuffer&& Other) noexcept
     {
         check( this != &Other )
 
@@ -50,7 +53,7 @@ struct LDeviceBuffer
 
         return *this;
     }
-    ~LDeviceBuffer() noexcept { Detail::FreeDeviceAllocation(this->Buffer, this->Allocation); }
+    ~TGenericDeviceBuffer() noexcept { Detail::FreeDeviceAllocation(this->Buffer, this->Allocation); }
 
     constexpr void Release() noexcept
     {
@@ -65,9 +68,12 @@ struct LDeviceBuffer
         this->Allocation = nullptr;
     }
 
-    vk::Buffer Buffer;
+    T Buffer;
     LDeviceAllocation Allocation;
 };
+
+typedef TGenericDeviceBuffer<vk::Buffer> LDeviceBuffer;
+typedef TGenericDeviceBuffer<vk::Image> LDeviceImage;
 
 //# A device buffer with detailed allocation info.
 struct LDetailedDeviceBuffer : public LDeviceBuffer
@@ -147,18 +153,42 @@ struct LMappedDeviceBuffer : public LDeviceBuffer
     void* Data;
 };
 
-struct LDevicePipelineConfig
+//# A device buffer holing vertices and indices.
+struct LDeviceIndexVertexBuffer
 {
+    //# TODO Make this struct that can hold to buffers in one single vk::buffer? for better cache locality?
+    // https://developer.nvidia.com/vulkan-memory-management
 };
 
 /* TODO: We can probably solve this with reflection in C++26? Bombastic sideeye */
 template<typename T>
-concept CDeviceVertexInput = requires (T&& t)
+concept CDeviceVertexInput = std::is_standard_layout_v<T> && requires (T&& t)
 {
-    { t.GetBindingDescriptions().data() } -> std::same_as<vk::VertexInputBindingDescription const*>;
-    { t.GetBindingDescriptions().size() } -> std::same_as<LSize>;
-    { t.GetAttributeDescriptions().data() } -> std::same_as<vk::VertexInputAttributeDescription const*>;
-    { t.GetAttributeDescriptions().size() } -> std::same_as<LSize>;
+    { t.BindingDescriptions().data() } -> std::same_as<vk::VertexInputBindingDescription const*>;
+    { t.BindingDescriptions().size() } -> std::same_as<LSize>;
+    { t.AttributeDescriptions().data() } -> std::same_as<vk::VertexInputAttributeDescription const*>;
+    { t.AttributeDescriptions().size() } -> std::same_as<LSize>;
+};
+
+template<typename T>
+concept CDeviceLayout = std::is_standard_layout_v<T> && requires (T&& t)
+{
+    { t.Bindings().data() } -> std::same_as<vk::DescriptorSetLayoutBinding const*>;
+    { t.Bindings().size() } -> std::same_as<LSize>;
+};
+
+struct LDevicePipeline
+{
+    void Free() noexcept
+    {
+        this->Pipeline = nullptr;
+        this->PipelineLayout = nullptr;
+        this->DescriptorSetLayout = nullptr;
+    }
+
+    vk::raii::Pipeline Pipeline{ nullptr };
+    vk::raii::PipelineLayout PipelineLayout{ nullptr };
+    vk::raii::DescriptorSetLayout DescriptorSetLayout{ nullptr };
 };
 
 struct LDevicePipelineFactory
@@ -166,13 +196,6 @@ struct LDevicePipelineFactory
     explicit LDevicePipelineFactory(LSurface const& InSurface) noexcept : Surface{ InSurface } {}
 
     PROHIBIT_REALLOC_OF_ANY_FORM(LDevicePipelineFactory)
-
-    decltype(auto) Push(this auto&& Self, vk::PushConstantRange&& Range)
-    {
-        check( Self.Range.has_value() == false )
-        Self.Range = std::move(Range);
-        return std::forward<decltype(Self)>(Self);
-    }
 
     decltype(auto) Shader(this auto&& Self, LPath const& Path, vk::ShaderStageFlags Stages)
     {
@@ -211,90 +234,105 @@ struct LDevicePipelineFactory
     }
 
     template<CDeviceVertexInput TDeviceVertexInput>
-    decltype(auto) VertexInput(this auto&& Self)
+    decltype(auto) VertexInput(this auto&& Self) noexcept
     {
         check( Self.VertexInputInfo.has_value() == false )
         Self.VertexInputInfo = {
-            .vertexBindingDescriptionCount = static_cast<u32>(TDeviceVertexInput::GetBindingDescriptions().size()),
-            .pVertexBindingDescriptions = TDeviceVertexInput::GetBindingDescriptions().data(),
-            .vertexAttributeDescriptionCount = static_cast<u32>(TDeviceVertexInput::GetAttributeDescriptions().size()),
-            .pVertexAttributeDescriptions = TDeviceVertexInput::GetAttributeDescriptions().data(),
+            .vertexBindingDescriptionCount = static_cast<u32>(TDeviceVertexInput::BindingDescriptions().size()),
+            .pVertexBindingDescriptions = TDeviceVertexInput::BindingDescriptions().data(),
+            .vertexAttributeDescriptionCount = static_cast<u32>(TDeviceVertexInput::AttributeDescriptions().size()),
+            .pVertexAttributeDescriptions = TDeviceVertexInput::AttributeDescriptions().data(),
             };
 
         return std::forward<decltype(Self)>(Self);
     }
 
-    vk::raii::Pipeline Build()
+    decltype(auto) InputAssembly(this auto&& Self, vk::PipelineInputAssemblyStateCreateInfo&& Info) noexcept
     {
-        auto& Frontend{ this->Surface.GetFrontend() };
+        Self.InputAssemblyInfo = std::move(Info);
+        return std::forward<decltype(Self)>(Self);
+    }
 
-        vk::raii::PipelineLayout Layout{
-            Frontend.GetVkDevice(),
-            vk::PipelineLayoutCreateInfo{
-                .setLayoutCount = 0, // TODO
-                .pSetLayouts = nullptr,
-                .pushConstantRangeCount = static_cast<uint32_t>(this->Range.has_value() ? 1uz : 0uz),
-                .pPushConstantRanges = this->Range.has_value() ? &*this->Range : nullptr
+    decltype(auto) ViewportState(this auto&& Self, vk::PipelineViewportStateCreateInfo&& Info) noexcept
+    {
+        Self.ViewportStateInfo = std::move(Info);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) Rasterization(this auto&& Self, vk::PipelineRasterizationStateCreateInfo&& Info) noexcept
+    {
+        Self.RasterizationInfo = std::move(Info);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) MultisamplingShading(this auto&& Self, vk::Bool32 Enable) noexcept
+    {
+        Self.MultisamplingShadingEnable = Enable;
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) DepthStencil(this auto&& Self, vk::PipelineDepthStencilStateCreateInfo&& Info) noexcept
+    {
+        Self.DepthStencilInfo = std::move(Info);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) ColorBlending(this auto&& Self, vk::LogicOp Op) noexcept
+    {
+        Self.ColorBlendLogicOpEnable = vk::True;
+        Self.ColorBlendLogicalOp = Op;
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) ColorBlendAttachment(this auto&& Self, vk::PipelineColorBlendAttachmentState&& Info) noexcept
+    {
+        Self.ColorBlendAttachment = std::move(Info);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) DynamicStates(this auto&& Self, std::array<vk::DynamicState, 2>&& States) noexcept
+    {
+        Self.DynamicStates = std::move(States);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<CDeviceLayout TDeviceLayout>
+    decltype(auto) Layout(this auto&& Self) noexcept
+    {
+        check( *Self.DescriptorSetLayout == nullptr )
+
+        Self.DescriptorSetLayout = vk::raii::DescriptorSetLayout{
+            Self.Surface.GetFrontend().GetVkDevice(),
+            vk::DescriptorSetLayoutCreateInfo{
+                .bindingCount = static_cast<u32>(TDeviceLayout::Bindings().size()),
+                .pBindings = TDeviceLayout::Bindings().data(),
                 }
             };
 
-        vk::PipelineDynamicStateCreateInfo DynamicStateInfo{
-            .dynamicStateCount = static_cast<u32>(this->DynamicStates.size()),
-            .pDynamicStates = this->DynamicStates.data(),
-            };
-
-        vk::PipelineColorBlendStateCreateInfo ColorBlendInfo{
-            .logicOpEnable = this->ColorBlendLogicOpEnable,
-            .logicOp = this->ColorBlendLogicalOp,
-            .attachmentCount = 1,
-            .pAttachments = &this->ColorBlendAttachment
-            };
-
-        vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
-            .rasterizationSamples = this->Surface.GetFrontend().GetMaxMsaaSamples(),
-            .sampleShadingEnable = this->MultisamplingShadingEnable
-            };
-
-        vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> Chain{
-            {
-                .stageCount = static_cast<u32>(this->Shaders.size()),
-                .pStages = this->Shaders.data(),
-                .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : nullptr,
-                .pInputAssemblyState = &this->InputAssemblyInfo,
-                .pViewportState = &this->ViewportStateInfo,
-                .pRasterizationState = &this->RasterizationInfo,
-                .pMultisampleState   = &MultisamplingInfo,
-                .pDepthStencilState  = &this->DepthStencilInfo,
-                .pColorBlendState    = &ColorBlendInfo,
-                .pDynamicState       = &DynamicStateInfo,
-                .layout = Layout,
-                .renderPass = nullptr,
-            },
-            {
-                .colorAttachmentCount = 1,
-                .pColorAttachmentFormats = &this->Surface.GetVkSwapchainSurfaceFormat().format,
-                .depthAttachmentFormat = Frontend.FindDepthFormat(),
-            }
-        };
-
-        return vk::raii::Pipeline{
-            Frontend.GetVkDevice(),
-            nullptr,
-            Chain.get<vk::GraphicsPipelineCreateInfo>()
-            };
+        return std::forward<decltype(Self)>(Self);
     }
+
+    decltype(auto) Push(this auto&& Self, vk::PushConstantRange&& Range) noexcept
+    {
+        check( Self.Range.has_value() == false )
+        Self.Range = std::move(Range);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    LDevicePipeline Build();
 
     LSurface const& Surface;
     TArray<vk::raii::ShaderModule> ShaderModules;
     TArray<vk::PipelineShaderStageCreateInfo> Shaders;
     std::optional<vk::PipelineVertexInputStateCreateInfo> VertexInputInfo;
-    std::optional<vk::PushConstantRange> Range;
-
     vk::PipelineInputAssemblyStateCreateInfo InputAssemblyInfo{
         .topology = vk::PrimitiveTopology::eTriangleList,
         .primitiveRestartEnable = vk::False
         };
-
+    vk::PipelineViewportStateCreateInfo ViewportStateInfo{
+        .viewportCount = 1,
+        .scissorCount = 1,
+        };
     vk::PipelineRasterizationStateCreateInfo RasterizationInfo{
         .depthClampEnable = vk::False,
         .rasterizerDiscardEnable = vk::False,
@@ -305,14 +343,7 @@ struct LDevicePipelineFactory
         .depthBiasSlopeFactor = 1.0f,
         .lineWidth = 1.0f
         };
-
     vk::Bool32 MultisamplingShadingEnable{ vk::False };
-
-    vk::PipelineViewportStateCreateInfo ViewportStateInfo{
-        .viewportCount = 1,
-        .scissorCount = 1,
-        };
-
     vk::PipelineDepthStencilStateCreateInfo DepthStencilInfo{
         .depthTestEnable       = vk::True,
         .depthWriteEnable      = vk::True,
@@ -320,19 +351,20 @@ struct LDevicePipelineFactory
         .depthBoundsTestEnable = vk::False,
         .stencilTestEnable     = vk::False
         };
-
-    vk::PipelineColorBlendAttachmentState ColorBlendAttachment{
-        .blendEnable = vk::False,
-        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-                        | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
-
     vk::Bool32 ColorBlendLogicOpEnable{ vk::False };
     vk::LogicOp ColorBlendLogicalOp{ vk::LogicOp::eCopy };
-
-    std::array<vk::DynamicState, 2> DynamicStates{
+    vk::PipelineColorBlendAttachmentState ColorBlendAttachmentState{
+        .blendEnable = vk::False,
+        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+                        | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+        };
+    std::array<vk::DynamicState, 2> DynamicStateInfo{
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor,
         };
+    vk::raii::DescriptorSetLayout DescriptorSetLayout{ nullptr };
+    vk::raii::PipelineLayout PipelineLayout{ nullptr };
+    std::optional<vk::PushConstantRange> Range;
 };
 
 } /* ~Namespace Jafg */

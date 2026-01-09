@@ -49,7 +49,7 @@ void Jafg::RendererStateMachine::PrepareForOrthographicPainting()
     return;
 }
 
-void Jafg::RendererStateMachine::ClipOrthographic(const LViewport& InViewport, LVector2&& InLocation, const LVector2& InSize)
+void Jafg::RendererStateMachine::ClipOrthographic(const LViewport& InViewport, LVector2D&& InLocation, const LVector2D& InSize)
 {
     InLocation.Y += InSize.Y;
     InViewport.ConvertTLToBLOrigin(&InLocation);

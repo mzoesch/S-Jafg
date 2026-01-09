@@ -27,8 +27,8 @@ void Jafg::WTabBarPanel::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
 
-    LVector2 DesiredSize; check( DesiredSize.IsZero() )
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    LVector2D DesiredSize; check( DesiredSize.IsZero() )
+    for (LWidgetSlot const* ChildSlot : this->GetChildren())
     {
         DesiredSize.X = Maths::Max(DesiredSize.X, ChildSlot->Content->GetDesiredSize_v2().X);
         DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildSlot->Content->GetDesiredSize_v2().Y);

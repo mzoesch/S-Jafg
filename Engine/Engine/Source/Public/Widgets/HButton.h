@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2D& InLocation) override;
 
     virtual void Construct() override;
     virtual LCursorReply OnCursorEnter() override;

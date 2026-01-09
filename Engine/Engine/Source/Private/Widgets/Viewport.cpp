@@ -10,6 +10,8 @@
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
 
+#include "TestWidget.h"
+
 void Jafg::LViewport::ClearInvalidWidgets()
 {
     if (this->FocusedWidget.IsValidDeep() == false)
@@ -48,7 +50,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
     return;
 }
 
-void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
+void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCursorLocation)
 {
     check( &this->Surface == &Context )
     this->SweepTranslation = LVector2D::ZeroVector;
@@ -282,7 +284,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
         {
             if (MostRecentReply.GetCursorType() != EMouseCursor::None)
             {
-                Context.SetMouseCursor(MostRecentReply.GetCursorType());
+                Context._SetMouseCursor(MostRecentReply.GetCursorType());
             }
         }
 
@@ -352,9 +354,10 @@ void Jafg::LViewport::Draw()
 
     this->IntermediateBuffer.MakeDrawTarget();
 
+    const auto Dimensions{ this->GetDimensions() };
     this->CachedOrthographicProjectionMatrix = Maths::MakeOrthographicProjectionMatrix
     (
-        LVector2(static_cast<f32>(this->Dimensions.X), static_cast<f32>(this->Dimensions.Y))
+        LVector2(static_cast<f32>(Dimensions.X), static_cast<f32>(Dimensions.Y))
     );
 
     RendererStateMachine::PrepareForPerspectivePainting();
@@ -391,7 +394,10 @@ void Jafg::LViewport::Draw()
             if (Widget->ShouldNowDraw())
             {
                 STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
-                // Widget->Draw(*this);
+                if (Widget->IsA<WTestWidget>())
+                {
+                    Widget->Draw(*this);
+                }
             }
         }
 
@@ -454,22 +460,27 @@ bool Jafg::LViewport::TryRemoveWidget(WUserWidget* Widget)
     return algo::erase_once(&this->TopLevelWidgets, Widget);
 }
 
-void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
+LUIntVector2 Jafg::LViewport::GetDimensions() const noexcept
 {
-    check( GEngine )
-    check( InDimensions.X > 0 && InDimensions.Y > 0 )
-
-    this->Dimensions = InDimensions;
-
-    if (this->IntermediateBuffer.IsValid())
-    {
-        this->IntermediateBuffer = { };
-    }
-
-    this->IntermediateBuffer.Build(this->GetDimensions());
-
-    return;
+    return this->Surface.GetDimensions();
 }
+
+// void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
+// {
+//     check( GEngine )
+//     check( InDimensions.X > 0 && InDimensions.Y > 0 )
+//
+//     this->Dimensions = InDimensions;
+//
+//     if (this->IntermediateBuffer.IsValid())
+//     {
+//         this->IntermediateBuffer = { };
+//     }
+//
+//     this->IntermediateBuffer.Build(this->GetDimensions());
+//
+//     return;
+// }
 
 Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
 {
@@ -546,7 +557,7 @@ void Jafg::LViewport::HandleReply(LSurface& Context, const LCursorReply& Reply)
 
     if (Reply.GetCursorType() != EMouseCursor::None)
     {
-        Context.SetMouseCursor(Reply.GetCursorType());
+        Context._SetMouseCursor(Reply.GetCursorType());
     }
 
     if (Reply.ShouldLooseFocus())

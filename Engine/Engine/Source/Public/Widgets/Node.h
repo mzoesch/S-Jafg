@@ -120,38 +120,38 @@ struct LAnchor final
     {
         struct
         {
-            f32 MinX;
-            f32 MinY;
-            f32 MaxX;
-            f32 MaxY;
+            f64 MinX;
+            f64 MinY;
+            f64 MaxX;
+            f64 MaxY;
         };
 
         //#
         //# Minimum to maximum.
         //# Left, Top, Right, Bottom.
         //#
-        LVector4 Anchors;
+        LVector4D Anchors;
     };
 
-    FORCEINLINE constexpr LAnchor() noexcept : Anchors(0.0f, 0.0f, 0.0f, 0.0f) { }
-    FORCEINLINE constexpr LAnchor(const f32 InUniformAnchors) noexcept
+    FORCEINLINE constexpr LAnchor() noexcept : Anchors(0.0, 0.0, 0.0, 0.0) { }
+    FORCEINLINE constexpr LAnchor(const f64 InUniformAnchors) noexcept
         : Anchors(InUniformAnchors, InUniformAnchors, InUniformAnchors, InUniformAnchors)
     {
         check( this->IsNormalized() )
     }
-    FORCEINLINE constexpr LAnchor(const f32 InHorizontalUniform, const f32 InVerticalUniform) noexcept
+    FORCEINLINE constexpr LAnchor(const f64 InHorizontalUniform, const f64 InVerticalUniform) noexcept
         : Anchors(InHorizontalUniform, InVerticalUniform, InHorizontalUniform, InVerticalUniform)
     {
         check( this->IsNormalized() )
     }
-    FORCEINLINE constexpr LAnchor(const f32 InMinX, const f32 InMinY, const f32 InMaxX, const f32 InMaxY) noexcept
+    FORCEINLINE constexpr LAnchor(const f64 InMinX, const f64 InMinY, const f64 InMaxX, const f64 InMaxY) noexcept
         : Anchors(InMinX, InMinY, InMaxX, InMaxY)
     {
         check( this->IsNormalized() )
     }
     FORCEINLINE constexpr LAnchor(const EAnchor::Type InAnchors) noexcept
     {
-        this->Anchors = LVector4::ZeroVector;
+        this->Anchors = LVector4D::ZeroVector;
         this->ApplyConstraints(InAnchors);
         return;
     }
@@ -161,25 +161,25 @@ struct LAnchor final
         this->ApplyConstraints(InConstraints);
         return;
     }
-    FORCEINLINE constexpr LAnchor(const LVector4& InOther, const EAnchor::Type InConstraints) noexcept
+    FORCEINLINE constexpr LAnchor(const LVector4D& InOther, const EAnchor::Type InConstraints) noexcept
     {
         this->Anchors = InOther;
         this->ApplyConstraints(InConstraints);
         return;
     }
-    FORCEINLINE constexpr LAnchor(const LVector4& InAnchors) noexcept : Anchors(InAnchors) { }
-    FORCEINLINE constexpr LAnchor(const LAnchor& InOther) noexcept : Anchors(InOther.Anchors) { }
+    FORCEINLINE constexpr LAnchor(LVector4D const& InAnchors) noexcept : Anchors(InAnchors) { }
+    FORCEINLINE constexpr LAnchor(LAnchor const& InOther) noexcept : Anchors(InOther.Anchors) { }
     FORCEINLINE constexpr LAnchor(LAnchor&& InOther) noexcept : Anchors(std::move(InOther.Anchors)) { }
-    FORCEINLINE constexpr LAnchor& operator=(const LAnchor& InOther)  noexcept { this->Anchors = InOther.Anchors; return *this; }
+    FORCEINLINE constexpr LAnchor& operator=(LAnchor const& InOther)  noexcept { this->Anchors = InOther.Anchors; return *this; }
     FORCEINLINE constexpr LAnchor& operator=(LAnchor&& InOther) noexcept { this->Anchors = std::move(InOther.Anchors); return *this; }
 
     ENGINE_API bool IsNormalized() const noexcept;
     ENGINE_API void Normalize() noexcept;
 
-    FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0f; }
-    FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0f; }
-    FORCEINLINE constexpr bool IsStretchedHorizontal() const noexcept { return this->MaxX > 0.0f; }
-    FORCEINLINE constexpr bool IsStretchedVertical() const noexcept { return this->MaxY > 0.0f; }
+    FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0; }
+    FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0; }
+    FORCEINLINE constexpr bool IsStretchedHorizontal() const noexcept { return this->MaxX > 0.0; }
+    FORCEINLINE constexpr bool IsStretchedVertical() const noexcept { return this->MaxY > 0.0; }
 
     FORCEINLINE constexpr bool IsPushed() const noexcept { return this->IsPushedHorizontal() || this->IsPushedVertical(); }
     FORCEINLINE constexpr bool IsStretched() const noexcept { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
@@ -450,15 +450,15 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JNodeData)
 };
 
-ENGINE_API  f32 InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept;
-FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept;
-ENGINE_API  LVector2 InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept;
-FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept;
+ENGINE_API  f64 InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept;
+FORCEINLINE f64 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept;
+ENGINE_API  LVector2D InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept;
+FORCEINLINE LVector2D InSpt(WNode const& Node, LWidgetSize2 Size) noexcept;
 
-ENGINE_API  f32 InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept;
-FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
-ENGINE_API  LVector2 InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept;
-FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept;
+ENGINE_API  f64 InSptFromRelative(LViewport const& Viewport, f64 Relative) noexcept;
+FORCEINLINE f64 InSptFromRelative(WNode const& Node, f64 Relative) noexcept;
+ENGINE_API  LVector2D InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept;
+FORCEINLINE LVector2D InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept;
 
 typedef TFunction<LCursorReply(WNode& Widget)> OnWidgetCursorEventSignature;
 typedef TFunction<LReply(WNode& Widget, LViewport& Viewport, LKeyEvent const& KeyEvent)> OnWidgetKeyEventSignature;
@@ -523,18 +523,18 @@ public:
     //#
     virtual bool AddData(JNodeData& Data) { return false; }
 
-    bool IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
+    bool IsInBounds(const LViewport& Context, const LVector2D& InLocation) const;
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2D& InLocation);
 
     virtual LCursorReply OnCursorEnter() { if (this->OnCursorEnterEvent.IsValid()) { return this->OnCursorEnterEvent.Invoke(*this); } return LCursorReply::Handled(); }
-    virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { if (this->OnCursorMovedEvent.IsValid()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    virtual LCursorReply OnCursorMoved(const LVector2D& InLocation) { if (this->OnCursorMovedEvent.IsValid()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
     virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsValid()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
 
     OnWidgetCursorEventSignature OnCursorEnterEvent;
     OnWidgetCursorEventSignature OnCursorMovedEvent;
     OnWidgetCursorEventSignature OnCursorLeaveEvent;
 
-    virtual LReply SweepFocusTest(const LViewport& Context, const LVector2& InLocation);
+    virtual LReply SweepFocusTest(const LViewport& Context, const LVector2D& InLocation);
 
     //#
     //# Called if this widget is being focused / unfocused. Extra care is given by the owing viewport for special
@@ -657,11 +657,11 @@ public:
     //# Do not call this method from outside the #UpdateDesiredSize method.
     //#
     FORCEINLINE void SetDesiredSize(LWidgetSize2 Size) const noexcept { this->SetDesiredSizeInSpt(InSpt(*this, Size)); }
-    void SetDesiredSizeInSpt(LVector2 Size) const noexcept;
+    void SetDesiredSizeInSpt(LVector2D Size) const noexcept;
     //# Internal usage only. Do not use unless you are a really smart person.
-    FORCEINLINE void SetDesiredSizeUnsanitized(LVector2 Size) const { this->DesiredSize_v2 = std::move(Size); return; }
-    FORCEINLINE LVector2 const& GetDesiredSize_v2() const { return this->DesiredSize_v2; }
-    FORCEINLINE LVector2 const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : LVector2::ZeroVector; }
+    FORCEINLINE void SetDesiredSizeUnsanitized(LVector2D Size) const { this->DesiredSize_v2 = std::move(Size); return; }
+    FORCEINLINE LVector2D const& GetDesiredSize_v2() const { return this->DesiredSize_v2; }
+    FORCEINLINE LVector2D const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : LVector2D::ZeroVector; }
     //# The min desired size. A widget will always be at least this size.
     FORCEINLINE void SetMinDesiredSize(LWidgetSize2 Size) { this->MinDesiredSize = std::move(Size); return; }
     FORCEINLINE LWidgetSize2 const& GetMinDesiredSize() const { return this->MinDesiredSize; }
@@ -670,21 +670,21 @@ public:
     FORCEINLINE LWidgetSize2 const& GetMaxDesiredSize() const { return this->MaxDesiredSize; }
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
-    virtual void UpdateAnchoredSize(const LViewport& Context) const;
+    virtual void UpdateAnchoredSize(LViewport const& Context) const;
     //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
-    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
-    FORCEINLINE void SetAnchoredSize(LVector2 const& Size) const noexcept { this->SetAnchoredSize(LVector2{ Size }); }
-    void SetAnchoredSize(LVector2&& Size) const noexcept;
-    FORCEINLINE LVector2 const& GetAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
-    FORCEINLINE LVector2 CopyAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
+    virtual void UpdateAnchoredSizeForChild(LViewport const& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
+    FORCEINLINE void SetAnchoredSize(LVector2D const& Size) const noexcept { this->SetAnchoredSize(LVector2D{ Size }); }
+    void SetAnchoredSize(LVector2D&& Size) const noexcept;
+    FORCEINLINE LVector2D const& GetAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
+    FORCEINLINE LVector2D CopyAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
     //# The anchored size that was lost during #MaxDesiredSize clamp.
-    FORCEINLINE LVector2 const& GetLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
-    FORCEINLINE LVector2 CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
+    FORCEINLINE LVector2D const& GetLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
+    FORCEINLINE LVector2D CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
-    virtual LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
-    LVector2 GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const;
+    virtual LVector2D GetAnchoredTopLeftFromMostOuter(LViewport const& Context) const;
+    LVector2D GetAnchoredAndTranslatedTopLeftFromMostOuter(LViewport const& Context) const;
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
-    virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL(return { })
+    virtual LVector2D GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Context, WNode const* InDirectChild) const PURE_VIRTUAL(return { })
 
     FORCEINLINE bool IsSlotValid() const noexcept { return this->Slot.Parent != nullptr; }
     FORCEINLINE LWidgetSlot& GetMutableSlot() noexcept { return this->Slot; }
@@ -740,7 +740,7 @@ private:
     //#
     //# The desired size of this widget in pt.
     //#
-    mutable LVector2 DesiredSize_v2;
+    mutable LVector2D DesiredSize_v2;
 
     //#
     //# The minimum content area.
@@ -755,12 +755,12 @@ private:
     //#
     //# The anchored size of this widget in pt.
     //#
-    mutable LVector2 AnchoredSize_v2;
+    mutable LVector2D AnchoredSize_v2;
 
     //#
     //# The anchored size that was lost during #MaxDesiredSize clamp in pt.
     //#
-    mutable LVector2 LostAnchoredSize_v2;
+    mutable LVector2D LostAnchoredSize_v2;
 
     LAnchor Anchor{ EAnchor::TopLeft };
 };
@@ -851,7 +851,7 @@ FORCEINLINE void LWidgetFactory::Finish() noexcept
     MakeDeferredWidgetNodeFinal(this->GetNodeRaw());
 }
 
-FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
+FORCEINLINE f64 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
     {
@@ -862,7 +862,7 @@ FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
     return InSptFromRelative(Node.GetViewport(), Size.Size);
 }
 
-FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept
+FORCEINLINE LVector2D InSpt(WNode const& Node, LWidgetSize2 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
     {
@@ -873,12 +873,12 @@ FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept
     return InSptFromRelative(Node.GetViewport(), Size.Size);
 }
 
-FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept
+FORCEINLINE f64 InSptFromRelative(WNode const& Node, f64 Relative) noexcept
 {
     return InSptFromRelative(Node.GetViewport(), Relative);
 }
 
-FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept
+FORCEINLINE LVector2D InSptFromRelative(WNode const& Node, LVector2D Relative) noexcept
 {
     return InSptFromRelative(Node.GetViewport(), Relative);
 }

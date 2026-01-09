@@ -173,9 +173,9 @@ public:
 
     virtual void Draw(LViewport& Context) const override;
 
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2D& InLocation) override;
 
-    virtual LReply SweepFocusTest(const LViewport& Context, const LVector2& InLocation) override;
+    virtual LReply SweepFocusTest(const LViewport& Context, const LVector2D& InLocation) override;
 
     //# This only the user interface.
     void UserInterfaceTick(const LViewport& InViewport);
@@ -249,28 +249,28 @@ protected:
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
     bool MBUpOnScrollbar(const LViewport& InViewport);
 
-    bool DrawVScrollbar(const f32 InVisibleY) const;
-    bool DrawHScrollbar(const f32 InVisibleX) const;
+    bool DrawVScrollbar(const f64 InVisibleY) const;
+    bool DrawHScrollbar(const f64 InVisibleX) const;
 
-    LVector2 GetVInteractiveAreaScrollSize() const;
-    LVector2 GetVInteractiveAreaScrollPositionFromOuter() const;
+    LVector2D GetVInteractiveAreaScrollSize() const;
+    LVector2D GetVInteractiveAreaScrollPositionFromOuter() const;
 
-    LVector2 GetHInteractiveAreaScrollSize() const;
-    LVector2 GetHInteractiveAreaScrollPositionFromOuter() const;
+    LVector2D GetHInteractiveAreaScrollSize() const;
+    LVector2D GetHInteractiveAreaScrollPositionFromOuter() const;
 
-    LVector2 GetVBackgroundScrollSize() const;
-    LVector2 GetVBackgroundScrollPositionFromOuter() const;
-    LVector2 GetVForegroundScrollSize() const;
-    LVector2 GetVForegroundScrollSize(const f32 InVisibleY) const;
-    LVector2 GetVForegroundScrollPositionFromOuter() const;
-    LVector2 GetVForegroundScrollPositionFromOuter(const f32 InScrollOffsetYPercent) const;
+    LVector2D GetVBackgroundScrollSize() const;
+    LVector2D GetVBackgroundScrollPositionFromOuter() const;
+    LVector2D GetVForegroundScrollSize() const;
+    LVector2D GetVForegroundScrollSize(const f64 InVisibleY) const;
+    LVector2D GetVForegroundScrollPositionFromOuter() const;
+    LVector2D GetVForegroundScrollPositionFromOuter(const f64 InScrollOffsetYPercent) const;
 
-    LVector2 GetHBackgroundScrollSize() const;
-    LVector2 GetHBackgroundScrollPositionFromOuter() const;
-    LVector2 GetHForegroundScrollSize() const;
-    LVector2 GetHForegroundScrollSize(const f32 InVisibleX) const;
-    LVector2 GetHForegroundScrollPositionFromOuter() const;
-    LVector2 GetHForegroundScrollPositionFromOuter(const f32 InScrollOffsetXPercent) const;
+    LVector2D GetHBackgroundScrollSize() const;
+    LVector2D GetHBackgroundScrollPositionFromOuter() const;
+    LVector2D GetHForegroundScrollSize() const;
+    LVector2D GetHForegroundScrollSize(const f64 InVisibleX) const;
+    LVector2D GetHForegroundScrollPositionFromOuter() const;
+    LVector2D GetHForegroundScrollPositionFromOuter(const f64 InScrollOffsetXPercent) const;
 
 private:
 
@@ -286,16 +286,16 @@ private:
     //#
     LVector2D ScrollPosition;
 
-    mutable LVector2 DesiredSizeOfChildren;
+    mutable LVector2D DesiredSizeOfChildren;
 
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
 
-    bool bCullNonVisible : 1{ true };
-    bool bUiTickV : 1{ false };
-    bool bUiTickH : 1{ false };
-    bool bUseChildrenDesiredSize : 1{ false };
-    f32 MbVOffset { 0.0f };
-    f32 MbHOffset { 0.0f };
+    bool bCullNonVisible:1{ true };
+    bool bUiTickV:1{ false };
+    bool bUiTickH:1{ false };
+    bool bUseChildrenDesiredSize:1{ false };
+    f64 MbVOffset { 0.0 };
+    f64 MbHOffset { 0.0 };
 };
 
 FORCEINLINE void WScrollRegion::SetBrush(const LScrollRegionBrush& InBrush) noexcept
@@ -314,7 +314,7 @@ FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrus
 
 FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept
 {
-    static_assert(sizeof(LRegionBrush) == 64, "LRegionBrush has changed. Please modify this function.");
+    static_assert(sizeof(LRegionBrush) == 96, "LRegionBrush has changed. Please modify this function.");
 
     LScrollRegionBrush Result;
 

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Platform/Surface.h"
 
 #if !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
@@ -12,17 +11,8 @@
 struct GLFWwindow;
 struct GLFWcursor;
 
-#include "Rhi/VkCommon.h"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/vec4.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
+#include "Rhi/VkForward.h"
+#include "Rhi/VkAl.h"
 
 namespace Jafg
 {
@@ -32,57 +22,12 @@ namespace Private
 
 struct LGlfw3Bridge;
 
-} /* ~Namespace Jafg::Private */
+} /* ~Namespace Private */
 
-struct Vertex
-{
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec2 texCoord;
-
-    static vk::VertexInputBindingDescription getBindingDescription()
-    {
-        return {
-            .binding = 0,
-            .stride = sizeof(Vertex),
-            .inputRate = vk::VertexInputRate::eVertex
-            };
-    }
-
-    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
-        return {
-            vk::VertexInputAttributeDescription{
-                .location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, pos)
-                },
-            vk::VertexInputAttributeDescription{
-                .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)
-                },
-            vk::VertexInputAttributeDescription{
-                .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, texCoord)
-                }
-        };
-    }
-
-    bool operator==(const Vertex &other) const
-    {
-        return pos == other.pos && color == other.color && texCoord == other.texCoord;
-    }
-};
-
-} /* ~Namespace Jafg */
-
-template <>
-struct std::hash<Jafg::Vertex>
-{
-    size_t operator()(Jafg::Vertex const &vertex) const noexcept
-    {
-        return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-    }
-};
-
-namespace Jafg
-{
-
+//#
+//# Vk methods are only available if vulkan is enabled for a given platform.
+//# _ methods are platform dependent, and it should be avoided to use them outside of platform specific code.
+//#
 class LSurfaceGlfw3 final : public LSurfaceBase
 {
 public:
@@ -99,44 +44,74 @@ public:
 
     void LateSetupVk();
 
-    virtual void OnClear() override;
-    virtual void OnUpdate() override;
+    void OnClear();
+    void OnUpdate();
+    NODISCARD FORCEINLINE bool IsValid() noexcept { return this->Handle != nullptr; }
+    void PollEvents();
+    void PollInputs();
 
-    FORCEINLINE virtual bool IsValid() override { return this->Handle != nullptr; }
+    ENGINE_API void SetInputMode(EInputMode::Type InMode) noexcept;
+    ENGINE_API void _SetMouseCursor(const EMouseCursor::Type InCursor);
 
-    virtual void PollInputs() override;
-    virtual void PollEvents() override;
+    FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
+    FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
 
-    ENGINE_API virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override;
-    ENGINE_API virtual void SetMouseCursor(const EMouseCursor::Type InCursor) override;
+    FORCEINLINE LUIntVector2 GetDimensions() const noexcept { return {this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height}; }
 
-               virtual i32  GetWidth() const override { return this->GetDimensions().X; }
-               virtual i32  GetHeight() const override { return this->GetDimensions().Y; }
-    ENGINE_API virtual auto GetDimensions() const -> LIntVector2 override;
+    NODISCARD FORCEINLINE bool CanEverVSync() const noexcept { return true; }
+    ENGINE_API void SetVSync(const bool bEnabled);
+    NODISCARD FORCEINLINE bool IsVSync() const noexcept { return this->bVSync; }
+    NODISCARD FORCEINLINE bool CanEverResize() const noexcept { return true; }
+    ENGINE_API void SetResizable(const bool bResizable);
+    NODISCARD FORCEINLINE bool IsResizable() const noexcept { return this->bResizable; }
 
-    ENGINE_API  virtual bool CanVSync() const override;
-    ENGINE_API  virtual void SetVSync(const bool bEnabled) override;
-    FORCEINLINE virtual bool IsVSync() const noexcept override { return this->bVSync; }
+    FORCEINLINE bool _HasPendingResize() const noexcept { return this->bPendingResize; }
+    FORCEINLINE auto _GetPendingResizeExtent() const noexcept { return this->PendingResizeExtent; }
+    FORCEINLINE f32  _GetPendingTimeForResizeApply() const noexcept { return this->PendingTimeForResizeApply; }
 
-    ENGINE_API  virtual bool CanResize() const override;
-    ENGINE_API  virtual void SetResizable(const bool bInResizable) override;
-    FORCEINLINE virtual bool IsResizable() const noexcept override { return this->bResizable; }
+    FORCEINLINE auto Vk_GetNumberOfFramesInFlight() const noexcept { return this->Vk_SwapchainImages.size(); }
 
-    FORCEINLINE bool IsFirstMouseCallback() const noexcept { return this->bFirstMouseCallback; }
-    FORCEINLINE f64  GetLastMouseX() const noexcept { return this->LastMouseX; }
-    FORCEINLINE f64  GetLastMouseY() const noexcept { return this->LastMouseY; }
+    FORCEINLINE auto const& Vk_GetCommandPool() const noexcept { return this->Vk_CommandPool; }
 
-    FORCEINLINE GLFWcursor* GetNativeCursorHandleDangerous() const { return this->Cursor; }
-    FORCEINLINE GLFWwindow* GetNativeHandleDangerous() const { return this->Handle; }
+    FORCEINLINE auto const& Vk_GetSurface() const noexcept { return this->Vk_Surface; }
 
-    FORCEINLINE auto const& GetVkSurface() const { return this->VkMySurface; }
+    FORCEINLINE auto const& Vk_GetSurfaceCapabilities() const noexcept { return this->Vk_SurfaceCapabilities; }
 
-    FORCEINLINE auto const& GetVkSwapchainSurfaceFormat() const { return this->VkMySwapchainSurfaceFormat; }
-    FORCEINLINE auto const& GetVkSwapchainPresentMode() const { return this->VkMySwapchainPresentMode; }
-    FORCEINLINE auto const& GetVkSwapchainExtent() const { return this->VkMySwapchainExtent; }
-    FORCEINLINE auto const& GetVkSwapchain() const { return this->VkMySwapchain; }
+    FORCEINLINE auto const& Vk_GetAvailableSurfaceFormats() const noexcept { return this->Vk_AvailableSurfaceFormats; }
+    FORCEINLINE auto Vk_GetDesiredSurfaceFormat() const noexcept { return this->Vk_DesiredSurfaceFormat; }
+    FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { return this->Vk_SurfaceFormat; }
 
-    FORCEINLINE auto const& GetVkCommandPool() const { return this->VkMyCommandPool; }
+    FORCEINLINE auto const& Vk_GetAvailablePresentModes() const noexcept { return this->Vk_AvailablePresentModes; }
+    FORCEINLINE auto Vk_GetDesiredPresentMode() const noexcept { return this->Vk_DesiredPresentMode; }
+    FORCEINLINE auto const& Vk_GetPresentMode() const noexcept { return this->Vk_PresentMode; }
+
+    FORCEINLINE auto _GetWindowFrameSizeTopLeft() const noexcept { return this->WindowFrameSizeTopLeft; }
+    FORCEINLINE auto _GetWindowFrameSizeBottomRight() const noexcept { return this->WindowFrameSizeBottomRight; }
+    FORCEINLINE auto _GetWindowSize() const noexcept { return this->WindowSize; }
+    FORCEINLINE auto _GetFramebufferSize() const noexcept { return this->FramebufferSize; }
+    FORCEINLINE auto Vk_GetSwapchainExtent() const noexcept { return this->Vk_SwapchainExtent; }
+    FORCEINLINE auto const& Vk_GetSwapchain() const noexcept { return this->Vk_VkMySwapchain; }
+
+    FORCEINLINE auto const& Vk_GetSwapchainImages() const noexcept { return this->Vk_SwapchainImages; }
+    FORCEINLINE auto const& Vk_GetSwapchainImageViews() const noexcept { return this->Vk_SwapchainImageViews; }
+    FORCEINLINE auto const& Vk_GetColorImage() const noexcept { return this->Vk_ColorImage; }
+    FORCEINLINE auto const& Vk_GetColorImageView() const noexcept { return this->Vk_ColorImageView; }
+    FORCEINLINE auto const& Vk_GetDepthImage() const noexcept { return this->Vk_DepthImage; }
+    FORCEINLINE auto const& Vk_GetDepthImageView() const noexcept { return this->Vk_DepthImageView; }
+
+    FORCEINLINE auto const& Vk_GetPresentSemaphores() const noexcept { return this->Vk_ImageAvailableSemaphores; }
+    FORCEINLINE auto const& Vk_GetRenderSemaphores() const noexcept { return this->Vk_RenderSemaphores; }
+    FORCEINLINE auto const& Vk_GetFlightFences() const noexcept { return this->Vk_FlightFences; }
+    FORCEINLINE auto Vk_GetLastFrameInFlightIndex() const noexcept { return this->Vk_LastFrameInFlightIndex; }
+    FORCEINLINE auto Vk_GetCurrentFrameInFlightIndex() const noexcept { check( this->Vk_CurrentFrameInFlightIndex.has_value() ) return this->Vk_CurrentFrameInFlightIndex.value(); }
+
+    FORCEINLINE auto const& Vk_GetCommandBuffers() const noexcept { return this->Vk_CommandBuffers; }
+
+    //#
+    //# Transitions an image layout for the current frame's command buffer.
+    //# @note If no flight frame is currently progressed, this method would then trigger an engine panic.
+    //#
+    ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier);
 
 private:
 
@@ -153,59 +128,32 @@ private:
     virtual void EmulateContentForBufferedInputGlfw3(const i32 InKey);
 #endif /* PLATFORM_LINUX */
 
-    void VkCreateSwapchain();
-    vk::SurfaceFormatKHR ChooseVkSwapSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats) const;
-    vk::PresentModeKHR ChooseVkSwapPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes) const;
-    vk::Extent2D ChooseVkSwapExtent(vk::SurfaceCapabilitiesKHR const& Capabilities) const;
-    void VkCreateImageViews();
-    void VkCreateDescriptorSetLayout();
-    void VkCreateGraphicsPipeline();
-    vk::raii::ShaderModule CreateShaderModule(TArray<u8> const& Code) const;
-    void VkCreateCommandPool();
-    void VkCreateCommandBuffers();
-    void VkCreateSynchObjects();
+    void Vk_CreateCommandPool();
 
-    void VkCleanSwapchain();
-    void WaitForSemaphore(vk::raii::Semaphore const& Semaphore);
-    void WaitForSemaphores(TArray<vk::raii::Semaphore> const& Semaphores);
-    void VkRecreateSwapchain();
-
-    void VkCreateBuffer(
-          vk::DeviceSize Size
-        , vk::BufferUsageFlags Usage
-        , vk::MemoryPropertyFlags Properties
-        , vk::raii::Buffer& Buffer
-        , vk::raii::DeviceMemory& BufferMemory
+    void Vk_CreateSwapchain();
+    static TOptional<vk::SurfaceFormatKHR> Vk_GetSwapchainSurfaceFormatKHR(
+          std::vector<vk::SurfaceFormatKHR> const& AvailableFormats
+        , vk::SurfaceFormatKHR DesiredSurfaceFormat
         );
-
-    void RecordCommandBuffer(u32 ImageIndex);
-
-    void TransitionImageLayout(
-        vk::Image Image,
-        vk::ImageLayout OldLayout,
-        vk::ImageLayout NewLayout,
-        vk::AccessFlags2 SrcAccessMask,
-        vk::AccessFlags2 DstAccessMask,
-        vk::PipelineStageFlags2 SrcStageMask,
-        vk::PipelineStageFlags2 DstStageMask,
-        vk::ImageAspectFlags AspectMask
+    static TOptional<vk::PresentModeKHR> Vk_GetSwapchainPresentModeKHR(
+          std::vector<vk::PresentModeKHR> const& AvailablePresentModes
+        , vk::PresentModeKHR DesiredPresentMode
         );
+        void __Vk_CreateImageViews();
+        void __Vk_CreateColorResources();
+        void __Vk_CreateDepthResources();
+        void __Vk_CreateSynchObjects();
 
-    u32 FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags Properties) const;
+    void Vk_CreateCommandBuffers();
 
     GLFWcursor* Cursor{ nullptr };
     GLFWwindow* Handle{ nullptr };
 
-    bool bVSync{ false };
-    bool bResizable{ false };
-
-    bool bFirstMouseCallback{ true };
-    f64 LastMouseX{ 0.0 };
-    f64 LastMouseY{ 0.0 };
+    bool bVSync:1{ false };
+    bool bResizable:1{ false };
 
     bool bPendingResize{ false };
-    i32 PendingWidth{ 0 };
-    i32 PendingHeight{ 0 };
+    LUIntVector2 PendingResizeExtent;
     f32 PendingTimeForResizeApply{ 0.0f };
 
 #if PLATFORM_LINUX
@@ -215,57 +163,60 @@ private:
     i32 Glfw3LastNewKey{ INDEX_NONE };
 #endif /* PLATFORM_LINUX */
 
-    vk::raii::SurfaceKHR VkMySurface{ nullptr };
+    vk::raii::SurfaceKHR Vk_Surface{ nullptr };
 
-    vk::SurfaceFormatKHR VkMySwapchainSurfaceFormat{ vk::Format::eUndefined };
-    vk::PresentModeKHR VkMySwapchainPresentMode;
-    vk::Extent2D VkMySwapchainExtent;
-    vk::raii::SwapchainKHR VkMySwapchain{ nullptr };
+    vk::raii::CommandPool Vk_CommandPool{ nullptr };
 
-    TArray<vk::Image> VkSwapchainImages;
-    TArray<vk::raii::ImageView> VkSwapchainImageViews;
-    vk::raii::DescriptorSetLayout VkMyDescriptorSetLayout{ nullptr };
-    vk::raii::PipelineLayout VkMyPipelineLayout{ nullptr };
-    vk::raii::Pipeline VkMyPipeline{ nullptr };
-    vk::raii::CommandPool VkMyCommandPool{ nullptr };
-    std::vector<vk::raii::CommandBuffer> VkCommandBuffers;
+    vk::SurfaceCapabilitiesKHR Vk_SurfaceCapabilities;
+
+    std::vector<vk::SurfaceFormatKHR> Vk_AvailableSurfaceFormats;
+    vk::SurfaceFormatKHR Vk_DesiredSurfaceFormat{.format = vk::Format::eB8G8R8A8Srgb, .colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear};
+    vk::SurfaceFormatKHR Vk_SurfaceFormat{.format = vk::Format::eUndefined};
+
+    std::vector<vk::PresentModeKHR> Vk_AvailablePresentModes;
+    vk::PresentModeKHR Vk_DesiredPresentMode{ vk::PresentModeKHR::eMailbox };
+    vk::PresentModeKHR Vk_PresentMode{ vk::PresentModeKHR::eImmediate };
+
+    LIntVector2 WindowFrameSizeTopLeft;
+    LIntVector2 WindowFrameSizeBottomRight;
+    LIntVector2 WindowSize;
+    LIntVector2 FramebufferSize;
+    vk::Extent2D Vk_SwapchainExtent;
+    vk::raii::SwapchainKHR Vk_VkMySwapchain{ nullptr };
+
+    TStackArray<vk::Image, Jafg::Vk_DesiredMaxFramesInFlight> Vk_SwapchainImages;
+    TArray<vk::raii::ImageView> Vk_SwapchainImageViews;
+    LDeviceImage Vk_ColorImage;
+    vk::raii::ImageView Vk_ColorImageView{ nullptr };
+    LDeviceImage Vk_DepthImage;
+    vk::raii::ImageView Vk_DepthImageView{ nullptr };
+
+    std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_ImageAvailableSemaphores;
+    std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_RenderSemaphores;
+    std::array<vk::raii::Fence, Jafg::Vk_DesiredMaxFramesInFlight> Vk_FlightFences;
+    u32 Vk_LastFrameInFlightIndex{ 0 };
+    std::optional<u32> Vk_CurrentFrameInFlightIndex{};
+
+    std::array<vk::raii::CommandBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_CommandBuffers;
+
+
+
+
+
+
+
     vk::raii::DescriptorPool VkMyDescriptorPool{ nullptr };
     TArray<vk::raii::DescriptorSet> VkDescriptorSets;
-    u32 VkFlightSyncFrameIndex{ 0 };
-    u32 VkSemaphoreSyncIndex{ 0 };
-    TArray<vk::raii::Semaphore> VkPresentSemaphores;
-    TArray<vk::raii::Semaphore> VkRenderSemaphores;
-    TArray<vk::raii::Fence> VkFlightFences;
-
-    LVmaBuffer VertexBuffer;
-    LVmaBuffer IndexBuffer;
-
-    TArray<LVmaMappedBuffer> UniformBuffers;
-
-    LVmaImage TextureImage;
+    TArray<LMappedDeviceBuffer> UniformBuffers;
+    LDeviceImage TextureImage;
     vk::raii::ImageView TextureImageView{ nullptr };
     vk::raii::Sampler TextureSampler{ nullptr };
-
-    LVmaImage DepthImage;
-    vk::raii::ImageView DepthImageView{ nullptr };
-
-    std::vector<Vertex> Vertices;
-    std::vector<u32> Indices;
-
     u32 MipLevels = INDEX_NONE;
 
-    LVmaImage ColorImage;
-    vk::raii::ImageView ColorImageView{ nullptr };
 
-    void VkCreateColorResources();
-    void VkCreateDepthResources();
     void VkCreateTextureImage();
-    void VkCreateTextureImageView();
     void VkCreateTextureSampler();
 
-    void VkLoadModel();
-    void VkCreateVertexBuffer();
-    void VkCreateIndexBuffer();
     void VkCreateUniformBuffers();
 
     void VkCreateDescriptorPool();

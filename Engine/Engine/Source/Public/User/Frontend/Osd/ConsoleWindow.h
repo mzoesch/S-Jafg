@@ -40,8 +40,8 @@ private:
 
     bool StdInCommit(LString const& Text, ETextCommit::Type CommitType);
 
-    static TOptional<LVector2> LastWindowLocation;
-    static TOptional<LVector2> LastWindowSize;
+    static TOptional<LVector2D> LastWindowLocation;
+    static TOptional<LVector2D> LastWindowSize;
 
     u64 LoadedLogCount{ 0 };
 

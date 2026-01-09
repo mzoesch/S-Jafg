@@ -50,7 +50,7 @@ void Jafg::WDebugMenu::OnVisibilityChanged(const EWidgetVisibility::Type InOldVi
 
     if (EWidgetVisibility::IsDrawn(InNewVisibility))
     {
-        Surface.SetInputMode(EInputMode::Both, true);
+        Surface.SetInputMode(EInputMode::Both | EInputMode::ShowMouseCursor);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -59,7 +59,7 @@ void Jafg::WDebugMenu::OnVisibilityChanged(const EWidgetVisibility::Type InOldVi
     }
     else
     {
-        Surface.SetInputMode(EInputMode::Both, false);
+        Surface.SetInputMode(EInputMode::Both);
 
         while (WEditorView* View { this->GetViewport().GetTopLevelWidgetByClass<WEditorView>() })
         {

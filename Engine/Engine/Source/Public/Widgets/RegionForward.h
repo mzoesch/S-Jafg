@@ -115,7 +115,7 @@ struct LRegionBrush
     //#
     //# The scale of the image.
     //#
-    f32 ImageScale{ 1.0f };
+    f64 ImageScale{ 1.0 };
 
     //#
     //# How the #Image should behave.
@@ -130,22 +130,22 @@ struct LRegionBrush
     //#
     //# How much padding to apply to the image.
     //#
-    f32 ImagePadding{ 0.0f };
+    f64 ImagePadding{ 0.0 };
 
     //#
     //# The radii to use for the edges. TL => TR => BR => BL.
     //#
-    LVector4 Radii{ 4.0f };
+    LVector4D Radii{ 4.0 };
 
     //#
     //# The thickness of the outline.
     //#
-    f32 OutlineThickness{ 2.0f };
+    f64 OutlineThickness{ 2.0 };
 
     //#
     //# The outline color to use.
     //#
-   Lal::LColor OutlineTint{ Lal::LColor::White };
+    Lal::LColor OutlineTint{ Lal::LColor::White };
 };
 
 } /* ~Namespace Jafg */

@@ -51,7 +51,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
         Jafg::LLevel
         {
             Name_LevelSvw.ToString(),
-            Jafg::EInputMode::InputSubSystem, false,
+            Jafg::EInputMode::InputSubSystem,
             Lal::LLinearColor::Gray,
             true, false, TArray<Jafg::LLevelSkyboxMap>
             {

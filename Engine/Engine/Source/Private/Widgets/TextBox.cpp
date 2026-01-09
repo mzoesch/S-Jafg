@@ -129,7 +129,12 @@ void Jafg::WTextBox::Draw(LViewport& Context) const
 
 void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noexcept
 {
-    LVector2 DesiredSize{ this->GetDesiredSizeForString(String) };
+    LVector2D DesiredSize{ this->GetDesiredSizeForString(String) };
+
+    if (!GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText))
+    {
+        return;
+    }
 
     if (this->bRespectContentHeight == false)
     {
@@ -147,7 +152,9 @@ void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noe
 
 LVector2 Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noexcept
 {
-    const LOrthographicTextShader* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+    const LOrthographicTextShader* Shader{ GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+
+    if (!Shader) { return LVector2::ZeroVector; }
 
     const f32 TextScaleInSpt{ this->TextScale.InSpt(this->GetViewport()) };
 

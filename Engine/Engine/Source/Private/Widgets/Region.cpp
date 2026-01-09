@@ -11,6 +11,12 @@
 #include "Rhi/OrthographicOutlineImageBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
+#include "Rhi/OrthoRegion.h"
+
+void Jafg::LOrthoRegion::Draw(LOrthoRegionDrawInfo const& Info) const
+{
+    return;
+}
 
 void Jafg::WRegion::BeginLifeCDR()
 {
@@ -218,6 +224,16 @@ void Jafg::WRegion::RegisterShaders()
     {
         (new LOrthographicRoundedOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineImageBox);
     }
+
+    return;
+}
+
+void Jafg::WRegion::RegisterPipeline()
+{
+    auto Pipeline{ std::make_unique<LOrthoRegion>() };
+
+    // LOrthoRegionDrawInfo Info;
+    // Pipeline->Draw(Info);
 
     return;
 }

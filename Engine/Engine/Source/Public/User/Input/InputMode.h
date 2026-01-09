@@ -30,6 +30,8 @@ enum Type : u8
     //#
     InputSubSystem  = 0x01 << 1,
 
+    ShowMouseCursor = 0x01 << 2,
+
     //#
     //# Both are checked.
     //# In this sequence: UserInterface, InputSubSystem.
@@ -39,6 +41,7 @@ enum Type : u8
 };
 
 } /* ~Namespace EInputMode */
+ENUM_CLASS_FLAGS(EInputMode::Type)
 
 inline LString LexToString(const EInputMode::Type InType)
 {
@@ -47,7 +50,16 @@ inline LString LexToString(const EInputMode::Type InType)
         case EInputMode::None:              { return "None"; }
         case EInputMode::UserInterface:     { return "UserInterface"; }
         case EInputMode::InputSubSystem:    { return "InputSubSystem"; }
+        case EInputMode::ShowMouseCursor:   { return "ShowMouseCursor"; }
         case EInputMode::Both:              { return "Both"; }
+        default:
+        {
+            std::stringstream SS;
+            if (InType & EInputMode::UserInterface)    { SS << "UserInterface"; }
+            if (InType & EInputMode::InputSubSystem)   { if (!SS.str().empty()){SS<<"|";} SS << "InputSubSystem"; }
+            if (InType & EInputMode::ShowMouseCursor)  { if (!SS.str().empty()){SS<<"|";} SS << "ShowMouseCursor"; }
+            return "";
+        }
     }
 
     checkNoEntry()

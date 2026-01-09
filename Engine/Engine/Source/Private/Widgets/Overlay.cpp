@@ -20,10 +20,10 @@ void Jafg::WOverlay::UpdateDesiredSize() const
         continue;
     }
 
-    LVector2 DesiredSize = LVector2::Zero();
+    LVector2D DesiredSize;
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        const LVector2 ChildDesiredSize = ChildSlot->Content->GetDesiredSize_v2();
+        LVector2D ChildDesiredSize = ChildSlot->Content->GetDesiredSize_v2();
         DesiredSize.X = Maths::Max(DesiredSize.X, ChildDesiredSize.X);
         DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildDesiredSize.Y);
         continue;
@@ -48,7 +48,7 @@ void Jafg::WOverlay::UpdateAnchoredSize(const LViewport& Context) const
         }
         else
         {
-            ChildSlot->Content->SetAnchoredSize(LVector2::Zero());
+            ChildSlot->Content->SetAnchoredSize(LVector2D::ZeroVector);
         }
 
         continue;
@@ -79,11 +79,11 @@ void Jafg::WOverlay::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     return;
 }
 
-LVector2 Jafg::WOverlay::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const
+LVector2D Jafg::WOverlay::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Context, WNode const* InDirectChild) const
 {
     check( InDirectChild )
 
-    LVector2 Out
+    LVector2D Out
     {
         this->GetPadding().GetLeftOffsetInSpt(Context)
         + InDirectChild->GetAnchor().MinX *

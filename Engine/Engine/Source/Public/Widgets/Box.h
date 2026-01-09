@@ -58,19 +58,19 @@ public:
     FORCEINLINE constexpr void SetBrush(const LBoxBrush& InBrush) noexcept { this->Brush = InBrush; }
     FORCEINLINE constexpr void SetBrush(LBoxBrush&& InBrush) noexcept { this->Brush = std::move(InBrush); }
     FORCEINLINE constexpr LBoxBrush& GetMutableBrush() noexcept { return this->Brush; }
-    FORCEINLINE constexpr const LBoxBrush& GetBrush() const noexcept { return this->Brush; }
+    FORCEINLINE constexpr LBoxBrush const& GetBrush() const noexcept { return this->Brush; }
 
     FORCEINLINE constexpr ERegionBrush::Type   GetType() const noexcept { return this->Brush.Type; }
     FORCEINLINE constexpr const Lal::LColor&   GetTint() const noexcept { return this->Brush.Tint; }
     FORCEINLINE constexpr const LTexture2*     GetTexture() const noexcept { return this->Brush.Image.GetTexture(); }
     FORCEINLINE constexpr const LImage&        GetImage() const noexcept { return this->Brush.Image; }
     FORCEINLINE constexpr const Lal::LColor&   GetImageTint() const noexcept { return this->Brush.ImageTint; }
-    FORCEINLINE constexpr const f32&           GetImageScale() const noexcept { return this->Brush.ImageScale; }
+    FORCEINLINE constexpr const f64&           GetImageScale() const noexcept { return this->Brush.ImageScale; }
     FORCEINLINE constexpr EImageBehavior::Type GetImageBehavior() const noexcept { return this->Brush.ImageBehavior; }
     FORCEINLINE constexpr EImageOobm::Type     GetImageOobm() const noexcept { return this->Brush.ImageOobm; }
-    FORCEINLINE constexpr f32                  GetImagePadding() const noexcept { return this->Brush.ImagePadding; }
-    FORCEINLINE constexpr const LVector4&      GetOutlineRadii() const noexcept { return this->Brush.Radii; }
-    FORCEINLINE constexpr f32                  GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
+    FORCEINLINE constexpr f64                  GetImagePadding() const noexcept { return this->Brush.ImagePadding; }
+    FORCEINLINE constexpr const LVector4D&     GetOutlineRadii() const noexcept { return this->Brush.Radii; }
+    FORCEINLINE constexpr f64                  GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
     FORCEINLINE constexpr const Lal::LColor&   GetOutlineTint() const noexcept { return this->Brush.OutlineTint; }
     FORCEINLINE constexpr const LPadding&      GetPadding() const noexcept { return this->Brush.Padding; }
 
@@ -83,7 +83,7 @@ public:
     FORCEINLINE constexpr void SetImageBehavior(const EImageBehavior::Type InBehavior) noexcept { this->Brush.ImageBehavior = InBehavior; }
     FORCEINLINE constexpr void SetImageOobm(const EImageOobm::Type InOobm) noexcept { this->Brush.ImageOobm = InOobm; }
     FORCEINLINE constexpr void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
-    FORCEINLINE constexpr void SetOutlineRadii(const LVector4& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE constexpr void SetOutlineRadii(const LVector4D& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE constexpr void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
     FORCEINLINE constexpr void SetOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
     FORCEINLINE constexpr void SetPadding(const LPadding& InPadding) noexcept { this->Brush.Padding = InPadding; }

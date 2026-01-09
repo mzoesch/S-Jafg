@@ -27,8 +27,8 @@ FORCEINLINE Lal::LColor LogToColor(auto const& Verbosity) noexcept
 
 } /* ~Namespace <Anonymous> */
 
-ENGINE_API TOptional<LVector2> Jafg::WConsoleWindow::LastWindowLocation;
-ENGINE_API TOptional<LVector2> Jafg::WConsoleWindow::LastWindowSize;
+ENGINE_API TOptional<LVector2D> Jafg::WConsoleWindow::LastWindowLocation;
+ENGINE_API TOptional<LVector2D> Jafg::WConsoleWindow::LastWindowSize;
 
 Jafg::WConsoleWindow::WConsoleWindow(LCxxObjectInitializer const& ObjectInitializer)
     : Super{ObjectInitializer}
@@ -97,7 +97,7 @@ void Jafg::WConsoleWindow::OnGarbage(ECxxRecordTearDownReason::Type Reason, LCla
     {
         if (auto Margin{ Window->GetMargin() }; Margin.has_value())
         {
-            WConsoleWindow::LastWindowLocation = LVector2{ Margin->Left, Margin->Top };
+            WConsoleWindow::LastWindowLocation = LVector2D{Margin->Left, Margin->Top};
         }
     }
 

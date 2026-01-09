@@ -3,8 +3,9 @@
 #pragma once
 
 #include "Framework/FrontendForward.h"
-#include "Rhi/VkCommon.h"
 #include "Framework/Frontend.h"
+#include "Rhi/VkForward.h"
+#include "Rhi/VkAl.h"
 
 namespace Jafg
 {
@@ -18,6 +19,27 @@ struct LSlangCompilationRequest
     TArray<LString> EntryPoints;
 };
 
+struct LStageBufferCreateInfo
+{
+    vk::BufferCopy BufferCopy;
+    void const* Data;
+    vk::BufferUsageFlags Usage;
+
+    struct LGenericBufferCreateInfo
+    {
+        vk::BufferCopy BufferCopy;
+        void const* Data;
+    };
+
+    typedef LGenericBufferCreateInfo LVertexCreateInfo;
+    typedef LGenericBufferCreateInfo LIndexCreateInfo;
+    typedef LGenericBufferCreateInfo LUniformCreateInfo;
+
+    FORCEINLINE static LStageBufferCreateInfo Vertex(LVertexCreateInfo const& Info) noexcept;
+    FORCEINLINE static LStageBufferCreateInfo Index(LIndexCreateInfo const& Info) noexcept;
+    FORCEINLINE static LStageBufferCreateInfo Uniform(LUniformCreateInfo const& Info) noexcept;
+};
+
 class LFrontendVk final : public LFrontendBase
 {
 public:
@@ -27,7 +49,7 @@ public:
 
     FORCEINLINE auto const& GetVkContext() const noexcept { return this->VkMyContext; }
     FORCEINLINE auto const& GetVkInstance() const noexcept { return this->VkMyInstance; }
-    FORCEINLINE auto const& GetVkPhysicalDevice() const noexcept { return this->VkMyPhysicalDevice; }
+    FORCEINLINE auto const& GetVkPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
     FORCEINLINE auto const& GetVkDevice() const noexcept { return this->VkMyDevice; }
     FORCEINLINE auto        GetVkGraphicsQueueFamilyIndex() const noexcept { return this->VkMyGraphicsQueueFamilyIndex; }
     FORCEINLINE auto        GetVkPresentQueueFamilyIndex() const noexcept { return this->VkMyPresentQueueFamilyIndex; }
@@ -39,28 +61,44 @@ public:
     ENGINE_API vk::raii::CommandBuffer VkBeginSingleTimeCommands(vk::CommandPool Pool) const;
     ENGINE_API void VkEndSingleTimeCommands(vk::CommandBuffer CommandBuffer) const;
 
-    ENGINE_API LVmaBuffer VkCreateBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO);
-    ENGINE_API LVmaDetailedBuffer VkCreateDetailedBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO);
-    ENGINE_API LVmaMappedBuffer VkCreateMappedBuffer(vk::BufferCreateInfo CreateInfo, vk::MemoryPropertyFlags Flags, VmaAllocationCreateFlags VmaFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO);
+    //# Create any buffer through VMA.
+    ENGINE_API LDeviceBuffer Vk_CreateBuffer(
+          vk::BufferCreateInfo Info
+        , vk::MemoryPropertyFlags Flags
+        , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
+    ENGINE_API LDetailedDeviceBuffer Vk_CreateDetailedBuffer(
+          vk::BufferCreateInfo Info
+        , vk::MemoryPropertyFlags Flags
+        , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
+    ENGINE_API LMappedDeviceBuffer Vk_CreateMappedBuffer(
+          vk::BufferCreateInfo Info
+        , vk::MemoryPropertyFlags Flags
+        , VmaAllocationCreateFlags VmaFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
+        , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
 
-    ENGINE_API void VkCopyBuffer(vk::CommandPool Pool, vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::BufferCopy BufferCopy) const;
+    //# By providing no pool this method will fall back to its internal transient command pool.
+    ENGINE_API void Vk_CopyBuffer(vk::Buffer Src, vk::Buffer Dst, vk::BufferCopy BufferCopy, vk::CommandPool Pool = nullptr) const;
 
-    //# TODO: VkCreateStagingBuffer function.
+    //#
+    //# Stage a buffer to the device.
+    //# Usage: Frontend.Vk_StageBuffer(LStageBufferCreateInfo::<Type>({.BufferCopy = ..., .Data = ...}));
+    //#
+    //# @see LStageBufferCreateInfo
+    //#
+    ENGINE_API LDeviceBuffer Vk_StageBuffer(LStageBufferCreateInfo const& Info);
 
-    ENGINE_API  LVmaBuffer VkStageData(vk::BufferCopy BufferCopy, void const* Data, vk::BufferUsageFlags Usage, vk::CommandPool Pool /* just temp... */);
-    FORCEINLINE LVmaBuffer VkStageVertexBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
-        vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer
-        ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
-    FORCEINLINE LVmaBuffer VkStageIndexBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
-        vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer
-        ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
-    FORCEINLINE LVmaBuffer VkStageUniformBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
-        vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer
-        ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
 
-    ENGINE_API LVmaImage VkCreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo);
 
-    ENGINE_API LVmaImage VkStage2dImage(
+
+
+
+
+
+
+
+    ENGINE_API LDeviceImage VkCreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo);
+
+    ENGINE_API LDeviceImage VkStage2dImage(
           i32 texWidth, i32 texHeight, i32 texChannels
         , stbi_uc* pixels
         , u32 MipLevels
@@ -68,12 +106,22 @@ public:
         );
 
     ENGINE_API void CopyBufferToImage(vk::Buffer Buffer, vk::Image Image, u32 Width, u32 Height, vk::CommandPool Pool /* just temp... */);
-    ENGINE_API LVmaImage VkCreateDeviceLocalImage(vk::ImageCreateInfo const& InInfo, vk::MemoryPropertyFlags Properties = vk::MemoryPropertyFlagBits::eDeviceLocal);
+    ENGINE_API LDeviceImage VkCreateDeviceLocalImage(vk::ImageCreateInfo const& InInfo, vk::MemoryPropertyFlags Properties = vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     ENGINE_API void VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, u32 MipLevels
         , vk::CommandPool Pool /* just temp... */);
 
-    ENGINE_API vk::raii::ImageView CreateImageView(vk::Image Image, vk::Format Format, vk::ImageAspectFlags AspectFlags, u32 MipLevels);
+    // DEPRECATED
+    ENGINE_API vk::raii::ImageView CreateImageView2D(
+          vk::Image Image
+        , vk::Format Format
+        , vk::ImageAspectFlags AspectFlags
+        , u32 MipLevels
+        );
+
+
+    FORCEINLINE vk::raii::ImageView CreateImageView(vk::ImageViewCreateInfo const& Info) const noexcept{ return vk::raii::ImageView{this->VkMyDevice, Info}; }
+
 
     ENGINE_API vk::Format FindSupportedFormat(
           TArray<vk::Format> const& Candidates
@@ -86,6 +134,10 @@ public:
 
     vk::SampleCountFlagBits CalculateMaxUsableSampleCount() const;
     FORCEINLINE vk::SampleCountFlagBits GetMaxMsaaSamples() const noexcept { return this->VkMsaaSamples; }
+
+    ENGINE_API u32 Vk_FindMemoryType(u32 Filter, vk::MemoryPropertyFlags Properties) const;
+
+    FORCEINLINE auto const& Vk_GetTransientCommandPool() const noexcept { return this->Vk_TransientCommandPool; }
 
     ENGINE_API i64 HandleCompilationRequest_viaSlang(LSlangCompilationRequest const& Request);
     ENGINE_API i64 HandleCompilationRequest_viaSlang(LPath const& Slang, LSlangCompilationRequest const& Request);
@@ -128,7 +180,8 @@ private:
     vk::raii::DebugUtilsMessengerEXT VkMyDebugUtilsMessenger{ nullptr };
 
     TArray<vk::raii::PhysicalDevice> AvailablePhysicalDevices;
-    vk::raii::PhysicalDevice VkMyPhysicalDevice{ nullptr };
+    vk::raii::PhysicalDevice Vk_PhysicalDevice{ nullptr };
+    vk::PhysicalDeviceMemoryProperties Vk_PhysicalDeviceMemoryProperties;
 
     TArray<char const*> RequiredDeviceExtensions{
         vk::KHRSwapchainExtensionName,
@@ -146,6 +199,101 @@ private:
     VmaAllocator VmaMyAllocator{ nullptr };
 
     vk::SampleCountFlagBits VkMsaaSamples{ vk::SampleCountFlagBits::e1 };
+
+    vk::raii::CommandPool Vk_TransientCommandPool{ nullptr };
 };
+
+FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Vertex(LVertexCreateInfo const& Info) noexcept
+{
+    return {
+        .BufferCopy = Info.BufferCopy,
+        .Data = Info.Data,
+        .Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
+        };
+}
+
+FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Index(LIndexCreateInfo const& Info) noexcept
+{
+    return {
+        .BufferCopy = Info.BufferCopy,
+        .Data = Info.Data,
+        .Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+        };
+}
+
+FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Uniform(LUniformCreateInfo const& Info) noexcept
+{
+    return {
+        .BufferCopy = Info.BufferCopy,
+        .Data = Info.Data,
+        .Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer,
+        };
+}
+
+inline LDevicePipeline LDevicePipelineFactory::Build()
+{
+    auto& Frontend{ this->Surface.GetFrontend() };
+
+    vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
+        .rasterizationSamples = this->Surface.GetFrontend().GetMaxMsaaSamples(),
+        .sampleShadingEnable = this->MultisamplingShadingEnable
+        };
+
+    vk::PipelineColorBlendStateCreateInfo ColorBlendInfo{
+        .logicOpEnable = this->ColorBlendLogicOpEnable,
+        .logicOp = this->ColorBlendLogicalOp,
+        .attachmentCount = 1,
+        .pAttachments = &this->ColorBlendAttachmentState
+        };
+
+    vk::PipelineDynamicStateCreateInfo DynamicStateInfo{
+        .dynamicStateCount = static_cast<u32>(this->DynamicStateInfo.size()),
+        .pDynamicStates = this->DynamicStateInfo.data(),
+        };
+
+    vk::raii::PipelineLayout Layout{
+        Frontend.GetVkDevice(),
+        vk::PipelineLayoutCreateInfo{
+            .setLayoutCount = (*this->DescriptorSetLayout) ? 1u : 0u,
+            .pSetLayouts = (*this->DescriptorSetLayout) ? &*this->DescriptorSetLayout : nullptr,
+            .pushConstantRangeCount = static_cast<uint32_t>(this->Range.has_value() ? 1uz : 0uz),
+            .pPushConstantRanges = this->Range.has_value() ? &*this->Range : nullptr
+            }
+       };
+
+    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> Chain{
+        {
+            .stageCount = static_cast<u32>(this->Shaders.size()),
+            .pStages = this->Shaders.data(),
+            .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : nullptr,
+            .pInputAssemblyState = &this->InputAssemblyInfo,
+            .pViewportState = &this->ViewportStateInfo,
+            .pRasterizationState = &this->RasterizationInfo,
+            .pMultisampleState   = &MultisamplingInfo,
+            .pDepthStencilState  = &this->DepthStencilInfo,
+            .pColorBlendState    = &ColorBlendInfo,
+            .pDynamicState       = &DynamicStateInfo,
+            .layout = Layout,
+            .renderPass = nullptr,
+        },
+        {
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &this->Surface.Vk_GetSurfaceFormat().format,
+            .depthAttachmentFormat = Frontend.FindDepthFormat(),
+        }
+    };
+
+    auto Pipeline{vk::raii::Pipeline{
+        Frontend.GetVkDevice(),
+        nullptr,
+        Chain.get<vk::GraphicsPipelineCreateInfo>()
+        }};
+
+    return LDevicePipeline{
+        .Pipeline = std::move(Pipeline),
+        .PipelineLayout = std::move(Layout),
+        .DescriptorSetLayout = std::move(this->DescriptorSetLayout),
+        };
+}
 
 } /* ~Namespace Jafg */

@@ -31,14 +31,14 @@ public:
     ENGINE_API void Draw
     (
         const LViewport& Context,
-        const LVector2& Size,
-        const LVector2& TopLeft,
+        const LVector2D& Size,
+        const LVector2D& TopLeft,
         const LPadding& Padding,
-        const LVector2& TextDesiredSize,
+        const LVector2D& TextDesiredSize,
         const ETextHAlign::Type TextHAlign,
         const ETextVAlign::Type TextVAlign,
         const Lal::LColor& TextColor,
-        const f32 TextScale,
+        const f64 TextScale,
         const LString& Content
     ) const {}
 

@@ -29,8 +29,8 @@ public:
     virtual void Destruct() override;
     virtual void Draw(LViewport& Context) const override;
 
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
-    virtual LReply       SweepFocusTest(const LViewport& Context, const LVector2& InLocation) override;
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2D& InLocation) override;
+    virtual LReply       SweepFocusTest(const LViewport& Context, const LVector2D& InLocation) override;
 
     virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
     virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;

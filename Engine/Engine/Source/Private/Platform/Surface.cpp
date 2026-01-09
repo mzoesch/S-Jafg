@@ -54,17 +54,17 @@ void Jafg::LSurfaceBase::Tick()
 
     if (bCheckInput)
     {
-        if (this->IsMouseLocationMeaningful())
+        if (this->HasMouseLocation())
         {
-            this->GetViewport().DispatchInputs(*this->AsSurface(), this->GetMouseLocation());
+            this->GetViewport().DispatchInputs(*this->AsSurface(), this->GetMouseLocationValue());
         }
         else
         {
-            this->GetViewport().DispatchInputs(*this->AsSurface(), LVector2(-1.0f));
+            this->GetViewport().DispatchInputs(*this->AsSurface(), LVector2D{-1.0f});
         }
     }
 
-    if (bCheckInput == false || this->IsMouseLocationMeaningful() == false)
+    if (bCheckInput == false || this->HasMouseLocation() == false)
     {
         this->GetViewport().OnMouseLeftViewport(*this->AsSurface(), bCheckInput == false);
     }
@@ -99,14 +99,6 @@ void Jafg::LSurfaceBase::PollVirtualInputs()
     return;
 }
 
-void Jafg::LSurfaceBase::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
-{
-    this->InputMode   = InMode;
-    this->bShowCursor = bInShowCursor;
-
-    return;
-}
-
 void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, const bool bKillOld /* = true */)
 {
     /* Otherwise, we will get access violations. */
@@ -131,7 +123,7 @@ void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, co
     {
         if (auto const* World{ this->Controller->GetWorldChecked() }; World->IsUnderlyingLevelValid())
         {
-            this->SetInputMode(World->GetUnderlyingLevelChecked().InputMode, World->GetUnderlyingLevelChecked().bShowMouseCursor);
+            this->AsSurface()->SetInputMode(World->GetUnderlyingLevelChecked().InputMode);
             this->GetViewport().SetBackgroundColor(World->GetUnderlyingLevelChecked().BackgroundColor);
         }
     }

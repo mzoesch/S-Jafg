@@ -70,14 +70,14 @@ ENGINE_API i32 PurgeWidgetFactories()
 namespace Jafg
 {
 
-ENGINE_API const LAnchor LAnchor::VTop    { 0.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VCenter { 0.0f, 0.5f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VBottom { 0.0f, 1.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HLeft   { 0.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HCenter { 0.5f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HRight  { 1.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VFill   { 0.0f, 0.0f, 0.0f, 1.0f };
-ENGINE_API const LAnchor LAnchor::HFill   { 0.0f, 0.0f, 1.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::VTop    { 0.0, 0.0, 0.0, 0.0 };
+ENGINE_API const LAnchor LAnchor::VCenter { 0.0, 0.5, 0.0, 0.0 };
+ENGINE_API const LAnchor LAnchor::VBottom { 0.0, 1.0, 0.0, 0.0 };
+ENGINE_API const LAnchor LAnchor::HLeft   { 0.0, 0.0, 0.0, 0.0 };
+ENGINE_API const LAnchor LAnchor::HCenter { 0.5, 0.0, 0.0, 0.0 };
+ENGINE_API const LAnchor LAnchor::HRight  { 1.0, 0.0, 0.0, 0.0 };
+ENGINE_API const LAnchor LAnchor::VFill   { 0.0, 0.0, 0.0, 1.0 };
+ENGINE_API const LAnchor LAnchor::HFill   { 0.0, 0.0, 1.0, 0.0 };
 
 bool LAnchor::IsNormalized() const noexcept
 {
@@ -132,7 +132,7 @@ struct LWidgetConstructor
 
 } /* ~Namespace Jafg */
 
-f32 Jafg::InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept
+f64 Jafg::InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
     {
@@ -142,7 +142,7 @@ f32 Jafg::InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept
     return InSptFromRelative(Viewport, Size.Size);
 }
 
-LVector2 Jafg::InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept
+LVector2D Jafg::InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
     {
@@ -152,18 +152,18 @@ LVector2 Jafg::InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept
     return InSptFromRelative(Viewport, Size.Size);
 }
 
-f32 Jafg::InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept
+f64 Jafg::InSptFromRelative(LViewport const& Viewport, f64 Relative) noexcept
 {
     const EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
     check( Scale != EApplicationScale::Auto )
-    return Relative * LexToFloat(Scale);
+    return Relative * LexToDouble(Scale);
 }
 
-LVector2 Jafg::InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept
+LVector2D Jafg::InSptFromRelative(LViewport const& Viewport, LVector2D Relative) noexcept
 {
     const EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
     check( Scale != EApplicationScale::Auto )
-    return Relative * LexToFloat(Scale);
+    return Relative * LexToDouble(Scale);
 }
 
 Jafg::WNode::~WNode()
@@ -171,14 +171,14 @@ Jafg::WNode::~WNode()
     check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
 }
 
-bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocation) const
+bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2D& InLocation) const
 {
     if (this->TransformsWidgetLayout() == false)
     {
         return false;
     }
 
-    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetSweepTranslation());
+    const LVector2D TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetSweepTranslation()};
     return
             TopLeftMostOuter.X <= InLocation.X
          && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize_v2().X
@@ -187,7 +187,7 @@ bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocatio
          ;
 }
 
-Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& InLocation)
+Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2D& InLocation)
 {
     if (this->IsHitTestable() == false)
     {
@@ -212,7 +212,7 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& I
     return this->OnCursorMoved(InLocation);
 }
 
-Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVector2& InLocation)
+Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVector2D& InLocation)
 {
     if (this->IsInBounds(Context, InLocation) == false || this->IsHitTestable() == false)
     {
@@ -352,7 +352,9 @@ bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
 
 LIntVector2 Jafg::WNode::GetViewportSize() const
 {
-    return this->GetViewport().GetDimensions();
+    /* TODO: Change to u32 */
+    auto Dimensions{ this->GetViewport().GetDimensions() };
+    return LIntVector2{ static_cast<i32>(Dimensions.X), static_cast<i32>(Dimensions.Y) };
 }
 
 void Jafg::WNode::RecacheViewport() noexcept
@@ -370,12 +372,12 @@ Jafg::LViewport* Jafg::WNode::GetMostOuterViewport() noexcept
     return nullptr;
 }
 
-void Jafg::WNode::SetDesiredSizeInSpt(LVector2 Size) const noexcept
+void Jafg::WNode::SetDesiredSizeInSpt(LVector2D Size) const noexcept
 {
     this->DesiredSize_v2 = Size;
 
-    LVector2 SptMinSize{InSpt(this->GetViewport(), this->MinDesiredSize)};
-    LVector2 SptMaxSize{InSpt(this->GetViewport(), this->MaxDesiredSize)};
+    LVector2D SptMinSize{InSpt(this->GetViewport(), this->MinDesiredSize)};
+    LVector2D SptMaxSize{InSpt(this->GetViewport(), this->MaxDesiredSize)};
 
     this->DesiredSize_v2.X = Maths::Max(this->DesiredSize_v2.X, SptMinSize.X);
     this->DesiredSize_v2.Y = Maths::Max(this->DesiredSize_v2.Y, SptMinSize.Y);
@@ -394,7 +396,7 @@ void Jafg::WNode::SetDesiredSizeInSpt(LVector2 Size) const noexcept
     return;
 }
 
-void Jafg::WNode::UpdateAnchoredSize(const LViewport& Context) const
+void Jafg::WNode::UpdateAnchoredSize(LViewport const& Context) const
 {
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
@@ -406,34 +408,34 @@ void Jafg::WNode::UpdateAnchoredSize(const LViewport& Context) const
         return;
     }
 
-    LVector2 Out;
-    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<f32>(Context.GetDimensions().X), this->DesiredSize_v2.X);
-    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<f32>(Context.GetDimensions().Y), this->DesiredSize_v2.Y);
+    LVector2D Out;
+    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<f64>(Context.GetDimensions().X), this->DesiredSize_v2.X);
+    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<f64>(Context.GetDimensions().Y), this->DesiredSize_v2.Y);
     this->SetAnchoredSize(Out);
 
     return;
 }
 
-void Jafg::WNode::SetAnchoredSize(LVector2&& InSize) const noexcept
+void Jafg::WNode::SetAnchoredSize(LVector2D&& InSize) const noexcept
 {
-    this->LostAnchoredSize_v2 = LVector2::ZeroVector;
+    this->LostAnchoredSize_v2 = LVector2D::ZeroVector;
     this->AnchoredSize_v2 = std::move(InSize);
 
-    if (this->MaxDesiredSize.X > 0.0f)
+    if (this->MaxDesiredSize.X > 0.0)
     {
-        this->LostAnchoredSize_v2.X = Maths::Max(this->AnchoredSize_v2.X - this->MaxDesiredSize.X, 0.0f);
+        this->LostAnchoredSize_v2.X = Maths::Max(this->AnchoredSize_v2.X - this->MaxDesiredSize.X, 0.0);
         this->AnchoredSize_v2.X = Maths::Min(this->AnchoredSize_v2.X, this->MaxDesiredSize.X);
     }
-    if (this->MaxDesiredSize.Y > 0.0f)
+    if (this->MaxDesiredSize.Y > 0.0)
     {
-        this->LostAnchoredSize_v2.Y = Maths::Max(this->AnchoredSize_v2.Y - this->MaxDesiredSize.Y, 0.0f);
+        this->LostAnchoredSize_v2.Y = Maths::Max(this->AnchoredSize_v2.Y - this->MaxDesiredSize.Y, 0.0);
         this->AnchoredSize_v2.Y = Maths::Min(this->AnchoredSize_v2.Y, this->MaxDesiredSize.Y);
     }
 
     return;
 }
 
-LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
+LVector2D Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
 {
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
@@ -444,16 +446,16 @@ LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) 
         return this->Slot.Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
     }
 
-    LVector2 Out;
-    Out.X = this->Anchor.MinX * static_cast<f32>(Context.GetDimensions().X);
-    Out.Y = this->Anchor.MinY * static_cast<f32>(Context.GetDimensions().Y);
+    LVector2D Out;
+    Out.X = this->Anchor.MinX * static_cast<f64>(Context.GetDimensions().X);
+    Out.Y = this->Anchor.MinY * static_cast<f64>(Context.GetDimensions().Y);
 
     return Out;
 }
 
-LVector2 Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
+LVector2D Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
 {
-    return this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetFrameTranslation());
+    return this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetFrameTranslation();
 }
 
 bool Jafg::WNode::SetMargin(const LMargin& InMargin) noexcept

@@ -338,7 +338,7 @@ EPlatformExit::Type GuardedMain()
     (
         LLevel
         {
-            Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem, false,
+            Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem,
             Lal::LLinearColor::Black,
             true, false, TArray<LLevelSkyboxMap>
             {

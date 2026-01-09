@@ -58,7 +58,7 @@ void Jafg::WFloatingWindow::Construct()
     {
         if (KeyEvent.GetKey() == EKeys::LeftMouseButton)
         {
-            Viewport.GetSurface().SetMouseCursor(EMouseCursor::Hand);
+            Viewport.GetSurface()._SetMouseCursor(EMouseCursor::Hand);
 
             WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
             Window->UiTickMoveHandle = Viewport.OnLateTick.Emplace(Window, &WFloatingWindow::UiTickMove);
@@ -73,7 +73,7 @@ void Jafg::WFloatingWindow::Construct()
     {
         if (KeyEvent.GetKey() == EKeys::LeftMouseButton)
         {
-            Viewport.GetSurface().SetMouseCursor(EMouseCursor::Default);
+            Viewport.GetSurface()._SetMouseCursor(EMouseCursor::Default);
 
             auto* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
             if (Window->UiTickMoveHandle.IsValid())
@@ -138,30 +138,30 @@ void Jafg::WFloatingWindow::UiTickMove(LViewport const& Viewport)
     if (this->MoveDragOffset.has_value() == false)
     {
         this->MoveDragOffset =
-            Viewport.GetSurface().GetMouseLocation()
+            Viewport.GetSurface().GetMouseLocationValue()
                 - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport);
 
         return;
     }
 
-    LVector2 NewPos{ Viewport.GetSurface().GetMouseLocation() - this->MoveDragOffset.value() };
+    LVector2D NewPos{Viewport.GetSurface().GetMouseLocationValue() - this->MoveDragOffset.value()};
 
-    if (NewPos.X + 25.0f > Viewport.GetDimensions().X)
+    if (NewPos.X + 25.0 > Viewport.GetDimensions().X)
     {
-        NewPos.X = Viewport.GetDimensions().X - 25.0f;
+        NewPos.X = Viewport.GetDimensions().X - 25.0;
     }
-    if (NewPos.Y + 25.0f > Viewport.GetDimensions().Y)
+    if (NewPos.Y + 25.0 > Viewport.GetDimensions().Y)
     {
-        NewPos.Y = Viewport.GetDimensions().Y - 25.0f;
+        NewPos.Y = Viewport.GetDimensions().Y - 25.0;
     }
 
-    if (NewPos.X - 75.0f + this->GetWindow()->GetDesiredSize_v2().X < 0.0f)
+    if (NewPos.X - 75.0 + this->GetWindow()->GetDesiredSize_v2().X < 0.0)
     {
         NewPos.X = 75.0 - this->GetWindow()->GetDesiredSize_v2().X;
     }
-    if (NewPos.Y < 0.0f)
+    if (NewPos.Y < 0.0)
     {
-        NewPos.Y = 0.0f;
+        NewPos.Y = 0.0;
     }
 
     this->SetWindowPosition(NewPos);
@@ -174,30 +174,30 @@ void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
     if (this->ResizeDragOffset.has_value() == false)
     {
         this->ResizeDragOffset =
-            Viewport.GetSurface().GetMouseLocation()
+            Viewport.GetSurface().GetMouseLocationValue()
                 - (this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport)
                     + this->GetWindow()->GetDesiredSize_v2());
 
         return;
     }
 
-    LVector2 NewSize{
-        Viewport.GetSurface().GetMouseLocation().X - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).X - this->ResizeDragOffset.value().X,
-        Viewport.GetSurface().GetMouseLocation().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y - this->ResizeDragOffset.value().Y
+    LVector2D NewSize{
+        Viewport.GetSurface().GetMouseLocationValue().X - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).X - this->ResizeDragOffset.value().X,
+        Viewport.GetSurface().GetMouseLocationValue().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y - this->ResizeDragOffset.value().Y
     };
 
-    LVector2 MaxSize{
+    LVector2D MaxSize{
         Viewport.GetDimensions().X - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).X,
         Viewport.GetDimensions().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y
     };
 
-    if (NewSize.X < 0.0f)
+    if (NewSize.X < 0.0)
     {
-        NewSize.X = 0.0f;
+        NewSize.X = 0.0;
     }
-    if (NewSize.Y < 0.0f)
+    if (NewSize.Y < 0.0)
     {
-        NewSize.Y = 0.0f;
+        NewSize.Y = 0.0;
     }
 
     if (NewSize.X > MaxSize.X)
@@ -209,7 +209,7 @@ void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
         NewSize.Y = MaxSize.Y;
     }
 
-    check( NewSize.X >= 0.0f && NewSize.Y >= 0.0f )
+    check( NewSize.X >= 0.0 && NewSize.Y >= 0.0 )
 
     this->SetWindowSize(NewSize);
 

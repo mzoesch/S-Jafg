@@ -21,8 +21,8 @@ public:
     ENGINE_API void Draw
     (
         const LViewport&   Context,
-        const LVector2&    Size,
-        const LVector2&    TopLeft,
+        const LVector2D&    Size,
+        const LVector2D&    TopLeft,
         const Lal::LColor& Tint
     ) const {}
 

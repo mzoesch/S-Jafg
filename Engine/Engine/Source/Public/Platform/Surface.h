@@ -32,71 +32,68 @@ struct LSurfaceCreateInfo
     // bool bUseNativeResolution  = true;
     // TODO: Desired monitor?
 
-    // Supported are the minimal dimensions of 640x475 px up to the maximum for "normal" use cases.
-    LIntVector2 DesiredDimensionsPx{ 1280, 720 };
+    //# Jafg officially supports the minimal dimensions of 640x475px up to the maximum for "normal" use cases.
+    LUIntVector2 DesiredDimensionsPx{ 1280, 720 };
     LString HumanReadableName{ "Transient" };
 };
 
-//#
 //# Interface for a generic surface that the RHI may use to draw on.
-//#
 class LSurfaceBase
 {
 public:
 
-    LSurfaceBase(LSurfaceCreateInfo const& Info) noexcept
-        : SurfaceViewport{*this->AsSurface()}
+    inline explicit LSurfaceBase(LSurfaceCreateInfo const& Info) noexcept : SurfaceViewport{*this->AsSurface()}
     {
         LOG_VERBOSE(LogSurface, "Creating surface [{}].", Info.HumanReadableName)
-
         this->HumanReadableName = Info.HumanReadableName;
     }
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceBase)
     virtual ~LSurfaceBase() = default;
 
-    template <class T = LSurfaceBase>
+    template<class T = LSurfaceBase>
     NODISCARD FORCEINLINE T* As();
-    template <class T = LSurfaceBase>
-    NODISCARD FORCEINLINE const T* As() const;
+    template<class T = LSurfaceBase>
+    NODISCARD FORCEINLINE T const* As() const;
     NODISCARD FORCEINLINE LSurface* AsSurface();
-    NODISCARD FORCEINLINE const LSurface* AsSurface() const;
+    NODISCARD FORCEINLINE LSurface const* AsSurface() const;
 
-    FORCEINLINE void SetHumanReadableName(const LString& InHumanReadableName) noexcept { this->HumanReadableName = InHumanReadableName; }
+    FORCEINLINE void SetHumanReadableName(LString const& S) noexcept { this->HumanReadableName = S; }
     FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
 
-    //# Initialize should make the handle to a native surface screen valid or panic if not possible.
-    virtual void Tick();
-    virtual void OnClear() { this->SurfaceViewport.OnClear(); }
-    virtual void OnUpdate() { this->SurfaceViewport.Draw(); }
+    void Tick();
+    void OnClear() { jassertNoEntry() }
+    void OnUpdate() { jassertNoEntry() }
+    NODISCARD FORCEINLINE bool IsValid() noexcept { jassertNoEntry() }
+    void BeginNewFrame();
+    void PollInputs() { jassertNoEntry() }
+    void PollEvents() { jassertNoEntry() }
+    void PollVirtualInputs();
 
-    virtual bool IsValid() = 0;
+    FORCEINLINE void SetInputMode(EInputMode::Type InMode) noexcept { jassertNoEntry() }
+    FORCEINLINE EInputMode::Type GetInputMode() const noexcept { return this->InputMode; }
+    FORCEINLINE bool IsShowMouseCursor() const noexcept { return this->GetInputMode() & EInputMode::ShowMouseCursor; }
 
-    virtual void BeginNewFrame();
-    virtual void PollInputs() = 0;
-    virtual void PollEvents() = 0;
-            void PollVirtualInputs();
+    FORCEINLINE bool HasMouseLocation() const noexcept { return this->MouseLocation.has_value(); }
+    FORCEINLINE auto const& GetMouseLocation() const noexcept { return this->MouseLocation; }
+    FORCEINLINE LVector2D   GetMouseLocationValue() const noexcept { check( this->MouseLocation.has_value() ) return this->MouseLocation.value(); }
+    FORCEINLINE bool HasLastMouseLocation() const noexcept { return this->LastMouseLocation.has_value(); }
+    FORCEINLINE auto const& GetLastMouseLocation() const noexcept { return this->LastMouseLocation; }
+    FORCEINLINE LVector2D   GetLastMouseLocationValue() const noexcept { check( this->LastMouseLocation.has_value() ) return this->LastMouseLocation.value(); }
 
-    virtual     void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor);
-    FORCEINLINE auto GetInputMode() const -> EInputMode::Type { return this->InputMode; }
-    FORCEINLINE auto IsShowMouseCursor() const -> bool { return this->bShowCursor; }
-    FORCEINLINE auto IsMouseLocationMeaningful() const -> bool { return this->bMouseLocationIsMeaningful; }
-    FORCEINLINE auto GetMouseLocation() const -> LVector2 { return this->MouseLocation; }
-    virtual     void SetMouseCursor(const EMouseCursor::Type InCursor) = 0;
+    FORCEINLINE LViewport& GetViewport() noexcept { return this->SurfaceViewport; }
+    FORCEINLINE LViewport const& GetViewport() const noexcept { return this->SurfaceViewport; }
 
-    FORCEINLINE       auto GetViewport()       ->       LViewport& { return this->SurfaceViewport; }
-    FORCEINLINE       auto GetViewport() const -> const LViewport& { return this->SurfaceViewport; }
-    NODISCARD virtual auto GetWidth() const -> i32                    = 0;
-    NODISCARD virtual auto GetHeight() const -> i32                   = 0;
-    NODISCARD virtual auto GetDimensions() const -> TIntVector2<i32>  = 0;
+    //# In physical pixels.
+    NODISCARD u32 GetWidth() const noexcept { return this->GetDimensions().X; }
+    NODISCARD u32 GetHeight() const noexcept { return this->GetDimensions().Y; }
+    NODISCARD LUIntVector2 GetDimensions() const noexcept { jassertNoEntry() }
 
-    //# Whether the current surface does ever support VSync.
-    NODISCARD virtual bool CanVSync() const = 0;
-              virtual void SetVSync(const bool bEnabled) = 0;
-    NODISCARD virtual bool IsVSync() const noexcept = 0;
-
-    NODISCARD virtual bool CanResize() const = 0;
-              virtual void SetResizable(const bool bInResizable) = 0;
-    NODISCARD virtual bool IsResizable() const noexcept = 0;
+    NODISCARD bool CanEverVSync() const noexcept { jassertNoEntry() }
+              void SetVSync(const bool bEnabled) { jassertNoEntry() }
+    NODISCARD bool IsVSync() const noexcept { jassertNoEntry() }
+    NODISCARD bool CanEverResize() const { jassertNoEntry() }
+              void SetResizable(const bool bResizable) { jassertNoEntry() }
+    NODISCARD bool IsResizable() const noexcept { jassertNoEntry() }
 
     FORCEINLINE void AddKeyDown(const LKey InKey);
     FORCEINLINE void AddKeyDown(const LKey InKey, const f32 InValue);
@@ -170,10 +167,14 @@ protected:
     virtual     void EmulateContentForBufferedInput(const LKey InKey) = 0;
 #endif /* PLATFORM_LINUX */
 
-    EInputMode::Type InputMode{ EInputMode::UserInterface };
-    bool bShowCursor{ true };
-    bool bMouseLocationIsMeaningful{ false };
-    LVector2 MouseLocation;
+    //# Input mode. The mouse cursor visibility might be ignored on some platform configurations.
+    EInputMode::Type InputMode{ EInputMode::UserInterface | EInputMode::ShowMouseCursor };
+    //# Mouse inside surface.
+    bool bIsMouseInsideSurface{ false };
+    //# The current mouse location if available. In some platform configurations, this value might always be missing.
+    TOptional<LVector2D> MouseLocation;
+    //# The last mouse location if available. In some platform configurations, this value might always be missing.
+    TOptional<LVector2D> LastMouseLocation;
 
 private:
 

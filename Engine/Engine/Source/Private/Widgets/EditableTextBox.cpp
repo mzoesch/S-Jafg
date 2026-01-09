@@ -72,15 +72,15 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
 
     if (this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed && this->IsFocusWidget())
     {
-        const LVector2 AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Context) };
+        const LVector2D AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Context) };
 
-        const LVector2 CaretSize { LVector2{2.0f, this->GetDesiredSize_v2().Y} * this->CaretBrush.Size };
+        const LVector2D CaretSize{LVector2D{2.0, this->GetDesiredSize_v2().Y} * this->CaretBrush.Size };
 
-        LVector2 CaretTopLeft
+        LVector2D CaretTopLeft
         {
               AnchoredTopLeftFromMostOuter
-            + LVector2{0.0f, (this->GetDesiredSize_v2().Y - CaretSize.Y) * 0.5f }
-            + LVector2{this->GetBrush().Padding.Left, 0.0f}
+            + LVector2D{0.0, (this->GetDesiredSize_v2().Y - CaretSize.Y) * 0.5}
+            + LVector2D{this->GetBrush().Padding.Left, 0.0}
         }
         ;
 
@@ -182,7 +182,7 @@ void Jafg::WEditableTextBox::OnFocusReceived()
 
     this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.Emplace(this, &WEditableTextBox::UserInterfaceTick);
 
-    if (this->GetViewport().GetSurface().IsMouseLocationMeaningful())
+    if (this->GetViewport().GetSurface().HasMouseLocation())
     {
         this->MoveCaretToMouseCursor(this->GetViewport());
     }
@@ -276,7 +276,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
 
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
-        if (InViewport.GetSurface().IsMouseLocationMeaningful())
+        if (InViewport.GetSurface().HasMouseLocation())
         {
             this->MoveCaretToMouseCursor(InViewport);
         }
@@ -345,7 +345,7 @@ void Jafg::WEditableTextBox::OnSuperContentChanged(const LString& InNewContent)
 
 void Jafg::WEditableTextBox::MoveCaretToMouseCursor(LViewport const& Viewport)
 {
-    check( Viewport.GetSurface().IsMouseLocationMeaningful() )
+    check( Viewport.GetSurface().HasMouseLocation() )
 
     /*
      * This is a workaround and bugprone. We are using the widget location data from the last frame.
@@ -354,20 +354,20 @@ void Jafg::WEditableTextBox::MoveCaretToMouseCursor(LViewport const& Viewport)
      * in the same frame. I do not think that my users will have the brainpower to actually operate computers fast
      * and right.
      */
-    const f32 BaseTopLeft
+    const f64 BaseTopLeft
     {
         this->GetAnchoredTopLeftFromMostOuter(Viewport).X // + this->CaretBrush.HOffset
     };
 
-    const f32 RelativeTopLeft { Viewport.GetSurface().GetMouseLocation().X - BaseTopLeft };
+    const f64 RelativeTopLeft { Viewport.GetSurface().GetMouseLocationValue().X - BaseTopLeft };
 
-    if (RelativeTopLeft < 0.0f)
+    if (RelativeTopLeft < 0.0)
     {
         this->SetCaretCursorToEnd();
     }
     else
     {
-        const i32 Rune { this->GoToWidth(this->GetContent(), RelativeTopLeft) };
+        const i32 Rune{this->GoToWidth(this->GetContent(), RelativeTopLeft)};
         this->SetCaretCursor(Rune);
     }
 

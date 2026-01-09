@@ -111,11 +111,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImageScale(const f32 InImageScale) noexcept { this->Style.NormalBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetHoverImageScale(const f32 InImageScale) noexcept { this->Style.HoverBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetPressImageScale(const f32 InImageScale) noexcept { this->Style.PressBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetDisabledImageScale(const f32 InImageScale) noexcept { this->Style.DisabledBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetOmniImageScale(const f32 InImageScale) noexcept
+    FORCEINLINE void SetNormalImageScale(const f64 InImageScale) noexcept { this->Style.NormalBrush.ImageScale = InImageScale; }
+    FORCEINLINE void SetHoverImageScale(const f64 InImageScale) noexcept { this->Style.HoverBrush.ImageScale = InImageScale; }
+    FORCEINLINE void SetPressImageScale(const f64 InImageScale) noexcept { this->Style.PressBrush.ImageScale = InImageScale; }
+    FORCEINLINE void SetDisabledImageScale(const f64 InImageScale) noexcept { this->Style.DisabledBrush.ImageScale = InImageScale; }
+    FORCEINLINE void SetOmniImageScale(const f64 InImageScale) noexcept
     {
         this->Style.NormalBrush.ImageScale   = InImageScale;
         this->Style.HoverBrush.ImageScale    = InImageScale;
@@ -153,11 +153,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImagePadding(const f32 InImagePadding) noexcept { this->Style.NormalBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetHoverImagePadding(const f32 InImagePadding) noexcept { this->Style.HoverBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetPressImagePadding(const f32 InImagePadding) noexcept { this->Style.PressBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetDisabledImagePadding(const f32 InImagePadding) noexcept { this->Style.DisabledBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetOmniImagePadding(const f32 InImagePadding) noexcept
+    FORCEINLINE void SetNormalImagePadding(const f64 InImagePadding) noexcept { this->Style.NormalBrush.ImagePadding = InImagePadding; }
+    FORCEINLINE void SetHoverImagePadding(const f64 InImagePadding) noexcept { this->Style.HoverBrush.ImagePadding = InImagePadding; }
+    FORCEINLINE void SetPressImagePadding(const f64 InImagePadding) noexcept { this->Style.PressBrush.ImagePadding = InImagePadding; }
+    FORCEINLINE void SetDisabledImagePadding(const f64 InImagePadding) noexcept { this->Style.DisabledBrush.ImagePadding = InImagePadding; }
+    FORCEINLINE void SetOmniImagePadding(const f64 InImagePadding) noexcept
     {
         this->Style.NormalBrush.ImagePadding   = InImagePadding;
         this->Style.HoverBrush.ImagePadding    = InImagePadding;
@@ -167,11 +167,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalRadii(LVector4 const& InRadii) noexcept { this->Style.NormalBrush.Radii = InRadii; }
-    FORCEINLINE void SetHoverRadii(LVector4 const& InRadii) noexcept { this->Style.HoverBrush.Radii = InRadii; }
-    FORCEINLINE void SetPressRadii(LVector4 const& InRadii) noexcept { this->Style.PressBrush.Radii = InRadii; }
-    FORCEINLINE void SetDisabledRadii(LVector4 const& InRadii) noexcept { this->Style.DisabledBrush.Radii = InRadii; }
-    FORCEINLINE void SetOmniRadii(LVector4 const& InRadii) noexcept
+    FORCEINLINE void SetNormalRadii(LVector4D const& InRadii) noexcept { this->Style.NormalBrush.Radii = InRadii; }
+    FORCEINLINE void SetHoverRadii(LVector4D const& InRadii) noexcept { this->Style.HoverBrush.Radii = InRadii; }
+    FORCEINLINE void SetPressRadii(LVector4D const& InRadii) noexcept { this->Style.PressBrush.Radii = InRadii; }
+    FORCEINLINE void SetDisabledRadii(LVector4D const& InRadii) noexcept { this->Style.DisabledBrush.Radii = InRadii; }
+    FORCEINLINE void SetOmniRadii(LVector4D const& InRadii) noexcept
     {
         this->Style.NormalBrush.Radii   = InRadii;
         this->Style.HoverBrush.Radii    = InRadii;
@@ -181,11 +181,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalOutlineThickness(const f32 InOutlineThickness) noexcept { this->Style.NormalBrush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetHoverOutlineThickness(const f32 InOutlineThickness) noexcept { this->Style.HoverBrush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetPressOutlineThickness(const f32 InOutlineThickness) noexcept { this->Style.PressBrush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetDisabledOutlineThickness(const f32 InOutlineThickness) noexcept { this->Style.DisabledBrush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetOmniOutlineThickness(const f32 InOutlineThickness) noexcept
+    FORCEINLINE void SetNormalOutlineThickness(const f64 InOutlineThickness) noexcept { this->Style.NormalBrush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE void SetHoverOutlineThickness(const f64 InOutlineThickness) noexcept { this->Style.HoverBrush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE void SetPressOutlineThickness(const f64 InOutlineThickness) noexcept { this->Style.PressBrush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE void SetDisabledOutlineThickness(const f64 InOutlineThickness) noexcept { this->Style.DisabledBrush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE void SetOmniOutlineThickness(const f64 InOutlineThickness) noexcept
     {
         this->Style.NormalBrush.OutlineThickness   = InOutlineThickness;
         this->Style.HoverBrush.OutlineThickness    = InOutlineThickness;

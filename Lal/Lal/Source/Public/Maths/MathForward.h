@@ -108,6 +108,7 @@ typedef LVectorF         LVector;
 typedef LVector4F        LVector4;
 typedef Li32Vector       LIntVector;
 typedef Li32Vector2      LIntVector2;
+typedef Lu32Vector2      LUIntVector2;
 typedef LRotatorF        LRotator;
 typedef LPlaneF          LPlane;
 

@@ -21,10 +21,10 @@ enum Type : u8
 struct LWidgetSize1 final
 {
     EWidgetSize::Type Type{ EWidgetSize::Points };
-    f32 Size;
+    f64 Size;
 
-    FORCEINLINE constexpr LWidgetSize1() noexcept : Size(0.0f) { }
-    FORCEINLINE constexpr LWidgetSize1(EWidgetSize::Type Type, f32 Size) noexcept
+    FORCEINLINE constexpr LWidgetSize1() noexcept : Size(0.0) { }
+    FORCEINLINE constexpr LWidgetSize1(EWidgetSize::Type Type, f64 Size) noexcept
         : Type(Type), Size(Size)
     {
         return;
@@ -58,7 +58,7 @@ struct LWidgetSize1 final
         return *this;
     }
 
-    FORCEINLINE constexpr LWidgetSize1 operator*(const f32 Scalar) const noexcept
+    FORCEINLINE constexpr LWidgetSize1 operator*(const f64 Scalar) const noexcept
     {
         return LWidgetSize1{ this->Type, this->Size * Scalar };
     }
@@ -77,14 +77,14 @@ struct LWidgetSize2 final
     {
         struct
         {
-            f32 X;
-            f32 Y;
+            f64 X;
+            f64 Y;
         };
 
-        LVector2 Size;
+        LVector2D Size;
     };
 
-    FORCEINLINE constexpr LWidgetSize2() noexceptcheck : Size{} { check( this->X == 0.0f && this->Y == 0.0f ) }
+    FORCEINLINE constexpr LWidgetSize2() noexceptcheck : Size{} { check( this->X == 0.0 && this->Y == 0.0 ) }
     FORCEINLINE constexpr LWidgetSize2(LWidgetSize2 const& WidgetSize2) noexcept
     {
         this->Type = WidgetSize2.Type;
@@ -110,7 +110,7 @@ struct LWidgetSize2 final
         return *this;
     }
 
-    FORCEINLINE constexpr LWidgetSize2(EWidgetSize::Type Type, f32 X, f32 Y) noexcept
+    FORCEINLINE constexpr LWidgetSize2(EWidgetSize::Type Type, f64 X, f64 Y) noexcept
         : Type(Type), Size(X, Y)
     {
         return;
@@ -122,7 +122,7 @@ struct LWidgetSize2 final
         return;
     }
 
-    FORCEINLINE constexpr LWidgetSize2(LWidgetSize1 X, f32 Y) noexcept
+    FORCEINLINE constexpr LWidgetSize2(LWidgetSize1 X, f64 Y) noexcept
         : Type(X.Type), Size(X.Size, Y)
     {
         return;
@@ -130,7 +130,7 @@ struct LWidgetSize2 final
 
     FORCEINLINE constexpr void SetXAxis(LWidgetSize1 InSize) noexcept
     {
-        check( this->Size.Y == 0.0f )
+        check( this->Size.Y == 0.0 )
 
         this->Type = InSize.Type;
         this->Size.X = InSize.Size;
@@ -140,7 +140,7 @@ struct LWidgetSize2 final
 
     FORCEINLINE constexpr void SetYAxis(LWidgetSize1 InSize) noexcept
     {
-        check( this->Size.X == 0.0f )
+        check( this->Size.X == 0.0 )
 
         this->Type = InSize.Type;
         this->Size.Y = InSize.Size;
@@ -148,14 +148,14 @@ struct LWidgetSize2 final
         return;
     }
 
-    FORCEINLINE constexpr LWidgetSize2 operator*(const f32 Scalar) const noexcept
+    FORCEINLINE constexpr LWidgetSize2 operator*(const f64 Scalar) const noexcept
     {
         return LWidgetSize2{ this->Type, this->Size.X * Scalar, this->Size.Y * Scalar };
     }
 
     FORCEINLINE static constexpr LWidgetSize2 Zero() noexcept
     {
-        return LWidgetSize2{ EWidgetSize::Points, 0.0f, 0.0f };
+        return LWidgetSize2{ EWidgetSize::Points, 0.0, 0.0 };
     }
 };
 
@@ -163,40 +163,40 @@ struct LWidgetSize2 final
 
 FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_spt(unsigned long long Value)
 {
-    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value) };
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::StaticPoints, static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_spt(long double Value)
 {
-    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value) };
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::StaticPoints, static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_pt(unsigned long long Value)
 {
-    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::Points, static_cast<f32>(Value) };
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::Points, static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize1 operator ""_pt(long double Value)
 {
-    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::Points, static_cast<f32>(Value) };
+    return Jafg::LWidgetSize1{ Jafg::EWidgetSize::Points, static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_spt2(unsigned long long Value)
 {
-    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value) };
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::StaticPoints, static_cast<f64>(Value), static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_spt2(long double Value)
 {
-    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value) };
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::StaticPoints, static_cast<f64>(Value), static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_pt2(unsigned long long Value)
 {
-    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::Points, static_cast<f32>(Value), static_cast<f32>(Value) };
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::Points, static_cast<f64>(Value), static_cast<f64>(Value) };
 }
 
 FORCEINLINE constexpr Jafg::LWidgetSize2 operator ""_pt2(long double Value)
 {
-    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::Points, static_cast<f32>(Value), static_cast<f32>(Value) };
+    return Jafg::LWidgetSize2{ Jafg::EWidgetSize::Points, static_cast<f64>(Value), static_cast<f64>(Value) };
 }

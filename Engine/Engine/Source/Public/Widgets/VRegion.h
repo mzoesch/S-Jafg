@@ -25,7 +25,7 @@ public:
 
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
-    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const -> LVector2 override;
+    virtual LVector2D GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
 
     FORCEINLINE void SetVSpace(const LWidgetSize1 InVSpace) { this->VSpace = InVSpace; }
     FORCEINLINE LWidgetSize1 GetVSpace() const { return this->VSpace; }

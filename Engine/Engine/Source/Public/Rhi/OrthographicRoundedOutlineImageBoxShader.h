@@ -23,18 +23,18 @@ public:
     ENGINE_API void Draw
     (
         const LViewport&           Context,
-        const LVector2&            Size,
-        const LVector2&            TopLeft,
+        const LVector2D&            TopLeft,
+        const LVector2D&            Size,
         const Lal::LColor&         Tint,
-        const f32                  OutlineThickness,
+        const f64                  OutlineThickness,
         const Lal::LColor&         OutlineTint,
-        const LVector4&            Radii,
+        const LVector4D&            Radii,
         const LImage&              Image,
         const Lal::LColor&         ImageTint,
-        const f32                  ImageScale,
+        const f64                  ImageScale,
         const EImageBehavior::Type ImageBehavior,
         const EImageOobm::Type     ImageOobm,
-        const f32                  ImagePadding
+        const f64                  ImagePadding
     ) const {}
 
 private:

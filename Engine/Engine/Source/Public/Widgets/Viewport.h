@@ -47,7 +47,7 @@ public:
     ~LViewport() { this->TearDown(); }
 
     void ClearInvalidWidgets();
-    void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
+    void DispatchInputs(LSurface& Context, const LVector2D& InCursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
     void OnClear();
     void Tick();
@@ -93,16 +93,15 @@ public:
     FORCEINLINE f32  GetPlatformDpi() const { return this->PlatformDpi; }
     FORCEINLINE f32  GetBaseDpi() const { return this->BaseDpi; }
 
-    ENGINE_API void ChangeDimensions(const LIntVector2& InDimensions);
-    FORCEINLINE LIntVector2 GetDimensions() const { return this->Dimensions; }
-    FORCEINLINE i32         GetWidth() const noexcept { return this->Dimensions.X; }
-    FORCEINLINE i32         GetHeight() const noexcept { return this->Dimensions.Y; }
-    FORCEINLINE LVector2    GetDimensionsF() const { return {static_cast<f32>(this->Dimensions.X), static_cast<f32>(this->Dimensions.Y)}; }
-    FORCEINLINE f32         GetWidthF() const noexcept { return static_cast<f32>(this->Dimensions.X); }
-    FORCEINLINE f32         GetHeightF() const noexcept { return static_cast<f32>(this->Dimensions.Y); }
-    FORCEINLINE LVector2D   GetDimensionsD() const noexcept { return {static_cast<f64>(this->Dimensions.X), static_cast<f64>(this->Dimensions.Y)}; }
-    FORCEINLINE f64         GetWidthD() const noexcept { return static_cast<f64>(this->Dimensions.X); }
-    FORCEINLINE f64         GetHeightD() const noexcept { return static_cast<f64>(this->Dimensions.Y); }
+    ENGINE_API LUIntVector2 GetDimensions() const noexcept;
+    FORCEINLINE i32         GetWidth() const noexcept { return this->GetDimensions().X; }
+    FORCEINLINE i32         GetHeight() const noexcept { return this->GetDimensions().Y; }
+    FORCEINLINE LVector2    GetDimensionsF() const { return {static_cast<f32>(this->GetDimensions().X), static_cast<f32>(this->GetDimensions().Y)}; }
+    FORCEINLINE f32         GetWidthF() const noexcept { return static_cast<f32>(this->GetDimensions().X); }
+    FORCEINLINE f32         GetHeightF() const noexcept { return static_cast<f32>(this->GetDimensions().Y); }
+    FORCEINLINE LVector2D   GetDimensionsD() const noexcept { return {static_cast<f64>(this->GetDimensions().X), static_cast<f64>(this->GetDimensions().Y)}; }
+    FORCEINLINE f64         GetWidthD() const noexcept { return static_cast<f64>(this->GetDimensions().X); }
+    FORCEINLINE f64         GetHeightD() const noexcept { return static_cast<f64>(this->GetDimensions().Y); }
 
     ENGINE_API  WNode* GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const;
     FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const;
@@ -119,15 +118,15 @@ public:
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WNode* Node);
 
-    FORCEINLINE f32 GetFrameOrthoZLayerDepth() const { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
+    FORCEINLINE f32 GetFrameOrthoZLayerDepth() const noexcept { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
 
     //#
     //# The translation that is recommended for children of a #WNode to use while drawing.
     //# This translation should be removed after said #WNode is finished drawing.
     //# This value is reset every frame.
     //#
-    FORCEINLINE void ApplyFrameTranslation(const LVector2D& InTranslation) const { this->FrameTranslation += InTranslation; }
-    FORCEINLINE auto GetFrameTranslation() const -> const LVector2D& { return this->FrameTranslation; }
+    FORCEINLINE void ApplyFrameTranslation(LVector2D const& InTranslation) const noexcept { this->FrameTranslation += InTranslation; }
+    FORCEINLINE LVector2D const& GetFrameTranslation() const noexcept { return this->FrameTranslation; }
 
     //#
     //# The translation that is recommended for children of a #WParentBase to use while sweeping.
@@ -136,7 +135,7 @@ public:
     //# @remark Use the #LViewportSweepTranslation for easy RAII style translation logic.
     //#
     FORCEINLINE void ApplySweepTranslation(const LVector2D& InTranslation) const noexcept { this->SweepTranslation += InTranslation; }
-    FORCEINLINE auto GetSweepTranslation() const -> const LVector2D& { return this->SweepTranslation; }
+    FORCEINLINE LVector2D const& GetSweepTranslation() const noexcept { return this->SweepTranslation; }
 
     FORCEINLINE bool HasFrameCulls() const noexcept { return this->FrameCulls.empty() == false; }
     FORCEINLINE TArray<LVector4D> const& GetFrameCulls() const noexcept { return this->FrameCulls; }
@@ -163,19 +162,19 @@ public:
     FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
     FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
 
-    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocation() const { return this->CachedCursorLocation; }
-    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationChecked() const { check( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
-    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationAsserted() const { jassert( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
+    FORCEINLINE auto const& GetCachedCursorLocation() const noexcept { return this->CachedCursorLocation; }
+    FORCEINLINE auto const& GetCachedCursorLocationChecked() const noexcept { check( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
+    FORCEINLINE auto const& GetCachedCursorLocationAsserted() const noexcept { jassert( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
 
     //#
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
     //#
-    FORCEINLINE constexpr void ConvertTLToBLOrigin(LVector2* Vector) const noexcept;
+    FORCEINLINE constexpr void ConvertTLToBLOrigin(LVector2D* Vector) const noexcept;
 
     //#
     //# @return True if the point is inside the bounds of the viewport.
     //#
-    FORCEINLINE static constexpr bool IsInBounds(const LVector2& InTopLeft, const LVector2& InSize, const LVector2& InPoint) noexcept;
+    FORCEINLINE static constexpr bool IsInBounds(const LVector2D& InTopLeft, const LVector2D& InSize, const LVector2D& InPoint) noexcept;
 
     FORCEINLINE const Lal::LLinearColor& GetBackgroundColor() { return this->BackgroundColor; }
     FORCEINLINE void SetBackgroundColor(const Lal::LLinearColor& InColor) { this->BackgroundColor = InColor; }
@@ -201,8 +200,6 @@ private:
     //#
     f32 BaseDpi{ 96.0f };
 
-    //# The dimensions of the viewport in px.
-    LIntVector2 Dimensions;
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;
 
@@ -219,7 +216,7 @@ private:
     LFrameBuffer IntermediateBuffer;
 
     LSurface& Surface;
-    TOptional<LVector2> CachedCursorLocation;
+    TOptional<LVector2D> CachedCursorLocation;
 
     Lal::LLinearColor BackgroundColor;
 
@@ -241,12 +238,14 @@ FORCEINLINE LViewportSweepTranslation::~LViewportSweepTranslation() noexcept
 
 FORCEINLINE EApplicationScale::Type LViewport::GetMaxAllowApplicationScale() const noexcept
 {
-    if (this->Dimensions.X < 640 || this->Dimensions.Y < 475)
+    auto Dimensions{ this->GetDimensions() };
+
+    if (Dimensions.X < 640 || Dimensions.Y < 475)
     {
         return EApplicationScale::Single;
     }
 
-    if (this->Dimensions.X < 960 || this->Dimensions.Y < 720)
+    if (Dimensions.X < 960 || Dimensions.Y < 720)
     {
         return EApplicationScale::Double;
     }
@@ -273,7 +272,7 @@ FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClassChecked() const
     return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
 }
 
-FORCEINLINE constexpr bool LViewport::IsInBounds(const LVector2& InTopLeft, const LVector2& InSize, const LVector2& InPoint) noexcept
+FORCEINLINE constexpr bool LViewport::IsInBounds(const LVector2D& InTopLeft, const LVector2D& InSize, const LVector2D& InPoint) noexcept
 {
     return
             InTopLeft.X <= InPoint.X
@@ -283,10 +282,10 @@ FORCEINLINE constexpr bool LViewport::IsInBounds(const LVector2& InTopLeft, cons
          ;
 }
 
-FORCEINLINE constexpr void LViewport::ConvertTLToBLOrigin(LVector2* Vector) const noexcept
+FORCEINLINE constexpr void LViewport::ConvertTLToBLOrigin(LVector2D* Vector) const noexcept
 {
     checkSlow( Vector )
-    Vector->Y = this->Dimensions.Y - Vector->Y;
+    Vector->Y = this->GetDimensions().Y - Vector->Y;
 }
 
 } /* ~Namespace Jafg */

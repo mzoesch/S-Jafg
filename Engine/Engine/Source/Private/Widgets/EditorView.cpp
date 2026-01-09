@@ -68,7 +68,7 @@ Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(const LViewport& InViewport, cons
 
 void Jafg::WEditorView::OnSecondaryDown()
 {
-    this->GetViewport().GetSurface().SetInputMode(EInputMode::Both, false);
+    this->GetViewport().GetSurface().SetInputMode(EInputMode::Both);
     this->SetShouldTick(true);
 
     // LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
@@ -80,7 +80,7 @@ void Jafg::WEditorView::OnSecondaryDown()
 
 void Jafg::WEditorView::OnSecondaryUp()
 {
-    this->GetViewport().GetSurface().SetInputMode(EInputMode::Both, true);
+    this->GetViewport().GetSurface().SetInputMode(EInputMode::Both | EInputMode::ShowMouseCursor);
     this->SetShouldTick(false);
     //
     // LUserInput& Input{ this->GetLocalEgo().GetUserInput() };

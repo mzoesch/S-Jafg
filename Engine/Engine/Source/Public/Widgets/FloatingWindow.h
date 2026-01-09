@@ -32,7 +32,7 @@ public:
     FORCEINLINE WVRegion* GetWindow() noexcept { return this->GetRoot<WVRegion>(); }
     FORCEINLINE WVRegion const* GetWindow() const noexcept { return this->GetRoot<WVRegion>(); }
 
-    FORCEINLINE void SetWindowSize(LVector2 SizeInSpt) noexcept
+    FORCEINLINE void SetWindowSize(LVector2D SizeInSpt) noexcept
     {
         this->GetWindow()->SetMinDesiredSize(
         {
@@ -41,7 +41,7 @@ public:
             , Maths::Max(SizeInSpt.Y, WFloatingWindow::MinWindowSizeInSpt.Y)
         });
     }
-    FORCEINLINE void SetWindowPosition(LVector2 PositionInSpt) noexcept
+    FORCEINLINE void SetWindowPosition(LVector2D PositionInSpt) noexcept
     {
         this->GetWindow()->SetMargin({EWidgetSize::StaticPoints, PositionInSpt, 0, 0});
     }
@@ -69,17 +69,17 @@ protected:
 
     LDelegateHandle UiTickMoveHandle{ nullptr };
     void UiTickMove(LViewport const& Viewport);
-    TOptional<LVector2> MoveDragOffset;
+    TOptional<LVector2D> MoveDragOffset;
 
     bool bCreateResizeUi{ true };
     LDelegateHandle UiTickResizeHandle{ nullptr };
     void UiTickResize(LViewport const& Viewport);
-    TOptional<LVector2> ResizeDragOffset;
+    TOptional<LVector2D> ResizeDragOffset;
 
 private:
 
     WTextBox* WindowTitle{ nullptr };
-    static constexpr LVector2 MinWindowSizeInSpt{ 320, 180 };
+    static constexpr LVector2D MinWindowSizeInSpt{ 320, 180 };
 };
 
 } /* ~Namespace Jafg */

@@ -27,7 +27,7 @@ public:
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSize(const LViewport& Context) const override;
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
-    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const -> LVector2 override;
+    virtual LVector2D GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
 };
 
 } /* ~Namespace Jafg */

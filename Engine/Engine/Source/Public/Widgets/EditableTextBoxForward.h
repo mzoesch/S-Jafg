@@ -51,13 +51,13 @@ struct LCaretBrush final
     Lal::LColor Tint { Lal::LColor::White };
 
     //# The size in percent from the default. Default is (2px x DesiredSize.Y).
-    LVector2 Size { 1.0f, 0.85f };
+    LVector2D Size { 1.0, 0.85 };
 
     //# The horizontal offset.
-    f32 HOffset { 0.0f };
+    f64 HOffset { 0.0 };
 
     //# The blinker speed of the caret in seconds.
-    f32 CaretBlinkerSpeed { 0.5f };
+    f64 CaretBlinkerSpeed { 0.5 };
 };
 
 namespace ETextCommit

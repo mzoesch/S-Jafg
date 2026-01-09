@@ -88,7 +88,7 @@ public:
     FORCEINLINE constexpr bool IsVCenterAligned() const noexcept { return ETextVAlign::IsCenter(this->TextVAlign); }
     FORCEINLINE constexpr bool IsBottomAligned() const noexcept { return ETextVAlign::IsBottom(this->TextVAlign); }
 
-    FORCEINLINE const LVector2& GetDesiredSizeOfRawText() const noexcept { return this->TextDesiredSize; }
+    FORCEINLINE const LVector2D& GetDesiredSizeOfRawText() const noexcept { return this->TextDesiredSize; }
 
 protected:
 
@@ -113,7 +113,7 @@ private:
 
     LString Content;
 
-    mutable LVector2 TextDesiredSize;
+    mutable LVector2D TextDesiredSize;
 };
 
 FORCEINLINE constexpr void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept
@@ -142,7 +142,7 @@ FORCEINLINE constexpr void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
 
 FORCEINLINE constexpr LTextBoxBrush WTextBox::GetBrush() const noexcept
 {
-    static_assert(sizeof(LTextBoxBrush) == 96, "This method needs to be updated because LTextBoxBrush has changed.");
+    static_assert(sizeof(LTextBoxBrush) == 152, "This method needs to be updated because LTextBoxBrush has changed.");
 
     LTextBoxBrush Out;
 

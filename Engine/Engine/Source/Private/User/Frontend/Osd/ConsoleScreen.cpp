@@ -280,7 +280,7 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         // UserInput.DeactivateContext(Name_UicInMyWorldFoot);
         // UserInput.DeactivateContext(Name_UicInMyWorld);
         // UserInput.ActivateContext(Name_UicInConsole);
-        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both | EInputMode::ShowMouseCursor);
     }
 
     else if (InState == EConsoleScreenState::Preview)
@@ -300,7 +300,7 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         // UserInput.DeactivateContext(Name_UicInConsole);
         // UserInput.ActivateContext(Name_UicInMyWorldFoot);
         // UserInput.ActivateContext(Name_UicInMyWorld);
-        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem);
     }
 
     else if (InState == EConsoleScreenState::TryPreview)
@@ -324,7 +324,7 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         // UserInput.DeactivateContext(Name_UicInConsole);
         // UserInput.ActivateContext(Name_UicInMyWorldFoot);
         // UserInput.ActivateContext(Name_UicInMyWorld);
-        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem);
     }
 
     else

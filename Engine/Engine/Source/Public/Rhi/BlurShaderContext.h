@@ -10,8 +10,8 @@ namespace Jafg
 
 struct LBlurShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
 {
-    LVector2 Size;
-    LVector2 TopLeft;
+    LVector2D Size;
+    LVector2D TopLeft;
     float Strength = 0.0f;
 };
 

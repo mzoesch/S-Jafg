@@ -5,6 +5,7 @@
 #include "User/LocalEgo.h"
 #include "User/Frontend/Osd/FrontendScreen.h"
 #include "User/Frontend/Osd/ConsoleWindow.h"
+#include "TestWidget.h"
 
 bool Jafg::JCoreFrontendWidgetsSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
@@ -24,6 +25,8 @@ void Jafg::JCoreFrontendWidgetsSubsystem::Initialize(LSubsystemCollection& Colle
 
     this->FrontendScreen = ConstructWidgetNode<WFrontendScreen>(Viewport, this->GetOuterChecked());
     ConstructWidgetNode<WConsoleWindow>(Viewport);
+
+    ConstructWidgetNode<WTestWidget>(Viewport, this->GetOuterChecked());
 
     return;
 }

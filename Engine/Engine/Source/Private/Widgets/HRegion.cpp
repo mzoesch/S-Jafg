@@ -6,8 +6,8 @@ void Jafg::WHRegion::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
 
-    LVector2 DesiredSize = LVector2::Zero();
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    LVector2D DesiredSize;
+    for (LWidgetSlot const* ChildSlot : this->GetChildren())
     {
         DesiredSize.X += ChildSlot->Content->GetDesiredSize_v2().X;
         DesiredSize.Y  = Maths::Max(DesiredSize.Y, ChildSlot->Content->GetDesiredSize_v2().Y);
@@ -35,10 +35,10 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
         return;
     }
 
-    f32 TotalDesiredSize { 0.0f };
+    f64 TotalDesiredSize { 0.0 };
 
     /* In percent. */
-    f32 TotalFreeUsage   { 0.0f };
+    f64 TotalFreeUsage   { 0.0 };
 
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
@@ -50,14 +50,14 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
         continue;
     }
 
-    const f32 FreeSpace
+    const f64 FreeSpace
     {
         (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt(Context))
         - TotalDesiredSize
         - this->GetHSpace() * (this->GetChildren().size() - 1)
     };
 
-    const f32 InverseFreeUsage { 1.0f / TotalFreeUsage };
+    const f64 InverseFreeUsage { 1.0 / TotalFreeUsage };
 
     InDirectChild->SetAnchoredSize
     ({
@@ -73,7 +73,7 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     return;
 }
 
-LVector2 Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const
+LVector2D Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Context, WNode const* InDirectChild) const
 {
     check( InDirectChild )
 
@@ -91,7 +91,7 @@ LVector2 Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport
         continue;
     }
 
-    LVector2 Out
+    LVector2D Out
     {
         this->GetPadding().GetLeftOffsetInSpt(Context)
         + Offset
