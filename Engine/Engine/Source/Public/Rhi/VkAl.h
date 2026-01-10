@@ -5,6 +5,7 @@
 #include "Lal.afx"
 #include "Rhi/VkForward.h"
 #include "Rhi/RhiVendorInclude.h"
+#include "Platform/SurfaceForward.h"
 
 //#
 //# File:
@@ -201,7 +202,7 @@ struct LDevicePipelineFactory
     {
         const auto Code{ Finder::ReadFileAsBinary(Path) };
         Self.ShaderModules.emplace_back(vk::raii::ShaderModule{
-            Self.Surface.GetFrontend().GetVkDevice(),
+            Self.Surface.GetFrontend().Vk_GetDevice(),
             vk::ShaderModuleCreateInfo{
                 .codeSize = Code.size() * sizeof(u8),
                 .pCode = reinterpret_cast<u32 const*>(Code.data())
@@ -302,7 +303,7 @@ struct LDevicePipelineFactory
         check( *Self.DescriptorSetLayout == nullptr )
 
         Self.DescriptorSetLayout = vk::raii::DescriptorSetLayout{
-            Self.Surface.GetFrontend().GetVkDevice(),
+            Self.Surface.GetFrontend().Vk_GetDevice(),
             vk::DescriptorSetLayoutCreateInfo{
                 .bindingCount = static_cast<u32>(TDeviceLayout::Bindings().size()),
                 .pBindings = TDeviceLayout::Bindings().data(),
@@ -319,7 +320,7 @@ struct LDevicePipelineFactory
         return std::forward<decltype(Self)>(Self);
     }
 
-    LDevicePipeline Build();
+    ENGINE_API LDevicePipeline Build();
 
     LSurface const& Surface;
     TArray<vk::raii::ShaderModule> ShaderModules;
@@ -366,5 +367,41 @@ struct LDevicePipelineFactory
     vk::raii::PipelineLayout PipelineLayout{ nullptr };
     std::optional<vk::PushConstantRange> Range;
 };
+
+inline LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
+{
+    switch (Format)
+    {
+    case vk::Format::eR8Unorm:
+    {
+        return 1;
+    }
+    case vk::Format::eR8G8Unorm:
+    {
+        return 2;
+    }
+    case vk::Format::eR8G8B8A8Unorm:
+    case vk::Format::eR8G8B8A8Srgb:
+    {
+        return 4;
+    }
+    case vk::Format::eB8G8R8A8Unorm:
+    {
+        return 4;
+    }
+    case vk::Format::eR16G16B16A16Sfloat:
+    {
+        return 8;
+    }
+    case vk::Format::eR32G32B32A32Sfloat:
+    {
+        return 16;
+    }
+    default:
+    {
+        panicMsgf( "Unsupported or non-linear format [{}] for bytes per pixel query.", vk::to_string(Format) )
+    }
+    }
+}
 
 } /* ~Namespace Jafg */

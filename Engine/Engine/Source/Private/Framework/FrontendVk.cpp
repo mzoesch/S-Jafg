@@ -83,11 +83,11 @@ void Jafg::Detail::FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation All
         static VmaAllocator Vma{ nullptr };
         if (LAL_LIKELY(Vma))
         {
-            check( GEngine->GetLocalEgo().GetFrontend().GetVma() == Vma )
+            check( GEngine->GetLocalEgo().GetFrontend().Vk_GetVmaAllocator() == Vma )
         }
         else
         {
-            Vma = GEngine->GetLocalEgo().GetFrontend().GetVma();
+            Vma = GEngine->GetLocalEgo().GetFrontend().Vk_GetVmaAllocator();
         }
 
         checkSlow( Vma )
@@ -111,11 +111,11 @@ void Jafg::Detail::FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allo
         static VmaAllocator Vma{ nullptr };
         if (LAL_LIKELY(Vma))
         {
-            check( GEngine->GetLocalEgo().GetFrontend().GetVma() == Vma )
+            check( GEngine->GetLocalEgo().GetFrontend().Vk_GetVmaAllocator() == Vma )
         }
         else
         {
-            Vma = GEngine->GetLocalEgo().GetFrontend().GetVma();
+            Vma = GEngine->GetLocalEgo().GetFrontend().Vk_GetVmaAllocator();
         }
 
         checkSlow( Vma )
@@ -135,6 +135,8 @@ void Jafg::Detail::FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allo
 void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 {
     STAT_CYCLE_FUNCTION()
+
+    LFrontendBase::Initialize(Outer);
 
     LOG_VERBOSE(LogSurface, "Initializing glfw.")
 
@@ -226,60 +228,78 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         this->UsablePhysicalViewports.emplace_back(std::move(Pv));
     }
 
-    LOG_VERBOSE(LogVulkan, "Initializing vulkan.")
+    LOG_VERBOSE(LogVulkan, "Initializing Vulkan.")
 
     LOG_VERBOSE(LogVulkan, "Setting up Vulkan dynamic dispatch loader.")
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
-    this->FetchAndCheckInstanceExtensions();
-    this->FetchAndCheckInstanceLayers();
-    this->CreateInstance();
+    this->Vk_FetchAndCheckInstanceExtensions();
+    this->Vk_FetchAndCheckInstanceLayers();
+    this->Vk_CreateInstance();
 #if !IN_SHIPPING
-    this->SetupDebugUtilsMessenger();
+    this->Vk_SetupDebugUtilsMessenger();
 #endif /* !IN_SHIPPING */
 
     LOG_VERBOSE(LogVulkan, "Initializing Vulkan dispatch loader with instance.")
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->VkMyInstance);
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->Vk_Instance);
 
-    LFrontendBase::Initialize(Outer);
-    check( this->GetSurfaces().empty() == false )
+    this->Vk_PickPhysicalDevice();
+    this->Vk_SetMaxMsaaSamples();
 
-    this->PickPhysicalDevice();
-    this->PickMaxMsaaSamples();
-    this->CreateLogicalDevice();
+    /*
+     * In order to create the best and optimal preferences for Vulkan, we first create a new surface to query
+     * data from it. This will allow for some great optimizations...
+     */
+    LSurfaceCreateInfo SurfaceInfo{
+#if !IN_SHIPPING
+        /* For development purposes, we want a smaller window as it does not cover so much space. */
+        .DesiredDimensionsPx = { 855, 475 },
+#endif /* !IN_SHIPPING */
+        .HumanReadableName = "Jafg - @mzoesch",
+        };
+    TUnique QuerySurface{ std::make_unique<LSurface>(SurfaceInfo) };
+
+    this->Vk_CreateLogicalDevice(*QuerySurface);
 
     LOG_VERBOSE(LogVulkan, "Initializing Vulkan dispatch loader with device.")
-    VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->VkMyDevice);
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->Vk_Device);
 
-    this->CreateVma();
+    this->Vk_CreateVma();
 
     LOG_VERBOSE(LogVulkan, "Creating transient command pool.")
-    this->Vk_TransientCommandPool = vk::raii::CommandPool{this->VkMyDevice, {
+    this->Vk_TransientCommandPool = vk::raii::CommandPool{this->Vk_Device, {
         .flags = vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-        .queueFamilyIndex = this->VkMyGraphicsQueueFamilyIndex // TODO: Queue that supports VK_QUEUE_TRANSFER_BIT
+        .queueFamilyIndex = this->Vk_GraphicsQueueFamilyIndex // TODO: Queue that supports VK_QUEUE_TRANSFER_BIT.
         }};
+
+    this->Vk_PreferredDepthFormat = this->Vk_FindSupportedFormat(
+        {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment
+        ).value_or(vk::Format::eUndefined);
+    if (this->Vk_PreferredDepthFormat == vk::Format::eUndefined)
+    {
+        panic( "Failed to find a supported depth format." )
+    }
 
     LSlangCompilationRequest Req{};
     Req.In = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Slang/Test.slang" };
     Req.Out = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Spir-V/Test.spv" };
     Req.EntryPoints.reflexive_emplace_back("vertMain").emplace_back("fragMain");
-    if (auto Rc{ this->HandleCompilationRequest_viaSlang(Req) }; Rc != 0)
+    if (auto Rc{ this->HandleSlangCompilationRequest(Req) }; Rc != 0)
     {
         panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )
     }
 
     Req.In = LPath{ "Content/Shaders/Slang/VisualBox.slang" };
     Req.Out = LPath{ "Content/Shaders/Spir-V/VisualBox.spv" };
-    if (auto Rc{ this->HandleCompilationRequest_viaSlang(Req) }; Rc != 0)
+    if (auto Rc{ this->HandleSlangCompilationRequest(Req) }; Rc != 0)
     {
         panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )
     }
 
-    for (auto& Surface : this->GetSurfaces())
-    {
-        Surface->LateSetupVk();
-        continue;
-    }
+    this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
+    this->GetSurfaces().back()->LateSetupVk();
 
     return;
 }
@@ -289,7 +309,7 @@ void Jafg::LFrontendVk::TearDown()
     LFrontendBase::TearDown();
 
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")
-    vmaDestroyAllocator(this->VmaMyAllocator);
+    vmaDestroyAllocator(this->Vk_VmaAllocator);
 
     LOG_VERBOSE(LogSurface, "Terminating glfw.")
     glfwTerminate();
@@ -297,29 +317,38 @@ void Jafg::LFrontendVk::TearDown()
     return;
 }
 
-vk::raii::CommandBuffer Jafg::LFrontendVk::VkBeginSingleTimeCommands(vk::CommandPool Pool) const
+vk::raii::CommandBuffer Jafg::LFrontendVk::Vk_BeginSingleTimeCommands(vk::CommandPool Pool) const
 {
-    vk::CommandBufferAllocateInfo allocInfo{
+    if (Pool == nullptr)
+    {
+        Pool = this->Vk_TransientCommandPool;
+    }
+
+    vk::CommandBufferAllocateInfo AllocateInfo{
         .commandPool = Pool,
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = 1
         };
 
-    vk::raii::CommandBuffer commandBuffer = std::move(this->VkMyDevice.allocateCommandBuffers(allocInfo).front());
+    vk::raii::CommandBuffer CommandBuffer{ std::move(this->Vk_Device.allocateCommandBuffers(AllocateInfo).front()) };
 
-    vk::CommandBufferBeginInfo beginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit };
-    commandBuffer.begin(beginInfo);
+    vk::CommandBufferBeginInfo BeginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit };
+    CommandBuffer.begin(BeginInfo);
 
-    return commandBuffer;
+    return CommandBuffer;
 }
 
-void Jafg::LFrontendVk::VkEndSingleTimeCommands(vk::CommandBuffer CommandBuffer) const
+void Jafg::LFrontendVk::Vk_EndSingleTimeCommands(vk::raii::CommandBuffer CommandBuffer) const
 {
+    check( Tasks::IsOnMasterThread() )
+    check( *CommandBuffer )
+
     CommandBuffer.end();
 
-    vk::SubmitInfo submitInfo{ .commandBufferCount = 1, .pCommandBuffers = &CommandBuffer };
-    this->VkMyGraphicsQueue.submit(submitInfo, nullptr);
-    this->VkMyGraphicsQueue.waitIdle();
+    vk::SubmitInfo SubmitInfo{ .commandBufferCount = 1, .pCommandBuffers = &*CommandBuffer };
+    //# TODO: Use a dedicated transfer queue if available.
+    this->Vk_GraphicsQueue.submit(SubmitInfo, nullptr);
+    this->Vk_GraphicsQueue.waitIdle();
 
     return;
 }
@@ -334,7 +363,7 @@ Jafg::LDeviceBuffer Jafg::LFrontendVk::Vk_CreateBuffer(vk::BufferCreateInfo Info
         };
 
     auto Res{vmaCreateBuffer(
-        this->VmaMyAllocator,
+        this->Vk_VmaAllocator,
         Info,
         &AllocationCreateInfo,
         &Buffer,
@@ -343,7 +372,7 @@ Jafg::LDeviceBuffer Jafg::LFrontendVk::Vk_CreateBuffer(vk::BufferCreateInfo Info
         )};
     check( Res == VK_SUCCESS )
 
-    return LDeviceBuffer{ Buffer, Allocation };
+    return { Buffer, Allocation };
 }
 
 Jafg::LDetailedDeviceBuffer Jafg::LFrontendVk::Vk_CreateDetailedBuffer(vk::BufferCreateInfo Info, vk::MemoryPropertyFlags Flags, VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */) const
@@ -357,7 +386,7 @@ Jafg::LDetailedDeviceBuffer Jafg::LFrontendVk::Vk_CreateDetailedBuffer(vk::Buffe
 
     VmaAllocationInfo AllocationInfo{};
     auto Res{vmaCreateBuffer(
-        this->VmaMyAllocator,
+        this->Vk_VmaAllocator,
         Info,
         &AllocationCreateInfo,
         &Buffer,
@@ -366,14 +395,14 @@ Jafg::LDetailedDeviceBuffer Jafg::LFrontendVk::Vk_CreateDetailedBuffer(vk::Buffe
         )};
     check( Res == VK_SUCCESS )
 
-    return LDetailedDeviceBuffer{ Buffer, Allocation, std::move(AllocationInfo) };
+    return { Buffer, Allocation, std::move(AllocationInfo) };
 }
 
 Jafg::LMappedDeviceBuffer Jafg::LFrontendVk::Vk_CreateMappedBuffer(
       vk::BufferCreateInfo Info
-    , vk::MemoryPropertyFlags Flags
+    , vk::MemoryPropertyFlags Flags /* = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent */
     , VmaAllocationCreateFlags VmaFlags /* = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT */
-    , VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */
+    , VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */ // TODO: Should that not be HOST!?
     ) const
 {
     VkBuffer Buffer;
@@ -385,27 +414,27 @@ Jafg::LMappedDeviceBuffer Jafg::LFrontendVk::Vk_CreateMappedBuffer(
         };
 
     VmaAllocationInfo AllocationInfo{};
-    auto Res = vmaCreateBuffer(
-        this->VmaMyAllocator,
+    auto Res{vmaCreateBuffer(
+        this->Vk_VmaAllocator,
         Info,
         &AllocationCreateInfo,
         &Buffer,
         &Allocation,
         &AllocationInfo
-        );
+        )};
     check( Res == VK_SUCCESS )
     check( AllocationInfo.pMappedData )
 
-    return LMappedDeviceBuffer{ Buffer, Allocation, AllocationInfo.pMappedData };
+    return { Buffer, Allocation, AllocationInfo.pMappedData };
 }
 
 void Jafg::LFrontendVk::Vk_CopyBuffer(vk::Buffer Src, vk::Buffer Dst, vk::BufferCopy BufferCopy, vk::CommandPool Pool /* = nullptr */) const
 {
     check( Src && Dst )
 
-    auto Buffer{this->VkBeginSingleTimeCommands(Pool ? Pool : this->Vk_TransientCommandPool)};
+    auto Buffer{this->Vk_BeginSingleTimeCommands(Pool)};
     Buffer.copyBuffer(Src, Dst, BufferCopy);
-    this->VkEndSingleTimeCommands(Buffer);
+    this->Vk_EndSingleTimeCommands(std::move(Buffer));
 
     return;
 }
@@ -430,7 +459,7 @@ Jafg::LDeviceBuffer Jafg::LFrontendVk::Vk_StageBuffer(LStageBufferCreateInfo con
     VmaAllocationInfo StagingAllocationInfo{};
 
     auto Res{vmaCreateBuffer(
-        this->VmaMyAllocator,
+        this->Vk_VmaAllocator,
         StagingBufferCreateInfo,
         &StagingAllocationCreateInfo,
         &StagingBuffer,
@@ -456,7 +485,7 @@ Jafg::LDeviceBuffer Jafg::LFrontendVk::Vk_StageBuffer(LStageBufferCreateInfo con
         };
 
     Res = vmaCreateBuffer(
-        this->VmaMyAllocator,
+        this->Vk_VmaAllocator,
         DeviceBufferCreateInfo,
         &DeviceAllocInfo,
         &DeviceBuffer,
@@ -467,241 +496,128 @@ Jafg::LDeviceBuffer Jafg::LFrontendVk::Vk_StageBuffer(LStageBufferCreateInfo con
 
     this->Vk_CopyBuffer(StagingBuffer, DeviceBuffer, Info.BufferCopy);
 
-    vmaDestroyBuffer(this->VmaMyAllocator, StagingBuffer, StagingAllocation);
+    vmaDestroyBuffer(this->Vk_VmaAllocator, StagingBuffer, StagingAllocation);
 
-    return LDeviceBuffer{ DeviceBuffer, DeviceAllocation };
+    return { DeviceBuffer, DeviceAllocation };
 }
 
-Jafg::LDeviceImage Jafg::LFrontendVk::VkCreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo)
+Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo)
 {
     VkImage Image;
     VmaAllocation Allocation;
 
-    auto Res = this->VmaMyAllocator->CreateImage(
+    auto Res{this->Vk_VmaAllocator->CreateImage(
         Info,
         &AllocationCreateInfo,
         nullptr,
         &Image,
         &Allocation,
         nullptr
-        );
+        )};
     check( Res == VK_SUCCESS )
 
     return LDeviceImage{ Image, Allocation };
 }
 
-Jafg::LDeviceImage Jafg::LFrontendVk::VkStage2dImage(i32 texWidth, i32 texHeight, i32 texChannels, stbi_uc* pixels, u32 MipLevels, vk::CommandPool Pool)
+Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info)
 {
-    check( pixels )
-
-    vk::DeviceSize ImageSize{ static_cast<vk::DeviceSize>(texWidth) * static_cast<vk::DeviceSize>(texHeight) * static_cast<vk::DeviceSize>(texChannels) };
-
-    auto StagingBuffer = this->Vk_CreateMappedBuffer(
-            vk::BufferCreateInfo{
-                .size = ImageSize,
-                .usage = vk::BufferUsageFlagBits::eTransferSrc
-            },
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-            );
-    std::memcpy(StagingBuffer.Data, pixels, static_cast<size_t>(ImageSize));
-
-    vk::ImageCreateInfo ImageCreateInfo{
-        .flags = {},
-        .imageType = vk::ImageType::e2D,
-        .format = vk::Format::eR8G8B8A8Srgb,
-        .extent = { static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
-        .mipLevels = MipLevels,
-        .arrayLayers = 1,
-        .samples = vk::SampleCountFlagBits::e1,
-        .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        .sharingMode = vk::SharingMode::eExclusive,
-        .initialLayout = vk::ImageLayout::eUndefined,
+    VmaAllocationCreateInfo AllocationInfo{
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         };
 
-    LDeviceImage Image = this->VkCreateDeviceLocalImage(ImageCreateInfo, vk::MemoryPropertyFlagBits::eDeviceLocal);
+    return this->Vk_CreateImage(Info, AllocationInfo);
+}
 
-    this->VkTransitionImageLayout(Image.Buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, MipLevels, Pool);
-    this->CopyBufferToImage(StagingBuffer.Buffer, Image.Buffer, texWidth, texHeight, Pool);
-    this->VkTransitionImageLayout(Image.Buffer, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, MipLevels, Pool);
+Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info)
+{
+    check( Info.Data )
+
+    auto N{ static_cast<size_t>(Vk_GetBytesPerPixel(Info.Info.format) * Info.Info.extent.width * Info.Info.extent.height) };
+
+    auto StagingBuffer{this->Vk_CreateMappedBuffer({
+        .size = N,
+        .usage = vk::BufferUsageFlagBits::eTransferSrc
+        })};
+    std::memcpy(StagingBuffer.Data, Info.Data, N);
+
+    auto Image{ this->Vk_CreateDeviceLocalImage(Info.Info) };
+
+    this->Vk_TransitionImageLayout({
+        .oldLayout = vk::ImageLayout::eUndefined,
+        .newLayout = vk::ImageLayout::eTransferDstOptimal,
+        .image = Image.Buffer,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = Info.Info.mipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+            },
+        });
+
+    {
+        auto CommandBuffer{ this->Vk_BeginSingleTimeCommands() };
+        vk::BufferImageCopy Region{
+            .bufferOffset = 0,
+            .bufferRowLength = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
+            .imageOffset = {0, 0, 0},
+            .imageExtent = Info.Info.extent
+            };
+        CommandBuffer.copyBufferToImage(StagingBuffer.Buffer, Image.Buffer, vk::ImageLayout::eTransferDstOptimal, Region);
+        this->Vk_EndSingleTimeCommands(std::move(CommandBuffer));
+    }
+
+    if (Info.Info.mipLevels > 1)
+    {
+        check( Info.Info.extent.depth == 1 && "Vk_StageLinearImage does currently only support 2D images with mipmaps." )
+        this->Vk_Generate2DMipMaps(
+              Image.Buffer, Info.Info.format
+            , vk::Extent2D{ Info.Info.extent.width, Info.Info.extent.height }
+            , Info.Info.mipLevels
+            );
+    }
+    else
+    {
+        this->Vk_TransitionImageLayout({
+            .oldLayout = vk::ImageLayout::eTransferDstOptimal,
+            .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            .image = Image.Buffer,
+            .subresourceRange = {
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = Info.Info.mipLevels,
+                .baseArrayLayer = 0,
+                .layerCount = 1
+                },
+            });
+    }
 
     return Image;
 }
 
-void Jafg::LFrontendVk::CopyBufferToImage(vk::Buffer Buffer, vk::Image Image, u32 Width, u32 Height, vk::CommandPool Pool)
+void Jafg::LFrontendVk::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier)
 {
-    auto CommandBuffer = this->VkBeginSingleTimeCommands(Pool);
+    auto Buffer{ this->Vk_BeginSingleTimeCommands() };
 
-    vk::BufferImageCopy Region{
-        .bufferOffset = 0,
-        .bufferRowLength = 0,
-        .bufferImageHeight = 0,
-        .imageSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
-        .imageOffset = {0, 0, 0},
-        .imageExtent = {Width, Height, 1}
+    vk::DependencyInfo DependencyInfo{
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &Barrier,
         };
 
-    CommandBuffer.copyBufferToImage(Buffer, Image, vk::ImageLayout::eTransferDstOptimal, Region);
+    Buffer.pipelineBarrier2(DependencyInfo);
 
-    this->VkEndSingleTimeCommands(CommandBuffer);
+    this->Vk_EndSingleTimeCommands(std::move(Buffer));
 
     return;
 }
 
-Jafg::LDeviceImage Jafg::LFrontendVk::VkCreateDeviceLocalImage(vk::ImageCreateInfo const& InInfo, vk::MemoryPropertyFlags Properties)
+i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LSlangCompilationRequest const& Request)
 {
-    VkImage Image;
-    VmaAllocation Allocation;
-    VmaAllocationCreateInfo AllocationCreateInfo{
-        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-        .requiredFlags = static_cast<VkMemoryPropertyFlags>(Properties),
-        };
-
-    auto Res = this->VmaMyAllocator->CreateImage(
-        InInfo,
-        &AllocationCreateInfo,
-        nullptr,
-        &Image,
-        &Allocation,
-        nullptr
-        );
-    check( Res == VK_SUCCESS )
-
-    return { Image, Allocation };
-}
-
-void Jafg::LFrontendVk::VkTransitionImageLayout(vk::Image Image, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout, u32 MipLevels
-    , vk::CommandPool Pool)
-{
-    auto Buffer = this->VkBeginSingleTimeCommands(Pool);
-
-    vk::ImageMemoryBarrier Barrier{
-        .oldLayout = OldLayout,
-        .newLayout = NewLayout,
-        .image = Image,
-        .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = 0,
-            .levelCount = MipLevels,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-            }
-        };
-
-    vk::PipelineStageFlags SourceStage;
-    vk::PipelineStageFlags DestinationStage;
-
-    if (OldLayout == vk::ImageLayout::eUndefined && NewLayout == vk::ImageLayout::eTransferDstOptimal)
-    {
-        Barrier.srcAccessMask = {};
-        Barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-        SourceStage      = vk::PipelineStageFlagBits::eTopOfPipe;
-        DestinationStage = vk::PipelineStageFlagBits::eTransfer;
-    }
-    else if (OldLayout == vk::ImageLayout::eTransferDstOptimal && NewLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
-    {
-        Barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        Barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-        SourceStage      = vk::PipelineStageFlagBits::eTransfer;
-        DestinationStage = vk::PipelineStageFlagBits::eFragmentShader;
-    }
-    else
-    {
-        panicMsgf( "Unsupported layout transition [{} => {}].", vk::to_string(OldLayout), vk::to_string(NewLayout) )
-    }
-
-    Buffer.pipelineBarrier(SourceStage, DestinationStage, {}, {}, nullptr, Barrier);
-
-    this->VkEndSingleTimeCommands(Buffer);
-
-    return;
-}
-
-vk::raii::ImageView Jafg::LFrontendVk::CreateImageView2D(vk::Image Image, vk::Format Format, vk::ImageAspectFlags AspectFlags, u32 MipLevels)
-{
-    vk::ImageViewCreateInfo CreateInfo{
-        .image = Image,
-        .viewType = vk::ImageViewType::e2D,
-        .format = Format,
-        .subresourceRange = {
-            .aspectMask = AspectFlags,
-            .baseMipLevel = 0,
-            .levelCount = MipLevels,
-            .baseArrayLayer = 0,
-            .layerCount = 1
-            }
-        };
-
-    return vk::raii::ImageView{ this->VkMyDevice, CreateInfo };
-}
-
-vk::Format Jafg::LFrontendVk::FindSupportedFormat(TArray<vk::Format> const& Candidates, vk::ImageTiling Tiling,
-        vk::FormatFeatureFlags Features) const
-{
-    for (const auto format : Candidates)
-    {
-        vk::FormatProperties props = this->Vk_PhysicalDevice.getFormatProperties(format);
-
-        if (Tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & Features) == Features) {
-            return format;
-        }
-        if (Tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & Features) == Features) {
-            return format;
-        }
-
-        continue;
-    }
-
-    panic( "Failed to find supported format." )
-}
-
-vk::Format Jafg::LFrontendVk::FindDepthFormat() const
-{
-    return this->FindSupportedFormat(
-     {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
-         vk::ImageTiling::eOptimal,
-         vk::FormatFeatureFlagBits::eDepthStencilAttachment
-     );
-}
-
-bool Jafg::LFrontendVk::HasStencilComponent(vk::Format Format) const
-{
-    return Format == vk::Format::eD32SfloatS8Uint || Format == vk::Format::eD24UnormS8Uint;
-}
-
-vk::SampleCountFlagBits Jafg::LFrontendVk::CalculateMaxUsableSampleCount() const
-{
-    vk::PhysicalDeviceProperties PhysicalDeviceProperties{ this->Vk_PhysicalDevice.getProperties() };
-
-    vk::SampleCountFlags Counts{ PhysicalDeviceProperties.limits.framebufferColorSampleCounts & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts };
-    if (Counts & vk::SampleCountFlagBits::e64) { return vk::SampleCountFlagBits::e64; }
-    if (Counts & vk::SampleCountFlagBits::e32) { return vk::SampleCountFlagBits::e32; }
-    if (Counts & vk::SampleCountFlagBits::e16) { return vk::SampleCountFlagBits::e16; }
-    if (Counts & vk::SampleCountFlagBits::e8)  { return vk::SampleCountFlagBits::e8; }
-    if (Counts & vk::SampleCountFlagBits::e4)  { return vk::SampleCountFlagBits::e4; }
-    if (Counts & vk::SampleCountFlagBits::e2)  { return vk::SampleCountFlagBits::e2; }
-
-    return vk::SampleCountFlagBits::e1;
-}
-
-u32 Jafg::LFrontendVk::Vk_FindMemoryType(u32 Filter, vk::MemoryPropertyFlags Properties) const
-{
-    for (u32 Idx{ 0 }; Idx < this->Vk_PhysicalDeviceMemoryProperties.memoryTypeCount; ++Idx)
-    {
-        if ((Filter & (1 << Idx)) && (this->Vk_PhysicalDeviceMemoryProperties.memoryTypes[Idx].propertyFlags & Properties) == Properties)
-        {
-            return Idx;
-        }
-    }
-
-    panic( "Failed to find suitable memory type." )
-}
-
-i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LSlangCompilationRequest const& Request)
-{
-    return this->HandleCompilationRequest_viaSlang(
+    return this->HandleSlangCompilationRequest(
         Lal::SprintF("Content/.Slang{}_{}/bin/slangc{}",
             PlatformMisc::GetTargetPlatform(),
             PlatformMisc::GetTargetArchitecture(),
@@ -715,7 +631,7 @@ i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LSlangCompilationReques
         );
 }
 
-i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LPath const& Slang, LSlangCompilationRequest const& Request)
+i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath const& Slang, LSlangCompilationRequest const& Request)
 {
     std::ostringstream SS;
     SS << Slang.string();
@@ -741,13 +657,13 @@ i64 Jafg::LFrontendVk::HandleCompilationRequest_viaSlang(LPath const& Slang, LSl
     return static_cast<i64>(std::system(CommandLine.c_str()));
 }
 
-void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()
+void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceExtensions()
 {
     LOG_VERBOSE(LogVulkan, "Refetching available instance extensions.")
 
-    this->AvailableInstanceExtensions = this->VkMyContext.enumerateInstanceExtensionProperties();
+    this->Vk_AvailableInstanceExtensions = this->Vk_Context.enumerateInstanceExtensionProperties();
     LOG_VERBOSE(LogVulkan, "Available Vulkan instance extensions:")
-    for (auto const& Extension : this->AvailableInstanceExtensions)
+    for (auto const& Extension : this->Vk_AvailableInstanceExtensions)
     {
         LOG_VERBOSE(LogVulkan, "    {} spec[{}]", LStringView{Extension.extensionName}, Extension.specVersion)
     }
@@ -757,23 +673,23 @@ void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()
     for (u32 Idx{ 0 }; Idx < Glfw3ExtensionCount; ++Idx)
     {
         LString Glfw3ExtensionStr{ Glfw3Extensions[Idx] };
-        if (algo::contains(this->RequiredInstanceExtensions, Glfw3ExtensionStr) == false)
+        if (algo::contains(this->Vk_RequiredInstanceExtensions, Glfw3ExtensionStr) == false)
         {
-            this->RequiredInstanceExtensions.emplace_back(std::move(Glfw3ExtensionStr));
+            this->Vk_RequiredInstanceExtensions.emplace_back(std::move(Glfw3ExtensionStr));
         }
         continue;
     }
 
     LOG_VERBOSE(LogVulkan, "Required Vulkan instance extensions:")
-    for (auto const& Extension : this->RequiredInstanceExtensions)
+    for (auto const& Extension : this->Vk_RequiredInstanceExtensions)
     {
         LOG_VERBOSE(LogVulkan, "    {}", Extension)
     }
 
-    for (LString const& Extension : this->RequiredInstanceExtensions)
+    for (LString const& Extension : this->Vk_RequiredInstanceExtensions)
     {
         bool bFound{ false };
-        for (auto const& AvailableExtension : AvailableInstanceExtensions)
+        for (auto const& AvailableExtension : Vk_AvailableInstanceExtensions)
         {
             if (Extension == AvailableExtension.extensionName)
             {
@@ -792,27 +708,27 @@ void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()
     return;
 }
 
-void Jafg::LFrontendVk::FetchAndCheckInstanceLayers()
+void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
 {
     LOG_VERBOSE(LogVulkan, "Refetching available instance layers.")
 
-    this->AvailableInstanceLayers = this->VkMyContext.enumerateInstanceLayerProperties();
+    this->Vk_AvailableInstanceLayers = this->Vk_Context.enumerateInstanceLayerProperties();
     LOG_VERBOSE(LogVulkan, "Available Vulkan instance layers:")
-    for (auto const& Layer : this->AvailableInstanceLayers)
+    for (auto const& Layer : this->Vk_AvailableInstanceLayers)
     {
         LOG_VERBOSE(LogVulkan, "    {} spec[{}]", LStringView{Layer.layerName}, Layer.specVersion)
     }
 
     LOG_VERBOSE(LogVulkan, "Required Vulkan instance layers:")
-    for (auto const& Layer : this->RequiredInstanceLayers)
+    for (auto const& Layer : this->Vk_RequiredInstanceLayers)
     {
         LOG_VERBOSE(LogVulkan, "    {}", Layer)
     }
 
-    for (LString const& Layer : this->RequiredInstanceLayers)
+    for (LString const& Layer : this->Vk_RequiredInstanceLayers)
     {
         bool bFound{ false };
-        for (auto const& AvailableLayer : AvailableInstanceLayers)
+        for (auto const& AvailableLayer : Vk_AvailableInstanceLayers)
         {
             if (Layer == AvailableLayer.layerName)
             {
@@ -831,11 +747,11 @@ void Jafg::LFrontendVk::FetchAndCheckInstanceLayers()
     return;
 }
 
-void Jafg::LFrontendVk::CreateInstance()
+void Jafg::LFrontendVk::Vk_CreateInstance()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan instance.")
 
-    constexpr vk::ApplicationInfo Info{
+    constexpr vk::ApplicationInfo ApplicationInfo{
         .pApplicationName = "S-Jafg @mzoesch",
         .applicationVersion = VK_MAKE_VERSION( PRIVATE_ENGINE_VERSION_MAJOR, PRIVATE_ENGINE_VERSION_MINOR, PRIVATE_ENGINE_VERSION_PATCH ),
         .pEngineName = "Jafg Engine",
@@ -843,78 +759,86 @@ void Jafg::LFrontendVk::CreateInstance()
         .apiVersion = ::Vk_ApiVersion
         };
 
-    TArray<char const*> RequiredInstanceExtensions_c_str; RequiredInstanceExtensions_c_str.reserve(this->RequiredInstanceExtensions.size());
-    algo::for_each(this->RequiredInstanceExtensions, [&RequiredInstanceExtensions_c_str](LString const& Extension)
+    TArray<char const*> RequiredInstanceExtensions_c_str; RequiredInstanceExtensions_c_str.reserve(this->Vk_RequiredInstanceExtensions.size());
+    algo::for_each(this->Vk_RequiredInstanceExtensions, [&RequiredInstanceExtensions_c_str](LString const& Extension)
     {
         RequiredInstanceExtensions_c_str.emplace_back(Extension.c_str());
     });
 
-    TArray<char const*> RequiredInstanceLayers_c_str; RequiredInstanceLayers_c_str.reserve(this->RequiredInstanceLayers.size());
-    algo::for_each(this->RequiredInstanceLayers, [&RequiredInstanceLayers_c_str](LString const& Layer)
+    TArray<char const*> RequiredInstanceLayers_c_str; RequiredInstanceLayers_c_str.reserve(this->Vk_RequiredInstanceLayers.size());
+    algo::for_each(this->Vk_RequiredInstanceLayers, [&RequiredInstanceLayers_c_str](LString const& Layer)
     {
         RequiredInstanceLayers_c_str.emplace_back(Layer.c_str());
     });
 
     vk::InstanceCreateInfo CreateInfo{
-        .pApplicationInfo = &Info,
+        .pApplicationInfo = &ApplicationInfo,
         .enabledLayerCount = static_cast<u32>(RequiredInstanceLayers_c_str.size()),
         .ppEnabledLayerNames = RequiredInstanceLayers_c_str.data(),
         .enabledExtensionCount = static_cast<u32>(RequiredInstanceExtensions_c_str.size()),
         .ppEnabledExtensionNames = RequiredInstanceExtensions_c_str.data(),
         };
 
-    this->VkMyInstance = vk::raii::Instance{ this->VkMyContext, CreateInfo };
+    this->Vk_Instance = vk::raii::Instance{ this->Vk_Context, CreateInfo };
 
     return;
 }
 
 #if !IN_SHIPPING
-void Jafg::LFrontendVk::SetupDebugUtilsMessenger()
+void Jafg::LFrontendVk::Vk_SetupDebugUtilsMessenger()
 {
     LOG_VERBOSE(LogVulkan, "Setting up Vulkan debug utils messenger ext.")
 
-    vk::DebugUtilsMessageSeverityFlagsEXT SeverityFlags =
+    vk::DebugUtilsMessageSeverityFlagsEXT SeverityFlags{
           vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose
         | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
         | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning
-        | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+        | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
+        };
 
-    vk::DebugUtilsMessageTypeFlagsEXT TypeFlags =
+    vk::DebugUtilsMessageTypeFlagsEXT TypeFlags{
           vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
         | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
         | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
         // | vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding
-        ;
+        };
 
     vk::DebugUtilsMessengerCreateInfoEXT CreateInfo{
         .messageSeverity = SeverityFlags,
         .messageType = TypeFlags,
         .pfnUserCallback = &::Hermes,
-        .pUserData = nullptr
+        .pUserData = this
         };
 
-    this->VkMyDebugUtilsMessenger = this->VkMyInstance.createDebugUtilsMessengerEXT(CreateInfo);
+    this->Vk_DebugUtilsMessenger = this->Vk_Instance.createDebugUtilsMessengerEXT(CreateInfo);
 
     return;
 }
 #endif /* !IN_SHIPPING */
 
-void Jafg::LFrontendVk::PickPhysicalDevice()
+void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
 {
     LOG_VERBOSE(LogVulkan, "Picking Vulkan physical device.")
 
     this->Vk_PhysicalDevice = nullptr;
+    algo::orphan(&this->Vk_AvailablePhysicalDevices);
 
-    this->AvailablePhysicalDevices = this->VkMyInstance.enumeratePhysicalDevices();
+    TArray<vk::raii::PhysicalDevice> AvailablePhysicalDevices;
+    AvailablePhysicalDevices = this->Vk_Instance.enumeratePhysicalDevices();
 
-    if (this->AvailablePhysicalDevices.empty())
+    if (AvailablePhysicalDevices.empty())
     {
         panic( "Failed to find any physical devices with Vulkan support." )
     }
 
-    auto RankedPhysicalDevices = this->RankPhysicalDevices(this->AvailablePhysicalDevices);
+    for (auto RankedPhysicalDevices{ this->Vk_RankPhysicalDevices(AvailablePhysicalDevices) };
+         auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
+    {
+        this->Vk_AvailablePhysicalDevices.emplace_back(Rating, PhysicalDevice);
+    }
+
     LOG_VERBOSE(LogVulkan, "Available physical devices ranked by suitability:")
-    for (auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
+    for (auto const& [Rating, PhysicalDevice] : this->Vk_AvailablePhysicalDevices)
     {
         auto Properties = PhysicalDevice.getProperties();
         LOG_VERBOSE(LogVulkan, "    [{}] rated [{}]: API v{}.{}.{}, Driver v{}.{}.{}",
@@ -930,24 +854,24 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
         continue;
     }
 
-    if (RankedPhysicalDevices.rbegin()->first == 0)
+    checkSlow( this->Vk_AvailablePhysicalDevices.empty() == false )
+    if (this->Vk_AvailablePhysicalDevices[0].Rating == 0)
     {
         panicMsgf( "Failed to find a suitable physical device." )
     }
 
     if (const auto Prefs{ GetDefault<JUserPreferences>() }; Prefs->PreferredPhysicalDevice.empty() == false)
     {
-        for (auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
+        for (auto const& [Rating, PhysicalDevice] : this->Vk_AvailablePhysicalDevices)
         {
-            auto Properties = PhysicalDevice.getProperties();
-            if (Prefs->PreferredPhysicalDevice == Properties.deviceName)
+            if (auto Properties{ PhysicalDevice.getProperties() }; Prefs->PreferredPhysicalDevice == Properties.deviceName)
             {
                 if (Rating == 0)
                 {
                     LOG_WARNING(LogVulkan, "Preferred physical device [{}] found but is no longer suitable. Clearing user prefs and falling back to best rated device.",
                         Prefs->PreferredPhysicalDevice
                         )
-                    GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice.clear();
+                    algo::orphan(&GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice);
                 }
                 else
                 {
@@ -964,12 +888,12 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
         LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Clearing user prefs and falling back to best rated device.",
             Prefs->PreferredPhysicalDevice
             )
-        GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice.clear();
+        algo::orphan(&GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice);
     }
 
     if (!*this->Vk_PhysicalDevice)
     {
-        this->Vk_PhysicalDevice = RankedPhysicalDevices.rbegin()->second;
+        this->Vk_PhysicalDevice = this->Vk_AvailablePhysicalDevices[0].PhysicalDevice;
         LOG_VERBOSE(LogVulkan, "Selected physical device [{}].",
             LStringView{this->Vk_PhysicalDevice.getProperties().deviceName}
             )
@@ -977,7 +901,7 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
 
     this->Vk_PhysicalDeviceMemoryProperties = this->Vk_PhysicalDevice.getMemoryProperties();
     LOG_VERBOSE(LogVulkan, "Physical device memory properties:")
-    for (u32 Idx{ 0 }; Idx < this->Vk_PhysicalDeviceMemoryProperties.memoryTypeCount; ++Idx)
+    for (auto Idx{ 0uz }; Idx < this->Vk_PhysicalDeviceMemoryProperties.memoryTypeCount; ++Idx)
     {
         auto const& MemType{ this->Vk_PhysicalDeviceMemoryProperties.memoryTypes[Idx] };
         auto const& MemHeap{ this->Vk_PhysicalDeviceMemoryProperties.memoryHeaps[MemType.heapIndex] };
@@ -992,20 +916,55 @@ void Jafg::LFrontendVk::PickPhysicalDevice()
     return;
 }
 
-void Jafg::LFrontendVk::PickMaxMsaaSamples()
+void Jafg::LFrontendVk::Vk_SetMaxMsaaSamples()
 {
-    this->VkMsaaSamples = this->CalculateMaxUsableSampleCount();
-    LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", static_cast<u32>(this->VkMsaaSamples))
+    LOG_VERBOSE(LogVulkan, "Determining max usable MSAA sample count.")
+
+    check( *this->Vk_PhysicalDevice )
+
+    const vk::PhysicalDeviceProperties PhysicalDeviceProperties{ this->Vk_PhysicalDevice.getProperties() };
+    const vk::SampleCountFlags Counts
+    {
+        PhysicalDeviceProperties.limits.framebufferColorSampleCounts & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts
+    };
+
+    if (Counts & vk::SampleCountFlagBits::e64)
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e64;
+    }
+    else if (Counts & vk::SampleCountFlagBits::e32)
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e32;
+    }
+    else if (Counts & vk::SampleCountFlagBits::e16)
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e16;
+    }
+    else if (Counts & vk::SampleCountFlagBits::e8)
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e8;
+    }
+    else if (Counts & vk::SampleCountFlagBits::e4)
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e4;
+    }
+    else if (Counts & vk::SampleCountFlagBits::e2)
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e2;
+    }
+    else
+    {
+        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e1;
+    }
+
+    LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", vk::to_string(this->Vk_MaxMsaaSamples))
 
     return;
 }
 
-void Jafg::LFrontendVk::CreateLogicalDevice()
+void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan logical device.")
-
-    // TODO: This is no longer a requirement, right??
-    check( this->GetSurfaceCount() == 1 && "To create a logical device, exactly one surface is required at this time." )
 
     auto QueueFamilyProperties{ this->Vk_PhysicalDevice.getQueueFamilyProperties() };
     auto GraphicsQueueFamilyProperty{ algo::find_if(QueueFamilyProperties, [](auto const& Qfp)
@@ -1023,7 +982,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
     }
 
     /* We prefer a combined graphics+present queue (because performance), but also separate ones are ok. */
-    u32 PresentQueueFamilyIndex = this->Vk_PhysicalDevice.getSurfaceSupportKHR(GraphicsQueueFamilyIndex, *this->GetSurfaces().front()->Vk_GetSurface())
+    u32 PresentQueueFamilyIndex = this->Vk_PhysicalDevice.getSurfaceSupportKHR(GraphicsQueueFamilyIndex, *QuerySurface.Vk_GetSurface())
         ? GraphicsQueueFamilyIndex
         : static_cast<u32>(QueueFamilyProperties.size());
 
@@ -1033,7 +992,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         for (auto Idx{ 0uz }; Idx < QueueFamilyProperties.size(); ++Idx)
         {
             if (   (QueueFamilyProperties[Idx].queueFlags & vk::QueueFlagBits::eGraphics)
-                && this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>( Idx ), *this->GetSurfaces().front()->Vk_GetSurface())
+                && this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>( Idx ), *QuerySurface.Vk_GetSurface())
             )
             {
                 GraphicsQueueFamilyIndex = static_cast<u32>(Idx);
@@ -1049,7 +1008,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         {
             for (auto Idx{ 0uz }; Idx < QueueFamilyProperties.size(); ++Idx)
             {
-                if (this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *this->GetSurfaces().front()->Vk_GetSurface()))
+                if (this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *QuerySurface.Vk_GetSurface()))
                 {
                     PresentQueueFamilyIndex = static_cast<u32>(Idx);
                     break;
@@ -1092,26 +1051,25 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         .pNext = &FeaturesChain.get<vk::PhysicalDeviceFeatures2>(),
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &DeviceQueueCreateInfo,
-        .enabledExtensionCount = static_cast<u32>(this->RequiredDeviceExtensions.size()),
-        .ppEnabledExtensionNames = this->RequiredDeviceExtensions.data(),
+        .enabledExtensionCount = static_cast<u32>(this->Vk_RequiredDeviceExtensions.size()),
+        .ppEnabledExtensionNames = this->Vk_RequiredDeviceExtensions.data(),
         };
 
-    this->VkMyDevice = vk::raii::Device{ this->Vk_PhysicalDevice, DeviceCreateInfo };
-    this->VkMyGraphicsQueue = vk::raii::Queue{ this->VkMyDevice, GraphicsQueueFamilyIndex, 0 };
-    this->VkMyPresentQueue = vk::raii::Queue{ this->VkMyDevice, PresentQueueFamilyIndex, 0 };
+    this->Vk_Device = vk::raii::Device{ this->Vk_PhysicalDevice, DeviceCreateInfo };
+    this->Vk_GraphicsQueue = vk::raii::Queue{ this->Vk_Device, GraphicsQueueFamilyIndex, 0 };
+    this->Vk_PresentQueue = vk::raii::Queue{ this->Vk_Device, PresentQueueFamilyIndex, 0 };
 
-    this->VkMyGraphicsQueueFamilyIndex = GraphicsQueueFamilyIndex;
-    this->VkMyPresentQueueFamilyIndex = PresentQueueFamilyIndex;
+    this->Vk_GraphicsQueueFamilyIndex = GraphicsQueueFamilyIndex;
+    this->Vk_PresentQueueFamilyIndex = PresentQueueFamilyIndex;
 
     LOG_VERBOSE(LogVulkan, "Finished loading logical device.")
-
-    LOG_VERBOSE(LogVulkan, "Graphics Queue Family Index: [{}].",  GraphicsQueueFamilyIndex)
-    LOG_VERBOSE(LogVulkan, "Present  Queue Family Index: [{}].",  PresentQueueFamilyIndex)
+    LOG_VERBOSE(LogVulkan, "    Graphics Queue Family Index: [{}].",  GraphicsQueueFamilyIndex)
+    LOG_VERBOSE(LogVulkan, "    Present  Queue Family Index: [{}].",  PresentQueueFamilyIndex)
 
     return;
 }
 
-void Jafg::LFrontendVk::CreateVma()
+void Jafg::LFrontendVk::Vk_CreateVma()
 {
     LOG_VERBOSE(LogVulkan, "Creating VMA.")
 
@@ -1129,18 +1087,18 @@ void Jafg::LFrontendVk::CreateVma()
             // | VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_EXTENSION_BIT
             ,
         .physicalDevice = *this->Vk_PhysicalDevice,
-        .device = *this->VkMyDevice,
+        .device = *this->Vk_Device,
         .preferredLargeHeapBlockSize = 0,
         .pAllocationCallbacks = nullptr,
         .pDeviceMemoryCallbacks = nullptr,
         .pHeapSizeLimit = nullptr,
         .pVulkanFunctions = &VulkanFunctions,
-        .instance = *this->VkMyInstance,
+        .instance = *this->Vk_Instance,
         .vulkanApiVersion = VK_API_VERSION_1_4,
         .pTypeExternalMemoryHandleTypes = nullptr,
         };
 
-    if (vmaCreateAllocator(&VmaAllocatorCreateInfo, &this->VmaMyAllocator) != VK_SUCCESS)
+    if (vmaCreateAllocator(&VmaAllocatorCreateInfo, &this->Vk_VmaAllocator) != VK_SUCCESS)
     {
         panic( "Failed to create VMA allocator." )
     }
@@ -1148,7 +1106,34 @@ void Jafg::LFrontendVk::CreateVma()
     return;
 }
 
-std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::RankPhysicalDevices(TArray<vk::raii::PhysicalDevice> const& PhysicalDevices) const
+TOptional<vk::Format> Jafg::LFrontendVk::Vk_FindSupportedFormat(TArray<vk::Format> const& Candidates, vk::ImageTiling Tiling, vk::FormatFeatureFlags Features) const
+{
+    for (const auto Format : Candidates)
+    {
+        vk::FormatProperties Props{ this->Vk_PhysicalDevice.getFormatProperties(Format) };
+
+        if (Tiling == vk::ImageTiling::eLinear && ((Props.linearTilingFeatures & Features) == Features))
+        {
+            return Format;
+        }
+
+        if (Tiling == vk::ImageTiling::eOptimal && ((Props.optimalTilingFeatures & Features) == Features))
+        {
+            return Format;
+        }
+
+        continue;
+    }
+
+    if (Tiling == vk::ImageTiling::eDrmFormatModifierEXT)
+    {
+        LOG_WARNING(LogVulkan, "Vk_FindSupportedFormat does not support checking for drm format modifier tiling. Querying will always fail.")
+    }
+
+    return {};
+}
+
+std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalDevices(TArray<vk::raii::PhysicalDevice> const& PhysicalDevices) const
 {
     std::multimap<u64, vk::raii::PhysicalDevice> Out;
 
@@ -1198,7 +1183,7 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::RankPhysicalDevi
             return !!(Qfp.queueFlags & vk::QueueFlagBits::eGraphics);
         });
 
-        bSupportsRequiredExtensions = algo::all_of(this->RequiredDeviceExtensions, [&Extensions](auto const& RequiredPhysicalDeviceExtensions)
+        bSupportsRequiredExtensions = algo::all_of(this->Vk_RequiredDeviceExtensions, [&Extensions](auto const& RequiredPhysicalDeviceExtensions)
         {
             return algo::any_of(Extensions, [RequiredPhysicalDeviceExtensions](auto const& AvailablePhysicalDeviceExtension)
             {
@@ -1228,4 +1213,147 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::RankPhysicalDevi
     }
 
     return Out;
+}
+
+void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format, vk::Extent2D Extent, u32 MipLevels)
+{
+    check( MipLevels > 1 )
+
+    if (vk::FormatProperties FormatProperties{ this->Vk_PhysicalDevice.getFormatProperties(Format) };
+        !(FormatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
+    {
+        panicMsgf( "The texture image format [{}] does not support linear blitting.", vk::to_string(Format) )
+    }
+
+    auto Buffer{ this->Vk_BeginSingleTimeCommands() };
+
+    vk::ImageMemoryBarrier Barrier{
+        .srcAccessMask = vk::AccessFlagBits::eTransferWrite, .dstAccessMask = vk::AccessFlagBits::eTransferRead,
+        .oldLayout = vk::ImageLayout::eTransferDstOptimal, .newLayout = vk::ImageLayout::eTransferSrcOptimal,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored, .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = Image,
+        .subresourceRange =  {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = static_cast<uint32_t>(INDEX_NONE),
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        };
+
+    for (auto Cursor{ 1uz }; Cursor < MipLevels; ++Cursor)
+    {
+        Barrier.subresourceRange.baseMipLevel = Cursor - 1;
+        Barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
+        Barrier.newLayout                     = vk::ImageLayout::eTransferSrcOptimal;
+        Barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
+        Barrier.dstAccessMask                 = vk::AccessFlagBits::eTransferRead;
+
+        Buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, Barrier);
+
+        vk::ArrayWrapper1D<vk::Offset3D, 2> offsets, dstOffsets;
+        offsets[0]          = vk::Offset3D(0, 0, 0);
+        offsets[1]          = vk::Offset3D(Extent.width, Extent.height, 1);
+        dstOffsets[0]       = vk::Offset3D(0, 0, 0);
+        dstOffsets[1]       = vk::Offset3D(Extent.width > 1 ? Extent.width / 2 : 1, Extent.height > 1 ? Extent.height / 2 : 1, 1);
+        vk::ImageBlit blit  = {.srcSubresource = {}, .srcOffsets = offsets, .dstSubresource = {}, .dstOffsets = dstOffsets};
+        blit.srcSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, Cursor - 1, 0, 1);
+        blit.dstSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, Cursor, 0, 1);
+
+        Buffer.blitImage(Image, vk::ImageLayout::eTransferSrcOptimal, Image, vk::ImageLayout::eTransferDstOptimal, {blit}, vk::Filter::eLinear);
+
+        Barrier.oldLayout     = vk::ImageLayout::eTransferSrcOptimal;
+        Barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
+        Barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        Barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        Buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, Barrier);
+
+        if (Extent.width > 1)
+        {
+            Extent.width /= 2;
+        }
+        if (Extent.height > 1)
+        {
+            Extent.height /= 2;
+        }
+
+        continue;
+    }
+
+    Barrier.subresourceRange.baseMipLevel = MipLevels - 1;
+    Barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
+    Barrier.newLayout                     = vk::ImageLayout::eShaderReadOnlyOptimal;
+    Barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
+    Barrier.dstAccessMask                 = vk::AccessFlagBits::eShaderRead;
+
+    Buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, Barrier);
+
+    this->Vk_EndSingleTimeCommands(std::move(Buffer));
+
+    return;
+}
+
+Jafg::LDevicePipeline Jafg::LDevicePipelineFactory::Build()
+{
+    auto& Frontend{ this->Surface.GetFrontend() };
+
+    vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
+        .rasterizationSamples = this->Surface.GetFrontend().Vk_GetMaxMsaaSamples(),
+        .sampleShadingEnable = this->MultisamplingShadingEnable
+        };
+
+    vk::PipelineColorBlendStateCreateInfo ColorBlendInfo{
+        .logicOpEnable = this->ColorBlendLogicOpEnable,
+        .logicOp = this->ColorBlendLogicalOp,
+        .attachmentCount = 1,
+        .pAttachments = &this->ColorBlendAttachmentState
+        };
+
+    vk::PipelineDynamicStateCreateInfo DynamicStateInfo{
+        .dynamicStateCount = static_cast<u32>(this->DynamicStateInfo.size()),
+        .pDynamicStates = this->DynamicStateInfo.data(),
+        };
+
+    vk::raii::PipelineLayout Layout{
+        Frontend.Vk_GetDevice(),
+        vk::PipelineLayoutCreateInfo{
+            .setLayoutCount = (*this->DescriptorSetLayout) ? 1u : 0u,
+            .pSetLayouts = (*this->DescriptorSetLayout) ? &*this->DescriptorSetLayout : nullptr,
+            .pushConstantRangeCount = static_cast<uint32_t>(this->Range.has_value() ? 1uz : 0uz),
+            .pPushConstantRanges = this->Range.has_value() ? &*this->Range : nullptr
+            }
+       };
+
+    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> Chain{
+        {
+            .stageCount = static_cast<u32>(this->Shaders.size()),
+            .pStages = this->Shaders.data(),
+            .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : nullptr,
+            .pInputAssemblyState = &this->InputAssemblyInfo,
+            .pViewportState = &this->ViewportStateInfo,
+            .pRasterizationState = &this->RasterizationInfo,
+            .pMultisampleState   = &MultisamplingInfo,
+            .pDepthStencilState  = &this->DepthStencilInfo,
+            .pColorBlendState    = &ColorBlendInfo,
+            .pDynamicState       = &DynamicStateInfo,
+            .layout = Layout,
+            .renderPass = nullptr,
+        },
+        {
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &this->Surface.Vk_GetSurfaceFormat().format,
+            .depthAttachmentFormat = Frontend.Vk_GetPreferredDepthFormat(),
+        }
+    };
+
+    return LDevicePipeline{
+        .Pipeline = vk::raii::Pipeline{
+            Frontend.Vk_GetDevice(),
+            nullptr,
+            Chain.get<vk::GraphicsPipelineCreateInfo>()
+            },
+        .PipelineLayout = std::move(Layout),
+        .DescriptorSetLayout = std::move(this->DescriptorSetLayout),
+        };
 }

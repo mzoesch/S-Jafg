@@ -22,7 +22,6 @@
 #include "Stats/Stats.h"
 
 #include "Rhi/VkAl.h"
-#include "TempModel.h"
 #include "Rhi/StaticMesh.h"
 
 static Jafg::LStaticMesh VkTestMesh{"Content/Models/viking_room.obj"};
@@ -266,7 +265,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
 
     this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
 
-    auto& Instance{ this->GetFrontend().GetVkInstance() };
+    auto& Instance{ this->GetFrontend().Vk_GetInstance() };
     VkSurfaceKHR CSurface;
     if (glfwCreateWindowSurface(*Instance, this->Handle, nullptr, &CSurface) != VK_SUCCESS)
     {
@@ -282,7 +281,7 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
     {
         STAT_QUICK_CYCLE_START("VkDeviceWaitIdle")
-        this->GetFrontend().GetVkDevice().waitIdle();
+        this->GetFrontend().Vk_GetDevice().waitIdle();
     }
 
     VkTestPipeline.Free();
@@ -392,7 +391,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
 
     this->Vk_CurrentFrameInFlightIndex = (this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlight();
 
-    while (vk::Result::eTimeout == Frontend.GetVkDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX))
+    while (vk::Result::eTimeout == Frontend.Vk_GetDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX))
         ;
 
     auto [Result, ImageIndex] = this->Vk_VkMySwapchain.acquireNextImage(
@@ -442,7 +441,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", static_cast<u32>(Result) )
     }
 
-    Frontend.GetVkDevice().resetFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
+    Frontend.Vk_GetDevice().resetFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
 
     auto& CommandBuffer{ this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex] };
     CommandBuffer.reset();
@@ -583,14 +582,14 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .commandBufferCount = 1, .pCommandBuffers = &*CommandBuffer,
         .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->Vk_RenderSemaphores[ImageIndex]
         };
-    Frontend.GetVkGraphicsQueue().submit(SubmitInfo, *this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
+    Frontend.Vk_GetGraphicsQueue().submit(SubmitInfo, *this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
 
     const vk::PresentInfoKHR PresentInfo{
         .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_RenderSemaphores[ImageIndex],
         .swapchainCount = 1, .pSwapchains = &*this->Vk_VkMySwapchain,
         .pImageIndices = &ImageIndex
         };
-    Result = Frontend.GetVkGraphicsQueue().presentKHR(PresentInfo);
+    Result = Frontend.Vk_GetGraphicsQueue().presentKHR(PresentInfo);
 
     this->Vk_LastFrameInFlightIndex = *this->Vk_CurrentFrameInFlightIndex;
     this->Vk_CurrentFrameInFlightIndex.reset();
@@ -997,10 +996,10 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 
     vk::CommandPoolCreateInfo PoolInfo{
         .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-        .queueFamilyIndex = this->GetFrontend().GetVkGraphicsQueueFamilyIndex()
+        .queueFamilyIndex = this->GetFrontend().Vk_GetGraphicsQueueFamilyIndex()
         };
 
-    this->Vk_CommandPool = vk::raii::CommandPool{this->GetFrontend().GetVkDevice(), PoolInfo};
+    this->Vk_CommandPool = vk::raii::CommandPool{this->GetFrontend().Vk_GetDevice(), PoolInfo};
 
     return;
 }
@@ -1031,7 +1030,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     {
         STAT_QUICK_CYCLE_START("VkDevice.waitIdle")
-        Frontend.GetVkDevice().waitIdle();
+        Frontend.Vk_GetDevice().waitIdle();
     }
 
     this->Vk_SwapchainImageViews.clear();
@@ -1041,7 +1040,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     for (auto& RenderSemaphore : this->Vk_RenderSemaphores) { RenderSemaphore = nullptr; }
     for (auto& FlightFence : this->Vk_FlightFences) { FlightFence = nullptr; }
 
-    this->Vk_SurfaceCapabilities = Frontend.GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(this->Vk_Surface);
+    this->Vk_SurfaceCapabilities = Frontend.Vk_GetPhysicalDevice().getSurfaceCapabilitiesKHR(this->Vk_Surface);
     LOG_VERBOSE(LogVulkan, "Surface capabilities: "
                            "minImageCount [{}], maxImageCount [{}], currentExtent [{}x{}], "
                            "minImageExtent [{}x{}], maxImageExtent [{}x{}], maxImageArrayLayers [{}], "
@@ -1062,7 +1061,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         vk::to_string(this->Vk_SurfaceCapabilities.supportedUsageFlags)
         )
 
-    this->Vk_AvailableSurfaceFormats = Frontend.GetVkPhysicalDevice().getSurfaceFormatsKHR(this->Vk_Surface);
+    this->Vk_AvailableSurfaceFormats = Frontend.Vk_GetPhysicalDevice().getSurfaceFormatsKHR(this->Vk_Surface);
     LOG_VERBOSE(LogVulkan, "Available surface formats:")
     for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
     {
@@ -1072,7 +1071,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
             )
     }
 
-    this->Vk_AvailablePresentModes = Frontend.GetVkPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface);
+    this->Vk_AvailablePresentModes = Frontend.Vk_GetPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface);
     LOG_VERBOSE(LogVulkan, "Available present modes:")
     for (auto const& PresentMode : this->Vk_AvailablePresentModes)
     {
@@ -1161,8 +1160,8 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         .oldSwapchain = VK_NULL_HANDLE
         };
 
-    const u32 QueueFamilyIndices[] {Frontend.GetVkGraphicsQueueFamilyIndex(), Frontend.GetVkPresentQueueFamilyIndex()};
-    if (Frontend.GetVkGraphicsQueue() == Frontend.GetVkPresentQueue())
+    const u32 QueueFamilyIndices[] {Frontend.Vk_GetGraphicsQueueFamilyIndex(), Frontend.Vk_GetPresentQueueFamilyIndex()};
+    if (Frontend.Vk_GetGraphicsQueue() == Frontend.Vk_GetPresentQueue())
     {
         LOG_VERBOSE(LogVulkan, "Using exclusive image sharing mode for swapchain as graphics and present queues are the same.")
     }
@@ -1174,7 +1173,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         SwapChainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
     }
 
-    this->Vk_VkMySwapchain = vk::raii::SwapchainKHR{Frontend.GetVkDevice(), SwapChainCreateInfo};
+    this->Vk_VkMySwapchain = vk::raii::SwapchainKHR{Frontend.Vk_GetDevice(), SwapChainCreateInfo};
     {
         for (const auto Images{ this->Vk_VkMySwapchain.getImages() }; auto Image : Images)
         {
@@ -1256,7 +1255,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()
 
     for (auto const& SwapchainImage : this->Vk_SwapchainImages)
     {
-        this->Vk_SwapchainImageViews.emplace_back(Frontend.CreateImageView({
+        this->Vk_SwapchainImageViews.emplace_back(vk::raii::ImageView{Frontend.Vk_GetDevice(), {
             .image = SwapchainImage,
             .viewType = vk::ImageViewType::e2D,
             .format = this->Vk_SurfaceFormat.format,
@@ -1267,7 +1266,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()
                 .baseArrayLayer = 0,
                 .layerCount = 1
                 }
-            }));
+            }});
     }
 
     LOG_VERBOSE(LogVulkan, "Created [{}] image views from swapchain images.", this->Vk_SwapchainImageViews.size())
@@ -1287,18 +1286,30 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
         .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
-        .samples = Frontend.GetMaxMsaaSamples(),
+        .samples = Frontend.Vk_GetMaxMsaaSamples(),
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         .sharingMode = vk::SharingMode::eExclusive,
         .initialLayout = vk::ImageLayout::eUndefined,
         };
-    VmaAllocationCreateInfo AllocationCreateInfo{
-        .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
-        };
+    // VmaAllocationCreateInfo AllocationCreateInfo{
+    //     .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+    //     };
 
-    this->Vk_ColorImage = Frontend.VkCreateImage(ImageCreateInfo, AllocationCreateInfo);
-    this->Vk_ColorImageView = Frontend.CreateImageView2D(this->Vk_ColorImage.Buffer, this->Vk_SurfaceFormat.format, vk::ImageAspectFlagBits::eColor, 1);
+    this->Vk_ColorImage = Frontend.Vk_CreateDeviceLocalImage(ImageCreateInfo);
+    // this->Vk_ColorImage = Frontend.Vk_CreateImage(ImageCreateInfo, AllocationCreateInfo);
+    this->Vk_ColorImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        .image = this->Vk_ColorImage.Buffer,
+        .viewType = vk::ImageViewType::e2D,
+        .format = this->Vk_SurfaceFormat.format,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        }};
 
     return;
 }
@@ -1308,35 +1319,44 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
     LOG_VERBOSE(LogVulkan, "Creating depth resources for surface [{}].", this->GetHumanReadableName())
 
     auto& Frontend{ this->GetFrontend() };
-    const vk::Format DepthFormat{ Frontend.FindDepthFormat() };
 
-    this->Vk_DepthImage = Frontend.VkCreateDeviceLocalImage(
+    this->Vk_DepthImage = Frontend.Vk_CreateDeviceLocalImage(
         vk::ImageCreateInfo{
             .imageType = vk::ImageType::e2D,
-            .format = DepthFormat,
+            .format = Frontend.Vk_GetPreferredDepthFormat(),
             .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
             .mipLevels = 1,
             .arrayLayers = 1,
-            .samples = Frontend.GetMaxMsaaSamples(),
+            .samples = Frontend.Vk_GetMaxMsaaSamples(),
             .tiling = vk::ImageTiling::eOptimal,
             .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
             .sharingMode = vk::SharingMode::eExclusive,
             .initialLayout = vk::ImageLayout::eUndefined,
             }
         );
-
-    this->Vk_DepthImageView = Frontend.CreateImageView2D(this->Vk_DepthImage.Buffer, DepthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    this->Vk_DepthImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        .image = this->Vk_DepthImage.Buffer,
+        .viewType = vk::ImageViewType::e2D,
+        .format = Frontend.Vk_GetPreferredDepthFormat(),
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eDepth,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        }};
 
     return;
 }
 
 void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 {
-    LOG_VERBOSE(LogVulkan, "Creating [{}+2*{}] vulkan synchronization objects for surface [{}].",
+    LOG_VERBOSE(LogVulkan, "Creating [{}+2*{}] Vulkan synchronization objects for surface [{}].",
         this->Vk_GetNumberOfFramesInFlight(), this->Vk_SwapchainImages.size(), this->GetHumanReadableName()
         )
 
-    auto& Device{ this->GetFrontend().GetVkDevice() };
+    auto& Device{ this->GetFrontend().Vk_GetDevice() };
 
     for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
     {
@@ -1356,7 +1376,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
 {
-    LOG_VERBOSE(LogVulkan, "Creating [{}] vulkan command buffers for surface.", this->Vk_GetNumberOfFramesInFlight())
+    LOG_VERBOSE(LogVulkan, "Creating [{}] Vulkan command buffers for surface.", this->Vk_GetNumberOfFramesInFlight())
 
     vk::CommandBufferAllocateInfo Info{
         .commandPool = this->Vk_CommandPool,
@@ -1364,7 +1384,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
         .commandBufferCount = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlight())
         };
 
-    auto CommandBuffers{ vk::raii::CommandBuffers(this->GetFrontend().GetVkDevice(), Info) };
+    auto CommandBuffers{ vk::raii::CommandBuffers(this->GetFrontend().Vk_GetDevice(), Info) };
     check( this->Vk_CommandBuffers.size() == CommandBuffers.size() )
     for (auto Idx{ 0uz }; Idx < CommandBuffers.size(); ++Idx)
     {
@@ -1412,66 +1432,47 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
     auto& Frontend = this->GetFrontend();
 
     int texWidth, texHeight, _;
-    // stbi_uc* pixels = stbi_load("Content/Textures/statue-1275469.jpg", &texWidth, &texHeight, &_, STBI_rgb_alpha);
     stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &_, STBI_rgb_alpha);
-    vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
         char const* error = stbi_failure_reason();
         panicMsgf("Failed to load texture image [Content/Textures/statue-1275469.jpg]. Reason: {}", error)
     }
 
-    this->MipLevels = static_cast<u32>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-    LOG_VERBOSE(LogVulkan, "Texture image will have [{}] mip levels.", this->MipLevels)
+    u32 MipLevels = static_cast<u32>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+    LOG_VERBOSE(LogVulkan, "Texture image will have [{}] mip levels.", MipLevels)
 
-    auto StatingBuffer = Frontend.Vk_CreateMappedBuffer(
-        vk::BufferCreateInfo{
-            .size = imageSize,
-            .usage = vk::BufferUsageFlagBits::eTransferSrc,
+    this->TextureImage = Frontend.Vk_StageLinearImage({
+        .Data = pixels,
+        .Info = {
+            .flags = {},
+            .imageType = vk::ImageType::e2D,
+            .format = vk::Format::eR8G8B8A8Srgb,
+            .extent = vk::Extent3D{ static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
+            .mipLevels = MipLevels,
+            .arrayLayers = 1,
+            .samples = vk::SampleCountFlagBits::e1,
+            .tiling = vk::ImageTiling::eOptimal,
+            .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+            .sharingMode = vk::SharingMode::eExclusive,
+            .initialLayout = vk::ImageLayout::eUndefined,
             },
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-        );
+        });
 
-    std::memcpy(StatingBuffer.Data, pixels, static_cast<size_t>(imageSize));
-    stbi_image_free(pixels);
-
-    vk::ImageCreateInfo TextureImageCreateInfo{
-        .flags = {},
-        .imageType = vk::ImageType::e2D,
+    this->TextureImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        .image = this->TextureImage.Buffer,
+        .viewType = vk::ImageViewType::e2D,
         .format = vk::Format::eR8G8B8A8Srgb,
-        .extent = vk::Extent3D{ static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
-        .mipLevels = MipLevels,
-        .arrayLayers = 1,
-        .samples = vk::SampleCountFlagBits::e1,
-        .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        .sharingMode = vk::SharingMode::eExclusive,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        };
-    VmaAllocationCreateInfo TextureImageAllocationCreateInfo{
-        .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
-        };
-    this->TextureImage = Frontend.VkCreateImage(TextureImageCreateInfo, TextureImageAllocationCreateInfo);
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = MipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        }};
 
-    Frontend.VkTransitionImageLayout(this->TextureImage.Buffer,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, MipLevels, this->Vk_CommandPool);
-    Frontend.CopyBufferToImage(
-        StatingBuffer.Buffer,
-        this->TextureImage.Buffer,
-        static_cast<u32>(texWidth),
-        static_cast<u32>(texHeight),
-        this->Vk_CommandPool
-        );
-
-    this->VkGenerateMipMaps(
-        this->TextureImage.Buffer, vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, this->MipLevels
-        );
-
-    // Frontend.VkTransitionImageLayout(this->TextureImage.Image, vk::ImageLayout::eTransferDstOptimal,
-    //      vk::ImageLayout::eShaderReadOnlyOptimal, MipLevels, this->VkMyCommandPool);
-
-    this->TextureImageView = this->GetFrontend().CreateImageView2D(this->TextureImage.Buffer,
-        vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, this->MipLevels);
+    stbi_image_free(pixels);
 
     return;
 }
@@ -1482,7 +1483,7 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
 
     auto& Frontend = this->GetFrontend();
 
-    vk::PhysicalDeviceProperties Properties = Frontend.GetVkPhysicalDevice().getProperties();
+    vk::PhysicalDeviceProperties Properties = Frontend.Vk_GetPhysicalDevice().getProperties();
     vk::SamplerCreateInfo SamplerInfo{.magFilter = vk::Filter::eLinear, .minFilter = vk::Filter::eLinear,  .mipmapMode = vk::SamplerMipmapMode::eLinear,
         .addressModeU = vk::SamplerAddressMode::eRepeat, .addressModeV = vk::SamplerAddressMode::eRepeat, .addressModeW = vk::SamplerAddressMode::eRepeat,
         .mipLodBias = 0.0f,
@@ -1493,7 +1494,7 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
         .borderColor = vk::BorderColor::eIntOpaqueBlack,
         };
 
-    this->TextureSampler = vk::raii::Sampler(Frontend.GetVkDevice(), SamplerInfo);
+    this->TextureSampler = vk::raii::Sampler(Frontend.Vk_GetDevice(), SamplerInfo);
 
     return;
 }
@@ -1535,7 +1536,7 @@ void Jafg::LSurfaceGlfw3::VkCreateDescriptorPool()
         .pPoolSizes = PoolSize.data()
         };
 
-    this->VkMyDescriptorPool = vk::raii::DescriptorPool(this->GetFrontend().GetVkDevice(), poolInfo);
+    this->VkMyDescriptorPool = vk::raii::DescriptorPool(this->GetFrontend().Vk_GetDevice(), poolInfo);
 
     return;
 }
@@ -1550,7 +1551,7 @@ void Jafg::LSurfaceGlfw3::VkCreateDescriptorSets()
     vk::DescriptorSetAllocateInfo        allocInfo{.descriptorPool = this->VkMyDescriptorPool,
         .descriptorSetCount = static_cast<uint32_t>(layouts.size()), .pSetLayouts = layouts.data()};
 
-    this->VkDescriptorSets = Frontend.GetVkDevice().allocateDescriptorSets(allocInfo);
+    this->VkDescriptorSets = Frontend.Vk_GetDevice().allocateDescriptorSets(allocInfo);
 
     for (size_t i = 0; i < this->Vk_GetNumberOfFramesInFlight(); i++)
     {
@@ -1564,7 +1565,7 @@ void Jafg::LSurfaceGlfw3::VkCreateDescriptorSets()
                 .descriptorType = vk::DescriptorType::eCombinedImageSampler, .pImageInfo = &imageInfo }
             };
 
-        Frontend.GetVkDevice().updateDescriptorSets(DescriptorWrites, {});
+        Frontend.Vk_GetDevice().updateDescriptorSets(DescriptorWrites, {});
     }
 
     return;
@@ -1592,13 +1593,13 @@ void Jafg::LSurfaceGlfw3::VkGenerateMipMaps(vk::Image Image, vk::Format Format, 
 {
     auto& Frontend = this->GetFrontend();
 
-    vk::FormatProperties formatProperties = Frontend.GetVkPhysicalDevice().getFormatProperties(Format);
+    vk::FormatProperties formatProperties = Frontend.Vk_GetPhysicalDevice().getFormatProperties(Format);
     if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
     {
         panic( "texture image format does not support linear blitting. ")
     }
 
-    vk::raii::CommandBuffer commandBuffer = Frontend.VkBeginSingleTimeCommands(this->Vk_CommandPool);
+    vk::raii::CommandBuffer commandBuffer = Frontend.Vk_BeginSingleTimeCommands(this->Vk_CommandPool);
 
     vk::ImageMemoryBarrier barrier          = {.srcAccessMask = vk::AccessFlagBits::eTransferWrite,
         .dstAccessMask = vk::AccessFlagBits::eTransferRead, .oldLayout = vk::ImageLayout::eTransferDstOptimal,
@@ -1654,7 +1655,7 @@ void Jafg::LSurfaceGlfw3::VkGenerateMipMaps(vk::Image Image, vk::Format Format, 
 
     commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, barrier);
 
-    Frontend.VkEndSingleTimeCommands(commandBuffer);
+    Frontend.Vk_EndSingleTimeCommands(std::move(commandBuffer));
 
     return;
 }

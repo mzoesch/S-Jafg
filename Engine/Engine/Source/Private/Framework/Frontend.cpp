@@ -15,26 +15,6 @@
 #include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
 
-void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
-{
-    check( this->Surfaces.empty() )
-
-    LSurfaceCreateInfo Info{
-#if !IN_SHIPPING
-        /* For development purposes, we want a smaller window as it does not cover so much space. */
-        .DesiredDimensionsPx = { 855, 475 },
-#endif /* !IN_SHIPPING */
-        .HumanReadableName = "Jafg - @mzoesch",
-        };
-
-    this->Surfaces.emplace_back(std::make_unique<LSurface>(Info));
-
-    this->FocusedSurface = this->Surfaces.size() - 1;
-    check( this->IsFocusedSurfaceValid() )
-
-    return;
-}
-
 void Jafg::LFrontendBase::Tick()
 {
     STAT_CYCLE_FUNCTION()
@@ -109,6 +89,37 @@ Jafg::LEngine& Jafg::LFrontendBase::GetEngine() const noexceptcheck
 Jafg::LLocalEgo& Jafg::LFrontendBase::GetLocalEgo() const noexceptcheck
 {
     return this->GetEngine().GetLocalEgo();
+}
+
+void Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior) noexcept
+{
+    check( Tasks::IsOnMasterThread() )
+
+    this->Surfaces.emplace_back(std::move(Surface));
+
+    if (Behavior == ENewSurfaceBehavior::Focus)
+    {
+        this->FocusedSurface = this->Surfaces.size() - 1;
+        check( this->IsFocusedSurfaceValid() )
+    }
+    else if (Behavior == ENewSurfaceBehavior::FocusIfNoneFocused)
+    {
+        if (this->IsFocusedSurfaceValid() == false)
+        {
+            this->FocusedSurface = this->Surfaces.size() - 1;
+            check( this->IsFocusedSurfaceValid() )
+        }
+    }
+    else if (Behavior == ENewSurfaceBehavior::FocusIfNonePresent)
+    {
+        if (this->Surfaces.size() == 1)
+        {
+            this->FocusedSurface = this->Surfaces.size() - 1;
+            check( this->IsFocusedSurfaceValid() )
+        }
+    }
+
+    return;
 }
 
 void Jafg::LFrontendBase::AddWidget(LViewport* Context, WUserWidget* Widget)

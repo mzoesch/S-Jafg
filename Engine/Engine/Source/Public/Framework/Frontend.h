@@ -63,11 +63,23 @@ class LFrontendBase
 {
 public:
 
+    enum ENewSurfaceBehavior
+    {
+        //# Just add the new surface.
+        NoAction,
+        //# Add the new surface and focus it; potentially unfocusing an already existing surface.
+        Focus,
+        //# Add the new surface and focus it only if no other surface is currently focused.
+        FocusIfNoneFocused,
+        //# Add the new surface and focus it only if there is no surfaces at all.
+        FocusIfNonePresent,
+    };
+
     LFrontendBase() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LFrontendBase)
     ~LFrontendBase() = default;
 
-    void Initialize(LClassOuter* Outer);
+    void Initialize(LClassOuter* Outer) {}
     void Tick();
     void OnUpdate();
     void TearDown();
@@ -76,6 +88,8 @@ public:
     ENGINE_API LLocalEgo& GetLocalEgo() const noexceptcheck;
 
     FORCEINLINE auto GetPhysicalViewports() const noexcept -> TArray<LPhysicalViewport> const& { return this->UsablePhysicalViewports; }
+
+    ENGINE_API void AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior = ENewSurfaceBehavior::NoAction) noexcept;
 
     FORCEINLINE LSize GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
     FORCEINLINE TArray<TUnique<LSurface>>& GetSurfaces() noexcept { return this->Surfaces; }

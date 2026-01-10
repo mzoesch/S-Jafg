@@ -42,6 +42,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceGlfw3)
     ENGINE_API virtual ~LSurfaceGlfw3() override;
 
+    //# Vk specific setup methods that may only be called after vk was fully initialized in the frontend.
     void LateSetupVk();
 
     void OnClear();
@@ -211,7 +212,6 @@ private:
     LDeviceImage TextureImage;
     vk::raii::ImageView TextureImageView{ nullptr };
     vk::raii::Sampler TextureSampler{ nullptr };
-    u32 MipLevels = INDEX_NONE;
 
 
     void VkCreateTextureImage();
