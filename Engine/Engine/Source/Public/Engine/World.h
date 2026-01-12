@@ -8,13 +8,9 @@
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/Level.h"
-#include "Framework/Skybox.h"
 #include "Cli/CliType.h"
 #include "Cli/CliCommand.h"
 #include "Platform/SurfaceForward.h"
-#if AS_CLIENT
-    #include "Debug/TemporalWorldObject.h"
-#endif /* AS_CLIENT */
 
 namespace Jafg
 {
@@ -236,10 +232,6 @@ public:
     //# Performance optimization for static objects.
     LOnStaticDraw OnStaticDraw;
 
-#if AS_CLIENT
-    void LateTick(const f32 DeltaTime);
-#endif /* AS_CLIENT */
-
     ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
 
     FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
@@ -250,13 +242,6 @@ public:
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
 
-#if AS_CLIENT
-    template <typename T>
-    FORCEINLINE void AddTemporalObject(T&& InTemporalObject);
-    FORCEINLINE TArray<TUnique<LTemporalWorldObject>> const& GetTemporalObjects() const noexcept { return this->TemporalObjects; }
-    FORCEINLINE TArray<TUnique<LTemporalWorldObject>>& GetMutableTemporalObjects() noexcept { return this->TemporalObjects; }
-#endif /* AS_CLIENT */
-
     ENGINE_API  void RegisterTickableObject(LTickableObject* Tickable);
     ENGINE_API  void UnregisterTickableObject(LTickableObject* Tickable);
     FORCEINLINE bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
@@ -264,11 +249,6 @@ public:
     FORCEINLINE TArray<LTickableObject*>& GetMutableTickableObjects() noexcept { return this->TickableObjects; }
     FORCEINLINE TArray<LTickableObject*> const& GetDeletedTickableObjects() const noexcept { return this->DeletedTickableObjects; }
     FORCEINLINE TArray<LTickableObject*>& GetDeletedMutableTickableObjects() noexcept { return this->DeletedTickableObjects; }
-
-    FORCEINLINE bool ShouldDrawSkyboxFirst() const noexcept { return this->bDrawSkyboxFirst; }
-    FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.has_value(); }
-    FORCEINLINE LSkybox const& GetSkybox() const noexceptcheck { check( this->IsSkyboxValid() ) return this->Skybox.value(); }
-    FORCEINLINE LSkybox& GetMutableSkybox() noexceptcheck { check( this->IsSkyboxValid() ) return this->Skybox.value(); }
 
     ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const noexcept;
 
@@ -321,19 +301,12 @@ private:
 
     TOptional<LLevel> UnderlyingLevel;
 
-#if AS_CLIENT
-    TArray<TUnique<LTemporalWorldObject>> TemporalObjects;
-#endif /* AS_CLIENT */
-
     //# Main thread only.
     FORCEINLINE void AcquireTickableObjectsLock() noexcept { this->TickableObjectsPutMutex = true; }
     FORCEINLINE void ReleaseTickableObjectsLock() noexcept { this->TickableObjectsPutMutex = false; }
     bool TickableObjectsPutMutex = false;
     TArray<LTickableObject*> TickableObjects;
     TArray<LTickableObject*> DeletedTickableObjects;
-
-    bool bDrawSkyboxFirst { false };
-    TOptional<LSkybox> Skybox;
 
     mutable LEyeToMatricesMap EyeToMatrices;
     EWorldState::Type WorldState;
@@ -365,15 +338,6 @@ FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LW
 {
     return LWorld::GetWorldFromHumanReadableNameAsserted(this->Name);
 }
-
-#if AS_CLIENT
-template <typename T>
-FORCEINLINE void LWorld::AddTemporalObject(T&& InTemporalObject)
-{
-    this->TemporalObjects.emplace_back(std::make_unique<T>(std::forward<T>(InTemporalObject)));
-    return;
-}
-#endif /* AS_CLIENT */
 
 FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName) noexceptcheck
 {

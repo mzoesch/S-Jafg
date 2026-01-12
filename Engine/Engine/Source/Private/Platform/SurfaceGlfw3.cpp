@@ -17,6 +17,8 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
+#include "System/TextureSubsystem.h"
+
 #include "User/Input/GlfwInputTranslation.h"
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
@@ -25,40 +27,16 @@
 #include "Rhi/StaticMesh.h"
 
 static Jafg::LStaticMesh VkTestMesh{"Content/Models/viking_room.obj"};
-static Jafg::LDevicePipeline VkTestMeshPipeline{nullptr};
+static Jafg::LGraphicsDevicePipeline VkTestMeshPipeline{nullptr};
 
-const std::string MODEL_PATH = "Content/Models/viking_room.obj";
 const std::string TEXTURE_PATH = "Content/Textures/viking_room.png";
 
 static_assert(std::is_standard_layout_v<Jafg::LStaticMesh::LVertex>);
 
-struct UniformBufferObject
-{
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
-};
-static_assert(std::is_standard_layout_v<UniformBufferObject>);
-static Jafg::LDevicePipeline VkTestPipeline;
+
+static Jafg::LGraphicsDevicePipeline VkTestPipeline;
 static Jafg::LDeviceBuffer VkTestVertexBuffer;
 static Jafg::LDeviceBuffer VkTestIndexBuffer;
-
-// const std::vector<Vertex> vertices = {
-//     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-//     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-//     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-//     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-//
-//     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-//     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-//     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-//     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-//     };
-//
-// const std::vector<uint16_t> indices = {
-//     0, 1, 2, 2, 3, 0,
-//     4, 5, 6, 6, 7, 4
-//     };
 
 struct LRhiVertex2D
 {
@@ -97,6 +75,14 @@ static std::vector<LRhiVertex2D> QuadVertices{
 static std::vector<uint16_t> QuadIndices{
     0, 2, 1, 2, 0, 3
     };
+
+struct PC_Model
+{
+    glm::mat4 model;
+
+    static vk::ShaderStageFlags Flags() noexcept { return vk::ShaderStageFlagBits::eVertex; }
+};
+static_assert(Jafg::CPushConstant<PC_Model>);
 
 static void TestPipeline(Jafg::LSurface const& Surface);
 
@@ -179,6 +165,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     , Vk_RenderSemaphores{vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}}
     , Vk_FlightFences{vk::raii::Fence{nullptr}, vk::raii::Fence{nullptr}, vk::raii::Fence{nullptr}}
     , Vk_CommandBuffers{vk::raii::CommandBuffer{nullptr}, vk::raii::CommandBuffer{nullptr}, vk::raii::CommandBuffer{nullptr}}
+    , Vk_DescriptorPools{vk::raii::DescriptorPool{nullptr}, vk::raii::DescriptorPool{nullptr}, vk::raii::DescriptorPool{nullptr}}
 {
     STAT_CYCLE_FUNCTION()
 
@@ -332,31 +319,28 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->Vk_CreateCommandPool();
     this->Vk_CreateSwapchain();
     this->Vk_CreateCommandBuffers();
+    this->Vk_CreateCommonBuffers();
+    this->Vk_CreateDescriptorPools();
 
     if (VkTestMesh.ReloadModel() != EStaticMeshResult::Success)
     {
         panic( "Failed to load test static mesh model." )
     }
 
-    VkTestMesh.UploadVertices();
     VkTestMeshPipeline = LDevicePipelineFactory{*this}
         .Shader("Content/Shaders/Spir-V/Test.spv", vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
         .VertexInput<LStaticMesh::LVertex>()
         .Layout<LVkTestMeshPipelineLayout>()
+        .Push<PC_Model>()
         .Build();
 
 
 
 
 
-
     this->VkCreateTextureImage();
-    this->VkCreateTextureSampler();
 
 
-    this->VkCreateUniformBuffers();
-    this->VkCreateDescriptorPool();
-    this->VkCreateDescriptorSets();
 
     TestPipeline(*this);
 
@@ -438,7 +422,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         Result != vk::Result::eSuboptimalKHR /* Not an error. Just ignore. */
         )
     {
-        panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", static_cast<u32>(Result) )
+        panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", vk::to_string(Result) )
     }
 
     Frontend.Vk_GetDevice().resetFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
@@ -446,6 +430,27 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     auto& CommandBuffer{ this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex] };
     CommandBuffer.reset();
     CommandBuffer.begin({});
+
+    this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex].reset({});
+
+    LRenderInfo Info{
+        .Frontend = Frontend,
+        .Surface = *this,
+        .CommandBuffer = *CommandBuffer,
+        .DescriptorPool = *this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex],
+        .Frame = *this->Vk_CurrentFrameInFlightIndex,
+        .Image = ImageIndex,
+        .PerspectiveCamera = {
+            .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+            .proj = glm::perspective(glm::radians(45.0f), static_cast<float>(this->Vk_SwapchainExtent.width) / static_cast<float>(this->Vk_SwapchainExtent.height), 0.1f, 10.0f),
+            },
+        .PerspectiveCameraBuffer = this->Vk_PerspectiveCameraBuffers[*this->Vk_CurrentFrameInFlightIndex].GetBuffer()
+        };
+    /* Invert Y for Vulkan. */
+    Info.PerspectiveCamera.proj[1][1] *= -1;
+    Info.PerspectiveCamera.Upload(this->Vk_PerspectiveCameraBuffers[Info.Frame]);
+
+    check( Info.CommandBuffer )
 
     Vk_TransitionImageLayout({
         .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -456,7 +461,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->Vk_SwapchainImages[ImageIndex],
+        .image = this->Vk_SwapchainImages[Info.Image],
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -475,7 +480,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->Vk_ColorImage.Buffer,
+        .image = this->Vk_ColorImage.GetBuffer(),
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -494,7 +499,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .newLayout = vk::ImageLayout::eDepthAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->Vk_DepthImage.Buffer,
+        .image = this->Vk_DepthImage.GetBuffer(),
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eDepth,
             .baseMipLevel = 0,
@@ -511,7 +516,7 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .imageView = this->Vk_ColorImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .resolveMode = vk::ResolveModeFlagBits::eAverage,
-        .resolveImageView = this->Vk_SwapchainImageViews[ImageIndex],
+        .resolveImageView = this->Vk_SwapchainImageViews[Info.Image],
         .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -533,26 +538,57 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .pDepthAttachment = &DepthAttachmentInfo
         };
 
-    CommandBuffer.beginRendering(RenderingInfo);
+    Info.CommandBuffer.beginRendering(RenderingInfo);
 
-    CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->Vk_SwapchainExtent.width), static_cast<f32>(this->Vk_SwapchainExtent.height), 0.0f, 1.0f));
-    CommandBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->Vk_SwapchainExtent ) );
+    Info.CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->Vk_SwapchainExtent.width), static_cast<f32>(this->Vk_SwapchainExtent.height), 0.0f, 1.0f));
+    Info.CommandBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->Vk_SwapchainExtent ) );
 
-    this->VkUpdateUniformBuffers(*this->Vk_CurrentFrameInFlightIndex);
-    CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *::VkTestMeshPipeline.Pipeline);
-    CommandBuffer.bindVertexBuffers(0, VkTestMesh.VertexBuffer.Buffer, {0});
-    CommandBuffer.bindIndexBuffer(VkTestMesh.IndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(VkTestMesh.Indices)::value_type>::value);
-    CommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *::VkTestMeshPipeline.PipelineLayout, 0 , *this->VkDescriptorSets[*this->Vk_CurrentFrameInFlightIndex], nullptr);
-    CommandBuffer.drawIndexed(VkTestMesh.Indices.size(), 1, 0, 0, 0);
 
-    CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *VkTestPipeline.Pipeline);
-    CommandBuffer.bindVertexBuffers(0, VkTestVertexBuffer.Buffer, {0});
-    CommandBuffer.bindIndexBuffer(VkTestIndexBuffer.Buffer, 0, vk::IndexTypeValue<decltype(QuadIndices)::value_type>::value);
-    CommandBuffer.drawIndexed(QuadIndices.size(), 1, 0, 0, 0);
+
+
+
+    static auto startTime = std::chrono::high_resolution_clock::now();
+    auto  currentTime = std::chrono::high_resolution_clock::now();
+    float time        = std::chrono::duration<float>(currentTime - startTime).count();
+    PC_Model FrameModel{
+        .model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+        };
+
+
+    // Info.CommandBuffer.bindDescriptorSets2({
+    //     .stageFlags = vk::ShaderStageFlagBits::eVertex,
+    //     .layout = *::VkTestMeshPipeline.Layout,
+    //     .firstSet = 0,
+    //     .descriptorSetCount = 1,
+    //     .pDescriptorSets = &*this->VkDescriptorSets[*this->Vk_CurrentFrameInFlightIndex],
+    //     .dynamicOffsetCount = 0,
+    //     .pDynamicOffsets = nullptr
+    //     });
+
+    Info.CommandBuffer.pushConstants2({
+        .layout = *::VkTestMeshPipeline.Layout,
+        .stageFlags = PC_Model::Flags(),
+        .offset = 0,
+        .size = sizeof(PC_Model),
+        .pValues = &FrameModel
+        });
+
+    Info.PerspectiveCamera.Bind(Info, ::VkTestMeshPipeline);
+    ::VkTestMesh.Render(Info, ::VkTestMeshPipeline);
+
+
+
+
+
+
+    Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *VkTestPipeline.Pipeline);
+    Info.CommandBuffer.bindVertexBuffers(0, VkTestVertexBuffer.GetBuffer(), {0});
+    Info.CommandBuffer.bindIndexBuffer(VkTestIndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(QuadIndices)::value_type>::value);
+    Info.CommandBuffer.drawIndexed(QuadIndices.size(), 1, 0, 0, 0);
 
     this->GetViewport().Draw();
 
-    CommandBuffer.endRendering();
+    Info.CommandBuffer.endRendering();
 
     Vk_TransitionImageLayout({
         .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -573,23 +609,23 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
             },
         });
 
-    CommandBuffer.end();
+    Info.CommandBuffer.end();
 
     vk::PipelineStageFlags DstStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
     const vk::SubmitInfo SubmitInfo{
         .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex],
         .pWaitDstStageMask = &DstStageMask,
-        .commandBufferCount = 1, .pCommandBuffers = &*CommandBuffer,
+        .commandBufferCount = 1, .pCommandBuffers = &Info.CommandBuffer,
         .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->Vk_RenderSemaphores[ImageIndex]
         };
-    Frontend.Vk_GetGraphicsQueue().submit(SubmitInfo, *this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
+    Info.Frontend.Vk_GetGraphicsQueue().submit(SubmitInfo, *this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
 
     const vk::PresentInfoKHR PresentInfo{
         .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_RenderSemaphores[ImageIndex],
         .swapchainCount = 1, .pSwapchains = &*this->Vk_VkMySwapchain,
         .pImageIndices = &ImageIndex
         };
-    Result = Frontend.Vk_GetGraphicsQueue().presentKHR(PresentInfo);
+    Result = Info.Frontend.Vk_GetGraphicsQueue().presentKHR(PresentInfo);
 
     this->Vk_LastFrameInFlightIndex = *this->Vk_CurrentFrameInFlightIndex;
     this->Vk_CurrentFrameInFlightIndex.reset();
@@ -1299,7 +1335,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
     this->Vk_ColorImage = Frontend.Vk_CreateDeviceLocalImage(ImageCreateInfo);
     // this->Vk_ColorImage = Frontend.Vk_CreateImage(ImageCreateInfo, AllocationCreateInfo);
     this->Vk_ColorImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->Vk_ColorImage.Buffer,
+        .image = this->Vk_ColorImage.GetBuffer(),
         .viewType = vk::ImageViewType::e2D,
         .format = this->Vk_SurfaceFormat.format,
         .subresourceRange = {
@@ -1335,7 +1371,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
             }
         );
     this->Vk_DepthImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->Vk_DepthImage.Buffer,
+        .image = this->Vk_DepthImage.GetBuffer(),
         .viewType = vk::ImageViewType::e2D,
         .format = Frontend.Vk_GetPreferredDepthFormat(),
         .subresourceRange = {
@@ -1376,7 +1412,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
 {
-    LOG_VERBOSE(LogVulkan, "Creating [{}] Vulkan command buffers for surface.", this->Vk_GetNumberOfFramesInFlight())
+    LOG_VERBOSE(LogVulkan, "Creating [{}] Vulkan command buffers for surface [{}].", this->Vk_GetNumberOfFramesInFlight(), this->GetHumanReadableName())
 
     vk::CommandBufferAllocateInfo Info{
         .commandPool = this->Vk_CommandPool,
@@ -1394,11 +1430,53 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
     return;
 }
 
+void Jafg::LSurfaceGlfw3::Vk_CreateCommonBuffers()
+{
+    LOG_VERBOSE(LogVulkan, "Createing perspective camera buffers for surface [{}].", this->GetHumanReadableName())
+    auto& Frontend{ this->GetFrontend() };
 
+    for (auto Idx{ 0uz }; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        this->Vk_PerspectiveCameraBuffers[Idx] = Frontend.Vk_CreateMappedBuffer({
+            .size = sizeof(UBO::LPerspectiveCamera),
+            .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+            });
+    }
 
+    return;
+}
 
+void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
+{
+    LOG_VERBOSE(LogVulkan, "Creating descriptor pools for surface [{}].", this->GetHumanReadableName())
 
+    std::array Sizes{
+        vk::DescriptorPoolSize{
+            .type = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 10,
+            },
+        vk::DescriptorPoolSize{
+            .type = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = 10,
+            },
+        };
 
+    for (auto Idx{ 0uz }; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        vk::DescriptorPoolCreateInfo PoolInfo{
+            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+            .maxSets = static_cast<u32>(Sizes.size()),
+            .poolSizeCount = static_cast<u32>(Sizes.size()),
+            .pPoolSizes = Sizes.data(),
+            };
+
+        this->Vk_DescriptorPools[Idx] = vk::raii::DescriptorPool{this->GetFrontend().Vk_GetDevice(), PoolInfo};
+
+        continue;
+    }
+
+    return;
+}
 
 static void TestPipeline(Jafg::LSurface const& Surface)
 {
@@ -1431,6 +1509,17 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
 
     auto& Frontend = this->GetFrontend();
 
+    this->MyImage = {
+        GetDefault<JTextureSubsystem>()->GetImage(
+                LPath{"Content/Textures/viking_room.png"}
+                , {.Format = vk::Format::eR8G8B8A8Srgb}
+                , ETextureLoadFlagBits::Load | ETextureLoadFlagBits::Stage
+                )
+    };
+
+
+
+
     int texWidth, texHeight, _;
     stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &_, STBI_rgb_alpha);
 
@@ -1442,25 +1531,25 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
     u32 MipLevels = static_cast<u32>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
     LOG_VERBOSE(LogVulkan, "Texture image will have [{}] mip levels.", MipLevels)
 
-    this->TextureImage = Frontend.Vk_StageLinearImage({
-        .Data = pixels,
-        .Info = {
-            .flags = {},
-            .imageType = vk::ImageType::e2D,
-            .format = vk::Format::eR8G8B8A8Srgb,
-            .extent = vk::Extent3D{ static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
-            .mipLevels = MipLevels,
-            .arrayLayers = 1,
-            .samples = vk::SampleCountFlagBits::e1,
-            .tiling = vk::ImageTiling::eOptimal,
-            .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-            .sharingMode = vk::SharingMode::eExclusive,
-            .initialLayout = vk::ImageLayout::eUndefined,
-            },
-        });
+    // this->TextureImage = Frontend.Vk_StageLinearImage({
+    //     .Data = pixels,
+    //     .Info = {
+    //         .flags = {},
+    //         .imageType = vk::ImageType::e2D,
+    //         .format = vk::Format::eR8G8B8A8Srgb,
+    //         .extent = vk::Extent3D{ static_cast<u32>(texWidth), static_cast<u32>(texHeight), 1 },
+    //         .mipLevels = MipLevels,
+    //         .arrayLayers = 1,
+    //         .samples = vk::SampleCountFlagBits::e1,
+    //         .tiling = vk::ImageTiling::eOptimal,
+    //         .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+    //         .sharingMode = vk::SharingMode::eExclusive,
+    //         .initialLayout = vk::ImageLayout::eUndefined,
+    //         },
+    //     });
 
     this->TextureImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->TextureImage.Buffer,
+        .image = this->MyImage.GetTexture().GetDeviceHandle().GetBuffer(),
         .viewType = vk::ImageViewType::e2D,
         .format = vk::Format::eR8G8B8A8Srgb,
         .subresourceRange = {
@@ -1474,15 +1563,6 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureImage()
 
     stbi_image_free(pixels);
 
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan texture sampler for surface.")
-
-    auto& Frontend = this->GetFrontend();
-
     vk::PhysicalDeviceProperties Properties = Frontend.Vk_GetPhysicalDevice().getProperties();
     vk::SamplerCreateInfo SamplerInfo{.magFilter = vk::Filter::eLinear, .minFilter = vk::Filter::eLinear,  .mipmapMode = vk::SamplerMipmapMode::eLinear,
         .addressModeU = vk::SamplerAddressMode::eRepeat, .addressModeV = vk::SamplerAddressMode::eRepeat, .addressModeW = vk::SamplerAddressMode::eRepeat,
@@ -1495,167 +1575,6 @@ void Jafg::LSurfaceGlfw3::VkCreateTextureSampler()
         };
 
     this->TextureSampler = vk::raii::Sampler(Frontend.Vk_GetDevice(), SamplerInfo);
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateUniformBuffers()
-{
-    LOG_VERBOSE(LogTemporal, "Creating Vulkan uniform buffers for surface.")
-
-    this->UniformBuffers.clear();
-
-    auto& Frontend = this->GetFrontend();
-
-    for (LSize Idx{ 0 }; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
-    {
-        this->UniformBuffers.emplace_back(Frontend.Vk_CreateMappedBuffer(vk::BufferCreateInfo{
-                .size = sizeof(UniformBufferObject),
-                .usage = vk::BufferUsageFlagBits::eUniformBuffer,
-                }
-            , vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-            ));
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateDescriptorPool()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor pool for surface.")
-
-    std::array PoolSize = {
-        vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, this->Vk_GetNumberOfFramesInFlight()),
-        vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, this->Vk_GetNumberOfFramesInFlight())
-        };
-
-    vk::DescriptorPoolCreateInfo poolInfo{
-        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlight()),
-        .poolSizeCount = static_cast<uint32_t>(PoolSize.size()),
-        .pPoolSizes = PoolSize.data()
-        };
-
-    this->VkMyDescriptorPool = vk::raii::DescriptorPool(this->GetFrontend().Vk_GetDevice(), poolInfo);
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkCreateDescriptorSets()
-{
-    LOG_VERBOSE(LogVulkan, "Creating Vulkan descriptor sets for surface.")
-
-    auto& Frontend = this->GetFrontend();
-
-    std::vector<vk::DescriptorSetLayout> layouts(this->Vk_GetNumberOfFramesInFlight(), *VkTestMeshPipeline.DescriptorSetLayout);
-    vk::DescriptorSetAllocateInfo        allocInfo{.descriptorPool = this->VkMyDescriptorPool,
-        .descriptorSetCount = static_cast<uint32_t>(layouts.size()), .pSetLayouts = layouts.data()};
-
-    this->VkDescriptorSets = Frontend.Vk_GetDevice().allocateDescriptorSets(allocInfo);
-
-    for (size_t i = 0; i < this->Vk_GetNumberOfFramesInFlight(); i++)
-    {
-        vk::DescriptorBufferInfo bufferInfo{.buffer = UniformBuffers[i].Buffer, .offset = 0, .range = sizeof(UniformBufferObject)};
-        vk::DescriptorImageInfo imageInfo{ .sampler = this->TextureSampler, .imageView = this->TextureImageView, .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal};
-
-        std::array DescriptorWrites = {
-            vk::WriteDescriptorSet{ .dstSet = VkDescriptorSets[i], .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &bufferInfo },
-            vk::WriteDescriptorSet{ .dstSet = VkDescriptorSets[i], .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eCombinedImageSampler, .pImageInfo = &imageInfo }
-            };
-
-        Frontend.Vk_GetDevice().updateDescriptorSets(DescriptorWrites, {});
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkUpdateUniformBuffers(uint32_t currentImage)
-{
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto  currentTime = std::chrono::high_resolution_clock::now();
-    float time        = std::chrono::duration<float>(currentTime - startTime).count();
-
-    UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view  = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj  = glm::perspective(glm::radians(45.0f), static_cast<float>(this->Vk_SwapchainExtent.width) / static_cast<float>(this->Vk_SwapchainExtent.height), 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
-
-    std::memcpy(this->UniformBuffers[currentImage].Data, &ubo, sizeof(ubo));
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::VkGenerateMipMaps(vk::Image Image, vk::Format Format, i32 Width, i32 Height, u32 _MipLevels)
-{
-    auto& Frontend = this->GetFrontend();
-
-    vk::FormatProperties formatProperties = Frontend.Vk_GetPhysicalDevice().getFormatProperties(Format);
-    if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
-    {
-        panic( "texture image format does not support linear blitting. ")
-    }
-
-    vk::raii::CommandBuffer commandBuffer = Frontend.Vk_BeginSingleTimeCommands(this->Vk_CommandPool);
-
-    vk::ImageMemoryBarrier barrier          = {.srcAccessMask = vk::AccessFlagBits::eTransferWrite,
-        .dstAccessMask = vk::AccessFlagBits::eTransferRead, .oldLayout = vk::ImageLayout::eTransferDstOptimal,
-        .newLayout = vk::ImageLayout::eTransferSrcOptimal, .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .dstQueueFamilyIndex = vk::QueueFamilyIgnored, .image = Image};
-    barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount     = 1;
-    barrier.subresourceRange.levelCount     = 1;
-
-    int32_t mipWidth  = Width;
-    int32_t mipHeight = Height;
-
-    for (uint32_t i = 1; i < _MipLevels; i++)
-    {
-        barrier.subresourceRange.baseMipLevel = i - 1;
-        barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
-        barrier.newLayout                     = vk::ImageLayout::eTransferSrcOptimal;
-        barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask                 = vk::AccessFlagBits::eTransferRead;
-
-        commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
-
-        vk::ArrayWrapper1D<vk::Offset3D, 2> offsets, dstOffsets;
-        offsets[0]          = vk::Offset3D(0, 0, 0);
-        offsets[1]          = vk::Offset3D(mipWidth, mipHeight, 1);
-        dstOffsets[0]       = vk::Offset3D(0, 0, 0);
-        dstOffsets[1]       = vk::Offset3D(mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1);
-        vk::ImageBlit blit  = {.srcSubresource = {}, .srcOffsets = offsets, .dstSubresource = {}, .dstOffsets = dstOffsets};
-        blit.srcSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i - 1, 0, 1);
-        blit.dstSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i, 0, 1);
-
-        commandBuffer.blitImage(Image, vk::ImageLayout::eTransferSrcOptimal, Image, vk::ImageLayout::eTransferDstOptimal, {blit}, vk::Filter::eLinear);
-
-        barrier.oldLayout     = vk::ImageLayout::eTransferSrcOptimal;
-        barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-        commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, barrier);
-
-        if (mipWidth > 1)
-            mipWidth /= 2;
-        if (mipHeight > 1)
-            mipHeight /= 2;
-    }
-
-    barrier.subresourceRange.baseMipLevel = _MipLevels - 1;
-    barrier.oldLayout                     = vk::ImageLayout::eTransferDstOptimal;
-    barrier.newLayout                     = vk::ImageLayout::eShaderReadOnlyOptimal;
-    barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
-    barrier.dstAccessMask                 = vk::AccessFlagBits::eShaderRead;
-
-    commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, barrier);
-
-    Frontend.Vk_EndSingleTimeCommands(std::move(commandBuffer));
 
     return;
 }

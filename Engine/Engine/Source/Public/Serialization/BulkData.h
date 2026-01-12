@@ -7,137 +7,118 @@
 namespace Jafg
 {
 
-template <typename InDomainTy>
-class LBulkData final
+template<typename TDomain>
+class TBulkData final
 {
 public:
 
-    using LBulkDomainTy = InDomainTy;
+    using LDomain = TDomain;
 
-    FORCEINLINE LBulkData() = default;
-    PROHIBIT_COPY(LBulkData)
-    FORCEINLINE LBulkData(LBulkData&& InOther) noexcept;
-    FORCEINLINE LBulkData& operator=(LBulkData&& InOther) noexcept;
-    FORCEINLINE ~LBulkData();
+    FORCEINLINE constexpr TBulkData() noexcept = default;
+    PROHIBIT_COPY(TBulkData)
+    inline constexpr TBulkData(TBulkData&& Other) noexcept
+    {
+        this->Number = Other.Number;
+        this->Bulk = Other.Bulk;
 
-    FORCEINLINE bool IsAllocated() const { return this->Bulk != nullptr; }
+        Other.Number = 0;
+        Other.Bulk = nullptr;
 
-    FORCEINLINE auto GetNum() const -> i32 { return this->Num; }
-    FORCEINLINE auto GetByteSize() const -> LSize { return this->Num * sizeof(LBulkDomainTy); }
-    FORCEINLINE auto GetRawBulk()       ->       LBulkDomainTy* { return this->Bulk; }
-    FORCEINLINE auto GetRawBulk() const -> const LBulkDomainTy* { return this->Bulk; }
+        return;
+    }
+    inline constexpr TBulkData& operator=(TBulkData&& Rhs) noexcept
+    {
+        if (this != &Rhs)
+        {
+            if (this->IsAllocated())
+            {
+                this->Free();
+            }
 
-    inline void AllocateBulk(const i32 InNumberOfDomains, const bool bZeroed = false);
-    inline void Serialize(const LBulkDomainTy* InBulk, const i32 InNumberOfDomains, const i32 InOffset = 0);
-    inline void FreeBulk();
+            this->Number = Rhs.Number;
+            this->Bulk = Rhs.Bulk;
+            Rhs.Number = 0;
+            Rhs.Bulk = nullptr;
+        }
+
+        return *this;
+    }
+    inline constexpr ~TBulkData() noexcept
+    {
+        if (this->Bulk)
+        {
+            delete[] this->Bulk;
+        }
+
+        return;
+    }
+
+    FORCEINLINE constexpr bool IsAllocated() const noexcept { return this->Bulk != nullptr; }
+
+    FORCEINLINE constexpr LSize GetNumber() const noexcept { return this->Number; }
+    FORCEINLINE constexpr LSize GetByteSize() const noexcept { return this->Number * sizeof(LDomain); }
+
+    FORCEINLINE constexpr LDomain* data() noexcept { return this->Bulk; }
+    FORCEINLINE constexpr LDomain const* data() const noexcept { return this->Bulk; }
+    FORCEINLINE constexpr LDomain& operator*() noexcept { return this->Bulk; }
+    FORCEINLINE constexpr LDomain const& operator*() const noexcept { return this->Bulk; }
+
+    FORCEINLINE constexpr auto begin() noexcept { return this->Bulk; }
+    FORCEINLINE constexpr auto begin() const noexcept { return this->Bulk; }
+    FORCEINLINE constexpr auto end() noexcept { return this->Bulk + this->Number; }
+    FORCEINLINE constexpr auto end() const noexcept { return this->Bulk + this->Number; }
+
+    FORCEINLINE constexpr void Allocate(const LSize DomainNumber)
+    {
+        check( this->IsAllocated() == false )
+        check( DomainNumber > 0 )
+
+        this->Number = DomainNumber;
+        this->Bulk = new LDomain[this->Number];
+
+        return;
+    }
+
+    FORCEINLINE void AllocateZeroed(const LSize DomainNumber)
+    {
+        this->Allocate(DomainNumber);
+        std::memset(this->Bulk, 0, this->GetByteSize());
+        return;
+    }
+
+    FORCEINLINE void Serialize(LDomain const* InBulk, const LSize DomainNumber, const LSize InOffset = 0)
+    {
+        check( this->IsAllocated() == false )
+        check( InBulk && DomainNumber > 0 )
+
+        this->Allocate(DomainNumber);
+        std::memcpy(this->Bulk, InBulk + InOffset, this->GetByteSize());
+
+        return;
+
+    }
+
+    inline constexpr void Free() noexcept
+    {
+        check( this->Bulk )
+
+        delete[] this->Bulk;
+        this->Number = {};
+        this->Bulk = {};
+
+        check( this->Number == 0 && this->Bulk == nullptr )
+
+        return;
+    }
 
 private:
 
-    //# The number of domains.
-    i32            Num  { 0 };
-    LBulkDomainTy* Bulk { nullptr };
+    LSize Number{};
+    LDomain* Bulk{};
 };
 
-template <typename InDomainTy>
-LBulkData<InDomainTy>::LBulkData(LBulkData&& InOther) noexcept
-{
-    this->Num = InOther.Num;
-    this->Bulk = InOther.Bulk;
-    InOther.Num = 0;
-    InOther.Bulk = nullptr;
-
-    return;
-}
-
-template <typename InDomainTy>
-LBulkData<InDomainTy>& LBulkData<InDomainTy>::operator=(LBulkData&& InOther) noexcept
-{
-    if (this != &InOther)
-    {
-        if (this->IsAllocated())
-        {
-            this->FreeBulk();
-        }
-
-        this->Num = InOther.Num;
-        this->Bulk = InOther.Bulk;
-        InOther.Num = 0;
-        InOther.Bulk = nullptr;
-    }
-
-    return *this;
-}
-
-template <typename InDomainTy>
-LBulkData<InDomainTy>::~LBulkData()
-{
-    if (this->IsAllocated())
-    {
-        this->FreeBulk();
-    }
-
-    return;
-}
-
-template <typename InDomainTy>
-void LBulkData<InDomainTy>::AllocateBulk(const i32 InNumberOfDomains, const bool bZeroed /* = false */)
-{
-    if (this->Bulk)
-    {
-        panic( "Tried to allocate bulk data that has bulk storage already." )
-        return;
-    }
-
-    jassert( InNumberOfDomains > 0 )
-
-    this->Num = InNumberOfDomains;
-    this->Bulk = new LBulkDomainTy[InNumberOfDomains];
-
-    if (bZeroed)
-    {
-        ::memset(this->Bulk, 0, this->GetByteSize());
-    }
-
-    return;
-}
-
-template <typename InDomainTy>
-void LBulkData<InDomainTy>::Serialize(const LBulkDomainTy* InBulk, const i32 InNumberOfDomains, const i32 InOffset /* = 0 */)
-{
-    if (this->Bulk)
-    {
-        panic( "Tried to serialize bulk data that has bulk storage already." )
-        return;
-    }
-
-    jassert( InNumberOfDomains > 0 )
-
-    this->Num = InNumberOfDomains;
-
-    InBulk += InOffset;
-    this->Bulk = new LBulkDomainTy[InNumberOfDomains];
-
-    ::memcpy(this->Bulk, InBulk, this->GetByteSize());
-
-    return;
-}
-
-template <typename InDomainTy>
-void LBulkData<InDomainTy>::FreeBulk()
-{
-    check( this->Bulk )
-
-    delete[] this->Bulk;
-    this->Bulk = nullptr;
-    this->Num = 0;
-
-    check( this->Num == 0 )
-
-    return;
-}
-
-using LByteBulkData = LBulkData<u8>;
-using LfBulkData    = LBulkData<float>;
-using LdBulkData    = LBulkData<double>;
+typedef TBulkData<u8>  LByteBulkData;
+typedef TBulkData<f32> LfBulkData;
+typedef TBulkData<f64> LdBulkData;
 
 } /* ~Namespace Jafg */

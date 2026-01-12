@@ -6,20 +6,12 @@
 #include "Engine/Engine.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
-#include "MyWorld/ChunkKey.h"
-#include "MyWorld/VoxelKey.h"
-#include "MyWorld/Chunk/Chunk.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBox.h"
 #include "Widgets/VRegion.h"
-#include "Debug/DebugTraceSphere.h"
-#include "Debug/DebugTraceCube.h"
-#include "Debug/DebugTraceLine.h"
-#include "Debug/DebugTracePlane.h"
-#include "MyWorld/TimeWorldSubsystem.h"
-#include "MyWorld/Validation/ChunkValidationUtility.h"
+#include "Cli/CliPrimitives.h"
 
 using namespace Jafg;
 
@@ -204,37 +196,37 @@ void Jgc::WDebugScreen::Tick()
             ));
         }
 
-        {
-            const LVector Location { Controller->GetPawn()->GetTranslation() };
-            const LChunkKey Key { LChunkKey(Location) };
-            this->LocalPawnChunkSection->SetContent(Lal::SprintF
-            (
-                "Chunk: {} {} {}",
-                Key.X, Key.Y, Key.Z
-            ));
-        }
+        // {
+        //     const LVector Location { Controller->GetPawn()->GetTranslation() };
+        //     const LChunkKey Key { LChunkKey(Location) };
+        //     this->LocalPawnChunkSection->SetContent(Lal::SprintF
+        //     (
+        //         "Chunk: {} {} {}",
+        //         Key.X, Key.Y, Key.Z
+        //     ));
+        // }
 
-        {
-            const LVector Location { Controller->GetPawn()->GetTranslation() };
-            const LVoxelKey Key { LVoxelKey::FromWorldSpace(Location) };
-            this->LocalPawnVoxelSection->SetContent(Lal::SprintF
-            (
-                "Local voxel: {} {} {}",
-                Key.X, Key.Y, Key.Z
-            ));
-        }
+        // {
+        //     const LVector Location { Controller->GetPawn()->GetTranslation() };
+        //     const LVoxelKey Key { LVoxelKey::FromWorldSpace(Location) };
+        //     this->LocalPawnVoxelSection->SetContent(Lal::SprintF
+        //     (
+        //         "Local voxel: {} {} {}",
+        //         Key.X, Key.Y, Key.Z
+        //     ));
+        // }
 
         {
             this->LocalPawnTargetVoxelSectionDestroy->EmptyContent();
-            for (const LHitResult& Hit : Controller->GetPawn()->GetCurrentGenericTraceResults())
-            {
-                if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
-                {
-                    const LVoxelKey Key = LVoxelKey::FromWorldSpace(Hit.GlobalWorldLocation);
-                    this->LocalPawnTargetVoxelSectionDestroy->SetContent(Lal::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
-                    break;
-                }
-            }
+            // for (const LHitResult& Hit : Controller->GetPawn()->GetCurrentGenericTraceResults())
+            // {
+            //     if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+            //     {
+            //         const LVoxelKey Key = LVoxelKey::FromWorldSpace(Hit.GlobalWorldLocation);
+            //         this->LocalPawnTargetVoxelSectionDestroy->SetContent(Lal::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
+            //         break;
+            //     }
+            // }
             if (this->LocalPawnTargetVoxelSectionDestroy->GetContent().empty())
             {
                 this->LocalPawnTargetVoxelSectionDestroy->SetContent("TvD: N/A");
@@ -243,148 +235,148 @@ void Jgc::WDebugScreen::Tick()
 
         {
             this->LocalPawnTargetVoxelSectionCreate->EmptyContent();
-            for (const LHitResult& Hit : Controller->GetPawn()->GetCurrentGenericTraceResults())
-            {
-                if (const AChunk* HitChunk { Hit.Actor->As<AChunk>() }; HitChunk && Hit.SurfaceNormal.has_value())
-                {
-                    const LVoxelKey Key { HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f) };
-                    this->LocalPawnTargetVoxelSectionCreate->SetContent(Lal::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
-                    break;
-                }
-            }
+            // for (const LHitResult& Hit : Controller->GetPawn()->GetCurrentGenericTraceResults())
+            // {
+            //     if (const AChunk* HitChunk { Hit.Actor->As<AChunk>() }; HitChunk && Hit.SurfaceNormal.has_value())
+            //     {
+            //         const LVoxelKey Key { HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f) };
+            //         this->LocalPawnTargetVoxelSectionCreate->SetContent(Lal::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
+            //         break;
+            //     }
+            // }
             if (this->LocalPawnTargetVoxelSectionCreate->GetContent().empty())
             {
                 this->LocalPawnTargetVoxelSectionCreate->SetContent("TvC: N/A");
             }
         }
 
-        for (const LHitResult& Hit : Controller->GetPawn()->GetCurrentGenericTraceResults())
-        {
-            const AChunk* HitChunk { Hit.Actor->As<AChunk>() };
-            if (HitChunk == nullptr)
-            {
-                continue;
-            }
-
-            LWorld* World { Controller->GetPawn()->GetWorld() };
-            const LChunkKey CKey { HitChunk->GetChunkKey() };
-
-            World->AddTemporalObject(LDebugTraceSphere
-            {
-                LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, 0.1f,
-                LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
-            });
-
-            if (Hit.SurfaceNormal.has_value())
-            {
-                const LVector WorldHit_Create { Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f };
-                const LVoxelKey VKey_Create { LVoxelKey::FromWorldSpace(WorldHit_Create) };
-                const LVector WorldSpaceCenter_Create
-                {
-                    CKey.ToWorldSpace() + LVector
-                    {
-                        static_cast<f32>(VKey_Create.X),
-                        static_cast<f32>(VKey_Create.Y),
-                        static_cast<f32>(VKey_Create.Z)
-                    }
-                };
-                World->AddTemporalObject(LDebugTraceLine
-                {
-                    LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, Hit.GlobalWorldLocation + Hit.SurfaceNormal.value(),
-                    LDebugTraceLineVisualParams{Lal::LColor::Magenta}
-                });
-                World->AddTemporalObject(LDebugTraceSphere
-                {
-                    LTemporalWorldObject::DrawOnce, WorldHit_Create, 0.1f,
-                    LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Magenta}
-                });
-                World->AddTemporalObject(LDebugTraceSphere
-                {
-                    LTemporalWorldObject::DrawOnce,
-                    CKey.ToWorldSpace() + HitChunk->CreateRelativeVoxelKey(WorldHit_Create).ToWorldSpace() + LVector(0.5f), 0.6f,
-                    LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
-                });
-                World->AddTemporalObject(LDebugTraceCube
-                {
-                    LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Create, LVector::OneVector,
-                    LDebugTraceCubeVisualParams{Lal::LColor::Blue}
-                });
-            }
-            break;
-        }
+        // for (const LHitResult& Hit : Controller->GetPawn()->GetCurrentGenericTraceResults())
+        // {
+        //     const AChunk* HitChunk { Hit.Actor->As<AChunk>() };
+        //     if (HitChunk == nullptr)
+        //     {
+        //         continue;
+        //     }
+        //
+        //     LWorld* World { Controller->GetPawn()->GetWorld() };
+        //     const LChunkKey CKey { HitChunk->GetChunkKey() };
+        //
+        //     World->AddTemporalObject(LDebugTraceSphere
+        //     {
+        //         LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, 0.1f,
+        //         LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
+        //     });
+        //
+        //     if (Hit.SurfaceNormal.has_value())
+        //     {
+        //         const LVector WorldHit_Create { Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f };
+        //         const LVoxelKey VKey_Create { LVoxelKey::FromWorldSpace(WorldHit_Create) };
+        //         const LVector WorldSpaceCenter_Create
+        //         {
+        //             CKey.ToWorldSpace() + LVector
+        //             {
+        //                 static_cast<f32>(VKey_Create.X),
+        //                 static_cast<f32>(VKey_Create.Y),
+        //                 static_cast<f32>(VKey_Create.Z)
+        //             }
+        //         };
+        //         World->AddTemporalObject(LDebugTraceLine
+        //         {
+        //             LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, Hit.GlobalWorldLocation + Hit.SurfaceNormal.value(),
+        //             LDebugTraceLineVisualParams{Lal::LColor::Magenta}
+        //         });
+        //         World->AddTemporalObject(LDebugTraceSphere
+        //         {
+        //             LTemporalWorldObject::DrawOnce, WorldHit_Create, 0.1f,
+        //             LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Magenta}
+        //         });
+        //         World->AddTemporalObject(LDebugTraceSphere
+        //         {
+        //             LTemporalWorldObject::DrawOnce,
+        //             CKey.ToWorldSpace() + HitChunk->CreateRelativeVoxelKey(WorldHit_Create).ToWorldSpace() + LVector(0.5f), 0.6f,
+        //             LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
+        //         });
+        //         World->AddTemporalObject(LDebugTraceCube
+        //         {
+        //             LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Create, LVector::OneVector,
+        //             LDebugTraceCubeVisualParams{Lal::LColor::Blue}
+        //         });
+        //     }
+        //     break;
+        // }
 
         /* Chunk debug lines. */
-        if
-        (
-            const LCliVariable* Var { GEngine->GetCommandLineInterface().GetVariable("ShowChunkBordersInDebugScreen") };
-            Var && Var->GetValue<bool>()
-        )
-        {
-            LWorld* World{ Controller->GetPawn()->GetWorld() };
-
-            const LVector PawnTranslation { Controller->GetPawn()->GetTranslation() };
-            const LChunkKey CKey { PawnTranslation };
-            const LVector ChunkCenter { CKey.ToWorldSpace() };
-
-            World->AddTemporalObject(LDebugTraceCube
-            {
-                LTemporalWorldObject::DrawOnce, LVector::ZeroVector + ChunkCenter, LVector::OneVector * MwStatics::ChunkSize,
-                LDebugTraceCubeVisualParams{Lal::LColor::Yellow}
-            });
-
-            for (i32 izDelta { 2 }; izDelta < MwStatics::ChunkSize; izDelta += 2)
-            {
-                const float zDelta = static_cast<float>(izDelta);
-                const LVector P1 { ChunkCenter + LVector::UpVector * zDelta };
-                const LVector P2 { P1 + LVector::RightVector * MwStatics::ChunkSize };
-                const LVector P3 { P1 + (LVector::RightVector + LVector::ForwardVector) * MwStatics::ChunkSize };
-                const LVector P4 { P1 + LVector::ForwardVector * MwStatics::ChunkSize };
-
-                World->AddTemporalObject(LDebugTracePlane
-                {
-                    LTemporalWorldObject::DrawOnce,
-                    P1, P2, P3, P4,
-                    LDebugTracePlaneVisualParams{Lal::LColor::Yellow}
-                });
-            }
-
-            for (const LChunkKey& Key : CKey.GetNeighboringChunkKeys())
-            {
-                World->AddTemporalObject(LDebugTraceCube
-                {
-                    LTemporalWorldObject::DrawOnce, LVector::ZeroVector + Key.ToWorldSpace(), LVector::OneVector * MwStatics::ChunkSize,
-                    LDebugTraceCubeVisualParams{Lal::LColor::Red}
-                });
-            }
-
-            for
-            (
-                const TArray<LChunkKey> OtherChunks { Validation::GetAllChunksFromCenterAsBox(CKey, 5, 3, CKey.Z - 1) };
-                const LChunkKey& Key : OtherChunks
-            )
-            {
-                if
-                (
-                       (Key.X == CKey.X + 0 && Key.Y == CKey.Y + 0)
-                    || (Key.X == CKey.X + 1 && Key.Y == CKey.Y + 0)
-                    || (Key.X == CKey.X + 0 && Key.Y == CKey.Y + 1)
-                    || (Key.X == CKey.X + 1 && Key.Y == CKey.Y + 1)
-                )
-                {
-                    continue;
-                }
-
-                World->AddTemporalObject(LDebugTraceLine
-                {
-                    LTemporalWorldObject::DrawOnce,
-                    Key.ToWorldSpace() + LVector::DownVector * MwStatics::ChunkSize * 10,
-                    Key.ToWorldSpace() + LVector::UpVector * MwStatics::ChunkSize * 10,
-                    LDebugTraceLineVisualParams{Lal::LColor::Blue}
-                });
-
-                continue;
-            }
-        }
+        // if
+        // (
+        //     const LCliVariable* Var { GEngine->GetCommandLineInterface().GetVariable("ShowChunkBordersInDebugScreen") };
+        //     Var && Var->GetValue<bool>()
+        // )
+        // {
+        //     LWorld* World{ Controller->GetPawn()->GetWorld() };
+        //
+        //     const LVector PawnTranslation { Controller->GetPawn()->GetTranslation() };
+        //     const LChunkKey CKey { PawnTranslation };
+        //     const LVector ChunkCenter { CKey.ToWorldSpace() };
+        //
+        //     World->AddTemporalObject(LDebugTraceCube
+        //     {
+        //         LTemporalWorldObject::DrawOnce, LVector::ZeroVector + ChunkCenter, LVector::OneVector * MwStatics::ChunkSize,
+        //         LDebugTraceCubeVisualParams{Lal::LColor::Yellow}
+        //     });
+        //
+        //     for (i32 izDelta { 2 }; izDelta < MwStatics::ChunkSize; izDelta += 2)
+        //     {
+        //         const float zDelta = static_cast<float>(izDelta);
+        //         const LVector P1 { ChunkCenter + LVector::UpVector * zDelta };
+        //         const LVector P2 { P1 + LVector::RightVector * MwStatics::ChunkSize };
+        //         const LVector P3 { P1 + (LVector::RightVector + LVector::ForwardVector) * MwStatics::ChunkSize };
+        //         const LVector P4 { P1 + LVector::ForwardVector * MwStatics::ChunkSize };
+        //
+        //         World->AddTemporalObject(LDebugTracePlane
+        //         {
+        //             LTemporalWorldObject::DrawOnce,
+        //             P1, P2, P3, P4,
+        //             LDebugTracePlaneVisualParams{Lal::LColor::Yellow}
+        //         });
+        //     }
+        //
+        //     for (const LChunkKey& Key : CKey.GetNeighboringChunkKeys())
+        //     {
+        //         World->AddTemporalObject(LDebugTraceCube
+        //         {
+        //             LTemporalWorldObject::DrawOnce, LVector::ZeroVector + Key.ToWorldSpace(), LVector::OneVector * MwStatics::ChunkSize,
+        //             LDebugTraceCubeVisualParams{Lal::LColor::Red}
+        //         });
+        //     }
+        //
+        //     for
+        //     (
+        //         const TArray<LChunkKey> OtherChunks { Validation::GetAllChunksFromCenterAsBox(CKey, 5, 3, CKey.Z - 1) };
+        //         const LChunkKey& Key : OtherChunks
+        //     )
+        //     {
+        //         if
+        //         (
+        //                (Key.X == CKey.X + 0 && Key.Y == CKey.Y + 0)
+        //             || (Key.X == CKey.X + 1 && Key.Y == CKey.Y + 0)
+        //             || (Key.X == CKey.X + 0 && Key.Y == CKey.Y + 1)
+        //             || (Key.X == CKey.X + 1 && Key.Y == CKey.Y + 1)
+        //         )
+        //         {
+        //             continue;
+        //         }
+        //
+        //         World->AddTemporalObject(LDebugTraceLine
+        //         {
+        //             LTemporalWorldObject::DrawOnce,
+        //             Key.ToWorldSpace() + LVector::DownVector * MwStatics::ChunkSize * 10,
+        //             Key.ToWorldSpace() + LVector::UpVector * MwStatics::ChunkSize * 10,
+        //             LDebugTraceLineVisualParams{Lal::LColor::Blue}
+        //         });
+        //
+        //         continue;
+        //     }
+        // }
     }
     else
     {
@@ -454,21 +446,21 @@ void Jgc::WDebugScreen::SlowTick()
     {
         const LWorld* World { static_cast<LWorld*>(this->GetOuter()) };
 
-        if (const JTimeWorldSubsystem* TimeSubsystem { World->GetSubsystem<JTimeWorldSubsystem>() }; TimeSubsystem)
-        {
-            this->MyWorldTimeSection->SetContent(Lal::SprintF
-            (
-                "T: {} [{} {}] {} [{:.3f}% {}-{}]",
-                TimeSubsystem->IsDay() ? 'D' : 'N',
-                TimeSubsystem->GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::HHMM),
-                TimeSubsystem->GetDayCycleAsItWouldBeOnEarth(JTimeWorldSubsystem::DDMMYYYY),
-                TimeSubsystem->GetDayTime(),
-                TimeSubsystem->GetDayTimeInPercentage(),
-                TimeSubsystem->GetMinDayTime(),
-                TimeSubsystem->GetMaxDayTime()
-            ));
-        }
-        else
+        // if (const JTimeWorldSubsystem* TimeSubsystem { World->GetSubsystem<JTimeWorldSubsystem>() }; TimeSubsystem)
+        // {
+        //     this->MyWorldTimeSection->SetContent(Lal::SprintF
+        //     (
+        //         "T: {} [{} {}] {} [{:.3f}% {}-{}]",
+        //         TimeSubsystem->IsDay() ? 'D' : 'N',
+        //         TimeSubsystem->GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::HHMM),
+        //         TimeSubsystem->GetDayCycleAsItWouldBeOnEarth(JTimeWorldSubsystem::DDMMYYYY),
+        //         TimeSubsystem->GetDayTime(),
+        //         TimeSubsystem->GetDayTimeInPercentage(),
+        //         TimeSubsystem->GetMinDayTime(),
+        //         TimeSubsystem->GetMaxDayTime()
+        //     ));
+        // }
+        // else
         {
             this->MyWorldTimeSection->SetContent("MyWorld Time: [ERR: No time subsystem]");
         }

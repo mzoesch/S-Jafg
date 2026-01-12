@@ -36,8 +36,8 @@ public:
 
     FORCEINLINE void SetType(const ERegionBrush::Type InType) { this->Brush.Type = InType; }
     FORCEINLINE void SetTint(const Lal::LColor& InTin) { this->Brush.Tint = InTin; }
-    FORCEINLINE void SetTexture(const LTexture2* InTexture) { this->Brush.Image.SetTexture(InTexture); }
-    FORCEINLINE void SetImage(const LImage& InImage) { this->Brush.Image = InImage; }
+    // FORCEINLINE void SetTexture(const LTexture2* InTexture) { this->Brush.Image.SetTexture(InTexture); }
+    // FORCEINLINE void SetImage(const LImage& InImage) { this->Brush.Image = InImage; }
     FORCEINLINE void SetImageTint(const Lal::LColor& InColor) { this->Brush.ImageTint = InColor; }
     FORCEINLINE void SetImageScale(const f64 InScale) { this->Brush.ImageScale = InScale; }
     FORCEINLINE void SetImageBehavior(const EImageBehavior::Type InType) { this->Brush.ImageBehavior = InType; }

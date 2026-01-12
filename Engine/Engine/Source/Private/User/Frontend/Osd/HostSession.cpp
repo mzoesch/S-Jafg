@@ -549,60 +549,60 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
 
     this->RemoveChildren();
 
-    if (this->Save->PreviewTexture.IsValid() == false)
-    {
-        this->OptionalHolder = GetDefault<JTextureSubsystem>()->GetTexture
-        ({
-            EEnginePaths::Interface, "NoImage.png"
-        }, ERawImageFormat::BGR8);
-    }
+    // if (this->Save->PreviewTexture.IsValid() == false)
+    // {
+    //     this->OptionalHolder = GetDefault<JTextureSubsystem>()->GetTexture
+    //     ({
+    //         EEnginePaths::Interface, "NoImage.png"
+    //     }, ERawImageFormat::BGR8);
+    // }
 
-    WRegion* Thumbnail;
-    WHRegion* Region;
-    NewNode(WHRegion).SaveTo(&Region)
-        .Anchor(EAnchor::Fill)
-        .Padding(10)
-    [
-        NewNode(WRegion).SaveTo(&Thumbnail)
-            .MinDesiredSize({100_pt, 100})
-            .Type(ERegionBrush::OutlineBox)
-            .Tint(Lal::LColor::White)
-            .OutlineTint(Lal::LColor::Black)
-            .ImageBehavior(EImageBehavior::Aspect)
-            .ImageOobm(EImageOobm::Discard)
-            .ImagePadding(2)
-            .Texture
-            (
-                  this->Save->PreviewTexture.IsValid()
-                ? &this->Save->PreviewTexture
-                : GetDefault<JTextureSubsystem>()->GetTexture
-                    ({
-                        EEnginePaths::Interface, "NoImage.png"
-                    }, ERawImageFormat::BGR8).get()
-            )
-        +
-        NewNode(WVRegion)
-            .Anchor(EAnchor::Fill)
-        [
-            NewNode(WTextBox)
-                .Content(this->Save->DisplayName)
-                .Brush(LTextBoxBrush::SubHeader())
-            +
-            NewNode(WTextBox)
-                .Content(this->Save->Description)
-                .Brush(LTextBoxBrush::Body())
-            +
-            NewNode(WSpacer)
-                .Anchor(EAnchor::VFill)
-            +
-            NewNode(WTextBox)
-                .Content(this->Save->Path.generic_string())
-                .Brush(LTextBoxBrush::Body())
-                .TextColor(Lal::LColor::DarkerGray)
-        ]
-    ];
-    this->AddChild(Region);
-    FinishWidget(Region);
+    // WRegion* Thumbnail;
+    // WHRegion* Region;
+    // NewNode(WHRegion).SaveTo(&Region)
+    //     .Anchor(EAnchor::Fill)
+    //     .Padding(10)
+    // [
+    //     NewNode(WRegion).SaveTo(&Thumbnail)
+    //         .MinDesiredSize({100_pt, 100})
+    //         .Type(ERegionBrush::OutlineBox)
+    //         .Tint(Lal::LColor::White)
+    //         .OutlineTint(Lal::LColor::Black)
+    //         .ImageBehavior(EImageBehavior::Aspect)
+    //         .ImageOobm(EImageOobm::Discard)
+    //         .ImagePadding(2)
+    //         .Texture
+    //         (
+    //               this->Save->PreviewTexture.IsValid()
+    //             ? &this->Save->PreviewTexture
+    //             : GetDefault<JTextureSubsystem>()->GetTexture
+    //                 ({
+    //                     EEnginePaths::Interface, "NoImage.png"
+    //                 }, ERawImageFormat::BGR8).get()
+    //         )
+    //     +
+    //     NewNode(WVRegion)
+    //         .Anchor(EAnchor::Fill)
+    //     [
+    //         NewNode(WTextBox)
+    //             .Content(this->Save->DisplayName)
+    //             .Brush(LTextBoxBrush::SubHeader())
+    //         +
+    //         NewNode(WTextBox)
+    //             .Content(this->Save->Description)
+    //             .Brush(LTextBoxBrush::Body())
+    //         +
+    //         NewNode(WSpacer)
+    //             .Anchor(EAnchor::VFill)
+    //         +
+    //         NewNode(WTextBox)
+    //             .Content(this->Save->Path.generic_string())
+    //             .Brush(LTextBoxBrush::Body())
+    //             .TextColor(Lal::LColor::DarkerGray)
+    //     ]
+    // ];
+    // this->AddChild(Region);
+    // FinishWidget(Region);
 
     return;
 }
@@ -753,15 +753,15 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves(const bool bResetHighlight /* = 
     if (this->FetchedSaves->empty())
     {
         WTextBox* Text;
-        NewNode(WTextBox).SaveTo(&Text)
-            .Anchor(EAnchor::Fill)
-            .Brush(LTextBoxBrush::SubHeader())
-            .TextHAlign(ETextHAlign::Center)
-            .TextVAlign(ETextVAlign::Center)
-            .Content("No sessions found. Select \"Host From New\" to create a new sessions.")
-        FinishWidget(Text);
+        // NewNode(WTextBox).SaveTo(&Text)
+        //     .Anchor(EAnchor::Fill)
+        //     .Brush(LTextBoxBrush::SubHeader())
+        //     .TextHAlign(ETextHAlign::Center)
+        //     .TextVAlign(ETextVAlign::Center)
+        //     .Content("No sessions found. Select \"Host From New\" to create a new sessions.")
+        // FinishWidget(Text);
 
-        this->SavesRegion->AddChild(Text);
+        // this->SavesRegion->AddChild(Text);
 
         return;
     }
@@ -921,18 +921,18 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
             continue;
         }
 
-        LTexture2 Preview;
-        Preview.LoadFromDisk(AsPath / "Thumbnail.png", ERawImageFormat::BGR8);
+        // LTexture2 Preview;
+        // Preview.LoadFromDisk(AsPath / "Thumbnail.png", ERawImageFormat::BGR8);
 
-        this->FetchedSaves->emplace_back(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
+        // this->FetchedSaves->emplace_back(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
 
         continue;
     }
 
-    for (const LFetchedSave& Fetched: this->FetchedSaves)
-    {
-        LOG_WARNING(LogTemporal, "[{}] {} => {}", Fetched.IsPreviewTextureValid(), Fetched.DisplayName, Fetched.Path)
-    }
+    // for (const LFetchedSave& Fetched: this->FetchedSaves)
+    // {
+    //     LOG_WARNING(LogTemporal, "[{}] {} => {}", Fetched.IsPreviewTextureValid(), Fetched.DisplayName, Fetched.Path)
+    // }
 
     return;
 }
@@ -997,7 +997,7 @@ void Jafg::WHostSessionScreen_Old_Host::UpdateToCachedSave()
     check( this->IsCachedSaveValid() )
 
     check( this->Header )
-    this->Header->SetContent(Lal::SprintF("Hosting \"{}\"", this->Save->DisplayName));
+    this->Header->SetContent(Lal::SprintF("Hosting \"{}\"", this->Save.DisplayName));
 
     return;
 }
@@ -1036,11 +1036,11 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_Old_Host::
                     return;
                 }
 
-                LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save->Path)
+                LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save.Path)
                 this->GetEngine().Browse
                 (
                     this->GetOuter()->AsWorld(),
-                    Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save->Path)
+                    Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save.Path)
                 );
 
                 return;

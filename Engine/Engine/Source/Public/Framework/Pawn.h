@@ -12,9 +12,7 @@ namespace Jafg
 class APersonaController;
 struct LInputActionValue;
 
-//#
 //# A pawn is something that can be possessed by a controller.
-//#
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class ENGINE_API APawn : public AActor
 {
@@ -55,19 +53,14 @@ public:
     FORCEINLINE void SetMovementSpeed(const f32 InMovementSpeed) noexcept { this->MovementSpeed = InMovementSpeed; }
     FORCEINLINE f32 GetMovementSpeed() const noexcept { return this->MovementSpeed; }
 
-    void OnOngoingRotationInput(LInputActionValue& InValue);
-    void OnOngoingVelocityChange(LInputActionValue& InValue);
-    void OnOngoingPrimaryInput(LInputActionValue& InValue);
-    void OnOngoingSecondaryInput(LInputActionValue& InValue);
-
     //# Cached hit results for this frame. Use this if only generic hit results information is needed.
-    FORCEINLINE auto GetCurrentGenericTraceResults() const -> const TArray<LHitResult>& { return this->CurrentGenericTraceResults; }
-    bool TraceFromEyeByChannel(
+    FORCEINLINE auto const& GetCurrentGenericTraceResults() const { return this->CurrentGenericTraceResults; }
+    bool TraceFromEyeByChannel( // TODO
         TArray<LHitResult>& OutHits,
         const float DistanceInMeters,
         const ECollisionChannel::Type Channel,
         const LCollisionQueryParams& Params
-    ) const;
+    ) const { return false; }
 
 private:
 

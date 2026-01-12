@@ -224,10 +224,10 @@ public:
 
     void UpdateToCachedSave();
 
-    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save->IsValid(); }
+    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save.IsValid(); }
     FORCEINLINE void Reset() noexcept { this->Save = LFetchedSave{}; }
     FORCEINLINE void SetSave(LFetchedSave&& Save) noexcept { this->Save = std::move(Save); }
-    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save->ValueCopy(Save); }
+    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save = Save; }
 
 private:
 
@@ -236,7 +236,7 @@ private:
     CDR_NULL_PTR(WTextBox*) Header{ nullptr };
     CDR_NULL_PTR(WHostSessionScreen*) Owner{ nullptr };
 
-    TCdrExpectDefault<LFetchedSave> Save;
+    LFetchedSave Save;
 };
 
 } /* ~Namespace Jafg */

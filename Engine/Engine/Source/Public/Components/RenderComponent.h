@@ -7,8 +7,8 @@
 namespace Jafg
 {
 
-class LRendererComponent;
 class LEye;
+class LRendererComponent;
 class LViewport;
 
 class LRendererComponent

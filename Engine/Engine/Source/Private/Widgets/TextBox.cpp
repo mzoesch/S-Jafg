@@ -3,8 +3,6 @@
 #include "Widgets/TextBox.h"
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
-#include "Rhi/OrthographicBoxShader.h"
-#include "Rhi/OrthographicTextShader.h"
 #include "User/UserPreferences.h"
 
 namespace
@@ -89,19 +87,19 @@ void Jafg::WTextBox::BeginLifeCDR()
 {
     Super::BeginLifeCDR();
 
-    if (GEngine)
-    {
-        this->RegisterShaders();
-    }
-    else
-    {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this](void) -> void
-        {
-            this->RegisterShaders();
-
-            return;
-        });
-    }
+    // if (GEngine)
+    // {
+    //     this->RegisterShaders();
+    // }
+    // else
+    // {
+    //     Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this](void) -> void
+    //     {
+    //         this->RegisterShaders();
+    //
+    //         return;
+    //     });
+    // }
 
     return;
 }
@@ -109,20 +107,20 @@ void Jafg::WTextBox::BeginLifeCDR()
 void Jafg::WTextBox::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
-
-    GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
-    (
-        Context,
-        this->GetAnchoredSize_v2(),
-        this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-        this->GetPadding(),
-        this->TextDesiredSize,
-        this->TextHAlign,
-        this->TextVAlign,
-        this->TextColor,
-        this->TextScale.InSpt(Context),
-        this->Content
-    );
+    //
+    // GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
+    // (
+    //     Context,
+    //     this->GetAnchoredSize_v2(),
+    //     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+    //     this->GetPadding(),
+    //     this->TextDesiredSize,
+    //     this->TextHAlign,
+    //     this->TextVAlign,
+    //     this->TextColor,
+    //     this->TextScale.InSpt(Context),
+    //     this->Content
+    // );
 
     return;
 }
@@ -131,16 +129,16 @@ void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noe
 {
     LVector2D DesiredSize{ this->GetDesiredSizeForString(String) };
 
-    if (!GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText))
-    {
-        return;
-    }
-
-    if (this->bRespectContentHeight == false)
-    {
-        DesiredSize.Y = GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)
-            ->GetApproxBearingHeight(this->TextScale.InSpt(this->GetViewport()));
-    }
+    // if (!GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText))
+    // {
+    //     return;
+    // }
+    //
+    // if (this->bRespectContentHeight == false)
+    // {
+    //     DesiredSize.Y = GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)
+    //         ->GetApproxBearingHeight(this->TextScale.InSpt(this->GetViewport()));
+    // }
 
     this->TextDesiredSize = DesiredSize;
 
@@ -152,32 +150,32 @@ void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noe
 
 LVector2 Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noexcept
 {
-    const LOrthographicTextShader* Shader{ GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+    // const LOrthographicTextShader* Shader{ GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
-    if (!Shader) { return LVector2::ZeroVector; }
-
-    const f32 TextScaleInSpt{ this->TextScale.InSpt(this->GetViewport()) };
-
-    LVector2 Out;
+    // if (!Shader) { return LVector2::ZeroVector; }
+    //
+    // const f32 TextScaleInSpt{ this->TextScale.InSpt(this->GetViewport()) };
+    //
+    // LVector2 Out;
     // LOrthographicTextShader::LCharacterMap::const_iterator LastIt{ Shader->GetCharacters().end() };
-    for (auto Rune : String)
-    {
-        if (auto It{ Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
-        {
-            // if (LastIt != Shader->GetCharacters().end())
-            // {
-            //     Out.X += (static_cast<f32>(LastIt->second.Advance.X) / 64.0f) * TextScaleInSpt;
-            //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
-            // }
-            //
-            // LastIt = It;
-
-            Out.X += (static_cast<f32>(It->second.Advance.X) / 64.0f) * TextScaleInSpt;
-            Out.Y  = Maths::Max(Out.Y, static_cast<f32>(It->second.Size.Y) * TextScaleInSpt);
-        }
-
-        continue;
-    }
+    // for (auto Rune : String)
+    // {
+    //     if (auto It{ Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
+    //     {
+    //         // if (LastIt != Shader->GetCharacters().end())
+    //         // {
+    //         //     Out.X += (static_cast<f32>(LastIt->second.Advance.X) / 64.0f) * TextScaleInSpt;
+    //         //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
+    //         // }
+    //         //
+    //         // LastIt = It;
+    //
+    //         Out.X += (static_cast<f32>(It->second.Advance.X) / 64.0f) * TextScaleInSpt;
+    //         Out.Y  = Maths::Max(Out.Y, static_cast<f32>(It->second.Size.Y) * TextScaleInSpt);
+    //     }
+    //
+    //     continue;
+    // }
 
     // if (LastIt != Shader->GetCharacters().end())
     // {
@@ -185,7 +183,9 @@ LVector2 Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const no
     //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
     // }
 
-    return Out;
+    // return Out;
+
+    return {};
 }
 
 i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const noexcept
@@ -195,56 +195,46 @@ i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const 
         return 0;
     }
 
-    const LOrthographicTextShader* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+    // const LOrthographicTextShader* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
-    f32 Width { 0.0f };
-    i32 Index { 0 };
-    for (auto const Rune : InString)
-    {
-        ++Index;
+    // f32 Width { 0.0f };
+    // i32 Index { 0 };
+    // for (auto const Rune : InString)
+    // {
+    //     ++Index;
+    //
+    //     if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
+    //     {
+    //         // TODO: Improve this algorithm to better reflect the actual width of one single character instead of the advance.
+    //
+    //         const f32 OldWidth { Width };
+    //         Width += static_cast<f32>(It->second.Advance.X) * this->TextScale.InSpt(this->GetViewport()) / 64.0f;
+    //
+    //         if (Width >= InWidth)
+    //         {
+    //             const f32 A
+    //             {
+    //                 Maths::Absolute
+    //                 (
+    //                     OldWidth - InWidth
+    //                     /* Super sketchy solution. This calculation should just not be based of the advance of the character. */
+    //                     + (15.0f * this->TextScale.InSpt(this->GetViewport()))
+    //                 )
+    //             };
+    //
+    //             if (Maths::IsNearlyEqual(A, Maths::Min(A, Maths::Absolute(Width - InWidth))))
+    //             {
+    //                 return --Index;
+    //             }
+    //
+    //             return Index;
+    //         }
+    //     }
+    //
+    //     continue;
+    // }
+    //
+    // return Index;
 
-        if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
-        {
-            // TODO: Improve this algorithm to better reflect the actual width of one single character instead of the advance.
-
-            const f32 OldWidth { Width };
-            Width += static_cast<f32>(It->second.Advance.X) * this->TextScale.InSpt(this->GetViewport()) / 64.0f;
-
-            if (Width >= InWidth)
-            {
-                const f32 A
-                {
-                    Maths::Absolute
-                    (
-                        OldWidth - InWidth
-                        /* Super sketchy solution. This calculation should just not be based of the advance of the character. */
-                        + (15.0f * this->TextScale.InSpt(this->GetViewport()))
-                    )
-                };
-
-                if (Maths::IsNearlyEqual(A, Maths::Min(A, Maths::Absolute(Width - InWidth))))
-                {
-                    return --Index;
-                }
-
-                return Index;
-            }
-        }
-
-        continue;
-    }
-
-    return Index;
-}
-
-void Jafg::WTextBox::RegisterShaders()
-{
-    check( GEngine )
-
-    if (GEngine->IsShaderValid(Name_ShaderOrthographicText) == false)
-    {
-        (new LOrthographicTextShader)->MakeChecked(Name_ShaderOrthographicText);
-    }
-
-    return;
+    return {};
 }

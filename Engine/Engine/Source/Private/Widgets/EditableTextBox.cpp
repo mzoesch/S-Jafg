@@ -7,8 +7,6 @@
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
 #include "Core/CoreNames.h"
-#include "Rhi/OrthographicBoxShader.h"
-#include "Rhi/OrthographicTextShader.h"
 #include "Containers/SimpleUtf8EncodingUtilStuffKindaRandom.h"
 
 LString Jafg::LexToString(const ETextCommit::Type InType)
@@ -51,19 +49,19 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
     {
         WBox::Draw(Context);
 
-        GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
-        (
-            Context,
-            this->GetAnchoredSize_v2(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->GetPadding(),
-            this->GetDesiredSizeOfRawText(),
-            this->GetTextHAlign(),
-            this->GetTextVAlign(),
-            this->PlaceholderColor,
-            this->GetTextScale().InSpt(Context),
-            this->PlaceholderContent
-        );
+        // GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
+        // (
+        //     Context,
+        //     this->GetAnchoredSize_v2(),
+        //     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+        //     this->GetPadding(),
+        //     this->GetDesiredSizeOfRawText(),
+        //     this->GetTextHAlign(),
+        //     this->GetTextVAlign(),
+        //     this->PlaceholderColor,
+        //     this->GetTextScale().InSpt(Context),
+        //     this->PlaceholderContent
+        // );
     }
     else
     {
@@ -96,13 +94,13 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
 
         CaretTopLeft.X += this->GetDesiredWidthForString(CaretContent) + this->CaretBrush.HOffset;
 
-        GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
-        (
-            Context,
-            CaretSize,
-            CaretTopLeft,
-            this->CaretBrush.Tint
-        );
+        // GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+        // (
+        //     Context,
+        //     CaretSize,
+        //     CaretTopLeft,
+        //     this->CaretBrush.Tint
+        // );
     }
 
     return;

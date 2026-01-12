@@ -453,6 +453,8 @@ using Lu8String = Lal::_Lu8String;
 using Lu16String = Lal::_Lu16String;
 using Lu32String = Lal::_Lu32String;
 
+template<> struct std::hash<LString> : public std::hash<std::string> {};
+
 using LStringView = std::string_view;
 using LWStringView = std::wstring_view;
 using Lu8StringView = std::u8string_view;

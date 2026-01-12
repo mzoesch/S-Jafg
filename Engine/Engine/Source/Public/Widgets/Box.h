@@ -62,8 +62,8 @@ public:
 
     FORCEINLINE constexpr ERegionBrush::Type   GetType() const noexcept { return this->Brush.Type; }
     FORCEINLINE constexpr const Lal::LColor&   GetTint() const noexcept { return this->Brush.Tint; }
-    FORCEINLINE constexpr const LTexture2*     GetTexture() const noexcept { return this->Brush.Image.GetTexture(); }
-    FORCEINLINE constexpr const LImage&        GetImage() const noexcept { return this->Brush.Image; }
+    // FORCEINLINE constexpr const LTexture2*     GetTexture() const noexcept { return this->Brush.Image.GetTexture(); }
+    // FORCEINLINE constexpr const LImage&        GetImage() const noexcept { return this->Brush.Image; }
     FORCEINLINE constexpr const Lal::LColor&   GetImageTint() const noexcept { return this->Brush.ImageTint; }
     FORCEINLINE constexpr const f64&           GetImageScale() const noexcept { return this->Brush.ImageScale; }
     FORCEINLINE constexpr EImageBehavior::Type GetImageBehavior() const noexcept { return this->Brush.ImageBehavior; }
@@ -76,8 +76,8 @@ public:
 
     FORCEINLINE constexpr void SetType(const ERegionBrush::Type InType) noexcept { this->Brush.Type = InType; }
     FORCEINLINE constexpr void SetTint(const Lal::LColor& InTin) noexcept { this->Brush.Tint = InTin; }
-    FORCEINLINE constexpr void SetTexture(const LTexture2* InTexture) noexcept { this->Brush.Image.SetTexture(InTexture); }
-    FORCEINLINE constexpr void SetImage(const LImage& InImage) noexcept { this->Brush.Image = InImage; }
+    // FORCEINLINE constexpr void SetTexture(const LTexture2* InTexture) noexcept { this->Brush.Image.SetTexture(InTexture); }
+    // FORCEINLINE constexpr void SetImage(const LImage& InImage) noexcept { this->Brush.Image = InImage; }
     FORCEINLINE constexpr void SetImageTint(const Lal::LColor& InColor) noexcept { this->Brush.ImageTint = InColor; }
     FORCEINLINE constexpr void SetImageScale(const f32& InScale) noexcept { this->Brush.ImageScale = InScale; }
     FORCEINLINE constexpr void SetImageBehavior(const EImageBehavior::Type InBehavior) noexcept { this->Brush.ImageBehavior = InBehavior; }

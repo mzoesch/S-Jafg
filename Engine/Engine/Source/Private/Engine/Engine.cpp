@@ -380,34 +380,18 @@ void Jafg::LEngine::Tick(const f32 DeltaTime)
 
     for (Private::LWorldTrack& Track : this->Tracks)
     {
-#if !WITH_LOCAL_LAYER
-        bool bTraveled { false };
-#endif /* WITH_LOCAL_LAYER */
+        bool bTraveled{ false };
 
         if (Track.IsWaitingForTravel())
         {
             if (this->TravelTrack(Track))
             {
-#if WITH_LOCAL_LAYER
-                /* Avoids late ticking before a real tick was done. */
-                Track.bSkipThisTick = true;
-#else /* WITH_LOCAL_LAYER */
                 bTraveled = true;
-#endif /* !WITH_LOCAL_LAYER */
             }
         }
 
         check( Track.IsValid() )
-
-        if
-        (
-#if WITH_LOCAL_LAYER
-               !Track.bSkipThisTick
-#else /* WITH_LOCAL_LAYER */
-               bTraveled == false
-#endif /* !WITH_LOCAL_LAYER */
-            && Track.ChildWorld->CanTick()
-        )
+        if (bTraveled == false && Track.ChildWorld->CanTick())
         {
             Track.ChildWorld->Tick(DeltaTime);
         }
@@ -417,26 +401,6 @@ void Jafg::LEngine::Tick(const f32 DeltaTime)
 
 #if WITH_LOCAL_LAYER
     this->LocalEgo.OnLateTick(DeltaTime);
-#endif /* WITH_LOCAL_LAYER */
-
-#if WITH_LOCAL_LAYER
-    for (Private::LWorldTrack& Track : this->Tracks)
-    {
-        check( Track.IsValid() )
-
-        if (Track.bSkipThisTick)
-        {
-            Track.bSkipThisTick = false;
-            continue;
-        }
-
-        if (Track.ChildWorld->CanTick())
-        {
-            Track.ChildWorld->LateTick(DeltaTime);
-        }
-
-        continue;
-    }
 #endif /* WITH_LOCAL_LAYER */
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);

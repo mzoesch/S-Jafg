@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Widgets/UserWidget.h"
-#include "Rhi/Texture2.h"
 #include "Cli/CliHandles.h"
 #include "DebugScreen.generated.h"
 

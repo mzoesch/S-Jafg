@@ -171,7 +171,7 @@ public:
         f32 HScrollBarBackgroundHeight { LScrollRegionBrush::NoScrollBarBackground };
     };
 
-    virtual void Draw(LViewport& Context) const override;
+    // virtual void Draw(LViewport& Context) const override; // TODO
 
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2D& InLocation) override;
 
@@ -314,7 +314,7 @@ FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrus
 
 FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept
 {
-    static_assert(sizeof(LRegionBrush) == 96, "LRegionBrush has changed. Please modify this function.");
+    static_assert(sizeof(LRegionBrush) == 104, "LRegionBrush has changed. Please modify this function.");
 
     LScrollRegionBrush Result;
 

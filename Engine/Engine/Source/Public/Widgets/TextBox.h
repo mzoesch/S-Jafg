@@ -97,7 +97,7 @@ protected:
 
 private:
 
-    void RegisterShaders();
+    // void RegisterShaders();
 
     Lal::LColor TextColor{ Lal::LColor::Black };
     LTextScale TextScale;
@@ -142,7 +142,7 @@ FORCEINLINE constexpr void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
 
 FORCEINLINE constexpr LTextBoxBrush WTextBox::GetBrush() const noexcept
 {
-    static_assert(sizeof(LTextBoxBrush) == 152, "This method needs to be updated because LTextBoxBrush has changed.");
+    static_assert(sizeof(LTextBoxBrush) == 160, "This method needs to be updated because LTextBoxBrush has changed.");
 
     LTextBoxBrush Out;
 

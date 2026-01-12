@@ -8,7 +8,6 @@
 #include "Engine/CxxClass.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
-#include "Rhi/EngineShader.h"
 #include "Foreign/PluginForward.h"
 #include "Subsystems/EngineSubsystem.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
@@ -89,10 +88,6 @@ struct LWorldTrack final
 
     ENGINE_API void CreateWorldFromParams();
 
-#if WITH_LOCAL_LAYER
-    bool bSkipThisTick { false };
-#endif /* WITH_LOCAL_LAYER */
-
     TUnique<LWorld> ChildWorld;
 
     TFunction<void(LWorld&)> OnWorldPreInit;
@@ -107,8 +102,6 @@ struct LWorldTrack final
 class LEngine final
 {
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
-
-    friend LEngineShader;
 
 public:
 
@@ -146,45 +139,9 @@ public:
     FORCEINLINE LLocalEgo& GetLocalEgo() noexcept { return this->LocalEgo; }
     FORCEINLINE LLocalEgo const& GetLocalEgo() const noexcept { return this->LocalEgo; }
 
-    FORCEINLINE bool IsShaderValid(const LName InName) const noexcept { return this->GetShader(InName) != nullptr; }
-    FORCEINLINE auto GetShader(const LName Name) noexcept -> LEngineShader*;
-    FORCEINLINE auto GetShader(const LName InName) const noexcept -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShader(InName); }
-    FORCEINLINE auto GetShaderChecked(const LName InName) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InName); check( Out ) return Out; }
-    FORCEINLINE auto GetShaderChecked(const LName InName) noexceptcheck const -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShaderChecked(InName); }
-    FORCEINLINE auto GetShaderAsserted(const LName InName) -> LEngineShader* { LEngineShader* Out = this->GetShader(InName); jassert( Out ) return Out; }
-    FORCEINLINE auto GetShaderAsserted(const LName InName) const -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShaderAsserted(InName); }
-    FORCEINLINE auto GetShaders() const noexcept -> const std::map<LName, LEngineShader*>& { return this->Shaders; }
-    FORCEINLINE bool UnregisterShader(const LName Name, const bool bFree = true) noexcept;
-    FORCEINLINE bool UnregisterShaderChecked(const LName Name, const bool bFree = true) noexceptcheck;
-
-    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
-    FORCEINLINE TShader*       GetShader(LName Name) noexcept { return static_cast<TShader*>(this->GetShader(Name)); }
-    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
-    FORCEINLINE TShader const* GetShader(LName Name) const noexcept { return static_cast<const TShader*>(this->GetShader(Name)); }
-    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
-    FORCEINLINE TShader*       GetShaderChecked(LName Name) noexcept { return static_cast<TShader*>(this->GetShaderChecked(Name)); }
-    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
-    FORCEINLINE TShader const* GetShaderChecked(LName Name) const noexcept { return static_cast<const TShader*>(this->GetShaderChecked(Name)); }
-    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
-    FORCEINLINE TShader*       GetShaderAsserted(LName Name) noexcept { return static_cast<TShader*>(this->GetShaderAsserted(Name)); }
-    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
-    FORCEINLINE TShader const* GetShaderAsserted(LName Name) const noexcept { return static_cast<const TShader*>(this->GetShaderAsserted(Name)); }
-
-    FORCEINLINE void RecompileShader(const LName Name, TArray<LShaderCompileTimeConstant> const& Remove, TArray<LShaderCompileTimeConstant> const& Add)
-    {
-        this->GetShaderAsserted(Name)->Recompile(Remove, Add);
-    }
-
 private:
 
-    FORCEINLINE bool AddShader(const LName Name, LEngineShader* Shader);
-    FORCEINLINE bool AddShaderChecked(const LName Name, LEngineShader* Shader) noexceptcheck { const bool bOut{ this->AddShader(Name, Shader) }; check( bOut ) return bOut; }
-    FORCEINLINE bool AddShaderAsserted(const LName Name, LEngineShader* Shader) { const bool bOut{ this->AddShader(Name, Shader) }; jassert( bOut ) return bOut; }
-
-    FORCEINLINE bool RemoveShader(const LEngineShader* Shader) noexcept;
-
     LLocalEgo LocalEgo;
-    std::map<LName, LEngineShader*> Shaders;
 
 #endif /* WITH_LOCAL_LAYER */
 
@@ -327,79 +284,5 @@ private:
     LReStCli ReSTCli;
 #endif /* JAFG_WITH_REST_CLS */
 };
-
-FORCEINLINE LEngineShader* LEngine::GetShader(const LName Name) noexcept
-{
-    if (const auto& It = this->Shaders.find(Name); It != this->Shaders.end())
-    {
-        return It->second;
-    }
-
-    return nullptr;
-}
-
-FORCEINLINE bool LEngine::UnregisterShader(const LName Name, const bool bFree /* = true */) noexcept
-{
-    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", Name)
-
-    if (bFree)
-    {
-        if (auto const& It{ this->Shaders.find(Name) }; It != this->Shaders.end())
-        {
-            LEngineShader const* Shader{ It->second };
-            this->Shaders.erase(It);
-            delete Shader;
-            return true;
-        }
-
-        LOG_ERROR(LogEngine, "Failed to find engine shader [{}] to free.", Name)
-    }
-
-    return this->Shaders.erase(Name) > 0;
-}
-
-FORCEINLINE bool LEngine::UnregisterShaderChecked(const LName Name, const bool bFree /* = true */) noexceptcheck
-{
-    const bool bOut{ this->UnregisterShader(Name, bFree) };
-    check( bOut )
-    return bOut;
-}
-
-FORCEINLINE bool LEngine::AddShader(const LName Name, LEngineShader* Shader)
-{
-    check( Shader )
-
-    if (this->GetShader(Name))
-    {
-        return false;
-    }
-
-    this->Shaders.emplace(Name, Shader);
-
-    LOG_VERBOSE(LogEngine, "Added new engine shader [{}] to a total of {} shaders.", Name, this->Shaders.size())
-    return true;
-}
-
-bool LEngine::RemoveShader(LEngineShader const* Shader) noexcept
-{
-    LName Name;
-    for (auto const& It : this->Shaders)
-    {
-        if (It.second == Shader)
-        {
-            Name = It.first;
-            break;
-        }
-
-        continue;
-    }
-
-    if (Name.IsSet())
-    {
-        return this->Shaders.erase(Name) > 0;
-    }
-
-    return false;
-}
 
 } /* ~Namespace Jafg */

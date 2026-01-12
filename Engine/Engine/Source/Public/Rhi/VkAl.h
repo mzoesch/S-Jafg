@@ -32,6 +32,8 @@ ENGINE_API void FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allocat
 template<typename T>
 struct TGenericDeviceBuffer
 {
+    static_assert(sizeof(T) == POINTER_BYTE_SIZE);
+
     constexpr TGenericDeviceBuffer() noexcept : Buffer{nullptr}, Allocation{nullptr} {}
     constexpr TGenericDeviceBuffer(T InBuffer, LDeviceAllocation InAllocation) noexcept : Buffer{InBuffer}, Allocation{InAllocation} {}
     PROHIBIT_COPY(TGenericDeviceBuffer)
@@ -56,18 +58,23 @@ struct TGenericDeviceBuffer
     }
     ~TGenericDeviceBuffer() noexcept { Detail::FreeDeviceAllocation(this->Buffer, this->Allocation); }
 
-    constexpr void Release() noexcept
+    FORCEINLINE constexpr T GetBuffer() const noexcept { return this->Buffer; }
+    FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return this->Allocation; }
+
+    constexpr inline void Release() noexcept
     {
         this->Buffer = nullptr;
         this->Allocation = nullptr;
     }
 
-    void Free() noexcept
+    inline void Free() noexcept
     {
         Detail::FreeDeviceAllocation(this->Buffer, this->Allocation);
         this->Buffer = nullptr;
         this->Allocation = nullptr;
     }
+
+private:
 
     T Buffer;
     LDeviceAllocation Allocation;
@@ -77,7 +84,7 @@ typedef TGenericDeviceBuffer<vk::Buffer> LDeviceBuffer;
 typedef TGenericDeviceBuffer<vk::Image> LDeviceImage;
 
 //# A device buffer with detailed allocation info.
-struct LDetailedDeviceBuffer : public LDeviceBuffer
+struct LDetailedDeviceBuffer final : private LDeviceBuffer
 {
     constexpr LDetailedDeviceBuffer() noexcept
         : LDeviceBuffer{}, Info{} {}
@@ -100,23 +107,29 @@ struct LDetailedDeviceBuffer : public LDeviceBuffer
         return *this;
     }
 
-    constexpr void Release() noexcept
+    FORCEINLINE constexpr vk::Buffer GetBuffer() const noexcept { return LDeviceBuffer::GetBuffer(); }
+    FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
+    FORCEINLINE constexpr LDeviceAllocationInfo const& GetAllocationInfo() const noexcept { return this->Info; }
+
+    constexpr inline void Release() noexcept
     {
         LDeviceBuffer::Release();
         this->Info = {};
     }
 
-    void Free() noexcept
+    inline void Free() noexcept
     {
         LDeviceBuffer::Free();
         this->Info = {};
     }
 
+private:
+
     LDeviceAllocationInfo Info;
 };
 
 //# A device buffer that is mapped to host visible memory.
-struct LMappedDeviceBuffer : public LDeviceBuffer
+struct LMappedDeviceBuffer final : private LDeviceBuffer
 {
     constexpr LMappedDeviceBuffer() noexcept
         : LDeviceBuffer{}, Data{nullptr} {}
@@ -139,17 +152,23 @@ struct LMappedDeviceBuffer : public LDeviceBuffer
         return *this;
     }
 
-    constexpr void Release() noexcept
+    FORCEINLINE constexpr vk::Buffer GetBuffer() const noexcept { return LDeviceBuffer::GetBuffer(); }
+    FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
+    FORCEINLINE constexpr void* GetData() const noexcept { return this->Data; }
+
+    constexpr inline void Release() noexcept
     {
         LDeviceBuffer::Release();
         this->Data = nullptr;
     }
 
-    void Free() noexcept
+    inline void Free() noexcept
     {
         LDeviceBuffer::Free();
         this->Data = nullptr;
     }
+
+private:
 
     void* Data;
 };
@@ -163,32 +182,45 @@ struct LDeviceIndexVertexBuffer
 
 /* TODO: We can probably solve this with reflection in C++26? Bombastic sideeye */
 template<typename T>
-concept CDeviceVertexInput = std::is_standard_layout_v<T> && requires (T&& t)
+concept CDeviceVertexInput = std::is_standard_layout_v<T> && requires
 {
-    { t.BindingDescriptions().data() } -> std::same_as<vk::VertexInputBindingDescription const*>;
-    { t.BindingDescriptions().size() } -> std::same_as<LSize>;
-    { t.AttributeDescriptions().data() } -> std::same_as<vk::VertexInputAttributeDescription const*>;
-    { t.AttributeDescriptions().size() } -> std::same_as<LSize>;
+    { T::BindingDescriptions().data() } -> std::same_as<vk::VertexInputBindingDescription const*>;
+    { T::BindingDescriptions().size() } -> std::same_as<LSize>;
+    { T::AttributeDescriptions().data() } -> std::same_as<vk::VertexInputAttributeDescription const*>;
+    { T::AttributeDescriptions().size() } -> std::same_as<LSize>;
 };
 
 template<typename T>
-concept CDeviceLayout = std::is_standard_layout_v<T> && requires (T&& t)
+concept CDeviceLayout = std::is_standard_layout_v<T> && requires
 {
-    { t.Bindings().data() } -> std::same_as<vk::DescriptorSetLayoutBinding const*>;
-    { t.Bindings().size() } -> std::same_as<LSize>;
+    { T::Bindings().data() } -> std::same_as<vk::DescriptorSetLayoutBinding const*>;
+    { T::Bindings().size() } -> std::same_as<LSize>;
 };
 
-struct LDevicePipeline
+template<typename T>
+concept CUniformBufferObject = std::is_standard_layout_v<T> && requires
+{
+    // { T::Binding() } -> std::same_as<u32>;
+    { T::Flags() } -> std::same_as<vk::ShaderStageFlags>;
+};
+
+template<typename T>
+concept CPushConstant = std::is_standard_layout_v<T> && requires
+{
+    { T::Flags() } -> std::same_as<vk::ShaderStageFlags>;
+};
+
+struct LGraphicsDevicePipeline
 {
     void Free() noexcept
     {
-        this->Pipeline = nullptr;
-        this->PipelineLayout = nullptr;
-        this->DescriptorSetLayout = nullptr;
+        this->Pipeline.clear();
+        this->Layout.clear();
+        this->DescriptorSetLayout.clear();
     }
 
     vk::raii::Pipeline Pipeline{ nullptr };
-    vk::raii::PipelineLayout PipelineLayout{ nullptr };
+    vk::raii::PipelineLayout Layout{ nullptr };
     vk::raii::DescriptorSetLayout DescriptorSetLayout{ nullptr };
 };
 
@@ -313,14 +345,19 @@ struct LDevicePipelineFactory
         return std::forward<decltype(Self)>(Self);
     }
 
-    decltype(auto) Push(this auto&& Self, vk::PushConstantRange&& Range) noexcept
+    template<CPushConstant TPushConstant>
+    decltype(auto) Push(this auto&& Self) noexcept
     {
         check( Self.Range.has_value() == false )
-        Self.Range = std::move(Range);
+        Self.Range = vk::PushConstantRange{
+            .stageFlags = TPushConstant::Flags(),
+            .offset = 0,
+            .size = sizeof(TPushConstant),
+            };
         return std::forward<decltype(Self)>(Self);
     }
 
-    ENGINE_API LDevicePipeline Build();
+    ENGINE_API LGraphicsDevicePipeline Build();
 
     LSurface const& Surface;
     TArray<vk::raii::ShaderModule> ShaderModules;
@@ -367,6 +404,21 @@ struct LDevicePipelineFactory
     vk::raii::PipelineLayout PipelineLayout{ nullptr };
     std::optional<vk::PushConstantRange> Range;
 };
+
+inline LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
+{
+    switch (Format)
+    {
+    case vk::Format::eR8G8B8A8Srgb:
+    {
+        return 4;
+    }
+    default:
+    {
+        panicMsgf( "Unsupported or non-linear format [{}] for channels per pixel query.", vk::to_string(Format) )
+    }
+    }
+}
 
 inline LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
 {

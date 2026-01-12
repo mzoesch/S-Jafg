@@ -11,8 +11,7 @@
 struct GLFWwindow;
 struct GLFWcursor;
 
-#include "Rhi/VkForward.h"
-#include "Rhi/VkAl.h"
+#include "Rhi.h"
 
 namespace Jafg
 {
@@ -146,6 +145,8 @@ private:
         void __Vk_CreateSynchObjects();
 
     void Vk_CreateCommandBuffers();
+    void Vk_CreateCommonBuffers();
+    void Vk_CreateDescriptorPools();
 
     GLFWcursor* Cursor{ nullptr };
     GLFWwindow* Handle{ nullptr };
@@ -196,34 +197,21 @@ private:
     std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_RenderSemaphores;
     std::array<vk::raii::Fence, Jafg::Vk_DesiredMaxFramesInFlight> Vk_FlightFences;
     u32 Vk_LastFrameInFlightIndex{ 0 };
-    std::optional<u32> Vk_CurrentFrameInFlightIndex{};
+    TOptional<u32> Vk_CurrentFrameInFlightIndex{};
 
     std::array<vk::raii::CommandBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_CommandBuffers;
 
+    std::array<vk::raii::DescriptorPool, Jafg::Vk_DesiredMaxFramesInFlight> Vk_DescriptorPools;
 
+    std::array<LMappedDeviceBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_PerspectiveCameraBuffers;
 
-
-
-
-
-    vk::raii::DescriptorPool VkMyDescriptorPool{ nullptr };
-    TArray<vk::raii::DescriptorSet> VkDescriptorSets;
-    TArray<LMappedDeviceBuffer> UniformBuffers;
-    LDeviceImage TextureImage;
-    vk::raii::ImageView TextureImageView{ nullptr };
-    vk::raii::Sampler TextureSampler{ nullptr };
-
+public:
 
     void VkCreateTextureImage();
-    void VkCreateTextureSampler();
 
-    void VkCreateUniformBuffers();
-
-    void VkCreateDescriptorPool();
-    void VkCreateDescriptorSets();
-    void VkUpdateUniformBuffers(uint32_t currentImage);
-
-    void VkGenerateMipMaps(vk::Image, vk::Format Format, i32 Width, i32 Height, u32 MipLevels);
+    LImage MyImage;
+    vk::raii::ImageView TextureImageView{ nullptr };
+    vk::raii::Sampler TextureSampler{ nullptr };
 };
 
 } /* ~Namespace Jafg */

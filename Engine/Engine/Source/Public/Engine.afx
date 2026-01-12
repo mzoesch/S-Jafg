@@ -135,14 +135,10 @@
     Rhi.
 ----------------------------------------------------------------------------*/
 
-#include "Rhi/TextureCore.h"
-#include "Rhi/TextureMipMap2.h"
-#include "Rhi/Texture2Handle.h"
-#include "Rhi/Texture2.h"
-#include "Rhi/Image.h"
-#include "Rhi/FrameBuffer.h"
-#include "Rhi/Shader.h"
-#include "Rhi/EngineShader.h"
+#include "Rhi/VkForward.h"
+#include "Rhi/RhiVendorInclude.h"
+#include "Rhi/VkAl.h"
+#include "Rhi.h"
 
 
 /*----------------------------------------------------------------------------

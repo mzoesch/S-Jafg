@@ -107,11 +107,7 @@ public:
           vk::BufferCreateInfo Info
         , vk::MemoryPropertyFlags Flags
         , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
-    ENGINE_API LMappedDeviceBuffer Vk_CreateMappedBuffer(
-          vk::BufferCreateInfo Info
-        , vk::MemoryPropertyFlags Flags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-        , VmaAllocationCreateFlags VmaFlags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
-        , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
+    ENGINE_API LMappedDeviceBuffer Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const;
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API void Vk_CopyBuffer(vk::Buffer Src, vk::Buffer Dst, vk::BufferCopy BufferCopy, vk::CommandPool Pool = nullptr) const;

@@ -8,7 +8,6 @@
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
 #include "Framework/Lackey.h"
-#include "MyWorld/MyWorldStatics.h"
 #include "Subsystems/LocalEgoSubsystem.h"
 #include "Stats/Stats.h"
 

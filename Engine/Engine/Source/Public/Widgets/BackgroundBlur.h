@@ -33,15 +33,12 @@ protected:
 
 public:
 
-    virtual void Construct() override;
-    virtual void Draw(LViewport& Context) const override;
-
     FORCEINLINE constexpr void SetBlurStrength(const f32 InStrength) noexcept { this->Strength = InStrength; }
     FORCEINLINE constexpr f32  GetBlurStrength(void) const noexcept { return this->Strength; }
 
 private:
 
-    f32 Strength { 0.0f };
+    f32 Strength{ 0.0f };
 };
 
 } /* ~Namespace Jafg */

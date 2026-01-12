@@ -56,6 +56,7 @@
     Forward Containers.
 ----------------------------------------------------------------------------*/
 
+#include "Containers/EnumCore.h"
 #include "Core/Traits.h"
 #include "Containers/LalIteratorTraits.h"
 #include "Containers/LalIterator.h"

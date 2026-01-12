@@ -14,11 +14,12 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
+#include "System/TextureSubsystem.h"
 #include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
-#include "Rhi/VkAl.h"
+#include "Rhi.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -308,6 +309,8 @@ void Jafg::LFrontendVk::TearDown()
 {
     LFrontendBase::TearDown();
 
+    GetMutableDefault<JTextureSubsystem>()->PurgeUnused();
+
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")
     vmaDestroyAllocator(this->Vk_VmaAllocator);
 
@@ -398,19 +401,14 @@ Jafg::LDetailedDeviceBuffer Jafg::LFrontendVk::Vk_CreateDetailedBuffer(vk::Buffe
     return { Buffer, Allocation, std::move(AllocationInfo) };
 }
 
-Jafg::LMappedDeviceBuffer Jafg::LFrontendVk::Vk_CreateMappedBuffer(
-      vk::BufferCreateInfo Info
-    , vk::MemoryPropertyFlags Flags /* = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent */
-    , VmaAllocationCreateFlags VmaFlags /* = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT */
-    , VmaMemoryUsage Usage /* = VMA_MEMORY_USAGE_AUTO */ // TODO: Should that not be HOST!?
-    ) const
+Jafg::LMappedDeviceBuffer Jafg::LFrontendVk::Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const
 {
     VkBuffer Buffer;
     VmaAllocation Allocation;
     VmaAllocationCreateInfo AllocationCreateInfo{
-        .flags = VmaFlags,
-        .usage = Usage,
-        .requiredFlags = static_cast<VkMemoryPropertyFlags>(Flags),
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO,
+        .requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         };
 
     VmaAllocationInfo AllocationInfo{};
@@ -539,14 +537,14 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
         .size = N,
         .usage = vk::BufferUsageFlagBits::eTransferSrc
         })};
-    std::memcpy(StagingBuffer.Data, Info.Data, N);
+    std::memcpy(StagingBuffer.GetData(), Info.Data, N);
 
     auto Image{ this->Vk_CreateDeviceLocalImage(Info.Info) };
 
     this->Vk_TransitionImageLayout({
         .oldLayout = vk::ImageLayout::eUndefined,
         .newLayout = vk::ImageLayout::eTransferDstOptimal,
-        .image = Image.Buffer,
+        .image = Image.GetBuffer(),
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -566,7 +564,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
             .imageOffset = {0, 0, 0},
             .imageExtent = Info.Info.extent
             };
-        CommandBuffer.copyBufferToImage(StagingBuffer.Buffer, Image.Buffer, vk::ImageLayout::eTransferDstOptimal, Region);
+        CommandBuffer.copyBufferToImage(StagingBuffer.GetBuffer(), Image.GetBuffer(), vk::ImageLayout::eTransferDstOptimal, Region);
         this->Vk_EndSingleTimeCommands(std::move(CommandBuffer));
     }
 
@@ -574,7 +572,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
     {
         check( Info.Info.extent.depth == 1 && "Vk_StageLinearImage does currently only support 2D images with mipmaps." )
         this->Vk_Generate2DMipMaps(
-              Image.Buffer, Info.Info.format
+              Image.GetBuffer(), Info.Info.format
             , vk::Extent2D{ Info.Info.extent.width, Info.Info.extent.height }
             , Info.Info.mipLevels
             );
@@ -584,7 +582,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
         this->Vk_TransitionImageLayout({
             .oldLayout = vk::ImageLayout::eTransferDstOptimal,
             .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-            .image = Image.Buffer,
+            .image = Image.GetBuffer(),
             .subresourceRange = {
                 .aspectMask = vk::ImageAspectFlagBits::eColor,
                 .baseMipLevel = 0,
@@ -1294,7 +1292,7 @@ void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format,
     return;
 }
 
-Jafg::LDevicePipeline Jafg::LDevicePipelineFactory::Build()
+Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
 {
     auto& Frontend{ this->Surface.GetFrontend() };
 
@@ -1347,13 +1345,69 @@ Jafg::LDevicePipeline Jafg::LDevicePipelineFactory::Build()
         }
     };
 
-    return LDevicePipeline{
+    return LGraphicsDevicePipeline{
         .Pipeline = vk::raii::Pipeline{
             Frontend.Vk_GetDevice(),
             nullptr,
             Chain.get<vk::GraphicsPipelineCreateInfo>()
             },
-        .PipelineLayout = std::move(Layout),
+        .Layout = std::move(Layout),
         .DescriptorSetLayout = std::move(this->DescriptorSetLayout),
         };
+}
+
+void Jafg::UBO::LPerspectiveCamera::Bind(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline) const noexcept
+{
+    auto Sets{(*Info.Frontend.Vk_GetDevice()).allocateDescriptorSets({
+        .descriptorPool = Info.DescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &*Pipeline.DescriptorSetLayout,
+        })};
+    check( Sets.size() == 1 )
+    auto Set{ Sets[0] };
+
+    vk::DescriptorBufferInfo BufferInfo{
+        .buffer = Info.PerspectiveCameraBuffer,
+        .offset = 0,
+        .range = sizeof(UBO::LPerspectiveCamera)
+        };
+
+    vk::DescriptorImageInfo ImageInfo{
+        .sampler = Info.Surface.TextureSampler,
+        .imageView = Info.Surface.TextureImageView,
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
+        };
+
+    std::array Writes{
+        vk::WriteDescriptorSet{
+            .dstSet = Set,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &BufferInfo
+            },
+        vk::WriteDescriptorSet{
+            .dstSet = Set,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+            .pImageInfo = &ImageInfo
+            },
+        };
+
+    Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+    Info.CommandBuffer.bindDescriptorSets2({
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .layout = *Pipeline.Layout,
+        .firstSet = 0,
+        .descriptorSetCount = 1,
+        .pDescriptorSets = &Set,
+        .dynamicOffsetCount = 0,
+        .pDynamicOffsets = nullptr
+        });
+
+    return;
 }

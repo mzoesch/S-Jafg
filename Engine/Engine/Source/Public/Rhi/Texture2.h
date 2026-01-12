@@ -2,93 +2,139 @@
 
 #pragma once
 
-#include "Rhi/TextureMipMap2.h"
-#include "Rhi/Texture2Handle.h"
-#include "System/SystemForward.h"
-#include "Engine/CdrMemberManipulation.h"
+#include "Rhi/VkAl.h"
+#include "Serialization/BulkData.h"
 
 namespace Jafg
 {
 
-class JUserPreferences;
-
-namespace Texture2
+//# A 2D extent structure compatible with the current underlying device API used.
+template<typename T>
+struct TExtent2D
 {
+    typedef T value_type;
+    typedef VkExtent2D type;
 
-ENGINE_API TUnique<u8[]> RotateCW (const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels);
-ENGINE_API TUnique<u8[]> RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels);
+    NODISCARD FORCEINLINE operator type&() noexcept { return *reinterpret_cast<type*>( this ); }
+    NODISCARD FORCEINLINE operator type const&() const noexcept { return *reinterpret_cast<type const*>(this); }
 
-} /* ~Namespace ~Image */
+    NODISCARD FORCEINLINE operator type*() noexcept { return reinterpret_cast<type*>(this); }
+    NODISCARD FORCEINLINE operator type const*() const noexcept { return reinterpret_cast<type const*>(this); }
 
-//#
-//# Represents a generic two-dimensional texture that can be uploaded to a graphics card.
-//#
-class LTexture2 final
+    NODISCARD FORCEINLINE auto operator<=>(TExtent2D const&) const = default;
+
+    T Width{};
+    T Height{};
+};
+
+typedef TExtent2D<u32> LTextureExtent;
+static_assert(sizeof(LTextureExtent) == sizeof(VkExtent2D));
+static_assert(std::is_standard_layout_v<LTextureExtent>);
+static_assert(std::is_same_v<LTextureExtent::type, VkExtent2D>);
+
+enum struct ETextureLoadFlagBits
+{
+    Default         = 0x00,
+    Load            = 0x01 << 0,
+    Stage           = 0x01 << 1,
+    FlipY           = 0x01 << 2,
+};
+ENUM_STRUCT_FLAGS(ETextureLoadFlagBits, ETextureLoadFlags)
+
+//# Represents a generic two-dimensional texture that can be uploaded to a device.
+class LTexture2
 {
 public:
 
-    inline LTexture2() = default;
+    struct LMetadata
+    {
+        //# The format of the texture data.
+        vk::Format Format{ vk::Format::eUndefined };
+
+        //#
+        //# The desired number of mip levels.
+        //# If not available, the optimal number will be used.
+        //#
+        TOptional<u32> DesiredMipLevels;
+
+        //# The number of samples per texel.
+        vk::SampleCountFlagBits Samples{ vk::SampleCountFlagBits::e1 };
+    };
+
+    constexpr LTexture2() noexcept = default;
+    explicit constexpr LTexture2(LPath Path, LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Default) noexcept
+        : Path(std::move(Path)), Meta(Meta)
+    {
+        if (Flags & ETextureLoadFlagBits::Load)
+        {
+            this->AllocateFromDisk(Flags);
+        }
+        else
+        {
+            check( !(Flags & ETextureLoadFlagBits::Stage) && "Cannot stage a texture that is not loaded." )
+        }
+
+        return;
+    }
     PROHIBIT_COPY(LTexture2)
     DEFAULT_MOVE(LTexture2)
-    inline ~LTexture2() { this->Free(); }
+    ~LTexture2() noexcept = default;
 
-    ENGINE_API bool CreateEmpty(const u32 InWidth, const u32 InHeight, const ERawImageFormat::Type InFormat);
-    ENGINE_API bool LoadFromDisk(const LPath& Path, const ERawImageFormat::Type InFormat);
-    ENGINE_API bool LoadFromDisk(const LEnginePath& Path, const ERawImageFormat::Type InFormat);
-    ENGINE_API void Free();
+    //# Load the texture from secondary storage to main memory.
+    inline     void AllocateFromDisk(LPath Path, ETextureLoadFlags Flags = ETextureLoadFlagBits::Default);
+    ENGINE_API void AllocateFromDisk(ETextureLoadFlags Flags = ETextureLoadFlagBits::Default);
 
-    //#
-    //# Copy another texture to this texture.
-    //#
-    //# @param InTexture           The texture to copy.
-    //# @param InPoint             The point to copy the texture to.
-    //# @param bKeepCurrentTexture If true, the current texture will be kept and the new texture will
-    //#                            be copied on top of it. The other texture will override current pixels and not
-    //#                            add them. It requires that the current texture is at least the same size as the
-    //#                            new texture.
-    //#
-    ENGINE_API void CopyTexture(const LTexture2& InTexture, const LPoint& InPoint = LPoint::Zero(), const bool bKeepCurrentTexture = false);
+    //# Allocate an empty texture with the given extent and format.
+    ENGINE_API void AllocateEmpty(LTextureExtent const& Extent, bool bZeroed);
 
-    FORCEINLINE bool IsValid() const noexcept { return this->MipMap.IsValid(); }
+    //# Stage the current texture to the device.
+    ENGINE_API void StageToDevice();
 
-    FORCEINLINE u32  GetWidth() const noexcept{ return this->MipMap.GetWidth(); }
-    FORCEINLINE u32  GetHeight() const noexcept { return this->MipMap.GetHeight(); }
-    FORCEINLINE auto GetSize() const noexcept -> Lu32Vector2 { return this->MipMap.GetSize(); }
-    FORCEINLINE auto GetFormat() const noexcept -> ERawImageFormat::Type { return this->MipMap.GetFormat(); }
-    FORCEINLINE i32  GetChannelsPerPixel() const noexcept { return this->MipMap.GetChannelsPerPixel(); }
-    FORCEINLINE i32  GetBytesPerPixel() const noexcept { return this->MipMap.GetBytesPerPixel(); }
-    FORCEINLINE auto GetFirstMipMap() const noexcept -> const LTextureMipMap2& { return this->MipMap; }
+    FORCEINLINE constexpr void Free_MainMemory() noexcept { if (this->MipMap0.IsAllocated()) { this->MipMap0.Free(); } }
+    FORCEINLINE void Free_Device() noexcept { this->Handle.Free(); }
+    FORCEINLINE void Free_v2() noexcept
+    {
+        this->Free_MainMemory();
+        this->Free_Device();
 
-    FORCEINLINE void Upload() const { this->Handle.Upload(*this); }
-    FORCEINLINE bool IsUploaded() const noexcept { return this->Handle.IsValid(); }
-    FORCEINLINE const LTexture2Handle& GetHandle() const noexcept;
-    FORCEINLINE const LTexture2Handle& GetHandleStrong() const noexcept { return this->Handle; }
+        return;
+    }
+
+    FORCEINLINE constexpr auto GetExtent() const noexcept { return this->Extent; }
+    FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Extent.Width; }
+    FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Extent.Height; }
+
+    FORCEINLINE constexpr auto const& GetMetadata() const noexcept { return this->Meta; }
+
+    FORCEINLINE constexpr auto GetFormat() const noexcept { return this->Meta.Format; }
+    FORCEINLINE constexpr auto GetChannelsPerPixel() const noexcept { return Vk_GetChannelsPerPixel(this->GetFormat()); }
+    FORCEINLINE constexpr auto GetBytesPerPixel() const noexcept { return Vk_GetBytesPerPixel(this->GetFormat()); }
+
+    FORCEINLINE constexpr bool HasDesiredMipLevels() const noexcept { return this->Meta.DesiredMipLevels.has_value(); }
+    FORCEINLINE constexpr u32  GetDesiredMipLevels() const noexcept { return this->Meta.DesiredMipLevels.value(); }
+    FORCEINLINE constexpr auto GetSamplesPerTexel() const noexcept { return this->Meta.Samples; }
+
+    FORCEINLINE constexpr bool IsOnMainMemory() const noexcept { return this->MipMap0.IsAllocated(); }
+    FORCEINLINE constexpr LByteBulkData const& GetFirstMipMap() const noexcept { return this->MipMap0; }
+
+    FORCEINLINE constexpr bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
+    FORCEINLINE constexpr auto const& GetDeviceHandle() const noexcept { return this->Handle; }
 
 private:
 
-    //#
-    //# The first mip map of this texture.
-    //#
-    LTextureMipMap2 MipMap;
-
-    //#
-    //# A handle that is valid if the texture was uploaded to the graphics card.
-    //#
-    mutable LTexture2Handle Handle;
+    LPath Path;
+    LTextureExtent Extent;
+    LMetadata Meta;
+    LByteBulkData MipMap0;
+    LDeviceImage Handle;
 };
 
-FORCEINLINE const LTexture2Handle& LTexture2::GetHandle() const noexcept
+inline void LTexture2::AllocateFromDisk(LPath Path, ETextureLoadFlags Flags)
 {
-    check( this->IsValid() )
+    this->Path = std::move(Path);
+    this->AllocateFromDisk(Flags);
 
-    if (this->IsUploaded() == false)
-    {
-        this->Upload();
-    }
-
-    return this->Handle;
+    return;
 }
-
-template<> NODISCARD FORCEINLINE bool IsCdrMemberConsideredDefault<LTexture2>(LTexture2 const& Value) noexcept { return Value.GetFirstMipMap().GetBulk().IsAllocated(); }
 
 } /* ~Namespace Jafg */

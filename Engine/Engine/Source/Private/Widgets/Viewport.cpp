@@ -4,8 +4,6 @@
 #include "Engine/Engine.h"
 #include "Framework/Eye.h"
 #include "Platform/Surface.h"
-#include "Rhi/EngineShader.h"
-#include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
@@ -304,21 +302,21 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
 void Jafg::LViewport::OnClear()
 {
-    if
-    (
-           this->BackgroundContexts.empty() == false
-        && this->BackgroundContexts[0].World->IsSkyboxValid()
-    )
-    {
-        this->IntermediateBuffer.MakeDrawTargetAndReset
-        (
-            this->BackgroundContexts[0].World->GetSkybox().GetBackgroundColor().ToLinearColor()
-        );
-    }
-    else
-    {
-        this->IntermediateBuffer.MakeDrawTargetAndReset(this->BackgroundColor);
-    }
+    // if
+    // (
+    //        this->BackgroundContexts.empty() == false
+    //     && this->BackgroundContexts[0].World->IsSkyboxValid()
+    // )
+    // {
+    //     this->IntermediateBuffer.MakeDrawTargetAndReset
+    //     (
+    //         this->BackgroundContexts[0].World->GetSkybox().GetBackgroundColor().ToLinearColor()
+    //     );
+    // }
+    // else
+    // {
+    //     this->IntermediateBuffer.MakeDrawTargetAndReset(this->BackgroundColor);
+    // }
 
     return;
 }
@@ -352,7 +350,7 @@ void Jafg::LViewport::Draw()
     this->FrameTranslation = LVector2D::ZeroVector;
     this->RecalculateScaleFactor();
 
-    this->IntermediateBuffer.MakeDrawTarget();
+    // this->IntermediateBuffer.MakeDrawTarget();
 
     const auto Dimensions{ this->GetDimensions() };
     this->CachedOrthographicProjectionMatrix = Maths::MakeOrthographicProjectionMatrix
@@ -360,30 +358,30 @@ void Jafg::LViewport::Draw()
         LVector2(static_cast<f32>(Dimensions.X), static_cast<f32>(Dimensions.Y))
     );
 
-    RendererStateMachine::PrepareForPerspectivePainting();
+    // RendererStateMachine::PrepareForPerspectivePainting();
     for (auto const& [Eye, World] : this->BackgroundContexts)
     {
         Eye->UpdateViewMatrix();
 
-        for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
-        {
-            checkSlow( Shader && Shader->IsValid() )
-            Shader->UpdateWorldUniforms(*this, *World, *Eye);
-            continue;
-        }
+        // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
+        // {
+        //     checkSlow( Shader && Shader->IsValid() )
+        //     Shader->UpdateWorldUniforms(*this, *World, *Eye);
+        //     continue;
+        // }
 
         // World->Draw(*this, *Eye);
 
         continue;
     }
 
-    RendererStateMachine::PrepareForOrthographicPainting();
-    for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
-    {
-        checkSlow( Shader && Shader->IsValid() )
-        Shader->UpdateViewportUniforms(*this);
-        continue;
-    }
+    // RendererStateMachine::PrepareForOrthographicPainting();
+    // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
+    // {
+    //     checkSlow( Shader && Shader->IsValid() )
+    //     Shader->UpdateViewportUniforms(*this);
+    //     continue;
+    // }
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
@@ -412,8 +410,8 @@ void Jafg::LViewport::Draw()
         }
     )
 
-    LFrameBuffer::MakeDefaultDrawTarget();
-    this->IntermediateBuffer.PaintToViewport(*this);
+    // LFrameBuffer::MakeDefaultDrawTarget();
+    // this->IntermediateBuffer.PaintToViewport(*this);
 
     return;
 }

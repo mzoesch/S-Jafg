@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Rhi/TextureCore.h"
+#include "Rhi.h"
 #include "System/EnginePath.h"
 #include "Engine/CxxClass.h"
 #include "TextureSubsystem.generated.h"
@@ -27,17 +27,38 @@ protected:
 
 public:
 
-    void PurgeTextures();
+    //# Removes all loaded textures that are not referenced anymore.
+    void PurgeUnused() noexcept;
 
-    std::shared_ptr<LTexture2> GetTexture(const LPath& InPath, const ERawImageFormat::Type InFormat) const;
-    std::shared_ptr<LTexture2> GetTexture(const LEnginePath& InPath, const ERawImageFormat::Type InFormat) const;
+    LImage GetImage(LString const& Ident) const
+    {
+        return LImage{this->GetTexture(nullptr, Ident, {}, ETextureLoadFlagBits::Default)};
+    }
+    LImage GetImage(LPath const& Path, LTexture2::LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Load) const
+    {
+        return LImage{this->GetTexture(&Path, Path.generic_string(), Meta, Flags)};
+    }
+    LImage GetImage(LEnginePath const& Path, LTexture2::LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Load) const
+    {
+        return this->GetImage(Path.ResolvePath(), Meta, Flags);
+    }
 
-    FORCEINLINE i32  GetLoadedTextureCount() const { return this->Textures.size(); }
-    FORCEINLINE auto GetTextures() const -> const std::map<std::string, std::shared_ptr<LTexture2>>& { return this->Textures; }
+    void AddImage(LImage const& Image, LString const& Ident) const noexcept
+    {
+        check( Image.HasTexture() )
+        check( this->Textures.contains(Ident) == false )
+        this->Textures.emplace(Ident, Image.GetNewTextureHandle());
+        return;
+    }
+
+    FORCEINLINE auto GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
+    FORCEINLINE auto const& GetTextures() const noexcept { return this->Textures; }
 
 private:
 
-    mutable std::map<std::string, std::shared_ptr<LTexture2>> Textures;
+    std::shared_ptr<LTexture2> GetTexture(LPath const* Path, LString const& Ident, LTexture2::LMetadata Meta, ETextureLoadFlags Flags) const;
+
+    mutable std::unordered_map<LString, std::shared_ptr<LTexture2>> Textures;
 };
 
 } /* ~Namespace Jafg */

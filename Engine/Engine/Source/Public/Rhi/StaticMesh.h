@@ -15,6 +15,8 @@ enum struct EStaticMeshResult
     LoadingError,
 };
 
+//# TODO: Make also an abstraction for instanced static meshes.
+//# TODO: Abstract the size of indices (u16 vs u32). (Currently u32 only.)
 class LStaticMesh
 {
 public:
@@ -60,31 +62,53 @@ public:
     };
     static_assert(Jafg::CDeviceVertexInput<LVertex>);
 
+    // enum struct ELoadFlags : u8
+    // {
+    //     None = 0,
+    //     LoadNormals = 1 << 0,
+    //     LoadTangents = 1 << 1,
+    // };
+    enum struct EUploadBehavior
+    {
+        Immediate,
+        Deferred,
+    };
+    enum struct EUploadHostMemoryBehavior
+    {
+        Free,
+        Keep,
+    };
+
     LStaticMesh() = default;
     LStaticMesh(LPath const& InPath) : Path{ InPath } { }
 
-    EStaticMeshResult ReloadModel();
+    inline EStaticMeshResult ReloadModel(
+          EUploadBehavior Behavior = EUploadBehavior::Immediate
+        , EUploadHostMemoryBehavior HostMemoryBehavior = EUploadHostMemoryBehavior::Free);
 
-    void UploadVertices()
+    inline void Upload(EUploadHostMemoryBehavior Behavior = EUploadHostMemoryBehavior::Free);
+
+    inline void Render(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline) const
     {
-        check( this->Vertices.size() > 0 )
-        check( this->Indices.size() > 0 )
+        check( this->IndexCount > 0 )
+        check( this->VertexBuffer.GetBuffer() && this->IndexBuffer.GetBuffer() )
 
-        this->VertexBuffer = GEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
-            .BufferCopy = vk::BufferCopy{ 0, 0, sizeof(this->Vertices[0]) * this->Vertices.size() },
-            .Data = this->Vertices.data(),
-            }));
+        Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline.Pipeline);
 
-        this->IndexBuffer = GEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Index({
-            .BufferCopy = vk::BufferCopy{ 0, 0, sizeof(this->Indices[0]) * this->Indices.size() },
-            .Data = this->Indices.data(),
-            }));
+        Info.CommandBuffer.bindVertexBuffers(0, this->VertexBuffer.GetBuffer(), {0});
+        Info.CommandBuffer.bindIndexBuffer(this->IndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
+
+
+
+
+        Info.CommandBuffer.drawIndexed(static_cast<uint32_t>(this->IndexCount), 1, 0, 0, 0);
 
         return;
     }
 
     void FreeFromDevice()
     {
+        this->IndexCount = 0;
         this->VertexBuffer.Free();
         this->IndexBuffer.Free();
 
@@ -92,9 +116,11 @@ public:
     }
 
     LPath Path;
+
     TArray<LVertex> Vertices;
     TArray<u32> Indices;
 
+    u32 IndexCount{ 0 };
     LDeviceBuffer VertexBuffer;
     LDeviceBuffer IndexBuffer;
 };
@@ -110,64 +136,4 @@ struct std::hash<Jafg::LStaticMesh::LVertex>
     }
 };
 
-namespace Jafg
-{
-
-inline EStaticMeshResult LStaticMesh::ReloadModel()
-{
-    LOG_VERBOSE(LogRhi, "Reloading static mesh from path [{}].", this->Path)
-
-    if (Finder::DoesFileExist(this->Path) == false)
-    {
-        return EStaticMeshResult::FileNotFound;
-    }
-
-    tinyobj::attrib_t Attrib;
-    std::vector<tinyobj::shape_t> Shapes;
-    std::vector<tinyobj::material_t> Materials;
-    LString Warning;
-    LString Error;
-
-    auto Result{ tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warning, &Error, this->Path.c_str()) };
-    if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinyobj: {}", Warning) }
-    if (Result == false) { LOG_ERROR(LogRhi, "tinyobj: {}", Error) }
-    if (Result == false) { return EStaticMeshResult::LoadingError; }
-
-    std::unordered_map<LVertex, u32> UniqueVertices;
-
-    algo::orphan(&this->Vertices);
-    algo::orphan(&this->Indices);
-
-    for (auto const& Shape : Shapes)
-    {
-        for (auto const& Idx : Shape.mesh.indices)
-        {
-            LVertex V;
-
-            V.Location = {
-                Attrib.vertices[3 * Idx.vertex_index + 0],
-                Attrib.vertices[3 * Idx.vertex_index + 1],
-                Attrib.vertices[3 * Idx.vertex_index + 2]
-            };
-
-            V.TexCoord = {
-                Attrib.texcoords[2 * Idx.texcoord_index + 0],
-                1.0f - Attrib.texcoords[2 * Idx.texcoord_index + 1]
-            };
-
-            V.Color = {1.0f, 1.0f, 1.0f};
-
-            if (UniqueVertices.contains(V) == false)
-            {
-                UniqueVertices[V] = static_cast<uint32_t>(this->Vertices.size());
-                this->Vertices.push_back(V);
-            }
-
-            Indices.push_back(UniqueVertices[V]);
-        }
-    }
-
-    return EStaticMeshResult::Success;
-}
-
-} /* ~Namespace Jafg */
+#include "Rhi/StaticMeshImpl.h"

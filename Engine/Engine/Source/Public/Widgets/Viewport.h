@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Widgets/Node.h"
-#include "Rhi/FrameBuffer.h"
 #include "User/Input/Replies.h"
 #include "User/UserPreferencesForward.h"
 
@@ -156,8 +155,6 @@ public:
 
     FORCEINLINE auto GetBackgroundContexts() const noexcept -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetMutableBackgroundContexts() noexcept -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
-    FORCEINLINE bool IsIntermediateBufferValid() const noexcept { return this->IntermediateBuffer.IsValid(); }
-    FORCEINLINE auto GetIntermediateBuffer() const noexcept -> const LFrameBuffer& { return this->IntermediateBuffer; }
 
     FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
     FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
@@ -213,7 +210,6 @@ private:
     TArray<LVector4D> FrameCulls;
 
     TArray<LBackgroundContext> BackgroundContexts;
-    LFrameBuffer IntermediateBuffer;
 
     LSurface& Surface;
     TOptional<LVector2D> CachedCursorLocation;

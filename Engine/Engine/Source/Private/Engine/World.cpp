@@ -6,15 +6,13 @@
 #include "Core/Application.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
-#include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Physics/PhysicCompontent.h"
 #include "User/LocalEgo.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Debug/DebugTraceLine.h"
-#include "Debug/DebugTraceSphere.h"
 #include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
+#include "Components/RenderComponent.h"
 
 LString Jafg::LWorldParameters::ToString() const
 {
@@ -79,17 +77,6 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     LOG_VERBOSE(LogWorld, "Initializing new world with [{}].", this->Parameters.ToString())
 
     this->UnderlyingLevel = Level;
-
-    if (this->UnderlyingLevel.has_value())
-    {
-        this->bDrawSkyboxFirst = this->UnderlyingLevel->bDrawSkyboxFirst;
-
-        if (this->UnderlyingLevel->bCreateSkybox)
-        {
-            this->Skybox = LSkybox{this->UnderlyingLevel->Skybox};
-            this->Skybox->Upload();
-        }
-    }
 
     if (this->UnderlyingLevel.has_value())
     {
@@ -263,11 +250,6 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
     // };
     const std::span CornersSpan{Corners};
 
-    if (this->Skybox.has_value() && this->bDrawSkyboxFirst)
-    {
-        this->Skybox->Draw(Viewport, Eye);
-    }
-
     (void)this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
 
     for (auto& Obj : this->GetEmployees())
@@ -292,70 +274,8 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         continue;
     }
 
-    if (this->GetLocalEgo().GetVariable_VisualizeFrustum())
-    {
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[0].X, Corners[0].Y, Corners[0].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[1].X, Corners[1].Y, Corners[1].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[2].X, Corners[2].Y, Corners[2].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[3].X, Corners[3].Y, Corners[3].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[4].X, Corners[4].Y, Corners[4].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[5].X, Corners[5].Y, Corners[5].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[6].X, Corners[6].Y, Corners[6].Z)
-        ));
-        const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
-            LTemporalWorldObject::DrawOnce,
-            LVector(Corners[7].X, Corners[7].Y, Corners[7].Z)
-        ));
-    }
-
-    for (auto& TemporalObject : this->TemporalObjects)
-    {
-        TemporalObject->Draw(*this, Viewport, Eye);
-    }
-
-    if (this->Skybox.has_value() && this->bDrawSkyboxFirst == false)
-    {
-        this->Skybox->Draw(Viewport, Eye);
-    }
-
     return;
 }
-
-#if AS_CLIENT
-void Jafg::LWorld::LateTick(const float DeltaTime)
-{
-    STAT_CYCLE_FUNCTION()
-
-    for (auto& TemporalObject : this->TemporalObjects)
-    {
-        TemporalObject->ReduceLifeTime(DeltaTime);
-    }
-
-    algo::erase_if(&this->TemporalObjects, [](auto& E){ return E->IsAlive() == false; });
-
-    return;
-}
-#endif /* AS_CLIENT */
 
 Jafg::APersonaController* Jafg::LWorld::Login(
       LTransientPersona Persona
@@ -605,16 +525,9 @@ void Jafg::LWorld::OnTearDown()
 
     this->UnderlyingLevel.reset();
 
-    ensureDiscard( this->TemporalObjects.empty() );
-    algo::orphan(&this->TemporalObjects);
-
-    ensureDiscard( this->TickableObjects.empty() );
     algo::orphan(&this->TickableObjects);
     ensureDiscard( this->DeletedTickableObjects.empty() );
     algo::orphan(&this->DeletedTickableObjects);
-
-    this->bDrawSkyboxFirst = false;
-    this->Skybox.reset();
 
     this->EyeToMatrices.clear();
 
