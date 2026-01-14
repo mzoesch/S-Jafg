@@ -19,11 +19,7 @@ class JSupremePolicies;
 struct LLevel final
 {
     LString Identifier;
-
     EInputMode::Type InputMode{ EInputMode::None | EInputMode::ShowMouseCursor };
-
-    Lal::LLinearColor BackgroundColor;
-
     TSubclassOf<JSupremePolicies> SupremePoliciesClass;
 };
 

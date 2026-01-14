@@ -37,7 +37,6 @@ void LJgcPluginLifetime::OnFinishedLoading()
        {
            .Identifier = Jgc::LevelName_Frontend,
            .InputMode = Jafg::EInputMode::Both,
-           .BackgroundColor = Lal::LLinearColor::CadetBlue,
            .SupremePoliciesClass = Jgc::JFwSupremePolicies::StaticClass(),
        }
    ) == false)

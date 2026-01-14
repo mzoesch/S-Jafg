@@ -17,6 +17,8 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
+#include <Framework/PersonaController.h>
+
 #include "System/TextureSubsystem.h"
 
 #include "User/Input/GlfwInputTranslation.h"
@@ -232,8 +234,6 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
     auto WindowDimensions{ this->GetDimensions() };
     LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.X, WindowDimensions.Y, PlatformDpi)
-
-    this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
 
     auto& Instance{ this->GetFrontend().Vk_GetInstance() };
     VkSurfaceKHR CSurface;
@@ -473,7 +473,16 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
             },
         });
 
-    constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
+    vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
+    if (this->DoesPossess())
+    {
+        auto const& Color{this->GetController()->GetWorldChecked()->GetBackgroundColor()};
+        ClearColor.color.float32[0] = Color.R;
+        ClearColor.color.float32[1] = Color.G;
+        ClearColor.color.float32[2] = Color.B;
+        ClearColor.color.float32[3] = Color.A;
+    }
+
     constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
 
     vk::RenderingAttachmentInfo ColorAttachmentInfo{

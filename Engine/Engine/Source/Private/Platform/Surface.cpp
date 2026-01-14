@@ -124,7 +124,6 @@ void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, co
         if (auto const* World{ this->Controller->GetWorldChecked() }; World->IsUnderlyingLevelValid())
         {
             this->AsSurface()->SetInputMode(World->GetUnderlyingLevelChecked().InputMode);
-            this->GetViewport().SetBackgroundColor(World->GetUnderlyingLevelChecked().BackgroundColor);
         }
     }
 

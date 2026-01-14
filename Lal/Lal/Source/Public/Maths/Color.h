@@ -43,7 +43,7 @@ struct LLinearColor final
 
     FORCEINLINE constexpr LLinearColor() noexcept
 #if LAL_PLATFORM_USES_LITTLE_ENDIAN
-        : B(0.0f), G(0.0f), R(0.0f), A(0.0f)
+        : B(0.0f), G(0.0f), R(0.0f), A(1.0f)
 #else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(0.0f), R(0.0f), G(0.0f), B(0.0f)
 #endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */

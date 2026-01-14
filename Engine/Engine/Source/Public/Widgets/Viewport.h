@@ -173,9 +173,6 @@ public:
     //#
     FORCEINLINE static constexpr bool IsInBounds(const LVector2D& InTopLeft, const LVector2D& InSize, const LVector2D& InPoint) noexcept;
 
-    FORCEINLINE const Lal::LLinearColor& GetBackgroundColor() { return this->BackgroundColor; }
-    FORCEINLINE void SetBackgroundColor(const Lal::LLinearColor& InColor) { this->BackgroundColor = InColor; }
-
 private:
 
     void ChangeFocusUnsafe(WNode* InNode);
@@ -211,8 +208,6 @@ private:
 
     LSurface& Surface;
     TOptional<LVector2D> CachedCursorLocation;
-
-    Lal::LLinearColor BackgroundColor;
 
     LClassOuter Outer{ "SurfaceViewport" };
 };

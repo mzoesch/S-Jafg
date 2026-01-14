@@ -260,6 +260,9 @@ public:
     FORCEINLINE JSupremePolicies* GetSupremePoliciesAsserted() { jassert( this->SupremePolicies ) return this->SupremePolicies; }
     FORCEINLINE JSupremePolicies const* GetSupremePoliciesAsserted() const { jassert( this->SupremePolicies ) return this->SupremePolicies; }
 
+    FORCEINLINE Lal::LLinearColor const& GetBackgroundColor() const noexcept { return this->BackgroundColor; }
+    FORCEINLINE void SetBackgroundColor(Lal::LLinearColor const& Color) noexcept { this->BackgroundColor = Color; }
+
     ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LString const& InHumanReadableName) noexcept;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LString const& InHumanReadableName) noexceptcheck;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(LString const& InHumanReadableName);
@@ -310,6 +313,8 @@ private:
     //# Only valid on authorities.
     //#
     JSupremePolicies* SupremePolicies{ nullptr };
+
+    Lal::LLinearColor BackgroundColor;
 };
 
 template <>
