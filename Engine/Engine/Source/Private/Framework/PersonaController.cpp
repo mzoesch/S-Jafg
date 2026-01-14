@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/PersonaController.h"
-#include "Engine/World.h"
 #include "Framework/Pawn.h"
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
@@ -34,16 +33,16 @@ void Jafg::APersonaController::EndLife()
 void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = true */)
 {
     /* Otherwise, we will get access violations. */
-    APawn* OldPawn{ bKillOld ? nullptr : this->Pawn };
+    APawn* OldPawn{bKillOld ? nullptr : this->Pawn};
 
     if (this->Pawn)
     {
-        if (auto* Surface{ this->GetSurface() })
+        if (auto* Surface{this->GetSurface()})
         {
             algo::erase_once_checked(
-                &Surface->GetViewport().GetMutableBackgroundContexts(),
+                &Surface->GetViewport().PerspectiveViews,
                 &this->Pawn->GetEye(),
-                &LBackgroundContext::Eye
+                &LPerspectiveView::Eye
                 );
         }
 
@@ -59,9 +58,9 @@ void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = 
     {
         this->Pawn->SetOwningController(this);
 
-        if (auto* Surface{ this->GetSurface()})
+        if (auto* Surface{this->GetSurface()})
         {
-            Surface->GetViewport().GetMutableBackgroundContexts().emplace_back(
+            Surface->GetViewport().PerspectiveViews.emplace_back(
                 &this->Pawn->GetEye(),
                 this->Pawn->GetWorldChecked()
                 );

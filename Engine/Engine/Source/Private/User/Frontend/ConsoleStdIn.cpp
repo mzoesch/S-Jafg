@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/ConsoleStdIn.h"
+#include "User/Frontend/ConsoleStdIn.h"
 #include "Widgets/EditableTextBox.h"
 #include "Widgets/VRegion.h"
 #include "Widgets/ScrollRegion.h"

@@ -81,7 +81,7 @@ struct TRotator final
     /** Global one rotator constant (1, 1, 1). */
     static const TRotator<T> OneRotator;
 
-    FORCEINLINE          TRotator() = default;
+    FORCEINLINE          TRotator() noexcept : Pitch(static_cast<T>(0)), Yaw(static_cast<T>(0)), Roll(static_cast<T>(0)) { }
     FORCEINLINE explicit TRotator(const T InFloatingPoint);
     FORCEINLINE explicit TRotator(const T InPitch, const T InYaw, const T InRoll);
     FORCEINLINE          TRotator(const TRotator<T>& InRotator) : Pitch(InRotator.Pitch), Yaw(InRotator.Yaw), Roll(InRotator.Roll) { }

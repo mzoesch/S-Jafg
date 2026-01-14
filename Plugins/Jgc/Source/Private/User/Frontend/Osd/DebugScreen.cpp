@@ -159,42 +159,42 @@ void Jgc::WDebugScreen::Tick()
 
     if (APersonaController* Controller{ this->GetViewport().GetSurface().GetController() }; Controller && Controller->IsPawnValid())
     {
-        {
-            const LVector Location { Controller->GetPawn()->GetTranslation() };
-            this->LocalPawnLocationSection->SetContent(Lal::SprintF
-            (
-                "XYZ: {:.3f} / {:.3f} / {:.3f}",
-                Location.X,
-                Location.Y,
-                Location.Z
-            ));
-        }
+        // {
+        //     const LVector Location { Controller->GetPawn()->GetTranslation() };
+        //     this->LocalPawnLocationSection->SetContent(Lal::SprintF
+        //     (
+        //         "XYZ: {:.3f} / {:.3f} / {:.3f}",
+        //         Location.X,
+        //         Location.Y,
+        //         Location.Z
+        //     ));
+        // }
 
-        {
-            const LRotator Rotator { Controller->GetPawn()->GetRotator() };
-            LString YawAsText { "N/A" };
-            if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
-            {
-                YawAsText = "+X (North)";
-            }
-            else if (Rotator.Yaw > 45.f && Rotator.Yaw < 135.f)
-            {
-                YawAsText = "+Y (East)";
-            }
-            else if (Rotator.Yaw >= 135.f || Rotator.Yaw <= -135.f)
-            {
-                YawAsText = "-X (South)";
-            }
-            else if (Rotator.Yaw > -135.f && Rotator.Yaw < -45.f)
-            {
-                YawAsText = "-Y (West)";
-            }
-            this->LocalPawnFacingSection->SetContent(Lal::SprintF
-            (
-                "Facing: {} ({:.2f}Y / {:.2f}P)",
-                YawAsText, Rotator.Yaw, Rotator.Pitch
-            ));
-        }
+        // {
+        //     const LRotator Rotator { Controller->GetPawn()->GetRotator() };
+        //     LString YawAsText { "N/A" };
+        //     if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
+        //     {
+        //         YawAsText = "+X (North)";
+        //     }
+        //     else if (Rotator.Yaw > 45.f && Rotator.Yaw < 135.f)
+        //     {
+        //         YawAsText = "+Y (East)";
+        //     }
+        //     else if (Rotator.Yaw >= 135.f || Rotator.Yaw <= -135.f)
+        //     {
+        //         YawAsText = "-X (South)";
+        //     }
+        //     else if (Rotator.Yaw > -135.f && Rotator.Yaw < -45.f)
+        //     {
+        //         YawAsText = "-Y (West)";
+        //     }
+        //     this->LocalPawnFacingSection->SetContent(Lal::SprintF
+        //     (
+        //         "Facing: {} ({:.2f}Y / {:.2f}P)",
+        //         YawAsText, Rotator.Yaw, Rotator.Pitch
+        //     ));
+        // }
 
         // {
         //     const LVector Location { Controller->GetPawn()->GetTranslation() };

@@ -4,8 +4,12 @@
 
 #include "Core/Name.h"
 
-JGC_API extern LName Name_LevelFrontend;
-JGC_API extern LName Name_LevelSvw;
+namespace Jgc
+{
+
+inline static constexpr auto LevelName_Frontend{ "LevelFrontend" };
+
+} /* ~Namespace Jgc */
 
 JGC_API extern LName Name_UicNaiveFly;
 JGC_API extern LName Name_UsrinNaiveMove;

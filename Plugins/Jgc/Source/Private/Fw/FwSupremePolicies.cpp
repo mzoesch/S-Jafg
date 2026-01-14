@@ -1,9 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Fw/FwSupremePolicies.h"
+#include "Framework/Actor.h"
+#include "Components/StaticMeshComponent.h"
 
-Jgc::JFwSupremePolicies::JFwSupremePolicies(Jafg::LCxxObjectInitializer const& ObjectInitializer)
-    : JSupremePolicies(ObjectInitializer)
+void Jgc::JFwSupremePolicies::OnWorldPreInit()
 {
-    this->bCreatePawn = false;
+    Super::OnWorldPreInit();
+
+    this->RotatingActor = Jafg::SpawnDeferredActor<Jafg::AActor>(this->GetWorld());
+    this->RotatingActor->EmplaceComponent<Jafg::LStaticMeshComponent>(Jafg::LStaticMeshComponent::LCreateInfo{
+        .MeshPath = "Content/Models/viking_room.obj",
+        .TexturePath = "Content/Textures/viking_room.png",
+        });
+
+    return;
 }

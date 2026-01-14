@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/ConsoleWindow.h"
-#include "User/Frontend/Osd/ConsoleStdIn.h"
+#include "User/Frontend/ConsoleWindow.h"
+#include "User/Frontend/ConsoleStdIn.h"
 #include "Widgets/ScrollRegion.h"
 #include "Widgets/VRegion.h"
 #include "Widgets/HRegion.h"

@@ -19,15 +19,8 @@ protected:
 
 public:
 
-    static bool IsOuterFrontend(LClassOuter const* Outer) noexcept;
-    static bool IsOuterWorld(LClassOuter const* Outer) noexcept;
-
-    FORCEINLINE LWorld* GetWorld() noexcept { auto* Out{ this->GetOuter() }; if (Out) { return Out->AsWorld(); } return nullptr; }
-    FORCEINLINE LWorld* GetWorldChecked() noexceptcheck { return this->GetOuterChecked()->AsWorld(); }
-    FORCEINLINE LWorld* GetWorldAsserted() noexceptcheck { return this->GetOuterAsserted()->AsWorld(); }
-    FORCEINLINE LWorld const* GetWorld() const noexcept { auto* Out{ this->GetOuter() }; if (Out) { return Out->AsWorld(); } return nullptr; }
-    FORCEINLINE LWorld const* GetWorldChecked() const noexceptcheck { return this->GetOuterChecked()->AsWorld(); }
-    FORCEINLINE LWorld const* GetWorldAsserted() const noexceptcheck { return this->GetOuterAsserted()->AsWorld(); }
+    FORCEINLINE LWorld* GetWorld() noexcept { check( this->GetOuter() ) return this->GetOuter()->AsWorld(); }
+    FORCEINLINE LWorld const* GetWorld() const noexcept { check( this->GetOuter() ) return this->GetOuter()->AsWorld(); }
 };
 
 } /* ~Namespace Jafg */

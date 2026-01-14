@@ -334,26 +334,6 @@ EPlatformExit::Type GuardedMain()
     GEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
 
-    GEngine->RegisterLevel
-    (
-        LLevel
-        {
-            Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem,
-            Lal::LLinearColor::Black,
-            true, false, TArray<LLevelSkyboxMap>
-            {
-                LLevelSkyboxMap
-                {
-                    "Night",
-                    TArray<LEnginePath>
-                    {
-                        LEnginePath{ EEnginePaths::Textures, "Misc/SbNight.png" },
-                    },
-                },
-            },
-        }
-    );
-
     STAT_CYCLE_END(GmEngineInit)
 
     if (GEngine == nullptr || ::IsEngineExitRequested())

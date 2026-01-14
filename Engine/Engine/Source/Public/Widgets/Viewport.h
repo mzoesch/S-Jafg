@@ -13,11 +13,12 @@ class WNode;
 class WUserWidget;
 class LEye;
 class LWorld;
+struct LRenderInfo;
 
-struct LBackgroundContext final
+struct LPerspectiveView final
 {
-    LEye*   Eye   { nullptr };
-    LWorld* World { nullptr };
+    LEye* Eye{};
+    LWorld* World{};
 };
 
 //# @see #LViewport::ApplySweepTranslation.
@@ -50,7 +51,7 @@ public:
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
     void OnClear();
     void Tick();
-    void Draw();
+    void Draw(LRenderInfo const& Info);
     void TearDown();
 
     //# Outer for this viewport only.
@@ -153,8 +154,7 @@ public:
     FORCEINLINE void PushFrameCull(LVector4D const& CullDimensions) noexcept { this->FrameCulls.emplace_back(CullDimensions); }
     FORCEINLINE void PopFrameCull() noexcept { this->FrameCulls.pop_back(); }
 
-    FORCEINLINE auto GetBackgroundContexts() const noexcept -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
-    FORCEINLINE auto GetMutableBackgroundContexts() noexcept -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    TArray<LPerspectiveView> PerspectiveViews;
 
     FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
     FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
@@ -208,8 +208,6 @@ private:
     mutable LVector2D FrameTranslation;
     mutable LVector2D SweepTranslation;
     TArray<LVector4D> FrameCulls;
-
-    TArray<LBackgroundContext> BackgroundContexts;
 
     LSurface& Surface;
     TOptional<LVector2D> CachedCursorLocation;

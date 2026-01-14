@@ -14,8 +14,6 @@
 namespace Jafg
 {
 
-struct LRenderInfo;
-
 namespace UBO
 {
 
@@ -31,7 +29,14 @@ struct LPerspectiveCamera
         std::memcpy(Buffer.GetData(), this, sizeof(LPerspectiveCamera));
     }
 
-    ENGINE_API void Bind(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline) const noexcept;
+    static vk::DescriptorBufferInfo GetWriteInfo(vk::Buffer Buffer) noexcept
+    {
+        return {
+            .buffer = Buffer,
+            .offset = 0,
+            .range = sizeof(UBO::LPerspectiveCamera)
+            };
+    }
 
     static vk::ShaderStageFlags Flags() noexcept { return vk::ShaderStageFlagBits::eVertex; }
 };
@@ -51,8 +56,22 @@ struct LRenderInfo
     u32 Image;
 
     UBO::LPerspectiveCamera PerspectiveCamera;
-    vk::Buffer PerspectiveCameraBuffer;
+    vk::DescriptorBufferInfo PerspectiveCameraWriteInfo;
 };
+
+template<typename T>
+inline void TPushConstant<T>::Push(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline, u32 Offset /* = 0 */) noexcept
+{
+    Info.CommandBuffer.pushConstants2({
+        .layout = *Pipeline.Layout,
+        .stageFlags = T::Flags(),
+        .offset = Offset,
+        .size = sizeof(T),
+        .pValues = this
+        });
+
+    return;
+}
 
 } /* ~Namespace Jafg */
 

@@ -48,16 +48,11 @@ public:
 
     struct LMetadata
     {
-        //# The format of the texture data.
         vk::Format Format{ vk::Format::eUndefined };
 
-        //#
-        //# The desired number of mip levels.
-        //# If not available, the optimal number will be used.
-        //#
+        //# The desired number of mip levels. If not available, the optimal number will be used.
         TOptional<u32> DesiredMipLevels;
 
-        //# The number of samples per texel.
         vk::SampleCountFlagBits Samples{ vk::SampleCountFlagBits::e1 };
     };
 
@@ -91,7 +86,7 @@ public:
     ENGINE_API void StageToDevice();
 
     FORCEINLINE constexpr void Free_MainMemory() noexcept { if (this->MipMap0.IsAllocated()) { this->MipMap0.Free(); } }
-    FORCEINLINE void Free_Device() noexcept { this->Handle.Free(); }
+    FORCEINLINE void Free_Device() noexcept { this->View.clear(); this->Handle.Free(); }
     FORCEINLINE void Free_v2() noexcept
     {
         this->Free_MainMemory();
@@ -109,7 +104,6 @@ public:
     FORCEINLINE constexpr auto GetFormat() const noexcept { return this->Meta.Format; }
     FORCEINLINE constexpr auto GetChannelsPerPixel() const noexcept { return Vk_GetChannelsPerPixel(this->GetFormat()); }
     FORCEINLINE constexpr auto GetBytesPerPixel() const noexcept { return Vk_GetBytesPerPixel(this->GetFormat()); }
-
     FORCEINLINE constexpr bool HasDesiredMipLevels() const noexcept { return this->Meta.DesiredMipLevels.has_value(); }
     FORCEINLINE constexpr u32  GetDesiredMipLevels() const noexcept { return this->Meta.DesiredMipLevels.value(); }
     FORCEINLINE constexpr auto GetSamplesPerTexel() const noexcept { return this->Meta.Samples; }
@@ -120,6 +114,9 @@ public:
     FORCEINLINE constexpr bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
     FORCEINLINE constexpr auto const& GetDeviceHandle() const noexcept { return this->Handle; }
 
+    FORCEINLINE constexpr bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
+    FORCEINLINE constexpr auto const& GetImageView() const noexcept { return this->View; }
+
 private:
 
     LPath Path;
@@ -127,6 +124,7 @@ private:
     LMetadata Meta;
     LByteBulkData MipMap0;
     LDeviceImage Handle;
+    vk::raii::ImageView View{ nullptr };
 };
 
 inline void LTexture2::AllocateFromDisk(LPath Path, ETextureLoadFlags Flags)

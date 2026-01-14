@@ -1,23 +1,20 @@
 // Copyright mzoesch. All rights reserved.
 
-#pragma once
-
 #include "Rhi/StaticMesh.h"
+#include "Engine/Engine.h"
 
-
-namespace Jafg
-{
-
-inline EStaticMeshResult LStaticMesh::ReloadModel(
-      EUploadBehavior Behavior /* = EUploadBehavior::Immediate */
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::ReloadModel(
+      ELoadBehavior Behavior /* = ELoadBehavior::LoadToDevice */
     , EUploadHostMemoryBehavior HostMemoryBehavior /* = EUploadHostMemoryBehavior::Free */
     )
 {
+    check( Behavior != ELoadBehavior::Deferred )
+
     LOG_VERBOSE(LogRhi, "Reloading static mesh from path [{}].", this->Path)
 
     if (Finder::DoesFileExist(this->Path) == false)
     {
-        return EStaticMeshResult::FileNotFound;
+        return EResult::FileNotFound;
     }
 
     tinyobj::attrib_t Attrib;
@@ -29,7 +26,7 @@ inline EStaticMeshResult LStaticMesh::ReloadModel(
     auto Result{ tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warning, &Error, this->Path.c_str()) };
     if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinyobj: {}", Warning) }
     if (Result == false) { LOG_ERROR(LogRhi, "tinyobj: {}", Error) }
-    if (Result == false) { return EStaticMeshResult::LoadingError; }
+    if (Result == false) { return EResult::LoadingError; }
 
     std::unordered_map<LVertex, u32> UniqueVertices;
 
@@ -65,15 +62,15 @@ inline EStaticMeshResult LStaticMesh::ReloadModel(
         }
     }
 
-    if (Behavior == EUploadBehavior::Immediate)
+    if (Behavior == ELoadBehavior::LoadToDevice)
     {
-        this->Upload(HostMemoryBehavior);
+        this->LoadToDevice(HostMemoryBehavior);
     }
 
-    return EStaticMeshResult::Success;
+    return EResult::Success;
 }
 
-inline void LStaticMesh::Upload(EUploadHostMemoryBehavior Behavior /* = EUploadHostMemoryBehavior::Free */)
+void Jafg::LStaticMesh::LoadToDevice(EUploadHostMemoryBehavior Behavior /* = EUploadHostMemoryBehavior::Free */)
 {
     check( this->Vertices.size() > 0 )
     check( this->Indices.size() > 0 )
@@ -99,4 +96,15 @@ inline void LStaticMesh::Upload(EUploadHostMemoryBehavior Behavior /* = EUploadH
     return;
 }
 
-} /* ~Namespace Jafg */
+void Jafg::LStaticMesh::DrawIndex(LRenderInfo const& Info) const
+{
+    check( this->IndexCount > 0 )
+    check( this->VertexBuffer.GetBuffer() && this->IndexBuffer.GetBuffer() )
+
+    Info.CommandBuffer.bindVertexBuffers(0, this->VertexBuffer.GetBuffer(), {0});
+    Info.CommandBuffer.bindIndexBuffer(this->IndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
+
+    Info.CommandBuffer.drawIndexed(static_cast<uint32_t>(this->IndexCount), 1, 0, 0, 0);
+
+    return;
+}

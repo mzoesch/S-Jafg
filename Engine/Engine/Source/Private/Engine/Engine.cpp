@@ -421,6 +421,10 @@ void Jafg::LEngine::TearDown()
     }
 #endif /* JAFG_WITH_REST_CLS */
 
+#if WITH_LOCAL_LAYER
+    this->LocalEgo.GetFrontend()._Vk_WaitIdle();
+#endif /* WITH_LOCAL_LAYER */
+
     LOG_VERBOSE(LogEngine, "Deallocating {} registered tracks.", this->Tracks.size())
     for (auto const& Track : this->Tracks)
     {

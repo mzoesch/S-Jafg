@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/CoreSubsystems/CoreCommandSubsystem.h"
+#include "User/CoreCommandSubsystem.h"
 #include "Engine/Engine.h"
 #include "Cli/CliCommand.h"
 #include "Cli/CliStatics.h"

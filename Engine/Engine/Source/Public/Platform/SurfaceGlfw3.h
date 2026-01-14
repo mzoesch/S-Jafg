@@ -79,7 +79,6 @@ public:
 
     FORCEINLINE auto const& Vk_GetAvailableSurfaceFormats() const noexcept { return this->Vk_AvailableSurfaceFormats; }
     FORCEINLINE auto Vk_GetDesiredSurfaceFormat() const noexcept { return this->Vk_DesiredSurfaceFormat; }
-    FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { return this->Vk_SurfaceFormat; }
 
     FORCEINLINE auto const& Vk_GetAvailablePresentModes() const noexcept { return this->Vk_AvailablePresentModes; }
     FORCEINLINE auto Vk_GetDesiredPresentMode() const noexcept { return this->Vk_DesiredPresentMode; }
@@ -125,7 +124,7 @@ private:
 #if PLATFORM_LINUX
     virtual void EmulateRepeatedContentForBufferedInput() override;
     virtual void EmulateContentForBufferedInput(const LKey InKey) override;
-    virtual void EmulateContentForBufferedInputGlfw3(const i32 InKey);
+    void EmulateContentForBufferedInputGlfw3(const i32 InKey);
 #endif /* PLATFORM_LINUX */
 
     void Vk_CreateCommandPool();
@@ -173,7 +172,6 @@ private:
 
     std::vector<vk::SurfaceFormatKHR> Vk_AvailableSurfaceFormats;
     vk::SurfaceFormatKHR Vk_DesiredSurfaceFormat{.format = vk::Format::eB8G8R8A8Srgb, .colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear};
-    vk::SurfaceFormatKHR Vk_SurfaceFormat{.format = vk::Format::eUndefined};
 
     std::vector<vk::PresentModeKHR> Vk_AvailablePresentModes;
     vk::PresentModeKHR Vk_DesiredPresentMode{ vk::PresentModeKHR::eMailbox };
@@ -204,14 +202,6 @@ private:
     std::array<vk::raii::DescriptorPool, Jafg::Vk_DesiredMaxFramesInFlight> Vk_DescriptorPools;
 
     std::array<LMappedDeviceBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_PerspectiveCameraBuffers;
-
-public:
-
-    void VkCreateTextureImage();
-
-    LImage MyImage;
-    vk::raii::ImageView TextureImageView{ nullptr };
-    vk::raii::Sampler TextureSampler{ nullptr };
 };
 
 } /* ~Namespace Jafg */

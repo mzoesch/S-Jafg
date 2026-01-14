@@ -4,6 +4,10 @@
 
 #include "Lal.afx"
 
+#if !WITH_LOCAL_LAYER
+    #error "WITH_LOCAL_LAYER is requried."
+#endif /* !WITH_LOCAL_LAYER */
+
 namespace Jafg
 {
 

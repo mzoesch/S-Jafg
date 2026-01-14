@@ -21,6 +21,8 @@
 #include "User/UserPreferences.h"
 #include "Rhi.h"
 
+#include "Rhi/StaticMesh.h"
+
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace
@@ -283,9 +285,11 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         panic( "Failed to find a supported depth format." )
     }
 
+    this->Vk_UpdateSamplers();
+
     LSlangCompilationRequest Req{};
-    Req.In = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Slang/Test.slang" };
-    Req.Out = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Spir-V/Test.spv" };
+    Req.In = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Slang/StaticMesh.slang" };
+    Req.Out = LPath{ LStaticMesh::DefaultShader };
     Req.EntryPoints.reflexive_emplace_back("vertMain").emplace_back("fragMain");
     if (auto Rc{ this->HandleSlangCompilationRequest(Req) }; Rc != 0)
     {
@@ -301,6 +305,14 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
+
+    auto Pipeline = LDevicePipelineFactory{*this}
+        .Shader(LStaticMesh::DefaultShader, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
+        .VertexInput<LStaticMesh::LVertex>()
+        .Layout<LStaticMesh::LPipelineLayout>()
+        .Push<LStaticMesh::LRootLocation>()
+        .Build();
+    this->Vk_Pipelines.emplace(LStaticMesh::DefaultShader, std::move(Pipeline));
 
     return;
 }
@@ -610,6 +622,29 @@ void Jafg::LFrontendVk::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& 
 
     this->Vk_EndSingleTimeCommands(std::move(Buffer));
 
+    return;
+}
+
+void Jafg::LFrontendVk::Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format)
+{
+    if (this->Vk_SurfaceFormat.format == vk::Format::eUndefined)
+    {
+        check( Format.format != vk::Format::eUndefined )
+        this->Vk_SurfaceFormat = Format;
+    }
+    else
+    {
+        jassert( this->Vk_SurfaceFormat.format == Format.format )
+        jassert( this->Vk_SurfaceFormat.colorSpace == Format.colorSpace )
+    }
+
+    return;
+}
+
+void Jafg::LFrontendVk::_Vk_WaitIdle()
+{
+    STAT_CYCLE_FUNCTION()
+    this->Vk_Device.waitIdle();
     return;
 }
 
@@ -1104,6 +1139,25 @@ void Jafg::LFrontendVk::Vk_CreateVma()
     return;
 }
 
+void Jafg::LFrontendVk::Vk_UpdateSamplers()
+{
+    LOG_VERBOSE(LogVulkan, "Updating Vulkan samplers.")
+
+    this->Vk_DefaultSampler = vk::raii::Sampler{this->Vk_Device, {
+        .magFilter = vk::Filter::eLinear, .minFilter = vk::Filter::eLinear,
+        .mipmapMode = vk::SamplerMipmapMode::eLinear,
+        .addressModeU = vk::SamplerAddressMode::eRepeat, .addressModeV = vk::SamplerAddressMode::eRepeat, .addressModeW = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias = 0.0f,
+        .anisotropyEnable = vk::True, .maxAnisotropy = this->Vk_PhysicalDevice.getProperties().limits.maxSamplerAnisotropy,
+        .compareEnable = vk::False, .compareOp = vk::CompareOp::eAlways,
+        .minLod = 0.0f, // Increase for worse texture quality.
+        .maxLod = VK_LOD_CLAMP_NONE,
+        .borderColor = vk::BorderColor::eIntOpaqueBlack,
+        }};
+
+    return;
+}
+
 TOptional<vk::Format> Jafg::LFrontendVk::Vk_FindSupportedFormat(TArray<vk::Format> const& Candidates, vk::ImageTiling Tiling, vk::FormatFeatureFlags Features) const
 {
     for (const auto Format : Candidates)
@@ -1294,10 +1348,8 @@ void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format,
 
 Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
 {
-    auto& Frontend{ this->Surface.GetFrontend() };
-
     vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
-        .rasterizationSamples = this->Surface.GetFrontend().Vk_GetMaxMsaaSamples(),
+        .rasterizationSamples = this->Frontend.Vk_GetMaxMsaaSamples(),
         .sampleShadingEnable = this->MultisamplingShadingEnable
         };
 
@@ -1340,7 +1392,7 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         },
         {
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &this->Surface.Vk_GetSurfaceFormat().format,
+            .pColorAttachmentFormats = &this->Frontend.Vk_GetSurfaceFormat().format,
             .depthAttachmentFormat = Frontend.Vk_GetPreferredDepthFormat(),
         }
     };
@@ -1354,60 +1406,4 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         .Layout = std::move(Layout),
         .DescriptorSetLayout = std::move(this->DescriptorSetLayout),
         };
-}
-
-void Jafg::UBO::LPerspectiveCamera::Bind(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline) const noexcept
-{
-    auto Sets{(*Info.Frontend.Vk_GetDevice()).allocateDescriptorSets({
-        .descriptorPool = Info.DescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &*Pipeline.DescriptorSetLayout,
-        })};
-    check( Sets.size() == 1 )
-    auto Set{ Sets[0] };
-
-    vk::DescriptorBufferInfo BufferInfo{
-        .buffer = Info.PerspectiveCameraBuffer,
-        .offset = 0,
-        .range = sizeof(UBO::LPerspectiveCamera)
-        };
-
-    vk::DescriptorImageInfo ImageInfo{
-        .sampler = Info.Surface.TextureSampler,
-        .imageView = Info.Surface.TextureImageView,
-        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
-        };
-
-    std::array Writes{
-        vk::WriteDescriptorSet{
-            .dstSet = Set,
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &BufferInfo
-            },
-        vk::WriteDescriptorSet{
-            .dstSet = Set,
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = &ImageInfo
-            },
-        };
-
-    Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-    Info.CommandBuffer.bindDescriptorSets2({
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .layout = *Pipeline.Layout,
-        .firstSet = 0,
-        .descriptorSetCount = 1,
-        .pDescriptorSets = &Set,
-        .dynamicOffsetCount = 0,
-        .pDynamicOffsets = nullptr
-        });
-
-    return;
 }

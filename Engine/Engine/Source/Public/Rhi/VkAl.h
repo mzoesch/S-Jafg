@@ -5,7 +5,7 @@
 #include "Lal.afx"
 #include "Rhi/VkForward.h"
 #include "Rhi/RhiVendorInclude.h"
-#include "Platform/SurfaceForward.h"
+#include "Framework/FrontendForward.h"
 
 //#
 //# File:
@@ -16,6 +16,9 @@
 
 namespace Jafg
 {
+
+struct LRenderInfo;
+struct LGraphicsDevicePipeline;
 
 typedef VmaAllocation LDeviceAllocation;
 typedef VmaAllocationInfo LDeviceAllocationInfo;
@@ -204,10 +207,35 @@ concept CUniformBufferObject = std::is_standard_layout_v<T> && requires
     { T::Flags() } -> std::same_as<vk::ShaderStageFlags>;
 };
 
+//# Concept for push constant structures. It must fulfill these requirements.
 template<typename T>
 concept CPushConstant = std::is_standard_layout_v<T> && requires
 {
     { T::Flags() } -> std::same_as<vk::ShaderStageFlags>;
+};
+
+//#
+//# A generic push constant structure.
+//# Inherit from this to create push constant structures for specific shader stages.
+//#
+template<typename T>
+struct TPushConstant
+{
+    inline void Push(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline, u32 Offset = 0) noexcept;
+};
+
+//# Push constant structure for vertex shaders.
+template<typename T>
+struct TVertexPushConstant : public TPushConstant<T>
+{
+    static vk::ShaderStageFlags Flags() noexcept { return vk::ShaderStageFlagBits::eVertex; }
+};
+
+//# Push constant structure for fragment shaders.
+template<typename T>
+struct TFragmentPushConstant : public TPushConstant<T>
+{
+    static vk::ShaderStageFlags Flags() noexcept { return vk::ShaderStageFlagBits::eFragment; }
 };
 
 struct LGraphicsDevicePipeline
@@ -219,6 +247,8 @@ struct LGraphicsDevicePipeline
         this->DescriptorSetLayout.clear();
     }
 
+    inline decltype(auto) operator*() const & noexcept { return *this->Pipeline; }
+
     vk::raii::Pipeline Pipeline{ nullptr };
     vk::raii::PipelineLayout Layout{ nullptr };
     vk::raii::DescriptorSetLayout DescriptorSetLayout{ nullptr };
@@ -226,7 +256,7 @@ struct LGraphicsDevicePipeline
 
 struct LDevicePipelineFactory
 {
-    explicit LDevicePipelineFactory(LSurface const& InSurface) noexcept : Surface{ InSurface } {}
+    explicit LDevicePipelineFactory(LFrontend const& InFrontend) noexcept : Frontend{ InFrontend } {}
 
     PROHIBIT_REALLOC_OF_ANY_FORM(LDevicePipelineFactory)
 
@@ -234,7 +264,7 @@ struct LDevicePipelineFactory
     {
         const auto Code{ Finder::ReadFileAsBinary(Path) };
         Self.ShaderModules.emplace_back(vk::raii::ShaderModule{
-            Self.Surface.GetFrontend().Vk_GetDevice(),
+            Self.Frontend.Vk_GetDevice(),
             vk::ShaderModuleCreateInfo{
                 .codeSize = Code.size() * sizeof(u8),
                 .pCode = reinterpret_cast<u32 const*>(Code.data())
@@ -335,7 +365,7 @@ struct LDevicePipelineFactory
         check( *Self.DescriptorSetLayout == nullptr )
 
         Self.DescriptorSetLayout = vk::raii::DescriptorSetLayout{
-            Self.Surface.GetFrontend().Vk_GetDevice(),
+            Self.Frontend.Vk_GetDevice(),
             vk::DescriptorSetLayoutCreateInfo{
                 .bindingCount = static_cast<u32>(TDeviceLayout::Bindings().size()),
                 .pBindings = TDeviceLayout::Bindings().data(),
@@ -359,7 +389,7 @@ struct LDevicePipelineFactory
 
     ENGINE_API LGraphicsDevicePipeline Build();
 
-    LSurface const& Surface;
+    LFrontend const& Frontend;
     TArray<vk::raii::ShaderModule> ShaderModules;
     TArray<vk::PipelineShaderStageCreateInfo> Shaders;
     std::optional<vk::PipelineVertexInputStateCreateInfo> VertexInputInfo;

@@ -3,7 +3,6 @@
 #include "Foreign/ForeignInclude.h"
 #include "Runtime/Args.h"
 #include "Core/JgcNames.h"
-#include "Svw/SvwSupremePolicies.h"
 #include "Fw/FwSupremePolicies.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
@@ -36,40 +35,16 @@ void LJgcPluginLifetime::OnFinishedLoading()
    (
        Jafg::LLevel
        {
-           .Identifier = Name_LevelFrontend.ToString(),
+           .Identifier = Jgc::LevelName_Frontend,
            .InputMode = Jafg::EInputMode::Both,
            .BackgroundColor = Lal::LLinearColor::CadetBlue,
            .SupremePoliciesClass = Jgc::JFwSupremePolicies::StaticClass(),
        }
    ) == false)
    {
-       LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Name_LevelFrontend.ToString())
+       LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Jgc::LevelName_Frontend)
    }
 #endif /* WITH_LOCAL_LAYER */
-    if (GEngine->RegisterLevel
-    (
-        Jafg::LLevel
-        {
-            Name_LevelSvw.ToString(),
-            Jafg::EInputMode::InputSubSystem,
-            Lal::LLinearColor::Gray,
-            true, false, TArray<Jafg::LLevelSkyboxMap>
-            {
-                Jafg::LLevelSkyboxMap
-                {
-                    "Night",
-                    TArray<Jafg::LEnginePath>
-                    {
-                        Jafg::LEnginePath{ Jafg::EEnginePaths::Textures, "Misc/SbNight.png" },
-                    },
-                },
-            },
-            Jgc::JSvwSupremePolicies::StaticClass()
-        }
-    ) == false)
-    {
-        LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Name_LevelSvw.ToString())
-    }
 
     Jafg::Application::LProgramArgument const* StartupLevelArg{ nullptr };
     if (Jafg::Application::HasCmdLineParameter(_JgcStartupLevel.Identifier, &StartupLevelArg))
@@ -82,7 +57,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     GEngine->Browse(GEngine->SummonWorld("JgcStartUp").Get()
         , (StartupLevelArg ? StartupLevelArg->Value.value()
 #if WITH_LOCAL_LAYER
-            : Name_LevelFrontend.ToString()
+            : Jgc::LevelName_Frontend
 #else /* WITH_LOCAL_LAYER */
             : Name_LevelListen.ToString()
 #endif /* !WITH_LOCAL_LAYER */
@@ -91,21 +66,19 @@ void LJgcPluginLifetime::OnFinishedLoading()
     {
 #if WITH_LOCAL_LAYER
         LOG_VERBOSE(LogJgcLifetime, "Setting up local layer in front-end level.")
-        auto& Frontend{ GEngine->GetLocalEgo().GetFrontend() };
-        if (Frontend.GetSurfaceCount() != 1)
+        if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() != 1)
         {
             LOG_WARNING(LogJgcLifetime, "Expected exactly one surface at engine startup. Jgc does not support multiple surfaces in this stage if the application.")
         }
         else
         {
-            auto& Surface{ Frontend.GetSurfaces()[0] };
-            if (Surface->GetController())
+            if (auto const& Surface{Frontend.GetSurfaces()[0]}; Surface->GetController())
             {
                 LOG_VERBOSE(LogJgcLifetime, "Local ego already possesses a persona controller. Skipping default jgc persona controller spawn.")
             }
             else
             {
-                auto* Pc{ World.Login(Jafg::LTransientPersona{ Jafg::EIncomingConnectionRequest::Local, Surface.get() }) };
+                auto* Pc{World.Login({Jafg::EIncomingConnectionRequest::Local, Surface.get()})};
                 check( Pc )
                 check( Pc->HasBegunLife() == false )
             }

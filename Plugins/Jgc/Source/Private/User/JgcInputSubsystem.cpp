@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/JgcInputSubsystem.h"
-#include "User/CoreSubsystems/CoreInputSubsystem.h"
+#include "../../../../../Engine/Engine/Source/Public/User/Input/CoreInputSubsystem.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 
 void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)

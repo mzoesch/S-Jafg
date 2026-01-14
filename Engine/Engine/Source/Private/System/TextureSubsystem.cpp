@@ -127,7 +127,7 @@ void Jafg::LTexture2::StageToDevice()
 {
     check( this->MipMap0.IsAllocated() )
 
-    auto& Frontend{ GEngine->GetLocalEgo().GetFrontend() };
+    auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
 
     if (this->Meta.DesiredMipLevels.has_value() == false)
     {
@@ -140,7 +140,7 @@ void Jafg::LTexture2::StageToDevice()
             .flags ={},
             .imageType = vk::ImageType::e2D,
             .format = this->GetFormat(),
-            .extent = vk::Extent3D{ this->GetWidth(), this->GetHeight(), 1 },
+            .extent = vk::Extent3D{this->GetWidth(), this->GetHeight(), 1},
             .mipLevels = this->GetDesiredMipLevels(),
             .arrayLayers = 1,
             .samples = this->GetSamplesPerTexel(),
@@ -150,6 +150,19 @@ void Jafg::LTexture2::StageToDevice()
             .initialLayout = vk::ImageLayout::eUndefined,
             }
         });
+
+    this->View = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        .image = this->Handle.GetBuffer(),
+        .viewType = vk::ImageViewType::e2D,
+        .format = this->GetFormat(),
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0, // TODO: This should probably be an user option.
+            .levelCount = this->GetDesiredMipLevels(),
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        }};
 
     return;
 }

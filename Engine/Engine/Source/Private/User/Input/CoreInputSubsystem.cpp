@@ -1,19 +1,17 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/CoreSubsystems/CoreInputSubsystem.h"
+#include "User/Input/CoreInputSubsystem.h"
 #include "Core/CoreNames.h"
 #include "Framework/Frontend.h"
 #include "Framework/Pawn.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
-#include "User/Frontend/Osd/ConsoleScreen.h"
-#include "User/Frontend/Osd/PauseScreen.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
 #include "Engine/Engine.h"
-#include "User/Frontend/Osd/DebugMenu.h"
-#include "User/Frontend/Osd/ConsoleWindow.h"
+#include "User/Frontend/DebugMenu.h"
+#include "User/Frontend/ConsoleWindow.h"
 
 void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {

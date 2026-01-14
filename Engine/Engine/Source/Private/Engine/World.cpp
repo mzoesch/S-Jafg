@@ -202,17 +202,17 @@ void Jafg::LWorld::Tick(const f32 DeltaTime)
     return;
 }
 
-void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
+void Jafg::LWorld::Draw(LRenderInfo const& Info, const LEye& Eye) const
 {
     STAT_CYCLE_FUNCTION()
 
     LMatrix P{SkipInit};
     LMatrix V{SkipInit};
-    if (const auto Cache = this->EyeToMatrices.find(&Eye); this->GetLocalEgo().GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
+    if (auto Cache{this->EyeToMatrices.find(&Eye)}; this->GetLocalEgo().GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
     {
         P = Maths::MakePerspectiveProjectionMatrix(
             Maths::ToRadians(Eye.GetDegYFov()),
-            static_cast<float>(Viewport.GetDimensions().X) / static_cast<float>(Viewport.GetDimensions().Y),
+            static_cast<f32>(Info.Surface.GetDimensions().X) / static_cast<f32>(Info.Surface.GetDimensions().X),
             Eye.GetNearFrustum(), Eye.GetFarFrustum()
         );
         V = Eye.GetViewMatrix();
@@ -250,8 +250,6 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
     // };
     const std::span CornersSpan{Corners};
 
-    (void)this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
-
     for (auto& Obj : this->GetEmployees())
     {
         AActor* Actor{ Obj->As<AActor>() };
@@ -262,14 +260,22 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
 
         check( Actor->IsGarbage() == false )
 
-        if
-        (
-               Actor->IsRendererComponentValid()
-            && Actor->GetRendererComponent()->Cull(CornersSpan) == false
-        )
+        for (TUnique<LActorComponent> const& Comp : Actor->GetComponents())
         {
-            Actor->GetRendererComponent()->Draw(Viewport, Eye);
+            if (Comp->ShouldRender())
+            {
+                Comp->Render(Info, Eye);
+            }
         }
+
+        // if
+        // (
+        //        Actor->IsRendererComponentValid()
+        //     && Actor->GetRendererComponent()->Cull(CornersSpan) == false
+        // )
+        // {
+        //     Actor->GetRendererComponent()->Draw(Viewport, Eye);
+        // }
 
         continue;
     }
@@ -380,32 +386,21 @@ bool Jafg::LWorld::LineTraceByChannel(
 
     check( (Begin - End).Magnitude() > LAL_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
 
-    if (Channel == ECollisionChannel::Static)
-    {
-        if (this->OnStaticLineTrace.IsValid())
-        {
-            STAT_QUICK_CYCLE_START("OnStaticLineTrace")
-            return this->OnStaticLineTrace(OutHits, Begin, End, Params);
-        }
-
-        return false;
-    }
-
     STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
     /* TODO: Save (as the tickables) the physics in a separate cached vector. */
     LHitResult Dummy;
     for (auto& Obj : this->GetEmployees())
     {
-        if (auto* Actor{ Obj->As<AActor>() }; Actor && Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
-        {
-            OutHits.push_back(Dummy);
-            Dummy.Reset();
-
-            if (Params.bSingleHit)
-            {
-                break;
-            }
-        }
+        // if (auto* Actor{ Obj->As<AActor>() }; Actor && Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
+        // {
+        //     OutHits.push_back(Dummy);
+        //     Dummy.Reset();
+        //
+        //     if (Params.bSingleHit)
+        //     {
+        //         break;
+        //     }
+        // }
 
         continue;
     }
@@ -515,9 +510,6 @@ void Jafg::LWorld::OnTearDown()
 
     algo::orphan(&this->TickableObjects);
     algo::orphan(&this->DeletedTickableObjects);
-
-    this->OnStaticDraw.Reset();
-    this->OnStaticLineTrace.Reset();
 
     algo::orphan(&this->UnsanitizedUrl);
     algo::orphan(&this->Url);

@@ -27,9 +27,10 @@ class APawn;
 class LEye;
 class LCommandLineInterface;
 class LWorld;
-struct LLevel;
 class JSupremePolicies;
+struct LLevel;
 struct LSubsystemCollection;
+struct LRenderInfo;
 
 namespace Private
 {
@@ -37,19 +38,6 @@ namespace Private
 struct LWorldMiscellaneousAccessor;
 
 } /* ~Namespace Private */
-
-typedef TFunction<bool(
-      TArray<LHitResult>& OutHits
-    , LVector const& Start
-    , LVector const& End
-    , LCollisionQueryParams const& Params
-    )> LOnStaticLineTrace;
-
-typedef TFunction<void(
-      LViewport const& Viewport
-    , LEye const& Eye
-    , std::span<LVector> const& Corners
-    )> LOnStaticDraw;
 
 namespace EWorldState
 {
@@ -228,9 +216,7 @@ public:
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const f32 DeltaTime);
 
-    void Draw(LViewport const& Viewport, LEye const& Eye) const;
-    //# Performance optimization for static objects.
-    LOnStaticDraw OnStaticDraw;
+    void Draw(LRenderInfo const& Info, LEye const& Eye) const;
 
     ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
 
@@ -264,7 +250,6 @@ public:
         , ECollisionChannel::Type Channel
         , LCollisionQueryParams const& Params
     ) const;
-    LOnStaticLineTrace OnStaticLineTrace;
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 

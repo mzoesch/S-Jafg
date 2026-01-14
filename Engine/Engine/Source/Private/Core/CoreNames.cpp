@@ -2,8 +2,6 @@
 
 #include "Core/CoreNames.h"
 
-ENGINE_API LName Name_LevelMyWorld          = MAKE_NAME("LevelMyWorld");
-
 ENGINE_API LName Name_UicInOmni             = MAKE_NAME("InOmni");
 ENGINE_API LName Name_UicInMyWorld          = MAKE_NAME("InMyWorld");
 ENGINE_API LName Name_UicInMyWorldFoot      = MAKE_NAME("InMyWorldFoot");

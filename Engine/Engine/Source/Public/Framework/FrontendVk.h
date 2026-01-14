@@ -46,6 +46,28 @@ struct LStageLinearImageCreateInfo
     vk::ImageCreateInfo Info;
 };
 
+//# TODO: Make this actually viable. This is only a quick and dirty key.
+struct LPipelineKey
+{
+    LPath Path;
+
+    FORCEINLINE bool operator==(LPipelineKey const& Path) const noexcept = default;
+};
+
+} /* ~Namespace Jafg */
+
+template<>
+struct std::hash<Jafg::LPipelineKey>
+{
+    FORCEINLINE std::size_t operator()(Jafg::LPipelineKey const& Key) const noexcept
+    {
+        return std::hash<std::filesystem::path>()(Key.Path);
+    }
+};
+
+namespace Jafg
+{
+
 class LFrontendVk final : public LFrontendBase
 {
 public:
@@ -93,6 +115,11 @@ public:
     FORCEINLINE auto const& Vk_GetTransientCommandPool() const noexcept { return this->Vk_TransientCommandPool; }
 
     FORCEINLINE auto Vk_GetPreferredDepthFormat() const noexcept { return this->Vk_PreferredDepthFormat; }
+    FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check( this->Vk_SurfaceFormat.format != vk::Format::eUndefined ) return this->Vk_SurfaceFormat; }
+
+    FORCEINLINE auto const& Vk_GetDefaultSampler() const noexcept { return this->Vk_DefaultSampler; }
+
+    FORCEINLINE auto const& Vk_GetPipelines() const noexcept { return this->Vk_Pipelines; }
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
@@ -129,6 +156,11 @@ public:
     //# Transitions an image layout. !!This is not for flight frame command buffers!!
     ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier);
 
+    ENGINE_API void Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format);
+
+    //# Public private function!!! NEVER use. For internal stuff only!!!!!!!!
+    ENGINE_API void _Vk_WaitIdle();
+
     ENGINE_API i64 HandleSlangCompilationRequest(LSlangCompilationRequest const& Request);
     ENGINE_API i64 HandleSlangCompilationRequest(LPath const& Slang, LSlangCompilationRequest const& Request);
 
@@ -144,6 +176,7 @@ private:
     void Vk_SetMaxMsaaSamples();
     void Vk_CreateLogicalDevice(LSurface const& QuerySurface);
     void Vk_CreateVma();
+    void Vk_UpdateSamplers();
 
     TOptional<vk::Format> Vk_FindSupportedFormat(
           TArray<vk::Format> const& Candidates
@@ -203,6 +236,11 @@ private:
     vk::raii::CommandPool Vk_TransientCommandPool{ nullptr };
 
     vk::Format Vk_PreferredDepthFormat{ vk::Format::eUndefined  };
+    vk::SurfaceFormatKHR Vk_SurfaceFormat{ vk::Format::eUndefined };
+
+    vk::raii::Sampler Vk_DefaultSampler{ nullptr };
+
+    std::unordered_map<LPipelineKey, LGraphicsDevicePipeline> Vk_Pipelines;
 };
 
 FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Vertex(LVertexCreateInfo const& Info) noexcept

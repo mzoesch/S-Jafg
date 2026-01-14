@@ -5,18 +5,29 @@
 #include "Framework/SupremePolicies.h"
 #include "FwSupremePolicies.generated.h"
 
+namespace Jafg
+{
+class AActor;
+} /* ~Namespace Jafg */
+
 namespace Jgc
 {
 
 DECLARE_JAFG_CLASS()
-class JFwSupremePolicies : public Jafg::JSupremePolicies
+class JGC_API JFwSupremePolicies : public Jafg::JSupremePolicies
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit JFwSupremePolicies(Jafg::LCxxObjectInitializer const& ObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(JFwSupremePolicies)
+    DEFAULT_OBJECT_CONSTRUCTOR(JFwSupremePolicies)
+
+public:
+
+    virtual void OnWorldPreInit() override;
+
+
+    Jafg::AActor* RotatingActor{};
 };
 
 } /* ~Namespace Jgc */

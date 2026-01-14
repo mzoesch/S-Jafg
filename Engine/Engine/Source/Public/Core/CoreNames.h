@@ -10,8 +10,6 @@
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
-ENGINE_API extern LName Name_LevelMyWorld;
-
 ENGINE_API extern LName Name_UicInOmni;
 ENGINE_API extern LName Name_UicInMyWorld;
 ENGINE_API extern LName Name_UicInMyWorldFoot;

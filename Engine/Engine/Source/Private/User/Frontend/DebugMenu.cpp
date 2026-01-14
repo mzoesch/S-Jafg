@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/DebugMenu.h"
+#include "User/Frontend/DebugMenu.h"
 #include "Platform/SurfaceGlfw3.h"
 #include "Widgets/EditorView.h"
 #include "Widgets/Region.h"

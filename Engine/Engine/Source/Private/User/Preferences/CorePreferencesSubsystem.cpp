@@ -1,11 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/CoreSubsystems/CorePreferencesSubsystem.h"
+#include "../../../Public/User/Preferences/CorePreferencesSubsystem.h"
 #include "Cli/CliFrontend.h"
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
-#include "User/Frontend/Osd/PreferencesScreen.h"
+#include "../../../Public/User/Frontend/PreferencesScreen.h"
 #include "User/Preferences/PreferenceRegistry.h"
 #include "User/Preferences/PreferenceCollection.h"
 #include "User/Preferences/PreferenceValue.h"

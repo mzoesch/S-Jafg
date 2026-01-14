@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/ConsoleScreen.h"
+#include "User/Frontend/ConsoleScreen.h"
 #include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
 #include "Cli/CommandLineInterface.h"

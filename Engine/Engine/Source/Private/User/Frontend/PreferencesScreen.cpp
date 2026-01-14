@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/PreferencesScreen.h"
+#include "User/Frontend/PreferencesScreen.h"
 #include "User/Preferences/PreferenceRegistry.h"
 #include "Widgets/ScrollRegion.h"
 #include "Widgets/Spacer.h"

@@ -340,7 +340,7 @@ void Jafg::LViewport::Tick()
     return;
 }
 
-void Jafg::LViewport::Draw()
+void Jafg::LViewport::Draw(LRenderInfo const& Info)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -359,7 +359,7 @@ void Jafg::LViewport::Draw()
     );
 
     // RendererStateMachine::PrepareForPerspectivePainting();
-    for (auto const& [Eye, World] : this->BackgroundContexts)
+    for (auto const& [Eye, World] : this->PerspectiveViews)
     {
         Eye->UpdateViewMatrix();
 
@@ -370,7 +370,9 @@ void Jafg::LViewport::Draw()
         //     continue;
         // }
 
-        // World->Draw(*this, *Eye);
+        // Info.Surface.GetDimensions()
+
+        World->Draw(Info, *Eye);
 
         continue;
     }

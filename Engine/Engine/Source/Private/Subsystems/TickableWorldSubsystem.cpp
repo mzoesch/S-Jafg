@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Subsystems/TickableWorldSubsystem.h"
 #include "Engine/World.h"
 

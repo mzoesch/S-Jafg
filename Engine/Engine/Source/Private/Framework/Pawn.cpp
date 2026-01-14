@@ -18,13 +18,13 @@ void Jafg::APawn::Tick(const f32 DeltaTime)
     this->UpdateRelativeVectors();
 
     algo::orphan(&this->CurrentGenericTraceResults);
-    const LVector TraceStart = this->GetTranslation();
-    const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
-    this->GetWorld()->LineTraceByChannel
-    (
-        this->CurrentGenericTraceResults, TraceStart, TraceEnd,
-        ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
-    );
+    // const LVector TraceStart = this->GetTranslation();
+    // const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
+    // this->GetWorld()->LineTraceByChannel
+    // (
+    //     this->CurrentGenericTraceResults, TraceStart, TraceEnd,
+    //     ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
+    // );
 
     return;
 }
@@ -72,13 +72,13 @@ void Jafg::APawn::SetOwningController(APersonaController* InNew)
 
 void Jafg::APawn::UpdateRelativeVectors()
 {
-    this->RelativeFront.X =
-        Maths::Cos(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
-    this->RelativeFront.Y =
-        Maths::Sin(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
-    this->RelativeFront.Z =
-        Maths::Sin(Maths::ToRadians(this->GetRotator().Pitch));
-    this->RelativeFront.Normalize();
+    // this->RelativeFront.X =
+    //     Maths::Cos(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
+    // this->RelativeFront.Y =
+    //     Maths::Sin(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
+    // this->RelativeFront.Z =
+    //     Maths::Sin(Maths::ToRadians(this->GetRotator().Pitch));
+    // this->RelativeFront.Normalize();
 
     this->RelativeRight = this->RelativeFront.Cross(LVector::UpVector).NormalizeRet().InvertRet();
     this->RelativeUp    = this->RelativeRight.Cross(this->RelativeFront).NormalizeRet().InvertRet();

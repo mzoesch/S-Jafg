@@ -8,18 +8,13 @@
 namespace Jafg
 {
 
-enum struct EStaticMeshResult
-{
-    Success,
-    FileNotFound,
-    LoadingError,
-};
-
 //# TODO: Make also an abstraction for instanced static meshes.
 //# TODO: Abstract the size of indices (u16 vs u32). (Currently u32 only.)
 class LStaticMesh
 {
 public:
+
+    static constexpr auto DefaultShader{ "Content/Shaders/Spir-V/StaticMesh.spv" };
 
     struct LVertex
     {
@@ -29,7 +24,7 @@ public:
 
         static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
         {
-            static std::array<vk::VertexInputBindingDescription, 1> Desc{vk::VertexInputBindingDescription{
+            static std::array Desc{vk::VertexInputBindingDescription{
                 .binding = 0,
                 .stride = sizeof(LVertex),
                 .inputRate = vk::VertexInputRate::eVertex
@@ -40,7 +35,7 @@ public:
 
         static std::array<vk::VertexInputAttributeDescription, 3> const& AttributeDescriptions() noexcept
         {
-            static std::array<vk::VertexInputAttributeDescription, 3> Desc{
+            static std::array Desc{
                 vk::VertexInputAttributeDescription{
                     .location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LVertex, Location)
                     },
@@ -62,51 +57,87 @@ public:
     };
     static_assert(Jafg::CDeviceVertexInput<LVertex>);
 
-    // enum struct ELoadFlags : u8
-    // {
-    //     None = 0,
-    //     LoadNormals = 1 << 0,
-    //     LoadTangents = 1 << 1,
-    // };
-    enum struct EUploadBehavior
+    struct LPipelineLayout
     {
-        Immediate,
-        Deferred,
+        static std::array<vk::DescriptorSetLayoutBinding, 2> const& Bindings() noexcept
+        {
+            static std::array Bindings{
+                vk::DescriptorSetLayoutBinding{
+                    .binding = 0,
+                    .descriptorType = vk::DescriptorType::eUniformBuffer,
+                    .descriptorCount = 1,
+                    .stageFlags = vk::ShaderStageFlagBits::eVertex,
+                    .pImmutableSamplers = nullptr
+                    },
+                vk::DescriptorSetLayoutBinding{
+                    .binding = 1,
+                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                    .descriptorCount = 1,
+                    .stageFlags = vk::ShaderStageFlagBits::eFragment,
+                    .pImmutableSamplers = nullptr
+                    },
+                };
+
+            return Bindings;
+        }
     };
+    static_assert(Jafg::CDeviceLayout<LPipelineLayout>);
+
+    struct LRootLocation final : public TVertexPushConstant<LRootLocation>
+    {
+        LMatrix4 Model;
+    };
+    static_assert(Jafg::CPushConstant<LRootLocation>);
+
+    enum struct EResult
+    {
+        Success,
+        FileNotFound,
+        LoadingError,
+    };
+
+    enum struct ELoadBehavior
+    {
+        //# Default behavior. Do nothing.
+        Deferred,
+        //# Load the model data immediately to host memory.
+        Load,
+        //# Additionally to #Load also upload the model data to the device immediately.
+        LoadToDevice,
+    };
+
     enum struct EUploadHostMemoryBehavior
     {
+        //# Free host memory.
         Free,
+        //# Keep host memory allocated.
         Keep,
     };
 
-    LStaticMesh() = default;
-    LStaticMesh(LPath const& InPath) : Path{ InPath } { }
-
-    inline EStaticMeshResult ReloadModel(
-          EUploadBehavior Behavior = EUploadBehavior::Immediate
-        , EUploadHostMemoryBehavior HostMemoryBehavior = EUploadHostMemoryBehavior::Free);
-
-    inline void Upload(EUploadHostMemoryBehavior Behavior = EUploadHostMemoryBehavior::Free);
-
-    inline void Render(LRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline) const
+    inline LStaticMesh() = default;
+    inline LStaticMesh(LPath const& InPath,
+        ELoadBehavior Behavior = ELoadBehavior::Deferred,
+        EUploadHostMemoryBehavior HostMemoryBehavior = EUploadHostMemoryBehavior::Free
+        ) : Path{InPath}
     {
-        check( this->IndexCount > 0 )
-        check( this->VertexBuffer.GetBuffer() && this->IndexBuffer.GetBuffer() )
-
-        Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline.Pipeline);
-
-        Info.CommandBuffer.bindVertexBuffers(0, this->VertexBuffer.GetBuffer(), {0});
-        Info.CommandBuffer.bindIndexBuffer(this->IndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
-
-
-
-
-        Info.CommandBuffer.drawIndexed(static_cast<uint32_t>(this->IndexCount), 1, 0, 0, 0);
+        if (Behavior != ELoadBehavior::Deferred)
+        {
+            auto Result{this->ReloadModel(Behavior, HostMemoryBehavior)};
+            jassert( Result == EResult::Success )
+        }
 
         return;
     }
 
-    void FreeFromDevice()
+    //# Load or reload the model from disk and optionally upload it to the device.
+    ENGINE_API EResult ReloadModel(
+          ELoadBehavior Behavior = ELoadBehavior::LoadToDevice
+        , EUploadHostMemoryBehavior HostMemoryBehavior = EUploadHostMemoryBehavior::Free);
+    ENGINE_API void LoadToDevice(EUploadHostMemoryBehavior Behavior = EUploadHostMemoryBehavior::Free);
+
+    ENGINE_API void DrawIndex(LRenderInfo const& Info) const;
+
+    inline void FreeFromDevice() noexcept
     {
         this->IndexCount = 0;
         this->VertexBuffer.Free();
@@ -135,5 +166,3 @@ struct std::hash<Jafg::LStaticMesh::LVertex>
         return ((hash<glm::vec3>()(Vertex.Location) ^ (hash<glm::vec3>()(Vertex.Color) << 1)) >> 1) ^ (hash<glm::vec2>()(Vertex.TexCoord) << 1);
     }
 };
-
-#include "Rhi/StaticMeshImpl.h"
