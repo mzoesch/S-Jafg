@@ -37,15 +37,6 @@ void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = 
 
     if (this->Pawn)
     {
-        if (auto* Surface{this->GetSurface()})
-        {
-            algo::erase_once_checked(
-                &Surface->GetViewport().PerspectiveViews,
-                &this->Pawn->GetEye(),
-                &LPerspectiveView::Eye
-                );
-        }
-
         this->Pawn->SetOwningController(nullptr);
         if (bKillOld)
         {
@@ -57,20 +48,7 @@ void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = 
     if (this->Pawn)
     {
         this->Pawn->SetOwningController(this);
-
-        if (auto* Surface{this->GetSurface()})
-        {
-            Surface->GetViewport().PerspectiveViews.emplace_back(
-                &this->Pawn->GetEye(),
-                this->Pawn->GetWorldChecked()
-                );
-        }
     }
-
-    this->GetLocalEgo().ForEachMutableSubsystem([OldPawn, New](JLocalEgoSubsystem* Subsystem)
-    {
-        Subsystem->OnNewPawnPossessed(OldPawn, New);
-    });
 
     return;
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Components/ActorComponent.h"
+#include "SceneComponent.generated.h"
 
 namespace Jafg
 {
@@ -14,11 +15,16 @@ enum struct LSceneSweep
     SweepComplex,
 };
 
-class ENGINE_API LSceneComponent : public LActorComponent
+DECLARE_JAFG_CLASS()
+class ENGINE_API JSceneComponent : public JActorComponent
 {
-public:
+    GENERATED_CLASS_BODY()
 
-    constexpr LSceneComponent() noexcept = default;
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JSceneComponent)
+
+public:
 
     // TODO: We do not have physics yet, so we cannot do sweeps.
     void ChangeTransform(const LTransform& InTransform, const LSceneSweep SweepType = LSceneSweep::Teleport) noexcept { this->Transform = InTransform; }
@@ -33,6 +39,30 @@ public:
     NODISCARD FORCEINLINE LVector const& GetTranslation() const noexcept { return this->Transform.Translation; }
     NODISCARD FORCEINLINE LRotator const& GetRotator() const noexcept { return this->Transform.Rotator; }
     NODISCARD FORCEINLINE LVector const& GetScale() const noexcept { return this->Transform.Scale; }
+
+    struct LRelativeVectors
+    {
+        LVector3F Front;
+        LVector3F Right;
+        LVector3F Up;
+    };
+    NODISCARD FORCEINLINE LRelativeVectors GetRelativeVectors() const noexcept
+    {
+        LRelativeVectors Out;
+
+        Out.Front.X =
+            Maths::Cos(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
+        Out.Front.Y =
+            Maths::Sin(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
+        Out.Front.Z =
+            Maths::Sin(Maths::ToRadians(this->GetRotator().Pitch));
+        Out.Front.Normalize();
+
+        Out.Right = Out.Front.Cross(LVector::UpVector).NormalizeRet().InvertRet();
+        Out.Up    = Out.Right.Cross(Out.Front).NormalizeRet().InvertRet();
+
+        return Out;
+    }
 
 private:
 

@@ -10,6 +10,7 @@ namespace Jafg
 {
 
 class APersonaController;
+class JSceneComponent;
 struct LInputActionValue;
 
 //# A pawn is something that can be possessed by a controller.
@@ -20,21 +21,17 @@ class ENGINE_API APawn : public AActor
 
 protected:
 
-    explicit APawn(LCxxObjectInitializer const& CxxObjectInitializer);
+    explicit APawn(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer) { this->SetEverTickConstructorOnlyFlag(); }
     DEFAULT_OBJECT_CDR_CTOR(APawn)
 
 public:
 
+    virtual void BeginLife() override;
     virtual void Tick(const float DeltaTime) override;
     virtual void EndLife() override;
 
-    FORCEINLINE bool IsEyeValid() const noexcept { return this->Eye.IsOwningPawnValid(); }
-    FORCEINLINE LEye& GetEye() noexcept { return this->Eye; }
-    FORCEINLINE LEye const& GetEye() const noexcept { return this->Eye; }
+    ENGINE_API LEye_v2 GetEye_v2() const noexcept;
 
-    FORCEINLINE LVector const& GetRelativeFront() const noexcept { return this->RelativeFront; }
-    FORCEINLINE LVector const& GetRelativeRight() const noexcept { return this->RelativeRight; }
-    FORCEINLINE LVector const& GetRelativeUp() const noexcept { return this->RelativeUp; }
 
     FORCEINLINE bool IsPossessed() const noexcept { return this->OwningController != nullptr; }
     bool IsPossessedLocally() const noexcept;
@@ -50,38 +47,38 @@ public:
     FORCEINLINE APersonaController const* GetOwningControllerAsserted() const noexceptcheck { jassert( this->IsPossessed() ) return this->OwningController; }
     virtual void SetOwningController(APersonaController* InNew);
 
-    FORCEINLINE void SetMovementSpeed(const f32 InMovementSpeed) noexcept { this->MovementSpeed = InMovementSpeed; }
-    FORCEINLINE f32 GetMovementSpeed() const noexcept { return this->MovementSpeed; }
+    FORCEINLINE void SetNearFrustum(f32 Value) noexcept { this->NearFrustum = Value; }
+    FORCEINLINE void SetFarFrustum(f32 Value) noexcept { this->FarFrustum = Value; }
 
     //# Cached hit results for this frame. Use this if only generic hit results information is needed.
-    FORCEINLINE auto const& GetCurrentGenericTraceResults() const { return this->CurrentGenericTraceResults; }
-    bool TraceFromEyeByChannel( // TODO
-        TArray<LHitResult>& OutHits,
-        const float DistanceInMeters,
-        const ECollisionChannel::Type Channel,
-        const LCollisionQueryParams& Params
-    ) const { return false; }
+    // FORCEINLINE auto const& GetCurrentGenericTraceResults() const { return this->CurrentGenericTraceResults; }
+    // bool TraceFromEyeByChannel( // TODO
+    //     TArray<LHitResult>& OutHits,
+    //     const float DistanceInMeters,
+    //     const ECollisionChannel::Type Channel,
+    //     const LCollisionQueryParams& Params
+    // ) const { return false; }
 
 private:
 
-#if WITH_LOCAL_LAYER
-    LEye Eye;
-#endif /* WITH_LOCAL_LAYER */
+    APersonaController* OwningController{};
 
-    void UpdateRelativeVectors();
-    LVector RelativeFront = LVector::ForwardVector;
-    LVector RelativeRight = LVector::RightVector;
-    LVector RelativeUp    = LVector::UpVector;
+    //# The root scene component that specifies the actual transform for this pawn.
+    JSceneComponent* RootComponent{};
 
-    APersonaController* OwningController = nullptr;
+    //# Vertical fov in degrees.
+    f32 DegYFov{ 60.0f };
+    f32 NearFrustum{ 0.1f };
+    f32 FarFrustum{ 1.0f };
 
-    f32  MovementSpeed    = 2.5f;
+    // TArray<LHitResult> CurrentGenericTraceResults;
+
+    // f32  MovementSpeed    = 2.5f;
     f32  MouseSensitivity = 0.1f;
     f64  LastMouseX       = 0.0;
     f64  LastMouseY       = 0.0;
     bool bFirstMouseCallback = true;
 
-    TArray<LHitResult> CurrentGenericTraceResults;
 };
 
 } /* ~Namespace Jafg */

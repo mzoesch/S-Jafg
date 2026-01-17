@@ -48,16 +48,14 @@ void Jafg::LViewport::ClearInvalidWidgets()
     return;
 }
 
-void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCursorLocation)
+void Jafg::LViewport::DispatchInputs(LSurface& Surface, TOptional<LVector2D> const& CursorLocation)
 {
-    check( &this->Surface == &Context )
+    check( &this->Surface == &Surface )
     this->SweepTranslation = LVector2D::ZeroVector;
 
-    const bool bCursorLocationIsMeaningful { InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f };
-
-    if (bCursorLocationIsMeaningful)
+    if (CursorLocation.has_value())
     {
-        this->CachedCursorLocation = InCursorLocation;
+        this->CachedCursorLocation = CursorLocation.value();
     }
     else
     {
@@ -65,7 +63,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
     }
 
     this->LastFrameHoveredWidgets = this->HoveredWidgets;
-    if (bCursorLocationIsMeaningful)
+    if (CursorLocation.has_value())
     {
         this->HoveredWidgets.clear();
     }
@@ -73,7 +71,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
     LCursorReply SweepReply;
 
     /* Sweep cursor input over widgets. */
-    if (bCursorLocationIsMeaningful)
+    if (CursorLocation.has_value())
     {
         for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
         {
@@ -82,7 +80,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
                 continue;
             }
 
-            if (LCursorReply Reply{ (*It)->SweepMouse(*this, InCursorLocation) }; Reply.IsHandled())
+            if (LCursorReply Reply{ (*It)->SweepMouse(*this, CursorLocation.value()) }; Reply.IsHandled())
             {
                 SweepReply = std::move(Reply);
                 break;
@@ -93,7 +91,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
     }
 
     /* Check for cursor leave events. */
-    if (bCursorLocationIsMeaningful)
+    if (CursorLocation.has_value())
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
         for (auto& Node : this->LastFrameHoveredWidgets)
@@ -110,7 +108,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
         }
         if (MostRecentReply.IsHandled())
         {
-            this->HandleReply(Context, MostRecentReply);
+            this->HandleReply(Surface, MostRecentReply);
         }
     }
 
@@ -121,11 +119,11 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
      */
     if (SweepReply.IsHandled())
     {
-        this->HandleReply(Context, SweepReply);
+        this->HandleReply(Surface, SweepReply);
     }
 
     /* Check for left-mouse-button down events to focus on another widget. */
-    if (bCursorLocationIsMeaningful && Context.IsNewKeyDown(EKeys::LeftMouseButton))
+    if (CursorLocation.has_value() && Surface.IsNewKeyDown(EKeys::LeftMouseButton))
     {
         bool bIsHandled { false };
         for (auto& Widget : this->HoveredWidgets)
@@ -135,9 +133,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
                 continue;
             }
 
-            if (const LReply Reply{ Widget->SweepFocusTest(*this, InCursorLocation) }; Reply.IsHandled())
+            if (const LReply Reply{ Widget->SweepFocusTest(*this, CursorLocation.value()) }; Reply.IsHandled())
             {
-                this->HandleReply(Context, Reply);
+                this->HandleReply(Surface, Reply);
                 bIsHandled = true;
                 break;
             }
@@ -146,7 +144,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
         }
         if (bIsHandled == false)
         {
-            this->HandleReply(Context, LReply::HandledWithFocusLost());
+            this->HandleReply(Surface, LReply::HandledWithFocusLost());
         }
     }
 
@@ -174,9 +172,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
     }
 
     /* Check for key down events. */
-    for (const LRawInput& Input : Context.GetCurrentlyPressedKeys())
+    for (const LRawInput& Input : Surface.GetCurrentlyPressedKeys())
     {
-        if (Input.bRepeated == false && Context.IsNewKeyDown(Input) == false)
+        if (Input.bRepeated == false && Surface.IsNewKeyDown(Input) == false)
         {
             continue;
         }
@@ -185,12 +183,12 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
         {
             if (const LReply Reply { this->FocusedWidget->OnKeyDown(*this, Input) }; Reply.IsHandled())
             {
-                this->HandleReply(Context, Reply);
+                this->HandleReply(Surface, Reply);
                 continue;
             }
         }
 
-        if (bCursorLocationIsMeaningful)
+        if (CursorLocation.has_value())
         {
             for (auto It{ this->TopLevelWidgets.rbegin() }; It != this->TopLevelWidgets.rend(); ++It)
             {
@@ -199,14 +197,14 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
                     continue;
                 }
 
-                if ((*It)->IsInBounds(*this, InCursorLocation) == false)
+                if ((*It)->IsInBounds(*this, CursorLocation.value()) == false)
                 {
                     continue;
                 }
 
                 if (const LReply Reply { (*It)->OnKeyDownNoFocus(*this, Input) }; Reply.IsHandled())
                 {
-                    this->HandleReply(Context, Reply);
+                    this->HandleReply(Surface, Reply);
                     break;
                 }
 
@@ -218,9 +216,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
     }
 
     /* Check for key up events. */
-    for (const LRawInput& Input : Context.GetLastFramePressedKeys())
+    for (const LRawInput& Input : Surface.GetLastFramePressedKeys())
     {
-        if (Context.IsKeyUp(Input) == false)
+        if (Surface.IsKeyUp(Input) == false)
         {
             continue;
         }
@@ -229,12 +227,12 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
         {
             if (const LReply Reply { this->FocusedWidget->OnKeyUp(*this, Input) }; Reply.IsHandled())
             {
-                this->HandleReply(Context, Reply);
+                this->HandleReply(Surface, Reply);
                 continue;
             }
         }
 
-        if (bCursorLocationIsMeaningful)
+        if (CursorLocation.has_value())
         {
             for (auto It{ this->TopLevelWidgets.rbegin() }; It != this->TopLevelWidgets.rend(); ++It)
             {
@@ -243,14 +241,14 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2D& InCurso
                     continue;
                 }
 
-                if ((*It)->IsInBounds(*this, InCursorLocation) == false)
+                if ((*It)->IsInBounds(*this, CursorLocation.value()) == false)
                 {
                     continue;
                 }
 
                 if (const LReply Reply { (*It)->OnKeyUpNoFocus(*this, Input) }; Reply.IsHandled())
                 {
-                    this->HandleReply(Context, Reply);
+                    this->HandleReply(Surface, Reply);
                     break;
                 }
 
@@ -300,27 +298,6 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
     return;
 }
 
-void Jafg::LViewport::OnClear()
-{
-    // if
-    // (
-    //        this->BackgroundContexts.empty() == false
-    //     && this->BackgroundContexts[0].World->IsSkyboxValid()
-    // )
-    // {
-    //     this->IntermediateBuffer.MakeDrawTargetAndReset
-    //     (
-    //         this->BackgroundContexts[0].World->GetSkybox().GetBackgroundColor().ToLinearColor()
-    //     );
-    // }
-    // else
-    // {
-    //     this->IntermediateBuffer.MakeDrawTargetAndReset(this->BackgroundColor);
-    // }
-
-    return;
-}
-
 void Jafg::LViewport::Tick()
 {
     STAT_CYCLE_FUNCTION()
@@ -359,23 +336,23 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     );
 
     // RendererStateMachine::PrepareForPerspectivePainting();
-    for (auto const& [Eye, World] : this->PerspectiveViews)
-    {
-        Eye->UpdateViewMatrix();
-
-        // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
-        // {
-        //     checkSlow( Shader && Shader->IsValid() )
-        //     Shader->UpdateWorldUniforms(*this, *World, *Eye);
-        //     continue;
-        // }
-
-        // Info.Surface.GetDimensions()
-
-        World->Draw(Info, *Eye);
-
-        continue;
-    }
+    // for (auto const& [Eye, World] : this->PerspectiveViews)
+    // {
+    //     Eye->UpdateViewMatrix();
+    //
+    //     // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
+    //     // {
+    //     //     checkSlow( Shader && Shader->IsValid() )
+    //     //     Shader->UpdateWorldUniforms(*this, *World, *Eye);
+    //     //     continue;
+    //     // }
+    //
+    //     // Info.Surface.GetDimensions()
+    //
+    //     World->Draw(Info, *Eye);
+    //
+    //     continue;
+    // }
 
     // RendererStateMachine::PrepareForOrthographicPainting();
     // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)

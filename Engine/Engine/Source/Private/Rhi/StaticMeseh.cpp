@@ -72,6 +72,7 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::ReloadModel(
 
 void Jafg::LStaticMesh::LoadToDevice(EUploadHostMemoryBehavior Behavior /* = EUploadHostMemoryBehavior::Free */)
 {
+    check( this->IndexCount == 0 && "Already on device." )
     check( this->Vertices.size() > 0 )
     check( this->Indices.size() > 0 )
 

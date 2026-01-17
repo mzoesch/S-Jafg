@@ -1,7 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/Engine.h"
-#include "Engine/Engine.h"
+#include "System/TextureSubsystem.h"
+#include "System/MeshSubsystem.h"
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
 #include "Async/TickedRunnable.h"
@@ -113,7 +114,7 @@ void Jafg::LEngine::Initialize()
 
             TArray<LString> Out;
 
-            for (Private::LWorldTrack const& Tracks : GEngine->GetTracks())
+            for (auto const& Tracks : GEngine->GetTracks())
             {
                 if (Out.size() >= MaxSuggestions)
                 {
@@ -280,17 +281,17 @@ void Jafg::LEngine::Initialize()
         {
             check( Args.GetArgCount() == 2 )
             LWorld* World { Args[0].GetAs<LWorld>() };
-            LString URL { Args[1].GetAs<LString>() };
+            LString Url { Args[1].GetAs<LString>() };
 
             if (GEngine)
             {
-                GEngine->Browse(World, URL);
+                GEngine->Browse(World, Url);
                 OutResponse->Rc = ECommandReturnCode::Success;
-                OutResponse->StdOut = Lal::SprintF("Browsing to URL [{}] in world [{}]", URL, World->GetHumanReadableName());
+                OutResponse->StdOut = Lal::SprintF("Browsing to URL [{}] in world [{}]", Url, World->GetHumanReadableName());
             }
             else
             {
-                LOG_WARNING(LogEngine, "GEngine is null, cannot browse to URL [{}] in world [{}].", URL, World->GetHumanReadableName())
+                LOG_WARNING(LogEngine, "GEngine is null, cannot browse to URL [{}] in world [{}].", Url, World->GetHumanReadableName())
                 OutResponse->Rc = ECommandReturnCode::SemanticError;
                 OutResponse->StdOut = "GEngine is null, cannot browse";
             }
@@ -378,7 +379,7 @@ void Jafg::LEngine::Tick(const f32 DeltaTime)
     this->LocalEgo.Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
-    for (Private::LWorldTrack& Track : this->Tracks)
+    for (Detail::LWorldTrack& Track : this->Tracks)
     {
         bool bTraveled{ false };
 
@@ -400,7 +401,10 @@ void Jafg::LEngine::Tick(const f32 DeltaTime)
     }
 
 #if WITH_LOCAL_LAYER
-    this->LocalEgo.OnLateTick(DeltaTime);
+    for (auto const& Surface : this->LocalEgo.GetFrontend().GetSurfaces())
+    {
+        Surface->OnRender();
+    }
 #endif /* WITH_LOCAL_LAYER */
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
@@ -438,6 +442,9 @@ void Jafg::LEngine::TearDown()
     this->Collection.TearDownSubsystems();
     this->Outer.TearDown();
     Private::GetGlobalCarnifex().KillAllGarbageChildren();
+
+    GetMutableDefault<JMeshSubsystem>()->PurgeUnused();
+    GetMutableDefault<JTextureSubsystem>()->PurgeUnused();
 
 #if WITH_LOCAL_LAYER
     check( this->LocalEgo.IsDecommissioned() == false )
@@ -586,7 +593,7 @@ void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
     return;
 }
 
-Jafg::Private::LWorldTrack& Jafg::LEngine::GetTrackFromWorld(LWorld const* World)
+Jafg::Detail::LWorldTrack& Jafg::LEngine::GetTrackFromWorld(LWorld const* World)
 {
     check( World )
 
@@ -605,7 +612,7 @@ Jafg::LWorldStorage Jafg::LEngine::SummonWorld(LString const& HumanReadableName)
         LOG_WARNING(LogEngine, "A world with the name [{}] is already summoned.", HumanReadableName)
     }
 
-    this->Tracks.emplace_back(Private::LWorldTrack{HumanReadableName});
+    this->Tracks.emplace_back(Detail::LWorldTrack{HumanReadableName});
     return LWorldStorage{ this->Tracks.back().ChildWorld.get() };
 }
 
@@ -646,7 +653,7 @@ bool Jafg::LEngine::RegisterLevel(LLevel&& Level)
     return true;
 }
 
-void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url, TFunction<void(LWorld&)>&& PreInitCallback, TFunction<void(LWorld&)>&& PostInitCallback)
+void Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LString const& Url, Detail::LWorldTrack::LCallbacks Callbacks)
 {
     check( Track.ChildWorld.get() )
     check( Track.TravelUrl.empty() )
@@ -675,8 +682,7 @@ void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url, TFun
     }
 
     Track.TravelUrl = Url;
-    Track.OnWorldPreInit = std::move(PreInitCallback);
-    Track.OnWorldLateInit =  std::move(PostInitCallback);
+    Track.Callbacks = std::move(Callbacks);
 
     return;
 }
@@ -692,7 +698,7 @@ bool Jafg::LEngine::IsTrackUrlInternal(LString const& Url) const
     return true;
 }
 
-bool Jafg::LEngine::TravelTrack(Private::LWorldTrack& Track)
+bool Jafg::LEngine::TravelTrack(Detail::LWorldTrack& Track)
 {
     check( Track.ChildWorld.get() )
     check( Track.IsWaitingForTravel() )

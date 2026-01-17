@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Rhi.h"
+#include "Rhi/Image.h"
 #include "System/EnginePath.h"
 #include "Engine/CxxClass.h"
 #include "TextureSubsystem.generated.h"
@@ -30,9 +30,9 @@ public:
     //# Removes all loaded textures that are not referenced anymore.
     void PurgeUnused() noexcept;
 
-    LImage GetImage(LString const& Ident) const
+    LImage GetImage(LString const& Ident, const bool bStage = true) const
     {
-        return LImage{this->GetTexture(nullptr, Ident, {}, ETextureLoadFlagBits::Default)};
+        return LImage{this->GetTexture(nullptr, Ident, {}, bStage ? ETextureLoadFlagBits::Stage : ETextureLoadFlagBits::Default)};
     }
     LImage GetImage(LPath const& Path, LTexture2::LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Load) const
     {
@@ -43,11 +43,11 @@ public:
         return this->GetImage(Path.ResolvePath(), Meta, Flags);
     }
 
-    void AddImage(LImage const& Image, LString const& Ident) const noexcept
+    inline void AddImage(LImage const& Image, LString const& Ident) const noexcept
     {
         check( Image.HasTexture() )
         check( this->Textures.contains(Ident) == false )
-        this->Textures.emplace(Ident, Image.GetNewTextureHandle());
+        this->Textures.emplace(Ident, Image.GetNewHandle());
         return;
     }
 

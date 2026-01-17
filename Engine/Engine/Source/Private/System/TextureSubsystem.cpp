@@ -31,7 +31,7 @@ std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(
     check( Ident.empty() == false )
     check( static_cast<bool>(Flags & ETextureLoadFlagBits::Stage) ? static_cast<bool>(Flags & ETextureLoadFlagBits::Load) : true )
 
-    if (auto const& It{ this->Textures.find(Ident) }; It != this->Textures.end())
+    if (auto const& It{this->Textures.find(Ident)}; It != this->Textures.end())
     {
         check( It->second->GetFormat() == Meta.Format )
 
@@ -53,7 +53,7 @@ std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(
     }
 
     this->Textures[Ident] = std::make_unique<LTexture2>(*Path, Meta, Flags);
-    auto& Reference{ this->Textures[Ident] };
+    auto& Reference{this->Textures[Ident]};
     return Reference;
 
 }

@@ -28,31 +28,40 @@ void Jafg::LUserInput::DispatchInputDelegates(LSurface& Surface)
     TArray OngoingKeys{ Surface.GetOngoingKeys() };
     TArray CompletedKeys{ Surface.GetCompletedKeys() };
 
-    this->DispatchInputDelegatesForKeyCategory(Surface, &TriggeredKeys, EInputActionTrigger::Triggered);
-    this->DispatchInputDelegatesForKeyCategory(Surface, &OngoingKeys,   EInputActionTrigger::Ongoing);
-    this->DispatchInputDelegatesForKeyCategory(Surface, &CompletedKeys, EInputActionTrigger::Completed);
+    if (TriggeredKeys.empty() == false)
+    {
+        this->DispatchInputDelegatesForKeyCategory(Surface, &TriggeredKeys, EInputActionTrigger::Triggered);
+    }
+    if (OngoingKeys.empty() == false)
+    {
+        this->DispatchInputDelegatesForKeyCategory(Surface, &OngoingKeys,   EInputActionTrigger::Ongoing);
+    }
+    if (CompletedKeys.empty() == false)
+    {
+        this->DispatchInputDelegatesForKeyCategory(Surface, &CompletedKeys, EInputActionTrigger::Completed);
+    }
 
     return;
 }
 
-bool Jafg::LUserInput::ActivateContext(LName Name, LSize Where /* = INDEX_NONE */) noexcept
+bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, LSize Where /* = INDEX_NONE */) noexcept
 {
-    check( Name.IsSet() )
+    check( Tag.IsSet() )
 
-    if (algo::contains(this->ActiveContexts, Name))
+    if (algo::contains(this->ActiveContexts, Tag))
     {
-        LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", Name)
+        LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", Tag.ToString())
         return false;
     }
 
-    LOG_VERBOSE(LogUserInput, "Activating context [{}].", Name)
+    LOG_VERBOSE(LogUserInput, "Activating context [{}].", Tag)
     if (Where == static_cast<decltype(Where)>(INDEX_NONE) || Where >= this->ActiveContexts.size())
     {
-        this->ActiveContexts.emplace_back(Name);
+        this->ActiveContexts.emplace_back(Tag);
     }
     else
     {
-        this->ActiveContexts.insert(this->ActiveContexts.begin() + Where, Name);
+        this->ActiveContexts.insert(this->ActiveContexts.begin() + Where, Tag);
     }
 
     return true;
@@ -64,7 +73,7 @@ bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& 
 
     algo::for_each(Contexts, [this, &Where, &bOut](LUserInputContext const* Context)
     {
-        if (this->ActivateContext(Context->GetName(), Where))
+        if (this->ActivateContext(Context->GetTag(), Where))
         {
             bOut = true;
             ++Where;
@@ -76,13 +85,13 @@ bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& 
     return bOut;
 }
 
-bool Jafg::LUserInput::ActivateContexts(TArray<LName> const& Names, LSize Where) noexcept
+bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputTag> const& Tags, LSize Where) noexcept
 {
     bool bOut{ false };
 
-    algo::for_each(Names, [this, &Where, &bOut](LName Name)
+    algo::for_each(Tags, [this, &Where, &bOut](LUserInputTag Tag)
     {
-        if (this->ActivateContext(Name, Where))
+        if (this->ActivateContext(Tag, Where))
         {
             bOut = true;
             ++Where;
@@ -100,7 +109,7 @@ bool Jafg::LUserInput::ActivateContexts(TArray<LStringView> const& Names, LSize 
 
     algo::for_each(Names, [this, &Where, &bOut](LStringView Name)
     {
-        if (this->ActivateContext(GET_NAME(Name), Where))
+        if (this->ActivateContext(LUserInputTag::ToTag(Name), Where))
         {
             bOut = true;
             ++Where;
@@ -112,18 +121,18 @@ bool Jafg::LUserInput::ActivateContexts(TArray<LStringView> const& Names, LSize 
     return bOut;
 }
 
-bool Jafg::LUserInput::DeactivateContext(LName Name) noexcept
+bool Jafg::LUserInput::DeactivateContext(LUserInputTag Tag) noexcept
 {
-    check( Name.IsSet() )
+    check( Tag.IsSet() )
 
-    if (algo::contains(this->ActiveContexts, Name) == false)
+    if (algo::contains(this->ActiveContexts, Tag) == false)
     {
-        LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", Name)
+        LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", Tag)
         return false;
     }
 
-    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", Name)
-    auto Removed{ algo::erase(&this->ActiveContexts, Name) };
+    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", Tag)
+    auto Removed{ algo::erase(&this->ActiveContexts, Tag) };
     check( Removed == 1 )
 
     return true;
@@ -135,7 +144,7 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LUserInputContext const*> const
 
     algo::for_each(Contexts, [this, &bOut](LUserInputContext const* InContext)
     {
-        if (this->DeactivateContext(InContext->GetName()))
+        if (this->DeactivateContext(InContext->GetTag()))
         {
             bOut = true;
         }
@@ -146,13 +155,13 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LUserInputContext const*> const
     return bOut;
 }
 
-bool Jafg::LUserInput::DeactivateContexts(TArray<LName> const& Contexts) noexcept
+bool Jafg::LUserInput::DeactivateContexts(TArray<LUserInputTag> const& Contexts) noexcept
 {
     bool bOut{ false };
 
-    algo::for_each(Contexts, [this, &bOut](LName Name)
+    algo::for_each(Contexts, [this, &bOut](LUserInputTag Tag)
     {
-        if (this->DeactivateContext(Name))
+        if (this->DeactivateContext(Tag))
         {
             bOut = true;
         }
@@ -169,7 +178,7 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LStringView> const& Contexts) n
 
     algo::for_each(Contexts, [this, &bOut](LStringView Name)
     {
-        if (this->DeactivateContext(GET_NAME(Name)))
+        if (this->DeactivateContext(LUserInputTag::ToTag(Name)))
         {
             bOut = true;
         }
@@ -243,7 +252,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
                     continue;
                 }
 
-                LInputActionValue Value{ Registry.GetActionByNameChecked(Action.Action)->GetCategory() };
+                LInputActionValue Value{ Registry.GetActionByNameChecked(Action.ActionTag)->GetCategory() };
                 for (auto It{ Inputs->begin() }; It != Inputs->end();)
                 {
                     LInputActionValue::Axis3D Magnitude;

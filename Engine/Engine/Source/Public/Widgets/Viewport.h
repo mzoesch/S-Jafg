@@ -11,15 +11,8 @@ namespace Jafg
 
 class WNode;
 class WUserWidget;
-class LEye;
 class LWorld;
 struct LRenderInfo;
-
-struct LPerspectiveView final
-{
-    LEye* Eye{};
-    LWorld* World{};
-};
 
 //# @see #LViewport::ApplySweepTranslation.
 struct LViewportSweepTranslation final
@@ -47,9 +40,8 @@ public:
     ~LViewport() { this->TearDown(); }
 
     void ClearInvalidWidgets();
-    void DispatchInputs(LSurface& Context, const LVector2D& InCursorLocation);
+    void DispatchInputs(LSurface& Surface, TOptional<LVector2D> const& CursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
-    void OnClear();
     void Tick();
     void Draw(LRenderInfo const& Info);
     void TearDown();
@@ -153,8 +145,6 @@ public:
     }
     FORCEINLINE void PushFrameCull(LVector4D const& CullDimensions) noexcept { this->FrameCulls.emplace_back(CullDimensions); }
     FORCEINLINE void PopFrameCull() noexcept { this->FrameCulls.pop_back(); }
-
-    TArray<LPerspectiveView> PerspectiveViews;
 
     FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
     FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }

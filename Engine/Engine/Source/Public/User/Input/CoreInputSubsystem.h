@@ -22,8 +22,6 @@ protected:
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
 
-    virtual void OnNewPawnPossessed(APawn* InOld, APawn* InNew) override;
-
 private:
 
     void OnDebugScreenToggle(LInputActionValue& InValue) const;

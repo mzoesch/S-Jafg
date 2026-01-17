@@ -13,7 +13,7 @@ void Jafg::JWorldObject::BeginLife()
     (
         bool bFound{ false };
 
-        for (Private::LWorldTrack const& Track : GEngine->GetTracks())
+        for (auto const& Track : GEngine->GetTracks())
         {
             check( Track.ChildWorld.get() )
             if (Track.ChildWorld.get() == this->GetOuter())

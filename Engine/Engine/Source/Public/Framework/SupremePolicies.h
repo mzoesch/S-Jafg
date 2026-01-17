@@ -30,7 +30,7 @@ public:
     //# Called late in the world initialization phase, after all subsystems have been initialized.
     //# But still before #LTrack::OnWorldPostInit.
     //#
-    virtual void OnWorldLateInit() {}
+    // virtual void OnWorldLateInit() {}
 
     //#
     //# The last hook to customize world initialization.

@@ -99,7 +99,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
 
     const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
-    auto* Action = GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByNameChecked(Self->GetName());
+    auto* Action = GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByNameChecked(Self->GetDisplayName());
     auto& Contexts = GEngine->GetLocalEgo().GetUserInputRegistry().GetRegisteredContexts();
 
     NewNodeCtx(Target, WVRegion).SaveTo(&Container)
@@ -127,7 +127,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
 
     for (auto& Context : Contexts)
     {
-        const LInputMappedAction* MappedAction = Context.FindMappedAction(Action->GetName());
+        const LInputMappedAction* MappedAction = Context.FindMappedAction(Action->GetTag());
         if (MappedAction == nullptr)
         {
             continue;
@@ -135,7 +135,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
 
         if (MappedAction->Triggers.empty())
         {
-            LOG_WARNING(LogPreferences, "Mapped action [{}] has no triggers.", Action->GetName())
+            LOG_WARNING(LogPreferences, "Mapped action [{}] has no triggers.", Action->GetTag())
             continue;
         }
 

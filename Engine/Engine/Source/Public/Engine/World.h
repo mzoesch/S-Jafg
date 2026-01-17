@@ -24,10 +24,10 @@ class JWorldSubsystem;
 class LTickableObject;
 class APersonaController;
 class APawn;
-class LEye;
 class LCommandLineInterface;
 class LWorld;
 class JSupremePolicies;
+struct LEye_v2;
 struct LLevel;
 struct LSubsystemCollection;
 struct LRenderInfo;
@@ -214,9 +214,9 @@ public:
     FORCEINLINE EWorldState::Type GetWorldState() const noexcept { return this->WorldState; }
 
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
-    void Tick(const f32 DeltaTime);
+    void Tick(const f32 Dt);
 
-    void Draw(LRenderInfo const& Info, LEye const& Eye) const;
+    void Draw(LRenderInfo const& Info) const;
 
     ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
 

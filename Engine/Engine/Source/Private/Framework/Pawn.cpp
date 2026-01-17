@@ -1,23 +1,27 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/Pawn.h"
+#include "User/UserPreferences.h"
 #include "User/Input/InputActionValue.h"
 #include "Framework/PersonaController.h"
 #include "Engine/Engine.h"
+#include "Components/SceneComponent.h"
 
-Jafg::APawn::APawn(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
+void Jafg::APawn::BeginLife()
 {
-    this->SetEverTickConstructorOnlyFlag();
+    Super::BeginLife();
+
+    this->RootComponent = this->EmplaceComponent<JSceneComponent>();
+    this->RootComponent->SetTranslation(LVector3F{});
+
     return;
 }
 
 void Jafg::APawn::Tick(const f32 DeltaTime)
 {
     Super::Tick(DeltaTime);
+    // algo::orphan(&this->CurrentGenericTraceResults);
 
-    this->UpdateRelativeVectors();
-
-    algo::orphan(&this->CurrentGenericTraceResults);
     // const LVector TraceStart = this->GetTranslation();
     // const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
     // this->GetWorld()->LineTraceByChannel
@@ -25,6 +29,7 @@ void Jafg::APawn::Tick(const f32 DeltaTime)
     //     this->CurrentGenericTraceResults, TraceStart, TraceEnd,
     //     ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
     // );
+
 
     return;
 }
@@ -39,6 +44,20 @@ void Jafg::APawn::EndLife()
     }
 
     return;
+}
+
+Jafg::LEye_v2 Jafg::APawn::GetEye_v2() const noexcept
+{
+    check( this->RootComponent )
+    auto Vs{this->RootComponent->GetRelativeVectors()};
+    return {
+        .DegYFov = this->DegYFov,
+        .NearFrustum = this->NearFrustum,
+        .FarFrustum = this->FarFrustum,
+        .Location = this->RootComponent->GetTranslation(),
+        .Front = Vs.Front,
+        .Up = Vs.Up,
+        };
 }
 
 bool Jafg::APawn::IsPossessedLocally() const noexcept
@@ -63,25 +82,10 @@ void Jafg::APawn::SetOwningController(APersonaController* InNew)
 #if WITH_LOCAL_LAYER
     if (InNew)
     {
-        this->Eye.SetOwningPawn(this);
+        this->NearFrustum = InNew->GetLocalEgo().GetVariable_FrustumNearPlane();
+        this->FarFrustum = InNew->GetLocalEgo().GetVariable_FrustumFarPlane();
     }
 #endif /* WITH_LOCAL_LAYER */
-
-    return;
-}
-
-void Jafg::APawn::UpdateRelativeVectors()
-{
-    // this->RelativeFront.X =
-    //     Maths::Cos(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
-    // this->RelativeFront.Y =
-    //     Maths::Sin(Maths::ToRadians(this->GetRotator().Yaw)) * Maths::Cos(Maths::ToRadians(this->GetRotator().Pitch));
-    // this->RelativeFront.Z =
-    //     Maths::Sin(Maths::ToRadians(this->GetRotator().Pitch));
-    // this->RelativeFront.Normalize();
-
-    this->RelativeRight = this->RelativeFront.Cross(LVector::UpVector).NormalizeRet().InvertRet();
-    this->RelativeUp    = this->RelativeRight.Cross(this->RelativeFront).NormalizeRet().InvertRet();
 
     return;
 }

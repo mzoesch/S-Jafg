@@ -31,11 +31,6 @@ public:
     //# Called when the local ego possesses a new controller. Both pointers may be null.
     //#
     virtual void OnNewPersonaControllerPossessed(APersonaController* InOld, APersonaController* InNew) { }
-
-    //#
-    //# Called when the current controller possesses a new pawn. Both pointers may be null.
-    //#
-    virtual void OnNewPawnPossessed(APawn* InOld, APawn* InNew) { }
 };
 
 } /* ~Namespace Jafg */

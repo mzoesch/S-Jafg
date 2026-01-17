@@ -17,10 +17,15 @@ void Jafg::JSupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)
 {
     if (this->bCreatePawn)
     {
+        LOG_VERBOSE(LogWorld, "Creating pawn for controller [{}].", Pc.GetNameAsString())
         auto* Pawn{ this->SpawnDeferredPawnForPersonaController(Pc) };
         check( Pawn )
         Pc.PossessPawn(Pawn);
         MakeDeferredActorFinal(Pawn);
+        LOG_VERBOSE(LogWorld, "Created pawn [{}] for controller [{}].",
+            Pawn->GetNameAsString(),
+            Pc.GetNameAsString()
+            )
     }
 
     return;

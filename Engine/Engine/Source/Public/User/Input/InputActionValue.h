@@ -61,13 +61,14 @@ struct LInputActionValue final
 
     ~LInputActionValue() = default;
 
-    FORCEINLINE bool  IsNonZero() const { return this->Value.SquaredMagnitude() > Maths::Squared(LInputActionValue::ThresholdForInputActionValueTrigger); }
-    FORCEINLINE LReal GetMagnitude() const { return this->Value.Magnitude(); }
-    FORCEINLINE LReal GetSquaredMagnitude() const { return this->Value.SquaredMagnitude(); }
+    FORCEINLINE bool  IsNonZero() const noexcept { return this->Value.SquaredMagnitude() > Maths::Squared(LInputActionValue::ThresholdForInputActionValueTrigger); }
+    FORCEINLINE LReal GetMagnitude() const noexcept { return this->Value.Magnitude(); }
+    FORCEINLINE LReal GetSquaredMagnitude() const noexcept { return this->Value.SquaredMagnitude(); }
 
-    FORCEINLINE Axis0D GetBooleanValue() const { return this->IsNonZero(); }
-    FORCEINLINE Axis1D GetAxis1DValue() const { return this->Value.X; }
-    FORCEINLINE Axis2D GetAxis2DValue() const { return this->Value.XY(); }
+    FORCEINLINE Axis0D GetBooleanValue() const noexcept { check( this->ValueType == EInputActionCategory::Boolean ) return this->IsNonZero(); }
+    FORCEINLINE Axis1D GetAxis1DValue() const noexcept { check( this->ValueType == EInputActionCategory::Axis1D ) return this->Value.X; }
+    FORCEINLINE Axis2D GetAxis2DValue() const noexcept { check( this->ValueType == EInputActionCategory::Axis2D ) return this->Value.XY(); }
+    FORCEINLINE Axis3D GetAxis3DValue() const noexcept { check( this->ValueType == EInputActionCategory::Axis3D ) return this->Value; }
     FORCEINLINE Axis3D GetRawValue() const { return this->Value; }
     FORCEINLINE EInputActionCategory::Type GetValueType() const { return this->ValueType; }
 
@@ -135,9 +136,13 @@ FORCEINLINE LString LInputActionValue::ToString() const
     {
         return Lal::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
     }
+    if (this->ValueType == EInputActionCategory::Axis3D)
+    {
+        return Lal::SprintF("{:.3f},{:.3f},{:.3f}", this->Value.X, this->Value.Y, this->Value.Z);
+    }
 
     checkNoEntry()
-    return { };
+    return {};
 }
 
 } /* ~Namespace Jafg */

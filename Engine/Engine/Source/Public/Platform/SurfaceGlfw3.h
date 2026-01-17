@@ -44,11 +44,8 @@ public:
     //# Vk specific setup methods that may only be called after vk was fully initialized in the frontend.
     void LateSetupVk();
 
-    void OnClear();
-    void OnUpdate();
-    NODISCARD FORCEINLINE bool IsValid() noexcept { return this->Handle != nullptr; }
-    void PollEvents();
-    void PollInputs();
+    void PollPlatformEvents();
+    void OnRender();
 
     ENGINE_API void SetInputMode(EInputMode::Type InMode) noexcept;
     ENGINE_API void _SetMouseCursor(const EMouseCursor::Type InCursor);

@@ -1,14 +1,25 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Components/StaticMeshComponent.h"
+#include "System/MeshSubsystem.h"
 #include "System/TextureSubsystem.h"
 #include "Framework/Frontend.h"
 
-Jafg::LStaticMeshComponent::LStaticMeshComponent(LCreateInfo const& Info)
-    : Mesh{Info.MeshPath, Info.MeshLoadBehavior, Info.MeshHostMemoryBehavior}
+static LMatrix4F Model(LTransformF Transform)
 {
-    this->SetShouldRender(Info.bRender);
+    LMatrix4F M;
 
+    M.Matrix[3][0] = Transform.Translation.X;
+    M.Matrix[3][1] = -Transform.Translation.Y;
+    M.Matrix[3][2] = Transform.Translation.Z;
+
+    return M;
+}
+
+void Jafg::JStaticMeshComponent::CreateImpl(LCreateInfo const& Info)
+{
+    this->Mesh = GetDefault<JMeshSubsystem>()->GetMesh(Info.MeshPath, Info.MeshLoadBehavior, Info.MeshHostMemoryBehavior);
+    this->SetShouldRender(Info.bRender);
     if (Info.TexturePath.empty() == false)
     {
         this->Image = GetDefault<JTextureSubsystem>()->GetImage(
@@ -21,7 +32,7 @@ Jafg::LStaticMeshComponent::LStaticMeshComponent(LCreateInfo const& Info)
     return;
 }
 
-void Jafg::LStaticMeshComponent::Render(LRenderInfo const& Info, LEye const& Eye) noexcept
+void Jafg::JStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
 {
     auto& Pipeline{Info.Frontend.Vk_GetPipelines().at({LStaticMesh::DefaultShader})};
 
@@ -71,8 +82,11 @@ void Jafg::LStaticMeshComponent::Render(LRenderInfo const& Info, LEye const& Eye
         .pDynamicOffsets = nullptr
         });
 
-    LStaticMesh::LRootLocation{}.Push(Info, Pipeline);
-    this->Mesh.DrawIndex(Info);
+    LStaticMesh::LRootLocation
+    {
+        .Model = ::Model(this->GetTransform())}
+        .Push(Info, Pipeline);
+    this->Mesh.GetMesh().DrawIndex(Info);
 
     return;
 }

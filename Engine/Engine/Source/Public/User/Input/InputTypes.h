@@ -3,9 +3,30 @@
 #pragma once
 
 #include "Lal.afx"
+#include "Misc/Tag.h"
 
 namespace Jafg
 {
+
+struct LUserInputTag : public Lal::TTag<u16>
+{
+    using Super = Lal::TTag<u16>;
+    using Super::Super;
+    //# Convert the range of characters to a tag.
+    ENGINE_API static LUserInputTag ToTag(LStringView S) noexcept;
+    //#
+    //# Get the tag version of the range of characters.
+    //# @return LUserInputTag::NO_TAG if S does not map to a tag.
+    //#
+    ENGINE_API static LUserInputTag AsTag(LStringView S);
+    FORCEINLINE static LUserInputTag AsTagChecked(LStringView S)
+    {
+        auto Tag{LUserInputTag::AsTag(S)};
+        check( Tag.IsSet() )
+        return Tag;
+    }
+    ENGINE_API LString ToString() const noexcept;
+};
 
 typedef u8 LKey;
 
@@ -23,6 +44,7 @@ namespace EKeys
 
 inline constexpr LKey KeyBegin                  {   0 };
 inline constexpr LKey KeyEnd                    { 255 };
+inline constexpr LKey FirstKey                  {   1 };
 inline constexpr LKey LastKey                   { 114 };
 /* Statically assert this so that in the future we do not forget to change begin and end - when changing the type. */
 static_assert(sizeof(LKey) == 1, "LKey must be 1 byte in size.");
@@ -166,3 +188,17 @@ inline constexpr LKey PlatformDelete            { EKeys::KeyEnd };
 } /* Namespace EKeys */
 
 } /* Namespace Jafg */
+
+template<>
+struct std::formatter<Jafg::LUserInputTag> : std::formatter<LString>
+{
+    FORCEINLINE auto format
+    (
+        const Jafg::LUserInputTag InTag,
+        ::std::format_context& InContext
+    ) const -> ::std::format_context::iterator
+    {
+        return ::std::formatter<LString>::format(InTag.ToString(), InContext);
+    }
+};
+

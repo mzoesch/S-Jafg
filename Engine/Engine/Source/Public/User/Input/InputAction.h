@@ -17,43 +17,38 @@ namespace Jafg
 //#
 struct LInputAction final
 {
-    LInputAction() noexcept = default;
-
+    constexpr LInputAction() noexcept = default;
     LInputAction
     (
-        const LName InName,
+        const LUserInputTag InName,
         const EInputActionCategory::Type InCategory
     ) noexcept
-        : Name(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())), Category(InCategory) {  }
-
+        : Tag(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())), Category(InCategory) {  }
     LInputAction
     (
-        LName InName,
+        LUserInputTag InName,
         LString InDisplayName,
         const EInputActionCategory::Type InCategory
     ) noexcept
-        : Name(std::move(InName)), DisplayName(std::move(InDisplayName)), Category(InCategory) { }
-
+        : Tag(std::move(InName)), DisplayName(std::move(InDisplayName)), Category(InCategory) { }
     LInputAction
     (
         LStringView InDisplayName,
         const EInputActionCategory::Type InCategory
     ) noexcept
-        : Name(MAKE_NAME(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
-
+        : Tag(LUserInputTag::ToTag(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
     DEFAULT_REALLOC_OF_ANY_FORM(LInputAction)
-
     ~LInputAction() noexcept = default;
 
-    FORCEINLINE bool operator==(LInputAction const& Other) const noexcept { return this->Name == Other.Name; }
+    FORCEINLINE bool operator==(LInputAction const& Other) const noexcept { return this->Tag == Other.Tag; }
 
-    FORCEINLINE LName const& GetName() const noexcept { return this->Name; }
+    FORCEINLINE LUserInputTag const& GetTag() const noexcept { return this->Tag; }
     FORCEINLINE LString const& GetDisplayName() const noexcept { return this->DisplayName; }
     FORCEINLINE EInputActionCategory::Type GetCategory() const noexcept { return this->Category; }
 
 private:
 
-    LName Name;
+    LUserInputTag Tag;
     LString DisplayName;
     EInputActionCategory::Type Category{ EInputActionCategory::None };
 };

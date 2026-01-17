@@ -35,7 +35,6 @@ public:
 
     void Initialize();
     void Tick(const f32 DeltaTime);
-    void OnLateTick(const f32 DeltaTime);
     void TearDown();
 
     FORCEINLINE LFrontend& GetFrontend() noexcept { return this->Frontend; }
@@ -85,8 +84,6 @@ private:
     LCliVariableHandle VariableHandle_VisualizeFrustum;
     LCliVariableHandle VariableHandle_FrustumNearPlane;
     LCliVariableHandle VariableHandle_FrustumFarPlane;
-
-    LCliVariableHandle VariableHandle_VerifyChunks;
 };
 
 } /* ~Namespace Jafg */

@@ -45,6 +45,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogClassOuter,                   LAL_LOG_DEFAULT_VE
 DECLARE_INLINE_LOG_CATEGORY( LogCli,                          LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogConfigIo,                     LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogController,                   LAL_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogEcs,                          LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogEgo,                          LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogEngine,                       LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogFontSubsystem,                LAL_LOG_DEFAULT_VERBOSITY                             )

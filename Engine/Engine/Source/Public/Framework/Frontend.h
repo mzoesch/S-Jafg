@@ -81,7 +81,6 @@ public:
 
     void Initialize(LClassOuter* Outer) {}
     void Tick();
-    void OnUpdate();
     void TearDown();
 
     ENGINE_API LEngine&   GetEngine() const noexceptcheck;

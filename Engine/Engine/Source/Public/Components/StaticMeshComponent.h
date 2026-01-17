@@ -3,14 +3,22 @@
 #pragma once
 
 #include "Components/SceneComponent.h"
-#include "Rhi/StaticMesh.h"
+#include "Rhi/StaticMeshRef.h"
 #include "Rhi/Image.h"
+#include "StaticMeshComponent.generated.h"
 
 namespace Jafg
 {
 
-class ENGINE_API LStaticMeshComponent : public LSceneComponent
+DECLARE_JAFG_CLASS()
+class ENGINE_API JStaticMeshComponent : public JSceneComponent
 {
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JStaticMeshComponent)
+
 public:
 
     struct LCreateInfo
@@ -26,14 +34,20 @@ public:
         ETextureLoadFlags TextureLoadFlags{ ETextureLoadFlagBits::Load | ETextureLoadFlagBits::Stage };
     };
 
-    explicit LStaticMeshComponent(LCreateInfo const& Info);
+     decltype(auto) Create(this auto&& Self, LCreateInfo const& Info)
+     {
+         Self.CreateImpl(Info);
+         return std::forward<decltype(Self)>(Self);
+     }
 
-    virtual void Render(LRenderInfo const& Info, LEye const& Eye) noexcept override;
+    virtual void Render(LRenderInfo const& Info) noexcept override;
 
 private:
 
+    void CreateImpl(LCreateInfo const& Info);
+
     LImage Image;
-    LStaticMesh Mesh;
+    LStaticMeshRef Mesh;
 };
 
 } /* ~Namespace Jafg */

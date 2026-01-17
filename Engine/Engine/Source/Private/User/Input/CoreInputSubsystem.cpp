@@ -19,31 +19,31 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
     LUserInputRegistry& Registry{ this->GetLocalEgo().GetUserInputRegistry() };
 
-    if (LUserInputContext* Context{ Registry.RegisterContext(LUserInputContext{Name_UicInOmni, "Omni Context"}) })
-    {
-        // Action: OpenConsole
-        Context->MapAction(
-            &Registry,
-            {Name_UsrInOpenConsole, "Open Console", EInputActionCategory::Boolean},
-            "",
-            EKeys::F9,
-            EInputActionTrigger::Triggered,
-            {},
-            [](LViewport& Viewport, LInputActionValue&)
-            {
-                Viewport.GetSurface().SetInputMode(EInputMode::UserInterface | EInputMode::ShowMouseCursor);
-                Viewport.AddWidget<WConsoleWindow>();
-            });
-
-        for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
-        {
-            Surface->GetUserInput().ActivateContext(Context->GetName());
-        }
-    }
-    else
-    {
-        LOG_ERROR(LogUserInput, "Failed to register omni input context.")
-    }
+    // if (LUserInputContext* Context{ Registry.RegisterContext(LUserInputContext{Name_UicInOmni, "Omni Context"}) })
+    // {
+    //     // Action: OpenConsole
+    //     Context->MapAction(
+    //         &Registry,
+    //         {Name_UsrInOpenConsole, "Open Console", EInputActionCategory::Boolean},
+    //         "",
+    //         EKeys::F9,
+    //         EInputActionTrigger::Triggered,
+    //         {},
+    //         [](LViewport& Viewport, LInputActionValue&)
+    //         {
+    //             Viewport.GetSurface().SetInputMode(EInputMode::UserInterface | EInputMode::ShowMouseCursor);
+    //             Viewport.AddWidget<WConsoleWindow>();
+    //         });
+    //
+    //     for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
+    //     {
+    //         Surface->GetUserInput().ActivateContext(Context->GetName());
+    //     }
+    // }
+    // else
+    // {
+    //     LOG_ERROR(LogUserInput, "Failed to register omni input context.")
+    // }
 
     // LUserInputContext* ContextMyWorld     = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorld, "In My World"});
     // LUserInputContext* ContextMyWorldFoot = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorldFoot, "In My World Foot"});
@@ -415,9 +415,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     return;
 }
 
-void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
-{
-    Super::OnNewPawnPossessed(InOld, InNew);
+// void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
+// {
+//     Super::OnNewPawnPossessed(InOld, InNew);
 
     // LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
     // LUserInputContext* ContextInMyWorldFoot{ UserInput.GetContextByNameChecked(Name_UicInMyWorldFoot) };
@@ -441,8 +441,8 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     //     return;
     // }
 
-    return;
-}
+//     return;
+// }
 
 void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue) const
 {

@@ -19,25 +19,19 @@ void Jafg::LFrontendBase::Tick()
 {
     STAT_CYCLE_FUNCTION()
 
-    for (auto& Surface : this->Surfaces)
+    for (auto const& Surface : this->Surfaces)
     {
-        Surface->OnClear();
         Surface->BeginNewFrame();
-        Surface->PollInputs();
-        Surface->PollEvents();
-        Surface->PollVirtualInputs();
-
-        continue;
     }
 
-    for (auto& Surface : this->Surfaces)
+    for (auto const& Surface : this->Surfaces)
     {
         Surface->Tick();
     }
 
     if (this->IsFocusedSurfaceValid())
     {
-        if (auto* Fs{ this->GetFocusedSurface() }; Fs->GetInputMode() & EInputMode::InputSubSystem)
+        if (auto* Fs{this->GetFocusedSurface()}; Fs->GetInputMode() & EInputMode::InputSubSystem)
         {
             Fs->GetUserInput().DispatchInputDelegates(*Fs);
         }
@@ -45,25 +39,11 @@ void Jafg::LFrontendBase::Tick()
 
     this->ForEachMutableSubsystem([](JFrontendSubsystem* E)
     {
-        check( E )
-
         if (E->ShouldTick())
         {
             E->Tick();
         }
-
-        return;
     });
-
-    return;
-}
-
-void Jafg::LFrontendBase::OnUpdate()
-{
-    for (auto& Surface : this->Surfaces)
-    {
-        Surface->OnUpdate();
-    }
 
     return;
 }

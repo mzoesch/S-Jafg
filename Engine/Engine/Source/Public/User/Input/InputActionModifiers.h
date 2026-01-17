@@ -30,7 +30,7 @@ struct LInputActionMappedKeyDeltaTimeModifier;
 //# Factory function to create a modifier of type TModifier.
 //#
 template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
-FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept;
+FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeInputModifier() noexcept;
 
 struct LInputActionMappedTriggerModifier
 {
@@ -75,7 +75,7 @@ struct LInputActionMappedKeyDeltaTimeModifier final : public LInputActionMappedT
 };
 
 template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
-FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept
+FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeInputModifier() noexcept
 {
     return TUnique<LInputActionMappedTriggerModifier>{ new TModifier{} };
 }

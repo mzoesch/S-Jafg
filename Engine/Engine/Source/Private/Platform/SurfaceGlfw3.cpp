@@ -17,7 +17,10 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include <Framework/PersonaController.h>
+#include <Framework/Pawn.h>
+
+#include "Framework/Eye.h"
+#include "Framework/PersonaController.h"
 
 #include "System/TextureSubsystem.h"
 
@@ -30,6 +33,7 @@
 static Jafg::LGraphicsDevicePipeline VkTestPipeline;
 static Jafg::LDeviceBuffer VkTestVertexBuffer;
 static Jafg::LDeviceBuffer VkTestIndexBuffer;
+static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
 
 struct LRhiVertex2D
 {
@@ -97,14 +101,14 @@ struct LGlfw3Bridge final
 
     static void CharCallback(::GLFWwindow* Window, const u32 Codepoint)
     {
-        LOG_WARNING(LogSurface, "Codepoint: {}", Codepoint)
+        // LOG_WARNING(LogSurface, "Codepoint: {}", Codepoint)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
     }
 
     static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
     {
-        LOG_WARNING(LogSurface, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
+        // LOG_WARNING(LogSurface, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
     }
@@ -118,7 +122,7 @@ struct LGlfw3Bridge final
 
     static void MouseButtonCallback(::GLFWwindow* Window, const i32 Button, const i32 Action, const i32 Mods)
     {
-        LOG_WARNING(LogSurface, "Button: {}, Action: {}, Mods: {}", Button, Action, Mods)
+        // LOG_WARNING(LogSurface, "Button: {}, Action: {}, Mods: {}", Button, Action, Mods)
     }
 
     static void CursorEnterCallback(::GLFWwindow* Window, const i32 Entered)
@@ -136,7 +140,7 @@ struct LGlfw3Bridge final
 
     static void ScrollCallback(::GLFWwindow* Window, const f64 XOffset, const f64 YOffset)
     {
-        LOG_WARNING(LogSurface, "XOffset: {}, YOffset: {}", XOffset, YOffset)
+        // LOG_WARNING(LogSurface, "XOffset: {}, YOffset: {}", XOffset, YOffset)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
     }
@@ -307,20 +311,66 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     return;
 }
 
-void Jafg::LSurfaceGlfw3::OnClear()
+void Jafg::LSurfaceGlfw3::PollPlatformEvents()
 {
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-    // glfwMakeContextCurrent(this->Handle);
+    check( this->Handle )
+    check( Tasks::IsOnMasterThread() )
 
-    this->GetViewport().OnClear();
+    if (glfwWindowShouldClose(this->Handle))
+    {
+        GEngine->RequestEngineExit("Window closed by user.");
+    }
+
+    LKey KeyCursor{EKeys::FirstKey};
+    while (KeyCursor <= EKeys::LastKey)
+    {
+        const i32 TranslatedKey = Glfw3::TranslateKeyToGlfw(KeyCursor);
+        if (TranslatedKey == INDEX_NONE)
+        {
+            ++KeyCursor;
+            continue;
+        }
+
+        if (glfwGetKey(this->Handle, TranslatedKey) == GLFW_PRESS)
+        {
+            this->AddKeyDown(KeyCursor);
+
+#if PLATFORM_LINUX
+            if (this->IsPlatformSupportsRepeatedKey() == false && this->IsNewKeyDown(KeyCursor))
+            {
+                Application::LHrcTimePoint Now { Application::GetHighestNow() };
+                this->SetLastPressTimePoint(Now);
+                this->SetCurrentRepeatedKeyInQuestion(KeyCursor);
+                this->Glfw3LastNewKey = TranslatedKey;
+                // this->EmulateContentForBufferedInputGlfw3(TranslatedKey);
+            }
+#endif /* PLATFORM_LINUX */
+        }
+
+        ++KeyCursor;
+
+        continue;
+    }
+
+    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::LeftMouseButton);
+    // }
+    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::RightMouseButton);
+    // }
+    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::MiddleMouseButton);
+    // }
+
+    glfwPollEvents();
 
     return;
 }
 
-static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
-
-void Jafg::LSurfaceGlfw3::OnUpdate()
+void Jafg::LSurfaceGlfw3::OnRender()
 {
     STAT_CYCLE_FUNCTION()
 
@@ -400,21 +450,9 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
         .DescriptorPool = *this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex],
         .Frame = *this->Vk_CurrentFrameInFlightIndex,
         .Image = ImageIndex,
-        .PerspectiveCamera = {
-            .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-            .proj = glm::perspective(glm::radians(45.0f), static_cast<f32>(this->Vk_SwapchainExtent.width) / static_cast<f32>(this->Vk_SwapchainExtent.height), 0.1f, 10.0f),
-            },
-        .PerspectiveCameraWriteInfo = {
-            .buffer = this->Vk_PerspectiveCameraBuffers[*this->Vk_CurrentFrameInFlightIndex].GetBuffer(),
-            .offset = 0,
-            .range = sizeof(decltype(LRenderInfo::PerspectiveCamera))
-            },
+        .PerspectiveCamera = {},
+        .PerspectiveCameraWriteInfo = {},
         };
-    /* Invert Y for Vulkan. */
-    Info.PerspectiveCamera.proj[1][1] *= -1;
-    Info.PerspectiveCamera.Upload(this->Vk_PerspectiveCameraBuffers[Info.Frame]);
-
-    check( Info.CommandBuffer )
 
     Vk_TransitionImageLayout({
         .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -513,10 +551,36 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
 
     Info.CommandBuffer.beginRendering(RenderingInfo);
 
-    Info.CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f,
-        static_cast<f32>(this->Vk_SwapchainExtent.width),
-        static_cast<f32>(this->Vk_SwapchainExtent.height), 0.0f, 1.0f));
+    Info.CommandBuffer.setViewport(0, vk::Viewport{
+        .x = 0.0f,
+        .y = 0.0f,
+        // .y = static_cast<f32>(this->Vk_SwapchainExtent.height),
+        .width = static_cast<f32>(this->Vk_SwapchainExtent.width), .height = static_cast<f32>(this->Vk_SwapchainExtent.height),
+        .minDepth = 0.0f, .maxDepth = 1.0f
+        });
     Info.CommandBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->Vk_SwapchainExtent ) );
+
+    if (this->DoesPossess() && this->GetController()->IsPawnValid())
+    {
+        Info.Eye = this->GetControllerChecked()->GetPawnChecked()->GetEye_v2();
+        auto const& Eye{*Info.Eye};
+        Info.PerspectiveCamera = {
+            .view = Maths::MakeViewMatrix<f32>(Eye.Location, Eye.Location + Eye.Front, LVector3F::UpVector),
+            .proj = Maths::MakePerspectiveProjectionMatrix<f32>(
+                Maths::ToRadians<f32>(Eye.DegYFov),
+                static_cast<f32>(this->Vk_SwapchainExtent.width) / static_cast<f32>(this->Vk_SwapchainExtent.height),
+                Eye.NearFrustum, Eye.FarFrustum
+                ),
+            };
+        Info.PerspectiveCamera.Upload(this->Vk_PerspectiveCameraBuffers[Info.Frame]);
+        Info.PerspectiveCameraWriteInfo = {
+            .buffer = this->Vk_PerspectiveCameraBuffers[*this->Vk_CurrentFrameInFlightIndex].GetBuffer(),
+            .offset = 0,
+            .range = sizeof(decltype(LRenderInfo::PerspectiveCamera))
+            };
+
+        this->GetController()->GetWorld()->Draw(Info);
+    }
 
     this->GetViewport().Draw(Info);
 
@@ -588,77 +652,6 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     return;
 }
 
-void Jafg::LSurfaceGlfw3::PollInputs()
-{
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-    // glfwMakeContextCurrent(this->Handle);
-
-    LKey KeyCursor = EKeys::A;
-    while (KeyCursor <= EKeys::LastKey)
-    {
-        const i32 TranslatedKey = Glfw3::TranslateKeyToGlfw(KeyCursor);
-        if (TranslatedKey == INDEX_NONE)
-        {
-            ++KeyCursor;
-            continue;
-        }
-
-        if (false)//glfwGetKey(this->Handle, TranslatedKey) == GLFW_PRESS)
-        {
-            this->AddKeyDown(KeyCursor);
-
-#if PLATFORM_LINUX
-            if (this->IsPlatformSupportsRepeatedKey() == false && this->IsNewKeyDown(KeyCursor))
-            {
-                Application::LHrcTimePoint Now { Application::GetHighestNow() };
-                this->SetLastPressTimePoint(Now);
-                this->SetCurrentRepeatedKeyInQuestion(KeyCursor);
-                this->Glfw3LastNewKey = TranslatedKey;
-                // this->EmulateContentForBufferedInputGlfw3(TranslatedKey);
-            }
-#endif /* PLATFORM_LINUX */
-        }
-
-        ++KeyCursor;
-
-        continue;
-    }
-
-    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::LeftMouseButton);
-    // }
-    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::RightMouseButton);
-    // }
-    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::MiddleMouseButton);
-    // }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::PollEvents()
-{
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-    // glfwMakeContextCurrent(this->Handle);
-
-    if (glfwWindowShouldClose(this->Handle))
-    {
-        GEngine->RequestEngineExit("Window closed by user.");
-    }
-    else
-    {
-        glfwPollEvents();
-    }
-
-    return;
-}
-
 void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode::Type InMode) noexcept
 {
     check( this->Handle )
@@ -666,14 +659,16 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode::Type InMode) noexcept
 
     this->InputMode = InMode;
 
-    if (this->IsShowMouseCursor() == false)
+    if (this->IsShowMouseCursor())
+    {
+        glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+    else
     {
         this->MouseLocation.reset();
         this->LastMouseLocation.reset();
+        glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
-
-    // glfwMakeContextCurrent(this->Handle);
-    // glfwSetInputMode(this->Handle, GLFW_CURSOR, this->bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 
     return;
 }
@@ -682,11 +677,16 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(const EMouseCursor::Type InCursor)
 {
     check( Tasks::IsOnMasterThread() )
     check( this->Handle )
-    // glfwMakeContextCurrent(this->Handle);
+
+    LOG_WARNING(LogPlatform, "Setting mouse cursor from to [{}].",
+        LexToString(InCursor)
+        )
+
+    glfwMakeContextCurrent(this->Handle);
 
     if (this->Cursor)
     {
-        //glfwDestroyCursor(this->Cursor);
+        glfwDestroyCursor(this->Cursor);
         this->Cursor = nullptr;
     }
 

@@ -35,10 +35,8 @@ void Jafg::LLocalEgo::Initialize()
                 {
                     if (auto* Pawn{ Controller->GetPawn() })
                     {
-                        Pawn->GetEye().SetNearFrustum(NearFrustum);
-
+                        Pawn->SetNearFrustum(NearFrustum);
                     }
-
                 }
 
                 continue;
@@ -61,7 +59,7 @@ void Jafg::LLocalEgo::Initialize()
                 {
                     if (auto* Pawn{ Controller->GetPawn() })
                     {
-                        Pawn->GetEye().SetFarFrustum(FarFrustum);
+                        Pawn->SetFarFrustum(FarFrustum);
                     }
                 }
 
@@ -71,7 +69,6 @@ void Jafg::LLocalEgo::Initialize()
 
         return;
     })});
-    this->VariableHandle_VerifyChunks = Cli.RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
 
     this->Frontend.Initialize(&this->Outer);
 
@@ -98,11 +95,6 @@ void Jafg::LLocalEgo::Tick(const f32 DeltaTime)
     return;
 }
 
-void Jafg::LLocalEgo::OnLateTick(const f32 DeltaTime)
-{
-    this->Frontend.OnUpdate();
-}
-
 void Jafg::LLocalEgo::TearDown()
 {
     check( GEngine )
@@ -119,7 +111,6 @@ void Jafg::LLocalEgo::TearDown()
     GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
     GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
     GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
-    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VerifyChunks);
 
     return;
 }

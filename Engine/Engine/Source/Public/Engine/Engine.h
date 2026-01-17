@@ -24,7 +24,6 @@ class LEngine;
 class LWorld;
 class JEngineSubsystem;
 class LCommandLineInterface;
-struct LWorldTrack;
 
 } /* ~Namespace Jafg */
 
@@ -66,35 +65,37 @@ FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace Private
+namespace Detail
 {
 
 struct LWorldTrack final
 {
-    LWorldTrack() = delete;
-    LWorldTrack(LWorldTrack&&) = default;
-    LWorldTrack(LString HumanReadableName) noexcept
+    struct LCallbacks
+    {
+        TFunction<void(LWorld&)> OnWorldPreInit;
+        TFunction<void(LWorld&)> OnWorldPostInit;
+    };
+
+    LWorldTrack() noexcept = delete;
+    constexpr LWorldTrack(LWorldTrack&&) noexcept = default;
+    constexpr LWorldTrack(LString HumanReadableName) noexcept
         : ChildWorld{ std::make_unique<LWorld>(std::move(HumanReadableName)) }
     {
         check( this->ChildWorld.get() != nullptr && this->ChildWorld->GetWorldState() == EWorldState::PreInitializing )
     }
-
-    ~LWorldTrack() { check( this->ChildWorld.get() == nullptr || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill ) }
-
-    FORCEINLINE bool IsValid() const { return this->ChildWorld.get() != nullptr; }
-
-    FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
-    LString TravelUrl;
+    constexpr ~LWorldTrack() noexcept { check( this->ChildWorld.get() == nullptr || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill ) }
 
     ENGINE_API void CreateWorldFromParams();
 
-    TUnique<LWorld> ChildWorld;
+    FORCEINLINE bool IsWaitingForTravel() const noexcept { return this->TravelUrl.empty() == false; }
+    LString TravelUrl;
+    LCallbacks Callbacks;
 
-    TFunction<void(LWorld&)> OnWorldPreInit;
-    TFunction<void(LWorld&)> OnWorldLateInit;
+    FORCEINLINE bool IsValid() const noexcept { return this->ChildWorld.get() != nullptr; }
+    TUnique<LWorld> ChildWorld;
 };
 
-} /* ~Namespace Private */
+} /* ~Namespace Detail */
 
 //#
 //# The engine - only one will be valid ever. Access its singleton with #GEngine.
@@ -165,7 +166,7 @@ public:
     // Track Related.
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API Private::LWorldTrack& GetTrackFromWorld(LWorld const* World);
+    ENGINE_API Detail::LWorldTrack& GetTrackFromWorld(LWorld const* World);
 
     //# Summon a completely new fresh world.
     ENGINE_API LWorldStorage SummonWorld(LString const& HumanReadableName);
@@ -179,10 +180,8 @@ public:
     //#    <LevelName>
     //#    <LevelName>?<option>?... (@see #LWorldParameters for how to format options.)
     //#
-    FORCEINLINE void Browse(LWorld const* World, LString const& Url,
-        TFunction<void(LWorld&)>&& PreInitCallback = {},
-        TFunction<void(LWorld&)>&& PostInitCallback = {}
-        ) { this->Browse(this->GetTrackFromWorld(World), Url, std::move(PreInitCallback), std::move(PostInitCallback)); }
+    FORCEINLINE void Browse(LWorld const* World, LString const& Url, Detail::LWorldTrack::LCallbacks Callbacks = {})
+        { this->Browse(this->GetTrackFromWorld(World), Url, std::move(Callbacks)); }
 
     //# @return True if registered successfully.
     ENGINE_API  bool RegisterLevel(LLevel const& Level);
@@ -195,16 +194,16 @@ public:
     //#
     TMulticastDelegate<void(LWorld* InNewWorld)> OnWorldBeginLife;
 
-    FORCEINLINE auto GetTracks() const noexcept -> const TArray<Private::LWorldTrack>& { return this->Tracks; }
-    FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TArray<LLevel>& { return this->RegisteredLevels; }
+    FORCEINLINE auto const& GetTracks() const noexcept { return this->Tracks; }
+    FORCEINLINE auto const& GetRegisteredLevels() const noexcept { return this->RegisteredLevels; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
 private:
 
-    ENGINE_API void Browse(Private::LWorldTrack& Track, LString const& Url, TFunction<void(LWorld&)>&& PreInitCallback, TFunction<void(LWorld&)>&& PostInitCallback);
+    ENGINE_API void Browse(Detail::LWorldTrack& Track, LString const& Url, Detail::LWorldTrack::LCallbacks Callbacks);
     bool IsTrackUrlInternal(LString const& Url) const;
-    bool TravelTrack(Private::LWorldTrack& Track);
+    bool TravelTrack(Detail::LWorldTrack& Track);
     LLevel* GetLevelByInternalUrl(LString const& Url);
 
     //#
@@ -212,7 +211,7 @@ private:
     //# An index of a specific context is not guaranteed to stay the same. Always expect a short
     //# lifetime of the index.
     //#
-    TArray<Private::LWorldTrack> Tracks;
+    TArray<Detail::LWorldTrack> Tracks;
     //# The registered levels that this engine can load.
     TArray<LLevel> RegisteredLevels;
 

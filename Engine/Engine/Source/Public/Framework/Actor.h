@@ -20,6 +20,63 @@ class ENGINE_API AActor : public JWorldObject, public LTickableObject
 
     friend LWorld;
 
+private:
+
+    struct LComponentArray
+    {
+        constexpr LComponentArray() noexcept = default;
+        constexpr LComponentArray(LComponentArray const& Other) noexcept
+        {
+            // TODO: Implement this...
+            check( Other.Elements.empty() && "Currently not possible..." )
+        }
+        constexpr LComponentArray(LComponentArray&& Other) noexcept
+            : Elements(std::move(Other.Elements))
+        {
+            check( Other.Elements.empty() )
+        }
+        constexpr LComponentArray& operator=(LComponentArray&& Rhs) noexcept
+        {
+            this->Elements = std::move(Rhs.Elements);
+            check( Rhs.Elements.empty() )
+            return *this;
+        }
+        constexpr ~LComponentArray() noexcept = default;
+
+        NODISCARD FORCEINLINE constexpr decltype(auto) begin() const noexcept
+        {
+            return this->Elements.begin();
+        }
+        NODISCARD FORCEINLINE constexpr decltype(auto) end() const noexcept
+        {
+            return this->Elements.end();
+        }
+
+        template<typename T> requires std::is_base_of_v<JActorComponent, T>
+        inline decltype(auto) emplace_back_deferred(LClassOuter* Outer, TFunction<void(T& Comp)> const& Callback)
+        {
+            T* Comp{static_cast<T*>(&*this->Elements.emplace_back(TJxxUnique<T>{NewDeferredObject<T>(Outer)}))};
+            if (Callback.IsValid())
+            {
+                Callback(*Comp);
+            }
+            return Comp;
+        }
+
+        template<typename T> requires std::is_base_of_v<JActorComponent, T>
+        inline decltype(auto) emplace_back(AActor* Who, LClassOuter* Outer, TFunction<void(T& Comp)> const& Callback)
+        {
+            auto* Comp{this->emplace_back_deferred<T>(Outer, Callback)};
+            MakeDeferredObjectFinal(Comp);
+            Comp->OnAttach(Who);
+            return Comp;
+        }
+
+    private:
+
+        TArray<TJxxUnique<JActorComponent>> Elements;
+    };
+
 protected:
 
     DEFAULT_OBJECT_CTOR(AActor)
@@ -27,14 +84,39 @@ protected:
 
 public:
 
-    virtual void BeginLife() override { Super::BeginLife(); }
+    virtual void BeginLife() override;
     virtual void Tick(const f32 DeltaTime) override { check( this->IsGarbage() == false ) }
     virtual void EndLife() override;
 
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
 
-    template<typename T, typename... TArgs> requires std::is_base_of_v<LActorComponent, T> && std::is_constructible_v<T, TArgs...>
-    FORCEINLINE decltype(auto) EmplaceComponent(TArgs&&... Args) noexcept { return this->Components.emplace_back<T>(std::forward<TArgs>(Args)...); }
+    template<typename T> requires std::is_base_of_v<JActorComponent, T>
+    FORCEINLINE T* EmplaceDeferredComponent(TFunction<void(T& Comp)> const& Callback = {}) noexcept
+    {
+        check( this->HasBegunLife() == false && "Deferred component placement is not allowed for already living objects.")
+        return this->Components.emplace_back_deferred<T>(this->GetOuterChecked(), Callback);
+    }
+
+    template<typename T> requires std::is_base_of_v<JActorComponent, T>
+    FORCEINLINE T* EmplaceComponent(TFunction<void(T& Comp)> const& Callback = {}) noexcept
+    {
+        check( this->HasBegunLife() && "Non-deferred component placement is not allowed for living objects.")
+        return this->Components.emplace_back<T>(this, this->GetOuterChecked(), Callback);
+    }
+
+    template<typename T> requires std::is_base_of_v<JActorComponent, T>
+    FORCEINLINE T* GetComponent() const noexcept
+    {
+        for (auto const& Comp : this->Components)
+        {
+            if (Comp->IsA<T>())
+            {
+                return StaticCastChecked<T>(&*Comp);
+            }
+        }
+
+        return {};
+    }
 
     FORCEINLINE auto const& GetComponents() const noexcept { return this->Components; }
 
@@ -44,8 +126,8 @@ public:
 
 protected:
 
-    FORCEINLINE void SetEverTickConstructorOnlyFlag() { this->bCanEverTick = true; }
-    FORCEINLINE void CancelEverTickConstructorOnlyFlag() { this->bCanEverTick = false; }
+    FORCEINLINE void SetEverTickConstructorOnlyFlag() noexcept { this->bCanEverTick = true; }
+    FORCEINLINE void CancelEverTickConstructorOnlyFlag() noexcept { this->bCanEverTick = false; }
 
 private:
 
@@ -57,39 +139,14 @@ private:
     //# This bool flag can only be set in the constructor of the actor - new objects of this class
     //# will not be registered in the context tickable registry.
     //#
-    bool bCanEverTick : 1 = false;
+    bool bCanEverTick:1{false};
 
     //#
     //# Whether this actor should tick now or not. This flag does nothing if bCanEverTick is false.
     //#
-    bool bShouldTick : 1  = true;
+    bool bShouldTick:1{true};
 
-    struct LComponentArray
-    {
-        constexpr LComponentArray() noexcept = default;
-        constexpr LComponentArray(LComponentArray const& Other) noexcept
-        {
-            // TODO: Implement this...
-            check( Other.Elements.empty() && "Currently not possible..." )
-        }
-        constexpr ~LComponentArray() noexcept = default;
-        template<typename T, typename ...TArgs> requires std::is_base_of_v<LActorComponent, T> && std::is_constructible_v<T, TArgs...>
-        inline decltype(auto) emplace_back(TArgs&&... Args) noexcept
-        {
-            return this->Elements.emplace_back(std::make_unique<T>(std::forward<TArgs>(Args)...));
-        }
-
-        NODISCARD FORCEINLINE constexpr decltype(auto) begin() const noexcept
-        {
-            return this->Elements.begin();
-        }
-        NODISCARD FORCEINLINE constexpr decltype(auto) end() const noexcept
-        {
-            return this->Elements.end();
-        }
-
-        TArray<TUnique<LActorComponent>> Elements;
-    } Components;
+    LComponentArray Components;
 };
 
 template<typename TActor> requires(std::is_base_of_v<AActor, TActor>)

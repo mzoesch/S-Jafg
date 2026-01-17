@@ -173,9 +173,9 @@ NODISCARD FORCEINLINE bool AabbsOverlap2D(TVector2<T> const& ALoc, TVector2<T> c
  *         | -R*Eye -U'*Eye  F*Eye    1 |       from Eye to Center.
  */
 template <typename T>
-NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up);
+NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(TVector<T> Eye, TVector<T> Center, const TVector<T>& Up);
 template <typename T>
-FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up);
+FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, TVector<T> Eye, TVector<T> Center, const TVector<T>& Up);
 
 /**
  * An affine transformation to get the transformation for objects to be projected perspectively while keeping the
@@ -458,8 +458,11 @@ NODISCARD FORCEINLINE bool AabbsOverlap2D(TVector2<T> const& ALoc, TVector2<T> c
 }
 
 template <typename T>
-NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up)
+NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(TVector<T> Eye, TVector<T> Center, const TVector<T>& Up)
 {
+    Eye.Y *= -1;
+    Center.Y *= -1;
+
     const TVector<T> F = (Center - Eye).NormalizeRet();
     const TVector<T> R = F.Cross(Up).NormalizeRet();
     const TVector<T> U = R.Cross(F);
@@ -483,9 +486,12 @@ NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(const TVector<T>& Eye,
 }
 
 template <typename T>
-FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up)
+FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, TVector<T> Eye, TVector<T> Center, const TVector<T>& Up)
 {
     checkSlow( Out )
+
+    Eye.Y *= -1;
+    Center.Y *= -1;
 
     const TVector<T> F = (Center - Eye).NormalizeRet();
     const TVector<T> R = F.Cross(Up).NormalizeRet();
@@ -511,17 +517,21 @@ FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, const TVector<T
 template <typename T>
 NODISCARD FORCEINLINE constexpr TMatrix<T> MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const T NearZPlane, const T FarZPlane)
 {
-    check( NearZPlane > 0.0f && FarZPlane > NearZPlane )
-    check( Maths::Absolute(Ratio - std::numeric_limits<T>::epsilon()) > static_cast<T>(0.0f) )
+    check( NearZPlane > static_cast<T>(0.) && FarZPlane > NearZPlane )
+    check( Maths::Absolute(Ratio - std::numeric_limits<T>::epsilon()) > static_cast<T>(0.) )
 
-    const T TanHalfYFov = Maths::Tan(RadYFov * static_cast<T>(0.5f));
+    const T TanHalfYFov = Maths::Tan(RadYFov * static_cast<T>(0.5));
 
     TMatrix<T> Result = Matrix::Zero;
-    Result.Matrix[0][0] = static_cast<T>(1.0f) / (Ratio * TanHalfYFov);
-    Result.Matrix[1][1] = static_cast<T>(1.0f) / TanHalfYFov;
+    Result.Matrix[0][0] = static_cast<T>(1.) / (Ratio * TanHalfYFov);
+    Result.Matrix[1][1] = static_cast<T>(1.) / TanHalfYFov;
     Result.Matrix[2][2] = - (FarZPlane + NearZPlane) / (FarZPlane - NearZPlane);
-    Result.Matrix[2][3] = -  static_cast<T>(1.0f);
-    Result.Matrix[3][2] = - (static_cast<T>(2.0f) * FarZPlane * NearZPlane) / (FarZPlane - NearZPlane);
+    Result.Matrix[2][3] = -  static_cast<T>(1.);
+    Result.Matrix[3][2] = - (static_cast<T>(2.) * FarZPlane * NearZPlane) / (FarZPlane - NearZPlane);
+
+    /* Invert Y. Because we primarily use vk. */
+    Result.Matrix[1][1] *= static_cast<T>(-1.);
+
     return Result;
 }
 

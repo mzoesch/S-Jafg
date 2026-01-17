@@ -8,6 +8,7 @@
 namespace Jafg
 {
 class AActor;
+
 } /* ~Namespace Jafg */
 
 namespace Jgc
@@ -25,7 +26,7 @@ protected:
 public:
 
     virtual void OnWorldPreInit() override;
-
+    virtual Jafg::APawn* SpawnDeferredPawnForPersonaController(Jafg::APersonaController& Pc) override;
 
     Jafg::AActor* RotatingActor{};
 };

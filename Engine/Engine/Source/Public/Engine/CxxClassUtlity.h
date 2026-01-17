@@ -109,6 +109,31 @@ FORCEINLINE TCxxClass* GetMutableDefault();
 ENGINE_API void PullConfigForCxxObject(LCxxClass* Obj);
 ENGINE_API void PushConfigFromCxxObject(LCxxClass const& Obj);
 
+namespace Detail
+{
+
+template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
+struct TJxxDelete
+{
+    constexpr TJxxDelete() noexcept = default;
+    template<typename TUp, typename = std::enable_if_t<std::is_convertible_v<TUp*, TCxxClass*>>> requires std::is_base_of_v<JCxxClass, TUp>
+    constexpr TJxxDelete(TJxxDelete<TUp> const&) noexcept {}
+    void operator()(TCxxClass* Ptr) const
+    {
+        static_assert(std::is_void_v<TCxxClass> == false, "Can't delete pointer to incomplete type.");
+        static_assert(sizeof(TCxxClass) > 0, "Can't delete pointer to incomplete type.");
+        Ptr->MarkAsGarbage_v2();
+
+        return;
+    }
+};
+
+} /* ~Namespace Detail */
+
+//# Unique pointer for jcxx classes.
+template<typename TCxxClass, typename Deleter = Detail::TJxxDelete<TCxxClass>> requires std::is_base_of_v<JCxxClass, TCxxClass>
+using TJxxUnique = TUnique<TCxxClass, Deleter>;
+
 namespace Private
 {
 

@@ -137,6 +137,14 @@ public:
 
     ENGINE_API void DrawIndex(LRenderInfo const& Info) const;
 
+    inline void FreeFromHost() noexcept
+    {
+        algo::orphan(&this->Vertices);
+        algo::orphan(&this->Indices);
+
+        return;
+    }
+
     inline void FreeFromDevice() noexcept
     {
         this->IndexCount = 0;

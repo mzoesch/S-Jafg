@@ -6,7 +6,6 @@
 #include "User/Input/InputActionTrigger.h"
 #include "User/Input/InputActionModifiers.h"
 #include "User/Input/InputAction.h"
-#include "Core/Name.h"
 
 namespace Jafg
 {
@@ -52,15 +51,15 @@ struct LInputMappedAction
     };
 
     LInputMappedAction() = delete;
-    explicit LInputMappedAction(LName ActionName) noexcept : Action(ActionName) { check( this->Action.IsSet() ) }
+    explicit LInputMappedAction(LUserInputTag ActionTag) noexcept : ActionTag(ActionTag) { check( this->ActionTag.IsSet() ) }
     DEFAULT_MOVE(LInputMappedAction)
     PROHIBIT_COPY(LInputMappedAction)
     ~LInputMappedAction() = default;
 
-    FORCEINLINE bool operator==(const LInputMappedAction& InOther) const noexcept { return this->Action == InOther.Action; }
+    FORCEINLINE bool operator==(const LInputMappedAction& InOther) const noexcept { return this->ActionTag == InOther.ActionTag; }
 
     //# The mapped action.
-    LName Action;
+    LUserInputTag ActionTag;
 
     //#
     //# Through what the action can be triggerd in this context.
@@ -85,9 +84,9 @@ using LInputTrigger = LInputMappedAction::LTrigger;
 struct LUserInputContext final
 {
     LUserInputContext() noexcept = delete;
-    explicit LUserInputContext(LName Name) noexcept : LUserInputContext(Name, Strings::AddSpacesToCamelCase(Name.ToString())) {}
-    LUserInputContext(LName Name, LString DisplayName) noexcept : Name(Name), DisplayName(std::move(DisplayName)) { check( this->Name.IsSet() ) }
-    explicit LUserInputContext(LString const& InDisplayName) noexcept : LUserInputContext(MAKE_NAME(InDisplayName), InDisplayName) {}
+    explicit LUserInputContext(LUserInputTag Name) noexcept : LUserInputContext(Name, Strings::AddSpacesToCamelCase(Name.ToString())) {}
+    LUserInputContext(LUserInputTag Tag, LString DisplayName) noexcept : Tag(Tag), DisplayName(std::move(DisplayName)) { check( this->Tag.IsSet() ) }
+    explicit LUserInputContext(LString const& DisplayName) noexcept : LUserInputContext(LUserInputTag::ToTag(DisplayName), DisplayName) {}
     DEFAULT_REALLOC_OF_ANY_FORM(LUserInputContext)
     ~LUserInputContext() = default;
 
@@ -101,21 +100,21 @@ struct LUserInputContext final
     //# Map an already registered (inside the user input registry) action.
     //# @return The newly mapped action.
     //#
-    ENGINE_API LInputMappedAction* MapAction(LName ActionName) noexceptcheck;
+    ENGINE_API LInputMappedAction* MapAction(LUserInputTag ActionTag) noexceptcheck;
 
-    FORCEINLINE bool operator==(LUserInputContext const& Other) const noexcept { return this->Name == Other.Name; }
+    FORCEINLINE bool operator==(LUserInputContext const& Other) const noexcept { return this->Tag == Other.Tag; }
 
-    FORCEINLINE const LName& GetName() const { return this->Name; }
-    FORCEINLINE const LString& GetDisplayName() const { return this->DisplayName; }
+    FORCEINLINE const LUserInputTag& GetTag() const noexcept { return this->Tag; }
+    FORCEINLINE const LString& GetDisplayName() const noexcept{ return this->DisplayName; }
 
-    FORCEINLINE LInputMappedAction* FindMappedAction(LName InName) noexcept { return algo::wfind_pointer(this->MappedActions, InName, &LInputMappedAction::Action); }
-    FORCEINLINE LInputMappedAction const* FindMappedAction(LName InName) const noexcept { return algo::wfind_pointer(this->MappedActions, InName, &LInputMappedAction::Action); }
-    FORCEINLINE LInputMappedAction* FindMappedActionChecked(LName InName) noexceptcheck { auto* Out{ this->FindMappedAction(InName) }; check( Out ) return Out; }
-    FORCEINLINE LInputMappedAction const* FindMappedActionChecked(LName InName) const noexceptcheck { auto* Out{ this->FindMappedAction(InName) }; check( Out ) return Out; }
-    FORCEINLINE LInputMappedAction* FindMappedActionAsserted(LName InName) { auto* Out{ this->FindMappedAction(InName) }; jassert( Out ) return Out; }
-    FORCEINLINE LInputMappedAction const* FindMappedActionAsserted(LName InName) const { auto* Out{ this->FindMappedAction(InName) }; jassert( Out ) return Out; }
+    FORCEINLINE LInputMappedAction* FindMappedAction(LUserInputTag Tag) noexcept { return algo::wfind_pointer(this->MappedActions, Tag, &LInputMappedAction::ActionTag); }
+    FORCEINLINE LInputMappedAction const* FindMappedAction(LUserInputTag Tag) const noexcept { return algo::wfind_pointer(this->MappedActions, Tag, &LInputMappedAction::ActionTag); }
+    FORCEINLINE LInputMappedAction* FindMappedActionChecked(LUserInputTag Tag) noexcept { auto* Out{ this->FindMappedAction(Tag) }; check( Out ) return Out; }
+    FORCEINLINE LInputMappedAction const* FindMappedActionChecked(LUserInputTag Tag) const noexcept { auto* Out{ this->FindMappedAction(Tag) }; check( Out ) return Out; }
+    FORCEINLINE LInputMappedAction* FindMappedActionAsserted(LUserInputTag Tag) noexcept { auto* Out{ this->FindMappedAction(Tag) }; jassert( Out ) return Out; }
+    FORCEINLINE LInputMappedAction const* FindMappedActionAsserted(LUserInputTag Tag) const noexcept { auto* Out{ this->FindMappedAction(Tag) }; jassert( Out ) return Out; }
 
-    FORCEINLINE const TArray<LInputMappedAction>& GetMappedActions() const { return this->MappedActions; }
+    FORCEINLINE TArray<LInputMappedAction> const& GetMappedActions() const noexcept { return this->MappedActions; }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Helper methods for faster and less boilerplate action registration.
@@ -134,7 +133,7 @@ struct LUserInputContext final
 
     FORCEINLINE LInputMappedAction* MapAction
     (
-        LName ActionName,
+        LUserInputTag ActionTag,
         LString TriggerName,
         const LKey DefaultKey,
         const EInputActionTrigger::Type ActionTrigger,
@@ -142,7 +141,7 @@ struct LUserInputContext final
         LOnUserInputAction&& Callback
     ) noexcept
     {
-        LInputMappedAction* MappedAction{ this->MapAction(ActionName) };
+        LInputMappedAction* MappedAction{ this->MapAction(ActionTag) };
         check( MappedAction )
         MappedAction->Triggers.emplace_back(std::move(TriggerName), DefaultKey, ActionTrigger, std::move(Modifiers));
         MappedAction->Callback = std::move(Callback);
@@ -160,12 +159,12 @@ struct LUserInputContext final
 
     FORCEINLINE LInputMappedAction* MapAction
     (
-        LName ActionName,
+        LUserInputTag ActionTag,
         TArray<LInputMappedAction::LTrigger>&& Triggers,
         LOnUserInputAction&& Callback
     ) noexcept
     {
-        LInputMappedAction* MappedAction{ this->MapAction(ActionName) };
+        LInputMappedAction* MappedAction{ this->MapAction(ActionTag) };
         check( MappedAction )
         MappedAction->Triggers = std::move(Triggers);
         MappedAction->Callback = std::move(Callback);
@@ -179,7 +178,7 @@ struct LUserInputContext final
 
 private:
 
-    LName Name;
+    LUserInputTag Tag;
     LString DisplayName;
     TArray<LInputMappedAction> MappedActions;
 };

@@ -10,6 +10,7 @@
 #include "Rhi/VkAl.h"
 #include "Rhi/Texture2.h"
 #include "Rhi/Image.h"
+#include "Framework/Eye.h"
 
 namespace Jafg
 {
@@ -20,8 +21,8 @@ namespace UBO
 //# UBO for perspective camera draw calls. Usually bound to (0, 0).
 struct LPerspectiveCamera
 {
-    glm::mat4 view;
-    glm::mat4 proj;
+    LMatrix4F view;
+    LMatrix4F proj;
 
     inline void Upload(LMappedDeviceBuffer const& Buffer) const noexcept
     {
@@ -54,6 +55,8 @@ struct LRenderInfo
 
     u32 Frame;
     u32 Image;
+
+    TOptional<LEye_v2> Eye;
 
     UBO::LPerspectiveCamera PerspectiveCamera;
     vk::DescriptorBufferInfo PerspectiveCameraWriteInfo;

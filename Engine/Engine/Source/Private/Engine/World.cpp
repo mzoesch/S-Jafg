@@ -57,7 +57,7 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     this->UnsanitizedUrl = Url;
 
     /* Remove level name from url. */
-    if (const auto Idx { Url.find('?') }; Idx != Url.npos)
+    if (const auto Idx{Url.find('?')}; Idx != Url.npos)
     {
         if (algo::is_valid_index(Url, Idx + 1))
         {
@@ -86,16 +86,17 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     {
         this->SupremePolicies = NewObject<JSupremePolicies>(this);
     }
-
     check( this->SupremePolicies )
-    this->SupremePolicies->OnWorldPreInit();
 
-    auto& Track{ GEngine->GetTrackFromWorld(this) };
-    if (Track.OnWorldPreInit.IsValid())
+    this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
+    check( this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched )
+
+    if (auto& Track{GEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
     {
-        Track.OnWorldPreInit(*this);
-        Track.OnWorldPreInit.Reset();
+        Track.Callbacks.OnWorldPreInit(*this);
+        Track.Callbacks.OnWorldPreInit.Reset();
     }
+    this->SupremePolicies->OnWorldPreInit();
 
     LOG_VERBOSE(LogWorld, "Initializing level actors.")
 #if !IN_SHIPPING
@@ -106,15 +107,11 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
         if (Obj->IsA<AActor>())
         {
             MakeDeferredActorFinal(StaticCast<AActor>(Obj.get()));
-
 #if WITH_LOCAL_LAYER
-            if (Obj->IsA<APersonaController>())
-            {
-                this->SupremePolicies->OnPersonaControllerCreated(*StaticCast<APersonaController>(Obj.get()));
-            }
-#else /* WITH_LOCAL_LAYER */
             check( Obj->IsA<APersonaController>() == false )
 #endif /* !WITH_LOCAL_LAYER */
+
+            ++ActorCount;
         }
 
         continue;
@@ -123,46 +120,18 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     LOG_VERBOSE(LogWorld, "Initialized [{}] actors.", ActorCount)
 #endif /* !IN_SHIPPING */
 
-    this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
-    check( this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched )
-
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
 
-    this->SupremePolicies->OnWorldLateInit();
-
-    if (Track.OnWorldLateInit.IsValid())
-    {
-        Track.OnWorldLateInit(*this);
-        Track.OnWorldLateInit.Reset();
-    }
-
     this->GetEngine().OnWorldBeginLife.Broadcast(this);
-
-    this->SupremePolicies->OnWorldPostInit();
-
     this->WorldState = EWorldState::Running;
 
-    if (this->SupremePolicies->bCreatePawn)
+    if (auto& Track{GEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPostInit.IsValid())
     {
-        for (auto& Obj : this->GetEmployees())
-        {
-            if (APersonaController* Pc{ Obj->As<APersonaController>() })
-            {
-                if (Pc->IsPawnValid())
-                {
-                    continue;
-                }
-
-                auto* Pawn{ this->SupremePolicies->SpawnDeferredPawnForPersonaController(*Pc) };
-                check( Pawn )
-                Pc->PossessPawn(Pawn);
-                MakeDeferredActorFinal(Pawn);
-            }
-
-            continue;
-        }
+        Track.Callbacks.OnWorldPostInit(*this);
+        Track.Callbacks.OnWorldPostInit.Reset();
     }
+    this->SupremePolicies->OnWorldPostInit();
 
     return;
 }
@@ -183,14 +152,14 @@ Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexceptcheck
     return this->GetEngine().GetLocalEgo();
 }
 
-void Jafg::LWorld::Tick(const f32 DeltaTime)
+void Jafg::LWorld::Tick(const f32 Dt)
 {
     STAT_CYCLE_FUNCTION()
 
     this->AcquireTickableObjectsLock();
     for (LTickableObject* Tickable : this->TickableObjects)
     {
-        Tickable->Tick(DeltaTime);
+        Tickable->Tick(Dt);
     }
     this->ReleaseTickableObjectsLock();
     for (LTickableObject* Tickable : this->DeletedTickableObjects)
@@ -202,70 +171,72 @@ void Jafg::LWorld::Tick(const f32 DeltaTime)
     return;
 }
 
-void Jafg::LWorld::Draw(LRenderInfo const& Info, const LEye& Eye) const
+void Jafg::LWorld::Draw(LRenderInfo const& Info) const
 {
     STAT_CYCLE_FUNCTION()
 
-    LMatrix P{SkipInit};
-    LMatrix V{SkipInit};
-    if (auto Cache{this->EyeToMatrices.find(&Eye)}; this->GetLocalEgo().GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
-    {
-        P = Maths::MakePerspectiveProjectionMatrix(
-            Maths::ToRadians(Eye.GetDegYFov()),
-            static_cast<f32>(Info.Surface.GetDimensions().X) / static_cast<f32>(Info.Surface.GetDimensions().X),
-            Eye.GetNearFrustum(), Eye.GetFarFrustum()
-        );
-        V = Eye.GetViewMatrix();
-        this->EyeToMatrices[&Eye] = { P, V };
-    }
-    else
-    {
-        P = Cache->second.P;
-        V = Cache->second.V;
-    }
+    // LMatrix P{SkipInit};
+    // LMatrix V{SkipInit};
+    // if (auto Cache{this->EyeToMatrices.find(&Eye)}; this->GetLocalEgo().GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
+    // {
+    //     P = Maths::MakePerspectiveProjectionMatrix(
+    //         Maths::ToRadians(Eye.GetDegYFov()),
+    //         static_cast<f32>(Info.Surface.GetDimensions().X) / static_cast<f32>(Info.Surface.GetDimensions().X),
+    //         Eye.GetNearFrustum(), Eye.GetFarFrustum()
+    //     );
+    //     V = Eye.GetViewMatrix();
+    //     this->EyeToMatrices[&Eye] = { P, V };
+    // }
+    // else
+    // {
+    //     P = Cache->second.P;
+    //     V = Cache->second.V;
+    // }
 
-    const LMatrix4 InversePV = (P * V).GetInverse();
+    // const LMatrix4 InversePV = (P * V).GetInverse();
 
-    LVector Corners[8];
-    constexpr LVector4 NdcCorners[8]
-    {
-        {-1, -1, -1,  1}, /* Near Bottom Left */
-        { 1, -1, -1,  1}, /* Near Bottom Right */
-        {-1,  1, -1,  1}, /* Near Top Left */
-        { 1,  1, -1,  1}, /* Near Top Right */
-        {-1, -1,  1,  1}, /* Far Bottom Left */
-        { 1, -1,  1,  1}, /* Far Bottom Right */
-        {-1,  1,  1,  1}, /* Far Top Left */
-        { 1,  1,  1,  1}  /* Far Top Right */
-    };
-    for (int i = 0; i < 8; i++)
-    {
-        LVector4 WorldLocation = InversePV * NdcCorners[i];
-        Corners[i] = WorldLocation.XYZ() / WorldLocation.W; /* Perspective divide */
-    }
+    // LVector Corners[8];
+    // constexpr LVector4 NdcCorners[8]
+    // {
+    //     {-1, -1, -1,  1}, /* Near Bottom Left */
+    //     { 1, -1, -1,  1}, /* Near Bottom Right */
+    //     {-1,  1, -1,  1}, /* Near Top Left */
+    //     { 1,  1, -1,  1}, /* Near Top Right */
+    //     {-1, -1,  1,  1}, /* Far Bottom Left */
+    //     { 1, -1,  1,  1}, /* Far Bottom Right */
+    //     {-1,  1,  1,  1}, /* Far Top Left */
+    //     { 1,  1,  1,  1}  /* Far Top Right */
+    // };
+    // for (int i = 0; i < 8; i++)
+    // {
+    //     LVector4 WorldLocation = InversePV * NdcCorners[i];
+    //     Corners[i] = WorldLocation.XYZ() / WorldLocation.W; /* Perspective divide */
+    // }
     // std::vector<std::pair<int, int>> frustumEdges = {
     //     {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near Plane Edges
     //     {4, 5}, {5, 7}, {7, 6}, {6, 4}, // Far Plane Edges
     //     {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting Near and Far Planes
     // };
-    const std::span CornersSpan{Corners};
+    // const std::span CornersSpan{Corners};
 
     for (auto& Obj : this->GetEmployees())
     {
-        AActor* Actor{ Obj->As<AActor>() };
-        if (Actor == nullptr)
+        if (Obj->IsA<AActor>() == false)
         {
             continue;
         }
 
+        AActor const* Actor{StaticCastChecked<AActor>(&*Obj)};
         check( Actor->IsGarbage() == false )
 
-        for (TUnique<LActorComponent> const& Comp : Actor->GetComponents())
+        for (auto const& Comp : Actor->GetComponents())
         {
             if (Comp->ShouldRender())
             {
-                Comp->Render(Info, Eye);
+                Comp->Render(Info);
             }
+
+            continue;
         }
 
         // if
@@ -289,6 +260,15 @@ Jafg::APersonaController* Jafg::LWorld::Login(
     )
 {
     check( this->SupremePolicies )
+    check( this->GetWorldState() == EWorldState::Running )
+
+    checkCode
+    (
+        if (Persona.Type == EIncomingConnectionRequest::Local)
+        {
+            check( Persona.Surface )
+        }
+    )
 
     if (Persona.Surface)
     {
@@ -321,8 +301,6 @@ Jafg::APersonaController* Jafg::LWorld::Login(
 
     if (Persona.Type == EIncomingConnectionRequest::Local)
     {
-        check( Persona.Surface )
-
         //# Sideeffect from creation, we do not really care.
         if (Persona.Surface->DoesPossess())
         {
@@ -334,11 +312,14 @@ Jafg::APersonaController* Jafg::LWorld::Login(
             Persona.Surface->PossessController(Pc);
         }
     }
-
-    if (this->RealTimeWhenWorldStarted > 0)
+    else
     {
-        this->SupremePolicies->OnPersonaControllerCreated(*Pc);
+        jassertNoEntry()
     }
+
+    MakeDeferredActorFinal(Pc);
+
+    this->SupremePolicies->OnPersonaControllerCreated(*Pc);
 
     return Pc;
 }

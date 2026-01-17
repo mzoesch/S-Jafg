@@ -10,16 +10,16 @@
 Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInputRegistry* Registry, LInputAction&& InAction) noexceptcheck
 {
     check( Registry )
-    return this->MapAction(Registry->RegisterAction(std::move(InAction))->GetName());
+    return this->MapAction(Registry->RegisterAction(std::move(InAction))->GetTag());
 }
 
-Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LName ActionName) noexceptcheck
+Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInputTag ActionTag) noexceptcheck
 {
-    check( ActionName.IsSet() )
+    check( ActionTag.IsSet() )
     check( GEngine )
-    check( GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByName(ActionName) )
+    check( GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByName(ActionTag) )
 
-    this->MappedActions.emplace_back(ActionName);
+    this->MappedActions.emplace_back(ActionTag);
     return &this->MappedActions.back();
 }
 
@@ -37,7 +37,7 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
     check( Registry )
 
     return this->MapAction(
-        Registry->RegisterAction(std::move(TransientAction))->GetName(),
+        Registry->RegisterAction(std::move(TransientAction))->GetTag(),
         std::move(TriggerName),
         DefaultKey,
         ActionTrigger,
@@ -55,7 +55,7 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
 ) noexcept
 {
     return this->MapAction(
-        Registry->RegisterAction(std::move(TransientAction))->GetName(),
+        Registry->RegisterAction(std::move(TransientAction))->GetTag(),
         std::move(Triggers),
         std::move(Callback)
         );

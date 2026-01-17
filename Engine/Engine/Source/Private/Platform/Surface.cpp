@@ -6,6 +6,27 @@
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
 
+void Jafg::LSurfaceBase::BeginNewFrame()
+{
+    algo::orphan(&this->PlatformInput);
+
+    this->DownKeys.swap(this->LastFrameDownKeys);
+    this->DownKeys.clear();
+
+    this->AsSurface()->PollPlatformEvents();
+
+    for (auto const& Input : this->VirtualInput)
+    {
+        if (algo::contains(this->DownKeys, Input.Key, &LRawInput::Key) == false)
+        {
+            this->AddKeyDown(Input);
+        }
+    }
+    this->VirtualInput.clear();
+
+    return;
+}
+
 void Jafg::LSurfaceBase::Tick()
 {
 #if PLATFORM_LINUX
@@ -70,31 +91,6 @@ void Jafg::LSurfaceBase::Tick()
     }
 
     this->SurfaceViewport.Tick();
-
-    return;
-}
-
-void Jafg::LSurfaceBase::BeginNewFrame()
-{
-    algo::orphan(&this->PlatformInput);
-
-    this->DownKeys.swap(this->LastFrameDownKeys);
-    this->DownKeys.clear();
-
-    return;
-}
-
-void Jafg::LSurfaceBase::PollVirtualInputs()
-{
-    for (const LRawInput& Input : this->VirtualInput)
-    {
-        if (algo::contains(this->DownKeys, Input.Key, &LRawInput::Key) == false)
-        {
-            this->AddKeyDown(Input);
-        }
-    }
-
-    algo::orphan(&this->VirtualInput);
 
     return;
 }

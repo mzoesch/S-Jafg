@@ -18,7 +18,7 @@ class LUserInput final
 {
 public:
 
-    typedef TArray<TArray<LName>> LContextStack;
+    typedef TArray<TArray<LUserInputTag>> LContextStack;
 
     constexpr LUserInput() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
@@ -31,22 +31,22 @@ public:
     //# @param Where Position where to insert the context. INDEX_NONE to add at the end.
     //# @return True if the context was activated.
     //#
-    ENGINE_API  bool ActivateContext(LName Name, LSize Where = INDEX_NONE) noexcept;
-    FORCEINLINE bool ActivateContext(LUserInputContext const& Context, LSize Where = INDEX_NONE) noexcept { return this->ActivateContext(Context.GetName(), Where); }
-    FORCEINLINE bool ActivateContext(LStringView Name, LSize Where = INDEX_NONE) noexcept { return this->ActivateContext(GET_NAME(Name), Where); }
+    ENGINE_API  bool ActivateContext(LUserInputTag Tag, LSize Where = INDEX_NONE) noexcept;
+    FORCEINLINE bool ActivateContext(LUserInputContext const& Context, LSize Where = INDEX_NONE) noexcept { return this->ActivateContext(Context.GetTag(), Where); }
+    FORCEINLINE bool ActivateContext(LStringView Name, LSize Where = INDEX_NONE) noexcept { return this->ActivateContext(LUserInputTag::ToTag(Name), Where); }
     ENGINE_API  bool ActivateContexts(TArray<LUserInputContext const*> const& Contexts, LSize Where = INDEX_NONE) noexcept;
-    ENGINE_API  bool ActivateContexts(TArray<LName> const& Names, LSize Where = INDEX_NONE) noexcept;
+    ENGINE_API  bool ActivateContexts(TArray<LUserInputTag> const& Tags, LSize Where = INDEX_NONE) noexcept;
     ENGINE_API  bool ActivateContexts(TArray<LStringView> const& Names, LSize Where = INDEX_NONE) noexcept;
 
     //#
     //# Deactivate a context. Nullptr is ok to pass.
     //# @return True if the context was activated.
     //#
-    FORCEINLINE bool DeactivateContext(LUserInputContext const& Context) noexcept { return this->DeactivateContext(Context.GetName()); }
-    ENGINE_API  bool DeactivateContext(LName Name) noexcept;
-    FORCEINLINE bool DeactivateContext(LStringView Name) noexcept { return this->DeactivateContext(GET_NAME(Name)); }
+    FORCEINLINE bool DeactivateContext(LUserInputContext const& Context) noexcept { return this->DeactivateContext(Context.GetTag()); }
+    ENGINE_API  bool DeactivateContext(LUserInputTag Tag) noexcept;
+    FORCEINLINE bool DeactivateContext(LStringView Name) noexcept { return this->DeactivateContext(LUserInputTag::ToTag(Name)); }
     ENGINE_API  bool DeactivateContexts(TArray<LUserInputContext const*> const& Contexts) noexcept;
-    ENGINE_API  bool DeactivateContexts(TArray<LName> const& Names) noexcept;
+    ENGINE_API  bool DeactivateContexts(TArray<LUserInputTag> const& Names) noexcept;
     ENGINE_API  bool DeactivateContexts(TArray<LStringView> const& Names) noexcept;
 
     //#
@@ -73,7 +73,7 @@ private:
     void DispatchInputDelegatesForKeyCategory(LSurface& Surface, TArray<LRawInput>* Inputs, EInputActionTrigger::Type TriggerType);
 
     //# Early contexts will be processed first.
-    TArray<LName> ActiveContexts;
+    TArray<LUserInputTag> ActiveContexts;
     LContextStack ContextStack;
 };
 

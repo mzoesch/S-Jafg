@@ -60,14 +60,10 @@ public:
     FORCEINLINE void SetHumanReadableName(LString const& S) noexcept { this->HumanReadableName = S; }
     FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
 
-    void Tick();
-    void OnClear() { jassertNoEntry() }
-    void OnUpdate() { jassertNoEntry() }
-    NODISCARD FORCEINLINE bool IsValid() noexcept { jassertNoEntry() }
     void BeginNewFrame();
-    void PollInputs() { jassertNoEntry() }
-    void PollEvents() { jassertNoEntry() }
-    void PollVirtualInputs();
+    void PollPlatformEvents() { jassertNoEntry() }
+    void Tick();
+    void OnRender() { jassertNoEntry() }
 
     FORCEINLINE void SetInputMode(EInputMode::Type InMode) noexcept { jassertNoEntry() }
     FORCEINLINE EInputMode::Type GetInputMode() const noexcept { return this->InputMode; }
@@ -184,7 +180,6 @@ private:
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
     //#
     LViewport SurfaceViewport;
-    bool bSurfaceViewportValid{ false };
 
     //# The keys that are currently down for this surface this frame.
     TArray<LRawInput> DownKeys;

@@ -52,40 +52,51 @@ void LJgcPluginLifetime::OnFinishedLoading()
         LOG_VERBOSE(LogJgcLifetime, "Browsing to start-up level [{}] as specified on command line.", StartupLevelArg->Value.value())
     }
 
-    LOG_VERBOSE(LogJgcLifetime, "Browsing to startup level.")
-    GEngine->Browse(GEngine->SummonWorld("JgcStartUp").Get()
-        , (StartupLevelArg ? StartupLevelArg->Value.value()
-#if WITH_LOCAL_LAYER
-            : Jgc::LevelName_Frontend
-#else /* WITH_LOCAL_LAYER */
-            : Name_LevelListen.ToString()
-#endif /* !WITH_LOCAL_LAYER */
-          )
-        , [](Jafg::LWorld& World)
+    LOG_VERBOSE(LogJgcLifetime, "Setting up local layer for frontend.")
+    if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() != 1)
     {
-#if WITH_LOCAL_LAYER
-        LOG_VERBOSE(LogJgcLifetime, "Setting up local layer in front-end level.")
-        if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() != 1)
+        LOG_WARNING(LogJgcLifetime, "Expected exactly one surface at engine startup. Jgc does not support multiple surfaces in this stage if the application.")
+    }
+    else
+    {
+        if (auto const& Surface{Frontend.GetSurfaces()[0]}; Surface->GetController())
         {
-            LOG_WARNING(LogJgcLifetime, "Expected exactly one surface at engine startup. Jgc does not support multiple surfaces in this stage if the application.")
+            LOG_VERBOSE(LogJgcLifetime, "Local ego already possesses a persona controller. Skipping default jgc frontend world creation and persona controller login.")
         }
         else
         {
-            if (auto const& Surface{Frontend.GetSurfaces()[0]}; Surface->GetController())
-            {
-                LOG_VERBOSE(LogJgcLifetime, "Local ego already possesses a persona controller. Skipping default jgc persona controller spawn.")
-            }
-            else
-            {
-                auto* Pc{World.Login({Jafg::EIncomingConnectionRequest::Local, Surface.get()})};
-                check( Pc )
-                check( Pc->HasBegunLife() == false )
-            }
+            auto StartupWorld{GEngine->SummonWorld("JgcStartUp")};
+            const LString TargetLevel{(StartupLevelArg ? StartupLevelArg->Value.value()
+#if WITH_LOCAL_LAYER
+                : Jgc::LevelName_Frontend
+#else /* WITH_LOCAL_LAYER */
+                : Name_LevelListen.ToString()
+#endif /* !WITH_LOCAL_LAYER */
+                )};
+            GEngine->Browse(StartupWorld, TargetLevel, {.OnWorldPostInit = [Surface = &*Surface](Jafg::LWorld& World){
+                if (Surface->DoesPossess())
+                {
+                    LOG_WARNING(LogJgcLifetime, "Surface [{}] already posses a persona controller through [{}@{}]. Skipping login",
+                        Surface->GetHumanReadableName(),
+                        Surface->GetController()->GetWorld()->GetHumanReadableName(),
+                        Surface->GetController()->GetWorld()->GetUnderlyingLevelName()
+                        )
+                }
+                else
+                {
+                    LOG_VERBOSE(LogJgcLifetime, "Logging in surface [{}] for [{}@{}].",
+                        Surface->GetHumanReadableName(),
+                        World.GetHumanReadableName(),
+                        World.GetUnderlyingLevelName()
+                        )
+                    if (LString OutError; World.Login({Jafg::EIncomingConnectionRequest::Local, Surface}, &OutError) == nullptr)
+                    {
+                        LOG_FATAL(LogJgcLifetime, "Failed to login: {}", OutError)
+                    }
+                }
+            }});
         }
-#endif /* WITH_LOCAL_LAYER */
-
-        return;
-    });
+    }
 
     return;
 }
