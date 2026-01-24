@@ -147,7 +147,7 @@ fn remove_suffixed_scoped_operator_because_gcc_does_gcc_unjustifiable_shenanigan
 {
     /*
      * Why gcc why?? This literally costed me days of fucking refactoring the whole fucking reflection system.
-     * @see ~Lal/Core/CoreMacros.h: LAL_JOIN_SCOPE_RESOLUTION_OUTER_XXX
+     * @see ~Jafg/Core/CoreMacros.h: JAFG_JOIN_SCOPE_RESOLUTION_OUTER_XXX
      */
     if spaced_identifier.ends_with("::")
     {
@@ -258,8 +258,8 @@ fn get_generated_file_stub_checked(file: &str) -> String
 
 fn reflect_file(args: &Cli, file: &str) -> Option<JPacketUnit>
 {
-    if     file == "Engine/Engine/Source/Public/Engine/CxxClassMacros.h"
-        || file == "Engine/Engine/Source/Public/Engine/CxxRecordMacros.h"
+    if     file == "Engine/Source/Public/Engine/CxxClassMacros.h"
+        || file == "Engine/Source/Public/Engine/CxxRecordMacros.h"
     {
         // Very, very special file that declares a lot of stuff. But sadly confuses our tokenizer...
         // It would take simply too much time to implement special rules that are commonly accepted over all files

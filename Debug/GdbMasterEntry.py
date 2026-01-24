@@ -16,7 +16,6 @@ def master_entry() -> None:
 
     lookups = [
         'Engine',
-        'Lal',
         'Runtime',
 
         # Third party libraries last.

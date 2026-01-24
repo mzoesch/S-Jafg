@@ -1,0 +1,122 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+//#
+//# File:
+//#     Minimal required include to use the Jafg engine. All clients must include this file.
+//#
+#if PREPROCESSOR_EXCLUDE_FF
+#endif /* PREPROCESSOR_EXCLUDE_FF */
+
+//#
+//# Low level includes.
+//#
+#include "Build/Build.h"
+
+//#
+//# Core includes.
+//#
+#include "Runtime/AssertionForward.h"
+#include "Hal/Platform.h"
+#include "Memory/Llmm.h"
+#include "Runtime/Asan.h"
+#include "Core/CoreMacros.h"
+#include "Core/CoreDefines.h"
+#include "Core/CoreConcepts.h"
+#include "Core/CoreFunctors.h"
+
+//#
+//# Standard, Platform-APIs and Third-Party.
+//#
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <set>
+#include <unordered_set>
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <chrono>
+#include <mutex>
+#include <shared_mutex>
+#include <fstream>
+#include <filesystem>
+#include <condition_variable>
+#include <ranges>
+#include <cmath>
+#include <type_traits>
+#include <string.h>
+#include <stdarg.h>
+#include <cstring>
+#include <regex>
+
+//#
+//# Forward Containers.
+//#
+#include "Containers/EnumCore.h"
+#include "Containers/IteratorTraits.h"
+#include "Containers/CoreContainers.h"
+#include "Containers/Format.h"
+#include "Containers/FuckTheStdGiveMeUb.h"
+
+//#
+//# Runtime assertions
+//#
+#include "Runtime/AssertionMacros.h"
+
+//#
+//# Logging
+//#
+#include "Logging/LogVerbosity.h"
+#include "Logging/LogMacros.h"
+#include "Logging/LogPrivate.h"
+#include "Logging/CoreCategories.h"
+#include "Logging/LogUtility.h"
+
+//#
+//# Maths
+//#
+#include "Maths/MathsTypes.h"
+#include "Maths/MathsDetail.h"
+#include "Maths/Maths.h"
+#include "Maths/Color.h"
+
+//#
+//# Memory
+//#
+#include "Memory/Smart.h"
+
+//#
+//# Containers
+//#
+#include "Algo/It.h"
+#include "Algo/Move.h"
+#include "Algo/Access.h"
+#include "Algo/Mutate.h"
+#include "Containers/CoreContainersUtility.h"
+#include "System/Finder.h"
+#include "System/EnginePath.h"
+#include "Containers/SimpleUtf8EncodingUtilStuffKindaRandom.h"
+#include "Traits/CoreTraits.h"
+
+//#
+//# Functors
+//#
+#include "Core/Function.h"
+#include "Delegates/Delegatev.h"
+#include "Delegates/Event.h"
+#include "Delegates/EventMacros.h"
+
+//#
+//# Impls
+//#
+#include "Runtime/AssertionForwardImpl.h"
+
+//#
+//# Misc
+//#
+#include "PrimitiveReflex/Core.h"
+#include "Serialization/RawStringSerialization.h"

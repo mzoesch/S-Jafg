@@ -1,0 +1,44 @@
+// Copyright mzoesch. All rights reserved.
+
+#include "Widgets/Compound/TabBarPanel.h"
+#include "Widgets/Compound/TabBar.h"
+
+Jafg::WTabBarPanel::WTabBarPanel(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
+{
+    this->SetAnchor(EAnchor::Fill);
+    return;
+}
+
+bool Jafg::WTabBarPanel::AddData(JNodeData& Data)
+{
+    const bool bSuper = Super::AddData(Data);
+    JTabBarData* TbData{ Data.As<JTabBarData>() };
+    if (TbData == nullptr)
+    {
+        return bSuper;
+    }
+
+    this->OwningTabBar = TbData->Context;
+
+    return true;
+}
+
+void Jafg::WTabBarPanel::UpdateDesiredSize() const
+{
+    Super::UpdateDesiredSize();
+
+    LVec2F DesiredSize{ maths::zero_vector<LVec2F> };
+    for (LWidgetSlot const* ChildSlot : this->GetChildren())
+    {
+        DesiredSize.x = maths::max(DesiredSize.x, ChildSlot->Content->GetDesiredSize_v2().x);
+        DesiredSize.y = maths::max(DesiredSize.y, ChildSlot->Content->GetDesiredSize_v2().y);
+
+        continue;
+    }
+
+    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
+
+    this->SetDesiredSizeInSpt(DesiredSize);
+
+    return;
+}

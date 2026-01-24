@@ -4,7 +4,6 @@
 
 #include "Core/Application.h"
 #include "Platform/PlatformMisc.h"
-#include "AbsoluteMinimalCore.h"
 #include <csignal>
 
 using namespace Jafg;
@@ -17,13 +16,13 @@ namespace
 NORETURN
 void SignumPosixAction_JafgHandler_Fatal(const i32 InSignal, siginfo_t* InInfo, void* InContext)
 {
-    if (JafgCore::bGAlreadyCrashed)
+    if (Application::Private::bGAlreadyCrashed)
     {
         LOG_ERROR(LogJafgInternal, "Already crashed - ignoring signal [{}].", InSignal)
-        Lal::LOnPlatformBreak::ExitQuietly();
+        LOnPlatformBreak::ExitQuietly();
     }
 
-    JafgCore::bGAlreadyCrashed = true;
+    Application::Private::bGAlreadyCrashed = true;
 
     u64 Cursor { 0 };
     char Emitted[37 + 7 + 30 /* 30 padding */];
@@ -59,7 +58,7 @@ void SignumPosixAction_JafgHandler_Fatal(const i32 InSignal, siginfo_t* InInfo, 
     }
     ::write(STDERR_FILENO, "].\n", 3);
 
-    Lal::LOnPlatformBreak::OnProgramPanicImpl(Emitted);
+    Jafg::LOnPlatformBreak::OnProgramPanicImpl(Emitted);
 }
 
 NORETURN
@@ -68,15 +67,77 @@ void SignumPosixAction_JafgHandler_NotSoFatal(const i32 InSignal, siginfo_t* InI
     //
     // Just do anything normally, but do not show the annoying crash report dialog window.
     //
-    JafgCore::bGSuppressCrashDialog = true;
+    Application::Private::bGSuppressCrashDialog = true;
 
     SignumPosixAction_JafgHandler_Fatal(InSignal, InInfo, InContext);
 }
 
 } /* ~Namespace <Anonymous> */
 
+static void test()
+{
+    check( maths::zero_vector<LVec1F> == LVec1F(0) )
+    check( maths::zero_vector<LVec1D> == LVec1D(0) )
+    check( maths::zero_vector<LVec2F> == LVec2F(0) )
+    check( maths::zero_vector<LVec2D> == LVec2D(0) )
+    check( maths::zero_vector<LVec3F> == LVec3F(0) )
+    check( maths::zero_vector<LVec3D> == LVec3D(0) )
+    check( maths::zero_vector<LVec4F> == LVec4F(0) )
+    check( maths::zero_vector<LVec4D> == LVec4D(0) )
+
+    check( maths::one_vector<LVec1F> == LVec1F(1) )
+    check( maths::one_vector<LVec1D> == LVec1D(1) )
+    check( maths::one_vector<LVec2F> == LVec2F(1) )
+    check( maths::one_vector<LVec2D> == LVec2D(1) )
+    check( maths::one_vector<LVec3F> == LVec3F(1) )
+    check( maths::one_vector<LVec3D> == LVec3D(1) )
+    check( maths::one_vector<LVec4F> == LVec4F(1) )
+    check( maths::one_vector<LVec4D> == LVec4D(1) )
+
+    check( maths::forward_vector<LVec3F> == LVec3F(1, 0, 0) )
+    check( maths::forward_vector<LVec3D> == LVec3D(1, 0, 0) )
+    check( maths::backward_vector<LVec3F> == LVec3F(-1, 0, 0) )
+    check( maths::backward_vector<LVec3D> == LVec3D(-1, 0, 0) )
+    check( maths::right_vector<LVec3F> == LVec3F(0, 1, 0) )
+    check( maths::right_vector<LVec3D> == LVec3D(0, 1, 0) )
+    check( maths::left_vector<LVec3F> == LVec3F(0, -1, 0) )
+    check( maths::left_vector<LVec3D> == LVec3D(0, -1, 0) )
+    check( maths::up_vector<LVec3F> == LVec3F(0, 0, 1) )
+    check( maths::up_vector<LVec3D> == LVec3D(0, 0, 1) )
+    check( maths::down_vector<LVec3F> == LVec3F(0, 0, -1) )
+    check( maths::down_vector<LVec3D> == LVec3D(0, 0, -1) )
+
+    check( maths::unit_vector_x<LVec1F> == LVec1F(1) )
+    check( maths::unit_vector_x<LVec1D> == LVec1D(1) )
+    check( maths::unit_vector_x<LVec2F> == LVec2F(1, 0) )
+    check( maths::unit_vector_x<LVec2D> == LVec2D(1, 0) )
+    check( maths::unit_vector_x<LVec3F> == LVec3F(1, 0, 0) )
+    check( maths::unit_vector_x<LVec3D> == LVec3D(1, 0, 0) )
+    check( maths::unit_vector_x<LVec4F> == LVec4F(1, 0, 0, 0) )
+    check( maths::unit_vector_x<LVec4D> == LVec4D(1, 0, 0, 0) )
+
+    check( maths::unit_vector_y<LVec2F> == LVec2F(0, 1) )
+    check( maths::unit_vector_y<LVec2D> == LVec2D(0, 1) )
+    check( maths::unit_vector_y<LVec3F> == LVec3F(0, 1, 0) )
+    check( maths::unit_vector_y<LVec3D> == LVec3D(0, 1, 0) )
+    check( maths::unit_vector_y<LVec4F> == LVec4F(0, 1, 0, 0) )
+    check( maths::unit_vector_y<LVec4D> == LVec4D(0, 1, 0, 0) )
+
+    check( maths::unit_vector_z<LVec3F> == LVec3F(0, 0, 1) )
+    check( maths::unit_vector_z<LVec3D> == LVec3D(0, 0, 1) )
+    check( maths::unit_vector_z<LVec4F> == LVec4F(0, 0, 1, 0) )
+    check( maths::unit_vector_z<LVec4D> == LVec4D(0, 0, 1, 0) )
+
+    check( maths::unit_vector_w<LVec4F> == LVec4F(0, 0, 0, 1) )
+    check( maths::unit_vector_w<LVec4D> == LVec4D(0, 0, 0, 1) )
+
+    return;
+}
+
 i32 main(const i32 ArgC, const char* ArgV[])
 {
+    test();
+
     i32 ErrorLevel { 0 };
 
     TArray<LString> Arguments;
@@ -144,7 +205,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue ...")
-        LAL_UNSAFE_FLUSH_OUT_STREAMS()
+        JAFG_UNSAFE_FLUSH_OUT_STREAMS()
 
         std::cin.get();
     }

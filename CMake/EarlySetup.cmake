@@ -140,11 +140,11 @@ endfunction()
 #
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(LAL_DO_SANITIZED_BUILD)
+if(JAFG_DO_SANITIZED_BUILD)
     message(STATUS "Enabling sanitizers for the current build.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         add_compile_definitions(
-            LAL_WITH_SANITIZERS=1
+            JAFG_WITH_SANITIZERS=1
             )
         add_compile_options(
             -fsanitize=address                  # address:                 Detects use-after-free, heap buffer overflows, etc.
@@ -168,7 +168,7 @@ if(LAL_DO_SANITIZED_BUILD)
     endif()
 endif()
 
-if(LAL_DO_HARDEN_BUILD)
+if(JAFG_DO_HARDEN_BUILD)
     message(STATUS "Enabling hardening flags for the current build.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         add_link_options(

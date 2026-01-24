@@ -121,10 +121,10 @@ function(_jafg_add_module_impl
             message(FATAL_ERROR "Missing implementation for type [${module_type}].")
         endif()
         target_compile_definitions(${module_name} PRIVATE
-            ${module_name_upper}_API=LAL_PLATFORM_CALLSPEC_OUT
+            ${module_name_upper}_API=JAFG_PLATFORM_CALLSPEC_OUT
             )
         target_compile_definitions(${module_name} INTERFACE
-            ${module_name_upper}_API=LAL_PLATFORM_CALLSPEC_IN
+            ${module_name_upper}_API=JAFG_PLATFORM_CALLSPEC_IN
             )
     else()
         message(FATAL_ERROR "Invalid module type [${module_type}].")
@@ -180,22 +180,22 @@ function(_jafg_add_module_impl
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_definitions(${module_name} PRIVATE
-            LAL_WITH_MSVC=1
+            JAFG_WITH_MSVC=1
             )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_definitions(${module_name} PRIVATE
-            LAL_WITH_GCC=1
+            JAFG_WITH_GCC=1
             )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_definitions(${module_name} PRIVATE
-            LAL_WITH_CLANG=1
+            JAFG_WITH_CLANG=1
             )
     else()
         message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
     endif()
 
     target_compile_definitions(${module_name} PRIVATE
-        PRIVATE_LAL_CPLUSPLUS=${_private_jafg_min_cplusplus}
+        PRIVATE_JAFG_CPLUSPLUS=${_private_jafg_min_cplusplus}
         )
 
     if(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_CLIENT)
@@ -290,7 +290,7 @@ function(_jafg_add_module_impl
         endif()
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_SHIPPING)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
+            if(JAFG_DO_DEBUG_SYMBOLS_IN_SHIPPING)
                 target_compile_options(${module_name} PRIVATE
                     -g              # Debug symbols.
                     -O3             # Aggressive optimizations (Prioritize speed and fuck security).
@@ -302,7 +302,7 @@ function(_jafg_add_module_impl
                     )
             endif()
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
+            if(JAFG_DO_DEBUG_SYMBOLS_IN_SHIPPING)
                 target_compile_options(${module_name} PRIVATE
                     /Zi             # PDB debug symbols.
                     /Ox             # Aggressive optimizations.
@@ -322,27 +322,23 @@ function(_jafg_add_module_impl
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_CONFIG [${JAFG_TARGET_CONFIG}].")
     endif()
 
-    set(b_LAL_DO_COMPILER_DIAGNOSTIC_SETUP $<IF:$<BOOL:LAL_DO_COMPILER_DIAGNOSTIC_SETUP>,1,0>)
+    set(b_JAFG_DO_COMPILER_DIAGNOSTIC_SETUP $<IF:$<BOOL:JAFG_DO_COMPILER_DIAGNOSTIC_SETUP>,1,0>)
 
     target_compile_definitions(${module_name} PRIVATE
-        LAL_DO_COMPILER_DIAGNOSTIC_SETUP=${b_LAL_DO_COMPILER_DIAGNOSTIC_SETUP}
+        JAFG_DO_COMPILER_DIAGNOSTIC_SETUP=${b_JAFG_DO_COMPILER_DIAGNOSTIC_SETUP}
         )
 
-    _jafg_add_flag_if_specified(${LAL_DO_ENABLE_SHIPPING_WARNINGS}           "LAL_DO_ENABLE_SHIPPING_WARNINGS")
+    _jafg_add_flag_if_specified(${JAFG_DO_ENABLE_SHIPPING_WARNINGS}          "JAFG_DO_ENABLE_SHIPPING_WARNINGS")
 
-    _jafg_add_flag_if_specified(${LAL_LOG_DEFAULT_VERBOSITY}                 "LAL_LOG_DEFAULT_VERBOSITY")
-    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_TRACE}                      "LAL_LOG_ENABLE_TRACE")
-    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_VERBOSE}                    "LAL_LOG_ENABLE_VERBOSE")
-    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_INFO}                       "LAL_LOG_ENABLE_INFO")
-    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_WARNING}                    "LAL_LOG_ENABLE_WARNING")
-    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_ERROR}                      "LAL_LOG_ENABLE_ERROR")
-    _jafg_add_flag_if_specified(${LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER}      "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER")
+    _jafg_add_flag_if_specified(${JAFG_LOG_DEFAULT_VERBOSITY}                "JAFG_LOG_DEFAULT_VERBOSITY")
+    _jafg_add_flag_if_specified(${JAFG_LOG_ENABLE_TRACE}                     "JAFG_LOG_ENABLE_TRACE")
+    _jafg_add_flag_if_specified(${JAFG_LOG_ENABLE_VERBOSE}                   "JAFG_LOG_ENABLE_VERBOSE")
+    _jafg_add_flag_if_specified(${JAFG_LOG_ENABLE_INFO}                      "JAFG_LOG_ENABLE_INFO")
+    _jafg_add_flag_if_specified(${JAFG_LOG_ENABLE_WARNING}                   "JAFG_LOG_ENABLE_WARNING")
+    _jafg_add_flag_if_specified(${JAFG_LOG_ENABLE_ERROR}                     "JAFG_LOG_ENABLE_ERROR")
+    _jafg_add_flag_if_specified(${JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER}     "JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER")
     _jafg_add_flag_if_specified(${JAFG_FORCE_LOG_FLUSH_INTERVAL}             "JAFG_FORCE_LOG_FLUSH_INTERVAL")
     _jafg_add_flag_if_specified(${JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES}        "JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES")
-
-    _jafg_add_flag_if_specified(${LAL_CHECK_CONTAINER_BOUNDS}                "LAL_CHECK_CONTAINER_BOUNDS")
-    _jafg_add_flag_if_specified(${LAL_CHECK_STRING_VALIDITY}                 "LAL_CHECK_STRING_VALIDITY")
-    _jafg_add_flag_if_specified(${LAL_CHECK_ARRAY}                           "LAL_CHECK_ARRAY")
     # ~Compiler flags
     ###############################################################################
 

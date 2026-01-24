@@ -35,15 +35,44 @@ void Jgc::JDebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
         auto Value3D{Value.GetAxis3DValue()};
         auto Vs{Scene->GetRelativeVectors()};
 
-        LVector3F Translation;
-        Translation += Vs.Front * Value3D.X;
-        Translation += Vs.Right * Value3D.Y;
+        // if:
+        //  fwd: -z
+        //  up: +y
+        //  right: +x
+        glm::vec3 front;
+        front.x = -cos(glm::radians(Scene->TempRot.x)) * sin(glm::radians(Scene->TempRot.y));
+        front.y = sin(glm::radians(Scene->TempRot.x));
+        front.z = cos(glm::radians(Scene->TempRot.x)) * cos(glm::radians(Scene->TempRot.y));
+        front   = glm::normalize(front);
+
+        LVec3F Translation{ maths::zero_vector<LVec3F> };
+
+        // fwd back
+        Translation += front * Value3D.x;
+        // left right
+        Translation += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * Value3D.y;
+        // up down
+        Translation += glm::vec3{0,-1,0} // TODO: Make this an option for the user. (or Vs.Up)
+            * Value3D.z;
 
         // TODO: Make this an option for the user.
         // Translation += Vs.Up * Value3D.Z;
-        Translation += LVector3F::UpVector * Value3D.Z;
+        // Translation += maths::up_vector<LVec3F> * Value3D.z;
+        // Translation.z += Value3D.z;
 
-        Scene->AddTranslation(Translation);
+        Scene->TempPos += Translation;
+
+        glm::vec3 front_jafg;
+        front_jafg.y = -cos(Scene->TempRot.x) * sin(Scene->TempRot.y);
+        front_jafg.z = sin(Scene->TempRot.x);
+        front_jafg.x = -cos(Scene->TempRot.x) * cos(Scene->TempRot.y);
+        front_jafg   = glm::normalize(front_jafg);
+        LVec3F Translation_jafg{ maths::zero_vector<LVec3F> };
+        Translation_jafg += front_jafg * -Value3D.x;
+        Translation_jafg += glm::normalize(glm::cross(front_jafg, glm::vec3(0.0f, 0.0f, 1.0f))) * Value3D.y;
+        Translation_jafg += glm::vec3{0,0,1} * Value3D.z;
+
+        Scene->TempPos_jafg += Translation_jafg;
     }
     else
     {
@@ -53,6 +82,7 @@ void Jgc::JDebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
             )
     }
 
+
     return;
 }
 
@@ -60,20 +90,10 @@ void Jgc::JDebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
 {
     if (auto* Scene{this->GetOwner()->GetComponent<Jafg::JSceneComponent>()})
     {
-        auto Value2D{Value.GetAxis2DValue()};
-
-        auto Rotator{Scene->GetRotator()};
-        Rotator += LRotator{
-              Value2D.X * this->Sensitivity
-            , Value2D.Y * this->Sensitivity
-            , 0.0f};
-        // Rotator *= this->Sensitivity;
-        Rotator.ConstrainAxis(Lal::ERotatorAxis::Pitch, 89.9f);
-        Rotator.NormalizeRotation();
-        check( Rotator.Pitch >= -89.9f && Rotator.Pitch <= 89.9f )
-        check( Rotator.Yaw >= -180.0f && Rotator.Yaw <= 180.0f )
-
-        Scene->SetRotator(Rotator);
+        f32 sensitivity = 0.1f; // radians per pixel
+        auto delta{Value.GetAxis2DValue()};
+        Scene->TempRot += maths::radians(LWorldVec3(-delta.y, delta.x, 0.0)) * sensitivity;
+        maths::pitch_l(&Scene->TempRot) = maths::clamp(maths::pitch(Scene->TempRot), maths::radians(-89.9f), maths::radians(89.9f));
     }
     else
     {

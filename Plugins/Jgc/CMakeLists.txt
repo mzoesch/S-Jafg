@@ -8,7 +8,7 @@ if(_guard)
     set(this_plugin_supports_dyn_unload false)
 
     jafg_add_module(JAFG_MODULE_TYPE_PLUGIN)
-    jafg_add_dependency("Engine/Engine" "public")
+    jafg_add_dependency("Engine" "public")
 
     add_custom_target(JgcRuntime DEPENDS Runtime Jgc)
 endif()

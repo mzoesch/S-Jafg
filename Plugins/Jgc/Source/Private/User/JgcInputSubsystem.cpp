@@ -30,7 +30,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     Jafg::EKeys::A,
                     Jafg::EInputActionTrigger::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
-                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleModifier>())
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXYModifier>())
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyNegateModifier>())
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyDeltaTimeModifier>())
                 })
@@ -49,7 +49,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     Jafg::EKeys::D,
                     Jafg::EInputActionTrigger::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
-                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleModifier>())
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXYModifier>())
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyDeltaTimeModifier>())
                 })
                 .reflexive_emplace_back(Jafg::LInputTrigger

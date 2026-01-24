@@ -1,0 +1,102 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+#if PLATFORM_WINDOWS /* Just some windows nonsense... */
+    #ifdef CreateFile
+        #pragma push_macro( "CreateFile" )
+        #undef CreateFile
+    #endif /* CreateFile */
+#endif /* PLATFORM_WINDOWS */
+
+//#
+//# Functions in this namespace will panic if something goes wrong unless stated otherwise.
+//#
+namespace Finder
+{
+
+inline LPath GetCwd();
+
+inline LPath GetSavedDir() noexcept { return LPath{ "Saved" }; }
+inline LPath GetUserPreferencesFile() noexcept { LPath Out { GetSavedDir() }; Out.concat("/MyPreferences.cfg"); return Out; }
+inline LPath GetSavesDir() noexcept { LPath Out { GetSavedDir() }; Out.concat("/Saves"); return Out; }
+inline LPath GetDumpsDir() noexcept { LPath Out { GetSavedDir() }; Out.concat("/Dumps"); return Out; }
+inline LPath GetMostRecentMemDumpFile() noexcept { LPath Out { GetDumpsDir() }; Out.concat("/proc.dmp"); return Out; }
+
+inline bool DoesExist(const LPath& Path);
+inline bool DoesExistChecked(const LPath& Path) { const bool bOut { DoesExist(Path) }; check( bOut ) return bOut; }
+inline bool DoesExistAsserted(const LPath& Path) { const bool bOut { DoesExist(Path) }; jassert( bOut ) return bOut; }
+
+inline bool DoesFileExist(const LPath& File);
+inline bool DoesFileExistChecked(const LPath& File) { const bool bOut { DoesFileExist(File) }; check( bOut ) return bOut; }
+inline bool DoesFileExistAsserted(const LPath& File) { const bool bOut { DoesFileExist(File) }; jassert( bOut ) return bOut; }
+
+inline bool DoesDirectoryExist(const LPath& Directory);
+inline bool DoesDirectoryExistChecked(const LPath& Directory) { const bool bOut { DoesDirectoryExist(Directory) }; check( bOut ) return bOut; }
+inline bool DoesDirectoryExistAsserted(const LPath& Directory) { const bool bOut { DoesDirectoryExist(Directory) }; jassert( bOut ) return bOut; }
+
+//#
+//# Ensure a file. If it does not exist, it will be created along with their parent directories if necessary.
+//# This is a safe function that will panic if the path is outside the engine root directory.
+//#
+inline void EnsureFile(const LPath& File);
+//# Check a file. If it does not exist, the program will panic. This function may read any file.
+inline void CheckFile(const LPath& File);
+
+inline bool AreFilesIdentical(const LPath& A, const LPath& B);
+
+inline void CreateFile(const LPath& File, const bool bMakeParents = false);
+inline void CreateDirectories(const LPath& Directory);
+
+//#
+//# Reads a file from the platform.
+//# This function will panic if something goes wrong.
+//# @note This function will panic if the file does not exist or access to the filesystem is denied.
+//#
+inline LString    ReadFile(const LPath& File);
+inline TArray<u8> ReadFileAsBinary(const LPath& File);
+
+//# Same as #ReadFile but will not panic, instead write the error message to the provided string if available.
+inline TOptional<LString>    TryReadFile(const LPath& File, LString* OutHumanReadableError = nullptr);
+inline TOptional<TArray<u8>> TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError = nullptr);
+
+inline void OverrideFile(const LPath& File, const LStringView& Content, const bool bUseNativeLineEndings = false);
+
+inline void MakeFileBackup(const LPath& File, const bool bMakeIfSame = false, i32 Count = 5, const LStringView& Extension = ".old");
+
+//#
+//# Searches the given directory for files with the given extension following std regrex.
+//#
+inline TArray<LString> FindFiles
+(
+    const LPath& Directory,
+    const bool bKeepExtension = true,
+    const LStringView& Extension = "*",
+    const std::regex_constants::syntax_option_type Options = std::regex_constants::ECMAScript
+);
+
+//#
+//# Searches the given directory for files with the given extension following std regex.
+//#
+inline TArray<LString> FindFilesRecursively
+(
+    const LPath& Directory,
+    const bool bKeepExtension = true,
+    const LStringView& Regex = "*",
+    const std::regex_constants::syntax_option_type Options = std::regex_constants::ECMAScript
+);
+
+//#
+//# Finds all files with the given name in the given directory and all subdirectories.
+//#
+inline TArray<LString> FindFilesRecursivelyByName
+(
+    const LPath& Directory,
+    const LStringView& FileName
+);
+
+} /* ~Namespace Finder */
+
+#if JAFG_PLATFORM_USES_STD_FINDER
+    #include "System/StdFinder.h"
+#endif /* JAFG_PLATFORM_USES_STD_FINDER */

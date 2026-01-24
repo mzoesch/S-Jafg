@@ -63,7 +63,6 @@ include(CMake/EarlySetup.cmake)
 if(NOT DEFINED JAFG_SEARCH_PATHS)
     set(JAFG_SEARCH_PATHS
         "Engine"
-        "Lal"
         "Plugins"
         "Runtime"
         )
@@ -75,7 +74,6 @@ endif()
 #
 if(NOT DEFINED JAFG_EXCLUDE_PATHS)
     set(JAFG_EXCLUDE_PATHS
-        "Engine/Vendor"
         "Plugins/Vendor"
         )
 endif()
@@ -102,8 +100,7 @@ set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 # The module name can be accessed via "_scoped_module_name". It is the name of the directory the CMakeLists.txt is in,
 # e.g. this means that:
 #    Runtime                    => Runtime
-#    Engine/Core                => Core
-#    Engine/Engine              => Engine
+#    Engine                     => Engine
 #    Plugins/mzoesch/MyPlugin   => MyPlugin
 #
 # You CMakeLists.txt file may be loaded multiple times by the Jafg build tool, therefore it is necessary to guard
@@ -122,7 +119,7 @@ set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 #   this_plugin_author:                 Set a custom author for your module. Default is ["Anonymous"].
 #   this_plugin_supports_dyn_unload:    Set to false if your module does not support dynamic unloading at runtime. Default is [true].
 #
-# @see Examples can be found at "Engine/Engine/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
+# @see Examples can be found at "Engine/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
 #
 macro(jafg_add_module
     # The type of the module. See the #JAFG_MODULE_TYPE_* constants above for valid values.
@@ -133,10 +130,10 @@ endmacro()
 
 #
 # Add another Jafg module as a dependency to the current module.
-# @see Examples can be found at "Engine/EngineForward/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
+# @see Examples can be found at "Plugins/Jgc/CMakeLists.txt".
 #
 macro(jafg_add_dependency
-    # The relative path of the module to add as a dependency to the engine. E.g.: "Engine/Engine".
+    # The relative path of the module to add as a dependency to the engine. E.g.: "Engine".
     dep_path
     #
     # The visibility of the dependency. This is either "public" or "private".

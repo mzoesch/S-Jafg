@@ -41,31 +41,29 @@ namespace
 /* Not a custom module. Place boilerplate manually. */
 JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS
 
-#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 void FlushLogs()
 {
-    LAL_UNSAFE_FLUSH_OUT_STREAMS()
+    JAFG_UNSAFE_FLUSH_OUT_STREAMS()
     Application::Private::LastStdOutFlushTime = Application::GetHighestNow();
     return;
 }
 
-#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    LEngine::_ReflectForwardedExitRequest();
-
     return ::HasCustomExitStatus()
         ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
         : EPlatformExit::Success;
 }
 
-#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineTick()
 {
     STAT_CYCLE_FUNCTION()
@@ -93,7 +91,7 @@ void EngineTick()
             {
                 const Application::LHrcTimePoint SleepStart = Application::GetHighestNow();
                 const f64 SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
-                Lal::Hal::SleepNoStats(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
+                Jafg::Hal::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
                 Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
                 if (Application::GetIdleDeltaTime() > Application::GetHighestIdleDeltaTime())
                 {
@@ -155,9 +153,9 @@ void EngineTick()
     return;
 }
 
-#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineExit()
 {
     STAT_BOOKMARK("TearingDown")
@@ -171,20 +169,12 @@ void EngineExit()
         delete GEngine;
         GEngine = nullptr;
     }
-    //
-    // Something very eccentric has happened or the pre-life-engine tasks failed to initialize before
-    // the engine was even created.
-    //
-    else
-    {
-        LEngine::_ReflectForwardedExitRequest();
-    }
 
     Private::GetGlobalCarnifex().KillAllGarbageChildren(); /* Non-CDRs */
     Private::GetGlobalCxxRecordRegistry().TearDown();
     Private::GetGlobalCarnifex().KillAllGarbageChildren(); /* CDRs */
 
-    (void)Private::GetNameRegistry().Destroy();
+    (void)Detail::GetNameRegistry().Destroy();
 
     if (::HasCustomExitReason())
     {
@@ -222,17 +212,6 @@ void EngineExit()
     return;
 }
 
-#if WITH_TESTS
-    //#
-    //# We include the static library tests from LAL directly here, so that the linker will not flag them as
-    //# unused and remove them during the linking phase to this runtime executable.
-    //# We can do this because LAL does not use the default automatic simple unit test registration process.
-    //#
-    //# @see Motor/Launch.rs
-    //#
-    #include "Lal/Lal/Source/Test/TestLal.h"
-#endif /* WITH_TESTS */
-
 //# A function "guarded" by platform-specific code implementing error handlers and user interface crash reporters.
 EPlatformExit::Type GuardedMain()
 {
@@ -254,7 +233,7 @@ EPlatformExit::Type GuardedMain()
         return ::GetMostSignificantExitReason();
     }
 
-#if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
+#if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
     struct GuardedMainScope
     {
         ~GuardedMainScope()
@@ -262,7 +241,7 @@ EPlatformExit::Type GuardedMain()
             EngineExit();
         }
     } GuardedMainScope;
-#endif /* !LAL_PLATFORM_USES_NON_GENERIC_EXIT */
+#endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
 
     LOG_INFO
     (
@@ -402,20 +381,20 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::FinishAndGiveUpMemory();
 
     Application::Private::PreviousFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
-    Lal::Hal::YieldThread();
+    Jafg::Hal::YieldThread();
     Application::Private::CurrentFrameTime  = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")
 
-#if LAL_PLATFORM_USES_NON_GENERIC_LOOP
-    LAL_PLATFORM_GUARDED_LOOP;
-#else /* LAL_PLATFORM_USES_NON_GENERIC_LOOP */
+#if JAFG_PLATFORM_USES_NON_GENERIC_LOOP
+    JAFG_PLATFORM_GUARDED_LOOP;
+#else /* JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
     while (::IsTearingDown() == false)
     {
         ::EngineTick();
     }
-#endif /* !LAL_PLATFORM_USES_NON_GENERIC_LOOP */
+#endif /* !JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
 
     return ::GetMostSignificantExitReason();
 #endif /* !WITH_TESTS */

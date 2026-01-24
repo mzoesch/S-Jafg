@@ -9,7 +9,7 @@ void Jgc::JFwSupremePolicies::OnWorldPreInit()
 {
     Super::OnWorldPreInit();
 
-    this->GetWorldChecked()->SetBackgroundColor(Lal::LLinearColor::DeepSkyBlue);
+    this->GetWorldChecked()->SetBackgroundColor(LinearColors::DeepSkyBlue);
 
     this->RotatingActor = Jafg::SpawnDeferredActor<Jafg::AActor>(this->GetWorld());
     this->RotatingActor->EmplaceDeferredComponent<Jafg::JStaticMeshComponent>([](Jafg::JStaticMeshComponent& Comp)
@@ -19,7 +19,12 @@ void Jgc::JFwSupremePolicies::OnWorldPreInit()
             .TexturePath = "Content/Textures/viking_room.png",
             });
 
-        Comp.SetTranslation(LVector3F{1,1,-1});
+        Comp.SetTranslation(LVec3F{2,-5,-4});
+        Comp.SetRotator(LWorldQuat{LWorldVec3{
+            0, // Pitch
+            0, // Yaw
+            0 //Roll
+            }});
     });
 
     return;

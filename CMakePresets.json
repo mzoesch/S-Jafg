@@ -78,7 +78,7 @@
             "name": "Sanitized",
             "hidden": true,
             "cacheVariables": {
-                "LAL_DO_SANITIZED_BUILD": "ON"
+                "JAFG_DO_SANITIZED_BUILD": "ON"
             }
         },
 

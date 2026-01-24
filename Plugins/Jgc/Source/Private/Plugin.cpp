@@ -10,7 +10,7 @@ DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 namespace
 {
 
-Lal::LProgramParameter _JgcStartupLevel{
+Jafg::LProgramParameter _JgcStartupLevel{
     "Jgc.StartupLevel",
     "Specifies the level to start Jgc with.",
     };
