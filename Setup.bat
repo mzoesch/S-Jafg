@@ -30,7 +30,7 @@ IF NOT EXIST "%MSYS2_ROOT%" (
 )
 
 ECHO Initializing MSYS2 environment...
-"%MSYS2_SHELL%" bash -c "pacman -Syu mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-vulkan-headers mingw-w64-ucrt-x86_64-vulkan-loader mingw-w64-ucrt-x86_64-vulkan-validation-layers"
+"%MSYS2_SHELL%" bash -c "pacman -S --noconfirm mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-vulkan-headers mingw-w64-ucrt-x86_64-vulkan-loader mingw-w64-ucrt-x86_64-vulkan-validation-layers && pacman -Syu --noconfirm"
 
 IF ERRORLEVEL 1 (
     ECHO MSYS2 setup failed!
