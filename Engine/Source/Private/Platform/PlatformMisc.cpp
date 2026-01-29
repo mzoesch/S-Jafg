@@ -57,7 +57,12 @@ LPath PlatformMisc::GetSelfProcDir()
         CachedSelfProcDir = LString{ Buffer };
         CachedSelfProcDir = CachedSelfProcDir.parent_path();
 #elif PLATFORM_WINDOWS
-    #error "Missing implementation for this platform."
+    TCHAR Buffer[JAFG_PLATFORM_MAX_PATH]{ 0 };
+    GetModuleFileName(nullptr, Buffer, JAFG_PLATFORM_MAX_PATH);
+        CachedSelfProcDir = LPath{ Buffer };
+        CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
+        CachedSelfProcDir = CachedSelfProcDir.remove_filename();
+        CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
 #else /* PLATFORM_WINDOWS */
     #error "Missing implementation for this platform."
 #endif /* !PLATFORM_WINDOWS */

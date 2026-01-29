@@ -23,7 +23,11 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::ReloadModel(
     LString Warning;
     LString Error;
 
+#if JAFG_PLATFORM_USES_UTF8
     auto Result{ tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warning, &Error, this->Path.c_str()) };
+#else /* JAFG_PLATFORM_USES_UTF8 */
+    auto Result{ tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warning, &Error, this->Path.string().c_str()) };
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
     if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinyobj: {}", Warning) }
     if (Result == false) { LOG_ERROR(LogRhi, "tinyobj: {}", Error) }
     if (Result == false) { return EResult::LoadingError; }

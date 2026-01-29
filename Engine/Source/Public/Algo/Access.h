@@ -82,13 +82,15 @@ using std::ranges::prev;
 ///////////////////////////////////////////////////////////////////////////////
 // Algo Base
 using std::ranges::equal_to;
-using std::ranges::greater_equal;
-using std::ranges::less_equal;
 using std::ranges::not_equal_to;
-using std::ranges::out_value_result;
-using std::ranges::equal;
-using std::ranges::in_out_result;
+using std::ranges::less;
+using std::ranges::less_equal;
+using std::ranges::greater;
+using std::ranges::greater_equal;
 
+using std::ranges::equal;
+using std::ranges::out_value_result;
+using std::ranges::in_out_result;
 using std::ranges::copy_result;
 using std::ranges::copy;
 using std::ranges::move_result;

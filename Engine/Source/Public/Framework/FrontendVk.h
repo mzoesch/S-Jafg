@@ -202,11 +202,7 @@ private:
         };
 
     TArray<vk::LayerProperties> Vk_AvailableInstanceLayers;
-    TArray<LString> Vk_RequiredInstanceLayers{
-#if !IN_SHIPPING
-        "VK_LAYER_KHRONOS_validation",
-#endif /* !IN_SHIPPING */
-        };
+    TArray<LString> Vk_RequiredInstanceLayers;
 
     vk::raii::Instance Vk_Instance{ nullptr };
 

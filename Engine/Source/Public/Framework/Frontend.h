@@ -108,10 +108,10 @@ public:
     ENGINE_API void AddWidget(LSurface* Context, WUserWidget* Widget);
     ENGINE_API void RemoveWidget(WUserWidget* Widget);
 
-    ENGINE_API WNode* GetTopLevelWidgetByClass(LViewport const* Context, TSubclassOf<WNode> Class) const { return Context->GetTopLevelWidgetByClass(Class); }
-    ENGINE_API WNode* GetTopLevelWidgetByClass(LSurface const* Context, TSubclassOf<WNode> Class) const { return Context->GetViewport().GetTopLevelWidgetByClass(Class); }
-    ENGINE_API WNode* GetTopLevelWidgetByClassChecked(LViewport* Context, TSubclassOf<WNode> Class) const { return Context->GetTopLevelWidgetByClassChecked(Class); }
-    ENGINE_API WNode* GetTopLevelWidgetByClassChecked(LSurface* Context, TSubclassOf<WNode> Class) const { return Context->GetViewport().GetTopLevelWidgetByClassChecked(Class); }
+    WNode* GetTopLevelWidgetByClass(LViewport const* Context, TSubclassOf<WNode> Class) const { return Context->GetTopLevelWidgetByClass(Class); }
+    WNode* GetTopLevelWidgetByClass(LSurface const* Context, TSubclassOf<WNode> Class) const { return Context->GetViewport().GetTopLevelWidgetByClass(Class); }
+    WNode* GetTopLevelWidgetByClassChecked(LViewport* Context, TSubclassOf<WNode> Class) const { return Context->GetTopLevelWidgetByClassChecked(Class); }
+    WNode* GetTopLevelWidgetByClassChecked(LSurface* Context, TSubclassOf<WNode> Class) const { return Context->GetViewport().GetTopLevelWidgetByClassChecked(Class); }
     template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass(LViewport* Context) const { return Context->GetTopLevelWidgetByClass<TNode>(Context); }
     template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass(LSurface* Context) const { return Context->GetViewport().GetTopLevelWidgetByClass<TNode>(); }
     template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked(LViewport* Context) const { return Context->GetTopLevelWidgetByClassChecked<TNode>(); }
@@ -135,8 +135,7 @@ public:
     UNUSED FORCEINLINE bool ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
     UNUSED FORCEINLINE bool ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
-    UNUSED ENGINE_API  bool ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode>Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
-    UNUSED ENGINE_API  bool ChangeWidgetVisibility(const LSurface* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    UNUSED ENGINE_API bool ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode>Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
     //# Instead of searching inside a specific context, this method search algorithm works just like the #GetFirstTopLevelWidgetByClass method.
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
     UNUSED FORCEINLINE bool ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
@@ -190,12 +189,6 @@ template<typename TNode> requires std::is_base_of_v<WNode, TNode>
 FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     return this->ChangeWidgetVisibility(TNode::StaticClass(), InVisibility, bAllowNotFound);
-}
-
-FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const LSurface* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
-{
-    check( Context )
-    return this->ChangeWidgetVisibility(&Context->GetViewport(), Class, InVisibility, bAllowNotFound);
 }
 
 FORCEINLINE bool LFrontendBase::FocusWidgetChecked(LViewport* Context, WNode* InNode)

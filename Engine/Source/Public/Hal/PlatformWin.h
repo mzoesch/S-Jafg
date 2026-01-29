@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #pragma once
-#include "Platform.h"
 
 /*-----------------------------------------------------------------------------
     Validate compiler and forward declare JAFG Windows logic.
@@ -46,7 +45,7 @@
     #endif /* !_MSVC_LANG */
 #endif /* JAFG_WITH_MSVC */
 
-namespace JAFG
+namespace Jafg
 {
 
 struct LPrimitivePlatformTypesGeneric;
@@ -61,7 +60,7 @@ struct LPrimitivePlatformTypesWindows final : public LPrimitivePlatformTypesGene
 
 //# Make it public.
 #ifndef JAFG_PLATFORM_TYPES_STRUCT
-    #define JAFG_PLATFORM_TYPES_STRUCT                                   ::JAFG::LPrimitivePlatformTypesWindows
+    #define JAFG_PLATFORM_TYPES_STRUCT                                   ::Jafg::LPrimitivePlatformTypesWindows
 #endif /* !JAFG_PLATFORM_TYPES_STRUCT */
 
 //# The platform break implementation details for break behavior on Windows.
@@ -70,7 +69,7 @@ struct LOnPlatformBreakWindows;
 //# Make it public.
 typedef LOnPlatformBreakWindows                                         LOnPlatformBreak;
 
-} /* ~Namespace JAFG */
+} /* ~Namespace Jafg */
 
 #if JAFG_DO_COMPILER_DIAGNOSTIC_SETUP
 ///////////////////////////////////////////////////////////////////////////////
@@ -331,7 +330,19 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
 #endif /* !JAFG_PLATFORM_NO_DISCARD_CTRL_PATH */
 
 #ifndef JAFG_PLATFORM_BREAK
-    #define JAFG_PLATFORM_BREAK()                                        __debugbreak();
+    #if JAFG_WITH_MSVC
+        #define JAFG_PLATFORM_BREAK()                                    __debugbreak();
+    #else /* JAFG_WITH_MSVC */
+        #if defined(__aarch64__) || defined(__arm64ec__)
+            #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("brk #0xf000"); }
+        #elif defined(__i386__) || defined(__x86_64__)
+            #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("int {$}3":); }
+        #elif defined(__arm__)
+            #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("udf #0xfe"); }
+        #else
+            #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("unimplemented"); }
+        #endif
+    #endif /* !JAFG_WITH_MSVC */
 #endif  /* !JAFG_PLATFORM_BREAK */
 
 //# Do we want to use __ud2 or __fastfail. This has to be evaluated.
@@ -414,22 +425,22 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
     #include <locale>
 #endif /* JAFG_WITH_GCC */
 
-namespace JAFG
+namespace Jafg
 {
 
 struct LOnPlatformBreakWindows final
 {
     [[noreturn]] NOINLINE
-    static void ExitQuietly();
+    ENGINE_API static void ExitQuietly();
 
     [[noreturn]] NOINLINE
-    static void OnProgramPanicImpl
+    ENGINE_API static void OnProgramPanicImpl
     (
         LPrimitivePlatformTypesGeneric::LJafgChar const* InMessage
     );
 
     [[noreturn]] NOINLINE
-    static void OnProgramPanic
+    ENGINE_API static void OnProgramPanic
     (
         LPrimitivePlatformTypesGeneric::LJafgChar const* InBaseMessage,
         LPrimitivePlatformTypesGeneric::LJafgChar const* InFile,
@@ -437,4 +448,4 @@ struct LOnPlatformBreakWindows final
     );
 };
 
-} /* ~Namespace JAFG */
+} /* ~Namespace Jafg */

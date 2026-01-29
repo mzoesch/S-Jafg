@@ -34,5 +34,9 @@ ghidra/
 /build/
 /build*/
 
+# Windows
+/msys64/
+/msys2-installer.exe
+
 # Osx - fuck you
 .DS_Store

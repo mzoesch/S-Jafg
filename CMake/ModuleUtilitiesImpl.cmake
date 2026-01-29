@@ -260,6 +260,15 @@ function(_jafg_add_module_impl
         message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
     endif()
 
+    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+        find_library(DBGHELP_LIBRARY dbghelp)
+        if(DBGHELP_LIBRARY)
+            target_link_libraries(${module_name} PRIVATE ${DBGHELP_LIBRARY})
+        else()
+            message(FATAL_ERROR "No such library: dbghelp.")
+        endif()
+    endif()
+
     if(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             target_compile_options(${module_name} PRIVATE
@@ -356,7 +365,7 @@ function(_jafg_add_module_impl
     ###############################################################################
     # Human readable plugin info file
     if(${module_type} STREQUAL JAFG_MODULE_TYPE_PLUGIN)
-        set(_target_root_plugin_jafg "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/.jafg.root.plugin")
+        set(_target_root_plugin_jafg "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/manifest.jafg")
         if(NOT EXISTS "${_target_root_plugin_jafg}")
             retrieve_file_content_no_fail("${JAFG_ENGINE_ROOT}/${module_rel_dir}/Config/.ver" _target_ver)
 

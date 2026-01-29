@@ -1,5 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
+#if 0
+
 #if PLATFORM_WINDOWS
 
 #include "Widgets/InterfaceTypes.h"
@@ -239,17 +241,6 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
 
 } /* ~Namespace <Anonymous> */
 
-LPath Jafg::PlatformMisc::Private::GetRealEngineRootDirImpl()
-{
-    TCHAR Buffer[JAFG_PLATFORM_MAX_PATH] = { 0 };
-    GetModuleFileName(nullptr, Buffer, JAFG_PLATFORM_MAX_PATH);
-
-    LPath Path{ Buffer };
-    Path = Path.lexically_normal();
-    Path = Path.remove_filename();
-    return Path.lexically_normal();
-}
-
 i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
 {
     return ::GetSystemMetrics(SM_CMONITORS);
@@ -282,3 +273,5 @@ bool Jafg::PlatformMisc::SetPhysicalViewports()
 }
 
 #endif /* PLATFORM_WINDOWS */
+
+#endif /* 0 */

@@ -4,6 +4,14 @@ include_guard(_guard)
 if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
+    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+        set_target_properties(${module_name} PROPERTIES
+                ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+                LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+                RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+                )
+    endif()
+
     ###############################################################################
     # Engine only compile time definitions
     if(NOT DEFINED PROJECT_VERSION)
@@ -182,17 +190,22 @@ if(_guard)
             if(NOT DOWNLOAD_RESULT EQUAL 0)
                 message(FATAL_ERROR "Failed to download slang from [${_url}].")
             endif()
-            file(MAKE_DIRECTORY "${JAFG_ENGINE_ROOT}/Content/.Slang${_os}")
-            execute_process(
-                COMMAND ${CMAKE_COMMAND} -E tar xzf "${_archive}"
-                WORKING_DIRECTORY "${JAFG_ENGINE_ROOT}/Content/.Slang${_os}"
-                )
         else()
             message(STATUS "Slangc archive already exists at [${_archive}].")
         endif()
+        set(_dst_slang_extraction_dir "${JAFG_ENGINE_ROOT}/Binaries/${_os}/Vendor/Slang")
+        if(NOT EXISTS "${_dst_slang_extraction_dir}/LICENSE")
+            file(MAKE_DIRECTORY "${_dst_slang_extraction_dir}")
+            execute_process(
+                COMMAND ${CMAKE_COMMAND} -E tar xzf "${_archive}"
+                WORKING_DIRECTORY "${_dst_slang_extraction_dir}"
+                )
+        else()
+            message(STATUS "Slangc already extracted for OS [${_os}] at [${_dst_slang_extraction_dir}].")
+        endif()
     endfunction()
-    _DownalodSlangc("Windows_x86_64" "${CMAKE_BINARY_DIR}/windows-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
-    _DownalodSlangc("Linux_x86_64" "${CMAKE_BINARY_DIR}/linux-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
+    _DownalodSlangc("Windows-x86_64" "${CMAKE_BINARY_DIR}/windows-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
+    _DownalodSlangc("Linux-x86_64" "${CMAKE_BINARY_DIR}/linux-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
 
     ###############################################################################
     # Fonts

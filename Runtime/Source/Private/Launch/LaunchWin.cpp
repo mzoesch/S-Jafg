@@ -4,7 +4,6 @@
 
 #include "Core/Application.h"
 #include "Platform/PlatformMisc.h"
-#include "AbsoluteMinimalCore.h"
 
 #if JAFG_WITH_MSVC
     #if IN_DEBUG
@@ -25,16 +24,16 @@ namespace
 {
 
 void InvalidParameterHandler(
-     const wchar_t* Expression
-   , const wchar_t* Function
-   , const wchar_t* File
-   , unsigned int Line
-   , uintptr_t pReserved
+     const LChar* Expression
+   , const LChar* Function
+   , const LChar* File
+   , u32 Line
+   , u64 pReserved
    )
 {
-    LString Utf8Expression{ Jafg::Utf16ToUtf8(Expression, std::wcslen(Expression)) };
-    LString Utf8Function{ Jafg::Utf16ToUtf8(Function, std::wcslen(Function)) };
-    LString Utf8File{ Jafg::Utf16ToUtf8(File, std::wcslen(File)) };
+    LString Utf8Expression{Utf16ToUtf8(Expression, std::wcslen(Expression))};
+    LString Utf8Function{Utf16ToUtf8(Function, std::wcslen(Function))};
+    LString Utf8File{Utf16ToUtf8(File, std::wcslen(File))};
 
     LOG_FATAL(LogCRT, "Invalid parameter detected inside expression:\n\t{}\nFunction {}\nFile: {}\nLine: {}",
         Utf8Expression,
@@ -52,10 +51,10 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
     // If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
     // Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
     //
-    i32 ErrorLevel = 0;
+    i32 ErrorLevel{};
 
     TArray<LString> Arguments;
-    for (i32 Idx{ 0 }; Idx < __argc; ++Idx)
+    for (auto Idx{0uz}; Idx < static_cast<LSize>(__argc); ++Idx)
     {
         Arguments.emplace_back(__argv[Idx]);
     }

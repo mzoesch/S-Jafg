@@ -128,7 +128,7 @@ public:
 
     ENGINE_API LReStCli() noexcept;
     PROHIBIT_REALLOC_OF_ANY_FORM(LReStCli)
-    ENGINE_API ~LReStCli() noexcept override = default;
+    ~LReStCli() noexcept override = default;
 
     virtual ETaskExit::Type Initialize() override;
     virtual ETaskExit::Type Run() override;

@@ -650,7 +650,7 @@ void Jafg::LFrontendVk::_Vk_WaitIdle()
 i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LSlangCompilationRequest const& Request)
 {
     return this->HandleSlangCompilationRequest(
-        Jafg::SprintF("Content/.Slang{}_{}/bin/slangc{}",
+        Jafg::SprintF("Content/Binaries/{}-{}/Vendor/Slang/bin/slangc{}",
             PlatformMisc::GetTargetPlatform(),
             PlatformMisc::GetTargetArchitecture(),
 #if PLATFORM_WINDOWS
@@ -751,6 +751,23 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
         LOG_VERBOSE(LogVulkan, "    {} spec[{}]", LStringView{Layer.layerName}, Layer.specVersion)
     }
 
+#if !IN_SHIPPING
+    if (algo::contains(this->Vk_AvailableInstanceLayers, "VK_LAYER_KHRONOS_validation", [](vk::LayerProperties const& Layer)
+        {
+            return LStringView{Layer.layerName};
+        }) == false)
+    {
+        LOG_WARNING(LogVulkan, "No such layer [VK_LAYER_KHRONOS_validation]. Validation layers will be disabled.")
+    }
+    else
+    {
+        if (algo::contains(this->Vk_RequiredInstanceLayers, "VK_LAYER_KHRONOS_validation") == false)
+        {
+            this->Vk_RequiredInstanceLayers.emplace_back("VK_LAYER_KHRONOS_validation");
+        }
+    }
+#endif /* !IN_SHIPPING */
+
     LOG_VERBOSE(LogVulkan, "Required Vulkan instance layers:")
     for (auto const& Layer : this->Vk_RequiredInstanceLayers)
     {
@@ -760,7 +777,7 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
     for (LString const& Layer : this->Vk_RequiredInstanceLayers)
     {
         bool bFound{ false };
-        for (auto const& AvailableLayer : Vk_AvailableInstanceLayers)
+        for (auto const& AvailableLayer : this->Vk_AvailableInstanceLayers)
         {
             if (Layer == AvailableLayer.layerName)
             {
@@ -863,12 +880,12 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
         panic( "Failed to find any physical devices with Vulkan support." )
     }
 
-    for (auto RankedPhysicalDevices{ this->Vk_RankPhysicalDevices(AvailablePhysicalDevices) };
+    for (auto RankedPhysicalDevices{this->Vk_RankPhysicalDevices(AvailablePhysicalDevices)};
          auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
     {
         this->Vk_AvailablePhysicalDevices.emplace_back(Rating, PhysicalDevice);
     }
-
+    algo::sort(this->Vk_AvailablePhysicalDevices, algo::greater{}, &LRankedPhysicalDevice::Rating);
     LOG_VERBOSE(LogVulkan, "Available physical devices ranked by suitability:")
     for (auto const& [Rating, PhysicalDevice] : this->Vk_AvailablePhysicalDevices)
     {
