@@ -879,15 +879,13 @@ void Jafg::LEngine::FetchPlugins(LPath const& Path)
 
     LOG_VERBOSE(LogForeign, "Fetching in [{}]...", Path)
 
-    i32 Fetched{ 0 };
+    i32 Fetched{};
     for
     (
-        const TArray<LString> Files{ Finder::FindFilesRecursively(Path, true, ".*\\.jafg\\.root\\.plugin$") };
+        const TArray<LString> Files{Finder::FindFilesRecursively(Path, true, ".*\\manifest.jafg")};
         LString const& File : Files
     )
     {
-        check( File.ends_with("/.jafg.root.plugin") )
-
         if (this->FetchPlugin(File))
         {
             ++Fetched;

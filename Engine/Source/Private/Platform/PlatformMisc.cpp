@@ -45,7 +45,6 @@ LPath PlatformMisc::GetSelfProcDir()
     if (CachedSelfProcDir.empty())
     {
         check( Tasks::IsOnMasterThread() )
-
 #if PLATFORM_LINUX
         char Buffer[JAFG_PLATFORM_MAX_PATH] = { 0 };
         auto Ret{ readlink("/proc/self/exe", Buffer, JAFG_PLATFORM_MAX_PATH) };
@@ -57,12 +56,12 @@ LPath PlatformMisc::GetSelfProcDir()
         CachedSelfProcDir = LString{ Buffer };
         CachedSelfProcDir = CachedSelfProcDir.parent_path();
 #elif PLATFORM_WINDOWS
-    TCHAR Buffer[JAFG_PLATFORM_MAX_PATH]{ 0 };
-    GetModuleFileName(nullptr, Buffer, JAFG_PLATFORM_MAX_PATH);
-        CachedSelfProcDir = LPath{ Buffer };
+        TCHAR Buffer[JAFG_PLATFORM_MAX_PATH]{ 0 };
+        GetModuleFileName(nullptr, Buffer, JAFG_PLATFORM_MAX_PATH);
+        CachedSelfProcDir = LPath{Buffer};
         CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
         CachedSelfProcDir = CachedSelfProcDir.remove_filename();
-        CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
+        CachedSelfProcDir = LPath{algo::left_chop(CachedSelfProcDir.native(), 1)};
 #else /* PLATFORM_WINDOWS */
     #error "Missing implementation for this platform."
 #endif /* !PLATFORM_WINDOWS */

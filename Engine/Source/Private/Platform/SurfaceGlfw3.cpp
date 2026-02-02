@@ -1088,8 +1088,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
             , &this->WindowFrameSizeBottomRight.x, &this->WindowFrameSizeBottomRight.y);
         glfwGetWindowSize(this->Handle, &this->WindowSize.x, &this->WindowSize.y);
         glfwGetFramebufferSize(this->Handle, &this->FramebufferSize.x, &this->FramebufferSize.y);
-        if (this->Vk_SurfaceCapabilities.currentExtent.width
-            == std::numeric_limits<decltype(this->Vk_SurfaceCapabilities.currentExtent.width)>::max())
+        if (this->Vk_SurfaceCapabilities.currentExtent.width == std::numeric_limits<decltype(this->Vk_SurfaceCapabilities.currentExtent.width)>::max())
         {
             this->Vk_SwapchainExtent = {
                 maths::clamp<decltype(vk::Extent2D::width)>(
@@ -1099,6 +1098,14 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
                       this->FramebufferSize.y
                     , this->Vk_SurfaceCapabilities.minImageExtent.height, this->Vk_SurfaceCapabilities.maxImageExtent.height)
                 };
+        }
+        else
+        {
+            this->Vk_SwapchainExtent = this->Vk_SurfaceCapabilities.currentExtent;
+            check( this->Vk_SwapchainExtent.width >= this->Vk_SurfaceCapabilities.minImageExtent.width
+                && this->Vk_SwapchainExtent.width <= this->Vk_SurfaceCapabilities.maxImageExtent.width )
+            check( this->Vk_SwapchainExtent.height >= this->Vk_SurfaceCapabilities.minImageExtent.height
+                && this->Vk_SwapchainExtent.height <= this->Vk_SurfaceCapabilities.maxImageExtent.height )
         }
     }
 
@@ -1255,6 +1262,8 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
     LOG_VERBOSE(LogVulkan, "Creating color resources for surface [{}].", this->GetHumanReadableName())
 
     auto& Frontend{ this->GetFrontend() };
+
+    check( this->Vk_SwapchainExtent.width > 0 && this->Vk_SwapchainExtent.height > 0 )
 
     vk::ImageCreateInfo ImageCreateInfo{
         .imageType = vk::ImageType::e2D,

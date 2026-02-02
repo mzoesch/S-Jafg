@@ -287,7 +287,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     this->Vk_UpdateSamplers();
 
     LSlangCompilationRequest Req{};
-    Req.In = LPath{ "/home/mzoesch/EDev/S-Jafg/Content/Shaders/Slang/StaticMesh.slang" };
+    Req.In = LPath{ "Content/Shaders/Slang/StaticMesh.slang" };
     Req.Out = LPath{ LStaticMesh::DefaultShader };
     Req.EntryPoints.reflexive_emplace_back("vertMain").emplace_back("fragMain");
     if (auto Rc{ this->HandleSlangCompilationRequest(Req) }; Rc != 0)
@@ -650,9 +650,9 @@ void Jafg::LFrontendVk::_Vk_WaitIdle()
 i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LSlangCompilationRequest const& Request)
 {
     return this->HandleSlangCompilationRequest(
-        Jafg::SprintF("Content/Binaries/{}-{}/Vendor/Slang/bin/slangc{}",
-            PlatformMisc::GetTargetPlatform(),
-            PlatformMisc::GetTargetArchitecture(),
+        Jafg::SprintF("Binaries/{}/Vendor/Slang/bin/slangc{}",
+        // Jafg::SprintF("test/Test.exe",
+            PlatformMisc::GetTargetPlatformCompound(),
 #if PLATFORM_WINDOWS
             ".exe"
 #else /* PLATFORM_WINDOWS */
@@ -663,15 +663,45 @@ i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LSlangCompilationRequest co
         );
 }
 
-i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath const& Slang, LSlangCompilationRequest const& Request)
+std::wstring GetLastErrorMessage(DWORD error)
 {
+    wchar_t* buffer = nullptr;
+
+    FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr,
+        error,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPWSTR)&buffer,
+        0,
+        nullptr
+    );
+
+    std::wstring message = buffer ? buffer : L"";
+    LocalFree(buffer);
+    return message;
+}
+
+i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath Slangc, LSlangCompilationRequest const& Request)
+{
+    Slangc.make_preferred();
+
     std::ostringstream SS;
-    SS << Slang.string();
+
+    SS << Slangc;
+
+    /* Quoting the requested in/out paths will not work, therefore spaces are not permitted. */
+    check( algo::contains(Request.In.native(), L' ') == false && "Slangc does not permit spaces in requested in/out paths." )
+    check( algo::contains(Request.Out.native(), L' ') == false && "Slangc does not permit spaces in requested in/out paths." )
     SS << " " << Request.In.string();
     SS << " -o " << Request.Out.string();
+
     SS << " -target " << Request.Target;
     SS << " -profile " << Request.Profile;
     SS << " -emit-spirv-directly";
+
     if (Request.EntryPoints.empty() == false)
     {
         SS << " -fvk-use-entrypoint-name";
@@ -681,12 +711,9 @@ i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath const& Slang, LSlangC
         }
     }
 
-    Finder::CreateDirectories(Request.Out.parent_path());
-
-    LString CommandLine{ SS.str() };
-    LOG_VERBOSE(LogSystem, "Executing: [{}].", CommandLine)
-
-    return static_cast<i64>(std::system(CommandLine.c_str()));
+    auto SSStr{SS.str()};
+    LOG_VERBOSE(LogSystem, "Executing: [{}].", SSStr)
+    return static_cast<i64>(std::system(SSStr.c_str()));
 }
 
 void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceExtensions()

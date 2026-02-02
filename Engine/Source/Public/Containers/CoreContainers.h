@@ -355,12 +355,12 @@ public:
     LSimplePath lexically_proximate(const path& base) const { return LSimplePath{TSuper::lexically_proximate(base)}; }
 
     /// Write a path to a stream
-    template<typename _CharT, typename _Traits>
-    friend std::basic_ostream<_CharT, _Traits>& operator<<(std::basic_ostream<_CharT, _Traits>& __os, const path& __p)
-    {
-        __os << std::quoted(__p.string<_CharT, _Traits>());
-        return __os;
-    }
+    // template<typename _CharT, typename _Traits>
+    // friend std::basic_ostream<_CharT, _Traits>& operator<<(std::basic_ostream<_CharT, _Traits>& __os, const path& __p)
+    // {
+    //     __os << std::quoted(__p.string<_CharT, _Traits>());
+    //     return __os;
+    // }
 
     /// Read a path from a stream
     template<typename _CharT, typename _Traits>
@@ -465,93 +465,6 @@ using LPath = Jafg::_LPath;
 
 template<typename T>
 using TOptional = std::optional<T>;
-
-namespace Jafg
-{
-
-#if PLATFORM_WINDOWS
-FORCEINLINE LWString Utf8ToUtf16(LString const& Utf8) noexcept;
-FORCEINLINE LWString Utf8ToUtf16(LString::value_type const* Ptr, LSize Size) noexcept;
-
-FORCEINLINE LString Utf16ToUtf8(LWString const& Utf16) noexcept;
-FORCEINLINE LString Utf16ToUtf8(LWString::value_type const* Ptr, LSize Size) noexcept;
-
-FORCEINLINE LWString Utf8ToUtf16(LString const& Utf8) noexcept
-{
-    return Utf8ToUtf16(Utf8.data(), Utf8.size());
-}
-
-FORCEINLINE LWString Utf8ToUtf16(LString::value_type const* Ptr, LSize Size) noexcept
-{
-    if (Size == 0)
-    {
-        return {};
-    }
-
-    auto RequiredSize = MultiByteToWideChar(
-        CP_UTF8,
-        0,
-        Ptr,
-        Size,
-        nullptr,
-        0
-        );
-
-    LWString Utf16(RequiredSize, LITERAL_WIDE('\0'));
-
-    MultiByteToWideChar(
-        CP_UTF8,
-        0,
-        Ptr,
-        Size,
-        &Utf16[0],
-        RequiredSize
-        );
-
-    return Utf16;
-}
-
-FORCEINLINE LString Utf16ToUtf8(LWString const& Utf16) noexcept
-{
-    return Utf16ToUtf8(Utf16.data(), Utf16.size());
-}
-
-FORCEINLINE LString Utf16ToUtf8(LWString::value_type const* Ptr, LSize Size) noexcept
-{
-    if (Size == 0)
-    {
-        return {};
-    }
-
-    auto RequiredSize = WideCharToMultiByte(
-        CP_UTF8,
-        0,
-        Ptr,
-        Size,
-        nullptr,
-        0,
-        nullptr,
-        nullptr
-        );
-
-    LString Utf8(RequiredSize, '\0');
-
-    WideCharToMultiByte(
-        CP_UTF8,
-        0,
-        Ptr,
-        Size,
-        &Utf8[0],
-        RequiredSize,
-        nullptr,
-        nullptr
-        );
-
-    return Utf8;
-}
-#endif /* PLATFORM_WINDOWS */
-
-} /* ~Namespace Jafg */
 
 template<>
 struct std::formatter<LString> : std::formatter<std::string_view>

@@ -25,6 +25,6 @@ ENGINE_API LStringView GetTargetPlatformCompound() noexcept;
 //# E.g.: "Linux-x86_64/Client-Shipping", ...
 ENGINE_API LStringView GetTargetConfigPath() noexcept;
 
-inline LPath GetRootBinaryDirectory() noexcept { return LPath{ "Binaries" } / GetTargetConfigPath(); }
+inline LPath GetRootBinaryDirectory() noexcept { auto Out{LPath{ "Binaries" } / GetTargetConfigPath()}; Out.make_preferred(); return Out; }
 
-} /* ~Namespace PlatformMisc::Jafg */
+} /* ~Namespace Jafg::PlatformMisc */

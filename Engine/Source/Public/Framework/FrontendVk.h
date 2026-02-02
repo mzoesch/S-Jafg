@@ -162,7 +162,7 @@ public:
     ENGINE_API void _Vk_WaitIdle();
 
     ENGINE_API i64 HandleSlangCompilationRequest(LSlangCompilationRequest const& Request);
-    ENGINE_API i64 HandleSlangCompilationRequest(LPath const& Slang, LSlangCompilationRequest const& Request);
+    ENGINE_API i64 HandleSlangCompilationRequest(LPath Slangc, LSlangCompilationRequest const& Request);
 
 private:
 

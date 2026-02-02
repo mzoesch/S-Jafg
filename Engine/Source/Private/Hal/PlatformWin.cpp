@@ -136,7 +136,7 @@ void Jafg::LOnPlatformBreakWindows::OnProgramPanicImpl
     if (Application::Private::bGSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
     {
         const LWString Caption{LITERAL_WIDE("Jafg panicked; We are fucked.")};
-        const auto Message{Utf8ToUtf16(InMessage)};
+        const auto Message{algo::utf8_to_utf16(InMessage, std::strlen(InMessage))};
 
         MessageBox(
             nullptr,

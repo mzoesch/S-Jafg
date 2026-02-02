@@ -31,9 +31,9 @@ void InvalidParameterHandler(
    , u64 pReserved
    )
 {
-    LString Utf8Expression{Utf16ToUtf8(Expression, std::wcslen(Expression))};
-    LString Utf8Function{Utf16ToUtf8(Function, std::wcslen(Function))};
-    LString Utf8File{Utf16ToUtf8(File, std::wcslen(File))};
+    LString Utf8Expression{algo::utf16_to_utf8(Expression, std::wcslen(Expression))};
+    LString Utf8Function{algo::utf16_to_utf8(Function, std::wcslen(Function))};
+    LString Utf8File{algo::utf16_to_utf8(File, std::wcslen(File))};
 
     LOG_FATAL(LogCRT, "Invalid parameter detected inside expression:\n\t{}\nFunction {}\nFile: {}\nLine: {}",
         Utf8Expression,

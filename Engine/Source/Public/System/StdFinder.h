@@ -369,7 +369,7 @@ inline TArray<LString> Finder::FindFilesRecursively
 #if JAFG_PLATFORM_USES_UTF8
         if (Regex == "*" || std::regex_match(P.path().native(), Pattern))
 #else /* JAFG_PLATFORM_USES_UTF8 */
-        LString PFromNative = Jafg::Utf16ToUtf8(P.path().native().c_str(), P.path().native().size());
+        LString PFromNative = algo::utf16_to_utf8(P.path().native());
         if (Regex == "*" || std::regex_match(PFromNative, Pattern))
 #endif /* JAFG_PLATFORM_USES_UTF8 */
         {

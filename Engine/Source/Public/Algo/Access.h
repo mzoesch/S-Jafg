@@ -10,6 +10,19 @@ namespace algo
 template<typename TContainer> FORCEINLINE constexpr void orphan(TContainer* Container) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
+// Move
+using std::swap;
+template<typename T> requires std::is_default_constructible_v<T>
+FORCEINLINE constexpr void swap_default(T* Element)
+    noexcept(std::is_nothrow_default_constructible_v<T> && std::is_nothrow_swappable_v<T>)
+{
+    check( Element )
+    T Default;
+    swap(*Element, Default);
+    return;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Core
 
 //# Convert something to a raw pointer.
@@ -49,6 +62,16 @@ struct raw_pointer_deref
     }
 };
 
+using std::ranges::range;
+using std::ranges::borrowed_range;
+
+using std::ranges::iterator_t;
+using std::ranges::const_iterator_t;
+using std::ranges::range_const_reference_t;
+
+using std::ranges::sentinel_t;
+using std::ranges::const_sentinel_t;
+
 using std::ranges::begin;
 using std::ranges::end;
 using std::ranges::rbegin;
@@ -61,17 +84,57 @@ using std::ranges::data;
 using std::ranges::sized_range;
 using std::ranges::range_size_t;
 
-NODISCARD FORCEINLINE constexpr bool is_valid_index(auto const& Container, const auto Index) noexcept
+using std::ranges::input_range;
+using std::ranges::forward_range;
+using std::ranges::random_access_range;
+using std::ranges::contiguous_range;
+using std::ranges::common_range;
+using std::ranges::constant_range;
+
+using std::input_iterator;
+using std::output_iterator;
+using std::forward_iterator;
+using std::bidirectional_iterator;
+using std::random_access_iterator;
+using std::contiguous_iterator;
+using std::sentinel_for;
+using std::sized_sentinel_for;
+
+//# Trivial distance.
+using std::distance;
+template<input_range TRange, typename TIt>
+FORCEINLINE constexpr decltype(auto) distance(TRange Range, TIt It) noexcept
 {
-    if constexpr (std::is_signed_v<decltype(Index)>)
+    return std::ranges::distance(begin(Range), It);
+}
+//# Distance between ranges.
+inline constexpr std::ranges::__distance_fn ranged_distance{};
+
+inline constexpr decltype(LString::npos) npos{ LString::npos };
+
+NODISCARD FORCEINLINE constexpr bool is_valid_index(auto const& Container, const auto Index) noexcept
+    requires (std::integral<decltype(Index)> || std::is_enum_v<decltype(Index)>)
+{
+    typedef decltype(Index) Index_t;
+    if constexpr (std::is_enum_v<Index_t>)
+    {
+        if constexpr (std::is_signed_v<std::underlying_type_t<Index_t>>)
+        {
+            if (std::to_underlying(Index) < 0)
+            {
+                return false;
+            }
+        }
+        return static_cast<std::make_unsigned_t<Index_t>>(std::to_underlying(Index)) < size(Container);
+    }
+    else if constexpr (std::is_signed_v<Index_t>)
     {
         if (Index < 0)
         {
             return false;
         }
     }
-
-    return static_cast<std::make_unsigned_t<decltype(Index)>>(Index) < algo::size(Container);
+    return static_cast<std::make_unsigned_t<Index_t>>(Index) < size(Container);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -348,7 +411,7 @@ namespace detail
 {
 struct contains_if_fn
 {
-    template<std::forward_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = algo::identity,
+    template<forward_iterator TIter, sentinel_for<TIter> TSent, typename TProj = algo::identity,
          std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
     NODISCARD FORCEINLINE constexpr bool
     operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const
@@ -356,8 +419,8 @@ struct contains_if_fn
         return std::ranges::find_if(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj)) != Sent;
     }
 
-    template<std::ranges::forward_range TRange, typename TProj = algo::identity,
-         std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<TRange>, TProj>> TPred>
+    template<forward_range TRange, typename TProj = algo::identity,
+         std::indirect_unary_predicate<std::projected<iterator_t<TRange>, TProj>> TPred>
     NODISCARD FORCEINLINE constexpr bool
     operator()(TRange&& Range, TPred&& Pred, TProj Proj = {}) const
     {
@@ -398,7 +461,7 @@ namespace detail
 {
 struct find_pointer_fn
 {
-    template<std::input_iterator _Iter, std::sentinel_for<_Iter> _Sent, typename _Proj = algo::identity, typename _Tp _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(_Iter, _Proj)>
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Proj = algo::identity, typename _Tp _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(_Iter, _Proj)>
         requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<_Iter, _Proj>, const _Tp*>
     NODISCARD FORCEINLINE constexpr auto
     operator()(_Iter __first, _Sent __last, const _Tp& __value, _Proj __proj = {}) const // -> decltype(algo::to_address(__first))
@@ -411,7 +474,7 @@ struct find_pointer_fn
         return static_cast<decltype(algo::to_address(__first))>(nullptr);
     }
 
-    template<std::ranges::input_range _Range, typename _Proj = algo::identity, typename _Tp _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(std::ranges::iterator_t<_Range>, _Proj)>
+    template<input_range _Range, typename _Proj = algo::identity, typename _Tp _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(std::ranges::iterator_t<_Range>, _Proj)>
         requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<std::ranges::iterator_t<_Range>, _Proj>, const _Tp*>
     NODISCARD FORCEINLINE constexpr auto
     operator()(_Range&& __r, const _Tp& __value, _Proj __proj = {}) const -> decltype(algo::to_address(algo::begin(__r)))
@@ -428,7 +491,7 @@ namespace detail
 {
 struct find_pointer_if_fn
 {
-    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = algo::identity,
+    template<input_iterator TIter, sentinel_for<TIter> TSent, typename TProj = algo::identity,
         std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
     NODISCARD FORCEINLINE constexpr auto
     operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const // -> decltype(algo::to_address(__first))
@@ -441,7 +504,7 @@ struct find_pointer_if_fn
         return static_cast<decltype(algo::to_address(Begin))>(nullptr);
     }
 
-    template<std::ranges::input_range TRange, typename TProj = algo::identity,
+    template<input_range TRange, typename TProj = algo::identity,
         std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<TRange>, TProj>> TPred>
     NODISCARD FORCEINLINE constexpr auto
     operator()(TRange&& Range, TPred&& Pred, TProj Proj = {}) const -> decltype(algo::to_address(algo::begin(Range)))
@@ -463,12 +526,20 @@ using std::ranges::min;
 using std::ranges::adjacent_find;
 
 ///////////////////////////////////////////////////////////////////////////////
+// Predicates
+using std::predicate;
+template<typename F, typename... TArgs>
+concept void_predicate = std::regular_invocable<F, TArgs...> && std::same_as<std::invoke_result_t<F, TArgs...>, void>;
+template<typename TFn, typename TWhat>
+concept void_mutable_predicate = requires(TFn&& Fn, TWhat What) { std::invoke(std::forward<TFn>(Fn), What); };
+
+///////////////////////////////////////////////////////////////////////////////
 // Extended
 template<typename TContainer>
 FORCEINLINE constexpr void orphan(TContainer* Container) noexcept
 {
     Container->clear();
-    default_swap(Container);
+    swap_default(Container);
     check( Container->size() == Container->capacity() )
     return;
 }
@@ -476,7 +547,7 @@ template<>
 FORCEINLINE constexpr void orphan<LString>(LString* Container) noexcept
 {
     Container->clear();
-    default_swap(Container);
+    swap_default(Container);
     return;
 }
 
@@ -538,4 +609,143 @@ NODISCARD FORCEINLINE constexpr auto wfind_pointer(RANGE Container, const auto& 
     return algo::wfind_pointer(algo::begin(Container), algo::end(Container), Value, std::move(Proj));
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Conversions
+namespace detail
+{
+struct add_spaces_to_camel_case_fn
+{
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TOut>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(TIter First, TSent Sent) const -> TOut
+    {
+        TOut Result;
+        if constexpr (algo::reservable<TOut>)
+        {
+            algo::reserve(&Result, algo::distance(First, Sent));
+        }
+
+        bool bFirst{true};
+        while (First != Sent)
+        {
+            if (*First >= 'A' && *First <= 'Z')
+            {
+                if (bFirst == false)
+                {
+                    Result.push_back(' ');
+                }
+            }
+
+            Result.push_back(*First);
+
+            bFirst = false;
+            continue;
+        }
+
+        return Result;
+    }
+
+    template<std::ranges::input_range TRange, typename TOut = std::remove_reference_t<TRange>>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(TRange&& R) const -> TOut
+    {
+        return (*this).template operator()<decltype(algo::begin(R)), decltype(algo::end(R)), TOut>(algo::begin(R), algo::end(R));
+    }
+};
+} /* ~Namespace detail */
+inline constexpr detail::add_spaces_to_camel_case_fn add_spaces_to_camel_case{};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// String utils
+struct case_insensitive_hash
+{
+    inline LSize operator()(auto const& Key) const noexcept
+    {
+        return (*this)(Key.data(), Key.size(), 0);
+    }
+    inline LSize operator()(char const* Str, LSize Size, LSize H) const noexcept
+    {
+        if (Size == 0)
+        {
+            return H;
+        }
+        return (*this)(Str + 1, Size - 1, (((std::numeric_limits<LSize>::max)() >> 6) & H * 33) ^ static_cast<unsigned char>(std::tolower(*Str)));
+    }
+};
+
+struct case_insensitive_equal_to
+{
+    inline LSize operator()(auto const& Lhs, auto const& Rhs) const noexcept
+    {
+        return
+               algo::size(Lhs) == algo::size(Rhs)
+            && std::equal(algo::begin(Lhs), algo::end(Lhs), algo::begin(Rhs), [](auto A, auto B) { return std::tolower(A) == std::tolower(B); });
+    }
+};
+
+#if PLATFORM_WINDOWS
+namespace detail
+{
+
+struct utf8_to_utf16_fn
+{
+    template<contiguous_iterator TIt, std::unsigned_integral TSize>
+    NODISCARD FORCEINLINE LWString operator()(TIt It, TSize Size) const noexcept
+    {
+        if (Size == 0)
+        {
+            return {};
+        }
+        auto Required{::MultiByteToWideChar(CP_UTF8, 0, &*It, static_cast<int>(Size), NULL, 0)};
+        LWString Utf16(Required, LITERAL_WIDE('\0'));
+        ::MultiByteToWideChar(CP_UTF8, 0, &*It, Size, &Utf16[0], Required);
+        return Utf16;
+    }
+    template<contiguous_range TRange>
+    NODISCARD FORCEINLINE LWString operator()(TRange const& Range) const noexcept
+    {
+        return (*this)(algo::begin(Range), algo::size(Range));
+    }
+};
+
+struct utf16_to_utf8_fn
+{
+    template<contiguous_iterator TIt, std::unsigned_integral TSize>
+    NODISCARD FORCEINLINE LString operator()(TIt It, TSize Size) const noexcept
+    {
+        if (Size == 0)
+        {
+            return {};
+        }
+        auto Required{::WideCharToMultiByte(CP_UTF8, 0, &*It, static_cast<int>(Size), NULL, 0, NULL, NULL)};
+        LString Utf8(Required, '\0');
+        ::WideCharToMultiByte(CP_UTF8, 0, &*It, Size, &Utf8[0], Required, NULL, NULL);
+        return Utf8;
+    }
+
+    template<input_range TRange>
+    NODISCARD FORCEINLINE LString operator()(TRange const& Range) const noexcept
+    {
+        return (*this)(algo::begin(Range), algo::size(Range));
+    }
+};
+
+} /* ~Namespace detail */
+
+inline constexpr detail::utf8_to_utf16_fn utf8_to_utf16{};
+inline constexpr detail::utf16_to_utf8_fn utf16_to_utf8{};
+
+#endif /* PLATFORM_WINDOWS */
+
 } /* ~Namespace algo */
+
+static_assert(sizeof(algo::npos) == sizeof(std::string::npos));
+static_assert(sizeof(algo::npos) == sizeof(LString::npos));
+static_assert(sizeof(algo::npos) == sizeof(LStringView::npos));
+static_assert(algo::npos == std::string::npos);
+static_assert(algo::npos == LString::npos);
+static_assert(algo::npos == LStringView::npos);
+static_assert(std::is_same_v<decltype(algo::npos), decltype(std::string::npos)>);
+static_assert(std::is_same_v<decltype(algo::npos), decltype(LString::npos)>);
+static_assert(std::is_same_v<decltype(algo::npos), decltype(LStringView::npos)>);

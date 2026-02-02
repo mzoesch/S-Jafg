@@ -29,7 +29,14 @@ public:
     FORCEINLINE i32  GetActiveWidgetIndex() const { return this->ActiveIndex; }
 
     void SetActiveWidget(WNode* Widget);
-    FORCEINLINE WNode* GetActiveWidget() const;
+    FORCEINLINE WNode* GetActiveWidget() const noexcept
+    {
+        if (algo::is_valid_index(this->GetChildren(), this->ActiveIndex))
+        {
+            return this->GetChildren()[this->ActiveIndex]->Content;
+        }
+        return nullptr;
+    }
     FORCEINLINE WNode* GetActiveWidgetChecked() const { const bool bOut = this->GetActiveWidget(); check( bOut ) return this->GetActiveWidget(); }
     FORCEINLINE WNode* GetActiveWidgetAsserted() const { const bool bOut = this->GetActiveWidget(); jassert( bOut ) return this->GetActiveWidget(); }
 
@@ -54,12 +61,5 @@ private:
     };
     TArray<LRecentVisibility> RecentVisibilities;
 };
-
-FORCEINLINE WNode* WSwitcher::GetActiveWidget() const
-{
-    return algo::is_valid_index(this->GetChildren(), NoActiveWidgetIndex)
-        ? this->GetChildren()[this->ActiveIndex]->Content
-        : nullptr;
-}
 
 } /* ~Namespace Jafg */
