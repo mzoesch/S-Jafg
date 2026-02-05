@@ -83,10 +83,10 @@ struct LTextScale final
         check( this->GetPredefinedScale() == ETextScale::Body )
     }
 
-    FORCEINLINE constexpr LTextScale(LTextScale const& Other) noexcept { this->Assign(Other); }
-    FORCEINLINE constexpr LTextScale& operator=(LTextScale const& Other) noexcept { this->Assign(Other); return *this; }
+    FORCEINLINE CONSTEXPR_CHECK LTextScale(LTextScale const& Other) noexcept { this->Assign(Other); }
+    FORCEINLINE CONSTEXPR_CHECK LTextScale& operator=(LTextScale const& Other) noexcept { this->Assign(Other); return *this; }
 
-    FORCEINLINE LTextScale(f32 CustomScale) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LTextScale(f32 CustomScale) noexcept
         : bPredefined(false)
     {
         check( CustomScale > 0.0f )
@@ -95,7 +95,7 @@ struct LTextScale final
         check( this->GetCustomScale() == CustomScale )
     }
 
-    FORCEINLINE LTextScale(ETextScale::Type Predefined) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LTextScale(ETextScale::Type Predefined) noexcept
 #if JAFG_PLATFORM_USES_LITTLE_ENDIAN
         : PredefinedScale(static_cast<u8>(Predefined))
         , bPredefined(true)
@@ -108,7 +108,7 @@ struct LTextScale final
         check( this->GetPredefinedScale() == Predefined )
     }
 
-    FORCEINLINE LTextScale& operator=(f32 CustomScale) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LTextScale& operator=(f32 CustomScale) noexcept
     {
         this->bPredefined = false;
         check( CustomScale > 0.0f )
@@ -120,7 +120,7 @@ struct LTextScale final
         return *this;
     }
 
-    FORCEINLINE LTextScale& operator=(ETextScale::Type Predefined) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LTextScale& operator=(ETextScale::Type Predefined) noexcept
     {
         this->bPredefined = true;
         this->PredefinedScale = static_cast<u8>(Predefined);
@@ -149,7 +149,7 @@ struct LTextScale final
     ENGINE_API f32 InSpt(LViewport const& Viewport) const noexcept;
     ENGINE_API f32 InSpt(WNode const& Node) const noexcept;
 
-    FORCEINLINE void Assign(LTextScale const& Other) noexcept
+    FORCEINLINE CONSTEXPR_CHECK void Assign(LTextScale const& Other) noexcept
     {
         this->bPredefined = Other.bPredefined;
 
@@ -171,12 +171,12 @@ struct LTextScale final
         return;
     }
 
-    FORCEINLINE constexpr static LTextScale Header() noexcept { return LTextScale{ETextScale::Header}; }
-    FORCEINLINE constexpr static LTextScale SubHeader() noexcept { return LTextScale{ETextScale::SubHeader}; }
-    FORCEINLINE constexpr static LTextScale Body() noexcept { return LTextScale{ETextScale::Body}; }
-    FORCEINLINE constexpr static LTextScale Compact() noexcept { return LTextScale{ETextScale::Compact}; }
-    FORCEINLINE constexpr static LTextScale Small() noexcept { return LTextScale{ETextScale::Small}; }
-    FORCEINLINE constexpr static LTextScale Tiny() noexcept { return LTextScale{ETextScale::Tiny}; }
+    FORCEINLINE CONSTEXPR_CHECK static LTextScale Header() noexcept { return LTextScale{ETextScale::Header}; }
+    FORCEINLINE CONSTEXPR_CHECK static LTextScale SubHeader() noexcept { return LTextScale{ETextScale::SubHeader}; }
+    FORCEINLINE CONSTEXPR_CHECK static LTextScale Body() noexcept { return LTextScale{ETextScale::Body}; }
+    FORCEINLINE CONSTEXPR_CHECK static LTextScale Compact() noexcept { return LTextScale{ETextScale::Compact}; }
+    FORCEINLINE CONSTEXPR_CHECK static LTextScale Small() noexcept { return LTextScale{ETextScale::Small}; }
+    FORCEINLINE CONSTEXPR_CHECK static LTextScale Tiny() noexcept { return LTextScale{ETextScale::Tiny}; }
 
 private:
 
@@ -214,11 +214,11 @@ struct LTextBoxBrush : public LBoxBrush
     ETextVAlign::Type TextVAlign{ ETextVAlign::Top };
     bool bRespectContentHeight{};
 
-    FORCEINLINE constexpr LTextBoxBrush& TextColorRet(LColor const& InColor) noexcept { this->TextColor = InColor; return *this; }
-    FORCEINLINE constexpr LTextBoxBrush& TextScaleRet(const ETextScale::Type InScale) noexcept { this->TextScale = InScale; return *this; }
-    FORCEINLINE constexpr LTextBoxBrush& TextHAlignRet(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; return *this; }
-    FORCEINLINE constexpr LTextBoxBrush& TextVAlignRet(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; return *this; }
-    FORCEINLINE constexpr LTextBoxBrush& RespectContentHeightRet(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; return *this; }
+    FORCEINLINE constexpr       LTextBoxBrush& TextColorRet(LColor const& InColor) noexcept { this->TextColor = InColor; return *this; }
+    FORCEINLINE CONSTEXPR_CHECK LTextBoxBrush& TextScaleRet(const ETextScale::Type InScale) noexcept { this->TextScale = InScale; return *this; }
+    FORCEINLINE constexpr       LTextBoxBrush& TextHAlignRet(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; return *this; }
+    FORCEINLINE constexpr       LTextBoxBrush& TextVAlignRet(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; return *this; }
+    FORCEINLINE constexpr       LTextBoxBrush& RespectContentHeightRet(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; return *this; }
 
     FORCEINLINE constexpr bool IsLeftAligned()    const noexcept { return ETextHAlign::IsLeft(this->TextHAlign);   }
     FORCEINLINE constexpr bool IsCenterAligned()  const noexcept { return ETextHAlign::IsCenter(this->TextHAlign); }
@@ -229,7 +229,7 @@ struct LTextBoxBrush : public LBoxBrush
     FORCEINLINE constexpr bool IsVCenterAligned() const noexcept { return ETextVAlign::IsCenter(this->TextVAlign); }
     FORCEINLINE constexpr bool IsBottomAligned()  const noexcept { return ETextVAlign::IsBottom(this->TextVAlign); }
 
-    FORCEINLINE constexpr static LTextBoxBrush Default() noexcept
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush Default() noexcept
     {
         LTextBoxBrush Brush;
         Brush.Tint = Colors::Transparent;
@@ -237,12 +237,12 @@ struct LTextBoxBrush : public LBoxBrush
         return Brush;
     }
 
-    FORCEINLINE constexpr static LTextBoxBrush Header() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Header); }
-    FORCEINLINE constexpr static LTextBoxBrush SubHeader() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::SubHeader); }
-    FORCEINLINE constexpr static LTextBoxBrush Body() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Body); }
-    FORCEINLINE constexpr static LTextBoxBrush Compact() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Compact); }
-    FORCEINLINE constexpr static LTextBoxBrush Small() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Small); }
-    FORCEINLINE constexpr static LTextBoxBrush Tiny() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Tiny); }
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush Header() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Header); }
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush SubHeader() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::SubHeader); }
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush Body() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Body); }
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush Compact() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Compact); }
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush Small() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Small); }
+    FORCEINLINE CONSTEXPR_CHECK static LTextBoxBrush Tiny() noexcept { return LTextBoxBrush::Default().TextScaleRet(ETextScale::Tiny); }
 };
 
 } /* ~Namespace Jafg */

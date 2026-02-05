@@ -13,10 +13,10 @@ struct LStaticMeshRef
     explicit LStaticMeshRef(std::shared_ptr<LStaticMesh> InMesh) noexcept : Mesh{ std::move(InMesh) } {}
     ~LStaticMeshRef() noexcept = default;
 
-    FORCEINLINE constexpr bool HasMesh() const noexcept { return this->Mesh.get() != nullptr; }
-    FORCEINLINE constexpr auto const& GetMesh() const noexcept { check( this->HasMesh() ) return *this->Mesh; }
+    FORCEINLINE bool HasMesh() const noexcept { return this->Mesh.get() != nullptr; }
+    FORCEINLINE CONSTEXPR_CHECK auto const& GetMesh() const noexcept { check( this->HasMesh() ) return *this->Mesh; }
 
-    FORCEINLINE constexpr std::shared_ptr<LStaticMesh> GetNewHandle() const noexcept
+    FORCEINLINE std::shared_ptr<LStaticMesh> GetNewHandle() const noexcept
     {
         check( this->HasMesh() )
         return this->Mesh;

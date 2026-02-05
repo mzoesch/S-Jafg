@@ -41,16 +41,18 @@ struct TGimmeThatIterConceptImpl<T>
 };
 
 //# Ofcourse if primary iter then this is just a random tag - obviously.
-#if JAFG_WITH_CLANG && __has_builtin(__is_base_of)
-    template <typename T>
-    requires (!requires { typename T::iterator_concept; })
-          && (!requires { typename T::iterator_category; })
-          && std::__detail::__primary_traits_iter<T>
-    struct TGimmeThatIterConceptImpl<T>
-    {
-        typedef std::random_access_iterator_tag type;
-    };
-#endif /* JAFG_WITH_CLANG && __has_builtin(__is_base_of) */
+#if JAFG_WITH_CLANG
+    #if __has_builtin(__is_base_of)
+        template <typename T>
+        requires (!requires { typename T::iterator_concept; })
+              && (!requires { typename T::iterator_category; })
+              && std::__detail::__primary_traits_iter<T>
+        struct TGimmeThatIterConceptImpl<T>
+        {
+            typedef std::random_access_iterator_tag type;
+        };
+    #endif /* __has_builtin(__is_base_of) */
+#endif /* JAFG_WITH_CLANG */
 
 //# If everything else fails, just let the compiler run into a wall here.
 template <typename T>
@@ -189,14 +191,6 @@ static_assert(TIterator_CanTraverseMultipleTimes_v<i64*>);
 static_assert(TIterator_CanTraverseBackward_v<i64*>);
 static_assert(TIterator_IsPointerLike_v<i64*>);
 static_assert(TIterator_IsContiguous_v<i64*>);
-
-template<typename TRange, typename T>
-concept ContainerCompatibleRange =
-#if JAFG_WITH_CLANG
-    std::__detail::__container_compatible_range<TRange, T>;
-#else /* JAFG_WITH_CLANG */
-    #error "Missing implementation for compiler."
-#endif /* !JAFG_WITH_CLANG */
 
 template<typename TRange>
 concept CRange = requires(TRange Range)

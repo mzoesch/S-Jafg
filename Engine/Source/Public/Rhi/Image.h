@@ -13,10 +13,10 @@ struct LImage
     explicit LImage(std::shared_ptr<LTexture2> InTexture) noexcept : Texture{ std::move(InTexture) } {}
     ~LImage() noexcept = default;
 
-    FORCEINLINE constexpr bool HasTexture() const noexcept { return this->Texture.get() != nullptr; }
-    FORCEINLINE constexpr auto const& GetTexture() const noexcept { check( this->HasTexture() ) return *this->Texture; }
+    FORCEINLINE bool HasTexture() const noexcept { return this->Texture.get() != nullptr; }
+    FORCEINLINE auto const& GetTexture() const noexcept { check( this->HasTexture() ) return *this->Texture; }
 
-    FORCEINLINE constexpr std::shared_ptr<LTexture2> GetNewHandle() const noexcept
+    FORCEINLINE std::shared_ptr<LTexture2> GetNewHandle() const noexcept
     {
         check( this->HasTexture() )
         return this->Texture;

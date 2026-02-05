@@ -29,12 +29,12 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
             std::from_chars
             (
                 String.data(),
-                String.end().base(),
+                &*String.end(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end().base())
+        if (ec == std::errc{} && ptr == &*String.end())
         {
             ++*Cursor;
             return true;
@@ -67,12 +67,12 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
             std::from_chars
             (
                 String.data(),
-                String.end().base(),
+                &*String.end(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end().base())
+        if (ec == std::errc{} && ptr == &*String.end())
         {
             ++*Cursor;
             return true;
@@ -105,12 +105,12 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
             std::from_chars
             (
                 String.data(),
-                String.end().base(),
+                &*String.end(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end().base() && (Value >= 0 && Value <= 255))
+        if (ec == std::errc{} && ptr == &*String.end() && (Value >= 0 && Value <= 255))
         {
             ++*Cursor;
             return true;
@@ -153,12 +153,12 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
             std::from_chars
             (
                 String.data(),
-                String.end().base(),
+                &*String.end(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end().base())
+        if (ec == std::errc{} && ptr == &*String.end())
         {
             ++*Cursor;
             return true;

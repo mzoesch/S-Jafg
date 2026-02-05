@@ -166,7 +166,7 @@
 
 #if JAFG_DO_EVER_CHECKS
     #if IN_SHIPPING
-        #deinfe JAFG_DO_CHECKS                                                   JAFG_DO_CHECKS_IN_SHIPPING
+        #define JAFG_DO_CHECKS                                                   JAFG_DO_CHECKS_IN_SHIPPING
         #if JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
             #define JAFG_DO_SLOW_CHECKS                                          JAFG_DO_CHECKS_IN_SHIPPING
         #else /* JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */

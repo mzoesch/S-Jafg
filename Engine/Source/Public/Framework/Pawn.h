@@ -30,8 +30,7 @@ public:
     virtual void Tick(const float DeltaTime) override;
     virtual void EndLife() override;
 
-    ENGINE_API LEye_v2 GetEye_v2() const noexcept;
-
+    LEye_v2 GetEye_v2() const noexcept;
 
     FORCEINLINE bool IsPossessed() const noexcept { return this->OwningController != nullptr; }
     bool IsPossessedLocally() const noexcept;

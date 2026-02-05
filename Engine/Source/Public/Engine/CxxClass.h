@@ -55,7 +55,7 @@ class JCxxClass
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wkeyword-macro"
 #endif /* JAFG_WITH_CLANG */
-#define override
+    #define override
     GENERATED_CLASS_BODY()
 #undef override
 #if JAFG_WITH_CLANG

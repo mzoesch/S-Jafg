@@ -6,6 +6,7 @@
 namespace Jafg
 {
 
+#if JAFG_WITH_CLANG
 namespace HellYeaThisIsAsFuckedUpAsItCanBeLol
 {
 
@@ -39,10 +40,24 @@ public:
 };
 
 } /* HellYeaThisIsAsFuckedUpAsItCanBeLol */
+#elif JAFG_WITH_MSVC
+    //# ... private and not protected :(
+#else /* JAFG_WITH_MSVC */
+#endif /* !JAFG_WITH_MSVC */
 
+//# TODO: Also, move this to algo... This does not belong here.
 template <typename TContainer>
+#if !JAFG_WITH_CLANG
+    //#
+    //# If this hits, we have to decide for another impl...
+    //# Currently this is not needed anymore, yea :D
+    //#
+    requires std::is_default_constructible_v<typename TContainer::value_type>
+#endif /* !JAFG_WITH_CLANG */
 void AddUninitialized(TContainer* Container, const typename TContainer::size_type Count = 1) noexcept
 {
+#if JAFG_WITH_CLANG
+
 #if JAFG_DO_CHECKS
     typename TContainer::size_type OldSize{ Container->size() };
 #endif /* JAFG_DO_CHECKS */
@@ -64,6 +79,12 @@ void AddUninitialized(TContainer* Container, const typename TContainer::size_typ
     JAFG_FWD_CHECK([Container, OldSize, Count]{return Container->size() == OldSize + Count;})
     JAFG_FWD_CHECK([Container]{return Container->size() <= Container->capacity();})
 #endif /* JAFG_DO_CHECKS */
+
+#else /* JAFG_WITH_CLANG */
+
+    Container->resize(Container->size() + Count);
+
+#endif /* !JAFG_WITH_CLANG */
 
     return;
 }

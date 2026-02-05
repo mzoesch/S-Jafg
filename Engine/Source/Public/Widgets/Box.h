@@ -55,8 +55,8 @@ public:
 
     virtual void UpdateDesiredSize() const override;
 
-    FORCEINLINE constexpr void SetBrush(const LBoxBrush& InBrush) noexcept { this->Brush = InBrush; }
-    FORCEINLINE constexpr void SetBrush(LBoxBrush&& InBrush) noexcept { this->Brush = std::move(InBrush); }
+    FORCEINLINE void SetBrush(const LBoxBrush& InBrush) noexcept { this->Brush = InBrush; }
+    FORCEINLINE void SetBrush(LBoxBrush&& InBrush) noexcept { this->Brush = std::move(InBrush); }
     FORCEINLINE constexpr LBoxBrush& GetMutableBrush() noexcept { return this->Brush; }
     FORCEINLINE constexpr LBoxBrush const& GetBrush() const noexcept { return this->Brush; }
 

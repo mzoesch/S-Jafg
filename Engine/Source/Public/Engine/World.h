@@ -180,7 +180,7 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    constexpr LWorld(LString const& InHumanReadableName) noexcept
+    LWorld(LString const& InHumanReadableName) noexcept
         : LClassOuter{InHumanReadableName}, WorldState(EWorldState::PreInitializing)
     {
         return;

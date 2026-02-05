@@ -435,7 +435,7 @@ struct LDevicePipelineFactory
     std::optional<vk::PushConstantRange> Range;
 };
 
-inline LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
+inline constexpr LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
 {
     switch (Format)
     {
@@ -450,7 +450,7 @@ inline LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
     }
 }
 
-inline LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
+inline constexpr LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
 {
     switch (Format)
     {

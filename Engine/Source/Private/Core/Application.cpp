@@ -146,7 +146,7 @@ namespace Jafg::Application::Private
 void WaitForDebuggerGracefully(const bool bAllowInstantBreak)
 {
     LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
-    JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+    Jafg::FlushOutStreams();
 
     while (HasTracerPidNow() == false)
     {
@@ -155,7 +155,7 @@ void WaitForDebuggerGracefully(const bool bAllowInstantBreak)
     }
 
     LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
-    JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+    Jafg::FlushOutStreams();
 
     if (bAllowInstantBreak)
     {

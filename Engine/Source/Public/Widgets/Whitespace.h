@@ -198,7 +198,7 @@ struct LWhitespace
         return {this->Type, this->West * InvScalar, this->North * InvScalar, this->East * InvScalar, this->South * InvScalar};
     }
 
-    FORCEINLINE constexpr bool operator==(const LWhitespace& Other) const noexcept
+    FORCEINLINE constexpr bool operator==(LWhitespace const& Other) const noexcept
     {
         return Type == Other.Type
             && maths::eq_e(West, Other.West)

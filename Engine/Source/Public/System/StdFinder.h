@@ -163,8 +163,7 @@ inline TOptional<LString> Finder::TryReadFile(const LPath& File, LString* OutHum
     }
 
     std::ostringstream Buffer; Buffer << F.rdbuf();
-    std::string S { Buffer.str() };
-    return LString{ S.begin().base(), S.end().base() };
+    return Buffer.str();
 }
 
 inline TOptional<TArray<u8>> Finder::TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError)
@@ -216,7 +215,7 @@ inline void Finder::OverrideFile(const LPath& File, const LStringView& Content, 
         std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? static_cast<std::ios::openmode>(0) : std::ios::binary)
     };
 
-    Out.write(Content.begin(), Content.size());
+    Out.write(&*Content.begin(), Content.size());
     Out.close();
 
     LOG_TRACE(LogSystem, "File [{}] overridden.", File )

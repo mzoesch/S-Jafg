@@ -134,34 +134,34 @@ struct LAnchor final
     };
 
     FORCEINLINE constexpr LAnchor() noexcept : Anchors(0.0, 0.0, 0.0, 0.0) { }
-    FORCEINLINE constexpr LAnchor(const f32 InUniformAnchors) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LAnchor(const f32 InUniformAnchors) noexcept
         : Anchors(InUniformAnchors, InUniformAnchors, InUniformAnchors, InUniformAnchors)
     {
         check( this->IsNormalized() )
     }
-    FORCEINLINE constexpr LAnchor(const f32 InHorizontalUniform, const f32 InVerticalUniform) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LAnchor(const f32 InHorizontalUniform, const f32 InVerticalUniform) noexcept
         : Anchors(InHorizontalUniform, InVerticalUniform, InHorizontalUniform, InVerticalUniform)
     {
         check( this->IsNormalized() )
     }
-    FORCEINLINE constexpr LAnchor(const f32 InMinX, const f32 InMinY, const f32 InMaxX, const f32 InMaxY) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LAnchor(const f32 InMinX, const f32 InMinY, const f32 InMaxX, const f32 InMaxY) noexcept
         : Anchors(InMinX, InMinY, InMaxX, InMaxY)
     {
         check( this->IsNormalized() )
     }
-    FORCEINLINE constexpr LAnchor(const EAnchor::Type InAnchors) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LAnchor(const EAnchor::Type InAnchors) noexcept
     {
         this->Anchors = maths::zero_vector<LVec4D>;
         this->ApplyConstraints(InAnchors);
         return;
     }
-    FORCEINLINE constexpr LAnchor(const LAnchor& InOther, const EAnchor::Type InConstraints) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LAnchor(const LAnchor& InOther, const EAnchor::Type InConstraints) noexcept
     {
         this->Anchors = InOther.Anchors;
         this->ApplyConstraints(InConstraints);
         return;
     }
-    FORCEINLINE constexpr LAnchor(const LVec4D& InOther, const EAnchor::Type InConstraints) noexcept
+    FORCEINLINE CONSTEXPR_CHECK LAnchor(const LVec4D& InOther, const EAnchor::Type InConstraints) noexcept
     {
         this->Anchors = InOther;
         this->ApplyConstraints(InConstraints);
@@ -184,7 +184,7 @@ struct LAnchor final
     FORCEINLINE constexpr bool IsPushed() const noexcept { return this->IsPushedHorizontal() || this->IsPushedVertical(); }
     FORCEINLINE constexpr bool IsStretched() const noexcept { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
 
-    constexpr void ApplyConstraints(const EAnchor::Type InConstraints) noexceptcheck
+    CONSTEXPR_CHECK void ApplyConstraints(const EAnchor::Type InConstraints) noexceptcheck
     {
         if (InConstraints & EAnchor::VTop)    { this->Anchors += LAnchor::VTop.Anchors;    }
         if (InConstraints & EAnchor::VCenter) { this->Anchors += LAnchor::VCenter.Anchors; }

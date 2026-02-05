@@ -152,7 +152,7 @@ struct LLoadedPlugin final
 
     FORCEINLINE constexpr bool IsLoaded() const noexcept { return this->NativeHandle != nullptr; }
 
-    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Fetched.AbsolutePath.empty() == false; }
+    FORCEINLINE bool           IsValid() const noexcept { return this->Fetched.AbsolutePath.empty() == false; }
     FORCEINLINE const LPath&   GetAbsolutePath() const noexcept { return this->Fetched.AbsolutePath; }
     FORCEINLINE const LString& GetIdentifier() const noexcept { return this->Fetched.Identifier; }
     FORCEINLINE const LString& GetFriendlyName() const noexcept { return this->Fetched.FriendlyName; }
@@ -175,7 +175,7 @@ private:
 
     u32 Uuid{ LLoadedPlugin::InvalidUuid };
 
-    void* NativeHandle { nullptr };
+    void* NativeHandle{};
 
     TUnique<LPluginLifetime> Lifetime;
 };

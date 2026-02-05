@@ -795,6 +795,21 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
     }
 #endif /* !IN_SHIPPING */
 
+    // if (algo::contains(this->Vk_AvailableInstanceLayers, "VK_LAYER_RENDERDOC_Capture", [](vk::LayerProperties const& Layer)
+    // {
+    //     return LStringView{Layer.layerName};
+    // }) == false)
+    // {
+    //     LOG_WARNING(LogVulkan, "No such layer [VK_LAYER_RENDERDOC_Capture]. Validation layers will be disabled.")
+    // }
+    // else
+    // {
+    //     if (algo::contains(this->Vk_RequiredInstanceLayers, "VK_LAYER_RENDERDOC_Capture") == false)
+    //     {
+    //         this->Vk_RequiredInstanceLayers.emplace_back("VK_LAYER_RENDERDOC_Capture");
+    //     }
+    // }
+
     LOG_VERBOSE(LogVulkan, "Required Vulkan instance layers:")
     for (auto const& Layer : this->Vk_RequiredInstanceLayers)
     {
@@ -826,6 +841,27 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
 void Jafg::LFrontendVk::Vk_CreateInstance()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan instance.")
+
+    if (auto SupportedVersion{vk::enumerateInstanceVersion()}; SupportedVersion < ::Vk_ApiVersion)
+    {
+        panicMsgf(
+            "Vulkan API version [{}.{}.{}] is not supported. Supported version is [{}.{}.{}].",
+            VK_VERSION_MAJOR(::Vk_ApiVersion),
+            VK_VERSION_MINOR(::Vk_ApiVersion),
+            VK_VERSION_PATCH(::Vk_ApiVersion),
+            VK_VERSION_MAJOR(SupportedVersion),
+            VK_VERSION_MINOR(SupportedVersion),
+            VK_VERSION_PATCH(SupportedVersion)
+            )
+    }
+    else
+    {
+        LOG_VERBOSE(LogVulkan, "Max supported Vulkan API version is [{}.{}.{}].",
+            VK_VERSION_MAJOR(SupportedVersion),
+            VK_VERSION_MINOR(SupportedVersion),
+            VK_VERSION_PATCH(SupportedVersion)
+            )
+    }
 
     constexpr vk::ApplicationInfo ApplicationInfo{
         .pApplicationName = "S-Jafg @mzoesch",

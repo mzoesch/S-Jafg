@@ -8,9 +8,9 @@
 namespace Jafg
 {
 
-#if PLATFORM_WINDOWS_WITH_MSVC
+#if JAFG_WITH_MSVC
     typedef u32 LThreadId;
-#elif PLATFORM_WINDOWS_WITH_GCC || JAFG_WITH_CLANG
+#elif JAFG_WITH_GCC || JAFG_WITH_CLANG
     typedef __gthread_t LThreadId;
 #elif PLATFORM_WASM
     typedef unsigned long LThreadId;

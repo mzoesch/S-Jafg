@@ -380,14 +380,14 @@ private: /* Restore default visibility. */                                     \
 #ifdef GENERATED_CLASS_BODY
     #undef GENERATED_CLASS_BODY
 #endif /* GENERATED_CLASS_BODY */
-#define GENERATED_CLASS_BODY(MY_API)   \
+#define GENERATED_CLASS_BODY(...)   \
     JAFG_JOIN_OUTER_FIVE(               \
         JAFG_PRIVATE_FILE_ID,          \
         _,                             \
         __LINE__,                      \
         _,                             \
         MY_GENERATED_CLASS_BODY        \
-    )( MY_API )
+    )( __VA_ARGS__ )
 
 //#
 //# Required before the jafg-widget-class declaration

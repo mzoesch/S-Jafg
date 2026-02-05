@@ -31,7 +31,7 @@ public:
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
     virtual void Destruct() override;
 
-    virtual LViewport* GetMostOuterViewport() override;
+    virtual LViewport* GetMostOuterViewport() noexcept override;
     virtual void RemoveFromParent(const bool bDestroy = true) override;
 
     virtual void RemoveChild(WNode* InChild) override;

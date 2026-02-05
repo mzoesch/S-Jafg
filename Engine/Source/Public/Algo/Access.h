@@ -2,6 +2,13 @@
 
 #pragma once
 
+#if JAFG_WITH_CLANG
+    #define JAFG_RANGE_VAL_T(It, Proj) _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(It, Proj)
+#else /* JAFG_WITH_CLANG */
+    //# TODO: Add security for non clang toolchains.
+    #define JAFG_RANGE_VAL_T(It, Proj)
+#endif /* !JAFG_WITH_CLANG */
+
 namespace algo
 {
 
@@ -30,7 +37,7 @@ using std::to_address;
 
 //# Identity projection.
 using std::identity;
-//# Projection to a dereferenced unique pointer.
+//# Projection to the raw underlying value of a unique pointer.
 struct unique_raw
 {
     template<typename T>
@@ -40,6 +47,7 @@ struct unique_raw
         return Ptr.get();
     }
 };
+//# Projection to a dereferenced unique pointer const reference.
 struct unique_deref
 {
     template<typename T>
@@ -108,7 +116,9 @@ FORCEINLINE constexpr decltype(auto) distance(TRange Range, TIt It) noexcept
     return std::ranges::distance(begin(Range), It);
 }
 //# Distance between ranges.
+#if JAFG_WITH_CLANG
 inline constexpr std::ranges::__distance_fn ranged_distance{};
+#endif /* JAFG_WITH_CLANG */
 
 inline constexpr decltype(LString::npos) npos{ LString::npos };
 
@@ -224,7 +234,7 @@ namespace detail
 {
 struct erase_fn
 {
-    template<typename TContainer, typename TProj = std::identity, typename T _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(std::ranges::iterator_t<TContainer>, TProj)>
+    template<typename TContainer, typename TProj = std::identity, typename T JAFG_RANGE_VAL_T(std::ranges::iterator_t<TContainer>, TProj)>
         requires std::permutable<std::ranges::iterator_t<TContainer>> && std::indirect_binary_predicate<std::ranges::equal_to, std::projected<std::ranges::iterator_t<TContainer>, TProj>, const T*>
     FORCEINLINE constexpr typename TContainer::size_type
     operator()(TContainer* Container, T const& What, TProj Proj = {}) const
@@ -461,7 +471,7 @@ namespace detail
 {
 struct find_pointer_fn
 {
-    template<input_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Proj = algo::identity, typename _Tp _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(_Iter, _Proj)>
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Proj = algo::identity, typename _Tp JAFG_RANGE_VAL_T(_Iter, _Proj)>
         requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<_Iter, _Proj>, const _Tp*>
     NODISCARD FORCEINLINE constexpr auto
     operator()(_Iter __first, _Sent __last, const _Tp& __value, _Proj __proj = {}) const // -> decltype(algo::to_address(__first))
@@ -474,7 +484,7 @@ struct find_pointer_fn
         return static_cast<decltype(algo::to_address(__first))>(nullptr);
     }
 
-    template<input_range _Range, typename _Proj = algo::identity, typename _Tp _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(std::ranges::iterator_t<_Range>, _Proj)>
+    template<input_range _Range, typename _Proj = algo::identity, typename _Tp JAFG_RANGE_VAL_T(std::ranges::iterator_t<_Range>, _Proj)>
         requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<std::ranges::iterator_t<_Range>, _Proj>, const _Tp*>
     NODISCARD FORCEINLINE constexpr auto
     operator()(_Range&& __r, const _Tp& __value, _Proj __proj = {}) const -> decltype(algo::to_address(algo::begin(__r)))

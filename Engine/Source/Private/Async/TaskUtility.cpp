@@ -817,7 +817,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     if (::EngineThreadsMutex.try_lock() == false)
     {
         LOG_ERROR(LogTaskSystem, "Failed to lock engine threads mutex. But in this state there should not be any other threads running.")
-        JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+        ::Jafg::FlushOutStreams();
         ::EngineThreadsMutex.lock(); // Hang this. Probably a deadlock. Let it idle forever. Highly unlikely.
     }
     algo::orphan(&::EngineThreads);

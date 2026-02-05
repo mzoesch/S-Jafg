@@ -174,13 +174,13 @@ void TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>::SetSafeValue(cons
 namespace Serialization
 {
 
-template<typename TSubField> NODISCARD FORCEINLINE constexpr LString ToString(Jafg::TPreference<TSubField> const& Field) noexcept
+template<typename TSubField> NODISCARD FORCEINLINE LString ToString(Jafg::TPreference<TSubField> const& Field) noexcept
     requires requires(TSubField const& SubField){ ToString(SubField); }
 {
     return ToString<TSubField>(Field.Value);
 }
 
-template<> FORCEINLINE constexpr void FromString<Jafg::LPreferencef32>(Jafg::LPreferencef32* Dst, LString const& Value) noexcept
+template<> FORCEINLINE void FromString<Jafg::LPreferencef32>(Jafg::LPreferencef32* Dst, LString const& Value) noexcept
 {
     check( Dst )
     f32 ValueF; FromString<f32>(&ValueF, Value);
@@ -189,7 +189,7 @@ template<> FORCEINLINE constexpr void FromString<Jafg::LPreferencef32>(Jafg::LPr
     return;
 }
 
-template<> FORCEINLINE constexpr void FromString<Jafg::LPreferencef64>(Jafg::LPreferencef64* Dst, LString const& Value) noexcept
+template<> FORCEINLINE void FromString<Jafg::LPreferencef64>(Jafg::LPreferencef64* Dst, LString const& Value) noexcept
 {
     check( Dst )
     f64 ValueD; FromString<f64>(&ValueD, Value);
@@ -198,7 +198,7 @@ template<> FORCEINLINE constexpr void FromString<Jafg::LPreferencef64>(Jafg::LPr
     return;
 }
 
-template<typename TSubField> FORCEINLINE constexpr void FromString(Jafg::TPreference<TSubField>* Dst, LString const& Value) noexcept
+template<typename TSubField> FORCEINLINE void FromString(Jafg::TPreference<TSubField>* Dst, LString const& Value) noexcept
     requires requires(TSubField* SubField, LString const& SubValue){ FromString(SubField, SubValue); }
 {
     Serialization::FromString<TSubField>(&Dst->Value, Value);

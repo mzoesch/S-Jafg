@@ -177,9 +177,6 @@
 #define LOG_PRIVATE_TRACE_STR_CUR_CLASS_FUNC_LINE \
     (PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC + LITERAL_WIDE([) + PRIVATE_JAFG_LOG_TRACE_STR_CUR_LINE + LITERAL_WIDE(]))
 
-//# Instantly flushes log output. Caller will have to wait.
-#define JAFG_UNSAFE_FLUSH_OUT_STREAMS()                                  (::Jafg::FlushOutStreams());
-
 #define PRIVATE_JAFG_LOG_DECLARE_INLINE_LOG_CATEGORY_IMPL(Category, Verbosity) \
     inline ::Jafg::LLogCategory<::Jafg::ELogVerbosity::Type::Verbosity> Category(#Category);
 

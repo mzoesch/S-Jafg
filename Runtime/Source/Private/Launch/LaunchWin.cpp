@@ -22,14 +22,13 @@ DECLARE_INLINE_LOG_CATEGORY(LogCRT, Trace)
 
 namespace
 {
-
 void InvalidParameterHandler(
-     const LChar* Expression
-   , const LChar* Function
-   , const LChar* File
-   , u32 Line
-   , u64 pReserved
-   )
+      const LChar* Expression
+    , const LChar* Function
+    , const LChar* File
+    , u32 Line
+    , u64 pReserved
+    )
 {
     LString Utf8Expression{algo::utf16_to_utf8(Expression, std::wcslen(Expression))};
     LString Utf8Function{algo::utf16_to_utf8(Function, std::wcslen(Function))};
@@ -42,8 +41,29 @@ void InvalidParameterHandler(
         Line
         )
 }
-
 } /* ~Namespace <Anonymous> */
+
+#if JAFG_WITH_MSVC
+NORETURN
+void HandelSeh()
+{
+    LOG_FATAL(LogPlatform, "Unhandled exception thrown.")
+}
+
+EPlatformExit::Type SehUnwinder()
+{
+    EPlatformExit::Type ErrorLevel{};
+    __try
+    {
+        ErrorLevel = GuardedMain();
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        HandelSeh();
+    }
+    return ErrorLevel;
+}
+#endif /* JAFG_WITH_MSVC */
 
 i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
 {
@@ -84,17 +104,12 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
     else
     {
         LOG_VERBOSE(LogPlatform, "Leveraging structured exception handling.")
-
-        __try
-        {
 #endif /* JAFG_WITH_MSVC */
-            ErrorLevel = GuardedMain();
-#if JAFG_WITH_MSVC
-        }
-        __except(EXCEPTION_EXECUTE_HANDLER)
-        {
-            LOG_FATAL(LogPlatform, "Unhandled exception thrown.")
-        }
+
+#if !JAFG_WITH_MSVC
+        ErrorLevel = GuardedMain();
+#else /* !JAFG_WITH_MSVC */
+        ErrorLevel = SehUnwinder();
     }
 #endif /* JAFG_WITH_MSVC */
 
@@ -102,7 +117,7 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")
-        JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+        Jafg::FlushOutStreams();
 
         std::cin.get();
     }

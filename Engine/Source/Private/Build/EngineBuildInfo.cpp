@@ -44,7 +44,14 @@ Jafg::BuildInfo::LEngineVersion Jafg::BuildInfo::GetEngineVersion()
 
 LString const& Jafg::BuildInfo::GetCompilerVersion()
 {
-    static LString Version{ __VERSION__ };
+#if JAFG_WITH_CLANG
+    static LString Version{__VERSION__};
+#elif JAFG_WITH_MSVC
+    static LString Version{std::to_string(_MSC_FULL_VER)};
+#else /* JAFG_WITH_MSVC */
+    #error "Missing compiler implementation."
+#endif /* !JAFG_WITH_MSVC */
+
     return Version;
 }
 

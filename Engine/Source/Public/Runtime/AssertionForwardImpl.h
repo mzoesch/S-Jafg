@@ -12,7 +12,7 @@ inline void FwdCheck(TPredicate&& Predicate, char const* Str, char const* File, 
 
     if (JAFG_UNLIKELY(!Predicate()))
     {
-        JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+        Jafg::FlushOutStreams();
         PRIVATE_JAFG_TRY_BREAK_NO_FACADE()
         LOnPlatformBreak::OnProgramPanic(Str, File, Line);
     }

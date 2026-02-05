@@ -154,7 +154,7 @@ public:
     //#
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
     //#
-    FORCEINLINE constexpr void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept;
+    FORCEINLINE CONSTEXPR_CHECK_SLOW void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept;
 
     //#
     //# @return True if the point is inside the bounds of the viewport.
@@ -257,7 +257,7 @@ FORCEINLINE constexpr bool LViewport::IsInBounds(const LVec2F& InTopLeft, const 
          ;
 }
 
-FORCEINLINE constexpr void LViewport::ConvertTLToBLOrigin(LVec2F* Vector) const noexcept
+FORCEINLINE CONSTEXPR_CHECK_SLOW void LViewport::ConvertTLToBLOrigin(LVec2F* Vector) const noexcept
 {
     checkSlow( Vector )
     Vector->y = this->GetDimensions().y - Vector->y;

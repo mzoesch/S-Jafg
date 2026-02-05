@@ -102,6 +102,11 @@
     //#
     #define unreachable()                       checkNoEntry()
 
+    //#
+    //# Macro for constexpr functions that cannot be const-evaluated if checks are enabled.
+    //#
+    #define CONSTEXPR_CHECK
+
 #endif /* JAFG_DO_CHECKS */
 
 //#
@@ -114,6 +119,7 @@
     #define checkSlowMsgf(Expr, Format, ...)    checkMsgf( Expr, Format, ##__VA_ARGS__ )
     #define checkSlowNoEntry(Expr)              checkNoEntry( Expr )
     #define checkSlowCode(Code)                 checkCode( Code )
+    #define CONSTEXPR_CHECK_SLOW
 
 #endif /* JAFG_DO_SLOW_CHECKS */
 
@@ -177,6 +183,8 @@
 
     #define unreachable()                           JAFG_PLATFORM_UNREACHABLE()
 
+    #define CONSTEXPR_CHECK                         constexpr
+
 #endif /* !JAFG_DO_CHECKS */
 
 //#
@@ -189,6 +197,7 @@
     #define checkSlowMsgf(Expr, Format, ...)
     #define checkSlowNoEntry(Expr)
     #define checkSlowCode(Code)
+    #define CONSTEXPR_CHECK_SLOW                    constexpr
 
 #endif /* !JAFG_DO_SLOW_CHECKS */
 
@@ -232,7 +241,7 @@
         }                                           \
         else                                        \
         {                                           \
-            JAFG_UNSAFE_FLUSH_OUT_STREAMS()          \
+            ::Jafg::FlushOutStreams();               \
             ::Jafg::LOnPlatformBreak::OnProgramPanic \
             (                                       \
                 JAFG_NO_ENTRY_ASSERT_TEXT,           \
@@ -260,7 +269,7 @@
     }
 
 #define PRIVATE_JAFG_GORGEOUS_BREAK_IMPL() \
-        JAFG_UNSAFE_FLUSH_OUT_STREAMS()    \
+        ::Jafg::FlushOutStreams();    \
         JAFG_PLATFORM_BREAK()
 
 #define PRIVATE_JAFG_GORGEOUS_TRAP_IMPL() \
@@ -270,8 +279,8 @@
     )
 
 #define PRIVATE_JAFG_GORGEOUS_TRAP_IMPL_MSG(Msg) \
-    JAFG_UNSAFE_FLUSH_OUT_STREAMS()              \
-    PRIVATE_JAFG_TRY_BREAK_NO_FACADE()           \
+    ::Jafg::FlushOutStreams();              \
+    PRIVATE_JAFG_TRY_BREAK_NO_FACADE();           \
     ::Jafg::LOnPlatformBreak::OnProgramPanic     \
     (                                           \
         Msg,                                    \

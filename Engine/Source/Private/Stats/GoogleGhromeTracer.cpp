@@ -6,8 +6,6 @@
 
 #include "Stats/GoogleChromeTracer.h"
 #include "Stats/StatsCore.h"
-#include "System/EnginePath.h"
-#include <bits/fs_path.h>
 
 Jafg::Stats::Vendor::LGoogleChromeTracer::~LGoogleChromeTracer()
 {

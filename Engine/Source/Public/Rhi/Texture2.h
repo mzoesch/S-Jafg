@@ -57,7 +57,7 @@ public:
     };
 
     constexpr LTexture2() noexcept = default;
-    explicit constexpr LTexture2(LPath Path, LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Default) noexcept
+    explicit LTexture2(LPath Path, LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Default) noexcept
         : Path(std::move(Path)), Meta(Meta)
     {
         if (Flags & ETextureLoadFlagBits::Load)
@@ -111,10 +111,10 @@ public:
     FORCEINLINE constexpr bool IsOnMainMemory() const noexcept { return this->MipMap0.IsAllocated(); }
     FORCEINLINE constexpr LByteBulkData const& GetFirstMipMap() const noexcept { return this->MipMap0; }
 
-    FORCEINLINE constexpr bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
+    FORCEINLINE bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
     FORCEINLINE constexpr auto const& GetDeviceHandle() const noexcept { return this->Handle; }
 
-    FORCEINLINE constexpr bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
+    FORCEINLINE bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
     FORCEINLINE constexpr auto const& GetImageView() const noexcept { return this->View; }
 
 private:

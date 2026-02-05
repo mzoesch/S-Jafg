@@ -101,13 +101,13 @@ inline constexpr std::string_view PrettyFunctionName(const char* InFunctionName)
     return { Begin, static_cast<std::string_view::size_type>(std::find(Begin, End, '(') - Begin) };
 }
 
-inline constexpr LString LogColor_Trace{ JAFG_LOG_COLOR_TRACE };
-inline constexpr LString LogColor_Verbose{ JAFG_LOG_COLOR_VERBOSE };
-inline constexpr LString LogColor_Info{ JAFG_LOG_COLOR_INFO };
-inline constexpr LString LogColor_Warning{ JAFG_LOG_COLOR_WARNING };
-inline constexpr LString LogColor_Error{ JAFG_LOG_COLOR_ERROR };
-inline constexpr LString LogColor_Fatal{ JAFG_LOG_COLOR_FATAL };
-inline constexpr LString LogColor_End{ JAFG_LOG_COLOR_END };
+inline constexpr LStringView LogColor_Trace{ JAFG_LOG_COLOR_TRACE };
+inline constexpr LStringView LogColor_Verbose{ JAFG_LOG_COLOR_VERBOSE };
+inline constexpr LStringView LogColor_Info{ JAFG_LOG_COLOR_INFO };
+inline constexpr LStringView LogColor_Warning{ JAFG_LOG_COLOR_WARNING };
+inline constexpr LStringView LogColor_Error{ JAFG_LOG_COLOR_ERROR };
+inline constexpr LStringView LogColor_Fatal{ JAFG_LOG_COLOR_FATAL };
+inline constexpr LStringView LogColor_End{ JAFG_LOG_COLOR_END };
 inline constexpr LStringView GetColorForVerbosity(const ELogVerbosity::Type Verbosity)
 {
     if (Verbosity == ELogVerbosity::Trace) { return LogColor_Trace; }
