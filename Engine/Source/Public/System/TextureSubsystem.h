@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Rhi/Image.h"
-#include "System/EnginePath.h"
 #include "Engine/CxxClass.h"
 #include "TextureSubsystem.generated.h"
 
@@ -37,10 +36,6 @@ public:
     LImage GetImage(LPath const& Path, LTexture2::LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Load) const
     {
         return LImage{this->GetTexture(&Path, Path.generic_string(), Meta, Flags)};
-    }
-    LImage GetImage(LEnginePath const& Path, LTexture2::LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Load) const
-    {
-        return this->GetImage(Path.ResolvePath(), Meta, Flags);
     }
 
     inline void AddImage(LImage const& Image, LString const& Ident) const noexcept

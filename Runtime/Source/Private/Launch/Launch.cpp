@@ -46,7 +46,7 @@ FORCEINLINE
 #endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 void FlushLogs()
 {
-    JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+    Jafg::FlushOutStreams();
     Application::Private::LastStdOutFlushTime = Application::GetHighestNow();
     return;
 }

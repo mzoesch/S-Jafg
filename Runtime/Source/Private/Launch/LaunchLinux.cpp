@@ -74,71 +74,9 @@ void SignumPosixAction_JafgHandler_NotSoFatal(const i32 InSignal, siginfo_t* InI
 
 } /* ~Namespace <Anonymous> */
 
-static void test()
-{
-    check( maths::zero_vector<LVec1F> == LVec1F(0) )
-    check( maths::zero_vector<LVec1D> == LVec1D(0) )
-    check( maths::zero_vector<LVec2F> == LVec2F(0) )
-    check( maths::zero_vector<LVec2D> == LVec2D(0) )
-    check( maths::zero_vector<LVec3F> == LVec3F(0) )
-    check( maths::zero_vector<LVec3D> == LVec3D(0) )
-    check( maths::zero_vector<LVec4F> == LVec4F(0) )
-    check( maths::zero_vector<LVec4D> == LVec4D(0) )
-
-    check( maths::one_vector<LVec1F> == LVec1F(1) )
-    check( maths::one_vector<LVec1D> == LVec1D(1) )
-    check( maths::one_vector<LVec2F> == LVec2F(1) )
-    check( maths::one_vector<LVec2D> == LVec2D(1) )
-    check( maths::one_vector<LVec3F> == LVec3F(1) )
-    check( maths::one_vector<LVec3D> == LVec3D(1) )
-    check( maths::one_vector<LVec4F> == LVec4F(1) )
-    check( maths::one_vector<LVec4D> == LVec4D(1) )
-
-    check( maths::forward_vector<LVec3F> == LVec3F(1, 0, 0) )
-    check( maths::forward_vector<LVec3D> == LVec3D(1, 0, 0) )
-    check( maths::backward_vector<LVec3F> == LVec3F(-1, 0, 0) )
-    check( maths::backward_vector<LVec3D> == LVec3D(-1, 0, 0) )
-    check( maths::right_vector<LVec3F> == LVec3F(0, 1, 0) )
-    check( maths::right_vector<LVec3D> == LVec3D(0, 1, 0) )
-    check( maths::left_vector<LVec3F> == LVec3F(0, -1, 0) )
-    check( maths::left_vector<LVec3D> == LVec3D(0, -1, 0) )
-    check( maths::up_vector<LVec3F> == LVec3F(0, 0, 1) )
-    check( maths::up_vector<LVec3D> == LVec3D(0, 0, 1) )
-    check( maths::down_vector<LVec3F> == LVec3F(0, 0, -1) )
-    check( maths::down_vector<LVec3D> == LVec3D(0, 0, -1) )
-
-    check( maths::unit_vector_x<LVec1F> == LVec1F(1) )
-    check( maths::unit_vector_x<LVec1D> == LVec1D(1) )
-    check( maths::unit_vector_x<LVec2F> == LVec2F(1, 0) )
-    check( maths::unit_vector_x<LVec2D> == LVec2D(1, 0) )
-    check( maths::unit_vector_x<LVec3F> == LVec3F(1, 0, 0) )
-    check( maths::unit_vector_x<LVec3D> == LVec3D(1, 0, 0) )
-    check( maths::unit_vector_x<LVec4F> == LVec4F(1, 0, 0, 0) )
-    check( maths::unit_vector_x<LVec4D> == LVec4D(1, 0, 0, 0) )
-
-    check( maths::unit_vector_y<LVec2F> == LVec2F(0, 1) )
-    check( maths::unit_vector_y<LVec2D> == LVec2D(0, 1) )
-    check( maths::unit_vector_y<LVec3F> == LVec3F(0, 1, 0) )
-    check( maths::unit_vector_y<LVec3D> == LVec3D(0, 1, 0) )
-    check( maths::unit_vector_y<LVec4F> == LVec4F(0, 1, 0, 0) )
-    check( maths::unit_vector_y<LVec4D> == LVec4D(0, 1, 0, 0) )
-
-    check( maths::unit_vector_z<LVec3F> == LVec3F(0, 0, 1) )
-    check( maths::unit_vector_z<LVec3D> == LVec3D(0, 0, 1) )
-    check( maths::unit_vector_z<LVec4F> == LVec4F(0, 0, 1, 0) )
-    check( maths::unit_vector_z<LVec4D> == LVec4D(0, 0, 1, 0) )
-
-    check( maths::unit_vector_w<LVec4F> == LVec4F(0, 0, 0, 1) )
-    check( maths::unit_vector_w<LVec4D> == LVec4D(0, 0, 0, 1) )
-
-    return;
-}
-
 i32 main(const i32 ArgC, const char* ArgV[])
 {
-    test();
-
-    i32 ErrorLevel { 0 };
+    i32 ErrorLevel{};
 
     TArray<LString> Arguments;
     for (i32 Idx{ 1 }; Idx < ArgC; ++Idx)
@@ -205,7 +143,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue ...")
-        JAFG_UNSAFE_FLUSH_OUT_STREAMS()
+        Jafg::FlushOutStreams();
 
         std::cin.get();
     }

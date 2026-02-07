@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Rhi/StaticMeshRef.h"
-#include "EnginePath.h"
 #include "Engine/CxxClass.h"
 #include "MeshSubsystem.generated.h"
 
@@ -39,14 +38,6 @@ public:
         ) const
     {
         return LStaticMeshRef{this->GetMesh(&Path, Path.generic_string(), LoadBehavior, HostMemoryBehavior)};
-    }
-    LStaticMeshRef GetMesh(
-          LEnginePath const& Path,
-          LStaticMesh::ELoadBehavior LoadBehavior = LStaticMesh::ELoadBehavior::LoadToDevice
-        , LStaticMesh::EUploadHostMemoryBehavior HostMemoryBehavior = LStaticMesh::EUploadHostMemoryBehavior::Free
-        ) const
-    {
-        return this->GetMesh(Path.ResolvePath(), LoadBehavior, HostMemoryBehavior);
     }
 
     void AddMesh(LStaticMeshRef const& Mesh, LString const& Ident) const noexcept

@@ -40,7 +40,7 @@ void Jafg::WUserWidget::Destruct()
     return;
 }
 
-Jafg::LViewport* Jafg::WUserWidget::GetMostOuterViewport()
+Jafg::LViewport* Jafg::WUserWidget::GetMostOuterViewport() noexcept
 {
     if (this->Slot.Parent)
     {

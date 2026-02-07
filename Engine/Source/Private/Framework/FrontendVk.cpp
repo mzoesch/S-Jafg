@@ -286,6 +286,8 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     this->Vk_UpdateSamplers();
 
+    Finder::CreateDirectories("Content/Shaders/Spir-V");
+
     LSlangCompilationRequest Req{};
     Req.In = LPath{ "Content/Shaders/Slang/StaticMesh.slang" };
     Req.Out = LPath{ LStaticMesh::DefaultShader };
@@ -663,27 +665,6 @@ i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LSlangCompilationRequest co
         );
 }
 
-std::wstring GetLastErrorMessage(DWORD error)
-{
-    wchar_t* buffer = nullptr;
-
-    FormatMessageW(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        nullptr,
-        error,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPWSTR)&buffer,
-        0,
-        nullptr
-    );
-
-    std::wstring message = buffer ? buffer : L"";
-    LocalFree(buffer);
-    return message;
-}
-
 i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath Slangc, LSlangCompilationRequest const& Request)
 {
     Slangc.make_preferred();
@@ -693,8 +674,8 @@ i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath Slangc, LSlangCompila
     SS << Slangc;
 
     /* Quoting the requested in/out paths will not work, therefore spaces are not permitted. */
-    check( algo::contains(Request.In.native(), L' ') == false && "Slangc does not permit spaces in requested in/out paths." )
-    check( algo::contains(Request.Out.native(), L' ') == false && "Slangc does not permit spaces in requested in/out paths." )
+    check( algo::contains(Request.In.native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths." )
+    check( algo::contains(Request.Out.native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths." )
     SS << " " << Request.In.string();
     SS << " -o " << Request.Out.string();
 

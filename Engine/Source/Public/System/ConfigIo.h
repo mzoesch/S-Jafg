@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "EnginePath.h"
+#include "Minimal.afx"
 
 namespace Jafg::ConfigIo
 {

@@ -60,7 +60,7 @@ struct LPrimitivePlatformTypesWindows final : public LPrimitivePlatformTypesGene
 
 //# Make it public.
 #ifndef JAFG_PLATFORM_TYPES_STRUCT
-    #define JAFG_PLATFORM_TYPES_STRUCT                                   ::Jafg::LPrimitivePlatformTypesWindows
+    #define JAFG_PLATFORM_TYPES_STRUCT                                  ::Jafg::LPrimitivePlatformTypesWindows
 #endif /* !JAFG_PLATFORM_TYPES_STRUCT */
 
 //# The platform break implementation details for break behavior on Windows.
@@ -256,45 +256,49 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
 #endif /* !JAFG_WITH_REST_CLS */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
-    #define JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        1
+    #define JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS       1
 #endif /* !JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS */
 
 #ifndef JAFG_PLATFORM_USES_64_BIT
-    #define JAFG_PLATFORM_USES_64_BIT                                    1
+    #define JAFG_PLATFORM_USES_64_BIT                                   1
 #endif /* !JAFG_PLATFORM_USES_64_BIT */
 
 //# https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
 #ifndef JAFG_PLATFORM_USES_LITTLE_ENDIAN
-    #define JAFG_PLATFORM_USES_LITTLE_ENDIAN                             1
+    #define JAFG_PLATFORM_USES_LITTLE_ENDIAN                            1
 #endif /* !JAFG_PLATFORM_USES_LITTLE_ENDIAN */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES
-    #define JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES                      1
+    #define JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES                     1
 #endif /* !JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_STD_FLUSH
-    #define JAFG_PLATFORM_SUPPORTS_STD_FLUSH                             1
+    #define JAFG_PLATFORM_SUPPORTS_STD_FLUSH                            1
 #endif /* !JAFG_PLATFORM_SUPPORTS_STD_FLUSH */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES
-    #define JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES                          1
+    #define JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES                         1
 #endif /* !JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_SIMD
-    #define JAFG_PLATFORM_SUPPORTS_SIMD                                  1
+    #define JAFG_PLATFORM_SUPPORTS_SIMD                                 1
 #endif /* !JAFG_PLATFORM_SUPPORTS_SIMD */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK
-    #define JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK                         1
+    #define JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK                        1
 #endif /* !JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK */
 
 #ifndef JAFG_PLATFORM_USES_UTF16
-    #define JAFG_PLATFORM_USES_UTF16                                     1
+    #define JAFG_PLATFORM_USES_UTF16                                    1
 #endif /* !JAFG_PLATFORM_USES_UTF16 */
 
 #ifndef JAFG_PLATFORM_WCHAR_SIZE
-    #define JAFG_PLATFORM_WCHAR_SIZE                                     2
+    #define JAFG_PLATFORM_WCHAR_SIZE                                    2
 #endif /* !JAFG_PLATFORM_WCHAR_SIZE */
+
+#ifndef LITERAL_TEXT
+    #define LITERAL_TEXT(x)                                             LITERAL_WIDE(x)
+#endif /* !LITERAL_TEXT */
 
 #ifndef JAFG_PLATFORM_CALLSPEC_IN
     #define JAFG_PLATFORM_CALLSPEC_IN                                    __declspec ( dllimport )

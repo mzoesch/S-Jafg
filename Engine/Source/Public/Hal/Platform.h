@@ -419,6 +419,11 @@ struct LPrimitivePlatformTypesGeneric
     #define LITERAL_UTF32(x)                                            U##x
 #endif /* !LITERAL_UTF32 */
 
+//# The literal for native platform exchange.
+#ifndef LITERAL_TEXT
+    #error "Platform is missing LITERAL_TEXT definition."
+#endif /* !LITERAL_TEXT */
+
 //# The call spec for imported functions.
 #ifndef JAFG_PLATFORM_CALLSPEC_IN
     #error "Platform is missing JAFG_PLATFORM_CALLSPEC_IN definition."
