@@ -22,7 +22,7 @@ class WTabBarButton : public WButton
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WTabBarButton)
+    DEFAULT_NODE_CONSTRUCTORS(WTabBarButton)
 
 public:
 
@@ -41,9 +41,9 @@ public:
 
 protected:
 
-    WTabBar* Context{ nullptr };
+    WTabBar* TabBar{};
     LString Identifier;
-    WTextBox* ButtonText{ nullptr };
+    WTextBox* ButtonText{};
     LOnTabBarButtonRelease OnButtonRelease;
 };
 

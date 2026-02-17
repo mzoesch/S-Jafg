@@ -29,9 +29,9 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(LPreference const* Self, WPare
         return;
     }
 
-    LPreferenceValue_CliType const* This{ static_cast<LPreferenceValue_CliType const*>(Self) };
+    LPreferenceValue_CliType const* This{static_cast<LPreferenceValue_CliType const*>(Self)};
 
-    LCommandLineInterface const& Cli{ GEngine->GetCommandLineInterface() };
+    LCommandLineInterface const& Cli{GEngine->GetCommandLineInterface()};
     LCliType const* Type{ Cli.GetType(This->Type) };
     if (Type == nullptr)
     {
@@ -39,35 +39,31 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(LPreference const* Self, WPare
         return;
     }
 
-    WParentBase* Container;
+    const u8 ColorSpace{static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1))};
 
-    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
-
-    NewNodeCtx(Target, WHRegion).SaveTo(&Container)
-        .Anchor(EAnchor::HFill)
-        .Padding({15.0f, 10.0f})
+    BeginStyling(*Target).Root<WHRegion>()
         .Type(ERegionBrush::Box)
+        .Anchor(EAnchor::HFill)
+        .Padding({15.,10.})
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
             .MinDesiredSize({100_pt, 0})
             .Content(Type->GetIdentifier())
         +
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
             .Brush(LTextBoxBrush::Body())
             .Content(Type->GetHelp())
         +
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
             .TextAlign(ETextAlign::Right)
             .Content(Type->GetDefault())
     ];
-
-    Target->AddChild(Container);
 
     return;
 }
@@ -105,29 +101,25 @@ void Jafg::LPreferenceValue_CliCommand::BuildDefault(const LPreference* Self, WP
         return;
     }
 
-    WParentBase* Container;
-
     const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
-    NewNodeCtx(Target, WHRegion).SaveTo(&Container)
+    BeginStyling(*Target).Root<WHRegion>()
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
             .MinDesiredSize({100_pt, 0})
             .Content(Command->GetIdentifier())
         +
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
             .Brush(LTextBoxBrush::Body())
             .Content(Command->GetHelp())
     ];
-
-    Target->AddChild(Container);
 
     return;
 }
@@ -165,35 +157,31 @@ void Jafg::LPreferenceValue_CliVariable::BuildDefault(const LPreference* Self, W
         return;
     }
 
-    WParentBase* Container;
-
     const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
-    NewNodeCtx(Target, WHRegion).SaveTo(&Container)
+    BeginStyling(*Target).Root<WHRegion>()
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
             .MinDesiredSize({100_pt, 0})
             .Content(Variable->GetIdentifier())
         +
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
             .Brush(LTextBoxBrush::Body())
             .Content(Variable->GetHelp())
         +
-        NewNodeCtx(Target, WTextBox)
+        NewNode(Target->GetViewport()).Class<WTextBox>()
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
             .TextAlign(ETextAlign::Right)
             .Content(Variable->GetValue())
     ];
-
-    Target->AddChild(Container);
 
     return;
 }

@@ -3,21 +3,17 @@
 #include "Widgets/Parent.h"
 #include "Widgets/Viewport.h"
 
-Jafg::WParent::WParent(LCxxObjectInitializer const& ObjectInitializer)
-    : Super(ObjectInitializer)
-{
-    this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
-    return;
-}
-
 void Jafg::WParent::Construct()
 {
     Super::Construct();
 
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    for (LWidgetSlot const* ChildSlot : this->GetChildren())
     {
-        checkSlow( ChildSlot->Content )
-        MakeDeferredWidgetNodeFinal(ChildSlot->Content);
+        check(ChildSlot->Content)
+        check(ChildSlot->Content->_HasBegunLife() == false)
+        MakeCxxObjectFinal(*ChildSlot->Content);
+        check(ChildSlot->Content->_HasBegunLife())
+        continue;
     }
 
     return;
@@ -27,14 +23,13 @@ void Jafg::WParent::Tick()
 {
     Super::Tick();
 
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    for (LWidgetSlot const* ChildSlot : this->GetChildren())
     {
-        checkSlow( ChildSlot->Content )
+        check(ChildSlot->Content)
         if (ChildSlot->Content->ShouldNowTick())
         {
             ChildSlot->Content->Tick();
         }
-
         continue;
     }
 
@@ -43,6 +38,7 @@ void Jafg::WParent::Tick()
 
 void Jafg::WParent::Destruct()
 {
+    check(Tasks::IsOnMasterThread())
     Super::Destruct();
 
     algo::for_each(this->Children,
@@ -52,14 +48,11 @@ void Jafg::WParent::Destruct()
 #endif  /* JAFG_DO_CHECKS */
     ](LWidgetSlot* ChildSlot)
     {
-        check( ChildSlot && ChildSlot->Content && ChildSlot->Parent == this )
-
-        auto* ChildWidget{ ChildSlot->Content };
-
+        check(ChildSlot && ChildSlot->Content && ChildSlot->Parent == this)
+        auto* ChildWidget{ChildSlot->Content};
         ChildSlot->Content->InvalidateSlotDangerous();
-        check( ChildSlot->Parent == nullptr && ChildSlot->Content == nullptr && ChildSlot->Margin == nullptr )
+        check(ChildSlot->Parent == nullptr && ChildSlot->Content == nullptr && ChildSlot->Margin == nullptr)
         ChildWidget->MarkAsGarbage_v2();
-
         return;
     });
 
@@ -72,32 +65,31 @@ void Jafg::WParent::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    for (LWidgetSlot const* ChildSlot : this->GetChildren())
     {
+        check(ChildSlot->Content)
         if (ChildSlot->Content->ShouldNowDraw())
         {
-            checkSlow( ChildSlot->Content )
             ChildSlot->Content->Draw(Context);
         }
-
         continue;
     }
 
     return;
 }
 
-Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVec2F& InLocation)
+Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, LVec2F const& Location)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
-        return Super::SweepMouse(Context, InLocation);
+        return Super::SweepMouse(Context, Location);
     }
 
     for (auto It{ this->Children.rbegin() }; It != this->Children.rend(); ++It)
     {
         if ((*It)->Content->ShouldCheckForInputs())
         {
-            if (const LCursorReply Reply{ (*It)->Content->SweepMouse(Context, InLocation) }; Reply.IsHandled())
+            if (const LCursorReply Reply{ (*It)->Content->SweepMouse(Context, Location) }; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -106,19 +98,19 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVec2F& I
         continue;
     }
 
-    return Super::SweepMouse(Context, InLocation);
+    return Super::SweepMouse(Context, Location);
 }
 
-Jafg::LReply Jafg::WParent::SweepFocusTest(const LViewport& Context, const LVec2F& InLocation)
+Jafg::LReply Jafg::WParent::SweepFocusTest(const LViewport& Context, const LVec2F& Location)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
-        return Super::SweepFocusTest(Context, InLocation);
+        return Super::SweepFocusTest(Context, Location);
     }
 
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        if (const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation); Reply.IsHandled())
+        if (const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, Location); Reply.IsHandled())
         {
             return Reply;
         }
@@ -126,16 +118,16 @@ Jafg::LReply Jafg::WParent::SweepFocusTest(const LViewport& Context, const LVec2
         continue;
     }
 
-    return Super::SweepFocusTest(Context, InLocation);
+    return Super::SweepFocusTest(Context, Location);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& Viewport, LKeyEvent const& KeyEvent)
 {
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
         check( ChildSlot->Content )
 
-        if (ChildSlot->Content == InViewport.GetFocusedWidget())
+        if (ChildSlot->Content == Viewport.GetFocusedWidget())
         {
             continue;
         }
@@ -145,12 +137,12 @@ Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& InViewport, const 
             continue;
         }
 
-        if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+        if (ChildSlot->Content->IsInBounds(Viewport, *Viewport.GetCachedCursorLocationChecked()) == false)
         {
             continue;
         }
 
-        if (const LReply Reply = ChildSlot->Content->OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+        if (const LReply Reply = ChildSlot->Content->OnKeyDownNoFocus(Viewport, KeyEvent); Reply.IsHandled())
         {
             return Reply;
         }
@@ -158,16 +150,16 @@ Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& InViewport, const 
         continue;
     }
 
-    return Super::OnKeyDownNoFocus(InViewport, InKeyEvent);
+    return Super::OnKeyDownNoFocus(Viewport, KeyEvent);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& Viewport, const LKeyEvent& KeyEvent)
 {
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
         check( ChildSlot->Content )
 
-        if (ChildSlot->Content == InViewport.GetFocusedWidget())
+        if (ChildSlot->Content == Viewport.GetFocusedWidget())
         {
             continue;
         }
@@ -177,12 +169,12 @@ Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& InViewport, const LK
             continue;
         }
 
-        if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+        if (ChildSlot->Content->IsInBounds(Viewport, *Viewport.GetCachedCursorLocationChecked()) == false)
         {
             continue;
         }
 
-        if (const LReply Reply = ChildSlot->Content->OnKeyUpNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+        if (const LReply Reply = ChildSlot->Content->OnKeyUpNoFocus(Viewport, KeyEvent); Reply.IsHandled())
         {
             return Reply;
         }
@@ -190,24 +182,24 @@ Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& InViewport, const LK
         continue;
     }
 
-    return Super::OnKeyUpNoFocus(InViewport, InKeyEvent);
+    return Super::OnKeyUpNoFocus(Viewport, KeyEvent);
 }
 
-bool Jafg::WParent::IsFocusWidgetTransitive(const LViewport* InViewport) const
+bool Jafg::WParent::IsFocusWidgetTransitive(const LViewport* Viewport) const
 {
-    if (InViewport == nullptr)
+    if (Viewport == nullptr)
     {
         return false;
     }
 
-    if (Super::IsFocusWidgetTransitive(InViewport))
+    if (Super::IsFocusWidgetTransitive(Viewport))
     {
         return true;
     }
 
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        if (ChildSlot->Content->IsFocusWidgetTransitive(InViewport))
+        if (ChildSlot->Content->IsFocusWidgetTransitive(Viewport))
         {
             return true;
         }
@@ -218,9 +210,9 @@ bool Jafg::WParent::IsFocusWidgetTransitive(const LViewport* InViewport) const
     return false;
 }
 
-bool Jafg::WParent::FindNodeInVisiblePath(const WNode* InNode) const
+bool Jafg::WParent::FindNodeInVisiblePath(const WNode* Node) const
 {
-    if (Super::FindNodeInVisiblePath(InNode))
+    if (Super::FindNodeInVisiblePath(Node))
     {
         return true;
     }
@@ -230,13 +222,13 @@ bool Jafg::WParent::FindNodeInVisiblePath(const WNode* InNode) const
         return false;
     }
 
-    for (const LWidgetSlot* ChildSlot : this->Children)
+    for (LWidgetSlot const* ChildSlot : this->Children)
     {
-        if (ChildSlot->Content->FindNodeInVisiblePath(InNode))
+        check(ChildSlot->Content)
+        if (ChildSlot->Content->FindNodeInVisiblePath(Node))
         {
             return true;
         }
-
         continue;
     }
 
@@ -245,21 +237,24 @@ bool Jafg::WParent::FindNodeInVisiblePath(const WNode* InNode) const
 
 void Jafg::WParent::RemoveChild(WNode* Child)
 {
-    auto It{ algo::find(this->Children, Child, [](auto const& E){ return E->Content; }) };
+    check(Tasks::IsOnMasterThread())
+    check(Child)
+
+    auto It{algo::find(this->Children, Child, [](auto const& E){return E->Content;})};
 
     if (It == this->Children.end())
     {
-        panic( "The in child is not a child of this widget." )
+        panic("The in child is not a child of this widget.")
     }
 
-    auto* ChildWidget{ (*It)->Content };
+    auto* ChildWidget{(*It)->Content};
 
-    (*It)->Content->InvalidateSlotDangerous();
-    check( (*It)->Parent == nullptr && (*It)->Content == nullptr && (*It)->Margin == nullptr )
+    ChildWidget->InvalidateSlotDangerous();
+    check((*It)->Parent == nullptr && (*It)->Content == nullptr && (*It)->Margin == nullptr)
     ChildWidget->MarkAsGarbage_v2();
 
     this->Children.erase(It);
-    check( algo::find(this->GetChildren(), Child, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
+    check(algo::find(this->GetChildren(), Child, [](auto const& E){return E->Content;}) == this->GetChildren().end())
 
     return;
 }
@@ -272,16 +267,15 @@ void Jafg::WParent::RemoveChild(LWidgetSlot* Child)
 void Jafg::WParent::RemoveChildAt(const i32 InIndex)
 {
     this->RemoveChild(this->GetChildren()[InIndex]);
-    return;
 }
 
 void Jafg::WParent::RemoveChildren()
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
     while (this->Children.empty() == false)
     {
-        checkSlow( this->Children.back() )
+        check(this->Children.back())
         this->RemoveChild(this->Children.back());
         continue;
     }
@@ -289,77 +283,34 @@ void Jafg::WParent::RemoveChildren()
     return;
 }
 
-Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
+Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* Child)
 {
-    check( Tasks::IsOnMasterThread() )
-
-    check( algo::find(this->GetChildren(), InChild, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
-
-    check( InChild )
-    check( InChild->GetSlot().Parent == nullptr && InChild->GetSlot().Content == nullptr && InChild->GetSlot().Margin == nullptr )
-
-    check( InChild->HasViewportDangerous() == false )
-
-    InChild->GetMutableSlot().Parent  = this;
-    InChild->GetMutableSlot().Content = InChild;
-    InChild->GetMutableSlot().Margin  = this->GetPaddingPtr();
-
-    this->Children.push_back(&InChild->GetMutableSlotChecked());
-
-    InChild->RecacheViewport();
-
-    return this->Children.back();
+    return this->AddChildAt(this->Children.size(), Child);
 }
 
-Jafg::LWidgetSlot* Jafg::WParent::AddChildAt(const i32 InIndex, WNode* InChild)
+Jafg::LWidgetSlot* Jafg::WParent::AddChildAt(const i32 Index, WNode* Child)
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
+    check(this->_HasBegunLife())
+    check(Child)
+    check(algo::find(this->GetChildren(), Child, [](auto const& E){return E->Content;}) == this->GetChildren().end())
+    check(Child->_HasBegunLife() == false)
+    check(Child->GetSlot().Parent == nullptr && Child->GetSlot().Content == nullptr && Child->GetSlot().Margin == nullptr)
 
-    check( algo::find(this->GetChildren(), InChild, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
+    Child->GetMutableSlot().Parent  = this;
+    Child->GetMutableSlot().Content = Child;
+    Child->GetMutableSlot().Margin  = this->GetPaddingPtr();
 
-    check( InChild )
-    check( InChild->GetSlot().Parent == nullptr && InChild->GetSlot().Content == nullptr && InChild->GetSlot().Margin == nullptr )
+    this->Children.insert(this->Children.begin() + Index, &Child->GetMutableSlotChecked());
 
-    check( InChild->HasViewportDangerous() == false )
+    MakeCxxObjectFinal(*Child);
+    check(Child->_HasBegunLife())
 
-    InChild->GetMutableSlot().Parent  = this;
-    InChild->GetMutableSlot().Content = InChild;
-    InChild->GetMutableSlot().Margin  = this->GetPaddingPtr();
-
-    this->Children.insert(this->Children.begin() + InIndex, &InChild->GetMutableSlotChecked());
-
-    InChild->RecacheViewport();
-
-    return this->Children[InIndex];
-}
-
-void Jafg::WParent::MakeChildrenFinal()
-{
-    for (const LWidgetSlot* ChildSlot : this->Children)
-    {
-        MakeDeferredWidgetNodeFinal(ChildSlot->Content);
-    }
-
-    return;
-}
-
-void Jafg::WParent::RecacheViewport() noexcept
-{
-    Super::RecacheViewport();
-
-    algo::for_each(this->Children,
-    [
 #if JAFG_DO_CHECKS
-        this
-#endif /* JAFG_DO_CHECKS */
-    ](LWidgetSlot* ChildSlot)
-    {
-        check( ChildSlot && ChildSlot->Content && ChildSlot->Parent == this )
-
-        ChildSlot->Content->RecacheViewport();
-
-        return;
-    });
-
-    return;
+    auto* Result{this->Children[Index]};
+    check(Result->Parent == this && Result->Content == Child && Result->Margin == this->GetPaddingPtr())
+    return Result;
+#else /* JAFG_DO_CHECKS */
+    return this->Children[Index];
+#endif /* !JAFG_DO_CHECKS */
 }

@@ -9,15 +9,21 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryHButton)
+class WHButton;
+typedef TFunction<void(WHButton* Self, LKeyEvent const& InKeyEvent)> LOnHButtonKeyEvent;
+typedef TFactoryButtonBase<WHButton> LFactoryHButton;
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryHButton)
 class ENGINE_API WHButton : public WHRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WHButton(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WHButton)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WHButton) noexcept
+    {
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+    }
 
 public:
 

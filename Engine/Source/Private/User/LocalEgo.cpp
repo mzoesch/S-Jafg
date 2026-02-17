@@ -26,7 +26,7 @@ void Jafg::LLocalEgo::Initialize()
     {
         if (GEngine)
         {
-            f32 NearFrustum; Serialization::FromString(&NearFrustum, InValue);
+            f32 NearFrustum; Serde::FromString(&NearFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes near frustum to [{}].", NearFrustum)
 
             for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
@@ -50,7 +50,7 @@ void Jafg::LLocalEgo::Initialize()
     {
         if (GEngine)
         {
-            f32 FarFrustum; Serialization::FromString(&FarFrustum, InValue);
+            f32 FarFrustum; Serde::FromString(&FarFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes far frustum to [{}].", FarFrustum)
 
             for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
@@ -77,20 +77,6 @@ void Jafg::LLocalEgo::Initialize()
 
     this->Frontend.GetCollection()->InitializeDeferred(&this->Outer);
     this->Frontend.GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
-
-    return;
-}
-
-void Jafg::LLocalEgo::Tick(const f32 DeltaTime)
-{
-    STAT_CYCLE_FUNCTION()
-
-    if (const i32 PurgedFactories{ Private::PurgeWidgetFactories() }; PurgedFactories > 0)
-    {
-        LOG_TRACE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
-    }
-
-    this->Frontend.Tick();
 
     return;
 }

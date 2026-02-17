@@ -10,7 +10,7 @@ namespace Jafg
 {
 
 class APersonaController;
-class JSceneComponent;
+class ASceneComponent;
 struct LInputActionValue;
 
 //# A pawn is something that can be possessed by a controller.
@@ -21,14 +21,24 @@ class ENGINE_API APawn : public AActor
 
 protected:
 
-    explicit APawn(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer) { this->SetEverTickConstructorOnlyFlag(); }
-    DEFAULT_OBJECT_CDR_CTOR(APawn)
+    inline explicit APawn(LWorldDynamicInit const& Init) : Super{Init}
+    {
+        this->DefaultInit();
+    }
+    template<typename TCxxClass>
+    inline explicit APawn(TCxxStaticInit<TCxxClass> const& Init) : Super{Init}
+    {
+        this->DefaultInit();
+    }
+
+private:
+
+    void DefaultInit();
 
 public:
 
-    virtual void BeginLife() override;
     virtual void Tick(const float DeltaTime) override;
-    virtual void EndLife() override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
     LEye_v2 GetEye_v2() const noexcept;
 
@@ -63,7 +73,7 @@ private:
     APersonaController* OwningController{};
 
     //# The root scene component that specifies the actual transform for this pawn.
-    JSceneComponent* RootComponent{};
+    ASceneComponent* RootComponent{};
 
     f32 VertFov{ 1.0471975511965977461542144610931676280657231331250352736583148641026054687620696662093449417807056893273826955044274355490312815 };
     f32 NearFrustum{ 0.1f };

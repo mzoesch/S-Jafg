@@ -32,6 +32,9 @@ pub enum TokenType
     ClassDeclaration,
 
     #[allow(dead_code)]
+    WorldObjectDeclaration,
+
+    #[allow(dead_code)]
     WidgetDeclaration,
 
     #[allow(dead_code)]
@@ -97,6 +100,16 @@ impl TokenType
     }
 
     #[allow(dead_code)]
+    pub fn is_world_obj_declaration(&self) -> bool
+    {
+        match self
+        {
+            TokenType::WorldObjectDeclaration => true,
+            _ => false,
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn is_widget_declaration(&self) -> bool
     {
         match self
@@ -148,6 +161,7 @@ impl PartialEq for TokenType
             (TokenType::NamespacePop, TokenType::NamespacePop) => true,
             (TokenType::Pragma, TokenType::Pragma) => true,
             (TokenType::ClassDeclaration, TokenType::ClassDeclaration) => true,
+            (TokenType::WorldObjectDeclaration, TokenType::WorldObjectDeclaration) => true,
             (TokenType::WidgetDeclaration, TokenType::WidgetDeclaration) => true,
             (TokenType::WidgetDeclarationWithFactory, TokenType::WidgetDeclarationWithFactory) => true,
             (TokenType::ClassBody, TokenType::ClassBody) => true,
@@ -340,7 +354,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 }
                 else if words[classname_idx].content.starts_with('A')
                 {
-                    if remove_all_namespaces(&words[inner_idx].content).starts_with('A') == false && words[classname_idx].content != "AActor"
+                    if remove_all_namespaces(&words[inner_idx].content).starts_with('A') == false && words[classname_idx].content != "AWorldObject"
                     {
                         panic!("[{}]: Excepted a-object super class after a-class declaration.", file);
                     }
@@ -350,7 +364,14 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                     panic!("[{}]: Excepted j-object or a-object super class after j-class declaration.", file);
                 }
 
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                if words[classname_idx].content.starts_with('A')
+                {
+                    tokens.push(Token { ty: TokenType::WorldObjectDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                }
+                else
+                {
+                    tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                }
             }
         }
         else if w.content == "DECLARE_JAFG_WIDGET"
@@ -679,7 +700,7 @@ fn split_file(file: &str, splits: Vec<char>, splits_no_out: Vec<char>) -> Vec<Wo
             continue;
         }
 
-        if c == '#'
+        if c == '#' && !in_string
         {
             if current_word.is_empty() == false
             {

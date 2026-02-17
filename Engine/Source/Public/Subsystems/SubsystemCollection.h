@@ -52,38 +52,19 @@ struct LSubsystemCollection final
 {
     constexpr LSubsystemCollection() noexcept = delete;
     constexpr LSubsystemCollection(LString InFriendlyName) noexcept : FriendlyName(std::move(InFriendlyName)) {}
-    LSubsystemCollection(LClassOuter* InOuter, LString InFriendlyName = {}) noexceptcheck : Outer(InOuter)
+    void InitializeDeferred(LClassOuter* InOuter, LString InFriendlyName = {}) noexcept
     {
-        check( this->Outer )
-        if (InFriendlyName.empty() == false)
-        {
-            this->FriendlyName = std::move(InFriendlyName);
-        }
-
-        return;
-    }
-    void InitializeDeferred(LClassOuter* InOuter, LString InFriendlyName = {}) noexceptcheck
-    {
-        check( InOuter )
-
-        check( this->IsValid() == false )
+        check( InOuter && this->Outer == nullptr )
+        check( this->Class == nullptr )
         check( this->SubsystemInstances.empty() )
-
         this->Outer = InOuter;
-
         if (InFriendlyName.empty() == false)
         {
             this->FriendlyName = std::move(InFriendlyName);
         }
-
-        return;
     }
-
     PROHIBIT_REALLOC_OF_ANY_FORM(LSubsystemCollection)
-
-    ~LSubsystemCollection() noexceptcheck { check( this->IsValid() == false && this->SubsystemInstances.empty() ) }
-
-    FORCEINLINE bool IsValid() const noexcept { return this->Outer != nullptr && this->Class != nullptr; }
+    inline ~LSubsystemCollection() noexcept { check( this->SubsystemInstances.empty() ) }
 
     ENGINE_API void InitializeSubsystems(TSubclassOf<JSubsystem> Class, bool bRegisterDeferredDelegate = true);
     template<typename TSubsystem> requires std::is_base_of_v<JSubsystem, TSubsystem>
@@ -96,7 +77,7 @@ struct LSubsystemCollection final
     //#
     ENGINE_API void InitializeSubsystemsForDeferred();
 
-    void OnForeignPluginLoaded(LLoadedPlugin const* Plugin);
+    void OnForeignPluginLoaded(LLoadedPlugin const& Plugin);
 
     //#
     //# Tears down all subsystems in this collection.
@@ -177,12 +158,16 @@ private:
 
     LString FriendlyName;
 
-    LClassOuter* Outer { nullptr };
+    //# The outer to use for all subsystems.
+    LClassOuter* Outer{};
+
+    //# The class to use.
     TSubclassOf<JSubsystem> Class;
 
+    //# All initialized current subsystem instances.
     TArray<JSubsystem*> SubsystemInstances;
 
-    LDelegateHandle OnForeignPluginLoadedHandle { nullptr };
+    LDelegateHandle OnForeignPluginLoadedHandle{ nullptr };
 };
 
 template<typename TPredicate> requires std::is_invocable_r_v<void, TPredicate>
@@ -254,29 +239,25 @@ FORCEINLINE void LSubsystemCollection::ForEachSubsystem(TPredicate&& Predicate) 
 template<typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
 FORCEINLINE void LSubsystemCollection::ForEachMutableSubsystem(TPredicate&& Predicate)
 {
-    check( this->Outer )
-    check( TSubsystem::StaticClass() == this->Class )
-
+    check(this->Outer)
+    check(&TSubsystem::StaticClass() == *this->Class)
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
-        checkSlow( Subsystem )
-        std::invoke(std::forward<TPredicate>(Predicate), StaticCast<TSubsystem>(Subsystem));
-        continue;
+        std::invoke(std::forward<TPredicate>(Predicate), StaticCastChecked<TSubsystem>(Subsystem));
     }
-
     return;
 }
 
 template<typename TSubsystem, algo::void_predicate<TSubsystem> TPredicate, bool bAllowMissCast> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
 FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(TPredicate&& Predicate) const
 {
-    check( this->Outer )
-    check( TSubsystem::StaticClass()->DerivesFrom(this->Class) )
+    check(this->Outer)
+    check(TSubsystem::StaticClass().DerivesFrom(this->Class))
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
-        checkSlow( Subsystem )
-        if (TSubsystem* CastedSubsystem { DynamicCast<TSubsystem>(Subsystem) })
+        check(Subsystem)
+        if (TSubsystem* CastedSubsystem{DynamicCast<TSubsystem>(Subsystem)})
         {
             std::invoke(std::forward<TPredicate>(Predicate), *CastedSubsystem);
             continue;
@@ -287,14 +268,10 @@ FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(TPredicate&& Pred
             continue;
         }
 
-        panicMsgf
-        (
-            "Failed to dynamically cast subsystem [{}] to [{}].",
-            Subsystem->GetNameAsString(),
-            TSubsystem::StaticClass()->GetFullyQualifiedName()
-        )
-
-        continue;
+        panicMsgf("Failed to dynamically cast subsystem [{}] to [{}]."
+            , Subsystem->GetNameAsString()
+            , TSubsystem::StaticClass().GetFullyQualifiedName()
+            )
     }
 
     return;
@@ -303,13 +280,13 @@ FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(TPredicate&& Pred
 template<typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate, bool bAllowMissCast> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
 FORCEINLINE void LSubsystemCollection::ForEachMutableSubtypeSubsystem(TPredicate&& Predicate)
 {
-    check( this->Outer )
-    check( TSubsystem::StaticClass()->DerivesFrom(this->Class) )
+    check(this->Outer)
+    check(TSubsystem::StaticClass().DerivesFrom(this->Class))
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
-        checkSlow( Subsystem )
-        if (TSubsystem* CastedSubsystem { DynamicCast<TSubsystem>(Subsystem) })
+        check(Subsystem)
+        if (TSubsystem* CastedSubsystem{DynamicCast<TSubsystem>(Subsystem)})
         {
             std::invoke(std::forward<TPredicate>(Predicate), CastedSubsystem);
             continue;
@@ -320,14 +297,10 @@ FORCEINLINE void LSubsystemCollection::ForEachMutableSubtypeSubsystem(TPredicate
             continue;
         }
 
-        panicMsgf
-        (
-            "Failed to dynamically cast subsystem [{}] to [{}].",
-            Subsystem->GetNameAsString(),
-            TSubsystem::StaticClass()->GetFullyQualifiedName()
+        panicMsgf("Failed to dynamically cast subsystem [{}] to [{}]."
+            , Subsystem->GetNameAsString()
+            , TSubsystem::StaticClass()->GetFullyQualifiedName()
         )
-
-        continue;
     }
 
     return;

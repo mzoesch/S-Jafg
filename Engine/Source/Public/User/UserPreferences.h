@@ -17,7 +17,7 @@ class JUserPreferences final : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JUserPreferences)
+    DEFAULT_OBJECT_CONSTRUCTORS(JUserPreferences)
 
 public:
 
@@ -28,87 +28,82 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LPreferencef32 MasterVolume{ 1.0f, true };
+    TPreference<f32> MasterVolume{ 1, 0, 1 };
     CLASS_FIELD(Config)
-    LPreferencef32 MusicVolume{ 1.0f, true };
+    TPreference<f32> MusicVolume{ 1, 0, 1 };
     CLASS_FIELD(Config)
-    LPreferencef32 MiscVolume{ 1.0f, true };
+    TPreference<f32> MiscVolume{ 1, 0, 1 };
     CLASS_FIELD(Config)
-    LPreferencef32 VoiceVolume{ 1.0f, true };
+    TPreference<f32> VoiceVolume{ 1, 0, 1 };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rendering pipeline
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LString PreferredPhysicalDevice{ "" };
+    LString PreferredPhysicalDevice;
 
     CLASS_FIELD(Config)
-    LPreferenceBool bVSyncEnabled{ true };
+    TPreference<bool> bVSyncEnabled{ true };
     //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
     CLASS_FIELD(Config)
-    LPreferencei32 MaxFps{ UnlimitedFps };
+    TPreference<i32> MaxFps{ UnlimitedFps };
 
     CLASS_FIELD(Config)
-    TPreference<EPolygonMode::Type> PolygonMode{ EPolygonMode::Fill };
-
-    CLASS_FIELD(Config)
-    i32 ChunkRenderDistance{ 6 };
-    CLASS_FIELD(Config)
-    i32 ChunkRenderHeight{ 6 };
+    TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    TPreference<EApplicationScale::Type> ApplicationScaleMode{ EApplicationScale::Double };
+    TPreference<EApplicationScale> ApplicationScaleMode{ EApplicationScale::Double };
 
     CLASS_FIELD(Config)
-    LPreferenceBool bInvertVerticalScrollWheel{ true };
+    TPreference<bool> bInvertVerticalScrollWheel{ true };
     CLASS_FIELD(Config)
-    LPreferenceBool bInvertHorizontalScrollWheel{ true };
+    TPreference<bool> bInvertHorizontalScrollWheel{ true };
     CLASS_FIELD(Config)
-    LPreferencef32 MouseWheelScrollSpeed{ 35.0f };
+    TPreference<f32> MouseWheelScrollSpeed{ 35.0f };
 
     CLASS_FIELD(Config)
-    LPreferencef32 HeaderFontSizeSingle    { 0.40f };
+    TPreference<f32> HeaderFontSizeSingle    { 0.40f };
     CLASS_FIELD(Config)
-    LPreferencef32 SubHeaderFontSizeSingle { 0.25f };
+    TPreference<f32> SubHeaderFontSizeSingle { 0.25f };
     CLASS_FIELD(Config)
-    LPreferencef32 BodyFontSizeSingle      { 0.20f };
+    TPreference<f32> BodyFontSizeSingle      { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 CompactFontSizeSingle   { 0.20f };
+    TPreference<f32> CompactFontSizeSingle   { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 SmallFontSizeSingle     { 0.20f };
+    TPreference<f32> SmallFontSizeSingle     { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 TinyFontSizeSingle      { 0.18f };
+    TPreference<f32> TinyFontSizeSingle      { 0.18f };
 
     CLASS_FIELD(Config)
-    LPreferencef32 HeaderFontSizeDouble    { 0.70f };
+    TPreference<f32> HeaderFontSizeDouble    { 0.70f };
     CLASS_FIELD(Config)
-    LPreferencef32 SubHeaderFontSizeDouble { 0.40f };
+    TPreference<f32> SubHeaderFontSizeDouble { 0.40f };
     CLASS_FIELD(Config)
-    LPreferencef32 BodyFontSizeDouble      { 0.30f };
+    TPreference<f32> BodyFontSizeDouble      { 0.30f };
     CLASS_FIELD(Config)
-    LPreferencef32 CompactFontSizeDouble   { 0.25f };
+    TPreference<f32> CompactFontSizeDouble   { 0.25f };
     CLASS_FIELD(Config)
-    LPreferencef32 SmallFontSizeDouble     { 0.20f };
+    TPreference<f32> SmallFontSizeDouble     { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 TinyFontSizeDouble      { 0.18f };
+    TPreference<f32> TinyFontSizeDouble      { 0.18f };
 
     CLASS_FIELD(Config)
-    LPreferencef32 HeaderFontSizeTriple    { 1.40f };
+    TPreference<f32> HeaderFontSizeTriple    { 1.40f };
     CLASS_FIELD(Config)
-    LPreferencef32 SubHeaderFontSizeTriple { 0.80f };
+    TPreference<f32> SubHeaderFontSizeTriple { 0.80f };
     CLASS_FIELD(Config)
-    LPreferencef32 BodyFontSizeTriple      { 0.60f };
+    TPreference<f32> BodyFontSizeTriple      { 0.60f };
     CLASS_FIELD(Config)
-    LPreferencef32 CompactFontSizeTriple   { 0.50f };
+    TPreference<f32> CompactFontSizeTriple   { 0.50f };
     CLASS_FIELD(Config)
-    LPreferencef32 SmallFontSizeTriple     { 0.40f };
+    TPreference<f32> SmallFontSizeTriple     { 0.40f };
     CLASS_FIELD(Config)
-    LPreferencef32 TinyFontSizeTriple      { 0.36f };
+    TPreference<f32> TinyFontSizeTriple      { 0.36f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins
@@ -139,18 +134,3 @@ public:
 };
 
 } /* ~Namespace Jafg */
-
-template <>
-struct std::formatter<::Jafg::EPolygonMode::Type> : std::formatter<u8>
-{
-    static_assert(std::is_enum_v<::Jafg::EPolygonMode::Type>);
-    static_assert(std::is_same_v<u8, std::underlying_type_t<::Jafg::EPolygonMode::Type>>);
-    FORCEINLINE auto format
-    (
-        const ::Jafg::EPolygonMode::Type& InMode,
-        ::std::format_context&            InContext
-    ) const -> ::std::format_context::iterator
-    {
-        return ::std::formatter<u8>::format(static_cast<u8>(InMode), InContext);
-    }
-};

@@ -19,7 +19,7 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
         {
             this->RecentVisibilities.emplace_back(CurrentNode, CurrentNode->GetVisibility());
         }
-        CurrentNode->SetVisibility(EWidgetVisibility::Collapsed);
+        CurrentNode->SetVisibility(ENodeVisibility::Collapsed);
     }
 
     this->ActiveIndex = Index;
@@ -45,7 +45,7 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
         }
         else
         {
-            NewNode->SetVisibility(EWidgetVisibility::Visible);
+            NewNode->SetVisibility(ENodeVisibility::Visible);
         }
     }
 
@@ -79,7 +79,7 @@ Jafg::LWidgetSlot* Jafg::WSwitcher::AddChild(WNode* InChild)
 
     check( algo::find_pointer(this->RecentVisibilities, InChild, &LRecentVisibility::Target) == nullptr )
     this->RecentVisibilities.emplace_back(InChild, InChild->GetVisibility());
-    InChild->SetVisibility(EWidgetVisibility::Collapsed);
+    InChild->SetVisibility(ENodeVisibility::Collapsed);
 
     return Ret;
 }
@@ -90,7 +90,7 @@ Jafg::LWidgetSlot* Jafg::WSwitcher::AddChildAt(const i32 InIndex, WNode* InChild
 
     check( algo::find_pointer(this->RecentVisibilities, InChild, &LRecentVisibility::Target) == nullptr )
     this->RecentVisibilities.emplace_back(InChild, InChild->GetVisibility());
-    InChild->SetVisibility(EWidgetVisibility::Collapsed);
+    InChild->SetVisibility(ENodeVisibility::Collapsed);
 
     return Ret;
 }

@@ -2,24 +2,10 @@
 
 #pragma once
 
-#include "Widgets/RegionForward.h"
-#include "Widgets/RegionFactory.h"
-#include "Widgets/VRegionFactory.h"
-#include "Widgets/HRegionFactory.h"
+#include "Minimal.afx"
 
 namespace Jafg
 {
-
-class WTextBox;
-class WButton;
-class WTextButton;
-class WVButton;
-class WHButton;
-struct LTextBoxBrush;
-
-typedef TFunction<void(WButton* Self, LKeyEvent const& InKeyEvent)>  LOnButtonKeyEvent;
-typedef TFunction<void(WVButton* Self, LKeyEvent const& InKeyEvent)> LOnVButtonKeyEvent;
-typedef TFunction<void(WHButton* Self, LKeyEvent const& InKeyEvent)> LOnHButtonKeyEvent;
 
 struct LButtonStyle
 {
@@ -29,6 +15,7 @@ struct LButtonStyle
     LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = Colors::NotSoDarkGray, .OutlineTint = Colors::Black };
 };
 
+//# Inherit from this to access common button logic.
 class LButtonBase
 {
 public:
@@ -55,11 +42,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalType(const ERegionBrush::Type InType) noexcept { this->Style.NormalBrush.Type = InType; }
-    FORCEINLINE void SetHoverType(const ERegionBrush::Type InType) noexcept { this->Style.HoverBrush.Type = InType; }
-    FORCEINLINE void SetPressType(const ERegionBrush::Type InType) noexcept { this->Style.PressBrush.Type = InType; }
-    FORCEINLINE void SetDisabledType(const ERegionBrush::Type InType) noexcept { this->Style.DisabledBrush.Type = InType; }
-    FORCEINLINE void SetOmniType(const ERegionBrush::Type InType) noexcept
+    FORCEINLINE void SetNormalType(const ERegionBrush InType) noexcept { this->Style.NormalBrush.Type = InType; }
+    FORCEINLINE void SetHoverType(const ERegionBrush InType) noexcept { this->Style.HoverBrush.Type = InType; }
+    FORCEINLINE void SetPressType(const ERegionBrush InType) noexcept { this->Style.PressBrush.Type = InType; }
+    FORCEINLINE void SetDisabledType(const ERegionBrush InType) noexcept { this->Style.DisabledBrush.Type = InType; }
+    FORCEINLINE void SetOmniType(const ERegionBrush InType) noexcept
     {
         this->Style.NormalBrush.Type   = InType;
         this->Style.HoverBrush.Type    = InType;
@@ -125,11 +112,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImageBehavior(const EImageBehavior::Type InImageBehavior) noexcept { this->Style.NormalBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetHoverImageBehavior(const EImageBehavior::Type InImageBehavior) noexcept { this->Style.HoverBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetPressImageBehavior(const EImageBehavior::Type InImageBehavior) noexcept { this->Style.PressBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetDisabledImageBehavior(const EImageBehavior::Type InImageBehavior) noexcept { this->Style.DisabledBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetOmniImageBehavior(const EImageBehavior::Type InImageBehavior) noexcept
+    FORCEINLINE void SetNormalImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.NormalBrush.ImageBehavior = InImageBehavior; }
+    FORCEINLINE void SetHoverImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.HoverBrush.ImageBehavior = InImageBehavior; }
+    FORCEINLINE void SetPressImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.PressBrush.ImageBehavior = InImageBehavior; }
+    FORCEINLINE void SetDisabledImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.DisabledBrush.ImageBehavior = InImageBehavior; }
+    FORCEINLINE void SetOmniImageBehavior(const EImageBehavior InImageBehavior) noexcept
     {
         this->Style.NormalBrush.ImageBehavior   = InImageBehavior;
         this->Style.HoverBrush.ImageBehavior    = InImageBehavior;
@@ -139,11 +126,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImageOobm(const EImageOobm::Type InImageOobm) noexcept { this->Style.NormalBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetHoverImageOobm(const EImageOobm::Type InImageOobm) noexcept { this->Style.HoverBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetPressImageOobm(const EImageOobm::Type InImageOobm) noexcept { this->Style.PressBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetDisabledImageOobm(const EImageOobm::Type InImageOobm) noexcept { this->Style.DisabledBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetOmniImageOobm(const EImageOobm::Type InImageOobm) noexcept
+    FORCEINLINE void SetNormalImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.NormalBrush.ImageOobm = InImageOobm; }
+    FORCEINLINE void SetHoverImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.HoverBrush.ImageOobm = InImageOobm; }
+    FORCEINLINE void SetPressImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.PressBrush.ImageOobm = InImageOobm; }
+    FORCEINLINE void SetDisabledImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.DisabledBrush.ImageOobm = InImageOobm; }
+    FORCEINLINE void SetOmniImageOobm(const EImageOobm InImageOobm) noexcept
     {
         this->Style.NormalBrush.ImageOobm   = InImageOobm;
         this->Style.HoverBrush.ImageOobm    = InImageOobm;
@@ -210,7 +197,7 @@ public:
     }
 
     FORCEINLINE void SetStyle(LButtonStyle const& InStyle) noexcept { this->Style = InStyle; }
-    FORCEINLINE const LButtonStyle& GetStyle() const noexcept { return this->Style; }
+    FORCEINLINE LButtonStyle const& GetStyle() const noexcept { return this->Style; }
     FORCEINLINE LButtonStyle& GetMutableStyle() noexcept { return this->Style; }
 
     FORCEINLINE LRegionBrush const& GetNormalBrush() const noexcept { return this->Style.NormalBrush; }
@@ -231,109 +218,367 @@ public:
 
 protected:
 
-    bool bLetUiReactToEvents : 1 { true };
-    bool bEnabled : 1 { true };
+    bool bLetUiReactToEvents:1{ true };
+    bool bEnabled:1{ true };
 
     LButtonStyle Style;
 };
 
-template <typename TNode, typename TSuper>
-class TWidgetFactoryButtonBase : public TSuper
+template<typename TClass>
+struct TFactoryButtonBase : NODE_FACTORY_PARENT(TClass)
 {
-public:
+    NODE_FACTORY_BODY(TClass)
 
-    static_assert(std::is_same_v<TNode, typename TSuper::TNodeTy>);
+    typedef TFunction<void(TClass* Self, LKeyEvent const& InKeyEvent)> _LOnButtonKeyEvent;
 
-    using Super         = TSuper;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
+    decltype(auto) OnPrimaryPress(this auto&& Self, _LOnButtonKeyEvent&& InDelegate)
+    {
+        NODE_FACTORY_SELF().OnPrimaryPressDelegate = std::move(InDelegate);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OnPrimaryRelease(this auto&& Self, _LOnButtonKeyEvent&& InDelegate)
+    {
+        NODE_FACTORY_SELF().OnPrimaryReleaseDelegate = std::move(InDelegate);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OnSecondaryPress(this auto&& Self, _LOnButtonKeyEvent&& InDelegate)
+    {
+        NODE_FACTORY_SELF().OnSecondaryPressDelegate = std::move(InDelegate);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OnSecondaryRelease(this auto&& Self, _LOnButtonKeyEvent&& InDelegate)
+    {
+        NODE_FACTORY_SELF().OnSecondaryReleaseDelegate = std::move(InDelegate);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& OnPrimaryPress(LOnButtonKeyEvent&& InDelegate) { this->This()->OnPrimaryPressDelegate = std::move(InDelegate); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnPrimaryRelease(LOnButtonKeyEvent&& InDelegate) { this->This()->OnPrimaryReleaseDelegate = std::move(InDelegate); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnSecondaryPress(LOnButtonKeyEvent&& InDelegate) { this->This()->OnSecondaryPressDelegate = std::move(InDelegate); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnSecondaryRelease(LOnButtonKeyEvent&& InDelegate) { this->This()->OnSecondaryReleaseDelegate = std::move(InDelegate); return this->Self(); }
+    decltype(auto) NormalBrush(this auto&& Self, const LRegionBrush& InBrush)
+    {
+        NODE_FACTORY_SELF().SetNormalBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverBrush(this auto&& Self, const LRegionBrush& InBrush)
+    {
+        NODE_FACTORY_SELF().SetHoverBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressBrush(this auto&& Self, const LRegionBrush& InBrush)
+    {
+        NODE_FACTORY_SELF().SetPressBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledBrush(this auto&& Self, const LRegionBrush& InBrush)
+    {
+        NODE_FACTORY_SELF().SetDisabledBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniBrush(this auto&& Self, const LRegionBrush& InBrush)
+    {
+        NODE_FACTORY_SELF().SetOmniBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalBrush(const LRegionBrush& InBrush) { this->This()->SetNormalBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverBrush(const LRegionBrush& InBrush) { this->This()->SetHoverBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressBrush(const LRegionBrush& InBrush) { this->This()->SetPressBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledBrush(const LRegionBrush& InBrush) { this->This()->SetDisabledBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniBrush(const LRegionBrush& InBrush) { this->This()->SetOmniBrush(InBrush); return this->Self(); }
+    decltype(auto) NormalType(this auto&& Self, const ERegionBrush InType)
+    {
+        NODE_FACTORY_SELF().SetNormalType(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverType(this auto&& Self, const ERegionBrush InType)
+    {
+        NODE_FACTORY_SELF().SetHoverType(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressType(this auto&& Self, const ERegionBrush InType)
+    {
+        NODE_FACTORY_SELF().SetPressType(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledType(this auto&& Self, const ERegionBrush InType)
+    {
+        NODE_FACTORY_SELF().SetDisabledType(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniType(this auto&& Self, const ERegionBrush InType)
+    {
+        NODE_FACTORY_SELF().SetOmniType(InType);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalType(const ERegionBrush::Type InType) { this->This()->SetNormalType(InType); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverType(const ERegionBrush::Type InType) { this->This()->SetHoverType(InType); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressType(const ERegionBrush::Type InType) { this->This()->SetPressType(InType); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledType(const ERegionBrush::Type InType) { this->This()->SetDisabledType(InType); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniType(const ERegionBrush::Type InType) { this->This()->SetOmniType(InType); return this->Self(); }
+    decltype(auto) NormalTint(this auto&& Self, const LColor& InTint)
+    {
+        NODE_FACTORY_SELF().SetNormalTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverTint(this auto&& Self, const LColor& InTint)
+    {
+        NODE_FACTORY_SELF().SetHoverTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressTint(this auto&& Self, const LColor& InTint)
+    {
+        NODE_FACTORY_SELF().SetPressTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledTint(this auto&& Self, const LColor& InTint)
+    {
+        NODE_FACTORY_SELF().SetDisabledTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniTint(this auto&& Self, const LColor& InTint)
+    {
+        NODE_FACTORY_SELF().SetOmniTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalTint(const LColor& InTint) { this->This()->SetNormalTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverTint(const LColor& InTint) { this->This()->SetHoverTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressTint(const LColor& InTint) { this->This()->SetPressTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledTint(const LColor& InTint) { this->This()->SetDisabledTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniTint(const LColor& InTint) { this->This()->SetOmniTint(InTint); return this->Self(); }
+    decltype(auto) NormalImage(this auto&& Self, const LImage& InImage)
+    {
+        NODE_FACTORY_SELF().SetNormalImage(InImage);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverImage(this auto&& Self, const LImage& InImage)
+    {
+        NODE_FACTORY_SELF().SetHoverImage(InImage);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressImage(this auto&& Self, const LImage& InImage)
+    {
+        NODE_FACTORY_SELF().SetPressImage(InImage);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledImage(this auto&& Self, const LImage& InImage)
+    {
+        NODE_FACTORY_SELF().SetDisabledImage(InImage);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniImage(this auto&& Self, const LImage& InImage)
+    {
+        NODE_FACTORY_SELF().SetOmniImage(InImage);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalImage(const LImage& InImage) { this->This()->SetNormalImage(InImage); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverImage(const LImage& InImage) { this->This()->SetHoverImage(InImage); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressImage(const LImage& InImage) { this->This()->SetPressImage(InImage); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledImage(const LImage& InImage) { this->This()->SetDisabledImage(InImage); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniImage(const LImage& InImage) { this->This()->SetOmniImage(InImage); return this->Self(); }
+    decltype(auto) NormalImageTint(this auto&& Self, const LColor& InImageTint)
+    {
+        NODE_FACTORY_SELF().SetNormalImageTint(InImageTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverImageTint(this auto&& Self, const LColor& InImageTint)
+    {
+        NODE_FACTORY_SELF().SetHoverImageTint(InImageTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressImageTint(this auto&& Self, const LColor& InImageTint)
+    {
+        NODE_FACTORY_SELF().SetPressImageTint(InImageTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledImageTint(this auto&& Self, const LColor& InImageTint)
+    {
+        NODE_FACTORY_SELF().SetDisabledImageTint(InImageTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniImageTint(this auto&& Self, const LColor& InImageTint)
+    {
+        NODE_FACTORY_SELF().SetOmniImageTint(InImageTint);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalImageTint(const LColor& InImageTint) { this->This()->SetNormalImageTint(InImageTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverImageTint(const LColor& InImageTint) { this->This()->SetHoverImageTint(InImageTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressImageTint(const LColor& InImageTint) { this->This()->SetPressImageTint(InImageTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledImageTint(const LColor& InImageTint) { this->This()->SetDisabledImageTint(InImageTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniImageTint(const LColor& InImageTint) { this->This()->SetOmniImageTint(InImageTint); return this->Self(); }
+    decltype(auto) NormalImageScale(this auto&& Self, const f32 InImageScale)
+    {
+        NODE_FACTORY_SELF().SetNormalImageScale(InImageScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverImageScale(this auto&& Self, const f32 InImageScale)
+    {
+        NODE_FACTORY_SELF().SetHoverImageScale(InImageScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressImageScale(this auto&& Self, const f32 InImageScale)
+    {
+        NODE_FACTORY_SELF().SetPressImageScale(InImageScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledImageScale(this auto&& Self, const f32 InImageScale)
+    {
+        NODE_FACTORY_SELF().SetDisabledImageScale(InImageScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniImageScale(this auto&& Self, const f32 InImageScale)
+    {
+        NODE_FACTORY_SELF().SetOmniImageScale(InImageScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) NormalImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    {
+        NODE_FACTORY_SELF().SetNormalImageBehavior(InImageBehavior);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    {
+        NODE_FACTORY_SELF().SetHoverImageBehavior(InImageBehavior);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    {
+        NODE_FACTORY_SELF().SetPressImageBehavior(InImageBehavior);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    {
+        NODE_FACTORY_SELF().SetDisabledImageBehavior(InImageBehavior);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    {
+        NODE_FACTORY_SELF().SetOmniImageBehavior(InImageBehavior);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalImageScale(const f32 InImageScale) { this->This()->SetNormalImageScale(InImageScale); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverImageScale(const f32 InImageScale) { this->This()->SetHoverImageScale(InImageScale); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressImageScale(const f32 InImageScale) { this->This()->SetPressImageScale(InImageScale); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledImageScale(const f32 InImageScale) { this->This()->SetDisabledImageScale(InImageScale); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniImageScale(const f32 InImageScale) { this->This()->SetOmniImageScale(InImageScale); return this->Self(); }
+    decltype(auto) NormalImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    {
+        NODE_FACTORY_SELF().SetNormalImageOobm(InImageOobm);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    {
+        NODE_FACTORY_SELF().SetHoverImageOobm(InImageOobm);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    {
+        NODE_FACTORY_SELF().SetPressImageOobm(InImageOobm);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    {
+        NODE_FACTORY_SELF().SetDisabledImageOobm(InImageOobm);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    {
+        NODE_FACTORY_SELF().SetOmniImageOobm(InImageOobm);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetNormalImageBehavior(InImageBehavior); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetHoverImageBehavior(InImageBehavior); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetPressImageBehavior(InImageBehavior); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetDisabledImageBehavior(InImageBehavior); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetOmniImageBehavior(InImageBehavior); return this->Self(); }
+    decltype(auto) NormalImagePadding(this auto&& Self, const f32 InImagePadding)
+    {
+        NODE_FACTORY_SELF().SetNormalImagePadding(InImagePadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverImagePadding(this auto&& Self, const f32 InImagePadding)
+    {
+        NODE_FACTORY_SELF().SetHoverImagePadding(InImagePadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressImagePadding(this auto&& Self, const f32 InImagePadding)
+    {
+        NODE_FACTORY_SELF().SetPressImagePadding(InImagePadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledImagePadding(this auto&& Self, const f32 InImagePadding)
+    {
+        NODE_FACTORY_SELF().SetDisabledImagePadding(InImagePadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniImagePadding(this auto&& Self, const f32 InImagePadding)
+    {
+        NODE_FACTORY_SELF().SetOmniImagePadding(InImagePadding);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetNormalImageOobm(InImageOobm); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetHoverImageOobm(InImageOobm); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetPressImageOobm(InImageOobm); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetDisabledImageOobm(InImageOobm); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetOmniImageOobm(InImageOobm); return this->Self(); }
+    decltype(auto) NormalRadii(this auto&& Self, const LVec4F& InRadii)
+    {
+        NODE_FACTORY_SELF().SetNormalRadii(InRadii);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverRadii(this auto&& Self, const LVec4F& InRadii)
+    {
+        NODE_FACTORY_SELF().SetHoverRadii(InRadii);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressRadii(this auto&& Self, const LVec4F& InRadii)
+    {
+        NODE_FACTORY_SELF().SetPressRadii(InRadii);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledRadii(this auto&& Self, const LVec4F& InRadii)
+    {
+        NODE_FACTORY_SELF().SetDisabledRadii(InRadii);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalImagePadding(const f32 InImagePadding) { this->This()->SetNormalImagePadding(InImagePadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverImagePadding(const f32 InImagePadding) { this->This()->SetHoverImagePadding(InImagePadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressImagePadding(const f32 InImagePadding) { this->This()->SetPressImagePadding(InImagePadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledImagePadding(const f32 InImagePadding) { this->This()->SetDisabledImagePadding(InImagePadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniImagePadding(const f32 InImagePadding) { this->This()->SetOmniImagePadding(InImagePadding); return this->Self(); }
+    decltype(auto) OmniRadii(this auto&& Self, const LVec4F& InRadii)
+    {
+        NODE_FACTORY_SELF().SetOmniRadii(InRadii);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalRadii(const LVec4F& InRadii) { this->This()->SetNormalRadii(InRadii); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverRadii(const LVec4F& InRadii) { this->This()->SetHoverRadii(InRadii); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressRadii(const LVec4F& InRadii) { this->This()->SetPressRadii(InRadii); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledRadii(const LVec4F& InRadii) { this->This()->SetDisabledRadii(InRadii); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniRadii(const LVec4F& InRadii) { this->This()->SetOmniRadii(InRadii); return this->Self(); }
+    decltype(auto) NormalOutlineThickness(this auto&& Self, const f32 InOutlineThickness)
+    {
+        NODE_FACTORY_SELF().SetNormalOutlineThickness(InOutlineThickness);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverOutlineThickness(this auto&& Self, const f32 InOutlineThickness)
+    {
+        NODE_FACTORY_SELF().SetHoverOutlineThickness(InOutlineThickness);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressOutlineThickness(this auto&& Self, const f32 InOutlineThickness)
+    {
+        NODE_FACTORY_SELF().SetPressOutlineThickness(InOutlineThickness);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledOutlineThickness(this auto&& Self, const f32 InOutlineThickness)
+    {
+        NODE_FACTORY_SELF().SetDisabledOutlineThickness(InOutlineThickness);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniOutlineThickness(this auto&& Self, const f32 InOutlineThickness)
+    {
+        NODE_FACTORY_SELF().SetOmniOutlineThickness(InOutlineThickness);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalOutlineThickness(const f32 InOutlineThickness) { this->This()->SetNormalOutlineThickness(InOutlineThickness); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverOutlineThickness(const f32 InOutlineThickness) { this->This()->SetHoverOutlineThickness(InOutlineThickness); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressOutlineThickness(const f32 InOutlineThickness) { this->This()->SetPressOutlineThickness(InOutlineThickness); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledOutlineThickness(const f32 InOutlineThickness) { this->This()->SetDisabledOutlineThickness(InOutlineThickness); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniOutlineThickness(const f32 InOutlineThickness) { this->This()->SetOmniOutlineThickness(InOutlineThickness); return this->Self(); }
+    decltype(auto) NormalOutlineTint(this auto&& Self, const LColor& InOutlineTint)
+    {
+        NODE_FACTORY_SELF().SetNormalOutlineTint(InOutlineTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverOutlineTint(this auto&& Self, const LColor& InOutlineTint)
+    {
+        NODE_FACTORY_SELF().SetHoverOutlineTint(InOutlineTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressOutlineTint(this auto&& Self, const LColor& InOutlineTint)
+    {
+        NODE_FACTORY_SELF().SetPressOutlineTint(InOutlineTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledOutlineTint(this auto&& Self, const LColor& InOutlineTint)
+    {
+        NODE_FACTORY_SELF().SetDisabledOutlineTint(InOutlineTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniOutlineTint(this auto&& Self, const LColor& InOutlineTint)
+    {
+        NODE_FACTORY_SELF().SetOmniOutlineTint(InOutlineTint);
+        return NODE_FACTORY_RESULT();
+    }
 
-    FORCEINLINE TFactoryRetTy& NormalOutlineTint(const LColor& InOutlineTint) { this->This()->SetNormalOutlineTint(InOutlineTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverOutlineTint(const LColor& InOutlineTint) { this->This()->SetHoverOutlineTint(InOutlineTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressOutlineTint(const LColor& InOutlineTint) { this->This()->SetPressOutlineTint(InOutlineTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisabledOutlineTint(const LColor& InOutlineTint) { this->This()->SetDisabledOutlineTint(InOutlineTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OmniOutlineTint(const LColor& InOutlineTint) { this->This()->SetOmniOutlineTint(InOutlineTint); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& Style(const LButtonStyle& InStyle) { this->This()->SetStyle(InStyle); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& UiResponsive(const bool bTrue) { this->This()->SetLetUiReactToEvents(bTrue); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Enabled(const bool bInEnabled) { this->This()->SetEnabled(bInEnabled); return this->Self(); }
+    decltype(auto) Style(this auto&& Self, const LButtonStyle& InStyle)
+    {
+        NODE_FACTORY_SELF().SetStyle(InStyle);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) UiResponsive(this auto&& Self, const bool bTrue)
+    {
+        NODE_FACTORY_SELF().SetLetUiReactToEvents(bTrue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Enabled(this auto&& Self, const bool bInEnabled)
+    {
+        NODE_FACTORY_SELF().SetEnabled(bInEnabled);
+        return NODE_FACTORY_RESULT();
+    }
 };
-
-template <typename TNode>
-using TWidgetFactoryButton      = TWidgetFactoryButtonBase<TNode, TWidgetFactoryRegion<TNode>>;
-template <typename TNode>
-using TWidgetFactoryVButton     = TWidgetFactoryButtonBase<TNode, TWidgetFactoryVRegion<TNode>>;
-template <typename TNode>
-using TWidgetFactoryHButton     = TWidgetFactoryButtonBase<TNode, TWidgetFactoryHRegion<TNode>>;
 
 } /* ~Namespace Jafg */

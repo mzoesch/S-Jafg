@@ -7,6 +7,7 @@
 #include "Core/CoreNames.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
+#include "User/UserPreferences.h"
 #include "User/Input/UserInput.h"
 #include "Widgets/EditableTextBox.h"
 #include "Widgets/Viewport.h"
@@ -16,56 +17,35 @@
 #include "Widgets/TextBox.h"
 #include "Widgets/VRegion.h"
 
-void Jafg::WConsoleScreen::BeginLifeCDR()
+void Jafg::JConsoleScreenPreferences::BeginLife()
 {
-    Super::BeginLifeCDR();
+    Super::BeginLife();
+    check(GEngine)
 
-    if (this->MaxHistorySize < 5)
-    {
-        LOG_ERROR(LogWidgets, "MaxHistorySize is set to [{}] which is less than the minimum of 5. Setting it to 5.", this->MaxHistorySize.get())
-        this->MaxHistorySize = 5;
-    }
-
-    if (this->ConsoleWidth < 100)
-    {
-        LOG_ERROR(LogWidgets, "ConsoleWidth is set to [{}] which is less than the minimum of 100. Setting it to 100.", this->ConsoleWidth.get())
-        this->ConsoleWidth = 100;
-    }
-
-    if (this->MaxPreviewLines < 2)
-    {
-        LOG_ERROR(LogWidgets, "MaxPreviewLines is set to [{}] which is less than the minimum of 2. Setting it to 2.", this->MaxPreviewLines.get())
-        this->MaxPreviewLines = 2;
-    }
-
-    if (this->PreviewMessageLifetime < 0.5)
-    {
-        LOG_ERROR(LogWidgets, "PreviewMessageLifetime is set to [{}] which is less than the minimum of 0.5. Setting it to 0.5.", this->PreviewMessageLifetime.get())
-        this->PreviewMessageLifetime = 0.5;
-    }
-
-    if (GEngine)
-    {
-        this->CommandHandle_Clear = GEngine->GetCommandLineInterface().RegisterCommand(
+    this->CommandHandle_Clear = GEngine->GetCommandLineInterface().RegisterCommand({
+        "Clear", "Clears the console messages.",
+        LCommandParams{}
+        .Exec([](LCommandExecutionInfo const& Info, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)->void
         {
-            "Clear", "Clears the console messages.",
-            LCommandParams{}
-            .Exec(LOnCommandInvocation::Create(this, &WConsoleScreen::ClearMessagesDefault))
-        });
-    }
-    else
-    {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [this](void) -> void
-        {
-            this->CommandHandle_Clear = GEngine->GetCommandLineInterface().RegisterCommand(
+            if (Info.Invoker && Info.Invoker->IsA<WConsoleScreen>())
             {
-                "Clear", "Clears the console messages.",
-                LCommandParams{}
-                .Exec(LOnCommandInvocation::Create(this, &WConsoleScreen::ClearMessagesDefault))
-            });
+                Info.Invoker->AsStatic<WConsoleScreen>()->ClearMessages();
+                OutResponse.Rc = ECommandReturnCode::SuccessNoResponse;
+                return;
+            }
+            if (Info.Viewport)
+            {
+                if (auto* Widget{Info.Viewport->GetTopLevelWidgetByClass<WConsoleScreen>()})
+                {
+                    Widget->ClearMessages();
+                    OutResponse.Rc = ECommandReturnCode::SuccessNoResponse;
+                    return;
+                }
+            }
+            OutResponse.Rc = ECommandReturnCode::Failure;
+            OutResponse.StdErr = "Could not find console target to clear.";
             return;
-        });
-    }
+        })});
 
     return;
 }
@@ -74,13 +54,13 @@ void Jafg::WConsoleScreen::Construct()
 {
     Super::Construct();
 
-    this->SetShouldTick(true);
+    auto& Prefs{GetSingleton<JConsoleScreenPreferences>()};
 
-    MakeRootNode(WRegion)
+    BeginStyling(*this).Root<WRegion>()
         .Padding(1_spt)
         .Anchor(EAnchor::Fill)
     [
-        NewNode(WEditableTextBox).SaveTo(&this->EditableTextBlock)
+        NewStaticNode(WEditableTextBox).SaveTo(&this->EditableTextBlock)
             .Anchor(EAnchor::VBottom | EAnchor::HFill)
             .TextColor(Colors::White)
             .TextScale(ETextScale::Body)
@@ -90,67 +70,67 @@ void Jafg::WConsoleScreen::Construct()
             .OnCommit(LEditableTextBoxCommitDelegate::Create(this, &WConsoleScreen::OnTextCommit))
             .OnChanged(LEditableTextBoxChangedDelegate::Create(this, &WConsoleScreen::OnTextChanged))
         +
-        NewNode(WRegion)
+        NewStaticNode(WRegion)
             .Anchor(EAnchor::Fill)
             .Padding({0.0f, 0.0f, 0.0f, 50.0f})
         [
-            NewNode(WScrollRegion).SaveTo(&this->ConsoleHistoryContainer)
+            NewStaticNode(WScrollRegion).SaveTo(&this->ConsoleHistoryContainer)
                 .Anchor(EAnchor::VFill | (this->AreConsoleComponentsStretched() ? EAnchor::HFill : EAnchor::Identity))
                 .MinDesiredSize(this->AreConsoleComponentsStretched() ?
                       LWidgetSize2{}
-                    : LWidgetSize2{EWidgetSize::StaticPoints, static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+                    : LWidgetSize2{EWidgetSize::StaticPoints, static_cast<f32>(*Prefs.ConsoleWidth), 0.0f})
             [
-                NewNode(WVRegion).SaveTo(&this->ConsoleHistory)
+                NewStaticNode(WVRegion).SaveTo(&this->ConsoleHistory)
                     .Anchor(EAnchor::VBottom | EAnchor::HFill)
                     .Tint({0, 0, 0, 164})
             ]
         ]
         +
-        NewNode(WOverlay)
+        NewStaticNode(WOverlay)
             .Anchor(EAnchor::Fill)
             .Padding({0.0f, 0.0f, 0.0f, 50.0f})
         [
-            NewNode(WVRegion).SaveTo(&this->ConsolePreview)
+            NewStaticNode(WVRegion).SaveTo(&this->ConsolePreview)
                 .Anchor(EAnchor::VBottom)
-                .MinDesiredSize({EWidgetSize::Points, static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+                .MinDesiredSize({EWidgetSize::Points, static_cast<f32>(*Prefs.ConsoleWidth), 0.0f})
                 .Type(ERegionBrush::Box)
                 .Tint({0, 0, 0, 164})
         ]
         +
-        NewNode(WVRegion).SaveTo(&this->IntellisenseContainer)
+        NewStaticNode(WVRegion).SaveTo(&this->IntellisenseContainer)
             .Anchor(EAnchor::VBottom)
             .Padding({0.0f, 0.0f, 0.0f, 30.0f})
             .VSpace(2_spt)
         [
-            NewNode(WVRegion).SaveTo(&this->IntellisensePredictions)
+            NewStaticNode(WVRegion).SaveTo(&this->IntellisensePredictions)
                 .Padding(3.0f)
                 .Type(ERegionBrush::OutlineBox)
-                .Tint(this->GetIntellisenseTint())
+                .Tint(*Prefs.IntellisenseTint)
                 .OutlineTint(Colors::Black)
             +
-            NewNode(WRegion).SaveTo(&this->IntellisenseHelpContainer)
+            NewStaticNode(WRegion).SaveTo(&this->IntellisenseHelpContainer)
                 .Padding(3.0f)
                 .Type(ERegionBrush::OutlineBox)
-                .Tint(this->GetIntellisenseTint())
+                .Tint(*Prefs.IntellisenseTint)
                 .OutlineTint(Colors::Black)
             [
-                NewNode(WTextBox).SaveTo(&this->IntellisenseHelp)
+                NewStaticNode(WTextBox).SaveTo(&this->IntellisenseHelp)
                     .Padding(3.0f)
                     .Brush(LTextBoxBrush::Body())
             ]
             +
-            NewNode(WVRegion).SaveTo(&this->Intellisense)
+            NewStaticNode(WVRegion).SaveTo(&this->Intellisense)
                 .Padding(3.0f)
                 .Type(ERegionBrush::OutlineBox)
-                .Tint(this->GetIntellisenseTint())
+                .Tint(*Prefs.IntellisenseTint)
                 .OutlineTint(Colors::Black)
             [
-                NewNode(WTextBox).SaveTo(&this->IntellisenseText)
+                NewStaticNode(WTextBox).SaveTo(&this->IntellisenseText)
                     .Brush(LTextBoxBrush::Body())
             ]
         ]
     ]
-    FinishWidgetStyling()
+    ;
 
     this->SetConsoleFrontendState(EConsoleScreenState::Show);
     return;
@@ -160,7 +140,7 @@ void Jafg::WConsoleScreen::Tick()
 {
     Super::Tick();
 
-    check( this->ConsolePreview )
+    check(this->ConsolePreview)
     if (this->ConsolePreview->IsPainted())
     {
         this->ShredOutdatedPreviewMessages();
@@ -169,21 +149,9 @@ void Jafg::WConsoleScreen::Tick()
     return;
 }
 
-void Jafg::WConsoleScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
-{
-    Super::OnGarbageDefault(Reason, PreviousOuter);
-
-    if (GEngine)
-    {
-        GEngine->GetCommandLineInterface().UnregisterCommand(this->CommandHandle_Clear.get_ptr());
-    }
-
-    return;
-}
-
 Jafg::LReply Jafg::WConsoleScreen::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    check( this->EditableTextBlock )
+    check(this->EditableTextBlock)
 
     if (this->EditableTextBlock->IsPainted() == false)
     {
@@ -245,28 +213,28 @@ void Jafg::WConsoleScreen::OnEscape()
     return;
 }
 
-void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Type InState)
+void Jafg::WConsoleScreen::SetConsoleFrontendState(EConsoleScreenState InState)
 {
     if (InState == EConsoleScreenState::Show)
     {
-        this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
 
-        checkSlow( this->ConsolePreview )
-        checkSlow( this->ConsoleHistory )
-        checkSlow( this->EditableTextBlock )
-        checkSlow( this->ConsoleHistoryContainer )
+        checkSlow(this->ConsolePreview)
+        checkSlow(this->ConsoleHistory)
+        checkSlow(this->EditableTextBlock)
+        checkSlow(this->ConsoleHistoryContainer)
 
-        this->ConsolePreview->SetVisibility(EWidgetVisibility::Collapsed);
-        this->EditableTextBlock->SetVisibility(EWidgetVisibility::Visible);
+        this->ConsolePreview->SetVisibility(ENodeVisibility::Collapsed);
+        this->EditableTextBlock->SetVisibility(ENodeVisibility::Visible);
         if (this->ConsoleHistory->GetChildren().empty())
         {
-            this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Collapsed);
+            this->ConsoleHistoryContainer->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
-            this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Visible);
+            this->ConsoleHistoryContainer->SetVisibility(ENodeVisibility::Visible);
         }
-        this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+        this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
 
         this->EditableTextBlock->EmptyContent();
         this->GetViewport().FocusWidgetNode(this->EditableTextBlock);
@@ -285,16 +253,16 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
 
     else if (InState == EConsoleScreenState::Preview)
     {
-        this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
 
         checkSlow( this->ConsolePreview )
         checkSlow( this->EditableTextBlock )
         checkSlow( this->ConsoleHistoryContainer )
 
-        this->ConsolePreview->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
-        this->EditableTextBlock->SetVisibility(EWidgetVisibility::Collapsed);
-        this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Collapsed);
-        this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+        this->ConsolePreview->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
+        this->EditableTextBlock->SetVisibility(ENodeVisibility::Collapsed);
+        this->ConsoleHistoryContainer->SetVisibility(ENodeVisibility::Collapsed);
+        this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
 
         // LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
         // UserInput.DeactivateContext(Name_UicInConsole);
@@ -318,7 +286,7 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
 
     else if (InState == EConsoleScreenState::Hide)
     {
-        this->SetVisibility(EWidgetVisibility::Collapsed);
+        this->SetVisibility(ENodeVisibility::Collapsed);
 
         // LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
         // UserInput.DeactivateContext(Name_UicInConsole);
@@ -335,9 +303,9 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
     return;
 }
 
-void Jafg::WConsoleScreen::OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
+void Jafg::WConsoleScreen::OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility)
 {
-    Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
+    Super::OnVisibilityChanged(OldVisibility, NewVisibility);
 
     // check
     // (
@@ -348,9 +316,9 @@ void Jafg::WConsoleScreen::OnVisibilityChanged(const EWidgetVisibility::Type InO
     return;
 }
 
-void Jafg::WConsoleScreen::AddToHistory(const LString& InText)
+void Jafg::WConsoleScreen::AddToHistory(LString const& InText)
 {
-    TArray<LString>& MutableHistory = GetMutableDefault<WConsoleScreen>()->History;
+    TArray<LString>& MutableHistory{GetMutableSingleton<JConsoleScreenPreferences>().History};
 
     if (MutableHistory.empty() == false)
     {
@@ -360,30 +328,29 @@ void Jafg::WConsoleScreen::AddToHistory(const LString& InText)
         }
     }
 
-    if (MutableHistory.size() > GetMutableDefault<WConsoleScreen>()->MaxHistorySize)
+    if (MutableHistory.size() > GetMutableSingleton<JConsoleScreenPreferences>().MaxHistorySize)
     {
         MutableHistory.erase(MutableHistory.begin());
     }
 
-    MutableHistory.push_back(InText);
+    MutableHistory.emplace_back(InText);
 
     return;
 }
 
 void Jafg::WConsoleScreen::GoHistoryBack()
 {
-    const i32 LastHistoryCursor = this->HistoryCursor;
+    auto const& History{GetSingleton<JConsoleScreenPreferences>().History};
 
-    const TArray<LString>& DefaultHistory = GetDefault<WConsoleScreen>()->History;
+    const i32 LastHistoryCursor{this->HistoryCursor};
 
-    this->HistoryCursor = maths::clamp(this->HistoryCursor + 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(DefaultHistory.size()) - 1);
-
+    this->HistoryCursor = maths::clamp(this->HistoryCursor + 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(History.size()) - 1);
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
     {
         return;
     }
 
-    if (const LString Item { *this->GetCurrentHistoryItemChecked() }; this->GetImplChecked()->GetContent() != Item)
+    if (LString const& Item{*this->GetCurrentHistoryItemChecked()}; this->GetImplChecked()->GetContent() != Item)
     {
         this->GetImplChecked()->SetContent(Item);
         this->GetImplChecked()->SetCaretCursorToEnd();
@@ -396,7 +363,7 @@ void Jafg::WConsoleScreen::GoHistoryForward()
 {
     const i32 LastHistoryCursor = this->HistoryCursor;
 
-    this->HistoryCursor = maths::clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(GetDefault<WConsoleScreen>()->History->size()) - 1);
+    this->HistoryCursor = maths::clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(GetSingleton<JConsoleScreenPreferences>().History.size()) - 1);
 
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
     {
@@ -404,7 +371,6 @@ void Jafg::WConsoleScreen::GoHistoryForward()
         {
             this->GetImpl()->SetContent("");
         }
-
         return;
     }
 
@@ -413,7 +379,7 @@ void Jafg::WConsoleScreen::GoHistoryForward()
     return;
 }
 
-void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwitchToPreview /* = true */)
+void Jafg::WConsoleScreen::AddNewMessage(LString const& InText, const bool bSwitchToPreview /* = true */)
 {
     LOG_VERBOSE(LogWidgets, "New console message: [{}].", InText)
 
@@ -423,16 +389,10 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
         return;
     }
 
-    WTextBox* Message;
-    NewNode(WTextBox).SaveTo(&Message)
-        .Content(InText)
-        .Brush(LTextBoxBrush::Body())
-    FinishWidget(Message);
-
-    checkSlow( this->ConsolePreview )
-    checkSlow( this->EditableTextBlock )
-    checkSlow( this->ConsoleHistory )
-    checkSlow( this->ConsoleHistoryContainer )
+    check(this->ConsolePreview)
+    check(this->EditableTextBlock)
+    check(this->ConsoleHistory)
+    check(this->ConsoleHistoryContainer)
 
     /* Allow drawing. */
     if (this->ConsoleHistory->GetChildren().empty())
@@ -440,23 +400,24 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
         this->ConsoleHistory->SetType(ERegionBrush::Box);
     }
 
-    this->ConsoleHistory->AddChild(Message);
+    BeginStyling(*this->ConsoleHistory).Root<WTextBox>()
+        .Content(InText)
+        .Brush(LTextBoxBrush::Body())
+        ;
 
     if (bSwitchToPreview)
     {
         this->SetConsoleFrontendState(EConsoleScreenState::Preview);
-
-        WTextBox* PreviewMessage;
-        NewNode(WTextBox).SaveTo(&PreviewMessage)
+        WNode* Message;
+        BeginStyling(*this->ConsolePreview).Root<WTextBox>().SaveTo(&Message)
             .Content(InText)
             .Brush(LTextBoxBrush::Body())
-        FinishWidget(PreviewMessage);
-        this->ConsolePreview->AddChild(PreviewMessage);
-        if (this->ConsolePreview->GetChildren().size() > GetMaxPreviewLines())
+            ;
+        if (this->ConsolePreview->GetChildren().size() > GetSingleton<JConsoleScreenPreferences>().MaxPreviewLines)
         {
             this->ConsolePreview->RemoveChildAt(0);
         }
-        this->PreviewMessages.emplace_back(Application::GetHighestNow(), static_cast<const WNode*>(PreviewMessage));
+        this->PreviewMessages.emplace_back(Application::GetHighestNow(), Message);
     }
 
     return;
@@ -464,8 +425,8 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
 
 void Jafg::WConsoleScreen::ClearMessages()
 {
-    check( this->ConsolePreview )
-    check( this->ConsoleHistory )
+    check(this->ConsolePreview)
+    check(this->ConsoleHistory)
 
     this->ConsolePreview->RemoveChildren();
     this->ConsoleHistory->RemoveChildren();
@@ -475,30 +436,20 @@ void Jafg::WConsoleScreen::ClearMessages()
     return;
 }
 
-void Jafg::WConsoleScreen::AddIntellisense(const LString& InText)
+void Jafg::WConsoleScreen::AddIntellisense(LString const& InText)
 {
-    WTextBox* PreviewMessage;
-    NewNode(WTextBox).SaveTo(&PreviewMessage)
+    BeginStyling(*this->Intellisense).At(0).Root<WTextBox>()
         .Content(InText)
         .Brush(LTextBoxBrush::Body())
-    FinishWidget(PreviewMessage);
-
-    this->Intellisense->AddChildAt(0, PreviewMessage);
-
-    return;
+        ;
 }
 
 void Jafg::WConsoleScreen::AddIntellisense(LString&& InText)
 {
-    WTextBox* PreviewMessage;
-    NewNode(WTextBox).SaveTo(&PreviewMessage)
+    BeginStyling(*this->Intellisense).At(0).Root<WTextBox>()
         .Content(std::move(InText))
         .Brush(LTextBoxBrush::Body())
-    FinishWidget(PreviewMessage);
-
-    this->Intellisense->AddChildAt(0, PreviewMessage);
-
-    return;
+        ;
 }
 
 void Jafg::WConsoleScreen::ClearIntellisense()
@@ -510,62 +461,46 @@ void Jafg::WConsoleScreen::ClearIntellisense()
 
 void Jafg::WConsoleScreen::TryHideIntellisense()
 {
-    this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
-
-    return;
+    this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
 }
 
 void Jafg::WConsoleScreen::AddIntellisensePrediction(const LString& InText)
 {
-    WTextBox* PreviewMessage;
-    NewNode(WTextBox).SaveTo(&PreviewMessage)
+    BeginStyling(*this->IntellisensePredictions).At(0).Root<WTextBox>()
         .Anchor(EAnchor::HFill)
         .Content(InText)
         .Brush(LTextBoxBrush::Body())
-        .Tint(this->GetIntellisenseHighlightTint())
-    FinishWidget(PreviewMessage);
-
-    this->IntellisensePredictions->AddChildAt(0, PreviewMessage);
-
-    return;
+        .Tint(*GetSingleton<JConsoleScreenPreferences>().IntellisenseHighlightTint)
+        ;
 }
 
 void Jafg::WConsoleScreen::AddIntellisensePrediction(LString&& InText)
 {
-    WTextBox* PreviewMessage;
-    NewNode(WTextBox).SaveTo(&PreviewMessage)
+    BeginStyling(*this->IntellisensePredictions).At(0).Root<WTextBox>()
         .Anchor(EAnchor::HFill)
         .Content(std::move(InText))
         .Brush(LTextBoxBrush::Body())
-        .Tint(this->GetIntellisenseHighlightTint())
-    FinishWidget(PreviewMessage);
-
-    this->IntellisensePredictions->AddChildAt(0, PreviewMessage);
-
-    return;
+        .Tint(*GetSingleton<JConsoleScreenPreferences>().IntellisenseHighlightTint)
+        ;
 }
 
 void Jafg::WConsoleScreen::ClearIntellisensePredictions()
 {
     this->IntellisensePredictions->RemoveChildren();
-
-    return;
 }
 
 bool Jafg::WConsoleScreen::OnAllowCommit()
 {
     if (this->IntellisenseContainer->IsPainted() && this->IntellisensePredictions->IsPainted())
     {
-        check( this->IsCurrentSelectedIntellisensePredictionValid() )
+        check(this->IsCurrentSelectedIntellisensePredictionValid())
         this->ApplyCurrentIntellisensePrediction();
-
         return false;
     }
-
     return true;
 }
 
-void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
+void Jafg::WConsoleScreen::OnTextCommit(LString const& InText, const ETextCommit InCommitType)
 {
     if (InCommitType != ETextCommit::OnEnter)
     {
@@ -582,7 +517,7 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
 
     if (CliStatics::IsCommand(InText))
     {
-        const LString Command = CliStatics::SafelyRemoveCommandPrefix(InText);
+        LString Command{CliStatics::SafelyRemoveCommandPrefix(InText)};
         if (Command.empty())
         {
             this->SetConsoleFrontendState(EConsoleScreenState::TryPreview);
@@ -590,45 +525,38 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
         }
 
         LCommandExecutionResponse Response;
-        this->GetEngine().GetCommandLineInterface().Invoke(Command, &Response);
+        this->GetEngine().GetCommandLineInterface().Invoke({.Invoker=this,.Viewport=&this->GetViewport()}, Command, &Response);
 
         if (Response.Rc > ECommandReturnCode::Failure)
         {
-            check( Response.StdOut.empty() )
-
+            check(Response.StdOut.empty())
             if (Response.StdErr.empty())
             {
                 LOG_ERROR(LogCli, "Command [{}] failed with return code [{}] but no StdEerr was provided.", Command, LexToString(Response.Rc))
                 return;
             }
-
-            /*
-             * As this is a local error code, we can just log the StdErr. We do not have to sanitize it.
-             */
+            /* As this is a local error code, we can just log the StdErr. We do not have to sanitize it. */
             this->AddNewMessage(Response.StdErr);
             LOG_ERROR(LogCli, "[{}] failed RC[{}]: {}.", Command, LexToString(Response.Rc), Response.StdErr)
         }
-
         else
         {
-            check( Response.StdErr.empty() && Response.SanitizedStdErr.empty() )
+            check(Response.StdErr.empty() && Response.SanitizedStdErr.empty())
 
             if (Response.Rc == ECommandReturnCode::Success)
             {
-                check( Response.StdOut.empty() == false )
+                check(Response.StdOut.empty() == false)
                 this->AddNewMessage(Response.StdOut);
                 LOG_VERBOSE(LogCli, " [{}] executed RC[{}]: {}.", Command, LexToString(Response.Rc), Response.StdOut)
             }
-
             else if (Response.Rc == ECommandReturnCode::SuccessNoResponse)
             {
                 LOG_VERBOSE(LogCli, "Command [{}] executed successfully.", Command)
                 this->SetConsoleFrontendState(EConsoleScreenState::TryPreview);
             }
-
             else
             {
-                check( Response.StdOut.empty() == false )
+                check(Response.StdOut.empty() == false)
                 this->AddNewMessage(Response.StdOut);
                 LOG_VERBOSE(LogCli, " [{}] executed RC[{}]: {}.", Command, LexToString(Response.Rc), Response.StdOut)
             }
@@ -650,7 +578,7 @@ void Jafg::WConsoleScreen::OnTextChanged(const LString& NewContent)
         return;
     }
 
-    this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+    this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
 
     return;
 }
@@ -659,9 +587,9 @@ void Jafg::WConsoleScreen::ShredOutdatedPreviewMessages()
 {
     for (auto It{ this->PreviewMessages.begin() }; It != this->PreviewMessages.end();)
     {
-        if (Application::GetTimeDiffFromNow(It->AddedTime) > this->GetPreviewMessageLifetime())
+        if (Application::GetTimeDiffFromNow(It->AddedTime) > GetSingleton<JConsoleScreenPreferences>().PreviewMessageLifetime)
         {
-            if (auto* const* Ref{ algo::find_pointer(this->ConsolePreview->GetChildren(), It->Node, &LWidgetSlot::Content) })
+            if (auto* const* Ref{algo::find_pointer(this->ConsolePreview->GetChildren(), It->Node, &LWidgetSlot::Content)})
             {
                 this->ConsolePreview->RemoveChild(*Ref);
             }
@@ -677,38 +605,6 @@ void Jafg::WConsoleScreen::ShredOutdatedPreviewMessages()
     if (this->ConsolePreview->GetChildren().empty())
     {
         this->SetConsoleFrontendState(EConsoleScreenState::Hide);
-    }
-
-    return;
-}
-
-void Jafg::WConsoleScreen::ClearMessagesDefault(const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
-{
-    check( this->IsDefault() )
-
-    if (GEngine == nullptr)
-    {
-        OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdErr = "Cannot clear console messages, GEngine is invalid.";
-        return;
-    }
-
-    if
-    (
-        WConsoleScreen* Instance
-        {
-            GEngine->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetViewport().GetTopLevelWidgetByClass<WConsoleScreen>()
-        };
-        Instance
-    )
-    {
-        Instance->ClearMessages();
-        OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-    }
-    else
-    {
-        OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdErr = "Cannot clear console messages, no console screen found.";
     }
 
     return;
@@ -746,11 +642,10 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
         i32 AddedCommands { 0 };
         for (const LCliCommand& Command : Cli.GetCommands())
         {
-            if (AddedCommands >= static_cast<i32>(this->GetMaxIntellisensePredictions()))
+            if (AddedCommands >= static_cast<i32>(*GetSingleton<JConsoleScreenPreferences>().MaxIntellisensePredictions))
             {
                 break;
             }
-
             ++AddedCommands;
             this->AddIntellisensePrediction(Command.GetIdentifier());
         }
@@ -758,12 +653,12 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
         if (AddedCommands == 0)
         {
             LOG_ERROR(LogWidgets, "No commands found for intellisense.")
-            this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
             this->ResetIntellisense();
             return;
         }
 
-        this->IntellisensePredictions->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+        this->IntellisensePredictions->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
         this->UpdateIntellisense();
 
         return;
@@ -780,33 +675,31 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
 
         for (const LCliCommand& CliCommand : Cli.GetCommands())
         {
-            if (Predictions.size() >= this->GetMaxIntellisensePredictions())
+            if (Predictions.size() >= GetSingleton<JConsoleScreenPreferences>().MaxIntellisensePredictions)
             {
                 break;
             }
-
             if (CliCommand.GetIdentifier().starts_with(CommandStr))
             {
                 Predictions.emplace_back(&CliCommand);
             }
-
             continue;
         }
 
         if (Predictions.empty())
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
             if (Predictions.size() == 1 && Predictions[0]->GetIdentifier() == CommandStr)
             {
-                this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+                this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
                 Command = Cli.GetCommandAsserted(CommandStr);
             }
             else
             {
-                this->IntellisensePredictions->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+                this->IntellisensePredictions->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
                 for (const LCliCommand* Prediction : Predictions)
                 {
                     this->AddIntellisensePrediction(Prediction->GetIdentifier());
@@ -819,32 +712,30 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
     }
     else if (const LCliCommand* Command { Cli.GetCommand(CommandStr) }; Command)
     {
-        check( this->IntellisensePredictions->GetChildren().empty() )
-
+        check(this->IntellisensePredictions->GetChildren().empty())
         if
         (
-            TArray<LString> Suggestions { Cli.GetCommonSuggestions(NewContent, this->GetMaxIntellisensePredictions()) };
+            TArray<LString> Suggestions{Cli.GetCommonSuggestions(NewContent, *GetSingleton<JConsoleScreenPreferences>().MaxIntellisensePredictions)};
             Suggestions.empty())
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
             for (LString& Suggestion : Suggestions)
             {
-                check( Suggestions.empty() == false )
+                check(Suggestions.empty() == false)
                 this->AddIntellisensePrediction(std::move(Suggestion));
                 continue;
             }
         }
-
         this->UpdateIntellisense(Command);
     }
     else
     {
-        check( this->IntellisensePredictions->GetChildren().empty() )
-        this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+        check(this->IntellisensePredictions->GetChildren().empty())
+        this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         this->UpdateIntellisense();
     }
 
@@ -855,15 +746,13 @@ void Jafg::WConsoleScreen::UpdateIntellisense(const LCliCommand* InTargetCommand
 {
     if (this->IntellisensePredictions->IsPainted())
     {
-        check( this->IntellisensePredictions->GetChildren().empty() == false)
-
+        check(this->IntellisensePredictions->GetChildren().empty() == false)
         if (this->IsCurrentSelectedIntellisensePredictionValid() == false)
         {
-            const WTextBox* ChildText { this->IntellisensePredictions->GetChildren().back()->Content->AsStatic<WTextBox>() };
+            WTextBox const* ChildText{this->IntellisensePredictions->GetChildren().back()->Content->AsStatic<WTextBox>()};
             this->CurrentIntellisensePrediction = ChildText->GetContent();
-            check( this->IsCurrentSelectedIntellisensePredictionValid() )
+            check(this->IsCurrentSelectedIntellisensePredictionValid())
         }
-
         this->UpdateIntellisensePredictionsColors();
     }
     else
@@ -871,7 +760,7 @@ void Jafg::WConsoleScreen::UpdateIntellisense(const LCliCommand* InTargetCommand
         this->ResetIntellisense();
     }
 
-    const LCliCommand* Command { InTargetCommand };
+    LCliCommand const* Command{InTargetCommand};
     if (Command == nullptr)
     {
         Command = this->GetCurrentHighlightedIntellisenseCommand();
@@ -879,63 +768,57 @@ void Jafg::WConsoleScreen::UpdateIntellisense(const LCliCommand* InTargetCommand
 
     if (Command)
     {
-        for (const LCommandParams& Overload : Command->GetOverloads())
+        for (LCommandParams const& Overload : Command->GetOverloads())
         {
-            if (LString Repr { Overload.GetCatRepresentation() }; Repr.empty() == false)
+            if (LString Repr{Overload.GetCatRepresentation()}; Repr.empty() == false)
             {
                 this->AddIntellisense(std::move(Repr));
             }
         }
         if (this->Intellisense->GetChildren().empty())
         {
-            this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+            this->Intellisense->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
-            this->Intellisense->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+            this->Intellisense->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
         }
         if (Command->GetHelp().empty())
         {
-            this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
             this->IntellisenseHelp->SetContent(Command->GetHelp());
-            this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+            this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
         }
     }
     else
     {
-        this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::Collapsed);
-        this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+        this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::Collapsed);
+        this->Intellisense->SetVisibility(ENodeVisibility::Collapsed);
     }
 
     if (this->Intellisense->IsPainted() || this->IntellisensePredictions->IsPainted())
     {
-        this->IntellisenseContainer->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+        this->IntellisenseContainer->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
     }
     else
     {
-        check( this->IntellisenseHelpContainer->IsPainted() == false )
-        this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+        check(this->IntellisenseHelpContainer->IsPainted() == false)
+        this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
     }
 
-    return;
-}
-
-void Jafg::WConsoleScreen::ResetIntellisense()
-{
-    algo::orphan(&this->CurrentIntellisensePrediction);
     return;
 }
 
 void Jafg::WConsoleScreen::UpdateIntellisensePredictionsColors()
 {
-    for (const LWidgetSlot* Child : this->IntellisensePredictions->GetChildren())
+    for (LWidgetSlot const* Child : this->IntellisensePredictions->GetChildren())
     {
         if
         (
-            WTextBox* TextBlock { Child->Content->AsStatic<WTextBox>() };
+            WTextBox* TextBlock{Child->Content->AsStatic<WTextBox>()};
             TextBlock->GetContent() == this->CurrentIntellisensePrediction
         )
         {
@@ -956,7 +839,7 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionUp()
 {
     if
     (
-        auto It{ algo::find(this->IntellisensePredictions->GetChildren(), this->CurrentIntellisensePrediction, [](auto const& E){ return E->Content->template AsStatic<WTextBox>()->GetContent(); }) };
+        auto It{algo::find(this->IntellisensePredictions->GetChildren(), this->CurrentIntellisensePrediction, [](auto const& E){ return E->Content->template AsStatic<WTextBox>()->GetContent(); })};
         It != this->IntellisensePredictions->GetChildren().end()
     )
     {
@@ -965,7 +848,6 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionUp()
         {
             this->CurrentIntellisensePrediction = (*It)->Content->AsStatic<WTextBox>()->GetContent();
             this->PrepareIntellisense(this->EditableTextBlock->GetContent());
-
             return true;
         }
     }
@@ -977,7 +859,7 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionDown()
 {
     if
     (
-        auto It{ algo::find(this->IntellisensePredictions->GetChildren(), this->CurrentIntellisensePrediction, [](auto const& E){ return E->Content->template AsStatic<WTextBox>()->GetContent(); }) };
+        auto It{algo::find(this->IntellisensePredictions->GetChildren(), this->CurrentIntellisensePrediction, [](auto const& E){ return E->Content->template AsStatic<WTextBox>()->GetContent(); })};
         It != this->IntellisensePredictions->GetChildren().end()
     )
     {
@@ -986,7 +868,6 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionDown()
         {
             this->CurrentIntellisensePrediction = (*It)->Content->AsStatic<WTextBox>()->GetContent();
             this->PrepareIntellisense(this->EditableTextBlock->GetContent());
-
             return true;
         }
     }
@@ -996,20 +877,19 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionDown()
 
 void Jafg::WConsoleScreen::ApplyCurrentIntellisensePrediction()
 {
-    check( this->IsCurrentSelectedIntellisensePredictionValid() )
+    check(this->IsCurrentSelectedIntellisensePredictionValid())
 
-    if (auto const Space { this->EditableTextBlock->GetContent().rfind(' ') }; Space == this->EditableTextBlock->GetContent().npos)
+    if (auto const Space{this->EditableTextBlock->GetContent().rfind(' ')}; Space == this->EditableTextBlock->GetContent().npos)
     {
         this->EditableTextBlock->SetContent(Jafg::SprintF("/{}", this->CurrentIntellisensePrediction));
     }
     else
     {
-        LString Temp { this->EditableTextBlock->GetContent().substr(0, Space + 1) };
+        LString Temp{ this->EditableTextBlock->GetContent().substr(0, Space + 1)};
         Temp.append(this->CurrentIntellisensePrediction);
 
         this->EditableTextBlock->SetContent(std::move(Temp));
     }
-
     this->EditableTextBlock->SetCaretCursorToEnd();
 
     this->PrepareIntellisense(this->EditableTextBlock->GetContent());
@@ -1021,14 +901,14 @@ Jafg::LCliCommand* Jafg::WConsoleScreen::GetCurrentHighlightedIntellisenseComman
 {
     if
     (
-        LString const* CurPrediction { &this->CurrentIntellisensePrediction };
+        LString const* CurPrediction{&this->CurrentIntellisensePrediction};
         algo::find(this->IntellisensePredictions->GetChildren(), *CurPrediction, [](auto const& E){ return E->Content->template AsStatic<WTextBox>()->GetContent(); }) == this->IntellisensePredictions->GetChildren().end()
     )
     {
         return nullptr;
     }
 
-    check( GEngine )
+    check(GEngine)
     return GEngine->GetCommandLineInterface().GetCommandChecked(this->CurrentIntellisensePrediction);
 }
 

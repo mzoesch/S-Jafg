@@ -3,12 +3,6 @@
 #include "Widgets/Compound/TabBarPanel.h"
 #include "Widgets/Compound/TabBar.h"
 
-Jafg::WTabBarPanel::WTabBarPanel(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
-{
-    this->SetAnchor(EAnchor::Fill);
-    return;
-}
-
 bool Jafg::WTabBarPanel::AddData(JNodeData& Data)
 {
     const bool bSuper = Super::AddData(Data);
@@ -18,7 +12,7 @@ bool Jafg::WTabBarPanel::AddData(JNodeData& Data)
         return bSuper;
     }
 
-    this->OwningTabBar = TbData->Context;
+    this->OwningTabBar = TbData->TabBar;
 
     return true;
 }

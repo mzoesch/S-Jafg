@@ -660,10 +660,14 @@ static_assert(IsOnProgramPanicValid<LOnPlatformBreak>);
 
 #if JAFG_PLATFORM_U64_SIZET_EQ
     static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::LSize>);
-#endif /* JAFG_PLATFORM_U64_SIZET_EQ */
+#else /* JAFG_PLATFORM_U64_SIZET_EQ */
+    static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::LSize> == false);
+#endif /* !JAFG_PLATFORM_U64_SIZET_EQ */
 #if JAFG_PLATFORM_U32_SIZET_EQ
     static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::LSize>);
-#endif /* JAFG_PLATFORM_U32_SIZET_EQ */
+#else /* JAFG_PLATFORM_U32_SIZET_EQ */
+    static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::LSize> == false);
+#endif /* !JAFG_PLATFORM_U32_SIZET_EQ */
 
 } /* ~Namespace Jafg */
 

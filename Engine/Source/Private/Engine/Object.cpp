@@ -4,29 +4,28 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
-void Jafg::JWorldObject::BeginLife()
+#if JAFG_DO_CHECKS
+void Jafg::AWorldObject::BeginLife()
 {
     Super::BeginLife();
 
-    check( this->GetOuter()->IsWorld() )
+    check(this->GetOuter().IsWorld())
     checkCode
     (
-        bool bFound{ false };
-
+        bool bFound{};
         for (auto const& Track : GEngine->GetTracks())
         {
-            check( Track.ChildWorld.get() )
-            if (Track.ChildWorld.get() == this->GetOuter())
+            check(Track.ChildWorld.get())
+            if (Track.ChildWorld.get() == &this->GetOuter())
             {
-                check( bFound == false )
+                check(bFound == false)
                 bFound = true;
             }
-
             continue;
         }
-
-        check( bFound )
+        check(bFound)
     )
 
     return;
 }
+#endif /* JAFG_DO_CHECKS */

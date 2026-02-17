@@ -10,23 +10,23 @@ void Jafg::WFloatingWindow::Construct()
 {
     Super::Construct();
 
-    WRegion* WindowTopBar{ nullptr };
-    MakeRootNode(WVRegion)
+    WRegion* WindowTopBar{};
+    BeginStyling(*this).Root<WVRegion>()
         .Anchor(EAnchor::TopLeft)
     [
-        NewNode(WRegion).SaveTo(&WindowTopBar)
-            .Visibility(EWidgetVisibility::Visible)
+        NewStaticNode(WRegion).SaveTo(&WindowTopBar)
+            .Visibility(ENodeVisibility::Visible)
             .MinDesiredSize({0_spt, 16})
             .Anchor(EAnchor::HFill)
             .Type(ERegionBrush::Box)
             .Tint(Colors::DarkerGray)
         [
-            NewNode(WTextBox).SaveTo(&this->WindowTitle)
+            NewStaticNode(WTextBox).SaveTo(&this->WindowTitle)
                 .Anchor(EAnchor::CenterCenter)
                 .Content("Floating Window")
                 .TextColor(Colors::White)
             +
-            NewNode(WTextButton)
+            NewStaticNode(WTextButton)
                 .Anchor(EAnchor::CenterRight)
                 .Content("X")
                 .OmniTint(Colors::Transparent)
@@ -50,7 +50,7 @@ void Jafg::WFloatingWindow::Construct()
                 })
         ]
     ]
-    FinishWidgetStyling()
+    ;
 
     this->SetWindowSize({640, 360});
 
@@ -93,17 +93,17 @@ void Jafg::WFloatingWindow::Construct()
 
 void Jafg::WFloatingWindow::SetContentNode(WNode& Content) noexcept
 {
-    auto* Window{ this->GetWindow() };
+    auto* Window{this->GetWindow()};
 
-    check( Window->GetChildren().size() == 1 )
+    check(Window->GetChildren().size() == 1)
 
     Window->AddChild(&Content);
     Content.SetAnchor(EAnchor::Fill);
-    Content.SetVisibility(EWidgetVisibility::Visible);
+    Content.SetVisibility(ENodeVisibility::Visible);
 
     if (this->bCreateResizeUi && Content.IsA<WParentBase>())
     {
-        NewNode(WTextButton)
+        BeginStyling(*StaticCast<WParentBase>(&Content)).Root<WTextButton>()
             .Anchor(EAnchor::BottomRight)
             .Content("#")
             .TextBlockBrush(LTextBoxBrush::Compact())
@@ -126,7 +126,6 @@ void Jafg::WFloatingWindow::SetContentNode(WNode& Content) noexcept
 
                 return;
             })
-            .TrailingParent(StaticCast<WParentBase>(&Content))
             ;
     }
 

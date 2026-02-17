@@ -23,7 +23,7 @@ class WFloatingWindow : public WUserWidget
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WFloatingWindow)
+    DEFAULT_NODE_CONSTRUCTORS(WFloatingWindow)
 
 public:
 
@@ -78,7 +78,7 @@ protected:
 
 private:
 
-    WTextBox* WindowTitle{ nullptr };
+    WTextBox* WindowTitle{};
     static constexpr LVec2F MinWindowSizeInSpt{ 320, 180 };
 };
 

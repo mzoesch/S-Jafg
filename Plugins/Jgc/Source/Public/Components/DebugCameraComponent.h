@@ -9,17 +9,17 @@ namespace Jgc
 {
 
 DECLARE_JAFG_CLASS()
-class JGC_API JDebugCameraComponent final : public Jafg::JActorComponent
+class JGC_API ADebugCameraComponent final : public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JDebugCameraComponent)
+    DEFAULT_WORLD_CONSTRUCTORS(ADebugCameraComponent)
 
 public:
 
-    virtual void OnAttach(Jafg::AActor* InOwner) override;
+    virtual void OnAttach(Jafg::AActor& InOwner) override;
 
     void OnMove(Jafg::LInputActionValue const& Value);
     void OnRotate(Jafg::LInputActionValue const& Value);

@@ -4,27 +4,6 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 
-void Jafg::WRegion::BeginLifeCDR()
-{
-    Super::BeginLifeCDR();
-
-    if (GEngine)
-    {
-        this->RegisterShaders();
-    }
-    else
-    {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this](void) -> void
-        {
-            this->RegisterShaders();
-
-            return;
-        });
-    }
-
-    return;
-}
-
 void Jafg::WRegion::Draw(LViewport& Context) const
 {
     // if (this->Brush.Type != ERegionBrush::None)

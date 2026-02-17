@@ -322,7 +322,7 @@ void Jafg::LFrontendVk::TearDown()
 {
     LFrontendBase::TearDown();
 
-    GetMutableDefault<JTextureSubsystem>()->PurgeUnused();
+    GetMutableSingleton<JTextureSubsystem>().PurgeUnused();
 
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")
     vmaDestroyAllocator(this->Vk_VmaAllocator);
@@ -953,18 +953,18 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
         panicMsgf( "Failed to find a suitable physical device." )
     }
 
-    if (const auto Prefs{ GetDefault<JUserPreferences>() }; Prefs->PreferredPhysicalDevice.empty() == false)
+    if (const auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PreferredPhysicalDevice.empty() == false)
     {
         for (auto const& [Rating, PhysicalDevice] : this->Vk_AvailablePhysicalDevices)
         {
-            if (auto Properties{ PhysicalDevice.getProperties() }; Prefs->PreferredPhysicalDevice == Properties.deviceName)
+            if (auto Properties{ PhysicalDevice.getProperties() }; Prefs.PreferredPhysicalDevice == Properties.deviceName)
             {
                 if (Rating == 0)
                 {
                     LOG_WARNING(LogVulkan, "Preferred physical device [{}] found but is no longer suitable. Clearing user prefs and falling back to best rated device.",
-                        Prefs->PreferredPhysicalDevice
+                        Prefs.PreferredPhysicalDevice
                         )
-                    algo::orphan(&GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice);
+                    algo::orphan(&GetMutableSingleton<JUserPreferences>().PreferredPhysicalDevice);
                 }
                 else
                 {
@@ -979,9 +979,9 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
         }
 
         LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Clearing user prefs and falling back to best rated device.",
-            Prefs->PreferredPhysicalDevice
+            Prefs.PreferredPhysicalDevice
             )
-        algo::orphan(&GetMutableDefault<JUserPreferences>()->PreferredPhysicalDevice);
+        algo::orphan(&GetMutableSingleton<JUserPreferences>().PreferredPhysicalDevice);
     }
 
     if (!*this->Vk_PhysicalDevice)

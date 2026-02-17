@@ -219,8 +219,8 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     glfwSetInputMode(this->Handle, GLFW_STICKY_KEYS, GLFW_TRUE);
     glfwSetInputMode(this->Handle, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
-    check( GEngine )
-    this->SetVSync(GetDefault<JUserPreferences>()->bVSyncEnabled);
+    check(GEngine)
+    this->SetVSync(*GetSingleton<JUserPreferences>().bVSyncEnabled);
 
 #if PLATFORM_WINDOWS
     const HWND NativeWindowHandle = glfwGetWin32Window(this->Handle);
@@ -509,7 +509,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
     vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
     if (this->DoesPossess())
     {
-        auto const& Color{this->GetController()->GetWorldChecked()->GetBackgroundColor()};
+        auto const& Color{this->GetController()->GetWorld().GetBackgroundColor()};
         ClearColor.color.float32[0] = Color.R;
         ClearColor.color.float32[1] = Color.G;
         ClearColor.color.float32[2] = Color.B;
@@ -559,7 +559,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         Info.PerspectiveEye = this->GetControllerChecked()->GetPawnChecked()->GetEye_v2();
         auto const& Eye{*Info.PerspectiveEye};
 
-        auto* Sc = this->GetControllerChecked()->GetPawnChecked()->GetComponent<JSceneComponent>();
+        auto* Sc{this->GetControllerChecked()->GetPawnChecked()->GetComponentChecked<ASceneComponent>()};
 
         LMat4F R{maths::identity<LMat4F>};
         R = maths::rotate(R, Sc->TempRot.x, maths::unit_vector_x<LVec3F>);
@@ -581,7 +581,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
             .range = sizeof(decltype(LRenderInfo::PerspectiveCamera))
             };
 
-        this->GetController()->GetWorld()->Draw(Info);
+        this->GetController()->GetWorld().Draw(Info);
     }
 
     this->GetViewport().Draw(Info);

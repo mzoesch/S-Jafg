@@ -4,29 +4,127 @@
 
 #include "Widgets/Overlay.h"
 #include "Rhi/Image.h"
-#include "Widgets/RegionForward.h"
-#include "Widgets/RegionFactory.h"
 #include "Region.generated.h"
 
 namespace Jafg
 {
 
+//# How the #LRegionBrush behaves at a high level.
+enum struct ERegionBrush
+{
+    //# Do not draw.
+    None,
+    //# Draw as a normal box.
+    Box,
+    //# Draw as a rounded box.
+    RoundedBox,
+    //# Draw as a box with an outline.
+    OutlineBox,
+    //# Draw as a box with a rounded outline.
+    RoundedOutlineBox,
+};
+
+//# High-level image behavior.
+enum struct EImageBehavior
+{
+    //# Scale the image to the size of the parent.
+    Scale,
+    //# Preserve the aspect ratio of the image.
+    Aspect,
+};
+
+//# The image out of bounds mode. How the image should behave if its UVs are going out of bounds.
+enum struct EImageOobm
+{
+    //# Wrap the image. The default behavior.
+    Wrap,
+    //# Clamp the image sides.
+    Clamp,
+    //# Discard the image channels.
+    Discard,
+};
+
+struct LRegionBrush
+{
+    //#
+    //# The type of the region brush.
+    //#
+    ERegionBrush Type{ ERegionBrush::None };
+
+    //#
+    //# The tint of the draw area from this region.
+    //#
+    LColor Tint{ Colors::White };
+
+    //#
+    //# An optional image to use as a background.
+    //#
+    LImage Image;
+
+    //#
+    //# The tint of the image.
+    //#
+    LColor ImageTint{ Colors::White };
+
+    //#
+    //# The scale of the image.
+    //#
+    f32 ImageScale{ 1.0 };
+
+    //#
+    //# How the #Image should behave.
+    //#
+    EImageBehavior ImageBehavior{ EImageBehavior::Scale };
+
+    //#
+    //# The image out of bounds mode. @see #EImageOobm.
+    //#
+    EImageOobm ImageOobm{ EImageOobm::Wrap };
+
+    //#
+    //# How much padding to apply to the image.
+    //#
+    f32 ImagePadding{};
+
+    //#
+    //# The radii to use for the edges. TL => TR => BR => BL.
+    //#
+    LVec4F Radii{ 4.0f };
+
+    //#
+    //# The thickness of the outline.
+    //#
+    f32 OutlineThickness{ 2.0f };
+
+    //#
+    //# The outline color to use.
+    //#
+    LColor OutlineTint{ Colors::White };
+};
+
+struct LFactoryRegion;
+
 //#
 //# WRegion is an overlay node that can be customized with a #LRegionBrush.
 //# A region might still draw outside these bounds.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryRegion)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryRegion)
 class ENGINE_API WRegion : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WRegion)
+    DEFAULT_NODE_CONSTRUCTORS(WRegion)
 
 public:
 
-    virtual void BeginLifeCDR() override;
+    static void BeginClassLife(LBeginClassLifeInfo const& Info)
+    {
+        Super::BeginClassLife(Info);
+        WRegion::RegisterShaders();
+    }
+
     virtual void Draw(LViewport& Context) const override;
 
     void SetBrush(const LRegionBrush& InBrush) { this->Brush = InBrush; }
@@ -34,24 +132,95 @@ public:
     LRegionBrush& GetMutableBrush() { return this->Brush; }
     const LRegionBrush&  GetBrush() const { return this->Brush; }
 
-    FORCEINLINE void SetType(const ERegionBrush::Type InType) { this->Brush.Type = InType; }
-    FORCEINLINE void SetTint(const LColor& InTint) { this->Brush.Tint = InTint; }
-    // FORCEINLINE void SetTexture(const LTexture2* InTexture) { this->Brush.Image.SetTexture(InTexture); }
-    // FORCEINLINE void SetImage(const LImage& InImage) { this->Brush.Image = InImage; }
-    FORCEINLINE void SetImageTint(const LColor& InColor) { this->Brush.ImageTint = InColor; }
-    FORCEINLINE void SetImageScale(const f32 InScale) { this->Brush.ImageScale = InScale; }
-    FORCEINLINE void SetImageBehavior(const EImageBehavior::Type InType) { this->Brush.ImageBehavior = InType; }
-    FORCEINLINE void SetImageOobm(const EImageOobm::Type InType) { this->Brush.ImageOobm = InType; }
-    FORCEINLINE void SetImagePadding(const f32 InPadding) { this->Brush.ImagePadding = InPadding; }
-    FORCEINLINE void SetOutlineThickness(const f32 InOutlineThickness) { this->Brush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetOutlineRadii(const LVec4F& InOutlineRadii) { this->Brush.Radii = InOutlineRadii; }
-    FORCEINLINE void SetOutlineTint(const LColor& InOutlineTint) { this->Brush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetType(const ERegionBrush InType) noexcept { this->Brush.Type = InType; }
+    FORCEINLINE void SetTint(const LColor& InTint) noexcept { this->Brush.Tint = InTint; }
+    // FORCEINLINE void SetTexture(const LTexture2* InTexture) noexcept { this->Brush.Image.SetTexture(InTexture); }
+    // FORCEINLINE void SetImage(const LImage& InImage) noexcept { this->Brush.Image = InImage; }
+    FORCEINLINE void SetImageTint(const LColor& InColor) noexcept { this->Brush.ImageTint = InColor; }
+    FORCEINLINE void SetImageScale(const f32 InScale) noexcept { this->Brush.ImageScale = InScale; }
+    FORCEINLINE void SetImageBehavior(const EImageBehavior InType) noexcept { this->Brush.ImageBehavior = InType; }
+    FORCEINLINE void SetImageOobm(const EImageOobm InType) noexcept { this->Brush.ImageOobm = InType; }
+    FORCEINLINE void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
+    FORCEINLINE void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE void SetOutlineRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE void SetOutlineTint(const LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
 
 private:
 
-    void RegisterShaders();
+    static void RegisterShaders();
 
     LRegionBrush Brush;
+};
+
+struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
+{
+    NODE_FACTORY_BODY(WRegion)
+
+    decltype(auto) Brush(this auto&& Self, LRegionBrush const& InBrush) noexcept
+    {
+        NODE_FACTORY_SELF().SetBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Type(this auto&& Self, ERegionBrush InType) noexcept
+    {
+        NODE_FACTORY_SELF().SetType(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Tint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Texture(this auto&& Self, LTexture2 const* InTexture) noexcept
+    {
+        NODE_FACTORY_SELF().SetTexture(InTexture);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Image(this auto&& Self, LImage const& InImage) noexcept
+    {
+        NODE_FACTORY_SELF().SetImage(InImage);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ImageTint(this auto&& Self, LColor const& InColor) noexcept
+    {
+        NODE_FACTORY_SELF().SetImageTint(InColor);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ImageScale(this auto&& Self, const f32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetImageScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ImageBehavior(this auto&& Self, const EImageBehavior InType) noexcept
+    {
+        NODE_FACTORY_SELF().SetImageBehavior(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ImageOobm(this auto&& Self, const EImageOobm InType) noexcept
+    {
+        NODE_FACTORY_SELF().SetImageOobm(InType);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ImagePadding(this auto&& Self, const f32 InPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetImagePadding(InPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OutlineThickness(this auto&& Self, const f32 InOutlineThickness) noexcept
+    {
+        NODE_FACTORY_SELF().SetOutlineThickness(InOutlineThickness);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OutlineRadii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept
+    {
+        NODE_FACTORY_SELF().SetOutlineRadii(InOutlineRadii);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OutlineTint(this auto&& Self, LColor const& InOutlineTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetOutlineTint(InOutlineTint);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

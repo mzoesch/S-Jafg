@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-class JSupremePolicies;
+class ASupremePolicies;
 
 //#
 //# Represents a level in the engine.
@@ -20,7 +20,7 @@ struct LLevel final
 {
     LString Identifier;
     EInputMode::Type InputMode{ EInputMode::None | EInputMode::ShowMouseCursor };
-    TSubclassOf<JSupremePolicies> SupremePoliciesClass;
+    TSubclassOf<ASupremePolicies> SupremePoliciesClass;
 };
 
 } /* Namespace Jafg */

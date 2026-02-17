@@ -14,17 +14,16 @@ class WTestWidget : public Jafg::WUserWidget
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WTestWidget)
+    DEFAULT_WIDGET_CONSTRUCTORS(WTestWidget)
 
 public:
 
     virtual void Construct() override
     {
-        MakeRootNode(Jafg::WRegion)
+        Jafg::BeginStyling(*this).Root<Jafg::WRegion>()
             .MinDesiredSize(200_pt2)
             .Type(Jafg::ERegionBrush::Box)
-            .Tint(Colors::Aqua)
-        FinishWidgetStyling()
+            .Tint(Colors::Aqua);
     }
 
     virtual void Draw(Jafg::LViewport& Context) const override

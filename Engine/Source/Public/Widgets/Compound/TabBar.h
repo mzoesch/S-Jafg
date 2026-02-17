@@ -15,6 +15,7 @@ class WTabBar;
 class WSwitcher;
 class WNode;
 class WTabBarButton;
+struct LFactoryTabBar;
 
 typedef TFunction<void(WTabBar* TabBar, WNode* Button, WNode* Panel)> LOnTabBarLoaded;
 
@@ -72,25 +73,6 @@ struct LTabBarTabDescriptor final
     TArray<LTabBarTabDescriptor> Siblings;
 };
 
-template <typename TNode>
-class TWidgetFactoryTabBar : public TWidgetFactoryParentBase<TNode>
-{
-public:
-
-    using Super         = TWidgetFactoryParentBase<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
-
-    FORCEINLINE TFactoryRetTy& AlignHorizontal() { this->This()->SetHorizontalPreference(); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& AlignVertical() { this->This()->SetVerticalPreference(); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& AddTab(LTabBarTabDescriptor&& InDescriptor) { this->This()->RegisterTab(std::move(InDescriptor)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& AllowNone() { this->This()->SetAllowNone(true); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisallowNone() { this->This()->SetAllowNone(false); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DefaultIndex(const i32 InIndex) { this->This()->SetDefaultIndex(InIndex); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& operator[](LTabBarTabDescriptor&& InDescriptor) { return this->AddTab(std::move(InDescriptor)); }
-};
-
 DECLARE_JAFG_CLASS()
 class JTabBarData : public JNodeData
 {
@@ -98,12 +80,12 @@ class JTabBarData : public JNodeData
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JTabBarData)
+    DEFAULT_OBJECT_CONSTRUCTORS(JTabBarData)
 
 public:
 
-    WTabBar* Context;
-    LTabBarTabDescriptor const* Descriptor;
+    WTabBar* TabBar{};
+    LTabBarTabDescriptor const* Descriptor{};
 };
 
 //#
@@ -115,15 +97,17 @@ public:
 //#   - The tab bar:        The collection of the buttons and panels.
 //# Tab bars can be nested within each other.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTabBar)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTabBar)
 class WTabBar : public WTabBarPanel
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WTabBar(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WTabBar)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WTabBar)
+    {
+        this->SetAnchor(EAnchor::TopLeft);
+    }
 
 public:
 
@@ -149,12 +133,12 @@ public:
     bool UnregisterTab(const LString& Identifier);
     bool UnregisterTabChecked(const LString& Identifier) { const bool bOut = this->UnregisterTab(Identifier); check( bOut ); return bOut; }
 
-    template <typename TNode>
+    template<typename TNode>
     FORCEINLINE void SetButtonsContainerClass() { this->SetButtonsContainerClass(TNode::StaticClass()); }
     FORCEINLINE void SetButtonsContainerClass(const TSubclassOf<WParentBase>& InButtonsContainerClass) { this->ButtonsContainerClass = InButtonsContainerClass; }
     FORCEINLINE auto GetCurrentButtonsContainerClass() const -> const TSubclassOf<WParentBase>& { return this->ButtonsContainerClass; }
 
-    template <typename TNode>
+    template<typename TNode>
     FORCEINLINE void SetSwitcherClass() { this->SetSwitcherClass(TNode::StaticClass()); }
     FORCEINLINE void SetSwitcherClass(const TSubclassOf<WSwitcher>& InSwitcherClass) { this->SwitcherClass = InSwitcherClass; }
     FORCEINLINE auto GetCurrentSwitcherClass() const -> const TSubclassOf<WSwitcher>& { return this->SwitcherClass; }
@@ -190,17 +174,17 @@ protected:
     //#
     //# The container where the buttons are stored.
     //#
-    WParentBase* ButtonsContainer{ nullptr };
+    WParentBase* ButtonsContainer{};
     TSubclassOf<WParentBase> ButtonsContainerClass;
     TSubclassOf<WNode> DefaultButtonClass;
 
     //#
     //# The switcher where the panels are stored.
     //#
-    WSwitcher* Switcher{ nullptr };
+    WSwitcher* Switcher{};
     TSubclassOf<WSwitcher> SwitcherClass;
 
-    CDR_NULL_PTR(void const*) CurrentlyFocusedTab{ nullptr };
+    void const* CurrentlyFocusedTab{};
                 const LAddedTabBarTab* GetCurrentlyFocusedTab() const;
     FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabChecked() const;
     FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabPanicked() const;
@@ -212,8 +196,8 @@ protected:
         WNode* Panel{ nullptr };
         i8 SwitcherIndex{ INDEX_NONE };
     };
-    TCdrEmptyArray<TArray<LAddedTabBarTab>> TabsInOrder;
-    TCdrEmptyArray<TArray<LTabBarTabDescriptor>> DeferredTabs;
+    TArray<LAddedTabBarTab> TabsInOrder;
+    TArray<LTabBarTabDescriptor> DeferredTabs;
 
     //#
     //# The default index to switch to when the tab bar is being made visible, or #ResetToDefault is called
@@ -227,21 +211,60 @@ protected:
     bool bAllowNone{ true };
 };
 
+struct LFactoryTabBar : NODE_FACTORY_PARENT(WTabBar)
+{
+    NODE_FACTORY_BODY(WTabBar)
+
+    decltype(auto) AlignHorizontal(this auto&& Self)
+    {
+        NODE_FACTORY_SELF().SetHorizontalPreference();
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) AlignVertical(this auto&& Self)
+    {
+        NODE_FACTORY_SELF().SetVerticalPreference();
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) AddTab(this auto&& Self, LTabBarTabDescriptor&& InDescriptor)
+    {
+        NODE_FACTORY_SELF().RegisterTab(std::move(InDescriptor));
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) AllowNone(this auto&& Self)
+    {
+        NODE_FACTORY_SELF().SetAllowNone(true);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisallowNone(this auto&& Self)
+    {
+        NODE_FACTORY_SELF().SetAllowNone(false);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) DefaultIndex(this auto&& Self, const i32 InIndex)
+    {
+        NODE_FACTORY_SELF().SetDefaultIndex(InIndex);
+        return NODE_FACTORY_RESULT();
+    }
+};
+
 } /* ~Namespace Jafg */
 
-const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTabChecked() const
+Jafg::WTabBar::LAddedTabBarTab const* Jafg::WTabBar::GetCurrentlyFocusedTabChecked() const
 {
-    const LAddedTabBarTab* Out = this->GetCurrentlyFocusedTab();
-    check( Out )
+    LAddedTabBarTab const* Out{this->GetCurrentlyFocusedTab()};
+    check(Out)
     return Out;
 }
 
-const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTabPanicked() const
+Jafg::WTabBar::LAddedTabBarTab const* Jafg::WTabBar::GetCurrentlyFocusedTabPanicked() const
 {
-    if (const LAddedTabBarTab* Out = this->GetCurrentlyFocusedTab(); Out)
+    if (LAddedTabBarTab const* Out{this->GetCurrentlyFocusedTab()}; Out)
     {
         return Out;
     }
-    panic( "No currently focused tab found." )
-    return nullptr;
+
+    panic("No currently focused tab found.")
 }

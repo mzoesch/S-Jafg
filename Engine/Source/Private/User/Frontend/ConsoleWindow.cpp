@@ -30,46 +30,39 @@ FORCEINLINE LColor LogToColor(auto const& Verbosity) noexcept
 ENGINE_API TOptional<LVec2F> Jafg::WConsoleWindow::LastWindowLocation;
 ENGINE_API TOptional<LVec2F> Jafg::WConsoleWindow::LastWindowSize;
 
-Jafg::WConsoleWindow::WConsoleWindow(LCxxObjectInitializer const& ObjectInitializer)
-    : Super{ObjectInitializer}
-{
-    this->SetShouldTick(true);
-    return;
-}
-
 void Jafg::WConsoleWindow::Construct()
 {
     Super::Construct();
 
     WRegion* Content;
-    NewNode(WRegion).SaveTo(&Content)
+    BeginStyling(*this).Root<WRegion>().SaveTo(&Content)
         .Type(ERegionBrush::OutlineBox)
         .Tint(Colors::DarkSlateGray)
         .OutlineThickness(1)
         .OutlineTint(Colors::Black)
     [
-        NewNode(WOverlay)
+        NewStaticNode(WOverlay)
             .Anchor(EAnchor::Fill)
             .Padding({0_spt, 0, 0, 18})
         [
-            NewNode(WScrollRegion).SaveTo(&this->HistoryScrollRegion)
+            NewStaticNode(WScrollRegion).SaveTo(&this->HistoryScrollRegion)
                 .Anchor(EAnchor::Fill)
             [
-                NewNode(WVRegion).SaveTo(&this->HistoryRegion)
+                NewStaticNode(WVRegion).SaveTo(&this->HistoryRegion)
                     .Anchor(EAnchor::Fill)
                     .Padding({4_spt, 8})
                     .VSpace(5_spt)
             ]
         ]
         +
-        NewNode(WConsoleStdIn).SaveTo(&this->StdIn)
+        NewStaticNode(WConsoleStdIn).SaveTo(&this->StdIn)
             .Anchor(EAnchor::Fill)
     ];
 
     this->SetContentNode(*Content);
-    MakeDeferredWidgetNodeFinal(Content);
+    // MakeDeferredWidgetNodeFinal(Content);
 
-    check( Content->GetVisibility() == EWidgetVisibility::Visible )
+    check(Content->GetVisibility() == ENodeVisibility::Visible)
 
     if (WConsoleWindow::LastWindowLocation.has_value())
     {
@@ -91,21 +84,6 @@ void Jafg::WConsoleWindow::Construct()
     return;
 }
 
-void Jafg::WConsoleWindow::OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
-{
-    if (auto* Window{ this->GetWindow() })
-    {
-        if (auto Margin{ Window->GetMargin() }; Margin.has_value())
-        {
-            WConsoleWindow::LastWindowLocation = {Margin->Left, Margin->Top};
-        }
-    }
-
-    Super::OnGarbage(Reason, PreviousOuter);
-
-    return;
-}
-
 void Jafg::WConsoleWindow::Tick()
 {
     Super::Tick();
@@ -118,14 +96,29 @@ void Jafg::WConsoleWindow::Tick()
     return;
 }
 
+void Jafg::WConsoleWindow::Destruct()
+{
+    if (auto* Window{this->GetWindow()})
+    {
+        if (auto Margin{Window->GetMargin()}; Margin.has_value())
+        {
+            WConsoleWindow::LastWindowLocation = {Margin->Left, Margin->Top};
+        }
+    }
+
+    Super::Destruct();
+
+    return;
+}
+
 void Jafg::WConsoleWindow::AddToConsole(LConsoleMessage Message)
 {
-    check( Tasks::IsOnMasterThread() )
-    check( this->HistoryRegion )
+    check(Tasks::IsOnMasterThread())
+    check(this->HistoryRegion)
 
-    auto* Node{ ConstructWidgetNode<WTextBox>(this->HistoryRegion) };
-    Node->SetContent(std::move(Message.Content));
-    Node->SetTextColor(Message.Color);
+    BeginStyling(*this->HistoryRegion).Root<WTextBox>()
+        .Content(std::move(Message.Content))
+        .TextColor(Message.Color);
 
     return;
 }
@@ -155,7 +148,7 @@ u64 Jafg::WConsoleWindow::LoadLogs(u64 Start)
     return Diff;
 }
 
-bool Jafg::WConsoleWindow::StdInCommit(LString const& Text, ETextCommit::Type CommitType)
+bool Jafg::WConsoleWindow::StdInCommit(LString const& Text, ETextCommit CommitType)
 {
     if (CommitType == ETextCommit::OnCleared)
     {
@@ -187,7 +180,7 @@ bool Jafg::WConsoleWindow::StdInCommit(LString const& Text, ETextCommit::Type Co
     }
 
     LCommandExecutionResponse Response;
-    this->GetCommandLineInterface().Invoke(CmdLine, &Response);
+    this->GetCommandLineInterface().Invoke({.Invoker=this, .Viewport=&this->GetViewport()}, CmdLine, &Response);
 
     if (Response.StdOut.empty() == false)
     {

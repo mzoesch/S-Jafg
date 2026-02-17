@@ -3,23 +3,24 @@
 #pragma once
 
 #include "Widgets/Region.h"
-#include "Widgets/VRegionFactory.h"
 #include "VRegion.generated.h"
 
 namespace Jafg
 {
 
+struct LFactoryVRegion;
+
 //#
 //# Vertical region widget. Children are stacked underneath each other. From top to bottom.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryVRegion)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryVRegion)
 class ENGINE_API WVRegion : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WVRegion)
+    DEFAULT_NODE_CONSTRUCTORS(WVRegion)
 
 public:
 
@@ -34,6 +35,17 @@ private:
 
     //# Vertical space between children.
     LWidgetSize1 VSpace;
+};
+
+struct LFactoryVRegion : NODE_FACTORY_PARENT(WVRegion)
+{
+    NODE_FACTORY_BODY(WVRegion)
+
+    FORCEINLINE decltype(auto) VSpace(this auto&& Self, const LWidgetSize1 InHSpace) noexcept
+    {
+        NODE_FACTORY_SELF().SetVSpace(InHSpace);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

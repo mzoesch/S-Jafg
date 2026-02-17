@@ -8,19 +8,23 @@
 namespace Jafg
 {
 
+struct LFactoryParent;
+
 //#
 //# The base class for all nodes that can possess children.
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
-DECLARE_JAFG_WIDGET(ECxxClassFlags::Abstract)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryParent, ECxxClassFlags::Abstract)
 class ENGINE_API WParent : public WParentBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WParent(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WParent)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WParent) noexcept
+    {
+        this->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
+    }
 
 public:
 
@@ -29,32 +33,28 @@ public:
     virtual void Destruct() override;
     virtual void Draw(LViewport& Context) const override;
 
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVec2F& InLocation) override;
-    virtual LReply       SweepFocusTest(const LViewport& Context, const LVec2F& InLocation) override;
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVec2F& Location) override;
+    virtual LReply       SweepFocusTest(const LViewport& Context, const LVec2F& Location) override;
 
-    virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyDownNoFocus(const LViewport& Viewport, const LKeyEvent& KeyEvent) override;
+    virtual LReply OnKeyUpNoFocus(const LViewport& Viewport, const LKeyEvent& KeyEvent) override;
 
-    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
-    virtual bool FindNodeInVisiblePath(const WNode* InNode) const override;
+    virtual bool IsFocusWidgetTransitive(const LViewport* Viewport) const override;
+    virtual bool FindNodeInVisiblePath(const WNode* Node) const override;
 
     FORCEINLINE
-    virtual auto GetChildren() const -> const TArray<LWidgetSlot*>& override { return this->Children; }
+    virtual auto GetChildren() const -> TArray<LWidgetSlot*> const& override { return this->Children; }
     virtual void RemoveChild(WNode* Child) override;
     virtual void RemoveChild(LWidgetSlot* Child) override;
     virtual void RemoveChildAt(const i32 InIndex) override;
     virtual void RemoveChildren() override;
-    virtual auto AddChild(WNode* InChild) -> LWidgetSlot* override;
-    virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
-
-    void MakeChildrenFinal();
+    virtual auto AddChild(WNode* Child) -> LWidgetSlot* override;
+    virtual auto AddChildAt(const i32 Index, WNode* Child) -> LWidgetSlot* override;
 
     FORCEINLINE void SetPadding(const LPadding& InPadding)    { this->Padding = InPadding; }
     FORCEINLINE auto GetPadding()    const -> const LPadding& { return this->Padding; }
     FORCEINLINE auto GetPaddingPtr() const -> const LPadding* { return &this->Padding; }
     FORCEINLINE auto GetPaddingPtr()       ->       LPadding* { return &this->Padding; }
-
-    virtual void RecacheViewport() noexcept override;
 
 private:
 
@@ -62,6 +62,17 @@ private:
 
     //# The padding area between the slot and the content it contains.
     LPadding Padding;
+};
+
+struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
+{
+    NODE_FACTORY_BODY(WParent)
+
+    FORCEINLINE decltype(auto) Padding(this auto&& Self, LPadding const& P) noexcept
+    {
+        NODE_FACTORY_SELF().SetPadding(P);
+        return std::forward<decltype(Self)>(Self);
+    }
 };
 
 } /* ~Namespace Jafg */

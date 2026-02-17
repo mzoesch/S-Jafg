@@ -25,14 +25,12 @@ void AddPreference(Jafg::WParentBase* Target, Jafg::LPreference* P)
 
     if (P->Build(Target) == false)
     {
-        WTextBox* Text = nullptr;
-        NewNodeCtx(Target, WTextBox).SaveTo(&Text)
+        BeginStyling(*Target).Root<WTextBox>()
             .Brush(LTextBoxBrush::SubHeader())
             .Content(P->GetDisplayName());
-        Target->AddChild(Text);
     }
 
-    Target->AddChild(NewNodeNoFactoryCtx(Target, WSpacer));
+    BeginStyling(*Target).Root<WSpacer>();
 
     for (const TUnique<LPreference>& SubSection : P->LoadAndGetChildPreferences())
     {
@@ -63,12 +61,11 @@ bool Jafg::WPreferencesPanel::AddData(JNodeData& Data)
     LPreference* P = PpData->Preference;
     check( P )
 
-    WParentBase* Root;
     WParentBase* ChildContainer;
-    NewNode(WScrollRegion).SaveTo(&Root)
+    BeginStyling(*this).Root<WScrollRegion>()
         .Anchor(EAnchor::Fill)
     [
-        NewNode(WVRegion).SaveTo(&ChildContainer)
+        NewStaticNode(WVRegion).SaveTo(&ChildContainer)
             .Anchor(EAnchor::Fill)
             .Padding(40.0f)
             .VSpace(5_pt)
@@ -80,18 +77,11 @@ bool Jafg::WPreferencesPanel::AddData(JNodeData& Data)
     {
         this->RemoveChild(this->GetChildren().back());
     }
-    this->AddChild(Root);
-    MakeDeferredWidgetNodeFinal(Root);
+
+    // this->AddChild(Root);
+    // MakeDeferredWidgetNodeFinal(Root);
 
     return true;
-}
-
-Jafg::WPreferencesScreen::WPreferencesScreen(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetHorizontalPreference();
-    this->SetAnchor(EAnchor::Fill);
-    return;
 }
 
 void Jafg::WPreferencesScreen::Construct()
@@ -102,8 +92,8 @@ void Jafg::WPreferencesScreen::Construct()
 
     jassert( this->PanelClass )
 
-    const JPreferenceRegistry* Registry = GetDefault<JPreferenceRegistry>();
-    for (const TUnique<LPreference>& TopPreference : Registry->GetPreferences())
+    JPreferenceRegistry const& Registry{GetSingleton<JPreferenceRegistry>()};
+    for (auto& TopPreference : Registry.GetPreferences())
     {
         check( TopPreference.get() )
         LPreference* LambdaPreference = TopPreference.get();
@@ -117,7 +107,7 @@ void Jafg::WPreferencesScreen::Construct()
         {
             if (Panel)
             {
-                JPreferencesPanelData* Data{ NewObject<JPreferencesPanelData>(this->GetOuter()) };
+                JPreferencesPanelData* Data{NewObject(TCxxStaticInit<JPreferencesPanelData>{this->GetOuter()})};
                 Data->Preference = LambdaPreference;
                 Panel->AddData(*Data);
 

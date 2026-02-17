@@ -22,7 +22,7 @@ class JThreadedWorldSubsystem : public JWorldSubsystem, public LTickedRunnable
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JThreadedWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JThreadedWorldSubsystem)
 
 public:
 
@@ -44,7 +44,7 @@ public:
     virtual void Exit() override { LTickedRunnable::Exit(); }
     // ~LTickedRunnable implementation
 
-    FORCEINLINE auto GetThisSubsystemsThreadName(void) const -> ENamedThreads::Type { return this->ThisSubsystemsThreadName; }
+    FORCEINLINE auto GetThisSubsystemsThreadName() const -> ENamedThreads::Type { return this->ThisSubsystemsThreadName; }
 
 private:
 

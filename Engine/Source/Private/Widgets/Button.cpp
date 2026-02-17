@@ -2,13 +2,6 @@
 
 #include "Widgets/Button.h"
 
-Jafg::WButton::WButton(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
-    return;
-}
-
 void Jafg::WButton::Construct()
 {
     Super::Construct();
@@ -160,21 +153,14 @@ void Jafg::WButton::SetEnabled(const bool bInEnabled)
     if (this->bEnabled)
     {
         this->SetBrush(this->Style.NormalBrush);
-        this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
     else
     {
         this->SetBrush(this->Style.DisabledBrush);
-        this->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
     }
 
-    return;
-}
-
-Jafg::WTextButton::WTextButton(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetPadding({4, 2});
     return;
 }
 
@@ -182,27 +168,25 @@ void Jafg::WTextButton::Construct()
 {
     if (this->ButtonText == nullptr)
     {
-        NewNode(WTextBox).SaveTo(&this->ButtonText)
+        BeginStyling(*this).Root<WTextBox>().SaveTo(&this->ButtonText)
             .TextAlign(ETextHAlign::Center)
             .TextAlign(ETextVAlign::Center)
             .Brush(LTextBoxBrush::SubHeader());
-
-        this->AddChild(this->ButtonText);
     }
 
-    check( this->GetChildren().size() > 0 )
+    check(this->GetChildren().size() > 0)
 
     if (this->IntermediateContent.empty() == false)
     {
         this->ButtonText->SetContent(std::move(this->IntermediateContent));
-        check( this->IntermediateContent.empty() )
+        check(this->IntermediateContent.empty())
     }
 
     if (this->IntermediateTextBoxBrush.has_value())
     {
         this->ButtonText->SetBrush(this->IntermediateTextBoxBrush.value());
         this->IntermediateTextBoxBrush.reset();
-        check( this->IntermediateTextBoxBrush.has_value() == false )
+        check(this->IntermediateTextBoxBrush.has_value() == false)
     }
 
     Super::Construct();

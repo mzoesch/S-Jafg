@@ -20,7 +20,7 @@ class JMeshSubsystem : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JMeshSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JMeshSubsystem)
 
 public:
 

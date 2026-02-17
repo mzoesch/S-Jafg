@@ -11,13 +11,13 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JStaticMeshComponent : public JSceneComponent
+class ENGINE_API AStaticMeshComponent : public ASceneComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JStaticMeshComponent)
+    DEFAULT_WORLD_CONSTRUCTORS(AStaticMeshComponent)
 
 public:
 

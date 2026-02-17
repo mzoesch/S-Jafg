@@ -15,7 +15,7 @@ class ENGINE_API JMaterialSubsystem final : public JEngineSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JMaterialSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JMaterialSubsystem)
 };
 
 } /* ~Namespace Jafg */

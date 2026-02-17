@@ -17,7 +17,7 @@ class LCxxRecord
 public:
 
     constexpr LCxxRecord() noexcept = delete;
-    constexpr LCxxRecord(LString InFullyQualifiedName) noexcept
+    CONSTEXPR_CHECK LCxxRecord(LString InFullyQualifiedName) noexcept
         : FullyQualifiedName(std::move(InFullyQualifiedName))
     {
         check( this->FullyQualifiedName.empty() == false )
@@ -37,7 +37,7 @@ public:
 
 private:
 
-    LName   Name;
+    LName Name;
     LString FullyQualifiedName;
 
     LLoadedPluginHandle PluginHandle;

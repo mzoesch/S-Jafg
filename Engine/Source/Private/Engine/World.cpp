@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/World.h"
+#include "Engine/Carnifex.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
 #include "Core/Application.h"
@@ -49,9 +50,9 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     STAT_CYCLE_FUNCTION()
 
     this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
-    check( this->RealTimeWhenWorldWasLaunched > 0.0f )
+    check(this->RealTimeWhenWorldWasLaunched > 0.0f)
 
-    check( this->WorldState == EWorldState::PreInitializing )
+    check(this->WorldState == EWorldState::PreInitializing)
     this->WorldState = EWorldState::Initializing;
 
     this->UnsanitizedUrl = Url;
@@ -80,16 +81,16 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
 
     if (this->UnderlyingLevel.has_value())
     {
-        this->SupremePolicies = NewObject<JSupremePolicies>(this, this->UnderlyingLevel->SupremePoliciesClass.GetCLassOrDefault());
+        this->SupremePolicies = SpawnObject(CastTo<ASupremePolicies>{}, {*this, this->UnderlyingLevel->SupremePoliciesClass.GetClassOrDefault()});
     }
     else
     {
-        this->SupremePolicies = NewObject<JSupremePolicies>(this);
+        this->SupremePolicies = SpawnObject(TWorldStaticInit<ASupremePolicies>{*this});
     }
-    check( this->SupremePolicies )
+    check(this->SupremePolicies)
 
     this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
-    check( this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched )
+    check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
 
     if (auto& Track{GEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
     {
@@ -98,27 +99,18 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     }
     this->SupremePolicies->OnWorldPreInit();
 
-    LOG_VERBOSE(LogWorld, "Initializing level actors.")
-#if !IN_SHIPPING
-    LSize ActorCount{ 0 };
-#endif /* !IN_SHIPPING */
-    for (auto& Obj : this->GetEmployees())
-    {
-        if (Obj->IsA<AActor>())
+    checkCode
+    (
+        for (auto& Obj : this->GetEmployees())
         {
-            MakeDeferredActorFinal(StaticCast<AActor>(Obj.get()));
-#if WITH_LOCAL_LAYER
-            check( Obj->IsA<APersonaController>() == false )
-#endif /* !WITH_LOCAL_LAYER */
-
-            ++ActorCount;
+            check(Obj->_HasBegunLife())
+            if (auto* Actor{Obj->As<AActor>()})
+            {
+                check(Actor->_Lives())
+                check(Obj->IsA<APersonaController>() == false)
+            }
         }
-
-        continue;
-    }
-#if !IN_SHIPPING
-    LOG_VERBOSE(LogWorld, "Initialized [{}] actors.", ActorCount)
-#endif /* !IN_SHIPPING */
+    )
 
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
@@ -136,20 +128,22 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     return;
 }
 
-Jafg::LEngine& Jafg::LWorld::GetEngine() const noexceptcheck
+Jafg::LEngine& Jafg::LWorld::GetEngine() const noexcept
 {
-    check( GEngine && "Engine has to be valid if a world exists." )
+    check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
     return *GEngine;
 }
 
-Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() const noexceptcheck
+Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() const noexcept
 {
-    return this->GetEngine().GetCommandLineInterface();
+    check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
+    return GEngine->GetCommandLineInterface();
 }
 
-Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexceptcheck
+Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexcept
 {
-    return this->GetEngine().GetLocalEgo();
+    check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
+    return GEngine->GetLocalEgo();
 }
 
 void Jafg::LWorld::Tick(const f32 Dt)
@@ -254,19 +248,16 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info) const
     return;
 }
 
-Jafg::APersonaController* Jafg::LWorld::Login(
-      LTransientPersona Persona
-    , LString* OutRejectionReason /* = nullptr */
-    )
+Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString* OutRejectionReason /* = nullptr */)
 {
-    check( this->SupremePolicies )
-    check( this->GetWorldState() == EWorldState::Running )
+    check(this->SupremePolicies)
+    check(this->GetWorldState() == EWorldState::Running)
 
     checkCode
     (
         if (Persona.Type == EIncomingConnectionRequest::Local)
         {
-            check( Persona.Surface )
+            check(Persona.Surface)
         }
     )
 
@@ -293,7 +284,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(
         }
     }
 
-    auto* Pc{ this->SupremePolicies->OnIncomingConnectionRequest(Persona.Type, OutRejectionReason) };
+    auto* Pc{this->SupremePolicies->OnIncomingConnectionRequest(Persona.Type, OutRejectionReason)};
     if (Pc == nullptr)
     {
         return nullptr;
@@ -304,22 +295,24 @@ Jafg::APersonaController* Jafg::LWorld::Login(
         //# Sideeffect from creation, we do not really care.
         if (Persona.Surface->DoesPossess())
         {
-            check( Persona.Surface->GetController() == Pc )
-            check( Pc->IsSurfaceValid() )
+            check(Persona.Surface->GetController() == Pc)
+            check(Pc->IsSurfaceValid() )
         }
         else
         {
             Persona.Surface->PossessController(Pc);
         }
     }
+    else if (Persona.Type == EIncomingConnectionRequest::Remote)
+    {
+        jassertNoEntry()
+    }
     else
     {
         jassertNoEntry()
     }
 
-    MakeDeferredActorFinal(Pc);
-
-    this->SupremePolicies->OnPersonaControllerCreated(*Pc);
+    this->SupremePolicies->OnPersonaControllerCreated(Pc);
 
     return Pc;
 }
@@ -389,7 +382,7 @@ bool Jafg::LWorld::LineTraceByChannel(
     return OutHits->empty() == false;
 }
 
-Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHumanReadableName) noexcept
+Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept
 {
     if (GEngine)
     {
@@ -410,7 +403,7 @@ Jafg::APersonaController* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow(
     {
         if (auto* Possessed{ Surface->GetController() })
         {
-            if (Possessed->GetWorld() == this)
+            if (&Possessed->GetWorld() == this)
             {
                 return Possessed;
             }
@@ -426,7 +419,7 @@ Jafg::APersonaController const* Jafg::LWorld::GetThisWorldsLocalPersonaControlle
     {
         if (auto* Possessed{ Surface->GetController() })
         {
-            if (Possessed->GetWorld() == this)
+            if (&Possessed->GetWorld() == this)
             {
                 return Possessed;
             }
@@ -474,7 +467,11 @@ void Jafg::LWorld::OnTearDown()
 #endif /* !IN_SHIPPING */
     for (TUnique<JCxxClass> const& Obj : this->GetEmployees())
     {
-        check( Obj.get() != nullptr )
+        /* Null only allowed in tear down. */
+        if (Obj.get() == nullptr)
+        {
+            continue;
+        }
 
         if (Obj->IsA<AActor>())
         {
@@ -482,12 +479,12 @@ void Jafg::LWorld::OnTearDown()
 #if !IN_SHIPPING
             ++ActorCount;
 #endif /* !IN_SHIPPING */
-
-            check( Obj.get() == nullptr )
+            check(Obj.get() == nullptr)
         }
 
         continue;
     }
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     algo::orphan(&this->TickableObjects);
     algo::orphan(&this->DeletedTickableObjects);
@@ -499,12 +496,12 @@ void Jafg::LWorld::OnTearDown()
     this->UnderlyingLevel.reset();
 
     algo::orphan(&this->TickableObjects);
-    ensureDiscard( this->DeletedTickableObjects.empty() );
+    ensureDiscard(this->DeletedTickableObjects.empty());
     algo::orphan(&this->DeletedTickableObjects);
 
-    check( this->Collection.IsValid() == false )
+    check(this->Collection.IsOuterValid() == false && this->Collection.IsClassValid() == false)
 
-    check( this->TickableObjectsPutMutex == false )
+    check(this->TickableObjectsPutMutex == false)
 
     this->RealTimeWhenWorldWasLaunched = -1.0f;
     this->RealTimeWhenWorldStarted = -1.0f;

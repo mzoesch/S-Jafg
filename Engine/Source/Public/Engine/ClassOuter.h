@@ -12,21 +12,9 @@ namespace Jafg
 class LWorld;
 class JCxxClass;
 
-namespace Private
-{
-
-struct LClassOuterMiscellaneousAccessor;
-
-} /* ~Namespace Private */
-
-//#
 //# Object context used to determine the context and lifetimes of reflected classes.
-//#
 class LClassOuter
 {
-    friend JCxxClass;
-    friend Private::LClassOuterMiscellaneousAccessor;
-
 public:
 
     inline LClassOuter() noexcept : HumanReadableName("<anonymous>") { }
@@ -36,12 +24,20 @@ public:
 
     ENGINE_API void TearDown() noexcept;
 
-#if JAFG_DO_CHECKS
-    ENGINE_API void CheckValidityForCDRStates() const noexcept;
-#endif /* JAFG_DO_CHECKS */
+    FORCEINLINE constexpr bool IsUserDataValid() const noexcept { return this->UserData != nullptr; }
+    FORCEINLINE constexpr void SetUserData(void* InUserData) noexcept { this->UserData = InUserData;     }
+    FORCEINLINE constexpr void* GetUserData() noexcept { return this->UserData; }
 
-    FORCEINLINE void SetHumanReadableName(LString const& S) noexcept { this->HumanReadableName = S; }
+    FORCEINLINE void SetHumanReadableName(LStringView const& S) noexcept { this->HumanReadableName = S; }
     FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
+
+    //# For internal use only. DO NOT USE.
+    FORCEINLINE void _AddEmployee(JCxxClass* Employee) noexcept
+    {
+        check(this->IsHiredHere(Employee) == false)
+        this->Employees.emplace_back(Employee);
+        return;
+    }
 
     FORCEINLINE bool IsHiredHere(JCxxClass const* Employee) const noexcept { return algo::contains(this->Employees, Employee, &TUnique<JCxxClass>::get); }
     FORCEINLINE TArray<TUnique<JCxxClass>> const& GetEmployees() const noexcept { return this->Employees; }
@@ -53,18 +49,18 @@ public:
         );
 
     virtual bool IsWorld() const noexcept { return false; }
-    LWorld const* AsWorld() const noexcept;
-    LWorld* AsWorld() noexcept;
+    LWorld& AsWorld() noexcept;
+    LWorld const& AsWorld() const noexcept;
 
     FORCEINLINE TUnique<JCxxClass> Poach(JCxxClass* Employee) noexceptcheck
     {
-        check( Employee )
-        auto It{ algo::find(this->Employees, Employee, algo::unique_raw{}) };
+        check(Employee)
+        auto It{algo::find(this->Employees, Employee, algo::unique_raw{})};
         check( It != this->Employees.end() )
 
-        TUnique Out{ std::move(*It) };
-        check( *It == nullptr )
-        check( Out.get() == Employee )
+        TUnique Out{std::move(*It)};
+        check(*It == nullptr)
+        check(Out.get() == Employee)
         this->Employees.erase(It);
 
         return Out;
@@ -73,12 +69,12 @@ public:
     FORCEINLINE TUnique<JCxxClass> PoachToNull(JCxxClass* Employee) noexceptcheck
     {
         check( Employee )
-        auto It{ algo::find(this->Employees, Employee, algo::unique_raw{}) };
+        auto It{algo::find(this->Employees, Employee, algo::unique_raw{})};
         check( It != this->Employees.end() )
 
-        TUnique Out{ std::move(*It) };
-        check( *It == nullptr )
-        check( Out.get() == Employee )
+        TUnique Out{std::move(*It)};
+        check(*It == nullptr)
+        check(Out.get() == Employee)
 
         return Out;
     }
@@ -92,9 +88,23 @@ private:
     void RegisterToEngine();
     void UnregisterFromEngine();
 
+    void* UserData{};
     LString HumanReadableName;
     TArray<TUnique<JCxxClass>> Employees;
-    bool bWasRegisteredToEngine : 1 { false };
+    bool bWasRegisteredToEngine{};
 };
+
+inline JCxxClass::JCxxClass(LCxxDynamicInit const& Init) noexcept
+    : JafgVirtualTable{Init.Class}, Outer{Init.Outer}
+{
+    this->Outer._AddEmployee(this);
+}
+
+template<typename TCxxClass>
+inline JCxxClass::JCxxClass(TCxxStaticInit<TCxxClass> const& Init) noexcept
+    : JafgVirtualTable{TCxxClass::StaticClass()}, Outer{Init.Outer}
+{
+    this->Outer._AddEmployee(this);
+}
 
 } /* ~Namespace Jafg */

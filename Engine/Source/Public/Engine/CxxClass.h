@@ -7,13 +7,14 @@
 #include "Engine/CxxClassFlags.h"
 #include "Engine/BuildToolMacros.h"
 #include "Engine/CxxClassMacros.h"
-#include "Engine/CxxClassBaseForward.h"
 #include "Engine/CxxRecordTearDownReason.h"
 #include "CxxClass.generated.h"
 
 namespace Jafg
 {
 
+class AActor;
+class WNode;
 class LCxxClass;
 class NextIsBaseCxxClass;
 class LEngine;
@@ -21,65 +22,132 @@ class LLocalEgo;
 class JCxxClass;
 class LCarnifex;
 class LCommandLineInterface;
+struct LBeginClassLifeInfo;
+struct LEndClassLifeInfo;
 
-namespace Private
+namespace Detail
 {
 
 class LCxxRecordRegistry;
-struct LCxxRecordMiscellaneousAccessor;
+struct NewStaticCxxFn;
 
-//# For internal purposes only. Do not use directly.
-template<typename T>
-NODISCARD FORCEINLINE T* GetCDRFromCxxClass() noexcept;
+template<typename TOuter, typename TProj = algo::identity>
+struct TCxxDynamicInit final
+{
+    static_assert(std::is_base_of_v<LClassOuter, std::remove_cvref_t<std::invoke_result_t<TProj, TOuter const&>>>);
 
-} /* ~Namespace Private */
+    typedef TProj Proj;
 
-static_assert(Jafg::TIsCompleteType_v<NextIsBaseCxxClass> == false);
+    //# The outer in which the new object will sit in.
+    TOuter& Outer;
+    //# Identifier of the object to create if TCxxClass cannot be resolved at compile-time.
+    LCxxClass const& Class;
+};
+
+template<typename TOuter, typename TCxxClass, typename TProj = algo::identity>
+struct TCxxStaticInitBase final
+{
+    static_assert(std::is_base_of_v<JCxxClass, TCxxClass>);
+    static_assert(std::is_base_of_v<LClassOuter, std::remove_cvref_t<std::invoke_result_t<TProj, TOuter const&>>>);
+
+    typedef TProj Proj;
+
+    //# The outer in which the new object will sit in.
+    TOuter& Outer;
+};
+
+struct LCxxOuterIdentityProj final
+{
+    NODISCARD inline constexpr decltype(auto) operator()(auto const& Init) const noexcept
+    {
+        return Init;
+    }
+};
+
+} /* ~Namespace Detail */
+
+//# Initialization for an object by runtime info. All classes have to fulfill this.
+typedef Detail::TCxxDynamicInit<LClassOuter> LCxxDynamicInit;
+
+//# Initialization for an object known at compile time. You may add any number of arguments to this.
+template<typename TCxxClass>
+using TCxxStaticInit = Detail::TCxxStaticInitBase<LClassOuter, TCxxClass>;
+
+//# Class initializer.
+struct LBeginClassLifeInfo final
+{
+    LCxxClass const& Class;
+};
+
+//# Class de-initializer.
+struct LEndClassLifeInfo final
+{
+    LCxxClass const& Class;
+    ECxxRecordTearDownReason::Type Reason;
+};
+
+typedef TFunction<void(JCxxClass* Object, LStringView Value)> LSetCxxClassField;
+typedef TFunction<LString(JCxxClass const& Object)> LGetCxxClassField;
+
+struct LCxxClassField final
+{
+    LStringView Identifier;
+    LSetCxxClassField Set;
+    LGetCxxClassField Get;
+};
 
 //#
 //# The base class for all objects that share a lifetime among its owner and that are detected automatically
 //# by the jafg build tool to allow for dynamic casting, network replication, etc.
 //# This class defines the bare minimum for an object to be a jafg object.
 //#
-//# @note Generally speaking, inheriting from this class directly is not recommended.
-//#
+static_assert(Jafg::TIsCompleteType_v<NextIsBaseCxxClass> == false);
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsBaseCxxClass")
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class JCxxClass
 {
-    friend LCarnifex;
-
-    LCxxClass& JafgVirtualTable;
-
-#if JAFG_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wkeyword-macro"
-#endif /* JAFG_WITH_CLANG */
-    #define override
     GENERATED_CLASS_BODY()
-#undef override
-#if JAFG_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* JAFG_WITH_CLANG */
+
+public:
+
+    typedef Detail::LCxxOuterIdentityProj LDynamicInitProj;
+
+private:
+
+    friend LCarnifex;
+    LCxxClass const& JafgVirtualTable;
 
 protected:
 
     //#
-    //# The constructor. Only called once. Only called on the default object of a class.
-    //# This constructor will always be called even if the object itself is abstract.
+    //# Jxx object can be created with two different ctors. Both should be declared as protected to avoid
+    //# accidentally creation of them:
     //#
-    ENGINE_API  explicit JCxxClass(LCxxObjectInitializer const& CxxObjectInitializer) noexceptcheck;
-    FORCEINLINE explicit JCxxClass(JCxxClass const& CDR) noexceptcheck
-        : JafgVirtualTable{CDR.GetVirtualTableInternal()}, Outer{nullptr}
-    {
-        check( CDR.IsCDR() )
-    }
+    //# 1. Dynamic initialized:
+    //#     - All dynamic ctors must only take one argument that is: l-cref to LCxxDynamicInit.
+    //# 2. Static initialized:
+    //#     - All static ctors must take as their first argument: l-cref to TCxxStaticInit<T> where T is the leaf class.
+    //#     - They make take any number of additional arguments after that.
+    //#
+    //# Static ctors are called if the client knows at compile time which class to instantiate. Comparable to "new Class()".
+    //# While dyn ctors are called by the jxx record system of Jafg; this allows for dynamic hot-swapping of newly
+    //# created classes at runtime through TSubclassOf<T>, user configs or plugin injections. A client knows only the
+    //# interface to the class but does not know the actual underlying class.
+    //#
+    //# To create a new object see Jafg::NewDeferredObject and Jafg::NewObject below.
+    //#
+    inline explicit JCxxClass(LCxxDynamicInit const& Init) noexcept;
+    template<typename TCxxClass>
+    inline explicit JCxxClass(TCxxStaticInit<TCxxClass> const& Init) noexcept;
 
 public:
 
     virtual ~JCxxClass() noexceptcheck
     {
-        checkCode( JCxxClass::CheckDoubleDestroy(this) )
+        //
+        // A class must begin their life before getting destroyed.
+        //
+        check(this->_HasBegunLife())
 
         //
         // If this check triggers, you might have done one of the following things that are forbidden:
@@ -91,81 +159,58 @@ public:
         // at the next engine butcher cycle or by calling #KillYourSelfNow to get them discarded immediately (comparable
         // with a call to the delete operator).
         //
-        check( this->bGarbage )
-        check( this->HasEndedLife() )
-
-        checkCode
-        (
-            if (this->IsCDRInternalWeak())
-            {
-                check( this->HasBegunLifeDefault() )
-                check( this->HasBegunLife() == false )
-            }
-            else
-            {
-                check( this->HasBegunLife() )
-                check( this->HasBegunLifeDefault() == false )
-            }
-        )
+        check(this->bGarbage)
 
         return;
     }
 
     //#
-    //# Delegate that is called when the default object of this class is finished loading.
-    //# If you need to set variables, use the object constructor to initialize them, but if you need to have access
-    //# to the finished loaded default object, use this delegate. E.g., validate config attributes (as they are not
-    //# loaded when the constructor is called).
+    //# Delegate that is guaranteed to be called before the first instantiation of a class object. Usually right after
+    //# a plugin has finished loading.
     //#
-    virtual void BeginLifeCDR()
+    static void BeginClassLife(LBeginClassLifeInfo const& Info)
     {
-        check( this->IsDefault() )
-#if DO_DOUBLE_CHECK_LIFETIMES
-    jassert( this->bHasBegunLifeCDR == false )
-    this->bHasBegunLifeCDR = true;
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+        checkCode(JCxxClass::_check_BeginClassLife(Info))
+#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
+        static std::unordered_set<void const*> Lifetimes;
+        jassert(Lifetimes.contains(&Info.Class) == false)
+        Lifetimes.emplace(&Info.Class);
+#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
     }
-#if DO_DOUBLE_CHECK_LIFETIMES
-    NODISCARD FORCEINLINE constexpr bool HasBegunLifeDefault() const noexcept { return this->bHasBegunLifeCDR; }
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+
+    //#
+    //# Delegate that is guaranteed to be called while no class objects of this type are allocated. Usually right
+    //# before the plugin unloading process or engine termination.
+    //#
+    static void EndClassLife(LEndClassLifeInfo const& Info)
+    {
+        checkCode(JCxxClass::_check_EndClassLife(Info))
+#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
+        static std::unordered_set<void const*> Lifetimes;
+        jassert(Lifetimes.contains(&Info.Class) == false)
+        Lifetimes.emplace(&Info.Class);
+#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
+    }
 
     //#
     //# The first thing that is being called after this object is being created.
+    //# Config and networked related fields will be initialized.
+    //#
     //# Use it as a deferred constructor that needs runtime information.
     //#
     virtual void BeginLife()
     {
-#if DO_DOUBLE_CHECK_LIFETIMES
+#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
         jassert( this->bHasBegunLife == false )
         this->bHasBegunLife = true;
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
     }
-#if DO_DOUBLE_CHECK_LIFETIMES
-    NODISCARD FORCEINLINE constexpr bool HasBegunLife() const noexcept { return this->bHasBegunLife; }
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
-
-    //#
-    //# Called transitively either by the butcher or #KillYourSelfNow at the last moment of this object lifetime.
-    //# The destructor will still be called afterward, but this should be the destructor for the common people.
-    //#
-    virtual void EndLife()
-    {
-#if DO_DOUBLE_CHECK_LIFETIMES
-        jassert( this->bHasExecutedEndLife == false )
-        this->bHasExecutedEndLife = true;
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
-    }
-#if DO_DOUBLE_CHECK_LIFETIMES
-    NODISCARD FORCEINLINE constexpr bool HasEndedLife() const noexcept { return this->bHasExecutedEndLife; }
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
+    NODISCARD FORCEINLINE constexpr bool _HasBegunLife() const noexcept { return this->bHasBegunLife; }
+#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
 
     FORCEINLINE LCxxClass const& GetVirtualTable() const noexcept { return this->JafgVirtualTable; }
-    FORCEINLINE LCxxClass& GetMutableVirtualTable() noexcept { return this->JafgVirtualTable; }
-    FORCEINLINE LCxxClass const* GetVirtualTablePtr() const noexcept { return &this->JafgVirtualTable; }
-    FORCEINLINE LCxxClass* GetMutableVirtualTablePtr() noexcept { return &this->JafgVirtualTable; }
-
-    NODISCARD FORCEINLINE bool IsCDR() const noexcept { return this->IsDefault(); }
-    NODISCARD FORCEINLINE bool IsDefault() const noexcept;
+    FORCEINLINE LCxxClass const* GetVirtualTableAsPointer() const noexcept { return &this->JafgVirtualTable; }
 
     //#
     //# Marks this object instance as garbage, and it will be killed at the end of this or the next tick depending
@@ -176,34 +221,32 @@ public:
     NODISCARD FORCEINLINE bool IsGarbage() const noexcept { return this->bGarbage; }
     //#
     //# Will not wait for the global feared engine butcher to massacre all garbage children of this class but will tell
-    //# them to kill themselves now. This might have minimal runtime performance issues when called in large quantities
-    //# as we cannot use the spare time between ticks, if enforcing it was enabled by the user, for this task.
+    //# them to kill themselves now.
+    //#
+    //# It is generally bad practice to call this randomly. As Jafg usually tries to assure that a handle to any Jafg
+    //# class is at least valid for the whole tick the handle was acquired and does not point to dangling memory.
+    //#
+    //# @see TClassStorage<T>
     //#
     void KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason = ECxxRecordTearDownReason::Default, bool bMayBeGarbage = false);
 
-    //# Delegate called when this object was marked as garbage. Never called on the default object.
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type, LClassOuter& PreviousOuter) { check( this->IsGarbage() && this->IsDefault() == false ) }
-    //# Delegate called when this object was marked as garbage. Only called on the default object.
-    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type, LClassOuter& PreviousOuter) { check( this->IsGarbage() && this->IsDefault() ) }
+    //#
+    //# Delegate called when this object was marked as garbage.
+    //# Use this for immediate reaction to be killed. Otherwise use the dctor that will usually be called at the end
+    //# of the tick this delegate was called.
+    //#
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) { check( this->IsGarbage() ) }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.
     //# Lifetimes can be abridged by calling either #MarkAsGarbage or #KillYourSelfNow.
     //#
-    FORCEINLINE bool IsOuterValid() const noexcept { return this->Outer != nullptr; }
-    FORCEINLINE LClassOuter const* GetOuter() const noexcept { return this->Outer; }
-    FORCEINLINE LClassOuter      * GetOuter() noexcept { return this->Outer; }
-    FORCEINLINE LClassOuter const* GetOuterChecked() const noexceptcheck { auto* Out{ this->GetOuter() }; check( Out ) return Out; }
-    FORCEINLINE LClassOuter      * GetOuterChecked() noexceptcheck { auto* Out{ this->GetOuter() }; check( Out ) return Out; }
-    FORCEINLINE LClassOuter const* GetOuterAsserted() const { auto* Out{ this->GetOuter() }; jassert( Out ) return Out; }
-    FORCEINLINE LClassOuter      * GetOuterAsserted()       { auto* Out{ this->GetOuter() }; jassert( Out ) return Out; }
+    FORCEINLINE LClassOuter      & GetOuter() noexcept { return this->Outer; }
+    FORCEINLINE LClassOuter const& GetOuter() const noexcept { return this->Outer; }
 
     FORCEINLINE LName          GetName() const noexcept;
     FORCEINLINE LStringView    GetNameAsStringView() const noexcept;
     FORCEINLINE LString const& GetNameAsString() const noexcept;
-
-    FORCEINLINE TArray<LCxxClassField> const& GetFields() const noexcept;
-    FORCEINLINE TArray<LCxxClassField>& GetMutableFieldsDangerous() noexcept;
 
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
     FORCEINLINE bool IsA() const noexcept;
@@ -237,15 +280,9 @@ public:
 
 private:
 
-    FORCEINLINE LCxxClass& GetVirtualTableInternal() const noexcept { return this->JafgVirtualTable; }
+    LClassOuter& Outer;
 
-    NODISCARD FORCEINLINE bool IsCDRInternalWeak() const noexcept;
-
-#if JAFG_DO_CHECKS
-    ENGINE_API static void CheckDoubleDestroy(void const* Ptr);
-#endif /* JAFG_DO_CHECKS */
-
-    enum class EMarkAsGarbageBehavior
+    enum struct EMarkAsGarbageBehavior
     {
         Default,
         Ignore,
@@ -253,17 +290,15 @@ private:
     };
 
     void MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordTearDownReason::Type Reason);
-    void OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter);
+#if JAFG_DO_CHECKS
+    ENGINE_API static void _check_BeginClassLife(LBeginClassLifeInfo const& Info);
+    ENGINE_API static void _check_EndClassLife(LEndClassLifeInfo const& Info);
+#endif /* JAFG_DO_CHECKS */
 
-    bool bGarbage : 1{ false };
-
-#if DO_DOUBLE_CHECK_LIFETIMES
-    bool bHasBegunLife : 1{ false };
-    bool bHasBegunLifeCDR : 1{ false };
-    bool bHasExecutedEndLife : 1{ false };
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
-
-    LClassOuter* Outer;
+    bool bGarbage:1{};
+#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
+    bool bHasBegunLife:1{};
+#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
 };
 
 } /* ~Namespace Jafg */
@@ -272,11 +307,6 @@ private:
 
 namespace Jafg
 {
-
-NODISCARD FORCEINLINE bool JCxxClass::IsDefault() const noexcept
-{
-    return this->GetVirtualTable().GetCDR() == this;
-}
 
 NODISCARD LName JCxxClass::GetName() const noexcept
 {
@@ -293,16 +323,6 @@ NODISCARD LString const& JCxxClass::GetNameAsString() const noexcept
     return this->GetVirtualTable().GetFullyQualifiedName();
 }
 
-NODISCARD TArray<LCxxClassField> const& JCxxClass::GetFields() const noexcept
-{
-    return this->GetVirtualTable().GetFields();
-}
-
-NODISCARD TArray<LCxxClassField>& JCxxClass::GetMutableFieldsDangerous() noexcept
-{
-    return this->GetMutableVirtualTable().GetMutableFieldsDangerous();
-}
-
 } /* ~Namespace Jafg */
 
 #include "Engine/ClassOuter.h"
@@ -311,49 +331,201 @@ NODISCARD TArray<LCxxClassField>& JCxxClass::GetMutableFieldsDangerous() noexcep
 #include "Engine/CxxClassUtlity.h"
 #include "Engine/ClassStorage.h"
 
-template <typename T>
-struct std::formatter<TSubclassOf<T>> : std::formatter<LStringView>
+template<typename T>
+struct std::formatter<TSubclassOf<T>> : std::formatter<LString>
 {
-    FORCEINLINE auto format
-    (
-        const TSubclassOf<T>& InClass,
-        std::format_context&  InContext
-    ) const -> std::format_context::iterator
+    FORCEINLINE std::format_context::iterator format(const TSubclassOf<T>& InClass, std::format_context&  InContext) const
     {
         if (InClass)
         {
-            return std::formatter<LStringView>::format(InClass->GetNameAsStringView(), InContext);
+            return std::formatter<LString>::format(InClass->GetNameAsString(), InContext);
         }
-
-        return ::std::formatter<LStringView>::format({}, InContext);
+        return std::formatter<LString>::format(Jafg::SprintF("{}?", T::StaticClass().GetNameAsString()), InContext);
     }
 };
 
 namespace Jafg
 {
 
-template<typename T> requires std::is_base_of_v<JCxxClass, T>
-NODISCARD FORCEINLINE T const* LCxxClass::GetCDR() const noexcept
-{
-    return StaticCast<T>(this->GetCDR());
-}
+//# Cast the result of a new object to a specific compile-time class.
+template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+struct CastTo final{};
 
-template<typename T> requires std::is_base_of_v<JCxxClass, T>
-NODISCARD FORCEINLINE T* LCxxClass::GetMutableCDR() noexcept
+namespace Detail
 {
-    return StaticCast<T>(this->GetMutableCDR());
-}
+
+template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+struct TNewStaticCxxType final{};
+
+struct NewStaticCxxFn
+{
+    template<typename TCxxClass, typename... TArgs>
+    inline static constexpr bool is_constructible_v{requires(TArgs&&... Args){new TCxxClass{std::forward<TArgs>(Args)...};}};
+
+    template<typename TCxxClass, typename... TArgs> requires std::is_base_of_v<JCxxClass, TCxxClass>
+        && NewStaticCxxFn::is_constructible_v<TCxxClass, TArgs&&...>
+    TCxxClass* operator()(TNewStaticCxxType<TCxxClass>, TArgs&&... Args) const noexcept(std::is_nothrow_constructible_v<TCxxClass, TArgs...>)
+    {
+        return new TCxxClass(std::forward<TArgs>(Args)...);
+    }
+};
+inline constexpr NewStaticCxxFn NewStaticCxx{};
+
+template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+struct TDeferredObjectExec
+{
+    inline constexpr TDeferredObjectExec() noexcept = delete;
+    inline constexpr TDeferredObjectExec(TCxxClass& InClass) noexcept : Class(InClass) {}
+    inline constexpr TDeferredObjectExec(TDeferredObjectExec&& O) noexcept : Class(O.Class), bReleased{O.bReleased}
+    {
+        O.bReleased = true;
+    }
+    template<typename UCxxClass> requires TIsCompleteType_v<UCxxClass> && std::is_base_of_v<JCxxClass, UCxxClass>
+        && (std::is_base_of_v<TCxxClass, UCxxClass> || std::is_base_of_v<UCxxClass, TCxxClass>)
+    inline constexpr TDeferredObjectExec(TDeferredObjectExec<UCxxClass>&& O) noexcept :
+        Class{static_cast<TCxxClass&>(O.Class)}, bReleased{O.bReleased}
+    {
+        O.bReleased = true;
+    }
+
+    inline constexpr TDeferredObjectExec& operator=(TDeferredObjectExec&&) noexcept = delete;
+    PROHIBIT_COPY(TDeferredObjectExec)
+
+    inline ~TDeferredObjectExec()
+    {
+        if (this->bReleased == false)
+        {
+            MakeCxxObjectFinal(Class);
+        }
+    }
+
+    inline constexpr TCxxClass* release() noexcept
+    {
+        check( this->bReleased )
+        this->bReleased = false;
+        return &this->Class;
+    }
+
+    inline TCxxClass& operator*() noexcept { return this->Class; }
+    inline TCxxClass const& operator*() const noexcept { return this->Class; }
+    inline TCxxClass* operator->() noexcept { return &this->Class; }
+    inline TCxxClass const* operator->() const noexcept { return &this->Class; }
+
+    inline explicit operator TCxxClass*() noexcept { return &this->Class; }
+    inline explicit operator TCxxClass const*() const noexcept { return &this->Class; }
+
+    inline TCxxClass* operator&() noexcept { return &this->Class; }
+    inline TCxxClass* operator&() const noexcept { return &this->Class; }
+
+    TCxxClass& Class;
+    bool bReleased{};
+};
+
+template<typename TDynInit, template<typename> typename TStatInit, template<typename> typename TResult, typename TRootNode, typename... TForbiddenNodes>
+struct NewDeferredObjectFn
+{
+    //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new deferred jxx-object.
+    template<typename TCxxClass>
+    inline static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+
+    TResult<TRootNode> operator()(TDynInit const& Init) const
+    {
+        check(Tasks::IsOnMasterThread())
+#if JAFG_DO_CHECKS
+        if (Init.Class.IsAbstract())
+        {
+            panicMsgf("Tried to instantiate abstract class [{}].", Init.Class.GetFullyQualifiedName())
+        }
+#endif /* JAFG_DO_CHECKS */
+        auto* Result{Init.Class.GetMallocCxxFn()({.Outer=std::invoke(typename TDynInit::Proj{}, Init.Outer),.Class=Init.Class})};
+        check(Result && Result->_HasBegunLife() == false)
+        return TResult<TRootNode>{*static_cast<TRootNode*>(Result)};
+    }
+
+    template<typename TCxxClass> requires AllowedTreeNode<TCxxClass>
+    TResult<TCxxClass> operator()(CastTo<TCxxClass>, TDynInit const& Init) const
+    {
+        return TResult<TCxxClass>{std::move((*this)(Init))};
+    }
+
+    template<typename TCxxClass, typename... TArgs> requires
+           AllowedTreeNode<TCxxClass>
+        && NewStaticCxxFn::is_constructible_v<TCxxClass, TStatInit<TCxxClass> const&, TArgs&&...>
+    TResult<TCxxClass> operator()(TStatInit<TCxxClass> const& Init, TArgs&&... Args) const
+    {
+        check(Tasks::IsOnMasterThread())
+#if JAFG_DO_CHECKS
+        if (TCxxClass::StaticClass().IsAbstract())
+        {
+            panicMsgf("Tried to instantiate abstract class [{}].", TCxxClass::StaticClass().GetFullyQualifiedName())
+        }
+#endif /* JAFG_DO_CHECKS */
+        auto* Result{NewStaticCxx(TNewStaticCxxType<TCxxClass>{}, Init, std::forward<TArgs>(Args)...)};
+        check(Result && &Result->GetVirtualTable() == &TCxxClass::StaticClass() && Result->_HasBegunLife() == false)
+        return TResult<TCxxClass>{*Result};
+    }
+};
+
+} /* ~Namespace Detail */
+
+//#
+//# Create a new deferred jxx-object; the #BeginLife method will not be called.
+//# Use this function and not new/delete, etc.
+//# @note Jxx-objects may not be allocated on the stack.
+//#
+inline constexpr Detail::NewDeferredObjectFn<LCxxDynamicInit, TCxxStaticInit, Detail::TDeferredObjectExec, JCxxClass, AActor, WNode> NewDeferredObject{};
+
+namespace Detail
+{
+
+template<typename TDeferrer, typename TDynInit, template<typename> typename TStatInit, typename TRootNode, typename... TForbiddenNodes>
+struct NewObjectFn
+{
+    //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new jxx-object.
+    template<typename TCxxClass>
+    inline static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+
+    TRootNode* operator()(TDynInit const& Init) const
+    {
+         return &this->Deferrer(Init);
+    }
+
+    template<typename TCxxClass> requires AllowedTreeNode<TCxxClass>
+    TCxxClass* operator()(CastTo<TCxxClass>, TDynInit const& Init) const
+    {
+        return StaticCastChecked<TCxxClass>((*this)(Init));
+    }
+
+    template<typename TCxxClass, typename... TArgs> requires
+           AllowedTreeNode<TCxxClass>
+        && NewStaticCxxFn::is_constructible_v<TCxxClass, TStatInit<TCxxClass> const&, TArgs&&...>
+    TCxxClass* operator()(TStatInit<TCxxClass> const& Init, TArgs&&... Args) const
+    {
+        return &this->Deferrer(Init, std::forward<TArgs>(Args)...);
+    }
+
+    TDeferrer& Deferrer;
+};
+
+} /* ~Namespace Detail */
+
+//#
+//# Create a new jxx-object.
+//# Use this function and not new/delete, etc.
+//# @note Jxx-objects may not be allocated on the stack.
+//#
+inline constexpr Detail::NewObjectFn<decltype(NewDeferredObject), LCxxDynamicInit, TCxxStaticInit, JCxxClass, AActor, WNode> NewObject{NewDeferredObject};
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE bool JCxxClass::IsA() const noexcept
 {
-    return this->GetVirtualTable().DerivesFrom(*TObj::StaticClass());
+    return this->GetVirtualTable().DerivesFrom(TObj::StaticClass());
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE bool JCxxClass::IsA(TObj const** CastedOut) const noexcept
 {
-    if (TObj const* Out{ DynamicCast<TObj>(this) })
+    if (TObj const* Out{DynamicCast<TObj>(this)})
     {
         if (CastedOut)
         {
@@ -369,7 +541,7 @@ FORCEINLINE bool JCxxClass::IsA(TObj const** CastedOut) const noexcept
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE bool JCxxClass::IsA(TObj** CastedOut) noexcept
 {
-    if (TObj* Out{ DynamicCast<TObj>(this) })
+    if (TObj* Out{DynamicCast<TObj>(this)})
     {
         if (CastedOut)
         {
@@ -402,32 +574,32 @@ FORCEINLINE TObj const* JCxxClass::As() const noexcept
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE TObj* JCxxClass::AsChecked() noexcept
 {
-    TObj* Out{ this->As<TObj>() };
-    check( Out )
+    TObj* Out{this->As<TObj>()};
+    check(Out)
     return Out;
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE TObj const* JCxxClass::AsChecked() const noexcept
 {
-    TObj const* Out{ this->As<TObj>() };
-    check( Out )
+    TObj const* Out{this->As<TObj>()};
+    check(Out)
     return Out;
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE TObj* JCxxClass::AsAsserted() noexcept
 {
-    TObj* Out{ this->As<TObj>() };
-    jassert( Out )
+    TObj* Out{this->As<TObj>()};
+    jassert(Out)
     return Out;
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE TObj const* JCxxClass::AsAsserted() const noexcept
 {
-    TObj const* Out{ this->As<TObj>() };
-    jassert( Out )
+    TObj const* Out{this->As<TObj>()};
+    jassert(Out)
     return Out;
 }
 
@@ -443,89 +615,53 @@ FORCEINLINE TObj const* JCxxClass::AsStatic() const noexcept
     return StaticCast<TObj>(this);
 }
 
-NODISCARD FORCEINLINE bool JCxxClass::IsCDRInternalWeak() const noexcept
-{
-    auto* CDR{ this->GetVirtualTable().GetCDRInternalWeakDoNotUsePlease() };
-    if (CDR)
-    {
-        return CDR == this;
-    }
-
-    //# Assume that there is no other object then the CDR if CDR is null.
-    return true;
-}
-
-namespace Private
-{
-
-template<typename T>
-NODISCARD FORCEINLINE T* GetCDRFromCxxClass() noexcept
-{
-    return T::MutableStaticClass()->template GetMutableCDR<T>();
-}
-
-NODISCARD FORCEINLINE LString const& LRegistryClassPackage::GetFullyQualifiedName() const noexcept
-{
-    return this->StaticClass.GetFullyQualifiedName();
-}
-
-FORCEINLINE LRegistryClassPackage const* LCxxRecordRegistry::GetPackageByCDR(void const* CDR) const noexcept
-{
-    if (auto const* Out{ algo::find_pointer_if(this->RegisteredPackages, [CDR](auto const& E)
-    {
-        if (E->IsClass() == false)
-        {
-            return false;
-        }
-
-        return static_cast<void const*>(E->AsClass().StaticClass.GetCDR()) == CDR;
-    }) })
-    {
-        return Out->get()->IsClass() ? &Out->get()->AsClass() : nullptr;
-    }
-
-    return nullptr;
-}
-
-FORCEINLINE JCxxClass* LCxxRecordMiscellaneousAccessor::MallocClass(JCxxClass const& Class) { return Class._MallocClone(); }
-FORCEINLINE void LCxxRecordMiscellaneousAccessor::ChangeOuter(JCxxClass* Obj, LClassOuter* NewOuter) noexcept
-{
-    check( Obj )
-    Obj->Outer = NewOuter;
-
-    return;
-}
-
-} /* ~Namespace Private */
-
 } /* ~Namespace Jafg */
 
-namespace Serialization
+template<typename TCxxClass, typename TArchive> requires std::is_base_of_v<Jafg::JCxxClass, TCxxClass>
+    && Serde::IsTextOArchive_v<TArchive>
+struct Serde::TSerializer<TSubclassOf<TCxxClass>, TArchive>
 {
-
-template<typename TClass> NODISCARD FORCEINLINE constexpr LString ToString(TSubclassOf<TClass> const& Field) noexcept
-{
-    if (Field.HasClass())
+    void operator()(TArchive& Ar, TSubclassOf<TCxxClass> const& Field) const
     {
-        return Field->GetFullyQualifiedName();
+        if (Field.HasClass())
+        {
+            Ar.Stream << Field->GetFullyQualifiedName();
+        }
+        else
+        {
+            Ar.Stream << TCxxClass::StaticClass().GetFullyQualifiedName();
+        }
     }
-
-    return TClass::StaticClass()->GetFullyQualifiedName();
-}
-
-template<typename TClass> FORCEINLINE constexpr void FromString(TSubclassOf<TClass>* Dst, LString const& Value) noexcept
+};
+template<typename TCxxClass, typename TArchive> requires std::is_base_of_v<Jafg::JCxxClass, TCxxClass>
+    && Serde::IsTextIArchive_v<TArchive>
+struct Serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
 {
-    check( Dst )
-
-    auto* Package{ Jafg::Private::GetGlobalCxxRecordRegistry().GetPackageByNameAsserted(Value) };
-    jassert( Package->IsClass() )
-    auto const& ClassPackage{ Package->AsClass() };
-
-    Dst->Assign(ClassPackage.StaticClass);
-
-    return;
-}
-
-} /* ~Namespace Serialization */
-
-static_assert(Jafg::TIsCompleteType_v<Jafg::NextIsBaseCxxClass> == false);
+    LDeserializationResult operator()(TArchive const& Ar, TSubclassOf<TCxxClass>& Field) const
+    {
+        if (auto* Package{Jafg::Detail::GetGlobalCxxRecordRegistry().GetPackageByName(Ar.Stream)})
+        {
+            if (Package->IsClass())
+            {
+                Field.Assign(Package->AsClass().StaticClass);
+            }
+            else
+            {
+                return {
+                    .Errc = std::errc::invalid_argument,
+                    .Error = Jafg::SprintF("Package [{}] is not a class. Found [{}].",
+                        Package->GetFullyQualifiedName(), Jafg::LexToString(Package->GetType())
+                        )
+                    };
+            }
+        }
+        else
+        {
+            return {
+                .Errc = std::errc::invalid_argument,
+                .Error = Jafg::SprintF("No such package: [{}].", Ar.Stream)
+                };
+        }
+        return {};
+    }
+};

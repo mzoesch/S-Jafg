@@ -41,30 +41,27 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WParen
 {
     const LPreferenceValue_Scalar* This = static_cast<const LPreferenceValue_Scalar*>(Self);
 
-    WParentBase* Container;
 
     const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
-    NewNodeCtx(Target, WHRegion).SaveTo(&Container)
+    BeginStyling(*Target).Root<WHRegion>()
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
         .MinDesiredSize({0_pt, 10})
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBox)
+        NewStaticNodeVp(Target->GetViewport(), WTextBox)
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
             .Content(This->GetDisplayName())
         +
-        NewNodeCtx(Target, WTextBox)
+        NewStaticNodeVp(Target->GetViewport(), WTextBox)
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
             .Brush(LTextBoxBrush::Body())
             .TextAlign(ETextAlign::Right)
             .Content(This->GetFormattedText())
     ];
-
-    Target->AddChild(Container);
 
     return;
 }
@@ -102,21 +99,21 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
     auto* Action = GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByNameChecked(Self->GetDisplayName());
     auto& Contexts = GEngine->GetLocalEgo().GetUserInputRegistry().GetRegisteredContexts();
 
-    NewNodeCtx(Target, WVRegion).SaveTo(&Container)
+    BeginStyling(*Target).Root<WVRegion>().SaveTo(&Container)
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
         .MinDesiredSize({0_pt, 10})
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WHRegion)
+        NewStaticNodeVp(Target->GetViewport(), WHRegion)
             .Anchor(EAnchor::Fill)
         [
-            NewNodeCtx(Target, WTextBox)
+            NewStaticNodeVp(Target->GetViewport(), WTextBox)
                 .Brush(LTextBoxBrush::Body())
                 .Content(Action->GetDisplayName())
             +
-            NewNodeCtx(Target, WTextBox)
+            NewStaticNodeVp(Target->GetViewport(), WTextBox)
                 .Anchor(EAnchor::HFill)
                 .Brush(LTextBoxBrush::Body())
                 .Content(LexToString(Action->GetCategory()))
@@ -143,35 +140,27 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         {
             for (const LKey& Key: InKeys)
             {
-                WNode* KeyNode;
-                NewNodeCtx(InTarget, WTextBox).SaveTo(&KeyNode)
+                BeginStyling(*InTarget).Root<WTextBox>()
                     .Brush(LTextBoxBrush::Body())
                     .Content(LexToString(Key))
-                ;
-
-                InTarget->AddChild(KeyNode);
-
-                continue;
+                    ;
             }
-
-            return;
         };
 
         if (MappedAction->Triggers.size() == 1)
         {
             WHRegion* ContextContainer;
-            NewNodeCtx(Target, WHRegion).SaveTo(&ContextContainer)
+            BeginStyling(*Target).Root<WHRegion>().SaveTo(&ContextContainer)
                 .Anchor(EAnchor::Fill)
                 .Padding({20.0f, 0.0f, 0.0f, 0.0f})
             [
-                NewNodeCtx(Target, WTextBox)
+                NewStaticNodeVp(Target->GetViewport(), WTextBox)
                     .Brush(LTextBoxBrush::Body())
                     .Content(Context.GetDisplayName())
                 +
-                NewNodeCtx(Target, WSpacer)
+                NewStaticNodeVp(Target->GetViewport(), WSpacer)
                     .Anchor(EAnchor::HFill)
-            ]
-            ;
+            ];
 
             const LInputTrigger& Trigger = MappedAction->Triggers[0];
             check( Trigger.Name.empty() )
@@ -184,11 +173,11 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         }
 
         WVRegion* ContextContainer;
-        NewNodeCtx(Target, WVRegion).SaveTo(&ContextContainer)
+        BeginStyling(*Target).Root<WVRegion>().SaveTo(&ContextContainer)
             .Anchor(EAnchor::Fill)
             .Padding({20.0f, 0.0f, 0.0f, 0.0f})
         [
-            NewNodeCtx(Target, WTextBox)
+            NewStaticNodeVp(Target->GetViewport(), WTextBox)
                 .Brush(LTextBoxBrush::Body())
                 .Content(Context.GetDisplayName())
         ]
@@ -197,15 +186,15 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         for (const LInputTrigger& Trigger: MappedAction->Triggers)
         {
             WHRegion* TriggerContainer;
-            NewNodeCtx(Target, WHRegion).SaveTo(&TriggerContainer)
+            BeginStyling(*Target).Root<WHRegion>().SaveTo(&TriggerContainer)
                 .Anchor(EAnchor::Fill)
                 .Padding({40.0f, 0.0f, 0.0f, 0.0f})
             [
-                NewNodeCtx(Target, WTextBox)
+                NewStaticNodeVp(Target->GetViewport(), WTextBox)
                     .Brush(LTextBoxBrush::Body())
                     .Content(Trigger.Name)
                 +
-                NewNodeCtx(Target, WSpacer)
+                NewStaticNodeVp(Target->GetViewport(), WSpacer)
                     .Anchor(EAnchor::HFill)
             ]
             ;

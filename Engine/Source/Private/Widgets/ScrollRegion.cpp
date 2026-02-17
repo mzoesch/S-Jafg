@@ -5,13 +5,6 @@
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
 
-Jafg::WScrollRegion::WScrollRegion(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetVisibility(EWidgetVisibility::Visible);
-    return;
-}
-
 Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LViewport& Context, const LVec2F& InLocation)
 {
     if (this->CanChildrenBeHitTestable() == false)
@@ -274,7 +267,7 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
 
 void Jafg::WScrollRegion::ApplyScroll(const LKeyEvent& InKeyEvent)
 {
-    const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
+    const JUserPreferences* Prefs = &GetSingleton<JUserPreferences>();
 
     this->ScrollPosition.y = maths::clamp
     (
@@ -282,7 +275,7 @@ void Jafg::WScrollRegion::ApplyScroll(const LKeyEvent& InKeyEvent)
         + maths::sign(InKeyEvent.GetValue())
         *
         (
-            Prefs->MouseWheelScrollSpeed
+            *Prefs->MouseWheelScrollSpeed
             /
             maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)
         )

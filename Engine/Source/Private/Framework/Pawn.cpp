@@ -7,12 +7,15 @@
 #include "Engine/Engine.h"
 #include "Components/SceneComponent.h"
 
-void Jafg::APawn::BeginLife()
+void Jafg::APawn::DefaultInit()
 {
-    Super::BeginLife();
+    this->SetEverTickConstructorOnlyFlag();
 
-    this->RootComponent = this->EmplaceComponent<JSceneComponent>();
-    this->RootComponent->SetTranslation(maths::zero_vector<LWorldVec3>);
+    if (this->RootComponent == nullptr)
+    {
+        this->RootComponent = this->EmplaceComponent<ASceneComponent>();
+        this->RootComponent->SetTranslation(maths::zero_vector<LWorldVec3>);
+    }
 
     return;
 }
@@ -30,19 +33,16 @@ void Jafg::APawn::Tick(const f32 DeltaTime)
     //     ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
     // );
 
-
     return;
 }
 
-void Jafg::APawn::EndLife()
+void Jafg::APawn::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::EndLife();
-
+    Super::OnGarbage(Reason);
     if (this->IsPossessed())
     {
         this->OwningController->PossessPawn(nullptr, false);
     }
-
     return;
 }
 
@@ -77,6 +77,8 @@ Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept
 
 void Jafg::APawn::SetOwningController(APersonaController* InNew)
 {
+    check(this->_Lives())
+
     this->OwningController = InNew;
 
 #if WITH_LOCAL_LAYER

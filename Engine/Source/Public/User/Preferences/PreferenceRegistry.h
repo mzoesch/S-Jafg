@@ -16,7 +16,7 @@ class JPreferenceRegistry : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JPreferenceRegistry)
+    DEFAULT_OBJECT_CONSTRUCTORS(JPreferenceRegistry)
 
 public:
 
@@ -27,7 +27,7 @@ public:
 
 protected:
 
-    TCdrEmptyArray<TArray<TUnique<LPreference>>> Preferences;
+    TArray<TUnique<LPreference>> Preferences;
 };
 
 } /* ~Namespace Jafg */

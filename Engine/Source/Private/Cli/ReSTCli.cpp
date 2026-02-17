@@ -104,7 +104,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
 
     LOG_VERBOSE(LogReST, "Initializing ReSTCli.")
 
-    auto& Prefs{ *GetDefault<JReSTCliPreferences>() };
+    auto& Prefs{GetSingleton<JReSTCliPreferences>()};
 
     check( Prefs.bAlwaysDisable == false )
 
@@ -219,7 +219,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
     }
 
     LOG_VERBOSE(LogReST, "Starting ReSTCli.")
-    auto& Prefs{ *GetDefault<JReSTCliPreferences>() };
+    auto& Prefs{GetSingleton<JReSTCliPreferences>()};
 
     check( ::Server->is_running() == false )
 
@@ -250,7 +250,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
     {
         if (ArgPort->HasValue())
         {
-            Serialization::FromString(&Port, ArgPort->Value.value());
+            Serde::FromString(&Port, ArgPort->Value.value());
         }
         else if (ArgPort->HasValues())
         {
@@ -287,7 +287,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
         static_cast<time_t>((Prefs.IdleIntervalInSeconds - static_cast<time_t>(Prefs.IdleIntervalInSeconds)) * maths::s2mus_d)
         );
 
-    ::Server->set_payload_max_length(Prefs.PayLoadMaxLength);
+    ::Server->set_payload_max_length(static_cast<size_t>(Prefs.PayLoadMaxLength));
 
     ::Server->set_tcp_nodelay(Prefs.TcpNoDelay);
     ::Server->set_ipv6_v6only(Prefs.Ipv6_v6Only);

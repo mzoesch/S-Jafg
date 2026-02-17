@@ -4,59 +4,42 @@
 #include "Widgets/EditableTextBox.h"
 #include "Widgets/TextBox.h"
 
-Jafg::WInput_Vector3::WInput_Vector3(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetPadding(5.0f);
-    this->SetOmniOutlineThickness(1.0f);
-    this->SetOmniTint(Colors::Transparent);
-
-    return;
-}
-
 void Jafg::WInput_Vector3::Construct()
 {
     Super::Construct();
 
-    LEditableTextBoxBrush Brush { LTextBoxBrush::Compact() };
+    LEditableTextBoxBrush Brush{LTextBoxBrush::Compact()};
     Brush.Type = ERegionBrush::RoundedOutlineBox;
     Brush.Tint = Colors::Black;
     Brush.OutlineThickness = 1.0f;
     Brush.OutlineTint = Colors::Gray;
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    BeginStyling(*this).Root<WTextBox>()
+        .Type(ERegionBrush::None)
+        .Brush(Brush)
+        .Content(this->DisplayName)
+        .MinDesiredSize({128_pt, 0});
 
-    WTextBox* Display { ConstructWidgetNode<WTextBox>(this->GetOuter()) };
-    Display->SetBrush(Brush);
-    Display->SetType(ERegionBrush::None);
-    Display->SetContent(this->DisplayName);
-    Display->SetMinDesiredSize({128_pt, 0});
+    BeginStyling(*this).Root<WEditableTextBox>()
+        .Brush(Brush)
+        .Content("1.0")
+        .MinDesiredSize({48_pt, 0})
+        .ContentPredicate(WEditableTextBox::IsContentFloatingPoint)
+        ;
 
-    this->AddChild(Display);
+    BeginStyling(*this).Root<WEditableTextBox>()
+        .Brush(Brush)
+        .Content("1.0")
+        .MinDesiredSize({48_pt, 0})
+        .ContentPredicate(WEditableTextBox::IsContentFloatingPoint)
+        ;
 
-    WEditableTextBox* X { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
-    X->SetBrush(Brush);
-    X->SetContent("1.0");
-    X->SetMinDesiredSize({48_pt, 0});
-    X->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
-    this->AddChild(X);
-
-    WEditableTextBox* Y { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
-    Y->SetBrush(Brush);
-    Y->SetContent("1.0");
-    Y->SetMinDesiredSize({48_pt, 0});
-    Y->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
-    this->AddChild(Y);
-
-    WEditableTextBox* Z { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
-    Z->SetBrush(Brush);
-    Z->SetContent("1.0");
-    Z->SetMinDesiredSize({48_pt, 0});
-    Z->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
-    this->AddChild(Z);
-
-#pragma clang diagnostic pop
+    BeginStyling(*this).Root<WEditableTextBox>()
+        .Brush(Brush)
+        .Content("1.0")
+        .MinDesiredSize({48_pt, 0})
+        .ContentPredicate(WEditableTextBox::IsContentFloatingPoint)
+        ;
 
     return;
 }

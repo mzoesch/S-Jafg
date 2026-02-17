@@ -9,40 +9,19 @@
 namespace Jafg
 {
 
-template <typename TNode>
-class TWidgetFactoryTextBox : public TWidgetFactoryBox<TNode>
-{
-public:
+struct LFactoryTextBox;
 
-    GENERATED_FACTORY_BODY(TWidgetFactoryBox)
-
-    FORCEINLINE TFactoryRetTy& Content(const LString&  InContent) { this->This()->SetContent(InContent); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& TextColor(const LColor&  InColor) { this->This()->SetTextColor(InColor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextScale(const LTextScale InScale) { this->This()->SetTextScale(InScale); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextAlign(const ETextHAlign::Type InAlign) { this->This()->SetTextHAlign(InAlign); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextAlign(const ETextVAlign::Type InAlign) { this->This()->SetTextVAlign(InAlign); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextHAlign(const ETextHAlign::Type InAlign) { this->This()->SetTextHAlign(InAlign); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextVAlign(const ETextVAlign::Type InAlign) { this->This()->SetTextVAlign(InAlign); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& RespectContentHeight(const bool bInRespect) { this->This()->SetRespectContentHeight(bInRespect); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& Brush(const LTextBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Brush(LTextBoxBrush&& InBrush) { this->This()->SetBrush(std::move(InBrush)); return this->Self(); }
-};
-
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBox)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTextBox)
 class ENGINE_API WTextBox : public WBox
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WTextBox)
+    DEFAULT_NODE_CONSTRUCTORS(WTextBox)
 
 public:
 
-    virtual void BeginLifeCDR() override;
     virtual void Draw(LViewport& Context) const override;
 
     FORCEINLINE void UpdateDesiredSize() const override { this->UpdateDesiredSizeForString(this->Content); }
@@ -55,7 +34,7 @@ public:
     LTextBoxChangedDelegate OnChanged;
 
     FORCEINLINE void EmptyContent() noexcept { algo::orphan(&this->Content); this->OnChanged.InvokeIfBound(this->Content); }
-    FORCEINLINE void SetContent(const LString& InContent) noexcept { this->Content = InContent; this->OnChanged.InvokeIfBound(this->Content); }
+    FORCEINLINE void SetContent(LString const& InContent) noexcept { this->Content = InContent; this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE void SetContent(LString&& InContent) noexcept { this->Content = std::move(InContent); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }
 
@@ -114,6 +93,67 @@ private:
     LString Content;
 
     mutable LVec2F TextDesiredSize;
+};
+
+struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
+{
+    NODE_FACTORY_BODY(WTextBox)
+
+    FORCEINLINE decltype(auto) Content(this auto&& Self, const LString&  InContent)
+    {
+        NODE_FACTORY_SELF().SetContent(InContent);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) Content(this auto&& Self, LString&& InContent)
+    {
+        NODE_FACTORY_SELF().SetContent(std::move(InContent));
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) TextColor(this auto&& Self, const LColor&  InColor)
+    {
+        NODE_FACTORY_SELF().SetTextColor(InColor);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) TextScale(this auto&& Self, const LTextScale InScale)
+    {
+        NODE_FACTORY_SELF().SetTextScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) TextAlign(this auto&& Self, const ETextHAlign::Type InAlign)
+    {
+        NODE_FACTORY_SELF().SetTextHAlign(InAlign);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) TextAlign(this auto&& Self, const ETextVAlign::Type InAlign)
+    {
+        NODE_FACTORY_SELF().SetTextVAlign(InAlign);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) TextHAlign(this auto&& Self, const ETextHAlign::Type InAlign)
+    {
+        NODE_FACTORY_SELF().SetTextHAlign(InAlign);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) TextVAlign(this auto&& Self, const ETextVAlign::Type InAlign)
+    {
+        NODE_FACTORY_SELF().SetTextVAlign(InAlign);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) RespectContentHeight(this auto&& Self, const bool bInRespect)
+    {
+        NODE_FACTORY_SELF().SetRespectContentHeight(bInRespect);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) Brush(this auto&& Self, const LTextBoxBrush& InBrush)
+    {
+        NODE_FACTORY_SELF().SetBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+    FORCEINLINE decltype(auto) Brush(this auto&& Self, LTextBoxBrush&& InBrush)
+    {
+        NODE_FACTORY_SELF().SetBrush(std::move(InBrush));
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 FORCEINLINE constexpr void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept

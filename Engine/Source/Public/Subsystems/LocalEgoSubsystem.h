@@ -23,13 +23,11 @@ class JLocalEgoSubsystem : public JSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JLocalEgoSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JLocalEgoSubsystem)
 
 public:
 
-    //#
     //# Called when the local ego possesses a new controller. Both pointers may be null.
-    //#
     virtual void OnNewPersonaControllerPossessed(APersonaController* InOld, APersonaController* InNew) { }
 };
 

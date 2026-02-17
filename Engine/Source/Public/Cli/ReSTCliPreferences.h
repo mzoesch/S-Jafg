@@ -15,7 +15,7 @@ class JReSTCliPreferences final : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JReSTCliPreferences)
+    DEFAULT_OBJECT_CONSTRUCTORS(JReSTCliPreferences)
 
 public:
 
@@ -24,11 +24,11 @@ public:
     //# even if appropriate program arguments are provided.
     //#
     CLASS_FIELD(Config)
-    bool bAlwaysDisable{ false };
+    TPreference<bool> bAlwaysDisable{ false };
 
     //# Whether to automatically start the ReST CLI server when the engine starts.
     CLASS_FIELD(Config)
-    bool bAutoStart{ false };
+    TPreference<bool> bAutoStart{ false };
 
     //# Default host to bind to.
     CLASS_FIELD(Config)
@@ -50,12 +50,12 @@ public:
     f64 IdleIntervalInSeconds{ 0.0 };
 
     CLASS_FIELD(Config)
-    size_t PayLoadMaxLength{ std::numeric_limits<size_t>::max() };
+    LSize PayLoadMaxLength{ std::numeric_limits<LSize>::max() };
 
     CLASS_FIELD(Config)
-    bool TcpNoDelay{ false };
+    bool TcpNoDelay{};
     CLASS_FIELD(Config)
-    bool Ipv6_v6Only{ false };
+    bool Ipv6_v6Only{};
 };
 
 } /* ~Namespace Jafg */

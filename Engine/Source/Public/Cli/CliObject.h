@@ -21,7 +21,7 @@ class LCliObject
 
 public:
 
-    static constexpr LCliObjectUuid NoUuid { 0 };
+    inline static constexpr LCliObjectUuid NoUuid{};
 
     FORCEINLINE LCliObject() = default;
     FORCEINLINE LCliObject(const LString& InName) : Identifier(InName) { }
@@ -68,7 +68,7 @@ protected:
 
 private:
 
-    LCliObjectUuid Uuid { NoUuid };
+    LCliObjectUuid Uuid{ NoUuid };
     LString Identifier;
     LString Help;
 };

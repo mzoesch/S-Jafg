@@ -5,14 +5,14 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/DebugCameraComponent.h"
 
-void Jgc::JFwSupremePolicies::OnWorldPreInit()
+void Jgc::AFwSupremePolicies::OnWorldPreInit()
 {
     Super::OnWorldPreInit();
 
-    this->GetWorldChecked()->SetBackgroundColor(LinearColors::DeepSkyBlue);
+    this->GetWorld().SetBackgroundColor(LinearColors::DeepSkyBlue);
 
-    this->RotatingActor = Jafg::SpawnDeferredActor<Jafg::AActor>(this->GetWorld());
-    this->RotatingActor->EmplaceDeferredComponent<Jafg::JStaticMeshComponent>([](Jafg::JStaticMeshComponent& Comp)
+    this->RotatingActor = Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()});
+    this->RotatingActor->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.Create({
             .MeshPath = "Content/Models/viking_room.obj",
@@ -30,9 +30,9 @@ void Jgc::JFwSupremePolicies::OnWorldPreInit()
     return;
 }
 
-Jafg::APawn* Jgc::JFwSupremePolicies::SpawnDeferredPawnForPersonaController(Jafg::APersonaController& Pc)
+Jafg::APawn* Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jafg::APersonaController const& Pc)
 {
-    auto* Pawn{Super::SpawnDeferredPawnForPersonaController(Pc)};
+    auto* Pawn{Super::GetPawnForPersonaController(Pc)};
     if (Pawn == nullptr)
     {
         return nullptr;
@@ -40,7 +40,7 @@ Jafg::APawn* Jgc::JFwSupremePolicies::SpawnDeferredPawnForPersonaController(Jafg
 
     if (Pc.IsLocallyPossessed())
     {
-        Pawn->EmplaceDeferredComponent<JDebugCameraComponent>();
+        Pawn->EmplaceComponent<ADebugCameraComponent>();
     }
 
     return Pawn;

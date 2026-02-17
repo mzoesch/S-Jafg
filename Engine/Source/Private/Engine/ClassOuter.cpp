@@ -17,10 +17,6 @@ Jafg::LClassOuter::LClassOuter(LString HumanReadableName, bool bRegisterToEngine
         this->bWasRegisteredToEngine = true;
         this->RegisterToEngine();
     }
-    else
-    {
-        check( this->bWasRegisteredToEngine == false )
-    }
 
     return;
 }
@@ -45,7 +41,7 @@ void Jafg::LClassOuter::TearDown() noexcept
         {
             check( E.get() != nullptr )
             check( E->IsGarbage() == false )
-            check( E->GetOuter() == this )
+            check( &E->GetOuter() == this )
 
             continue;
         }
@@ -61,7 +57,7 @@ void Jafg::LClassOuter::TearDown() noexcept
 
     while (this->Employees.empty() == false)
     {
-        auto& E{ this->Employees.back() };
+        auto& E{this->Employees.back()};
 
         /* Null only allowed in tear down. */
         if (E.get() == nullptr)
@@ -88,43 +84,10 @@ void Jafg::LClassOuter::TearDown() noexcept
 
     algo::orphan(&this->Employees);
 
-    Private::GetGlobalCarnifex().KillAllGarbageChildren();
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;
 }
-
-#if JAFG_DO_CHECKS
-void Jafg::LClassOuter::CheckValidityForCDRStates() const noexcept
-{
-    LSize CDRCount{ 0 };
-    LSize NonCDRCount{ 0 };
-
-    algo::for_each(this->Employees, [&CDRCount, &NonCDRCount](auto const& E)
-    {
-        if (E->IsCDR())
-        {
-            ++CDRCount;
-        }
-        else
-        {
-            ++NonCDRCount;
-        }
-
-        return;
-    });
-
-    if (CDRCount != 0 && NonCDRCount != 0)
-    {
-        LOG_WARNING(LogClassOuter, "Class outer [{}] employs both normal [{}] and CDR [{}] classes.",
-              this->HumanReadableName
-            , NonCDRCount
-            , CDRCount
-            )
-    }
-
-    return;
-}
-#endif /* JAFG_DO_CHECKS */
 
 LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
     LLoadedPluginHandle PluginHandle,
@@ -141,32 +104,21 @@ LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
 
     STAT_CYCLE_FUNCTION()
 
-    checkCode( this->CheckValidityForCDRStates() )
-
-    LSize KillCount { 0 };
-
-    bool bTouched { false };
+    LSize KillCount{};
+    bool bTouched{};
     do
     {
         for (auto const& E : this->Employees)
         {
-            auto const& Class{ E->GetVirtualTable() };
+            auto const& Class{E->GetVirtualTable()};
             if (Class.GetPluginHandle() != PluginHandle)
             {
                 continue;
             }
 
-#if JAFG_DO_CHECKS
-            const LSize Size { this->Employees.size() };
-#endif /* JAFG_DO_CHECKS */
-
             bTouched = true;
             ++KillCount;
             E->MarkAsGarbage_v2(Reason);
-
-#if JAFG_DO_CHECKS
-            check( this->Employees.size() < Size )
-#endif /* JAFG_DO_CHECKS */
 
             break;
         }
@@ -175,7 +127,7 @@ LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
     if (KillCount > 0)
     {
         LOG_VERBOSE(LogClassOuter, "Removed {} employees from outer [{}] that were loaded by a foreign plugin.", KillCount, this->HumanReadableName)
-        Private::GetGlobalCarnifex().KillAllGarbageChildren();
+        Detail::GetGlobalCarnifex().KillAllGarbageChildren();
     }
 
     return KillCount;

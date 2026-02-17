@@ -16,17 +16,15 @@ bool Jafg::WTabBarButton::AddData(JNodeData& Data)
 
     if (TbData->Descriptor->DisplayNameField.empty() == false)
     {
-        this->GetFactory<WTabBarButton>()
-        [
-            NewNode(WTextBox).SaveTo(&this->ButtonText)
-                .Brush(LTextBoxBrush::SubHeader())
-                .Content(TbData->Descriptor->DisplayNameField)
-                .Anchor(EAnchor::CenterCenter)
-                .Padding(TbData->Descriptor->PaddingField)
-        ];
+        BeginStyling(*this).Root<WTextBox>().SaveTo(&this->ButtonText)
+            .Brush(LTextBoxBrush::SubHeader())
+            .Content(TbData->Descriptor->DisplayNameField)
+            .Anchor(EAnchor::CenterCenter)
+            .Padding(TbData->Descriptor->PaddingField)
+            ;
     }
 
-    this->Context = TbData->Context;
+    this->TabBar = TbData->TabBar;
     this->Identifier = TbData->Descriptor->IdentifierField;
 
     if (TbData->Descriptor->OnButtonReleaseField.IsValid())
@@ -41,12 +39,12 @@ void Jafg::WTabBarButton::OnPrimaryRelease()
 {
     Super::OnPrimaryRelease();
 
-    if (this->OnButtonRelease.IsValid() && this->OnButtonRelease(*this->Context, this->Identifier))
+    if (this->OnButtonRelease.IsValid() && this->OnButtonRelease(*this->TabBar, this->Identifier))
     {
         return;
     }
 
-    this->Context->OnTabBarButtonReleased(this->Identifier);
+    this->TabBar->OnTabBarButtonReleased(this->Identifier);
 
     return;
 }

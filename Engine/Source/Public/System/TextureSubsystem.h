@@ -22,7 +22,7 @@ class JTextureSubsystem : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JTextureSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JTextureSubsystem)
 
 public:
 

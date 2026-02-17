@@ -24,7 +24,7 @@ class JFrontendSubsystem : public JSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JFrontendSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JFrontendSubsystem)
 
     virtual void Tick() { }
 
@@ -36,7 +36,7 @@ protected:
 
 private:
 
-    bool bShouldTick{ false };
+    bool bShouldTick{};
 };
 
 } /* ~Namespace Jafg */

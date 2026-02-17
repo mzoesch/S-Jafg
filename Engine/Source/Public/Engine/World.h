@@ -26,23 +26,13 @@ class APersonaController;
 class APawn;
 class LCommandLineInterface;
 class LWorld;
-class JSupremePolicies;
+class ASupremePolicies;
 struct LEye_v2;
 struct LLevel;
 struct LSubsystemCollection;
 struct LRenderInfo;
 
-namespace Private
-{
-
-struct LWorldMiscellaneousAccessor;
-
-} /* ~Namespace Private */
-
-namespace EWorldState
-{
-
-enum Type : u8
+enum struct EWorldState : u8
 {
     PreInitializing,
     Initializing,
@@ -50,11 +40,9 @@ enum Type : u8
     TearingDown,
     WaitingForKill,
 };
-
-} /* ~Namespace EWorldState */
-inline LStringView LexToString(const EWorldState::Type InType) noexcept
+inline LStringView LexToString(EWorldState Type) noexcept
 {
-    switch (InType)
+    switch (Type)
     {
         case EWorldState::PreInitializing: return "PreInitializing";
         case EWorldState::Initializing:    return "Initializing";
@@ -65,9 +53,7 @@ inline LStringView LexToString(const EWorldState::Type InType) noexcept
     }
 }
 
-namespace EWorldTimeBehavior
-{
-enum Type : u8
+enum struct EWorldTimeBehavior : u8
 {
     //#
     //# Time behaves linearly. This is the default behavior.
@@ -86,10 +72,9 @@ enum Type : u8
     //#
     Simulate,
 };
-} /* ~Namespace EWorldTimeBehavior */
-inline LStringView LexToString(const EWorldTimeBehavior::Type InType) noexcept
+inline LStringView LexToString(EWorldTimeBehavior Type) noexcept
 {
-    switch (InType)
+    switch (Type)
     {
         case EWorldTimeBehavior::Linear:   return "Linear";
         case EWorldTimeBehavior::Desist:   return "Desist";
@@ -98,20 +83,24 @@ inline LStringView LexToString(const EWorldTimeBehavior::Type InType) noexcept
     }
 }
 
-namespace EIncomingConnectionRequest
-{
-
-enum Type : u8
+enum struct EIncomingConnectionRequest : u8
 {
     Local,
     Remote,
 };
-
-} /* ~Namespace EIncomingConnectionRequest */
+inline LStringView LexToString(EIncomingConnectionRequest Type) noexcept
+{
+    switch (Type)
+    {
+    case EIncomingConnectionRequest::Local:  return "Local";
+    case EIncomingConnectionRequest::Remote: return "Remote";
+    default:                                 return "<Unknown>";
+    }
+}
 
 struct LTransientPersona final
 {
-    EIncomingConnectionRequest::Type Type;
+    EIncomingConnectionRequest Type;
     LSurface* Surface;
     //# TODO: Net stuff etc.
 };
@@ -147,22 +136,22 @@ private:
 
 typedef LGenericArgument LWorldArgument;
 
-template<> FORCEINLINE LCliType LCliType::Type<LWorld>  () { return LCliType::Type("World");   }
+template<> FORCEINLINE LCliType LCliType::Type<LWorld>() { return LCliType::Type("World"); }
 
 template<>
 struct LCommandArgsTypeRet<LWorld> final
 {
-    typedef LWorld* Type;
+    typedef LWorld* type;
 };
 template<>
-FORCEINLINE LCommandArgsTypeRet<LWorld>::Type LCommandArgs::GetAs<LWorld>() const;
+FORCEINLINE LCommandArgsTypeRet_t<LWorld> LCommandArgs::GetAs<LWorld>() const;
 template<>
 struct LCommandArgsTypeRet<const LWorld> final
 {
-    typedef const LWorld* Type;
+    typedef LWorld const* type;
 };
 template<>
-FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LWorld>() const;
+FORCEINLINE LCommandArgsTypeRet_t<const LWorld> LCommandArgs::GetAs<const LWorld>() const;
 
 //#
 //# A world.
@@ -174,7 +163,6 @@ FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LW
 class LWorld final : public LClassOuter
 {
     friend AActor;
-    friend Private::LWorldMiscellaneousAccessor;
 
 public:
 
@@ -193,9 +181,9 @@ public:
     void InitializeWorld(TOptional<LLevel> const& Level = {}, LString&& Url = {});
 
     //# There are no checked alternatives, as the engine must be valid at all times if a world exists.
-    ENGINE_API LEngine& GetEngine() const noexceptcheck;
-    ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexceptcheck;
-    ENGINE_API LLocalEgo& GetLocalEgo() const noexceptcheck;
+    ENGINE_API LEngine& GetEngine() const noexcept;
+    ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexcept;
+    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
 
     //#
     //# The real URL that was used to launch this world. This might not be valid.
@@ -208,7 +196,7 @@ public:
     //# The URL but parsed into a structured way. This might not be valid.
     FORCEINLINE LWorldParameters const& GetParameters() const noexcept { return this->Parameters; }
 
-    FORCEINLINE EWorldState::Type GetWorldState() const noexcept { return this->WorldState; }
+    FORCEINLINE EWorldState GetWorldState() const noexcept { return this->WorldState; }
 
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const f32 Dt);
@@ -250,19 +238,29 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
-    FORCEINLINE JSupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
-    FORCEINLINE JSupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
-    FORCEINLINE JSupremePolicies* GetSupremePoliciesChecked() noexceptcheck { check( this->SupremePolicies ) return this->SupremePolicies; }
-    FORCEINLINE JSupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check( this->SupremePolicies ) return this->SupremePolicies; }
-    FORCEINLINE JSupremePolicies* GetSupremePoliciesAsserted() { jassert( this->SupremePolicies ) return this->SupremePolicies; }
-    FORCEINLINE JSupremePolicies const* GetSupremePoliciesAsserted() const { jassert( this->SupremePolicies ) return this->SupremePolicies; }
+    FORCEINLINE ASupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
+    FORCEINLINE ASupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
+    FORCEINLINE ASupremePolicies* GetSupremePoliciesChecked() noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
+    FORCEINLINE ASupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
+    FORCEINLINE ASupremePolicies* GetSupremePoliciesAsserted() { jassert(this->SupremePolicies) return this->SupremePolicies; }
+    FORCEINLINE ASupremePolicies const* GetSupremePoliciesAsserted() const { jassert(this->SupremePolicies) return this->SupremePolicies; }
 
     FORCEINLINE LLinearColor const& GetBackgroundColor() const noexcept { return this->BackgroundColor; }
     FORCEINLINE void SetBackgroundColor(LLinearColor const& Color) noexcept { this->BackgroundColor = Color; }
 
-    ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LString const& InHumanReadableName) noexcept;
-    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LString const& InHumanReadableName) noexceptcheck;
-    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(LString const& InHumanReadableName);
+    ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
+    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LStringView InHumanReadableName) noexcept
+    {
+        auto* Out{GetWorldFromHumanReadableName(InHumanReadableName)};
+        check(Out)
+        return Out;
+    }
+    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(LStringView InHumanReadableName)
+    {
+        auto* Out{GetWorldFromHumanReadableName(InHumanReadableName)};
+        jassert(Out)
+        return Out;
+    }
 
     ENGINE_API  APersonaController* GetThisWorldsLocalPersonaControllerSlow() noexcept;
     FORCEINLINE APersonaController* GetThisWorldsLocalPersonaControllerSlowAsserted() noexceptcheck { auto* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; check( Out ) return Out; }
@@ -293,7 +291,7 @@ private:
     TArray<LTickableObject*> TickableObjects;
     TArray<LTickableObject*> DeletedTickableObjects;
 
-    EWorldState::Type WorldState;
+    EWorldState WorldState;
 
     LSubsystemCollection Collection{ "World" };
 
@@ -308,47 +306,33 @@ private:
     //# Policies for this world. Cannot change. Can only be set during world initialization with the level blueprint.
     //# Only valid on authorities.
     //#
-    JSupremePolicies* SupremePolicies{ nullptr };
+    ASupremePolicies* SupremePolicies{};
 
     LLinearColor BackgroundColor;
 };
 
-template <>
-FORCEINLINE LCommandArgsTypeRet<LWorld>::Type LCommandArgs::GetAs<LWorld>() const
+template<>
+FORCEINLINE LCommandArgsTypeRet_t<LWorld> LCommandArgs::GetAs<LWorld>() const
 {
     return LWorld::GetWorldFromHumanReadableNameAsserted(this->Name);
 }
 
-template <>
-FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LWorld>() const
+template<>
+FORCEINLINE LCommandArgsTypeRet_t<const LWorld> LCommandArgs::GetAs<const LWorld>() const
 {
     return LWorld::GetWorldFromHumanReadableNameAsserted(this->Name);
 }
 
-FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName) noexceptcheck
+inline LWorld& LClassOuter::AsWorld() noexcept
 {
-    LWorld* Out { LWorld::GetWorldFromHumanReadableName(InHumanReadableName) };
-    check( Out )
-    return Out;
+    check(this->IsWorld())
+    return *static_cast<LWorld*>(this);
 }
 
-FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameAsserted(const LString& InHumanReadableName)
+inline LWorld const& LClassOuter::AsWorld() const noexcept
 {
-    LWorld* Out { LWorld::GetWorldFromHumanReadableName(InHumanReadableName) };
-    jassert( Out )
-    return Out;
-}
-
-inline LWorld* LClassOuter::AsWorld() noexcept
-{
-    check( this->IsWorld() )
-    return static_cast<LWorld*>(this);
-}
-
-inline LWorld const* LClassOuter::AsWorld() const noexcept
-{
-    check( this->IsWorld() )
-    return static_cast<LWorld const*>(this);
+    check(this->IsWorld())
+    return *static_cast<LWorld const*>(this);
 }
 
 } /* ~Namespace Jafg */

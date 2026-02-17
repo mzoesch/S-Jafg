@@ -20,10 +20,8 @@ enum Type : LCxxClassFlags
     //# Fields with the CLASS_FIELD macro are serialized both ways - only for the default package.
     Config          = 1 << 1,
 
-    //# The class is a singleton and can only be accessed through the #DetDefault and #GetMutableDefault functions.
-    Singleton       = Abstract,
-
-    Error           = 1 << 7,
+    //# The class is a singleton and can only be accessed through the #GetSingleton and #GetMutableSingleton functions.
+    Singleton       = 1 << 2,
 };
 
 } /* ~Namespace ECxxClassFlags */

@@ -117,18 +117,6 @@
     PROHIBIT_COPY(Ty)                    \
     PROHIBIT_MOVE(Ty)
 
-#define PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR_DEFAULTED(Ty)          \
-    Ty( Ty      & JAFG_JOIN_INNER_TWO(_, Ty))           = delete;  \
-    Ty( Ty const& JAFG_JOIN_INNER_TWO(_, Ty))           = default; \
-    Ty& operator=(Ty const& JAFG_JOIN_INNER_TWO(_, Ty)) = delete;  \
-    PROHIBIT_MOVE(Ty)
-
-#define PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR(Ty)                   \
-    Ty( Ty      & JAFG_JOIN_INNER_TWO(_, Ty))           = delete; \
-    Ty& operator=(Ty const& JAFG_JOIN_INNER_TWO(_, Ty)) = delete; \
-    PROHIBIT_MOVE(Ty)                                             \
-    Ty( Ty const& CDR)
-
 #define PROHIBIT_REALLOC_OF_ANY_FORM_NAMESPACED(TSpacedTy, Ty) \
     PROHIBIT_COPY_NAMESPACED(TSpacedTy, Ty)                    \
     PROHIBIT_MOVE_NAMESPACED(TSpacedTy, Ty)

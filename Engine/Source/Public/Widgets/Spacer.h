@@ -8,28 +8,16 @@
 namespace Jafg
 {
 
-template <typename TNode>
-class TWidgetFactorySpacer : public TWidgetFactory<TNode>
-{
-public:
+struct LFactorySpacer;
 
-    using Super         = TWidgetFactory<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
-
-    FORCEINLINE TFactoryRetTy& Size(LWidgetSize2 const& Size) noexcept { this->This()->SetSize(Size); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Size(LWidgetSize2&& Size) noexcept { this->This()->SetSize(std::move(Size)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Height(const LWidgetSize1 Height) noexcept { this->This()->SetHeight(Height); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Width(const LWidgetSize1 Width) noexcept { this->This()->SetWidth(Width);   return this->Self(); }
-};
-
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpacer)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactorySpacer)
 class ENGINE_API WSpacer final : public WNode
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WSpacer)
+    DEFAULT_NODE_CONSTRUCTORS(WSpacer)
 
 public:
 
@@ -61,6 +49,27 @@ public:
 private:
 
     LWidgetSize2 Size;
+};
+
+struct LFactorySpacer : NODE_FACTORY_PARENT(WSpacer)
+{
+    NODE_FACTORY_BODY(WSpacer)
+
+    decltype(auto) Size(this auto&& Self, LWidgetSize2 const& Size) noexcept
+    {
+        NODE_FACTORY_SELF().SetSize(Size);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Height(this auto&& Self, const LWidgetSize1 Height) noexcept
+    {
+        NODE_FACTORY_SELF().SetHeight(Height);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Width(this auto&& Self, const LWidgetSize1 Width) noexcept
+    {
+        NODE_FACTORY_SELF().SetWidth(Width);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

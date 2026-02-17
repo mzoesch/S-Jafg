@@ -10,62 +10,60 @@
 
 void Jafg::WConsoleStdIn::Construct()
 {
-    NewNode(WEditableTextBox).SaveTo(&this->EditableTextBox)
+    BeginStyling(*this).Root<WEditableTextBox>().SaveTo(&this->EditableTextBox)
         .Anchor(EAnchor::VBottom | EAnchor::HFill)
         .Padding({2_spt, 4})
         .OnCommit(LEditableTextBoxCommitDelegate::Create(this, &WConsoleStdIn::OnCommit))
-        .OnChanged(LEditableTextBoxChangedDelegate::Create(this, &WConsoleStdIn::OnChanged))
-        .TrailingParent(this);
+        .OnChanged(LEditableTextBoxChangedDelegate::Create(this, &WConsoleStdIn::OnChanged));
 
-    NewNode(WVRegion).SaveTo(&this->IntellisenseContainer)
+    BeginStyling(*this).Root<WVRegion>().SaveTo(&this->IntellisenseContainer)
         .Anchor(EAnchor::VBottom)
         .Padding({0_spt, 0, 0, 30})
     [
-            NewNode(WScrollRegion)
+            NewStaticNode(WScrollRegion)
                 .MinDesiredSize({60_spt, 50})
                 .UseChildrenDesiredSize(true)
             [
-                NewNode(WVRegion).SaveTo(&this->IntellisensePredictions)
+                NewStaticNode(WVRegion).SaveTo(&this->IntellisensePredictions)
                     .Anchor(EAnchor::VBottom)
                     .MinDesiredSize({60_spt, 0})
                     .Padding(2_spt)
                     .Type(ERegionBrush::OutlineBox)
-                    .Tint(this->GetCDR()->IntellisenseTint)
+                    .Tint(*GetSingleton<JConsoleStdInPreferences>().IntellisenseTint)
                     .OutlineTint(Colors::Black)
             ]
             +
-            NewNode(WRegion).SaveTo(&this->IntellisenseHelpContainer)
+            NewStaticNode(WRegion).SaveTo(&this->IntellisenseHelpContainer)
                 .Padding(2_spt)
                 .Type(ERegionBrush::OutlineBox)
-                .Tint(this->GetCDR()->IntellisenseTint)
+                .Tint(*GetSingleton<JConsoleStdInPreferences>().IntellisenseTint)
                 .OutlineTint(Colors::Black)
             [
-                NewNode(WTextBox).SaveTo(&this->IntellisenseHelp)
+                NewStaticNode(WTextBox).SaveTo(&this->IntellisenseHelp)
                     .Padding(3_spt)
                     .Padding({2_spt, 4})
                     .TextScale(0.25)
                     .TextColor(Colors::White)
             ]
             +
-            NewNode(WVRegion).SaveTo(&this->Intellisense)
+            NewStaticNode(WVRegion).SaveTo(&this->Intellisense)
                 .Padding(3_spt)
                 .Type(ERegionBrush::OutlineBox)
-                .Tint(this->GetCDR()->IntellisenseTint)
+                .Tint(*GetSingleton<JConsoleStdInPreferences>().IntellisenseTint)
                 .OutlineTint(Colors::Black)
             [
-                NewNode(WTextBox).SaveTo(&this->IntellisenseText)
+                NewStaticNode(WTextBox).SaveTo(&this->IntellisenseText)
                     .Brush(LTextBoxBrush::Body())
             ]
-    ]
-        .TrailingParent(this);
+    ];
 
     Super::Construct();
 
-    this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+    this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
 
-    this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
-    this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::Collapsed);
-    this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+    this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
+    this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::Collapsed);
+    this->Intellisense->SetVisibility(ENodeVisibility::Collapsed);
 
     return;
 }
@@ -121,7 +119,7 @@ void Jafg::WConsoleStdIn::AddToHistory(LString const& Text)
 {
     check( Text.empty() == false )
 
-    TArray<LString>& CdrHistory = GetMutableCDR()->History;
+    TArray<LString>& CdrHistory = GetMutableSingleton<JConsoleStdInPreferences>().History;
 
     if (CdrHistory.empty() == false)
     {
@@ -133,7 +131,7 @@ void Jafg::WConsoleStdIn::AddToHistory(LString const& Text)
 
     CdrHistory.emplace_back(Text);
 
-    if (CdrHistory.size() > GetMutableCDR()->MaxHistorySize)
+    if (CdrHistory.size() > GetSingleton<JConsoleStdInPreferences>().MaxHistorySize)
     {
         CdrHistory.erase(CdrHistory.begin());
     }
@@ -141,13 +139,13 @@ void Jafg::WConsoleStdIn::AddToHistory(LString const& Text)
     return;
 }
 
-void Jafg::WConsoleStdIn::OnCommit(LString const& Text, ETextCommit::Type CommitType)
+void Jafg::WConsoleStdIn::OnCommit(LString const& Text, ETextCommit CommitType)
 {
     if (CommitType == ETextCommit::OnCleared)
     {
         if (this->IntellisenseContainer->IsPainted())
         {
-            this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
             return;
         }
     }
@@ -180,8 +178,8 @@ void Jafg::WConsoleStdIn::OnCommit(LString const& Text, ETextCommit::Type Commit
 
         this->IntellisensePredictions->RemoveChildren();
         this->Intellisense->RemoveChildren();
-        this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
-        this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+        this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
+        this->Intellisense->SetVisibility(ENodeVisibility::Collapsed);
         this->UpdateIntellisense();
     }
 
@@ -206,7 +204,7 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
 
         for (auto const& Command : Cli.GetCommands())
         {
-            if (AddedCommands >= static_cast<i32>(GetCDR()->MaxIntellisensePredictions))
+            if (AddedCommands >= static_cast<i32>(*GetSingleton<JConsoleStdInPreferences>().MaxIntellisensePredictions))
             {
                 break;
             }
@@ -219,11 +217,11 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
 
         if (AddedCommands)
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
         }
         else
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         }
 
         this->UpdateIntellisense();
@@ -237,7 +235,7 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
 
         for (auto const& Command : Cli.GetCommands())
         {
-            if (Predictions.size() >= GetCDR()->MaxIntellisensePredictions)
+            if (Predictions.size() >= GetSingleton<JConsoleStdInPreferences>().MaxIntellisensePredictions)
             {
                 break;
             }
@@ -254,18 +252,18 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
 
         if (Predictions.empty())
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
             if (Predictions.size() == 1 && Predictions[0]->GetIdentifier() == CommandStr)
             {
-                this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+                this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
                 Command = Cli.GetCommandChecked(CommandStr);
             }
             else
             {
-                this->IntellisensePredictions->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+                this->IntellisensePredictions->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
                 for (LCliCommand const* Prediction : Predictions)
                 {
                     this->AddIntellisensePrediction(Prediction->GetIdentifier());
@@ -282,14 +280,14 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
 
         if
         (
-            TArray Suggestions{ Cli.GetCommonSuggestions(Text, this->GetCDR()->MaxIntellisensePredictions) };
+            TArray Suggestions{ Cli.GetCommonSuggestions(Text, *GetSingleton<JConsoleStdInPreferences>().MaxIntellisensePredictions) };
             Suggestions.empty())
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
-            this->IntellisensePredictions->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+            this->IntellisensePredictions->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
             for (LString& Suggestion : Suggestions)
             {
                 check( Suggestions.empty() == false )
@@ -304,7 +302,7 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
     else
     {
         check( this->IntellisensePredictions->GetChildren().empty() )
-        this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
+        this->IntellisensePredictions->SetVisibility(ENodeVisibility::Collapsed);
         this->UpdateIntellisense();
     }
 
@@ -313,28 +311,28 @@ void Jafg::WConsoleStdIn::OnChanged(LString const& Text)
 
 void Jafg::WConsoleStdIn::AddIntellisensePrediction(LString Text)
 {
-    NewNode(WTextBox)
+    BeginStyling(*this->IntellisensePredictions).At(0).Root<WTextBox>()
         .Anchor(EAnchor::HFill)
         .Padding({2_spt, 4})
         .Content(std::move(Text))
         .TextScale(0.25)
         .TextColor(Colors::White)
-        .Tint(this->GetCDR()->IntellisenseHighlightTint)
-        .FinishWithParentAt(0, this->IntellisensePredictions);
+        .Tint(*GetSingleton<JConsoleStdInPreferences>().IntellisenseHighlightTint)
+        ;
 
     return;
 }
 
 void Jafg::WConsoleStdIn::AddIntellisense(LString Text)
 {
-    NewNode(WTextBox)
+    BeginStyling(*this->Intellisense).At(0).Root<WTextBox>()
         .Anchor(EAnchor::HFill)
         .Padding({2_spt, 4})
         .Content(std::move(Text))
         .TextScale(0.25)
         .TextColor(Colors::White)
-        .Tint(this->GetCDR()->IntellisenseHighlightTint)
-        .FinishWithParentAt(0, this->Intellisense);
+        .Tint(*GetSingleton<JConsoleStdInPreferences>().IntellisenseHighlightTint)
+        ;
 
     return;
 }
@@ -403,36 +401,36 @@ void Jafg::WConsoleStdIn::UpdateIntellisense(LCliCommand const* TargetCommand /*
         }
         if (this->Intellisense->GetChildren().empty())
         {
-            this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+            this->Intellisense->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
-            this->Intellisense->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+            this->Intellisense->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
         }
         if (Command->GetHelp().empty())
         {
-            this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::Collapsed);
+            this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::Collapsed);
         }
         else
         {
             this->IntellisenseHelp->SetContent(Command->GetHelp());
-            this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+            this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
         }
     }
     else
     {
-        this->IntellisenseHelpContainer->SetVisibility(EWidgetVisibility::Collapsed);
-        this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+        this->IntellisenseHelpContainer->SetVisibility(ENodeVisibility::Collapsed);
+        this->Intellisense->SetVisibility(ENodeVisibility::Collapsed);
     }
 
     if (this->Intellisense->IsPainted() || this->IntellisensePredictions->IsPainted())
     {
-        this->IntellisenseContainer->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+        this->IntellisenseContainer->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
     }
     else
     {
         check( this->IntellisenseHelpContainer->IsPainted() == false )
-        this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
+        this->IntellisenseContainer->SetVisibility(ENodeVisibility::Collapsed);
     }
 
     return;
@@ -524,7 +522,7 @@ void Jafg::WConsoleStdIn::GoHistoryBack()
     check( this->EditableTextBox )
 
     const i32 LastHistoryCursor{ this->HistoryCursor };
-    TArray<LString> const& CdrHistory = this->GetCDR()->History;
+    TArray<LString> const& CdrHistory = GetSingleton<JConsoleStdInPreferences>().History;
     this->HistoryCursor = maths::clamp(this->HistoryCursor + 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(CdrHistory.size()) - 1);
 
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
@@ -549,7 +547,7 @@ void Jafg::WConsoleStdIn::GoHistoryForward()
     check( this->EditableTextBox )
 
     const i32 LastHistoryCursor{ this->HistoryCursor };
-    this->HistoryCursor = maths::clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(this->GetCDR()->History->size()) - 1);
+    this->HistoryCursor = maths::clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(GetSingleton<JConsoleStdInPreferences>().History.size()) - 1);
 
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
     {

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Subsystems/LocalEgoSubsystem.h"
-#include "Cli/CliHandles.h"
+#include "Cli/CommandLineInterface.h"
 #include "CoreCommandSubsystem.generated.h"
 
 namespace Jafg
@@ -16,16 +16,15 @@ class JCoreCommandSubsystem final : public JLocalEgoSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JCoreCommandSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JCoreCommandSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown(LClassOuter& PreviousOuter) override;
+    virtual void TearDown() override;
 
 private:
 
     LCliCommandHandle CommandHandle_Quit;
     LCliCommandHandle CommandHandle_Say;
-    LCliCommandHandle CommandHandle_CreateNewSurface;
 };
 
 } /* ~Namespace Jafg */

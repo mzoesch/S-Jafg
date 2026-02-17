@@ -106,7 +106,7 @@ class LEngine final
 
 public:
 
-    ENGINE_API static void PreInitialize();
+    ENGINE_API LEngine();
     ENGINE_API void Initialize();
     ENGINE_API void Tick(const f32 DeltaTime);
     ENGINE_API void TearDown();
@@ -241,7 +241,7 @@ public:
     //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
     //#                               plugin.
     //#
-    MULTI_EVENT_DECL_VERBOSE(LEngine, OnForeignPluginLoaded, LLoadedPlugin* Plugin)
+    MULTI_EVENT_DECL_VERBOSE(LEngine, OnForeignPluginLoaded, LLoadedPlugin& Plugin)
 
 private:
 

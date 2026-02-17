@@ -219,8 +219,8 @@ struct erase_if_fn
     FORCEINLINE constexpr typename TContainer::size_type
     operator()(TContainer* Container, TPred&& Pred, TProj Proj = {}) const
     {
-        auto [It, End] { std::ranges::remove_if(*Container, std::forward<TPred>(Pred), std::move(Proj)) };
-        const auto OldSize { Container->size() };
+        auto [It, End]{std::ranges::remove_if(*Container, std::forward<TPred>(Pred), std::move(Proj))};
+        const auto OldSize{Container->size()};
         Container->erase(It, End);
         return OldSize - Container->size();
     }
@@ -239,8 +239,8 @@ struct erase_fn
     FORCEINLINE constexpr typename TContainer::size_type
     operator()(TContainer* Container, T const& What, TProj Proj = {}) const
     {
-        auto [It, End] { std::ranges::remove(*Container, What, std::move(Proj)) };
-        const auto OldSize { Container->size() };
+        auto [It, End]{std::ranges::remove(*Container, What, std::move(Proj))};
+        const auto OldSize{Container->size()};
         Container->erase(It, End);
         return OldSize - Container->size();
     }
@@ -263,7 +263,7 @@ struct erase_once_fn
     FORCEINLINE constexpr bool
     operator()(TContainer* Container, T const& What, TProj Proj = {}) const
     {
-        if (auto It { std::ranges::find(algo::begin(*Container), algo::end(*Container), What, std::move(Proj)) }; It != algo::end(*Container))
+        if (auto It{std::ranges::find(algo::begin(*Container), algo::end(*Container), What, std::move(Proj))}; It != algo::end(*Container))
         {
             Container->erase(It);
             return true;
@@ -280,7 +280,7 @@ struct erase_once_checked_fn
     FORCEINLINE constexpr bool
     operator()(TContainer* Container, T const& What, TProj Proj = {}) const
     {
-        const bool bRemoved{ erase_once_fn{}(Container, What, std::move(Proj)) };
+        const bool bRemoved{erase_once_fn{}(Container, What, std::move(Proj))};
         check( bRemoved )
         return bRemoved;
     }
@@ -293,22 +293,47 @@ struct erase_once_asserted_fn
     FORCEINLINE constexpr bool
     operator()(TContainer* Container, T const& What, TProj Proj = {}) const
     {
-        const bool bRemoved{ erase_once_fn{}(Container, What, std::move(Proj)) };
+        const bool bRemoved{erase_once_fn{}(Container, What, std::move(Proj))};
         jassert( bRemoved )
         return bRemoved;
     }
 };
+
+struct erase_exactly_once_checked_fn
+{
+    template<typename TContainer, typename TProj = std::identity, typename T>
+        requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<std::ranges::iterator_t<TContainer>, TProj>, T const*>
+    FORCEINLINE constexpr bool
+    operator()(TContainer* Container, T const& What, TProj Proj = {}) const
+    {
+#if JAFG_DO_CHECKS
+        TProj Proj2{Proj};
+#endif /* JAFG_DO_CHECKS */
+        const bool bRemoved{erase_once_fn{}(Container, What, std::move(Proj))};
+        check( bRemoved )
+        check( erase_once_fn{}(Container, What, std::move(Proj2)) == false && "Encountered multiple elements that are equal to #What." )
+        return bRemoved;
+    }
+};
+
 } /* ~Namespace detail */
+//#
+//# Erase an element from a range if it exists.
+//# @return True, if successfully deleted.
+//#
 inline constexpr detail::erase_once_fn          erase_once{};
+//# Checks that the element is removed. There may still be more elements that equal the #What.
 inline constexpr detail::erase_once_checked_fn  erase_once_checked{};
 inline constexpr detail::erase_once_asserted_fn erase_once_asserted{};
+//# Remove an element exactly once. If checks are enabled, unable to remove once or finding duplicate elements will result in a program panic.
+inline constexpr detail::erase_exactly_once_checked_fn erase_exactly_once_checked{};
 
 //# Subs a container.
 template<typename TContainer, typename UContainer = TContainer>
 FORCEINLINE UContainer sub(TContainer const& Container, const LSize Begin, const LSize End)
 {
     check( Begin <= End && End <= algo::size(Container) )
-    UContainer Out{ Container.begin() + Begin, Container.begin() + End };
+    UContainer Out{Container.begin() + Begin, Container.begin() + End};
     return Out;
 }
 //# Cuts the left.
@@ -316,7 +341,7 @@ template<typename TContainer, typename UContainer = TContainer>
 FORCEINLINE UContainer right_sub(TContainer const& Container, const LSize Begin)
 {
     check( Begin <= algo::size(Container) )
-    return UContainer{ Container.begin() + Begin, Container.end() };
+    return UContainer{Container.begin() + Begin, Container.end()};
 }
 
 //# Chops N elements from the left.
@@ -324,7 +349,7 @@ template<typename TContainer, typename UContainer = TContainer>
 FORCEINLINE UContainer right_chop(TContainer const& Container, const LSize N)
 {
     check( N <= algo::size(Container) )
-    return UContainer{ Container.begin() + N, Container.end() };
+    return UContainer{Container.begin() + N, Container.end()};
 }
 FORCEINLINE void inline_right_chop(auto* Container, const LSize N, const bool bAllowShrinking = true) noexcept
 {
@@ -339,7 +364,7 @@ template<typename TContainer, typename UContainer = TContainer>
 FORCEINLINE UContainer left_chop(TContainer const& Container, const LSize N)
 {
     check( N <= algo::size(Container) )
-    return UContainer{ Container.begin(), Container.end() - N };
+    return UContainer{Container.begin(), Container.end() - N};
 }
 FORCEINLINE void inline_left_chop(auto* Container, const LSize N, const bool bAllowShrinking = true) noexcept
 {
@@ -476,7 +501,7 @@ struct find_pointer_fn
     NODISCARD FORCEINLINE constexpr auto
     operator()(_Iter __first, _Sent __last, const _Tp& __value, _Proj __proj = {}) const // -> decltype(algo::to_address(__first))
     {
-        if (_Iter It { algo::find(__first, __last, __value, std::move(__proj)) }; It != __last)
+        if (_Iter It{algo::find(__first, __last, __value, std::move(__proj))}; It != __last)
         {
             return algo::to_address(It);
         }
@@ -506,7 +531,7 @@ struct find_pointer_if_fn
     NODISCARD FORCEINLINE constexpr auto
     operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const // -> decltype(algo::to_address(__first))
     {
-        if (TIter It{ algo::find_if(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj)) }; It != Sent)
+        if (TIter It{algo::find_if(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj))}; It != Sent)
         {
             return algo::to_address(It);
         }
@@ -591,7 +616,7 @@ NODISCARD FORCEINLINE constexpr auto wfind_pointer(ITERATOR Begin, ITERATOR End,
 {
     if constexpr (std::is_same_v<TProj, algo::identity>)
     {
-        if (auto It { std::find(Begin, End, Value) }; It != End)
+        if (auto It{std::find(Begin, End, Value)}; It != End)
         {
             return &*It;
         }

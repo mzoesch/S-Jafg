@@ -10,7 +10,7 @@ namespace Jafg
 class WEditableTextBox;
 struct LCaretBrush;
 struct LEditableTextBoxBrush;
-namespace ETextCommit { enum Type : u8; }
+enum struct ETextCommit : u8;
 
 //#
 //# Delegate, which is invoked when the user tries to commit the content of the editable text box.
@@ -23,7 +23,7 @@ typedef TFunction<bool()> LEditableTextBoxAllowCommitDelegate;
 //#
 //# Delegate, which is invoked when the user commits the content of the editable text box.
 //#
-typedef TFunction<void(LString const&, ETextCommit::Type)> LEditableTextBoxCommitDelegate;
+typedef TFunction<void(LString const&, ETextCommit)> LEditableTextBoxCommitDelegate;
 
 //#
 //# Delegate, which is invoked when the contents of the editable text box changed in any way.
@@ -60,29 +60,28 @@ struct LCaretBrush final
     f32 CaretBlinkerSpeed{ 0.5f };
 };
 
-namespace ETextCommit
+enum struct ETextCommit : u8
 {
 
-enum Type : u8
-{
-    //#
     //# Text was commit via an enter key press. This does not mean a loss of focus.
-    //#
     OnEnter,
 
-    //#
     //# Focus was lost due to a press of the escape key.
-    //#
     OnCleared,
 
-    //#
     //# Focus was lost due to some other reason.
-    //#
     FocusLost,
 };
-
-} /* ~Namespace ETextCommit */
-ENGINE_API LString LexToString(const ETextCommit::Type InType);
+inline LString LexToString(const ETextCommit Type) noexcept
+{
+    switch (Type)
+    {
+    case ETextCommit::OnEnter:   { return "OnEnter"; }
+    case ETextCommit::OnCleared: { return "OnCleared"; }
+    case ETextCommit::FocusLost: { return "FocusLost"; }
+    default:                     { checkNoEntry() return {}; }
+    }
+}
 
 struct LEditableTextBoxBrush : public LTextBoxBrush
 {

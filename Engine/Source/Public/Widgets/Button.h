@@ -10,31 +10,28 @@
 namespace Jafg
 {
 
-template <typename TNode>
-class TWidgetFactoryTextButton : public TWidgetFactoryButton<TNode>
-{
-public:
+class WButton;
+class WTextButton;
+struct LFactoryTextButton;
+typedef TFunction<void(WButton* Self, LKeyEvent const& InKeyEvent)>  LOnButtonKeyEvent;
+typedef TFactoryButtonBase<WButton> LFactoryButton;
 
-    GENERATED_FACTORY_BODY(TWidgetFactoryButton)
-
-    FORCEINLINE TFactoryRetTy& Content(const LString& InContent) { this->This()->SetContent(InContent); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& Enabled() { this->This()->SetEnabled(true); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Disabled() { this->This()->SetEnabled(false); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& TextBlockBrush(const LTextBoxBrush& InBrush) { this->This()->SetTextBoxBrush(InBrush); return this->Self(); }
-};
-
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryButton)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryButton)
 class WButton : public WRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WButton(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WButton)
+    explicit WButton(LNodeDynamicInit const& Init) noexcept : Super{Init}
+    {
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+    }
+    template<typename TCxxClass>
+    explicit WButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+    {
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+    }
 
 public:
 
@@ -52,15 +49,22 @@ public:
     void SetEnabled(const bool bInEnabled) override;
 };
 
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextButton)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTextButton)
 class WTextButton : public WButton
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WTextButton(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WTextButton)
+    explicit WTextButton(LNodeDynamicInit const& Init) noexcept : Super{Init}
+    {
+        this->SetPadding({4,2});
+    }
+    template<typename TCxxClass>
+    explicit WTextButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+    {
+        this->SetPadding({4,2});
+    }
 
 public:
 
@@ -86,19 +90,36 @@ public:
     FORCEINLINE bool IsButtonTextValid() const noexcept { return this->ButtonText != nullptr; }
     FORCEINLINE auto GetButtonText() noexcept -> WTextBox* { return this->ButtonText; }
     FORCEINLINE auto GetButtonText() const noexcept -> const WTextBox* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextChecked() noexcept -> WTextBox* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextChecked() const noexcept -> const WTextBox* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextAsserted() noexcept -> WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextAsserted() const noexcept -> const WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextChecked() noexcept -> WTextBox* { check(this->ButtonText) return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextChecked() const noexcept -> const WTextBox* { check(this->ButtonText) return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextAsserted() noexcept -> WTextBox* { jassert(this->ButtonText) return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextAsserted() const noexcept -> const WTextBox* { jassert(this->ButtonText) return this->ButtonText; }
 
 protected:
 
-    WTextBox* ButtonText { nullptr };
+    WTextBox* ButtonText{};
 
 private:
 
     LString IntermediateContent;
     TOptional<LTextBoxBrush> IntermediateTextBoxBrush;
+};
+
+struct LFactoryTextButton : NODE_FACTORY_PARENT(WTextButton)
+{
+    NODE_FACTORY_BODY(WTextButton)
+
+    decltype(auto) Content(this auto&& Self, LString Content) noexcept
+    {
+        NODE_FACTORY_SELF().SetContent(std::move(Content));
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) TextBlockBrush(this auto&& Self, LTextBoxBrush const& Brush)
+    {
+        NODE_FACTORY_SELF().SetTextBoxBrush(Brush);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

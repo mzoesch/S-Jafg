@@ -23,14 +23,14 @@ bool Jafg::LCliType::SetVariable(const LCommandArgs& InValue, LString* OutValue)
 
 bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
 {
-    check( Cursor )
+    check(Cursor)
     if (this->OnParseType.IsValid())
     {
         return this->OnParseType.Invoke(Args, Cursor);
     }
 
-    check( GEngine )
-    const LCliType* CliType{ GEngine->GetCommandLineInterface().GetTypeAsserted(*this) };
+    check(GEngine)
+    LCliType const* CliType{GEngine->GetCommandLineInterface().GetTypeAsserted(*this)};
 
     if (this == CliType)
     {
@@ -48,20 +48,18 @@ TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Curs
         return this->OnSuggest.Invoke(Args, Cursor, MaxSuggestions);
     }
 
-    check( GEngine )
-    const LCliType* CliType{ GEngine->GetCommandLineInterface().GetType(*this) };
+    check(GEngine)
+    LCliType const* CliType{GEngine->GetCommandLineInterface().GetType(*this)};
 
     if (CliType == nullptr)
     {
-        return { };
+        return {};
     }
 
     if (this == CliType)
     {
-        /*
-         * Infinite recursion is okay, as not all types may have a suggestion delegate. This is completly okay.
-         */
-        return { };
+        /* Infinite recursion is okay, as not all types may have a suggestion delegate. This is completely okay. */
+        return {};
     }
 
     return CliType->OnSuggest.Invoke(Args, Cursor, MaxSuggestions);

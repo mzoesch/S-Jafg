@@ -18,7 +18,7 @@ class WSwitcher : public WOverlay
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WSwitcher)
+    DEFAULT_NODE_CONSTRUCTORS(WSwitcher)
 
 public:
 
@@ -43,8 +43,8 @@ public:
     FORCEINLINE bool IsIndexValid() const { return algo::is_valid_index(this->GetChildren(), this->ActiveIndex); }
     FORCEINLINE auto GetActiveNode() -> WNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
     FORCEINLINE auto GetActiveNode() const -> const WNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
-    FORCEINLINE auto GetActiveNodeChecked() -> WNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
-    FORCEINLINE auto GetActiveNodeChecked() const -> const WNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
+    FORCEINLINE auto GetActiveNodeChecked() -> WNode* { check(this->IsIndexValid()) return this->GetChildren()[this->ActiveIndex]->Content; }
+    FORCEINLINE auto GetActiveNodeChecked() const -> const WNode* { check(this->IsIndexValid()) return this->GetChildren()[this->ActiveIndex]->Content; }
 
     // WParent implementation
     virtual LWidgetSlot* AddChild(WNode* InChild) override;
@@ -53,11 +53,11 @@ public:
 
 private:
 
-    i32 ActiveIndex { NoActiveWidgetIndex };
+    i32 ActiveIndex{ NoActiveWidgetIndex };
     struct LRecentVisibility
     {
-        const void* Target { nullptr };
-        EWidgetVisibility::Type Visibility { EWidgetVisibility::Visible };
+        const void* Target{};
+        ENodeVisibility Visibility{ ENodeVisibility::Visible };
     };
     TArray<LRecentVisibility> RecentVisibilities;
 };

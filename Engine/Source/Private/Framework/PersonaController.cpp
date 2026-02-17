@@ -5,9 +5,9 @@
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
-void Jafg::APersonaController::EndLife()
+void Jafg::APersonaController::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::EndLife();
+    Super::OnGarbage(Reason);
 
     if (this->IsSurfaceValid())
     {
@@ -32,6 +32,8 @@ void Jafg::APersonaController::EndLife()
 
 void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = true */)
 {
+    check(this->_Lives())
+
     /* Otherwise, we will get access violations. */
     APawn* OldPawn{bKillOld ? nullptr : this->Pawn};
 

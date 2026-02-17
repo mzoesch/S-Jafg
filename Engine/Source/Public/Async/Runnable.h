@@ -29,15 +29,7 @@ public:
 
     ENGINE_API LRunnable();
     ENGINE_API LRunnable(const LString& InHumanReadableName);
-
-    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR(LRunnable)
-    {
-        check( CDR.IsStopped() == false )
-        check( CDR.HumanReadableName.empty() )
-
-        return;
-    }
-
+    PROHIBIT_REALLOC_OF_ANY_FORM(LRunnable)
     virtual ~LRunnable() = default;
 
     //#

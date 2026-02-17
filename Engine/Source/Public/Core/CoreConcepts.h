@@ -61,4 +61,23 @@ template <> struct TIsChar<char32_t> : std::true_type { };
 template <typename T>
 inline constexpr bool TIsChar_v = TIsChar<T>::value;
 
+//#
+//# In a tree with:
+//#
+//#          TRoot
+//#    |               |
+//#   TA              TB
+//#  |   |   |         |
+//# TA1 TA2 TA3       ...
+//#  |
+//# ...
+//#
+//# This concept checks that the node TNode derives from only TAllowedNode while not being a child
+//# from any of the TProhibitedNodes.
+//#
+template<typename TNode, typename TAllowedNode, typename... TProhibitedNodes>
+concept CAllowedTreeNode
+    =  std::is_base_of_v<TAllowedNode, TNode>
+    && ((std::is_base_of_v<TProhibitedNodes, TNode> == false) && ...);
+
 } /* ~Namespace Jafg */

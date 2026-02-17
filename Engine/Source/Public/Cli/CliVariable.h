@@ -10,9 +10,7 @@ namespace Jafg
 
 typedef TFunction<void(const LString& InValue)> LOnVariableChangedDelegate;
 
-//#
 //# A variable inside the cli of the engine.
-//#
 class LCliVariable final : public LCliObject
 {
 public:
@@ -56,9 +54,10 @@ public:
     ENGINE_API  bool SetValue(const LString& InValue);
     FORCEINLINE auto GetValue() const -> const LString& { return this->Value; }
 
-    template <typename TField>
-    FORCEINLINE void GetValue(TField* Destination) const { Serialization::FromString(Destination, this->Value); }
-    template <typename TField> requires (std::is_default_constructible_v<TField>)
+    template<typename TField>
+    FORCEINLINE void GetValue(TField* Destination) const { Serde::FromString(Destination, this->Value); }
+    template<typename TField> requires std::is_default_constructible_v<TField>
+        && (std::is_move_constructible_v<TField> || std::is_move_assignable_v<TField>)
     FORCEINLINE TField GetValue() const
     {
         TField OutValue;

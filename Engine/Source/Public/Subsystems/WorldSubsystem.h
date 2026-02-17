@@ -8,6 +8,7 @@
 namespace Jafg
 {
 
+//# A subsystem that are spawned in a LWorld.
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class ENGINE_API JWorldSubsystem : public JSubsystem
 {
@@ -15,12 +16,12 @@ class ENGINE_API JWorldSubsystem : public JSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JWorldSubsystem)
 
 public:
 
-    FORCEINLINE LWorld* GetWorld() noexcept { check( this->GetOuter() ) return this->GetOuter()->AsWorld(); }
-    FORCEINLINE LWorld const* GetWorld() const noexcept { check( this->GetOuter() ) return this->GetOuter()->AsWorld(); }
+    FORCEINLINE LWorld& GetWorld() noexcept { return this->GetOuter().AsWorld(); }
+    FORCEINLINE LWorld const& GetWorld() const noexcept { return this->GetOuter().AsWorld(); }
 };
 
 } /* ~Namespace Jafg */

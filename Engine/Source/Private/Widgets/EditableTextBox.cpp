@@ -8,30 +8,6 @@
 #include "Engine/Engine.h"
 #include "Core/CoreNames.h"
 
-LString Jafg::LexToString(const ETextCommit::Type InType)
-{
-    switch (InType)
-    {
-    case ETextCommit::OnEnter:   { return "OnEnter"; }
-    case ETextCommit::OnCleared: { return "OnCleared"; }
-    case ETextCommit::FocusLost: { return "FocusLost"; }
-    default:                     { checkNoEntry() return { }; }
-    }
-}
-
-Jafg::WEditableTextBox::WEditableTextBox(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetVisibility(EWidgetVisibility::Visible);
-    this->SetAnchor(EAnchor::Fill);
-    this->SetPadding({5.0, 4.0});
-    this->SetType(ERegionBrush::Box);
-    this->SetTint(Colors::Black);
-    this->SetTextColor(Colors::White);
-
-    return;
-}
-
 void Jafg::WEditableTextBox::Construct()
 {
     Super::Construct();
@@ -293,7 +269,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-void Jafg::WEditableTextBox::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
+void Jafg::WEditableTextBox::OnTextCommit(const LString& InText, const ETextCommit InCommitType)
 {
     (void)this->OnContentCommitted.InvokeIfBound(InText, InCommitType);
 }
@@ -316,7 +292,7 @@ i32 Jafg::WEditableTextBox::SetCaretCursorToEnd()
     return this->CaretCursor;
 }
 
-bool Jafg::WEditableTextBox::IsContentFloatingPoint(const LString& InContent) noexcept
+bool Jafg::WEditableTextBox::IsContentFloatingPoint(LString const& InContent) noexcept
 {
     for (auto& Rune : InContent)
     {

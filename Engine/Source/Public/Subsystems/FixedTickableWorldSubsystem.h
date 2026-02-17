@@ -15,11 +15,15 @@ class JFixedTickableWorldSubsystem : public JTickableWorldSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JFixedTickableWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JFixedTickableWorldSubsystem)
+
+private:
 
     // JTickableWorldSubsystem implementation
     virtual void Tick(const f32 DeltaTime) override final;
     // JTickableWorldSubsystem implementation
+
+public:
 
     //#
     //# Override this method to implement the fixed tick logic.
@@ -34,15 +38,11 @@ protected:
 
 private:
 
-    //#
     //# The tick interval in seconds. Zero means no interval -> tick every frame.
-    //#
-    f32 TickInterval{ 0.0f };
+    f32 TickInterval{};
 
-    //#
     //# The last time the subsystem was ticked.
-    //#
-    f32 LastTickTime{ 0.0f };
+    f32 LastTickTime{};
 };
 
 } /* ~Namespace Jafg */

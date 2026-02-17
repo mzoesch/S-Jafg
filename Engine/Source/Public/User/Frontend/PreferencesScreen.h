@@ -20,7 +20,7 @@ class JPreferencesPanelData : public JNodeData
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JPreferencesPanelData)
+    DEFAULT_OBJECT_CONSTRUCTORS(JPreferencesPanelData)
 
 public:
 
@@ -36,7 +36,7 @@ class WPreferencesPanel : public WCommonMenuTabBarPanel
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WPreferencesPanel)
+    DEFAULT_NODE_CONSTRUCTORS(WPreferencesPanel)
 
     virtual void Construct() override;
     virtual bool AddData(JNodeData& Data) override;
@@ -49,8 +49,11 @@ class WPreferencesScreen : public WCommonMenuTabBar
 
 protected:
 
-    explicit WPreferencesScreen(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WPreferencesScreen)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WPreferencesScreen)
+    {
+        this->SetHorizontalPreference();
+        this->SetAnchor(EAnchor::Fill);
+    }
 
 public:
 

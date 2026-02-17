@@ -20,30 +20,39 @@ public:
 
     LCommandLineInterface() = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LCommandLineInterface)
-    ~LCommandLineInterface() = default;
+    ~LCommandLineInterface() { this->TearDown(); }
 
-    void TearDown();
+    ENGINE_API void TearDown();
 
     //#
     //# Invoke a command.
     //#
-    ENGINE_API void Invoke(const LString& InCommandLine, LCommandExecutionResponse* OutResponse = nullptr);
+    ENGINE_API void Invoke(LCommandExecutionInfo const& Info, LString const& CommandLine, LCommandExecutionResponse* OutResponse = nullptr);
 
     //#
     //# Based of the current state of the command line interface, this method returns a list of suggestions
     //# that are common for the given command line.
     //# The first index is the most common suggestion, the last index is the least common suggestion.
     //#
-    ENGINE_API TArray<LString> GetCommonSuggestions(const LString& InCommandLine, const u32 MaxSuggestions) const;
+    ENGINE_API TArray<LString> GetCommonSuggestions(const LString& CommandLine, const u32 MaxSuggestions) const;
 
-    ENGINE_API auto RegisterType(LCliType&& InType) -> LCliTypeHandle;
-    ENGINE_API bool UnregisterType(LCliTypeHandle* InHandle);
+    ENGINE_API  LCliTypeHandle RegisterType(LCliType&& InType);
+    FORCEINLINE LCliTypeHandle RegisterTypeChecked(LCliType&& InType) { auto Result{this->RegisterType(std::move(InType))}; check(Result.IsValid()) return Result; }
+    FORCEINLINE LCliTypeRaiiHandle RegisterTypeRaii(LCliType&& InType) { return LCliTypeRaiiHandle{this->RegisterType(std::move(InType))}; }
+    FORCEINLINE LCliTypeRaiiHandle RegisterTypeRaiiChecked(LCliType&& InType) { return LCliTypeRaiiHandle{this->RegisterTypeChecked(std::move(InType))}; }
+    ENGINE_API  bool UnregisterType(LCliTypeHandle* InHandle);
 
-    ENGINE_API auto RegisterCommand(LCliCommand&& InCommand) -> LCliCommandHandle;
-    ENGINE_API bool UnregisterCommand(LCliCommandHandle* InHandle);
+    ENGINE_API  LCliCommandHandle RegisterCommand(LCliCommand&& InCommand);
+    FORCEINLINE LCliCommandHandle RegisterCommandChecked(LCliCommand&& InCommand) { auto Result{this->RegisterCommand(std::move(InCommand))}; check(Result.IsValid()) return Result; }
+    FORCEINLINE LCliCommandRaiiHandle RegisterCommandRaii(LCliCommand&& InCommand) { return LCliCommandRaiiHandle{this->RegisterCommand(std::move(InCommand))}; }
+    FORCEINLINE LCliCommandRaiiHandle RegisterCommandRaiiChecked(LCliCommand&& InCommand) { return LCliCommandRaiiHandle{this->RegisterCommandChecked(std::move(InCommand))}; }
+    ENGINE_API  bool UnregisterCommand(LCliCommandHandle* InHandle);
 
-    ENGINE_API auto RegisterVariable(LCliVariable&& InVariable) -> LCliVariableHandle;
-    ENGINE_API bool UnregisterVariable(LCliVariableHandle* InHandle);
+    ENGINE_API  LCliVariableHandle RegisterVariable(LCliVariable&& InVariable);
+    FORCEINLINE LCliVariableHandle RegisterVariableChecked(LCliVariable&& InVariable) { auto Result{this->RegisterVariable(std::move(InVariable))}; check(Result.IsValid()) return Result; }
+    FORCEINLINE LCliVariableRaiiHandle RegisterVariableRaii(LCliVariable&& InVariable) { return LCliVariableRaiiHandle{this->RegisterVariable(std::move(InVariable))}; }
+    FORCEINLINE LCliVariableRaiiHandle RegisterVariableRaiiChecked(LCliVariable&& InVariable) { return LCliVariableRaiiHandle{this->RegisterVariableChecked(std::move(InVariable))}; }
+    ENGINE_API  bool UnregisterVariable(LCliVariableHandle* InHandle);
 
     FORCEINLINE TOptional<LCliObjectHandle>   GetHandle(const LCliObject& InObject) const;
     FORCEINLINE TOptional<LCliTypeHandle>     GetHandle(const LCliType& InObject) const;
@@ -167,7 +176,37 @@ private:
 template<typename TField>
 FORCEINLINE void LCliObjectHandle::GetValue(TField* Destination) const
 {
-    this->GetCommandLineInterface()->GetVariableChecked(*this)->GetValue<TField>(Destination);
+    auto* Cli{this->GetCommandLineInterface()};
+    check(Cli)
+    Cli->GetVariableChecked(*this)->GetValue<TField>(Destination);
+    return;
+}
+
+template<typename TField>
+FORCEINLINE void LCliObjectRaiiHandle::GetValue(TField* Destination) const
+{
+    auto* Cli{this->GetCommandLineInterface()};
+    check(Cli)
+    Cli->GetVariableChecked(static_cast<LCliObjectHandle>(*this))->GetValue<TField>(Destination);
+    return;
+}
+
+FORCEINLINE constexpr void LCliObjectRaiiHandle::Reset() noexcept
+{
+    if (this->IsValid())
+    {
+        if (auto* Cli{this->GetCommandLineInterface()})
+        {
+            if (auto Temp{static_cast<LCliObjectHandle>(*this)}; Cli->UnregisterCommand(&Temp))
+            {
+                this->Release();
+            }
+            return;
+        }
+        LOG_ERROR(LogCli, "Cli is no longer valid but [{}] is dangling.", this->Uuid)
+    }
+
+    return;
 }
 
 FORCEINLINE TOptional<LCliObjectHandle> LCommandLineInterface::GetHandle(const LCliObject& InObject) const

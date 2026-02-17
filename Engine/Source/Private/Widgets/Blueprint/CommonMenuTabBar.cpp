@@ -6,49 +6,20 @@
 #include "Widgets/Switcher.h"
 #include "Widgets/BackgroundBlur.h"
 
-Jafg::WCommonMenuTabBarButton::WCommonMenuTabBarButton(Jafg::LCxxObjectInitializer const& ObjectInitializer)
-    : Super{ObjectInitializer}
-{
-    this->SetNormalBrush({ERegionBrush::None});
-    this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
-    this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
-
-    this->SetPadding({2, 4});
-    this->SetMinDesiredSize(5_pt2);
-    this->SetAnchor(EAnchor::HFill);
-
-    return;
-}
-
-void Jafg::WCommonMenuTabBarButton::Construct()
-{
-    Super::Construct();
-
-    if (this->IsButtonTextWidgetValid())
-    {
-        this->GetButtonTextWidget()->SetAnchor(EAnchor::CenterLeft);
-        this->GetButtonTextWidget()->SetBrush(LTextBoxBrush::SubHeader());
-    }
-
-    return;
-}
-
 void Jafg::WCommonMenuTabBarPanel::Construct()
 {
     Super::Construct();
 
-    LColor Tint = Colors::Black;
-    if (const WCommonMenuTabBar* CommonTabBar = DynamicCast<WCommonMenuTabBar>(this->GetOwningTabBar()))
+    LColor Tint{Colors::Black};
+    if (WCommonMenuTabBar const* CommonTabBar{DynamicCast<WCommonMenuTabBar>(this->GetOwningTabBar())})
     {
         Tint.A = WCommonMenuTabBar::GetAlphaTintBasedOfDepth(CommonTabBar->GetLeafDepth());
     }
 
-    NewNode(WRegion).SaveTo(&this->Panel)
+    BeginStyling(*this).Root<WRegion>().SaveTo(&this->Panel)
         .Anchor(EAnchor::Fill)
         .Type(ERegionBrush::Box)
         .Tint(Tint);
-    this->AddChild(this->Panel);
-    MakeDeferredWidgetNodeFinal(this->Panel);
 
     return;
 }
@@ -62,10 +33,9 @@ void Jafg::WCommonMenuTabBar::Construct()
 
     if (this->bBlur)
     {
-        WBackgroundBlur* Blur = ConstructDeferredWidgetNode<WBackgroundBlur>(this->GetOuter());
-        Blur->SetAnchor(EAnchor::Fill);
-        Blur->SetBlurStrength(0.4f);
-        this->AddChild(Blur);
+        BeginStyling(*this).Root<WBackgroundBlur>()
+            .Anchor(EAnchor::Fill)
+            .Strength(0.4f);
     }
 
     Super::Construct();
@@ -82,6 +52,19 @@ void Jafg::WCommonMenuTabBar::Construct()
     }
 
     this->Switcher->SetAnchor(EAnchor::Fill);
+
+    return;
+}
+
+void Jafg::WCommonMenuTabBarButton::Construct()
+{
+    Super::Construct();
+
+    if (this->IsButtonTextWidgetValid())
+    {
+        this->GetButtonTextWidget()->SetAnchor(EAnchor::CenterLeft);
+        this->GetButtonTextWidget()->SetBrush(LTextBoxBrush::SubHeader());
+    }
 
     return;
 }

@@ -1,4 +1,5 @@
 // Copyright mzoesch. All rights reserved.
+
 #pragma once
 
 #include "User/Preferences/PreferenceTypes.h"
@@ -6,24 +7,13 @@
 namespace Jafg
 {
 
-namespace EPolygonMode
+enum struct EPolygonMode : u8
 {
-
-enum Type : u8
-{
-    Fill      = 0,
-    Wireframe = 1,
-    Max       = 1,
-    Num       = 2,
+    Fill,
+    Wireframe,
 };
 
-} /* ~Namespace EPolygonMode */
-template<> struct TIsPreferenceTypeAllowed<EPolygonMode::Type> : std::true_type { };
-
-namespace EApplicationScale
-{
-
-enum Type : u8
+enum struct EApplicationScale : u8
 {
     Auto,
     Single,
@@ -31,36 +21,28 @@ enum Type : u8
     Triple
 };
 
-} /* ~Namespace EApplicationScale */
-template<> struct TIsPreferenceTypeAllowed<EApplicationScale::Type> : std::true_type { };
-
-FORCEINLINE f32 LexToFloat(EApplicationScale::Type Scale) noexcept
+inline constexpr f32 LexToFloat(EApplicationScale Scale) noexcept
 {
     switch (Scale)
     {
-    case EApplicationScale::Single: return 1.0f;
-    case EApplicationScale::Double: return 2.0f;
-    case EApplicationScale::Triple: return 3.0f;
-    default:                        checkNoEntry()
+    case EApplicationScale::Single: { return 1.0f; }
+    case EApplicationScale::Double: { return 2.0f; }
+    case EApplicationScale::Triple: { return 3.0f; }
+    default:                        { checkNoEntry() }
     }
-
     return 1.0f;
 }
 
-FORCEINLINE f64 LexToDouble(EApplicationScale::Type Scale) noexcept
+inline constexpr f64 LexToDouble(EApplicationScale Scale) noexcept
 {
     switch (Scale)
     {
-    case EApplicationScale::Single: return 1.0;
-    case EApplicationScale::Double: return 2.0;
-    case EApplicationScale::Triple: return 3.0;
-    default:                        checkNoEntry()
+    case EApplicationScale::Single: { return 1.0; }
+    case EApplicationScale::Double: { return 2.0; }
+    case EApplicationScale::Triple: { return 3.0; }
+    default:                        { checkNoEntry() }
     }
-
     return 1.0;
 }
 
 } /* ~Namespace Jafg */
-
-ENUM_CLASS_SERIALIZATION_FUNCTIONS(Jafg::EPolygonMode::Type)
-ENUM_CLASS_SERIALIZATION_FUNCTIONS(Jafg::EApplicationScale::Type)

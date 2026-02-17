@@ -21,7 +21,7 @@ class WPanel : public WParent
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WPanel)
+    DEFAULT_NODE_CONSTRUCTORS(WPanel)
 
 public:
 

@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Widgets/BoxForward.h"
 #include "User/UserPreferencesForward.h"
+#include "Widgets/Box.h"
 
 namespace Jafg
 {

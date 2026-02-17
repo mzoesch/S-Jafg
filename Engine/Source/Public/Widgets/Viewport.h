@@ -35,7 +35,7 @@ class LViewport final
 
 public:
 
-    explicit LViewport(LSurface& Owner) noexcept : Surface(Owner) { }
+    explicit LViewport(LSurface& Owner) noexcept : Surface(Owner) { this->Outer.SetUserData(this); }
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() { this->TearDown(); }
 
@@ -64,20 +64,16 @@ public:
     mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnLateTick, LViewport const& InViewport)
 
     template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
-    FORCEINLINE TWidget* AddWidget()
-    {
-        TWidget* NewWidget{ ConstructDeferredWidgetNode<TWidget>(&this->Outer) };
-        NewWidget->AddToViewport(this);
-        MakeDeferredWidgetNodeFinal(NewWidget);
-        return NewWidget;
-    }
+    FORCEINLINE TWidget* AddWidget();
     void AddWidget(WUserWidget* Widget);
+    // template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
+    // FORCEINLINE TWidget* AddWidgetAt();
     void AddWidgetAt(const i32 Index, WUserWidget* Widget);
     ENGINE_API void RemoveWidget(WUserWidget* Widget);
     ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
 
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
-    FORCEINLINE EApplicationScale::Type GetMaxAllowApplicationScale() const noexcept;
+    FORCEINLINE EApplicationScale GetMaxAllowApplicationScale() const noexcept;
     FORCEINLINE f32  GetScaleFactor() const { return this->ScaleFactor; }
     FORCEINLINE void SetPlatformDpi(const f32 InDpi) { this->PlatformDpi = InDpi; }
     FORCEINLINE f32  GetPlatformDpi() const { return this->PlatformDpi; }
@@ -93,6 +89,7 @@ public:
     FORCEINLINE f64     GetWidthD() const noexcept { return static_cast<f64>(this->GetDimensions().x); }
     FORCEINLINE f64     GetHeightD() const noexcept { return static_cast<f64>(this->GetDimensions().y); }
 
+    FORCEINLINE auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
     ENGINE_API  WNode* GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const;
     FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const;
     template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClass() const;
@@ -211,7 +208,7 @@ FORCEINLINE LViewportSweepTranslation::~LViewportSweepTranslation() noexcept
     return;
 }
 
-FORCEINLINE EApplicationScale::Type LViewport::GetMaxAllowApplicationScale() const noexcept
+FORCEINLINE EApplicationScale LViewport::GetMaxAllowApplicationScale() const noexcept
 {
     auto Dimensions{ this->GetDimensions() };
 
@@ -263,4 +260,22 @@ FORCEINLINE CONSTEXPR_CHECK_SLOW void LViewport::ConvertTLToBLOrigin(LVec2F* Vec
     Vector->y = this->GetDimensions().y - Vector->y;
 }
 
+namespace Detail
+{
+
+inline constexpr LNodeDynamicInit LOuter2ViewportProj::operator()(LCxxDynamicInit const& Init) const noexcept
+{
+    check(Init.Outer.GetUserData())
+    return {.Outer=*static_cast<LViewport*>(Init.Outer.GetUserData()),.Class=Init.Class};
+}
+
+} /* ~Namespace Detail */
+
+inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
+    : Super{LCxxDynamicInit{.Outer=std::invoke(LNodeDynamicInit::Proj{}, Init.Outer),.Class=Init.Class}}
+    , AttachedViewport{Init.Outer}
+{
+}
+
 } /* ~Namespace Jafg */
+

@@ -83,9 +83,9 @@ public:
     //#
     FORCEINLINE static LCliType Type(const LString& InIdentifier) { return LCliType(InIdentifier); }
     FORCEINLINE static LCliType Type(const LString& InIdentifier, const LString& InHelp) { return LCliType(InIdentifier, InHelp); }
-    template <typename T>
+    template<typename T>
     FORCEINLINE static LCliType Type() UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return LCliType::Type(""))
-    template <typename T, typename... TArgs> requires LCliTypeFactory<T>::bExists
+    template<typename T, typename... TArgs> requires LCliTypeFactory<T>::bExists
     FORCEINLINE static LCliType Type(TArgs&&... Args);
 
     FORCEINLINE LCliType* GetRegisteredType() const { return static_cast<LCliType*>(this->GetRegisteredObjectByUuid()); }

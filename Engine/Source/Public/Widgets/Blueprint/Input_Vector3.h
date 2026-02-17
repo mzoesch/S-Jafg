@@ -8,27 +8,21 @@
 namespace Jafg
 {
 
-template <typename TNode>
-class TWidgetFactoryInput_Vector3 : public TWidgetFactoryHButton<TNode>
-{
-public:
+struct LFactoryInput_Vector3;
 
-    GENERATED_FACTORY_BODY(TWidgetFactoryHRegion)
-
-    FORCEINLINE TFactoryRetTy& DisplayName(const LString& InDisplayName) { this->This()->SetDisplayName(InDisplayName); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& DisplayName(LString&& InDisplayName) { this->This()->SetDisplayName(std::move(InDisplayName)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Value(const LVec3F& InValue) { this->This()->SetValue(InValue); return this->Self(); }
-};
-
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryInput_Vector3)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryInput_Vector3)
 class ENGINE_API WInput_Vector3 : public WHButton
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WInput_Vector3(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WInput_Vector3)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WInput_Vector3) noexcept
+    {
+        this->SetPadding(5.0f);
+        this->SetOmniOutlineThickness(1.0f);
+        this->SetOmniTint(Colors::Transparent);
+    }
 
 public:
 
@@ -45,6 +39,27 @@ private:
 
     LString DisplayName;
     LVec3F Value;
+};
+
+struct LFactoryInput_Vector3 : NODE_FACTORY_PARENT(WInput_Vector3)
+{
+    NODE_FACTORY_BODY(WInput_Vector3)
+
+    decltype(auto) DisplayName(this auto&& Self, LString const& InDisplayName)
+     {
+        NODE_FACTORY_SELF().SetDisplayName(InDisplayName);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisplayName(this auto&& Self, LString&& InDisplayName)
+    {
+        NODE_FACTORY_SELF().SetDisplayName(std::move(InDisplayName));
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Value(this auto&& Self, LVec3F const& InValue)
+    {
+        NODE_FACTORY_SELF().SetValue(InValue);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

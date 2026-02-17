@@ -9,31 +9,7 @@
 namespace Jafg
 {
 
-template <typename TNode>
-class TWidgetFactoryCommonMenuTabBar : public TWidgetFactoryTabBar<TNode>
-{
-public:
-
-    using Super         = TWidgetFactoryTabBar<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
-
-    FORCEINLINE TFactoryRetTy& BlurBackground(const bool bInBlur) { this->This()->SetDoBlurBackground(bInBlur); return this->Self(); }
-};
-
-DECLARE_JAFG_WIDGET()
-class WCommonMenuTabBarButton : public WTabBarButton
-{
-    GENERATED_CLASS_BODY()
-
-protected:
-
-    explicit WCommonMenuTabBarButton(LCxxObjectInitializer const& ObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WCommonMenuTabBarButton)
-
-public:
-
-    virtual void Construct() override;
-};
+struct LFactoryCommonMenuTabBar;
 
 DECLARE_JAFG_WIDGET()
 class WCommonMenuTabBarPanel : public WTabBarPanel
@@ -42,7 +18,7 @@ class WCommonMenuTabBarPanel : public WTabBarPanel
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WCommonMenuTabBarPanel)
+    DEFAULT_NODE_CONSTRUCTORS(WCommonMenuTabBarPanel)
 
     virtual void Construct() override;
 
@@ -54,17 +30,17 @@ protected:
 
 private:
 
-    WRegion* Panel{ nullptr };
+    WRegion* Panel{};
 };
 
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryCommonMenuTabBar)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryCommonMenuTabBar)
 class WCommonMenuTabBar : public WTabBar
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WCommonMenuTabBar)
+    DEFAULT_NODE_CONSTRUCTORS(WCommonMenuTabBar)
 
 public:
 
@@ -86,6 +62,40 @@ private:
 
     bool bBlur{};
     i32 Depth{};
+};
+
+DECLARE_JAFG_WIDGET()
+class WCommonMenuTabBarButton : public WTabBarButton
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WCommonMenuTabBarButton)
+    {
+        this->SetNormalBrush({ERegionBrush::None});
+        this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
+        this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
+
+        this->SetPadding({2, 4});
+        this->SetMinDesiredSize(5_pt2);
+        this->SetAnchor(EAnchor::HFill);
+    }
+
+public:
+
+    virtual void Construct() override;
+};
+
+struct LFactoryCommonMenuTabBar : NODE_FACTORY_PARENT(WCommonMenuTabBar)
+{
+    NODE_FACTORY_BODY(WCommonMenuTabBar)
+
+    decltype(auto) BlurBackground(this auto&& Self, const bool bInBlur)
+    {
+        NODE_FACTORY_SELF().SetDoBlurBackground(bInBlur);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

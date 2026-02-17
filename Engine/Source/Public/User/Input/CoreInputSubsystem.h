@@ -18,7 +18,7 @@ class JCoreInputSubsystem final : public JLocalEgoSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JCoreInputSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JCoreInputSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
 

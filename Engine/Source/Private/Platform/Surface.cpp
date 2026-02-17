@@ -98,7 +98,7 @@ void Jafg::LSurfaceBase::Tick()
 void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, const bool bKillOld /* = true */)
 {
     /* Otherwise, we will get access violations. */
-    APersonaController* OldController{ bKillOld ? nullptr : this->Controller };
+    APersonaController* OldController{bKillOld ? nullptr : this->Controller};
 
     if (this->Controller)
     {
@@ -117,9 +117,9 @@ void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, co
 
     if (this->Controller)
     {
-        if (auto const* World{ this->Controller->GetWorldChecked() }; World->IsUnderlyingLevelValid())
+        if (auto const& World{this->Controller->GetWorld()}; World.IsUnderlyingLevelValid())
         {
-            this->AsSurface()->SetInputMode(World->GetUnderlyingLevelChecked().InputMode);
+            this->AsSurface()->SetInputMode(World.GetUnderlyingLevelChecked().InputMode);
         }
     }
 
@@ -133,18 +133,18 @@ void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, co
 
 Jafg::LEngine& Jafg::LSurfaceBase::GetEngine() const noexcept
 {
-    check( GEngine && "Absence of GEngine while a surface exists is undefined behavior." )
+    check(GEngine && "Absence of GEngine while a surface exists is undefined behavior.")
     return *GEngine;
 }
 
 Jafg::LLocalEgo& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
 {
-    check( GEngine && "Absence of GEngine while a surface exists is undefined behavior." )
+    check(GEngine && "Absence of GEngine while a surface exists is undefined behavior.")
     return GEngine->GetLocalEgo();
 }
 
 Jafg::LFrontend& Jafg::LSurfaceBase::GetFrontend() const noexcept
 {
-    check( GEngine && "Absence of GEngine while a surface exists is undefined behavior." )
+    check(GEngine && "Absence of GEngine while a surface exists is undefined behavior.")
     return GEngine->GetLocalEgo().GetFrontend();
 }

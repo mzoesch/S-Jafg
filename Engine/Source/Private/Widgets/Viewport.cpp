@@ -409,22 +409,18 @@ void Jafg::LViewport::TearDown()
 
 void Jafg::LViewport::AddWidget(WUserWidget* Widget)
 {
-    check( Widget )
-    this->TopLevelWidgets.push_back(Widget);
-
-    check( &Widget->GetViewport() == this )
-
-    return;
+    this->AddWidgetAt(this->TopLevelWidgets.size(), Widget);
 }
 
 void Jafg::LViewport::AddWidgetAt(const i32 Index, WUserWidget* Widget)
 {
-    check( Widget )
+    check(Widget)
+    check(Widget->IsTopLevel() == false)
+    check(algo::contains(this->TopLevelWidgets, Widget) == false)
+    // TODO: Check that #Widget is also not in the viewport as a child of some other user widget.
     this->TopLevelWidgets.insert(this->TopLevelWidgets.begin() + Index, Widget);
-
-    check( &Widget->GetViewport() == this )
-
-    return;
+    Widget->bIsTopLevel = true;
+    check(&Widget->GetViewport() == this)
 }
 
 void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)
@@ -471,7 +467,8 @@ Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class)
         continue;
     }
 
-    return nullptr;}
+    return nullptr;
+}
 
 bool Jafg::LViewport::FocusWidgetNode(WNode* InNode)
 {

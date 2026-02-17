@@ -16,7 +16,7 @@ class LTickableObject
 public:
 
     LTickableObject() = default;
-    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR_DEFAULTED(LTickableObject)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LTickableObject)
     virtual ~LTickableObject() = default;
 
     virtual void Tick(const f32 DeltaTime) = 0;

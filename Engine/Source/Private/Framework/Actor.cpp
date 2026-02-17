@@ -1,52 +1,48 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/Actor.h"
-#include "Components/RenderComponent.h"
 
 void Jafg::AActor::BeginLife()
 {
     Super::BeginLife();
 
-    TArray<JActorComponent*> DeferredComponents; DeferredComponents.reserve(algo::size(this->Components));
-    for (auto const& Comp : this->Components)
+    TArray<AActorComponent*> PreComponents; PreComponents.reserve(this->Components.size());
+    for (auto& Comp : this->Components)
     {
-        DeferredComponents.emplace_back(&*Comp);
-        MakeDeferredObjectFinal(&*Comp);
+        PreComponents.emplace_back(&*Comp);
     }
-
-    for (auto const& Comp : DeferredComponents)
+    check(this->bLives == false)
+    this->bLives = true;
+    for (auto* Comp : PreComponents)
     {
-        Comp->OnAttach(this);
+        Comp->OnAttach(*this);
     }
-
-    return;
-}
-
-void Jafg::AActor::EndLife()
-{
-    Super::EndLife();
-
-    this->Components = LComponentArray{};
-
-    return;
-}
-
-void Jafg::AActor::OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
-{
-    Super::OnGarbage(Reason, PreviousOuter);
-
-    check( this->GetWorld() == nullptr )
-    check( PreviousOuter.IsWorld() )
 
     if (this->CanEverTick())
     {
-        if (PreviousOuter.AsWorld()->IsTickableObjectsPutMutexLocked())
+        this->GetWorld().RegisterTickableObject(static_cast<LTickableObject*>(this));
+    }
+
+    return;
+}
+
+void Jafg::AActor::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+{
+    Super::OnGarbage(Reason);
+
+    algo::orphan(&this->Components);
+
+    if (this->CanEverTick())
+    {
+        auto& World{this->GetWorld()};
+
+        if (World.IsTickableObjectsPutMutexLocked())
         {
-            PreviousOuter.AsWorld()->DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
+            World.DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
         }
         else
         {
-            algo::erase_once_checked(&PreviousOuter.AsWorld()->TickableObjects, static_cast<LTickableObject*>(this));
+            algo::erase_exactly_once_checked(&World.TickableObjects, static_cast<LTickableObject*>(this));
         }
     }
 

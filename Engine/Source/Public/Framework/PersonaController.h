@@ -21,11 +21,11 @@ class ENGINE_API APersonaController : public AActor
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(APersonaController)
+    DEFAULT_WORLD_CONSTRUCTORS(APersonaController)
 
 public:
 
-    virtual void EndLife() override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
     FORCEINLINE bool IsLocallyPossessed() const noexcept { return this->IsSurfaceValid(); }
 
@@ -49,8 +49,8 @@ public:
 
 private:
 
-    LSurface* Surface{ nullptr };
-    APawn* Pawn{ nullptr };
+    LSurface* Surface{};
+    APawn* Pawn{};
 };
 
 } /* ~Namespace Jafg */

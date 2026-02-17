@@ -10,29 +10,27 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
-    check( this->Outer )
-    check( this->SubsystemInstances.empty() )
-    check( Class.HasClass() )
+    check(Tasks::IsOnMasterThread())
+    check(this->Outer)
+    check(this->SubsystemInstances.empty())
+    check(Class.HasClass())
 
     LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {}.", Class->GetFullyQualifiedName())
 
-    auto& Registry{ Private::GetGlobalCxxRecordRegistry() };
-    for (TArray ValidClasses{ Registry.GetClassesByBase(*Class.GetClass()) }; auto const* Candidate : ValidClasses)
+    auto& Registry{Detail::GetGlobalCxxRecordRegistry()};
+    for (TArray ValidClasses{Registry.GetClassesByBase(*Class.GetClass())}; auto const* Candidate : ValidClasses)
     {
         check( Candidate )
-
-        if (Candidate->StaticClass.IsNotAbstract())
+        if (Candidate->IsNotAbstract())
         {
-            this->SubsystemInstances.emplace_back(NewObject<JSubsystem>(this->Outer, Candidate->StaticClass));
+            this->SubsystemInstances.emplace_back(NewObject(CastTo<JSubsystem>{}, {*this->Outer, *Candidate}));
         }
-
         continue;
     }
 
     for (auto It{ this->SubsystemInstances.begin() }; It != this->SubsystemInstances.end();)
     {
-        checkSlow( *It )
+        check(*It)
 
         if ((*It)->IsInitialized())
         {
@@ -50,7 +48,6 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
 
         (*It)->MarkAsGarbage_v2();
         this->SubsystemInstances.erase(It);
-
         continue;
     }
 
@@ -66,9 +63,9 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
 
     checkCode
     (
-        for (auto E : this->SubsystemInstances)
+        for (auto* E : this->SubsystemInstances)
         {
-            check( E && E->IsInitialized() && E->GetOuter() == this->Outer && E->GetVirtualTable().DerivesFrom(*Class.GetClass()) )
+            check(E && E->IsInitialized() && &E->GetOuter() == this->Outer && E->GetVirtualTable().DerivesFrom(*Class.GetClass()))
         }
     )
 
@@ -79,34 +76,34 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
-    check( this->Outer )
-    check( this->Class.HasClass() )
+    check(Tasks::IsOnMasterThread())
+    check(this->Outer)
+    check(this->Class.HasClass())
 
     LOG_VERBOSE(LogSubsystemCollection, "[{}]: Locating all subsystems of class {} that are not loaded.", this->FriendlyName, this->Class->GetFullyQualifiedName())
 
-    auto& Registry{ Private::GetGlobalCxxRecordRegistry() };
-    for (TArray ValidClasses{ Registry.GetClassesByBase(*this->Class.GetClass()) }; auto const* Candidate : ValidClasses)
+    auto& Registry{Detail::GetGlobalCxxRecordRegistry()};
+    for (TArray ValidClasses{Registry.GetClassesByBase(*this->Class.GetClass())}; auto const* Candidate : ValidClasses)
     {
-        check( Candidate )
+        check(Candidate)
 
-        if (Candidate->StaticClass.IsAbstract())
+        if (Candidate->IsAbstract())
         {
             continue;
         }
 
-        if (algo::contains(this->SubsystemInstances, &Candidate->StaticClass, &JSubsystem::GetVirtualTablePtr) == false)
+        if (algo::contains(this->SubsystemInstances, Candidate, &JSubsystem::GetVirtualTableAsPointer) == false)
         {
             LOG_VERBOSE(LogSubsystemCollection, "Found potential subsystem [{}].", Candidate->GetFullyQualifiedName() )
-            this->SubsystemInstances.emplace_back(NewObject<JSubsystem>(this->Outer, Candidate->StaticClass));
+            this->SubsystemInstances.emplace_back(NewObject(CastTo<JSubsystem>{}, {*this->Outer, *Candidate}));
         }
 
         continue;
     }
 
-    for (auto It{ this->SubsystemInstances.begin() }; It != this->SubsystemInstances.end();)
+    for (auto It{this->SubsystemInstances.begin()}; It != this->SubsystemInstances.end();)
     {
-        checkSlow( *It )
+        check(*It)
 
         if ((*It)->IsInitialized())
         {
@@ -131,11 +128,9 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
     return;
 }
 
-void Jafg::LSubsystemCollection::OnForeignPluginLoaded(LLoadedPlugin const* Plugin)
+void Jafg::LSubsystemCollection::OnForeignPluginLoaded(LLoadedPlugin const& Plugin)
 {
-    check( Plugin )
-    LOG_VERBOSE(LogSubsystemCollection, "Foreign plugin loaded, initializing dependent subsystems for [{}].", Plugin->GetIdentifier())
-
+    LOG_VERBOSE(LogSubsystemCollection, "Foreign plugin loaded, initializing dependent subsystems for [{}].", Plugin.GetIdentifier())
     this->InitializeSubsystemsForDeferred();
 
     return;
@@ -152,12 +147,11 @@ void Jafg::LSubsystemCollection::InitializeDependency(TSubclassOf<JSubsystem> Cl
 
     if (Subsystem->ShouldCreateSubsystem(this->Outer) == false)
     {
-        LOG_WARNING
-        (
-            LogJafgInternal,
+        LOG_FATAL(
+            LogSubsystemCollection,
             "Wanted to initialize dependent subsystem {} but it does not want to be created.",
             Subsystem->GetNameAsString()
-        )
+            )
         return;
     }
 
@@ -171,12 +165,11 @@ Jafg::JSubsystem const* Jafg::LSubsystemCollection::GetSubsystem(TSubclassOf<JSu
 {
     for (JSubsystem const* Subsystem : this->SubsystemInstances)
     {
-        checkSlow( Subsystem )
-        if (Subsystem->GetVirtualTablePtr() == Class.GetClass())
+        check(Subsystem)
+        if (&Subsystem->GetVirtualTable() == Class.GetClass())
         {
             return Subsystem;
         }
-
         continue;
     }
 
@@ -187,12 +180,11 @@ Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(TSubclassOf<JSubsyste
 {
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
-        checkSlow( Subsystem )
-        if (Subsystem->GetVirtualTablePtr() == Class.GetClass())
+        check(Subsystem)
+        if (&Subsystem->GetVirtualTable() == Class.GetClass())
         {
             return Subsystem;
         }
-
         continue;
     }
 
@@ -203,14 +195,13 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
-    check( this->Outer )
+    check(Tasks::IsOnMasterThread())
+    check(this->Outer)
 
-    i32 SubsystemCount { 0 };
-
+    i32 SubsystemCount{};
     for (auto*& Subsystem : this->SubsystemInstances)
     {
-        check( Subsystem )
+        check(Subsystem)
 
         if (Subsystem->IsPriorityTearDown())
         {
@@ -227,7 +218,7 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
         LOG_VERBOSE(LogSubsystemCollection, "Tore down {} priority subsystems for outer [{}].", SubsystemCount, this->Outer->GetHumanReadableName())
     }
 
-    Private::GetGlobalCarnifex().KillAllGarbageChildren();
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;
 }
@@ -236,8 +227,8 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
-    check( this->Outer )
+    check(Tasks::IsOnMasterThread())
+    check(this->Outer)
 
     LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.size(), this->Outer->GetHumanReadableName())
 
@@ -247,19 +238,17 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
         {
             Subsystem->MarkAsGarbage_v2();
         }
-
-        continue;
     }
 
     algo::orphan(&this->SubsystemInstances);
-    Private::GetGlobalCarnifex().KillAllGarbageChildren();
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
     this->Outer = nullptr;
     this->Class.SetClass(nullptr);
 
     if (GEngine)
     {
         GEngine->OnForeignPluginLoaded.Remove(&this->OnForeignPluginLoadedHandle);
-        check( this->OnForeignPluginLoadedHandle.IsValid() == false )
+        check(this->OnForeignPluginLoadedHandle.IsValid() == false)
     }
     else
     {

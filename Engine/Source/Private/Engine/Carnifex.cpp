@@ -17,12 +17,9 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
 
     while (this->GarbageChildren.empty() == false)
     {
-        auto& Child{ this->GarbageChildren.back() };
+        auto& Child{this->GarbageChildren.back()};
         check( Child->IsGarbage() )
-
-        Child->EndLife();
         this->GarbageChildren.pop_back();
-
         continue;
     }
 
@@ -33,9 +30,9 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
 
 void Jafg::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
 {
-    check( Child.get() )
+    check( &*Child )
 
-    if (auto It{ algo::find(this->GarbageChildren, Child.get(), algo::unique_raw{})}; It != this->GarbageChildren.end())
+    if (auto It{algo::find(this->GarbageChildren, Child.get(), algo::unique_raw{})}; It != this->GarbageChildren.end())
     {
         checkSlow( It->get() == Child.get() )
         check( It->get()->IsGarbage() )
@@ -55,11 +52,9 @@ void Jafg::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
         check( algo::contains(this->GarbageChildren, Child.get(), algo::unique_raw{}) == false )
     }
 
-    checkSlow( Child.get() )
+    check( Child.get() )
     check( Child->IsGarbage() )
-    check( Child->Outer == nullptr && Child->Outer->IsHiredHere(Child.get()) == false )
-    check( Child->HasEndedLife() == false )
-    Child->EndLife();
+    check( Child->Outer.IsHiredHere(&*Child) == false )
 
     return;
 }

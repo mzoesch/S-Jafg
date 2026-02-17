@@ -9,13 +9,13 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JSupremePolicies : public JWorldObject
+class ENGINE_API ASupremePolicies : public AWorldObject
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JSupremePolicies)
+    DEFAULT_WORLD_CONSTRUCTORS(ASupremePolicies)
 
 public:
 
@@ -44,17 +44,18 @@ public:
     //# @return The persona controller to use for this connection. If nullptr is returned, the connection is rejected.
     //#         The persona controller must be deferred.
     //#
-    virtual APersonaController* OnIncomingConnectionRequest(EIncomingConnectionRequest::Type IncomingConnection, LString* OutRejectionReason = nullptr);
+    virtual APersonaController* OnIncomingConnectionRequest(EIncomingConnectionRequest IncomingConnection, LString* OutRejectionReason = nullptr);
 
     //#
     //# Called after a persona controller has been created.
     //#
-    virtual void OnPersonaControllerCreated(APersonaController& Pc);
+    virtual void OnPersonaControllerCreated(APersonaController* Pc);
 
     //#
-    //# Called whenever a pawn is spawned for a persona controller.
+    //# Called whenever a pawn is spawned/used for a persona controller.
+    //# @return A valid pointer to a possessable pawn.
     //#
-    virtual APawn* SpawnDeferredPawnForPersonaController(APersonaController& Pc);
+    virtual APawn* GetPawnForPersonaController(APersonaController const& Pc);
 
     TSubclassOf<APersonaController> PersonaControllerClass;
     TSubclassOf<APawn> DefaultPawnClass;

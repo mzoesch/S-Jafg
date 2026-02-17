@@ -5,15 +5,6 @@
 #include "User/LocalEgo.h"
 #include "Widgets/Viewport.h"
 
-Jafg::WEditorView::WEditorView(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetAnchor(EAnchor::Fill);
-    this->SetVisibility(EWidgetVisibility::Visible);
-
-    return;
-}
-
 void Jafg::WEditorView::Tick()
 {
     Super::Tick();

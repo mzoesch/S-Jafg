@@ -78,7 +78,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 {
                     if (auto* Pawn{Ctrl->GetPawn()})
                     {
-                        if (auto* Comp{Pawn->GetComponent<JDebugCameraComponent>()})
+                        if (auto* Comp{Pawn->GetComponent<ADebugCameraComponent>()})
                         {
                             Comp->OnMove(Value);
                         }
@@ -121,7 +121,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 {
                     if (auto* Pawn{Ctrl->GetPawn()})
                     {
-                        if (auto* Comp{Pawn->GetComponent<JDebugCameraComponent>()})
+                        if (auto* Comp{Pawn->GetComponent<ADebugCameraComponent>()})
                         {
                             Comp->OnRotate(Value);
                         }

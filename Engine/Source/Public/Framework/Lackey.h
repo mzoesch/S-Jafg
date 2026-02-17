@@ -18,7 +18,7 @@ class ALackey final : public APawn
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(ALackey)
+    DEFAULT_WORLD_CONSTRUCTORS(ALackey)
 };
 
 } /* ~Namespace Jafg */

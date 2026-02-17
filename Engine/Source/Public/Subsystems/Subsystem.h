@@ -24,19 +24,15 @@ class ENGINE_API JSubsystem : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JSubsystem)
 
-    virtual void BeginLife() override final { Super::BeginLife(); }
-    virtual void EndLife()   override final { Super::EndLife();   }
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override final
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override final
     {
-        Super::OnGarbage(Reason, PreviousOuter);
-
-        check( this->GetOuter() == nullptr )
+        Super::OnGarbage(Reason);
 
         if (this->IsInitialized())
         {
-            this->TearDown(PreviousOuter);
+            this->TearDown();
         }
 
         return;
@@ -48,15 +44,21 @@ protected:
     //# @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
     //#       soon after.
     //#
-    FORCEINLINE virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const { return true; }
-                virtual void Initialize(LSubsystemCollection& Collection);
-    FORCEINLINE virtual void TearDown() { }
-    FORCEINLINE virtual void TearDown(LClassOuter& PreviousOuter) { }
+    inline virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const noexcept { return true; }
+
+    //# Initialize the subsystem.
+    inline virtual void Initialize(LSubsystemCollection& Collection)
+    {
+        check( Tasks::IsOnMasterThread() && this->bIsInitialized == false)
+        this->bIsInitialized = true;
+    }
+
+    inline virtual void TearDown() {}
 
     FORCEINLINE bool IsInitialized() const noexcept { return this->bIsInitialized; }
     FORCEINLINE bool IsPriorityTearDown() const noexcept { return this->bPriorityTearDown; }
     //# Please see the #bPriorityTearDown documentation for more information. DO NOT JUST SET THIS TO TRUE.
-    FORCEINLINE void SetPriorityTearDown(const bool bPriority) noexcept { this->bPriorityTearDown = bPriority; }
+    FORCEINLINE void SetPriorityTearDown(bool b) noexcept { this->bPriorityTearDown = b; }
 
 private:
 
@@ -65,9 +67,10 @@ private:
     //# In general, this **ONLY** applies to subsystems that are threaded.
     //# If you see yourself setting this flag on a NON-THREADED subsystem, please reconsider your design choice.
     //#
-    bool bPriorityTearDown : 1 { false };
+    bool bPriorityTearDown:1{};
 
-    bool bIsInitialized : 1 { false };
+    //# Whether #ShouldCreateSubsystem returned true and the subsystem was, therefore, initialized.
+    bool bIsInitialized:1{};
 };
 
 } /* Namespace Jafg */

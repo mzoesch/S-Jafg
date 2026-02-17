@@ -15,7 +15,7 @@ class JCorePreferencesSubsystem final : public JLocalEgoSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JCorePreferencesSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JCorePreferencesSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
 };

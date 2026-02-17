@@ -15,7 +15,7 @@ class JgcInputSubsystem final : public Jafg::JLocalEgoSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JgcInputSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JgcInputSubsystem)
 
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
 };

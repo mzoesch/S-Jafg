@@ -16,13 +16,13 @@ enum struct LSceneSweep
 };
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JSceneComponent : public JActorComponent
+class ENGINE_API ASceneComponent : public AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JSceneComponent)
+    DEFAULT_WORLD_CONSTRUCTORS(ASceneComponent)
 
 public:
 

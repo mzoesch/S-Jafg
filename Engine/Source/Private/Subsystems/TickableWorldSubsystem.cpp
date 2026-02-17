@@ -6,19 +6,13 @@
 void Jafg::JTickableWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
-
-    check( this->GetWorld() )
-    this->GetWorld()->RegisterTickableObject(this);
-
+    this->GetWorld().RegisterTickableObject(this);
     return;
 }
 
-void Jafg::JTickableWorldSubsystem::TearDown(LClassOuter& PreviousOuter)
+void Jafg::JTickableWorldSubsystem::TearDown()
 {
-    JWorldSubsystem::TearDown(PreviousOuter);
-
-    check( this->GetWorld() == nullptr )
-    PreviousOuter.AsWorld()->UnregisterTickableObject(this);
-
+    Super::TearDown();
+    this->GetWorld().UnregisterTickableObject(this);
     return;
 }

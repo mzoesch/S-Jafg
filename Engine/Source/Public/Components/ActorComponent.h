@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/CxxClass.h"
+#include "Engine/WorldObject.h"
 #include "ActorComponent.generated.h"
 
 namespace Jafg
@@ -12,7 +12,7 @@ class AActor;
 struct LRenderInfo;
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JActorComponent : public JCxxClass
+class ENGINE_API AActorComponent : public AWorldObject
 {
     GENERATED_CLASS_BODY()
 
@@ -20,22 +20,26 @@ class ENGINE_API JActorComponent : public JCxxClass
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JActorComponent)
+    DEFAULT_WORLD_CONSTRUCTORS(AActorComponent)
+
+private:
+
+    //# Do not use. Use #OnAttach.
+    virtual void BeginLife() override final { Super::BeginLife(); }
 
 public:
 
-    virtual void OnAttach(AActor* InOwner)
+    //#
+    //# Called when this component is attached to an actor. This call might be deferred quite a while if the actor
+    //# itself is not spawned in.
+    //#
+    virtual void OnAttach(AActor& InOwner)
     {
-        check( InOwner )
-
 #if JAFG_DO_CHECKS
         check( this->bHasExecutedOnAttach == false )
         this->bHasExecutedOnAttach = true;
 #endif /* JAFG_DO_CHECKS */
-
-        this->Owner = InOwner;
-
-        return;
+        this->Owner = &InOwner;
     }
 
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
@@ -44,7 +48,8 @@ public:
 
 protected:
 
-    FORCEINLINE AActor* GetOwner() const noexcept { check( this->Owner ) return this->Owner; }
+    FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
+    FORCEINLINE AActor& GetOwner() const noexcept { check( this->IsOwnerValid() ) return *this->Owner; }
 
 private:
 

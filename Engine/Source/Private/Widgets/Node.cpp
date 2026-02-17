@@ -7,66 +7,6 @@
 #include "Widgets/Region.h"
 #include "User/UserPreferences.h"
 
-namespace
-{
-
-std::map<void*, TUnique<Jafg::LWidgetFactory>> GWidgetFactories;
-
-} /* ~Namespace <Anonymous> */
-
-namespace Jafg::Private
-{
-
-ENGINE_API void AddWidgetFactory(TUnique<LWidgetFactory> InFactory)
-{
-    check( InFactory->GetNodeRaw() )
-
-#if JAFG_DO_CHECKS
-    for (auto const& Snd: GWidgetFactories | std::views::values)
-    {
-        check( Snd && Snd->GetNodeRaw() )
-        check( Snd->GetNodeRaw() != InFactory->GetNodeRaw() )
-    }
-#endif /* LAL_DO_CHECKS */
-
-    GWidgetFactories[InFactory->GetNodeRaw()] = std::move(InFactory);
-
-    return;
-}
-
-ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode)
-{
-    for (auto const& [Fst, Snd] : GWidgetFactories)
-    {
-        if (Fst == InNode)
-        {
-            check( Snd )
-            return Snd.get();
-        }
-    }
-
-    return nullptr;
-}
-
-ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode)
-{
-    if (auto* Factory{ FindOrNullWidgetFactory(InNode) })
-    {
-        return *Factory;
-    }
-
-    panic( "The widget factory is not registered." )
-}
-
-ENGINE_API i32 PurgeWidgetFactories()
-{
-    const i32 Count{ static_cast<i32>(GWidgetFactories.size()) };
-    GWidgetFactories.clear();
-    return Count;
-}
-
-} /* ~Namespace Jafg::Private */
-
 namespace Jafg
 {
 
@@ -112,23 +52,19 @@ void LAnchor::Normalize() noexcept
     return;
 }
 
-LString LexToString(const EWidgetVisibility::Type InVisibility)
+LString LexToString(ENodeVisibility Visibility)
 {
-    switch (InVisibility)
+    switch (Visibility)
     {
-    case EWidgetVisibility::Visible: { return "Visible"; }
-    case EWidgetVisibility::Hidden: { return "Hidden"; }
-    case EWidgetVisibility::Collapsed: { return "Collapsed"; }
-    case EWidgetVisibility::DerivedHitTestInvisible: { return "DerivedHitTestInvisible"; }
-    case EWidgetVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
-    case EWidgetVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
-    default: checkNoEntry() return { };
+    case ENodeVisibility::Visible: { return "Visible"; }
+    case ENodeVisibility::Hidden: { return "Hidden"; }
+    case ENodeVisibility::Collapsed: { return "Collapsed"; }
+    case ENodeVisibility::DerivedHitTestInvisible: { return "DerivedHitTestInvisible"; }
+    case ENodeVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
+    case ENodeVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
+    default: checkNoEntry() return {"<unknown>"};
     }
 }
-
-struct LWidgetConstructor
-{
-};
 
 } /* ~Namespace Jafg */
 
@@ -154,21 +90,16 @@ LVec2F Jafg::InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept
 
 f32 Jafg::InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept
 {
-    const EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
-    check( Scale != EApplicationScale::Auto )
+    const EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
+    check(Scale != EApplicationScale::Auto)
     return Relative * LexToDouble(Scale);
 }
 
 LVec2F Jafg::InSptFromRelative(LViewport const& Viewport, LVec2F Relative) noexcept
 {
-    const EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
-    check( Scale != EApplicationScale::Auto )
+    const EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
+    check(Scale != EApplicationScale::Auto)
     return Relative * LexToFloat(Scale);
-}
-
-Jafg::WNode::~WNode()
-{
-    check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
 }
 
 bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVec2F& InLocation) const
@@ -294,14 +225,14 @@ bool Jafg::WNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
     return false;
 }
 
-void Jafg::WNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
+void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
 {
     if (this->Visibility == InVisibility)
     {
         return;
     }
 
-    const EWidgetVisibility::Type OldVisibility = this->Visibility;
+    const ENodeVisibility OldVisibility = this->Visibility;
     this->Visibility = InVisibility;
     this->OnVisibilityChanged(OldVisibility, InVisibility);
 
@@ -312,9 +243,9 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
     if (this->Slot.Parent)
     {
-        check( this->Slot.Content == this )
+        check(this->Slot.Content == this)
         this->Slot.Parent->RemoveChild(this);
-        check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
+        check(this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr)
     }
 
     if (bDestroy)
@@ -325,23 +256,21 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
-Jafg::WNode* Jafg::WNode::GetMostOuterParent()
+Jafg::WNode* Jafg::WNode::GetMostOuterParent() noexcept
 {
     if (this->Slot.Parent)
     {
         return this->Slot.Parent->GetMostOuterParent();
     }
-
     return this;
 }
 
-const Jafg::WNode* Jafg::WNode::GetMostOuterParent() const
+Jafg::WNode const* Jafg::WNode::GetMostOuterParent() const noexcept
 {
     if (this->Slot.Parent)
     {
         return this->Slot.Parent->GetMostOuterParent();
     }
-
     return this;
 }
 
@@ -353,21 +282,6 @@ bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
 LVec2u32 Jafg::WNode::GetViewportSize() const
 {
     return this->GetViewport().GetDimensions();
-}
-
-void Jafg::WNode::RecacheViewport() noexcept
-{
-    this->CachedViewport = this->GetMostOuterViewport();
-}
-
-Jafg::LViewport* Jafg::WNode::GetMostOuterViewport() noexcept
-{
-    if (this->Slot.Parent)
-    {
-        return this->Slot.Parent->GetMostOuterViewport();
-    }
-
-    return nullptr;
 }
 
 void Jafg::WNode::SetDesiredSizeInSpt(LVec2F Size) const noexcept
@@ -389,19 +303,19 @@ void Jafg::WNode::SetDesiredSizeInSpt(LVec2F Size) const noexcept
         this->DesiredSize_v2.y = maths::min(this->DesiredSize_v2.y, SptMaxSize.y);
     }
 
-    check( this->DesiredSize_v2.x >= 0.0f && this->DesiredSize_v2.y >= 0.0f )
+    check(this->DesiredSize_v2.x >= 0.0f && this->DesiredSize_v2.y >= 0.0f)
 
     return;
 }
 
 void Jafg::WNode::UpdateAnchoredSize(LViewport const& Context) const
 {
-    check( this->TransformsWidgetLayout() )
-    check( this->Anchor.IsNormalized() )
+    check(this->TransformsWidgetLayout())
+    check(this->Anchor.IsNormalized())
 
     if (this->Slot.Parent)
     {
-        check( this->Slot.Content == this )
+        check(this->Slot.Content == this)
         this->Slot.Parent->UpdateAnchoredSizeForChild(Context, this);
         return;
     }
@@ -435,20 +349,19 @@ void Jafg::WNode::SetAnchoredSize(LVec2F&& InSize) const noexcept
 
 LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
 {
-    check( this->TransformsWidgetLayout() )
-    check( this->Anchor.IsNormalized() )
+    check(this->TransformsWidgetLayout())
+    check(this->Anchor.IsNormalized())
 
     if (this->Slot.Parent)
     {
-        check( this->Slot.Content == this )
+        check(this->Slot.Content == this)
         return this->Slot.Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
     }
 
-    LVec2D Out;
-    Out.x = this->Anchor.MinX * static_cast<f64>(Context.GetDimensions().x);
-    Out.y = this->Anchor.MinY * static_cast<f64>(Context.GetDimensions().y);
-
-    return Out;
+    return {
+        this->Anchor.MinX * static_cast<f32>(Context.GetDimensions().x),
+        this->Anchor.MinY * static_cast<f32>(Context.GetDimensions().y)
+        };
 }
 
 LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
@@ -460,18 +373,10 @@ bool Jafg::WNode::SetMargin(const LMargin& InMargin) noexcept
 {
     if (this->Slot.Margin)
     {
-        check( this->Slot.Parent )
+        check(this->Slot.Parent)
         *this->Slot.Margin = InMargin;
         return true;
     }
 
     return false;
 }
-
-void Jafg::WNode::ConstructInternal() noexcept
-{
-
-    this->Construct();
-    return;
-}
-

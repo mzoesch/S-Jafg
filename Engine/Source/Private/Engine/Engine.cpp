@@ -50,7 +50,7 @@ bool Jafg::LWorldStorage::IsValid() const noexcept
     return GEngine->IsWorldValid(this->World);
 }
 
-void Jafg::LEngine::PreInitialize()
+Jafg::LEngine::LEngine()
 {
     STAT_CYCLE_FUNCTION()
 
@@ -62,8 +62,6 @@ void Jafg::LEngine::PreInitialize()
     {
         LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", static_cast<i32>(Rc));
     }
-
-    return;
 }
 
 void Jafg::LEngine::Initialize()
@@ -75,7 +73,7 @@ void Jafg::LEngine::Initialize()
 
     /* Engine stuff. */
     {
-        const bool bValid_TypeWorld{ this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
+        const bool bValid_TypeWorld{this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
         [](LCommandArgs const& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -142,21 +140,18 @@ void Jafg::LEngine::Initialize()
         }}).IsValid()};
         ensureDiscard(bValid_TypeWorld);
 
-        const bool bValid_CommandSet{ this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
+        this->CommandLineInterface.RegisterCommandChecked({"Set", "Set any variable.",
         LCommandParams{}
         .Token(LCliType::Type<LCliVariable>())
-        .Token(LCliType
-        {
-            "VarType", "The value to set.",
+        .Token(LCliType{"VarType", "The value to set.",
             {},
             [](LCommandArgs const& Args, i32* Cursor) -> bool
             {
-                checkSlow( *Cursor < Args.GetArgCount() )
+                check(*Cursor < Args.GetArgCount())
                 if (Args[*Cursor].Name.empty())
                 {
                     return false;
                 }
-
                 ++*Cursor;
                 return true;
             },
@@ -166,196 +161,148 @@ void Jafg::LEngine::Initialize()
                 if (algo::is_valid_index(Args.SubArgs, Cursor - 1) == false)
                 {
                     LOG_WARNING(LogCli, "Encountered invalid command args [{}].", Args.GetCatRepresentation())
-                    return { };
+                    return {};
                 }
 
                 if (GEngine == nullptr)
                 {
-                    return { };
+                    return {};
                 }
 
-                if
-                (
-                    const LCliVariable* TargetVar { GEngine->CommandLineInterface.GetVariable(Args[Cursor - 1].Name) };
-                    TargetVar
-                )
+                if (LCliVariable const* TargetVar{GEngine->CommandLineInterface.GetVariable(Args[Cursor - 1].Name)})
                 {
-                    check( TargetVar->GetType() )
+                    check(TargetVar->GetType())
                     return TargetVar->GetType()->Suggest(Args, Cursor, MaxSuggestions);
                 }
 
-                return { };
+                return {};
             }
         })
-        .Exec([](LCommandArgs const& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& InArgs, LCommandExecutionResponse& OutResponse)
         {
-            check( InArgs.GetArgCount() == 2 )
+            check(InArgs.GetArgCount() == 2)
             if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
             {
                 i32 Cursor = 1;
                 if (Var->GetType()->CanParse(InArgs, &Cursor) == false)
                 {
-                    OutResponse->Rc = ECommandReturnCode::TypeError;
-                    OutResponse->StdOut = Jafg::SprintF("Cannot parse [{}] as [{}]", InArgs[1].Name, Var->GetType()->GetIdentifier());
+                    OutResponse.Rc = ECommandReturnCode::TypeError;
+                    OutResponse.StdOut = Jafg::SprintF("Cannot parse [{}] as [{}]", InArgs[1].Name, Var->GetType()->GetIdentifier());
                     return;
                 }
 
                 if (Var->SetValue(InArgs[1].Name))
                 {
-                    OutResponse->Rc = ECommandReturnCode::Success;
-                    OutResponse->StdOut = Jafg::SprintF("Updated [{}] to [{}]", Var->GetIdentifier(), Var->GetValue());
+                    OutResponse.Rc = ECommandReturnCode::Success;
+                    OutResponse.StdOut = Jafg::SprintF("Updated [{}] to [{}]", Var->GetIdentifier(), Var->GetValue());
                 }
                 else
                 {
-                    OutResponse->Rc = ECommandReturnCode::Success;
+                    OutResponse.Rc = ECommandReturnCode::Success;
                 }
             }
             else
             {
-                OutResponse->Rc = ECommandReturnCode::SemanticError;
-                OutResponse->StdOut = Jafg::SprintF("No such variable [{}]", InArgs[0].Name);
+                OutResponse.Rc = ECommandReturnCode::SemanticError;
+                OutResponse.StdOut = Jafg::SprintF("No such variable [{}]", InArgs[0].Name);
             }
+        })});
 
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandSet);
-
-        const bool bValid_CommandGet{ this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
+        this->CommandLineInterface.RegisterCommandChecked({"Get", "Get any variable.",
         LCommandParams{}
         .Token(LCliType::Type("Var", "The variable to get."))
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse) -> void
         {
-            check( InArgs.GetArgCount() == 1 )
-            if (const LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
+            check(Args.GetArgCount() == 1)
+            if (const LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(Args[0].Name); Var)
             {
-                OutResponse->Rc = ECommandReturnCode::Success;
-                OutResponse->StdOut = Jafg::SprintF("[{}] == [{}]", Var->GetIdentifier(), Var->GetValue());
+                OutResponse.Rc = ECommandReturnCode::Success;
+                OutResponse.StdOut = Jafg::SprintF("[{}] == [{}]", Var->GetIdentifier(), Var->GetValue());
             }
             else
             {
-                OutResponse->Rc = ECommandReturnCode::SemanticError;
-                OutResponse->StdOut = Jafg::SprintF("No such variable [{}]", InArgs[0].Name);
+                OutResponse.Rc = ECommandReturnCode::SemanticError;
+                OutResponse.StdOut = Jafg::SprintF("No such variable [{}]", Args[0].Name);
             }
-
             return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandGet);
+        })});
 
-        const bool bValid_CommandBreak{ this->GetCommandLineInterface().RegisterCommand({"_Break", "Breaks jafg.",
+        this->GetCommandLineInterface().RegisterCommandChecked({"_Break", "Breaks jafg.",
         LCommandParams{}
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            OutResponse->Rc = ECommandReturnCode::Success;
-            OutResponse->StdOut = "Successfully broken Jafg";
-
+            check(Args.GetArgCount() == 0)
+            OutResponse.Rc = ECommandReturnCode::Success;
+            OutResponse.StdOut = "Successfully broken Jafg";
             JAFG_GORGEOUS_BREAK_MSG("Broken through CLI command [_Break].")
+        })});
 
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandBreak);
-
-        const bool bValid_CommandPrintWorldParams{ this->GetCommandLineInterface().RegisterCommand(
+        this->GetCommandLineInterface().RegisterCommandChecked({"PrintWorldParams", "Prints the world parameters to the standard output.",
+        LCommandParams{}
+        .Token(LCliType::Type<LWorld>())
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            "PrintWorldParams", "Prints the world parameters to the standard output.",
-            LCommandParams{}
-            .Token(LCliType::Type<LWorld>())
-            .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
-            {
-                check( InArgs.GetArgCount() == 1 )
+            check(Args.GetArgCount() == 1)
+            LWorld* World{Args[0].GetAs<LWorld>()};
+            OutResponse.StdOut = Jafg::SprintF("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
+            OutResponse.Rc = ECommandReturnCode::Success;
+        })});
 
-                LWorld* World { InArgs[0].GetAs<LWorld>() };
-
-                OutResponse->StdOut = Jafg::SprintF("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
-                OutResponse->Rc = ECommandReturnCode::Success;
-
-                return;
-            })
-        }).IsValid()};
-        ensureDiscard(bValid_CommandPrintWorldParams);
-
-        const bool bValid_Browse{ this->GetCommandLineInterface().RegisterCommand({"Browse", "Browses to an URL.",
+        this->GetCommandLineInterface().RegisterCommandChecked({"Browse", "Browses to an URL.",
         LCommandParams{}
         .Token(LCliType::Type<LWorld>())
         .Token(LCliType::Type<LString>())
-        .Exec([](LCommandArgs const& Args, LCommandExecutionResponse* OutResponse)
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            check( Args.GetArgCount() == 2 )
-            LWorld* World { Args[0].GetAs<LWorld>() };
-            LString Url { Args[1].GetAs<LString>() };
+            check(Args.GetArgCount() == 2)
+            check(GEngine)
+            LWorld* World{ Args[0].GetAs<LWorld>() };
+            LString Url{ Args[1].GetAs<LString>() };
+            GEngine->Browse(World, Url);
+            OutResponse.Rc = ECommandReturnCode::Success;
+            OutResponse.StdOut = Jafg::SprintF("Browsing to URL [{}] in world [{}]", Url, World->GetHumanReadableName());
+        })});
 
-            if (GEngine)
-            {
-                GEngine->Browse(World, Url);
-                OutResponse->Rc = ECommandReturnCode::Success;
-                OutResponse->StdOut = Jafg::SprintF("Browsing to URL [{}] in world [{}]", Url, World->GetHumanReadableName());
-            }
-            else
-            {
-                LOG_WARNING(LogEngine, "GEngine is null, cannot browse to URL [{}] in world [{}].", Url, World->GetHumanReadableName())
-                OutResponse->Rc = ECommandReturnCode::SemanticError;
-                OutResponse->StdOut = "GEngine is null, cannot browse";
-            }
-
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_Browse);
-
-        const bool bValid_CommandTrap{ this->GetCommandLineInterface().RegisterCommand({"_Trap", "Traps jafg.",
+        this->GetCommandLineInterface().RegisterCommandChecked({"_Trap", "Traps jafg.",
         LCommandParams{}
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            OutResponse->Rc = ECommandReturnCode::Success;
-            OutResponse->StdOut = "Successfully trapped Jafg";
-
+            check(Args.GetArgCount() == 0)
+            OutResponse.Rc = ECommandReturnCode::Success;
+            OutResponse.StdOut = "Successfully trapped Jafg";
             JAFG_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")
+        })});
 
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandTrap);
-
-        const bool bValid_CommandTrapThread{ this->GetCommandLineInterface().RegisterCommand({"_TrapThread", "Traps jafg but not the master thread.",
+        this->GetCommandLineInterface().RegisterCommandChecked({"_TrapThread", "Traps jafg but not the master thread.",
         LCommandParams{}
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            OutResponse->Rc = ECommandReturnCode::Success;
-            OutResponse->StdOut = "Send request to trap another thread";
+            check(Args.GetArgCount() == 0)
+            OutResponse.Rc = ECommandReturnCode::Success;
+            OutResponse.StdOut = "Send request to trap another thread";
+            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever, []{JAFG_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")});
+        })});
 
-            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever, [](void) -> void
-            {
-                JAFG_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")
-                return;
-            });
-
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandTrapThread);
-
-        const bool bValid_CommandThrowAccessViolation{ this->GetCommandLineInterface().RegisterCommand({"_ThrowAccessViolation", "Causes a C access violation.",
+        this->GetCommandLineInterface().RegisterCommandChecked({"_ThrowAccessViolation", "Causes a C access violation.",
         LCommandParams{}
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            OutResponse->Rc = ECommandReturnCode::Success;
-            OutResponse->StdOut = "Successfully caused a C access violation";
-
-            i64* P { nullptr };
+            check(Args.GetArgCount() == 0)
+            OutResponse.Rc = ECommandReturnCode::Success;
+            OutResponse.StdOut = "Successfully caused a C access violation";
+            i64* P{};
             *P = 0xFF;
+        })});
 
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandThrowAccessViolation);
-
-        const bool bValid_CommandThrowStdAccessViolation{ this->GetCommandLineInterface().RegisterCommand({"_ThrowStdAccessViolation", "Causes an access violation in the Stl.",
+        this->GetCommandLineInterface().RegisterCommandChecked({"_ThrowStdAccessViolation", "Causes an access violation in the Stl.",
         LCommandParams{}
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
-            OutResponse->Rc = ECommandReturnCode::Success;
-            OutResponse->StdOut = "Successfully caused a Stl access violation";
-
+            check(Args.GetArgCount() == 0)
+            OutResponse.Rc = ECommandReturnCode::Success;
+            OutResponse.StdOut = "Successfully caused a Stl access violation";
             std::vector<u8>{}[1024] = 0xFF;
-
-            return;
-        })}).IsValid()};
-        ensureDiscard(bValid_CommandThrowStdAccessViolation);
+        })});
     }
 
     this->Collection.InitializeDeferred(&this->Outer);
@@ -441,13 +388,13 @@ void Jafg::LEngine::TearDown()
 
     this->Collection.TearDownSubsystems();
     this->Outer.TearDown();
-    Private::GetGlobalCarnifex().KillAllGarbageChildren();
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
-    GetMutableDefault<JMeshSubsystem>()->PurgeUnused();
-    GetMutableDefault<JTextureSubsystem>()->PurgeUnused();
+    GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
+    GetMutableSingleton<JTextureSubsystem>().PurgeUnused();
 
 #if WITH_LOCAL_LAYER
-    check( this->LocalEgo.IsDecommissioned() == false )
+    check(this->LocalEgo.IsDecommissioned() == false)
     this->LocalEgo.TearDown();
 #endif /* WITH_LOCAL_LAYER */
 
@@ -456,9 +403,7 @@ void Jafg::LEngine::TearDown()
     LOG_VERBOSE(LogJafgInternal, "Deallocating  {} registered levels.", this->RegisteredLevels.size())
     algo::orphan(&this->RegisteredLevels);
 
-    this->CommandLineInterface.TearDown();
-
-    Private::GetGlobalCarnifex().KillAllGarbageChildren();
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
 #if JAFG_WITH_FOREIGN_SUPPORT
     if (this->LoadedPlugins.empty() == false)
@@ -507,11 +452,6 @@ void Jafg::LEngine::TearDown()
         check( this->LoadedPlugins.empty() )
     }
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
-
-    if (this->KnownOuters.empty() == false)
-    {
-        LOG_WARNING(LogObjectInternal, "Some class outers [#{}] where not correctly teared down.", this->KnownOuters.size() )
-    }
 
     return;
 }
@@ -563,6 +503,7 @@ bool Jafg::LEngine::CanEverRender() const noexcept
 void Jafg::LEngine::RegisterClassOuter(LClassOuter* Outer)
 {
     check( Tasks::IsOnMasterThread() )
+    check( Outer )
 
     if (algo::contains(this->KnownOuters, Outer))
     {
@@ -577,14 +518,17 @@ void Jafg::LEngine::RegisterClassOuter(LClassOuter* Outer)
 void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
 {
     check( Tasks::IsOnMasterThread() )
+    check( Outer )
 
-    if (algo::contains(this->KnownOuters, Outer) == false)
+    if (auto It{algo::find(this->KnownOuters, Outer)}; It != this->KnownOuters.end())
     {
-        panic( "Outer not registered." )
-        return;
+        this->KnownOuters.erase(It);
+    }
+    else
+    {
+        panicMsgf( "Outer [{}] was not registered to engine.", Outer->GetHumanReadableName() )
     }
 
-    algo::erase_once_checked(&this->KnownOuters, Outer);
     return;
 }
 
@@ -825,14 +769,13 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plu
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
-    check( Plugin )
+    check(Tasks::IsOnMasterThread())
+    check(Plugin)
+    check(Plugin->IsLoaded())
+    check(Plugin->Fetched.bDynUnloadable)
 
-    check( Plugin->IsLoaded() )
-    check( Plugin->Fetched.bDynUnloadable )
-
-    const LString CachedIdent{ Plugin->GetIdentifier() };
-    const LPath CachedPath{ Plugin->GetAbsolutePath() };
+    const LString CachedIdent{Plugin->GetIdentifier()};
+    const LPath CachedPath{Plugin->GetAbsolutePath()};
 
     Plugin->PrepareLibraryClose(Reason);
 
@@ -841,7 +784,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plu
         Outer->KillEmployeesFromForeignPlugin(Plugin->GetHandle());
     }
 
-    auto RemovedPackages{ Private::GetGlobalCxxRecordRegistry().RemovePackagesOf(Plugin->GetHandle()) };
+    auto RemovedPackages{Detail::GetGlobalCxxRecordRegistry().RemovePackagesOf(Plugin->GetHandle())};
     LOG_VERBOSE(LogForeign, "Removed [{}] registered packages from [{}].", RemovedPackages, CachedIdent)
 
     const EPluginLoadReturnCode::Type Rc{ Plugin->CloseLibrary(Reason) };
@@ -850,7 +793,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plu
         LOG_INFO(LogForeign, "Successfully unloaded plugin [{}] from [{}].", CachedIdent, CachedPath)
     }
 
-    if (auto const Removed{ algo::erase(&this->LoadedPlugins, CachedPath, &LLoadedPlugin::GetAbsolutePath) }; Removed != 1)
+    if (auto const Removed{algo::erase(&this->LoadedPlugins, CachedPath, &LLoadedPlugin::GetAbsolutePath)}; Removed != 1)
     {
         LOG_ERROR(LogForeign, "Suspicious behavior while unloading plugin [{}]. Found [{}] loaded.", CachedIdent, Removed)
     }
@@ -1055,19 +998,18 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
 
     LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", FetchedPlugin.Identifier, Bin)
 
-    check( Private::GetGlobalCxxRecordRegistry().GetPendingPackages().empty() )
-    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(true);
+    check(Detail::GetGlobalCxxRecordRegistry().GetPendingPackages().empty())
+    Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(true);
 
     LLoadedPlugin Plugin{ FetchedPlugin, Bin };
     check( Plugin.GetIdentifier().empty() == false )
     const EPluginLoadReturnCode::Type Rc{ Plugin.OpenLibrary() };
-    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
+    Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
 
     if (Rc != EPluginLoadReturnCode::Success)
     {
-        Private::GetGlobalCxxRecordRegistry().KillPendingPackages();
-        Private::GetGlobalCarnifex().KillAllGarbageChildren();
-
+        Detail::GetGlobalCxxRecordRegistry().KillPendingPackages();
+        Detail::GetGlobalCarnifex().KillAllGarbageChildren();
         return Rc;
     }
 
@@ -1075,13 +1017,13 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
 
     Plugin.Uuid = this->GetNextPluginUuid();
 
-    Private::GetGlobalCxxRecordRegistry().LoadPendingPackages(Plugin.GetHandle());
+    Detail::GetGlobalCxxRecordRegistry().LoadPendingPackages(Plugin.GetHandle());
 
     Plugin.Lifetime->OnFinishedLoading();
 
     this->LoadedPlugins.emplace_back(std::move(Plugin));
     auto& Ref{ this->LoadedPlugins.back() };
-    this->OnForeignPluginLoaded.Broadcast(&Ref);
+    this->OnForeignPluginLoaded.Broadcast(Ref);
 
     LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Ref.GetIdentifier(), Ref.GetPathToBin())
 
@@ -1162,7 +1104,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
             }
 
             u64 ConvertedId;
-            if (Serialization::FromStringSafe(&ConvertedId, Id) == false)
+            if (Serde::FromStringRelaxed(&ConvertedId, Id) == false)
             {
                 OutResponse->SetStatusCode(ReST::BadRequest_400);
                 OutResponse->SetContent(R"({"error":"Invalid 'id' parameter."})", "application/json");
@@ -1206,7 +1148,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
 void Jafg::LEngine::StartReSTCliServer()
 {
-    if (GetDefault<JReSTCliPreferences>()->bAlwaysDisable)
+    if (GetSingleton<JReSTCliPreferences>().bAlwaysDisable)
     {
         LOG_WARNING(LogReST, "ReST CLI server is always disabled by preferences.")
         return;

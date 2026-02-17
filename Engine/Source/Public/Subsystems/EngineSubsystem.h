@@ -19,7 +19,7 @@ class JEngineSubsystem : public JSubsystem
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JEngineSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JEngineSubsystem)
 };
 
 } /* ~Namespace Jafg */

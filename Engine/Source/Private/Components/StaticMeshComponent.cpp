@@ -82,13 +82,13 @@ static LMat4F Model(LWorldTrans Transform)
     return LMat4F (1);
 }
 
-void Jafg::JStaticMeshComponent::CreateImpl(LCreateInfo const& Info)
+void Jafg::AStaticMeshComponent::CreateImpl(LCreateInfo const& Info)
 {
-    this->Mesh = GetDefault<JMeshSubsystem>()->GetMesh(Info.MeshPath, Info.MeshLoadBehavior, Info.MeshHostMemoryBehavior);
+    this->Mesh = GetSingleton<JMeshSubsystem>().GetMesh(Info.MeshPath, Info.MeshLoadBehavior, Info.MeshHostMemoryBehavior);
     this->SetShouldRender(Info.bRender);
     if (Info.TexturePath.empty() == false)
     {
-        this->Image = GetDefault<JTextureSubsystem>()->GetImage(
+        this->Image = GetSingleton<JTextureSubsystem>().GetImage(
               Info.TexturePath
             , Info.TextureMetadata
             , Info.TextureLoadFlags
@@ -98,7 +98,7 @@ void Jafg::JStaticMeshComponent::CreateImpl(LCreateInfo const& Info)
     return;
 }
 
-void Jafg::JStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
+void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
 {
     auto& Pipeline{Info.Frontend.Vk_GetPipelines().at({LStaticMesh::DefaultShader})};
 

@@ -96,6 +96,7 @@
 #include "System/Finder.h"
 #include "Containers/SimpleUtf8EncodingUtilStuffKindaRandom.h"
 #include "Traits/CoreTraits.h"
+#include "Containers/Reference.h"
 
 //#
 //# Functors
@@ -114,4 +115,4 @@
 //# Misc
 //#
 #include "PrimitiveReflex/Core.h"
-#include "Serialization/RawStringSerialization.h"
+#include "Serialization/Archive.h"

@@ -11,6 +11,12 @@ namespace Jafg
 class LViewport;
 class WParent;
 
+//# Initializer for the dynamic ctors for WUserWidgets.
+typedef Detail::TCxxDynamicInit<LViewport, Detail::LViewport2OuterProj> LWidgetDynamicInit;
+//# Initializer for the static ctors for WUserWidgets.
+template<typename TCxxClass>
+using TWidgetStaticInit = Detail::TCxxStaticInitBase<LViewport, TCxxClass, Detail::LViewport2OuterProj>;
+
 //#
 //# A user widget is a widget node that can be added to the local ego widget viewport.
 //# A user widget can consist of multiple widget nodes and can be used to create complex
@@ -20,45 +26,52 @@ DECLARE_JAFG_WIDGET()
 class ENGINE_API WUserWidget : public WOverlay
 {
     GENERATED_CLASS_BODY()
+    friend LViewport;
 
 protected:
 
-    explicit WUserWidget(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WUserWidget)
+    inline explicit WUserWidget(LWidgetDynamicInit const& Init)
+        : Super{LNodeDynamicInit{.Outer=Init.Outer,.Class=Init.Class}}
+    {
+        this->SetAnchor(EAnchor::Fill);
+        this->SetShouldTick(false);
+    }
+    template<typename TCxxClass>
+    inline explicit WUserWidget(TWidgetStaticInit<TCxxClass> const& Init) noexcept
+        : Super{TNodeStaticInit<TCxxClass>{.Outer=Init.Outer}}
+    {
+        this->SetAnchor(EAnchor::Fill);
+        this->SetShouldTick(false);
+    }
 
 public:
 
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
     virtual void Destruct() override;
 
-    virtual LViewport* GetMostOuterViewport() noexcept override;
-    virtual void RemoveFromParent(const bool bDestroy = true) override;
+    //# Whether this is a top level widget inside the viewport.
+    FORCEINLINE constexpr bool IsTopLevel() const noexcept { return this->bIsTopLevel; }
 
-    virtual void RemoveChild(WNode* InChild) override;
-    using Super::RemoveChild;
-    virtual auto AddChild(WNode* InChild) -> LWidgetSlot* override;
-    virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
+    //# Set the root for this user widget.
+    void SetRoot(WNode* InRoot);
+    virtual void RemoveFromParent(bool bDestroy = true) override;
 
-    //# Add this widget to the main viewport of the current active local ego.
-    void AddToViewport(LViewport* InViewport);
-    void AddToViewportAt(const i32 InIndex, LViewport* InViewport);
-
-    //# @return The new root.
-    template <typename TParent>
-    TParent* ReplaceRoot(TParent* InRoot) { return StaticCastChecked<TParent>(this->ReplaceRootImpl(InRoot)); }
-    FORCEINLINE bool IsRootValid() const { return this->Root != nullptr; }
-    FORCEINLINE WNode* GetRoot() const { return this->Root->Content;  }
-    template <typename TNode>
-    FORCEINLINE TNode* GetRoot() const { return StaticCastChecked<TNode>(this->Root->Content); }
+    FORCEINLINE bool IsRootValid() const noexcept { return this->GetChildren().empty() == false; }
+    FORCEINLINE WNode* GetRoot() const noexcept { if (this->GetChildren().empty()) { return nullptr; } return this->GetChildren()[0]->Content; }
+    FORCEINLINE WNode* GetRootChecked() const noexcept { check(this->GetChildren().empty() == false) return this->GetChildren()[0]->Content; }
+    FORCEINLINE WNode* GetRootAsserted() const noexcept { jassert(this->GetChildren().empty() == false) return this->GetChildren()[0]->Content; }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetRoot() const noexcept { return StaticCast<TNode>(this->GetRoot()); }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetRootChecked() const noexcept { return StaticCast<TNode>(this->GetRootChecked()); }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetRootAsserted() const noexcept { return StaticCast<TNode>(this->GetRootAsserted()); }
 
 private:
 
-    WParentBase* ReplaceRootImpl(WParentBase* InRoot);
+    virtual LWidgetSlot* AddChild(WNode* InChild) override final { this->SetRoot(InChild); return this->GetChildren()[0]; }
+    virtual LWidgetSlot* AddChildAt(const i32 InIndex, WNode* InChild) override final { this->SetRoot(InChild); return this->GetChildren()[0]; }
 
-    //# The absolute root of this widget. Attach everything to this widget. Weak pointer.
-    LWidgetSlot* Root{ nullptr };
-    //# Where this widget resides in. Can be null if attached to another widget. So do not use without checking.
-    LViewport* AttachedViewport{ nullptr };
+    bool bIsTopLevel{};
 };
 
 } /* ~Namespace Jafg */
@@ -68,26 +81,30 @@ private:
 namespace Jafg
 {
 
-template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer /* = nullptr */)
+namespace Detail
 {
-    check( Viewport )
-    return ConstructWidgetNode<TNode>(Viewport, Outer ? Outer : &Viewport->GetOuter(), TNode::StaticClass());
-}
-template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, TSubclassOf<TNode> const& Class)
+
+template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+struct TDeferredUserWidgetExec : public TDeferredObjectExec<TCxxClass>
 {
-    check( Viewport )
-    return ConstructWidgetNode<TNode>(Viewport, Viewport->GetOuter(), Class);
-}
-template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer, TSubclassOf<TNode> const& Class)
+    inline ~TDeferredUserWidgetExec()
+    {
+        if (this->bReleased == false)
+        {
+            this->Class.GetViewport().AddWidget(&this->Class);
+        }
+    }
+};
+
+} /* ~Namespace Detail */
+
+inline constexpr Detail::NewDeferredObjectFn<LWidgetDynamicInit, TWidgetStaticInit, Detail::TDeferredUserWidgetExec, WUserWidget> ConstructDeferredWidget{};
+inline constexpr Detail::NewObjectFn<decltype(ConstructDeferredWidget), LWidgetDynamicInit, TWidgetStaticInit, WUserWidget> ConstructWidget{ConstructDeferredWidget};
+
+template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
+FORCEINLINE TWidget* LViewport::AddWidget()
 {
-    check( Viewport && Outer )
-    TNode* Out{ ConstructDeferredWidgetNode<TNode>(Outer, Class) };
-    Out->AddToViewport(Viewport);
-    MakeDeferredWidgetNodeFinal(Out);
-    return Out;
+    return ConstructWidget(TWidgetStaticInit<TWidget>{*this});
 }
 
 } /* ~Namespace Jafg */

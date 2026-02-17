@@ -11,58 +11,36 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    LCommandLineInterface& CommandLineInterface{ this->GetCommandLineInterface() };
+    LCommandLineInterface& CommandLineInterface{this->GetCommandLineInterface()};
 
-    // Command: quit
+    // Command: Quit
+    this->CommandHandle_Quit = CommandLineInterface.RegisterCommandChecked({"Quit", "Quit to desktop.",
+    LCommandParams()
+    .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
     {
+        LOG_VERBOSE(LogCoreCommands, "Received quit request.")
+        GEngine->RequestEngineExit("Invoked by CLI command.");
+        OutResponse.Rc = ECommandReturnCode::SuccessNoResponse;
+    })});
 
-        this->CommandHandle_Quit = CommandLineInterface.RegisterCommand({"Quit", "Quit to desktop.",
-        LCommandParams()
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
-        {
-            LOG_VERBOSE(LogCoreCommands, "Received quit request.")
-            GEngine->RequestEngineExit("Invoked by CLI command.");
-            OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-        })});
-        check( this->CommandHandle_Quit.IsValid() )
-    }
-
-    // Command: say
+    // Command: Say
+    this->CommandHandle_Say = CommandLineInterface.RegisterCommandChecked({"Say", "Say something.",
+    LCommandParams()
+    .Token(LCliType::Type("String"))
+    .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
     {
-        this->CommandHandle_Say = CommandLineInterface.RegisterCommand({"Say", "Say something.",
-        LCommandParams()
-        .Token(LCliType::Type("String"))
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
-        {
-            LOG_WARNING(LogTemporal, "{}", InArgs.GetCatRepresentation())
-            OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-        })});
-        check( this->CommandHandle_Say.IsValid() )
-    }
-
-    // Command: CreateNewSurface
-    {
-        LCliCommand Command("a");
-        Command.AddOverload(
-            LCommandParams()
-            .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
-            {
-                LOG_WARNING(LogTemporal, "Creating new surface...")
-                OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-            }
-
-        ));
-        this->CommandHandle_CreateNewSurface = CommandLineInterface.RegisterCommand(std::move(Command));
-    }
+        LOG_WARNING(LogTemporal, "{}", Args.GetCatRepresentation())
+        OutResponse.Rc = ECommandReturnCode::SuccessNoResponse;
+    })});
 
     return;
 }
 
-void Jafg::JCoreCommandSubsystem::TearDown(LClassOuter& PreviousOuter)
+void Jafg::JCoreCommandSubsystem::TearDown()
 {
-    Super::TearDown(PreviousOuter);
+    Super::TearDown();
 
-    LCommandLineInterface& CommandLineInterface{ this->GetCommandLineInterface() };
+    LCommandLineInterface& CommandLineInterface{this->GetCommandLineInterface()};
 
 #define UNREGISTER_COMMAND(CommandHandle)                                                  \
     if (CommandLineInterface.UnregisterCommand(&(CommandHandle)) == false)                 \
@@ -70,11 +48,10 @@ void Jafg::JCoreCommandSubsystem::TearDown(LClassOuter& PreviousOuter)
         LOG_WARNING(LogCoreCommands, "Failed to unregister command [" #CommandHandle "].") \
         (CommandHandle).Reset();                                                           \
     }                                                                                      \
-    check( this->CommandHandle.IsValid() == false )                                        \
+    check(this->CommandHandle.IsValid() == false)                                          \
 
     UNREGISTER_COMMAND(CommandHandle_Quit)
     UNREGISTER_COMMAND(CommandHandle_Say)
-    UNREGISTER_COMMAND(CommandHandle_CreateNewSurface)
 
 #undef UNREGISTER_COMMAND
 

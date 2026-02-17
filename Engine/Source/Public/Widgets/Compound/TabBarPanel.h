@@ -18,8 +18,10 @@ class WTabBarPanel : public WRegion
 
 protected:
 
-    explicit WTabBarPanel(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WTabBarPanel)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WTabBarPanel) noexcept
+    {
+        this->SetAnchor(EAnchor::Fill);
+    }
 
 public:
 
@@ -34,7 +36,7 @@ public:
 
 private:
 
-    WTabBar* OwningTabBar { nullptr };
+    WTabBar* OwningTabBar{};
 };
 
 } /* ~Namespace Jafg */

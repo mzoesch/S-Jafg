@@ -11,42 +11,52 @@ namespace Jafg
 {
 
 class LCxxClass;
+struct LBeginClassLifeInfo;
+struct LEndClassLifeInfo;
 
-namespace Private
+namespace Detail
 {
 
-struct LCxxClassMiscellaneousAccessor;
-typedef JCxxClass* (*GetCDR)(void);
+typedef JCxxClass*(*MallocCxxFn)(LCxxDynamicInit const&);
+typedef void(*BeginClassLifeFn)(LBeginClassLifeInfo const&);
+typedef void(*EndClassLifeFn)(LEndClassLifeInfo const&);
 
-
-} /* ~Namespace Private */
+} /* ~Namespace Detail */
 
 //#
 //# A reflected class.
 //#
 class LCxxClass final : public LCxxRecord
 {
-    friend Private::LCxxRecordRegistry;
-    friend Private::LCxxClassMiscellaneousAccessor;
-
-#define PRIVATE_JAFG_CXX_VALIDATE() check( (this->Flags & ECxxClassFlags::Error) == ECxxClassFlags::None )
+    friend Detail::LCxxRecordRegistry;
 
 public:
 
     LCxxClass() = delete;
     LCxxClass(
-          LString InFullyQualifiedName,
-          Private::GetCDR InGetCDR
+          LString InFullyQualifiedName
+        , Detail::MallocCxxFn InMallocCxx
+        , Detail::BeginClassLifeFn InBeginClassLife
+        , Detail::EndClassLifeFn InEndClassLife
         , LStringView InParentName
+        , ECxxClassFlags::Type InFlags
         , TArray<LCxxClassField>&& InFields
         ) noexcept
         : LCxxRecord{std::move(InFullyQualifiedName)}
-        , GetCDRFunction(InGetCDR)
+        , MallocCxx(InMallocCxx)
+        , BeginClassLife(InBeginClassLife)
+        , EndClassLife(InEndClassLife)
         , ParentName(std::move(InParentName))
+        , Flags(InFlags)
         , Fields(std::move(InFields))
-        { }
+    {
+    }
     PROHIBIT_REALLOC_OF_ANY_FORM(LCxxClass)
     ~LCxxClass() = default;
+
+    NODISCARD FORCEINLINE auto const& GetMallocCxxFn() const noexcept { return this->MallocCxx; }
+    NODISCARD FORCEINLINE auto const& GetBeginClassLifeFn() const noexcept { return this->BeginClassLife; }
+    NODISCARD FORCEINLINE auto const& GetEndClassLifeFn() const noexcept { return this->EndClassLife; }
 
     NODISCARD FORCEINLINE bool IsValid() const noexcept { return this->Parent != nullptr || this->GetFullyQualifiedName() == "Jafg::JObjectBase"; }
 
@@ -58,56 +68,66 @@ public:
     NODISCARD FORCEINLINE auto GetChildren() const noexcept -> TArray<LCxxClass*> const& { return this->Children; }
 
     template<typename T> requires std::is_base_of_v<JCxxClass, T>
-    NODISCARD FORCEINLINE bool DerivesFrom() const noexcept { return this->DerivesFrom(*T::StaticClass()); }
+    NODISCARD FORCEINLINE bool DerivesFrom() const noexcept { return this->DerivesFrom(T::StaticClass()); }
     NODISCARD ENGINE_API  bool DerivesFrom(LCxxClass const& Parent) const noexcept;
 
-    NODISCARD FORCEINLINE auto GetFlags()      const noexcept -> LCxxClassFlags { PRIVATE_JAFG_CXX_VALIDATE() return this->Flags; }
-    NODISCARD FORCEINLINE bool HasAnyFlags()   const noexcept { PRIVATE_JAFG_CXX_VALIDATE() return  this->Flags != ECxxClassFlags::None;                              }
-    NODISCARD FORCEINLINE bool IsAbstract()    const noexcept { PRIVATE_JAFG_CXX_VALIDATE() return (this->Flags  & ECxxClassFlags::Abstract) != ECxxClassFlags::None; }
-    NODISCARD FORCEINLINE bool IsNotAbstract() const noexcept { PRIVATE_JAFG_CXX_VALIDATE() return (this->Flags  & ECxxClassFlags::Abstract) == ECxxClassFlags::None; }
-    NODISCARD FORCEINLINE bool IsConfig()      const noexcept { PRIVATE_JAFG_CXX_VALIDATE() return (this->Flags  & ECxxClassFlags::Config)   != ECxxClassFlags::None; }
-    NODISCARD FORCEINLINE bool IsNotConfig()   const noexcept { PRIVATE_JAFG_CXX_VALIDATE() return (this->Flags  & ECxxClassFlags::Config)   == ECxxClassFlags::None; }
-
-    NODISCARD FORCEINLINE bool IsCDRValid() const noexcept { return this->CDR.get() != nullptr; }
-    NODISCARD FORCEINLINE JCxxClass const* GetCDR() const noexceptcheck { check( this->IsCDRValid() ) return this->CDR.get(); }
-    NODISCARD FORCEINLINE JCxxClass* GetMutableCDR() noexceptcheck { check( this->IsCDRValid() ) return this->CDR.get(); }
-    template<typename T> requires std::is_base_of_v<JCxxClass, T>
-    NODISCARD FORCEINLINE T const* GetCDR() const noexcept;
-    template<typename T> requires std::is_base_of_v<JCxxClass, T>
-    NODISCARD FORCEINLINE T* GetMutableCDR() noexcept;
-    NODISCARD FORCEINLINE JCxxClass const* GetCDRInternalWeakDoNotUsePlease() const noexcept { return this->CDR.get(); }
+    NODISCARD FORCEINLINE auto GetFlags()       const noexcept { return this->Flags; }
+    NODISCARD FORCEINLINE bool HasAnyFlags()    const noexcept { return  this->Flags != ECxxClassFlags::None;                               }
+    NODISCARD FORCEINLINE bool IsAbstract()     const noexcept { return (this->Flags  & ECxxClassFlags::Abstract)  != ECxxClassFlags::None; }
+    NODISCARD FORCEINLINE bool IsNotAbstract()  const noexcept { return (this->Flags  & ECxxClassFlags::Abstract)  == ECxxClassFlags::None; }
+    NODISCARD FORCEINLINE bool IsConfig()       const noexcept { return (this->Flags  & ECxxClassFlags::Config)    != ECxxClassFlags::None; }
+    NODISCARD FORCEINLINE bool IsNotConfig()    const noexcept { return (this->Flags  & ECxxClassFlags::Config)    == ECxxClassFlags::None; }
+    NODISCARD FORCEINLINE bool IsSingleton()    const noexcept { return (this->Flags  & ECxxClassFlags::Singleton) != ECxxClassFlags::None; }
+    NODISCARD FORCEINLINE bool IsNotSingleton() const noexcept { return (this->Flags  & ECxxClassFlags::Singleton) == ECxxClassFlags::None; }
 
     NODISCARD FORCEINLINE TArray<LCxxClassField> const& GetFields() const noexcept { return this->Fields; }
     NODISCARD FORCEINLINE TArray<LCxxClassField>& GetMutableFieldsDangerous() noexcept { return this->Fields; }
 
+    template<typename TCxxClass = JCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
+    NODISCARD FORCEINLINE TCxxClass const& GetSingleton() const noexcept;
+    template<typename TCxxClass = JCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
+    NODISCARD FORCEINLINE TCxxClass& GetSingleton() noexcept;
+
 private:
 
-    Private::GetCDR GetCDRFunction{ nullptr };
+    Detail::MallocCxxFn MallocCxx{};
+    Detail::BeginClassLifeFn BeginClassLife{};
+    Detail::EndClassLifeFn EndClassLife{};
 
     LStringView ParentName;
-    LCxxClass* Parent{ nullptr };
+    LCxxClass* Parent{};
     TArray<LCxxClass*> Children;
 
-    LCxxClassFlags Flags{ ECxxClassFlags::Error };
+    LCxxClassFlags Flags;
 
-    TUnique<JCxxClass> CDR;
     TArray<LCxxClassField> Fields;
 
+    JCxxClass* Singleton;
 #undef PRIVATE_JAFG_CXX_VALIDATE
 };
 
-namespace Private
+namespace Detail
 {
 
-FORCEINLINE TArray<LRegistryClassPackage const*> LCxxRecordRegistry::GetClassesByBase(LCxxClass const& Base) noexcept
+NODISCARD FORCEINLINE LString const& LRegistryClassPackage::GetFullyQualifiedName() const noexcept
 {
-    TArray<LRegistryClassPackage const*> Out;
+    return this->StaticClass.GetFullyQualifiedName();
+}
+
+} /* ~Namespace Detail */
+
+namespace Detail
+{
+
+NODISCARD FORCEINLINE TArray<LCxxClass const*> LCxxRecordRegistry::GetClassesByBase(LCxxClass const& Base) const noexcept
+{
+    TArray<LCxxClass const*> Out;
 
     for (auto& E : this->RegisteredPackages)
     {
         if (E->IsClass() && E->AsClass().StaticClass.DerivesFrom(Base))
         {
-            Out.push_back(&E->AsClass());
+            Out.push_back(&E->AsClass().StaticClass);
         }
 
         continue;
@@ -116,17 +136,6 @@ FORCEINLINE TArray<LRegistryClassPackage const*> LCxxRecordRegistry::GetClassesB
     return Out;
 }
 
-struct LCxxClassMiscellaneousAccessor final
-{
-    UTILITY_STRUCT(LCxxClassMiscellaneousAccessor)
-
-    FORCEINLINE static TUnique<JCxxClass> ExchangeCDR(LCxxClass* Class, TUnique<JCxxClass> NewCDR) noexcept
-    {
-        check( Class )
-        return std::exchange(Class->CDR, std::move(NewCDR));
-    }
-};
-
-} /* ~Namespace Private */
+} /* ~Namespace Detail */
 
 } /* ~Namespace Jafg */

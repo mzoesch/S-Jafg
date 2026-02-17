@@ -23,7 +23,7 @@ struct TClassStorage final
     {
         if (InPointer)
         {
-            this->Outer = InPointer->GetOuter();
+            this->Outer = &InPointer->GetOuter();
         }
 
         checkCode( this->CheckValidState() )
@@ -49,7 +49,7 @@ struct TClassStorage final
     {
         if (InPointer)
         {
-            this->Outer = InPointer->GetOuter();
+            this->Outer = &InPointer->GetOuter();
             this->Pointer = InPointer;
         }
         else

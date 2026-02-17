@@ -2,13 +2,6 @@
 
 #include "Widgets/VButton.h"
 
-Jafg::WVButton::WVButton(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetVisibility(EWidgetVisibility::Visible);
-    return;
-}
-
 void Jafg::WVButton::Construct()
 {
     Super::Construct();
@@ -154,12 +147,12 @@ void Jafg::WVButton::SetEnabled(const bool bInEnabled)
     if (this->bEnabled)
     {
         this->SetBrush(this->Style.NormalBrush);
-        this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
     else
     {
         this->SetBrush(this->Style.DisabledBrush);
-        this->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
     }
 
     return;

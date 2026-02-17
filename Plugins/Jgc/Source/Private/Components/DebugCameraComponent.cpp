@@ -3,21 +3,21 @@
 #include "Components/DebugCameraComponent.h"
 #include "Components/SceneComponent.h"
 
-void Jgc::JDebugCameraComponent::OnAttach(Jafg::AActor* InOwner)
+void Jgc::ADebugCameraComponent::OnAttach(Jafg::AActor& InOwner)
 {
     Super::OnAttach(InOwner);
 
-    if (this->GetOwner()->IsA<Jafg::APawn>() == false)
+    if (this->GetOwner().IsA<Jafg::APawn>() == false)
     {
         LOG_FATAL(LogUserInput, "Class [{}] requires to be attached a APawn but is on [{}].",
             this->GetNameAsString(),
-            this->GetOwner()->GetNameAsString()
+            this->GetOwner().GetNameAsString()
             )
     }
 
-    Jafg::APawn* Pawn{Jafg::StaticCastChecked<Jafg::APawn>(this->GetOwner())};
+    Jafg::APawn& Pawn{*Jafg::StaticCastChecked<Jafg::APawn>(&this->GetOwner())};
 
-    if (auto* Ctrl{Pawn->GetOwningController()})
+    if (auto* Ctrl{Pawn.GetOwningController()})
     {
         if (auto* Surface{Ctrl->GetSurface()})
         {
@@ -28,9 +28,9 @@ void Jgc::JDebugCameraComponent::OnAttach(Jafg::AActor* InOwner)
     return;
 }
 
-void Jgc::JDebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
+void Jgc::ADebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
 {
-    if (auto* Scene{this->GetOwner()->GetComponent<Jafg::JSceneComponent>()})
+    if (auto* Scene{this->GetOwner().GetComponent<Jafg::ASceneComponent>()})
     {
         auto Value3D{Value.GetAxis3DValue()};
         auto Vs{Scene->GetRelativeVectors()};
@@ -78,7 +78,7 @@ void Jgc::JDebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
     {
         LOG_WARNING(LogEcs, "Component [{}] is attached to [{}] which does not possess a ::Jafg::SceneComponent.",
             this->GetNameAsString(),
-            this->GetOwner()->GetNameAsString()
+            this->GetOwner().GetNameAsString()
             )
     }
 
@@ -86,9 +86,9 @@ void Jgc::JDebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
     return;
 }
 
-void Jgc::JDebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
+void Jgc::ADebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
 {
-    if (auto* Scene{this->GetOwner()->GetComponent<Jafg::JSceneComponent>()})
+    if (auto* Scene{this->GetOwner().GetComponent<Jafg::ASceneComponent>()})
     {
         f32 sensitivity = 0.1f; // radians per pixel
         auto delta{Value.GetAxis2DValue()};
@@ -99,7 +99,7 @@ void Jgc::JDebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
     {
         LOG_WARNING(LogEcs, "Component [{}] is attached to [{}] which does not possess a ::Jafg::SceneComponent.",
             this->GetNameAsString(),
-            this->GetOwner()->GetNameAsString()
+            this->GetOwner().GetNameAsString()
             )
     }
 

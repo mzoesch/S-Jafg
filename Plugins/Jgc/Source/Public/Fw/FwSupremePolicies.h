@@ -15,18 +15,18 @@ namespace Jgc
 {
 
 DECLARE_JAFG_CLASS()
-class JGC_API JFwSupremePolicies : public Jafg::JSupremePolicies
+class JGC_API AFwSupremePolicies : public Jafg::ASupremePolicies
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JFwSupremePolicies)
+    DEFAULT_WORLD_CONSTRUCTORS(AFwSupremePolicies)
 
 public:
 
     virtual void OnWorldPreInit() override;
-    virtual Jafg::APawn* SpawnDeferredPawnForPersonaController(Jafg::APersonaController& Pc) override;
+    virtual Jafg::APawn* GetPawnForPersonaController(Jafg::APersonaController const& Pc) override;
 
     Jafg::AActor* RotatingActor{};
 };

@@ -20,7 +20,7 @@ class ENGINE_API WOverlay : public WParent
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WOverlay)
+    DEFAULT_NODE_CONSTRUCTORS(WOverlay)
 
 public:
 

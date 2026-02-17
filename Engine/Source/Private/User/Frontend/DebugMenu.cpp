@@ -13,58 +13,44 @@ void Jafg::WDebugMenu::Construct()
 {
     Super::Construct();
 
-    LTextBoxBrush Brush { LTextBoxBrush::Body() };
+    LTextBoxBrush Brush{LTextBoxBrush::Body()};
     Brush.Tint = { 0, 0, 0, 128 };
 
-    MakeRootNode(WRegion)
+    BeginStyling(*this).Root<WRegion>()
         .Anchor(EAnchor::Fill)
     [
-        NewNode(WVRegion)
+        NewNode(this->GetViewport()).Class<WVRegion>()
             .Anchor(EAnchor::TopRight)
             .Type(ERegionBrush::Box)
             .Tint(Colors::DarkerGray)
         [
-            NewNode(WInput_Vector3)
+            NewNode(this->GetViewport()).Class<WInput_Vector3>()
                 .HSpace(1.0f)
                 .DisplayName("Sun Direction")
         ]
-    ]
-    FinishWidgetStyling()
+    ];
 
     return;
 }
 
-void Jafg::WDebugMenu::Tick()
+void Jafg::WDebugMenu::OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility)
 {
-    Super::Tick();
+    Super::OnVisibilityChanged(OldVisibility, NewVisibility);
 
+    LSurface& Surface{this->GetViewport().GetSurface()};
 
-    return;
-}
-
-void Jafg::WDebugMenu::OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
-{
-    Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
-
-    LSurface& Surface { this->GetViewport().GetSurface() };
-
-    if (EWidgetVisibility::IsDrawn(InNewVisibility))
+    if (NodeVisibility::IsDrawn(NewVisibility))
     {
         Surface.SetInputMode(EInputMode::Both | EInputMode::ShowMouseCursor);
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        ConstructWidgetNode<WEditorView>(this->GetOuter())->AddToViewport(&this->GetViewport());
-#pragma clang diagnostic pop
+        check(this->GetViewport().GetTopLevelWidgetByClass<WEditorView>() == nullptr)
+        ConstructWidget(TWidgetStaticInit<WEditorView>{.Outer=this->GetViewport()});
     }
     else
     {
         Surface.SetInputMode(EInputMode::Both);
-
-        while (WEditorView* View { this->GetViewport().GetTopLevelWidgetByClass<WEditorView>() })
+        while (WEditorView* View{this->GetViewport().GetTopLevelWidgetByClass<WEditorView>()})
         {
             View->RemoveFromParent();
-            continue;
         }
     }
 

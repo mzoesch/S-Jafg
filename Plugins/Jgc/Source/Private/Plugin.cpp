@@ -37,7 +37,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
        {
            .Identifier = Jgc::LevelName_Frontend,
            .InputMode = Jafg::EInputMode::Both,
-           .SupremePoliciesClass = Jgc::JFwSupremePolicies::StaticClass(),
+           .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
        }
    ) == false)
    {
@@ -78,8 +78,8 @@ void LJgcPluginLifetime::OnFinishedLoading()
                 {
                     LOG_WARNING(LogJgcLifetime, "Surface [{}] already posses a persona controller through [{}@{}]. Skipping login",
                         Surface->GetHumanReadableName(),
-                        Surface->GetController()->GetWorld()->GetHumanReadableName(),
-                        Surface->GetController()->GetWorld()->GetUnderlyingLevelName()
+                        Surface->GetController()->GetWorld().GetHumanReadableName(),
+                        Surface->GetController()->GetWorld().GetUnderlyingLevelName()
                         )
                 }
                 else

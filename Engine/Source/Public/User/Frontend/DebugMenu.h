@@ -17,13 +17,12 @@ class WDebugMenu final : public WUserWidget
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WDebugMenu)
+    DEFAULT_NODE_CONSTRUCTORS(WDebugMenu)
 
 public:
 
     virtual void Construct() override;
-    virtual void Tick() override;
-    virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
+    virtual void OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility) override;
 };
 
 } /* ~Namespace Jafg */

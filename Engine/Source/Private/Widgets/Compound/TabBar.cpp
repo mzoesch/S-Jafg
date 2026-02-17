@@ -7,13 +7,6 @@
 #include "Widgets/Spacer.h"
 #include "Widgets/VRegion.h"
 
-Jafg::WTabBar::WTabBar(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetAnchor(EAnchor::TopLeft);
-    return;
-}
-
 void Jafg::WTabBar::Construct()
 {
     Super::Construct();
@@ -31,44 +24,34 @@ void Jafg::WTabBar::Construct()
         this->DefaultButtonClass.SetClass<WRegion>();
     }
 
-    checkSlow( this->ButtonsContainerClass )
-    checkSlow( this->ButtonsContainerClass.IsValidType() )
-    checkSlow( this->SwitcherClass )
-    checkSlow( this->SwitcherClass.IsValidType() )
-    checkSlow( this->DefaultButtonClass )
-    checkSlow( this->DefaultButtonClass.IsValidType() )
+    check(this->ButtonsContainerClass)
+    check(this->ButtonsContainerClass.IsValidType())
+    check(this->SwitcherClass)
+    check(this->SwitcherClass.IsValidType())
+    check(this->DefaultButtonClass)
+    check(this->DefaultButtonClass.IsValidType())
 
-    WParentBase* Container = this;
+    WParentBase* Container{this};
     if (this->WrapperClass)
     {
-        Container = ConstructDeferredWidgetNode<WParentBase>(this->GetOuter(), this->WrapperClass);
-        this->AddChild(Container);
-        MakeDeferredWidgetNodeFinal(Container);
+        BeginStyling(*this).Root<WParentBase>(this->WrapperClass).SaveTo(&Container);
     }
     else if (this->bIsVertical.has_value())
     {
         if (this->bIsVertical.value() == true)
         {
-            Container = ConstructDeferredWidgetNode<WVRegion>(this->GetOuter());
-            Container->SetAnchor(EAnchor::Fill);
-            this->AddChild(Container);
-            MakeDeferredWidgetNodeFinal(Container);
+            BeginStyling(*this).Root<WVRegion>().SaveTo(&Container)
+                .Anchor(EAnchor::Fill);
         }
         else
         {
-            Container = ConstructDeferredWidgetNode<WHRegion>(this->GetOuter());
-            this->AddChild(Container);
-            Container->SetAnchor(EAnchor::Fill);
-            MakeDeferredWidgetNodeFinal(Container);
+            BeginStyling(*this).Root<WHRegion>().SaveTo(&Container)
+                .Anchor(EAnchor::Fill);
         }
     }
 
-    this->ButtonsContainer = ConstructDeferredWidgetNode<WParentBase>(this->GetOuter(), this->ButtonsContainerClass);
-    this->Switcher = ConstructDeferredWidgetNode<WSwitcher>(this->GetOuter(), this->SwitcherClass);
-    Container->AddChild(this->ButtonsContainer);
-    Container->AddChild(this->Switcher);
-    MakeDeferredWidgetNodeFinal(this->ButtonsContainer);
-    MakeDeferredWidgetNodeFinal(this->Switcher);
+    BeginStyling(*Container).Root<WParentBase>(this->ButtonsContainerClass);
+    BeginStyling(*Container).Root<WSwitcher>(this->SwitcherClass);
 
     for (LTabBarTabDescriptor& DeferredTab : this->DeferredTabs)
     {
@@ -90,24 +73,24 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
 
     if (this->ButtonsContainer == nullptr)
     {
-        this->DeferredTabs->emplace_back(std::move(InTabDescriptor));
+        this->DeferredTabs.emplace_back(std::move(InTabDescriptor));
         return;
     }
 
     TArray<LAddedTabBarTab>::size_type Idx;
     if (InTabDescriptor.AddAfterField.empty())
     {
-        this->TabsInOrder->push_back(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
-        Idx = this->TabsInOrder->size() - 1;
+        this->TabsInOrder.push_back(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
+        Idx = this->TabsInOrder.size() - 1;
     }
     else
     {
         Idx = algo::distance(this->TabsInOrder.begin(), algo::find(this->TabsInOrder, InTabDescriptor.AddAfterField, &LAddedTabBarTab::Identifier));
-        check( Idx != this->TabsInOrder->size() )
+        check( Idx != this->TabsInOrder.size() )
         ++Idx;
         LAddedTabBarTab AddedTab;
         AddedTab.Identifier = InTabDescriptor.IdentifierField;
-        this->TabsInOrder->insert(this->TabsInOrder.begin() + Idx, std::move(AddedTab));
+        this->TabsInOrder.insert(this->TabsInOrder.begin() + Idx, std::move(AddedTab));
     }
 
     if (InTabDescriptor.DisplayNameField.empty())
@@ -122,32 +105,23 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
 
 void Jafg::WTabBar::AppendVSpace_v2(const LWidgetSize1 VSpace)
 {
-    WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
-    Spacer->SetHeight(VSpace);
-    this->ButtonsContainer->AddChild(Spacer);
-    MakeDeferredWidgetNodeFinal(Spacer);
-
-    return;
+    check(this->ButtonsContainer)
+    BeginStyling(*this->ButtonsContainer).Root<WSpacer>()
+        .Height(VSpace);
 }
 
 void Jafg::WTabBar::AppendHSpace_v2(const LWidgetSize1 HSpace)
 {
-    WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
-    Spacer->SetWidth(HSpace);
-    this->ButtonsContainer->AddChild(Spacer);
-    MakeDeferredWidgetNodeFinal(Spacer);
-
-    return;
+    check(this->ButtonsContainer)
+    BeginStyling(*this->ButtonsContainer).Root<WSpacer>()
+        .Width(HSpace);
 }
 
 void Jafg::WTabBar::AppendStretch(const LAnchor& InStretch)
 {
-    WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
-    Spacer->SetAnchor(InStretch);
-    this->ButtonsContainer->AddChild(Spacer);
-    MakeDeferredWidgetNodeFinal(Spacer);
-
-    return;
+    check(this->ButtonsContainer)
+    BeginStyling(*this->ButtonsContainer).Root<WSpacer>()
+        .Anchor(InStretch);
 }
 
 bool Jafg::WTabBar::UnregisterTab(const LString& Identifier)
@@ -183,7 +157,7 @@ void Jafg::WTabBar::ResetToDefault()
 void Jafg::WTabBar::ActivateTab(const LString& Identifier)
 {
     TArray<LAddedTabBarTab>::size_type Idx { 0 };
-    for (; Idx < this->TabsInOrder->size(); ++Idx)
+    for (; Idx < this->TabsInOrder.size(); ++Idx)
     {
         if (this->TabsInOrder[Idx].Identifier == Identifier)
         {
@@ -191,7 +165,7 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
         }
         continue;
     }
-    jassert( Idx < this->TabsInOrder->size() || Identifier.empty() )
+    jassert( Idx < this->TabsInOrder.size() || Identifier.empty() )
 
     if (Identifier.empty() && this->bAllowNone == false)
     {
@@ -263,9 +237,10 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
     check( this->ButtonsContainer )
     check( !(InTabDescriptor.ButtonWidgetClassField && InTabDescriptor.OnButtonReleaseField.IsValid()) )
 
-    WNode* Button = InTabDescriptor.ButtonWidgetClassField.HasClass()
-        ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), InTabDescriptor.ButtonWidgetClassField)
-        : ConstructDeferredWidgetNode<WNode>(this->GetOuter(), this->DefaultButtonClass);
+    WNode* Button{};
+    // WNode* Button = InTabDescriptor.ButtonWidgetClassField.HasClass()
+    //     ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), InTabDescriptor.ButtonWidgetClassField)
+    //     : ConstructDeferredWidgetNode<WNode>(this->GetOuter(), this->DefaultButtonClass);
 
     i32 Iterator { 0 };
     i32 Where { 0 };
@@ -304,23 +279,23 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
 
     this->TabsInOrder[InIndex].Button = Button;
 
-    JTabBarData* Data{ NewObject<JTabBarData>(this->GetOuter()) };
-    Data->Context = this;
+    JTabBarData* Data{NewObject(TCxxStaticInit<JTabBarData>{this->GetOuter()})};
+    Data->TabBar = this;
     Data->Descriptor = &InTabDescriptor;
     Button->AddData(*Data);
 
-    MakeDeferredWidgetNodeFinal(Button);
+    // MakeDeferredWidgetNodeFinal(Button);
 
     WNode* Panel { nullptr };
     if (InTabDescriptor.PanelWidgetClassField)
     {
-        Panel = ConstructDeferredWidgetNode(this->GetOuter(), InTabDescriptor.PanelWidgetClassField);
-        checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
-        this->TabsInOrder[InIndex].Panel = Panel;
-        this->Switcher->AddChild(Panel);
-        this->TabsInOrder[InIndex].SwitcherIndex = static_cast<i8>(this->Switcher->GetChildren().size() - 1);
-        Panel->AddData(*Data);
-        MakeDeferredWidgetNodeFinal(Panel);
+        // Panel = ConstructDeferredWidgetNode(this->GetOuter(), InTabDescriptor.PanelWidgetClassField);
+        // checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
+        // this->TabsInOrder[InIndex].Panel = Panel;
+        // this->Switcher->AddChild(Panel);
+        // this->TabsInOrder[InIndex].SwitcherIndex = static_cast<i8>(this->Switcher->GetChildren().size() - 1);
+        // Panel->AddData(*Data);
+        // MakeDeferredWidgetNodeFinal(Panel);
     }
 
     InTabDescriptor.CallbackField.InvokeIfBound(this, Button, Panel);

@@ -17,8 +17,11 @@ class WEditorView final : public WUserWidget
 
 protected:
 
-    explicit WEditorView(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WEditorView)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WEditorView)
+    {
+        this->SetAnchor(EAnchor::Fill);
+        this->SetVisibility(ENodeVisibility::Visible);
+    }
 
 public:
 
@@ -34,7 +37,7 @@ private:
     void OnSecondaryDown();
     void OnSecondaryUp();
 
-    TCdrEmptyArray<TArray<LUserInputContext*>> LastUsedContexts;
+    TArray<LUserInputContext*> LastUsedContexts;
 };
 
 } /* ~Namespace Jafg */

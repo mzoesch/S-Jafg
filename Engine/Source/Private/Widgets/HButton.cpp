@@ -2,13 +2,6 @@
 
 #include "Widgets/HButton.h"
 
-Jafg::WHButton::WHButton(LCxxObjectInitializer const& CxxObjectInitializer)
-    : Super(CxxObjectInitializer)
-{
-    this->SetVisibility(EWidgetVisibility::Visible);
-    return;
-}
-
 Jafg::LCursorReply Jafg::WHButton::SweepMouse(LViewport& Context, const LVec2F& InLocation)
 {
     return Super::SweepMouse(Context, InLocation);
@@ -159,12 +152,12 @@ void Jafg::WHButton::SetEnabled(const bool bInEnabled)
     if (this->bEnabled)
     {
         this->SetBrush(this->Style.NormalBrush);
-        this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
     else
     {
         this->SetBrush(this->Style.DisabledBrush);
-        this->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+        this->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
     }
 
     return;}

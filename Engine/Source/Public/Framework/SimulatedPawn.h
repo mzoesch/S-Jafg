@@ -18,7 +18,7 @@ class ASimulatedPawn final : public APawn
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(ASimulatedPawn)
+    DEFAULT_WORLD_CONSTRUCTORS(ASimulatedPawn)
 };
 
 } /* ~Namespace Jafg */

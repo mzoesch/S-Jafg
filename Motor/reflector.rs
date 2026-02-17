@@ -282,7 +282,7 @@ fn reflect_file(args: &Cli, file: &str) -> Option<JPacketUnit>
                 None => (),
             }
         }
-        else if t.ty.is_class_declaration() || t.ty.is_widget_declaration() || t.ty.is_widget_declaration_with_factory()
+        else if t.ty.is_class_declaration() || t.ty.is_world_obj_declaration() || t.ty.is_widget_declaration() || t.ty.is_widget_declaration_with_factory()
         {
             match add_class(file, &tokens, idx, t)
             {
@@ -459,6 +459,11 @@ fn on_add_class__VA_ARGS__(packet: &JPacket) -> String
         let default_only: bool = arg.contains("@D");
         let member: String = arg.replace("@C", "").replace("@D", "");
 
+        if default_only
+        {
+            panic!("Default only fields are no longer supported on: [{}::{}].", packet.name, member);
+        }
+
         if config && default_only
         {
             out.push_str(&format!(r##"                                                                   \
@@ -473,16 +478,16 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
         else if config && !default_only
         {
             out.push_str(&format!(r##"                                                        \
-Ref->GetMutableClassFieldsDangerous().emplace_back(                                           \
+{{                                           \
     /* Field Name   */ "{member}",                                                            \
-    /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_{member}), \
-    /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_{member}), \
-    /* Field Malloc */ nullptr                                                                \
-);                                                                                            \
+    /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
+    /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
+}},                                                                                            \
 "##));
         }
         else if !config && default_only
         {
+            panic!("Only config files are currently supported on: [{}::{}].", packet.name, member);
             out.push_str(&format!(r##"                                                                   \
 Ref->GetMutableClassFieldsDangerous().emplace_back(                                                      \
     /* Field Name   */ "{member}",                                                                       \
@@ -499,8 +504,8 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
 
 fn add_class(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPacket>
 {
-    assert_eq!(t.ty.is_class_declaration() || t.ty.is_widget_declaration() || t.ty.is_widget_declaration_with_factory(), true);
-    assert_eq!(tokens[i].ty.is_class_declaration() || tokens[i].ty.is_widget_declaration() || tokens[i].ty.is_widget_declaration_with_factory(), true);
+    assert_eq!(t.ty.is_class_declaration() || t.ty.is_world_obj_declaration() || t.ty.is_widget_declaration() || t.ty.is_widget_declaration_with_factory(), true);
+    assert_eq!(tokens[i].ty.is_class_declaration() || tokens[i].ty.is_world_obj_declaration() || tokens[i].ty.is_widget_declaration() || tokens[i].ty.is_widget_declaration_with_factory(), true);
 
     // Just a more user-friendly error message - if the body was missing is kinda hard to make
     // sense of the C++ compilation error message.
@@ -577,6 +582,51 @@ fn add_class(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPa
                     get_all_namespaces(&self_packet.name), self_packet.name,
                     remove_all_namespaces(&self_packet.args[0]), self_packet.args[0],
                     self_packet.line,
+                ));
+
+                t_builder.push_str(&format!(r##"
+PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
+    /* My Class Name */          {}, /* ORIGIN VALUE: {} */                               \
+    /* My Class Spaces */        {}, /* ORIGIN ARG VALUE: {} */                           \
+    /* Line Of Declaration */    {},                                                      \
+    /* Super Class Name */       {},                                                      \
+    /* __VA_ARGS__ */            {}                                                       \
+)
+"##,
+                                            remove_all_namespaces(&self_packet.name), self_packet.name,
+                                            get_all_namespaces(&self_packet.name), self_packet.name,
+                                            self_packet.line,
+                                            self_packet.args[SUPER_CLASS],
+                                            on_add_class__VA_ARGS__(&self_packet),
+                ));
+
+                return
+            }),
+            TokenType::WorldObjectDeclaration => Box::new(|h_file_id, h_builder, t_builder, self_packet|
+            {
+                h_builder.push_str(&format!(r##"
+#ifdef {}_{}_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [{}] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
+#endif /* {}_{}_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
+#define {}_{}_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(...)              \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
+        /* My Class Name */          {}, /* ORIGIN VALUE: {} */                                \
+        /* My Class Spaces */        {}, /* ORIGIN ARG VALUE: {} */                            \
+        /* Super Class Name */       {}, /* ORIGIN VALUE: {} */                                \
+        /* Line */                   {},                                                       \
+        /* Additional Class Flags */ __VA_ARGS__                                               \
+    )
+"##,
+                                            h_file_id, self_packet.line,
+                                            self_packet.name,
+                                            h_file_id, self_packet.line,
+                                            h_file_id, self_packet.line,
+                                            remove_all_namespaces(&self_packet.name), self_packet.name,
+                                            get_all_namespaces(&self_packet.name), self_packet.name,
+                                            remove_all_namespaces(&self_packet.args[0]), self_packet.args[0],
+                                            self_packet.line,
                 ));
 
                 t_builder.push_str(&format!(r##"
@@ -764,7 +814,7 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
     assert_eq!(t.ty.is_class_body(), true);
     assert_eq!(tokens[i].ty.is_class_body(), true);
 
-    let class_decl: &Token = find_prev_token_by_list_checked(tokens, i, &vec![TokenType::ClassDeclaration, TokenType::WidgetDeclaration, TokenType::WidgetDeclarationWithFactory]);
+    let class_decl: &Token = find_prev_token_by_list_checked(tokens, i, &vec![TokenType::ClassDeclaration, TokenType::WorldObjectDeclaration, TokenType::WidgetDeclaration, TokenType::WidgetDeclarationWithFactory]);
 
     return Some(JPacket
     {
@@ -783,6 +833,33 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
 #endif /* {}_{}_MY_GENERATED_CLASS_BODY */
 #define {}_{}_MY_GENERATED_CLASS_BODY(...)                            \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(          \
+        /* My Class Name */            {}, /* ORIGIN VALUE: {} */     \
+        /* My Class Spaces */          {}, /* ORIGIN ARG VALUE: {} */ \
+        /* Super Class Name */         {},                            \
+        /* Construction Helper Line */ {},                            \
+        __VA_ARGS__ /* API */                                         \
+    )
+"##,
+                    h_file_id, self_packet.line,
+                    self_packet.name,
+                    h_file_id, self_packet.line,
+                    h_file_id, self_packet.line,
+                    remove_all_namespaces(&self_packet.name), self_packet.name,
+                    get_all_namespaces(&self_packet.name), self_packet.name,
+                    self_packet.args[SUPER_CLASS],
+                    self_packet.args[1],
+                ));
+            }),
+            TokenType::WorldObjectDeclaration => Box::new(|h_file_id, h_builder, _t_builder, self_packet|
+            {
+                    h_builder.push_str(&format!(r##"
+#ifdef {}_{}_MY_GENERATED_CLASS_BODY
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [{}] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
+#endif /* {}_{}_MY_GENERATED_CLASS_BODY */
+#define {}_{}_MY_GENERATED_CLASS_BODY(...)                            \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL(          \
         /* My Class Name */            {}, /* ORIGIN VALUE: {} */     \
         /* My Class Spaces */          {}, /* ORIGIN ARG VALUE: {} */ \
         /* Super Class Name */         {},                            \

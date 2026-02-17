@@ -98,8 +98,7 @@
         ConstructionHelper                                                                                       \
         )();                                                                                                     \
         inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };                \
-        template<typename TNode>                                                                                 \
-        using TWidgetFactoryTy = FactoryType<TNode>;                                                             \
+        typedef FactoryType LFactory;                                                             \
     };
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION
@@ -141,24 +140,11 @@
             )                                                                                         \
         )()                                                                                           \
     {                                                                                             \
-        Jafg::Private::GetGlobalCxxRecordRegistry().AddNewPendingPackage(\
-            std::make_unique<::Jafg::Private::LRegistryClassPackage>( \
-          *JAFG_JOIN_SCOPE_RESOLUTION_OUTER_THREE(MyClassSpaces, MyClassName, MutableStaticClass)() \
-            , JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                          \
-            MyClassSpaces,                                                            \
-            JAFG_JOIN_OUTER_NINE(                                                      \
-            L,                                                                    \
-            _,                                                                    \
-            JAFG_PRIVATE_FILE_ID,                                                 \
-            _,                                                                    \
-            MyClassName,                                                          \
-            _,                                                                    \
-            LineOfDeclaration,                                                    \
-            _,                                                                    \
-            ConstructionHelper                                                    \
-            )                                                                         \
-            )::Flags \
-        )); \
+        Jafg::Detail::GetGlobalCxxRecordRegistry().AddNewPendingClassPackage(\
+            std::make_unique<::Jafg::Detail::LRegistryClassPackage>( \
+            JAFG_JOIN_SCOPE_RESOLUTION_OUTER_THREE(MyClassSpaces, MyClassName, MutableStaticClass)()) \
+             \
+        ); \
                                                            \
         return;                                                                                   \
     }                                                                                             \
@@ -197,85 +183,135 @@
                                                                                                   \
     } /* ~Namespace <Anonymous> */                                                                \
     ::Jafg::LCxxClass& JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)            \
-        ::_GetCxxClass() noexcept \
+        ::MutableStaticClass() noexcept \
     {\
-        static auto CDRGetter = [] (void) -> ::Jafg::JCxxClass* \
+        typedef JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName) _JAFG_OHGCRCHD_TObj; \
+        static auto MallocCxxFn{[](::Jafg::LCxxDynamicInit const& Init) -> ::Jafg::JCxxClass* \
         { \
             return new\
                 JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)\
-                (::Jafg::GetDefaultObjectInitializer(\
-                JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)::_GetCxxClass())); \
-        }; \
+                (typename JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)::LDynamicInitProj{}(Init)); \
+        }}; \
+        static auto BeginClassLifeFn{[](::Jafg::LBeginClassLifeInfo const& Info) -> void \
+        { \
+            JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)::BeginClassLife(Info);\
+        }}; \
+        static auto EndClassLifeFn{[](::Jafg::LEndClassLifeInfo const& Info) -> void \
+        { \
+        JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)::EndClassLife(Info);\
+        }}; \
         static ::Jafg::LCxxClass Instance{ \
               #MyClassSpaces "::" #MyClassName \
-            , CDRGetter \
-            , #SuperClassName, {} \
+            , MallocCxxFn, BeginClassLifeFn, EndClassLifeFn \
+, #SuperClassName, JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                          \
+MyClassSpaces,                                                            \
+JAFG_JOIN_OUTER_NINE(                                                      \
+L,                                                                    \
+_,                                                                    \
+JAFG_PRIVATE_FILE_ID,                                                 \
+_,                                                                    \
+MyClassName,                                                          \
+_,                                                                    \
+LineOfDeclaration,                                                    \
+_,                                                                    \
+ConstructionHelper                                                    \
+)                                                                         \
+)::Flags, {__VA_ARGS__} \
             }; \
         return Instance; \
     }
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET
+#error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(ObjectType, Name) \
+    ::Jafg::LSetCxxClassField::CreateStrong([](::Jafg::JCxxClass* Object, ::LStringView Value) -> void \
+    {\
+         ObjectType * CastedObject{StaticCastChecked< ObjectType >(Object)}; \
+         ObjectType ::\
+            JAFG_JOIN_OUTER_TWO(_SetField_, Name)\
+            (CastedObject, Value); \
+    })
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET
+#error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(ObjectType, Name) \
+    ::Jafg::LGetCxxClassField::CreateStrong([](::Jafg::JCxxClass const& Object) -> ::LString \
+    {\
+         ObjectType const& CastedObject{*StaticCastChecked< ObjectType >(&Object)}; \
+         return ObjectType ::\
+            JAFG_JOIN_OUTER_TWO(_GetField_, Name)\
+            (CastedObject); \
+    })
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL */
-#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                            \
-        MyClassName,                                                                        \
-        MyClassSpaces,                                                                      \
-        SuperClassName,                                                                     \
-        ConstructionHelperLine,                                                             \
-        OptionalAPI,                                                                        \
-        ...                                                                                 \
-    )                                                                                       \
-                                                                                            \
-private:                                                                                    \
-    typedef SuperClassName Super;                                                           \
-    typedef MyClassName    Derived;                                                         \
-    friend class  ::Jafg::Private::LCxxRecordRegistry;                                      \
-    friend struct ::Jafg::Private::LCxxRecordMiscellaneousAccessor;                         \
-    friend JAFG_JOIN_OUTER_NINE(                                                             \
-      L,                                                                                    \
-      _,                                                                                    \
-      JAFG_PRIVATE_FILE_ID,                                                                 \
-      _,                                                                                    \
-      MyClassName,                                                                          \
-      _,                                                                                    \
-      ConstructionHelperLine,                                                               \
-      _,                                                                                    \
-      ConstructionHelper                                                                    \
-      );                                                                                    \
-    OptionalAPI static ::Jafg::LCxxClass& _GetCxxClass() noexcept;                          \
-                                                                                            \
-protected:                                                                                  \
-    virtual MyClassName* _MallocClone() const override                                      \
-    {                                                                                       \
-        check( this->IsCDR() ) return new MyClassName{*this};                               \
-    }                                                                                       \
-                                                                                            \
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                             \
+        MyClassName,                                                                         \
+        MyClassSpaces,                                                                       \
+        SuperClassName,                                                                      \
+        ConstructionHelperLine,                                                              \
+        OptionalAPI,                                                                         \
+        ...                                                                                  \
+    )                                                                                        \
+                                                                                             \
 public:                                                                                     \
-    inline static MyClassName const* GetCDR()                                               \
-    {                                                                                       \
-        return ::Jafg::Private::GetCDRFromCxxClass<MyClassName>();                          \
-    }                                                                                       \
-    inline static MyClassName* GetMutableCDR()                                              \
-    {                                                                                       \
-        return ::Jafg::Private::GetCDRFromCxxClass<MyClassName>();                          \
-    }                                                                                       \
-    inline static ::Jafg::LCxxClass const* StaticClass()                                    \
-    {                                                                                       \
-        return &MyClassName::_GetCxxClass();                                                \
-    }                                                                                       \
-    inline static ::Jafg::LCxxClass* MutableStaticClass()                                   \
-    {                                                                                       \
-        return &MyClassName::_GetCxxClass();                                                \
-    }                                                                                       \
-    MyClassName() = delete;                                                                 \
-    MyClassName(      MyClassName& JAFG_JOIN_INNER_TWO(_, MyClassName))            = delete; \
-    MyClassName& operator=(const MyClassName& JAFG_JOIN_INNER_TWO(_, MyClassName)) = delete; \
-    PROHIBIT_MOVE(MyClassName)                                                              \
-    /* void operator delete(void* Ptr) = delete; */                                         \
-                                                                                            \
-private: /* Restore default visibility. */                                                  \
+    typedef SuperClassName Super;                                                            \
+    typedef MyClassName    Derived;                                                          \
+private:                                                                                     \
+    friend ::Jafg::Detail::NewStaticCxxFn;                                           \
+    friend JAFG_JOIN_OUTER_NINE(                                                             \
+      L,                                                                                     \
+      _,                                                                                     \
+      JAFG_PRIVATE_FILE_ID,                                                                  \
+      _,                                                                                     \
+      MyClassName,                                                                           \
+      _,                                                                                     \
+      ConstructionHelperLine,                                                                \
+      _,                                                                                     \
+      ConstructionHelper                                                                     \
+      );                                                                                     \
+                                                                                             \
+public:                                                                                      \
+    inline static ::Jafg::LCxxClass const& StaticClass() noexcept                                     \
+    {                                                                                        \
+        return MyClassName::MutableStaticClass();                                                 \
+    }                                                                                        \
+    OptionalAPI static ::Jafg::LCxxClass& MutableStaticClass() noexcept;                                    \
+    MyClassName() = delete;                                                                  \
+    PROHIBIT_REALLOC_OF_ANY_FORM(MyClassName)                                                               \
+                                                                                             \
+private: /* Restore default visibility. */                                                   \
     __VA_ARGS__
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL( \
+    MyClassName,                                                  \
+    MyClassSpaces,                                                \
+    SuperClassName,                                               \
+    ConstructionHelperLine,                                       \
+    OptionalAPI,                                                  \
+    ...                                                           \
+    )                                                             \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
+        MyClassName,                                              \
+        MyClassSpaces,                                            \
+        SuperClassName,                                           \
+        ConstructionHelperLine,                                   \
+        OptionalAPI                                               \
+    )                                                             \
+public:                                                           \
+    typedef ::Jafg::Detail::LOuter2WorldProj LDynamicInitProj; \
+private: /* Restore default visibility. */                        \
+    __VA_ARGS__
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL already defined."
+#endif /* !PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL( \
     MyClassName,                                                  \
     MyClassSpaces,                                                \
@@ -292,9 +328,8 @@ private: /* Restore default visibility. */                                      
         OptionalAPI                                               \
     )                                                             \
 public:                                                           \
-    template <typename TNode>                                     \
-    using TWidgetFactoryTy = Super::TWidgetFactoryTy<TNode>;      \
-    using TWidgetFactory = TWidgetFactoryTy<Derived>;             \
+    typedef typename Super::LFactory LFactory;\
+    typedef ::Jafg::Detail::LOuter2ViewportProj LDynamicInitProj; \
 private: /* Restore default visibility. */                        \
     __VA_ARGS__
 
@@ -317,8 +352,7 @@ private: /* Restore default visibility. */                        \
         OptionalAPI                                                            \
     )                                                                          \
 public:                                                                        \
-    template <typename TNode>                                                  \
-    using TWidgetFactoryTy = JAFG_JOIN_OUTER_NINE(                              \
+    typedef JAFG_JOIN_OUTER_NINE(                              \
         L,                                                                     \
         _,                                                                     \
         JAFG_PRIVATE_FILE_ID,                                                  \
@@ -328,8 +362,8 @@ public:                                                                        \
         ConstructionHelperLine,                                                \
         _,                                                                     \
         ConstructionHelper                                                     \
-    )::TWidgetFactoryTy<TNode>;                                                \
-    using TWidgetFactory = TWidgetFactoryTy<Derived>;                          \
+    )::LFactory LFactory;                                                \
+    typedef ::Jafg::Detail::LOuter2ViewportProj LDynamicInitProj; \
 private: /* Restore default visibility. */                                     \
     __VA_ARGS__
 
@@ -337,13 +371,13 @@ private: /* Restore default visibility. */                                     \
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember) \
-    void JAFG_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::LString& _InValue)        \
-    {                                                                                         \
-        ::Serialization::FromString(&this->MyClassMember, _InValue);                          \
+    inline static void JAFG_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(Derived* Class, ::LStringView _InValue) \
+    {                check( Class )                                                                         \
+        ::Serde::FromString(&Class->MyClassMember, _InValue);                          \
     }                                                                                         \
-    ::LString JAFG_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const                      \
-    {                                                                                         \
-        return ::Serialization::ToString(this->MyClassMember);                                \
+    inline static ::LString JAFG_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)(Derived const& Class)                       \
+    {                                                                                      \
+        return ::Serde::ToString(Class.MyClassMember);                                \
     }
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly
@@ -360,7 +394,7 @@ private: /* Restore default visibility. */                                     \
 //# @see Engine/Object.h, for example.
 //#
 #ifdef DECLARE_JAFG_CLASS
-    #undef DECLARE_JAFG_CLASS
+    #error "DECLARE_JAFG_CLASS already defined."
 #endif /* DECLARE_JAFG_CLASS */
 #define DECLARE_JAFG_CLASS(...)                                        \
     JAFG_JOIN_OUTER_FIVE(                                               \
@@ -378,7 +412,7 @@ private: /* Restore default visibility. */                                     \
 //# You may optionally provide an API as argument.
 //#
 #ifdef GENERATED_CLASS_BODY
-    #undef GENERATED_CLASS_BODY
+    #error "GENERATED_CLASS_BODY already defined."
 #endif /* GENERATED_CLASS_BODY */
 #define GENERATED_CLASS_BODY(...)   \
     JAFG_JOIN_OUTER_FIVE(               \
@@ -394,7 +428,7 @@ private: /* Restore default visibility. */                                     \
 //# @see Widgets/WidgetNode.h
 //#
 #ifdef DECLARE_JAFG_WIDGET
-    #undef DECLARE_JAFG_WIDGET
+    #error "DECLARE_JAFG_WIDGET already defined."
 #endif /* DECLARE_JAFG_WIDGET */
 #define DECLARE_JAFG_WIDGET(...) DECLARE_JAFG_CLASS(__VA_ARGS__)
 
@@ -403,7 +437,7 @@ private: /* Restore default visibility. */                                     \
 //# @see Widgets/WidgetNode.h
 //#
 #ifdef DECLARE_JAFG_WIDGET_WITH_FACTORY
-    #undef DECLARE_JAFG_WIDGET_WITH_FACTORY
+    #error "DECLARE_JAFG_WIDGET_WITH_FACTORY already defined."
 #endif /* DECLARE_JAFG_WIDGET_WITH_FACTORY */
 #define DECLARE_JAFG_WIDGET_WITH_FACTORY(TFactoryTy, ...)              \
     JAFG_JOIN_OUTER_FIVE(                                               \
@@ -417,30 +451,220 @@ private: /* Restore default visibility. */                                     \
 //#
 //# Default behavior for all memory allocations.
 //#
-#ifdef DEFAULT_OBJECT_CONSTRUCTOR
-    #undef DEFAULT_OBJECT_CONSTRUCTOR
-#endif /* DEFAULT_OBJECT_CONSTRUCTOR */
-#define DEFAULT_OBJECT_CONSTRUCTOR(MyClassName) \
-    DEFAULT_OBJECT_CTOR(MyClassName)            \
-    DEFAULT_OBJECT_CDR_CTOR(MyClassName)
+#ifdef DEFAULT_OBJECT_CONSTRUCTORS
+    #error "DEFAULT_OBJECT_CONSTRUCTORS already defined."
+#endif /* DEFAULT_OBJECT_CONSTRUCTORS */
+#define DEFAULT_OBJECT_CONSTRUCTORS(MyClassName) \
+    DEFAULT_OBJECT_DYNAMIC_CTOR(MyClassName)            \
+    DEFAULT_OBJECT_STATIC_CTOR(MyClassName)
 
 //#
-//# Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this
-//# type. The new constructor is prohibited from changing the arguments of the constructor.
+//# Default behavior for all memory allocations with an additional body to execute code.
 //#
-#ifdef DEFAULT_OBJECT_CTOR
-    #undef DEFAULT_OBJECT_CTOR
-#endif /* DEFAULT_OBJECT_CTOR */
-#define DEFAULT_OBJECT_CTOR(MyClassName)                                         \
-    explicit MyClassName(::Jafg::LCxxObjectInitializer const& ObjectInitializer) \
-        : Super{ObjectInitializer} { return; }
+//# Use as follows:
+//#     DEFAULT_OBJECT_CONSTRUCTORS_BODY(CxxClass)
+//#     {
+//#         <...>
+//#     }
+//#
+#ifdef DEFAULT_OBJECT_CONSTRUCTORS_BODY
+    #error "DEFAULT_OBJECT_CONSTRUCTORS_BODY already defined."
+#endif /* DEFAULT_OBJECT_CONSTRUCTORS_BODY */
+#define DEFAULT_OBJECT_CONSTRUCTORS_BODY(MyClassName) \
+    DEFAULT_OBJECT_DYNAMIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); }           \
+    DEFAULT_OBJECT_STATIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); } \
+    void _CommonCtorLogic(auto const& Init)
 
-//# Default behavior for a CDR malloc.
-#ifdef DEFAULT_OBJECT_CDR_CTOR
-    #undef DEFAULT_OBJECT_CDR_CTOR
-#endif /* DEFAULT_OBJECT_CDR_CTOR */
-#define DEFAULT_OBJECT_CDR_CTOR(MyClassName) \
-    explicit MyClassName(MyClassName const& CDR) noexcept = default;
+//#
+//# Default behavior for all memory allocations.
+//#
+#ifdef DEFAULT_WORLD_CONSTRUCTORS
+    #error "DEFAULT_WORLD_CONSTRUCTORS already defined."
+#endif /* DEFAULT_WORLD_CONSTRUCTORS */
+#define DEFAULT_WORLD_CONSTRUCTORS(MyClassName) \
+    DEFAULT_WORLD_DYNAMIC_CTOR(MyClassName)            \
+    DEFAULT_WORLD_STATIC_CTOR(MyClassName)
+
+//#
+//# Default behavior for all memory allocations with an additional body to execute code.
+//#
+//# Use as follows:
+//#     DEFAULT_WORLD_CONSTRUCTORS_BODY(CxxClass)
+//#     {
+//#         <...>
+//#     }
+//#
+#ifdef DEFAULT_WORLD_CONSTRUCTORS_BODY
+    #error "DEFAULT_WORLD_CONSTRUCTORS_BODY already defined."
+#endif /* DEFAULT_WORLD_CONSTRUCTORS_BODY */
+#define DEFAULT_WORLD_CONSTRUCTORS_BODY(MyClassName) \
+    DEFAULT_WORLD_DYNAMIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); }           \
+    DEFAULT_WORLD_STATIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); } \
+    void _CommonCtorLogic(auto const& Init)
+
+//#
+//# Default behavior for all memory allocations.
+//#
+#ifdef DEFAULT_NODE_CONSTRUCTORS
+    #error "DEFAULT_NODE_CONSTRUCTORS already defined."
+#endif /* DEFAULT_NODE_CONSTRUCTORS */
+#define DEFAULT_NODE_CONSTRUCTORS(MyClassName) \
+    DEFAULT_NODE_DYNAMIC_CTOR(MyClassName)            \
+    DEFAULT_NODE_STATIC_CTOR(MyClassName)
+
+//#
+//# Default behavior for all memory allocations with an additional body to execute code.
+//#
+//# Use as follows:
+//#     DEFAULT_NODE_CONSTRUCTORS_BODY(CxxClass)
+//#     {
+//#         <...>
+//#     }
+//#
+#ifdef DEFAULT_NODE_CONSTRUCTORS_BODY
+    #error "DEFAULT_NODE_CONSTRUCTORS_BODY already defined."
+#endif /* DEFAULT_NODE_CONSTRUCTORS_BODY */
+#define DEFAULT_NODE_CONSTRUCTORS_BODY(MyClassName) \
+    DEFAULT_NODE_DYNAMIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); }           \
+    DEFAULT_NODE_STATIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); } \
+    void _CommonCtorLogic(auto const& Init)
+
+//#
+//# Default behavior for all memory allocations.
+//#
+#ifdef DEFAULT_WIDGET_CONSTRUCTORS
+    #error "DEFAULT_WIDGET_CONSTRUCTORS already defined."
+#endif /* DEFAULT_WIDGET_CONSTRUCTORS */
+#define DEFAULT_WIDGET_CONSTRUCTORS(MyClassName) \
+    DEFAULT_WIDGET_DYNAMIC_CTOR(MyClassName)            \
+    DEFAULT_WIDGET_STATIC_CTOR(MyClassName)
+//#
+//# Default behavior for all memory allocations with an additional body to execute code.
+//#
+//# Use as follows:
+//#     DEFAULT_WIDGET_CONSTRUCTORS_BODY(CxxClass)
+//#     {
+//#         <...>
+//#     }
+//#
+#ifdef DEFAULT_WIDGET_CONSTRUCTORS_BODY
+    #error "DEFAULT_WIDGET_CONSTRUCTORS_BODY already defined."
+#endif /* DEFAULT_WIDGET_CONSTRUCTORS_BODY */
+#define DEFAULT_WIDGET_CONSTRUCTORS_BODY(MyClassName) \
+    DEFAULT_WIDGET_DYNAMIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); }           \
+    DEFAULT_WIDGET_STATIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); } \
+    void _CommonCtorLogic(auto const& Init)
+
+//#
+//# Default dynamic ctor for a JCxxClasses. Mandatory. It may be used to declare extra information for all
+//# objects of this type. The new ctor is prohibited from changing the arguments of the super dynamic ctor.
+//#
+#ifdef DEFAULT_OBJECT_DYNAMIC_CTOR
+    #error "DEFAULT_OBJECT_DYNAMIC_CTOR already defined."x
+#endif /* DEFAULT_OBJECT_DYNAMIC_CTOR */
+#define DEFAULT_OBJECT_DYNAMIC_CTOR(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LCxxDynamicInit const& Init) noexcept : Super{Init} {}
+//#
+//# Default static ctor for a JCxxClass. Not mandatory but default implementation is highly recommended.
+//# The first argument must be the same as the first argument of the super static ctor.
+//#
+#ifdef DEFAULT_OBJECT_STATIC_CTOR
+    #undef DEFAULT_OBJECT_STATIC_CTOR
+#endif /* DEFAULT_OBJECT_STATIC_CTOR */
+#define DEFAULT_OBJECT_STATIC_CTOR(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TCxxStaticInit<TCxxClass> const& Init) noexcept : Super{Init} {}
+
+//# Default jxx ctors for subclasses of Jafg::JCxxClass with no body attached.
+#ifdef DEFAULT_OBJECT_DYNAMIC_CTOR_BODY
+    #error "DEFAULT_OBJECT_DYNAMIC_CTOR_BODY already defined."x
+#endif /* DEFAULT_OBJECT_DYNAMIC_CTOR_BODY */
+#define DEFAULT_OBJECT_DYNAMIC_CTOR_BODY(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LCxxDynamicInit const& Init) noexcept : Super{Init}
+#ifdef DEFAULT_OBJECT_STATIC_CTOR_BODY
+    #undef DEFAULT_OBJECT_STATIC_CTOR_BODY
+#endif /* DEFAULT_OBJECT_STATIC_CTOR_BODY */
+#define DEFAULT_OBJECT_STATIC_CTOR_BODY(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TCxxStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+
+//# Default world object ctors for subclasses of Jafg::AWorldObjects.
+#ifdef DEFAULT_WORLD_DYNAMIC_CTOR
+    #error "DEFAULT_WORLD_DYNAMIC_CTOR already defined."
+#endif /* DEFAULT_WORLD_DYNAMIC_CTOR */
+#define  DEFAULT_WORLD_DYNAMIC_CTOR(MyClassName) \
+    explicit MyClassName(::Jafg::LWorldDynamicInit const& Init) noexcept : Super{Init} {}
+#ifdef DEFAULT_WORLD_STATIC_CTOR
+    #undef DEFAULT_WORLD_STATIC_CTOR
+#endif /* DEFAULT_WORLD_STATIC_CTOR */
+#define DEFAULT_WORLD_STATIC_CTOR(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TWorldStaticInit<TCxxClass> const& Init) noexcept : Super{Init} {}
+
+//# Default world object ctors for subclasses of Jafg::AWorldObjects with no body attached.
+#ifdef DEFAULT_WORLD_DYNAMIC_CTOR_BODY
+    #error "DEFAULT_WORLD_DYNAMIC_CTOR_BODY already defined."
+#endif /* DEFAULT_WORLD_DYNAMIC_CTOR_BODY */
+#define  DEFAULT_WORLD_DYNAMIC_CTOR_BODY(MyClassName) \
+    explicit MyClassName(::Jafg::LWorldDynamicInit const& Init) noexcept : Super{Init}
+#ifdef DEFAULT_WORLD_STATIC_CTOR_BODY
+    #undef DEFAULT_WORLD_STATIC_CTOR_BODY
+#endif /* DEFAULT_WORLD_STATIC_CTOR_BODY */
+#define DEFAULT_WORLD_STATIC_CTOR_BODY(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TWorldStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+
+//# Default node ctors for subclasses of Jafg::WNode.
+#ifdef DEFAULT_NODE_DYNAMIC_CTOR
+    #error "DEFAULT_NODE_DYNAMIC_CTOR already defined."
+#endif /* DEFAULT_NODE_DYNAMIC_CTOR */
+#define DEFAULT_NODE_DYNAMIC_CTOR(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LNodeDynamicInit const& Init) noexcept : Super{Init} {}
+#ifdef DEFAULT_NODE_STATIC_CTOR
+    #undef DEFAULT_NODE_STATIC_CTOR
+#endif /* DEFAULT_NODE_STATIC_CTOR */
+#define DEFAULT_NODE_STATIC_CTOR(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init} {}
+
+//# Default node ctors for subclasses of Jafg::WNode with no body attached.
+#ifdef DEFAULT_NODE_DYNAMIC_CTOR_BODY
+    #error "DEFAULT_NODE_DYNAMIC_CTOR_BODY already defined."
+#endif /* DEFAULT_NODE_DYNAMIC_CTOR_BODY */
+#define DEFAULT_NODE_DYNAMIC_CTOR_BODY(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LNodeDynamicInit const& Init) noexcept : Super{Init}
+#ifdef DEFAULT_NODE_STATIC_CTOR_BODY
+    #undef DEFAULT_NODE_STATIC_CTOR_BODY
+#endif /* DEFAULT_NODE_STATIC_CTOR_BODY */
+#define DEFAULT_NODE_STATIC_CTOR_BODY(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+
+//# Default widget ctors for subclasses of Jafg::WUserWidget.
+#ifdef DEFAULT_WIDGET_DYNAMIC_CTOR
+    #error "DEFAULT_WIDGET_DYNAMIC_CTOR already defined."
+#endif /* DEFAULT_WIDGET_DYNAMIC_CTOR */
+#define DEFAULT_WIDGET_DYNAMIC_CTOR(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LWidgetDynamicInit const& Init) noexcept : Super{Init} {}
+#ifdef DEFAULT_WIDGET_STATIC_CTOR
+    #undef DEFAULT_WIDGET_STATIC_CTOR
+#endif /* DEFAULT_WIDGET_STATIC_CTOR */
+#define DEFAULT_WIDGET_STATIC_CTOR(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TWidgetStaticInit<TCxxClass> const& Init) noexcept : Super{Init} {}
+
+//# Default widget ctors for subclasses of Jafg::WUserWidget with no body attached.
+#ifdef DEFAULT_WIDGET_DYNAMIC_CTOR_BODY
+    #error "DEFAULT_WIDGET_DYNAMIC_CTOR_BODY already defined."
+#endif /* DEFAULT_WIDGET_DYNAMIC_CTOR_BODY */
+#define DEFAULT_WIDGET_DYNAMIC_CTOR_BODY(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LWidgetDynamicInit const& Init) noexcept : Super{Init}
+#ifdef DEFAULT_WIDGET_STATIC_CTOR_BODY
+    #undef DEFAULT_WIDGET_STATIC_CTOR_BODY
+#endif /* DEFAULT_WIDGET_STATIC_CTOR_BODY */
+#define DEFAULT_WIDGET_STATIC_CTOR_BODY(MyClassName) \
+    template<typename TCxxClass> \
+    explicit MyClassName(::Jafg::TWidgetStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
 
 //#
 //# Mark a member of a j-class as something special.

@@ -6,15 +6,24 @@
 #include "Async/TaskUtility.h"
 #include "Algo/Sort.h"
 
-Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const
+Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const noexcept
 {
     if (GEngine)
     {
         return &GEngine->GetCommandLineInterface();
     }
-
     return nullptr;
 }
+
+Jafg::LCommandLineInterface* Jafg::LCliObjectRaiiHandle::GetCommandLineInterface() const noexcept
+{
+    if (GEngine)
+    {
+        return &GEngine->GetCommandLineInterface();
+    }
+    return nullptr;
+}
+
 
 void Jafg::LCommandLineInterface::TearDown()
 {
@@ -25,51 +34,49 @@ void Jafg::LCommandLineInterface::TearDown()
     return;
 }
 
-void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandExecutionResponse* OutResponse /* = nullptr */)
+void Jafg::LCommandLineInterface::Invoke(LCommandExecutionInfo const& Info, LString const& CommandLine, LCommandExecutionResponse* OutResponse /* = nullptr */)
 {
-    LCommandExecutionResponse DefaultResponse;
-    LCommandExecutionResponse* Response { OutResponse ? OutResponse : &DefaultResponse };
-    check( Response )
+    LCommandExecutionResponse Void;
+    LCommandExecutionResponse& Response{OutResponse ? *OutResponse : Void};
 
-    const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
+    LString CommandStr{CliStatics::GetCommandFromText(CommandLine)};
     if (CommandStr.empty())
     {
-        Response->Rc = ECommandReturnCode::Failure;
-        Response->StdErr = "Failed to extract command from input";
+        Response.Rc = ECommandReturnCode::Failure;
+        Response.StdErr = "Failed to extract command from input";
         return;
     }
 
-    LCliCommand* Cmd = this->GetCommand(CommandStr);
+    LCliCommand* Cmd{this->GetCommand(CommandStr)};
     if (Cmd == nullptr)
     {
-        Response->Rc = ECommandReturnCode::Unknown;
-        Response->StdErr = Jafg::SprintF("No such command [{}]", CommandStr);
+        Response.Rc = ECommandReturnCode::Unknown;
+        Response.StdErr = Jafg::SprintF("No such command [{}]", CommandStr);
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
-        Response->Rc = ECommandReturnCode::Failure;
-        Response->StdErr = Jafg::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        Response.Rc = ECommandReturnCode::Failure;
+        Response.StdErr = Jafg::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
         return;
     }
 
-    LString ChoppedArgs = CliStatics::GetArgsFromText(InCommandLine);
+    LString ChoppedArgs = CliStatics::GetArgsFromText(CommandLine);
     const LCommandArgs Args = CliStatics::TokenizeCommand(std::move(ChoppedArgs));
     for (LCommandParams& Params : Cmd->GetOverloads())
     {
         if (Params.IsInvocable(Args))
         {
-            Params.Invoke(Args, Response);
-            check( Response->Rc != ECommandReturnCode::Invalid )
-
+            Params.Invoke(Info, Args, Response);
+            check(Response.Rc != ECommandReturnCode::Invalid)
             return;
         }
         continue;
     }
 
-    Response->Rc = ECommandReturnCode::SyntaxError;
-    Response->StdErr = "Target is not invocable with given arguments. No overload is matching";
+    Response.Rc = ECommandReturnCode::SyntaxError;
+    Response.StdErr = "Target is not invocable with given arguments. No overload is matching";
 
     return;
 }
@@ -172,12 +179,12 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
     if (InCommand.Identifier.empty())
     {
         LOG_ERROR(LogCli, "Failed to register command. Identifier is empty.")
-        return { };
+        return {};
     }
     if (this->GetObject(InCommand.Identifier))
     {
         LOG_ERROR(LogCli, "Failed to register command. Identifier [{}] already in use.", InCommand.GetIdentifier())
-        return { };
+        return {};
     }
 
     InCommand.Uuid = ++this->UuidCursor;
@@ -190,15 +197,15 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
 
 bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
 {
-    check( Tasks::IsOnMasterThread() )
-    check( InHandle )
+    check(Tasks::IsOnMasterThread())
+    check(InHandle)
     if (InHandle->IsValid() == false)
     {
         LOG_WARNING(LogCli, "Received invalid command handle.")
         return false;
     }
 
-    if (auto It { algo::find(this->Commands, InHandle->Uuid, &LCliCommand::Uuid) }; It != this->Commands.end())
+    if (auto It{algo::find(this->Commands, InHandle->Uuid, &LCliCommand::Uuid)}; It != this->Commands.end())
     {
         LOG_VERBOSE(LogCli, "Unregistering command [{}].", It->GetIdentifier())
         this->Commands.erase(It);
@@ -212,19 +219,19 @@ bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
 
 Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVariable&& InVariable)
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
     LOG_VERBOSE(LogCli, "Registering variable [{}].", InVariable.GetIdentifier())
-    check( InVariable.Uuid == LCliObject::NoUuid )
+    check(InVariable.Uuid == LCliObject::NoUuid)
 
     if (InVariable.Identifier.empty())
     {
         LOG_ERROR(LogCli, "Failed to register variable. Identifier is empty.")
-        return { };
+        return {};
     }
     if (this->GetObject(InVariable.Identifier))
     {
         LOG_ERROR(LogCli, "Failed to register variable. Identifier [{}] already in use.", InVariable.GetIdentifier())
-        return { };
+        return {};
     }
 
     InVariable.Uuid = ++this->UuidCursor;
@@ -232,20 +239,20 @@ Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVaria
 
     Algo::SortQuick(&this->Variables);
 
-    return LCliCommandHandle{ this->UuidCursor };
+    return LCliCommandHandle{this->UuidCursor};
 }
 
 bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandle)
 {
-    check( Tasks::IsOnMasterThread() )
-    check( InHandle )
+    check(Tasks::IsOnMasterThread())
+    check(InHandle)
     if (InHandle->IsValid() == false)
     {
         LOG_WARNING(LogCli, "Received invalid variable handle.")
         return false;
     }
 
-    if (auto It { algo::find(this->Variables, InHandle->Uuid, &LCliVariable::Uuid) }; It != this->Variables.end())
+    if (auto It{algo::find(this->Variables, InHandle->Uuid, &LCliVariable::Uuid)}; It != this->Variables.end())
     {
         LOG_VERBOSE(LogCli, "Unregistering variable [{}].", It->GetIdentifier())
         this->Variables.erase(It);
@@ -259,7 +266,7 @@ bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandl
 
 Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LCliObject& InHandle)
 {
-    if (LCliType* Type = this->GetType(LCliTypeHandle{InHandle.GetUuid()}); Type)
+    if (LCliType* Type{this->GetType(LCliTypeHandle{InHandle.GetUuid()})}; Type)
     {
         return Type;
     }

@@ -8,9 +8,9 @@
 namespace
 {
 
-f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale::Type Scale) noexcept
+f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale Scale) noexcept
 {
-    auto* const Prefs{ Jafg::GetDefault<Jafg::JUserPreferences>() };
+    auto* const Prefs{ &Jafg::GetSingleton<Jafg::JUserPreferences>() };
 
     switch (Scale)
     {
@@ -18,12 +18,12 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale::
     {
         switch (TextScale)
         {
-        case Jafg::ETextScale::Header:    return Prefs->HeaderFontSizeSingle;
-        case Jafg::ETextScale::SubHeader: return Prefs->SubHeaderFontSizeSingle;
-        case Jafg::ETextScale::Body:      return Prefs->BodyFontSizeSingle;
-        case Jafg::ETextScale::Compact:   return Prefs->CompactFontSizeSingle;
-        case Jafg::ETextScale::Small:     return Prefs->SmallFontSizeSingle;
-        case Jafg::ETextScale::Tiny:      return Prefs->TinyFontSizeSingle;
+        case Jafg::ETextScale::Header:    return *Prefs->HeaderFontSizeSingle;
+        case Jafg::ETextScale::SubHeader: return *Prefs->SubHeaderFontSizeSingle;
+        case Jafg::ETextScale::Body:      return *Prefs->BodyFontSizeSingle;
+        case Jafg::ETextScale::Compact:   return *Prefs->CompactFontSizeSingle;
+        case Jafg::ETextScale::Small:     return *Prefs->SmallFontSizeSingle;
+        case Jafg::ETextScale::Tiny:      return *Prefs->TinyFontSizeSingle;
         default: break;
         }
     }
@@ -31,12 +31,12 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale::
     {
         switch (TextScale)
         {
-        case Jafg::ETextScale::Header:    return Prefs->HeaderFontSizeDouble;
-        case Jafg::ETextScale::SubHeader: return Prefs->SubHeaderFontSizeDouble;
-        case Jafg::ETextScale::Body:      return Prefs->BodyFontSizeDouble;
-        case Jafg::ETextScale::Compact:   return Prefs->CompactFontSizeDouble;
-        case Jafg::ETextScale::Small:     return Prefs->SmallFontSizeDouble;
-        case Jafg::ETextScale::Tiny:      return Prefs->TinyFontSizeDouble;
+        case Jafg::ETextScale::Header:    return *Prefs->HeaderFontSizeDouble;
+        case Jafg::ETextScale::SubHeader: return *Prefs->SubHeaderFontSizeDouble;
+        case Jafg::ETextScale::Body:      return *Prefs->BodyFontSizeDouble;
+        case Jafg::ETextScale::Compact:   return *Prefs->CompactFontSizeDouble;
+        case Jafg::ETextScale::Small:     return *Prefs->SmallFontSizeDouble;
+        case Jafg::ETextScale::Tiny:      return *Prefs->TinyFontSizeDouble;
         default: break;
         }
     }
@@ -44,12 +44,12 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale::
     {
         switch (TextScale)
         {
-        case Jafg::ETextScale::Header:    return Prefs->HeaderFontSizeTriple;
-        case Jafg::ETextScale::SubHeader: return Prefs->SubHeaderFontSizeTriple;
-        case Jafg::ETextScale::Body:      return Prefs->BodyFontSizeTriple;
-        case Jafg::ETextScale::Compact:   return Prefs->CompactFontSizeTriple;
-        case Jafg::ETextScale::Small:     return Prefs->SmallFontSizeTriple;
-        case Jafg::ETextScale::Tiny:      return Prefs->TinyFontSizeTriple;
+        case Jafg::ETextScale::Header:    return *Prefs->HeaderFontSizeTriple;
+        case Jafg::ETextScale::SubHeader: return *Prefs->SubHeaderFontSizeTriple;
+        case Jafg::ETextScale::Body:      return *Prefs->BodyFontSizeTriple;
+        case Jafg::ETextScale::Compact:   return *Prefs->CompactFontSizeTriple;
+        case Jafg::ETextScale::Small:     return *Prefs->SmallFontSizeTriple;
+        case Jafg::ETextScale::Tiny:      return *Prefs->TinyFontSizeTriple;
         default: break;
         }
     }
@@ -68,11 +68,11 @@ f32 Jafg::LTextScale::InSpt(LViewport const& Viewport) const noexcept
         return this->GetCustomScale();
     }
 
-    EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
+    EApplicationScale Scale{ Viewport.GetMaxAllowApplicationScale() };
 
-    if (const EApplicationScale::Type UserMaxScale{ GetDefault<JUserPreferences>()->ApplicationScaleMode }; UserMaxScale != EApplicationScale::Auto)
+    if (const EApplicationScale UserMaxScale{ *GetSingleton<JUserPreferences>().ApplicationScaleMode }; UserMaxScale != EApplicationScale::Auto)
     {
-        Scale = EApplicationScale::Type{maths::min(std::to_underlying(Scale), std::to_underlying(UserMaxScale))};
+        Scale = EApplicationScale{maths::min(std::to_underlying(Scale), std::to_underlying(UserMaxScale))};
     }
 
     return ::TextBoxInSptImpl(this->GetPredefinedScale(), Scale);
@@ -83,10 +83,10 @@ f32 Jafg::LTextScale::InSpt(WNode const& Node) const noexcept
     return this->InSpt(Node.GetViewport());
 }
 
-void Jafg::WTextBox::BeginLifeCDR()
-{
-    Super::BeginLifeCDR();
-
+// void Jafg::WTextBox::BeginLifeCDR()
+// {
+//     Super::BeginLifeCDR();
+//
     // if (GEngine)
     // {
     //     this->RegisterShaders();
@@ -100,9 +100,9 @@ void Jafg::WTextBox::BeginLifeCDR()
     //         return;
     //     });
     // }
-
-    return;
-}
+//
+//     return;
+// }
 
 void Jafg::WTextBox::Draw(LViewport& Context) const
 {

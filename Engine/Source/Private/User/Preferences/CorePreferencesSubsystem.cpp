@@ -1,11 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "../../../Public/User/Preferences/CorePreferencesSubsystem.h"
+#include "User/Preferences/CorePreferencesSubsystem.h"
 #include "Cli/CliFrontend.h"
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
-#include "../../../Public/User/Frontend/PreferencesScreen.h"
+#include "User/Frontend/PreferencesScreen.h"
 #include "User/Preferences/PreferenceRegistry.h"
 #include "User/Preferences/PreferenceCollection.h"
 #include "User/Preferences/PreferenceValue.h"
@@ -20,8 +20,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 {
     Super::Initialize(Collection);
 
-    JUserPreferences*    UserPreferences = GetMutableDefault<JUserPreferences>();
-    JPreferenceRegistry* Registry        = GetMutableDefault<JPreferenceRegistry>();
+    JUserPreferences*    UserPreferences = &GetMutableSingleton<JUserPreferences>();
+    JPreferenceRegistry* Registry        = &GetMutableSingleton<JPreferenceRegistry>();
 
     {
         TUnique<LPreferenceCollection> Screen = std::make_unique<LPreferenceCollection>(Name_PrefGameplay, "Gameplay");
@@ -33,8 +33,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
         {
             TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("MasterVolume"), "Master Volume");
-            Preference->SetDefaultValue(UserPreferences->MasterVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MasterVolume; });
+            Preference->SetDefaultValue(*UserPreferences->MasterVolume);
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return *UserPreferences->MasterVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MasterVolume = static_cast<f32>(Value); });
             if (UserPreferences->MasterVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->MasterVolume.GetMinValue()); }
             if (UserPreferences->MasterVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->MasterVolume.GetMaxValue()); }
@@ -44,8 +44,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
         {
             TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("MusicVolume"), "Music Volume");
-            Preference->SetDefaultValue(UserPreferences->MusicVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MusicVolume; });
+            Preference->SetDefaultValue(*UserPreferences->MusicVolume);
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return *UserPreferences->MusicVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MusicVolume = static_cast<f32>(Value); });
             if (UserPreferences->MusicVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->MusicVolume.GetMinValue()); }
             if (UserPreferences->MusicVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->MusicVolume.GetMaxValue()); }
@@ -55,8 +55,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
         {
             TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("MiscVolume"), "Misc Volume");
-            Preference->SetDefaultValue(UserPreferences->MiscVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MiscVolume; });
+            Preference->SetDefaultValue(*UserPreferences->MiscVolume);
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return *UserPreferences->MiscVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MiscVolume = static_cast<f32>(Value); });
             if (UserPreferences->MiscVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->MiscVolume.GetMinValue()); }
             if (UserPreferences->MiscVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->MiscVolume.GetMaxValue()); }
@@ -66,8 +66,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
         {
             TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("VoiceVolume"), "Voice Volume");
-            Preference->SetDefaultValue(UserPreferences->VoiceVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->VoiceVolume; });
+            Preference->SetDefaultValue(*UserPreferences->VoiceVolume);
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return *UserPreferences->VoiceVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->VoiceVolume = static_cast<f32>(Value); });
             if (UserPreferences->VoiceVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->VoiceVolume.GetMinValue()); }
             if (UserPreferences->VoiceVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->VoiceVolume.GetMaxValue()); }
@@ -96,15 +96,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
             WHRegion* Container;
 
-            NewNodeCtx(Target, WHRegion).SaveTo(&Container)
+            BeginStyling(*Target).Root<WHRegion>().SaveTo(&Container)
                 .Anchor(EAnchor::HFill)
             [
-                NewNodeCtx(Target, WTextBox)
+                NewStaticNodeVp(Target->GetViewport(), WTextBox)
                     .Anchor(EAnchor::VCenter | EAnchor::HFill)
                     .Brush(LTextBoxBrush::SubHeader())
                     .Content(Self->GetDisplayName())
                 +
-                NewNodeCtx(Target, WTextButton)
+                NewStaticNodeVp(Target->GetViewport(), WTextButton)
                     .Anchor(EAnchor::VCenter)
                     .Content("Refresh")
                     .TextBlockBrush(LTextBoxBrush::Body())
@@ -123,7 +123,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        JPreferenceRegistry* Registry = GetMutableDefault<JPreferenceRegistry>();
+                        JPreferenceRegistry* Registry = &GetMutableSingleton<JPreferenceRegistry>();
                         if (Registry == nullptr)
                         {
                             return;
@@ -135,7 +135,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        JPreferencesPanelData* Data{ NewObject<JPreferencesPanelData>(Self->GetOuter()) };
+                        JPreferencesPanelData* Data{ NewObject(TCxxStaticInit<JPreferencesPanelData>{Self->GetOuter()}) };
                         Data->Preference = P->get();
                         Panel->AddData(*Data);
                         Data->MarkAsGarbage_v2();
@@ -188,15 +188,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
             WHRegion* Container;
 
-            NewNodeCtx(Target, WHRegion).SaveTo(&Container)
+            BeginStyling(*Target).Root<WHRegion>().SaveTo(&Container)
                 .Anchor(EAnchor::HFill)
             [
-                NewNodeCtx(Target, WTextBox)
+                NewStaticNodeVp(Target->GetViewport(), WTextBox)
                     .Anchor(EAnchor::VCenter | EAnchor::HFill)
                     .Brush(LTextBoxBrush::SubHeader())
                     .Content(Self->GetDisplayName())
                 +
-                NewNodeCtx(Target, WTextButton)
+                NewStaticNodeVp(Target->GetViewport(), WTextButton)
                     .Anchor(EAnchor::VCenter)
                     .Content("Refresh")
                     .TextBlockBrush(LTextBoxBrush::Body())
@@ -213,7 +213,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        JPreferenceRegistry* Registry = GetMutableDefault<JPreferenceRegistry>();
+                        JPreferenceRegistry* Registry = &GetMutableSingleton<JPreferenceRegistry>();
                         if (Registry == nullptr)
                         {
                             return;
@@ -225,7 +225,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        JPreferencesPanelData* Data { NewObject<JPreferencesPanelData>(Self->GetOuter()) };
+                        JPreferencesPanelData* Data { NewObject(TCxxStaticInit<JPreferencesPanelData>{Self->GetOuter()}) };
                         Data->Preference = P->get();
                         Panel->AddData(*Data);
                         Data->MarkAsGarbage_v2();

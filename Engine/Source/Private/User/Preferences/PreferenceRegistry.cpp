@@ -4,16 +4,15 @@
 
 void Jafg::JPreferenceRegistry::AddTopLevelPreference(TUnique<LPreference>&& InPreference)
 {
-    jassert( InPreference.get() )
+    jassert(InPreference.get())
 
     if (algo::contains(this->Preferences, InPreference->GetName(), [](auto const& E){ return E->GetName(); }))
     {
-        panicMsgf( "Cannot add duplicate preference [{}::{}].", InPreference->GetName().ToString(), InPreference->GetDisplayName())
-        return;
+        panicMsgf("Cannot add duplicate preference [{}::{}].", InPreference->GetName().ToString(), InPreference->GetDisplayName())
     }
 
-    this->Preferences->emplace_back(std::move(InPreference));
-    checkSlow( InPreference.get() == nullptr )
+    this->Preferences.emplace_back(std::move(InPreference));
+    check(InPreference.get() == nullptr)
 
     return;
 }

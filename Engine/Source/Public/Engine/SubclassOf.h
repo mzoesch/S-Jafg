@@ -20,7 +20,7 @@ public:
     constexpr TSubclassOf() noexcept : Class{nullptr} { }
     constexpr TSubclassOf(LNullptrTy) noexcept : Class{nullptr} { }
 
-    TSubclassOf(EDefaultInit) noexcept : Class{TObj::StaticClass()} { check( this->HasClass() && this->IsValidType() ) }
+    TSubclassOf(EDefaultInit) noexcept : Class{&TObj::StaticClass()} { check( this->HasClass() && this->IsValidType() ) }
 
     TSubclassOf(Jafg::LCxxClass const* InClass) noexceptcheck : Class{InClass} { check( this->IsValidType() ) }
     TSubclassOf(Jafg::LCxxClass const& InClass) noexceptcheck : Class{&InClass} { check( this->IsValidType() ) }
@@ -58,14 +58,14 @@ public:
         return *this;
     }
 
-    FORCEINLINE Jafg::LCxxClass const& GetCLassOrDefault() const noexcept
+    FORCEINLINE Jafg::LCxxClass const& GetClassOrDefault() const noexcept
     {
         if (this->HasClass())
         {
             return *this->Class;
         }
 
-        return *TObj::StaticClass();
+        return TObj::StaticClass();
     }
 
     FORCEINLINE Jafg::LCxxClass const* GetClass() const noexcept { return this->Class; }
@@ -75,16 +75,6 @@ public:
 
     FORCEINLINE Jafg::LCxxClass const* operator->() const noexcept { check( this->HasClass() ) return this->Class; }
     FORCEINLINE Jafg::LCxxClass const* operator*() const noexcept { if (this->HasClass()) { return this->Class; } return nullptr; }
-
-    FORCEINLINE TObj const* GetCDR() noexcept
-    {
-        if (this->HasClass())
-        {
-            return this->Class->GetCDR<TObj>();
-        }
-
-        return nullptr;
-    }
 
     FORCEINLINE bool IsValidType() const noexcept
     {
@@ -103,7 +93,7 @@ public:
             LOG_WARNING(LogObjectInternal,
                 "[{}] is used in TSubclassOf<{}> but not yet initialized. Assuming valid parent.",
                 this->Class->GetFullyQualifiedName(),
-                TObj::StaticClass()->GetFullyQualifiedName()
+                TObj::StaticClass().GetFullyQualifiedName()
                 )
             return true;
         }

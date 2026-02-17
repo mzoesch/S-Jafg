@@ -21,16 +21,16 @@ class ENGINE_API WConsoleWindow final : public WFloatingWindow
 
 protected:
 
-    explicit WConsoleWindow(LCxxObjectInitializer const& ObjectInitializer);
-
-    DEFAULT_OBJECT_CDR_CTOR(WConsoleWindow)
+    DEFAULT_WIDGET_CONSTRUCTORS_BODY(WConsoleWindow)
+    {
+        this->SetShouldTick(true);
+    }
 
 public:
 
     virtual void Construct() override;
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
-
     virtual void Tick() override;
+    virtual void Destruct() override;
 
     ENGINE_API void AddToConsole(LConsoleMessage Message);
 
@@ -38,18 +38,18 @@ private:
 
     u64 LoadLogs(u64 Start);
 
-    bool StdInCommit(LString const& Text, ETextCommit::Type CommitType);
+    bool StdInCommit(LString const& Text, ETextCommit CommitType);
 
     static TOptional<LVec2F> LastWindowLocation;
     static TOptional<LVec2F> LastWindowSize;
 
-    u64 LoadedLogCount{ 0 };
+    u64 LoadedLogCount{};
 
     bool bHighlightOnConstruct{ true };
 
-    WConsoleStdIn* StdIn{ nullptr };
-    WScrollRegion* HistoryScrollRegion{ nullptr };
-    WVRegion* HistoryRegion{ nullptr };
+    WConsoleStdIn* StdIn{};
+    WScrollRegion* HistoryScrollRegion{};
+    WVRegion* HistoryRegion{};
 };
 
 } /* ~Namespace Jafg */

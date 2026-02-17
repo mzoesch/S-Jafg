@@ -12,81 +12,51 @@ struct LScrollRegionBrush : public LRegionBrush
 {
     enum { NoScrollBarBackground = 0 };
 
-    bool bAlwaysShowVScrollbar { false  };
+    bool bAlwaysShowVScrollbar{};
     //# Requires that #bAlwaysShowVScrollbar is false.
-    bool bAlwaysHideVScrollbar { false };
+    bool bAlwaysHideVScrollbar{};
 
-    bool bAlwaysShowHScrollbar { false  };
+    bool bAlwaysShowHScrollbar{};
     //# Requires that #bAlwaysShowHScrollbar is false.
-    bool bAlwaysHideHScrollbar { false };
+    bool bAlwaysHideHScrollbar{};
 
-    LColor VBackgroundTint { Colors::Black };
-    LColor VTint { Colors::White };
-    LColor HBackgroundTint { Colors::Black };
-    LColor HTint { Colors::White };
+    LColor VBackgroundTint{ Colors::Black };
+    LColor VTint{ Colors::White };
+    LColor HBackgroundTint{ Colors::Black };
+    LColor HTint{ Colors::White };
 
     //#
     //# The padding from the top right of the vertical scroll bar.
     //#
-    LVec2F VScrollBarPadding { 0.0 };
+    LVec2F VScrollBarPadding{ maths::zero_vector<LVec2F> };
 
     //#
     //# The width of the vertical scroll bar.
     //#
-    f32 VScrollBarWidth { 5.0f };
+    f32 VScrollBarWidth{ 5.0f };
 
     //#
     //# The width of the vertical scroll bar background. Zero means no background.
     //#
-    f32 VScrollBarBackgroundWidth { NoScrollBarBackground };
+    f32 VScrollBarBackgroundWidth{ NoScrollBarBackground };
 
     //#
     //# The padding from the left bottom of the horizontal scroll bar.
     //#
-    LVec2F HScrollBarPadding { 5.0f, 0.0f };
+    LVec2F HScrollBarPadding{ 5.0f, 0.0f };
 
     //#
     //# The height of the horizontal scroll bar.
     //#
-    f32 HScrollBarHeight { 5.0f };
+    f32 HScrollBarHeight{ 5.0f };
 
     //#
     //# The height of the horizontal scroll bar background. Zero means no background.
     //#
-    f32 HScrollBarBackgroundHeight { NoScrollBarBackground };
+    f32 HScrollBarBackgroundHeight{ NoScrollBarBackground };
 };
 
-template <typename TNode>
-class TWidgetFactoryScrollRegion : public TWidgetFactoryRegion<TNode>
-{
-public:
-
-    GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
-
-    FORCEINLINE TFactoryRetTy& Brush(LScrollRegionBrush const& InBrush) noexcept
-    {
-        this->This()->SetBrush(InBrush);
-        return this->Self();
-    }
-
-    FORCEINLINE TFactoryRetTy& CullNonVisible(const bool bCull) noexcept
-    {
-        this->This()->SetCullNonVisible(bCull);
-        return this->Self();
-    }
-
-    FORCEINLINE TFactoryRetTy& ScrollRegionSize(LWidgetSize2 const& InSize) noexcept
-    {
-        this->This()->SetScrollRegionSize(InSize);
-        return this->Self();
-    }
-
-    FORCEINLINE TFactoryRetTy& UseChildrenDesiredSize(const bool bValue) noexcept
-    {
-        this->This()->SetUseChildrenDesiredSize(bValue);
-        return this->Self();
-    }
-};
+struct LFactoryScrollRegion;
 
 //#
 //# A #WScrollRegion is a parent node that may have many children.
@@ -95,15 +65,22 @@ public:
 //# The scroll overlay usually should be anchored to its parent, and for unanchored sides the #SetScrollRegionSize in
 //# should be used to define the size of the scroll overlay.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryScrollRegion)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryScrollRegion)
 class WScrollRegion : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WScrollRegion(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WScrollRegion)
+    explicit WScrollRegion(LNodeDynamicInit const& Init) noexcept : Super{Init}
+    {
+        this->SetVisibility(ENodeVisibility::Visible);
+    }
+    template<typename TCxxClass>
+    explicit WScrollRegion(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+    {
+        this->SetVisibility(ENodeVisibility::Visible);
+    }
 
 public:
 
@@ -298,18 +275,44 @@ private:
     f32 MbHOffset { 0.0 };
 };
 
+struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)
+{
+    NODE_FACTORY_BODY(WScrollRegion)
+
+    decltype(auto) Brush(this auto&& Self, LScrollRegionBrush const& InBrush) noexcept
+    {
+        NODE_FACTORY_SELF().SetBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) CullNonVisible(this auto&& Self, const bool bCull) noexcept
+    {
+        NODE_FACTORY_SELF().SetCullNonVisible(bCull);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) ScrollRegionSize(this auto&& Self, LWidgetSize2 const& InSize) noexcept
+    {
+        NODE_FACTORY_SELF().SetScrollRegionSize(InSize);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) UseChildrenDesiredSize(this auto&& Self, const bool bValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetUseChildrenDesiredSize(bValue);
+        return NODE_FACTORY_RESULT();
+    }
+};
+
 FORCEINLINE void WScrollRegion::SetBrush(const LScrollRegionBrush& InBrush) noexcept
 {
     this->Super::SetBrush(InBrush);
     this->Brush.Copy(InBrush);
-
-    return;
 }
 
 FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrush& InBrush) noexcept
 {
     this->Brush.Copy(InBrush);
-    return;
 }
 
 FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept

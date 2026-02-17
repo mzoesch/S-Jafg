@@ -16,15 +16,15 @@ class JTickableWorldSubsystem : public JWorldSubsystem, public LTickableObject
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JTickableWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JTickableWorldSubsystem)
 
     // JWorldSubsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown(LClassOuter& PreviousOuter) override;
+    virtual void TearDown() override;
     // ~JWorldSubsystem implementation
 
     // LTickableObject implementation
-    virtual void Tick(const f32 DeltaTime) override { }
+    virtual void Tick(const f32 DeltaTime) override {}
     // ~LTickableObject implementation
 };
 

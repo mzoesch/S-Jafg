@@ -8,7 +8,7 @@ bool Jafg::IsValidFast(LClassOuter const* Outer, JCxxClass const* Obj)
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Outer )
+    check(Outer)
 
     if (Obj == nullptr)
     {
@@ -51,31 +51,25 @@ bool Jafg::IsValidSlow(LClassOuter const* Outer, JCxxClass const* Obj)
     return Obj->IsGarbage() == false;
 }
 
-void Jafg::PullConfigForCxxObject(LCxxClass* Obj)
+void Jafg::PullConfigForCxxObject(JCxxClass* Object, LCxxClass* Class)
 {
-    // TODO: Config
 }
 
-void Jafg::PushConfigFromCxxObject(LCxxClass const& Obj)
+void Jafg::PushConfigFromCxxObject(JCxxClass const& Object, LCxxClass const& Class)
 {
-    // TODO: Config
-}
+    check(Class.IsConfig())
+    check(Object.IsA(Class))
 
-Jafg::JCxxClass* Jafg::Private::LClassOuterMiscellaneousAccessor::NewDeferredObjectImpl(LClassOuter* Outer, LCxxClass const& Class)
-{
-    check( Tasks::IsOnMasterThread() )
-    check( Outer )
-
-    if (Class.IsAbstract())
+    for (auto const& Field : Class.GetFields())
     {
-        panicMsgf( "Tried to instantiate abstract class [{}].", Class.GetFullyQualifiedName() );
+        LString FieldStr{Field.Get(Object)};
+
+        LOG_WARNING(LogTemporal, "[{}]: {} == {}",
+            Object.GetNameAsString(),
+            Field.Identifier,
+            FieldStr
+            )
     }
 
-    // This is very dirty. In C26 we can do this maybe much better with the new reflection features.
-    // and then explicitly copy this with LCxxCDRCopy, or something like this in the Ctor.
-    TUnique<JCxxClass> Obj { LCxxRecordMiscellaneousAccessor::MallocClass(*Class.GetCDR()) };
-
-    LCxxRecordMiscellaneousAccessor::ChangeOuter(Obj.get(), Outer);
-    Outer->Employees.emplace_back(std::move(Obj));
-    return Outer->Employees.back().get();
+    return;
 }

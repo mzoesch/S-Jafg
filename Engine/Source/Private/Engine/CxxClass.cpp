@@ -22,23 +22,13 @@ namespace
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::JCxxClass::JCxxClass(LCxxObjectInitializer const& CxxObjectInitializer) noexceptcheck
-    : JafgVirtualTable{CxxObjectInitializer.Class}, Outer{&CxxObjectInitializer.Outer}
-{
-    check( this->Outer )
-
-    check( algo::contains(this->Outer->GetEmployees(), this, &TUnique<JCxxClass>::get) == false )
-    this->Outer->Employees.push_back(TUnique<JCxxClass>(this));
-
-    return;
-}
-
 void Jafg::JCxxClass::MarkAsGarbage_v2(ECxxRecordTearDownReason::Type Reason)
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
     if (this->bGarbage)
     {
+        LOG_WARNING(LogObjectInternal, "Class [{}] was already marked as garbage.", this->GetNameAsString())
         return;
     }
 
@@ -57,7 +47,11 @@ void Jafg::JCxxClass::KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason /
         }
     )
 
-    if (this->IsGarbage() == false)
+    if (this->IsGarbage())
+    {
+        LOG_ERROR(LogObjectInternal, "Class [{}] was already marked as garbage. Failed to devour.", this->GetNameAsString())
+    }
+    else
     {
         this->MarkAsGarbage(EMarkAsGarbageBehavior::DevourNow, Reason);
     }
@@ -81,69 +75,33 @@ Jafg::LCommandLineInterface& Jafg::JCxxClass::GetCommandLineInterface() const no
     return this->GetEngine().GetCommandLineInterface();
 }
 
-#if JAFG_DO_CHECKS
-void Jafg::JCxxClass::CheckDoubleDestroy(void const* Ptr)
-{
-    return;
-
-    if (const auto It{ DoubleDestroyCheckTable.find(Ptr) }; It != DoubleDestroyCheckTable.end())
-    {
-        panicMsgf("Double destroy detected. At memory address [{}]. Previous destroy stacktrace:\n{}"
-            , Ptr
-            , It->second
-            )
-    }
-
-#if JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE
-    DoubleDestroyCheckTable.emplace(Ptr, std::stacktrace::current());
-#else /* JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE */
-    DoubleDestroyCheckTable.emplace(Ptr, "<unknown-stacktrace>");
-#endif /* !JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE */
-
-    return;
-}
-#endif /* JAFG_DO_CHECKS */
-
 void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordTearDownReason::Type Reason)
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
-    check( this->IsGarbage() == false )
+    check(this->IsGarbage() == false)
     this->bGarbage = true;
 
-    check( this->Outer )
+    this->OnGarbage(Reason);
 
     TUnique<JCxxClass> Self;
     if (Reason == ECxxRecordTearDownReason::OuterTearDown)
     {
-        Self = this->Outer->PoachToNull(this);
+        Self = this->Outer.PoachToNull(this);
     }
     else
     {
-        Self = this->Outer->Poach(this);
+        Self = this->Outer.Poach(this);
     }
     check( Self.get() == this )
 
-    LClassOuter* PoachedOuter{ this->Outer };
-
-    Private::LCxxRecordMiscellaneousAccessor::ChangeOuter(Self.get(), nullptr);
-
-    if (this->IsDefault())
-    {
-        this->OnDefaultGarbageInternal(Reason, *PoachedOuter);
-    }
-    else
-    {
-        this->OnGarbage(Reason, *PoachedOuter);
-    }
-
     if (Behavior == EMarkAsGarbageBehavior::Default)
     {
-        Private::GetGlobalCarnifex().AddGarbageChild(std::move(Self));
+        Detail::GetGlobalCarnifex().AddGarbageChild(std::move(Self));
     }
     else if (Behavior == EMarkAsGarbageBehavior::DevourNow)
     {
-        Private::GetGlobalCarnifex().DevourGarbageChildNow(std::move(Self));
+        Detail::GetGlobalCarnifex().DevourGarbageChildNow(std::move(Self));
     }
     else if (Behavior == EMarkAsGarbageBehavior::Ignore)
     {
@@ -158,28 +116,14 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
     return;
 }
 
-void Jafg::JCxxClass::OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
+#if JAFG_DO_CHECKS
+void Jafg::JCxxClass::_check_BeginClassLife(LBeginClassLifeInfo const& Info)
 {
-    check( this->IsDefault() )
-    check( this->IsGarbage() )
-
-    this->OnGarbageDefault(Reason, PreviousOuter);
-
-    if (this->GetVirtualTable().IsConfig())
-    {
-        PushConfigFromCxxObject(this->GetVirtualTable());
-    }
-
-    check( this->GetVirtualTable().IsCDRValid() )
-    check( this->GetVirtualTable().GetCDR() == this )
-
-    auto Self{ Private::LCxxClassMiscellaneousAccessor::ExchangeCDR(&this->GetMutableVirtualTable(), nullptr) };
-    check( Self.get() == this )
-
-    check( this->GetVirtualTable().IsCDRValid() == false )
-
-    Self.release();
-    check( Self.get() == nullptr )
-
-    return;
+    check(GEngine && "Absence of GEngine if undefined behavior.")
 }
+
+void Jafg::JCxxClass::_check_EndClassLife(LEndClassLifeInfo const& Info)
+{
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+}
+#endif /* JAFG_DO_CHECKS */

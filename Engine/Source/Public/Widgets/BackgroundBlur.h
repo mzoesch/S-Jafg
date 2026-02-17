@@ -8,28 +8,19 @@
 namespace Jafg
 {
 
-template <typename TNode>
-class TWidgetFactoryBackgroundBlur : public TWidgetFactory<TNode>
-{
-public:
-
-    using Super         = TWidgetFactory<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
-
-    FORCEINLINE TFactoryRetTy& Strength(const float InStrength) { this->This()->SetBlurStrength(InStrength); return this->Self(); }
-};
+struct LFactoryBackgroundBlur;
 
 //#
 //# Adds blur for perspective projection only. Warning: Expensive.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryBackgroundBlur)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryBackgroundBlur)
 class WBackgroundBlur : public WNode
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WBackgroundBlur)
+    DEFAULT_NODE_CONSTRUCTORS(WBackgroundBlur)
 
 public:
 
@@ -38,7 +29,18 @@ public:
 
 private:
 
-    f32 Strength{ 0.0f };
+    f32 Strength{};
+};
+
+struct LFactoryBackgroundBlur : NODE_FACTORY_PARENT(WBackgroundBlur)
+{
+    NODE_FACTORY_BODY(WBackgroundBlur)
+
+    decltype(auto) Strength(this auto&& Self, f32 InStrength) noexcept
+    {
+        NODE_FACTORY_SELF().SetBlurStrength(InStrength);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */

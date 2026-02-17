@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Motor_Engine: Linux | Client-Debug" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="buildProfileId" value="release" />
-    <option name="command" value="run --package motor --bin motor -- --Verbose --Module Engine/Engine --Platform Linux --Architecture x86_64 --Target Client --Configuration Debug --Kind unknown" />
+    <option name="command" value="run --package motor --bin motor -- --Verbose --Module Engine --Platform Linux --Architecture x86_64 --Target Client --Configuration Debug --Kind unknown" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <envs />
     <option name="emulateTerminal" value="true" />

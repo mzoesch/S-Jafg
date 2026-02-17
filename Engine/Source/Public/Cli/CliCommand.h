@@ -8,15 +8,18 @@
 namespace Jafg
 {
 
+class JCxxClass;
+class LViewport;
 class LCliObject;
 class LCliCommand;
 class LCliVariable;
+struct LCommandExecutionInfo;
 struct LCommandExecutionResponse;
 struct LCommandArgs;
 struct LCommandParams;
 namespace ECommandReturnCode { enum Type : u8; }
 
-typedef TFunction<void(LCommandArgs const& InArgs, LCommandExecutionResponse* OutResponse)> LOnCommandInvocation;
+typedef TFunction<void(LCommandExecutionInfo const& Info, LCommandArgs const& InArgs, LCommandExecutionResponse& OutResponse)> LOnCommandInvocation;
 
 namespace ECommandReturnCode
 {
@@ -81,13 +84,14 @@ enum Type : u8
 } /* ~Namespace ECommandReturnCode */
 ENGINE_API LString LexToString(const ECommandReturnCode::Type& InType);
 
-template <typename T>
+template<typename T>
 struct LCommandArgsTypeRet final
 {
     UTILITY_STRUCT(LCommandArgsTypeRet)
-
-    typedef T Type;
+    typedef T type;
 };
+template<typename T>
+using LCommandArgsTypeRet_t = typename LCommandArgsTypeRet<T>::type;
 
 //#
 //# The arguments that the command receives.
@@ -112,19 +116,26 @@ struct LCommandArgs
     //# Get the argument of the command to the given LCommandArgsTypeRet<TField>::Type C++ type.
     //# This method is typesafe.
     //#
-    template <typename TField>
-    FORCEINLINE typename LCommandArgsTypeRet<TField>::Type GetAs() const;
+    template<typename TField>
+    FORCEINLINE LCommandArgsTypeRet_t<TField> GetAs() const
+    {
+        typedef LCommandArgsTypeRet_t<TField> return_type;
+        static_assert(std::is_default_constructible_v<return_type>);
+        return_type Field{};
+        Serde::FromString<return_type>(&Field, this->GetCatRepresentation());
+        return Field;
+    }
 
     //#
     //# Same as the above #GetAs method but allows for more advanced context checking by allowing any number
     //# of arguments. Some types might resolve to differently depending on which context they are used.
     //#
-    template <typename TField, typename... TArgs> requires
-    (
-           sizeof... (TArgs) > 0
-        && std::is_invocable_r_v<typename LCommandArgsTypeRet<TField>::Type, typename LCommandArgsTypeRet<TField>::Dispatcher, const LCommandArgs&, TArgs...>
-    )
-    FORCEINLINE typename LCommandArgsTypeRet<TField>::Type GetAs(TArgs&&... Args) const;
+    template<typename TField, typename... TArgs> requires(sizeof... (TArgs) > 0
+        && std::is_invocable_r_v<LCommandArgsTypeRet_t<TField>, typename LCommandArgsTypeRet<TField>::dispatcher, LCommandArgs const&, TArgs...>)
+    FORCEINLINE LCommandArgsTypeRet_t<TField> GetAs(TArgs&&... Args) const
+    {
+        return LCommandArgsTypeRet<TField>::dispatch(*this, std::forward<TArgs>(Args)...);
+    }
 
     LString Name;
     TArray<LCommandArgs> SubArgs;
@@ -154,9 +165,9 @@ struct LCommandParams
 
     //# Whether the command can be invoked with the given arguments.
     ENGINE_API  bool IsInvocable(const LCommandArgs& Args) const;
-    FORCEINLINE void Invoke(const LCommandArgs& Args, LCommandExecutionResponse* OutResponse) const
+    FORCEINLINE void Invoke(LCommandExecutionInfo const& Info, const LCommandArgs& Args, LCommandExecutionResponse& OutResponse) const
     {
-        this->OnExec.Invoke(Args, OutResponse);
+        this->OnExec.Invoke(Info, Args, OutResponse);
     }
 
     ENGINE_API TArray<LString> GetCommonSuggestions(const LCommandArgs& Args, const u32 MaxSuggestions, const bool bParseNotBeginTypedArg) const;
@@ -168,9 +179,21 @@ struct LCommandParams
 };
 
 //#
+//# The context information for a command.
+//#
+struct LCommandExecutionInfo final
+{
+    //# Optional jxx-class which may act as the invoker.
+    JCxxClass* Invoker;
+
+    //# Optional viewport where the command was executed from.
+    LViewport* Viewport;
+};
+
+//#
 //# The response of the command.
 //#
-struct LCommandExecutionResponse
+struct LCommandExecutionResponse final
 {
     //# Return code of the command. @see #ECommandReturnCode for meaning.
     ECommandReturnCode::Type Rc = ECommandReturnCode::Invalid;
@@ -247,24 +270,5 @@ private:
 
     TArray<LCommandParams> Overloads;
 };
-
-template<typename TField>
-FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs() const
-{
-    typedef typename LCommandArgsTypeRet<TField>::Type TRet;
-    TRet Field;
-    Serialization::FromString<TRet>(&Field, this->GetCatRepresentation());
-    return Field;
-}
-
-template<typename TField, typename... TArgs> requires
-(
-       sizeof...(TArgs) > 0
-    && std::is_invocable_r_v<typename LCommandArgsTypeRet<TField>::Type, typename LCommandArgsTypeRet<TField>::Dispatcher, const LCommandArgs&, TArgs...>
-)
-FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs(TArgs&&... Args) const
-{
-    return LCommandArgsTypeRet<TField>::Dispatch(*this, std::forward<TArgs>(Args)...);
-}
 
 } /* ~Namespace Jafg */
