@@ -53,25 +53,49 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
 {
     (void)UserData;
 
+    if (CallbackData == nullptr)
+    {
+        LOG_WARNING(LogVulkan, "Hermes invoked but no callback data provided.")
+    }
     if (Severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
     {
-        LOG_ERROR(LogVulkan, "[{}] Validation Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+        LOG_ERROR(LogVulkan, "[{}] Validation Layer [{}]: {}"
+            , CallbackData->messageIdNumber
+            , CallbackData->pMessageIdName ? CallbackData->pMessageIdName : "<missing-id-name>"
+            , CallbackData->pMessage ? CallbackData->pMessage : "<missing-id-message>"
+            )
     }
     else if (Severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
     {
-        LOG_WARNING(LogVulkan, "[{}] Validation Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+        LOG_WARNING(LogVulkan, "[{}] Validation Layer [{}]: {}"
+            , CallbackData->messageIdNumber
+            , CallbackData->pMessageIdName ? CallbackData->pMessageIdName : "<missing-id-name>"
+            , CallbackData->pMessage ? CallbackData->pMessage : "<missing-id-message>"
+            )
     }
     else if (Type & vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance)
     {
-        LOG_WARNING(LogVulkan, "[{}] Performance Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+        LOG_WARNING(LogVulkan, "[{}] Performance Layer [{}]: {}"
+            , CallbackData->messageIdNumber
+            , CallbackData->pMessageIdName ? CallbackData->pMessageIdName : "<missing-id-name>"
+            , CallbackData->pMessage ? CallbackData->pMessage : "<missing-id-message>"
+            )
     }
     else if (Severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose)
     {
-        LOG_VERBOSE(LogVulkan, "[{}] Info (Verbose) [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+        LOG_VERBOSE(LogVulkan, "[{}] Info (Verbose) [{}]: {}"
+            , CallbackData->messageIdNumber
+            , CallbackData->pMessageIdName ? CallbackData->pMessageIdName : "<missing-id-name>"
+            , CallbackData->pMessage ? CallbackData->pMessage : "<missing-id-message>"
+            )
     }
     else
     {
-        LOG_INFO(LogVulkan, "[{}] Info [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+        LOG_INFO(LogVulkan, "[{}] Info [{}]: {}"
+            , CallbackData->messageIdNumber
+            , CallbackData->pMessageIdName ? CallbackData->pMessageIdName : "<missing-id-name>"
+            , CallbackData->pMessage ? CallbackData->pMessage : "<missing-id-message>"
+            )
     }
 
     return VK_FALSE;
