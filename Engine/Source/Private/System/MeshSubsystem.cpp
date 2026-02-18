@@ -6,7 +6,7 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 {
     std::erase_if(this->Meshes, [](auto& E) -> bool
     {
-        if (E.second.unique())
+        if (E.second.use_count() == 1)
         {
             LOG_VERBOSE(LogTextureSubsystem, "Purging unused mesh [{}].", E.first)
             return true;

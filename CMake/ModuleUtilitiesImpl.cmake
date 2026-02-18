@@ -100,7 +100,11 @@ function(_jafg_add_module_impl
         )
 
     if(${module_type} STREQUAL JAFG_MODULE_TYPE_LAUNCH)
-        add_executable(${module_name} ${src_files})
+        if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") AND (JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_SHIPPING))
+            add_executable(${module_name} WIN32 ${src_files})
+        else()
+            add_executable(${module_name} ${src_files})
+        endif()
         set(motor_module_type "launch")
         target_compile_definitions(${module_name} PRIVATE
             ${module_name_upper}_API=
@@ -255,6 +259,7 @@ function(_jafg_add_module_impl
             /Zc:__cplusplus             # Why the fuck microsoft?
             /GR-                        # No RTTI.
             /MP                         # Multiple processors.
+            /Zc:preprocessor            # No legacy pp.
             )
     else()
         message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")

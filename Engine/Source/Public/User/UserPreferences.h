@@ -28,13 +28,13 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    TPreference<f32> MasterVolume{ 1, 0, 1 };
+    TPreference<f32> MasterVolume{ 1.f, 0.f, 1.f };
     CLASS_FIELD(Config)
-    TPreference<f32> MusicVolume{ 1, 0, 1 };
+    TPreference<f32> MusicVolume{ 1.f, 0.f, 1.f };
     CLASS_FIELD(Config)
-    TPreference<f32> MiscVolume{ 1, 0, 1 };
+    TPreference<f32> MiscVolume{ 1.f, 0.f, 1.f };
     CLASS_FIELD(Config)
-    TPreference<f32> VoiceVolume{ 1, 0, 1 };
+    TPreference<f32> VoiceVolume{ 1.f, 0.f, 1.f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rendering pipeline

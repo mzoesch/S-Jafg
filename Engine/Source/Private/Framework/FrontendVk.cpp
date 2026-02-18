@@ -921,7 +921,7 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
 
     if (AvailablePhysicalDevices.empty())
     {
-        panic( "Failed to find any physical devices with Vulkan support." )
+        panic("Failed to find any physical devices with Vulkan support.")
     }
 
     for (auto RankedPhysicalDevices{this->Vk_RankPhysicalDevices(AvailablePhysicalDevices)};
@@ -947,10 +947,10 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
         continue;
     }
 
-    checkSlow( this->Vk_AvailablePhysicalDevices.empty() == false )
+    check(this->Vk_AvailablePhysicalDevices.empty() == false)
     if (this->Vk_AvailablePhysicalDevices[0].Rating == 0)
     {
-        panicMsgf( "Failed to find a suitable physical device." )
+        panic("Failed to find a suitable physical device.")
     }
 
     if (const auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PreferredPhysicalDevice.empty() == false)

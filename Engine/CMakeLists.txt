@@ -4,13 +4,11 @@ include_guard(_guard)
 if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
-    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-        set_target_properties(${module_name} PROPERTIES
-                ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
-                LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
-                RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
-                )
-    endif()
+    set_target_properties(${module_name} PROPERTIES
+            ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+            LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+            RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+            )
 
     ###############################################################################
     # Engine only compile time definitions

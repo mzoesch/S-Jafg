@@ -82,7 +82,11 @@ public:
     FORCEINLINE constexpr void SetCaretHOffset(const f64 InOffset) noexcept { this->CaretBrush.HOffset = InOffset; }
     FORCEINLINE constexpr void SetCaretBlinkerSpeed(const f64 InSpeed) noexcept { this->CaretBrush.CaretBlinkerSpeed = InSpeed; }
 
-    FORCEINLINE constexpr void SetBrush(const LEditableTextBoxBrush& InBrush) noexcept;
+    FORCEINLINE CONSTEXPR_CHECK void SetBrush(const LEditableTextBoxBrush& InBrush) noexcept
+    {
+        this->PlaceholderColor = InBrush.PlaceholderColor;
+        Super::SetBrush(InBrush);
+    }
 
     FORCEINLINE constexpr void SetCaretBrush(const LCaretBrush& InBrush) noexcept { this->CaretBrush = InBrush; }
     FORCEINLINE constexpr LCaretBrush& GetMutableCaretBrush() noexcept { return this->CaretBrush; }
@@ -121,7 +125,6 @@ private:
 
     LDelegateHandle UserInterfaceTickDelegateHandle{ nullptr };
 };
-
 
 struct LFactoryEditableTextBox : NODE_FACTORY_PARENT(WEditableTextBox)
 {
@@ -202,12 +205,5 @@ struct LFactoryEditableTextBox : NODE_FACTORY_PARENT(WEditableTextBox)
         return NODE_FACTORY_RESULT();
     }
 };
-
-FORCEINLINE constexpr void WEditableTextBox::SetBrush(LEditableTextBoxBrush const& InBrush) noexcept
-{
-    this->PlaceholderColor = InBrush.PlaceholderColor;
-    Super::SetBrush(InBrush);
-    return;
-}
 
 } /* ~Namespace Jafg */

@@ -79,13 +79,13 @@ struct TTagRegistry
     FORCEINLINE TagType GetTagChecked(LStringView InRepr) const noexcept
     {
         const TagType Tag {this->GetTag(InRepr)};
-        check( Tag.IsSet() )
+        check(Tag.IsSet())
         return Tag;
     }
     FORCEINLINE TagType GetTagAsserted(LStringView InRepr) const noexcept
     {
         const TagType Tag {this->GetTag(InRepr)};
-        jassert( Tag.IsSet() )
+        jassert(Tag.IsSet())
         return Tag;
     }
 
@@ -96,9 +96,9 @@ struct TTagRegistry
 
     FORCEINLINE TagType RegisterOrGet(LStringView InRepr) noexcept
     {
-        check( InRepr.empty() == false )
+        check(InRepr.empty() == false)
 
-        if (const TagType Tag {this->GetTag(InRepr)}; Tag.IsSet())
+        if (const TagType Tag{this->GetTag(InRepr)}; Tag.IsSet())
         {
             return Tag;
         }

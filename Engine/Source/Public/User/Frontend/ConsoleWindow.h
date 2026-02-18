@@ -32,7 +32,7 @@ public:
     virtual void Tick() override;
     virtual void Destruct() override;
 
-    ENGINE_API void AddToConsole(LConsoleMessage Message);
+    void AddToConsole(LConsoleMessage Message);
 
 private:
 

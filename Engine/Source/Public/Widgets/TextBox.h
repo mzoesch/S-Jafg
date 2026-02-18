@@ -39,7 +39,7 @@ public:
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }
 
     FORCEINLINE constexpr void SetTextColor(const LColor& InColor) noexcept { this->TextColor = InColor; }
-    FORCEINLINE constexpr void SetTextScale(const LTextScale InScale) noexcept { this->TextScale = InScale; }
+    FORCEINLINE CONSTEXPR_CHECK void SetTextScale(const LTextScale InScale) noexcept { this->TextScale = InScale; }
     FORCEINLINE constexpr void SetTextAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
     FORCEINLINE constexpr void SetTextAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
     FORCEINLINE constexpr void SetTextHAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
@@ -47,16 +47,21 @@ public:
     FORCEINLINE constexpr void SetRespectContentHeight(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; }
 
     FORCEINLINE constexpr const LColor& GetTextColor() const noexcept { return this->TextColor; }
-    FORCEINLINE constexpr LTextScale        GetTextScale() const noexcept { return this->TextScale; }
+    FORCEINLINE constexpr LTextScale const& GetTextScale() const noexcept { return this->TextScale; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextHAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextVAlign::Type GetTextVAlign() const noexcept { return this->TextVAlign; }
     FORCEINLINE constexpr bool IsRespectingContentHeight() const noexcept { return this->bRespectContentHeight; }
 
-    FORCEINLINE constexpr void SetBrush(const LTextBoxBrush& InBrush) noexcept;
-    FORCEINLINE constexpr void SetBrush(LTextBoxBrush&& InBrush) noexcept;
-    //# WARNING: This returns a new brush and not a reference.
-    FORCEINLINE constexpr LTextBoxBrush GetBrush() const noexcept;
+    FORCEINLINE CONSTEXPR_CHECK void SetBrush(const LTextBoxBrush& InBrush) noexcept
+    {
+        this->TextColor = InBrush.TextColor;
+        this->TextScale = InBrush.TextScale;
+        this->TextHAlign = InBrush.TextHAlign;
+        this->TextVAlign = InBrush.TextVAlign;
+
+        this->Super::SetBrush(InBrush);
+    }
 
     FORCEINLINE constexpr bool IsLeftAligned() const noexcept { return ETextHAlign::IsLeft(this->TextHAlign);   }
     FORCEINLINE constexpr bool IsCenterAligned() const noexcept { return ETextHAlign::IsCenter(this->TextHAlign); }
@@ -155,57 +160,5 @@ struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
         return NODE_FACTORY_RESULT();
     }
 };
-
-FORCEINLINE constexpr void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept
-{
-    this->TextColor = InBrush.TextColor;
-    this->TextScale = InBrush.TextScale;
-    this->TextHAlign = InBrush.TextHAlign;
-    this->TextVAlign = InBrush.TextVAlign;
-
-    this->Super::SetBrush(InBrush);
-
-    return;
-}
-
-FORCEINLINE constexpr void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
-{
-    this->TextColor = std::move(InBrush.TextColor);
-    this->TextScale = std::move(InBrush.TextScale);
-    this->TextHAlign = std::move(InBrush.TextHAlign);
-    this->TextVAlign = std::move(InBrush.TextVAlign);
-
-    this->Super::SetBrush(std::move(InBrush));
-
-    return;
-}
-
-FORCEINLINE constexpr LTextBoxBrush WTextBox::GetBrush() const noexcept
-{
-    static_assert(sizeof(LTextBoxBrush) == 104, "This method needs to be updated because LTextBoxBrush has changed.");
-
-    LTextBoxBrush Out;
-
-    Out.Type = this->Super::GetBrush().Type;
-    Out.Tint = this->Super::GetBrush().Tint;
-    Out.Image = this->Super::GetBrush().Image;
-    Out.ImageTint = this->Super::GetBrush().ImageTint;
-    Out.ImageScale = this->Super::GetBrush().ImageScale;
-    Out.ImageBehavior = this->Super::GetBrush().ImageBehavior;
-    Out.ImageOobm = this->Super::GetBrush().ImageOobm;
-    Out.ImagePadding = this->Super::GetBrush().ImagePadding;
-    Out.Radii = this->Super::GetBrush().Radii;
-    Out.OutlineThickness = this->Super::GetBrush().OutlineThickness;
-    Out.OutlineTint = this->Super::GetBrush().OutlineTint;
-
-    Out.Padding = this->Super::GetBrush().Padding;
-
-    Out.TextColor = this->TextColor;
-    Out.TextScale = this->TextScale;
-    Out.TextHAlign = this->TextHAlign;
-    Out.TextVAlign = this->TextVAlign;
-
-    return Out;
-}
 
 } /* ~Namespace Jafg */

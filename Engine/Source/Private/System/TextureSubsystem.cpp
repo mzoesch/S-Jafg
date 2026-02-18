@@ -7,7 +7,7 @@ void Jafg::JTextureSubsystem::PurgeUnused() noexcept
 {
     std::erase_if(this->Textures, [](auto& E) -> bool
     {
-        if (E.second.unique())
+        if (E.second.use_count() == 1)
         {
             LOG_VERBOSE(LogTextureSubsystem, "Purging unused texture [{}].", E.first)
             return true;

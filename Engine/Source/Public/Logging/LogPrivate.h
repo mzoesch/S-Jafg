@@ -5,100 +5,32 @@
 namespace Jafg
 {
 
-namespace Logging::Detail
+inline LString GetPrettyFunctionName(LStringView FunctionName) noexcept
 {
+    LString Result; Result.reserve(FunctionName.size());
 
-inline constexpr bool StartsWith(const char* InString, const char* InPrefix) noexcept
-{
-    while (*InString == *InPrefix)
+    LSize Stack{};
+    for (auto It{FunctionName.begin()}; It != FunctionName.end(); ++It)
     {
-        if (*InPrefix == '\0')
-        {
-            return true;
-        }
-
-        ++InString;
-        ++InPrefix;
-    }
-
-    return false;
-}
-
-inline constexpr const char* ConsumeType(const char* Begin, const char* End) noexcept
-{
-    static const char* const Signed("signed");
-    static const char* const Unsigned("unsigned");
-
-    const char* It = Begin;
-    if (Logging::Detail::StartsWith(It, Signed))
-    {
-        It += ::strlen(Signed) + 1;
-    }
-    else if (Logging::Detail::StartsWith(It, Unsigned))
-    {
-        It += strlen(Unsigned) + 1;
-    }
-
-    i32 TemplateNest = 0;
-    while (It != End)
-    {
-        if (*It == ' ' && TemplateNest == 0)
-        {
-            break;
-        }
-
         if (*It == '<')
         {
-            ++TemplateNest;
+            ++Stack;
+            continue;
         }
-        else if (*It == '>' && TemplateNest > 0)
+        if (*It == '>')
         {
-            --TemplateNest;
+            --Stack;
+            continue;
         }
-
-        ++It;
-    }
-
-    return It;
-}
-
-} /* ~Namespace Logging::Detail */
-
-inline constexpr std::string_view PrettyFunctionName(const char* InFunctionName) noexcept
-{
-    const char* Begin = InFunctionName;
-    const char* End   = InFunctionName;
-    while (*End != '\0')
-    {
-        ++End;
-    }
-
-    Begin = Logging::Detail::ConsumeType(Begin, End);
-    if (Begin == End)
-    {
-        return InFunctionName;
-    }
-
-    /* Space after return type */
-    ++Begin;
-    if (Begin == End)
-    {
-        return InFunctionName;
-    }
-
-    if (*Begin == '(')
-    {
-        Begin = Logging::Detail::ConsumeType(++Begin, End);
-
-        /* Space after return type */
-        ++Begin;
-        if (Begin == End)
+        if (Stack > 0)
         {
-            return InFunctionName;
+            continue;
         }
+
+        Result += *It;
     }
 
-    return { Begin, static_cast<std::string_view::size_type>(std::find(Begin, End, '(') - Begin) };
+    return Result;
 }
 
 inline constexpr LStringView LogColor_Trace{ JAFG_LOG_COLOR_TRACE };

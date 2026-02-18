@@ -80,7 +80,7 @@
 //#
 #if JAFG_LOG_ENABLE_TRACE
     #define LOG_TRACE(Category, Format, ...) \
-        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Trace, JAFG_LOG_COLOR_TRACE, Format, ##__VA_ARGS__)
+        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Trace, JAFG_LOG_COLOR_TRACE, Format, __VA_ARGS__)
 #endif /* JAFG_LOG_ENABLE_TRACE */
 
 //#
@@ -91,7 +91,7 @@
 //#
 #if JAFG_LOG_ENABLE_VERBOSE
     #define LOG_VERBOSE(Category, Format, ...) \
-        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbose, JAFG_LOG_COLOR_VERBOSE, Format, ##__VA_ARGS__)
+        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbose, JAFG_LOG_COLOR_VERBOSE, Format, __VA_ARGS__)
 #endif /* JAFG_LOG_ENABLE_VERBOSE */
 
 //#
@@ -102,7 +102,7 @@
 //#
 #if JAFG_LOG_ENABLE_INFO
     #define LOG_INFO(Category, Format, ...) \
-        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Info, JAFG_LOG_COLOR_INFO, Format, ##__VA_ARGS__)
+        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Info, JAFG_LOG_COLOR_INFO, Format, __VA_ARGS__)
 #endif /* JAFG_LOG_ENABLE_INFO */
 
 //#
@@ -113,7 +113,7 @@
 //#
 #if JAFG_LOG_ENABLE_WARNING
     #define LOG_WARNING(Category, Format, ...) \
-        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Warning, JAFG_LOG_COLOR_WARNING, Format, ##__VA_ARGS__)
+        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Warning, JAFG_LOG_COLOR_WARNING, Format, __VA_ARGS__)
 #endif /* JAFG_LOG_ENABLE_WARNING */
 
 //#
@@ -124,7 +124,7 @@
 //#
 #if JAFG_LOG_ENABLE_ERROR
     #define LOG_ERROR(Category, Format, ...) \
-        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Error, JAFG_LOG_COLOR_ERROR, Format, ##__VA_ARGS__)
+        PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Error, JAFG_LOG_COLOR_ERROR, Format, __VA_ARGS__)
 #endif /* JAFG_LOG_ENABLE_ERROR */
 
 //#
@@ -135,10 +135,10 @@
 //#
 #define LOG_FATAL(Category, Format, ...)  \
     JAFG_GORGEOUS_TRAP_MSG(::Jafg::SprintF( \
-        "[{}] - {}: " Format "", Category.GetCategory(), std::string_view{__FUNCTION__}, ##__VA_ARGS__).c_str())
+        "[{}] - {}: " Format "", Category.GetCategory(), JAFG_PRETTY_FUNCTION_NAME __VA_OPT__(,) __VA_ARGS__).c_str())
 #define PRIVATE_JAFG_LOG_FATAL_CORE(Category, Format, ...) \
     JAFG_GORGEOUS_TRAP_MSG(std::vformat(                   \
-        "[{}] - {}: " Format "", std::make_format_args(Category.GetCategory(), __FUNCTION__, ##__VA_ARGS__)).c_str())
+        "[{}] - {}: " Format "", std::make_format_args(Category.GetCategory(), JAFG_PRETTY_FUNCTION_NAME __VA_OPT__(,) __VA_ARGS__)).c_str())
 
 
 /*----------------------------------------------------------------------------
@@ -146,17 +146,18 @@
 ----------------------------------------------------------------------------*/
 
 #if (JAFG_WITH_GCC || JAFG_WITH_CLANG)
-    #define JAFG_FUNCTION_SIG                                            __PRETTY_FUNCTION__
-    #define JAFG_REAL_FUNC_SIG                                           JAFG_FUNCTION_SIG
+    #define JAFG_FUNCTION_NAME                                          __FUNCTION__
+    #define JAFG_FUNCTION_SIG                                           __PRETTY_FUNCTION__
 #elif JAFG_WITH_MSVC
-    #define JAFG_FUNCTION_SIG                                            __FUNCSIG__
-    #define JAFG_REAL_FUNC_SIG                                           __FUNCDNAME__
+    #define JAFG_FUNCTION_NAME                                          __FUNCTION__
+    #define JAFG_FUNCTION_SIG                                           __FUNCSIG__
+    #define JAFG_FUNCTION_MANGLED                                       __FUNCDNAME__
 #else /* JAFG_WITH_MSVC */
     #error "Compiler missing implementation."
 #endif /* !JAFG_WITH_MSVC */
 
 //# Pretty function name as [MyNameSpace::MyClass::MyFunction].
-#define JAFG_PRETTY_FUNCTION                                             (::Jafg::PrettyFunctionName(JAFG_FUNCTION_SIG))
+#define JAFG_PRETTY_FUNCTION_NAME                                        (::Jafg::GetPrettyFunctionName(JAFG_FUNCTION_NAME))
 
 //# Current class name.
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS                             (LStringLegacy(__FUNCTION__)
@@ -183,15 +184,15 @@
 #if JAFG_SAVE_LOGS_IN_MEMORY
     #define PRIVATE_JAFG_LOG_SAVE_LOG(Category, Verbosity, Format, ...)                             \
         ::Jafg::SaveLog<::Jafg::ELogVerbosity::Type::Verbosity, Category.GetCompileTimeVerbosity()>( \
-            "[" #Category "] - {}: " Format "", std::string_view{__FUNCTION__}, ##__VA_ARGS__);
+            "[" #Category "] - {}: " Format "", JAFG_PRETTY_FUNCTION_NAME __VA_OPT__(,) __VA_ARGS__);
 #else /* JAFG_SAVE_LOGS_IN_MEMORY */
     #define PRIVATE_JAFG_LOG_SAVE_LOG(Category, Verbosity, Format, ...)
 #endif /* !JAFG_SAVE_LOGS_IN_MEMORY */
 
 #define PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)                \
-    PRIVATE_JAFG_LOG_SAVE_LOG(Category, Verbosity, Format, ##__VA_ARGS__)                    \
+    PRIVATE_JAFG_LOG_SAVE_LOG(Category, Verbosity, Format, __VA_ARGS__)                    \
     ::Jafg::LogMessage<::Jafg::ELogVerbosity::Verbosity, Category.GetCompileTimeVerbosity()>( \
-        Color "[" #Category "] - {}: " Format "" JAFG_LOG_COLOR_END, std::string_view{__FUNCTION__}, ##__VA_ARGS__);
+        Color "[" #Category "] - {}: " Format "" JAFG_LOG_COLOR_END, JAFG_PRETTY_FUNCTION_NAME __VA_OPT__(,) __VA_ARGS__);
 
 #if !JAFG_LOG_ENABLE_TRACE
     #define LOG_TRACE(Category, Format, ...)

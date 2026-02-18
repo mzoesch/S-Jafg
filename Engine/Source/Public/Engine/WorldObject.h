@@ -21,7 +21,7 @@ namespace Detail
 
 struct LOuter2WorldProj
 {
-    NODISCARD inline constexpr LWorldDynamicInit operator()(LCxxDynamicInit const& Init) const noexcept
+    NODISCARD inline CONSTEXPR_CHECK LWorldDynamicInit operator()(LCxxDynamicInit const& Init) const noexcept
     {
         check(Init.Outer.GetUserData() == nullptr)
         return {.Outer=Init.Outer.AsWorld(),.Class=Init.Class};

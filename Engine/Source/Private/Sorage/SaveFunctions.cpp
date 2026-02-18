@@ -19,11 +19,11 @@
 #define EMIT_ERROR(Format, ...)                            \
     if (OutError)                                          \
     {                                                      \
-        *OutError = ::Jafg::SprintF(Format, ##__VA_ARGS__); \
+        *OutError = ::Jafg::SprintF(Format __VA_OPT__(,) __VA_ARGS__); \
     }                                                      \
     else                                                   \
     {                                                      \
-        LOG_ERROR(LogStorage, Format, ##__VA_ARGS__)       \
+        LOG_ERROR(LogStorage, Format __VA_OPT__(,) __VA_ARGS__)       \
     }
 
 namespace

@@ -18,7 +18,8 @@ void SortQuick(T* Begin, T* Slack);
 FORCEINLINE void SortQuick(auto* Container)
 {
     static_assert(TIterator_IsContiguous_v<TIteratorTraits<decltype(Container->begin())>>);
-    Private::SortQuick(Container->begin().base(), Container->end().base());
+    check(algo::size(*Container) > 0)
+    Private::SortQuick(Container->data(), Container->data() + algo::size(*Container));
 }
 
 namespace Private

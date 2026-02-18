@@ -79,7 +79,7 @@
     #define checkMsg(Expr, Msg)                 PRIVATE_JAFG_ASSERT_STRONG_MSG_IMPL( Expr, Msg )
 
     //# Same as checkMsg but with a formatted message one in the style of std::format.
-    #define checkMsgf(Expr, Format, ...)        PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL( Expr, Format, ##__VA_ARGS__ )
+    #define checkMsgf(Expr, Format, ...)        PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL( Expr, Format, __VA_ARGS__ )
 
     //# Will evaluate to a check that will always fail at runtime.
     #define checkNoEntry()                      PRIVATE_JAFG_ASSERT_STRONG_IMPL_ON_FAIL( JAFG_NO_ENTRY_ASSERT_TEXT )
@@ -116,7 +116,7 @@
 
     #define checkSlow(Expr)                     check( Expr )
     #define checkSlowMsg(Expr, Msg)             checkMsg( Expr, Msg )
-    #define checkSlowMsgf(Expr, Format, ...)    checkMsgf( Expr, Format, ##__VA_ARGS__ )
+    #define checkSlowMsgf(Expr, Format, ...)    checkMsgf( Expr, Format, __VA_ARGS__ )
     #define checkSlowNoEntry(Expr)              checkNoEntry( Expr )
     #define checkSlowCode(Code)                 checkCode( Code )
     #define CONSTEXPR_CHECK_SLOW
@@ -147,7 +147,7 @@
 //#
 #define jassert(Expr)                           PRIVATE_JAFG_ASSERT_STRONG_IMPL( Expr )
 #define jassertMsg(Expr, Msg)                   PRIVATE_JAFG_ASSERT_STRONG_MSG_IMPL( Expr, Msg )
-#define jassertMsgf(Expr, Format, ...)          PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL( Expr, Format, ##__VA_ARGS__ )
+#define jassertMsgf(Expr, Format, ...)          PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL( Expr, Format, __VA_ARGS__ )
 #define jassertNoEntry()                        PRIVATE_JAFG_ASSERT_STRONG_IMPL_ON_FAIL( JAFG_NO_ENTRY_ASSERT_TEXT )
 
 //#
@@ -156,7 +156,7 @@
 #define panic(Msg)                              JAFG_GORGEOUS_TRAP_MSG( "Program panicked. " Msg )
 #define panicMsgf(Format, ...)                  JAFG_GORGEOUS_TRAP_MSG( ::Jafg::SprintF             \
                                                 (                                                 \
-                                                    "Program panicked. " Format "", ##__VA_ARGS__ \
+                                                    "Program panicked. " Format ""  __VA_OPT__(,) __VA_ARGS__ \
                                                 ).c_str() )
 
 
@@ -226,7 +226,7 @@
 #define PRIVATE_JAFG_TRY_BREAK_NO_FACADE()       \
     if (::Jafg::Hal::IsTracerPidValidVerySlow()) \
     {                                           \
-        JAFG_PLATFORM_BREAK();                   \
+        JAFG_PLATFORM_BREAK()                   \
     }
 
 //#
@@ -300,7 +300,7 @@
 #define PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...) \
     ::Jafg::SprintF                                                         \
     (                                                                      \
-        "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
+        "Program panicked. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__ \
     )
 
 //# Get an expression as a string with ANSI format if the platform supports it.
@@ -316,7 +316,7 @@
     ::Jafg::SprintF                                                              \
     (                                                                           \
         JAFG_LOG_COLOR_FATAL                                                     \
-        "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__      \
+        "Program panicked. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__      \
         JAFG_LOG_COLOR_END                                                       \
     )
 
@@ -332,7 +332,7 @@
 #define PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...)            \
     ::Jafg::SprintF                                                                  \
     (                                                                               \
-        "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
+        "Program run into an error. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__ \
     )
 
 //# Get an expression as a string with ANSI format if the platform supports it.
@@ -348,7 +348,7 @@
     ::Jafg::SprintF                                                                  \
     (                                                                               \
         JAFG_LOG_COLOR_ERROR                                                         \
-        "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
+        "Program run into an error. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__ \
         JAFG_LOG_COLOR_END                                                           \
     )
 
@@ -423,11 +423,11 @@
     PRIVATE_JAFG_ASSERT_IMPL                                                      \
     (                                                                            \
         Expr,                                                                    \
-        PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, ##__VA_ARGS__) \
+        PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, __VA_ARGS__) \
     )
 
 #define PRIVATE_JAFG_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, ...)                                          \
-    JAFG_GORGEOUS_TRAP_MSG(PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ##__VA_ARGS__).c_str()) \
+    JAFG_GORGEOUS_TRAP_MSG(PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, __VA_ARGS__).c_str()) \
 
 #define PRIVATE_JAFG_ENSURE_IMPL(Expr)              \
     (JAFG_LIKELY(Expr) || [](void) -> bool          \

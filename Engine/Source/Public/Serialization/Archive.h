@@ -75,8 +75,9 @@ struct LOStringArchive final
     typedef LJafgChar value_type;
 
     constexpr LOStringArchive() noexcept = default;
-    constexpr LOStringArchive(LCopyPrefs, LOStringArchive const&) noexcept {}
-    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LOStringArchive)
+    LOStringArchive(LCopyPrefs, LOStringArchive const&) noexcept {}
+    PROHIBIT_COPY(LOStringArchive)
+    DEFAULT_CONSTEXPR_MOVE(LOStringArchive)
     constexpr ~LOStringArchive() noexcept = default;
 
     template<typename T>

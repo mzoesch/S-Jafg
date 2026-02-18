@@ -33,7 +33,7 @@
                 Category.GetCompileTimeVerbosity()                                         \
             >                                                                              \
             (Category, PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC, std::format(              \
-                "" Format "", ##__VA_ARGS__                                                \
+                "" Format "" __VA_OPT__(,) __VA_ARGS__                                                \
             ));
 #else /* DO_LOG_SCOPED_TIME_TASK_MEASURER */
     #define SCOPED_TIME_TAKEN_MEASURER(Category, Verbosity, Name)

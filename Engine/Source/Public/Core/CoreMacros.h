@@ -98,7 +98,7 @@
     #define UNSUPPORTED_TEMPLATED_SPECIALIZATION(Ty, ...)                                                           \
         {                                                                                                           \
             static_assert(sizeof(Ty) == UNREACHABLE_BYTE_SIZE_FOR_TYPE, "Templated specialization not supported."); \
-            ##__VA_ARGS__;                                                                                          \
+            __VA_ARGS__;                                                                                          \
         }
 #elif JAFG_WITH_GCC || JAFG_WITH_CLANG
     #define UNSUPPORTED_TEMPLATED_SPECIALIZATION(Ty, ...)                                                           \

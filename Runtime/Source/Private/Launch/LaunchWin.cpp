@@ -65,8 +65,17 @@ EPlatformExit::Type SehUnwinder()
 }
 #endif /* JAFG_WITH_MSVC */
 
+#if IN_SHIPPING
 i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
+#else /* IN_SHIPPING */
+i32 main(i32 ArgC, char* ArgV[])
+#endif /* !IN_SHIPPING */
 {
+#if IN_SHIPPING
+    i32 ArgC{__argc};
+    char** ArgV{__argv};
+#endif /* IN_SHIPPING */
+
     //
     // If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
     // Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
@@ -74,9 +83,9 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
     i32 ErrorLevel{};
 
     TArray<LString> Arguments;
-    for (auto Idx{0uz}; Idx < static_cast<LSize>(__argc); ++Idx)
+    for (auto Idx{0uz}; Idx < static_cast<LSize>(ArgC); ++Idx)
     {
-        Arguments.emplace_back(__argv[Idx]);
+        Arguments.emplace_back(ArgV[Idx]);
     }
     Application::Private::RawCommandLine = std::move(Arguments);
 

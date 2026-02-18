@@ -150,8 +150,8 @@ public:
 
 private:
 
-    static constexpr u32 InvalidHandle{ 0 };
+    inline static constexpr u64 InvalidHandle{};
 
-    TArray<std::pair<u32, LDelegate>> Delegates;
+    TArray<std::pair<u64, LDelegate>> Delegates;
     u64 Cursor{ InvalidHandle };
 };

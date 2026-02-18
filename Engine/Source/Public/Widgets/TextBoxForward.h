@@ -157,15 +157,15 @@ struct LTextScale final
         {
             this->PredefinedScale = Other.PredefinedScale;
 
-            check( this->bPredefined == true )
-            check( this->GetPredefinedScale() == Other.GetPredefinedScale() )
+            check(this->bPredefined == true)
+            check(this->GetPredefinedScale() == Other.GetPredefinedScale())
         }
         else
         {
             this->CustomScale = Other.CustomScale;
 
-            check( this->bPredefined == false )
-            check( this->GetCustomScale() == Other.GetCustomScale() )
+            check(this->bPredefined == false)
+            check(this->GetCustomScale() == Other.GetCustomScale())
         }
 
         return;

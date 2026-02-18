@@ -47,7 +47,7 @@
 //# The display name will be automatically generated from the function name.
 //#
 #define STAT_CYCLE_FUNCTION_START(Symbol) \
-    STAT_CYCLE_START(Symbol, JAFG_PRETTY_FUNCTION)
+    STAT_CYCLE_START(Symbol, JAFG_PRETTY_FUNCTION_NAME)
 //# Counterpart for #STAT_CYCLE_FUNCTION_START to end the stat.
 #define STAT_CYCLE_FUNCTION_END(Symbol) \
     STAT_CYCLE_END(Symbol)

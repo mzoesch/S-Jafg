@@ -463,13 +463,16 @@ void Jafg::LWorld::OnTearDown()
 
     LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
 #if !IN_SHIPPING
-    LSize ActorCount{ 0 };
+    LSize ActorCount{};
 #endif /* !IN_SHIPPING */
-    for (TUnique<JCxxClass> const& Obj : this->GetEmployees())
+    for (auto Idx{0uz}; Idx < this->GetEmployees().size();)
     {
+        TUnique<JCxxClass> const& Obj{this->GetEmployees()[Idx]};
+
         /* Null only allowed in tear down. */
         if (Obj.get() == nullptr)
         {
+            ++Idx;
             continue;
         }
 
@@ -480,10 +483,21 @@ void Jafg::LWorld::OnTearDown()
             ++ActorCount;
 #endif /* !IN_SHIPPING */
             check(Obj.get() == nullptr)
+
+            Idx = 0;
+            continue;
         }
 
+        ++Idx;
         continue;
     }
+    checkCode
+    (
+        for (auto const& Obj : this->GetEmployees())
+        {
+            check(Obj.get() == nullptr || Obj->IsA<AActor>() == false)
+        }
+    )
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     algo::orphan(&this->TickableObjects);

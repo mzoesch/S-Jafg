@@ -232,7 +232,7 @@ bool Jafg::LUserInput::PopContexts() noexcept
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, TArray<LRawInput>* Inputs, EInputActionTrigger::Type TriggerType)
 {
-    STAT_QUICK_CYCLE_START(Jafg::SprintF("{}{}", JAFG_PRETTY_FUNCTION, LexToString(TriggerType)))
+    STAT_QUICK_CYCLE_START(Jafg::SprintF("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerType)))
 
     check( Inputs )
     check( TriggerType != EInputActionTrigger::None )
