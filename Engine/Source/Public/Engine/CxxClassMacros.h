@@ -253,8 +253,7 @@ ConstructionHelper                                                    \
         MyClassSpaces,                                                                       \
         SuperClassName,                                                                      \
         ConstructionHelperLine,                                                              \
-        OptionalAPI,                                                                         \
-        ...                                                                                  \
+        ... /*OptionalAPI*/                                                                                 \
     )                                                                                        \
                                                                                              \
 public:                                                                                     \
@@ -279,12 +278,12 @@ public:                                                                         
     {                                                                                        \
         return MyClassName::MutableStaticClass();                                                 \
     }                                                                                        \
-    OptionalAPI static ::Jafg::LCxxClass& MutableStaticClass() noexcept;                                    \
+    __VA_ARGS__/*OptionalAPI*/ static ::Jafg::LCxxClass& MutableStaticClass() noexcept;      \
     MyClassName() = delete;                                                                  \
     PROHIBIT_REALLOC_OF_ANY_FORM(MyClassName)                                                               \
                                                                                              \
-private: /* Restore default visibility. */                                                   \
-    __VA_ARGS__
+private: /* Restore default visibility. */
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WORLD_BODY_IMPL already defined."
@@ -294,20 +293,19 @@ private: /* Restore default visibility. */                                      
     MyClassSpaces,                                                \
     SuperClassName,                                               \
     ConstructionHelperLine,                                       \
-    OptionalAPI,                                                  \
-    ...                                                           \
+    .../*OptionalAPI*/                                                          \
     )                                                             \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
         MyClassName,                                              \
         MyClassSpaces,                                            \
         SuperClassName,                                           \
         ConstructionHelperLine,                                   \
-        OptionalAPI                                               \
+        __VA_ARGS__                                               \
     )                                                             \
 public:                                                           \
     typedef ::Jafg::Detail::LOuter2WorldProj LDynamicInitProj; \
-private: /* Restore default visibility. */                        \
-    __VA_ARGS__
+private: /* Restore default visibility. */
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL already defined."
@@ -317,21 +315,20 @@ private: /* Restore default visibility. */                        \
     MyClassSpaces,                                                \
     SuperClassName,                                               \
     ConstructionHelperLine,                                       \
-    OptionalAPI,                                                  \
-    ...                                                           \
+    ... /*OptionalAPI*/                                                          \
     )                                                             \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
         MyClassName,                                              \
         MyClassSpaces,                                            \
         SuperClassName,                                           \
         ConstructionHelperLine,                                   \
-        OptionalAPI                                               \
+        __VA_ARGS__                                               \
     )                                                             \
 public:                                                           \
     typedef typename Super::LFactory LFactory;\
     typedef ::Jafg::Detail::LOuter2ViewportProj LDynamicInitProj; \
-private: /* Restore default visibility. */                        \
-    __VA_ARGS__
+private: /* Restore default visibility. */
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL already defined."
@@ -341,15 +338,14 @@ private: /* Restore default visibility. */                        \
     MyClassSpaces,                                                             \
     SuperClassName,                                                            \
     ConstructionHelperLine,                                                    \
-    OptionalAPI,                                                               \
-    ...                                                                        \
+    ...  /*OptionalAPI*/                                                                      \
     )                                                                          \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                   \
         MyClassName,                                                           \
         MyClassSpaces,                                                         \
         SuperClassName,                                                        \
         ConstructionHelperLine,                                                \
-        OptionalAPI                                                            \
+        __VA_ARGS__                                                            \
     )                                                                          \
 public:                                                                        \
     typedef JAFG_JOIN_OUTER_NINE(                              \
@@ -364,8 +360,8 @@ public:                                                                        \
         ConstructionHelper                                                     \
     )::LFactory LFactory;                                                \
     typedef ::Jafg::Detail::LOuter2ViewportProj LDynamicInitProj; \
-private: /* Restore default visibility. */                                     \
-    __VA_ARGS__
+private: /* Restore default visibility. */
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."

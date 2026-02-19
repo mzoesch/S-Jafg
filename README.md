@@ -6,7 +6,12 @@ As of now, it runs natively on Windows and Linux.
 # Getting Up and Running
 
 ## 1.) Prerequisites
-### Windows
+### Windows (MSVC) - recommended
+- Install [Visual Studio 2026](https://visualstudio.microsoft.com) with at least the "Desktop development with C++" workload.
+- Install the [Vulkan SDK](https://vulkan.lunarg.com).
+- If not developing with Visual Studio, install additionally [CMake](https://cmake.org).
+- Follow the instructions for _Build and Run_.
+### Windows (clang)
 - Run `Setup.bat` to install msys2 and required packages.
 - Open the `msys64/ucrt64` shell. 
 - Follow the instructions for _Build and Run_.
@@ -27,11 +32,11 @@ Only when making changes to the reflection system you will additionally need `>=
    ```
    If you want to customize the build configuration, run the following instead:
    ```bash
-   mkdir build && cmake -B build --preset "<PLATFORM> | <TYPE>-<CONFIG>" 
+   mkdir build && cmake -B build --preset "<PLATFORM>-x64--<TYPE>-<CONFIG>" 
    ```
    with:
-   - `PLATFORM`: The target platform you want to build for [`Linux`, `Windows`]
-   - `TYPE`: The target type you want to build for [`Client`, `Daemon`, `TestUnit`]
-   - `CONFIG`: The target configuration you want to build for [`Debug`, `Development`, `Shipping`]
+   - `PLATFORM`: The target platform you want to build for [`lnx`, `wub`]
+   - `TYPE`: The target type you want to build for [`client`, `daemon`, `testunit`]
+   - `CONFIG`: The target configuration you want to build for [`sanitized`, `debug`, `development`, `shipping`]
 2. Compile it with `cmake --build build --target JgcRuntime` (The `JgcRuntime` target is the main executable of Jafg with core plugins enabled).
-3. Then run the executable located in `Binaries/.../Runtime/Runtime(.exe)`.
+3. Then run the executable located in `Binaries/.../Runtime(.exe)`.
