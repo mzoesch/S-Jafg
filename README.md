@@ -9,7 +9,7 @@ As of now, it runs natively on Windows and Linux.
 ### Windows (MSVC) - recommended
 - Install [Visual Studio 2026](https://visualstudio.microsoft.com) with at least the "Desktop development with C++" workload.
 - Install the [Vulkan SDK](https://vulkan.lunarg.com).
-- If not developing with Visual Studio, install additionally [CMake](https://cmake.org).
+- If not developing in the Visual Studio IDE, install additionally [CMake](https://cmake.org).
 - Follow the instructions for _Build and Run_.
 ### Windows (clang)
 - Run `Setup.bat` to install msys2 and required packages.
@@ -35,7 +35,7 @@ Only when making changes to the reflection system you will additionally need `>=
    mkdir build && cmake -B build --preset "<PLATFORM>-x64--<TYPE>-<CONFIG>" 
    ```
    with:
-   - `PLATFORM`: The target platform you want to build for [`lnx`, `wub`]
+   - `PLATFORM`: The target platform you want to build for [`lnx`, `win`]
    - `TYPE`: The target type you want to build for [`client`, `daemon`, `testunit`]
    - `CONFIG`: The target configuration you want to build for [`sanitized`, `debug`, `development`, `shipping`]
 2. Compile it with `cmake --build build --target JgcRuntime` (The `JgcRuntime` target is the main executable of Jafg with core plugins enabled).
