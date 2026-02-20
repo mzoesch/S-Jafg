@@ -27,24 +27,25 @@ public:
 
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
-    FORCEINLINE bool IsLocallyPossessed() const noexcept { return this->IsSurfaceValid(); }
+    FORCEINLINE constexpr bool IsLocallyPossessed() const noexcept { return this->IsOwningSurfaceValid(); }
 
-    FORCEINLINE bool IsSurfaceValid() const noexcept { return this->Surface != nullptr; }
-    FORCEINLINE LSurface* GetSurface() noexcept { return this->Surface; }
-    FORCEINLINE LSurface const* GetSurface() const noexcept { return this->Surface; }
-    FORCEINLINE LSurface* GetSurfaceChecked() noexceptcheck { check( this->Surface ); return this->Surface; }
-    FORCEINLINE LSurface const* GetSurfaceChecked() const noexceptcheck { check( this->Surface ); return this->Surface; }
-    FORCEINLINE LSurface* GetSurfaceAsserted() noexceptcheck { jassert( this->Surface ); return this->Surface; }
-    FORCEINLINE LSurface const* GetSurfaceAsserted() const noexceptcheck { jassert( this->Surface ); return this->Surface; }
-    FORCEINLINE void SetSurface(LSurface* InSurface) noexcept { this->Surface = InSurface; }
+    FORCEINLINE constexpr bool IsOwningSurfaceValid() const noexcept { return this->Surface != nullptr; }
+    FORCEINLINE LSurface* GetOwningSurface() noexcept { return this->Surface; }
+    FORCEINLINE LSurface const* GetOwningSurface() const noexcept { return this->Surface; }
+    FORCEINLINE LSurface* GetOwningSurfaceChecked() noexcept{ check(this->Surface) return this->Surface; }
+    FORCEINLINE LSurface const* GetOwningSurfaceChecked() const noexcept { check(this->Surface) return this->Surface; }
+    FORCEINLINE LSurface* GetOwningSurfaceAsserted() noexcept { jassert(this->Surface) return this->Surface; }
+    FORCEINLINE LSurface const* GetOwningSurfaceAsserted() const noexcept { jassert(this->Surface) return this->Surface; }
+    //# Jafg internal method. Do not use. @see #LSurface::PossessController
+    FORCEINLINE void _SetOwningSurface(LSurface* InSurface) noexcept { this->Surface = InSurface; }
 
-    FORCEINLINE bool IsPawnValid() const noexcept { return this->Pawn != nullptr; }
-    FORCEINLINE APawn* GetPawn() noexcept { return this->Pawn; }
-    FORCEINLINE APawn const* GetPawn() const noexcept { return this->Pawn; }
-    FORCEINLINE APawn* GetPawnChecked() noexceptcheck { check( this->IsPawnValid() ) return this->Pawn; }
-    FORCEINLINE APawn const* GetPawnChecked() const noexceptcheck { check( this->IsPawnValid() ) return this->Pawn; }
-    FORCEINLINE APawn* GetPawnAsserted() noexceptcheck { jassert( this->IsPawnValid() ) return this->Pawn; }
-    FORCEINLINE APawn const* GetPawnAsserted() const noexceptcheck { jassert( this->IsPawnValid() ) return this->Pawn; }
+    FORCEINLINE bool IsOwnedPawnValid() const noexcept { return this->Pawn != nullptr; }
+    FORCEINLINE APawn* GetOwnedPawn() noexcept { return this->Pawn; }
+    FORCEINLINE APawn const* GetOwnedPawn() const noexcept { return this->Pawn; }
+    FORCEINLINE APawn* GetOwnedPawnChecked() noexcept { check(this->IsOwnedPawnValid()) return this->Pawn; }
+    FORCEINLINE APawn const* GetOwnedPawnChecked() const noexcept { check(this->IsOwnedPawnValid()) return this->Pawn; }
+    FORCEINLINE APawn* GetOwnedPawnAsserted() noexcept { jassert(this->IsOwnedPawnValid()) return this->Pawn; }
+    FORCEINLINE APawn const* GetOwnedPawnAsserted() const noexcept { jassert(this->IsOwnedPawnValid()) return this->Pawn; }
     void PossessPawn(APawn* New, const bool bKillOld = true);
 
 private:

@@ -60,15 +60,16 @@ void Jafg::LFrontendBase::TearDown()
     return;
 }
 
-Jafg::LEngine& Jafg::LFrontendBase::GetEngine() const noexceptcheck
+Jafg::LEngine& Jafg::LFrontendBase::GetEngine() const noexcept
 {
-    check( GEngine && "Absence of GEngine when an object of LFrontendBase exists is undefined behavior." )
+    check(GEngine && "Absence of GEngine when an object of LFrontendBase exists is undefined behavior.")
     return *GEngine;
 }
 
-Jafg::LLocalEgo& Jafg::LFrontendBase::GetLocalEgo() const noexceptcheck
+Jafg::LLocalEgo& Jafg::LFrontendBase::GetLocalEgo() const noexcept
 {
-    return this->GetEngine().GetLocalEgo();
+    check(GEngine && "Absence of GEngine when an object of LFrontendBase exists is undefined behavior.")
+    return GEngine->GetLocalEgo();
 }
 
 void Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior) noexcept

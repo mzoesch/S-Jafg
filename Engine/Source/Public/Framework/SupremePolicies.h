@@ -49,7 +49,7 @@ public:
     //#
     //# Called after a persona controller has been created.
     //#
-    virtual void OnPersonaControllerCreated(APersonaController* Pc);
+    virtual void OnPersonaControllerCreated(APersonaController& Pc);
 
     //#
     //# Called whenever a pawn is spawned/used for a persona controller.
@@ -57,10 +57,13 @@ public:
     //#
     virtual APawn* GetPawnForPersonaController(APersonaController const& Pc);
 
-    TSubclassOf<APersonaController> PersonaControllerClass;
-    TSubclassOf<APawn> DefaultPawnClass;
-
+    //# Whether a pawn should be automatically created for a new persona controller.
     bool bCreatePawn{ true };
+
+	//# The default class for all persona controllers unless overridden by #OnIncomingConnectionRequest.
+    TSubclassOf<APersonaController> PersonaControllerClass;
+	//# The default class for all spawned pawns unless overridden by #GetPawnForPersonaController.
+    TSubclassOf<APawn> DefaultPawnClass;
 };
 
 } /* ~Namespace Jafg */

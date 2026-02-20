@@ -343,8 +343,10 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
 
 void Jafg::LSurfaceGlfw3::PollPlatformEvents()
 {
-    check( this->Handle )
-    check( Tasks::IsOnMasterThread() )
+    STAT_CYCLE_FUNCTION()
+
+    check(this->Handle)
+    check(Tasks::IsOnMasterThread())
 
     if (glfwWindowShouldClose(this->Handle))
     {
@@ -354,7 +356,7 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
     LKey KeyCursor{EKeys::FirstKey};
     while (KeyCursor <= EKeys::LastKey)
     {
-        const i32 TranslatedKey = Glfw3::TranslateKeyToGlfw(KeyCursor);
+        i32 TranslatedKey{Glfw3::TranslateKeyToGlfw(KeyCursor)};
         if (TranslatedKey == INDEX_NONE)
         {
             ++KeyCursor;
@@ -542,9 +544,9 @@ void Jafg::LSurfaceGlfw3::OnRender()
         });
 
     vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
-    if (this->DoesPossess())
+    if (this->IsOwnedControllerValid())
     {
-        auto const& Color{this->GetController()->GetWorld().GetBackgroundColor()};
+        auto const& Color{this->GetOwnedControllerChecked()->GetWorld().GetBackgroundColor()};
         ClearColor.color.float32[0] = Color.R;
         ClearColor.color.float32[1] = Color.G;
         ClearColor.color.float32[2] = Color.B;
@@ -589,12 +591,12 @@ void Jafg::LSurfaceGlfw3::OnRender()
         });
     Info.CommandBuffer.setScissor(0, {vk::Rect2D{{0, 0}, this->Vk_SwapchainExtent}});
 
-    if (this->DoesPossess() && this->GetController()->IsPawnValid())
+    if (this->IsOwnedControllerValid() && this->GetOwnedControllerChecked()->IsOwnedPawnValid())
     {
-        Info.PerspectiveEye = this->GetControllerChecked()->GetPawnChecked()->GetEye_v2();
+        Info.PerspectiveEye = this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetEye_v2();
         auto const& Eye{*Info.PerspectiveEye};
 
-        auto* Sc{this->GetControllerChecked()->GetPawnChecked()->GetComponentChecked<ASceneComponent>()};
+        auto* Sc{this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetComponentChecked<ASceneComponent>()};
 
         LMat4F R{maths::identity<LMat4F>};
         R = maths::rotate(R, Sc->TempRot.x, maths::unit_vector_x<LVec3F>);
@@ -616,7 +618,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
             .range = sizeof(decltype(LRenderInfo::PerspectiveCamera))
             };
 
-        this->GetController()->GetWorld().Draw(Info);
+        this->GetOwnedController()->GetWorld().Draw(Info);
     }
 
     this->GetViewport().Draw(Info);

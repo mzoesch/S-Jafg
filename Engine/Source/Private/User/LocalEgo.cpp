@@ -31,9 +31,9 @@ void Jafg::LLocalEgo::Initialize()
 
             for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
             {
-                if (auto* Controller{ Surface->GetController() })
+                if (auto* Ctrl{Surface->GetOwnedController()})
                 {
-                    if (auto* Pawn{ Controller->GetPawn() })
+                    if (auto* Pawn{Ctrl->GetOwnedPawn()})
                     {
                         Pawn->SetNearFrustum(NearFrustum);
                     }
@@ -55,9 +55,9 @@ void Jafg::LLocalEgo::Initialize()
 
             for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
             {
-                if (auto* Controller{ Surface->GetController() })
+                if (auto* Ctrl{Surface->GetOwnedController()})
                 {
-                    if (auto* Pawn{ Controller->GetPawn() })
+                    if (auto* Pawn{Ctrl->GetOwnedPawn()})
                     {
                         Pawn->SetFarFrustum(FarFrustum);
                     }

@@ -88,9 +88,9 @@ public:
               void SetResizable(const bool bResizable) { jassertNoEntry() }
     NODISCARD bool IsResizable() const noexcept { jassertNoEntry() }
 
-    FORCEINLINE void AddKeyDown(const LKey InKey);
-    FORCEINLINE void AddKeyDown(const LKey InKey, const f32 InValue);
-    FORCEINLINE void AddKeyDown(const LRawInput& InRawInput);
+    FORCEINLINE void AddKeyDown(const LKey Key);
+    FORCEINLINE void AddKeyDown(const LKey Key, const f32 Value);
+    FORCEINLINE void AddKeyDown(LRawInput const& RawInput);
     FORCEINLINE void AddVirtualKeyDown(const LKey InKey) { this->VirtualInput.emplace_back(InKey); }
     FORCEINLINE void AddVirtualKeyDown(const LKey InKey, const float InValue) { this->VirtualInput.emplace_back(InKey, InValue); }
     FORCEINLINE void AddVirtualKeyDown(const LRawInput& InRawInput) { this->VirtualInput.emplace_back(InRawInput); }
@@ -123,14 +123,14 @@ public:
     FORCEINLINE LUserInput& GetUserInput() noexcept { return this->UserInput; }
     FORCEINLINE LUserInput const& GetUserInput() const noexcept { return this->UserInput; }
 
-    FORCEINLINE bool DoesPossess() const { return this->Controller != nullptr; }
-    FORCEINLINE APersonaController* GetController() noexcept { return this->Controller; }
-    FORCEINLINE APersonaController* GetControllerChecked() noexceptcheck { check( this->DoesPossess() ) return this->Controller; }
-    FORCEINLINE APersonaController* GetControllerAsserted() { jassert( this->DoesPossess() ) return this->Controller; }
-    FORCEINLINE APersonaController const* GetController() const noexcept { return this->Controller; }
-    FORCEINLINE APersonaController const* GetControllerChecked() const noexceptcheck { check( this->DoesPossess() ) return this->Controller; }
-    FORCEINLINE APersonaController const* GetControllerAsserted() const { jassert( this->DoesPossess() ) return this->Controller; }
-    ENGINE_API  void PossessController(APersonaController* NewController, const bool bKillOld = true);
+    FORCEINLINE bool IsOwnedControllerValid() const { return this->Controller != nullptr; }
+    FORCEINLINE APersonaController* GetOwnedController() noexcept { return this->Controller; }
+    FORCEINLINE APersonaController const* GetOwnedController() const noexcept { return this->Controller; }
+    FORCEINLINE APersonaController* GetOwnedControllerChecked() noexcept{ check(this->IsOwnedControllerValid()) return this->Controller; }
+    FORCEINLINE APersonaController const* GetOwnedControllerChecked() const noexceptcheck { check(this->IsOwnedControllerValid()) return this->Controller; }
+    FORCEINLINE APersonaController* GetOwnedControllerAsserted() noexcept { jassert(this->IsOwnedControllerValid()) return this->Controller; }
+    FORCEINLINE APersonaController const* GetOwnedControllerAsserted() const noexcept { jassert(this->IsOwnedControllerValid()) return this->Controller; }
+    ENGINE_API  void PossessController(APersonaController* New, const bool bKillOld = true);
 
     ENGINE_API LEngine& GetEngine() const noexcept;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
@@ -224,24 +224,24 @@ private:
 
 } /* ~Namespace Jafg */
 
-void Jafg::LSurfaceBase::AddKeyDown(const LKey InKey)
+void Jafg::LSurfaceBase::AddKeyDown(const LKey Key)
 {
-    check( algo::find_pointer(this->DownKeys, InKey, &LRawInput::Key) == nullptr )
-    this->DownKeys.emplace_back(InKey);
+    check(algo::contains(this->DownKeys, Key, &LRawInput::Key) == false)
+    this->DownKeys.emplace_back(Key);
     return;
 }
 
-void Jafg::LSurfaceBase::AddKeyDown(const LKey InKey, const float InValue)
+void Jafg::LSurfaceBase::AddKeyDown(const LKey Key, const float Value)
 {
-    check( algo::find_pointer(this->DownKeys, InKey, &LRawInput::Key) == nullptr )
-    this->DownKeys.emplace_back(InKey, InValue);
+    check(algo::contains(this->DownKeys, Key, &LRawInput::Key) == false)
+    this->DownKeys.emplace_back(Key, Value);
     return;
 }
 
-void Jafg::LSurfaceBase::AddKeyDown(const LRawInput& InRawInput)
+void Jafg::LSurfaceBase::AddKeyDown(LRawInput const& RawInput)
 {
-    check( algo::find_pointer(this->DownKeys, InRawInput.Key, &LRawInput::Key) == nullptr )
-    this->DownKeys.emplace_back(InRawInput);
+    check(algo::contains(this->DownKeys, RawInput.Key, &LRawInput::Key) == false)
+    this->DownKeys.emplace_back(RawInput);
     return;
 }
 
@@ -253,10 +253,10 @@ NODISCARD FORCEINLINE T* Jafg::LSurfaceBase::As()
 }
 
 template<class T>
-NODISCARD FORCEINLINE const T* Jafg::LSurfaceBase::As() const
+NODISCARD FORCEINLINE T const* Jafg::LSurfaceBase::As() const
 {
     static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");
-    return static_cast<const T*>(this);
+    return static_cast<T const*>(this);
 }
 
 NODISCARD FORCEINLINE Jafg::LSurface* Jafg::LSurfaceBase::AsSurface()
@@ -264,7 +264,7 @@ NODISCARD FORCEINLINE Jafg::LSurface* Jafg::LSurfaceBase::AsSurface()
     return this->As<LSurface>();
 }
 
-NODISCARD FORCEINLINE const Jafg::LSurface* Jafg::LSurfaceBase::AsSurface() const
+NODISCARD FORCEINLINE Jafg::LSurface const* Jafg::LSurfaceBase::AsSurface() const
 {
     return this->As<LSurface>();
 }

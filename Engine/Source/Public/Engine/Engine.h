@@ -129,11 +129,7 @@ public:
 
     ENGINE_API  bool CanEverRender() const noexcept;
 
-#if !WITH_LOCAL_LAYER
-
-    FORCEINLINE bool IsLocalEgoValid() const noexcept { return false; }
-
-#else /* !WITH_LOCAL_LAYER */
+#if WITH_LOCAL_LAYER
 
     FORCEINLINE LLocalEgo& GetLocalEgo() noexcept { return this->LocalEgo; }
     FORCEINLINE LLocalEgo const& GetLocalEgo() const noexcept { return this->LocalEgo; }

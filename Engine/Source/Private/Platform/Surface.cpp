@@ -95,24 +95,21 @@ void Jafg::LSurfaceBase::Tick()
     return;
 }
 
-void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, const bool bKillOld /* = true */)
+void Jafg::LSurfaceBase::PossessController(APersonaController* New, const bool bKillOld /* = true */)
 {
-    /* Otherwise, we will get access violations. */
-    APersonaController* OldController{bKillOld ? nullptr : this->Controller};
-
     if (this->Controller)
     {
-        this->Controller->SetSurface(nullptr);
+        this->Controller->_SetOwningSurface(nullptr);
         if (bKillOld)
         {
             this->Controller->MarkAsGarbage_v2();
         }
     }
 
-    this->Controller = NewController;
+    this->Controller = New;
     if (this->Controller)
     {
-        this->Controller->SetSurface(this->AsSurface());
+        this->Controller->_SetOwningSurface(this->AsSurface());
     }
 
     if (this->Controller)
@@ -123,9 +120,9 @@ void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, co
         }
     }
 
-    this->GetLocalEgo().ForEachMutableSubsystem([OldController, NewController](JLocalEgoSubsystem* Subsystem)
+    this->GetLocalEgo().ForEachMutableSubsystem([New](JLocalEgoSubsystem* Subsystem)
     {
-        Subsystem->OnNewPersonaControllerPossessed(OldController, NewController);
+        Subsystem->OnNewPersonaController(New);
     });
 
     return;

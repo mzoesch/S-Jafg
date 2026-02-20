@@ -74,9 +74,9 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 }),
             [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value)
             {
-                if (auto* Ctrl{Viewport.GetSurface().GetController()})
+                if (auto* Ctrl{Viewport.GetSurface().GetOwnedController()})
                 {
-                    if (auto* Pawn{Ctrl->GetPawn()})
+                    if (auto* Pawn{Ctrl->GetOwnedPawn()})
                     {
                         if (auto* Comp{Pawn->GetComponent<ADebugCameraComponent>()})
                         {
@@ -117,9 +117,9 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {},
             [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value)
             {
-                if (auto* Ctrl{Viewport.GetSurface().GetController()})
+                if (auto* Ctrl{Viewport.GetSurface().GetOwnedController()})
                 {
-                    if (auto* Pawn{Ctrl->GetPawn()})
+                    if (auto* Pawn{Ctrl->GetOwnedPawn()})
                     {
                         if (auto* Comp{Pawn->GetComponent<ADebugCameraComponent>()})
                         {

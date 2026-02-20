@@ -27,28 +27,28 @@ void LJgcPluginLifetime::OnFinishedLoading()
     LPluginLifetime::OnFinishedLoading();
     LOG_VERBOSE(LogJgcLifetime, "Loading Jgc plugin.")
 
-    check( GEngine )
+    check(GEngine)
 
     LOG_VERBOSE(LogJgcLifetime, "Creating jgc levels.")
 #if WITH_LOCAL_LAYER
-   if (GEngine->RegisterLevel
-   (
-       Jafg::LLevel
-       {
-           .Identifier = Jgc::LevelName_Frontend,
-           .InputMode = Jafg::EInputMode::Both,
-           .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
-       }
-   ) == false)
-   {
-       LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Jgc::LevelName_Frontend)
-   }
+    if (GEngine->RegisterLevel
+    (
+        Jafg::LLevel
+        {
+            .Identifier = Jgc::LevelName_Frontend,
+            .InputMode = Jafg::EInputMode::Both,
+            .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
+        }
+    ) == false)
+    {
+        LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Jgc::LevelName_Frontend)
+    }
 #endif /* WITH_LOCAL_LAYER */
 
-    Jafg::Application::LProgramArgument const* StartupLevelArg{ nullptr };
+    Jafg::Application::LProgramArgument const* StartupLevelArg{};
     if (Jafg::Application::HasCmdLineParameter(_JgcStartupLevel.Identifier, &StartupLevelArg))
     {
-        jassert( StartupLevelArg->Value.has_value() )
+        jassert(StartupLevelArg->Value.has_value())
         LOG_VERBOSE(LogJgcLifetime, "Browsing to start-up level [{}] as specified on command line.", StartupLevelArg->Value.value())
     }
 
@@ -59,7 +59,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     }
     else
     {
-        if (auto const& Surface{Frontend.GetSurfaces()[0]}; Surface->GetController())
+        if (auto const& Surface{Frontend.GetSurfaces()[0]}; Surface->GetOwnedController())
         {
             LOG_VERBOSE(LogJgcLifetime, "Local ego already possesses a persona controller. Skipping default jgc frontend world creation and persona controller login.")
         }
@@ -74,12 +74,12 @@ void LJgcPluginLifetime::OnFinishedLoading()
 #endif /* !WITH_LOCAL_LAYER */
                 )};
             GEngine->Browse(StartupWorld, TargetLevel, {.OnWorldPostInit = [Surface = &*Surface](Jafg::LWorld& World){
-                if (Surface->DoesPossess())
+                if (Surface->IsOwnedControllerValid())
                 {
                     LOG_WARNING(LogJgcLifetime, "Surface [{}] already posses a persona controller through [{}@{}]. Skipping login",
                         Surface->GetHumanReadableName(),
-                        Surface->GetController()->GetWorld().GetHumanReadableName(),
-                        Surface->GetController()->GetWorld().GetUnderlyingLevelName()
+                        Surface->GetOwnedControllerChecked()->GetWorld().GetHumanReadableName(),
+                        Surface->GetOwnedControllerChecked()->GetWorld().GetUnderlyingLevelName()
                         )
                 }
                 else

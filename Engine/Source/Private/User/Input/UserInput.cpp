@@ -234,16 +234,16 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
 {
     STAT_QUICK_CYCLE_START(Jafg::SprintF("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerType)))
 
-    check( Inputs )
-    check( TriggerType != EInputActionTrigger::None )
+    check(Inputs)
+    check(TriggerType != EInputActionTrigger::None)
 
-    LUserInputRegistry const& Registry{ Surface.GetLocalEgo().GetUserInputRegistry() };
+    LUserInputRegistry const& Registry{Surface.GetLocalEgo().GetUserInputRegistry()};
 
     for (auto ContextName : this->ActiveContexts)
     {
-        auto* Context{ Registry.GetContextByNameChecked(ContextName) };
+        auto& Context{*Registry.GetContextByNameChecked(ContextName)};
 
-        for (auto const& Action : Context->GetMappedActions())
+        for (auto const& Action : Context.GetMappedActions())
         {
             for (auto const& Trigger : Action.Triggers)
             {
@@ -252,8 +252,8 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
                     continue;
                 }
 
-                LInputActionValue Value{ Registry.GetActionByNameChecked(Action.ActionTag)->GetCategory() };
-                for (auto It{ Inputs->begin() }; It != Inputs->end();)
+                LInputActionValue Value{Registry.GetActionByNameChecked(Action.ActionTag)->GetCategory()};
+                for (auto It{Inputs->begin()}; It != Inputs->end();)
                 {
                     LInputActionValue::Axis3D Magnitude;
 
@@ -290,7 +290,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
                     }
                     Value += Magnitude;
 
-                    Inputs->erase(It);
+                    It = Inputs->erase(It);
 
                     continue;
                 }

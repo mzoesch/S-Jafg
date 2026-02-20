@@ -33,11 +33,14 @@ public:
     //# Called when this component is attached to an actor. This call might be deferred quite a while if the actor
     //# itself is not spawned in.
     //#
+    //# Once spawned in, the component cannot change its owner anymore.
+    //#
     virtual void OnAttach(AActor& InOwner)
     {
 #if JAFG_DO_CHECKS
-        check( this->bHasExecutedOnAttach == false )
+        check(this->bHasExecutedOnAttach == false)
         this->bHasExecutedOnAttach = true;
+		check(this->Owner == nullptr)
 #endif /* JAFG_DO_CHECKS */
         this->Owner = &InOwner;
     }
@@ -46,10 +49,8 @@ public:
     constexpr bool ShouldRender() const noexcept { return this->bRender; }
     virtual void Render(LRenderInfo const& Info) noexcept {}
 
-protected:
-
-    FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
-    FORCEINLINE AActor& GetOwner() const noexcept { check( this->IsOwnerValid() ) return *this->Owner; }
+    FORCEINLINE constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
+    FORCEINLINE CONSTEXPR_CHECK AActor& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
 
 private:
 

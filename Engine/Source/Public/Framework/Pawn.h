@@ -21,12 +21,7 @@ class ENGINE_API APawn : public AActor
 
 protected:
 
-    inline explicit APawn(LWorldDynamicInit const& Init) : Super{Init}
-    {
-        this->DefaultInit();
-    }
-    template<typename TCxxClass>
-    inline explicit APawn(TCxxStaticInit<TCxxClass> const& Init) : Super{Init}
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(APawn)
     {
         this->DefaultInit();
     }
@@ -37,24 +32,25 @@ private:
 
 public:
 
-    virtual void Tick(const float DeltaTime) override;
+    virtual void Tick(f32 Dt) override;
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
     LEye_v2 GetEye_v2() const noexcept;
 
-    FORCEINLINE bool IsPossessed() const noexcept { return this->OwningController != nullptr; }
     bool IsPossessedLocally() const noexcept;
     LLocalEgo* GetLocalEgoIfPossessed() const noexcept;
-    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedChecked() const noexceptcheck { LLocalEgo* Out{ this->GetLocalEgoIfPossessed() }; check( Out ) return Out; }
-    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedAsserted() const { LLocalEgo* Out{ this->GetLocalEgoIfPossessed() }; jassert( Out ) return Out; }
+    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedChecked() const noexcept { auto* Out{this->GetLocalEgoIfPossessed()}; check(Out) return Out; }
+    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedAsserted() const noexcept { auto* Out{this->GetLocalEgoIfPossessed()}; jassert(Out) return Out; }
 
+    FORCEINLINE bool IsOwningControllerValid() const noexcept { return this->OwningController != nullptr; }
     FORCEINLINE APersonaController* GetOwningController() noexcept { return this->OwningController; }
     FORCEINLINE APersonaController const* GetOwningController() const noexcept { return this->OwningController; }
-    FORCEINLINE APersonaController* GetOwningControllerChecked() noexceptcheck { check( this->IsPossessed() ) return this->OwningController; }
-    FORCEINLINE APersonaController const* GetOwningControllerChecked() const noexceptcheck { check( this->IsPossessed() ) return this->OwningController; }
-    FORCEINLINE APersonaController* GetOwningControllerAsserted() noexceptcheck { jassert( this->IsPossessed() ) return this->OwningController; }
-    FORCEINLINE APersonaController const* GetOwningControllerAsserted() const noexceptcheck { jassert( this->IsPossessed() ) return this->OwningController; }
-    virtual void SetOwningController(APersonaController* InNew);
+    FORCEINLINE APersonaController* GetOwningControllerChecked() noexcept{ check(this->IsOwningControllerValid()) return this->OwningController; }
+    FORCEINLINE APersonaController const* GetOwningControllerChecked() const noexcept { check(this->IsOwningControllerValid()) return this->OwningController; }
+    FORCEINLINE APersonaController* GetOwningControllerAsserted() noexcept { jassert( this->IsOwningControllerValid()) return this->OwningController; }
+    FORCEINLINE APersonaController const* GetOwningControllerAsserted() const noexcept { jassert(this->IsOwningControllerValid()) return this->OwningController; }
+    //# Jafg internal method. Do not use. @see #APersonaController::PossessPawn.
+    virtual void _SetOwningController(APersonaController* New);
 
     FORCEINLINE void SetNearFrustum(f32 Value) noexcept { this->NearFrustum = Value; }
     FORCEINLINE void SetFarFrustum(f32 Value) noexcept { this->FarFrustum = Value; }

@@ -83,8 +83,8 @@ public:
     void Tick();
     void TearDown();
 
-    ENGINE_API LEngine&   GetEngine() const noexceptcheck;
-    ENGINE_API LLocalEgo& GetLocalEgo() const noexceptcheck;
+    ENGINE_API LEngine&   GetEngine() const noexcept;
+    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
 
     FORCEINLINE auto GetPhysicalViewports() const noexcept -> TArray<LPhysicalViewport> const& { return this->UsablePhysicalViewports; }
 

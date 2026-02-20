@@ -13,21 +13,19 @@ Jafg::APersonaController* Jafg::ASupremePolicies::OnIncomingConnectionRequest(
     return SpawnObject(CastTo<APersonaController>{}, {this->GetWorld(), this->PersonaControllerClass.GetClassOrDefault()});
 }
 
-void Jafg::ASupremePolicies::OnPersonaControllerCreated(APersonaController* Pc)
+void Jafg::ASupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)
 {
-    check(Pc)
-
     if (this->bCreatePawn)
     {
-        LOG_VERBOSE(LogWorld, "Creating pawn for controller [{}].", Pc->GetNameAsString())
+        LOG_VERBOSE(LogWorld, "Creating pawn for controller [{}].", Pc.GetNameAsString())
 
-        auto* Pawn{this->GetPawnForPersonaController(*Pc)};
-        check(Pawn)
+        auto* Pawn{this->GetPawnForPersonaController(Pc)};
+        check(IsValidSlow(&this->GetOuter(), Pawn))
         LOG_VERBOSE(LogWorld, "Created pawn [{}] for controller [{}]. Starting possess process.",
             Pawn->GetNameAsString(),
-            Pc->GetNameAsString()
+            Pc.GetNameAsString()
             )
-        Pc->PossessPawn(Pawn);
+        Pc.PossessPawn(Pawn);
     }
 
     return;

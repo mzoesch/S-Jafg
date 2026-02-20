@@ -6,12 +6,12 @@
 #include "Platform/PlatformMisc.h"
 
 #if JAFG_WITH_MSVC
-    #if IN_DEBUG
+    #if !IN_SHIPPING
         #ifndef _DEBUG
             #erorr "_DEBUG must be defined to use <crtdbg.h>."
         #endif /* !_DEBUG */
         #include <crtdbg.h>
-    #endif /* IN_DEBUG */
+    #endif /* !IN_SHIPPING */
 #endif /* JAFG_WITH_MSVC */
 
 using namespace Jafg;
@@ -76,10 +76,6 @@ i32 main(i32 ArgC, char* ArgV[])
     char** ArgV{__argv};
 #endif /* IN_SHIPPING */
 
-    //
-    // If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
-    // Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
-    //
     i32 ErrorLevel{};
 
     TArray<LString> Arguments;
@@ -95,32 +91,35 @@ i32 main(i32 ArgC, char* ArgV[])
     }
 
     _set_invalid_parameter_handler(::InvalidParameterHandler);
-#if IN_DEBUG && JAFG_WITH_MSVC
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
-    _CrtSetDebugFillThreshold(0);
-#endif /* IN_DEBUG && JAFG_WITH_MSVC */
 
 #if JAFG_WITH_MSVC
     Application::Private::bAlwaysReportCrash = Application::HasCmdLineParameter("AlwaysReportCrash");
 #endif /* JAFG_WITH_MSVC */
 
+#if !IN_SHIPPING && JAFG_WITH_MSVC
+    //_CrtSetDebugFillThreshold(SIZE_MAX);
+#endif /* !IN_SHIPPING && JAFG_WITH_MSVC */
+
 #if JAFG_WITH_MSVC
+#if !IN_SHIPPING
     if (Application::HasTracerPidNow() && (Application::IsAlwaysReportCrash() == false))
     {
         LOG_VERBOSE(LogPlatform, "Suppressing crash dialog due to presence of tracer pid.")
-        ErrorLevel = GuardedMain();
+        _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+        _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+        _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
     }
     else
     {
-        LOG_VERBOSE(LogPlatform, "Leveraging structured exception handling.")
-#endif /* JAFG_WITH_MSVC */
-
-#if !JAFG_WITH_MSVC
-        ErrorLevel = GuardedMain();
-#else /* !JAFG_WITH_MSVC */
-        ErrorLevel = SehUnwinder();
+        _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_WNDW);
+        _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_WNDW);
+        _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_WNDW);
     }
-#endif /* JAFG_WITH_MSVC */
+#endif /* !IN_SHIPPING */
+    ErrorLevel = SehUnwinder();
+#else /* JAFG_WITH_MSVC */
+    ErrorLevel = GuardedMain();
+#endif /* !JAFG_WITH_MSVC */
 
     if (Application::IsPauseBeforeExit())
     {

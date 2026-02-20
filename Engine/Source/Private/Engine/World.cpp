@@ -263,12 +263,12 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
 
     if (Persona.Surface)
     {
-        if (Persona.Surface->DoesPossess())
+        if (Persona.Surface->IsOwnedControllerValid())
         {
             LOG_WARNING(LogWorld,
                 "Surface [{}] already possesses persona controller [{}]. Rejecting login request.",
                 Persona.Surface->GetHumanReadableName(),
-                Persona.Surface->GetController()->GetNameAsString()
+                Persona.Surface->GetOwnedControllerChecked()->GetNameAsString()
                 )
 
             if (OutRejectionReason)
@@ -276,7 +276,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
                 *OutRejectionReason = Jafg::SprintF(
                     "Surface [{}] already possesses persona controller [{}].",
                     Persona.Surface->GetHumanReadableName(),
-                    Persona.Surface->GetController()->GetNameAsString()
+                    Persona.Surface->GetOwnedControllerChecked()->GetNameAsString()
                     );
             }
 
@@ -293,10 +293,10 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
     if (Persona.Type == EIncomingConnectionRequest::Local)
     {
         //# Sideeffect from creation, we do not really care.
-        if (Persona.Surface->DoesPossess())
+        if (Persona.Surface->IsOwnedControllerValid())
         {
-            check(Persona.Surface->GetController() == Pc)
-            check(Pc->IsSurfaceValid() )
+            check(Persona.Surface->GetOwnedControllerChecked() == Pc)
+            check(Pc->IsOwningSurfaceValid())
         }
         else
         {
@@ -312,7 +312,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
         jassertNoEntry()
     }
 
-    this->SupremePolicies->OnPersonaControllerCreated(Pc);
+    this->SupremePolicies->OnPersonaControllerCreated(*Pc);
 
     return Pc;
 }
@@ -321,7 +321,7 @@ void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
 {
     if (algo::contains(this->TickableObjects, Tickable))
     {
-        panic( "Found duplicate tickable object" )
+        panic("Found duplicate tickable object")
         return;
     }
 
@@ -337,8 +337,7 @@ void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
         return;
     }
 
-    panic( "Failed to find tickable object" )
-
+    panic("Failed to find tickable object")
     return;
 }
 
@@ -401,11 +400,11 @@ Jafg::APersonaController* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow(
 {
     for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
     {
-        if (auto* Possessed{ Surface->GetController() })
+        if (auto* Ctrl{Surface->GetOwnedController()})
         {
-            if (&Possessed->GetWorld() == this)
+            if (&Ctrl->GetWorld() == this)
             {
-                return Possessed;
+                return Ctrl;
             }
         }
     }
@@ -417,11 +416,11 @@ Jafg::APersonaController const* Jafg::LWorld::GetThisWorldsLocalPersonaControlle
 {
     for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
     {
-        if (auto* Possessed{ Surface->GetController() })
+        if (auto* Ctrl{Surface->GetOwnedController()})
         {
-            if (&Possessed->GetWorld() == this)
+            if (&Ctrl->GetWorld() == this)
             {
-                return Possessed;
+                return Ctrl;
             }
         }
     }

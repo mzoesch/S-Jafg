@@ -6,6 +6,24 @@
 #include "Framework/PersonaController.h"
 #include "Engine/Engine.h"
 #include "Components/SceneComponent.h"
+#include "Components/PawnComponent.h"
+
+#if JAFG_DO_CHECKS
+void Jafg::APawnComponent::OnAttach(AActor& InOwner)
+{
+    Super::OnAttach(InOwner);
+
+    if (this->GetOwningActor().IsA<APawn>() == false)
+    {
+        LOG_FATAL(LogUserInput, "Class [{}] requires to be attached a APawn but is on [{}].",
+            this->GetNameAsString(),
+            this->GetOwningActor().GetNameAsString()
+        )
+    }
+
+    return;
+}
+#endif /* JAFG_DO_CHECKS */
 
 void Jafg::APawn::DefaultInit()
 {
@@ -20,9 +38,9 @@ void Jafg::APawn::DefaultInit()
     return;
 }
 
-void Jafg::APawn::Tick(const f32 DeltaTime)
+void Jafg::APawn::Tick(const f32 Dt)
 {
-    Super::Tick(DeltaTime);
+    Super::Tick(Dt);
     // algo::orphan(&this->CurrentGenericTraceResults);
 
     // const LVector TraceStart = this->GetTranslation();
@@ -39,16 +57,16 @@ void Jafg::APawn::Tick(const f32 DeltaTime)
 void Jafg::APawn::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
     Super::OnGarbage(Reason);
-    if (this->IsPossessed())
+    if (this->IsOwningControllerValid())
     {
-        this->OwningController->PossessPawn(nullptr, false);
+        this->GetOwningControllerChecked()->PossessPawn(nullptr, false);
     }
     return;
 }
 
 Jafg::LEye_v2 Jafg::APawn::GetEye_v2() const noexcept
 {
-    check( this->RootComponent )
+    check(this->RootComponent)
     auto Vs{this->RootComponent->GetRelativeVectors()};
     return {
         .VertFov = this->VertFov,
@@ -62,7 +80,7 @@ Jafg::LEye_v2 Jafg::APawn::GetEye_v2() const noexcept
 
 bool Jafg::APawn::IsPossessedLocally() const noexcept
 {
-    return this->OwningController && this->OwningController->IsSurfaceValid();
+    return this->IsOwningControllerValid() && this->GetOwningControllerChecked()->IsOwningSurfaceValid();
 }
 
 Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept
@@ -75,19 +93,28 @@ Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept
     return nullptr;
 }
 
-void Jafg::APawn::SetOwningController(APersonaController* InNew)
+void Jafg::APawn::_SetOwningController(APersonaController* New)
 {
     check(this->_Lives())
+    check(this->OwningController != New)
 
-    this->OwningController = InNew;
+    this->OwningController = New;
 
 #if WITH_LOCAL_LAYER
-    if (InNew)
+    if (New)
     {
-        this->NearFrustum = InNew->GetLocalEgo().GetVariable_FrustumNearPlane();
-        this->FarFrustum = InNew->GetLocalEgo().GetVariable_FrustumFarPlane();
+        this->NearFrustum = New->GetLocalEgo().GetVariable_FrustumNearPlane();
+        this->FarFrustum = New->GetLocalEgo().GetVariable_FrustumFarPlane();
     }
 #endif /* WITH_LOCAL_LAYER */
+
+    for (auto const& Comp : this->GetComponents())
+    {
+        if (auto* PawnComp{Comp->As<APawnComponent>()})
+        {
+            PawnComp->OnNewPersonaController(this->OwningController);
+        }
+    }
 
     return;
 }

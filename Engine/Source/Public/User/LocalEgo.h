@@ -67,7 +67,7 @@ public:
 private:
 
 #if JAFG_DO_CHECKS
-    bool bDecommissioned{ false };
+    bool bDecommissioned{};
 #endif /* JAFG_DO_CHECKS */
 
     LFrontend Frontend;
@@ -77,7 +77,7 @@ private:
     //# The context of the local ego. It is created when the local ego is instantiated
     //# and not destroyed until the local ego is killed.
     //#
-    LClassOuter Outer{"LocalEgo"};
+    LClassOuter Outer{ "LocalEgo" };
     LSubsystemCollection Collection{ "LocalEgo" };
 
     LCliVariableHandle VariableHandle_UpdateFrustum;

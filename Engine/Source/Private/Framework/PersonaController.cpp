@@ -9,7 +9,7 @@ void Jafg::APersonaController::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
     Super::OnGarbage(Reason);
 
-    if (this->IsSurfaceValid())
+    if (this->IsOwningSurfaceValid())
     {
         if (Jafg::IsTearingDown() == false)
         {
@@ -19,10 +19,10 @@ void Jafg::APersonaController::OnGarbage(ECxxRecordTearDownReason::Type Reason)
                 )
         }
 
-        this->GetSurfaceChecked()->PossessController(nullptr, false);
+        this->GetOwningSurfaceChecked()->PossessController(nullptr, false);
     }
 
-    if (this->IsPawnValid())
+    if (this->IsOwnedPawnValid())
     {
         this->PossessPawn(nullptr);
     }
@@ -34,12 +34,9 @@ void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = 
 {
     check(this->_Lives())
 
-    /* Otherwise, we will get access violations. */
-    APawn* OldPawn{bKillOld ? nullptr : this->Pawn};
-
     if (this->Pawn)
     {
-        this->Pawn->SetOwningController(nullptr);
+        this->Pawn->_SetOwningController(nullptr);
         if (bKillOld)
         {
             this->Pawn->MarkAsGarbage_v2();
@@ -49,7 +46,7 @@ void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = 
     this->Pawn = New;
     if (this->Pawn)
     {
-        this->Pawn->SetOwningController(this);
+        this->Pawn->_SetOwningController(this);
     }
 
     return;

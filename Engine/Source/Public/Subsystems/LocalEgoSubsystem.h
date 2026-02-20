@@ -27,8 +27,11 @@ protected:
 
 public:
 
-    //# Called when the local ego possesses a new controller. Both pointers may be null.
-    virtual void OnNewPersonaControllerPossessed(APersonaController* InOld, APersonaController* InNew) { }
+    //#
+    //# Called when the local ego changed their PC.
+    //# @note If #New is null, then the local ego does not possess.
+    //#
+    virtual void OnNewPersonaController(APersonaController* New) {}
 };
 
 } /* ~Namespace Jafg */
