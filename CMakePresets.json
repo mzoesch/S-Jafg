@@ -61,6 +61,18 @@
       ]
     },
     {
+      "name": "windows-msys",
+        "hidden": true,
+        "inherits": [
+            "ninja-base",
+            "windows-base"
+        ],
+        "cacheVariables": {
+            "CMAKE_C_COMPILER": "clang.exe",
+            "CMAKE_CXX_COMPILER": "clang++.exe"
+        }
+    },
+    {
       "name": "debug",
       "hidden": true,
       "cacheVariables": {
@@ -326,6 +338,117 @@
       "displayName": "Windows | TestUnit-Sanitized",
       "inherits": [
         "windows-msvc",
+        "testunit",
+        "debug",
+        "sanitized"
+      ]
+    },
+    {
+      "name": "msys-x64--client-shipping",
+      "displayName": "Windows | Client-Shipping",
+      "inherits": [
+        "windows-msys",
+        "client",
+        "shipping"
+      ]
+    },
+    {
+      "name": "msys-x64--client-development",
+      "displayName": "Windows | Client-Development",
+      "inherits": [
+        "windows-msys",
+        "client",
+        "development"
+      ]
+    },
+    {
+      "name": "msys-x64--client-debug",
+      "displayName": "Windows | Client-Debug",
+      "inherits": [
+        "windows-msys",
+        "client",
+        "debug"
+      ]
+    },
+    {
+      "name": "msys-x64--client-sanitized",
+      "displayName": "Windows | Client-Sanitized",
+      "inherits": [
+        "windows-msys",
+        "client",
+        "debug",
+        "sanitized"
+      ]
+    },
+    {
+      "name": "msys-x64--daemon-shipping",
+      "displayName": "Windows | Daemon-Shipping",
+      "inherits": [
+        "windows-msys",
+        "daemon",
+        "shipping"
+      ]
+    },
+    {
+      "name": "msys-x64--daemon-development",
+      "displayName": "Windows | Daemon-Development",
+      "inherits": [
+        "windows-msys",
+        "daemon",
+        "development"
+      ]
+    },
+    {
+      "name": "msys-x64--daemon-debug",
+      "displayName": "Windows | Daemon-Debug",
+      "inherits": [
+        "windows-msys",
+        "daemon",
+        "debug"
+      ]
+    },
+    {
+      "name": "msys-x64--daemon-sanitized",
+      "displayName": "Windows | Daemon-Sanitized",
+      "inherits": [
+        "windows-msys",
+        "daemon",
+        "debug",
+        "sanitized"
+      ]
+    },
+    {
+      "name": "msys-x64--testunit-shipping",
+      "displayName": "Windows | TestUnit-Shipping",
+      "inherits": [
+        "windows-msys",
+        "testunit",
+        "shipping"
+      ]
+    },
+    {
+      "name": "msys-x64--testunit-development",
+      "displayName": "Windows | TestUnit-Development",
+      "inherits": [
+        "windows-msys",
+        "testunit",
+        "development"
+      ]
+    },
+    {
+      "name": "msys-x64--testunit-debug",
+      "displayName": "Windows | TestUnit-Debug",
+      "inherits": [
+        "windows-msys",
+        "testunit",
+        "debug"
+      ]
+    },
+    {
+      "name": "msys-x64--testunit-sanitized",
+      "displayName": "Windows | TestUnit-Sanitized",
+      "inherits": [
+        "windows-msys",
         "testunit",
         "debug",
         "sanitized"
