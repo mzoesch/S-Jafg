@@ -87,14 +87,9 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) Texture(this auto&& Self, const LTexture2* InTexture)
+    FORCEINLINE decltype(auto) Texture(this auto&& Self, LTexture2Ref InTexture)
     {
-        NODE_FACTORY_SELF().SetTexture(InTexture);
-        return NODE_FACTORY_RESULT();
-    }
-    FORCEINLINE decltype(auto) Image(this auto&& Self, const LImage& InImage)
-    {
-        NODE_FACTORY_SELF().SetImage(InImage);
+        NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
     FORCEINLINE decltype(auto) ImageTint(this auto&& Self, const LColor& InImageTint)

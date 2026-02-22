@@ -443,6 +443,10 @@ inline constexpr LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
     {
         return 4;
     }
+    case vk::Format::eR8G8B8Srgb:
+    {
+        return 3;
+    }
     default:
     {
         panicMsgf( "Unsupported or non-linear format [{}] for channels per pixel query.", vk::to_string(Format) )
@@ -461,6 +465,10 @@ inline constexpr LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
     case vk::Format::eR8G8Unorm:
     {
         return 2;
+    }
+    case vk::Format::eR8G8B8Srgb:
+    {
+        return 3;
     }
     case vk::Format::eR8G8B8A8Unorm:
     case vk::Format::eR8G8B8A8Srgb:
@@ -484,6 +492,40 @@ inline constexpr LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
         panicMsgf( "Unsupported or non-linear format [{}] for bytes per pixel query.", vk::to_string(Format) )
     }
     }
+}
+
+inline constexpr vk::SampleCountFlagBits Vk_GetMaxMsaaSamples(vk::SampleCountFlags Counts) noexcept
+{
+    if (Counts & vk::SampleCountFlagBits::e64)
+    {
+        return vk::SampleCountFlagBits::e64;
+    }
+    if (Counts & vk::SampleCountFlagBits::e32)
+    {
+        return vk::SampleCountFlagBits::e32;
+    }
+    if (Counts & vk::SampleCountFlagBits::e16)
+    {
+        return vk::SampleCountFlagBits::e16;
+    }
+    if (Counts & vk::SampleCountFlagBits::e8)
+    {
+        return vk::SampleCountFlagBits::e8;
+    }
+    if (Counts & vk::SampleCountFlagBits::e4)
+    {
+        return vk::SampleCountFlagBits::e4;
+    }
+    if (Counts & vk::SampleCountFlagBits::e2)
+    {
+        return vk::SampleCountFlagBits::e2;
+    }
+    if (Counts & vk::SampleCountFlagBits::e1)
+    {
+        return vk::SampleCountFlagBits::e1;
+    }
+
+    panicMsgf("Unsupported sample count flags [{}] for max MSAA samples query.", vk::to_string(Counts))
 }
 
 } /* ~Namespace Jafg */

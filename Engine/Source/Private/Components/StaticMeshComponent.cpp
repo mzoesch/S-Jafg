@@ -12,10 +12,11 @@ void Jafg::AStaticMeshComponent::Create(CreateInfo const& Info)
     this->Mesh = GetSingleton<JMeshSubsystem>().FromFile(Info.MeshPath, Info.MeshState);
     if (Info.TexturePath.empty() == false)
     {
-        this->Image = GetSingleton<JTextureSubsystem>().GetImage(
+        this->Texture = GetSingleton<JTextureSubsystem>().FromFile(
               Info.TexturePath
-            , Info.TextureMetadata
-            , Info.TextureLoadFlags
+            , Info.TextureHostCreateInfo
+            , Info.TextureDeviceCreateInfo
+            , Info.TextureState
             );
     }
 }
@@ -36,7 +37,7 @@ void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
 
     vk::DescriptorImageInfo ImageInfo{
         .sampler = Info.Surface.GetFrontend().Vk_GetDefaultSampler(),
-        .imageView = this->Image.GetTexture().GetImageView(),
+        .imageView = this->Texture->GetImageView(),
         .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
 

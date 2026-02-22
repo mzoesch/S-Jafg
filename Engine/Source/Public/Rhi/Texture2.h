@@ -4,13 +4,14 @@
 
 #include "Rhi/VkAl.h"
 #include "Serialization/BulkData.h"
+#include "Rhi/ResourceReference.h"
 
 namespace Jafg
 {
 
-//# A 2D extent structure compatible with the current underlying device API used.
+//# A two-dimensional extent structure compatible with the current underlying device API used.
 template<typename T>
-struct TExtent2D
+struct TExtent2
 {
     typedef T value_type;
     typedef VkExtent2D type;
@@ -21,118 +22,118 @@ struct TExtent2D
     NODISCARD FORCEINLINE operator type*() noexcept { return reinterpret_cast<type*>(this); }
     NODISCARD FORCEINLINE operator type const*() const noexcept { return reinterpret_cast<type const*>(this); }
 
-    NODISCARD FORCEINLINE auto operator<=>(TExtent2D const&) const = default;
+    NODISCARD FORCEINLINE auto operator<=>(TExtent2 const&) const = default;
 
     T Width{};
     T Height{};
 };
+typedef TExtent2<u32> LTexture2Extent;
+static_assert(sizeof(LTexture2Extent) == sizeof(VkExtent2D));
+static_assert(std::is_standard_layout_v<LTexture2Extent>);
+static_assert(std::is_same_v<LTexture2Extent::type, VkExtent2D>);
 
-typedef TExtent2D<u32> LTextureExtent;
-static_assert(sizeof(LTextureExtent) == sizeof(VkExtent2D));
-static_assert(std::is_standard_layout_v<LTextureExtent>);
-static_assert(std::is_same_v<LTextureExtent::type, VkExtent2D>);
-
-enum struct ETextureLoadFlagBits
-{
-    Default         = 0x00,
-    Load            = 0x01 << 0,
-    Stage           = 0x01 << 1,
-    FlipY           = 0x01 << 2,
-};
-ENUM_STRUCT_FLAGS(ETextureLoadFlagBits, ETextureLoadFlags)
+typedef EResourceStateBits ETexture2StateBits;
+typedef EResourceState ETexture2State;
 
 //# Represents a generic two-dimensional texture that can be uploaded to a device.
-class LTexture2
+struct LTexture2 final
 {
-public:
-
-    struct LMetadata
+    struct HostInfo
     {
         vk::Format Format{ vk::Format::eUndefined };
-
+    };
+    struct DeviceInfo
+    {
         //# The desired number of mip levels. If not available, the optimal number will be used.
         TOptional<u32> DesiredMipLevels;
+        //# The allowed sample numbers. The highest available will be used unless greater than the max sample count of the device.
+        vk::SampleCountFlags Samples{ vk::SampleCountFlagBits::e1 };
+    };
 
-        vk::SampleCountFlagBits Samples{ vk::SampleCountFlagBits::e1 };
+    enum struct EResult
+    {
+        Success,
+        FileNotFound,
+        LoadingError,
     };
 
     constexpr LTexture2() noexcept = default;
-    explicit LTexture2(LPath Path, LMetadata Meta, ETextureLoadFlags Flags = ETextureLoadFlagBits::Default) noexcept
-        : Path(std::move(Path)), Meta(Meta)
+    explicit LTexture2(LPath Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::None) noexcept
+        : Path(std::move(Path))
     {
-        if (Flags & ETextureLoadFlagBits::Load)
+        if (State & ETexture2StateBits::Host || State & ETexture2StateBits::Device)
         {
-            this->AllocateFromDisk(Flags);
+            auto Result{this->LoadToHost(HostCreateInfo)};
+            jassert(Result == EResult::Success)
         }
-        else
+
+        if (State & ETexture2StateBits::Device)
         {
-            check( !(Flags & ETextureLoadFlagBits::Stage) && "Cannot stage a texture that is not loaded." )
+            this->LoadToDevice(DeviceCreateInfo);
+            if ((State & ETexture2StateBits::Host) == ETexture2StateBits::None)
+            {
+                this->FreeFromHost();
+            }
         }
 
         return;
     }
-    PROHIBIT_COPY(LTexture2)
-    DEFAULT_MOVE(LTexture2)
-    ~LTexture2() noexcept = default;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
+    ~LTexture2() = default;
 
-    //# Load the texture from secondary storage to main memory.
-    inline     void AllocateFromDisk(LPath Path, ETextureLoadFlags Flags = ETextureLoadFlagBits::Default);
-    ENGINE_API void AllocateFromDisk(ETextureLoadFlags Flags = ETextureLoadFlagBits::Default);
-
-    //# Allocate an empty texture with the given extent and format.
-    ENGINE_API void AllocateEmpty(LTextureExtent const& Extent, bool bZeroed);
-
-    //# Stage the current texture to the device.
-    ENGINE_API void StageToDevice();
-
-    FORCEINLINE constexpr void Free_MainMemory() noexcept { if (this->MipMap0.IsAllocated()) { this->MipMap0.Free(); } }
-    FORCEINLINE void Free_Device() noexcept { this->View.clear(); this->Handle.Free(); }
-    FORCEINLINE void Free_v2() noexcept
+    FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->MipMap0.IsAllocated(); }
+    ENGINE_API EResult LoadToHost(HostInfo const& Info);
+    inline void FreeFromHost() noexcept
     {
-        this->Free_MainMemory();
-        this->Free_Device();
-
-        return;
+        if (this->MipMap0.IsAllocated())
+        {
+            this->MipMap0.Free();
+        }
     }
 
-    FORCEINLINE constexpr auto GetExtent() const noexcept { return this->Extent; }
-    FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Extent.Width; }
-    FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Extent.Height; }
+    FORCEINLINE constexpr bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
+    ENGINE_API void LoadToDevice(DeviceInfo const& Info);
+    inline void FreeFromDevice() noexcept
+    {
+        this->View.clear();
+        this->Handle.Free();
+    }
+
+    FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
 
     FORCEINLINE constexpr auto const& GetMetadata() const noexcept { return this->Meta; }
-
+    FORCEINLINE constexpr auto const& GetExtent() const noexcept { return this->Meta.Extent; }
+    FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Meta.Extent.Width; }
+    FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Meta.Extent.Height; }
     FORCEINLINE constexpr auto GetFormat() const noexcept { return this->Meta.Format; }
     FORCEINLINE constexpr auto GetChannelsPerPixel() const noexcept { return Vk_GetChannelsPerPixel(this->GetFormat()); }
     FORCEINLINE constexpr auto GetBytesPerPixel() const noexcept { return Vk_GetBytesPerPixel(this->GetFormat()); }
-    FORCEINLINE constexpr bool HasDesiredMipLevels() const noexcept { return this->Meta.DesiredMipLevels.has_value(); }
-    FORCEINLINE constexpr u32  GetDesiredMipLevels() const noexcept { return this->Meta.DesiredMipLevels.value(); }
+    FORCEINLINE constexpr u32  GetMipLevels() const noexcept { return this->Meta.MipLevels; }
     FORCEINLINE constexpr auto GetSamplesPerTexel() const noexcept { return this->Meta.Samples; }
 
-    FORCEINLINE constexpr bool IsOnMainMemory() const noexcept { return this->MipMap0.IsAllocated(); }
     FORCEINLINE constexpr LByteBulkData const& GetFirstMipMap() const noexcept { return this->MipMap0; }
 
-    FORCEINLINE bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
-    FORCEINLINE constexpr auto const& GetDeviceHandle() const noexcept { return this->Handle; }
-
+    FORCEINLINE constexpr LDeviceImage const& GetDeviceHandle() const noexcept { return this->Handle; }
     FORCEINLINE bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
     FORCEINLINE constexpr auto const& GetImageView() const noexcept { return this->View; }
 
 private:
 
+    struct Metadata
+    {
+        LTexture2Extent Extent;
+        vk::Format Format{ vk::Format::eUndefined };
+        u32 MipLevels{ std::numeric_limits<u32>::max() };
+        vk::SampleCountFlagBits Samples{ vk::SampleCountFlagBits::e1 };
+    };
+
     LPath Path;
-    LTextureExtent Extent;
-    LMetadata Meta;
+    Metadata Meta;
     LByteBulkData MipMap0;
     LDeviceImage Handle;
     vk::raii::ImageView View{ nullptr };
 };
 
-inline void LTexture2::AllocateFromDisk(LPath Path, ETextureLoadFlags Flags)
-{
-    this->Path = std::move(Path);
-    this->AllocateFromDisk(Flags);
-
-    return;
-}
+typedef TResourceReference<LTexture2> LTexture2Ref;
 
 } /* ~Namespace Jafg */

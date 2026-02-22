@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Widgets/Overlay.h"
-#include "Rhi/Image.h"
+#include "Rhi/Texture2.h"
 #include "Region.generated.h"
 
 namespace Jafg
@@ -57,9 +57,9 @@ struct LRegionBrush
     LColor Tint{ Colors::White };
 
     //#
-    //# An optional image to use as a background.
+    //# An optional texture to use as a background.
     //#
-    LImage Image;
+    LTexture2Ref Texture;
 
     //#
     //# The tint of the image.
@@ -127,15 +127,14 @@ public:
 
     virtual void Draw(LViewport& Context) const override;
 
-    void SetBrush(const LRegionBrush& InBrush) { this->Brush = InBrush; }
+    void SetBrush(LRegionBrush const& InBrush) { this->Brush = InBrush; }
     void SetBrush(LRegionBrush&& InBrush) { this->Brush = std::move(InBrush); }
     LRegionBrush& GetMutableBrush() { return this->Brush; }
-    const LRegionBrush&  GetBrush() const { return this->Brush; }
+    const LRegionBrush& GetBrush() const { return this->Brush; }
 
     FORCEINLINE void SetType(const ERegionBrush InType) noexcept { this->Brush.Type = InType; }
     FORCEINLINE void SetTint(const LColor& InTint) noexcept { this->Brush.Tint = InTint; }
-    // FORCEINLINE void SetTexture(const LTexture2* InTexture) noexcept { this->Brush.Image.SetTexture(InTexture); }
-    // FORCEINLINE void SetImage(const LImage& InImage) noexcept { this->Brush.Image = InImage; }
+    FORCEINLINE void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
     FORCEINLINE void SetImageTint(const LColor& InColor) noexcept { this->Brush.ImageTint = InColor; }
     FORCEINLINE void SetImageScale(const f32 InScale) noexcept { this->Brush.ImageScale = InScale; }
     FORCEINLINE void SetImageBehavior(const EImageBehavior InType) noexcept { this->Brush.ImageBehavior = InType; }
@@ -171,14 +170,9 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Texture(this auto&& Self, LTexture2 const* InTexture) noexcept
+    decltype(auto) Texture(this auto&& Self, LTexture2Ref InTexture) noexcept
     {
-        NODE_FACTORY_SELF().SetTexture(InTexture);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) Image(this auto&& Self, LImage const& InImage) noexcept
-    {
-        NODE_FACTORY_SELF().SetImage(InImage);
+        NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) ImageTint(this auto&& Self, LColor const& InColor) noexcept

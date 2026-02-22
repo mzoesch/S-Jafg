@@ -70,16 +70,16 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImage(LImage const& InImage) noexcept { this->Style.NormalBrush.Image = InImage; }
-    FORCEINLINE void SetHoverImage(LImage const& InImage) noexcept { this->Style.HoverBrush.Image = InImage; }
-    FORCEINLINE void SetPressImage(LImage const& InImage) noexcept { this->Style.PressBrush.Image = InImage; }
-    FORCEINLINE void SetDisabledImage(LImage const& InImage) noexcept { this->Style.DisabledBrush.Image = InImage; }
-    FORCEINLINE void SetOmniImage(LImage const& InImage) noexcept
+    FORCEINLINE void SetNormalTexture(LTexture2Ref InTexture) noexcept { this->Style.NormalBrush.Texture = std::move(InTexture); }
+    FORCEINLINE void SetHoverTexture(LTexture2Ref InTexture) noexcept { this->Style.HoverBrush.Texture = std::move(InTexture); }
+    FORCEINLINE void SetPressTexture(LTexture2Ref InTexture) noexcept { this->Style.PressBrush.Texture = std::move(InTexture); }
+    FORCEINLINE void SetDisabledTexture(LTexture2Ref InTexture) noexcept { this->Style.DisabledBrush.Texture = std::move(InTexture); }
+    FORCEINLINE void SetOmniTexture(LTexture2Ref InTexture) noexcept
     {
-        this->Style.NormalBrush.Image   = InImage;
-        this->Style.HoverBrush.Image    = InImage;
-        this->Style.PressBrush.Image    = InImage;
-        this->Style.DisabledBrush.Image = InImage;
+        this->Style.NormalBrush.Texture   = std::move(InTexture);
+        this->Style.HoverBrush.Texture    = std::move(InTexture);
+        this->Style.PressBrush.Texture    = std::move(InTexture);
+        this->Style.DisabledBrush.Texture = std::move(InTexture);
 
         return;
     }
@@ -330,29 +330,29 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TClass)
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalImage(this auto&& Self, const LImage& InImage)
+    decltype(auto) NormalImage(this auto&& Self, LTexture2Ref InTexture)
     {
-        NODE_FACTORY_SELF().SetNormalImage(InImage);
+        NODE_FACTORY_SELF().SetNormalImage(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) HoverImage(this auto&& Self, const LImage& InImage)
+    decltype(auto) HoverImage(this auto&& Self, LTexture2Ref InTexture)
     {
-        NODE_FACTORY_SELF().SetHoverImage(InImage);
+        NODE_FACTORY_SELF().SetHoverImage(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) PressImage(this auto&& Self, const LImage& InImage)
+    decltype(auto) PressImage(this auto&& Self, LTexture2Ref InTexture)
     {
-        NODE_FACTORY_SELF().SetPressImage(InImage);
+        NODE_FACTORY_SELF().SetPressImage(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) DisabledImage(this auto&& Self, const LImage& InImage)
+    decltype(auto) DisabledImage(this auto&& Self, LTexture2Ref InTexture)
     {
-        NODE_FACTORY_SELF().SetDisabledImage(InImage);
+        NODE_FACTORY_SELF().SetDisabledImage(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OmniImage(this auto&& Self, const LImage& InImage)
+    decltype(auto) OmniImage(this auto&& Self, LTexture2Ref InTexture)
     {
-        NODE_FACTORY_SELF().SetOmniImage(InImage);
+        NODE_FACTORY_SELF().SetOmniImage(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
 

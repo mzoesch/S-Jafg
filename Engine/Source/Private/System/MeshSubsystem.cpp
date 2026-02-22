@@ -20,7 +20,7 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
     return;
 }
 
-Jafg::LStaticMeshRef_v2 Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State) const
+Jafg::LStaticMeshRef_v2 Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */) const
 {
     if (auto const& It{this->Meshes.find(Path)}; It != this->Meshes.end())
     {

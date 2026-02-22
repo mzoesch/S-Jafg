@@ -1045,34 +1045,7 @@ void Jafg::LFrontendVk::Vk_SetMaxMsaaSamples()
         PhysicalDeviceProperties.limits.framebufferColorSampleCounts & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts
     };
 
-    if (Counts & vk::SampleCountFlagBits::e64)
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e64;
-    }
-    else if (Counts & vk::SampleCountFlagBits::e32)
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e32;
-    }
-    else if (Counts & vk::SampleCountFlagBits::e16)
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e16;
-    }
-    else if (Counts & vk::SampleCountFlagBits::e8)
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e8;
-    }
-    else if (Counts & vk::SampleCountFlagBits::e4)
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e4;
-    }
-    else if (Counts & vk::SampleCountFlagBits::e2)
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e2;
-    }
-    else
-    {
-        this->Vk_MaxMsaaSamples = vk::SampleCountFlagBits::e1;
-    }
+    this->Vk_MaxMsaaSamples = Jafg::Vk_GetMaxMsaaSamples(Counts);
 
     LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", vk::to_string(this->Vk_MaxMsaaSamples))
 

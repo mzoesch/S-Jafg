@@ -9,7 +9,6 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Rhi/VkAl.h"
 #include "Rhi/Texture2.h"
-#include "Rhi/Image.h"
 #include "Framework/Eye.h"
 
 namespace Jafg

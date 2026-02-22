@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Components/SceneComponent.h"
-#include "Rhi/Image.h"
+#include "Rhi/Texture2.h"
 #include "Rhi/StaticMesh.h"
 #include "StaticMeshComponent.generated.h"
 
@@ -33,8 +33,9 @@ public:
 
         //# The path to the texture that should be rendered by this component.
         LPath TexturePath;
-        LTexture2::LMetadata TextureMetadata{ .Format = vk::Format::eR8G8B8A8Srgb };
-        ETextureLoadFlags TextureLoadFlags{ ETextureLoadFlagBits::Load | ETextureLoadFlagBits::Stage };
+        LTexture2::HostInfo TextureHostCreateInfo{ .Format = vk::Format::eR8G8B8A8Srgb };
+        LTexture2::DeviceInfo TextureDeviceCreateInfo{};
+        ETexture2State TextureState{ ETexture2StateBits::Device };
     };
 
     void Create(CreateInfo const& Info);
@@ -43,7 +44,7 @@ public:
 
 private:
 
-    LImage Image;
+    LTexture2Ref Texture;
     LStaticMeshRef_v2 Mesh;
 };
 

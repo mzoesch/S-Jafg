@@ -21,148 +21,40 @@ void Jafg::JTextureSubsystem::PurgeUnused() noexcept
     return;
 }
 
-std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(
-      LPath const* Path
-    , LString const& Ident
-    , LTexture2::LMetadata Meta
-    , ETextureLoadFlags Flags
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPath const& Path
+    , LTexture2::HostInfo HostCreateInfo
+    , LTexture2::DeviceInfo DeviceCreateInfo
+    , ETexture2State State /* = ETexture2StateBits::Device */
     ) const
 {
-    check( Ident.empty() == false )
-    check( static_cast<bool>(Flags & ETextureLoadFlagBits::Stage) ? static_cast<bool>(Flags & ETextureLoadFlagBits::Load) : true )
-
-    if (auto const& It{this->Textures.find(Ident)}; It != this->Textures.end())
+    if (auto const& It{this->Textures.find(Path)}; It != this->Textures.end())
     {
-        check( It->second->GetFormat() == Meta.Format )
+        LTexture2& Texture{*It->second};
 
-        if (Flags & ETextureLoadFlagBits::Load && It->second->IsOnMainMemory() == false)
+        check(Texture.GetFormat() == vk::Format::eUndefined || Texture.GetFormat() == HostCreateInfo.Format)
+        if (State & ETexture2StateBits::Host || ((State & ETexture2StateBits::Device) && Texture.IsOnDevice() == false))
         {
-            It->second->AllocateFromDisk(Flags);
-        }
-        else if (Flags & ETextureLoadFlagBits::Stage && It->second->IsOnDevice() == false)
-        {
-            It->second->StageToDevice();
-        }
-
-        return It->second;
-    }
-
-    if (Path == nullptr)
-    {
-        return {};
-    }
-
-    this->Textures[Ident] = std::make_unique<LTexture2>(*Path, Meta, Flags);
-    auto& Reference{this->Textures[Ident]};
-    return Reference;
-
-}
-
-void Jafg::LTexture2::AllocateFromDisk(ETextureLoadFlags Flags /* = ETextureLoadFlagBits::Default */)
-{
-    check( this->Meta.Format != vk::Format::eUndefined )
-
-    auto Bin{ Finder::ReadFileAsBinary(this->Path) };
-
-    LVec2i32 Extent;
-    i32 NrChannels;
-
-    ::stbi_set_flip_vertically_on_load(static_cast<bool>(Flags & ETextureLoadFlagBits::FlipY));
-    u8* Data{::stbi_load_from_memory(
-          Bin.data()
-        , static_cast<int>(Bin.size())
-        , &Extent.x
-        , &Extent.y
-        , &NrChannels
-        , static_cast<i32>(Vk_GetChannelsPerPixel(this->Meta.Format))
-        )};
-
-    if (stbi_failure_reason())
-    {
-        LOG_FATAL(LogRhi, "Failed to load texture [{}] from disk. Reason: [{}].", this->Path, stbi_failure_reason())
-    }
-    check( Data && Extent.x > 0 && Extent.y > 0 )
-
-    if constexpr (IS_COMPILED_LOG(LogRhi, Verbose))
-    {
-        if (NrChannels != static_cast<i32>(Vk_GetChannelsPerPixel(Meta.Format)))
-        {
-            LOG_VERBOSE(LogRhi,
-                "Potential misuse: Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
-                this->Path, NrChannels, Vk_GetChannelsPerPixel(Meta.Format)
-                )
-        }
-    }
-
-    this->Extent = LTextureExtent{static_cast<LTextureExtent::value_type>(Extent.x), static_cast<LTextureExtent::value_type>(Extent.y)};
-    this->MipMap0.Serialize(Data, static_cast<LSize>(Extent.x * Extent.y) * this->GetBytesPerPixel());
-
-    if (Flags & ETextureLoadFlagBits::Stage)
-    {
-        this->StageToDevice();
-    }
-
-    ::stbi_image_free(Data);
-
-    return;
-}
-
-void Jafg::LTexture2::AllocateEmpty(LTextureExtent const& Extent, bool bZeroed)
-{
-    this->Extent = Extent;
-
-    if (bZeroed)
-    {
-        this->MipMap0.AllocateZeroed(this->Extent.Width * this->Extent.Height * this->GetBytesPerPixel());
-    }
-    else
-    {
-        this->MipMap0.Allocate(this->Extent.Width * this->Extent.Height * this->GetBytesPerPixel());
-    }
-
-    return;
-}
-
-void Jafg::LTexture2::StageToDevice()
-{
-    check( this->MipMap0.IsAllocated() )
-
-    auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
-
-    if (this->Meta.DesiredMipLevels.has_value() == false)
-    {
-        this->Meta.DesiredMipLevels = static_cast<u32>(std::floor(std::log2(std::max(this->GetWidth(), this->GetHeight())))) + 1;
-    }
-
-    this->Handle = Frontend.Vk_StageLinearImage({
-        .Data = this->MipMap0.data(),
-        .Info = {
-            .flags ={},
-            .imageType = vk::ImageType::e2D,
-            .format = this->GetFormat(),
-            .extent = vk::Extent3D{this->GetWidth(), this->GetHeight(), 1},
-            .mipLevels = this->GetDesiredMipLevels(),
-            .arrayLayers = 1,
-            .samples = this->GetSamplesPerTexel(),
-            .tiling = vk::ImageTiling::eOptimal,
-            .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-            .sharingMode = vk::SharingMode::eExclusive,
-            .initialLayout = vk::ImageLayout::eUndefined,
+            if (Texture.IsOnHost() == false)
+            {
+                auto Result{Texture.LoadToHost(HostCreateInfo)};
+                jassert(Result == LTexture2::EResult::Success)
             }
-        });
+        }
+        if (State & ETexture2StateBits::Device)
+        {
+            if (Texture.IsOnDevice() == false)
+            {
+                Texture.LoadToDevice(DeviceCreateInfo);
+                if ((State & ETexture2StateBits::Host) == ETexture2StateBits::None)
+                {
+                    Texture.FreeFromHost();
+                }
+            }
+        }
 
-    this->View = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->Handle.GetBuffer(),
-        .viewType = vk::ImageViewType::e2D,
-        .format = this->GetFormat(),
-        .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = 0, // TODO: This should probably be an user option.
-            .levelCount = this->GetDesiredMipLevels(),
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-            },
-        }};
+        return LTexture2Ref{It->second};
+    }
 
-    return;
+    this->Textures[Path] = std::make_shared<LTexture2>(Path, HostCreateInfo, DeviceCreateInfo, State);
+    return LTexture2Ref{this->Textures[Path]};
 }

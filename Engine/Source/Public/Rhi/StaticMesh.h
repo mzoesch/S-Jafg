@@ -9,34 +9,13 @@
 namespace Jafg
 {
 
-//# The state that is required after the mesh load function was called.
-enum struct EStaticMeshStateBits
-{
-    //#
-    //# No state is required. Just allocate the resource. The client will handle the rest.
-    //# If another client already requested host or device memory then the resource will be in the same
-    //# state as requested previously by the other client.
-    //#
-    None = 0 << 0,
-    //#
-    //# The mesh data will be loaded to host memory. If another client already requested device memory
-    //# then the resource will be loaded to host and device memory.
-    //#
-    Host = 1 << 0,
-    //#
-    //# The mesh data will be loaded to device memory. Host memory will be orphaned if host memory was
-    //# not requested by another client.
-    //#
-    Device = 1 << 1,
-};
-ENUM_STRUCT_FLAGS(EStaticMeshStateBits, EStaticMeshState)
+typedef EResourceStateBits EStaticMeshStateBits;
+typedef EResourceState EStaticMeshState;
 
 //# TODO: Make also an abstraction for instanced static meshes.
 //# TODO: Abstract the size of indices (u16 vs u32). (Currently u32 only.)
-class LStaticMesh final
+struct LStaticMesh final
 {
-public:
-
     inline static constexpr auto DefaultShader{ "Content/Shaders/Spir-V/StaticMesh.spv" };
 
     struct Vertex final
@@ -137,6 +116,8 @@ public:
 
         return;
     }
+    PROHIBIT_REALLOC_OF_ANY_FORM(LStaticMesh)
+    ~LStaticMesh() = default;
 
     FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->Vertices.size() > 0; }
     ENGINE_API EResult LoadToHost();
@@ -156,6 +137,8 @@ public:
     }
 
     ENGINE_API void DrawIndex(LRenderInfo const& Info) const;
+
+    FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
 
     //# Modify with care.
     TArray<LStaticMesh::Vertex> Vertices;
