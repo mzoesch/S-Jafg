@@ -64,17 +64,17 @@ void Jafg::APawn::OnGarbage(ECxxRecordTearDownReason::Type Reason)
     return;
 }
 
-Jafg::LEye_v2 Jafg::APawn::GetEye_v2() const noexcept
+Jafg::LEye_v2 Jafg::APawn::GetEye() const noexcept
 {
     check(this->RootComponent)
-    auto Vs{this->RootComponent->GetRelativeVectors()};
     return {
         .VertFov = this->VertFov,
         .NearFrustum = this->NearFrustum,
         .FarFrustum = this->FarFrustum,
-        .Location = this->RootComponent->GetTranslation(),
-        .Front = Vs.Front,
-        .Up = Vs.Up,
+        .Translation = this->RootComponent->GetTranslation(),
+        .Front = this->RootComponent->GetRotator() * maths::forward_vector<LWorldVec3>,
+        /* Maybe hard lock this to maths::up_vector? */
+        .Up = this->RootComponent->GetRotator() * maths::up_vector<LWorldVec3>,
         };
 }
 

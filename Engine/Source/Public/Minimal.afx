@@ -79,8 +79,6 @@
 //#
 //# Maths
 //#
-#include "Maths/MathsTypes.h"
-#include "Maths/MathsDetail.h"
 #include "Maths/Maths.h"
 #include "Maths/Color.h"
 

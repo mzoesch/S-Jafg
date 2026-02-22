@@ -585,7 +585,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
 
     Info.CommandBuffer.setViewport(0, vk::Viewport{
         .x = 0.0f,
-        .y = 0.0f, // .y = static_cast<f32>(this->Vk_SwapchainExtent.height),
+        .y = 0.0f,
         .width = static_cast<f32>(this->Vk_SwapchainExtent.width), .height = static_cast<f32>(this->Vk_SwapchainExtent.height),
         .minDepth = 0.0f, .maxDepth = 1.0f
         });
@@ -593,18 +593,11 @@ void Jafg::LSurfaceGlfw3::OnRender()
 
     if (this->IsOwnedControllerValid() && this->GetOwnedControllerChecked()->IsOwnedPawnValid())
     {
-        Info.PerspectiveEye = this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetEye_v2();
+        Info.PerspectiveEye = this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetEye();
         auto const& Eye{*Info.PerspectiveEye};
-
-        auto* Sc{this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetComponentChecked<ASceneComponent>()};
-
-        LMat4F R{maths::identity<LMat4F>};
-        R = maths::rotate(R, Sc->TempRot.x, maths::unit_vector_x<LVec3F>);
-        R = maths::rotate(R, Sc->TempRot.y, maths::unit_vector_y<LVec3F>);
-        R = maths::rotate(R, Sc->TempRot.z, maths::unit_vector_z<LVec3F>);
         Info.PerspectiveCamera = {
-            .view = R * maths::translate(maths::identity<LMat4F>, maths::vk_translation(Sc->TempPos_jafg)),
-            .proj = glm::perspective(
+            .view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up),
+            .proj = glm::perspectiveRH_ZO(
                 Eye.VertFov,
                 static_cast<f32>(this->Vk_SwapchainExtent.width) / static_cast<f32>(this->Vk_SwapchainExtent.height),
                 Eye.NearFrustum, Eye.FarFrustum

@@ -2,8 +2,178 @@
 
 #pragma once
 
-#include "Maths/MathsTypes.h"
-#include "Maths/MathsDetail.h"
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_RIGHT_HANDED
+#include <glm/glm.hpp>
+
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+
+#include <glm/mat2x2.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
+
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <glm/gtx/hash.hpp>
+#include <glm/gtx/string_cast.hpp>
+
+namespace maths
+{
+
+using length_t = glm::length_t;
+using qual_t = glm::qualifier;
+
+using glm::qualifier;
+using qualifier::highp;
+using qualifier::mediump;
+using qualifier::lowp;
+using qualifier::packed;
+using qualifier::defaultp;
+
+typedef f32 single_precision;
+typedef f64 double_precision;
+
+} /* ~Namespace maths */
+
+template<typename TReal,maths::qual_t Q> using TQua = glm::qua<TReal,Q>;
+using LQuatF = TQua<maths::single_precision,maths::defaultp>;
+using LQuatD = TQua<maths::double_precision,maths::defaultp>;
+
+template<maths::length_t L,typename TReal,maths::qual_t Q> using TVec = glm::vec<L,TReal,Q>;
+template<typename TReal,maths::qual_t Q> using TVec1 = TVec<1,TReal,Q>;
+using LVec1F = TVec1<maths::single_precision,maths::defaultp>;
+using LVec1D = TVec1<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TVec2 = TVec<2,TReal,Q>;
+using LVec2F = TVec2<maths::single_precision,maths::defaultp>;
+using LVec2D = TVec2<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TVec3 = TVec<3,TReal,Q>;
+using LVec3F = TVec3<maths::single_precision,maths::defaultp>;
+using LVec3D = TVec3<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TVec4 = TVec<4,TReal,Q>;
+using LVec4F = TVec4<maths::single_precision,maths::defaultp>;
+using LVec4D = TVec4<maths::double_precision,maths::defaultp>;
+
+using LVec1u8 = TVec1<u8,maths::defaultp>;
+using LVec1i8 = TVec1<i8,maths::defaultp>;
+using LVec2u8 = TVec2<u8,maths::defaultp>;
+using LVec2i8 = TVec2<i8,maths::defaultp>;
+using LVec3u8 = TVec3<u8,maths::defaultp>;
+using LVec3i8 = TVec3<i8,maths::defaultp>;
+using LVec4u8 = TVec4<u8,maths::defaultp>;
+using LVec4i8 = TVec4<i8,maths::defaultp>;
+
+using LVec1u16 = TVec1<u16,maths::defaultp>;
+using LVec1i16 = TVec1<i16,maths::defaultp>;
+using LVec2u16 = TVec2<u16,maths::defaultp>;
+using LVec2i16 = TVec2<i16,maths::defaultp>;
+using LVec3u16 = TVec3<u16,maths::defaultp>;
+using LVec3i16 = TVec3<i16,maths::defaultp>;
+using LVec4u16 = TVec4<u16,maths::defaultp>;
+using LVec4i16 = TVec4<i16,maths::defaultp>;
+
+using LVec1u32 = TVec1<u32,maths::defaultp>;
+using LVec1i32 = TVec1<i32,maths::defaultp>;
+using LVec2u32 = TVec2<u32,maths::defaultp>;
+using LVec2i32 = TVec2<i32,maths::defaultp>;
+using LVec3u32 = TVec3<u32,maths::defaultp>;
+using LVec3i32 = TVec3<i32,maths::defaultp>;
+using LVec4u32 = TVec4<u32,maths::defaultp>;
+using LVec4i32 = TVec4<i32,maths::defaultp>;
+
+using LVec1u64 = TVec1<u64,maths::defaultp>;
+using LVec1i64 = TVec1<i64,maths::defaultp>;
+using LVec2u64 = TVec2<u64,maths::defaultp>;
+using LVec2i64 = TVec2<i64,maths::defaultp>;
+using LVec3u64 = TVec3<u64,maths::defaultp>;
+using LVec3i64 = TVec3<i64,maths::defaultp>;
+using LVec4u64 = TVec4<u64,maths::defaultp>;
+using LVec4i64 = TVec4<i64,maths::defaultp>;
+
+template<maths::length_t C,maths::length_t R,typename T,maths::qual_t Q>
+using TMat = glm::mat<C,R,T,Q>;
+template<typename T,maths::qual_t Q> using TMat2 = TMat<2,2,T,Q>;
+template<typename T,maths::qual_t Q> using TMat3 = TMat<3,3,T,Q>;
+template<typename T,maths::qual_t Q> using TMat4 = TMat<4,4,T,Q>;
+using LMat2F = TMat2<maths::single_precision,maths::defaultp>;
+using LMat2D = TMat2<maths::double_precision,maths::defaultp>;
+using LMat3F = TMat3<maths::single_precision,maths::defaultp>;
+using LMat3D = TMat3<maths::double_precision,maths::defaultp>;
+using LMat4F = TMat4<maths::single_precision,maths::defaultp>;
+using LMat4D = TMat4<maths::double_precision,maths::defaultp>;
+
+//# Transformation object.
+template<typename TReal,maths::qual_t Q>
+struct TTrans final
+{
+    //# Translation.
+    TVec3<TReal,Q> T;
+    //# Rotation.
+    TQua<TReal,Q>  R;
+    //# Scale.
+    TVec3<TReal,Q> S;
+};
+using LTransformF = TTrans<maths::single_precision,maths::defaultp>;
+using LTransformD = TTrans<maths::double_precision,maths::defaultp>;
+
+//#
+//# Types used for world coordinates.
+//#
+inline constexpr maths::qualifier world_qual{maths::highp};
+using LWorldReal  = maths::single_precision;
+using LWorldQuat  = TQua<LWorldReal,world_qual>;
+using LWorldVec1  = TVec1<LWorldReal,world_qual>;
+using LWorldVec2  = TVec2<LWorldReal,world_qual>;
+using LWorldVec3  = TVec3<LWorldReal,world_qual>;
+using LWorldVec4  = TVec4<LWorldReal,world_qual>;
+using LWorldTrans = TTrans<LWorldReal,world_qual>;
+
+#define MATHS_CONSTANT(Constant)                                                                            \
+    namespace detail                                                                                        \
+    {                                                                                                       \
+    template<typename T> struct JAFG_JOIN_OUTER_TWO(Constant, _t) {};                                       \
+    } /* ~Namespace detail */                                                                               \
+    template<typename T> inline constexpr T Constant{detail::JAFG_JOIN_OUTER_TWO(Constant, _t)<T>::value};
+
+#define DETAIL_MATHS_FLT_CONSTANT(Constant, Type, Value)         \
+    template<> struct JAFG_JOIN_OUTER_TWO(Constant, _t)<Type>         \
+    {                                                                 \
+        inline static constexpr Type value{static_cast<Type>(Value)}; \
+    };
+
+#define MATHS_FLT_CONSTANT_V(Constant, Value) \
+    namespace detail                                                                                      \
+    {                                                                                                     \
+    template<typename T> struct JAFG_JOIN_OUTER_TWO(Constant, _t) {};                                     \
+    DETAIL_MATHS_FLT_CONSTANT(Constant, f32, Value)                                                       \
+    DETAIL_MATHS_FLT_CONSTANT(Constant, f64, Value)                                                       \
+    template<typename T> inline constexpr T JAFG_JOIN_OUTER_TWO(Constant,_v)                              \
+    {                                                                                                     \
+        detail::JAFG_JOIN_OUTER_TWO(Constant, _t)<T>::value };                                            \
+    } /* ~Namespace detail */                                                                             \
+    inline constexpr f32 JAFG_JOIN_OUTER_TWO(Constant, _f){detail::JAFG_JOIN_OUTER_TWO(Constant,_v)<f32>}; \
+    inline constexpr f64 JAFG_JOIN_OUTER_TWO(Constant, _d){detail::JAFG_JOIN_OUTER_TWO(Constant,_v)<f64>};
+
+#define MATHS_SWIZZLE(Num, Name, ...)                                                            \
+    struct JAFG_JOIN_OUTER_TWO(Name, _fn)                                                        \
+    {                                                                                            \
+        template<length_t L, typename T, qual_t Q>                                               \
+        inline constexpr auto operator()(TVec<L, T, Q> const& v) const noexcept -> TVec<Num,T,Q> \
+        {                                                                                        \
+            return __VA_ARGS__;                                                                  \
+        }                                                                                        \
+    };
+
+#define MATHS_CONSTANT_VALUE(constant, type, ...)       \
+    template<>                                          \
+    struct JAFG_JOIN_OUTER_TWO(constant, _t)<type>      \
+    {                                                   \
+        inline static constexpr type value __VA_ARGS__; \
+    };
 
 namespace maths
 {
@@ -14,17 +184,17 @@ namespace maths
 MATHS_CONSTANT(zero_vector)
 //# Global one vector constant (1, 1, 1, 1).
 MATHS_CONSTANT(one_vector)
-//# Global forward vector constant (1, 0, 0).
+//# Global forward vector constant (0, 0, -1).
 MATHS_CONSTANT(forward_vector)
-//# Global backward vector constant (-1, 0, 0).
+//# Global backward vector constant (0, 0, 1).
 MATHS_CONSTANT(backward_vector)
-//# Global right vector constant (0, 1, 0).
+//# Global right vector constant (1, 0, 0).
 MATHS_CONSTANT(right_vector)
-//# Global left vector constant (0, -1, 0).
+//# Global left vector constant (-1, 0, 0).
 MATHS_CONSTANT(left_vector)
-//# Global up vector constant (0, 0, 1).
+//# Global up vector constant (0, 1, 0).
 MATHS_CONSTANT(up_vector)
-//# Global down vector constant (0, 0, -1).
+//# Global down vector constant (0, -1, 0).
 MATHS_CONSTANT(down_vector)
 ///# Global 2d unit vector constant along the 45-degree angle.
 MATHS_CONSTANT(unit_vector_2d)
@@ -37,13 +207,10 @@ MATHS_CONSTANT(unit_vector_z)
 //# Global unit vector constant along the w-axis (0, 0, 0, 1).
 MATHS_CONSTANT(unit_vector_w)
 
-//# Global zero quat constant. Zero in terms of euler.
-MATHS_CONSTANT(zero_quat)
-//# Global zero trans constant.
-MATHS_CONSTANT(zero_trans)
-
 //# Global identity constant.
 MATHS_CONSTANT(identity)
+
+#undef MATHS_CONSTANT
 
 MATHS_FLT_CONSTANT_V(small_number,        1e-8)
 MATHS_FLT_CONSTANT_V(not_so_small_number, 1e-4)
@@ -162,6 +329,180 @@ MATHS_FLT_CONSTANT_V(h2mus,  3.6e+9)
 MATHS_FLT_CONSTANT_V(h2ms,   3.6e+6)
 MATHS_FLT_CONSTANT_V(h2s,    3600.0)
 MATHS_FLT_CONSTANT_V(h2m,    60.0)
+
+#undef MATHS_FLT_CONSTANT_V
+
+namespace detail
+{
+
+MATHS_SWIZZLE(2, xy, {v.x,v.y})
+MATHS_SWIZZLE(2, xz, {v.x,v.z})
+MATHS_SWIZZLE(2, yx, {v.y,v.x})
+MATHS_SWIZZLE(2, yz, {v.y,v.z})
+MATHS_SWIZZLE(3, xyz, {v.x,v.y,v.z})
+MATHS_SWIZZLE(3, xzy, {v.x,v.z,v.y})
+MATHS_SWIZZLE(3, yxz, {v.y,v.x,v.z})
+MATHS_SWIZZLE(3, yzx, {v.y,v.z,v.x})
+MATHS_SWIZZLE(3, zxy, {v.z,v.x,v.y})
+MATHS_SWIZZLE(3, zyx, {v.z,v.y,v.x})
+
+#undef MATHS_SWIZZLE
+
+} /* ~Namespace detail */
+
+namespace detail
+{
+
+MATHS_CONSTANT_VALUE(zero_vector, LVec1F, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec1D, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2F, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2D, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3F, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3D, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4F, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4D, {0})
+
+MATHS_CONSTANT_VALUE(zero_vector, LVec1u8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec1i8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2u8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2i8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3u8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3i8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4u8, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4i8, {0})
+
+MATHS_CONSTANT_VALUE(zero_vector, LVec1u16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec1i16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2u16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2i16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3u16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3i16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4u16, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4i16, {0})
+
+MATHS_CONSTANT_VALUE(zero_vector, LVec1u32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec1i32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2u32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2i32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3u32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3i32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4u32, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4i32, {0})
+
+MATHS_CONSTANT_VALUE(zero_vector, LVec1u64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec1i64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2u64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec2i64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3u64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec3i64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4u64, {0})
+MATHS_CONSTANT_VALUE(zero_vector, LVec4i64, {0})
+
+MATHS_CONSTANT_VALUE(one_vector, LVec1F, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec1D, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2F, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2D, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3F, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3D, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4F, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4D, {1})
+
+MATHS_CONSTANT_VALUE(one_vector, LVec1u8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec1i8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2u8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2i8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3u8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3i8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4u8, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4i8, {1})
+
+MATHS_CONSTANT_VALUE(one_vector, LVec1u16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec1i16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2u16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2i16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3u16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3i16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4u16, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4i16, {1})
+
+MATHS_CONSTANT_VALUE(one_vector, LVec1u32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec1i32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2u32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2i32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3u32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3i32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4u32, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4i32, {1})
+
+MATHS_CONSTANT_VALUE(one_vector, LVec1u64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec1i64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2u64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec2i64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3u64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec3i64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4u64, {1})
+MATHS_CONSTANT_VALUE(one_vector, LVec4i64, {1})
+
+MATHS_CONSTANT_VALUE(forward_vector, LVec3F, {0, 0, -1})
+MATHS_CONSTANT_VALUE(forward_vector, LVec3D, {0, 0, -1})
+MATHS_CONSTANT_VALUE(backward_vector, LVec3F, {0, 0, 1})
+MATHS_CONSTANT_VALUE(backward_vector, LVec3D, {0, 0, 1})
+MATHS_CONSTANT_VALUE(right_vector, LVec3F, {1, 0, 0})
+MATHS_CONSTANT_VALUE(right_vector, LVec3D, {1, 0, 0})
+MATHS_CONSTANT_VALUE(left_vector, LVec3F, {-1, 0, 0})
+MATHS_CONSTANT_VALUE(left_vector, LVec3D, {-1, 0, 0})
+MATHS_CONSTANT_VALUE(up_vector, LVec3F, {0, 1, 0})
+MATHS_CONSTANT_VALUE(up_vector, LVec3D, {0, 1, 0})
+MATHS_CONSTANT_VALUE(down_vector, LVec3F, {0, -1, 0})
+MATHS_CONSTANT_VALUE(down_vector, LVec3D, {0, -1, 0})
+
+MATHS_CONSTANT_VALUE(unit_vector_2d, LVec2F, {0.70710678118654752440084436210484903928483593768847403658833986899536623923105351942519376716382078636750692311545614851246241802})
+MATHS_CONSTANT_VALUE(unit_vector_2d, LVec2D, {0.70710678118654752440084436210484903928483593768847403658833986899536623923105351942519376716382078636750692311545614851246241802})
+
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec1F, {1})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec1D, {1})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec2F, {1, 0})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec2D, {1, 0})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec3F, {1, 0, 0})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec3D, {1, 0, 0})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec4F, {1, 0, 0, 0})
+MATHS_CONSTANT_VALUE(unit_vector_x, LVec4D, {1, 0, 0, 0})
+
+MATHS_CONSTANT_VALUE(unit_vector_y, LVec2F, {0, 1})
+MATHS_CONSTANT_VALUE(unit_vector_y, LVec2D, {0, 1})
+MATHS_CONSTANT_VALUE(unit_vector_y, LVec3F, {0, 1, 0})
+MATHS_CONSTANT_VALUE(unit_vector_y, LVec3D, {0, 1, 0})
+MATHS_CONSTANT_VALUE(unit_vector_y, LVec4F, {0, 1, 0, 0})
+MATHS_CONSTANT_VALUE(unit_vector_y, LVec4D, {0, 1, 0, 0})
+
+MATHS_CONSTANT_VALUE(unit_vector_z, LVec3F, {0, 0, 1})
+MATHS_CONSTANT_VALUE(unit_vector_z, LVec3D, {0, 0, 1})
+MATHS_CONSTANT_VALUE(unit_vector_z, LVec4F, {0, 0, 1, 0})
+MATHS_CONSTANT_VALUE(unit_vector_z, LVec4D, {0, 0, 1, 0})
+
+MATHS_CONSTANT_VALUE(unit_vector_w, LVec4F, {0, 0, 0, 1})
+MATHS_CONSTANT_VALUE(unit_vector_w, LVec4D, {0, 0, 0, 1})
+
+MATHS_CONSTANT_VALUE(identity, LQuatF, {1, 0, 0, 0})
+MATHS_CONSTANT_VALUE(identity, LQuatD, {1, 0, 0, 0})
+
+MATHS_CONSTANT_VALUE(identity, LMat4F, {1})
+MATHS_CONSTANT_VALUE(identity, LMat4D, {1})
+
+MATHS_CONSTANT_VALUE(identity, LTransformF, {
+    .T = maths::zero_vector<decltype(LTransformF::T)>,
+    .R = maths::identity<decltype(LTransformF::R)>,
+    .S = maths::one_vector<decltype(LTransformF::S)>
+    })
+MATHS_CONSTANT_VALUE(identity, LTransformD, {
+    .T = maths::zero_vector<decltype(LTransformD::T)>,
+    .R = maths::identity<decltype(LTransformD::R)>,
+    .S = maths::one_vector<decltype(LTransformD::S)>
+    })
+
+#undef MATHS_CONSTANT_VALUE
+
+} /* ~Namespace detail */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Common
@@ -310,31 +651,66 @@ inline constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt
 // Matrix
 using glm::translate;
 using glm::rotate;
+using glm::mat4_cast;
 using glm::scale;
 using glm::shear;
 using glm::transpose;
 using glm::determinant;
 using glm::inverse;
+template<typename T,qual_t Q>
+inline constexpr TMat4<T,Q> model(TTrans<T,Q> const& trans) noexcept
+{
+    return maths::translate(maths::identity<TMat4<T,Q>>, trans.T)
+        *  maths::mat4_cast(trans.R)
+        *  maths::scale(maths::identity<TMat4<T,Q>>, trans.S);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Quaternion
-template<typename T,qual_t Q> inline constexpr TVec3<T,Q> euler_angles(TQua<T,Q> const& q) noexcept { return glm::eulerAngles(q); }
+//# Rotations from a quaternion.
 using glm::pitch;
-template<typename T,qual_t Q> inline constexpr T pitch(TVec3<T,Q> const& v) noexcept { return v.x; }
 using glm::yaw;
-template<typename T,qual_t Q> inline constexpr T yaw(TVec3<T,Q> const& v) noexcept { return v.y; }
 using glm::roll;
-template<typename T,qual_t Q> inline constexpr T roll(TVec3<T,Q> const& v) noexcept { return v.z; }
-//# Returns l values.
-template<typename T,qual_t Q> inline constexpr T& pitch_l(TVec3<T,Q>* v) noexcept { check( v ) return v->x; }
-template<typename T,qual_t Q> inline constexpr T& yaw_l(TVec3<T,Q>* v) noexcept { check( v ) return v->y; }
-template<typename T,qual_t Q> inline constexpr T& roll_l(TVec3<T,Q>* v) noexcept { check( v ) return v->z; }
+//# Rotations from a vector.
+template<typename T,qual_t Q> inline constexpr T pitch(TVec3<T,Q> const& v) noexcept { return v.x; }
+template<typename T,qual_t Q> inline constexpr T yaw(TVec3<T,Q> const& v)   noexcept { return v.y; }
+template<typename T,qual_t Q> inline constexpr T roll(TVec3<T,Q> const& v)  noexcept { return v.z; }
+//# Rotations from a vector. Returns mutable l-values.
+template<typename T,qual_t Q> inline constexpr T& pitch_l(TVec3<T,Q>* v) noexcept { check(v) return v->x; }
+template<typename T,qual_t Q> inline constexpr T& yaw_l(TVec3<T,Q>* v)   noexcept { check(v) return v->y; }
+template<typename T,qual_t Q> inline constexpr T& roll_l(TVec3<T,Q>* v)  noexcept { check(v) return v->z; }
+//# Quaternions from Euler angles.
+template<typename T,qual_t Q>
+inline constexpr TQua<T,Q> rotator(TVec3<T,Q> const& rads) noexcept
+{
+    auto P{glm::angleAxis(maths::pitch(rads), maths::right_vector<LWorldVec3>)};
+    auto Y{glm::angleAxis(-maths::yaw(rads),  maths::up_vector<LWorldVec3>)};
+    auto R{glm::angleAxis(maths::roll(rads),  maths::forward_vector<LWorldVec3>)};
+    return Y * P * R;
+}
+template<typename T,qual_t Q>
+inline constexpr TQua<T,Q> rotator_deg(TVec3<T,Q> const& degs) noexcept
+{
+    return maths::rotator(maths::radians(degs));
+}
+//# Euler angles from a quaternion.
+template<typename T,qual_t Q>
+inline constexpr TVec3<T,Q> euler_angles(TQua<T,Q> const& q) noexcept
+{
+    auto Result{glm::eulerAngles(q)};
+    return TVec3<T,Q>{Result.x,-Result.y,Result.z};
+}
+template<typename T,qual_t Q>
+inline constexpr TVec3<T,Q> euler_angles_deg(TQua<T,Q> const& q) noexcept
+{
+    return maths::degrees(maths::euler_angles(q));
+}
+template<typename T, qualifier Q>
+inline constexpr TQua<T,Q> angle_axis(T a, TVec3<T,Q> const& v) noexcept { return glm::angleAxis(a, v); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Conversions
 using glm::to_string;
-//# Transforms jafg translations to vk with {right, up, -fwd}.
-template<typename T,qual_t Q> inline constexpr TVec3<T,Q> vk_translation(TVec3<T,Q> const& v) noexcept { return TVec3<T,Q>{-v.y, -v.z, v.x}; }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Swizzle
@@ -348,178 +724,5 @@ inline constexpr detail::yxz_fn yxz;
 inline constexpr detail::yzx_fn yzx;
 inline constexpr detail::zxy_fn zxy;
 inline constexpr detail::zyx_fn zyx;
-
-#undef MATHS_CONSTANT
-
-namespace detail
-{
-
-#define MATHS_CONSTANT_VALUE(constant, type, ...)       \
-    template<>                                          \
-    struct JAFG_JOIN_OUTER_TWO(constant, _t)<type>      \
-    {                                                   \
-        inline static constexpr type value __VA_ARGS__; \
-    };
-
-MATHS_CONSTANT_VALUE(zero_vector, LVec1F, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec1D, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2F, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2D, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3F, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3D, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4F, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4D, {0})
-
-MATHS_CONSTANT_VALUE(zero_vector, LVec1u8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec1i8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2u8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2i8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3u8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3i8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4u8, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4i8, {0})
-
-MATHS_CONSTANT_VALUE(zero_vector, LVec1u16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec1i16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2u16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2i16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3u16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3i16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4u16, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4i16, {0})
-
-MATHS_CONSTANT_VALUE(zero_vector, LVec1u32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec1i32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2u32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2i32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3u32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3i32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4u32, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4i32, {0})
-
-MATHS_CONSTANT_VALUE(zero_vector, LVec1u64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec1i64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2u64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec2i64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3u64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec3i64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4u64, {0})
-MATHS_CONSTANT_VALUE(zero_vector, LVec4i64, {0})
-
-MATHS_CONSTANT_VALUE(one_vector, LVec1F, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec1D, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2F, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2D, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3F, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3D, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4F, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4D, {1})
-
-MATHS_CONSTANT_VALUE(one_vector, LVec1u8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec1i8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2u8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2i8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3u8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3i8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4u8, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4i8, {1})
-
-MATHS_CONSTANT_VALUE(one_vector, LVec1u16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec1i16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2u16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2i16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3u16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3i16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4u16, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4i16, {1})
-
-MATHS_CONSTANT_VALUE(one_vector, LVec1u32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec1i32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2u32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2i32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3u32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3i32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4u32, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4i32, {1})
-
-MATHS_CONSTANT_VALUE(one_vector, LVec1u64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec1i64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2u64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec2i64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3u64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec3i64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4u64, {1})
-MATHS_CONSTANT_VALUE(one_vector, LVec4i64, {1})
-
-MATHS_CONSTANT_VALUE(forward_vector, LVec3F, {1, 0, 0})
-MATHS_CONSTANT_VALUE(forward_vector, LVec3D, {1, 0, 0})
-MATHS_CONSTANT_VALUE(backward_vector, LVec3F, {-1, 0, 0})
-MATHS_CONSTANT_VALUE(backward_vector, LVec3D, {-1, 0, 0})
-MATHS_CONSTANT_VALUE(right_vector, LVec3F, {0, 1, 0})
-MATHS_CONSTANT_VALUE(right_vector, LVec3D, {0, 1, 0})
-MATHS_CONSTANT_VALUE(left_vector, LVec3F, {0, -1, 0})
-MATHS_CONSTANT_VALUE(left_vector, LVec3D, {0, -1, 0})
-MATHS_CONSTANT_VALUE(up_vector, LVec3F, {0, 0, 1})
-MATHS_CONSTANT_VALUE(up_vector, LVec3D, {0, 0, 1})
-MATHS_CONSTANT_VALUE(down_vector, LVec3F, {0, 0, -1})
-MATHS_CONSTANT_VALUE(down_vector, LVec3D, {0, 0, -1})
-
-MATHS_CONSTANT_VALUE(unit_vector_2d, LVec2F, {0.70710678118654752440084436210484903928483593768847403658833986899536623923105351942519376716382078636750692311545614851246241802})
-MATHS_CONSTANT_VALUE(unit_vector_2d, LVec2D, {0.70710678118654752440084436210484903928483593768847403658833986899536623923105351942519376716382078636750692311545614851246241802})
-
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec1F, {1})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec1D, {1})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec2F, {1, 0})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec2D, {1, 0})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec3F, {1, 0, 0})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec3D, {1, 0, 0})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec4F, {1, 0, 0, 0})
-MATHS_CONSTANT_VALUE(unit_vector_x, LVec4D, {1, 0, 0, 0})
-
-MATHS_CONSTANT_VALUE(unit_vector_y, LVec2F, {0, 1})
-MATHS_CONSTANT_VALUE(unit_vector_y, LVec2D, {0, 1})
-MATHS_CONSTANT_VALUE(unit_vector_y, LVec3F, {0, 1, 0})
-MATHS_CONSTANT_VALUE(unit_vector_y, LVec3D, {0, 1, 0})
-MATHS_CONSTANT_VALUE(unit_vector_y, LVec4F, {0, 1, 0, 0})
-MATHS_CONSTANT_VALUE(unit_vector_y, LVec4D, {0, 1, 0, 0})
-
-MATHS_CONSTANT_VALUE(unit_vector_z, LVec3F, {0, 0, 1})
-MATHS_CONSTANT_VALUE(unit_vector_z, LVec3D, {0, 0, 1})
-MATHS_CONSTANT_VALUE(unit_vector_z, LVec4F, {0, 0, 1, 0})
-MATHS_CONSTANT_VALUE(unit_vector_z, LVec4D, {0, 0, 1, 0})
-
-MATHS_CONSTANT_VALUE(unit_vector_w, LVec4F, {0, 0, 0, 1})
-MATHS_CONSTANT_VALUE(unit_vector_w, LVec4D, {0, 0, 0, 1})
-
-MATHS_CONSTANT_VALUE(zero_quat, LQuatF, {1, 0, 0, 0})
-MATHS_CONSTANT_VALUE(zero_quat, LQuatD, {1, 0, 0, 0})
-
-MATHS_CONSTANT_VALUE(zero_trans, LQuaTransformF, {
-    .T = maths::zero_vector<decltype(LQuaTransformF::T)>,
-    .R = maths::zero_quat<decltype(LQuaTransformF::R)>,
-    .S = maths::zero_vector<decltype(LQuaTransformF::S)>
-    })
-MATHS_CONSTANT_VALUE(zero_trans, LQuaTransformD, {
-    .T = maths::zero_vector<decltype(LQuaTransformD::T)>,
-    .R = maths::zero_quat<decltype(LQuaTransformD::R)>,
-    .S = maths::zero_vector<decltype(LQuaTransformD::S)>
-    })
-MATHS_CONSTANT_VALUE(zero_trans, LVecTransformF, {
-    .T = maths::zero_vector<decltype(LVecTransformF::T)>,
-    .R = maths::zero_vector<decltype(LVecTransformF::R)>,
-    .S = maths::zero_vector<decltype(LVecTransformF::S)>
-    })
-MATHS_CONSTANT_VALUE(zero_trans, LVecTransformD, {
-    .T = maths::zero_vector<decltype(LVecTransformD::T)>,
-    .R = maths::zero_vector<decltype(LVecTransformD::R)>,
-    .S = maths::zero_vector<decltype(LVecTransformD::S)>
-    })
-
-MATHS_CONSTANT_VALUE(identity, LMat4F, {1})
-MATHS_CONSTANT_VALUE(identity, LMat4D, {1})
-
-#undef MATHS_CONSTANT_VALUE
-
-} /* ~Namespace detail */
 
 } /* ~Namespace maths */

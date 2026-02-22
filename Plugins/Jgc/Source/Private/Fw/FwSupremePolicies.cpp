@@ -15,16 +15,12 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     this->RotatingActor->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.Create({
-            .MeshPath = "Content/Models/viking_room.obj",
+            .MeshPath = "Content/Models/Untitled.obj",
+            // .MeshPath = "Content/Models/viking_room.obj",
             .TexturePath = "Content/Textures/viking_room.png",
             });
 
-        Comp.SetTranslation(LVec3F{2,-5,-4});
-        Comp.SetRotator(LWorldQuat{LWorldVec3{
-            0, // Pitch
-            0, // Yaw
-            0 //Roll
-            }});
+        Comp.SetTranslation(LWorldVec3{0,0,-2});
     });
 
     return;

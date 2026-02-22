@@ -35,7 +35,7 @@ public:
     virtual void Tick(f32 Dt) override;
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
-    LEye_v2 GetEye_v2() const noexcept;
+    LEye_v2 GetEye() const noexcept;
 
     bool IsPossessedLocally() const noexcept;
     LLocalEgo* GetLocalEgoIfPossessed() const noexcept;
