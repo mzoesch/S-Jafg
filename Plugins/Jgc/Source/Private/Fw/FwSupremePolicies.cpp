@@ -11,12 +11,10 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
 
     this->GetWorld().SetBackgroundColor(LinearColors::DeepSkyBlue);
 
-    this->RotatingActor = Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()});
-    this->RotatingActor->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.Create({
-            .MeshPath = "Content/Models/Untitled.obj",
-            // .MeshPath = "Content/Models/viking_room.obj",
+            .MeshPath = "Content/Models/viking_room.obj",
             .TexturePath = "Content/Textures/viking_room.png",
             });
 

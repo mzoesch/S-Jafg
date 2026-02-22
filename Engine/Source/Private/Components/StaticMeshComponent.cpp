@@ -5,10 +5,11 @@
 #include "System/TextureSubsystem.h"
 #include "Framework/Frontend.h"
 
-void Jafg::AStaticMeshComponent::CreateImpl(LCreateInfo const& Info)
+void Jafg::AStaticMeshComponent::Create(CreateInfo const& Info)
 {
-    this->Mesh = GetSingleton<JMeshSubsystem>().GetMesh(Info.MeshPath, Info.MeshLoadBehavior, Info.MeshHostMemoryBehavior);
     this->SetShouldRender(Info.bRender);
+    check(Info.MeshPath.empty() == false)
+    this->Mesh = GetSingleton<JMeshSubsystem>().FromFile(Info.MeshPath, Info.MeshState);
     if (Info.TexturePath.empty() == false)
     {
         this->Image = GetSingleton<JTextureSubsystem>().GetImage(
@@ -17,8 +18,6 @@ void Jafg::AStaticMeshComponent::CreateImpl(LCreateInfo const& Info)
             , Info.TextureLoadFlags
             );
     }
-
-    return;
 }
 
 void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
@@ -71,8 +70,8 @@ void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
         .pDynamicOffsets = nullptr
         });
 
-    LStaticMesh::LRootLocation{.Model = maths::model(this->GetTransform())}.Push(Info, Pipeline);
-    this->Mesh.GetMesh().DrawIndex(Info);
+    LStaticMesh::VPC{.Model = maths::model(this->GetTransform())}.Push(Info, Pipeline);
+    this->Mesh->DrawIndex(Info);
 
     return;
 }

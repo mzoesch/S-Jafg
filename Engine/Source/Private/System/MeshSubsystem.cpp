@@ -20,46 +20,35 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
     return;
 }
 
-std::shared_ptr<Jafg::LStaticMesh> Jafg::JMeshSubsystem::GetMesh(
-      LPath const* Path
-    , LString const& Ident
-    , LStaticMesh::ELoadBehavior LoadBehavior
-    , LStaticMesh::EUploadHostMemoryBehavior HostMemoryBehavior
-    ) const
+Jafg::LStaticMeshRef_v2 Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State) const
 {
-    check( Ident.empty() == false )
-
-    if (auto const& It{this->Meshes.find(Ident)}; It != this->Meshes.end())
+    if (auto const& It{this->Meshes.find(Path)}; It != this->Meshes.end())
     {
-        if (LoadBehavior == LStaticMesh::ELoadBehavior::Load)
+        LStaticMesh& Mesh{*It->second};
+
+        if (State & EStaticMeshStateBits::Host || ((State & EStaticMeshStateBits::Device) && Mesh.IsOnDevice() == false))
         {
-            if (It->second->VertexBuffer.GetBuffer())
+            if (Mesh.IsOnHost() == false)
             {
-                LOG_FATAL(LogRhi, "Mesh [{}] is set to only load but is already on device.", Ident)
-            }
-            It->second->ReloadModel(LoadBehavior, HostMemoryBehavior);
-        }
-        else if (LoadBehavior == LStaticMesh::ELoadBehavior::LoadToDevice)
-        {
-            if (It->second->Vertices.empty())
-            {
-                It->second->ReloadModel(LoadBehavior, HostMemoryBehavior);
-            }
-            else
-            {
-                It->second->LoadToDevice(HostMemoryBehavior);
+                auto Result{Mesh.LoadToHost()};
+                jassert(Result == LStaticMesh::EResult::Success)
             }
         }
+        if (State & EStaticMeshStateBits::Device)
+        {
+            if (Mesh.IsOnDevice() == false)
+            {
+                Mesh.LoadToDevice();
+                if ((State & EStaticMeshStateBits::Host) == EStaticMeshStateBits::None)
+                {
+                    Mesh.FreeFromHost();
+                }
+            }
+        }
 
-        return It->second;
+        return LStaticMeshRef_v2{It->second};
     }
 
-    if (Path == nullptr)
-    {
-        return {};
-    }
-
-    this->Meshes[Ident] = std::make_unique<LStaticMesh>(*Path, LoadBehavior, HostMemoryBehavior);
-    auto& Reference{this->Meshes[Ident]};
-    return Reference;
+    this->Meshes[Path] = std::make_shared<LStaticMesh>(Path, State);
+    return LStaticMeshRef_v2{this->Meshes[Path]};
 }

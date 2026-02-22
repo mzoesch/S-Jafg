@@ -333,9 +333,9 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     auto Pipeline = LDevicePipelineFactory{*this}
         .Shader(LStaticMesh::DefaultShader, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-        .VertexInput<LStaticMesh::LVertex>()
-        .Layout<LStaticMesh::LPipelineLayout>()
-        .Push<LStaticMesh::LRootLocation>()
+        .VertexInput<LStaticMesh::Vertex>()
+        .Layout<LStaticMesh::PipelineLayout>()
+        .Push<LStaticMesh::VPC>()
         .Build();
     this->Vk_Pipelines.emplace(LStaticMesh::DefaultShader, std::move(Pipeline));
 

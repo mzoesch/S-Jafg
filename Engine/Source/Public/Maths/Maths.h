@@ -139,26 +139,28 @@ using LWorldTrans = TTrans<LWorldReal,world_qual>;
     } /* ~Namespace detail */                                                                               \
     template<typename T> inline constexpr T Constant{detail::JAFG_JOIN_OUTER_TWO(Constant, _t)<T>::value};
 
-#define DETAIL_MATHS_FLT_CONSTANT(Constant, Type, Value)         \
+#define DETAIL_MATHS_FLT_CONSTANT(Constant, Type, Value)              \
     template<> struct JAFG_JOIN_OUTER_TWO(Constant, _t)<Type>         \
     {                                                                 \
         inline static constexpr Type value{static_cast<Type>(Value)}; \
     };
 
-#define MATHS_FLT_CONSTANT_V(Constant, Value) \
-    namespace detail                                                                                      \
-    {                                                                                                     \
-    template<typename T> struct JAFG_JOIN_OUTER_TWO(Constant, _t) {};                                     \
-    DETAIL_MATHS_FLT_CONSTANT(Constant, f32, Value)                                                       \
-    DETAIL_MATHS_FLT_CONSTANT(Constant, f64, Value)                                                       \
-    template<typename T> inline constexpr T JAFG_JOIN_OUTER_TWO(Constant,_v)                              \
-    {                                                                                                     \
-        detail::JAFG_JOIN_OUTER_TWO(Constant, _t)<T>::value };                                            \
-    } /* ~Namespace detail */                                                                             \
+#define MATHS_FLT_CONSTANT_V(Constant, Value)                                                              \
+    namespace detail                                                                                       \
+    {                                                                                                      \
+    template<typename T> struct JAFG_JOIN_OUTER_TWO(Constant, _t) {};                                      \
+    DETAIL_MATHS_FLT_CONSTANT(Constant, f32, Value)                                                        \
+    DETAIL_MATHS_FLT_CONSTANT(Constant, f64, Value)                                                        \
+    template<typename T> inline constexpr T JAFG_JOIN_OUTER_TWO(Constant,_v)                               \
+    {                                                                                                      \
+        detail::JAFG_JOIN_OUTER_TWO(Constant, _t)<T>::value };                                             \
+    } /* ~Namespace detail */                                                                              \
     inline constexpr f32 JAFG_JOIN_OUTER_TWO(Constant, _f){detail::JAFG_JOIN_OUTER_TWO(Constant,_v)<f32>}; \
     inline constexpr f64 JAFG_JOIN_OUTER_TWO(Constant, _d){detail::JAFG_JOIN_OUTER_TWO(Constant,_v)<f64>};
 
 #define MATHS_SWIZZLE(Num, Name, ...)                                                            \
+    namespace detail                                                                             \
+    {                                                                                            \
     struct JAFG_JOIN_OUTER_TWO(Name, _fn)                                                        \
     {                                                                                            \
         template<length_t L, typename T, qual_t Q>                                               \
@@ -166,7 +168,9 @@ using LWorldTrans = TTrans<LWorldReal,world_qual>;
         {                                                                                        \
             return __VA_ARGS__;                                                                  \
         }                                                                                        \
-    };
+    };                                                                                           \
+    } /* ~Namespace detail */                                                                    \
+    inline constexpr detail::JAFG_JOIN_OUTER_TWO(Name, _fn) Name{};
 
 #define MATHS_CONSTANT_VALUE(constant, type, ...)       \
     template<>                                          \
@@ -332,23 +336,72 @@ MATHS_FLT_CONSTANT_V(h2m,    60.0)
 
 #undef MATHS_FLT_CONSTANT_V
 
-namespace detail
-{
-
+///////////////////////////////////////////////////////////////////////////////
+// Swizzle
 MATHS_SWIZZLE(2, xy, {v.x,v.y})
 MATHS_SWIZZLE(2, xz, {v.x,v.z})
+MATHS_SWIZZLE(2, xw, {v.x,v.w})
 MATHS_SWIZZLE(2, yx, {v.y,v.x})
 MATHS_SWIZZLE(2, yz, {v.y,v.z})
+MATHS_SWIZZLE(2, yw, {v.y,v.w})
+MATHS_SWIZZLE(2, zx, {v.z,v.x})
+MATHS_SWIZZLE(2, zy, {v.z,v.y})
+MATHS_SWIZZLE(2, zw, {v.z,v.w})
+MATHS_SWIZZLE(2, wx, {v.w,v.x})
+MATHS_SWIZZLE(2, wy, {v.w,v.y})
+MATHS_SWIZZLE(2, wz, {v.w,v.z})
+
 MATHS_SWIZZLE(3, xyz, {v.x,v.y,v.z})
+MATHS_SWIZZLE(3, xyw, {v.x,v.y,v.w})
 MATHS_SWIZZLE(3, xzy, {v.x,v.z,v.y})
+MATHS_SWIZZLE(3, xzw, {v.x,v.z,v.w})
+MATHS_SWIZZLE(3, xwy, {v.x,v.w,v.y})
+MATHS_SWIZZLE(3, xwz, {v.x,v.w,v.z})
 MATHS_SWIZZLE(3, yxz, {v.y,v.x,v.z})
+MATHS_SWIZZLE(3, yxw, {v.y,v.x,v.w})
 MATHS_SWIZZLE(3, yzx, {v.y,v.z,v.x})
-MATHS_SWIZZLE(3, zxy, {v.z,v.x,v.y})
+MATHS_SWIZZLE(3, yzw, {v.y,v.z,v.w})
+MATHS_SWIZZLE(3, ywx, {v.y,v.w,v.x})
+MATHS_SWIZZLE(3, ywz, {v.y,v.w,v.z})
 MATHS_SWIZZLE(3, zyx, {v.z,v.y,v.x})
+MATHS_SWIZZLE(3, zyw, {v.z,v.y,v.w})
+MATHS_SWIZZLE(3, zxy, {v.z,v.x,v.y})
+MATHS_SWIZZLE(3, zxw, {v.z,v.x,v.w})
+MATHS_SWIZZLE(3, zwy, {v.z,v.w,v.y})
+MATHS_SWIZZLE(3, zwx, {v.z,v.w,v.x})
+MATHS_SWIZZLE(3, wyz, {v.w,v.y,v.z})
+MATHS_SWIZZLE(3, wyx, {v.w,v.y,v.x})
+MATHS_SWIZZLE(3, wzy, {v.w,v.z,v.y})
+MATHS_SWIZZLE(3, wzx, {v.w,v.z,v.x})
+MATHS_SWIZZLE(3, wxy, {v.w,v.x,v.y})
+MATHS_SWIZZLE(3, wxz, {v.w,v.x,v.z})
+
+MATHS_SWIZZLE(4, xyzw, {v.x,v.y,v.z,v.w})
+MATHS_SWIZZLE(4, xywz, {v.x,v.y,v.w,v.z})
+MATHS_SWIZZLE(4, xzyw, {v.x,v.z,v.y,v.w})
+MATHS_SWIZZLE(4, xzwy, {v.x,v.z,v.w,v.y})
+MATHS_SWIZZLE(4, xwyz, {v.x,v.w,v.y,v.z})
+MATHS_SWIZZLE(4, xwzy, {v.x,v.w,v.z,v.y})
+MATHS_SWIZZLE(4, yxzw, {v.y,v.x,v.z,v.w})
+MATHS_SWIZZLE(4, yxwz, {v.y,v.x,v.w,v.z})
+MATHS_SWIZZLE(4, yzxw, {v.y,v.z,v.x,v.w})
+MATHS_SWIZZLE(4, yzwx, {v.y,v.z,v.w,v.x})
+MATHS_SWIZZLE(4, ywyz, {v.y,v.w,v.x,v.z})
+MATHS_SWIZZLE(4, ywzx, {v.y,v.w,v.z,v.x})
+MATHS_SWIZZLE(4, zyxw, {v.z,v.y,v.x,v.w})
+MATHS_SWIZZLE(4, zywx, {v.z,v.y,v.w,v.x})
+MATHS_SWIZZLE(4, zxyw, {v.z,v.x,v.y,v.w})
+MATHS_SWIZZLE(4, zxwy, {v.z,v.x,v.w,v.y})
+MATHS_SWIZZLE(4, zwyx, {v.z,v.w,v.y,v.x})
+MATHS_SWIZZLE(4, zwxy, {v.z,v.w,v.x,v.y})
+MATHS_SWIZZLE(4, wyzx, {v.w,v.y,v.z,v.x})
+MATHS_SWIZZLE(4, wyxz, {v.w,v.y,v.x,v.z})
+MATHS_SWIZZLE(4, wzyx, {v.w,v.z,v.y,v.x})
+MATHS_SWIZZLE(4, wzxy, {v.w,v.z,v.x,v.y})
+MATHS_SWIZZLE(4, wxyz, {v.w,v.x,v.y,v.z})
+MATHS_SWIZZLE(4, wxzy, {v.w,v.x,v.z,v.y})
 
 #undef MATHS_SWIZZLE
-
-} /* ~Namespace detail */
 
 namespace detail
 {
@@ -688,10 +741,33 @@ inline constexpr TQua<T,Q> rotator(TVec3<T,Q> const& rads) noexcept
     auto R{glm::angleAxis(maths::roll(rads),  maths::forward_vector<LWorldVec3>)};
     return Y * P * R;
 }
+template<typename T> requires std::is_floating_point_v<T>
+inline constexpr TQua<T,defaultp> rotator(T pitch, T yaw, T roll) noexcept
+{
+    auto P{glm::angleAxis(pitch, maths::right_vector<LWorldVec3>)};
+    auto Y{glm::angleAxis(-yaw,  maths::up_vector<LWorldVec3>)};
+    auto R{glm::angleAxis(roll,  maths::forward_vector<LWorldVec3>)};
+    return Y * P * R;
+}
+template<typename T> requires (!std::is_floating_point_v<T>)
+inline constexpr TQua<LWorldReal,defaultp> rotator(T pitch, T yaw, T roll) noexcept
+{
+    return maths::rotator<LWorldReal>(static_cast<LWorldReal>(pitch), static_cast<LWorldReal>(yaw), static_cast<LWorldReal>(roll));
+}
 template<typename T,qual_t Q>
 inline constexpr TQua<T,Q> rotator_deg(TVec3<T,Q> const& degs) noexcept
 {
     return maths::rotator(maths::radians(degs));
+}
+template<typename T> requires std::is_floating_point_v<T>
+inline constexpr TQua<T,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
+{
+    return maths::rotator(maths::radians(pitch), maths::radians(yaw), maths::radians(roll));
+}
+template<typename T> requires (!std::is_floating_point_v<T>)
+inline constexpr TQua<LWorldReal,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
+{
+    return maths::rotator_deg<LWorldReal>(static_cast<LWorldReal>(pitch), static_cast<LWorldReal>(yaw), static_cast<LWorldReal>(roll));
 }
 //# Euler angles from a quaternion.
 template<typename T,qual_t Q>
@@ -711,18 +787,5 @@ inline constexpr TQua<T,Q> angle_axis(T a, TVec3<T,Q> const& v) noexcept { retur
 ///////////////////////////////////////////////////////////////////////////////
 // Conversions
 using glm::to_string;
-
-///////////////////////////////////////////////////////////////////////////////
-// Swizzle
-inline constexpr detail::xy_fn xy;
-inline constexpr detail::xz_fn xz;
-inline constexpr detail::yx_fn yx;
-inline constexpr detail::yz_fn yz;
-inline constexpr detail::xyz_fn xyz;
-inline constexpr detail::xzy_fn xzy;
-inline constexpr detail::yxz_fn yxz;
-inline constexpr detail::yzx_fn yzx;
-inline constexpr detail::zxy_fn zxy;
-inline constexpr detail::zyx_fn zyx;
 
 } /* ~Namespace maths */

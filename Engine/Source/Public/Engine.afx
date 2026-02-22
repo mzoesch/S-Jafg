@@ -139,7 +139,6 @@
 #include "Rhi/Texture2.h"
 #include "Rhi/Image.h"
 #include "Rhi/StaticMesh.h"
-#include "Rhi/StaticMeshRef.h"
 
 
 /*----------------------------------------------------------------------------

@@ -2,19 +2,16 @@
 
 #pragma once
 
-#include "Rhi/StaticMeshRef.h"
 #include "Engine/CxxClass.h"
+#include "Rhi/StaticMesh.h"
 #include "MeshSubsystem.generated.h"
 
 namespace Jafg
 {
 
-//#
-//# A mesh that was loaded by the program and may be used across many different widgets.
-//# @remark This is not intended for textures that are very specific.
-//#
+//# A mesh that was loaded by the program and may be used across many different objects.
 DECLARE_JAFG_CLASS(ECxxClassFlags::Singleton)
-class JMeshSubsystem : public JCxxClass
+class JMeshSubsystem final : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 
@@ -24,43 +21,18 @@ protected:
 
 public:
 
-    //# Removes all loaded models that are not referenced anymore.
+    //# Removes all loaded meshes that are not referenced anymore.
     void PurgeUnused() noexcept;
 
-    LStaticMeshRef GetMesh(LString const& Ident) const
-    {
-        return LStaticMeshRef{this->GetMesh(nullptr, Ident, {}, {})};
-    }
-    LStaticMeshRef GetMesh(
-          LPath const& Path
-        , LStaticMesh::ELoadBehavior LoadBehavior = LStaticMesh::ELoadBehavior::LoadToDevice
-        , LStaticMesh::EUploadHostMemoryBehavior HostMemoryBehavior = LStaticMesh::EUploadHostMemoryBehavior::Free
-        ) const
-    {
-        return LStaticMeshRef{this->GetMesh(&Path, Path.generic_string(), LoadBehavior, HostMemoryBehavior)};
-    }
+    FORCEINLINE constexpr auto GetLoadedMeshCount() const noexcept { return this->Meshes.size(); }
+    FORCEINLINE constexpr auto const& GetMeshes() const noexcept { return this->Meshes; }
 
-    void AddMesh(LStaticMeshRef const& Mesh, LString const& Ident) const noexcept
-    {
-        check( Mesh.HasMesh() )
-        check( this->Meshes.contains(Ident) == false )
-        this->Meshes.emplace(Ident, Mesh.GetNewHandle());
-        return;
-    }
-
-    FORCEINLINE auto GetLoadedMeshCount() const noexcept { return this->Meshes.size(); }
-    FORCEINLINE auto const& GetMeshes() const noexcept { return this->Meshes; }
+    //# Allocate the requested resource from a file.
+    ENGINE_API LStaticMeshRef_v2 FromFile(LPath const& Path, EStaticMeshState State = EStaticMeshStateBits::Device) const;
 
 private:
 
-    std::shared_ptr<LStaticMesh> GetMesh(
-          LPath const* Path
-        , LString const& Ident
-        , LStaticMesh::ELoadBehavior LoadBehavior
-        , LStaticMesh::EUploadHostMemoryBehavior HostMemoryBehavior
-        ) const;
-
-    mutable std::unordered_map<LString, std::shared_ptr<LStaticMesh>> Meshes;
+    mutable std::unordered_map<LPath, std::shared_ptr<LStaticMesh>> Meshes;
 };
 
 } /* ~Namespace Jafg */

@@ -44,16 +44,13 @@ void Jgc::ADebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
 {
     if (auto* Sc{this->GetOwningActor().GetComponent<Jafg::ASceneComponent>()})
     {
-        auto Value3D{Value.GetAxis2DValue() * this->Sensitivity};
+        auto Value2D{Value.GetAxis2DValue() * this->Sensitivity};
 
         /* Yaw */
-        Sc->AddRotator(maths::angle_axis(-glm::radians(Value3D.x), maths::up_vector<LWorldVec3>), Jafg::ESceneSweep::Teleport);
+        Sc->AddRotator(maths::angle_axis(-glm::radians(Value2D.x), maths::up_vector<LWorldVec3>), Jafg::ESceneSweep::Teleport);
 
         /* Pitch */
-        LWorldReal Pitch{maths::clamp(this->CachedPitch + glm::radians(Value3D.y),
-            glm::radians(-89.9f),
-            glm::radians(89.9f)
-            )};
+        LWorldReal Pitch{maths::clamp(this->CachedPitch + glm::radians(Value2D.y), glm::radians(-89.9f), glm::radians(89.9f))};
         Sc->AddRotator(maths::angle_axis(-(this->CachedPitch - Pitch), Sc->GetRotator() * maths::right_vector<LWorldVec3>), Jafg::ESceneSweep::Teleport);
 
         Sc->SetRotator(maths::normalize(Sc->GetRotator()), Jafg::ESceneSweep::Teleport);

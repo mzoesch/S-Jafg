@@ -27,8 +27,6 @@ public:
 
     virtual void OnWorldPreInit() override;
     virtual Jafg::APawn* GetPawnForPersonaController(Jafg::APersonaController const& Pc) override;
-
-    Jafg::AActor* RotatingActor{};
 };
 
 } /* ~Namespace Jgc */
