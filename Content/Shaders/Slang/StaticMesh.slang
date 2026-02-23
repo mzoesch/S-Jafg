@@ -45,5 +45,5 @@ VSOutput vertMain(VSInput input)
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_TARGET
 {
-   return texture.Sample(vertIn.tex_coord);
+   return texture.Sample(vertIn.tex_coord) * float4(vertIn.color, 1.0);
 }

@@ -45,7 +45,7 @@ public:
 private:
 
     LTexture2Ref Texture;
-    LStaticMeshRef_v2 Mesh;
+    LStaticMeshRef Mesh;
 };
 
 } /* ~Namespace Jafg */

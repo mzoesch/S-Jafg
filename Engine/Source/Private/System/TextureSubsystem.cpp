@@ -52,9 +52,9 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPath const& Path
             }
         }
 
-        return LTexture2Ref{It->second};
+        return It->second;
     }
 
     this->Textures[Path] = std::make_shared<LTexture2>(Path, HostCreateInfo, DeviceCreateInfo, State);
-    return LTexture2Ref{this->Textures[Path]};
+    return this->Textures[Path];
 }

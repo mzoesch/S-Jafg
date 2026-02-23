@@ -169,7 +169,18 @@ if(_guard)
         GIT_TAG                 release
         )
     FetchContent_MakeAvailable(FetchContent_tinyobjloader)
-    target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_tinyobjloader_SOURCE_DIR})
+    target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_tinyobjloader_SOURCE_DIR})
+
+    ###############################################################################
+    # tinygltf
+    message(STATUS "Fetching tinygltf...")
+    FetchContent_Declare(
+        FetchContent_tinygltf
+        GIT_REPOSITORY          https://github.com/syoyo/tinygltf.git
+        GIT_TAG                 release
+        )
+    FetchContent_MakeAvailable(FetchContent_tinygltf)
+    target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_tinygltf_SOURCE_DIR})
 
     ###############################################################################
     # slangc

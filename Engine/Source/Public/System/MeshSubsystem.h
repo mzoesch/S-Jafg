@@ -28,7 +28,7 @@ public:
     FORCEINLINE constexpr auto const& GetMeshes() const noexcept { return this->Meshes; }
 
     //# Allocate the requested resource from a file.
-    ENGINE_API LStaticMeshRef_v2 FromFile(LPath const& Path, EStaticMeshState State = EStaticMeshStateBits::Device) const;
+    ENGINE_API LStaticMeshRef FromFile(LPath const& Path, EStaticMeshState State = EStaticMeshStateBits::Device) const;
 
 private:
 

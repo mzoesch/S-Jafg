@@ -72,7 +72,7 @@ void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
         });
 
     LStaticMesh::VPC{.Model = maths::model(this->GetTransform())}.Push(Info, Pipeline);
-    this->Mesh->DrawIndex(Info);
+    this->Mesh->DrawIndexed(Info);
 
     return;
 }

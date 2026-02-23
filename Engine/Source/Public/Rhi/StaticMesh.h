@@ -20,7 +20,7 @@ struct LStaticMesh final
 
     struct Vertex final
     {
-        LVec3F Location;
+        LVec3F Position;
         LVec3F Color;
         LVec2F TexCoord;
 
@@ -38,7 +38,7 @@ struct LStaticMesh final
         {
             static std::array Desc{
                 vk::VertexInputAttributeDescription{
-                    .location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Location)
+                    .location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Position)
                     },
                 vk::VertexInputAttributeDescription{
                     .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Color)
@@ -52,10 +52,10 @@ struct LStaticMesh final
 
         FORCEINLINE constexpr bool operator==(LStaticMesh::Vertex const& V) const noexcept
         {
-            return this->Location == V.Location && this->Color == V.Color && this->TexCoord == V.TexCoord;
+            return this->Position == V.Position && this->Color == V.Color && this->TexCoord == V.TexCoord;
         }
     };
-    static_assert(Jafg::CDeviceVertexInput<LStaticMesh::Vertex>);
+    static_assert(CDeviceVertexInput<LStaticMesh::Vertex>);
 
     struct PipelineLayout final
     {
@@ -81,13 +81,13 @@ struct LStaticMesh final
             return Bindings;
         }
     };
-    static_assert(Jafg::CDeviceLayout<PipelineLayout>);
+    static_assert(CDeviceLayout<PipelineLayout>);
 
     struct VPC final : public TVertexPushConstant<LStaticMesh::VPC>
     {
         LMat4F Model;
     };
-    static_assert(Jafg::CPushConstant<LStaticMesh::VPC>);
+    static_assert(CPushConstant<LStaticMesh::VPC>);
 
     enum struct EResult
     {
@@ -136,7 +136,7 @@ struct LStaticMesh final
         this->IndexBuffer.Free();
     }
 
-    ENGINE_API void DrawIndex(LRenderInfo const& Info) const;
+    ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
 
     FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
 
@@ -154,7 +154,7 @@ private:
     LPath Path;
 };
 
-typedef TResourceReference<LStaticMesh> LStaticMeshRef_v2;
+typedef TSharedRef<LStaticMesh> LStaticMeshRef;
 
 } /* ~Namespace Jafg */
 
@@ -163,6 +163,6 @@ struct std::hash<Jafg::LStaticMesh::Vertex>
 {
     FORCEINLINE size_t operator()(Jafg::LStaticMesh::Vertex const& Vertex) const noexcept
     {
-        return ((hash<glm::vec3>()(Vertex.Location) ^ (hash<glm::vec3>()(Vertex.Color) << 1)) >> 1) ^ (hash<glm::vec2>()(Vertex.TexCoord) << 1);
+        return ((hash<glm::vec3>()(Vertex.Position) ^ (hash<glm::vec3>()(Vertex.Color) << 1)) >> 1) ^ (hash<glm::vec2>()(Vertex.TexCoord) << 1);
     }
 };

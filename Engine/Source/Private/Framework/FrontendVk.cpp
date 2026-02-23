@@ -4,8 +4,6 @@
 #include <vulkan/vulkan.h>
 
 #define VMA_IMPLEMENTATION
-#define TINYOBJLOADER_IMPLEMENTATION
-
 #include "Framework/FrontendVk.h"
 
 #include <GLFW/glfw3.h>
@@ -14,6 +12,7 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
+#include "System/MeshSubsystem.h"
 #include "System/TextureSubsystem.h"
 #include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
@@ -259,6 +258,8 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     LOG_VERBOSE(LogVulkan, "Setting up Vulkan dynamic dispatch loader.")
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
+    check(glfwVulkanSupported())
+
     this->Vk_FetchAndCheckInstanceExtensions();
     this->Vk_FetchAndCheckInstanceLayers();
     this->Vk_CreateInstance();
@@ -346,6 +347,7 @@ void Jafg::LFrontendVk::TearDown()
 {
     LFrontendBase::TearDown();
 
+    GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
     GetMutableSingleton<JTextureSubsystem>().PurgeUnused();
 
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")

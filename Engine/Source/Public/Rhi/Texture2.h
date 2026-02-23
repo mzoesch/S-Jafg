@@ -134,6 +134,6 @@ private:
     vk::raii::ImageView View{ nullptr };
 };
 
-typedef TResourceReference<LTexture2> LTexture2Ref;
+typedef TSharedRef<LTexture2> LTexture2Ref;
 
 } /* ~Namespace Jafg */

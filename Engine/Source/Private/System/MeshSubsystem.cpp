@@ -20,7 +20,7 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
     return;
 }
 
-Jafg::LStaticMeshRef_v2 Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */) const
+Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */) const
 {
     if (auto const& It{this->Meshes.find(Path)}; It != this->Meshes.end())
     {
@@ -46,9 +46,9 @@ Jafg::LStaticMeshRef_v2 Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStati
             }
         }
 
-        return LStaticMeshRef_v2{It->second};
+        return It->second;
     }
 
     this->Meshes[Path] = std::make_shared<LStaticMesh>(Path, State);
-    return LStaticMeshRef_v2{this->Meshes[Path]};
+    return this->Meshes[Path];
 }

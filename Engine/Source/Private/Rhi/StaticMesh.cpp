@@ -3,6 +3,177 @@
 #include "Rhi/StaticMesh.h"
 #include "Engine/Engine.h"
 
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-W#warnings"
+    #pragma clang diagnostic ignored "-Wc++98-compat-extra-semi"
+    #pragma clang diagnostic ignored "-Wdeprecated-literal-operator"
+#endif /* JAFG_WITH_CLANG */
+    #define TINYOBJLOADER_IMPLEMENTATION
+    #include <tiny_obj_loader.h>
+    #define TINYGLTF_IMPLEMENTATION
+    #include <tiny_gltf.h>
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* JAFG_WITH_CLANG */
+
+static_assert(sizeof(uint8_t) == sizeof(u8));
+static_assert(sizeof(uint16_t) == sizeof(u16));
+static_assert(sizeof(uint32_t) == sizeof(u32));
+
+namespace
+{
+
+enum struct ETinyObjHint
+{
+    Binary,
+    Json,
+};
+
+Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHint Hint)
+{
+    typedef Jafg::LStaticMesh::Vertex LVertex;
+
+    tinygltf::TinyGLTF Ldr;
+    tinygltf::Model Model;
+    LString Warning;
+    LString Error;
+
+    bool Result{};
+    if (Hint == ETinyObjHint::Binary)
+    {
+        LOG_VERBOSE(LogRhi, "Loading static mesh [{}] via tinygltf as binary glTF.", Target.GetPath())
+#if JAFG_PLATFORM_USES_UTF8
+        Result = Ldr.LoadBinaryFromFile(&Attrib, &Shapes, &Materials, &Warning, &Error, Target.GetPath().native().c_str());
+#else /* JAFG_PLATFORM_USES_UTF8 */
+        Result = Ldr.LoadBinaryFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
+    }
+    else
+    {
+        check(Hint == ETinyObjHint::Json)
+#if JAFG_PLATFORM_USES_UTF8
+        Result = Ldr.LoadASCIIFromFile(&Attrib, &Shapes, &Materials, &Warning, &Error, Target.GetPath().native().c_str());
+#else /* JAFG_PLATFORM_USES_UTF8 */
+        Result = Ldr.LoadASCIIFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
+    }
+    if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinygltf: {}", Warning) }
+    if (Error.empty() == false) { LOG_ERROR(LogRhi, "tinygltf: {}", Error) }
+    if (Result == false)
+    {
+        return Jafg::LStaticMesh::EResult::LoadingError;
+    }
+
+    {
+        auto& Asset{Model.asset};
+        LOG_VERBOSE(LogRhi, "[{}]: Asset: v[{}>={}] g[{}]",
+            Target.GetPath(), Asset.version, Asset.minVersion, Asset.generator
+            )
+    }
+
+    LOG_VERBOSE(LogRhi, "[{}]: {} meshes, {} materials, {} textures, {} samplers, {} animations, {} skins, {} nodes"
+                        ", {} buffers, {} buffer views, {} accessors."
+        , Target.GetPath(), Model.meshes.size(), Model.materials.size(), Model.textures.size(), Model.samplers.size()
+        , Model.animations.size(), Model.skins.size(), Model.nodes.size(), Model.buffers.size(), Model.bufferViews.size(), Model.accessors.size()
+        )
+
+    std::unordered_map<Jafg::LStaticMesh::Vertex, u32> uniqueVertices;
+    for (const auto &Mesh : Model.meshes)
+    {
+        for (const  auto &Primitive : Mesh.primitives)
+        {
+            tinygltf::Accessor const& IdxAccessor{Model.accessors[Primitive.indices]};
+            tinygltf::BufferView const& IdxBufferView{Model.bufferViews[IdxAccessor.bufferView]};
+            tinygltf::Buffer const& IdxBuffer{Model.buffers[IdxBufferView.buffer]};
+
+            tinygltf::Accessor const& PosAccessor{Model.accessors[Primitive.attributes.at("POSITION")]};
+            tinygltf::BufferView const& PosBufferView{Model.bufferViews[PosAccessor.bufferView]};
+            tinygltf::Buffer const& PosBuffer{Model.buffers[PosBufferView.buffer]};
+
+            tinygltf::Accessor const* TexCoordAccessor{};
+            tinygltf::BufferView const* TexCoordBufferView{};
+            tinygltf::Buffer const* TexCoordBuffer{};
+            if (auto It{Primitive.attributes.find("TEXCOORD_0")}; It != Primitive.attributes.end())
+            {
+                TexCoordAccessor   = &Model.accessors[It->second];
+                TexCoordBufferView = &Model.bufferViews[TexCoordAccessor->bufferView];
+                TexCoordBuffer     = &Model.buffers[TexCoordBufferView->buffer];
+            }
+
+            uint32_t baseVertex = static_cast<uint32_t>(Target.Vertices.size());
+
+            for (auto Idx{0uz}; Idx < PosAccessor.count; ++Idx)
+            {
+                LVertex Vertex{};
+
+                auto* pPosition{reinterpret_cast<f32 const*>(&PosBuffer.data[
+                    PosBufferView.byteOffset + PosAccessor.byteOffset + Idx * sizeof(decltype(Vertex.Position))
+                    ])};
+                Vertex.Position = {pPosition[0], pPosition[1], pPosition[2]};
+
+                if (TexCoordAccessor)
+                {
+                    check(TexCoordBufferView && TexCoordBuffer)
+                    auto* pTexCoord{reinterpret_cast<f32 const*>(&TexCoordBuffer->data[
+                        TexCoordBufferView->byteOffset + TexCoordAccessor->byteOffset + Idx * sizeof(decltype(Vertex.TexCoord))
+                        ])};
+                    Vertex.TexCoord = {pTexCoord[0], pTexCoord[1]};
+                }
+                else
+                {
+                    Vertex.TexCoord = {0.0f, 0.0f};
+                }
+
+                Vertex.Color = {1.0f, 1.0f, 1.0f};
+
+                Target.Vertices.emplace_back(std::move(Vertex));
+            }
+
+            auto const* pIdxData{&IdxBuffer.data[IdxBufferView.byteOffset + IdxAccessor.byteOffset]};
+            auto IdxCount{IdxAccessor.count};
+            auto IdxStride{
+                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT   ? sizeof(u32) :
+                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? sizeof(u16) :
+                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE  ? sizeof(u8) :
+                0uz
+                };
+            if (IdxStride == 0uz)
+            {
+                LOG_FATAL(LogRhi, "[{}]: Could not infer index stride from component type [{}].",
+                    Target.GetPath(), IdxAccessor.componentType
+                    )
+            }
+
+            Target.Indices.reserve(Target.Indices.size() + IdxCount);
+
+            for (auto Idx{0uz}; Idx < IdxCount; ++Idx)
+            {
+                if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
+                {
+                    Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u16 const*>(pIdxData + Idx * IdxStride));
+                }
+                else if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+                {
+                    Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u32 const*>(pIdxData + Idx * IdxStride));
+                }
+                else if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
+                {
+                    Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u8 const*>(pIdxData + Idx * IdxStride));
+                }
+                else
+                {
+                    unreachable()
+                }
+            }
+        }
+    }
+
+    return Jafg::LStaticMesh::EResult::Success;
+}
+
+} /* ~Namespace <Anonymous> */
+
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
 {
     check(this->Path.empty() == false)
@@ -20,49 +191,29 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
     }
     check(this->Vertices.empty() && this->Indices.empty())
 
-    tinyobj::attrib_t Attrib;
-    std::vector<tinyobj::shape_t> Shapes;
-    std::vector<tinyobj::material_t> Materials;
-    LString Warning;
-    LString Error;
-
-#if JAFG_PLATFORM_USES_UTF8
-    auto Result{tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warning, &Error, this->Path.c_str())};
-#else /* JAFG_PLATFORM_USES_UTF8 */
-    auto Result{tinyobj::LoadObj(&Attrib, &Shapes, &Materials, &Warning, &Error, this->Path.string().c_str())};
-#endif /* !JAFG_PLATFORM_USES_UTF8 */
-    if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinyobj: {}", Warning) }
-    if (Result == false) { LOG_ERROR(LogRhi, "tinyobj: {}", Error) }
-    if (Result == false) { return EResult::LoadingError; }
-
-    std::unordered_map<Vertex, u32> UniqueVertices;
-    for (auto const& Shape : Shapes)
+    if (this->Path.native().ends_with(LITERAL_TEXT(".glb")))
     {
-        for (auto const& Idx : Shape.mesh.indices)
+        if (auto Rc{::LoadViaTinyGltf(*this, ETinyObjHint::Binary)}; Rc != EResult::Success)
         {
-            LStaticMesh::Vertex V;
-
-            V.Location = {
-                Attrib.vertices[3 * Idx.vertex_index + 0],
-                Attrib.vertices[3 * Idx.vertex_index + 1],
-                Attrib.vertices[3 * Idx.vertex_index + 2]
-                };
-
-            V.TexCoord = {
-                Attrib.texcoords[2 * Idx.texcoord_index + 0],
-                1.0f - Attrib.texcoords[2 * Idx.texcoord_index + 1]
-                };
-
-            V.Color = {1.0f, 1.0f, 1.0f};
-
-            if (UniqueVertices.contains(V) == false)
-            {
-                UniqueVertices[V] = static_cast<uint32_t>(this->Vertices.size());
-                this->Vertices.push_back(V);
-            }
-
-            Indices.push_back(UniqueVertices[V]);
+            return Rc;
         }
+    }
+    else if (this->Path.native().ends_with(LITERAL_TEXT(".gltf")))
+    {
+        if (auto Rc{::LoadViaTinyGltf(*this, ETinyObjHint::Json)}; Rc != EResult::Success)
+        {
+            return Rc;
+        }
+    }
+    else
+    {
+        LOG_FATAL(LogRhi, "Unsupported static mesh file format: [{}].", this->Path)
+    }
+
+    if (this->Vertices.empty() || this->Indices.empty())
+    {
+        LOG_ERROR(LogRhi, "[{}]: No vertices or indices were loaded.", this->GetPath())
+        return EResult::LoadingError;
     }
 
     return EResult::Success;
@@ -95,7 +246,7 @@ void Jafg::LStaticMesh::LoadToDevice()
     return;
 }
 
-void Jafg::LStaticMesh::DrawIndex(LRenderInfo const& Info) const
+void Jafg::LStaticMesh::DrawIndexed(LRenderInfo const& Info) const
 {
     check(this->IndexCount > 0)
     check(this->VertexBuffer.GetBuffer() && this->IndexBuffer.GetBuffer())
@@ -103,7 +254,7 @@ void Jafg::LStaticMesh::DrawIndex(LRenderInfo const& Info) const
     Info.CommandBuffer.bindVertexBuffers(0, this->VertexBuffer.GetBuffer(), {0});
     Info.CommandBuffer.bindIndexBuffer(this->IndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
 
-    Info.CommandBuffer.drawIndexed(static_cast<uint32_t>(this->IndexCount), 1, 0, 0, 0);
+    Info.CommandBuffer.drawIndexed(static_cast<u32>(this->IndexCount), 1, 0, 0, 0);
 
     return;
 }
