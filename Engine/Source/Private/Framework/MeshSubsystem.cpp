@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "System/MeshSubsystem.h"
+#include "Framework/MeshSubsystem.h"
 
 void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 {

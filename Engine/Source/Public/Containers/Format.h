@@ -20,7 +20,11 @@ FORCEINLINE LWString WSprintF(LWideChar const* Format, TArgs&&... Args) noexcept
 template<typename... TArgs>
 FORCEINLINE auto NativeSprintF(LChar const* Format, TArgs&&... Args) noexcept
 {
+#if JAFG_PLATFORM_USES_UTF8
     return std::vformat(Format, std::make_format_args(Args...));
+#else /* JAFG_PLATFORM_USES_UTF8 */
+    return std::vformat(Format, std::make_wformat_args(Args...));
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
 }
 
 } /* ~Namespace Jafg */

@@ -68,6 +68,9 @@ struct LRenderInfo
     UBO::LPerspectiveCamera PerspectiveCamera;
     //# Perspective device buffer to freely use. Only valid if #PerspectiveEye exists.
     vk::DescriptorBufferInfo PerspectiveCameraWriteInfo;
+    vk::DescriptorSet PerspectiveCameraDescriptorSet;
+
+    vk::DescriptorSet DefaultMaterialDescriptorSet;
 };
 
 template<typename T>

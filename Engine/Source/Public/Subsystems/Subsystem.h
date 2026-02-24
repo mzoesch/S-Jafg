@@ -29,6 +29,7 @@ protected:
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override final
     {
         Super::OnGarbage(Reason);
+        check(this->bRequestingDependency == false)
 
         if (this->IsInitialized())
         {
@@ -38,27 +39,22 @@ protected:
         return;
     }
 
-    //#
-    //# Weather a subsystem should be created given its new context.
-    //#
-    //# @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
-    //#       soon after.
-    //#
-    inline virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const noexcept { return true; }
+    //# Weather the subsystem should be created.
+    inline virtual bool ShouldCreateSubsystem() const noexcept { return true; }
 
-    //# Initialize the subsystem.
+    //# Initialize the subsystem. Only called if #ShouldCreateSubsystem returns true.
     inline virtual void Initialize(LSubsystemCollection& Collection)
     {
-        check( Tasks::IsOnMasterThread() && this->bIsInitialized == false)
+        check(Tasks::IsOnMasterThread() && this->bIsInitialized == false)
         this->bIsInitialized = true;
     }
 
     inline virtual void TearDown() {}
 
-    FORCEINLINE bool IsInitialized() const noexcept { return this->bIsInitialized; }
-    FORCEINLINE bool IsPriorityTearDown() const noexcept { return this->bPriorityTearDown; }
+    FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->bIsInitialized; }
+    FORCEINLINE constexpr bool IsPriorityTearDown() const noexcept { return this->bPriorityTearDown; }
     //# Please see the #bPriorityTearDown documentation for more information. DO NOT JUST SET THIS TO TRUE.
-    FORCEINLINE void SetPriorityTearDown(bool b) noexcept { this->bPriorityTearDown = b; }
+    FORCEINLINE constexpr void SetPriorityTearDown(bool b) noexcept { this->bPriorityTearDown = b; }
 
 private:
 
@@ -71,6 +67,10 @@ private:
 
     //# Whether #ShouldCreateSubsystem returned true and the subsystem was, therefore, initialized.
     bool bIsInitialized:1{};
+
+#if JAFG_DO_CHECKS
+    bool bRequestingDependency:1{};
+#endif /* JAFG_DO_CHECKS */
 };
 
 } /* Namespace Jafg */

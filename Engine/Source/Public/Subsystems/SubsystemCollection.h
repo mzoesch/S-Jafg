@@ -98,9 +98,9 @@ struct LSubsystemCollection final
     //# this method was called on.
     //# Use this method if you must preserve the order of initialization of subsystems in a given collection.
     //#
-    ENGINE_API void InitializeDependency(TSubclassOf<JSubsystem> Class);
+    ENGINE_API void InitializeDependency(JSubsystem* Requester, TSubclassOf<JSubsystem> Class);
     template<typename TSubsystem>
-    FORCEINLINE void InitializeDependency() noexcept { this->InitializeDependency(TSubsystem::StaticClass()); }
+    FORCEINLINE void InitializeDependency(JSubsystem* Requester) noexcept { this->InitializeDependency(Requester, TSubsystem::StaticClass()); }
 
     //# Execute the given predicate on all subsystems in this collection.
     template<algo::void_predicate<JSubsystem> TPredicate>

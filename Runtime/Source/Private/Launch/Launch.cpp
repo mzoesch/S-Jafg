@@ -261,7 +261,6 @@ EPlatformExit::Type GuardedMain()
 
     std::filesystem::current_path(PlatformMisc::GetEngineRootDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
-    Finder::CreateDirectories(Finder::GetSavesDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
 
     LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", PlatformMisc::GetEngineRootDir())

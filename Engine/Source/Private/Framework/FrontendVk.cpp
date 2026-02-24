@@ -12,8 +12,10 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include "System/MeshSubsystem.h"
-#include "System/TextureSubsystem.h"
+#include <Rhi/Material.h>
+
+#include "Framework/MeshSubsystem.h"
+#include "Framework/TextureSubsystem.h"
 #include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
@@ -306,39 +308,39 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         ).value_or(vk::Format::eUndefined);
     if (this->Vk_PreferredDepthFormat == vk::Format::eUndefined)
     {
-        panic( "Failed to find a supported depth format." )
+        panic("Failed to find a supported depth format.")
     }
 
     this->Vk_UpdateSamplers();
 
-    Finder::CreateDirectories("Content/Shaders/Spir-V");
-
-    LSlangCompilationRequest Req{};
-    Req.In = LPath{ "Content/Shaders/Slang/StaticMesh.slang" };
-    Req.Out = LPath{ LStaticMesh::DefaultShader };
-    Req.EntryPoints.reflexive_emplace_back("vertMain").emplace_back("fragMain");
-    if (auto Rc{ this->HandleSlangCompilationRequest(Req) }; Rc != 0)
-    {
-        panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )
-    }
-
-    Req.In = LPath{ "Content/Shaders/Slang/VisualBox.slang" };
-    Req.Out = LPath{ "Content/Shaders/Spir-V/VisualBox.spv" };
-    if (auto Rc{ this->HandleSlangCompilationRequest(Req) }; Rc != 0)
-    {
-        panicMsgf( "Failed to compile shader [{}] via Slang [{}].", Req.In, Rc )
-    }
-
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
+
+    this->Vk_PerspectiveCameraDescriptorSetLayout = vk::raii::DescriptorSetLayout{
+        this->Vk_Device,
+        vk::DescriptorSetLayoutCreateInfo{
+            .bindingCount = static_cast<u32>(PerspectiveCameraSetLayout::Bindings().size()),
+            .pBindings = PerspectiveCameraSetLayout::Bindings().data(),
+            }
+        };
+    this->Vk_DefaultMaterialDescriptorSetLayout = vk::raii::DescriptorSetLayout{
+        this->Vk_Device,
+        vk::DescriptorSetLayoutCreateInfo{
+            .bindingCount = static_cast<u32>(DefaultMaterialSetLayout::Bindings().size()),
+            .pBindings = DefaultMaterialSetLayout::Bindings().data(),
+            }
+        };
 
     auto Pipeline = LDevicePipelineFactory{*this}
         .Shader(LStaticMesh::DefaultShader, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
         .VertexInput<LStaticMesh::Vertex>()
-        .Layout<LStaticMesh::PipelineLayout>()
+        .SharedLayout(*this->Vk_PerspectiveCameraDescriptorSetLayout)
+        .SharedLayout(*this->Vk_DefaultMaterialDescriptorSetLayout)
         .Push<LStaticMesh::VPC>()
         .Build();
     this->Vk_Pipelines.emplace(LStaticMesh::DefaultShader, std::move(Pipeline));
+
+    LMaterial Texture{};
 
     return;
 }
@@ -673,54 +675,6 @@ void Jafg::LFrontendVk::_Vk_WaitIdle()
     STAT_CYCLE_FUNCTION()
     this->Vk_Device.waitIdle();
     return;
-}
-
-i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LSlangCompilationRequest const& Request)
-{
-    return this->HandleSlangCompilationRequest(
-        Jafg::SprintF("Binaries/{}/Vendor/Slang/bin/slangc{}",
-        // Jafg::SprintF("test/Test.exe",
-            PlatformMisc::GetTargetPlatformCompound(),
-#if PLATFORM_WINDOWS
-            ".exe"
-#else /* PLATFORM_WINDOWS */
-            ""
-#endif /* !PLATFORM_WINDOWS */
-            ),
-        Request
-        );
-}
-
-i64 Jafg::LFrontendVk::HandleSlangCompilationRequest(LPath Slangc, LSlangCompilationRequest const& Request)
-{
-    Slangc.make_preferred();
-
-    std::ostringstream SS;
-
-    SS << Slangc;
-
-    /* Quoting the requested in/out paths will not work, therefore spaces are not permitted. */
-    check( algo::contains(Request.In.native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths." )
-    check( algo::contains(Request.Out.native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths." )
-    SS << " " << Request.In.string();
-    SS << " -o " << Request.Out.string();
-
-    SS << " -target " << Request.Target;
-    SS << " -profile " << Request.Profile;
-    SS << " -emit-spirv-directly";
-
-    if (Request.EntryPoints.empty() == false)
-    {
-        SS << " -fvk-use-entrypoint-name";
-        for (auto const& EntryPoint : Request.EntryPoints)
-        {
-            SS << " -entry " << EntryPoint;
-        }
-    }
-
-    auto SSStr{SS.str()};
-    LOG_VERBOSE(LogSystem, "Executing: [{}].", SSStr)
-    return static_cast<i64>(std::system(SSStr.c_str()));
 }
 
 void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceExtensions()
@@ -1424,11 +1378,20 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         .pDynamicStates = this->DynamicStateInfo.data(),
         };
 
+    TArray DescriptorSetLayouts{this->SharedDescriptorSetLayouts};
+
+    algo::for_each(this->UniqueDescriptorSetLayouts, [&DescriptorSetLayouts](auto const& Layout)
+    {
+         check(*Layout)
+         DescriptorSetLayouts.emplace_back(*Layout);
+         return;
+    });
+
     vk::raii::PipelineLayout Layout{
         Frontend.Vk_GetDevice(),
         vk::PipelineLayoutCreateInfo{
-            .setLayoutCount = (*this->DescriptorSetLayout) ? 1u : 0u,
-            .pSetLayouts = (*this->DescriptorSetLayout) ? &*this->DescriptorSetLayout : nullptr,
+            .setLayoutCount = static_cast<u32>(DescriptorSetLayouts.size()),
+            .pSetLayouts = DescriptorSetLayouts.data(),
             .pushConstantRangeCount = static_cast<uint32_t>(this->Range.has_value() ? 1uz : 0uz),
             .pPushConstantRanges = this->Range.has_value() ? &*this->Range : nullptr
             }
@@ -1463,6 +1426,7 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
             Chain.get<vk::GraphicsPipelineCreateInfo>()
             },
         .Layout = std::move(Layout),
-        .DescriptorSetLayout = std::move(this->DescriptorSetLayout),
+        .SharedDescriptorSetLayout = std::move(this->SharedDescriptorSetLayouts),
+        .UniqueDescriptorSetLayout = std::move(this->UniqueDescriptorSetLayouts),
         };
 }

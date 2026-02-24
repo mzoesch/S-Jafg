@@ -20,7 +20,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
     auto& Registry{Detail::GetGlobalCxxRecordRegistry()};
     for (TArray ValidClasses{Registry.GetClassesByBase(*Class.GetClass())}; auto const* Candidate : ValidClasses)
     {
-        check( Candidate )
+        check(Candidate)
         if (Candidate->IsNotAbstract())
         {
             this->SubsystemInstances.emplace_back(NewObject(CastTo<JSubsystem>{}, {*this->Outer, *Candidate}));
@@ -28,9 +28,10 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
         continue;
     }
 
-    for (auto It{ this->SubsystemInstances.begin() }; It != this->SubsystemInstances.end();)
+    for (auto It{this->SubsystemInstances.begin()}; It != this->SubsystemInstances.end();)
     {
         check(*It)
+        check((*It)->bRequestingDependency == false)
 
         if ((*It)->IsInitialized())
         {
@@ -38,7 +39,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
             continue;
         }
 
-        if ((*It)->ShouldCreateSubsystem(this->Outer))
+        if ((*It)->ShouldCreateSubsystem())
         {
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", (*It)->GetNameAsString())
             (*It)->Initialize(*this);
@@ -104,6 +105,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
     for (auto It{this->SubsystemInstances.begin()}; It != this->SubsystemInstances.end();)
     {
         check(*It)
+        check((*It)->bRequestingDependency == false)
 
         if ((*It)->IsInitialized())
         {
@@ -111,7 +113,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
             continue;
         }
 
-        if ((*It)->ShouldCreateSubsystem(this->Outer))
+        if ((*It)->ShouldCreateSubsystem())
         {
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", (*It)->GetNameAsString())
             (*It)->Initialize(*this);
@@ -136,27 +138,57 @@ void Jafg::LSubsystemCollection::OnForeignPluginLoaded(LLoadedPlugin const& Plug
     return;
 }
 
-void Jafg::LSubsystemCollection::InitializeDependency(TSubclassOf<JSubsystem> Class)
+void Jafg::LSubsystemCollection::InitializeDependency(JSubsystem* Requester, TSubclassOf<JSubsystem> Class)
 {
-    JSubsystem* Subsystem{ this->GetSubsystemAsserted(Class) };
+    check(Requester)
+
+#if JAFG_DO_CHECKS
+    if (Requester->bRequestingDependency)
+    {
+        LOG_FATAL(LogSubsystemCollection,
+            "Found (transient) dependency circle between subsystem [{} <=> {}]. Initialization request rejected."
+            , Requester->GetNameAsString(), Class->GetFullyQualifiedName()
+            )
+    }
+    Requester->bRequestingDependency = true;
+#endif /* JAFG_DO_CHECKS */
+
+    JSubsystem* Subsystem{this->GetSubsystemChecked(Class)};
+    check(Subsystem != Requester)
+#if JAFG_DO_CHECKS
+    if (Subsystem->bRequestingDependency)
+    {
+        LOG_FATAL(LogSubsystemCollection,
+            "Found (transient) dependency circle between subsystem [{} <=> {}]. Initialization request rejected."
+            , Subsystem->GetNameAsString(), Class->GetFullyQualifiedName()
+            )
+    }
+#endif /* JAFG_DO_CHECKS */
 
     if (Subsystem->IsInitialized())
     {
+        LOG_TRACE(LogSubsystemCollection, "Subsystem [{}] already initialized. Rejecting initialization request.", Subsystem->GetNameAsString())
+#if JAFG_DO_CHECKS
+        Requester->bRequestingDependency = false;
+#endif /* JAFG_DO_CHECKS */
         return;
     }
 
-    if (Subsystem->ShouldCreateSubsystem(this->Outer) == false)
+    if (Subsystem->ShouldCreateSubsystem() == false)
     {
         LOG_FATAL(
             LogSubsystemCollection,
-            "Wanted to initialize dependent subsystem {} but it does not want to be created.",
+            "Wanted to initialize dependent subsystem [{}] but it does not want to be created.",
             Subsystem->GetNameAsString()
             )
-        return;
     }
 
-    LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetNameAsString())
+    LOG_TRACE(LogSubsystemCollection, "Initializing subsystem [{}] off a dependent subsystem request.", Subsystem->GetNameAsString())
     Subsystem->Initialize(*this);
+
+#if JAFG_DO_CHECKS
+    Requester->bRequestingDependency = false;
+#endif /* JAFG_DO_CHECKS */
 
     return;
 }

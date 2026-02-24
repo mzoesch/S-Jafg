@@ -16,7 +16,7 @@ typedef EResourceState EStaticMeshState;
 //# TODO: Abstract the size of indices (u16 vs u32). (Currently u32 only.)
 struct LStaticMesh final
 {
-    inline static constexpr auto DefaultShader{ "Content/Shaders/Spir-V/StaticMesh.spv" };
+    inline static constexpr auto DefaultShader{ "Content/Shaders/Spir-V/StaticMesh.jafg.spv" };
 
     struct Vertex final
     {
@@ -57,31 +57,31 @@ struct LStaticMesh final
     };
     static_assert(CDeviceVertexInput<LStaticMesh::Vertex>);
 
-    struct PipelineLayout final
-    {
-        static std::array<vk::DescriptorSetLayoutBinding, 2> const& Bindings() noexcept
-        {
-            static std::array Bindings{
-                vk::DescriptorSetLayoutBinding{
-                    .binding = 0,
-                    .descriptorType = vk::DescriptorType::eUniformBuffer,
-                    .descriptorCount = 1,
-                    .stageFlags = vk::ShaderStageFlagBits::eVertex,
-                    .pImmutableSamplers = nullptr
-                    },
-                vk::DescriptorSetLayoutBinding{
-                    .binding = 1,
-                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                    .descriptorCount = 1,
-                    .stageFlags = vk::ShaderStageFlagBits::eFragment,
-                    .pImmutableSamplers = nullptr
-                    },
-                };
-
-            return Bindings;
-        }
-    };
-    static_assert(CDeviceLayout<PipelineLayout>);
+    // struct PipelineLayout final
+    // {
+    //     static std::array<vk::DescriptorSetLayoutBinding, 1> const& Bindings() noexcept
+    //     {
+    //         static std::array Bindings{
+    //             // vk::DescriptorSetLayoutBinding{
+    //             //     .binding = 0,
+    //             //     .descriptorType = vk::DescriptorType::eUniformBuffer,
+    //             //     .descriptorCount = 1,
+    //             //     .stageFlags = vk::ShaderStageFlagBits::eVertex,
+    //             //     .pImmutableSamplers = nullptr
+    //             //     },
+    //             vk::DescriptorSetLayoutBinding{
+    //                 .binding = 0,
+    //                 .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+    //                 .descriptorCount = 1,
+    //                 .stageFlags = vk::ShaderStageFlagBits::eFragment,
+    //                 .pImmutableSamplers = nullptr
+    //                 },
+    //             };
+    //
+    //         return Bindings;
+    //     }
+    // };
+    // static_assert(CDeviceLayout<PipelineLayout>);
 
     struct VPC final : public TVertexPushConstant<LStaticMesh::VPC>
     {

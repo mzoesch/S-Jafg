@@ -19,7 +19,6 @@
 #include "Framework/Pawn.h"
 #include "Framework/Eye.h"
 #include "Framework/PersonaController.h"
-#include "System/TextureSubsystem.h"
 #include "User/Input/GlfwInputTranslation.h"
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
@@ -188,7 +187,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
 
@@ -200,7 +199,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     }
 #endif /* PLATFORM_LINUX */
 
-    check( Info.bFullScreen == false && "Full screen windows are not yet supported." )
+    check(Info.bFullScreen == false && "Full screen windows are not yet supported.")
 
     if (this->CanEverResize())
     {
@@ -209,7 +208,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     }
     else
     {
-        check( this->IsResizable() == false )
+        check(this->IsResizable() == false)
         if (Info.bResizable)
         {
             LOG_WARNING(LogSurface, "The surface [{}] does not support resizing, ignoring request.", this->GetHumanReadableName())
@@ -217,7 +216,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     }
 
     // glfwWindowHint(GLFW_DECORATED, Info.bBorderless ? GLFW_FALSE : GLFW_TRUE);
-    check( Info.bBorderless == false && "Borderless windows are not yet supported." )
+    check(Info.bBorderless == false && "Borderless windows are not yet supported.")
 
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
@@ -233,7 +232,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     }
     if (this->Handle == nullptr)
     {
-        panic( "Failed to create glfw window." )
+        panic("Failed to create glfw window.")
     }
 
     glfwSetWindowUserPointer(this->Handle, this);
@@ -258,24 +257,24 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
     this->SetVSync(*GetSingleton<JUserPreferences>().bVSyncEnabled);
 
 #if PLATFORM_WINDOWS
-    const HWND NativeWindowHandle = glfwGetWin32Window(this->Handle);
-    check( NativeWindowHandle )
-    const u32 PlatformDpi = ::GetDpiForWindow(NativeWindowHandle);
+    const HWND NativeWindowHandle{glfwGetWin32Window(this->Handle)};
+    check(NativeWindowHandle)
+    const u32 PlatformDpi{::GetDpiForWindow(NativeWindowHandle)};
 #else /* PLATFORM_WINDOWS */
     const u32 PlatformDpi = 96; // Sketchy
 #endif /* !PLATFORM_WINDOWS */
     // TODO: Update this when the window is moved to another monitor with different DPI.
     this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
-    auto WindowDimensions{ this->GetDimensions() };
+    auto WindowDimensions{this->GetDimensions()};
     LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.x, WindowDimensions.y, PlatformDpi)
 
-    auto& Instance{ this->GetFrontend().Vk_GetInstance() };
+    auto& Instance{this->GetFrontend().Vk_GetInstance()};
     VkSurfaceKHR CSurface;
     if (glfwCreateWindowSurface(*Instance, this->Handle, nullptr, &CSurface) != VK_SUCCESS)
     {
-        panic( "Failed to create Vulkan window surface." )
+        panic("Failed to create Vulkan window surface.")
     }
-    check( CSurface )
+    check(CSurface)
     this->Vk_Surface = vk::raii::SurfaceKHR{Instance, CSurface};
 
     return;
@@ -611,6 +610,40 @@ void Jafg::LSurfaceGlfw3::OnRender()
             .range = sizeof(decltype(LRenderInfo::PerspectiveCamera))
             };
 
+        {
+            auto Sets{(*Frontend.Vk_GetDevice()).allocateDescriptorSets({
+                .descriptorPool = Info.DescriptorPool,
+                .descriptorSetCount = 1,
+                .pSetLayouts = &*Frontend.Vk_GetPerspectiveCameraDescriptorSetLayout()
+                })};
+            check(Sets.size() == 1)
+            auto Set{Sets[0]};
+
+            std::array Writes{vk::WriteDescriptorSet{
+                .dstSet = Set,
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .pBufferInfo = &Info.PerspectiveCameraWriteInfo,
+                }};
+            Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+            Info.PerspectiveCameraDescriptorSet = Set;
+        }
+
+        {
+            auto Sets{(*Info.Frontend.Vk_GetDevice()).allocateDescriptorSets({
+                .descriptorPool = Info.DescriptorPool,
+                .descriptorSetCount = 1,
+                .pSetLayouts = &*Frontend.Vk_GetDefaultMaterialDescriptorSetLayout(),
+                })};
+            check(Sets.size() == 1)
+            auto Set{Sets[0]};
+
+            Info.DefaultMaterialDescriptorSet = Set;
+        }
+
         this->GetOwnedController()->GetWorld().Draw(Info);
     }
 
@@ -780,8 +813,8 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(const EMouseCursor::Type InCursor)
 
 void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 {
-    checkSlow( Tasks::IsOnMasterThread() )
-    checkSlow( this->Handle )
+    checkSlow(Tasks::IsOnMasterThread())
+    checkSlow(this->Handle)
 
     if (this->IsVSync() == bEnabled)
     {
@@ -1053,9 +1086,12 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     this->Vk_AvailablePresentModes = Frontend.Vk_GetPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface);
     LOG_VERBOSE(LogVulkan, "Available present modes:")
-    for (auto const& PresentMode : this->Vk_AvailablePresentModes)
+    if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose))
     {
-        LOG_VERBOSE(LogVulkan, "    Present Mode [{}]", vk::to_string(PresentMode))
+        for (auto const& PresentMode : this->Vk_AvailablePresentModes)
+        {
+            LOG_VERBOSE(LogVulkan, "    Present Mode [{}]", vk::to_string(PresentMode))
+        }
     }
 
     {
@@ -1441,7 +1477,7 @@ static void TestPipeline(Jafg::LSurface const& Surface)
     auto& Frontend{Surface.GetFrontend()};
 
     VkTestPipeline = LDevicePipelineFactory{Frontend}
-        .Shader("Content/Shaders/Spir-V/VisualBox.spv",
+        .Shader("Content/Shaders/Spir-V/VisualBox.jafg.spv",
             vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
         .VertexInput<LRhiVertex2D>()
         .Build();

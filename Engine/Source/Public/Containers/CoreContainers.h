@@ -150,6 +150,10 @@ struct std::formatter<LPath> : std::formatter<std::string>
 {
     FORCEINLINE std::format_context::iterator format(LPath const& Path, std::format_context& InContext) const
     {
+#if JAFG_PLATFORM_USES_UTF8
+        return std::formatter<std::string>::format(Path.native(), InContext);
+#else /* JAFG_PLATFORM_USES_UTF8 */
         return std::formatter<std::string>::format(Path.string(), InContext);
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
     }
 };

@@ -16,6 +16,7 @@ struct LSlangCompilationRequest
     LPath Out;
     LString Target{ "spirv" };
     LString Profile{ "spirv_1_5" };
+    TArray<LString> IncludeDirectories;
     TArray<LString> EntryPoints;
 };
 
@@ -78,6 +79,42 @@ public:
         vk::raii::PhysicalDevice PhysicalDevice;
     };
 
+    struct PerspectiveCameraSetLayout
+    {
+        static std::array<vk::DescriptorSetLayoutBinding, 1> const& Bindings() noexcept
+        {
+            static std::array Bindings{
+                vk::DescriptorSetLayoutBinding{
+                    .binding = 0,
+                    .descriptorType = vk::DescriptorType::eUniformBuffer,
+                    .descriptorCount = 1,
+                    .stageFlags = vk::ShaderStageFlagBits::eVertex,
+                    .pImmutableSamplers = nullptr
+                    },
+                };
+
+            return Bindings;
+        }
+    };
+
+    struct DefaultMaterialSetLayout
+    {
+        static std::array<vk::DescriptorSetLayoutBinding, 1> const& Bindings() noexcept
+        {
+            static std::array Bindings{
+                vk::DescriptorSetLayoutBinding{
+                    .binding = 0,
+                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                    .descriptorCount = 1,
+                    .stageFlags = vk::ShaderStageFlagBits::eFragment,
+                    .pImmutableSamplers = nullptr
+                    },
+                };
+
+            return Bindings;
+        }
+    };
+
     void Initialize(LClassOuter* Outer);
     void TearDown();
 
@@ -118,6 +155,8 @@ public:
     FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check( this->Vk_SurfaceFormat.format != vk::Format::eUndefined ) return this->Vk_SurfaceFormat; }
 
     FORCEINLINE auto const& Vk_GetDefaultSampler() const noexcept { return this->Vk_DefaultSampler; }
+    FORCEINLINE auto const& Vk_GetPerspectiveCameraDescriptorSetLayout() const noexcept { return this->Vk_PerspectiveCameraDescriptorSetLayout; }
+    FORCEINLINE auto const& Vk_GetDefaultMaterialDescriptorSetLayout() const noexcept { return this->Vk_DefaultMaterialDescriptorSetLayout; }
 
     FORCEINLINE auto const& Vk_GetPipelines() const noexcept { return this->Vk_Pipelines; }
 
@@ -160,9 +199,6 @@ public:
 
     //# Public private function!!! NEVER use. For internal stuff only!!!!!!!!
     ENGINE_API void _Vk_WaitIdle();
-
-    ENGINE_API i64 HandleSlangCompilationRequest(LSlangCompilationRequest const& Request);
-    ENGINE_API i64 HandleSlangCompilationRequest(LPath Slangc, LSlangCompilationRequest const& Request);
 
 private:
 
@@ -235,6 +271,8 @@ private:
     vk::SurfaceFormatKHR Vk_SurfaceFormat{ vk::Format::eUndefined };
 
     vk::raii::Sampler Vk_DefaultSampler{ nullptr };
+    vk::raii::DescriptorSetLayout Vk_PerspectiveCameraDescriptorSetLayout{ nullptr };
+    vk::raii::DescriptorSetLayout Vk_DefaultMaterialDescriptorSetLayout{ nullptr };
 
     std::unordered_map<LPipelineKey, LGraphicsDevicePipeline> Vk_Pipelines;
 };

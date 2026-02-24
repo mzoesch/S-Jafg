@@ -336,13 +336,13 @@ inline TArray<LString> Finder::FindFilesRecursively
 (
     const LPath& Directory,
     const bool bKeepExtension /* = true */,
-    const LStringView& Regex /* = "*" */,
+    LStringView Regex /* = "*" */,
     std::regex_constants::syntax_option_type Options /* = std::regex_constants::ECMAScript */
 )
 {
     if (DoesDirectoryExist(Directory) == false)
     {
-        return { };
+        return {};
     }
 
     TArray<LString> Out;
@@ -377,14 +377,14 @@ inline TArray<LString> Finder::FindFilesRecursively
 #if JAFG_PLATFORM_USES_UTF8
                 Out.emplace_back(LString{ P.path().native().begin().base(), P.path().native().size() });
 #else /* JAFG_PLATFORM_USES_UTF8 */
-                Out.emplace_back(std::move(PFromNative));
+                Out.emplace_back(Finder::Normalize(std::move(PFromNative)));
 #endif /* JAFG_PLATFORM_USES_UTF8 */
             }
             else
             {
-                std::filesystem::path NoExtension { P.path().native() };
+                std::filesystem::path NoExtension{P.path().native()};
                 NoExtension.replace_extension();
-                Out.emplace_back(NoExtension.string());
+                Out.emplace_back(Finder::Normalize(NoExtension.string()));
             }
         }
 
@@ -394,11 +394,11 @@ inline TArray<LString> Finder::FindFilesRecursively
     return Out;
 }
 
-inline TArray<LString> Finder::FindFilesRecursivelyByName(const LPath& Directory, const LStringView& FileName)
+inline TArray<LString> Finder::FindFilesRecursivelyByName(LPath const& Directory, LStringView FileName)
 {
     if (DoesDirectoryExist(Directory) == false)
     {
-        return { };
+        return {};
     }
 
     TArray<LString> Out;
@@ -415,9 +415,9 @@ inline TArray<LString> Finder::FindFilesRecursivelyByName(const LPath& Directory
             continue;
         }
 
-        if (const LString F{ P.path().filename().string() }; FileName == F)
+        if (const LString F{P.path().filename().string()}; FileName == F)
         {
-            Out.emplace_back(P.path().string());
+            Out.emplace_back(Finder::Normalize(P.path().string()));
         }
 
         continue;

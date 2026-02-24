@@ -17,11 +17,18 @@ namespace Finder
 
 inline LPath GetCwd();
 
-inline LPath GetSavedDir() noexcept { return LPath{ "Saved" }; }
-inline LPath GetUserPreferencesFile() noexcept { LPath Out { GetSavedDir() }; Out.concat("/MyPreferences.cfg"); return Out; }
-inline LPath GetSavesDir() noexcept { LPath Out { GetSavedDir() }; Out.concat("/Saves"); return Out; }
-inline LPath GetDumpsDir() noexcept { LPath Out { GetSavedDir() }; Out.concat("/Dumps"); return Out; }
-inline LPath GetMostRecentMemDumpFile() noexcept { LPath Out { GetDumpsDir() }; Out.concat("/proc.dmp"); return Out; }
+inline LPath GetSavedDir() noexcept { return LPath{"Saved"}; }
+inline LPath GetUserPreferencesFile() noexcept { return GetSavedDir() / "MyPreferences.cfg"; }
+inline LPath GetDumpsDir() noexcept { return GetSavedDir() / "Dumps"; }
+inline LPath GetMostRecentMemDumpFile() noexcept { return GetDumpsDir() / "proc.dmp"; }
+
+inline LPath GetContentDir() noexcept { return LPath{"Content"}; }
+inline LPath GetMaterialsDir() noexcept { return GetContentDir() / "Materials"; }
+inline LPath GetModelsDir() noexcept { return GetContentDir() / "Models"; }
+inline LPath GetTopLevelShadersDir() noexcept { return GetContentDir() / "Shaders"; }
+inline LPath GetSlangShadersDir() noexcept { return GetTopLevelShadersDir() / "Slang"; }
+inline LPath GetSpirShadersDir() noexcept { return GetTopLevelShadersDir() / "Spir-V"; }
+inline LPath GetTexturesDir() noexcept { return GetContentDir() / "Textures"; }
 
 inline bool DoesExist(const LPath& Path);
 inline bool DoesExistChecked(const LPath& Path) { const bool bOut { DoesExist(Path) }; check( bOut ) return bOut; }
@@ -64,6 +71,19 @@ inline void OverrideFile(const LPath& File, const LStringView& Content, const bo
 
 inline void MakeFileBackup(const LPath& File, const bool bMakeIfSame = false, i32 Count = 5, const LStringView& Extension = ".old");
 
+inline LString Normalize(LString File) noexcept
+{
+#if PLATFORM_WINDOWS
+    auto Location{File.find('\\')};
+    while (Location != File.npos)
+    {
+        File[Location] = '/';
+        Location = File.find('\\', Location);
+    }
+#endif /* PLATFORM_WINDOWS */
+    return File;
+}
+
 //#
 //# Searches the given directory for files with the given extension following std regrex.
 //#
@@ -82,7 +102,7 @@ inline TArray<LString> FindFilesRecursively
 (
     const LPath& Directory,
     const bool bKeepExtension = true,
-    const LStringView& Regex = "*",
+    LStringView Regex = "*",
     const std::regex_constants::syntax_option_type Options = std::regex_constants::ECMAScript
 );
 
@@ -91,8 +111,8 @@ inline TArray<LString> FindFilesRecursively
 //#
 inline TArray<LString> FindFilesRecursivelyByName
 (
-    const LPath& Directory,
-    const LStringView& FileName
+    LPath const& Directory,
+    LStringView FileName
 );
 
 } /* ~Namespace Finder */

@@ -1,9 +1,5 @@
-struct UBO_Camera
-{
-    float4x4 view;
-    float4x4 proj;
-};
-[[vk::binding(0, 0)]] ConstantBuffer<UBO_Camera> camera;
+// Copyright mzoesch. All rights reserved.
+#include "Bindings/PerspectiveCamera.jafg.slang"
 
 struct PC_Model
 {
@@ -40,7 +36,7 @@ VSOutput vertMain(VSInput input)
     return output;
 }
 
-[[vk::binding(1, 0)]] Sampler2D texture;
+[[vk::binding(0, 1)]] Sampler2D texture;
 
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_TARGET

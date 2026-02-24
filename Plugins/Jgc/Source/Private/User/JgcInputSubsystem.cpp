@@ -7,7 +7,7 @@
 void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
-    Collection.InitializeDependency<Jafg::JCoreInputSubsystem>();
+    Collection.InitializeDependency<Jafg::JCoreInputSubsystem>(this);
 
     Jafg::LUserInputRegistry& Registry{this->GetLocalEgo().GetUserInputRegistry()};
 

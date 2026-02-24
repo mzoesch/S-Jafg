@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Subsystems/EngineSubsystem.h"
+#include "Rhi/Material.h"
 #include "MaterialSubsystem.generated.h"
 
 namespace Jafg
@@ -16,6 +17,18 @@ class ENGINE_API JMaterialSubsystem final : public JEngineSubsystem
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JMaterialSubsystem)
+
+public:
+
+    virtual void Initialize(LSubsystemCollection& Collection) override;
+
+    void ReloadMaterials();
+
+    FORCEINLINE TArray<LMaterial> const& GetMaterials() const noexcept { return this->Materials; }
+
+private:
+
+    TArray<LMaterial> Materials;
 };
 
 } /* ~Namespace Jafg */

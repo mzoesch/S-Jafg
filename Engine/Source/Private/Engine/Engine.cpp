@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/Engine.h"
-#include "System/TextureSubsystem.h"
-#include "System/MeshSubsystem.h"
+#include "Framework/TextureSubsystem.h"
+#include "Framework/MeshSubsystem.h"
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
 #include "Async/TickedRunnable.h"

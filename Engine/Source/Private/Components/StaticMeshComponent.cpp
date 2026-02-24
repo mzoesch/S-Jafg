@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Components/StaticMeshComponent.h"
-#include "System/MeshSubsystem.h"
-#include "System/TextureSubsystem.h"
+#include "Framework/MeshSubsystem.h"
+#include "Framework/TextureSubsystem.h"
 #include "Framework/Frontend.h"
 
 void Jafg::AStaticMeshComponent::Create(CreateInfo const& Info)
@@ -21,19 +21,16 @@ void Jafg::AStaticMeshComponent::Create(CreateInfo const& Info)
     }
 }
 
+static u64 Frame{999999};
+
 void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
 {
     auto& Pipeline{Info.Frontend.Vk_GetPipelines().at({LStaticMesh::DefaultShader})};
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
 
-    auto Sets{(*Info.Frontend.Vk_GetDevice()).allocateDescriptorSets({
-        .descriptorPool = Info.DescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &*Pipeline.DescriptorSetLayout,
-        })};
-    check(Sets.size() == 1)
-    auto Set{Sets[0]};
+    check(Pipeline.SharedDescriptorSetLayout.size() == 2)
+    check(Pipeline.UniqueDescriptorSetLayout.size() == 0)
 
     vk::DescriptorImageInfo ImageInfo{
         .sampler = Info.Surface.GetFrontend().Vk_GetDefaultSampler(),
@@ -41,32 +38,38 @@ void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
         .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
 
-    std::array Writes{
-        vk::WriteDescriptorSet{
-            .dstSet = Set,
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &Info.PerspectiveCameraWriteInfo,
-            },
-        vk::WriteDescriptorSet{
-            .dstSet = Set,
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo = &ImageInfo,
-            },
-        };
-    Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    if (Application::GetFrameCount() != Frame)
+    {
+        Frame = Application::GetFrameCount();
+        std::array Writes{
+            vk::WriteDescriptorSet{
+                .dstSet = Info.DefaultMaterialDescriptorSet,
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .pImageInfo = &ImageInfo,
+                },
+            };
+        Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
 
     Info.CommandBuffer.bindDescriptorSets2({
         .stageFlags = vk::ShaderStageFlagBits::eVertex,
         .layout = *Pipeline.Layout,
         .firstSet = 0,
         .descriptorSetCount = 1,
-        .pDescriptorSets = &Set,
+        .pDescriptorSets = &Info.PerspectiveCameraDescriptorSet,
+        .dynamicOffsetCount = 0,
+        .pDynamicOffsets = nullptr
+        });
+
+    Info.CommandBuffer.bindDescriptorSets2({
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .layout = *Pipeline.Layout,
+        .firstSet = 1,
+        .descriptorSetCount = 1,
+        .pDescriptorSets = &Info.DefaultMaterialDescriptorSet,
         .dynamicOffsetCount = 0,
         .pDynamicOffsets = nullptr
         });

@@ -111,17 +111,17 @@ public:
 
 private:
 
-    void FramebufferSizeCallback(const i32 Width, const i32 Height);
-    void MouseCallback(const f64 XPos, const f64 YPos);
-    void ScrollCallback(const f64 XOffset, const f64 YOffset);
-    void MouseEnterCallback(const i32 Entered);
-    void CharCallback(const u32 Codepoint);
-    void KeyCallback(const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods);
+    void FramebufferSizeCallback(i32 Width, i32 Height);
+    void MouseCallback(f64 XPos, f64 YPos);
+    void ScrollCallback(f64 XOffset, f64 YOffset);
+    void MouseEnterCallback(i32 Entered);
+    void CharCallback(u32 Codepoint);
+    void KeyCallback(i32 Key, i32 Scancode, i32 Action, i32 Mods);
 
 #if PLATFORM_LINUX
     virtual void EmulateRepeatedContentForBufferedInput() override;
-    virtual void EmulateContentForBufferedInput(const LKey InKey) override;
-    void EmulateContentForBufferedInputGlfw3(const i32 InKey);
+    virtual void EmulateContentForBufferedInput(LKey InKey) override;
+    void EmulateContentForBufferedInputGlfw3(i32 InKey);
 #endif /* PLATFORM_LINUX */
 
     void Vk_CreateCommandPool();
@@ -191,12 +191,14 @@ private:
     std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_ImageAvailableSemaphores;
     std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_RenderSemaphores;
     std::array<vk::raii::Fence, Jafg::Vk_DesiredMaxFramesInFlight> Vk_FlightFences;
-    u32 Vk_LastFrameInFlightIndex{ 0 };
+    u32 Vk_LastFrameInFlightIndex{};
     TOptional<u32> Vk_CurrentFrameInFlightIndex{};
 
     std::array<vk::raii::CommandBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_CommandBuffers;
 
     std::array<vk::raii::DescriptorPool, Jafg::Vk_DesiredMaxFramesInFlight> Vk_DescriptorPools;
+
+    std::array<vk::DescriptorSet, Jafg::Vk_DesiredMaxFramesInFlight> Vk_PerspectiveCameraDescriptorSets;
 
     std::array<LMappedDeviceBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_PerspectiveCameraBuffers;
 };

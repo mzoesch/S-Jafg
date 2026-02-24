@@ -244,14 +244,15 @@ struct LGraphicsDevicePipeline
     {
         this->Pipeline.clear();
         this->Layout.clear();
-        this->DescriptorSetLayout.clear();
+        algo::orphan(&this->UniqueDescriptorSetLayout);
     }
 
     inline decltype(auto) operator*() const & noexcept { return *this->Pipeline; }
 
     vk::raii::Pipeline Pipeline{ nullptr };
     vk::raii::PipelineLayout Layout{ nullptr };
-    vk::raii::DescriptorSetLayout DescriptorSetLayout{ nullptr };
+    TArray<vk::DescriptorSetLayout> SharedDescriptorSetLayout;
+    TArray<vk::raii::DescriptorSetLayout> UniqueDescriptorSetLayout;
 };
 
 struct LDevicePipelineFactory
@@ -359,18 +360,22 @@ struct LDevicePipelineFactory
         return std::forward<decltype(Self)>(Self);
     }
 
-    template<CDeviceLayout TDeviceLayout>
-    decltype(auto) Layout(this auto&& Self) noexcept
+    decltype(auto) SharedLayout(this auto&& Self, vk::DescriptorSetLayout SharedDescriptorSetLayout) noexcept
     {
-        check( *Self.DescriptorSetLayout == nullptr )
+        Self.SharedDescriptorSetLayouts.emplace_back(SharedDescriptorSetLayout);
+        return std::forward<decltype(Self)>(Self);
+    }
 
-        Self.DescriptorSetLayout = vk::raii::DescriptorSetLayout{
+    template<CDeviceLayout TDeviceLayout>
+    decltype(auto) UniqueLayout(this auto&& Self) noexcept
+    {
+        Self.UniqueDescriptorSetLayouts.emplace_back(
             Self.Frontend.Vk_GetDevice(),
             vk::DescriptorSetLayoutCreateInfo{
                 .bindingCount = static_cast<u32>(TDeviceLayout::Bindings().size()),
                 .pBindings = TDeviceLayout::Bindings().data(),
                 }
-            };
+            );
 
         return std::forward<decltype(Self)>(Self);
     }
@@ -430,10 +435,19 @@ struct LDevicePipelineFactory
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor,
         };
-    vk::raii::DescriptorSetLayout DescriptorSetLayout{ nullptr };
+    TArray<vk::DescriptorSetLayout> SharedDescriptorSetLayouts;
+    TArray<vk::raii::DescriptorSetLayout> UniqueDescriptorSetLayouts;
     vk::raii::PipelineLayout PipelineLayout{ nullptr };
     std::optional<vk::PushConstantRange> Range;
 };
+
+inline vk::Format Vk_StringToFormat(LStringView String) noexcept
+{
+    if (String == "eR8G8B8A8Srgb") { return vk::Format::eR8G8B8A8Srgb; }
+    if (String == "eR8G8B8Srgb") { return vk::Format::eR8G8B8Srgb; }
+
+    return vk::Format::eUndefined;
+}
 
 inline constexpr LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
 {

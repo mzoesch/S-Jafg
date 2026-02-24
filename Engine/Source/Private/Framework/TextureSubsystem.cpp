@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "System/TextureSubsystem.h"
+#include "Framework/TextureSubsystem.h"
 #include "Engine/Engine.h"
 
 void Jafg::JTextureSubsystem::PurgeUnused() noexcept
