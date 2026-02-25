@@ -1,5 +1,5 @@
 // Copyright mzoesch. All rights reserved.
-#include "Ubos/PerspectiveCamera.jafg.slang"
+#include "Ubos/Jafg.PerspectiveCamera.slang"
 
 //
 // The default perspective camera bindings used by Jafg.

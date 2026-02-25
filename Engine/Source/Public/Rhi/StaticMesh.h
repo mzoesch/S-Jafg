@@ -19,7 +19,7 @@ struct LStaticMesh final
     struct Vertex final
     {
         LVec3F Position;
-        LVec3F Color;
+        LVec3F Normal;
         LVec2F TexCoord;
 
         static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
@@ -39,7 +39,7 @@ struct LStaticMesh final
                     .location = 0, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Position)
                     },
                 vk::VertexInputAttributeDescription{
-                    .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Color)
+                    .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Normal)
                     },
                 vk::VertexInputAttributeDescription{
                     .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(LStaticMesh::Vertex, TexCoord)
@@ -50,7 +50,7 @@ struct LStaticMesh final
 
         FORCEINLINE constexpr bool operator==(LStaticMesh::Vertex const& V) const noexcept
         {
-            return this->Position == V.Position && this->Color == V.Color && this->TexCoord == V.TexCoord;
+            return this->Position == V.Position && this->TexCoord == V.TexCoord;
         }
     };
     static_assert(CDeviceVertexInput<LStaticMesh::Vertex>);
@@ -135,6 +135,6 @@ struct std::hash<Jafg::LStaticMesh::Vertex>
 {
     FORCEINLINE size_t operator()(Jafg::LStaticMesh::Vertex const& Vertex) const noexcept
     {
-        return ((hash<glm::vec3>()(Vertex.Position) ^ (hash<glm::vec3>()(Vertex.Color) << 1)) >> 1) ^ (hash<glm::vec2>()(Vertex.TexCoord) << 1);
+        return (hash<glm::vec3>()(Vertex.Position) >> 1) ^ (hash<glm::vec2>()(Vertex.TexCoord) << 1);
     }
 };

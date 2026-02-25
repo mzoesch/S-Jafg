@@ -14,7 +14,7 @@ struct LTextureView;
 
 //# A texture that was loaded by the program and may be used across many different widgets.
 DECLARE_JAFG_CLASS()
-class JTextureSubsystem : public JFrontendSubsystem
+class ENGINE_API JTextureSubsystem : public JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -35,14 +35,14 @@ public:
     FORCEINLINE auto GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
     FORCEINLINE auto const& GetTextures() const noexcept { return this->Textures; }
 
-    ENGINE_API LTexture2Ref FromFile(LPath const& Path
+    LTexture2Ref FromFile(LPath const& Path
         , LTexture2::HostInfo HostCreateInfo
         , LTexture2::DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Device
         );
 
-    ENGINE_API LTexture2Ref FromTextureViewIdentifier(LStringView TextureView, ETexture2State State = ETexture2StateBits::Device);
-    ENGINE_API LTexture2Ref FromTextureView(LTextureView const& View, ETexture2State State = ETexture2StateBits::Device);
+    LTexture2Ref FromTextureViewIdentifier(LStringView TextureView, ETexture2State State = ETexture2StateBits::Device);
+    LTexture2Ref FromTextureView(LTextureView const& View, ETexture2State State = ETexture2StateBits::Device);
 
 private:
 

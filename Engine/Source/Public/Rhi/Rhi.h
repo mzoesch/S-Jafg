@@ -70,7 +70,13 @@ struct LRenderInfo
     vk::DescriptorBufferInfo PerspectiveCameraWriteInfo;
     vk::DescriptorSet PerspectiveCameraDescriptorSet;
 
-    vk::DescriptorSet DefaultMaterialDescriptorSet;
+    //#
+    //# The default perspective polygon mode. If rendering does not require a specific polygon mode,
+    //# this one should be used.
+    //# If your draw call requires something else. Then reset the command buffer to this polygon mode after your
+    //# buffer submission.
+    //#
+    vk::PolygonMode DefaultPerspectivePolygonMode;
 };
 
 template<typename T>

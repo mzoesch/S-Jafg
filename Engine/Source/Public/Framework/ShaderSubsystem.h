@@ -12,12 +12,9 @@ namespace Jafg
 
 struct LShaderCompilationRequest
 {
-    LPath In;
-    LPath Out;
     LString Target{ "spirv" };
     LString Profile{ "spirv_1_5" };
-    TArray<LString> IncludeDirectories;
-    TArray<LString> EntryPoints;
+    LFetchedShader const& FetchedShader;
 };
 
 DECLARE_JAFG_CLASS()

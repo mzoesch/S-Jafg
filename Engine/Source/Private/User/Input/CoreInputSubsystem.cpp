@@ -17,7 +17,27 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    LUserInputRegistry& Registry{ this->GetLocalEgo().GetUserInputRegistry() };
+    LUserInputRegistry& Registry{this->GetLocalEgo().GetUserInputRegistry()};
+
+    if (LUserInputContext* Context{Registry.RegisterContext({LUserInputTag::ToTag("RhiDebug"), "Rhi Debug"})})
+    {
+        Context->MapAction(&Registry,
+            {LUserInputTag::ToTag("ToggleRhiPolygonMode"), "ToggleRhiPolygonMode", EInputActionCategory::Boolean},
+            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{"Forward", EKeys::F1, EInputActionTrigger::Triggered}),
+            [](LViewport&, LInputActionValue&)
+            {
+                if (auto& Prefs{GetMutableSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
+                {
+                    LOG_VERBOSE(LogUserInput, "Switching polygon mode to wireframe.")
+                    Prefs.PolygonMode = EPolygonMode::Wireframe;
+                }
+                else
+                {
+                    LOG_VERBOSE(LogUserInput, "Switching polygon mode to fill.")
+                    Prefs.PolygonMode = EPolygonMode::Fill;
+                }
+            });
+    }
 
     // if (LUserInputContext* Context{ Registry.RegisterContext(LUserInputContext{Name_UicInOmni, "Omni Context"}) })
     // {

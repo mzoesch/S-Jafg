@@ -18,25 +18,15 @@ class ENGINE_API AStaticMeshComponent : public ASceneComponent
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS(AStaticMeshComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(AStaticMeshComponent)
+    {
+        this->SetShouldRender(true);
+    }
 
 public:
 
-    struct CreateInfo final
-    {
-        //# Whether to enable rendering for this component in future draw calls.
-        bool bRender{ true };
-
-        //# Required path to the mesh that should be rendered by this component.
-        LPath MeshPath;
-        //# The state that the mesh will have when loaded.
-        EStaticMeshState MeshState{ EStaticMeshStateBits::Device };
-
-        LString Material;
-        LString TextureView;
-    };
-
-    void Create(CreateInfo const& Info);
+    void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
+    void SetMaterialInstance(LMaterialInstanceRef MaterialInstance) noexcept;
 
     virtual void Render(LRenderInfo const& Info) noexcept override;
 

@@ -1,0 +1,29 @@
+{
+    "Inherits": "Jafg.Base",
+    "Src": "Jafg.StaticMesh.slang",
+    "Dst": "Jafg.StaticMesh.spv",
+    "VertexInput": "Jafg::LStaticMesh::Vertex",
+    "PushConstants": [
+        "Jafg::LStaticMesh::VPC"
+    ],
+    "Layouts": [
+        [
+            {
+                "Identifier": "PerspectiveCamera",
+                "Type": "Shared"
+            }
+        ],
+        [
+            {
+                "Type": "Unique",
+                "Sets": [
+                    {
+                        "Identifier": "Texture",
+                        "Stage": "eFragment",
+                        "DescriptorType": "eCombinedImageSampler"
+                    }
+                ]
+            }
+        ]
+    ]
+}

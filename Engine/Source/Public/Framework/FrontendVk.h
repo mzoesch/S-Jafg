@@ -216,6 +216,7 @@ private:
         vk::KHRSpirv14ExtensionName,
         vk::KHRSynchronization2ExtensionName,
         vk::KHRCreateRenderpass2ExtensionName,
+        vk::EXTExtendedDynamicState3ExtensionName
         };
     vk::raii::Device Vk_Device{ nullptr };
     vk::raii::Queue Vk_GraphicsQueue{ nullptr };

@@ -9,7 +9,10 @@
 namespace Jafg
 {
 
+class JShaderSubsystem;
+class JTextureSubsystem;
 struct LTexture2;
+struct LFetchedShader;
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JMaterialSubsystem final : public JFrontendSubsystem
@@ -32,15 +35,21 @@ public:
     LMaterialRef GetMaterial(LString const& Name) noexcept;
     //# Get the instance of a material to specify unique data.
     LMaterialInstanceRef GetInstance(LMaterialRef Material);
+    LMaterialInstanceRef GetInstanceFromMaterialName(LString const& MaterialName) { return this->GetInstance(this->GetMaterial(MaterialName)); }
 
-    //# Only for unique layouts.
-    void SetCombinedImageSampler(LMaterialInstanceRef MaterialInstance, LStringView Where, LTexture2 const& Texture) const;
+    ///////////////////////////////////////////////////////////////////////////////
+    // Only for unique layouts.
+    //# @param FetchedMaterial Optional field if the caller already has the fetched material at hand.
+    void SetMaterialInstanceField(LMaterialInstance& Instance, LString const& Key, LString const& Value, LFetchedShader const& InShader) const noexcept;
+    void SetCombinedImageSampler(LMaterialInstance& Instance, LStringView Where, LTexture2 const& Texture) const;
 
 private:
 
+    JTextureSubsystem* TextureSubsystem{};
+    JShaderSubsystem* ShaderSubsystem{};
+
     TArray<LFetchedMaterial> FetchedMaterials;
     std::unordered_map<LString, std::shared_ptr<LMaterial>> Materials;
-    std::unordered_map<LString, std::shared_ptr<LMaterialInstance>> MaterialInstances;
 };
 
 } /* ~Namespace Jafg */

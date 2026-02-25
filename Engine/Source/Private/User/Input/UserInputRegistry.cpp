@@ -11,7 +11,7 @@ Jafg::LUserInputTag Jafg::LUserInputTag::ToTag(LStringView S) noexcept
         return GEngine->GetLocalEgo().GetUserInputRegistry().GetMutableTagRegistry().RegisterOrGet(S);
     }
 
-    return {};
+    LOG_FATAL(LogUserInput, "Attempted to convert string [{}] to user input tag but engine is not valid.", S)
 }
 
 Jafg::LUserInputTag Jafg::LUserInputTag::AsTag(LStringView S)
@@ -21,7 +21,7 @@ Jafg::LUserInputTag Jafg::LUserInputTag::AsTag(LStringView S)
         return GEngine->GetLocalEgo().GetUserInputRegistry().GetMutableTagRegistry().GetTag(S);
     }
 
-    return {};
+    LOG_FATAL(LogUserInput, "Attempted to convert string [{}] to user input tag but engine is not valid.", S)
 }
 
 LString Jafg::LUserInputTag::ToString() const noexcept
@@ -31,7 +31,7 @@ LString Jafg::LUserInputTag::ToString() const noexcept
         return GEngine->GetLocalEgo().GetUserInputRegistry().GetTagRegistry().GetReprSafe(*this);
     }
 
-    return {};
+    LOG_FATAL(LogUserInput, "Attempted to convert user input tag [{}] to string but engine is not valid.", *this)
 }
 
 Jafg::LInputAction const* Jafg::LUserInputRegistry::RegisterAction(LInputAction&& InAction)

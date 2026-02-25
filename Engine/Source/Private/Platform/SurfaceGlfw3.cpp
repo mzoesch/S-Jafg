@@ -632,6 +632,19 @@ void Jafg::LSurfaceGlfw3::OnRender()
             Info.PerspectiveCameraDescriptorSet = Set;
         }
 
+        if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
+        {
+            Info.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
+        }
+        else if (Prefs.PolygonMode == EPolygonMode::Wireframe)
+        {
+            Info.DefaultPerspectivePolygonMode = vk::PolygonMode::eLine;
+        }
+        else
+        {
+            unreachable()
+        }
+
         this->GetOwnedController()->GetWorld().Draw(Info);
     }
 

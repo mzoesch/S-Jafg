@@ -573,9 +573,10 @@ struct LDevicePipelineFactory
         .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
                         | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
         };
-    std::array<vk::DynamicState, 2> DynamicStateInfo{
+    std::array<vk::DynamicState, 3> DynamicStateInfo{
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor,
+        vk::DynamicState::ePolygonModeEXT,
         };
     TArray<TDescriptorSetLayout<vk::DescriptorSetLayout>> SharedDescriptorSetLayouts;
     TArray<TDescriptorSetLayout<vk::raii::DescriptorSetLayout>> UniqueDescriptorSetLayouts;

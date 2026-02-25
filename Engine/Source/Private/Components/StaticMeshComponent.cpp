@@ -1,35 +1,64 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Components/StaticMeshComponent.h"
+#include "Framework/ShaderSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/MeshSubsystem.h"
-#include "Framework/TextureSubsystem.h"
 #include "Framework/Frontend.h"
 #include "Engine/Engine.h"
 
-void Jafg::AStaticMeshComponent::Create(CreateInfo const& Info)
+void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
 {
+    this->Mesh = GetSingleton<JMeshSubsystem>().FromFile(Mesh, MeshState);
+}
+
+void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef InMaterialInstance) noexcept
+{
+    if (InMaterialInstance.get() == nullptr)
+    {
+        this->MaterialInstance = nullptr;
+        return;
+    }
+    check(InMaterialInstance->Material.get() != nullptr)
+
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
     JMaterialSubsystem& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
-    JTextureSubsystem& TextureSubsystem{*Frontend.GetSubsystemChecked<JTextureSubsystem>()};
+    JShaderSubsystem& ShaderSubsystem{*Frontend.GetSubsystemChecked<JShaderSubsystem>()};
 
-    this->SetShouldRender(Info.bRender);
+    auto& FetchedMaterial{MaterialSubsystem.GetFetchedMaterial(InMaterialInstance->Material->FetchedMaterial)};
+    auto& FetchedShader{ShaderSubsystem.GetFetchedShader(FetchedMaterial.Shader)};
+    if (FetchedShader.Layouts.empty())
+    {
+        LOG_FATAL(LogRhi, "Expected shared [PerspectiveCamera] binding point at [[(0,0)]].")
+    }
+    else
+    {
+        auto& Layout{FetchedShader.Layouts[0]};
+        if (Layout.Type != LFetchedShader::Layout::Type::Shared || Layout.Identifier != "PerspectiveCamera")
+        {
+            LOG_FATAL(LogRhi
+                , "Expected shared [PerspectiveCamera] binding point at [[(0,0)]]. But got [{}] at [[({}, {})]]."
+                , Layout.Identifier.has_value() ? Layout.Identifier.value() : "<UNIQUE>", 0, 0
+                )
+        }
+    }
 
-    check(Info.MeshPath.empty() == false)
-    this->Mesh = GetSingleton<JMeshSubsystem>().FromFile(Info.MeshPath, Info.MeshState);
-
-    check(Info.TextureView.empty() == false)
-    this->Texture = TextureSubsystem.FromTextureViewIdentifier(Info.TextureView);
-
-    check(Info.Material.empty() == false)
-    this->MaterialInstance = MaterialSubsystem.GetInstance(MaterialSubsystem.GetMaterial(Info.Material));
-    MaterialSubsystem.SetCombinedImageSampler(this->MaterialInstance, "Texture", *this->Texture);
+    this->MaterialInstance = std::move(InMaterialInstance);
 
     return;
 }
 
 void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
 {
+    if (this->Mesh.get() == nullptr)
+    {
+        LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
+    }
+    if (this->MaterialInstance.get() == nullptr)
+    {
+        LOG_FATAL(LogRhi, "No material instance set for this static mesh component. Failed to render.")
+    }
+
     auto& Pipeline{this->MaterialInstance->Material->Pipeline};
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);

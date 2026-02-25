@@ -1016,34 +1016,50 @@ void Jafg::LFrontendVk::Vk_SetMaxMsaaSamples()
     return;
 }
 
+namespace
+{
+
+template<typename TFeature, typename TProj>
+void AssertAvailablePhysicalDeviceFeature(TFeature const& AvailableFeature, TFeature const& RequiredFeature, TProj Proj, LStringView FeatureName)
+{
+    if (std::invoke(Proj, AvailableFeature) != std::invoke(Proj, RequiredFeature))
+    {
+        LOG_FATAL(LogVulkan, "Required physical device feature [{}] is not available.", FeatureName)
+    }
+
+    return;
+}
+
+} /* +Namespace <Anonymous> */
+
 void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan logical device.")
 
-    auto QueueFamilyProperties{ this->Vk_PhysicalDevice.getQueueFamilyProperties() };
-    auto GraphicsQueueFamilyProperty{ algo::find_if(QueueFamilyProperties, [](auto const& Qfp)
+    auto QueueFamilyProperties{this->Vk_PhysicalDevice.getQueueFamilyProperties()};
+    auto GraphicsQueueFamilyProperty{algo::find_if(QueueFamilyProperties, [](auto const& Qfp)
     {
         return (Qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
     })};
     if (GraphicsQueueFamilyProperty == QueueFamilyProperties.end())
     {
-        panic( "Failed to find a suitable graphics queue family." )
+        panic("Failed to find a suitable graphics queue family.")
     }
-    u32 GraphicsQueueFamilyIndex{ static_cast<u32>(algo::distance(QueueFamilyProperties.begin(), GraphicsQueueFamilyProperty)) };
+    u32 GraphicsQueueFamilyIndex{static_cast<u32>(algo::distance(QueueFamilyProperties.begin(), GraphicsQueueFamilyProperty))};
     if (JAFG_UNLIKELY(GraphicsQueueFamilyIndex == QueueFamilyProperties.size()))
     {
-        panic( "Failed to find a suitable graphics queue family." )
+        panic("Failed to find a suitable graphics queue family.")
     }
 
     /* We prefer a combined graphics+present queue (because performance), but also separate ones are ok. */
-    u32 PresentQueueFamilyIndex = this->Vk_PhysicalDevice.getSurfaceSupportKHR(GraphicsQueueFamilyIndex, *QuerySurface.Vk_GetSurface())
+    u32 PresentQueueFamilyIndex{this->Vk_PhysicalDevice.getSurfaceSupportKHR(GraphicsQueueFamilyIndex, *QuerySurface.Vk_GetSurface())
         ? GraphicsQueueFamilyIndex
-        : static_cast<u32>(QueueFamilyProperties.size());
+        : static_cast<u32>(QueueFamilyProperties.size())};
 
     if (PresentQueueFamilyIndex == QueueFamilyProperties.size())
     {
         /* Now try really hard to find a combined queue. */
-        for (auto Idx{ 0uz }; Idx < QueueFamilyProperties.size(); ++Idx)
+        for (auto Idx{0uz}; Idx < QueueFamilyProperties.size(); ++Idx)
         {
             if (   (QueueFamilyProperties[Idx].queueFlags & vk::QueueFlagBits::eGraphics)
                 && this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>( Idx ), *QuerySurface.Vk_GetSurface())
@@ -1053,21 +1069,19 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
                 PresentQueueFamilyIndex  = GraphicsQueueFamilyIndex;
                 break;
             }
-
             continue;
         }
 
         /* Yikes, ig we now have to tile this. */
         if (PresentQueueFamilyIndex == QueueFamilyProperties.size())
         {
-            for (auto Idx{ 0uz }; Idx < QueueFamilyProperties.size(); ++Idx)
+            for (auto Idx{0uz}; Idx < QueueFamilyProperties.size(); ++Idx)
             {
                 if (this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *QuerySurface.Vk_GetSurface()))
                 {
                     PresentQueueFamilyIndex = static_cast<u32>(Idx);
                     break;
                 }
-
                 continue;
             }
         }
@@ -1075,24 +1089,68 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
 
     if (GraphicsQueueFamilyIndex == QueueFamilyProperties.size())
     {
-        panic( "Failed to find a suitable graphics queue family index." )
+        panic("Failed to find a suitable graphics queue family index.")
     }
     if (PresentQueueFamilyIndex == QueueFamilyProperties.size())
     {
-        panic( "Failed to find a suitable present queue family index." )
+        panic("Failed to find a suitable present queue family index.")
     }
 
-    vk::StructureChain<
+    auto AvailableFeatures{this->Vk_PhysicalDevice.getFeatures2<
+      vk::PhysicalDeviceFeatures2
+    , vk::PhysicalDeviceVulkan11Features
+    , vk::PhysicalDeviceVulkan13Features
+    , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+    , vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()};
+    auto& A1{AvailableFeatures.get<vk::PhysicalDeviceFeatures2>()};
+    auto& A2{AvailableFeatures.get<vk::PhysicalDeviceVulkan11Features>()};
+    auto& A3{AvailableFeatures.get<vk::PhysicalDeviceVulkan13Features>()};
+    auto& A4{AvailableFeatures.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>()};
+    auto& A5{AvailableFeatures.get<vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()};
+
+    typedef vk::StructureChain<
           vk::PhysicalDeviceFeatures2
         , vk::PhysicalDeviceVulkan11Features
         , vk::PhysicalDeviceVulkan13Features
         , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
-        > FeaturesChain{
-        {.features = { .samplerAnisotropy = VK_TRUE } }, /* vk::PhysicalDeviceFeatures2 */
-        {.shaderDrawParameters = VK_TRUE }, /* vk::PhysicalDeviceVulkan11Features */
-        {.synchronization2 = VK_TRUE, .dynamicRendering = VK_TRUE}, /* vk::PhysicalDeviceVulkan13Features */
-        {.extendedDynamicState = VK_TRUE} /* vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT */
+        , vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT
+        > RequiredFeaturesChain;
+    RequiredFeaturesChain FeaturesChain{
+            /* vk::PhysicalDeviceFeatures2 */ {.features = {
+                .fillModeNonSolid = vk::True,
+                .samplerAnisotropy = vk::True,
+            }},
+            /* vk::PhysicalDeviceVulkan11Features */{
+                .shaderDrawParameters = vk::True
+            },
+            /* vk::PhysicalDeviceVulkan13Features */{
+                .synchronization2 = vk::True, .dynamicRendering = vk::True
+            },
+            /* vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT */{
+                .extendedDynamicState = vk::True,
+            },
+            /* PhysicalDeviceExtendedDynamicState3FeaturesEXT */{
+                .extendedDynamicState3PolygonMode = vk::True,
+            }
         };
+    auto& R1{FeaturesChain.get<vk::PhysicalDeviceFeatures2>()};
+    auto& R2{FeaturesChain.get<vk::PhysicalDeviceVulkan11Features>()};
+    auto& R3{FeaturesChain.get<vk::PhysicalDeviceVulkan13Features>()};
+    auto& R4{FeaturesChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>()};
+    auto& R5{FeaturesChain.get<vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()};
+
+    #ifdef ASSERT_FEATURE
+        #error "ASSERT_FEATURE is defined."
+    #endif /* ASSERT_FEATURE */
+    #define ASSERT_FEATURE(A, R, P) ::AssertAvailablePhysicalDeviceFeature(A, R, P, #P);
+    ASSERT_FEATURE(A1.features, R1.features, &vk::PhysicalDeviceFeatures::fillModeNonSolid)
+    ASSERT_FEATURE(A1.features, R1.features, &vk::PhysicalDeviceFeatures::samplerAnisotropy)
+    ASSERT_FEATURE(A2, R2, &vk::PhysicalDeviceVulkan11Features::shaderDrawParameters)
+    ASSERT_FEATURE(A3, R3, &vk::PhysicalDeviceVulkan13Features::synchronization2)
+    ASSERT_FEATURE(A3, R3, &vk::PhysicalDeviceVulkan13Features::dynamicRendering)
+    ASSERT_FEATURE(A4, R4, &vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT::extendedDynamicState)
+    ASSERT_FEATURE(A5, R5, &vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT::extendedDynamicState3PolygonMode)
+    #undef ASSERT_FEATURE
 
     f32 QueuePriority{ 1.0f };
     vk::DeviceQueueCreateInfo DeviceQueueCreateInfo{

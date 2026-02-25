@@ -9,6 +9,31 @@ namespace Jafg
 
 struct LFetchedShader final
 {
+    struct CompileTimeDefinition
+    {
+        LString Name;
+        LString Value;
+    };
+
+    struct Layout
+    {
+        enum Type
+        {
+            Unique,
+            Shared,
+        };
+
+        struct Set
+        {
+            LString Identifier;
+            vk::ShaderStageFlagBits Stage;
+            vk::DescriptorType DescriptorType;
+        };
+
+        Type Type;
+        TOptional<LString> Identifier;
+        TOptional<TArray<Set>> Sets;
+    };
 
     LPath Path;
     LString Name;
@@ -17,6 +42,8 @@ struct LFetchedShader final
     TArray<LString> IncludeDirectories;
     TArray<LShaderEntrypoint> Entrypoints;
 
+    TArray<CompileTimeDefinition> CompileTimeDefinitions;
+
     TOptional<LPath> Src;
     TOptional<LPath> SrcPrefix;
     TOptional<LPath> Dst;
@@ -24,6 +51,7 @@ struct LFetchedShader final
 
     TOptional<LString> VertexInput;
     TArray<LString> PushConstants;
+    TArray<Layout> Layouts;
 
     inline LPath GetSrc() const
     {

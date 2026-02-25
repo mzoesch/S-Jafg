@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Fw/FwSupremePolicies.h"
+#include "Framework/MaterialSubsystem.h"
 #include "Framework/Actor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/DebugCameraComponent.h"
@@ -11,42 +12,72 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
 
     this->GetWorld().SetBackgroundColor(LinearColors::DeepSkyBlue);
 
-    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
-    {
-        Comp.Create({
-            .MeshPath = "Content/Models/NewNew.glb",
-            .Material = "viking_room",
-            .TextureView = "viking_room",
-            });
+    auto& Frontend{this->GetLocalEgo().GetFrontend()};
+    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()};
+    auto MaterialInstance{MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Identity")};
 
-        Comp.SetTranslation(LWorldVec3{-0.5,-.5,-1});
-        Comp.SetRotator(maths::rotator_deg(0,90,0));
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZModel.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{0,0,-10});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.Create({
-            .MeshPath = "Content/Models/MyNewNew.glb",
-            .Material = "viking_room",
-            .TextureView = "viking_room",
-            });
-
-        Comp.SetTranslation(LWorldVec3{0,0.6,-1.2});
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{0,0,-4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.Create({
-            .MeshPath = "Content/Models/DefaultCube.glb",
-            .Material = "viking_room",
-            .TextureView = "viking_room",
-            });
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{2,0,-4});
+    });
 
-        Comp.SetTranslation(LWorldVec3{1,0,-1});
-        Comp.SetScale(LWorldVec3{0.3f});
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{4,0,-4});
+    });
+
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Icosphere.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{6,0,-4});
+    });
+
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cylinder.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{8,0,-4});
+    });
+
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cone.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{10,0,-4});
+    });
+
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
+    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Torus.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{12,0,-4});
     });
 
     return;
@@ -60,6 +91,7 @@ Jafg::APawn* Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jafg::APersona
         return nullptr;
     }
 
+    Pawn->GetComponentChecked<Jafg::ASceneComponent>()->SetTranslation({0.f, 2.0f, 0.f});
     if (Pc.IsLocallyPossessed())
     {
         Pawn->EmplaceComponent<ADebugCameraComponent>();

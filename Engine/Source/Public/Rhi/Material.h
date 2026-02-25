@@ -11,30 +11,16 @@ namespace Jafg
 
 struct LFetchedMaterial final
 {
-    struct Layout
+    struct Property
     {
-        enum Type
-        {
-            Unique,
-            Shared,
-        };
-
-        struct Set
-        {
-            LString Identifier;
-            vk::ShaderStageFlagBits Stage;
-            vk::DescriptorType DescriptorType;
-        };
-
-        Type Type;
-        TOptional<LString> Identifier;
-        TOptional<TArray<Set>> Sets;
+        LString Key;
+        LString Value;
     };
 
     LPath Path;
     LString Name;
     LString Shader;
-    TArray<Layout> Layouts;
+    TArray<Property> Properties;
 };
 
 struct LMaterial final

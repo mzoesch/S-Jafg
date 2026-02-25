@@ -36,6 +36,7 @@ void PopulateChildFromParent(Jafg::LFetchedShader* Child, Jafg::LFetchedShader c
 
     Child->IncludeDirectories.insert(Child->IncludeDirectories.end(), Parent.IncludeDirectories.begin(), Parent.IncludeDirectories.end());
     Child->Entrypoints.insert(Child->Entrypoints.end(), Parent.Entrypoints.begin(), Parent.Entrypoints.end());
+    Child->CompileTimeDefinitions.insert(Child->CompileTimeDefinitions.end(), Parent.CompileTimeDefinitions.begin(), Parent.CompileTimeDefinitions.end());
 
     if (Child->Src.has_value() == false)
     {
@@ -176,6 +177,26 @@ void Jafg::JShaderSubsystem::RefetchShaders()
             }
         }
 
+        if (ShaderJson.contains("CompileTimeDefinitions"))
+        {
+            if (ShaderJson["CompileTimeDefinitions"].is_array() == false)
+            {
+                LOG_FATAL(LogShaderSubsystem, "[{}]: CompileTimeDefinitions entry is not an array. Failed to load.", Shader.Path)
+            }
+            for (auto const& CompileTimeDefinitionJson : ShaderJson["CompileTimeDefinitions"])
+            {
+                if (CompileTimeDefinitionJson.is_object() == false)
+                {
+                    LOG_FATAL(LogShaderSubsystem, "[{}]: CompileTimeDefinitions entry is not an object. Failed to load.", Shader.Path)
+                }
+                if (Json::DoesObjectContainTypeCheckedKeys(CompileTimeDefinitionJson, {{"Name", Json::LKeyType::String}, {"Value", Json::LKeyType::String}}, &MissingKey, &Error) == false)
+                {
+                    Json::DefaultFail(Shader.Path, MissingKey, Error);
+                }
+                Shader.CompileTimeDefinitions.emplace_back(LFetchedShader::CompileTimeDefinition{CompileTimeDefinitionJson["Name"].get<LString>(), CompileTimeDefinitionJson["Value"].get<LString>()});
+            }
+        }
+
         if (ShaderJson.contains("Src"))
         {
             if (ShaderJson["Src"].is_string() == false)
@@ -234,6 +255,93 @@ void Jafg::JShaderSubsystem::RefetchShaders()
             }
         }
 
+        for (json LayoutArray = ShaderJson["Layouts"]; auto const& LayoutJson : LayoutArray)
+        {
+            if (LayoutJson.is_array() == false)
+            {
+                LOG_FATAL(LogMaterialSubsystem, "Material [{}]: Layouts entry is not an array. Failed to load.", Shader.Path)
+            }
+
+            for (auto const& LayoutMetaJson : LayoutJson)
+            {
+                if (Json::DoesObjectContainTypeCheckedKeys(LayoutMetaJson, {{"Type", Json::LKeyType::String}}, &MissingKey, &Error) == false)
+                {
+                    Json::DefaultFail(Shader.Path, MissingKey, Error);
+                }
+
+                if (LString SetType{LayoutMetaJson["Type"].get<LString>()}; SetType == "Unique")
+                {
+                    if (Json::DoesObjectContainTypeCheckedKeys(LayoutMetaJson, {{"Sets", Json::LKeyType::Array}}, &MissingKey, &Error) == false)
+                    {
+                        Json::DefaultFail(Shader.Path, MissingKey, Error);
+                    }
+
+                    TArray<LFetchedShader::Layout::Set> Sets;
+                    for (auto const& SetJson : LayoutMetaJson["Sets"])
+                    {
+                        if (Json::DoesObjectContainTypeCheckedKeys(SetJson, {{"Identifier", Json::LKeyType::String}
+                            , {"Stage", Json::LKeyType::String}, {"DescriptorType", Json::LKeyType::String}}, &MissingKey, &Error) == false)
+                        {
+                            Json::DefaultFail(Shader.Path, MissingKey, Error);
+                        }
+                        LString SetIdentifier{SetJson["Identifier"].get<LString>()};
+                        algo::for_each(Shader.Layouts, [&Shader, &SetIdentifier](LFetchedShader::Layout const& Layout)
+                        {
+                            if (Layout.Sets.has_value())
+                            {
+                                algo::for_each(*Layout.Sets, [&Shader, &SetIdentifier](LFetchedShader::Layout::Set const& Set)
+                                {
+                                    if (Set.Identifier == SetIdentifier)
+                                    {
+                                        LOG_FATAL(LogShaderSubsystem, "[{}]: Set identifier [{}] is not unique among sets.", Shader.Path, SetIdentifier)
+                                    }
+                                });
+                            }
+                        });
+
+                        Sets.emplace_back(LFetchedShader::Layout::Set{
+                            .Identifier=std::move(SetIdentifier),
+                            .Stage=Vk_StringToShaderStageFlagBits(SetJson["Stage"].get<LString>()),
+                            .DescriptorType=Vk_StringToDescriptorType(SetJson["DescriptorType"].get<LString>())
+                            });
+                        continue;
+                    }
+
+                    Shader.Layouts.emplace_back(LFetchedShader::Layout{.Type=LFetchedShader::Layout::Type::Unique,.Sets=std::move(Sets)});
+                    check(SetType.contains("Identifier") == false)
+                }
+                else if (SetType == "Shared")
+                {
+                    if (Json::DoesObjectContainTypeCheckedKeys(LayoutMetaJson, {{"Identifier", Json::LKeyType::String}}, &MissingKey, &Error) == false)
+                    {
+                        Json::DefaultFail(Shader.Path, MissingKey, Error);
+                    }
+
+                    LString LayoutIdentifier {LayoutMetaJson["Identifier"].get<LString>()};
+                    algo::for_each(Shader.Layouts, [&Shader, &LayoutIdentifier](LFetchedShader::Layout const& Layout)
+                    {
+                        if (Layout.Identifier.has_value())
+                        {
+                            if (Layout.Identifier.value() == LayoutIdentifier)
+                            {
+                                LOG_FATAL(LogShaderSubsystem, "[{}]: Layout identifier [{}] is not unique among layouts.", Shader.Path, LayoutIdentifier)
+                            }
+                        }
+                    });
+                    Shader.Layouts.emplace_back(LFetchedShader::Layout{.Type=LFetchedShader::Layout::Type::Shared,.Identifier=std::move(LayoutIdentifier)});
+                    check(SetType.contains("Set") == false)
+                }
+                else
+                {
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Layout entry has invalid type [{}]. Failed to load.", Shader.Path, SetType)
+                }
+
+                continue;
+            }
+
+            continue;
+        }
+
         this->FetchedShaders.emplace_back(Shader);
     }
 
@@ -267,15 +375,35 @@ void Jafg::JShaderSubsystem::RefetchShaders()
     if constexpr (IS_COMPILED_LOG(LogShaderSubsystem, Trace))
     for (auto const& FetchedShader : this->FetchedShaders)
     {
-        LOG_TRACE(LogShaderSubsystem, "[{}]: IncludeDirectories [{}], Entrypoints [{}], Src [{}], Dst [{}], VertexInput [{}], PushConstants [{}]."
+        LOG_TRACE(LogShaderSubsystem, "[{}]: IncludeDirectories [{}], Entrypoints [{}], Src [{}], Dst [{}], CompileDefinitions [{}], VertexInput [{}], PushConstants [{}], Layouts [{}]."
             , FetchedShader.Path
             , algo::join(FetchedShader.IncludeDirectories)
             , algo::join(FetchedShader.Entrypoints, &LShaderEntrypoint::Name)
+            , algo::join(FetchedShader.CompileTimeDefinitions, [](auto const& E){ return E.Name + "=" + E.Value; })
             , FetchedShader.Src.has_value() ? FetchedShader.GetSrc().string() : "N/A"
             , FetchedShader.Dst.has_value() ? FetchedShader.GetDst().string() : "N/A"
             , FetchedShader.VertexInput.has_value() ? *FetchedShader.VertexInput : "N/A"
             , algo::join(FetchedShader.PushConstants)
-            )
+            , algo::join(FetchedShader.Layouts, [](LFetchedShader::Layout const& L) -> LString
+            {
+                if (L.Type == LFetchedShader::Layout::Type::Unique)
+                {
+                    check(L.Sets.has_value())
+                    return SprintF("Unique[{}]", algo::join(*L.Sets, [](LFetchedShader::Layout::Set const& S) -> LString
+                    {
+                        return S.Identifier + "(" + vk::to_string(S.DescriptorType) + " at " + vk::to_string(S.Stage) + ")";
+                    }));
+                }
+                else if (L.Type == LFetchedShader::Layout::Type::Shared)
+                {
+                    check(L.Identifier.has_value())
+                    return SprintF("Shared[{}]", *L.Identifier);
+                }
+                else
+                {
+                    unreachable()
+                }
+            }))
     }
 
     LOG_VERBOSE(LogShaderSubsystem, "Refetched {} shaders.", this->FetchedShaders.size())
@@ -315,10 +443,7 @@ void Jafg::JShaderSubsystem::RecompileChangedShaders()
             {
                 Entrypoints.emplace_back(Entrypoint.Name);
             });
-            if (this->RecompileShader({
-                .In = Src, .Out = Dst,
-                .IncludeDirectories = FetchedShader.IncludeDirectories, .EntryPoints = Entrypoints,
-                }) != 0)
+            if (this->RecompileShader({.FetchedShader=FetchedShader}) != 0)
             {
                 LOG_FATAL(LogShaderSubsystem, "[{}]: Failed to compile shader from [{}].", Dst, Src)
             }
@@ -338,10 +463,7 @@ void Jafg::JShaderSubsystem::RecompileChangedShaders()
             {
                 Entrypoints.emplace_back(Entrypoint.Name);
             });
-            if (this->RecompileShader({
-                .In = Src, .Out = Dst,
-                .IncludeDirectories = FetchedShader.IncludeDirectories, .EntryPoints = Entrypoints,
-                }) != 0)
+            if (this->RecompileShader({.FetchedShader=FetchedShader}) != 0)
             {
                 LOG_FATAL(LogShaderSubsystem, "Failed to compile shader [{}] from [{}].", Dst, Src)
             }
@@ -376,11 +498,11 @@ i32 Jafg::JShaderSubsystem::RecompileShader(LShaderCompilationRequest const& Req
     SS << Slangc;
 
     /* Quoting the requested in/out paths will not work, therefore spaces are not permitted. */
-    check(algo::contains(Request.In.native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths.")
-    check(algo::contains(Request.Out.native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths.")
-    SS << " " << Request.In.string();
-    SS << " -o " << Request.Out.string();
-    for (LString const& IncludeDirectory : Request.IncludeDirectories)
+    check(algo::contains(Request.FetchedShader.GetSrc().native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths.")
+    check(algo::contains(Request.FetchedShader.GetDst().native(), LITERAL_TEXT(' ')) == false && "Slangc does not permit spaces in requested in/out paths.")
+    SS << " " << Request.FetchedShader.GetSrc().string();
+    SS << " -o " << Request.FetchedShader.GetDst().string();
+    for (LString const& IncludeDirectory : Request.FetchedShader.IncludeDirectories)
     {
         SS << " -I" << IncludeDirectory;
     }
@@ -388,12 +510,17 @@ i32 Jafg::JShaderSubsystem::RecompileShader(LShaderCompilationRequest const& Req
     SS << " -profile " << Request.Profile;
     SS << " -emit-spirv-directly";
 
-    if (Request.EntryPoints.empty() == false)
+    for (auto const& CompileTimeDefinition : Request.FetchedShader.CompileTimeDefinitions)
+    {
+        SS << " -D" << CompileTimeDefinition.Name << "=" << CompileTimeDefinition.Value;
+    }
+
+    if (Request.FetchedShader.Entrypoints.empty() == false)
     {
         SS << " -fvk-use-entrypoint-name";
-        for (auto const& EntryPoint : Request.EntryPoints)
+        for (auto const& EntryPoint : Request.FetchedShader.Entrypoints)
         {
-            SS << " -entry " << EntryPoint;
+            SS << " -entry " << EntryPoint.Name;
         }
     }
 

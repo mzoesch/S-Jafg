@@ -9,7 +9,9 @@ bool Jgc::ADebugCameraComponent::ActivateUserInputContext() const noexcept
     {
         if (auto* Surface{Ctrl->GetOwningSurface()})
         {
-            return Surface->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"));
+            auto& UserInput{Surface->GetUserInput()};
+            (void) UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("RhiDebug"));
+            return UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"));
         }
     }
     return false;
@@ -21,7 +23,7 @@ void Jgc::ADebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
     {
         LWorldVec3 Front{Sc->GetRotator() * maths::forward_vector<LVec3F>};
 
-        auto Value3D{Value.GetAxis3DValue()};
+        auto Value3D{Value.GetAxis3DValue() * 10.0f};
 
         LWorldVec3 Delta{maths::zero_vector<LWorldVec3>};
         Delta += Front * Value3D.x;

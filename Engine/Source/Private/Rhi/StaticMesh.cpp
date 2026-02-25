@@ -45,7 +45,7 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
     bool Result{};
     if (Hint == ETinyObjHint::Binary)
     {
-        LOG_VERBOSE(LogRhi, "Loading static mesh [{}] via tinygltf as binary glTF.", Target.GetPath())
+        LOG_TRACE(LogRhi, "Loading static mesh [{}] via tinygltf as binary glTF.", Target.GetPath())
 #if JAFG_PLATFORM_USES_UTF8
         Result = Ldr.LoadBinaryFromFile(&Attrib, &Shapes, &Materials, &Warning, &Error, Target.GetPath().native().c_str());
 #else /* JAFG_PLATFORM_USES_UTF8 */
@@ -70,12 +70,12 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
 
     {
         auto& Asset{Model.asset};
-        LOG_VERBOSE(LogRhi, "[{}]: Asset: v[{}>={}] g[{}]",
+        LOG_TRACE(LogRhi, "[{}]: Asset: v[{}>={}] g[{}]",
             Target.GetPath(), Asset.version, Asset.minVersion, Asset.generator
             )
     }
 
-    LOG_VERBOSE(LogRhi, "[{}]: {} meshes, {} materials, {} textures, {} samplers, {} animations, {} skins, {} nodes"
+    LOG_TRACE(LogRhi, "[{}]: {} meshes, {} materials, {} textures, {} samplers, {} animations, {} skins, {} nodes"
                         ", {} buffers, {} buffer views, {} accessors."
         , Target.GetPath(), Model.meshes.size(), Model.materials.size(), Model.textures.size(), Model.samplers.size()
         , Model.animations.size(), Model.skins.size(), Model.nodes.size(), Model.buffers.size(), Model.bufferViews.size(), Model.accessors.size()
@@ -93,6 +93,16 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
             tinygltf::Accessor const& PosAccessor{Model.accessors[Primitive.attributes.at("POSITION")]};
             tinygltf::BufferView const& PosBufferView{Model.bufferViews[PosAccessor.bufferView]};
             tinygltf::Buffer const& PosBuffer{Model.buffers[PosBufferView.buffer]};
+
+            tinygltf::Accessor const* NormalAccessor{};
+            tinygltf::BufferView const* NormalBufferView{};
+            tinygltf::Buffer const* NormalBuffer{};
+            if (auto It{Primitive.attributes.find("NORMAL")}; It != Primitive.attributes.end())
+            {
+                NormalAccessor   = &Model.accessors[It->second];
+                NormalBufferView = &Model.bufferViews[NormalAccessor->bufferView];
+                NormalBuffer     = &Model.buffers[NormalBufferView->buffer];
+            }
 
             tinygltf::Accessor const* TexCoordAccessor{};
             tinygltf::BufferView const* TexCoordBufferView{};
@@ -115,6 +125,19 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
                     ])};
                 Vertex.Position = {pPosition[0], pPosition[1], pPosition[2]};
 
+                if (NormalAccessor)
+                {
+                    check(NormalBufferView && NormalBuffer)
+                    auto* pNormal{reinterpret_cast<f32 const*>(&NormalBuffer->data[
+                        NormalBufferView->byteOffset + NormalAccessor->byteOffset + Idx * sizeof(decltype(Vertex.Normal))
+                        ])};
+                    Vertex.Normal = {pNormal[0], pNormal[1], pNormal[2]};
+                }
+                else
+                {
+                    Vertex.Normal = {0.0f, 0.0f, 0.0f};
+                }
+
                 if (TexCoordAccessor)
                 {
                     check(TexCoordBufferView && TexCoordBuffer)
@@ -127,8 +150,6 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
                 {
                     Vertex.TexCoord = {0.0f, 0.0f};
                 }
-
-                Vertex.Color = {1.0f, 1.0f, 1.0f};
 
                 Target.Vertices.emplace_back(std::move(Vertex));
             }
@@ -149,7 +170,6 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
             }
 
             Target.Indices.reserve(Target.Indices.size() + IdxCount);
-
             for (auto Idx{0uz}; Idx < IdxCount; ++Idx)
             {
                 if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
@@ -225,11 +245,11 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
 void Jafg::LStaticMesh::LoadToDevice()
 {
     check(this->IsOnHost())
-    LOG_VERBOSE(LogRhi, "Loading static mesh [{}] to device.", this->Path)
+    LOG_TRACE(LogRhi, "Loading static mesh [{}] to device.", this->Path)
 
     if (this->IsOnDevice())
     {
-        LOG_VERBOSE(LogRhi, "Static mesh [{}] already loaded to device memory. Freeing previous device memory and reloading.", this->Path)
+        LOG_TRACE(LogRhi, "Static mesh [{}] already loaded to device memory. Freeing previous device memory and reloading.", this->Path)
         this->FreeFromDevice();
     }
     check(this->IndexCount == 0 && this->VertexBuffer.GetAllocation() == nullptr && this->IndexBuffer.GetAllocation() == nullptr)

@@ -213,6 +213,8 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info) const
     // };
     // const std::span CornersSpan{Corners};
 
+    Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
+
     for (auto& Obj : this->GetEmployees())
     {
         if (Obj->IsA<AActor>() == false)

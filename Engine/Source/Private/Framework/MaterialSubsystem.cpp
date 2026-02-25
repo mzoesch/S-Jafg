@@ -13,6 +13,10 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     Super::Initialize(Collection);
     Collection.InitializeDependency<JTextureSubsystem>(this);
     Collection.InitializeDependency<JShaderSubsystem>(this);
+
+    this->TextureSubsystem = Collection.GetSubsystemChecked<JTextureSubsystem>();
+    this->ShaderSubsystem = Collection.GetSubsystemChecked<JShaderSubsystem>();
+
     this->ReloadMaterials();
 
     return;
@@ -36,75 +40,39 @@ void Jafg::JMaterialSubsystem::ReloadMaterials()
             LOG_FATAL(LogMaterialSubsystem, "Material [{}] is not valid json. Failed to load.", Material.Path)
         }
 
-        if (Json::DoesObjectContainTypeCheckedKeys(MaterialJson, {{"Shader", Json::LKeyType::String}, {"Layouts", Json::LKeyType::Array}}, &MissingKey, &Error) == false)
+        if (Json::DoesObjectContainTypeCheckedKeys(MaterialJson, {{"Shader", Json::LKeyType::String}}, &MissingKey, &Error) == false)
         {
             Json::DefaultFail(Material.Path, MissingKey, Error);
         }
 
         Material.Shader = MaterialJson["Shader"].get<LString>();
 
-        for (json LayoutArray = MaterialJson["Layouts"]; auto const& LayoutJson : LayoutArray)
+        if (MaterialJson.contains("Properties"))
         {
-            if (LayoutJson.is_array() == false)
+            if (MaterialJson["Properties"].is_object() == false)
             {
-                LOG_FATAL(LogMaterialSubsystem, "Material [{}]: Layouts entry is not an array. Failed to load.", Material.Path)
+                LOG_FATAL(LogMaterialSubsystem, "Material [{}]: Properties entry is not an object. Failed to load.", Material.Path)
             }
-
-            for (auto const& LayoutMetaJson : LayoutJson)
+            for (auto const& Property : MaterialJson["Properties"].items())
             {
-                if (Json::DoesObjectContainTypeCheckedKeys(LayoutMetaJson, {{"Type", Json::LKeyType::String}}, &MissingKey, &Error) == false)
+                if (Property.value().is_string() == false)
                 {
-                    Json::DefaultFail(Material.Path, MissingKey, Error);
+                    LOG_FATAL(LogMaterialSubsystem, "Material [{}]: Property value for key [{}] is not a string. Failed to load.", Material.Path, Property.key())
                 }
-
-                if (LString SetType{LayoutMetaJson["Type"].get<LString>()}; SetType == "Unique")
-                {
-                    if (Json::DoesObjectContainTypeCheckedKeys(LayoutMetaJson, {{"Sets", Json::LKeyType::Array}}, &MissingKey, &Error) == false)
-                    {
-                        Json::DefaultFail(Material.Path, MissingKey, Error);
-                    }
-
-                    TArray<LFetchedMaterial::Layout::Set> Sets;
-                    for (auto const& SetJson : LayoutMetaJson["Sets"])
-                    {
-                        if (Json::DoesObjectContainTypeCheckedKeys(SetJson, {{"Identifier", Json::LKeyType::String}
-                            , {"Stage", Json::LKeyType::String}, {"DescriptorType", Json::LKeyType::String}}, &MissingKey, &Error) == false)
-                        {
-                            Json::DefaultFail(Material.Path, MissingKey, Error);
-                        }
-                        Sets.emplace_back(LFetchedMaterial::Layout::Set{
-                            .Identifier=SetJson["Identifier"].get<LString>(),
-                            .Stage=Vk_StringToShaderStageFlagBits(SetJson["Stage"].get<LString>()),
-                            .DescriptorType=Vk_StringToDescriptorType(SetJson["DescriptorType"].get<LString>())
-                            });
-                        continue;
-                    }
-
-                    Material.Layouts.emplace_back(LFetchedMaterial::Layout{.Type=LFetchedMaterial::Layout::Type::Unique,.Sets=std::move(Sets)});
-                    check(SetType.contains("Identifier") == false)
-                }
-                else if (SetType == "Shared")
-                {
-                    if (Json::DoesObjectContainTypeCheckedKeys(LayoutMetaJson, {{"Identifier", Json::LKeyType::String}}, &MissingKey, &Error) == false)
-                    {
-                        Json::DefaultFail(Material.Path, MissingKey, Error);
-                    }
-                    Material.Layouts.emplace_back(LFetchedMaterial::Layout{.Type=LFetchedMaterial::Layout::Type::Shared,.Identifier=LayoutMetaJson["Identifier"].get<LString>()});
-                    check(SetType.contains("Set") == false)
-                }
-                else
-                {
-                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Layout entry has invalid type [{}]. Failed to load.", Material.Path, SetType)
-                }
-
-                continue;
+                Material.Properties.emplace_back(LFetchedMaterial::Property{Property.key(), Property.value().get<LString>()});
             }
-
-            continue;
         }
 
         check(algo::contains(this->FetchedMaterials, Material.Path, &LFetchedMaterial::Path) == false)
         check(algo::contains(this->FetchedMaterials, Material.Name, &LFetchedMaterial::Name) == false)
+
+        if constexpr (IS_COMPILED_LOG(LogMaterialSubsystem, Trace))
+        LOG_TRACE(LogMaterialSubsystem, "[{}]: Shader [{}], Properties [{}]."
+            , Material.Path
+            , Material.Shader
+            , algo::join(Material.Properties, [](auto const& P){ return P.Key + "=" + P.Value; })
+            )
+
         this->FetchedMaterials.emplace_back(std::move(Material));
         continue;
     }
@@ -125,6 +93,8 @@ Jafg::LFetchedMaterial const& Jafg::JMaterialSubsystem::GetFetchedMaterial(LStri
 
 Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) noexcept
 {
+    check(this->ShaderSubsystem && this->TextureSubsystem)
+
     {
         auto It{this->Materials.find(Name)};
         if (It != this->Materials.end())
@@ -134,7 +104,6 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     }
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    auto& ShaderSubsystem{*Frontend.GetSubsystemChecked<JShaderSubsystem>()};
 
     auto It{algo::find(this->FetchedMaterials, Name, &LFetchedMaterial::Name)};
     if (It == this->FetchedMaterials.end())
@@ -144,7 +113,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     auto& FetchedMaterial{*It};
     std::shared_ptr Material{std::make_shared<LMaterial>(LMaterial{.FetchedMaterial=It->Name})};
 
-    auto& FetchedShader{ShaderSubsystem.GetFetchedShader(FetchedMaterial.Shader)};
+    auto& FetchedShader{this->ShaderSubsystem->GetFetchedShader(FetchedMaterial.Shader)};
     auto Factory{LDevicePipelineFactory{Frontend}};
     Factory.Shader(FetchedShader.GetDst(), FetchedShader.Entrypoints);
 
@@ -152,11 +121,11 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     {
         LOG_FATAL(LogMaterialSubsystem, "[{}]: No vertex input specified in shader [{}]. Failed to create material.", FetchedMaterial.Path, FetchedShader.Path)
     }
-    Factory.VertexInput(ShaderSubsystem.GetVertexInputStateCreateInfo(*FetchedShader.VertexInput));
+    Factory.VertexInput(this->ShaderSubsystem->GetVertexInputStateCreateInfo(*FetchedShader.VertexInput));
 
-    for (auto const& Layout : FetchedMaterial.Layouts)
+    for (auto const& Layout : FetchedShader.Layouts)
     {
-        if (Layout.Type == LFetchedMaterial::Layout::Unique)
+        if (Layout.Type == LFetchedShader::Layout::Unique)
         {
             TArray<vk::DescriptorSetLayoutBinding> Bindings; Bindings.reserve(Layout.Sets->size());
             check(Layout.Sets.has_value())
@@ -176,7 +145,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
                 .pBindings = Bindings.data(),
                 });
         }
-        else if (Layout.Type == LFetchedMaterial::Layout::Shared)
+        else if (Layout.Type == LFetchedShader::Layout::Shared)
         {
             check(Layout.Identifier.has_value())
             if (Layout.Identifier == "PerspectiveCamera")
@@ -196,7 +165,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
 
     for (auto const& PushConstant : FetchedShader.PushConstants)
     {
-        Factory.PushConstant(ShaderSubsystem.GetPushConstantInfo(PushConstant));
+        Factory.PushConstant(this->ShaderSubsystem->GetPushConstantInfo(PushConstant));
     }
 
     Material->Pipeline = Factory.Build();
@@ -205,13 +174,74 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     return Material;
 }
 
-void Jafg::JMaterialSubsystem::SetCombinedImageSampler(LMaterialInstanceRef MaterialInstance, LStringView Where, LTexture2 const& Texture) const
+void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Instance, LString const& Key, LString const& Value, LFetchedShader const& FetchedShader) const noexcept
 {
-    check(MaterialInstance.get() && MaterialInstance->Material.get())
+    LOG_VERBOSE(LogMaterialSubsystem, "Setting material instance field [{}] to [{}].", Key, Value)
 
-    auto& Material{this->GetFetchedMaterial(MaterialInstance->Material->FetchedMaterial)};
+    check(this->ShaderSubsystem)
+    check(Instance.Material.get())
+    checkCode
+    (
+        if (this->GetFetchedMaterial(Instance.Material->FetchedMaterial).Shader != FetchedShader.Name)
+        {
+            LOG_FATAL(LogMaterialSubsystem
+                , "Fetched shader [{}] does not match the shader [{}] specified in the material [{}]. Failed to set material instance field [{}] to [{}]."
+                , FetchedShader.Name, this->GetFetchedMaterial(Instance.Material->FetchedMaterial).Shader, Instance.Material->FetchedMaterial
+                , Key, Value
+                )
+        }
+    )
+
+    for (auto const& Layout : FetchedShader.Layouts)
+    {
+        if (Layout.Sets.has_value() == false)
+        {
+            check(Layout.Identifier.has_value() && Layout.Type == LFetchedShader::Layout::Shared)
+            continue;
+        }
+
+        for (auto const& Set : *Layout.Sets)
+        {
+            if (Set.Identifier != Key)
+            {
+                continue;
+            }
+
+            switch (Set.DescriptorType)
+            {
+            case vk::DescriptorType::eCombinedImageSampler:
+            {
+                this->SetCombinedImageSampler(Instance, Key, *this->TextureSubsystem->FromTextureViewIdentifier(Value));
+                return;
+            }
+            default:
+            {
+                LOG_FATAL(LogMaterialSubsystem
+                    , "[{}]: Unsupported descriptor type [{}] for set identifier [{}]., Failed to set value [{}]."
+                    , Instance.Material->FetchedMaterial, vk::to_string(Set.DescriptorType), Key, Value
+                    )
+            }
+            }
+
+            return;
+        }
+    }
+
+    LOG_FATAL(LogMaterialSubsystem
+        , "[{}]: No such set in any layout [{}]. Failed to set value [{}]."
+        , Instance.Material->FetchedMaterial, Key, Value
+        )
+}
+
+void Jafg::JMaterialSubsystem::SetCombinedImageSampler(LMaterialInstance& Instance, LStringView Where, LTexture2 const& Texture) const
+{
+    check(Instance.Material.get())
+    check(this->ShaderSubsystem)
+
+    auto& Material{this->GetFetchedMaterial(Instance.Material->FetchedMaterial)};
+    auto& Shader{this->ShaderSubsystem->GetFetchedShader(Material.Shader)};
     auto LayoutIdx{0uz};
-    for (auto const& Layout : Material.Layouts)
+    for (auto const& Layout : Shader.Layouts)
     {
         if (Layout.Sets.has_value() == false)
         {
@@ -243,7 +273,7 @@ void Jafg::JMaterialSubsystem::SetCombinedImageSampler(LMaterialInstanceRef Mate
 
             std::array Writes{
                 vk::WriteDescriptorSet{
-                    .dstSet = *MaterialInstance->_UniqueDescriptorSets[LayoutIdx],
+                    .dstSet = *Instance._UniqueDescriptorSets[LayoutIdx],
                     .dstBinding = static_cast<u32>(SetIdx),
                     .dstArrayElement = 0,
                     .descriptorCount = 1,
@@ -280,6 +310,13 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
             .descriptorSetCount = static_cast<u32>(LayoutsToAllocate.size()),
             .pSetLayouts = LayoutsToAllocate.data(),
         });
+    }
+
+    auto& FetchedMaterial{this->GetFetchedMaterial(Material->FetchedMaterial)};
+    auto& Shader{this->ShaderSubsystem->GetFetchedShader(FetchedMaterial.Shader)};
+    for (auto const& [Key, Value] : FetchedMaterial.Properties)
+    {
+        this->SetMaterialInstanceField(*Instance, Key, Value, Shader);
     }
 
     return Instance;

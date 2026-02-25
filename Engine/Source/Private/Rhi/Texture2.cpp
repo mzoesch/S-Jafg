@@ -38,14 +38,12 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     check(Data && StbiExtent.x > 0 && StbiExtent.y > 0)
 
     if constexpr (IS_COMPILED_LOG(LogRhi, Verbose))
+    if (NrChannels != static_cast<i32>(Vk_GetChannelsPerPixel(Meta.Format)))
     {
-        if (NrChannels != static_cast<i32>(Vk_GetChannelsPerPixel(Meta.Format)))
-        {
-            LOG_VERBOSE(LogRhi,
-                "Potential misuse: Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
-                this->Path, NrChannels, Vk_GetChannelsPerPixel(Meta.Format)
-                )
-        }
+        LOG_TRACE(LogRhi,
+            "Potential misuse: Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
+            this->Path, NrChannels, Vk_GetChannelsPerPixel(Meta.Format)
+            )
     }
 
     this->Meta.Extent = LTexture2Extent{static_cast<LTexture2Extent::value_type>(StbiExtent.x), static_cast<LTexture2Extent::value_type>(StbiExtent.y)};
@@ -75,8 +73,14 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
 void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
 {
     check(this->IsOnHost())
-    LOG_VERBOSE(LogRhi, "Loading texture2 [{}] to device.", this->Path)
+    LOG_TRACE(LogRhi, "Loading texture2 [{}] to device.", this->Path)
     auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
+
+    if (this->IsOnDevice())
+    {
+        LOG_TRACE(LogRhi, "Texture2 [{}] already loaded to device memory. Freeing previous device memory and reloading.", this->Path)
+        this->FreeFromDevice();
+    }
 
     if (Info.DesiredMipLevels.has_value())
     {

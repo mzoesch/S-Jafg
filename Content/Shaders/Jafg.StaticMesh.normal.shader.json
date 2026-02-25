@@ -1,5 +1,17 @@
 {
-    "Shader": "StaticMesh.jafg",
+    "Inherits": "Jafg.Base",
+    "Src": "Jafg.StaticMesh.slang",
+    "Dst": "Jafg.StaticMesh.normal.spv",
+    "VertexInput": "Jafg::LStaticMesh::Vertex",
+    "PushConstants": [
+        "Jafg::LStaticMesh::VPC"
+    ],
+    "CompileTimeDefinitions": [
+        {
+            "Name": "JAFG_PREFER_NORMALS",
+            "Value": "1"
+        }
+    ],
     "Layouts": [
         [
             {

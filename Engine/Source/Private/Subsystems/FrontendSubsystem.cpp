@@ -6,12 +6,12 @@
 
 Jafg::LFrontend& Jafg::JFrontendSubsystem::GetFrontend() noexcept
 {
-    check( GEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid." )
+    check(GEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid.")
     return GEngine->GetLocalEgo().GetFrontend();
 }
 
 Jafg::LFrontend const& Jafg::JFrontendSubsystem::GetFrontend() const noexcept
 {
-    check( GEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid." )
+    check(GEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid.")
     return GEngine->GetLocalEgo().GetFrontend();
 }
