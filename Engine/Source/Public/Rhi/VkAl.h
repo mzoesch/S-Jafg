@@ -193,6 +193,45 @@ concept CDeviceVertexInput = std::is_standard_layout_v<T> && requires
     { T::AttributeDescriptions().size() } -> std::same_as<LSize>;
 };
 
+typedef vk::PipelineVertexInputStateCreateInfo(*LDeviceVertexInputStateCreateProviderSig)();
+
+template<typename T> requires CDeviceVertexInput<T>
+struct TDeviceVertexInputStateCreateProviderFn
+{
+    static vk::PipelineVertexInputStateCreateInfo operator()() noexcept
+    {
+        return vk::PipelineVertexInputStateCreateInfo{
+            .vertexBindingDescriptionCount = static_cast<u32>(T::BindingDescriptions().size()),
+            .pVertexBindingDescriptions = T::BindingDescriptions().data(),
+            .vertexAttributeDescriptionCount = static_cast<u32>(T::AttributeDescriptions().size()),
+            .pVertexAttributeDescriptions = T::AttributeDescriptions().data(),
+            };
+    }
+};
+template<typename T> requires CDeviceVertexInput<T>
+inline constexpr TDeviceVertexInputStateCreateProviderFn<T> DeviceVertexInputStateCreateProvider{};
+
+namespace Detail
+{
+
+extern void AddVertexProviderImpl(LString Name, LDeviceVertexInputStateCreateProviderSig Sig) noexcept;
+template<typename TVertexInput> requires CDeviceVertexInput<TVertexInput>
+inline void AddVertexProvider() noexcept
+{
+    AddVertexProviderImpl(LString{GetTypeName<TVertexInput>()}, &DeviceVertexInputStateCreateProvider<TVertexInput>.operator());
+}
+
+} /* ~Namespace Detail */
+
+template<typename T> requires CDeviceVertexInput<T>
+struct LRegisterDeviceVertexInput final
+{
+    inline LRegisterDeviceVertexInput() noexcept
+    {
+        Detail::AddVertexProvider<T>();
+    }
+};
+
 template<typename T>
 concept CDeviceLayout = std::is_standard_layout_v<T> && requires
 {
@@ -238,21 +277,77 @@ struct TFragmentPushConstant : public TPushConstant<T>
     static vk::ShaderStageFlags Flags() noexcept { return vk::ShaderStageFlagBits::eFragment; }
 };
 
+namespace Detail
+{
+
+struct LPushConstantInfo
+{
+    vk::ShaderStageFlags StageFlags;
+    u32 Size;
+};
+
+} /* ~Namespace Detail */
+
+typedef Detail::LPushConstantInfo(*LPushConstantProviderSig)();
+
+template<typename T> requires CPushConstant<T>
+struct TPushConstantProviderFn
+{
+    static Detail::LPushConstantInfo operator()() noexcept
+    {
+        return Detail::LPushConstantInfo{
+            .StageFlags = T::Flags(),
+            .Size = sizeof(T)
+            };
+    }
+};
+template<typename T> requires CPushConstant<T>
+inline constexpr TPushConstantProviderFn<T> PushConstantProvider{};
+
+namespace Detail
+{
+
+extern void AddPushConstantProviderImpl(LString Name, LPushConstantProviderSig Sig) noexcept;
+template<typename TPushConstant> requires CPushConstant<TPushConstant>
+inline void AddPushConstantProvider() noexcept
+{
+    AddPushConstantProviderImpl(LString{GetTypeName<TPushConstant>()}, &PushConstantProvider<TPushConstant>.operator());
+}
+
+} /* ~Namespace Detail */
+
+template<typename T> requires CPushConstant<T>
+struct LRegisterPushConstant final
+{
+    inline LRegisterPushConstant() noexcept
+    {
+        Detail::AddPushConstantProvider<T>();
+    }
+};
+
 struct LGraphicsDevicePipeline
 {
     void Free() noexcept
     {
         this->Pipeline.clear();
         this->Layout.clear();
-        algo::orphan(&this->UniqueDescriptorSetLayout);
+        algo::orphan(&this->DescriptorSetLayouts);
+        algo::orphan(&this->_UniqueDescriptorSetLayout);
     }
 
     inline decltype(auto) operator*() const & noexcept { return *this->Pipeline; }
 
     vk::raii::Pipeline Pipeline{ nullptr };
     vk::raii::PipelineLayout Layout{ nullptr };
-    TArray<vk::DescriptorSetLayout> SharedDescriptorSetLayout;
-    TArray<vk::raii::DescriptorSetLayout> UniqueDescriptorSetLayout;
+
+    TArray<vk::DescriptorSetLayout> DescriptorSetLayouts;
+    TArray<vk::raii::DescriptorSetLayout> _UniqueDescriptorSetLayout;
+};
+
+struct LShaderEntrypoint
+{
+    vk::ShaderStageFlagBits Stage;
+    LString Name;
 };
 
 struct LDevicePipelineFactory
@@ -261,9 +356,13 @@ struct LDevicePipelineFactory
 
     PROHIBIT_REALLOC_OF_ANY_FORM(LDevicePipelineFactory)
 
-    decltype(auto) Shader(this auto&& Self, LPath const& Path, vk::ShaderStageFlags Stages)
+    decltype(auto) Shader(this auto&& Self, LPath const& Path, TArray<LShaderEntrypoint> InEntrypoints)
     {
-        const auto Code{ Finder::ReadFileAsBinary(Path) };
+        check(Self.ShaderEntrypoints.contains(Path) == false)
+        Self.ShaderEntrypoints[Path] = std::move(InEntrypoints);
+        auto& Entrypoints{Self.ShaderEntrypoints[Path]};
+
+        const auto Code{Finder::ReadFileAsBinary(Path)};
         Self.ShaderModules.emplace_back(vk::raii::ShaderModule{
             Self.Frontend.Vk_GetDevice(),
             vk::ShaderModuleCreateInfo{
@@ -271,14 +370,20 @@ struct LDevicePipelineFactory
                 .pCode = reinterpret_cast<u32 const*>(Code.data())
                 }
             });
-        auto ShaderModuleHandle{ *Self.ShaderModules.back() };
+        auto ShaderModuleHandle{*Self.ShaderModules.back()};
+
+        vk::ShaderStageFlags Stages{};
+        algo::for_each(Entrypoints, [&Stages](auto const& Entrypoint)
+        {
+            Stages |= Entrypoint.Stage;
+        });
 
         if (Stages & vk::ShaderStageFlagBits::eVertex)
         {
             Self.Shaders.emplace_back(vk::PipelineShaderStageCreateInfo{
                 .stage = vk::ShaderStageFlagBits::eVertex,
                 .module = ShaderModuleHandle,
-                .pName = "vertMain",
+                .pName = algo::find(Entrypoints, vk::ShaderStageFlagBits::eVertex, &LShaderEntrypoint::Stage)->Name.c_str(),
                 });
         }
 
@@ -287,7 +392,7 @@ struct LDevicePipelineFactory
             Self.Shaders.emplace_back(vk::PipelineShaderStageCreateInfo{
                 .stage = vk::ShaderStageFlagBits::eFragment,
                 .module = ShaderModuleHandle,
-                .pName = "fragMain",
+                .pName = algo::find(Entrypoints, vk::ShaderStageFlagBits::eFragment, &LShaderEntrypoint::Stage)->Name.c_str(),
                 });
         }
 
@@ -300,7 +405,7 @@ struct LDevicePipelineFactory
     template<CDeviceVertexInput TDeviceVertexInput>
     decltype(auto) VertexInput(this auto&& Self) noexcept
     {
-        check( Self.VertexInputInfo.has_value() == false )
+        check(Self.VertexInputInfo.has_value() == false)
         Self.VertexInputInfo = {
             .vertexBindingDescriptionCount = static_cast<u32>(TDeviceVertexInput::BindingDescriptions().size()),
             .pVertexBindingDescriptions = TDeviceVertexInput::BindingDescriptions().data(),
@@ -309,6 +414,12 @@ struct LDevicePipelineFactory
             };
 
         return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) VertexInput(this auto&& Self, vk::PipelineVertexInputStateCreateInfo&& Info)
+    {
+        check(Self.VertexInputInfo.has_value() == false)
+        Self.VertexInputInfo = std::move(Info);
     }
 
     decltype(auto) InputAssembly(this auto&& Self, vk::PipelineInputAssemblyStateCreateInfo&& Info) noexcept
@@ -362,41 +473,72 @@ struct LDevicePipelineFactory
 
     decltype(auto) SharedLayout(this auto&& Self, vk::DescriptorSetLayout SharedDescriptorSetLayout) noexcept
     {
-        Self.SharedDescriptorSetLayouts.emplace_back(SharedDescriptorSetLayout);
+        Self.SharedDescriptorSetLayouts.emplace_back(Self.GetCurrentNumberOfLayouts(), SharedDescriptorSetLayout);
         return std::forward<decltype(Self)>(Self);
     }
 
     template<CDeviceLayout TDeviceLayout>
     decltype(auto) UniqueLayout(this auto&& Self) noexcept
     {
-        Self.UniqueDescriptorSetLayouts.emplace_back(
+        Self.UniqueDescriptorSetLayouts.emplace_back(Self.GetCurrentNumberOfLayouts(), vk::raii::DescriptorSetLayout{
             Self.Frontend.Vk_GetDevice(),
             vk::DescriptorSetLayoutCreateInfo{
                 .bindingCount = static_cast<u32>(TDeviceLayout::Bindings().size()),
                 .pBindings = TDeviceLayout::Bindings().data(),
                 }
-            );
+            });
 
         return std::forward<decltype(Self)>(Self);
     }
 
-    template<CPushConstant TPushConstant>
-    decltype(auto) Push(this auto&& Self) noexcept
+    decltype(auto) UniqueLayout(this auto&& Self, vk::DescriptorSetLayoutCreateInfo const& Layout) noexcept
     {
-        check( Self.Range.has_value() == false )
-        Self.Range = vk::PushConstantRange{
+        Self.UniqueDescriptorSetLayouts.emplace_back(Self.GetCurrentNumberOfLayouts(), vk::raii::DescriptorSetLayout{
+            Self.Frontend.Vk_GetDevice(),
+            Layout
+            });
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<CPushConstant TPushConstant>
+    decltype(auto) PushConstant(this auto&& Self) noexcept
+    {
+        Self.PushConstantRange.emplace_back(vk::PushConstantRange{
             .stageFlags = TPushConstant::Flags(),
-            .offset = 0,
+            .offset = static_cast<u32>(Self.PushConstantRange.size()),
             .size = sizeof(TPushConstant),
-            };
+            });
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    decltype(auto) PushConstant(this auto&& Self, Detail::LPushConstantInfo const& Info) noexcept
+    {
+        Self.PushConstantRange .emplace_back(vk::PushConstantRange{
+            .stageFlags = Info.StageFlags,
+            .offset = static_cast<u32>(Self.PushConstantRange.size()),
+            .size = Info.Size
+            });
         return std::forward<decltype(Self)>(Self);
     }
 
     ENGINE_API LGraphicsDevicePipeline Build();
 
+    inline u32 GetCurrentNumberOfLayouts() const noexcept
+    {
+        return static_cast<u32>(this->SharedDescriptorSetLayouts.size() + this->UniqueDescriptorSetLayouts.size());
+    }
+
+    template<typename T>
+    struct TDescriptorSetLayout
+    {
+        u64 Binding;
+        T DescriptorSetLayout;
+    };
+
     LFrontend const& Frontend;
     TArray<vk::raii::ShaderModule> ShaderModules;
     TArray<vk::PipelineShaderStageCreateInfo> Shaders;
+    std::unordered_map<LPath, TArray<LShaderEntrypoint>> ShaderEntrypoints;
     std::optional<vk::PipelineVertexInputStateCreateInfo> VertexInputInfo;
     vk::PipelineInputAssemblyStateCreateInfo InputAssemblyInfo{
         .topology = vk::PrimitiveTopology::eTriangleList,
@@ -435,10 +577,10 @@ struct LDevicePipelineFactory
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor,
         };
-    TArray<vk::DescriptorSetLayout> SharedDescriptorSetLayouts;
-    TArray<vk::raii::DescriptorSetLayout> UniqueDescriptorSetLayouts;
+    TArray<TDescriptorSetLayout<vk::DescriptorSetLayout>> SharedDescriptorSetLayouts;
+    TArray<TDescriptorSetLayout<vk::raii::DescriptorSetLayout>> UniqueDescriptorSetLayouts;
     vk::raii::PipelineLayout PipelineLayout{ nullptr };
-    std::optional<vk::PushConstantRange> Range;
+    TArray<vk::PushConstantRange> PushConstantRange;
 };
 
 inline vk::Format Vk_StringToFormat(LStringView String) noexcept
@@ -447,6 +589,34 @@ inline vk::Format Vk_StringToFormat(LStringView String) noexcept
     if (String == "eR8G8B8Srgb") { return vk::Format::eR8G8B8Srgb; }
 
     return vk::Format::eUndefined;
+}
+
+inline vk::SampleCountFlagBits Vk_StringToSampleCountFlagBits(LStringView String) noexcept
+{
+    if (String == "e1") { return vk::SampleCountFlagBits::e1; }
+    if (String == "e2") { return vk::SampleCountFlagBits::e2; }
+    if (String == "e4") { return vk::SampleCountFlagBits::e4; }
+    if (String == "e8") { return vk::SampleCountFlagBits::e8; }
+    if (String == "e16") { return vk::SampleCountFlagBits::e16; }
+    if (String == "e32") { return vk::SampleCountFlagBits::e32; }
+    if (String == "e64") { return vk::SampleCountFlagBits::e64; }
+
+    LOG_FATAL(LogVulkan, "Unsupported sample count string [{}] for conversion to sample count flag bits.", String)
+}
+
+inline vk::ShaderStageFlagBits Vk_StringToShaderStageFlagBits(LStringView String) noexcept
+{
+    if (String == "eVertex") { return vk::ShaderStageFlagBits::eVertex; }
+    if (String == "eFragment") { return vk::ShaderStageFlagBits::eFragment; }
+
+    LOG_FATAL(LogVulkan, "Unsupported shader stage string [{}] for conversion to shader stage flag bits.", String)
+}
+
+inline vk::DescriptorType Vk_StringToDescriptorType(LStringView String) noexcept
+{
+    if (String == "eCombinedImageSampler") { return vk::DescriptorType::eCombinedImageSampler; }
+
+    LOG_FATAL(LogVulkan, "Unsupported descriptor type string [{}] for conversion to descriptor type.", String)
 }
 
 inline constexpr LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept

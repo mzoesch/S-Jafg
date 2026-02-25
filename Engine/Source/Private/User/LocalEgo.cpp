@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/LocalEgo.h"
+#include "Engine/Carnifex.h"
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
@@ -83,12 +84,12 @@ void Jafg::LLocalEgo::Initialize()
 
 void Jafg::LLocalEgo::TearDown()
 {
-    check( GEngine )
-
-    check( this->bDecommissioned == false )
-    checkCode( this->bDecommissioned = true )
+    check(GEngine)
+    check(this->bDecommissioned == false)
+    checkCode(this->bDecommissioned = true)
 
     this->Collection.TearDownSubsystems();
+    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     this->Frontend.TearDown();
     this->Outer.TearDown();

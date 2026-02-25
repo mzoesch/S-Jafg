@@ -43,11 +43,11 @@ void Jafg::JCxxClass::KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason /
     (
         if (bMayBeGarbage == false)
         {
-            check( this->IsGarbage() == false )
+            check( this->_IsGarbage() == false )
         }
     )
 
-    if (this->IsGarbage())
+    if (this->_IsGarbage())
     {
         LOG_ERROR(LogObjectInternal, "Class [{}] was already marked as garbage. Failed to devour.", this->GetNameAsString())
     }
@@ -79,7 +79,7 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
 {
     check(Tasks::IsOnMasterThread())
 
-    check(this->IsGarbage() == false)
+    check(this->_IsGarbage() == false)
     this->bGarbage = true;
 
     this->OnGarbage(Reason);

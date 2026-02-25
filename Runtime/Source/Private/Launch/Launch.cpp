@@ -260,6 +260,7 @@ EPlatformExit::Type GuardedMain()
 #endif /* !WITH_TESTS */
 
     std::filesystem::current_path(PlatformMisc::GetEngineRootDir());
+    Finder::CreateDirectories(Finder::GetTempDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
 

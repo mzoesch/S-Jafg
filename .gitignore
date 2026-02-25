@@ -23,6 +23,7 @@ ghidra/
 
 # Long term storage
 /Saved/
+/Temp/
 
 # CLion CMake files
 /cmake-build-*/

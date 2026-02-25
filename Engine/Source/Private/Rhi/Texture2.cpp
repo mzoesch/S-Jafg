@@ -87,13 +87,35 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
         this->Meta.MipLevels = static_cast<u32>(std::floor(std::log2(std::max(this->GetWidth(), this->GetHeight())))) + 1;
     }
 
-    this->Meta.Samples = Vk_GetMaxMsaaSamples(Info.Samples);
-    if (this->Meta.Samples > Frontend.Vk_GetMaxMsaaSamples())
+    // TODO: This should be more like. GetPreferredMaxMsaaSamples (based of user preferences).
+    this->Meta.Samples = Frontend.Vk_GetMaxMsaaSampleCount();
+    if (Info.Samples.has_value())
     {
-        LOG_WARNING(LogRhi, "Requested MSAA samples [{}] for texture2 [{}] exceeds device capabilities. Clamping to maximum supported samples [{}].",
-            vk::to_string(Info.Samples), this->Path, vk::to_string(Frontend.Vk_GetMaxMsaaSamples()))
-        this->Meta.Samples = Frontend.Vk_GetMaxMsaaSamples();
+        if (auto PreferredSampleCount{Vk_GetMaxMsaaSamples(Info.Samples.value())}; PreferredSampleCount > Frontend.Vk_GetMaxMsaaSampleCount())
+        {
+            LOG_WARNING(LogRhi, "Requested MSAA samples [{}] for texture2 [{}] exceeds device capabilities. Clamping to maximum supported samples [{}].",
+                        vk::to_string(*Info.Samples), this->Path, vk::to_string(Frontend.Vk_GetMaxMsaaSampleCount()))
+            this->Meta.Samples = Frontend.Vk_GetMaxMsaaSampleCount();
+        }
+        else
+        {
+            this->Meta.Samples = PreferredSampleCount;
+        }
     }
+
+    checkCode
+    (
+        if (this->Meta.MipLevels > 1)
+        {
+            if (this->Meta.Samples != vk::SampleCountFlagBits::e1)
+            {
+                LOG_FATAL(LogRhi,
+                    "[{}]: Texture2 has [{}] mipmaps and uses MSAA samples [{}] which is not VK_SAMPLE_COUNT_1_BIT.",
+                    this->Path, this->Meta.MipLevels, vk::to_string(this->Meta.Samples)
+                    )
+            }
+        }
+    )
 
     this->Handle = Frontend.Vk_StageLinearImage({
         .Data = this->MipMap0.data(),

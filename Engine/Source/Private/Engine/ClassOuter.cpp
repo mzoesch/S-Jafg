@@ -40,7 +40,7 @@ void Jafg::LClassOuter::TearDown() noexcept
         for (auto& E : this->Employees)
         {
             check( E.get() != nullptr )
-            check( E->IsGarbage() == false )
+            check( E->_IsGarbage() == false )
             check( &E->GetOuter() == this )
 
             continue;

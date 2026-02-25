@@ -1,80 +1,63 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Components/StaticMeshComponent.h"
+#include "Framework/MaterialSubsystem.h"
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/Frontend.h"
+#include "Engine/Engine.h"
 
 void Jafg::AStaticMeshComponent::Create(CreateInfo const& Info)
 {
+    auto& Frontend{this->GetLocalEgo().GetFrontend()};
+    JMaterialSubsystem& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
+    JTextureSubsystem& TextureSubsystem{*Frontend.GetSubsystemChecked<JTextureSubsystem>()};
+
     this->SetShouldRender(Info.bRender);
+
     check(Info.MeshPath.empty() == false)
     this->Mesh = GetSingleton<JMeshSubsystem>().FromFile(Info.MeshPath, Info.MeshState);
-    if (Info.TexturePath.empty() == false)
-    {
-        this->Texture = GetSingleton<JTextureSubsystem>().FromFile(
-              Info.TexturePath
-            , Info.TextureHostCreateInfo
-            , Info.TextureDeviceCreateInfo
-            , Info.TextureState
-            );
-    }
-}
 
-static u64 Frame{999999};
+    check(Info.TextureView.empty() == false)
+    this->Texture = TextureSubsystem.FromTextureViewIdentifier(Info.TextureView);
+
+    check(Info.Material.empty() == false)
+    this->MaterialInstance = MaterialSubsystem.GetInstance(MaterialSubsystem.GetMaterial(Info.Material));
+    MaterialSubsystem.SetCombinedImageSampler(this->MaterialInstance, "Texture", *this->Texture);
+
+    return;
+}
 
 void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
 {
-    auto& Pipeline{Info.Frontend.Vk_GetPipelines().at({LStaticMesh::DefaultShader})};
+    auto& Pipeline{this->MaterialInstance->Material->Pipeline};
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
 
-    check(Pipeline.SharedDescriptorSetLayout.size() == 2)
-    check(Pipeline.UniqueDescriptorSetLayout.size() == 0)
+    check(Pipeline.DescriptorSetLayouts.size() == 2)
+    check(Pipeline._UniqueDescriptorSetLayout.size() == 1)
+    check(this->MaterialInstance->_UniqueDescriptorSets.size() == 1)
 
-    vk::DescriptorImageInfo ImageInfo{
-        .sampler = Info.Surface.GetFrontend().Vk_GetDefaultSampler(),
-        .imageView = this->Texture->GetImageView(),
-        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
-        };
-
-    if (Application::GetFrameCount() != Frame)
+    TArray<vk::DescriptorSet> DescriptorSets; DescriptorSets.reserve(Pipeline.DescriptorSetLayouts.size());
+    DescriptorSets.emplace_back(Info.PerspectiveCameraDescriptorSet);
+    for (auto const& Set : this->MaterialInstance->_UniqueDescriptorSets)
     {
-        Frame = Application::GetFrameCount();
-        std::array Writes{
-            vk::WriteDescriptorSet{
-                .dstSet = Info.DefaultMaterialDescriptorSet,
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                .pImageInfo = &ImageInfo,
-                },
-            };
-        Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+        DescriptorSets.emplace_back(*Set);
     }
 
     Info.CommandBuffer.bindDescriptorSets2({
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        /* TODO: Is this correct? The sets are vertex && fragment respectively -- not vertex | fragment. */
+        .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
         .layout = *Pipeline.Layout,
         .firstSet = 0,
-        .descriptorSetCount = 1,
-        .pDescriptorSets = &Info.PerspectiveCameraDescriptorSet,
-        .dynamicOffsetCount = 0,
-        .pDynamicOffsets = nullptr
-        });
-
-    Info.CommandBuffer.bindDescriptorSets2({
-        .stageFlags = vk::ShaderStageFlagBits::eFragment,
-        .layout = *Pipeline.Layout,
-        .firstSet = 1,
-        .descriptorSetCount = 1,
-        .pDescriptorSets = &Info.DefaultMaterialDescriptorSet,
+        .descriptorSetCount = static_cast<u32>(DescriptorSets.size()),
+        .pDescriptorSets = DescriptorSets.data(),
         .dynamicOffsetCount = 0,
         .pDynamicOffsets = nullptr
         });
 
     LStaticMesh::VPC{.Model = maths::model(this->GetTransform())}.Push(Info, Pipeline);
+
     this->Mesh->DrawIndexed(Info);
 
     return;

@@ -218,7 +218,7 @@ public:
     //#
     ENGINE_API void MarkAsGarbage_v2(ECxxRecordTearDownReason::Type Reason = ECxxRecordTearDownReason::Default);
     //# Whether this object is marked as garbage and will be killed very soon. Usually at the very end of a tick.
-    NODISCARD FORCEINLINE bool IsGarbage() const noexcept { return this->bGarbage; }
+    NODISCARD FORCEINLINE bool _IsGarbage() const noexcept { return this->bGarbage; }
     //#
     //# Will not wait for the global feared engine butcher to massacre all garbage children of this class but will tell
     //# them to kill themselves now.
@@ -235,7 +235,7 @@ public:
     //# Use this for immediate reaction to be killed. Otherwise use the dctor that will usually be called at the end
     //# of the tick this delegate was called.
     //#
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) { check( this->IsGarbage() ) }
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) { check( this->_IsGarbage() ) }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.

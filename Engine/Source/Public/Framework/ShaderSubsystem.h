@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "Subsystems/EngineSubsystem.h"
+#include "Subsystems/FrontendSubsystem.h"
+#include "Rhi/FetchedShader.h"
+#include "Rhi/VkAl.h"
 #include "ShaderSubsystem.generated.h"
 
 namespace Jafg
@@ -19,7 +21,7 @@ struct LShaderCompilationRequest
 };
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JShaderSubsystem final : public JEngineSubsystem
+class ENGINE_API JShaderSubsystem final : public JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -31,17 +33,35 @@ public:
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
 
+    inline bool HasFetchedShader(LStringView Name) const noexcept { return algo::contains(this->FetchedShaders, Name, &LFetchedShader::Name); }
+    inline LFetchedShader const& GetFetchedShader(LStringView Name) const noexcept
+    {
+        auto It{algo::find(this->FetchedShaders, Name, &LFetchedShader::Name)};
+        if (It == this->FetchedShaders.end())
+        {
+            LOG_FATAL(LogShaderSubsystem, "No such shader [{}].", Name)
+        }
+        return *It;
+    }
+    void RefetchShaders();
+
     void RecompileChangedShaders();
     void RecompileAllShaders() { checkNoEntry() }
 
     //# @return System response.
     i32 RecompileShader(LShaderCompilationRequest const& Request);
 
-    TArray<LString> GetDefaultShaderIncludeDirectories() const;
+    template<typename TVertexInput> requires CDeviceVertexInput<TVertexInput>
+    inline void AddVertexProvider() noexcept { Detail::AddVertexProvider<TVertexInput>(); }
+    vk::PipelineVertexInputStateCreateInfo GetVertexInputStateCreateInfo(LString const& Name) const;
+
+    template<typename TPushConstant> requires CPushConstant<TPushConstant>
+    inline void AddPushConstantProvider() noexcept { Detail::AddPushConstantProvider<TPushConstant>(); }
+    Detail::LPushConstantInfo GetPushConstantInfo(LString const& Name) const;
 
 private:
 
-    LShaderCompilationRequest DefaultRequestTemplate;
+    TArray<LFetchedShader> FetchedShaders;
 };
 
 } /* ~Namespace Jafg */

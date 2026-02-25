@@ -17,17 +17,27 @@ namespace Finder
 
 inline LPath GetCwd();
 
+//#
+//# Everything that should be saved for a longer period of time. But if they get deleted by the user, it's ok.
+//#
+inline LPath GetTempDir() noexcept { return LPath{"Temp"}; }
+inline LPath GetDumpsDir() noexcept { return GetTempDir() / "Dumps"; }
+inline LPath GetMostRecentMemDumpFile() noexcept { return GetDumpsDir() / "proc.dmp"; }
+
+//#
+//# User folder. Store user specific stuff here. That should be saved between sessions and for a long time.
+//# If a user uninstalls the program, this folder should contain only files that they might want to keep, for a
+//# potential reinstallation.
+//# This contains user preferences, progression data, etc.
+//#
 inline LPath GetSavedDir() noexcept { return LPath{"Saved"}; }
 inline LPath GetUserPreferencesFile() noexcept { return GetSavedDir() / "MyPreferences.cfg"; }
-inline LPath GetDumpsDir() noexcept { return GetSavedDir() / "Dumps"; }
-inline LPath GetMostRecentMemDumpFile() noexcept { return GetDumpsDir() / "proc.dmp"; }
 
 inline LPath GetContentDir() noexcept { return LPath{"Content"}; }
 inline LPath GetMaterialsDir() noexcept { return GetContentDir() / "Materials"; }
 inline LPath GetModelsDir() noexcept { return GetContentDir() / "Models"; }
-inline LPath GetTopLevelShadersDir() noexcept { return GetContentDir() / "Shaders"; }
-inline LPath GetSlangShadersDir() noexcept { return GetTopLevelShadersDir() / "Slang"; }
-inline LPath GetSpirShadersDir() noexcept { return GetTopLevelShadersDir() / "Spir-V"; }
+//# Jafg will automatically look for shaders in this directory trailing with ".shader.json".
+inline LPath GetShadersDir() noexcept { return GetContentDir() / "Shaders"; }
 inline LPath GetTexturesDir() noexcept { return GetContentDir() / "Textures"; }
 
 inline bool DoesExist(const LPath& Path);
@@ -87,7 +97,7 @@ inline LString Normalize(LString File) noexcept
 //#
 //# Searches the given directory for files with the given extension following std regrex.
 //#
-inline TArray<LString> FindFiles
+inline TArray<LPath> FindFiles
 (
     const LPath& Directory,
     const bool bKeepExtension = true,
@@ -98,7 +108,7 @@ inline TArray<LString> FindFiles
 //#
 //# Searches the given directory for files with the given extension following std regex.
 //#
-inline TArray<LString> FindFilesRecursively
+inline TArray<LPath> FindFilesRecursively
 (
     const LPath& Directory,
     const bool bKeepExtension = true,
@@ -109,10 +119,10 @@ inline TArray<LString> FindFilesRecursively
 //#
 //# Finds all files with the given name in the given directory and all subdirectories.
 //#
-inline TArray<LString> FindFilesRecursivelyByName
+inline TArray<LPath> FindFilesRecursivelyByName
 (
     LPath const& Directory,
-    LStringView FileName
+    std::basic_string_view<LPath::value_type> FileName
 );
 
 } /* ~Namespace Finder */

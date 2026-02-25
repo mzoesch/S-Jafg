@@ -20,7 +20,7 @@ bool Jafg::IsValidFast(LClassOuter const* Outer, JCxxClass const* Obj)
         return false;
     }
 
-    return Obj->IsGarbage() == false;
+    return Obj->_IsGarbage() == false;
 }
 
 bool Jafg::IsValidSlow(LClassOuter const* Outer, JCxxClass const* Obj)
@@ -48,7 +48,7 @@ bool Jafg::IsValidSlow(LClassOuter const* Outer, JCxxClass const* Obj)
         return false;
     }
 
-    return Obj->IsGarbage() == false;
+    return Obj->_IsGarbage() == false;
 }
 
 void Jafg::PullConfigForCxxObject(JCxxClass* Object, LCxxClass* Class)

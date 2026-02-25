@@ -1,0 +1,9 @@
+{
+    "Inherits": "Base.jafg",
+    "Src": "StaticMesh.jafg.slang",
+    "Dst": "StaticMesh.jafg.spv",
+    "VertexInput": "Jafg::LStaticMesh::Vertex",
+    "PushConstants": [
+        "Jafg::LStaticMesh::VPC"
+    ]
+}

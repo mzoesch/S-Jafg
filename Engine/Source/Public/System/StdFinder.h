@@ -285,7 +285,7 @@ inline void Finder::MakeFileBackup(const LPath& File, const bool bMakeIfSame /* 
     return;
 }
 
-inline TArray<LString> Finder::FindFiles
+inline TArray<LPath> Finder::FindFiles
 (
     const LPath& Directory,
     const bool bKeepExtension /* = true */,
@@ -295,16 +295,16 @@ inline TArray<LString> Finder::FindFiles
 {
     if (DoesDirectoryExist(Directory) == false)
     {
-        return { };
+        return {};
     }
 
     std::regex Pattern;
     if (Extension != "*")
     {
-        Pattern = std::regex{ Extension.begin(), Extension.end(), Options };
+        Pattern = std::regex{Extension.begin(), Extension.end(), Options};
     }
 
-    TArray<LString> Out;
+    TArray<LPath> Out;
     for (auto& P : std::filesystem::directory_iterator{Directory})
     {
         if (P.is_directory())
@@ -316,13 +316,11 @@ inline TArray<LString> Finder::FindFiles
         {
             if (bKeepExtension)
             {
-                const std::string S { P.path().filename().string() };
-                Out.emplace_back(LString{ S.c_str(), S.size() });
+                Out.emplace_back(P.path().filename());
             }
             else
             {
-                const std::string S { P.path().stem().string() };
-                Out.emplace_back( LString{ S.c_str(), S.size() });
+                Out.emplace_back(P.path().stem());
             }
         }
 
@@ -332,7 +330,7 @@ inline TArray<LString> Finder::FindFiles
     return Out;
 }
 
-inline TArray<LString> Finder::FindFilesRecursively
+inline TArray<LPath> Finder::FindFilesRecursively
 (
     const LPath& Directory,
     const bool bKeepExtension /* = true */,
@@ -345,12 +343,12 @@ inline TArray<LString> Finder::FindFilesRecursively
         return {};
     }
 
-    TArray<LString> Out;
+    TArray<LPath> Out;
 
-    std::regex Pattern;
+    std::basic_regex<LPath::value_type> Pattern;
     if (Regex != "*")
     {
-        Pattern = std::regex{Regex.begin(), Regex.end(), Options };
+        Pattern = std::basic_regex<LPath::value_type>{Regex.begin(), Regex.end(), Options };
     }
 
     for (const std::filesystem::directory_entry& P : std::filesystem::recursive_directory_iterator
@@ -365,26 +363,15 @@ inline TArray<LString> Finder::FindFilesRecursively
             continue;
         }
 
-#if JAFG_PLATFORM_USES_UTF8
         if (Regex == "*" || std::regex_match(P.path().native(), Pattern))
-#else /* JAFG_PLATFORM_USES_UTF8 */
-        LString PFromNative = algo::utf16_to_utf8(P.path().native());
-        if (Regex == "*" || std::regex_match(PFromNative, Pattern))
-#endif /* JAFG_PLATFORM_USES_UTF8 */
         {
             if (bKeepExtension)
             {
-#if JAFG_PLATFORM_USES_UTF8
-                Out.emplace_back(LString{ P.path().native().begin().base(), P.path().native().size() });
-#else /* JAFG_PLATFORM_USES_UTF8 */
-                Out.emplace_back(Finder::Normalize(std::move(PFromNative)));
-#endif /* JAFG_PLATFORM_USES_UTF8 */
+                Out.emplace_back(LPath{P.path()}.make_preferred());
             }
             else
             {
-                std::filesystem::path NoExtension{P.path().native()};
-                NoExtension.replace_extension();
-                Out.emplace_back(Finder::Normalize(NoExtension.string()));
+                Out.emplace_back(LPath{P.path()}.replace_extension().make_preferred());
             }
         }
 
@@ -394,14 +381,14 @@ inline TArray<LString> Finder::FindFilesRecursively
     return Out;
 }
 
-inline TArray<LString> Finder::FindFilesRecursivelyByName(LPath const& Directory, LStringView FileName)
+inline TArray<LPath> Finder::FindFilesRecursivelyByName(LPath const& Directory, std::basic_string_view<LPath::value_type> FileName)
 {
     if (DoesDirectoryExist(Directory) == false)
     {
         return {};
     }
 
-    TArray<LString> Out;
+    TArray<LPath> Out;
 
     for (const std::filesystem::directory_entry& P : std::filesystem::recursive_directory_iterator
          {
@@ -415,9 +402,9 @@ inline TArray<LString> Finder::FindFilesRecursivelyByName(LPath const& Directory
             continue;
         }
 
-        if (const LString F{P.path().filename().string()}; FileName == F)
+        if (auto F{P.path().filename()}; FileName == F)
         {
-            Out.emplace_back(Finder::Normalize(P.path().string()));
+            Out.emplace_back(LPath{P.path()}.make_preferred());
         }
 
         continue;

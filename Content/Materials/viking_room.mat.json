@@ -1,0 +1,23 @@
+{
+    "Shader": "StaticMesh.jafg",
+    "Layouts": [
+        [
+            {
+                "Identifier": "PerspectiveCamera",
+                "Type": "Shared"
+            }
+        ],
+        [
+            {
+                "Type": "Unique",
+                "Sets": [
+                    {
+                        "Identifier": "Texture",
+                        "Stage": "eFragment",
+                        "DescriptorType": "eCombinedImageSampler"
+                    }
+                ]
+            }
+        ]
+    ]
+}

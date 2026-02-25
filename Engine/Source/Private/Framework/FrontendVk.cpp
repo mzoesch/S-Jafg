@@ -313,6 +313,23 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     this->Vk_UpdateSamplers();
 
+    std::array Sizes{
+        vk::DescriptorPoolSize{
+            .type = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 2048, /* Completely arbitrary limit. */
+            },
+        vk::DescriptorPoolSize{
+            .type = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = 2048, /* Completely arbitrary limit. */
+            },
+        };
+    this->Vk_DescriptorPool = vk::raii::DescriptorPool{this->Vk_Device, vk::DescriptorPoolCreateInfo{
+            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, // TODO: Flags??
+            .maxSets = 1024, /* Completely arbitrary limit. */
+            .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
+            .pPoolSizes = Sizes.data(),
+        }};
+
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
 
@@ -323,24 +340,13 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
             .pBindings = PerspectiveCameraSetLayout::Bindings().data(),
             }
         };
-    this->Vk_DefaultMaterialDescriptorSetLayout = vk::raii::DescriptorSetLayout{
-        this->Vk_Device,
-        vk::DescriptorSetLayoutCreateInfo{
-            .bindingCount = static_cast<u32>(DefaultMaterialSetLayout::Bindings().size()),
-            .pBindings = DefaultMaterialSetLayout::Bindings().data(),
-            }
-        };
-
-    auto Pipeline = LDevicePipelineFactory{*this}
-        .Shader(LStaticMesh::DefaultShader, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-        .VertexInput<LStaticMesh::Vertex>()
-        .SharedLayout(*this->Vk_PerspectiveCameraDescriptorSetLayout)
-        .SharedLayout(*this->Vk_DefaultMaterialDescriptorSetLayout)
-        .Push<LStaticMesh::VPC>()
-        .Build();
-    this->Vk_Pipelines.emplace(LStaticMesh::DefaultShader, std::move(Pipeline));
-
-    LMaterial Texture{};
+    // this->Vk_DefaultMaterialDescriptorSetLayout = vk::raii::DescriptorSetLayout{
+    //     this->Vk_Device,
+    //     vk::DescriptorSetLayoutCreateInfo{
+    //         .bindingCount = static_cast<u32>(DefaultMaterialSetLayout::Bindings().size()),
+    //         .pBindings = DefaultMaterialSetLayout::Bindings().data(),
+    //         }
+    //     };
 
     return;
 }
@@ -350,7 +356,9 @@ void Jafg::LFrontendVk::TearDown()
     LFrontendBase::TearDown();
 
     GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
-    GetMutableSingleton<JTextureSubsystem>().PurgeUnused();
+
+    this->Vk_DefaultSampler.clear();
+    this->Vk_DescriptorPool.reset();
 
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")
     vmaDestroyAllocator(this->Vk_VmaAllocator);
@@ -1001,9 +1009,9 @@ void Jafg::LFrontendVk::Vk_SetMaxMsaaSamples()
         PhysicalDeviceProperties.limits.framebufferColorSampleCounts & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts
     };
 
-    this->Vk_MaxMsaaSamples = Jafg::Vk_GetMaxMsaaSamples(Counts);
+    this->Vk_MaxMsaaSampleCount = Jafg::Vk_GetMaxMsaaSamples(Counts);
 
-    LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", vk::to_string(this->Vk_MaxMsaaSamples))
+    LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", vk::to_string(this->Vk_MaxMsaaSampleCount))
 
     return;
 }
@@ -1362,7 +1370,7 @@ void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format,
 Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
 {
     vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
-        .rasterizationSamples = this->Frontend.Vk_GetMaxMsaaSamples(),
+        .rasterizationSamples = this->Frontend.Vk_GetMaxMsaaSampleCount(),
         .sampleShadingEnable = this->MultisamplingShadingEnable
         };
 
@@ -1378,22 +1386,33 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         .pDynamicStates = this->DynamicStateInfo.data(),
         };
 
-    TArray DescriptorSetLayouts{this->SharedDescriptorSetLayouts};
-
-    algo::for_each(this->UniqueDescriptorSetLayouts, [&DescriptorSetLayouts](auto const& Layout)
+    TArray<vk::DescriptorSetLayout> DescriptorSetLayouts;
+    for (auto Idx{0uz}; Idx < this->SharedDescriptorSetLayouts.size() + this->UniqueDescriptorSetLayouts.size(); ++Idx)
     {
-         check(*Layout)
-         DescriptorSetLayouts.emplace_back(*Layout);
-         return;
-    });
+        if (auto It{algo::find(this->SharedDescriptorSetLayouts, Idx, &TDescriptorSetLayout<vk::DescriptorSetLayout>::Binding)};
+            It != this->SharedDescriptorSetLayouts.end())
+        {
+            DescriptorSetLayouts.emplace_back(It->DescriptorSetLayout);
+            continue;
+        }
+
+        if (auto It{algo::find(this->UniqueDescriptorSetLayouts, Idx, &TDescriptorSetLayout<vk::raii::DescriptorSetLayout>::Binding)};
+            It != this->UniqueDescriptorSetLayouts.end())
+        {
+            DescriptorSetLayouts.emplace_back(*It->DescriptorSetLayout);
+            continue;
+        }
+
+        LOG_FATAL(LogRhi, "Failed to find descriptor set layout binding [{}].", Idx)
+    }
 
     vk::raii::PipelineLayout Layout{
         Frontend.Vk_GetDevice(),
         vk::PipelineLayoutCreateInfo{
             .setLayoutCount = static_cast<u32>(DescriptorSetLayouts.size()),
             .pSetLayouts = DescriptorSetLayouts.data(),
-            .pushConstantRangeCount = static_cast<uint32_t>(this->Range.has_value() ? 1uz : 0uz),
-            .pPushConstantRanges = this->Range.has_value() ? &*this->Range : nullptr
+            .pushConstantRangeCount = static_cast<u32>(this->PushConstantRange.size()),
+            .pPushConstantRanges = this->PushConstantRange.data(),
             }
        };
 
@@ -1419,6 +1438,13 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         }
     };
 
+    TArray<vk::raii::DescriptorSetLayout> Temp; Temp.reserve(this->UniqueDescriptorSetLayouts.size());
+    for (auto& DescriptorSetLayout : this->UniqueDescriptorSetLayouts)
+    {
+        Temp.emplace_back(std::move(DescriptorSetLayout.DescriptorSetLayout));
+    }
+    algo::orphan(&this->UniqueDescriptorSetLayouts);
+
     return LGraphicsDevicePipeline{
         .Pipeline = vk::raii::Pipeline{
             Frontend.Vk_GetDevice(),
@@ -1426,7 +1452,7 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
             Chain.get<vk::GraphicsPipelineCreateInfo>()
             },
         .Layout = std::move(Layout),
-        .SharedDescriptorSetLayout = std::move(this->SharedDescriptorSetLayouts),
-        .UniqueDescriptorSetLayout = std::move(this->UniqueDescriptorSetLayouts),
+        .DescriptorSetLayouts = std::move(DescriptorSetLayouts),
+        ._UniqueDescriptorSetLayout = std::move(Temp),
         };
 }

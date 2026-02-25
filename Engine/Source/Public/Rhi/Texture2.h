@@ -47,7 +47,7 @@ struct LTexture2 final
         //# The desired number of mip levels. If not available, the optimal number will be used.
         TOptional<u32> DesiredMipLevels;
         //# The allowed sample numbers. The highest available will be used unless greater than the max sample count of the device.
-        vk::SampleCountFlags Samples{ vk::SampleCountFlagBits::e1 };
+        TOptional<vk::SampleCountFlags> Samples;
     };
 
     enum struct EResult

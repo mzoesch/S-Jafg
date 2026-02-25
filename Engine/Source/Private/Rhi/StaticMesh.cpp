@@ -24,6 +24,9 @@ static_assert(sizeof(uint32_t) == sizeof(u32));
 namespace
 {
 
+Jafg::LRegisterDeviceVertexInput<Jafg::LStaticMesh::Vertex> StaticMeshVertexRegistration{};
+Jafg::LRegisterPushConstant<Jafg::LStaticMesh::VPC> StaticMeshVPCRegistration{};
+
 enum struct ETinyObjHint
 {
     Binary,

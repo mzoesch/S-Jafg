@@ -284,7 +284,7 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
     this->GetFrontend()._Vk_WaitIdle();
 
-    VkTestPipeline.Free();
+    // VkTestPipeline.Free();
 
     VkTestVertexBuffer.Free();
     VkTestIndexBuffer.Free();
@@ -335,7 +335,7 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
 
 
 
-    TestPipeline(*this);
+    // TestPipeline(*this);
 
     return;
 }
@@ -630,18 +630,6 @@ void Jafg::LSurfaceGlfw3::OnRender()
             Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 
             Info.PerspectiveCameraDescriptorSet = Set;
-        }
-
-        {
-            auto Sets{(*Info.Frontend.Vk_GetDevice()).allocateDescriptorSets({
-                .descriptorPool = Info.DescriptorPool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &*Frontend.Vk_GetDefaultMaterialDescriptorSetLayout(),
-                })};
-            check(Sets.size() == 1)
-            auto Set{Sets[0]};
-
-            Info.DefaultMaterialDescriptorSet = Set;
         }
 
         this->GetOwnedController()->GetWorld().Draw(Info);
@@ -1315,7 +1303,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
         .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
-        .samples = Frontend.Vk_GetMaxMsaaSamples(),
+        .samples = Frontend.Vk_GetMaxMsaaSampleCount(),
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         .sharingMode = vk::SharingMode::eExclusive,
@@ -1355,7 +1343,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
         .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
-        .samples = Frontend.Vk_GetMaxMsaaSamples(),
+        .samples = Frontend.Vk_GetMaxMsaaSampleCount(),
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
         .sharingMode = vk::SharingMode::eExclusive,
@@ -1456,7 +1444,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
     {
         vk::DescriptorPoolCreateInfo PoolInfo{
             .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            .maxSets = static_cast<u32>(Sizes.size()),
+            .maxSets = 2,
             .poolSizeCount = static_cast<u32>(Sizes.size()),
             .pPoolSizes = Sizes.data(),
             };
@@ -1471,25 +1459,26 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
 
 static void TestPipeline(Jafg::LSurface const& Surface)
 {
-    using namespace Jafg;
-    LOG_VERBOSE(LogVulkan, "Creating test pipeline...")
+    checkNoEntry()
+    // using namespace Jafg;
+    // LOG_VERBOSE(LogVulkan, "Creating test pipeline...")
+    //
+    // auto& Frontend{Surface.GetFrontend()};
 
-    auto& Frontend{Surface.GetFrontend()};
-
-    VkTestPipeline = LDevicePipelineFactory{Frontend}
-        .Shader("Content/Shaders/Spir-V/VisualBox.jafg.spv",
-            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-        .VertexInput<LRhiVertex2D>()
-        .Build();
-
-    VkTestVertexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
-        .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadVertices[0]) * QuadVertices.size()},
-        .Data = QuadVertices.data()
-        }));
-    VkTestIndexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Index({
-        .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadIndices[0]) * QuadIndices.size()},
-        .Data = QuadIndices.data()
-        }));
+    // VkTestPipeline = LDevicePipelineFactory{Frontend}
+    //     .Shader("Content/Shaders/Spir-V/VisualBox.jafg.spv",
+    //         vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
+    //     .VertexInput<LRhiVertex2D>()
+    //     .Build();
+    //
+    // VkTestVertexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
+    //     .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadVertices[0]) * QuadVertices.size()},
+    //     .Data = QuadVertices.data()
+    //     }));
+    // VkTestIndexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Index({
+    //     .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadIndices[0]) * QuadIndices.size()},
+    //     .Data = QuadIndices.data()
+    //     }));
 
     return;
 }

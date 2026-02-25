@@ -18,7 +18,7 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
     while (this->GarbageChildren.empty() == false)
     {
         auto& Child{this->GarbageChildren.back()};
-        check( Child->IsGarbage() )
+        check( Child->_IsGarbage() )
         this->GarbageChildren.pop_back();
         continue;
     }
@@ -35,12 +35,12 @@ void Jafg::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
     if (auto It{algo::find(this->GarbageChildren, Child.get(), algo::unique_raw{})}; It != this->GarbageChildren.end())
     {
         checkSlow( It->get() == Child.get() )
-        check( It->get()->IsGarbage() )
+        check( It->get()->_IsGarbage() )
         this->GarbageChildren.erase(It);
     }
     else
     {
-        if (Child->IsGarbage() == false)
+        if (Child->_IsGarbage() == false)
         {
             LOG_WARNING(LogCarnifex,
                 "The provided child is not garbage - but still alive. {}",
@@ -53,7 +53,7 @@ void Jafg::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
     }
 
     check( Child.get() )
-    check( Child->IsGarbage() )
+    check( Child->_IsGarbage() )
     check( Child->Outer.IsHiredHere(&*Child) == false )
 
     return;

@@ -386,17 +386,15 @@ void Jafg::LEngine::TearDown()
     }
     algo::orphan(&this->Tracks);
 
-    this->Collection.TearDownSubsystems();
-    this->Outer.TearDown();
-    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
-
-    GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
-    GetMutableSingleton<JTextureSubsystem>().PurgeUnused();
-
 #if WITH_LOCAL_LAYER
     check(this->LocalEgo.IsDecommissioned() == false)
     this->LocalEgo.TearDown();
 #endif /* WITH_LOCAL_LAYER */
+
+    this->Collection.TearDownSubsystems();
+    this->Outer.TearDown();
+
+    GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
 
     Tasks::Private::StopAndJoinRemainingThreads();
 
@@ -412,7 +410,7 @@ void Jafg::LEngine::TearDown()
 
         while (this->LoadedPlugins.empty() == false)
         {
-            LLoadedPlugin& Plugin{ this->LoadedPlugins.back() };
+            LLoadedPlugin& Plugin{this->LoadedPlugins.back()};
 
             if (Plugin.IsLoaded() == false)
             {
@@ -425,8 +423,8 @@ void Jafg::LEngine::TearDown()
             {
                 LOG_VERBOSE(LogForeign, "Plugin [{}] is not marked as unloadable. Skipping unload.", Plugin.GetIdentifier() )
 
-                check( Plugin.NativeHandle )
-                check( Plugin.Lifetime.get() )
+                check(Plugin.NativeHandle)
+                check(Plugin.Lifetime.get())
 
                 //# This causes a memory leak. But who tf cares.
                 this->LoadedPlugins.back().NativeHandle = nullptr;
@@ -436,7 +434,7 @@ void Jafg::LEngine::TearDown()
                 continue;
             }
 
-            LString CachedIdentifier{ Plugin.GetIdentifier() };
+            LString CachedIdentifier{Plugin.GetIdentifier()};
 
             if
             (
@@ -449,7 +447,7 @@ void Jafg::LEngine::TearDown()
 
             continue;
         }
-        check( this->LoadedPlugins.empty() )
+        check(this->LoadedPlugins.empty())
     }
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
@@ -823,11 +821,7 @@ void Jafg::LEngine::FetchPlugins(LPath const& Path)
     LOG_VERBOSE(LogForeign, "Fetching in [{}]...", Path)
 
     i32 Fetched{};
-    for
-    (
-        const TArray<LString> Files{Finder::FindFilesRecursively(Path, true, ".*\\manifest.jafg")};
-        LString const& File : Files
-    )
+    for(TArray Files{Finder::FindFilesRecursively(Path, true, ".*\\manifest.jafg")}; auto const& File : Files)
     {
         if (this->FetchPlugin(File))
         {

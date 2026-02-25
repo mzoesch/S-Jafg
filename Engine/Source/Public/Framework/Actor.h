@@ -25,7 +25,7 @@ protected:
 public:
 
     virtual void BeginLife() override;
-    virtual void Tick(f32 Dt) override { check(this->bLives && this->IsGarbage() == false) }
+    virtual void Tick(f32 Dt) override { check(this->bLives && this->_IsGarbage() == false) }
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
     template<typename TActorComponent> requires std::is_base_of_v<AActorComponent, TActorComponent>

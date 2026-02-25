@@ -221,7 +221,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info) const
         }
 
         AActor const* Actor{StaticCastChecked<AActor>(&*Obj)};
-        check( Actor->IsGarbage() == false )
+        check( Actor->_IsGarbage() == false )
 
         for (auto const& Comp : Actor->GetComponents())
         {

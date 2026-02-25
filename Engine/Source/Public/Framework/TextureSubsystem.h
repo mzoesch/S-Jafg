@@ -2,16 +2,19 @@
 
 #pragma once
 
+#include "Subsystems/FrontendSubsystem.h"
+#include "Rhi/TextureView.h"
 #include "Rhi/Texture2.h"
-#include "Engine/CxxClass.h"
 #include "TextureSubsystem.generated.h"
 
 namespace Jafg
 {
 
+struct LTextureView;
+
 //# A texture that was loaded by the program and may be used across many different widgets.
-DECLARE_JAFG_CLASS(ECxxClassFlags::Singleton)
-class JTextureSubsystem : public JCxxClass
+DECLARE_JAFG_CLASS()
+class JTextureSubsystem : public JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -21,8 +24,13 @@ protected:
 
 public:
 
+    virtual void Initialize(LSubsystemCollection& Collection) override;
+
     //# Removes all loaded textures that are not referenced anymore.
     void PurgeUnused() noexcept;
+
+    LTextureView const& GetTextureView(LStringView Name) const noexcept;
+    void RefetchingTextureViews();
 
     FORCEINLINE auto GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
     FORCEINLINE auto const& GetTextures() const noexcept { return this->Textures; }
@@ -31,11 +39,15 @@ public:
         , LTexture2::HostInfo HostCreateInfo
         , LTexture2::DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Device
-        ) const;
+        );
+
+    ENGINE_API LTexture2Ref FromTextureViewIdentifier(LStringView TextureView, ETexture2State State = ETexture2StateBits::Device);
+    ENGINE_API LTexture2Ref FromTextureView(LTextureView const& View, ETexture2State State = ETexture2StateBits::Device);
 
 private:
 
-    mutable std::unordered_map<LPath, std::shared_ptr<LTexture2>> Textures;
+    TArray<LTextureView> TextureViews;
+    std::unordered_map<LPath, std::shared_ptr<LTexture2>> Textures;
 };
 
 } /* ~Namespace Jafg */

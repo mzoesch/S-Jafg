@@ -112,7 +112,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                     {
                         check( Self )
 
-                        if (Target->IsGarbage())
+                        if (Target->_IsGarbage())
                         {
                             return;
                         }
@@ -202,7 +202,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                     .TextBlockBrush(LTextBoxBrush::Body())
                     .OnPrimaryRelease([Target](WButton* Self, const LKeyEvent& InKeyEvent) -> void
                     {
-                        if (Target->IsGarbage())
+                        if (Target->_IsGarbage())
                         {
                             return;
                         }

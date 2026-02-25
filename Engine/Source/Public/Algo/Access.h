@@ -680,7 +680,7 @@ struct add_spaces_to_camel_case_fn
         return Result;
     }
 
-    template<std::ranges::input_range TRange, typename TOut = std::remove_reference_t<TRange>>
+    template<input_range TRange, typename TOut = std::remove_reference_t<TRange>>
     NODISCARD FORCEINLINE constexpr auto
     operator()(TRange&& R) const -> TOut
     {
@@ -772,6 +772,39 @@ inline constexpr detail::utf8_to_utf16_fn utf8_to_utf16{};
 inline constexpr detail::utf16_to_utf8_fn utf16_to_utf8{};
 
 #endif /* PLATFORM_WINDOWS */
+
+namespace detail
+{
+
+struct join_fn
+{
+    template<input_iterator TIter, sentinel_for<TIter> TSent, typename TProj = algo::identity>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(TIter First, TSent Sent, TProj Proj, LStringView Separator = ", ") const -> LString
+    {
+        std::stringstream ss;
+        if (First != Sent)
+        {
+            ss << std::invoke(Proj, *First++);
+            for (;First != Sent; ++First)
+            {
+                ss << Separator << std::invoke(Proj, *First);
+            }
+        }
+        return ss.str();
+    }
+
+    template<input_range TRange, typename TProj = algo::identity>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(TRange&& R, TProj Proj = {}, LStringView Separator = ", ") const -> LString
+    {
+        return (*this)(begin(R), end(R), std::move(Proj), Separator);
+    }
+};
+
+} /* ~Namespace detail */
+
+inline constexpr detail::join_fn join{};
 
 } /* ~Namespace algo */
 

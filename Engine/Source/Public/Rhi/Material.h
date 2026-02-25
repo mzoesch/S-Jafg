@@ -3,20 +3,54 @@
 #pragma once
 
 #include "Minimal.afx"
+#include "ResourceReference.h"
+#include "Rhi/VkAl.h"
 
 namespace Jafg
 {
 
-struct LMaterial final
+struct LFetchedMaterial final
 {
-    struct TextureView
+    struct Layout
     {
-        LString Identifier;
+        enum Type
+        {
+            Unique,
+            Shared,
+        };
+
+        struct Set
+        {
+            LString Identifier;
+            vk::ShaderStageFlagBits Stage;
+            vk::DescriptorType DescriptorType;
+        };
+
+        Type Type;
+        TOptional<LString> Identifier;
+        TOptional<TArray<Set>> Sets;
     };
 
     LPath Path;
-    LPath Shader;
-    TArray<TextureView> TextureViews;
+    LString Name;
+    LString Shader;
+    TArray<Layout> Layouts;
 };
+
+struct LMaterial final
+{
+    LString FetchedMaterial;
+    LGraphicsDevicePipeline Pipeline;
+};
+
+typedef TSharedRef<LMaterial> LMaterialRef;
+
+struct LMaterialInstance final
+{
+    LMaterialRef Material;
+    TArray<vk::raii::DescriptorSet> _UniqueDescriptorSets;
+};
+
+typedef TSharedRef<LMaterialInstance> LMaterialInstanceRef;
 
 } /* ~Namespace Jafg */

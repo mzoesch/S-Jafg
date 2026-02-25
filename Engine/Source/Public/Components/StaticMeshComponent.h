@@ -5,6 +5,7 @@
 #include "Components/SceneComponent.h"
 #include "Rhi/Texture2.h"
 #include "Rhi/StaticMesh.h"
+#include "Rhi/Material.h"
 #include "StaticMeshComponent.generated.h"
 
 namespace Jafg
@@ -31,11 +32,8 @@ public:
         //# The state that the mesh will have when loaded.
         EStaticMeshState MeshState{ EStaticMeshStateBits::Device };
 
-        //# The path to the texture that should be rendered by this component.
-        LPath TexturePath;
-        LTexture2::HostInfo TextureHostCreateInfo{ .Format = vk::Format::eR8G8B8A8Srgb };
-        LTexture2::DeviceInfo TextureDeviceCreateInfo{};
-        ETexture2State TextureState{ ETexture2StateBits::Device };
+        LString Material;
+        LString TextureView;
     };
 
     void Create(CreateInfo const& Info);
@@ -44,6 +42,7 @@ public:
 
 private:
 
+    LMaterialInstanceRef MaterialInstance;
     LTexture2Ref Texture;
     LStaticMeshRef Mesh;
 };

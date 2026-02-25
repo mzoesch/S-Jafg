@@ -47,28 +47,6 @@ struct LStageLinearImageCreateInfo
     vk::ImageCreateInfo Info;
 };
 
-//# TODO: Make this actually viable. This is only a quick and dirty key.
-struct LPipelineKey
-{
-    LPath Path;
-
-    FORCEINLINE bool operator==(LPipelineKey const& Path) const noexcept = default;
-};
-
-} /* ~Namespace Jafg */
-
-template<>
-struct std::hash<Jafg::LPipelineKey>
-{
-    FORCEINLINE std::size_t operator()(Jafg::LPipelineKey const& Key) const noexcept
-    {
-        return std::hash<std::filesystem::path>()(Key.Path);
-    }
-};
-
-namespace Jafg
-{
-
 class LFrontendVk final : public LFrontendBase
 {
 public:
@@ -89,24 +67,6 @@ public:
                     .descriptorType = vk::DescriptorType::eUniformBuffer,
                     .descriptorCount = 1,
                     .stageFlags = vk::ShaderStageFlagBits::eVertex,
-                    .pImmutableSamplers = nullptr
-                    },
-                };
-
-            return Bindings;
-        }
-    };
-
-    struct DefaultMaterialSetLayout
-    {
-        static std::array<vk::DescriptorSetLayoutBinding, 1> const& Bindings() noexcept
-        {
-            static std::array Bindings{
-                vk::DescriptorSetLayoutBinding{
-                    .binding = 0,
-                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                    .descriptorCount = 1,
-                    .stageFlags = vk::ShaderStageFlagBits::eFragment,
                     .pImmutableSamplers = nullptr
                     },
                 };
@@ -138,7 +98,7 @@ public:
     FORCEINLINE auto const& Vk_GetPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
     FORCEINLINE auto const& Vk_GetPhysicalDeviceMemoryProperties() const noexcept { return this->Vk_PhysicalDeviceMemoryProperties; }
 
-    FORCEINLINE auto Vk_GetMaxMsaaSamples() const noexcept { return this->Vk_MaxMsaaSamples; }
+    FORCEINLINE auto Vk_GetMaxMsaaSampleCount() const noexcept { return this->Vk_MaxMsaaSampleCount; }
 
     FORCEINLINE auto const& Vk_GetRequiredDeviceExtensions() const noexcept { return this->Vk_RequiredDeviceExtensions; }
     FORCEINLINE auto&       Vk_GetMutableRequiredDeviceExtensions() noexcept { return this->Vk_RequiredDeviceExtensions; }
@@ -155,10 +115,9 @@ public:
     FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check( this->Vk_SurfaceFormat.format != vk::Format::eUndefined ) return this->Vk_SurfaceFormat; }
 
     FORCEINLINE auto const& Vk_GetDefaultSampler() const noexcept { return this->Vk_DefaultSampler; }
-    FORCEINLINE auto const& Vk_GetPerspectiveCameraDescriptorSetLayout() const noexcept { return this->Vk_PerspectiveCameraDescriptorSetLayout; }
-    FORCEINLINE auto const& Vk_GetDefaultMaterialDescriptorSetLayout() const noexcept { return this->Vk_DefaultMaterialDescriptorSetLayout; }
-
-    FORCEINLINE auto const& Vk_GetPipelines() const noexcept { return this->Vk_Pipelines; }
+    //# @return A descriptor pool that lives for as long the frontend lives.
+    FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
+    FORCEINLINE auto const& Vk_GetPerspectiveCameraDescriptorSetLayout() const noexcept { check(*this->Vk_PerspectiveCameraDescriptorSetLayout) return this->Vk_PerspectiveCameraDescriptorSetLayout; }
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
@@ -250,7 +209,7 @@ private:
     vk::raii::PhysicalDevice Vk_PhysicalDevice{ nullptr };
     vk::PhysicalDeviceMemoryProperties Vk_PhysicalDeviceMemoryProperties;
 
-    vk::SampleCountFlagBits Vk_MaxMsaaSamples{ vk::SampleCountFlagBits::e1 };
+    vk::SampleCountFlagBits Vk_MaxMsaaSampleCount{ vk::SampleCountFlagBits::e1 };
 
     TArray<char const*> Vk_RequiredDeviceExtensions{
         vk::KHRSwapchainExtensionName,
@@ -271,10 +230,8 @@ private:
     vk::SurfaceFormatKHR Vk_SurfaceFormat{ vk::Format::eUndefined };
 
     vk::raii::Sampler Vk_DefaultSampler{ nullptr };
+    vk::raii::DescriptorPool Vk_DescriptorPool{ nullptr };
     vk::raii::DescriptorSetLayout Vk_PerspectiveCameraDescriptorSetLayout{ nullptr };
-    vk::raii::DescriptorSetLayout Vk_DefaultMaterialDescriptorSetLayout{ nullptr };
-
-    std::unordered_map<LPipelineKey, LGraphicsDevicePipeline> Vk_Pipelines;
 };
 
 FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Vertex(LVertexCreateInfo const& Info) noexcept

@@ -237,6 +237,8 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 
         if (Subsystem->IsPriorityTearDown())
         {
+            LOG_TRACE(LogSubsystemCollection, "Tearing down priority subsystem [{}] for outer [{}].", Subsystem->GetNameAsString(), this->Outer->GetHumanReadableName())
+            check(Subsystem->_IsGarbage() == false)
             Subsystem->MarkAsGarbage_v2();
             Subsystem = nullptr;
             ++SubsystemCount;
@@ -268,6 +270,8 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
     {
         if (Subsystem)
         {
+            LOG_TRACE(LogSubsystemCollection, "Tearing down subsystem [{}].", Subsystem->GetNameAsString())
+            check(Subsystem->_IsGarbage() == false)
             Subsystem->MarkAsGarbage_v2();
         }
     }
