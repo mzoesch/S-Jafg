@@ -7,6 +7,7 @@
 #include "User/LocalEgo.h"
 #include "Stats/Stats.h"
 #include "Serialization/Json.h"
+#include "Rhi/GraphicsPipelineFactory.h"
 
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -27,50 +28,70 @@ void Jafg::JMaterialSubsystem::ReloadMaterials()
     STAT_CYCLE_FUNCTION()
     LOG_VERBOSE(LogMaterialSubsystem, "Reloading materials.")
 
-    algo::orphan(&this->FetchedMaterials);
+    check(this->ShaderSubsystem)
+
+    // TODO: We need to track changes and then change device information accordingly/rebuild pipelines, etc.
+    check(this->FetchedMaterials.empty())
 
     LString MissingKey; Json::EError Error;
     for (auto MaterialFiles{Finder::FindFilesRecursively("Content/Materials", true, ".*\\.mat.json")}; auto const& MaterialFile : MaterialFiles)
     {
-        LFetchedMaterial Material{.Path=MaterialFile,.Name=MaterialFile.stem().stem().string()};
-
-        json MaterialJson = json::parse(Finder::ReadFile(Material.Path), nullptr, false);
+        json MaterialJson = json::parse(Finder::ReadFile(MaterialFile), nullptr, false);
         if (MaterialJson.is_discarded())
         {
-            LOG_FATAL(LogMaterialSubsystem, "Material [{}] is not valid json. Failed to load.", Material.Path)
+            LOG_FATAL(LogMaterialSubsystem, "Material [{}] is not valid json. Failed to load.", MaterialFile)
         }
 
         if (Json::DoesObjectContainTypeCheckedKeys(MaterialJson, {{"Shader", Json::LKeyType::String}}, &MissingKey, &Error) == false)
         {
-            Json::DefaultFail(Material.Path, MissingKey, Error);
+            Json::DefaultFail(MaterialFile, MissingKey, Error);
         }
 
-        Material.Shader = MaterialJson["Shader"].get<LString>();
+        std::unique_ptr Material{std::make_unique<LFetchedMaterial>(
+              MaterialFile
+            , MaterialFile.stem().stem().string()
+            , this->ShaderSubsystem->GetFetchedShader(MaterialJson["Shader"].get<LString>())
+            )};
+
+        if (MaterialJson.contains("Type"))
+        {
+            if (MaterialJson["Type"].is_string() == false)
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Type entry is not a string. Failed to load.", Material->Path)
+            }
+            if (LString Type{MaterialJson["Type"].get<LString>()}; Type == "Solid")
+            {
+                Material->Type = LFetchedMaterial::Solid;
+            }
+            else
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such material type [{}]. Failed to load.", Material->Path, Type)
+            }
+        }
 
         if (MaterialJson.contains("Properties"))
         {
             if (MaterialJson["Properties"].is_object() == false)
             {
-                LOG_FATAL(LogMaterialSubsystem, "Material [{}]: Properties entry is not an object. Failed to load.", Material.Path)
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Properties entry is not an object. Failed to load.", Material->Path)
             }
             for (auto const& Property : MaterialJson["Properties"].items())
             {
                 if (Property.value().is_string() == false)
                 {
-                    LOG_FATAL(LogMaterialSubsystem, "Material [{}]: Property value for key [{}] is not a string. Failed to load.", Material.Path, Property.key())
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Property value for key [{}] is not a string. Failed to load.", Material->Path, Property.key())
                 }
-                Material.Properties.emplace_back(LFetchedMaterial::Property{Property.key(), Property.value().get<LString>()});
+                Material->Properties.emplace_back(LFetchedMaterial::Property{Property.key(), Property.value().get<LString>()});
             }
         }
 
-        check(algo::contains(this->FetchedMaterials, Material.Path, &LFetchedMaterial::Path) == false)
-        check(algo::contains(this->FetchedMaterials, Material.Name, &LFetchedMaterial::Name) == false)
+        check(algo::contains(this->FetchedMaterials, Material->Name, [](std::unique_ptr<LFetchedMaterial> const& M){ return M->Name; }) == false)
 
         if constexpr (IS_COMPILED_LOG(LogMaterialSubsystem, Trace))
         LOG_TRACE(LogMaterialSubsystem, "[{}]: Shader [{}], Properties [{}]."
-            , Material.Path
-            , Material.Shader
-            , algo::join(Material.Properties, [](auto const& P){ return P.Key + "=" + P.Value; })
+            , Material->Path
+            , Material->FetchedShader.Name
+            , algo::join(Material->Properties, [](auto const& P){ return P.Key + "=" + P.Value; })
             )
 
         this->FetchedMaterials.emplace_back(std::move(Material));
@@ -83,12 +104,12 @@ void Jafg::JMaterialSubsystem::ReloadMaterials()
 
 Jafg::LFetchedMaterial const& Jafg::JMaterialSubsystem::GetFetchedMaterial(LString const& Name) const noexcept
 {
-    auto It{algo::find(this->FetchedMaterials, Name, &LFetchedMaterial::Name)};
+    auto It{algo::find(this->FetchedMaterials, Name, [](std::unique_ptr<LFetchedMaterial> const& M){ return M->Name; })};
     if (It == this->FetchedMaterials.end())
     {
         LOG_FATAL(LogMaterialSubsystem, "No such material [{}].", Name)
     }
-    return *It;
+    return **It;
 }
 
 Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) noexcept
@@ -104,16 +125,10 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     }
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
+    auto const& FetchedMaterial{this->GetFetchedMaterial(Name)};
+    std::shared_ptr Material{std::make_shared<LMaterial>(LMaterial{.FetchedMaterial=FetchedMaterial})};
 
-    auto It{algo::find(this->FetchedMaterials, Name, &LFetchedMaterial::Name)};
-    if (It == this->FetchedMaterials.end())
-    {
-        LOG_FATAL(LogMaterialSubsystem, "No such material [{}].", Name)
-    }
-    auto& FetchedMaterial{*It};
-    std::shared_ptr Material{std::make_shared<LMaterial>(LMaterial{.FetchedMaterial=It->Name})};
-
-    auto& FetchedShader{this->ShaderSubsystem->GetFetchedShader(FetchedMaterial.Shader)};
+    auto& FetchedShader{FetchedMaterial.FetchedShader};
     auto Factory{LDevicePipelineFactory{Frontend}};
     Factory.Shader(FetchedShader.GetDst(), FetchedShader.Entrypoints);
 
@@ -123,11 +138,26 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     }
     Factory.VertexInput(this->ShaderSubsystem->GetVertexInputStateCreateInfo(*FetchedShader.VertexInput));
 
+    switch (FetchedMaterial.Type)
+    {
+    case LFetchedMaterial::Solid:
+    {
+        check(Factory.PipelineColorBlendStateCreateInfo == nullptr)
+        Factory.PipelineColorBlendStateCreateInfo = &this->GetSolidColorBlending();
+        break;
+    }
+    default:
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}]: Missing implementation for material type [{}].", FetchedMaterial.Path, std::to_string(FetchedMaterial.Type))
+    }
+    }
+
     for (auto const& Layout : FetchedShader.Layouts)
     {
-        if (Layout.Type == LFetchedShader::Layout::Unique)
+        if (Layout.Type == LFetchedShader::Layout::eUnique)
         {
             TArray<vk::DescriptorSetLayoutBinding> Bindings; Bindings.reserve(Layout.Sets->size());
+            check(Layout.Stage.has_value())
             check(Layout.Sets.has_value())
             for (auto Idx{0uz}; Idx < Layout.Sets->size(); ++Idx)
             {
@@ -136,7 +166,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
                     .binding = static_cast<u32>(Idx),
                     .descriptorType = Set.DescriptorType,
                     .descriptorCount = 1,
-                    .stageFlags = Set.Stage,
+                    .stageFlags = *Layout.Stage,
                     .pImmutableSamplers = nullptr
                     });
             }
@@ -145,16 +175,17 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
                 .pBindings = Bindings.data(),
                 });
         }
-        else if (Layout.Type == LFetchedShader::Layout::Shared)
+        else if (Layout.Type == LFetchedShader::Layout::eShared)
         {
             check(Layout.Identifier.has_value())
-            if (Layout.Identifier == "PerspectiveCamera")
+            auto& SharedLayouts{Frontend.Vk_GetDescriptorSetLayouts()};
+            if (auto It2{SharedLayouts.find(*Layout.Identifier)}; It2 == SharedLayouts.end())
             {
-                Factory.SharedLayout(Frontend.Vk_GetPerspectiveCameraDescriptorSetLayout());
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such shared layout [{}].", FetchedMaterial.Path, *Layout.Identifier)
             }
             else
             {
-                checkNoEntry()
+                Factory.SharedLayout(*It2->second);
             }
         }
         else
@@ -170,153 +201,214 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
 
     Material->Pipeline = Factory.Build();
 
-    this->Materials[It->Name] = Material;
+    this->Materials.emplace(FetchedMaterial.Name, Material);
     return Material;
 }
 
-void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Instance, LString const& Key, LString const& Value, LFetchedShader const& FetchedShader) const noexcept
+Jafg::JMaterialSubsystem::LBinding Jafg::JMaterialSubsystem::GetBinding(LMaterialInstance& Instance, LStringView Key)
 {
-    LOG_VERBOSE(LogMaterialSubsystem, "Setting material instance field [{}] to [{}].", Key, Value)
-
     check(this->ShaderSubsystem)
     check(Instance.Material.get())
-    checkCode
-    (
-        if (this->GetFetchedMaterial(Instance.Material->FetchedMaterial).Shader != FetchedShader.Name)
-        {
-            LOG_FATAL(LogMaterialSubsystem
-                , "Fetched shader [{}] does not match the shader [{}] specified in the material [{}]. Failed to set material instance field [{}] to [{}]."
-                , FetchedShader.Name, this->GetFetchedMaterial(Instance.Material->FetchedMaterial).Shader, Instance.Material->FetchedMaterial
-                , Key, Value
-                )
-        }
-    )
 
-    for (auto const& Layout : FetchedShader.Layouts)
+    auto& FetchedShader{Instance.Material->FetchedMaterial.FetchedShader};
+    for (auto LayoutIdx{0uz}; LayoutIdx < FetchedShader.Layouts.size(); ++LayoutIdx)
     {
+        auto& Layout{FetchedShader.Layouts[LayoutIdx]};
         if (Layout.Sets.has_value() == false)
         {
-            check(Layout.Identifier.has_value() && Layout.Type == LFetchedShader::Layout::Shared)
+            check(Layout.Identifier.has_value() && Layout.Type == LFetchedShader::Layout::eShared)
             continue;
         }
-
-        for (auto const& Set : *Layout.Sets)
+        for (auto SetIdx{0uz}; SetIdx < Layout.Sets->size(); ++SetIdx)
         {
+            auto& Set{(*Layout.Sets)[SetIdx]};
             if (Set.Identifier != Key)
             {
                 continue;
             }
-
-            switch (Set.DescriptorType)
-            {
-            case vk::DescriptorType::eCombinedImageSampler:
-            {
-                this->SetCombinedImageSampler(Instance, Key, *this->TextureSubsystem->FromTextureViewIdentifier(Value));
-                return;
-            }
-            default:
-            {
-                LOG_FATAL(LogMaterialSubsystem
-                    , "[{}]: Unsupported descriptor type [{}] for set identifier [{}]., Failed to set value [{}]."
-                    , Instance.Material->FetchedMaterial, vk::to_string(Set.DescriptorType), Key, Value
-                    )
-            }
-            }
-
-            return;
+            return {
+                .Type = Set.DescriptorType,
+                .Layout = static_cast<u32>(LayoutIdx),
+                .Set = static_cast<u32>(SetIdx),
+                };
         }
     }
 
     LOG_FATAL(LogMaterialSubsystem
-        , "[{}]: No such set in any layout [{}]. Failed to set value [{}]."
-        , Instance.Material->FetchedMaterial, Key, Value
+        , "[{}]: No such set in any layout [{}]."
+        , Instance.Material->FetchedMaterial.Name, Key
         )
 }
 
-void Jafg::JMaterialSubsystem::SetCombinedImageSampler(LMaterialInstance& Instance, LStringView Where, LTexture2 const& Texture) const
+void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Instance, LBinding Where, LString const& Value) const noexcept
 {
-    check(Instance.Material.get())
-    check(this->ShaderSubsystem)
-
-    auto& Material{this->GetFetchedMaterial(Instance.Material->FetchedMaterial)};
-    auto& Shader{this->ShaderSubsystem->GetFetchedShader(Material.Shader)};
-    auto LayoutIdx{0uz};
-    for (auto const& Layout : Shader.Layouts)
+    switch (Where.Type)
     {
-        if (Layout.Sets.has_value() == false)
+    case vk::DescriptorType::eSampler:
+    {
+        if (Value == "Jafg.DefaultSampler")
         {
-            continue;
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetDefaultSampler());
         }
-
-        for (auto SetIdx{0uz}; SetIdx < Layout.Sets->size(); ++SetIdx)
+        else
         {
-            auto& Set{(*Layout.Sets)[SetIdx]};
-            if (Set.Identifier != Where)
-            {
-                continue;
-            }
-            if (Set.DescriptorType != vk::DescriptorType::eCombinedImageSampler)
-            {
-                LOG_FATAL(LogMaterialSubsystem
-                    , "Material [{}] has a set with identifier [{}], but it is not a combined image sampler. Failed to set combined image sampler."
-                    , Material.Name, Where
-                    )
-            }
-
-            auto& Frontend{this->GetFrontend()};
-
-            vk::DescriptorImageInfo ImageInfo{
-                .sampler = Frontend.Vk_GetDefaultSampler(),
-                .imageView = Texture.GetImageView(),
-                .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
-                };
-
-            std::array Writes{
-                vk::WriteDescriptorSet{
-                    .dstSet = *Instance._UniqueDescriptorSets[LayoutIdx],
-                    .dstBinding = static_cast<u32>(SetIdx),
-                    .dstArrayElement = 0,
-                    .descriptorCount = 1,
-                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                    .pImageInfo = &ImageInfo,
-                    },
-                };
-            Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-            return;
+            LOG_FATAL(LogMaterialSubsystem
+                , "[{}]: No such sampler identifier [{}]. Failed to set value [{}] for set identifier [{}]."
+                , Instance.Material->FetchedMaterial.Name, Value, Value, Where.Set
+                )
         }
-
-        ++LayoutIdx;
-        continue;
+        break;
     }
+    case vk::DescriptorType::eSampledImage:
+    {
+        this->SetSampledImage(Instance, Where, *this->TextureSubsystem->FromTextureViewIdentifier(Value));
+        break;
+    }
+    default:
+    {
+        LOG_FATAL(LogMaterialSubsystem
+            , "[{}]: Unsupported descriptor type [{}] for set identifier [{}]. Failed to set value [{}]."
+            , Instance.Material->FetchedMaterial.Name, vk::to_string(Where.Type), Where.Set, Value
+            )
+    }
+    }
+}
 
-    LOG_FATAL(LogMaterialSubsystem
-        , "Material [{}] does not have a combined image sampler set with identifier [{}]. Failed to set combined image sampler."
-        , Material.Name, Where
-        )
+void Jafg::JMaterialSubsystem::SetSampler(LMaterialInstance& Instance, LBinding Where, vk::Sampler const& Sampler) const
+{
+    auto& Frontend{this->GetFrontend()};
+
+    auto It{algo::find(Instance.InfrequentDescriptorSets, Where.Layout, [](auto const& E){ return E.first; })};
+    check(It != Instance.InfrequentDescriptorSets.end())
+
+    vk::DescriptorImageInfo ImageInfo{
+        .sampler = Sampler,
+        };
+    check(ImageInfo.imageView == nullptr && ImageInfo.imageLayout == vk::ImageLayout::eUndefined)
+    std::array Writes{
+        vk::WriteDescriptorSet{
+            .dstSet = *It->second,
+            .dstBinding = Where.Set,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampler,
+            .pImageInfo = &ImageInfo,
+            },
+        };
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+    return;
+}
+
+void Jafg::JMaterialSubsystem::SetSampledImage(LMaterialInstance& Instance, LBinding Where, LTexture2 const& Texture) const
+{
+    auto& Frontend{this->GetFrontend()};
+
+    auto It{algo::find(Instance.InfrequentDescriptorSets, Where.Layout, [](auto const& E){ return E.first; })};
+    check(It != Instance.InfrequentDescriptorSets.end())
+
+    vk::DescriptorImageInfo ImageInfo{
+        .imageView = Texture.GetImageView(),
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
+        };
+    check(ImageInfo.sampler == nullptr)
+    std::array Writes{
+        vk::WriteDescriptorSet{
+            .dstSet = *It->second,
+            .dstBinding = Where.Set,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampledImage,
+            .pImageInfo = &ImageInfo,
+            },
+        };
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+    return;
 }
 
 Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Material)
 {
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
+    auto& FetchedMaterial{Material->FetchedMaterial};
+    auto& FetchedShader{FetchedMaterial.FetchedShader};
 
     auto Instance{std::make_shared<LMaterialInstance>(LMaterialInstance{.Material=Material})};
-    if (Material->Pipeline._UniqueDescriptorSetLayout.empty() == false)
+
+    auto UniqueIdx{0uz};
+    TArray<vk::DescriptorSetLayout> LayoutsToAllocate;
+    for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
     {
-        TArray<vk::DescriptorSetLayout> LayoutsToAllocate(Material->Pipeline._UniqueDescriptorSetLayout.size());
-        algo::transform(Material->Pipeline._UniqueDescriptorSetLayout, LayoutsToAllocate.begin(), [](auto& Layout){ return *Layout; });
-        Instance->_UniqueDescriptorSets = Frontend.Vk_GetDevice().allocateDescriptorSets({
+        auto& Layout{FetchedShader.Layouts[Idx]};
+        if (Layout.Type == LFetchedShader::Layout::eShared)
+        {
+            continue;
+        }
+
+        if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
+        {
+            check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+            for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
+            {
+                LayoutsToAllocate.emplace_back(*Material->Pipeline._UniqueDescriptorSetLayout[UniqueIdx]);
+            }
+        }
+        else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
+        {
+            LayoutsToAllocate.emplace_back(*Material->Pipeline._UniqueDescriptorSetLayout[UniqueIdx]);
+        }
+        else
+        {
+            unreachable()
+        }
+
+        ++UniqueIdx;
+        continue;
+    }
+    check(UniqueIdx == Material->Pipeline._UniqueDescriptorSetLayout.size())
+
+    if (LayoutsToAllocate.empty() == false)
+    {
+        auto SetIdx{0uz};
+        auto DescriptorSets{Frontend.Vk_GetDevice().allocateDescriptorSets({
             .descriptorPool = Frontend.Vk_GetDescriptorPool(),
             .descriptorSetCount = static_cast<u32>(LayoutsToAllocate.size()),
             .pSetLayouts = LayoutsToAllocate.data(),
-        });
+            })};
+
+        for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
+        {
+            auto& Layout{FetchedShader.Layouts[Idx]};
+            if (Layout.Type == LFetchedShader::Layout::eShared)
+            {
+                continue;
+            }
+            if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
+            {
+                check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+                for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
+                {
+                    Instance->FrequentDescriptorSets[FramesInFlight].emplace_back(Idx, std::move(DescriptorSets[SetIdx++]));
+                }
+            }
+            else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
+            {
+                Instance->InfrequentDescriptorSets.emplace_back(Idx, std::move(DescriptorSets[SetIdx++]));
+            }
+            else
+            {
+                unreachable()
+            }
+
+            continue;
+        }
+
+        check(SetIdx == DescriptorSets.size())
     }
 
-    auto& FetchedMaterial{this->GetFetchedMaterial(Material->FetchedMaterial)};
-    auto& Shader{this->ShaderSubsystem->GetFetchedShader(FetchedMaterial.Shader)};
     for (auto const& [Key, Value] : FetchedMaterial.Properties)
     {
-        this->SetMaterialInstanceField(*Instance, Key, Value, Shader);
+        this->SetMaterialInstanceField(*Instance, this->GetBinding(*Instance, Key), Value);
     }
 
     return Instance;

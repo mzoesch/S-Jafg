@@ -4,8 +4,6 @@
 
 #include "Framework/FrontendForward.h"
 #include "Framework/Frontend.h"
-#include "Rhi/VkForward.h"
-#include "Rhi/VkAl.h"
 
 namespace Jafg
 {
@@ -57,24 +55,6 @@ public:
         vk::raii::PhysicalDevice PhysicalDevice;
     };
 
-    struct PerspectiveCameraSetLayout
-    {
-        static std::array<vk::DescriptorSetLayoutBinding, 1> const& Bindings() noexcept
-        {
-            static std::array Bindings{
-                vk::DescriptorSetLayoutBinding{
-                    .binding = 0,
-                    .descriptorType = vk::DescriptorType::eUniformBuffer,
-                    .descriptorCount = 1,
-                    .stageFlags = vk::ShaderStageFlagBits::eVertex,
-                    .pImmutableSamplers = nullptr
-                    },
-                };
-
-            return Bindings;
-        }
-    };
-
     void Initialize(LClassOuter* Outer);
     void TearDown();
 
@@ -114,10 +94,18 @@ public:
     FORCEINLINE auto Vk_GetPreferredDepthFormat() const noexcept { return this->Vk_PreferredDepthFormat; }
     FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check( this->Vk_SurfaceFormat.format != vk::Format::eUndefined ) return this->Vk_SurfaceFormat; }
 
+    FORCEINLINE auto Vk_GetNumberOfFramesInFlight() const noexcept { return this->Vk_FramesInFlight; }
+    void _Vk_ReportFramesInFlight(u32 FramesInFlight) noexcept
+    {
+        check(this->Vk_FramesInFlight == 0)
+        this->Vk_FramesInFlight = FramesInFlight;
+    }
+
     FORCEINLINE auto const& Vk_GetDefaultSampler() const noexcept { return this->Vk_DefaultSampler; }
     //# @return A descriptor pool that lives for as long the frontend lives.
     FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
-    FORCEINLINE auto const& Vk_GetPerspectiveCameraDescriptorSetLayout() const noexcept { check(*this->Vk_PerspectiveCameraDescriptorSetLayout) return this->Vk_PerspectiveCameraDescriptorSetLayout; }
+    FORCEINLINE auto const& Vk_GetDescriptorSetLayouts() const noexcept { return this->Vk_DescriptorSetLayouts; }
+    FORCEINLINE auto&       Vk_GetMutableDescriptorSetLayouts() noexcept { return this->Vk_DescriptorSetLayouts; }
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
@@ -230,9 +218,11 @@ private:
     vk::Format Vk_PreferredDepthFormat{ vk::Format::eUndefined  };
     vk::SurfaceFormatKHR Vk_SurfaceFormat{ vk::Format::eUndefined };
 
+    u32 Vk_FramesInFlight{};
+
     vk::raii::Sampler Vk_DefaultSampler{ nullptr };
     vk::raii::DescriptorPool Vk_DescriptorPool{ nullptr };
-    vk::raii::DescriptorSetLayout Vk_PerspectiveCameraDescriptorSetLayout{ nullptr };
+    std::unordered_map<LString, vk::raii::DescriptorSetLayout> Vk_DescriptorSetLayouts;
 };
 
 FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Vertex(LVertexCreateInfo const& Info) noexcept

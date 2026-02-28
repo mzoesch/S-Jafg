@@ -19,7 +19,7 @@ op.export_hierarchy_full_collections = False
 op.export_apply = False
 op.export_texcoords = True
 op.export_normals = True
-op.export_tangents = False
+op.export_tangents = True
 op.export_attributes = False
 op.export_shared_accessors = False
 

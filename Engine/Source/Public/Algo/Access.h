@@ -659,24 +659,18 @@ struct add_spaces_to_camel_case_fn
         {
             algo::reserve(&Result, algo::distance(First, Sent));
         }
-
-        bool bFirst{true};
-        while (First != Sent)
+        if (First != Sent)
         {
-            if (*First >= 'A' && *First <= 'Z')
+            Result.push_back(*First++);
+            while (First != Sent)
             {
-                if (bFirst == false)
+                if (*First >= 'A' && *First <= 'Z')
                 {
                     Result.push_back(' ');
                 }
+                Result.push_back(*First++);
             }
-
-            Result.push_back(*First);
-
-            bFirst = false;
-            continue;
         }
-
         return Result;
     }
 

@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "Minimal.afx"
-#include "Rhi/VkAl.h"
+#include "Rhi/RendererCore.h"
 
 namespace Jafg
 {

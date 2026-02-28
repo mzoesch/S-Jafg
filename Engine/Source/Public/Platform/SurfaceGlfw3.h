@@ -8,10 +8,11 @@
     #error "Tried to include glfw3 specific code on a platform that does not support glfw3."
 #endif /* !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
 
+#include "Rhi/RendererCore.h"
+#include "Rhi/DeviceBuffers.h"
+
 struct GLFWwindow;
 struct GLFWcursor;
-
-#include "Rhi/Rhi.h"
 
 namespace Jafg
 {
@@ -22,6 +23,8 @@ namespace Private
 struct LGlfw3Bridge;
 
 } /* ~Namespace Private */
+
+struct LRenderInfo;
 
 //#
 //# Vk methods are only available if vulkan is enabled for a given platform.
@@ -66,8 +69,6 @@ public:
     FORCEINLINE auto _GetPendingResizeExtent() const noexcept { return this->PendingResizeExtent; }
     FORCEINLINE f32  _GetPendingTimeForResizeApply() const noexcept { return this->PendingTimeForResizeApply; }
 
-    FORCEINLINE auto Vk_GetNumberOfFramesInFlight() const noexcept { return this->Vk_SwapchainImages.size(); }
-
     FORCEINLINE auto const& Vk_GetCommandPool() const noexcept { return this->Vk_CommandPool; }
 
     FORCEINLINE auto const& Vk_GetSurface() const noexcept { return this->Vk_Surface; }
@@ -103,6 +104,9 @@ public:
 
     FORCEINLINE auto const& Vk_GetCommandBuffers() const noexcept { return this->Vk_CommandBuffers; }
 
+    template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
+    FORCEINLINE auto const& Vk_GetDescriptorPool(TRenderInfo const& Info) const noexcept { return this->Vk_DescriptorPools[Info.Frame]; }
+
     //#
     //# Transitions an image layout for the current frame's command buffer.
     //# @note If no flight frame is currently progressed, this method would then trigger an engine panic.
@@ -110,6 +114,8 @@ public:
     ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier);
 
 private:
+
+    FORCEINLINE auto Vk_GetNumberOfFramesInFlightInternal() const noexcept { return this->Vk_SwapchainImages.size(); }
 
     void FramebufferSizeCallback(i32 Width, i32 Height);
     void MouseCallback(f64 XPos, f64 YPos);
@@ -141,7 +147,6 @@ private:
         void __Vk_CreateSynchObjects();
 
     void Vk_CreateCommandBuffers();
-    void Vk_CreateCommonBuffers();
     void Vk_CreateDescriptorPools();
 
     GLFWcursor* Cursor{};
@@ -188,19 +193,14 @@ private:
     LDeviceImage Vk_DepthImage;
     vk::raii::ImageView Vk_DepthImageView{ nullptr };
 
-    std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_ImageAvailableSemaphores;
-    std::array<vk::raii::Semaphore, Jafg::Vk_DesiredMaxFramesInFlight> Vk_RenderSemaphores;
-    std::array<vk::raii::Fence, Jafg::Vk_DesiredMaxFramesInFlight> Vk_FlightFences;
+    TFrameArray<vk::raii::Semaphore> Vk_ImageAvailableSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    TFrameArray<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    TFrameArray<vk::raii::Fence> Vk_FlightFences JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     u32 Vk_LastFrameInFlightIndex{};
     TOptional<u32> Vk_CurrentFrameInFlightIndex{};
 
-    std::array<vk::raii::CommandBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_CommandBuffers;
-
-    std::array<vk::raii::DescriptorPool, Jafg::Vk_DesiredMaxFramesInFlight> Vk_DescriptorPools;
-
-    std::array<vk::DescriptorSet, Jafg::Vk_DesiredMaxFramesInFlight> Vk_PerspectiveCameraDescriptorSets;
-
-    std::array<LMappedDeviceBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_PerspectiveCameraBuffers;
+    TFrameArray<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    TFrameArray<vk::raii::DescriptorPool> Vk_DescriptorPools JAFG_VK_FRAME_ARRAY_INIT(nullptr);
 };
 
 } /* ~Namespace Jafg */

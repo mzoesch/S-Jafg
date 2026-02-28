@@ -4,12 +4,14 @@
 
 #include "Platform/Surface.h"
 
-#include "Rhi/Rhi.h"
+#include "Rhi/RendererCore.h"
 #include <GLFW/glfw3.h>
 #if PLATFORM_WINDOWS
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
+
+#include <Framework/MaterialSubsystem.h>
 
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
@@ -23,6 +25,10 @@
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
 #include "Components/SceneComponent.h"
+
+// TEMP REMOVE
+#include "Rhi/VertexInput.h"
+#include "Rhi/Layout.h"
 
 static Jafg::LGraphicsDevicePipeline VkTestPipeline;
 static Jafg::LDeviceBuffer VkTestVertexBuffer;
@@ -177,13 +183,7 @@ LString Glfw3CodePoint2Utf8(auto CodePoint)
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info)
-    : Super{Info}
-    , Vk_ImageAvailableSemaphores{vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}}
-    , Vk_RenderSemaphores{vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}, vk::raii::Semaphore{nullptr}}
-    , Vk_FlightFences{vk::raii::Fence{nullptr}, vk::raii::Fence{nullptr}, vk::raii::Fence{nullptr}}
-    , Vk_CommandBuffers{vk::raii::CommandBuffer{nullptr}, vk::raii::CommandBuffer{nullptr}, vk::raii::CommandBuffer{nullptr}}
-    , Vk_DescriptorPools{vk::raii::DescriptorPool{nullptr}, vk::raii::DescriptorPool{nullptr}, vk::raii::DescriptorPool{nullptr}}
+Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 {
     STAT_CYCLE_FUNCTION()
 
@@ -330,10 +330,7 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->Vk_CreateCommandPool();
     this->Vk_CreateSwapchain();
     this->Vk_CreateCommandBuffers();
-    this->Vk_CreateCommonBuffers();
     this->Vk_CreateDescriptorPools();
-
-
 
     // TestPipeline(*this);
 
@@ -405,16 +402,17 @@ void Jafg::LSurfaceGlfw3::OnRender()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->Handle )
-    check( Tasks::IsOnRendererThread() )
+    check(this->Handle)
+    check(Tasks::IsOnRendererThread())
 
-    check( this->Vk_LastFrameInFlightIndex < Jafg::Vk_DesiredMaxFramesInFlight )
+    check(this->Vk_LastFrameInFlightIndex < Jafg::Vk_DesiredMaxFramesInFlight)
 
-    check( this->Vk_CommandBuffers.size() == this->Vk_GetNumberOfFramesInFlight() )
+    check(this->Vk_CommandBuffers.size() == this->Vk_GetNumberOfFramesInFlightInternal())
 
-    auto& Frontend{ this->GetFrontend() };
+    auto& Frontend{this->GetFrontend()};
 
-    this->Vk_CurrentFrameInFlightIndex = static_cast<u32>((this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlight());
+    check(this->Vk_GetNumberOfFramesInFlightInternal() == Frontend.Vk_GetNumberOfFramesInFlight())
+    this->Vk_CurrentFrameInFlightIndex = static_cast<u32>((this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlightInternal());
 
     while (vk::Result::eTimeout == Frontend.Vk_GetDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX))
         ;
@@ -475,14 +473,13 @@ void Jafg::LSurfaceGlfw3::OnRender()
     this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex].reset({});
 
     LRenderInfo Info{
+        .UserPreferences = GetSingleton<JUserPreferences>(),
         .Frontend = Frontend,
         .Surface = *this,
         .CommandBuffer = *CommandBuffer,
         .DescriptorPool = *this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex],
         .Frame = *this->Vk_CurrentFrameInFlightIndex,
         .Image = ImageIndex,
-        .PerspectiveCamera = {},
-        .PerspectiveCameraWriteInfo = {},
         };
 
     Vk_TransitionImageLayout({
@@ -593,58 +590,6 @@ void Jafg::LSurfaceGlfw3::OnRender()
     if (this->IsOwnedControllerValid() && this->GetOwnedControllerChecked()->IsOwnedPawnValid())
     {
         Info.PerspectiveEye = this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetEye();
-        auto const& Eye{*Info.PerspectiveEye};
-        Info.PerspectiveCamera = {
-            .view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up),
-            .proj = glm::perspectiveRH_ZO(
-                Eye.VertFov,
-                static_cast<f32>(this->Vk_SwapchainExtent.width) / static_cast<f32>(this->Vk_SwapchainExtent.height),
-                Eye.NearFrustum, Eye.FarFrustum
-                ),
-            };
-        Info.PerspectiveCamera.proj[1][1] *= -1.0f;
-        Info.PerspectiveCamera.Upload(this->Vk_PerspectiveCameraBuffers[Info.Frame]);
-        Info.PerspectiveCameraWriteInfo = {
-            .buffer = this->Vk_PerspectiveCameraBuffers[Info.Frame].GetBuffer(),
-            .offset = 0,
-            .range = sizeof(decltype(LRenderInfo::PerspectiveCamera))
-            };
-
-        {
-            auto Sets{(*Frontend.Vk_GetDevice()).allocateDescriptorSets({
-                .descriptorPool = Info.DescriptorPool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &*Frontend.Vk_GetPerspectiveCameraDescriptorSetLayout()
-                })};
-            check(Sets.size() == 1)
-            auto Set{Sets[0]};
-
-            std::array Writes{vk::WriteDescriptorSet{
-                .dstSet = Set,
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eUniformBuffer,
-                .pBufferInfo = &Info.PerspectiveCameraWriteInfo,
-                }};
-            Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-            Info.PerspectiveCameraDescriptorSet = Set;
-        }
-
-        if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
-        {
-            Info.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
-        }
-        else if (Prefs.PolygonMode == EPolygonMode::Wireframe)
-        {
-            Info.DefaultPerspectivePolygonMode = vk::PolygonMode::eLine;
-        }
-        else
-        {
-            unreachable()
-        }
-
         this->GetOwnedController()->GetWorld().Draw(Info);
     }
 
@@ -1169,10 +1114,20 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
             )
     }
 
+    if (Frontend.Vk_GetNumberOfFramesInFlight() == 0)
+    {
+        Frontend._Vk_ReportFramesInFlight(maths::clamp<u32>(Vk_DesiredMaxFramesInFlight, this->Vk_SurfaceCapabilities.minImageCount, this->Vk_SurfaceCapabilities.maxImageCount));
+    }
+    else
+    {
+        check( Frontend.Vk_GetNumberOfFramesInFlight() >= this->Vk_SurfaceCapabilities.minImageCount
+            && Frontend.Vk_GetNumberOfFramesInFlight() <= this->Vk_SurfaceCapabilities.maxImageCount )
+    }
+
     vk::SwapchainCreateInfoKHR SwapChainCreateInfo{
         .flags = vk::SwapchainCreateFlagsKHR{},
         .surface = this->Vk_Surface,
-        .minImageCount = maths::clamp<u32>(Jafg::Vk_DesiredMaxFramesInFlight, this->Vk_SurfaceCapabilities.minImageCount, this->Vk_SurfaceCapabilities.maxImageCount),
+        .minImageCount = Frontend.Vk_GetNumberOfFramesInFlight(),
         .imageFormat = Frontend.Vk_GetSurfaceFormat().format,
         .imageColorSpace = Frontend.Vk_GetSurfaceFormat().colorSpace,
         .imageExtent =  this->Vk_SwapchainExtent,
@@ -1203,11 +1158,17 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     this->Vk_VkMySwapchain = vk::raii::SwapchainKHR{Frontend.Vk_GetDevice(), SwapChainCreateInfo};
     {
-        for (const auto Images{ this->Vk_VkMySwapchain.getImages() }; auto Image : Images)
+        for (const auto Images{this->Vk_VkMySwapchain.getImages()}; auto Image : Images)
         {
             this->Vk_SwapchainImages.push_back(Image);
         }
         LOG_VERBOSE(LogVulkan, "Created swapchain with [{}] images.", this->Vk_SwapchainImages.size())
+    }
+    if (this->Vk_SwapchainImages.size() != Frontend.Vk_GetNumberOfFramesInFlight())
+    {
+        LOG_FATAL(LogVulkan, "Number of images in swapchain [{}] does not match number of expected frames in flight reported by the frontend [{}].",
+            this->Vk_SwapchainImages.size(), Frontend.Vk_GetNumberOfFramesInFlight()
+            )
     }
 
     this->bPendingResize = false;
@@ -1308,7 +1269,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
 
     auto& Frontend{ this->GetFrontend() };
 
-    check( this->Vk_SwapchainExtent.width > 0 && this->Vk_SwapchainExtent.height > 0 )
+    check(this->Vk_SwapchainExtent.width > 0 && this->Vk_SwapchainExtent.height > 0)
 
     vk::ImageCreateInfo ImageCreateInfo{
         .imageType = vk::ImageType::e2D,
@@ -1381,12 +1342,12 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
 void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 {
     LOG_VERBOSE(LogVulkan, "Creating [{}+2*{}] Vulkan synchronization objects for surface [{}].",
-        this->Vk_GetNumberOfFramesInFlight(), this->Vk_SwapchainImages.size(), this->GetHumanReadableName()
+        this->Vk_GetNumberOfFramesInFlightInternal(), this->Vk_SwapchainImages.size(), this->GetHumanReadableName()
         )
 
     auto& Device{this->GetFrontend().Vk_GetDevice()};
 
-    for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
+    for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlightInternal(); ++Idx)
     {
         this->Vk_ImageAvailableSemaphores[Idx] = vk::raii::Semaphore{Device, vk::SemaphoreCreateInfo{}};
         this->Vk_RenderSemaphores[Idx] = vk::raii::Semaphore{Device, vk::SemaphoreCreateInfo{}};
@@ -1404,35 +1365,19 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
 {
-    LOG_VERBOSE(LogVulkan, "Creating [{}] Vulkan command buffers for surface [{}].", this->Vk_GetNumberOfFramesInFlight(), this->GetHumanReadableName())
+    LOG_VERBOSE(LogVulkan, "Creating [{}] Vulkan command buffers for surface [{}].", this->Vk_GetNumberOfFramesInFlightInternal(), this->GetHumanReadableName())
 
     vk::CommandBufferAllocateInfo Info{
         .commandPool = this->Vk_CommandPool,
         .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlight())
+        .commandBufferCount = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlightInternal())
         };
 
     auto CommandBuffers{vk::raii::CommandBuffers(this->GetFrontend().Vk_GetDevice(), Info)};
-    check( this->Vk_CommandBuffers.size() == CommandBuffers.size() )
+    check(this->Vk_CommandBuffers.size() == CommandBuffers.size())
     for (auto Idx{0uz}; Idx < CommandBuffers.size(); ++Idx)
     {
         this->Vk_CommandBuffers[Idx] = std::move(CommandBuffers[Idx]);
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::Vk_CreateCommonBuffers()
-{
-    LOG_VERBOSE(LogVulkan, "Creating perspective camera buffers for surface [{}].", this->GetHumanReadableName())
-    auto& Frontend{this->GetFrontend()};
-
-    for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
-    {
-        this->Vk_PerspectiveCameraBuffers[Idx] = Frontend.Vk_CreateMappedBuffer({
-            .size = sizeof(UBO::LPerspectiveCamera),
-            .usage = vk::BufferUsageFlagBits::eUniformBuffer,
-            });
     }
 
     return;
@@ -1453,7 +1398,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
             },
         };
 
-    for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlight(); ++Idx)
+    for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlightInternal(); ++Idx)
     {
         vk::DescriptorPoolCreateInfo PoolInfo{
             .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,

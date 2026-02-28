@@ -1,0 +1,38 @@
+{
+    "Inherits": "Jafg.Base",
+    "Src": "Jafg.Pbr.slang",
+    "Dst": "Jafg.Pbr.spv",
+    "VertexInput": "Jafg::LStaticMesh::Vertex",
+    "PushConstants": [
+        "Jafg::PC::Pbr"
+    ],
+    "Layouts": [
+        {
+            "Type": "eShared",
+            "Identifier": "WorldData"
+        },
+        {
+            "Type": "eUnique",
+            "UpdateFrequency": "eRarely",
+            "Stage": "eFragment",
+            "Sets": [
+                {
+                    "Identifier": "baseColorMap",
+                    "DescriptorType": "eSampledImage"
+                },
+                {
+                    "Identifier": "metallicRoughnessMap",
+                    "DescriptorType": "eSampledImage"
+                },
+                {
+                    "Identifier": "normalMap",
+                    "DescriptorType": "eSampledImage"
+                },
+                {
+                    "Identifier": "sampler",
+                    "DescriptorType": "eSampler"
+                }
+            ]
+        }
+    ]
+}

@@ -61,18 +61,20 @@ void Jafg::JCxxClass::KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason /
 
 Jafg::LEngine& Jafg::JCxxClass::GetEngine() const noexcept
 {
-    check( GEngine && "Absence of GEngine if undefined behavior." )
+    check(GEngine && "Absence of GEngine if undefined behavior.")
     return *GEngine;
 }
 
 Jafg::LLocalEgo& Jafg::JCxxClass::GetLocalEgo() const noexcept
 {
-    return this->GetEngine().GetLocalEgo();
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+    return GEngine->GetLocalEgo();
 }
 
 Jafg::LCommandLineInterface& Jafg::JCxxClass::GetCommandLineInterface() const noexcept
 {
-    return this->GetEngine().GetCommandLineInterface();
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+    return GEngine->GetCommandLineInterface();
 }
 
 void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordTearDownReason::Type Reason)

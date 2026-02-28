@@ -2,10 +2,16 @@
 
 #pragma once
 
-#include "Rhi/VkAl.h"
+#include "Rhi/RendererCore.h"
 
 namespace Jafg
 {
+
+struct LShaderEntrypoint final
+{
+    vk::ShaderStageFlagBits Stage;
+    LString Name;
+};
 
 struct LFetchedShader final
 {
@@ -19,19 +25,39 @@ struct LFetchedShader final
     {
         enum Type
         {
-            Unique,
-            Shared,
+            eUnique,
+            eShared,
         };
+
+        enum UpdateFrequency
+        {
+            ePerFrame,
+            eRarely,
+        };
+        inline static UpdateFrequency StringToUpdateFrequency(LString const& Str)
+        {
+            if (Str == "ePerFrame") { return UpdateFrequency::ePerFrame; }
+            else if (Str == "eRarely") { return UpdateFrequency::eRarely; }
+            else
+            {
+                LOG_FATAL(LogShaderSubsystem, "Invalid update frequency string [{}].", Str)
+            }
+        }
 
         struct Set
         {
             LString Identifier;
-            vk::ShaderStageFlagBits Stage;
             vk::DescriptorType DescriptorType;
         };
 
         Type Type;
+
+        //# Required for shared.
         TOptional<LString> Identifier;
+
+        //# Required for unique.
+        TOptional<UpdateFrequency> UpdateFrequency;
+        TOptional<vk::ShaderStageFlags> Stage;
         TOptional<TArray<Set>> Sets;
     };
 
@@ -50,6 +76,7 @@ struct LFetchedShader final
     TOptional<LPath> DstPrefix;
 
     TOptional<LString> VertexInput;
+    // Flatten this. with min vulkan guaranteed value.
     TArray<LString> PushConstants;
     TArray<Layout> Layouts;
 

@@ -4,13 +4,14 @@
 
 #include "Subsystems/FrontendSubsystem.h"
 #include "Rhi/FetchedShader.h"
-#include "Rhi/VkAl.h"
+#include "Rhi/VertexInput.h"
+#include "Rhi/PushConstants.h"
 #include "ShaderSubsystem.generated.h"
 
 namespace Jafg
 {
 
-struct LShaderCompilationRequest
+struct LShaderCompilationRequest final
 {
     LString Target{ "spirv" };
     LString Profile{ "spirv_1_5" };
@@ -38,7 +39,7 @@ public:
         {
             LOG_FATAL(LogShaderSubsystem, "No such shader [{}].", Name)
         }
-        return *It;
+        return **It;
     }
     void RefetchShaders();
 
@@ -54,11 +55,12 @@ public:
 
     template<typename TPushConstant> requires CPushConstant<TPushConstant>
     inline void AddPushConstantProvider() noexcept { Detail::AddPushConstantProvider<TPushConstant>(); }
+    Detail::LPushConstantSigs const& GetPushConstant(LString const& Name) const;
     Detail::LPushConstantInfo GetPushConstantInfo(LString const& Name) const;
 
 private:
 
-    TArray<LFetchedShader> FetchedShaders;
+    TArray<std::unique_ptr<LFetchedShader>> FetchedShaders;
 };
 
 } /* ~Namespace Jafg */

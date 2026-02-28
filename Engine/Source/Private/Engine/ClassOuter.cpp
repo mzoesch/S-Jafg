@@ -25,9 +25,8 @@ void Jafg::LClassOuter::TearDown() noexcept
 {
     if (this->HumanReadableName.starts_with("<torn-down:"))
     {
-        check( this->Employees.empty() )
-        check( this->bWasRegisteredToEngine == false )
-
+        check(this->Employees.empty())
+        check(this->bWasRegisteredToEngine == false)
         return;
     }
 
@@ -39,11 +38,9 @@ void Jafg::LClassOuter::TearDown() noexcept
     (
         for (auto& E : this->Employees)
         {
-            check( E.get() != nullptr )
-            check( E->_IsGarbage() == false )
-            check( &E->GetOuter() == this )
-
-            continue;
+            check(E.get() != nullptr)
+            check(E->_IsGarbage() == false)
+            check(&E->GetOuter() == this)
         }
     )
     this->OnTearDown();
@@ -58,16 +55,13 @@ void Jafg::LClassOuter::TearDown() noexcept
     while (this->Employees.empty() == false)
     {
         auto& E{this->Employees.back()};
-
         /* Null only allowed in tear down. */
         if (E.get() == nullptr)
         {
             this->Employees.pop_back();
             continue;
         }
-
         E->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
-
         continue;
     }
 
@@ -79,11 +73,10 @@ void Jafg::LClassOuter::TearDown() noexcept
 
     this->HumanReadableName = "<torn-down:" + this->HumanReadableName + '>';
 
-    check( this->Employees.empty() )
-    check( this->bWasRegisteredToEngine == false )
+    check(this->Employees.empty())
+    check(this->bWasRegisteredToEngine == false)
 
     algo::orphan(&this->Employees);
-
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;

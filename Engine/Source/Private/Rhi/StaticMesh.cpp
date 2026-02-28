@@ -2,6 +2,8 @@
 
 #include "Rhi/StaticMesh.h"
 #include "Engine/Engine.h"
+#include "Rhi/VertexInput.h"
+#include "Rhi/RenderInfo.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -25,7 +27,6 @@ namespace
 {
 
 Jafg::LRegisterDeviceVertexInput<Jafg::LStaticMesh::Vertex> StaticMeshVertexRegistration{};
-Jafg::LRegisterPushConstant<Jafg::LStaticMesh::VPC> StaticMeshVPCRegistration{};
 
 enum struct ETinyObjHint
 {
@@ -90,6 +91,10 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
             tinygltf::BufferView const& IdxBufferView{Model.bufferViews[IdxAccessor.bufferView]};
             tinygltf::Buffer const& IdxBuffer{Model.buffers[IdxBufferView.buffer]};
 
+            if (Primitive.attributes.contains("POSITION") == false)
+            {
+                LOG_FATAL(LogRhi, "[{}]: Primitive [{}] has no POSITION attribute.", Target.GetPath(), Primitive.indices)
+            }
             tinygltf::Accessor const& PosAccessor{Model.accessors[Primitive.attributes.at("POSITION")]};
             tinygltf::BufferView const& PosBufferView{Model.bufferViews[PosAccessor.bufferView]};
             tinygltf::Buffer const& PosBuffer{Model.buffers[PosBufferView.buffer]};
@@ -103,6 +108,10 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
                 NormalBufferView = &Model.bufferViews[NormalAccessor->bufferView];
                 NormalBuffer     = &Model.buffers[NormalBufferView->buffer];
             }
+            else
+            {
+                LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no NORMAL attribute.", Target.GetPath(), Primitive.indices)
+            }
 
             tinygltf::Accessor const* TexCoordAccessor{};
             tinygltf::BufferView const* TexCoordBufferView{};
@@ -112,6 +121,24 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
                 TexCoordAccessor   = &Model.accessors[It->second];
                 TexCoordBufferView = &Model.bufferViews[TexCoordAccessor->bufferView];
                 TexCoordBuffer     = &Model.buffers[TexCoordBufferView->buffer];
+            }
+            else
+            {
+                LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no TEXCOORD_0 attribute.", Target.GetPath(), Primitive.indices)
+            }
+
+            tinygltf::Accessor const* TangentAccessor{};
+            tinygltf::BufferView const* TangentBufferView{};
+            tinygltf::Buffer const* TangentBuffer{};
+            if (auto It{Primitive.attributes.find("TANGENT")}; It != Primitive.attributes.end())
+            {
+                TangentAccessor   = &Model.accessors[It->second];
+                TangentBufferView = &Model.bufferViews[TangentAccessor->bufferView];
+                TangentBuffer     = &Model.buffers[TangentBufferView->buffer];
+            }
+            else
+            {
+                LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no TANGENT attribute.", Target.GetPath(), Primitive.indices)
             }
 
             uint32_t baseVertex = static_cast<uint32_t>(Target.Vertices.size());
@@ -149,6 +176,19 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
                 else
                 {
                     Vertex.TexCoord = {0.0f, 0.0f};
+                }
+
+                if (TangentAccessor)
+                {
+                    check(TangentBufferView && TangentBuffer)
+                    auto* pTangent{reinterpret_cast<f32 const*>(&TangentBuffer->data[
+                        TangentBufferView->byteOffset + TangentAccessor->byteOffset + Idx * sizeof(decltype(Vertex.Tangent))
+                        ])};
+                    Vertex.Tangent = {pTangent[0], pTangent[1], pTangent[2], pTangent[3]};
+                }
+                else
+                {
+                    Vertex.Tangent = {0.0f, 0.0f, 0.0f, 1.0f};
                 }
 
                 Target.Vertices.emplace_back(std::move(Vertex));

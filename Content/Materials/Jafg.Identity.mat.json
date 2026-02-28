@@ -1,6 +1,0 @@
-{
-    "Shader": "Jafg.StaticMesh",
-    "Properties": {
-        "Texture": "Jafg.Identity"
-    }
-}

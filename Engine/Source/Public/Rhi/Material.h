@@ -3,14 +3,20 @@
 #pragma once
 
 #include "Minimal.afx"
-#include "ResourceReference.h"
-#include "Rhi/VkAl.h"
+#include "Rhi/FetchedShader.h"
+#include "Rhi/ResourceReference.h"
+#include "Rhi/GraphicsPipeline.h"
 
 namespace Jafg
 {
 
 struct LFetchedMaterial final
 {
+    enum Type
+    {
+        Solid,
+    };
+
     struct Property
     {
         LString Key;
@@ -19,13 +25,14 @@ struct LFetchedMaterial final
 
     LPath Path;
     LString Name;
-    LString Shader;
+    LFetchedShader const& FetchedShader;
+    Type Type{Solid};
     TArray<Property> Properties;
 };
 
 struct LMaterial final
 {
-    LString FetchedMaterial;
+    LFetchedMaterial const& FetchedMaterial;
     LGraphicsDevicePipeline Pipeline;
 };
 
@@ -34,7 +41,9 @@ typedef TSharedRef<LMaterial> LMaterialRef;
 struct LMaterialInstance final
 {
     LMaterialRef Material;
-    TArray<vk::raii::DescriptorSet> _UniqueDescriptorSets;
+
+    TArray<std::pair<u32, vk::raii::DescriptorSet>> InfrequentDescriptorSets;
+    std::array<TArray<std::pair<u32, vk::raii::DescriptorSet>>, Vk_DesiredMaxFramesInFlight> FrequentDescriptorSets;
 };
 
 typedef TSharedRef<LMaterialInstance> LMaterialInstanceRef;

@@ -1,0 +1,7 @@
+{
+    "Inherits": "Jafg.Base",
+    "VertexInput": "Jafg::LStaticMesh::Vertex",
+    "PushConstants": [
+        "Jafg::PC::MVP"
+    ]
+}

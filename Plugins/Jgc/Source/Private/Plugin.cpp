@@ -2,7 +2,6 @@
 
 #include "Foreign/ForeignInclude.h"
 #include "Runtime/Args.h"
-#include "Core/JgcNames.h"
 #include "Fw/FwSupremePolicies.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
@@ -35,13 +34,13 @@ void LJgcPluginLifetime::OnFinishedLoading()
     (
         Jafg::LLevel
         {
-            .Identifier = Jgc::LevelName_Frontend,
+            .Identifier = "LevelFrontend",
             .InputMode = Jafg::EInputMode::Both,
             .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
         }
     ) == false)
     {
-        LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Jgc::LevelName_Frontend)
+        LOG_WARNING(LogJgcLifetime, "Level [LevelFrontend] is already registered.")
     }
 #endif /* WITH_LOCAL_LAYER */
 
@@ -68,7 +67,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
             auto StartupWorld{GEngine->SummonWorld("JgcStartUp")};
             const LString TargetLevel{(StartupLevelArg ? StartupLevelArg->Value.value()
 #if WITH_LOCAL_LAYER
-                : Jgc::LevelName_Frontend
+                : "LevelFrontend"
 #else /* WITH_LOCAL_LAYER */
                 : Name_LevelListen.ToString()
 #endif /* !WITH_LOCAL_LAYER */

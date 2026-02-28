@@ -2,12 +2,15 @@
 
 #pragma once
 
-#include "Minimal.afx"
-#include "Rhi/Rhi.h"
+#include "Rhi/RendererCore.h"
+#include "Rhi/VertexInput.h"
 #include "Rhi/ResourceReference.h"
+#include "Rhi/DeviceBuffers.h"
 
 namespace Jafg
 {
+
+struct LRenderInfo;
 
 typedef EResourceStateBits EStaticMeshStateBits;
 typedef EResourceState EStaticMeshState;
@@ -21,8 +24,9 @@ struct LStaticMesh final
         LVec3F Position;
         LVec3F Normal;
         LVec2F TexCoord;
+        LVec4F Tangent;
 
-        static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
+        inline static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
         {
             static std::array Desc{vk::VertexInputBindingDescription{
                 .binding = 0,
@@ -32,7 +36,7 @@ struct LStaticMesh final
             return Desc;
         }
 
-        static std::array<vk::VertexInputAttributeDescription, 3> const& AttributeDescriptions() noexcept
+        inline static std::array<vk::VertexInputAttributeDescription, 4> const& AttributeDescriptions() noexcept
         {
             static std::array Desc{
                 vk::VertexInputAttributeDescription{
@@ -43,23 +47,20 @@ struct LStaticMesh final
                     },
                 vk::VertexInputAttributeDescription{
                     .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(LStaticMesh::Vertex, TexCoord)
-                    }
+                    },
+                vk::VertexInputAttributeDescription{
+                    .location = 3, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Tangent)
+                    },
                 };
             return Desc;
         }
 
-        FORCEINLINE constexpr bool operator==(LStaticMesh::Vertex const& V) const noexcept
+        FORCEINLINE constexpr bool operator==(Vertex const& V) const noexcept
         {
-            return this->Position == V.Position && this->TexCoord == V.TexCoord;
+            return this->Position == V.Position && this->Normal == V.Normal && this->TexCoord == V.TexCoord && this->Tangent == V.Tangent;
         }
     };
-    static_assert(CDeviceVertexInput<LStaticMesh::Vertex>);
-
-    struct VPC final : public TVertexPushConstant<LStaticMesh::VPC>
-    {
-        LMat4F Model;
-    };
-    static_assert(CPushConstant<LStaticMesh::VPC>);
+    static_assert(CDeviceVertexInput<Vertex>);
 
     enum struct EResult
     {
@@ -112,11 +113,11 @@ struct LStaticMesh final
 
     FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
 
-    //# Modify with care.
-    TArray<LStaticMesh::Vertex> Vertices;
+    //# Host memory. Modify with care.
+    TArray<Vertex> Vertices;
     TArray<u32> Indices;
 
-    //# Modify with care.
+    //# Device memory. Modify with care.
     u32 IndexCount{};
     LDeviceBuffer VertexBuffer;
     LDeviceBuffer IndexBuffer;

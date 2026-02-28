@@ -316,14 +316,14 @@ void Jafg::LEngine::Initialize()
     return;
 }
 
-void Jafg::LEngine::Tick(const f32 DeltaTime)
+void Jafg::LEngine::Tick(const f32 Dt)
 {
     STAT_CYCLE_FUNCTION()
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
 #if WITH_LOCAL_LAYER
-    this->LocalEgo.Tick(DeltaTime);
+    this->LocalEgo.Tick(Dt);
 #endif /* WITH_LOCAL_LAYER */
 
     for (Detail::LWorldTrack& Track : this->Tracks)
@@ -341,7 +341,7 @@ void Jafg::LEngine::Tick(const f32 DeltaTime)
         check( Track.IsValid() )
         if (bTraveled == false && Track.ChildWorld->CanTick())
         {
-            Track.ChildWorld->Tick(DeltaTime);
+            Track.ChildWorld->Tick(Dt);
         }
 
         continue;
@@ -637,12 +637,12 @@ bool Jafg::LEngine::IsTrackUrlInternal(LString const& Url) const
 
 bool Jafg::LEngine::TravelTrack(Detail::LWorldTrack& Track)
 {
-    check( Track.ChildWorld.get() )
-    check( Track.IsWaitingForTravel() )
+    check(Track.ChildWorld.get())
+    check(Track.IsWaitingForTravel())
 
     LOG_INFO(LogEngine, "Traveling [{}] to [{}].", Track.ChildWorld->GetHumanReadableName(), Track.TravelUrl)
 
-    LLevel* Level{ this->GetLevelByInternalUrl(Track.TravelUrl) };
+    LLevel* Level{this->GetLevelByInternalUrl(Track.TravelUrl)};
     if (Level == nullptr)
     {
         LOG_ERROR(LogEngine, "Failed to resolve URL for any world [{}].", Track.TravelUrl)
@@ -652,19 +652,15 @@ bool Jafg::LEngine::TravelTrack(Detail::LWorldTrack& Track)
 
     if (Track.ChildWorld->GetWorldState() == EWorldState::Running)
     {
-        LString OldHumanReadableName { Track.ChildWorld->GetHumanReadableName() };
-        Track.ChildWorld->TearDown();
-        check( Track.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
-        Track.ChildWorld.reset();
-        check( Track.ChildWorld.get() == nullptr )
+        LString OldHumanReadableName{Track.ChildWorld->GetHumanReadableName()};
         Track.ChildWorld = std::make_unique<LWorld>(std::move(OldHumanReadableName));
     }
 
-    check( Track.ChildWorld->GetWorldState() == EWorldState::PreInitializing )
-    check( Track.ChildWorld->GetHumanReadableName().empty() == false )
+    check(Track.ChildWorld->GetWorldState() == EWorldState::PreInitializing)
+    check(Track.ChildWorld->GetHumanReadableName().empty() == false)
 
     Track.ChildWorld->InitializeWorld(*Level, std::move(Track.TravelUrl));
-    check( Track.TravelUrl.empty() )
+    check(Track.TravelUrl.empty())
 
     return true;
 }

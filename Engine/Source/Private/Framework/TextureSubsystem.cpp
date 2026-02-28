@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "Stats/Stats.h"
 #include "Serialization/Json.h"
+#include "Rhi/FromString.h"
 
 void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -52,7 +53,7 @@ void Jafg::JTextureSubsystem::RefetchingTextureViews()
     LString MissingKey; Json::EError Error;
     for (auto TextureViewFiles{Finder::FindFilesRecursively("Content/TextureViews", true, ".*\\.tv.json")}; auto const& TextureViewFile : TextureViewFiles)
     {
-        LTextureView TextureView{.Path = TextureViewFile,.Name=TextureViewFile.stem().stem().string()};
+        LTextureView TextureView{.Path=TextureViewFile,.Name=Finder::Normalize(TextureViewFile.string().substr(21, TextureViewFile.string().size() - 21 - 8))};
         json TextureViewJson = json::parse(Finder::ReadFile(TextureView.Path), nullptr, false);
         if (TextureViewJson.is_discarded())
         {
@@ -76,7 +77,7 @@ void Jafg::JTextureSubsystem::RefetchingTextureViews()
                 )
         }
 
-        TextureView.Format = Vk_StringToFormat(TextureViewJson["Format"].get<LString>());
+        TextureView.Format = Vk_FromString<vk::Format>(TextureViewJson["Format"].get<LString>());
         if (TextureView.Format == vk::Format::eUndefined)
         {
             LOG_FATAL(LogTextureSubsystem, "[{}]: Unsupported format string [{}]. Failed to load."
@@ -117,7 +118,7 @@ void Jafg::JTextureSubsystem::RefetchingTextureViews()
                 {
                     LOG_FATAL(LogTextureSubsystem, "[{}]: MaxSampleCount entry is not a string. Failed to load.", TextureView.Path)
                 }
-                TextureView.MaxSampleCount = Vk_StringToSampleCountFlagBits(TextureViewJson["MaxSampleCount"].get<LString>());
+                TextureView.MaxSampleCount = Vk_FromString<vk::SampleCountFlagBits>(TextureViewJson["MaxSampleCount"].get<LString>());
             }
         }
 

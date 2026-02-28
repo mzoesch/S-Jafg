@@ -3,13 +3,13 @@
 #pragma once
 
 #include "Engine/WorldObject.h"
+#include "Components/ActorComponentForward.h"
 #include "ActorComponent.generated.h"
 
 namespace Jafg
 {
 
 class AActor;
-struct LRenderInfo;
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API AActorComponent : public AWorldObject
@@ -40,14 +40,14 @@ public:
 #if JAFG_DO_CHECKS
         check(this->bHasExecutedOnAttach == false)
         this->bHasExecutedOnAttach = true;
-		check(this->Owner == nullptr)
+        check(this->Owner == nullptr)
 #endif /* JAFG_DO_CHECKS */
         this->Owner = &InOwner;
     }
 
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
     constexpr bool ShouldRender() const noexcept { return this->bRender; }
-    virtual void Render(LRenderInfo const& Info) noexcept {}
+    virtual void Render(LActorRenderInfo const& Info) noexcept {}
 
     FORCEINLINE constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
     FORCEINLINE CONSTEXPR_CHECK AActor& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }

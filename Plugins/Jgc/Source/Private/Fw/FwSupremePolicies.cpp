@@ -13,8 +13,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     this->GetWorld().SetBackgroundColor(LinearColors::DeepSkyBlue);
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()};
-    auto MaterialInstance{MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Identity")};
+    auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.MetallicGold")};
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
     ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)

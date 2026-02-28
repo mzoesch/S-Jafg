@@ -108,7 +108,7 @@ public:
 
     ENGINE_API LEngine();
     ENGINE_API void Initialize();
-    ENGINE_API void Tick(const f32 DeltaTime);
+    ENGINE_API void Tick(const f32 Dt);
     ENGINE_API void TearDown();
 
     ///////////////////////////////////////////////////////////////////////////////

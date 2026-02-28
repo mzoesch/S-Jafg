@@ -12,7 +12,6 @@ namespace Jafg
 class JShaderSubsystem;
 class JTextureSubsystem;
 struct LTexture2;
-struct LFetchedShader;
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JMaterialSubsystem final : public JFrontendSubsystem
@@ -38,17 +37,46 @@ public:
     LMaterialInstanceRef GetInstanceFromMaterialName(LString const& MaterialName) { return this->GetInstance(this->GetMaterial(MaterialName)); }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Only for unique layouts.
+    // BEGIN Only for unique layouts.
+
     //# @param FetchedMaterial Optional field if the caller already has the fetched material at hand.
-    void SetMaterialInstanceField(LMaterialInstance& Instance, LString const& Key, LString const& Value, LFetchedShader const& InShader) const noexcept;
-    void SetCombinedImageSampler(LMaterialInstance& Instance, LStringView Where, LTexture2 const& Texture) const;
+    struct LBinding{ vk::DescriptorType Type; u32 Layout; u32 Set; };
+    LBinding GetBinding(LMaterialInstance& Instance, LStringView Key);
+
+    void SetMaterialInstanceField(LMaterialInstance& Instance, LBinding Where, LString const& Value) const noexcept;
+    void SetSampler(LMaterialInstance& Instance, LBinding Where, vk::Sampler const& Sampler) const;
+    void SetSampledImage(LMaterialInstance& Instance, LBinding Where, LTexture2 const& Texture) const;
+
+    // END Only for unique layouts.
+    ///////////////////////////////////////////////////////////////////////////////
+
+    FORCEINLINE auto const& GetFetchedMaterials() const noexcept { return this->FetchedMaterials; }
+    FORCEINLINE auto const& GetMaterials() const noexcept { return this->Materials; }
+
+    vk::PipelineColorBlendStateCreateInfo const& GetSolidColorBlending() const noexcept
+    {
+        static vk::PipelineColorBlendAttachmentState State{
+            .blendEnable = vk::False,
+            .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+                            | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+            };
+
+        static vk::PipelineColorBlendStateCreateInfo Info{
+            .logicOpEnable = vk::False,
+            .attachmentCount = 1,
+            .pAttachments = &State
+            };
+
+        return Info;
+    }
+
 
 private:
 
     JTextureSubsystem* TextureSubsystem{};
     JShaderSubsystem* ShaderSubsystem{};
 
-    TArray<LFetchedMaterial> FetchedMaterials;
+    TArray<std::unique_ptr<LFetchedMaterial>> FetchedMaterials;
     std::unordered_map<LString, std::shared_ptr<LMaterial>> Materials;
 };
 

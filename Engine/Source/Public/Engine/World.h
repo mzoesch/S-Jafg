@@ -11,6 +11,8 @@
 #include "Cli/CliType.h"
 #include "Cli/CliCommand.h"
 #include "Platform/SurfaceForward.h"
+#include "Rhi/RendererCore.h"
+#include "Rhi/DeviceBuffers.h"
 
 namespace Jafg
 {
@@ -170,6 +172,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
     LWorld(LString const& InHumanReadableName) noexcept
         : LClassOuter{InHumanReadableName}, WorldState(EWorldState::PreInitializing)
+        , Vk_WorldDescriptorSets{nullptr, nullptr, nullptr}
     {
         return;
     }
@@ -201,7 +204,7 @@ public:
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const f32 Dt);
 
-    void Draw(LRenderInfo const& Info) const;
+    void Draw(LRenderInfo& Info) const;
 
     ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
 
@@ -247,6 +250,11 @@ public:
 
     FORCEINLINE LLinearColor const& GetBackgroundColor() const noexcept { return this->BackgroundColor; }
     FORCEINLINE void SetBackgroundColor(LLinearColor const& Color) noexcept { this->BackgroundColor = Color; }
+
+    template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
+    FORCEINLINE auto const& Vk_GetWorldDataDescriptorSet(TRenderInfo const& Info) const noexcept { return this->Vk_WorldDescriptorSets[Info.Frame]; }
+    template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
+    FORCEINLINE auto const& Vk_GetWorldDataBuffer(TRenderInfo const& Info) const noexcept { return this->Vk_WorldBuffers[Info.Frame]; }
 
     ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LStringView InHumanReadableName) noexcept
@@ -309,6 +317,8 @@ private:
     ASupremePolicies* SupremePolicies{};
 
     LLinearColor BackgroundColor;
+    std::array<vk::raii::DescriptorSet, Jafg::Vk_DesiredMaxFramesInFlight> Vk_WorldDescriptorSets;
+    std::array<LMappedDeviceBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_WorldBuffers;
 };
 
 template<>

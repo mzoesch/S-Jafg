@@ -12,16 +12,13 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include <Rhi/Material.h>
-
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"
 #include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
-#include "Rhi/Rhi.h"
-#include "Rhi/StaticMesh.h"
+#include "Engine/WorldData.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -167,14 +164,14 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     LOG_VERBOSE(LogSurface, "Initializing glfw.")
 
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
     // TODO: Do we want to use this sometimes/always? Or make a user flag for this??
     // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 
     if (!glfwInit())
     {
-        panic( "Failed to initialize glfw." )
+        panic("Failed to initialize glfw.")
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, ::GlfwContextVersionMajor);
@@ -198,25 +195,25 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         LOG_VERBOSE(LogSurface, "Using Win32 platform.")
     }
 
-    i32 MonitorCount{ 0 };
-    auto Monitors{ glfwGetMonitors(&MonitorCount) };
+    i32 MonitorCount{};
+    auto Monitors{glfwGetMonitors(&MonitorCount)};
     if (MonitorCount < 1)
     {
         panic( "No suitable physical monitors detected." )
     }
-    auto* PrimaryMonitor{ glfwGetPrimaryMonitor() };
+    auto* PrimaryMonitor{glfwGetPrimaryMonitor()};
     if (PrimaryMonitor == nullptr)
     {
         LOG_VERBOSE(LogSurface, "No primary monitor detected, picking first available monitor as primary.")
         /* Just pick the first one. */
         PrimaryMonitor = Monitors[0];
-        check( PrimaryMonitor )
+        check(PrimaryMonitor)
     }
     LOG_VERBOSE(LogSurface, "Found [{}] physical monitors connected.", MonitorCount)
-    for (auto MonitorIndex{ 0uz }; MonitorIndex < static_cast<LSize>(MonitorCount); ++MonitorIndex)
+    for (auto MonitorIndex{0uz}; MonitorIndex < static_cast<LSize>(MonitorCount); ++MonitorIndex)
     {
-        GLFWmonitor* Monitor{ Monitors[MonitorIndex] };
-        check( Monitor )
+        GLFWmonitor* Monitor{Monitors[MonitorIndex]};
+        check(Monitor)
 
         LPhysicalViewport Pv{};
         Pv.Identifier = Monitor;
@@ -319,7 +316,11 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
             .descriptorCount = 2048, /* Completely arbitrary limit. */
             },
         vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eCombinedImageSampler,
+            .type = vk::DescriptorType::eSampledImage,
+            .descriptorCount = 2048, /* Completely arbitrary limit. */
+            },
+        vk::DescriptorPoolSize{
+            .type = vk::DescriptorType::eSampler,
             .descriptorCount = 2048, /* Completely arbitrary limit. */
             },
         };
@@ -330,23 +331,23 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
             .pPoolSizes = Sizes.data(),
         }};
 
+    if (this->Vk_DescriptorSetLayouts.contains("WorldData"))
+    {
+        LOG_WARNING(LogRhi, "Descriptor set layout for WorldData already exists, skipping creation.")
+    }
+    else
+    {
+        this->Vk_DescriptorSetLayouts.emplace("WorldData", vk::raii::DescriptorSetLayout{
+            this->Vk_Device,
+            vk::DescriptorSetLayoutCreateInfo{
+                .bindingCount = static_cast<u32>(UBO::WorldData::Bindings().size()),
+                .pBindings = UBO::WorldData::Bindings().data(),
+                },
+            });
+    }
+
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
-
-    this->Vk_PerspectiveCameraDescriptorSetLayout = vk::raii::DescriptorSetLayout{
-        this->Vk_Device,
-        vk::DescriptorSetLayoutCreateInfo{
-            .bindingCount = static_cast<u32>(PerspectiveCameraSetLayout::Bindings().size()),
-            .pBindings = PerspectiveCameraSetLayout::Bindings().data(),
-            }
-        };
-    // this->Vk_DefaultMaterialDescriptorSetLayout = vk::raii::DescriptorSetLayout{
-    //     this->Vk_Device,
-    //     vk::DescriptorSetLayoutCreateInfo{
-    //         .bindingCount = static_cast<u32>(DefaultMaterialSetLayout::Bindings().size()),
-    //         .pBindings = DefaultMaterialSetLayout::Bindings().data(),
-    //         }
-    //     };
 
     return;
 }
@@ -981,18 +982,130 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
     }
 
     this->Vk_PhysicalDeviceMemoryProperties = this->Vk_PhysicalDevice.getMemoryProperties();
-    LOG_VERBOSE(LogVulkan, "Physical device memory properties:")
-    for (auto Idx{ 0uz }; Idx < this->Vk_PhysicalDeviceMemoryProperties.memoryTypeCount; ++Idx)
+    if constexpr (IS_COMPILED_LOG(LogVulkan, Trace))
     {
-        auto const& MemType{ this->Vk_PhysicalDeviceMemoryProperties.memoryTypes[Idx] };
-        auto const& MemHeap{ this->Vk_PhysicalDeviceMemoryProperties.memoryHeaps[MemType.heapIndex] };
-        LOG_VERBOSE(LogVulkan, "    Type[{}]: Heap[{}] Size[{}MB] PropertyFlags[{}]",
-            Idx,
-            MemType.heapIndex,
-            MemHeap.size / (1024 * 1024),
-            vk::to_string(MemType.propertyFlags)
-            )
+        LOG_TRACE(LogVulkan, "Physical device memory properties:")
+        for (auto Idx{0uz}; Idx < this->Vk_PhysicalDeviceMemoryProperties.memoryTypeCount; ++Idx)
+        {
+            auto const& MemType{ this->Vk_PhysicalDeviceMemoryProperties.memoryTypes[Idx] };
+            auto const& MemHeap{ this->Vk_PhysicalDeviceMemoryProperties.memoryHeaps[MemType.heapIndex] };
+            LOG_TRACE(LogVulkan, "    Type[{}]: Heap[{}] Size[{}MB] PropertyFlags[{}]",
+                Idx,
+                MemType.heapIndex,
+                MemHeap.size / (1024 * 1024),
+                vk::to_string(MemType.propertyFlags)
+                )
+        }
     }
+
+    vk::PhysicalDeviceLimits Limits{this->Vk_PhysicalDevice.getProperties().limits};
+    LOG_TRACE(LogVulkan, "Physical device limits:")
+    LOG_TRACE(LogVulkan, "    maxImageDimension1D: {}", Limits.maxImageDimension1D)
+    LOG_TRACE(LogVulkan, "    maxImageDimension2D: {}", Limits.maxImageDimension2D)
+    LOG_TRACE(LogVulkan, "    maxImageDimension3D: {}", Limits.maxImageDimension3D)
+    LOG_TRACE(LogVulkan, "    maxImageDimensionCube: {}", Limits.maxImageDimensionCube)
+    LOG_TRACE(LogVulkan, "    maxImageArrayLayers: {}", Limits.maxImageArrayLayers)
+    LOG_TRACE(LogVulkan, "    maxTexelBufferElements: {}", Limits.maxTexelBufferElements)
+    LOG_TRACE(LogVulkan, "    maxUniformBufferRange: {}", Limits.maxUniformBufferRange)
+    LOG_TRACE(LogVulkan, "    maxStorageBufferRange: {}", Limits.maxStorageBufferRange)
+    LOG_TRACE(LogVulkan, "    maxPushConstantsSize: {}", Limits.maxPushConstantsSize)
+    LOG_TRACE(LogVulkan, "    maxMemoryAllocationCount: {}", Limits.maxMemoryAllocationCount)
+    LOG_TRACE(LogVulkan, "    maxSamplerAllocationCount: {}", Limits.maxSamplerAllocationCount)
+    LOG_TRACE(LogVulkan, "    bufferImageGranularity: {}", Limits.bufferImageGranularity)
+    LOG_TRACE(LogVulkan, "    sparseAddressSpaceSize: {}", Limits.sparseAddressSpaceSize)
+    LOG_TRACE(LogVulkan, "    maxBoundDescriptorSets: {}", Limits.maxBoundDescriptorSets)
+    LOG_TRACE(LogVulkan, "    maxPerStageDescriptorSamplers: {}", Limits.maxPerStageDescriptorSamplers)
+    LOG_TRACE(LogVulkan, "    maxPerStageDescriptorUniformBuffers: {}", Limits.maxPerStageDescriptorUniformBuffers)
+    LOG_TRACE(LogVulkan, "    maxPerStageDescriptorStorageBuffers: {}", Limits.maxPerStageDescriptorStorageBuffers)
+    LOG_TRACE(LogVulkan, "    maxPerStageDescriptorSampledImages: {}", Limits.maxPerStageDescriptorSampledImages)
+    LOG_TRACE(LogVulkan, "    maxPerStageDescriptorStorageImages: {}", Limits.maxPerStageDescriptorStorageImages)
+    LOG_TRACE(LogVulkan, "    maxPerStageDescriptorInputAttachments: {}", Limits.maxPerStageDescriptorInputAttachments)
+    LOG_TRACE(LogVulkan, "    maxPerStageResources: {}", Limits.maxPerStageResources)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetSamplers: {}", Limits.maxDescriptorSetSamplers)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetUniformBuffers: {}", Limits.maxDescriptorSetUniformBuffers)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetUniformBuffersDynamic: {}", Limits.maxDescriptorSetUniformBuffersDynamic)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetStorageBuffers: {}", Limits.maxDescriptorSetStorageBuffers)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetStorageBuffersDynamic: {}", Limits.maxDescriptorSetStorageBuffersDynamic)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetSampledImages: {}", Limits.maxDescriptorSetSampledImages)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetStorageImages: {}", Limits.maxDescriptorSetStorageImages)
+    LOG_TRACE(LogVulkan, "    maxDescriptorSetInputAttachments: {}", Limits.maxDescriptorSetInputAttachments)
+    LOG_TRACE(LogVulkan, "    maxVertexInputAttributes: {}", Limits.maxVertexInputAttributes)
+    LOG_TRACE(LogVulkan, "    maxVertexInputBindings: {}", Limits.maxVertexInputBindings)
+    LOG_TRACE(LogVulkan, "    maxVertexInputAttributeOffset: {}", Limits.maxVertexInputAttributeOffset)
+    LOG_TRACE(LogVulkan, "    maxVertexInputBindingStride: {}", Limits.maxVertexInputBindingStride)
+    LOG_TRACE(LogVulkan, "    maxVertexOutputComponents: {}", Limits.maxVertexOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxTessellationGenerationLevel: {}", Limits.maxTessellationGenerationLevel)
+    LOG_TRACE(LogVulkan, "    maxTessellationPatchSize: {}", Limits.maxTessellationPatchSize)
+    LOG_TRACE(LogVulkan, "    maxTessellationControlPerVertexInputComponents: {}", Limits.maxTessellationControlPerVertexInputComponents)
+    LOG_TRACE(LogVulkan, "    maxTessellationControlPerVertexOutputComponents: {}", Limits.maxTessellationControlPerVertexOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxTessellationControlPerPatchOutputComponents: {}", Limits.maxTessellationControlPerPatchOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxTessellationControlTotalOutputComponents: {}", Limits.maxTessellationControlTotalOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxTessellationEvaluationInputComponents: {}", Limits.maxTessellationEvaluationInputComponents)
+    LOG_TRACE(LogVulkan, "    maxTessellationEvaluationOutputComponents: {}", Limits.maxTessellationEvaluationOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxGeometryShaderInvocations: {}", Limits.maxGeometryShaderInvocations)
+    LOG_TRACE(LogVulkan, "    maxGeometryInputComponents: {}", Limits.maxGeometryInputComponents)
+    LOG_TRACE(LogVulkan, "    maxGeometryOutputComponents: {}", Limits.maxGeometryOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxGeometryOutputVertices: {}", Limits.maxGeometryOutputVertices)
+    LOG_TRACE(LogVulkan, "    maxGeometryTotalOutputComponents: {}", Limits.maxGeometryTotalOutputComponents)
+    LOG_TRACE(LogVulkan, "    maxFragmentInputComponents: {}", Limits.maxFragmentInputComponents)
+    LOG_TRACE(LogVulkan, "    maxFragmentOutputAttachments: {}", Limits.maxFragmentOutputAttachments)
+    LOG_TRACE(LogVulkan, "    maxFragmentDualSrcAttachments: {}", Limits.maxFragmentDualSrcAttachments)
+    LOG_TRACE(LogVulkan, "    maxFragmentCombinedOutputResources: {}", Limits.maxFragmentCombinedOutputResources)
+    LOG_TRACE(LogVulkan, "    maxComputeSharedMemorySize: {}", Limits.maxComputeSharedMemorySize)
+    LOG_TRACE(LogVulkan, "    maxComputeWorkGroupCount: {}", Limits.maxComputeWorkGroupCount)
+    LOG_TRACE(LogVulkan, "    maxComputeWorkGroupInvocations: {}", Limits.maxComputeWorkGroupInvocations)
+    LOG_TRACE(LogVulkan, "    maxComputeWorkGroupSize: {}", Limits.maxComputeWorkGroupSize)
+    LOG_TRACE(LogVulkan, "    subPixelPrecisionBits: {}", Limits.subPixelPrecisionBits)
+    LOG_TRACE(LogVulkan, "    subTexelPrecisionBits: {}", Limits.subTexelPrecisionBits)
+    LOG_TRACE(LogVulkan, "    mipmapPrecisionBits: {}", Limits.mipmapPrecisionBits)
+    LOG_TRACE(LogVulkan, "    maxDrawIndexedIndexValue: {}", Limits.maxDrawIndexedIndexValue)
+    LOG_TRACE(LogVulkan, "    maxDrawIndirectCount: {}", Limits.maxDrawIndirectCount)
+    LOG_TRACE(LogVulkan, "    maxSamplerLodBias: {}", Limits.maxSamplerLodBias)
+    LOG_TRACE(LogVulkan, "    maxSamplerAnisotropy: {}", Limits.maxSamplerAnisotropy)
+    LOG_TRACE(LogVulkan, "    maxViewports: {}", Limits.maxViewports)
+    LOG_TRACE(LogVulkan, "    maxViewportDimensions: {}", Limits.maxViewportDimensions)
+    LOG_TRACE(LogVulkan, "    viewportBoundsRange: {}", Limits.viewportBoundsRange)
+    LOG_TRACE(LogVulkan, "    viewportSubPixelBits: {}", Limits.viewportSubPixelBits)
+    LOG_TRACE(LogVulkan, "    minMemoryMapAlignment: {}", Limits.minMemoryMapAlignment)
+    LOG_TRACE(LogVulkan, "    minTexelBufferOffsetAlignment: {}", Limits.minTexelBufferOffsetAlignment)
+    LOG_TRACE(LogVulkan, "    minUniformBufferOffsetAlignment: {}", Limits.minUniformBufferOffsetAlignment)
+    LOG_TRACE(LogVulkan, "    minStorageBufferOffsetAlignment: {}", Limits.minStorageBufferOffsetAlignment)
+    LOG_TRACE(LogVulkan, "    minTexelOffset: {}", Limits.minTexelOffset)
+    LOG_TRACE(LogVulkan, "    maxTexelOffset: {}", Limits.maxTexelOffset)
+    LOG_TRACE(LogVulkan, "    minTexelGatherOffset: {}", Limits.minTexelGatherOffset)
+    LOG_TRACE(LogVulkan, "    maxTexelGatherOffset: {}", Limits.maxTexelGatherOffset)
+    LOG_TRACE(LogVulkan, "    minInterpolationOffset: {}", Limits.minInterpolationOffset)
+    LOG_TRACE(LogVulkan, "    maxInterpolationOffset: {}", Limits.maxInterpolationOffset)
+    LOG_TRACE(LogVulkan, "    subPixelInterpolationOffsetBits: {}", Limits.subPixelInterpolationOffsetBits)
+    LOG_TRACE(LogVulkan, "    maxFramebufferWidth: {}", Limits.maxFramebufferWidth)
+    LOG_TRACE(LogVulkan, "    maxFramebufferHeight: {}", Limits.maxFramebufferHeight)
+    LOG_TRACE(LogVulkan, "    maxFramebufferLayers: {}", Limits.maxFramebufferLayers)
+    LOG_TRACE(LogVulkan, "    framebufferColorSampleCounts: {}", vk::to_string(Limits.framebufferColorSampleCounts))
+    LOG_TRACE(LogVulkan, "    framebufferDepthSampleCounts: {}", vk::to_string(Limits.framebufferDepthSampleCounts))
+    LOG_TRACE(LogVulkan, "    framebufferStencilSampleCounts: {}", vk::to_string(Limits.framebufferStencilSampleCounts))
+    LOG_TRACE(LogVulkan, "    framebufferNoAttachmentsSampleCounts: {}", vk::to_string(Limits.framebufferNoAttachmentsSampleCounts))
+    LOG_TRACE(LogVulkan, "    maxColorAttachments: {}", Limits.maxColorAttachments)
+    LOG_TRACE(LogVulkan, "    sampledImageColorSampleCounts: {}", vk::to_string(Limits.sampledImageColorSampleCounts))
+    LOG_TRACE(LogVulkan, "    sampledImageIntegerSampleCounts: {}", vk::to_string(Limits.sampledImageIntegerSampleCounts))
+    LOG_TRACE(LogVulkan, "    sampledImageDepthSampleCounts: {}", vk::to_string(Limits.sampledImageDepthSampleCounts))
+    LOG_TRACE(LogVulkan, "    sampledImageStencilSampleCounts: {}", vk::to_string(Limits.sampledImageStencilSampleCounts))
+    LOG_TRACE(LogVulkan, "    storageImageSampleCounts: {}", vk::to_string(Limits.storageImageSampleCounts))
+    LOG_TRACE(LogVulkan, "    maxSampleMaskWords: {}", Limits.maxSampleMaskWords)
+    LOG_TRACE(LogVulkan, "    timestampComputeAndGraphics: {}", Limits.timestampComputeAndGraphics)
+    LOG_TRACE(LogVulkan, "    timestampPeriod: {}", Limits.timestampPeriod)
+    LOG_TRACE(LogVulkan, "    maxClipDistances: {}", Limits.maxClipDistances)
+    LOG_TRACE(LogVulkan, "    maxCullDistances: {}", Limits.maxCullDistances)
+    LOG_TRACE(LogVulkan, "    maxCombinedClipAndCullDistances: {}", Limits.maxCombinedClipAndCullDistances)
+    LOG_TRACE(LogVulkan, "    discreteQueuePriorities: {}", Limits.discreteQueuePriorities)
+    LOG_TRACE(LogVulkan, "    pointSizeRange: {}", Limits.pointSizeRange)
+    LOG_TRACE(LogVulkan, "    lineWidthRange: {}", Limits.lineWidthRange)
+    LOG_TRACE(LogVulkan, "    pointSizeGranularity: {}", Limits.pointSizeGranularity)
+    LOG_TRACE(LogVulkan, "    lineWidthGranularity: {}", Limits.lineWidthGranularity)
+    LOG_TRACE(LogVulkan, "    strictLines: {}", Limits.strictLines)
+    LOG_TRACE(LogVulkan, "    standardSampleLocations: {}", Limits.standardSampleLocations)
+    LOG_TRACE(LogVulkan, "    optimalBufferCopyOffsetAlignment: {}", Limits.optimalBufferCopyOffsetAlignment)
+    LOG_TRACE(LogVulkan, "    optimalBufferCopyRowPitchAlignment: {}", Limits.optimalBufferCopyRowPitchAlignment)
+    LOG_TRACE(LogVulkan, "    nonCoherentAtomSize: {}", Limits.nonCoherentAtomSize)
 
     return;
 }
@@ -1423,94 +1536,4 @@ void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format,
     this->Vk_EndSingleTimeCommands(std::move(Buffer));
 
     return;
-}
-
-Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
-{
-    vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
-        .rasterizationSamples = this->Frontend.Vk_GetMaxMsaaSampleCount(),
-        .sampleShadingEnable = this->MultisamplingShadingEnable
-        };
-
-    vk::PipelineColorBlendStateCreateInfo ColorBlendInfo{
-        .logicOpEnable = this->ColorBlendLogicOpEnable,
-        .logicOp = this->ColorBlendLogicalOp,
-        .attachmentCount = 1,
-        .pAttachments = &this->ColorBlendAttachmentState
-        };
-
-    vk::PipelineDynamicStateCreateInfo DynamicStateInfo{
-        .dynamicStateCount = static_cast<u32>(this->DynamicStateInfo.size()),
-        .pDynamicStates = this->DynamicStateInfo.data(),
-        };
-
-    TArray<vk::DescriptorSetLayout> DescriptorSetLayouts;
-    for (auto Idx{0uz}; Idx < this->SharedDescriptorSetLayouts.size() + this->UniqueDescriptorSetLayouts.size(); ++Idx)
-    {
-        if (auto It{algo::find(this->SharedDescriptorSetLayouts, Idx, &TDescriptorSetLayout<vk::DescriptorSetLayout>::Binding)};
-            It != this->SharedDescriptorSetLayouts.end())
-        {
-            DescriptorSetLayouts.emplace_back(It->DescriptorSetLayout);
-            continue;
-        }
-
-        if (auto It{algo::find(this->UniqueDescriptorSetLayouts, Idx, &TDescriptorSetLayout<vk::raii::DescriptorSetLayout>::Binding)};
-            It != this->UniqueDescriptorSetLayouts.end())
-        {
-            DescriptorSetLayouts.emplace_back(*It->DescriptorSetLayout);
-            continue;
-        }
-
-        LOG_FATAL(LogRhi, "Failed to find descriptor set layout binding [{}].", Idx)
-    }
-
-    vk::raii::PipelineLayout Layout{
-        Frontend.Vk_GetDevice(),
-        vk::PipelineLayoutCreateInfo{
-            .setLayoutCount = static_cast<u32>(DescriptorSetLayouts.size()),
-            .pSetLayouts = DescriptorSetLayouts.data(),
-            .pushConstantRangeCount = static_cast<u32>(this->PushConstantRange.size()),
-            .pPushConstantRanges = this->PushConstantRange.data(),
-            }
-       };
-
-    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> Chain{
-        {
-            .stageCount = static_cast<u32>(this->Shaders.size()),
-            .pStages = this->Shaders.data(),
-            .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : nullptr,
-            .pInputAssemblyState = &this->InputAssemblyInfo,
-            .pViewportState = &this->ViewportStateInfo,
-            .pRasterizationState = &this->RasterizationInfo,
-            .pMultisampleState   = &MultisamplingInfo,
-            .pDepthStencilState  = &this->DepthStencilInfo,
-            .pColorBlendState    = &ColorBlendInfo,
-            .pDynamicState       = &DynamicStateInfo,
-            .layout = Layout,
-            .renderPass = nullptr,
-        },
-        {
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &this->Frontend.Vk_GetSurfaceFormat().format,
-            .depthAttachmentFormat = Frontend.Vk_GetPreferredDepthFormat(),
-        }
-    };
-
-    TArray<vk::raii::DescriptorSetLayout> Temp; Temp.reserve(this->UniqueDescriptorSetLayouts.size());
-    for (auto& DescriptorSetLayout : this->UniqueDescriptorSetLayouts)
-    {
-        Temp.emplace_back(std::move(DescriptorSetLayout.DescriptorSetLayout));
-    }
-    algo::orphan(&this->UniqueDescriptorSetLayouts);
-
-    return LGraphicsDevicePipeline{
-        .Pipeline = vk::raii::Pipeline{
-            Frontend.Vk_GetDevice(),
-            nullptr,
-            Chain.get<vk::GraphicsPipelineCreateInfo>()
-            },
-        .Layout = std::move(Layout),
-        .DescriptorSetLayouts = std::move(DescriptorSetLayouts),
-        ._UniqueDescriptorSetLayout = std::move(Temp),
-        };
 }

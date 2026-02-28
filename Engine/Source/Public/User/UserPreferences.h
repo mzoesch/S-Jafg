@@ -5,6 +5,7 @@
 
 #include "Engine/CxxClass.h"
 #include "User/UserPreferencesForward.h"
+#include "Rhi/Material.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -51,6 +52,9 @@ public:
 
     CLASS_FIELD(Config)
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
+
+    //# If set, this material should be preferred by mesh renders to use.
+    TOptional<LMaterialInstanceRef> MeshMaterialPreference;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface

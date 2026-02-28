@@ -1,11 +1,23 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Components/StaticMeshComponent.h"
+
+#include <User/UserPreferences.h>
+
 #include "Framework/ShaderSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/MeshSubsystem.h"
 #include "Framework/Frontend.h"
 #include "Engine/Engine.h"
+#include "Rhi/PhysicalRendering.h"
+#include "Framework/Actor.h"
+
+void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
+{
+    Super::OnAttach(InOwner);
+    this->ShaderSubsystem = this->GetLocalEgo().GetFrontend().GetSubsystemChecked<JShaderSubsystem>();
+    return;
+}
 
 void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
 {
@@ -22,33 +34,40 @@ void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef InMate
     check(InMaterialInstance->Material.get() != nullptr)
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    JMaterialSubsystem& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
-    JShaderSubsystem& ShaderSubsystem{*Frontend.GetSubsystemChecked<JShaderSubsystem>()};
+    // JMaterialSubsystem& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
+    // JShaderSubsystem& ShaderSubsystem{*Frontend.GetSubsystemChecked<JShaderSubsystem>()};
 
-    auto& FetchedMaterial{MaterialSubsystem.GetFetchedMaterial(InMaterialInstance->Material->FetchedMaterial)};
-    auto& FetchedShader{ShaderSubsystem.GetFetchedShader(FetchedMaterial.Shader)};
-    if (FetchedShader.Layouts.empty())
-    {
-        LOG_FATAL(LogRhi, "Expected shared [PerspectiveCamera] binding point at [[(0,0)]].")
-    }
-    else
-    {
-        auto& Layout{FetchedShader.Layouts[0]};
-        if (Layout.Type != LFetchedShader::Layout::Type::Shared || Layout.Identifier != "PerspectiveCamera")
-        {
-            LOG_FATAL(LogRhi
-                , "Expected shared [PerspectiveCamera] binding point at [[(0,0)]]. But got [{}] at [[({}, {})]]."
-                , Layout.Identifier.has_value() ? Layout.Identifier.value() : "<UNIQUE>", 0, 0
-                )
-        }
-    }
-
+    // auto& FetchedMaterial{MaterialSubsystem.GetFetchedMaterial(InMaterialInstance->Material->FetchedMaterial)};
+    // auto& FetchedShader{ShaderSubsystem.GetFetchedShader(FetchedMaterial.Shader)};
+    // if (FetchedShader.Layouts.empty())
+    // {
+    //     LOG_FATAL(LogRhi, "Expected shared [PerspectiveCamera] binding point at [[(0,0)]].")
+    // }
+    // else
+    // {
+    //     auto& Layout{FetchedShader.Layouts[0]};
+    //     if (Layout.Type != LFetchedShader::Layout::Type::Shared || Layout.Identifier != "PerspectiveCamera")
+    //     {
+    //         LOG_FATAL(LogRhi
+    //             , "Expected shared [PerspectiveCamera] binding point at [[(0,0)]]. But got [{}] at [[({}, {})]]."
+    //             , Layout.Identifier.has_value() ? Layout.Identifier.value() : "<UNIQUE>", 0, 0
+    //             )
+    //     }
+    // }
     this->MaterialInstance = std::move(InMaterialInstance);
+
+    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        this->uniformBuffers[Idx] = Frontend.Vk_CreateMappedBuffer({
+            .size = sizeof(UBO::WorldData),
+            .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+            });
+    }
 
     return;
 }
 
-void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
+void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
 {
     if (this->Mesh.get() == nullptr)
     {
@@ -58,36 +77,87 @@ void Jafg::AStaticMeshComponent::Render(LRenderInfo const& Info) noexcept
     {
         LOG_FATAL(LogRhi, "No material instance set for this static mesh component. Failed to render.")
     }
+    check(this->MaterialInstance->Material.get())
 
-    auto& Pipeline{this->MaterialInstance->Material->Pipeline};
+    auto& Frontend{this->GetLocalEgo().GetFrontend()};
+    auto& Instance{Info.UserPreferences.MeshMaterialPreference.has_value()
+        ? **Info.UserPreferences.MeshMaterialPreference
+        : *this->MaterialInstance
+        };
+
+    auto& Material{*Instance.Material};
+    auto& Pipeline{Material.Pipeline};
+    auto& FetchedMaterial{Material.FetchedMaterial};
+    auto& FetchedShader{FetchedMaterial.FetchedShader};
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
 
-    check(Pipeline.DescriptorSetLayouts.size() == 2)
-    check(Pipeline._UniqueDescriptorSetLayout.size() == 1)
-    check(this->MaterialInstance->_UniqueDescriptorSets.size() == 1)
-
-    TArray<vk::DescriptorSet> DescriptorSets; DescriptorSets.reserve(Pipeline.DescriptorSetLayouts.size());
-    DescriptorSets.emplace_back(Info.PerspectiveCameraDescriptorSet);
-    for (auto const& Set : this->MaterialInstance->_UniqueDescriptorSets)
+    if (FetchedShader.Layouts.empty() == false)
     {
-        DescriptorSets.emplace_back(*Set);
-    }
-
-    Info.CommandBuffer.bindDescriptorSets2({
-        /* TODO: Is this correct? The sets are vertex && fragment respectively -- not vertex | fragment. */
-        .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-        .layout = *Pipeline.Layout,
-        .firstSet = 0,
-        .descriptorSetCount = static_cast<u32>(DescriptorSets.size()),
-        .pDescriptorSets = DescriptorSets.data(),
-        .dynamicOffsetCount = 0,
-        .pDynamicOffsets = nullptr
+        // Vulkan specs states at least 4.
+        std::array<vk::DescriptorSet, 4> DescriptorSetToBind;
+        u32 NumDescriptorSets{0};
+        algo::for_each(Instance.InfrequentDescriptorSets, [&DescriptorSetToBind, &NumDescriptorSets](auto const& Set)
+        {
+            check(Set.first < DescriptorSetToBind.size())
+            check(DescriptorSetToBind[Set.first] == nullptr)
+            DescriptorSetToBind[Set.first] = *Set.second;
+            NumDescriptorSets = maths::max(NumDescriptorSets, Set.first + 1);
+        });
+        algo::for_each(Instance.FrequentDescriptorSets[Info.Frame], [&DescriptorSetToBind, &NumDescriptorSets](auto const& Set)
+        {
+            check(Set.first < DescriptorSetToBind.size())
+            check(DescriptorSetToBind[Set.first] == nullptr)
+            DescriptorSetToBind[Set.first] = *Set.second;
+            NumDescriptorSets = maths::max(NumDescriptorSets, Set.first + 1);
         });
 
-    LStaticMesh::VPC{.Model = maths::model(this->GetTransform())}.Push(Info, Pipeline);
+        for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
+        {
+            if (auto const& Layout{FetchedShader.Layouts[Idx]}; Layout.Type == LFetchedShader::Layout::eShared)
+            {
+                check(Layout.Identifier.has_value())
+                if (Layout.Identifier.value() == "WorldData")
+                {
+                    check(DescriptorSetToBind[Idx] == nullptr)
+                    DescriptorSetToBind[Idx] = Info.WorldDataDescriptorSet;
+
+                    // TODO: ?
+                    NumDescriptorSets = maths::max(NumDescriptorSets, static_cast<u32>(Idx + 1));
+                }
+            }
+        }
+
+        checkCode
+        (
+            for (vk::DescriptorSet const& SetToBind : DescriptorSetToBind | std::views::take(NumDescriptorSets))
+            {
+                check(SetToBind != nullptr)
+            }
+        )
+
+        Info.CommandBuffer.bindDescriptorSets2({
+            /* TODO: Is this correct? The sets are vertex && fragment respectively -- not vertex | fragment. */
+            .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+            .layout = *Pipeline.Layout,
+            .firstSet = 0,
+            .descriptorSetCount = NumDescriptorSets,
+            .pDescriptorSets = DescriptorSetToBind.data(),
+            .dynamicOffsetCount = 0,
+            .pDynamicOffsets = nullptr
+            });
+    }
+
+    check(this->ShaderSubsystem)
+    for (auto const& PushConstantName : FetchedMaterial.FetchedShader.PushConstants)
+    {
+        auto const& PushConstant{this->ShaderSubsystem->GetPushConstant(PushConstantName)};
+        check(PushConstant.ActorAutoPush)
+        PushConstant.ActorAutoPush(Info, Pipeline, LActorDrawInfo{.Transform=this->GetTransform()});
+    }
 
     this->Mesh->DrawIndexed(Info);
 
     return;
 }
+

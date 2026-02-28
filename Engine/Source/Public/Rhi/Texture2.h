@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "Rhi/VkAl.h"
 #include "Serialization/BulkData.h"
 #include "Rhi/ResourceReference.h"
+#include "Rhi/DeviceBuffers.h"
 
 namespace Jafg
 {
@@ -56,6 +56,16 @@ struct LTexture2 final
         FileNotFound,
         LoadingError,
     };
+    inline static LStringView ResultToString(EResult Result) noexcept
+    {
+        switch (Result)
+        {
+        case EResult::Success: return "Success";
+        case EResult::FileNotFound: return "FileNotFound";
+        case EResult::LoadingError: return "LoadingError";
+        default: return "Unknown";
+        }
+    }
 
     constexpr LTexture2() noexcept = default;
     explicit LTexture2(LPath Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::None) noexcept
@@ -63,8 +73,10 @@ struct LTexture2 final
     {
         if (State & ETexture2StateBits::Host || State & ETexture2StateBits::Device)
         {
-            auto Result{this->LoadToHost(HostCreateInfo)};
-            jassert(Result == EResult::Success)
+            if (auto Result{this->LoadToHost(HostCreateInfo)}; Result != EResult::Success)
+            {
+                LOG_FATAL(LogRhi, "[{}]: Failed to load texture to host; Reason: [{}].", this->Path, LTexture2::ResultToString(Result))
+            }
         }
 
         if (State & ETexture2StateBits::Device)

@@ -13,7 +13,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
-#include "Components/RenderComponent.h"
+#include "User/UserPreferences.h"
 
 LString Jafg::LWorldParameters::ToString() const
 {
@@ -55,6 +55,8 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     check(this->WorldState == EWorldState::PreInitializing)
     this->WorldState = EWorldState::Initializing;
 
+    auto& Frontend{this->GetEngine().GetLocalEgo().GetFrontend()};
+
     this->UnsanitizedUrl = Url;
 
     /* Remove level name from url. */
@@ -76,6 +78,24 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     this->Url = std::move(Url);
     this->UpdateUrlParams();
     LOG_VERBOSE(LogWorld, "Initializing new world with [{}].", this->Parameters.ToString())
+
+    LOG_TRACE(LogRhi, "Allocating world data descriptor sets.")
+    check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+    TArray<vk::DescriptorSetLayout> LayoutsToAllocate; LayoutsToAllocate.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
+    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        LayoutsToAllocate.push_back(*Frontend.Vk_GetDescriptorSetLayouts().at("WorldData"));
+    }
+    auto Sets = Frontend.Vk_GetDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo{
+        .descriptorPool = Frontend.Vk_GetDescriptorPool(),
+        .descriptorSetCount = static_cast<u32>(Frontend.Vk_GetNumberOfFramesInFlight()),
+        .pSetLayouts = LayoutsToAllocate.data(),
+        });
+    for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
+    {
+        this->Vk_WorldDescriptorSets[Idx] = std::move(Sets[Idx]);
+        this->Vk_WorldBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::WorldData::CreateInfo());
+    }
 
     this->UnderlyingLevel = Level;
 
@@ -165,7 +185,7 @@ void Jafg::LWorld::Tick(const f32 Dt)
     return;
 }
 
-void Jafg::LWorld::Draw(LRenderInfo const& Info) const
+void Jafg::LWorld::Draw(LRenderInfo& Info) const
 {
     STAT_CYCLE_FUNCTION()
 
@@ -213,7 +233,79 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info) const
     // };
     // const std::span CornersSpan{Corners};
 
-    Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
+    LActorRenderInfo ActorInfo{Info};
+
+    auto& Frontend{ActorInfo.Frontend};
+    auto& Surface{ActorInfo.Surface};
+    check(ActorInfo.PerspectiveEye.has_value())
+    auto& Eye{*ActorInfo.PerspectiveEye};
+
+    if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
+    {
+        ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
+    }
+    else if (Prefs.PolygonMode == EPolygonMode::Wireframe)
+    {
+        ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eLine;
+    }
+    else
+    {
+        unreachable()
+    }
+
+    auto& WorldData{ActorInfo.WorldData};
+    // model...
+    WorldData.view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up);
+    WorldData = {
+        .view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up),
+        .proj = glm::perspectiveRH_ZO(
+            Eye.VertFov,
+            static_cast<f32>(Surface.Vk_GetSwapchainExtent().width) / static_cast<f32>(Surface.Vk_GetSwapchainExtent().height),
+            Eye.NearFrustum, Eye.FarFrustum
+            ),
+        };
+    WorldData.proj[1][1] *= -1.0f;
+
+    // Set up lights
+    // Light 1: White light from above
+    WorldData.lightPositions[0] = glm::vec4(0.0f, 5.0f, 5.0f, 1.0f);
+    WorldData.lightColors[0] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
+
+    // Light 2: Blue light from the left
+    WorldData.lightPositions[1] = glm::vec4(-5.0f, 0.0f, 0.0f, 1.0f);
+    WorldData.lightColors[1] = glm::vec4(0.0f, 0.0f, 300.0f, 1.0f);
+
+    // Light 3: Red light from the right
+    WorldData.lightPositions[2] = glm::vec4(5.0f, 0.0f, 0.0f, 1.0f);
+    WorldData.lightColors[2] = glm::vec4(300.0f, 0.0f, 0.0f, 1.0f);
+
+    // Light 4: Green light from behind
+    WorldData.lightPositions[3] = glm::vec4(0.0f, -5.0f, 0.0f, 1.0f);
+    WorldData.lightColors[3] = glm::vec4(0.0f, 300.0f, 0.0f, 1.0f);
+
+    // Set camera position for view-dependent effects
+    WorldData.camPos = LVec4F{Eye.Translation, 1.0f};
+
+    // Set PBR parameters
+    WorldData.exposure = 3.2;//4.5f;
+    WorldData.gamma = 1.3f;//2.2f;
+    WorldData.prefilteredCubeMipLevels = 1.0f;
+    WorldData.scaleIBLAmbient = 1.0f;
+
+    ActorInfo.WorldDataDescriptorSet = this->Vk_GetWorldDataDescriptorSet(ActorInfo);
+
+    auto& WorldDataBuffer{this->Vk_GetWorldDataBuffer(ActorInfo)};
+    WorldData.Upload(WorldDataBuffer);
+    auto WorldDataWriteInfo{WorldData.WriteInfo(*WorldDataBuffer)};
+    std::array Writes{vk::WriteDescriptorSet{
+        .dstSet = ActorInfo.WorldDataDescriptorSet,
+        .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .pBufferInfo = &WorldDataWriteInfo,
+        }};
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+    ActorInfo.CommandBuffer.setPolygonModeEXT(ActorInfo.DefaultPerspectivePolygonMode);
 
     for (auto& Obj : this->GetEmployees())
     {
@@ -223,13 +315,13 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info) const
         }
 
         AActor const* Actor{StaticCastChecked<AActor>(&*Obj)};
-        check( Actor->_IsGarbage() == false )
+        check(Actor->_IsGarbage() == false)
 
         for (auto const& Comp : Actor->GetComponents())
         {
             if (Comp->ShouldRender())
             {
-                Comp->Render(Info);
+                Comp->Render(ActorInfo);
             }
 
             continue;
@@ -434,30 +526,18 @@ void Jafg::LWorld::OnTearDown()
 {
     STAT_CYCLE_FUNCTION()
 
-    if (this->WorldState == EWorldState::PreInitializing)
-    {
-        check( this->Collection.GetSubsystems().size() == 0 )
-        check( this->TickableObjects.size() == 0 )
-        check( this->DeletedTickableObjects.size() == 0 )
-        LClassOuter::OnTearDown();
-        this->WorldState = EWorldState::WaitingForKill;
-        return;
-    }
-
-    check( this->GetWorldState() == EWorldState::Running )
+    check(this->WorldState == EWorldState::Running)
     this->WorldState = EWorldState::TearingDown;
 
     LOG_VERBOSE(LogWorld, "Tearing down world subsystems for world [{}].", this->GetHumanReadableName())
     this->Collection.TearDownSubsystems([](void) -> void
     {
+        /* Preserve order. */
         Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
         Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
         Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
-
-        return;
     });
-
-    // Preserve order!
+    /* Preserve order. */
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
@@ -484,7 +564,6 @@ void Jafg::LWorld::OnTearDown()
             ++ActorCount;
 #endif /* !IN_SHIPPING */
             check(Obj.get() == nullptr)
-
             Idx = 0;
             continue;
         }
@@ -501,25 +580,8 @@ void Jafg::LWorld::OnTearDown()
     )
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
-    algo::orphan(&this->TickableObjects);
-    algo::orphan(&this->DeletedTickableObjects);
-
-    algo::orphan(&this->UnsanitizedUrl);
-    algo::orphan(&this->Url);
-    this->Parameters.Reset();
-
-    this->UnderlyingLevel.reset();
-
-    algo::orphan(&this->TickableObjects);
-    ensureDiscard(this->DeletedTickableObjects.empty());
-    algo::orphan(&this->DeletedTickableObjects);
-
     check(this->Collection.IsOuterValid() == false && this->Collection.IsClassValid() == false)
-
     check(this->TickableObjectsPutMutex == false)
-
-    this->RealTimeWhenWorldWasLaunched = -1.0f;
-    this->RealTimeWhenWorldStarted = -1.0f;
 
     LClassOuter::OnTearDown();
 

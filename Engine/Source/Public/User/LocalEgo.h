@@ -34,7 +34,7 @@ public:
     ~LLocalEgo() noexcept = default;
 
     void Initialize();
-    void Tick(const f32 DeltaTime) { this->Frontend.Tick(); }
+    void Tick(f32 Dt) { this->Frontend.Tick(); }
     void TearDown();
 
     FORCEINLINE LFrontend& GetFrontend() noexcept { return this->Frontend; }
