@@ -27,5 +27,4 @@ static_assert(CUniformBufferObject<WorldData>);
 
 } /* ~Namespace UBO */
 
-
 } /* ~Namespace Jafg */

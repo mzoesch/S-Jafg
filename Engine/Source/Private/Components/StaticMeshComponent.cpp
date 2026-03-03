@@ -152,8 +152,8 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
     for (auto const& PushConstantName : FetchedMaterial.FetchedShader.PushConstants)
     {
         auto const& PushConstant{this->ShaderSubsystem->GetPushConstant(PushConstantName)};
-        check(PushConstant.ActorAutoPush)
-        PushConstant.ActorAutoPush(Info, Pipeline, LActorDrawInfo{.Transform=this->GetTransform()});
+        check(PushConstant.AutoActorPush)
+        PushConstant.AutoActorPush(Info, Pipeline, LActorDrawInfo{.Transform=this->GetTransform()});
     }
 
     this->Mesh->DrawIndexed(Info);

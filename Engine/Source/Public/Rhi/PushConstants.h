@@ -66,7 +66,7 @@ typedef void(*LPushConstantActorAutoPush)(LActorRenderInfo const&, LGraphicsDevi
 struct LPushConstantSigs
 {
     LPushConstantProviderSig Provider;
-    LPushConstantActorAutoPush ActorAutoPush;
+    LPushConstantActorAutoPush AutoActorPush;
 };
 
 template<typename T> requires CPushConstant<T>
@@ -90,7 +90,7 @@ inline void AddPushConstantProvider() noexcept
     {
         AddPushConstantProviderImpl(LString{GetTypeName<TPushConstant>()}, LPushConstantSigs{
             .Provider = &PushConstantProvider<TPushConstant>.operator(),
-            .ActorAutoPush = &TPushConstant::AutoActorPush
+            .AutoActorPush = &TPushConstant::AutoActorPush
             });
     }
     else

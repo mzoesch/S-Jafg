@@ -92,11 +92,6 @@ float3 FresnelSchlick(float cosTheta, float3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-///
-/// Default vertex shader.
-/// Requires that the client defines VSInput, FRInput, and an 
-/// UniformBufferObject structure with an proj and view matrix.
-///
 [[shader("vertex")]]
 FRInput vertMain(VSInput input)
 {
@@ -127,7 +122,6 @@ FRInput vertMain(VSInput input)
     return result;
 }
 
-// Fragment shader entry point - Executes once per pixel
 [[shader("fragment")]]
 float4 fragMain(FRInput input) : SV_TARGET
 {
