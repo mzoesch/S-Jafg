@@ -7,67 +7,6 @@
 #include "Widgets/Region.h"
 #include "User/UserPreferences.h"
 
-namespace Jafg
-{
-
-ENGINE_API const LAnchor LAnchor::VTop    { 0.0, 0.0, 0.0, 0.0 };
-ENGINE_API const LAnchor LAnchor::VCenter { 0.0, 0.5, 0.0, 0.0 };
-ENGINE_API const LAnchor LAnchor::VBottom { 0.0, 1.0, 0.0, 0.0 };
-ENGINE_API const LAnchor LAnchor::HLeft   { 0.0, 0.0, 0.0, 0.0 };
-ENGINE_API const LAnchor LAnchor::HCenter { 0.5, 0.0, 0.0, 0.0 };
-ENGINE_API const LAnchor LAnchor::HRight  { 1.0, 0.0, 0.0, 0.0 };
-ENGINE_API const LAnchor LAnchor::VFill   { 0.0, 0.0, 0.0, 1.0 };
-ENGINE_API const LAnchor LAnchor::HFill   { 0.0, 0.0, 1.0, 0.0 };
-
-bool LAnchor::IsNormalized() const noexcept
-{
-    return
-           this->Anchors.x >= 0.0f && this->Anchors.y >= 0.0f && this->Anchors.z >= 0.0f && this->Anchors.w >= 0.0f
-        && this->Anchors.x <= 1.0f && this->Anchors.y <= 1.0f && this->Anchors.z <= 1.0f && this->Anchors.w <= 1.0f
-        && this->MinX + this->MaxX <= 1.0f
-        && this->MinY + this->MaxY <= 1.0f;
-}
-
-void LAnchor::Normalize() noexcept
-{
-#if LAL_DO_CHECKS
-    LAnchor Old = *this;
-#endif /* LAL_DO_CHECKS */
-
-    this->Anchors.x = maths::clamp(this->Anchors.x, 0.0f, 1.0f);
-    this->Anchors.y = maths::clamp(this->Anchors.y, 0.0f, 1.0f);
-    this->Anchors.z = maths::clamp(this->Anchors.z, 0.0f, 1.0f);
-    this->Anchors.w = maths::clamp(this->Anchors.w, 0.0f, 1.0f);
-
-    this->MaxX = maths::min(this->MaxX, 1.0f - this->MinX);
-    this->MaxY = maths::min(this->MaxY, 1.0f - this->MinY);
-
-#if LAL_DO_CHECKS
-    if (Old != *this)
-    {
-        LOG_WARNING(LogWidgetFramework, "Anchor was not normalized correctly: {} -> {}.", Old.ToString(), this->ToString())
-    }
-#endif /* LAL_DO_CHECKS */
-
-    return;
-}
-
-LString LexToString(ENodeVisibility Visibility)
-{
-    switch (Visibility)
-    {
-    case ENodeVisibility::Visible: { return "Visible"; }
-    case ENodeVisibility::Hidden: { return "Hidden"; }
-    case ENodeVisibility::Collapsed: { return "Collapsed"; }
-    case ENodeVisibility::DerivedHitTestInvisible: { return "DerivedHitTestInvisible"; }
-    case ENodeVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
-    case ENodeVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
-    default: checkNoEntry() return {"<unknown>"};
-    }
-}
-
-} /* ~Namespace Jafg */
-
 f32 Jafg::InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
@@ -160,9 +99,9 @@ Jafg::LReply Jafg::WNode::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKe
         return this->OnKeyDownEvent.Invoke(*this, InViewport, InKeyEvent);
     }
 
-    if (this->Slot.Parent)
+    if (this->Parent)
     {
-        return this->Slot.Parent->OnKeyDown(InViewport, InKeyEvent);
+        return this->Parent->OnKeyDown(InViewport, InKeyEvent);
     }
 
     return LReply::Unhandled();
@@ -175,9 +114,9 @@ Jafg::LReply Jafg::WNode::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyE
         return this->OnKeyUpEvent.Invoke(*this, InViewport, InKeyEvent);
     }
 
-    if (this->Slot.Parent)
+    if (this->Parent)
     {
-        return this->Slot.Parent->OnKeyUp(InViewport, InKeyEvent);
+        return this->Parent->OnKeyUp(InViewport, InKeyEvent);
     }
 
     return LReply::Unhandled();
@@ -239,16 +178,15 @@ void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
     return;
 }
 
-void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
+void Jafg::WNode::RemoveFromParent2()
 {
-    if (this->Slot.Parent)
-    {
-        check(this->Slot.Content == this)
-        this->Slot.Parent->RemoveChild(this);
-        check(this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr)
-    }
+    check(this->_IsGarbage() == false)
 
-    if (bDestroy)
+    if (this->Parent)
+    {
+        this->Parent->RemoveChild(this);
+    }
+    else
     {
         this->MarkAsGarbage_v2();
     }
@@ -258,18 +196,18 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
 
 Jafg::WNode* Jafg::WNode::GetMostOuterParent() noexcept
 {
-    if (this->Slot.Parent)
+    if (this->Parent)
     {
-        return this->Slot.Parent->GetMostOuterParent();
+        return this->Parent->GetMostOuterParent();
     }
     return this;
 }
 
 Jafg::WNode const* Jafg::WNode::GetMostOuterParent() const noexcept
 {
-    if (this->Slot.Parent)
+    if (this->Parent)
     {
-        return this->Slot.Parent->GetMostOuterParent();
+        return this->Parent->GetMostOuterParent();
     }
     return this;
 }
@@ -313,10 +251,9 @@ void Jafg::WNode::UpdateAnchoredSize(LViewport const& Context) const
     check(this->TransformsWidgetLayout())
     check(this->Anchor.IsNormalized())
 
-    if (this->Slot.Parent)
+    if (this->Parent)
     {
-        check(this->Slot.Content == this)
-        this->Slot.Parent->UpdateAnchoredSizeForChild(Context, this);
+        this->Parent->UpdateAnchoredSizeForChild(Context, this);
         return;
     }
 
@@ -347,36 +284,42 @@ void Jafg::WNode::SetAnchoredSize(LVec2F&& InSize) const noexcept
     return;
 }
 
-LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
+LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter(LViewport const& Viewport) const
 {
     check(this->TransformsWidgetLayout())
     check(this->Anchor.IsNormalized())
 
-    if (this->Slot.Parent)
+    if (this->Parent)
     {
-        check(this->Slot.Content == this)
-        return this->Slot.Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
+        return this->Parent->GetAnchoredTopLeftFromMostOuterForChild(Viewport, this);
     }
 
     return {
-        this->Anchor.MinX * static_cast<f32>(Context.GetDimensions().x),
-        this->Anchor.MinY * static_cast<f32>(Context.GetDimensions().y)
+        this->Anchor.MinX * static_cast<f32>(Viewport.GetDimensions().x),
+        this->Anchor.MinY * static_cast<f32>(Viewport.GetDimensions().y)
         };
 }
 
-LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
+LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Viewport) const
 {
-    return this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetFrameTranslation();
+    return this->GetAnchoredTopLeftFromMostOuter(Viewport) + Viewport.GetFrameTranslation();
 }
 
-bool Jafg::WNode::SetMargin(const LMargin& InMargin) noexcept
+TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept
 {
-    if (this->Slot.Margin)
+    if (this->Parent)
     {
-        check(this->Slot.Parent)
-        *this->Slot.Margin = InMargin;
-        return true;
+        return this->Parent->GetPadding();
     }
-
-    return false;
+    return {};
 }
+
+#if JAFG_DO_CHECKS
+void Jafg::WNode::_check_Destruct()
+{
+    if (this->Parent)
+    {
+        jassert(algo::contains(this->Parent->GetChildren(), this, [](auto const& E){return &*E;}) == false)
+    }
+}
+#endif /* JAFG_DO_CHECKS */

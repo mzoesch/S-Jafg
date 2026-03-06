@@ -10,7 +10,7 @@ namespace Jafg
 namespace UBO
 {
 
-struct WorldData final : public Jafg::UBO::TUbo<WorldData, 0, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+struct WorldData final : public TUbo<WorldData, 0, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
     // LMat4F model;                     // Model-to-world transformation matrix
     LMat4F view;                      // World-to-camera transformation matrix

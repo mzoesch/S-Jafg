@@ -31,10 +31,10 @@ void Jafg::WTabBar::Construct()
     check(this->DefaultButtonClass)
     check(this->DefaultButtonClass.IsValidType())
 
-    WParentBase* Container{this};
+    WParent* Container{this};
     if (this->WrapperClass)
     {
-        BeginStyling(*this).Root<WParentBase>(this->WrapperClass).SaveTo(&Container);
+        BeginStyling(*this).Root<WParent>(this->WrapperClass).SaveTo(&Container);
     }
     else if (this->bIsVertical.has_value())
     {
@@ -50,7 +50,7 @@ void Jafg::WTabBar::Construct()
         }
     }
 
-    BeginStyling(*Container).Root<WParentBase>(this->ButtonsContainerClass);
+    BeginStyling(*Container).Root<WParent>(this->ButtonsContainerClass);
     BeginStyling(*Container).Root<WSwitcher>(this->SwitcherClass);
 
     for (LTabBarTabDescriptor& DeferredTab : this->DeferredTabs)
@@ -200,7 +200,7 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
     if (Identifier.empty())
     {
         check( this->bAllowNone )
-        this->Switcher->ResetWidgetIndex();
+        this->Switcher->SetActiveNodeByIndex(WSwitcher::NoActiveNodeIndex);
         return;
     }
 
@@ -211,7 +211,7 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
 
     if (TabDescriptor->SwitcherIndex != INDEX_NONE)
     {
-        this->Switcher->SetActiveWidgetIndex(TabDescriptor->SwitcherIndex);
+        this->Switcher->SetActiveNodeByIndex(TabDescriptor->SwitcherIndex);
         if (WTabBarButton* B = DynamicCast<WTabBarButton>(TabDescriptor->Button); B)
         {
             B->OnTabBarFocus(true);
@@ -220,7 +220,7 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
     else
     {
         check( this->bAllowNone )
-        this->Switcher->ResetWidgetIndex();
+        this->Switcher->SetActiveNodeByIndex(WSwitcher::NoActiveNodeIndex);
     }
 
     return;
@@ -244,15 +244,15 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
 
     i32 Iterator { 0 };
     i32 Where { 0 };
-    for (const LWidgetSlot* Slot : this->ButtonsContainer->GetChildren())
+    for (auto& Child : this->ButtonsContainer->GetChildren())
     {
+        check(Child.get())
         if (Iterator == InIndex)
         {
             break;
         }
 
-        check( Slot && Slot->Content )
-        if (Slot->Content->IsA<WSpacer>() == false)
+        if (Child->IsA<WSpacer>() == false)
         {
             ++Iterator;
         }
@@ -264,9 +264,9 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
     check( Iterator == InIndex )
     while (algo::is_valid_index(this->ButtonsContainer->GetChildren(), Where))
     {
-        const LWidgetSlot* Slot = this->ButtonsContainer->GetChildren()[Where];
-        check( Slot && Slot->Content )
-        if (Slot->Content->IsA<WSpacer>() == false)
+        auto& Child = this->ButtonsContainer->GetChildren()[Where];
+        check(Child.get())
+        if (Child->IsA<WSpacer>() == false)
         {
             break;
         }
@@ -275,7 +275,7 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
 
         continue;
     }
-    this->ButtonsContainer->AddChildAt(Where, Button);
+    // this->ButtonsContainer->AddChildAt(Where, Button);
 
     this->TabsInOrder[InIndex].Button = Button;
 

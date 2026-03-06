@@ -7,12 +7,11 @@ void Jafg::WVRegion::UpdateDesiredSize() const
     Super::UpdateDesiredSize();
 
     LVec2F DesiredSize{ maths::zero_vector<LVec2F> };
-    for (LWidgetSlot const* ChildSlot : this->GetChildren())
+    for (auto& Child : this->GetChildren())
     {
-        DesiredSize.x  = maths::max(DesiredSize.x, ChildSlot->Content->GetDesiredSize_v2().x);
-        DesiredSize.y += ChildSlot->Content->GetDesiredSize_v2().y;
-
-        continue;
+        check(Child.get())
+        DesiredSize.x  = maths::max(DesiredSize.x, Child->GetDesiredSize_v2().x);
+        DesiredSize.y += Child->GetDesiredSize_v2().y;
     }
 
     DesiredSize.y += InSpt(this->GetViewport(), this->VSpace) * (this->GetChildren().size() - 1);
@@ -40,14 +39,11 @@ void Jafg::WVRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     /* In percent. */
     f32 TotalFreeUsage   { 0.0 };
 
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    for (auto& Child : this->GetChildren())
     {
-        checkSlow( ChildSlot->Content )
-
-        TotalDesiredSize += ChildSlot->Content->GetDesiredSize_v2().y;
-        TotalFreeUsage   += ChildSlot->Content->GetAnchor().MaxY;
-
-        continue;
+        check(Child.get())
+        TotalDesiredSize += Child->GetDesiredSize_v2().y;
+        TotalFreeUsage   += Child->GetAnchor().MaxY;
     }
 
     const f32 FreeSpace
@@ -78,14 +74,15 @@ LVec2F Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& 
     check( InDirectChild )
 
     f32 Offset{0.0};
-    for (LWidgetSlot const* ChildSlot : this->GetChildren())
+    for (auto& Child : this->GetChildren())
     {
-        if (ChildSlot->Content == InDirectChild)
+        check(Child.get())
+        if (&*Child == InDirectChild)
         {
             break;
         }
 
-        Offset += ChildSlot->Content->GetAnchoredSize_v2().y;
+        Offset += Child->GetAnchoredSize_v2().y;
         Offset += InSpt(this->GetViewport(), this->GetVSpace());
 
         continue;

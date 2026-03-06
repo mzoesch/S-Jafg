@@ -103,7 +103,7 @@ struct LTexture2 final
         }
     }
 
-    FORCEINLINE constexpr bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
+    FORCEINLINE bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
     ENGINE_API void LoadToDevice(DeviceInfo const& Info);
     inline void FreeFromDevice() noexcept
     {

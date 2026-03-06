@@ -1,5 +1,5 @@
 {
-    "Inherits": "Jafg.Base",
+    "Inherits": "Jafg.Perspective",
     "Src": "Jafg.Pbr.slang",
     "Dst": "Jafg.Pbr.spv",
     "VertexInput": "Jafg::LStaticMesh::Vertex",
@@ -14,7 +14,7 @@
         {
             "Type": "eUnique",
             "UpdateFrequency": "eRarely",
-            "Stage": "eFragment",
+            "Stages": "eFragment",
             "Sets": [
                 {
                     "Identifier": "baseColorMap",

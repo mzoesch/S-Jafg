@@ -46,59 +46,37 @@ enum struct EImageOobm
 
 struct LRegionBrush
 {
-    //#
     //# The type of the region brush.
-    //#
     ERegionBrush Type{ ERegionBrush::None };
 
-    //#
     //# The tint of the draw area from this region.
-    //#
     LColor Tint{ Colors::White };
 
-    //#
     //# An optional texture to use as a background.
-    //#
     LTexture2Ref Texture;
 
-    //#
     //# The tint of the image.
-    //#
     LColor ImageTint{ Colors::White };
 
-    //#
     //# The scale of the image.
-    //#
     f32 ImageScale{ 1.0 };
 
-    //#
     //# How the #Image should behave.
-    //#
     EImageBehavior ImageBehavior{ EImageBehavior::Scale };
 
-    //#
     //# The image out of bounds mode. @see #EImageOobm.
-    //#
     EImageOobm ImageOobm{ EImageOobm::Wrap };
 
-    //#
     //# How much padding to apply to the image.
-    //#
     f32 ImagePadding{};
 
-    //#
     //# The radii to use for the edges. TL => TR => BR => BL.
-    //#
-    LVec4F Radii{ 4.0f };
+    LVec4F Radii{ maths::zero_vector<LVec4F> };
 
-    //#
     //# The thickness of the outline.
-    //#
-    f32 OutlineThickness{ 2.0f };
+    f32 OutlineThickness{};
 
-    //#
     //# The outline color to use.
-    //#
     LColor OutlineTint{ Colors::White };
 };
 
@@ -119,13 +97,7 @@ protected:
 
 public:
 
-    static void BeginClassLife(LBeginClassLifeInfo const& Info)
-    {
-        Super::BeginClassLife(Info);
-        WRegion::RegisterShaders();
-    }
-
-    virtual void Draw(LViewport& Context) const override;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     void SetBrush(LRegionBrush const& InBrush) { this->Brush = InBrush; }
     void SetBrush(LRegionBrush&& InBrush) { this->Brush = std::move(InBrush); }
@@ -141,12 +113,10 @@ public:
     FORCEINLINE void SetImageOobm(const EImageOobm InType) noexcept { this->Brush.ImageOobm = InType; }
     FORCEINLINE void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
     FORCEINLINE void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetOutlineRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE void SetOutlineTint(const LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
 
 private:
-
-    static void RegisterShaders();
 
     LRegionBrush Brush;
 };
@@ -205,9 +175,9 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetOutlineThickness(InOutlineThickness);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OutlineRadii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept
+    decltype(auto) Radii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept
     {
-        NODE_FACTORY_SELF().SetOutlineRadii(InOutlineRadii);
+        NODE_FACTORY_SELF().SetRadii(InOutlineRadii);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) OutlineTint(this auto&& Self, LColor const& InOutlineTint) noexcept

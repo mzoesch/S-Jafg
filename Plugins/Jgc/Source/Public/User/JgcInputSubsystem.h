@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "JgcMinimal.afx"
 #include "Subsystems/LocalEgoSubsystem.h"
 #include "JgcInputSubsystem.generated.h"
 

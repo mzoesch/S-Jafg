@@ -4,6 +4,13 @@
 
 Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
 {
+    vk::PipelineVertexInputStateCreateInfo DummyPipelineVertexInputStateCreateInfo{
+        .vertexBindingDescriptionCount = 0,
+        .pVertexBindingDescriptions = nullptr,
+        .vertexAttributeDescriptionCount = 0,
+        .pVertexAttributeDescriptions = nullptr,
+        };
+
     vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
         // TODO: Max user defined limit. Preferred material limit?
         .rasterizationSamples = this->Frontend.Vk_GetMaxMsaaSampleCount(),
@@ -49,7 +56,7 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         {
             .stageCount = static_cast<u32>(this->Shaders.size()),
             .pStages = this->Shaders.data(),
-            .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : nullptr,
+            .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : &DummyPipelineVertexInputStateCreateInfo,
             .pInputAssemblyState = &this->InputAssemblyInfo,
             .pViewportState = &this->ViewportStateInfo,
             .pRasterizationState = &this->RasterizationInfo,

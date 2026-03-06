@@ -104,9 +104,9 @@ f32 Jafg::LTextScale::InSpt(WNode const& Node) const noexcept
 //     return;
 // }
 
-void Jafg::WTextBox::Draw(LViewport& Context) const
+void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 {
-    Super::Draw(Context);
+    Super::Draw(Info);
     //
     // GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
     // (

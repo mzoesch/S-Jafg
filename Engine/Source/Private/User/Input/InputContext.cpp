@@ -9,16 +9,17 @@
 
 Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInputRegistry* Registry, LInputAction&& InAction) noexceptcheck
 {
-    check( Registry )
+    check(Tasks::IsOnMasterThread())
+    check(Registry)
     return this->MapAction(Registry->RegisterAction(std::move(InAction))->GetTag());
 }
 
 Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInputTag ActionTag) noexceptcheck
 {
-    check( ActionTag.IsSet() )
-    check( GEngine )
-    check( GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByName(ActionTag) )
-
+    check(Tasks::IsOnMasterThread())
+    check(ActionTag.IsSet())
+    check(GEngine)
+    check(GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByName(ActionTag))
     this->MappedActions.emplace_back(ActionTag);
     return &this->MappedActions.back();
 }
@@ -27,18 +28,16 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
 (
     LUserInputRegistry* Registry,
     LInputAction&& TransientAction,
-    LString TriggerName,
-    const LKey DefaultKey,
-    const EInputActionTrigger::Type ActionTrigger,
+    LKey DefaultKey,
+    EInputActionTrigger::Type ActionTrigger,
     TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
     LOnUserInputAction&& Callback
 ) noexcept
 {
-    check( Registry )
-
+    check(Tasks::IsOnMasterThread())
+    check(Registry)
     return this->MapAction(
         Registry->RegisterAction(std::move(TransientAction))->GetTag(),
-        std::move(TriggerName),
         DefaultKey,
         ActionTrigger,
         std::move(Modifiers),
@@ -54,6 +53,7 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
     LOnUserInputAction&& Callback
 ) noexcept
 {
+    check(Tasks::IsOnMasterThread())
     return this->MapAction(
         Registry->RegisterAction(std::move(TransientAction))->GetTag(),
         std::move(Triggers),

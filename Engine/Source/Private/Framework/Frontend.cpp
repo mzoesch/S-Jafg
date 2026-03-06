@@ -31,7 +31,7 @@ void Jafg::LFrontendBase::Tick()
 
     if (this->IsFocusedSurfaceValid())
     {
-        if (auto* Fs{this->GetFocusedSurface()}; Fs->GetInputMode() & EInputMode::InputSubSystem)
+        if (auto* Fs{this->GetFocusedSurface()}; Fs->GetInputMode() & EInputModeBits::InputSubsystem)
         {
             Fs->GetUserInput().DispatchInputDelegates(*Fs);
         }
@@ -101,105 +101,4 @@ void Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehav
     }
 
     return;
-}
-
-void Jafg::LFrontendBase::AddWidget(LViewport* Viewport, WUserWidget* Widget)
-{
-    check(Viewport)
-    Viewport->AddWidget(Widget);
-    return;
-}
-
-void Jafg::LFrontendBase::RemoveWidget(WUserWidget* Widget)
-{
-    for (auto& Surface : this->Surfaces)
-    {
-        if (Surface->GetViewport().TryRemoveWidget(Widget))
-        {
-            return;
-        }
-
-        continue;
-    }
-
-    panicMsgf("Could not remove widget [{}] from any surface.", Widget->GetNameAsString())
-
-    return;
-}
-
-Jafg::WNode* Jafg::LFrontendBase::GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
-{
-    if (this->IsFocusedSurfaceValid())
-    {
-        if (WNode* Widget{this->GetFocusedSurface()->GetViewport().GetTopLevelWidgetByClass(Class)}; Widget)
-        {
-            return Widget;
-        }
-    }
-
-    for (auto Idx{0uz}; Idx < this->Surfaces.size(); ++Idx)
-    {
-        if (this->FocusedSurface != INDEX_NONE && static_cast<TArray<LSurface>::size_type>(this->FocusedSurface) == Idx)
-        {
-            continue;
-        }
-
-        LSurface const& Surface{*this->Surfaces[Idx]};
-        if (WNode* Widget{Surface.GetViewport().GetTopLevelWidgetByClass(Class)}; Widget)
-        {
-            return Widget;
-        }
-
-        continue;
-    }
-
-    return nullptr;
-}
-
-bool Jafg::LFrontendBase::ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode> Class, ENodeVisibility Visibility, const bool bAllowNotFound) const
-{
-    WNode* Widget = this->GetTopLevelWidgetByClass(Context, Class);
-    if (Widget == nullptr)
-    {
-        if (bAllowNotFound == false)
-        {
-            panicMsgf("Could not find widget of class [{}] to change visibility.", Class->GetFullyQualifiedName())
-        }
-        return false;
-    }
-
-    if (Widget->GetVisibility() == Visibility)
-    {
-        return false;
-    }
-
-    Widget->SetVisibility(Visibility);
-    return true;
-}
-
-bool Jafg::LFrontendBase::ChangeWidgetVisibility(TSubclassOf<WNode> Class, ENodeVisibility Visibility, const bool bAllowNotFound) const
-{
-    WNode* Widget = this->GetFirstTopLevelWidgetByClass(Class);
-    if (Widget == nullptr)
-    {
-        if (bAllowNotFound == false)
-        {
-            panicMsgf("Could not find widget of class [{}] to change visibility.", Class->GetFullyQualifiedName())
-        }
-        return false;
-    }
-
-    if (Widget->GetVisibility() == Visibility)
-    {
-        return false;
-    }
-
-    Widget->SetVisibility(Visibility);
-    return true;
-}
-
-bool Jafg::LFrontendBase::FocusWidget(LViewport* Context, WNode* InNode)
-{
-    check(Context)
-    return Context->FocusWidgetNode(InNode);
 }

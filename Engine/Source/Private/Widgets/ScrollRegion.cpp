@@ -9,7 +9,7 @@ Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LViewport& Context, const LVe
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
-        return WParentBase::SweepMouse(Context, InLocation);
+        return WNode::SweepMouse(Context, InLocation);
     }
 
     if (this->IsInBounds(Context, InLocation))
@@ -25,11 +25,11 @@ Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LViewport& Context, const LVe
 
             LViewportSweepTranslation Translation{Context, {-ScrollOffsetX, -ScrollOffsetY}};
 
-            for (const LWidgetSlot* ChildSlot : this->GetChildren())
+            for (auto& Child : this->GetChildren())
             {
-                if (ChildSlot->Content->ShouldCheckForInputs())
+                if (Child->ShouldCheckForInputs())
                 {
-                    if (const LCursorReply Reply = ChildSlot->Content->SweepMouse(Context, InLocation); Reply.IsHandled())
+                    if (const LCursorReply Reply = Child->SweepMouse(Context, InLocation); Reply.IsHandled())
                     {
                         return Reply;
                     }
@@ -40,14 +40,14 @@ Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LViewport& Context, const LVe
         }
     }
 
-    return WParentBase::SweepMouse(Context, InLocation);
+    return WNode::SweepMouse(Context, InLocation);
 }
 
 Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(const LViewport& Context, const LVec2F& InLocation)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
-        return WParentBase::SweepFocusTest(Context, InLocation);
+        return WNode::SweepFocusTest(Context, InLocation);
     }
 
     if (this->IsInBounds(Context, InLocation))
@@ -63,11 +63,11 @@ Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(const LViewport& Context, const
 
             LViewportSweepTranslation Translation{Context, {-ScrollOffsetX, -ScrollOffsetY}};
 
-            for (const LWidgetSlot* ChildSlot : this->GetChildren())
+            for (auto& Child : this->GetChildren())
             {
-                if (ChildSlot->Content->ShouldCheckForInputs())
+                if (Child->ShouldCheckForInputs())
                 {
-                    if (const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation); Reply.IsHandled())
+                    if (const LReply Reply = Child->SweepFocusTest(Context, InLocation); Reply.IsHandled())
                     {
                         return Reply;
                     }
@@ -78,7 +78,7 @@ Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(const LViewport& Context, const
         }
     }
 
-    return WParentBase::SweepFocusTest(Context, InLocation);
+    return WNode::SweepFocusTest(Context, InLocation);
 }
 
 void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
@@ -170,26 +170,26 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(const LViewport& InViewport, 
 
         LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
 
-        for (const LWidgetSlot* ChildSlot : this->GetChildren())
+        for (auto& Child : this->GetChildren())
         {
-            check( ChildSlot->Content )
+            check(Child.get())
 
-            if (ChildSlot->Content == InViewport.GetFocusedWidget())
+            if (&*Child == InViewport.GetFocusedWidget())
             {
                 continue;
             }
 
-            if (ChildSlot->Content->ShouldCheckForInputs() == false)
+            if (Child->ShouldCheckForInputs() == false)
             {
                 continue;
             }
 
-            if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+            if (Child->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
             {
                 continue;
             }
 
-            if (const LReply Reply = ChildSlot->Content->OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+            if (const LReply Reply = Child->OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
             {
                 return Reply;
             }
@@ -204,7 +204,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(const LViewport& InViewport, 
         return LReply::Handled();
     }
 
-    return WParentBase::OnKeyDownNoFocus(InViewport, InKeyEvent);
+    return WNode::OnKeyDownNoFocus(InViewport, InKeyEvent);
 }
 
 Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
@@ -220,26 +220,26 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, co
 
         LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
 
-        for (const LWidgetSlot* ChildSlot : this->GetChildren())
+        for (auto& Child : this->GetChildren())
         {
-            check( ChildSlot->Content )
+            check(Child.get())
 
-            if (ChildSlot->Content == InViewport.GetFocusedWidget())
+            if (&*Child == InViewport.GetFocusedWidget())
             {
                 continue;
             }
 
-            if (ChildSlot->Content->ShouldCheckForInputs() == false)
+            if (Child->ShouldCheckForInputs() == false)
             {
                 continue;
             }
 
-            if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+            if (Child->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
             {
                 continue;
             }
 
-            if (const LReply Reply = ChildSlot->Content->OnKeyUpNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+            if (const LReply Reply = Child->OnKeyUpNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
             {
                 return Reply;
             }
@@ -248,7 +248,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, co
         }
     }
 
-    return WParentBase::OnKeyUpNoFocus(InViewport, InKeyEvent);
+    return WNode::OnKeyUpNoFocus(InViewport, InKeyEvent);
 }
 
 void Jafg::WScrollRegion::UpdateDesiredSize() const

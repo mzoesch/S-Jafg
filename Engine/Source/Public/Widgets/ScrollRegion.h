@@ -148,7 +148,7 @@ public:
         f32 HScrollBarBackgroundHeight { LScrollRegionBrush::NoScrollBarBackground };
     };
 
-    // virtual void Draw(LViewport& Context) const override; // TODO
+    // virtual void Draw(LNodeRenderInfo const& Info) const override; // TODO
 
     virtual LCursorReply SweepMouse(LViewport& Context, const LVec2F& InLocation) override;
 

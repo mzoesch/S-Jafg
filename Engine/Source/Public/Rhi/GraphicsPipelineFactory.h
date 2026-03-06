@@ -83,6 +83,7 @@ struct LDevicePipelineFactory
     {
         check(Self.VertexInputInfo.has_value() == false)
         Self.VertexInputInfo = std::move(Info);
+        return std::forward<decltype(Self)>(Self);
     }
 
     decltype(auto) InputAssembly(this auto&& Self, vk::PipelineInputAssemblyStateCreateInfo&& Info) noexcept

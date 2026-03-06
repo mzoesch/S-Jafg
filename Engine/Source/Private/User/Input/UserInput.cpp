@@ -24,9 +24,9 @@ LString Jafg::LexToString(EInputActionCategory::Type InType)
 
 void Jafg::LUserInput::DispatchInputDelegates(LSurface& Surface)
 {
-    TArray TriggeredKeys{ Surface.GetTriggeredKeys() };
-    TArray OngoingKeys{ Surface.GetOngoingKeys() };
-    TArray CompletedKeys{ Surface.GetCompletedKeys() };
+    TArray TriggeredKeys{Surface.GetTriggeredKeys()};
+    TArray OngoingKeys{Surface.GetOngoingKeys()};
+    TArray CompletedKeys{Surface.GetCompletedKeys()};
 
     if (TriggeredKeys.empty() == false)
     {
@@ -189,45 +189,39 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LStringView> const& Contexts) n
     return bOut;
 }
 
-void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */) noexcept
+void Jafg::LUserInput::PushContexts(EInputMode InputMode, const bool bEmpty /* = true */) noexcept
 {
     if (bEmpty)
     {
-        this->ContextStack.emplace_back(std::move(this->ActiveContexts));
-        check( this->ActiveContexts.empty() )
+        this->ContextStack.emplace_back(InputMode, std::move(this->ActiveContexts));
+        check(this->ActiveContexts.empty())
     }
     else
     {
-        TArray Ctx{ this->ActiveContexts };
-        this->ContextStack.emplace_back(std::move(Ctx));
-        check( this->ContextStack.back().size() == this->ActiveContexts.size() )
+        this->ContextStack.emplace_back(InputMode, this->ActiveContexts);
+        check(this->ContextStack.back().second.size() == this->ActiveContexts.size())
     }
 
-    LOG_VERBOSE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.back().size())
+    LOG_VERBOSE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.back().second.size())
 
     return;
 }
 
-bool Jafg::LUserInput::PopContexts() noexcept
+TOptional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
 {
-    bool bRet;
-
     if (this->ContextStack.empty())
     {
-        bRet = false;
+        return {};
     }
-    else
-    {
-        bRet = true;
 
-        this->ActiveContexts = std::move(this->ContextStack.back());
-        check( this->ContextStack.back().empty() )
-        this->ContextStack.pop_back();
-    }
+    this->ActiveContexts = std::move(this->ContextStack.back().second);
+    check(this->ContextStack.back().second.empty())
 
     LOG_VERBOSE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.size())
+    EInputMode Result{this->ContextStack.back().first};
+    this->ContextStack.pop_back();
 
-    return bRet;
+    return Result;
 }
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, TArray<LRawInput>* Inputs, EInputActionTrigger::Type TriggerType)
@@ -297,7 +291,11 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
 
                 if (Value.IsNonZero())
                 {
-                    Action.Callback(Surface.GetViewport(), Value);
+                    if (auto Result{Action.Callback(Surface.GetViewport(), Value)}; Result.bDirty)
+                    {
+                        /* Do not proces any further. This is not optimal, as this can result in discarded inputs. */
+                        return;
+                    }
                 }
 
                 continue;

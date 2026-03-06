@@ -20,9 +20,9 @@ class WNode;
 class WParent;
 class WUserWidget;
 class LViewport;
-class WParentBase;
-struct LWidgetSlot;
 struct LWidgetConstructor;
+struct LMappedDeviceBuffer;
+struct LNodeRenderInfo;
 
 //#
 //# How to anchor a child to its parent if the parent can have children.
@@ -97,48 +97,76 @@ struct LAnchor final
         LVec4F Anchors;
     };
 
-    FORCEINLINE constexpr LAnchor() noexcept : Anchors(0.0, 0.0, 0.0, 0.0) { }
-    FORCEINLINE CONSTEXPR_CHECK LAnchor(const f32 InUniformAnchors) noexcept
+    FORCEINLINE constexpr LAnchor() noexcept : Anchors(maths::zero_vector<LVec4F>) { }
+    FORCEINLINE constexpr LAnchor(f32 InUniformAnchors) noexcept
         : Anchors(InUniformAnchors, InUniformAnchors, InUniformAnchors, InUniformAnchors)
     {
-        check( this->IsNormalized() )
+        check(this->IsNormalized())
     }
-    FORCEINLINE CONSTEXPR_CHECK LAnchor(const f32 InHorizontalUniform, const f32 InVerticalUniform) noexcept
+    FORCEINLINE constexpr LAnchor(f32 InHorizontalUniform, f32 InVerticalUniform) noexcept
         : Anchors(InHorizontalUniform, InVerticalUniform, InHorizontalUniform, InVerticalUniform)
     {
-        check( this->IsNormalized() )
+        check(this->IsNormalized())
     }
-    FORCEINLINE CONSTEXPR_CHECK LAnchor(const f32 InMinX, const f32 InMinY, const f32 InMaxX, const f32 InMaxY) noexcept
+    FORCEINLINE constexpr LAnchor(f32 InMinX, f32 InMinY, f32 InMaxX, f32 InMaxY) noexcept
         : Anchors(InMinX, InMinY, InMaxX, InMaxY)
     {
-        check( this->IsNormalized() )
+        check(this->IsNormalized())
     }
-    FORCEINLINE CONSTEXPR_CHECK LAnchor(const EAnchor::Type InAnchors) noexcept
+    FORCEINLINE constexpr LAnchor(EAnchor::Type InAnchors) noexcept
+        : Anchors(maths::zero_vector<LVec4F>)
     {
-        this->Anchors = maths::zero_vector<LVec4D>;
         this->ApplyConstraints(InAnchors);
-        return;
     }
-    FORCEINLINE CONSTEXPR_CHECK LAnchor(const LAnchor& InOther, const EAnchor::Type InConstraints) noexcept
+    FORCEINLINE constexpr LAnchor(LAnchor const& InOther, EAnchor::Type InConstraints) noexcept
+        : Anchors(InOther.Anchors)
     {
-        this->Anchors = InOther.Anchors;
         this->ApplyConstraints(InConstraints);
-        return;
     }
-    FORCEINLINE CONSTEXPR_CHECK LAnchor(const LVec4D& InOther, const EAnchor::Type InConstraints) noexcept
+    FORCEINLINE constexpr LAnchor(LVec4F const& InOther, const EAnchor::Type InConstraints) noexcept
+        : Anchors(InOther)
     {
-        this->Anchors = InOther;
         this->ApplyConstraints(InConstraints);
-        return;
     }
-    FORCEINLINE constexpr LAnchor(LVec4D const& InAnchors) noexcept : Anchors(InAnchors) { }
+    FORCEINLINE constexpr LAnchor(LVec4F const& InAnchors) noexcept : Anchors(InAnchors) { }
     FORCEINLINE constexpr LAnchor(LAnchor const& InOther) noexcept : Anchors(InOther.Anchors) { }
     FORCEINLINE constexpr LAnchor(LAnchor&& InOther) noexcept : Anchors(std::move(InOther.Anchors)) { }
-    FORCEINLINE constexpr LAnchor& operator=(LAnchor const& InOther)  noexcept { this->Anchors = InOther.Anchors; return *this; }
+    FORCEINLINE constexpr LAnchor& operator=(LAnchor const& InOther) noexcept { this->Anchors = InOther.Anchors; return *this; }
     FORCEINLINE constexpr LAnchor& operator=(LAnchor&& InOther) noexcept { this->Anchors = std::move(InOther.Anchors); return *this; }
 
-    ENGINE_API bool IsNormalized() const noexcept;
-    ENGINE_API void Normalize() noexcept;
+    constexpr bool IsNormalized() const noexcept
+    {
+        return
+            this->Anchors.x >= 0.0f && this->Anchors.y >= 0.0f && this->Anchors.z >= 0.0f && this->Anchors.w >= 0.0f
+            && this->Anchors.x <= 1.0f && this->Anchors.y <= 1.0f && this->Anchors.z <= 1.0f && this->Anchors.w <= 1.0f
+            && this->Anchors.x + this->Anchors.z <= 1.0f
+            && this->Anchors.y + this->Anchors.w <= 1.0f;
+    }
+    constexpr void Normalize() noexcept
+    {
+#if LAL_DO_CHECKS
+        LAnchor Old{*this};
+#endif /* LAL_DO_CHECKS */
+
+        this->Anchors.x = maths::clamp(this->Anchors.x, 0.0f, 1.0f);
+        this->Anchors.y = maths::clamp(this->Anchors.y, 0.0f, 1.0f);
+        this->Anchors.z = maths::clamp(this->Anchors.z, 0.0f, 1.0f);
+        this->Anchors.w = maths::clamp(this->Anchors.w, 0.0f, 1.0f);
+
+        this->MaxX = maths::min(this->MaxX, 1.0f - this->MinX);
+        this->MaxY = maths::min(this->MaxY, 1.0f - this->MinY);
+
+#if LAL_DO_CHECKS
+        if (Old != *this)
+        {
+            LOG_WARNING(LogWidgetFramework, "Anchor was not normalized correctly [{} -> {}].", Old.ToString(), this->ToString())
+        }
+#endif /* LAL_DO_CHECKS */
+
+        return;
+    }
+
+    inline constexpr void ApplyConstraints(EAnchor::Type InConstraints) noexcept;
 
     FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0; }
     FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0; }
@@ -148,37 +176,39 @@ struct LAnchor final
     FORCEINLINE constexpr bool IsPushed() const noexcept { return this->IsPushedHorizontal() || this->IsPushedVertical(); }
     FORCEINLINE constexpr bool IsStretched() const noexcept { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
 
-    CONSTEXPR_CHECK void ApplyConstraints(const EAnchor::Type InConstraints) noexceptcheck
-    {
-        if (InConstraints & EAnchor::VTop)    { this->Anchors += LAnchor::VTop.Anchors;    }
-        if (InConstraints & EAnchor::VCenter) { this->Anchors += LAnchor::VCenter.Anchors; }
-        if (InConstraints & EAnchor::VBottom) { this->Anchors += LAnchor::VBottom.Anchors; }
-        if (InConstraints & EAnchor::HLeft)   { this->Anchors += LAnchor::HLeft.Anchors;   }
-        if (InConstraints & EAnchor::HCenter) { this->Anchors += LAnchor::HCenter.Anchors; }
-        if (InConstraints & EAnchor::HRight)  { this->Anchors += LAnchor::HRight.Anchors;  }
-        if (InConstraints & EAnchor::VFill)   { this->Anchors += LAnchor::VFill.Anchors;   }
-        if (InConstraints & EAnchor::HFill)   { this->Anchors += LAnchor::HFill.Anchors;   }
-
-        check( this->IsNormalized() )
-
-        return;
-    }
-
-    FORCEINLINE constexpr bool operator==(const LAnchor& InOther) const noexcept { return this->Anchors == InOther.Anchors; }
-    FORCEINLINE constexpr bool operator!=(const LAnchor& InOther) const noexcept { return this->Anchors != InOther.Anchors; }
-
+    FORCEINLINE constexpr bool operator==(LAnchor const& InOther) const noexcept { return this->Anchors == InOther.Anchors; }
     FORCEINLINE LString ToString() const noexcept { return maths::to_string(this->Anchors); }
-
-    ENGINE_API static const LAnchor VTop;
-    ENGINE_API static const LAnchor VCenter;
-    ENGINE_API static const LAnchor VBottom;
-    ENGINE_API static const LAnchor HLeft;
-    ENGINE_API static const LAnchor HCenter;
-    ENGINE_API static const LAnchor HRight;
-
-    ENGINE_API static const LAnchor VFill;
-    ENGINE_API static const LAnchor HFill;
 };
+
+namespace Anchors
+{
+
+inline static constexpr LAnchor VTop    { 0.0, 0.0, 0.0, 0.0 };
+inline static constexpr LAnchor VCenter { 0.0, 0.5, 0.0, 0.0 };
+inline static constexpr LAnchor VBottom { 0.0, 1.0, 0.0, 0.0 };
+inline static constexpr LAnchor HLeft   { 0.0, 0.0, 0.0, 0.0 };
+inline static constexpr LAnchor HCenter { 0.5, 0.0, 0.0, 0.0 };
+inline static constexpr LAnchor HRight  { 1.0, 0.0, 0.0, 0.0 };
+inline static constexpr LAnchor VFill   { 0.0, 0.0, 0.0, 1.0 };
+inline static constexpr LAnchor HFill   { 0.0, 0.0, 1.0, 0.0 };
+
+} /* ~Namespace Anchors */
+
+inline constexpr void LAnchor::ApplyConstraints(EAnchor::Type InConstraints) noexcept
+{
+    if (InConstraints & EAnchor::VTop)    { this->Anchors += Anchors::VTop.Anchors; }
+    if (InConstraints & EAnchor::VCenter) { this->Anchors += Anchors::VCenter.Anchors; }
+    if (InConstraints & EAnchor::VBottom) { this->Anchors += Anchors::VBottom.Anchors; }
+    if (InConstraints & EAnchor::HLeft)   { this->Anchors += Anchors::HLeft.Anchors; }
+    if (InConstraints & EAnchor::HCenter) { this->Anchors += Anchors::HCenter.Anchors; }
+    if (InConstraints & EAnchor::HRight)  { this->Anchors += Anchors::HRight.Anchors; }
+    if (InConstraints & EAnchor::VFill)   { this->Anchors += Anchors::VFill.Anchors; }
+    if (InConstraints & EAnchor::HFill)   { this->Anchors += Anchors::HFill.Anchors; }
+
+    check(this->IsNormalized())
+
+    return;
+}
 
 enum struct ENodeVisibility : u8
 {
@@ -250,20 +280,19 @@ FORCEINLINE constexpr bool TransformsWidgetLayout(ENodeVisibility Visibility) no
 }
 
 } /* ~Namespace EWidgetVisibility */
-ENGINE_API LString LexToString(ENodeVisibility Visibility);
-
-//# The base struct for every widget slot.
-struct LWidgetSlot final
+inline LString LexToString(ENodeVisibility Visibility)
 {
-    //# The parent of this slot.
-    WParentBase* Parent{};
-
-    //# The content of this slot. We interpret all names in this and derived structs as of the view of the content.
-    WNode* Content{};
-
-    //# The padding of the parent widget aka the margin of the child widget.
-    LMargin* Margin{};
-};
+    switch (Visibility)
+    {
+    case ENodeVisibility::Visible: { return "Visible"; }
+    case ENodeVisibility::Hidden: { return "Hidden"; }
+    case ENodeVisibility::Collapsed: { return "Collapsed"; }
+    case ENodeVisibility::DerivedHitTestInvisible: { return "DerivedHitTestInvisible"; }
+    case ENodeVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
+    case ENodeVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
+    default: checkNoEntry() return { "<unknown>" };
+    }
+}
 
 namespace Detail
 {
@@ -276,21 +305,34 @@ struct LViewport2OuterProj
     }
 };
 
+struct LBeginStylingFnResult;
 struct LNodeFactoryBase
 {
+    friend LBeginStylingFnResult;
+
     constexpr LNodeFactoryBase() noexcept = delete;
     constexpr LNodeFactoryBase(WNode& InNode) noexcept : Node{InNode} {}
     PROHIBIT_COPY(LNodeFactoryBase)
-    LNodeFactoryBase(LNodeFactoryBase&& O) noexcept : Node{O.Node}, bReleased{O.bReleased}, Siblings{std::move(O.Siblings)}
+    LNodeFactoryBase(LNodeFactoryBase&& O) noexcept
+        : Node{O.Node}
+        , Siblings{std::move(O.Siblings)}
+#if JAFG_DO_CHECKS
+        , _bReleased{O._bReleased}
+#endif /* JAFG_DO_CHECKS */
     {
         check(O.Siblings.empty())
-        O.bReleased = true;
+        checkCode(O._bReleased = true)
     }
     LNodeFactoryBase& operator=(LNodeFactoryBase&& Rhs) noexcept = delete;
     ~LNodeFactoryBase()
     {
-        check(this->bReleased && this->Siblings.empty())
+        check(this->_bReleased && this->Siblings.empty())
     }
+
+#if JAFG_DO_CHECKS
+    FORCEINLINE void _Release() noexcept { check(this->_bReleased == false) this->_bReleased = true; }
+    FORCEINLINE bool _IsReleased() const noexcept { return this->_bReleased; }
+#endif /* JAFG_DO_CHECKS */
 
     FORCEINLINE auto& GetRawNode() noexcept { return this->Node; }
     FORCEINLINE auto const& GetRawNode() const noexcept { return this->Node; }
@@ -301,20 +343,23 @@ struct LNodeFactoryBase
 private:
 
     WNode& Node;
-    bool bReleased{};
     TArray<WNode*> Siblings;
+#if JAFG_DO_CHECKS
+    bool _bReleased{};
+#endif /* JAFG_DO_CHECKS */
 };
 
 struct LBeginStylingFnResult final
 {
 public:
 
-    inline constexpr LBeginStylingFnResult(WParentBase& P) noexcept : Parent{P} {}
+    inline constexpr LBeginStylingFnResult(WParent& P) noexcept : Parent{P} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LBeginStylingFnResult)
     inline ~LBeginStylingFnResult();
 
-    WParentBase& Parent;
+    WParent& Parent;
     std::optional<i32> Where;
+    TUnique<LNodeFactoryBase> Factory;
 
     decltype(auto) At(this auto&& Self, i32 InIndex) noexcept
     {
@@ -323,10 +368,10 @@ public:
     }
 
     template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
-    inline typename TNode::LFactory Root(LCxxClass const& Class);
+    inline typename TNode::LFactory& Root(LCxxClass const& Class);
 
     template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
-    inline typename TNode::LFactory Root()
+    inline typename TNode::LFactory& Root()
     {
         // TODO: Call static init dot dynamic.
         return this->Root<TNode>(TNode::StaticClass());
@@ -454,7 +499,7 @@ public:
 #if JAFG_DO_CHECKS
     virtual ~WNode() override
     {
-        check(this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr)
+        check(this->Parent == nullptr)
     }
 #endif /* JAFG_DO_CHECKS */
 
@@ -484,14 +529,22 @@ public:
     //# Called when this widget is being destructed. This does not mean being removed from its parent. This method
     //# replaces the #EndLife super method.
     //#
-    virtual void Destruct() { }
+    virtual void Destruct()
+    {
+        check(Tasks::IsOnMasterThread())
+        if (this->Parent)
+        {
+            checkCode(_check_Destruct())
+            this->Parent = nullptr;
+        }
+    }
 
     //#
     //# The paint function for a widget. Only called if the widget is visible and paintable.
     //# Do not update any values of any widgets when inside this method.
     //# Automatically called by the owning viewport. Do not call manually.
     //#
-    virtual void Draw(LViewport& Context) const { check( this->ShouldNowDraw() ) }
+    virtual void Draw(LNodeRenderInfo const& Info) const { check(this->ShouldNowDraw()) }
 
     //#
     //# Use this method to pass arbitrary typesafe data to the widget.
@@ -597,17 +650,16 @@ public:
     //# Only if old and new are different.
     virtual void OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility) { }
 
-    //#
-    //# Orphans this child from its parent widget.
-    //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
-    //#
-    virtual void RemoveFromParent(const bool bDestroy = true); // TODO WARNING Will currently always destroy the child.
-    FORCEINLINE WParentBase* GetParent() { return this->Slot.Parent; }
-    FORCEINLINE WParentBase* GetParentChecked() { WParentBase* Out = this->GetParent(); check( Out ); return Out; }
-    FORCEINLINE WParentBase* GetParentAsserted() { WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
-    FORCEINLINE const WParentBase* GetParent() const { return this->Slot.Parent; }
-    FORCEINLINE const WParentBase* GetParentChecked() const { const WParentBase* Out = this->GetParent(); check( Out ); return Out; }
-    FORCEINLINE const WParentBase* GetParentAsserted() const { const WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
+    //# Mark this node and alls its children as garbage and remove them, from their parent.
+    virtual void RemoveFromParent2();
+
+    FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
+    FORCEINLINE WParent* GetParent() { return this->Parent; }
+    FORCEINLINE WParent* GetParentChecked() { auto* Out{this->GetParent()}; check(Out); return Out; }
+    FORCEINLINE WParent* GetParentAsserted() { auto* Out{this->GetParent()}; jassert(Out); return Out; }
+    FORCEINLINE WParent const* GetParent() const { return this->Parent; }
+    FORCEINLINE WParent const* GetParentChecked() const { auto const* Out{this->GetParent()}; check(Out); return Out; }
+    FORCEINLINE WParent const* GetParentAsserted() const { auto const* Out{this->GetParent()}; jassert(Out); return Out; }
     //# @return The most outer parent of this widget or the widget itself if no outer parent.
     WNode* GetMostOuterParent() noexcept;
     WNode const* GetMostOuterParent() const noexcept;
@@ -654,69 +706,52 @@ public:
     FORCEINLINE LVec2F const& GetLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     FORCEINLINE LVec2F CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
-    virtual LVec2F GetAnchoredTopLeftFromMostOuter(LViewport const& Context) const;
-    LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LViewport const& Context) const;
+    virtual LVec2F GetAnchoredTopLeftFromMostOuter(LViewport const& Viewport) const;
+    LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LViewport const& Viewport) const;
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
-    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Context, WNode const* InDirectChild) const PURE_VIRTUAL(return { })
+    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Viewport, WNode const* InDirectChild) const PURE_VIRTUAL(return { })
 
-    FORCEINLINE constexpr bool IsSlotValid() const noexcept { return this->Slot.Parent != nullptr; }
-    FORCEINLINE LWidgetSlot& GetMutableSlot() noexcept { return this->Slot; }
-    FORCEINLINE LWidgetSlot& GetMutableSlotChecked() noexcept { check(this->IsSlotValid()) return this->GetMutableSlot(); }
-    FORCEINLINE LWidgetSlot& GetMutableSlotAsserted() noexcept { jassert(this->IsSlotValid()) return this->GetMutableSlot(); }
-    FORCEINLINE LWidgetSlot const& GetSlot() const noexcept { return this->Slot; }
-    FORCEINLINE LWidgetSlot const& GetSlotChecked() const noexceptcheck { check( this->IsSlotValid() ) return this->GetSlot(); }
-    FORCEINLINE LWidgetSlot const& GetSlotAsserted() const { jassert( this->IsSlotValid() ) return this->GetSlot(); }
-    FORCEINLINE TOptional<LMargin> GetMargin() const noexcept { if (this->Slot.Margin) { check( this->Slot.Parent ) return *this->Slot.Margin; } return { }; }
-    FORCEINLINE TOptional<LMargin> GetMarginChecked() const noexceptcheck { TOptional Out{ this->GetMargin() }; check( Out.has_value() ); return Out; }
-    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional Out{ this->GetMargin() }; jassert( Out.has_value() ); return Out; }
-                bool SetMargin(const LMargin& InMargin) noexcept;
-    FORCEINLINE bool SetMarginChecked(const LMargin& InMargin) noexceptcheck { const bool Out = this->SetMargin(InMargin); check( Out ); return Out; }
-    FORCEINLINE bool SetMarginAsserted(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); jassert( Out ); return Out; }
-    FORCEINLINE void InvalidateSlotDangerous() noexcept { check(this->IsSlotValid()) this->Slot.Parent = nullptr; this->Slot.Content = nullptr; this->Slot.Margin = nullptr; }
+    TOptional<LMargin> GetMargin() const noexcept;
+    FORCEINLINE TOptional<LMargin> GetMarginChecked() const noexcept { TOptional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const noexcept { TOptional Out{this->GetMargin()}; jassert(Out.has_value()); return Out; }
 
-    FORCEINLINE auto GetAnchor()           ->       LAnchor& { return this->Anchor; }
-    FORCEINLINE auto GetAnchor()     const -> const LAnchor& { return this->Anchor; }
-    FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
-    FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
+    FORCEINLINE constexpr LAnchor& GetAnchor() noexcept { return this->Anchor; }
+    FORCEINLINE constexpr LAnchor const& GetAnchor() const noexcept { return this->Anchor; }
+    FORCEINLINE constexpr void SetAnchor(LAnchor const& InAnchor) noexcept { this->Anchor = InAnchor; }
+    FORCEINLINE constexpr void SetAnchor(EAnchor::Type  InAnchor) noexcept { this->Anchor = InAnchor; }
+
+    //# Internal function of Jafg. Do not call yourself.
+    void _SetParentDangerous(WParent* InParent) noexcept { this->Parent = InParent; }
 
 private:
+
+#if JAFG_DO_CHECKS
+    void _check_Destruct();
+#endif /* JAFG_DO_CHECKS */
 
     bool bAllowTick{ true };
     ENodeVisibility Visibility{ ENodeVisibility::TransitiveHitTestInvisible };
 
-    //#
-    //# The slot that this widget is currently in.
-    //#
-    LWidgetSlot Slot;
+    //# Parent of this widget.
+    WParent* Parent{};
 
     LViewport& AttachedViewport;
 
-    //#
     //# The desired size of this widget in pt.
-    //#
     mutable LVec2F DesiredSize_v2;
 
-    //#
     //# The minimum content area.
-    //#
     LWidgetSize2 MinDesiredSize;
 
-    //#
     //# The maximal content area. Zero means unbound. This includes max size of anchored nodes.
-    //#
     LWidgetSize2 MaxDesiredSize;
 
-    //#
-    //# The anchored size of this widget in pt.
-    //#
-    mutable LVec2F AnchoredSize_v2;
-
-    //#
-    //# The anchored size that was lost during #MaxDesiredSize clamp in pt.
-    //#
-    mutable LVec2F LostAnchoredSize_v2;
-
+    //# The anchor to use.
     LAnchor Anchor{ EAnchor::TopLeft };
+    //# The anchored size of this widget in pt.
+    mutable LVec2F AnchoredSize_v2;
+    //# The anchored size that was lost during #MaxDesiredSize clamp in pt.
+    mutable LVec2F LostAnchoredSize_v2;
 };
 
 inline decltype(auto) LFactoryNode::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
@@ -737,7 +772,7 @@ inline constexpr NewDeferredObjectFn<LNodeDynamicInit, TNodeStaticInit, TDeferre
 
 struct BeginStylingFn final
 {
-    template<typename TParent> requires std::is_base_of_v<WParentBase, TParent>
+    template<typename TParent> requires std::is_base_of_v<WParent, TParent>
     LBeginStylingFnResult operator()(TParent& Parent) const
     {
         return {Parent};
@@ -774,8 +809,8 @@ struct NewNodeFn final
 inline constexpr Detail::BeginStylingFn BeginStyling{};
 //# Call this inside #BeginStyling to create new child/sibling nodes.
 inline constexpr Detail::NewNodeFn NewNode{};
-#define NewStaticNode(NodeClass) NewNode(this->GetViewport()).Class<NodeClass>()
-#define NewStaticNodeVp(Vp, NodeClass) NewNode(Vp).Class<NodeClass>()
+#define NewStaticNode(NodeClass) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>()
+#define NewStaticNodeVp(Vp, NodeClass) ::Jafg::NewNode(Vp).Class<NodeClass>()
 
 FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
 {

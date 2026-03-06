@@ -17,7 +17,7 @@ typedef TFunction<void(WButton* Self, LKeyEvent const& InKeyEvent)>  LOnButtonKe
 typedef TFactoryButtonBase<WButton> LFactoryButton;
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryButton)
-class WButton : public WRegion, public LButtonBase
+class ENGINE_API WButton : public WRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 
@@ -69,7 +69,7 @@ protected:
 public:
 
     virtual void Construct() override;
-    virtual void Draw(LViewport& Context) const override;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     //#
     //# @return True if the content was set to the #ButtonText widget.

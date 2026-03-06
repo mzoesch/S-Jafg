@@ -44,6 +44,9 @@ struct LKeyType
         Bool,
         String,
         Array,
+        Integer,
+        UInteger,
+        Float,
     };
 
     LStringView Key;
@@ -138,6 +141,36 @@ inline bool DoesObjectContainTypeCheckedKeys(json const& Object, TArray<LKeyType
             }
             break;
         }
+        case LKeyType::Integer:
+        {
+            if (Object[Key.Key].is_number_integer() == false)
+            {
+                KeyError = Key.Key;
+                Error = EError::InvalidType;
+                return false;
+            }
+            break;
+        }
+        case LKeyType::UInteger:
+        {
+            if (Object[Key.Key].is_number_integer() == false)
+            {
+                KeyError = Key.Key;
+                Error = EError::InvalidType;
+                return false;
+            }
+            break;
+        }
+        case LKeyType::Float:
+        {
+            if (Object[Key.Key].is_number_float() == false)
+            {
+                KeyError = Key.Key;
+                Error = EError::InvalidType;
+                return false;
+            }
+            break;
+        }
         default:
         {
             unreachable()
@@ -151,20 +184,18 @@ inline bool DoesObjectContainTypeCheckedKeys(json const& Object, TArray<LKeyType
 }
 
 [[noreturn]]
-inline void DefaultFail(auto const& Category, LString Key, EError Error)
+inline void DefaultFail(auto const& Category, auto const& Key, EError Error)
 {
     if (Error == EError::InvalidType)
     {
         LOG_FATAL(LogSerialization, "[{}]: Key [{}] is of invalid type. Failed to load.", Category, Key)
     }
-    else if (Error == EError::MissingKey)
+    if (Error == EError::MissingKey)
     {
         LOG_FATAL(LogSerialization, "[{}]: Key [{}] is missing. Failed to load.", Category, Key)
     }
-    else
-    {
-        unreachable()
-    }
+
+    unreachable()
 }
 
 } /* ~Namespace Json */

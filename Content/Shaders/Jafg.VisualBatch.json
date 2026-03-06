@@ -1,0 +1,26 @@
+{
+    "Inherits": "Jafg.Base",
+    "Src": "Jafg.VisualBatch.slang",
+    "Dst": "Jafg.VisualBatch.spv",
+    "PipelineInputAssemblyState": {
+        "topology": "eTriangleStrip",
+        "primitiveRestartEnable": false
+    },
+    "Layouts": [
+        {
+            "Type": "eShared",
+            "Identifier": "Jafg.VisualShared"
+        },
+        {
+            "Type": "eUnique",
+            "UpdateFrequency": "ePerFrame",
+            "Stages": "eVertex|eFragment",
+            "Sets": [
+                {
+                    "Identifier": "InstanceBuffer",
+                    "DescriptorType": "eStorageBuffer"
+                }
+            ]
+        }
+    ] 
+}

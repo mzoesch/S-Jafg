@@ -86,7 +86,7 @@ public:
     ENGINE_API LEngine&   GetEngine() const noexcept;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
 
-    FORCEINLINE auto GetPhysicalViewports() const noexcept -> TArray<LPhysicalViewport> const& { return this->UsablePhysicalViewports; }
+    FORCEINLINE TArray<LPhysicalViewport> const& GetPhysicalViewports() const noexcept { return this->UsablePhysicalViewports; }
 
     ENGINE_API void AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior = ENewSurfaceBehavior::NoAction) noexcept;
 
@@ -95,57 +95,14 @@ public:
     FORCEINLINE TArray<TUnique<LSurface>> const& GetSurfaces() const noexcept { return this->Surfaces; }
 
     FORCEINLINE bool IsFocusedSurfaceValid() const { return this->FocusedSurface > INDEX_NONE; }
-    FORCEINLINE auto GetFocusedSurface() -> LSurface* { return this->IsFocusedSurfaceValid() ? this->Surfaces[this->FocusedSurface].get() : nullptr; }
-    FORCEINLINE auto GetFocusedSurfaceChecked() -> LSurface* { check( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
-    FORCEINLINE auto GetFocusedSurfaceAsserted() -> LSurface* { jassert( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
-    FORCEINLINE auto GetFocusedSurface() const -> const LSurface* { return this->IsFocusedSurfaceValid() ? this->Surfaces[this->FocusedSurface].get() : nullptr; }
-    FORCEINLINE auto GetFocusedSurfaceChecked() const -> const LSurface* { check( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
-    FORCEINLINE auto GetFocusedSurfaceAsserted() const -> const LSurface* { jassert( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE LSurface* GetFocusedSurface() noexcept { if (this->IsFocusedSurfaceValid()) { return this->Surfaces[this->FocusedSurface].get(); } return nullptr; }
+    FORCEINLINE LSurface* GetFocusedSurfaceChecked() noexcept { check(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE LSurface* GetFocusedSurfaceAsserted() noexcept { jassert(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE LSurface const* GetFocusedSurface() const noexcept { if (this->IsFocusedSurfaceValid()) { return this->Surfaces[this->FocusedSurface].get(); } return nullptr; }
+    FORCEINLINE LSurface const* GetFocusedSurfaceChecked() const noexcept { check(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE LSurface const* GetFocusedSurfaceAsserted() const noexcept { jassert(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
-
-    ENGINE_API void AddWidget(LViewport* Viewport, WUserWidget* Widget);
-    ENGINE_API void RemoveWidget(WUserWidget* Widget);
-
-    WNode* GetTopLevelWidgetByClass(LViewport const* Context, TSubclassOf<WNode> Class) const { return Context->GetTopLevelWidgetByClass(Class); }
-    WNode* GetTopLevelWidgetByClass(LSurface const* Context, TSubclassOf<WNode> Class) const { return Context->GetViewport().GetTopLevelWidgetByClass(Class); }
-    WNode* GetTopLevelWidgetByClassChecked(LViewport* Context, TSubclassOf<WNode> Class) const { return Context->GetTopLevelWidgetByClassChecked(Class); }
-    WNode* GetTopLevelWidgetByClassChecked(LSurface* Context, TSubclassOf<WNode> Class) const { return Context->GetViewport().GetTopLevelWidgetByClassChecked(Class); }
-    template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass(LViewport* Context) const { return Context->GetTopLevelWidgetByClass<TNode>(Context); }
-    template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass(LSurface* Context) const { return Context->GetViewport().GetTopLevelWidgetByClass<TNode>(); }
-    template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked(LViewport* Context) const { return Context->GetTopLevelWidgetByClassChecked<TNode>(); }
-    template<typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked(LSurface* Context) const { return Context->GetViewport().GetTopLevelWidgetByClassChecked<TNode>(); }
-
-    //# Checks first the currently focused surface, then all others. Returns the first valid result.
-    ENGINE_API  WNode* GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> Class) const;
-    FORCEINLINE WNode* GetFirstTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const;
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetFirstTopLevelWidgetByClass() const { return StaticCast<TNode>(this->GetFirstTopLevelWidgetByClass(TNode::StaticClass())); }
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetFirstTopLevelWidgetByClassChecked() const { return StaticCastChecked<TNode>(this->GetFirstTopLevelWidgetByClassChecked(TNode::StaticClass())); }
-
-    //#
-    //# Change the visibility of a top level widget.
-    //# @param InVisibility   The new visibility state of the widget.
-    //# @param bAllowNotFound If true, nothing happens if the widget was not found. If false, the program will panic.
-    //# @return True, if widget was found and made visible. False if widget was not found or was already visible.
-    //#
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    UNUSED FORCEINLINE bool ChangeWidgetVisibility(const LViewport* Context, ENodeVisibility Visibility, bool bAllowNotFound = false) const;
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    UNUSED FORCEINLINE bool ChangeWidgetVisibility(const LSurface* Context, ENodeVisibility Visibility, bool bAllowNotFound = false) const;
-    UNUSED ENGINE_API bool ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode>Class, ENodeVisibility Visibility, bool bAllowNotFound = false) const;
-    //# Instead of searching inside a specific context, this method search algorithm works just like the #GetFirstTopLevelWidgetByClass method.
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    UNUSED FORCEINLINE bool ChangeWidgetVisibility(ENodeVisibility Visibility, bool bAllowNotFound = false) const;
-    UNUSED ENGINE_API  bool ChangeWidgetVisibility(TSubclassOf<WNode>Class, ENodeVisibility Visibility, bool bAllowNotFound = false) const;
-
-    ENGINE_API  bool FocusWidget(LViewport* Context, WNode* InNode);
-    FORCEINLINE bool FocusWidgetChecked(LViewport* Context, WNode* InNode);
-    FORCEINLINE bool FocusWidgetAsserted(LViewport* Context, WNode* InNode);
-    FORCEINLINE bool FocusWidget(LSurface* Context, WNode* InNode) { check(Context) return this->FocusWidget(&Context->GetViewport(), InNode); }
-    FORCEINLINE bool FocusWidgetChecked(LSurface* Context, WNode* InNode) { check(Context) return this->FocusWidgetChecked(&Context->GetViewport(), InNode); }
-    FORCEINLINE bool FocusWidgetAsserted(LSurface* Context, WNode* InNode) { check(Context) return this->FocusWidgetAsserted(&Context->GetViewport(), InNode); }
 
 protected:
 
@@ -164,45 +121,6 @@ private:
     TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };
 };
-
-FORCEINLINE WNode* LFrontendBase::GetFirstTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const
-{
-    WNode* Out = this->GetFirstTopLevelWidgetByClass(Class);
-    check( Out )
-    return Out;
-}
-
-template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const LViewport* Context, ENodeVisibility Visibility, const bool bAllowNotFound) const
-{
-    return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), Visibility, bAllowNotFound);
-}
-
-template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const LSurface* Context, ENodeVisibility Visibility, const bool bAllowNotFound) const
-{
-    return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), Visibility, bAllowNotFound);
-}
-
-template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(ENodeVisibility Visibility, const bool bAllowNotFound) const
-{
-    return this->ChangeWidgetVisibility(TNode::StaticClass(), Visibility, bAllowNotFound);
-}
-
-FORCEINLINE bool LFrontendBase::FocusWidgetChecked(LViewport* Context, WNode* InNode)
-{
-    const bool bOut = this->FocusWidget(Context, InNode);
-    check( bOut )
-    return bOut;
-}
-
-FORCEINLINE bool LFrontendBase::FocusWidgetAsserted(LViewport* Context, WNode* InNode)
-{
-    const bool bOut = this->FocusWidget(Context, InNode);
-    jassert( bOut )
-    return bOut;
-}
 
 } /* ~Namespace Jafg */
 

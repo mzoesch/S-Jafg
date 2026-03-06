@@ -22,7 +22,7 @@ protected:
 
 public:
 
-    virtual void Draw(LViewport& Context) const override;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     FORCEINLINE void UpdateDesiredSize() const override { this->UpdateDesiredSizeForString(this->Content); }
     void UpdateDesiredSizeForString(LString const& String) const noexcept;

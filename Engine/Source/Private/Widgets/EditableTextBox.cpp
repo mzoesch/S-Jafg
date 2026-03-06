@@ -7,6 +7,7 @@
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
 #include "Core/CoreNames.h"
+#include "Rhi/NodeRenderInfo.h"
 
 void Jafg::WEditableTextBox::Construct()
 {
@@ -18,11 +19,11 @@ void Jafg::WEditableTextBox::Construct()
     return;
 }
 
-void Jafg::WEditableTextBox::Draw(LViewport& Context) const
+void Jafg::WEditableTextBox::Draw(LNodeRenderInfo const& Info) const
 {
     if (this->GetContent().empty())
     {
-        WBox::Draw(Context);
+        WBox::Draw(Info);
 
         // GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
         // (
@@ -40,12 +41,12 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
     }
     else
     {
-        Super::Draw(Context);
+        Super::Draw(Info);
     }
 
     if (this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed && this->IsFocusWidget())
     {
-        const LVec2F AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Context) };
+        const LVec2F AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Info.Surface.GetViewport()) };
 
         const LVec2F CaretSize{LVec2F{2.0, this->GetDesiredSize_v2().y} * this->CaretBrush.Size };
 

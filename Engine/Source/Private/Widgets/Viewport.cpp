@@ -7,8 +7,60 @@
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
+#include "Framework/MaterialSubsystem.h"
+#include "Rhi/VisualInstance.h"
+#include "Rhi/NodeRenderInfo.h"
 
-#include "TestWidget.h"
+void Jafg::LViewport::Vk_OnLateInit()
+{
+    LOG_VERBOSE(LogVulkan, "Allocating visual batch buffers.")
+
+    auto& Frontend{this->Surface.GetFrontend()};
+    check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+
+    LOG_TRACE(LogRhi, "Allocating visual batch buffers.")
+    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        this->VisualBatches[Idx] = Frontend.Vk_CreateMappedBuffer({
+            .size = sizeof(LVisualInstance) * this->MaxInstanceCount,
+            .usage = vk::BufferUsageFlagBits::eStorageBuffer,
+            .sharingMode = vk::SharingMode::eExclusive
+            });
+    }
+
+    TArray<vk::DescriptorSetLayout> LayoutsToAllocate; LayoutsToAllocate.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
+    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        LayoutsToAllocate.push_back(*Frontend.Vk_GetDescriptorSetLayouts().at("Jafg.VisualShared"));
+    }
+    auto Sets = Frontend.Vk_GetDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo{
+        .descriptorPool = Frontend.Vk_GetDescriptorPool(),
+        .descriptorSetCount = static_cast<u32>(Frontend.Vk_GetNumberOfFramesInFlight()),
+        .pSetLayouts = LayoutsToAllocate.data(),
+        });
+    for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
+    {
+        this->Vk_VisualSharedDescriptorSets[Idx] = std::move(Sets[Idx]);
+        this->Vk_VisualSharedBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::VisualShared::CreateInfo());
+    }
+
+    Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [this]
+    {
+        check(GEngine)
+        auto& MaterialSubsystem{*this->GetSurface().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
+        if (auto It{MaterialSubsystem.GetSharedMaterialInstances().find("Jafg.VisualBatch")}; It != MaterialSubsystem.GetSharedMaterialInstances().end())
+        {
+            this->VisualBatchMaterial = It->second;
+        }
+        else
+        {
+            this->VisualBatchMaterial = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.VisualBatch");
+            MaterialSubsystem.RegisterSharedMaterialInstance("Jafg.VisualBatch", this->VisualBatchMaterial);
+        }
+    });
+
+    return;
+}
 
 void Jafg::LViewport::ClearInvalidWidgets()
 {
@@ -321,6 +373,9 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 {
     STAT_CYCLE_FUNCTION()
 
+    auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
+    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
+
     this->ClearInvalidWidgets();
 
     this->FrameZLayerDepth = 0.0f;
@@ -362,7 +417,27 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     //     continue;
     // }
 
-    for (const WUserWidget* Widget : this->TopLevelWidgets)
+    LNodeRenderInfo NodeInfo{Info, *this};
+
+    {
+        auto Dims{this->GetDimensionsF()};
+        UBO::VisualShared Shared{.Proj = glm::orthoRH_ZO(
+            0.0f, Dims.x,
+            0.0f,Dims.y,
+            0.0f, 1.0f
+            )};
+        Shared.Upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
+        auto WorldDataWriteInfo{Shared.WriteInfo(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame],
+            .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &WorldDataWriteInfo,
+            }};
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
+
+    for (auto const* Widget : this->TopLevelWidgets)
     {
         if (Widget->TransformsWidgetLayout())
         {
@@ -371,15 +446,55 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
             if (Widget->ShouldNowDraw())
             {
                 STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
-                if (Widget->IsA<WTestWidget>())
-                {
-                    Widget->Draw(*this);
-                }
+                Widget->Draw(NodeInfo);
             }
         }
 
         continue;
     }
+
+    check(this->VisualBatches[NodeInfo.Frame].GetData())
+    std::memcpy(
+          this->VisualBatches[NodeInfo.Frame].GetData()
+        , NodeInfo.VisualInstances.data()
+        , sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
+        );
+
+    LMaterialInstance& Instance{*MaterialSubsystem.GetSharedMaterialInstances().at("Jafg.VisualBatch")};
+    auto& FetchedMaterial{Instance.Material->FetchedMaterial};
+    auto& FetchedShader{FetchedMaterial.FetchedShader};
+    vk::DescriptorBufferInfo BufferInfo{
+        .buffer = *this->VisualBatches[NodeInfo.Frame],
+        .offset = 0,
+        .range = sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
+        };
+    std::array Writes{
+        vk::WriteDescriptorSet{
+            .dstSet = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eStorageBuffer,
+            .pBufferInfo = &BufferInfo
+            },
+        };
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+    std::array<vk::DescriptorSet, 2> DescriptorSetsToBind;
+    DescriptorSetsToBind[0] = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
+    DescriptorSetsToBind[1] = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second;
+    NodeInfo.CommandBuffer.bindDescriptorSets2({
+        .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+        .layout = *Instance.Material->Pipeline.Layout,
+        .firstSet = 0,
+        .descriptorSetCount = DescriptorSetsToBind.size(),
+        .pDescriptorSets = DescriptorSetsToBind.data(),
+        .dynamicOffsetCount = 0,
+        .pDynamicOffsets = nullptr
+        });
+
+    NodeInfo.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Instance.Material->Pipeline);
+    NodeInfo.CommandBuffer.draw(4, NodeInfo.VisualInstances.size(), 0, 0);
 
     checkCode
     (
@@ -397,40 +512,37 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 
 void Jafg::LViewport::TearDown()
 {
-    for (WUserWidget* Widget : this->TopLevelWidgets)
+    while (this->TopLevelWidgets.empty() == false)
     {
-        Widget->MarkAsGarbage_v2();
+        this->TopLevelWidgets.back()->MarkAsGarbage_v2();
     }
-
     algo::orphan(&this->TopLevelWidgets);
 
     return;
 }
 
-void Jafg::LViewport::AddWidget(WUserWidget* Widget)
-{
-    this->AddWidgetAt(this->TopLevelWidgets.size(), Widget);
-}
-
-void Jafg::LViewport::AddWidgetAt(const i32 Index, WUserWidget* Widget)
+void Jafg::LViewport::_AddWidget(WUserWidget* Widget)
 {
     check(Widget)
-    check(Widget->IsTopLevel() == false)
-    check(algo::contains(this->TopLevelWidgets, Widget) == false)
+    check(Widget->_HasBegunLife() == false)
+
     // TODO: Check that #Widget is also not in the viewport as a child of some other user widget.
-    this->TopLevelWidgets.insert(this->TopLevelWidgets.begin() + Index, Widget);
+    check(algo::contains(this->TopLevelWidgets, Widget) == false)
+
+    this->TopLevelWidgets.emplace_back(Widget);
     Widget->bIsTopLevel = true;
+    MakeCxxObjectFinal(*Widget);
+
     check(&Widget->GetViewport() == this)
+
+    return;
 }
 
-void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)
+void Jafg::LViewport::_RemoveWidget(WUserWidget* Widget)
 {
+    check(Widget)
+    check(Widget->IsTopLevel())
     algo::erase_once_checked(&this->TopLevelWidgets, Widget);
-}
-
-bool Jafg::LViewport::TryRemoveWidget(WUserWidget* Widget)
-{
-    return algo::erase_once(&this->TopLevelWidgets, Widget);
 }
 
 LVec2u32 Jafg::LViewport::GetDimensions() const noexcept
@@ -455,18 +567,16 @@ LVec2u32 Jafg::LViewport::GetDimensions() const noexcept
 //     return;
 // }
 
-Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
+Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const noexcept
 {
-    for (WUserWidget* Widget : this->TopLevelWidgets)
+    for (auto* Widget : this->TopLevelWidgets)
     {
-        if (Widget->GetVirtualTable().DerivesFrom(Class))
+        if (Widget->IsA(Class))
         {
             return Widget;
         }
-
         continue;
     }
-
     return nullptr;
 }
 

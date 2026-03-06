@@ -44,7 +44,7 @@ void Jafg::WFloatingWindow::Construct()
                         }
                     }
 
-                    this->RemoveFromParent();
+                    this->RemoveFromParent2();
 
                     return;
                 })
@@ -91,46 +91,46 @@ void Jafg::WFloatingWindow::Construct()
     return;
 }
 
-void Jafg::WFloatingWindow::SetContentNode(WNode& Content) noexcept
-{
-    auto* Window{this->GetWindow()};
-
-    check(Window->GetChildren().size() == 1)
-
-    Window->AddChild(&Content);
-    Content.SetAnchor(EAnchor::Fill);
-    Content.SetVisibility(ENodeVisibility::Visible);
-
-    if (this->bCreateResizeUi && Content.IsA<WParentBase>())
-    {
-        BeginStyling(*StaticCast<WParentBase>(&Content)).Root<WTextButton>()
-            .Anchor(EAnchor::BottomRight)
-            .Content("#")
-            .TextBlockBrush(LTextBoxBrush::Compact())
-            .Padding({2_spt})
-            .OnPrimaryPress([](WButton* Self, const LKeyEvent& InKeyEvent)
-            {
-                WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
-                Window->UiTickResizeHandle = Self->GetViewport().OnLateTick.Emplace(Window, &WFloatingWindow::UiTickResize);
-
-                return;
-            })
-            .OnPrimaryRelease([](WButton* Self, const LKeyEvent& InKeyEvent)
-            {
-                WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
-                if (Window->UiTickResizeHandle.IsValid())
-                {
-                    Self->GetViewport().OnLateTick.Remove(&Window->UiTickResizeHandle);
-                }
-                Window->ResizeDragOffset.reset();
-
-                return;
-            })
-            ;
-    }
-
-    return;
-}
+// void Jafg::WFloatingWindow::SetContentNode(WNode& Content) noexcept
+// {
+//     auto* Window{this->GetWindow()};
+//
+//     check(Window->GetChildren().size() == 1)
+//
+//     Window->AddChild(&Content);
+//     Content.SetAnchor(EAnchor::Fill);
+//     Content.SetVisibility(ENodeVisibility::Visible);
+//
+//     if (this->bCreateResizeUi && Content.IsA<WParentBase>())
+//     {
+//         BeginStyling(*StaticCast<WParentBase>(&Content)).Root<WTextButton>()
+//             .Anchor(EAnchor::BottomRight)
+//             .Content("#")
+//             .TextBlockBrush(LTextBoxBrush::Compact())
+//             .Padding({2_spt})
+//             .OnPrimaryPress([](WButton* Self, const LKeyEvent& InKeyEvent)
+//             {
+//                 WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
+//                 Window->UiTickResizeHandle = Self->GetViewport().OnLateTick.Emplace(Window, &WFloatingWindow::UiTickResize);
+//
+//                 return;
+//             })
+//             .OnPrimaryRelease([](WButton* Self, const LKeyEvent& InKeyEvent)
+//             {
+//                 WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
+//                 if (Window->UiTickResizeHandle.IsValid())
+//                 {
+//                     Self->GetViewport().OnLateTick.Remove(&Window->UiTickResizeHandle);
+//                 }
+//                 Window->ResizeDragOffset.reset();
+//
+//                 return;
+//             })
+//             ;
+//     }
+//
+//     return;
+// }
 
 void Jafg::WFloatingWindow::UiTickMove(LViewport const& Viewport)
 {

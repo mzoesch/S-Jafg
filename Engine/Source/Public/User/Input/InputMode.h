@@ -13,58 +13,32 @@ enum : u8
     ShowMouseCursor = 1,
 };
 
-namespace EInputMode
-{
-
-enum Type : u8
+//#
+//# If #UserInterface and #InputSubsystem they will be parsed in this sequence:
+//#     UserInterface, InputSubsystem.
+//# If a specific input is consumed by the user interface, it will not be passed to the input subsystem.
+//#
+enum struct EInputModeBits
 {
     None            = 0x00,
 
-    //#
     //# Only user interface input is checked.
-    //#
     UserInterface   = 0x01 << 0,
 
-    //#
     //# Only the input handled by the input subsystem is checked.
-    //#
-    InputSubSystem  = 0x01 << 1,
+    InputSubsystem  = 0x01 << 1,
 
+    //# Whether to show the mouse cursor.
     ShowMouseCursor = 0x01 << 2,
-
-    //#
-    //# Both are checked.
-    //# In this sequence: UserInterface, InputSubSystem.
-    //# If a specific input is consumed by the user interface, it will not be passed to the input subsystem.
-    //#
-    Both            = UserInterface | InputSubSystem,
 };
-
-} /* ~Namespace EInputMode */
-ENUM_CLASS_FLAGS(EInputMode::Type)
-
-inline LString LexToString(const EInputMode::Type InType)
+ENUM_STRUCT_FLAGS(EInputModeBits, EInputMode)
+inline LString LexToString(EInputMode InFlags)
 {
-    switch (InType)
-    {
-        case EInputMode::None:              { return "None"; }
-        case EInputMode::UserInterface:     { return "UserInterface"; }
-        case EInputMode::InputSubSystem:    { return "InputSubSystem"; }
-        case EInputMode::ShowMouseCursor:   { return "ShowMouseCursor"; }
-        case EInputMode::Both:              { return "Both"; }
-        default:
-        {
-            std::stringstream SS;
-            if (InType & EInputMode::UserInterface)    { SS << "UserInterface"; }
-            if (InType & EInputMode::InputSubSystem)   { if (!SS.str().empty()){SS<<"|";} SS << "InputSubSystem"; }
-            if (InType & EInputMode::ShowMouseCursor)  { if (!SS.str().empty()){SS<<"|";} SS << "ShowMouseCursor"; }
-            return "";
-        }
-    }
-
-    checkNoEntry()
-
-    return "";
+    std::stringstream SS;
+    if (InFlags & EInputModeBits::UserInterface)    { SS << "UserInterface|"; }
+    if (InFlags & EInputModeBits::InputSubsystem)   { SS << "InputSubSystem|"; }
+    if (InFlags & EInputModeBits::ShowMouseCursor)  { SS << "ShowMouseCursor|"; }
+    return SS.str();
 }
 
 } /* ~Namespace Jafg */

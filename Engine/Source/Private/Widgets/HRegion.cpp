@@ -6,17 +6,13 @@ void Jafg::WHRegion::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
 
-    LVec2F DesiredSize{ maths::zero_vector<LVec2F> };
-    for (LWidgetSlot const* ChildSlot : this->GetChildren())
+    LVec2F DesiredSize{maths::zero_vector<LVec2F>};
+    for (auto& Child : this->GetChildren())
     {
-        DesiredSize.x += ChildSlot->Content->GetDesiredSize_v2().x;
-        DesiredSize.y  = maths::max(DesiredSize.y, ChildSlot->Content->GetDesiredSize_v2().y);
-
-        continue;
+        DesiredSize.x += Child->GetDesiredSize_v2().x;
+        DesiredSize.y  = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
     }
-
     DesiredSize.x += this->HSpace * (this->GetChildren().size() - 1);
-
     DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
@@ -40,14 +36,11 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     /* In percent. */
     f32 TotalFreeUsage   { 0.0 };
 
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    for (auto& Child : this->GetChildren())
     {
-        checkSlow( ChildSlot->Content )
-
-        TotalDesiredSize += ChildSlot->Content->GetDesiredSize_v2().x;
-        TotalFreeUsage   += ChildSlot->Content->GetAnchor().MaxX;
-
-        continue;
+        check(Child.get())
+        TotalDesiredSize += Child->GetDesiredSize_v2().x;
+        TotalFreeUsage   += Child->GetAnchor().MaxX;
     }
 
     const f32 FreeSpace
@@ -78,14 +71,15 @@ LVec2F Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& 
     check( InDirectChild )
 
     f32 Offset { 0.0f };
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    for (auto& Child : this->GetChildren())
     {
-        if (ChildSlot->Content == InDirectChild)
+        check(Child.get())
+        if (&*Child == InDirectChild)
         {
             break;
         }
 
-        Offset += ChildSlot->Content->GetAnchoredSize_v2().x;
+        Offset += Child->GetAnchoredSize_v2().x;
         Offset += this->GetHSpace();
 
         continue;

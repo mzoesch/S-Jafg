@@ -18,11 +18,17 @@ struct LInputActionValue;
 struct LInputMappedAction;
 struct LUserInputContext;
 
+struct LOnUserInputActionResult
+{
+    //# Whether active contexts changed.
+    bool bDirty{};
+};
+
 //#
 //# @param Value    The value of the action that was triggered.
 //# @param Viewport The viewport on which the action was triggered.
 //#
-typedef TFunction<void(LViewport& Viewport, LInputActionValue& Value)> LOnUserInputAction;
+typedef TFunction<LOnUserInputActionResult(LViewport& Viewport, LInputActionValue& Value)> LOnUserInputAction;
 
 //#
 //# A mapped action that is owned by a context.
@@ -84,11 +90,12 @@ using LInputTrigger = LInputMappedAction::LTrigger;
 struct LUserInputContext final
 {
     LUserInputContext() noexcept = delete;
-    explicit LUserInputContext(LUserInputTag Name) noexcept : LUserInputContext(Name, algo::add_spaces_to_camel_case(Name.ToString())) {}
-    LUserInputContext(LUserInputTag Tag, LString DisplayName) noexcept : Tag(Tag), DisplayName(std::move(DisplayName)) { check( this->Tag.IsSet() ) }
-    explicit LUserInputContext(LString const& DisplayName) noexcept : LUserInputContext(LUserInputTag::ToTag(DisplayName), DisplayName) {}
+    LUserInputContext(LUserInputTag Tag, LString DisplayName) noexcept : Tag(Tag), DisplayName(std::move(DisplayName)) { check(this->Tag.IsSet()) }
+    LUserInputContext(LUserInputTag Tag) noexcept : LUserInputContext{Tag, algo::add_spaces_to_camel_case(Tag.ToString())} {}
+    explicit LUserInputContext(LString const& DisplayName) noexcept : LUserInputContext{LUserInputTag::ToTag(DisplayName), DisplayName} {}
+    explicit LUserInputContext(char const* DisplayName) noexcept : LUserInputContext{LUserInputTag::ToTag(DisplayName), DisplayName} {}
     DEFAULT_REALLOC_OF_ANY_FORM(LUserInputContext)
-    ~LUserInputContext() = default;
+    ~LUserInputContext() noexcept = default;
 
     //#
     //# Registers the action to the active #LUserInputRegistry and maps to this context it.
@@ -124,9 +131,8 @@ struct LUserInputContext final
     (
         LUserInputRegistry* Registry,
         LInputAction&& TransientAction,
-        LString TriggerName,
-        const LKey DefaultKey,
-        const EInputActionTrigger::Type ActionTrigger,
+        LKey DefaultKey,
+        EInputActionTrigger::Type ActionTrigger,
         TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
         LOnUserInputAction&& Callback
     ) noexcept;
@@ -134,16 +140,15 @@ struct LUserInputContext final
     FORCEINLINE LInputMappedAction* MapAction
     (
         LUserInputTag ActionTag,
-        LString TriggerName,
-        const LKey DefaultKey,
-        const EInputActionTrigger::Type ActionTrigger,
+        LKey DefaultKey,
+        EInputActionTrigger::Type ActionTrigger,
         TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
         LOnUserInputAction&& Callback
     ) noexcept
     {
-        LInputMappedAction* MappedAction{ this->MapAction(ActionTag) };
+        LInputMappedAction* MappedAction{this->MapAction(ActionTag)};
         check( MappedAction )
-        MappedAction->Triggers.emplace_back(std::move(TriggerName), DefaultKey, ActionTrigger, std::move(Modifiers));
+        MappedAction->Triggers.emplace_back("", DefaultKey, ActionTrigger, std::move(Modifiers));
         MappedAction->Callback = std::move(Callback);
 
         return MappedAction;
@@ -165,7 +170,7 @@ struct LUserInputContext final
     ) noexcept
     {
         LInputMappedAction* MappedAction{ this->MapAction(ActionTag) };
-        check( MappedAction )
+        check(MappedAction)
         MappedAction->Triggers = std::move(Triggers);
         MappedAction->Callback = std::move(Callback);
 

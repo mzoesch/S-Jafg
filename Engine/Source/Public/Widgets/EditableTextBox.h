@@ -45,7 +45,7 @@ protected:
 public:
 
     virtual void Construct() override;
-    virtual void Draw(LViewport& Context) const override;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     virtual void UpdateDesiredSize() const override;
 

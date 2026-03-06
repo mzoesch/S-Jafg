@@ -2,6 +2,10 @@
 
 #include "Components/DebugCameraComponent.h"
 #include "Components/SceneComponent.h"
+#include "Framework/PersonaController.h"
+#include "Platform/Surface.h"
+#include "User/Input/InputTypes.h"
+#include "User/Input/InputActionValue.h"
 
 bool Jgc::ADebugCameraComponent::ActivateUserInputContext() const noexcept
 {

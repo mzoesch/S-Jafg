@@ -4,7 +4,7 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 
-void Jafg::WBox::Draw(LViewport& Context) const
+void Jafg::WBox::Draw(LNodeRenderInfo const& Info) const
 {
     // if (this->Brush.Type != ERegionBrush::None)
     // {
@@ -141,7 +141,7 @@ void Jafg::WBox::Draw(LViewport& Context) const
     //     }
     // }
 
-    Super::Draw(Context);
+    Super::Draw(Info);
 
     return;
 }

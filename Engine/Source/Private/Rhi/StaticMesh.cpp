@@ -48,7 +48,7 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
     {
         LOG_TRACE(LogRhi, "Loading static mesh [{}] via tinygltf as binary glTF.", Target.GetPath())
 #if JAFG_PLATFORM_USES_UTF8
-        Result = Ldr.LoadBinaryFromFile(&Attrib, &Shapes, &Materials, &Warning, &Error, Target.GetPath().native().c_str());
+        Result = Ldr.LoadBinaryFromFile(&Model, &Warning, &Error, Target.GetPath().native().c_str());
 #else /* JAFG_PLATFORM_USES_UTF8 */
         Result = Ldr.LoadBinaryFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
 #endif /* !JAFG_PLATFORM_USES_UTF8 */
@@ -57,7 +57,7 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
     {
         check(Hint == ETinyObjHint::Json)
 #if JAFG_PLATFORM_USES_UTF8
-        Result = Ldr.LoadASCIIFromFile(&Attrib, &Shapes, &Materials, &Warning, &Error, Target.GetPath().native().c_str());
+        Result = Ldr.LoadASCIIFromFile(&Model, &Warning, &Error, Target.GetPath().native().c_str());
 #else /* JAFG_PLATFORM_USES_UTF8 */
         Result = Ldr.LoadASCIIFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
 #endif /* !JAFG_PLATFORM_USES_UTF8 */

@@ -309,7 +309,7 @@ void Jafg::LEngine::Initialize()
     this->Collection.InitializeSubsystems<JEngineSubsystem>();
 
 #if WITH_LOCAL_LAYER
-    check( this->LocalEgo.IsDecommissioned() == false )
+    check(this->LocalEgo.IsDecommissioned() == false)
     this->LocalEgo.Initialize();
 #endif /* WITH_LOCAL_LAYER */
 

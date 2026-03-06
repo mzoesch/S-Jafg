@@ -1,5 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
 #ifdef __cplusplus
-    #include "Engine.afx"
+    #include "JgcMinimal.afx"
 #endif /* __cplusplus */

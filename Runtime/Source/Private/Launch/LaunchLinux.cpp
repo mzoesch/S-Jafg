@@ -4,6 +4,7 @@
 
 #include "Core/Application.h"
 #include "Platform/PlatformMisc.h"
+#include "Engine/Engine.h"
 #include <csignal>
 
 using namespace Jafg;
@@ -14,11 +15,13 @@ namespace
 {
 
 NORETURN
-void SignumPosixAction_JafgHandler_Fatal(const i32 InSignal, siginfo_t* InInfo, void* InContext)
+void SignumPosixAction_JafgHandler_Fatal(i32 Signal, siginfo_t* Info, void* InContext)
 {
+    (void)InContext;
+
     if (Application::Private::bGAlreadyCrashed)
     {
-        LOG_ERROR(LogJafgInternal, "Already crashed - ignoring signal [{}].", InSignal)
+        LOG_ERROR(LogJafgInternal, "Already crashed - ignoring signal [{}].", Signal)
         LOnPlatformBreak::ExitQuietly();
     }
 
@@ -30,7 +33,7 @@ void SignumPosixAction_JafgHandler_Fatal(const i32 InSignal, siginfo_t* InInfo, 
     ::strcpy(Emitted, "Low Level Fatal Error: Posix Signum [");
     Cursor += 37;
 
-    if (const char* Name { ::strsignal(InSignal) }; Name)
+    if (const char* Name { ::strsignal(Signal) }; Name)
     {
         ::strcpy(Emitted + Cursor, Name);
         Cursor += ::strlen(Name);
@@ -46,10 +49,10 @@ void SignumPosixAction_JafgHandler_Fatal(const i32 InSignal, siginfo_t* InInfo, 
     ::write(STDERR_FILENO, "\n", 1);
 
     ::write(STDERR_FILENO, "Address: [", 10);
-    if (InInfo && InInfo->si_addr)
+    if (Info && Info->si_addr)
     {
         char AddrStr[20];
-        ::snprintf(AddrStr, sizeof(AddrStr), "%p", InInfo->si_addr);
+        ::snprintf(AddrStr, sizeof(AddrStr), "%p", Info->si_addr);
         ::write(STDERR_FILENO, AddrStr, ::strlen(AddrStr));
     }
     else
@@ -62,14 +65,16 @@ void SignumPosixAction_JafgHandler_Fatal(const i32 InSignal, siginfo_t* InInfo, 
 }
 
 NORETURN
-void SignumPosixAction_JafgHandler_NotSoFatal(const i32 InSignal, siginfo_t* InInfo, void* InContext)
+void SignumPosixAction_JafgHandler_NotSoFatal(i32 Signal, siginfo_t* Info, void* Context)
 {
-    //
-    // Just do anything normally, but do not show the annoying crash report dialog window.
-    //
+    /* Just do anything normally, but do not show the annoying crash report dialog window. */
     Application::Private::bGSuppressCrashDialog = true;
+    SignumPosixAction_JafgHandler_Fatal(Signal, Info, Context);
+}
 
-    SignumPosixAction_JafgHandler_Fatal(InSignal, InInfo, InContext);
+void SignumPosixAction_JafgHandler_Exit(i32 InSignal, siginfo_t*, void*)
+{
+    GEngine->RequestEngineExit(InSignal);
 }
 
 } /* ~Namespace <Anonymous> */
@@ -98,6 +103,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     //
     struct sigaction Action_Fatal {}; // Pretty bad.
     struct sigaction Action_Error {}; // Not so fatal.
+    struct sigaction Action_Exit  {}; // Exit.
 
     // "On some architectures a union is involved: do not assign to both sa_handler and sa_sigaction." <-- Lol, idiots
     Action_Fatal.sa_sigaction = SignumPosixAction_JafgHandler_Fatal;
@@ -116,6 +122,9 @@ i32 main(const i32 ArgC, const char* ArgV[])
     Action_Error.sa_sigaction = SignumPosixAction_JafgHandler_NotSoFatal;
     Action_Error.sa_flags = SA_SIGINFO;
 
+    Action_Exit.sa_sigaction = SignumPosixAction_JafgHandler_Exit;
+    Action_Exit.sa_flags = SA_SIGINFO;
+
     ///////////////////////////////////////////////////////////////////////////////
     // ISO C99
     ::sigaction(SIGABRT, &Action_Fatal, nullptr); /* Abnormal termination from ::abort. */
@@ -124,7 +133,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     ::sigaction(SIGILL,  &Action_Fatal, nullptr); /* Illegal instruction. */
     ::sigaction(SIGINT,  &Action_Error, nullptr); /* Interactive attention signal. */ // -> Non-fatal because the user is at fault then (because he cannot use his keyboard), not us.
     ::sigaction(SIGSEGV, &Action_Fatal, nullptr); /* Invalid memory reference */ // <- The usual suspect
-    ::sigaction(SIGTERM, &Action_Error, nullptr); /* Termination signal. */ // The default behavior for SIGTERM is to terminate the process, but we want to handle it gracefully.
+    ::sigaction(SIGTERM, &Action_Exit,  nullptr); /* Termination signal. */ // The default behavior for SIGTERM is to terminate the process, but we want to handle it gracefully.
 
     ///////////////////////////////////////////////////////////////////////////////
     // Historical POSIX.

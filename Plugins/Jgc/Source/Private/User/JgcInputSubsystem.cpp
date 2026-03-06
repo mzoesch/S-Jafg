@@ -1,8 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/JgcInputSubsystem.h"
-#include "User/Input/CoreInputSubsystem.h"
 #include "Components/DebugCameraComponent.h"
+#include "User/LocalEgo.h"
+#include "User/Input/CoreInputSubsystem.h"
+#include "User/Input/UserInputRegistry.h"
+#include "Framework/PersonaController.h"
 
 void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
@@ -11,10 +14,24 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 
     Jafg::LUserInputRegistry& Registry{this->GetLocalEgo().GetUserInputRegistry()};
 
-    if (Jafg::LUserInputContext* Context{Registry.RegisterContext({Jafg::LUserInputTag::ToTag("DebugCamera"), "Debug Camera"})})
+    if (Jafg::LUserInputContext* Context{Registry.RegisterContext(Jafg::LUserInputContext{"DebugCamera"})})
     {
         Context->MapAction(&Registry,
-            {Jafg::LUserInputTag::ToTag("Moving"), "Moving", Jafg::EInputActionCategory::Axis3D},
+            {"Pause", Jafg::EInputActionCategory::Boolean},
+            Jafg::EKeys::Escape, Jafg::EInputActionTrigger::Triggered,
+            {},
+            [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                auto& Input{Viewport.GetSurface().GetUserInput()};
+                Input.PushContexts(Viewport.GetSurface().GetInputMode());
+                Input.ActivateContext("PauseScreen");
+                Viewport.GetSurface().SetInputMode(Jafg::EInputModeBits::UserInterface | Jafg::EInputModeBits::InputSubsystem | Jafg::EInputModeBits::ShowMouseCursor);
+
+                return {.bDirty=true};
+            });
+
+        Context->MapAction(&Registry,
+            {"Moving", Jafg::EInputActionCategory::Axis3D},
             TArray<Jafg::LInputTrigger>{}
                 .reflexive_emplace_back(Jafg::LInputTrigger
                 {
@@ -72,7 +89,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyNegateModifier>())
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyDeltaTimeModifier>())
                 }),
-            [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value)
+            [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
                 if (auto* Ctrl{Viewport.GetSurface().GetOwnedController()})
                 {
@@ -106,16 +123,15 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                         )
                 }
 
-                return;
+                return {};
             });
 
         Context->MapAction(&Registry,
-            {Jafg::LUserInputTag::ToTag("Rotating"), "Rotating", Jafg::EInputActionCategory::Axis2D},
-            "",
+            {"Rotating", Jafg::EInputActionCategory::Axis2D},
             Jafg::EKeys::MouseXY,
             Jafg::EInputActionTrigger::Triggered,
             {},
-            [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value)
+            [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
                 if (auto* Ctrl{Viewport.GetSurface().GetOwnedController()})
                 {
@@ -148,11 +164,37 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                         Viewport.GetSurface().GetHumanReadableName()
                         )
                 }
+                return {};
             });
     }
     else
     {
-        LOG_WARNING(LogUserInput, "Failed to register [3D-Vehicle] user input context.")
+        LOG_WARNING(LogUserInput, "Failed to register [DebugCamera] user input context.")
+    }
+
+    if (Jafg::LUserInputContext* Context{Registry.RegisterContext(Jafg::LUserInputContext{"PauseScreen"})})
+    {
+        Context->MapAction(&Registry,
+            {"Unpause", Jafg::EInputActionCategory::Boolean},
+            Jafg::EKeys::Escape, Jafg::EInputActionTrigger::Triggered,
+            {},
+            [](Jafg::LViewport& Viewport, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                auto& Input{Viewport.GetSurface().GetUserInput()};
+                if (auto InputMode{Input.PopContexts()}; InputMode.has_value())
+                {
+                    Viewport.GetSurface().SetInputMode(*InputMode);
+                }
+                else
+                {
+                    LOG_WARNING(LogUserInput, "Failed to pop any use input contexts.")
+                }
+                return {.bDirty=true};
+            });
+    }
+    else
+    {
+        LOG_WARNING(LogUserInput, "Failed to register [PauseScreen] user input context.")
     }
 
     return;

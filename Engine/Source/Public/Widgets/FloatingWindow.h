@@ -29,8 +29,16 @@ public:
 
     virtual void Construct() override;
 
-    FORCEINLINE WVRegion* GetWindow() noexcept { return this->GetRoot<WVRegion>(); }
-    FORCEINLINE WVRegion const* GetWindow() const noexcept { return this->GetRoot<WVRegion>(); }
+    FORCEINLINE WVRegion* GetWindow() noexcept
+    {
+        check(this->GetChildren().size() > 0 && this->GetChildren()[0].get())
+        return this->GetChildren()[0]->AsStatic<WVRegion>();
+    }
+    FORCEINLINE WVRegion const* GetWindow() const noexcept
+    {
+        check(this->GetChildren().size() > 0 && this->GetChildren()[0].get())
+        return this->GetChildren()[0]->AsStatic<WVRegion>();
+    }
 
     FORCEINLINE void SetWindowSize(LVec2F SizeInSpt) noexcept
     {
@@ -43,10 +51,10 @@ public:
     }
     FORCEINLINE void SetWindowPosition(LVec2F PositionInSpt) noexcept
     {
-        this->GetWindow()->SetMargin({EWidgetSize::StaticPoints, PositionInSpt, 0, 0});
+        this->GetWindow()->GetParent()->SetPadding({EWidgetSize::StaticPoints, PositionInSpt, 0, 0});
     }
 
-    ENGINE_API void SetContentNode(WNode& Content) noexcept;
+    // ENGINE_API void SetContentNode(WNode& Content) noexcept;
 
     FORCEINLINE bool CreateResizeUi() const noexcept { return this->bCreateResizeUi; }
     FORCEINLINE void SetCreateResizeUi(const bool bInCreateResizeUi) noexcept { this->bCreateResizeUi = bInCreateResizeUi; }

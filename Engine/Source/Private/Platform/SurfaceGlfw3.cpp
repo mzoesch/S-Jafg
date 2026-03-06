@@ -26,54 +26,7 @@
 #include "Stats/Stats.h"
 #include "Components/SceneComponent.h"
 
-// TEMP REMOVE
-#include "Rhi/VertexInput.h"
-#include "Rhi/Layout.h"
-
-static Jafg::LGraphicsDevicePipeline VkTestPipeline;
-static Jafg::LDeviceBuffer VkTestVertexBuffer;
-static Jafg::LDeviceBuffer VkTestIndexBuffer;
 static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
-
-struct LRhiVertex2D
-{
-    glm::vec2 Position;
-
-    static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
-    {
-        static std::array<vk::VertexInputBindingDescription, 1> Desc{vk::VertexInputBindingDescription{
-            .binding = 0,
-            .stride = sizeof(LRhiVertex2D),
-            .inputRate = vk::VertexInputRate::eVertex
-            }};
-
-        return Desc;
-    }
-
-    static std::array<vk::VertexInputAttributeDescription, 1> const& AttributeDescriptions() noexcept
-    {
-        static std::array<vk::VertexInputAttributeDescription, 1> Desc{vk::VertexInputAttributeDescription{
-            .location = 0,
-            .binding = 0,
-            .format = vk::Format::eR32G32Sfloat,
-            .offset = offsetof(LRhiVertex2D, Position)
-            }};
-
-        return Desc;
-    }
-};
-static_assert(Jafg::CDeviceVertexInput<LRhiVertex2D>);
-static std::vector<LRhiVertex2D> QuadVertices{
-    {{-0.9f, -0.9f}},
-    {{-0.3f, -0.9f}},
-    {{-0.3f, -0.3f}},
-    {{-0.9f, -0.3f}}
-    };
-static std::vector<uint16_t> QuadIndices{
-    0, 2, 1, 2, 0, 3
-    };
-
-static void TestPipeline(Jafg::LSurface const& Surface);
 
 namespace Jafg::Private
 {
@@ -96,7 +49,7 @@ struct LGlfw3Bridge final
 
     static void WindowFocusCallback(GLFWwindow* Window, const i32 Focused)
     {
-        LOG_WARNING(LogSurface, "Focused: {}", Focused)
+        // LOG_WARNING(LogSurface, "Focused: {}", Focused)
     }
 
     static void CharCallback(::GLFWwindow* Window, const u32 Codepoint)
@@ -284,11 +237,6 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
     this->GetFrontend()._Vk_WaitIdle();
 
-    // VkTestPipeline.Free();
-
-    VkTestVertexBuffer.Free();
-    VkTestIndexBuffer.Free();
-
     if (this->Cursor)
     {
         LOG_VERBOSE(LogSurface, "Destroying glfw cursor.")
@@ -306,25 +254,6 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
     return;
 }
 
-struct LVkTestMeshPipelineLayout
-{
-    static std::array<vk::DescriptorSetLayoutBinding, 2> const& Bindings() noexcept
-    {
-        static std::array<vk::DescriptorSetLayoutBinding, 2> Bindings{
-            vk::DescriptorSetLayoutBinding{
-                .binding = 0, .descriptorType = vk::DescriptorType::eUniformBuffer, .descriptorCount = 1, .stageFlags = vk::ShaderStageFlagBits::eVertex, .pImmutableSamplers = nullptr
-                },
-            vk::DescriptorSetLayoutBinding{
-                .binding = 1, .descriptorType = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 1, .stageFlags = vk::ShaderStageFlagBits::eFragment, .pImmutableSamplers = nullptr
-                },
-            };
-
-        return Bindings;
-    }
-
-};
-static_assert(Jafg::CDeviceLayout<LVkTestMeshPipelineLayout>);
-
 void Jafg::LSurfaceGlfw3::LateSetupVk()
 {
     this->Vk_CreateCommandPool();
@@ -332,7 +261,7 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->Vk_CreateCommandBuffers();
     this->Vk_CreateDescriptorPools();
 
-    // TestPipeline(*this);
+    this->GetViewport().Vk_OnLateInit();
 
     return;
 }
@@ -595,11 +524,6 @@ void Jafg::LSurfaceGlfw3::OnRender()
 
     this->GetViewport().Draw(Info);
 
-    // Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *VkTestPipeline.Pipeline);
-    // Info.CommandBuffer.bindVertexBuffers(0, VkTestVertexBuffer.GetBuffer(), {0});
-    // Info.CommandBuffer.bindIndexBuffer(VkTestIndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(QuadIndices)::value_type>::value);
-    // Info.CommandBuffer.drawIndexed(QuadIndices.size(), 1, 0, 0, 0);
-
     Info.CommandBuffer.endRendering();
 
     Vk_TransitionImageLayout({
@@ -663,10 +587,10 @@ void Jafg::LSurfaceGlfw3::OnRender()
     return;
 }
 
-void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode::Type InMode) noexcept
+void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
 {
-    check( this->Handle )
-    check( Tasks::IsOnMasterThread() )
+    check(this->Handle)
+    check(Tasks::IsOnMasterThread())
 
     this->InputMode = InMode;
 
@@ -826,14 +750,20 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
     return;
 }
 
-void Jafg::LSurfaceGlfw3::MouseCallback(const f64 XPos, const f64 YPos)
+void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
 {
-    check( this->bIsMouseInsideSurface )
+    if (this->bIsMouseInsideSurface == false)
+    {
+        //#
+        //# So some platforms allow this. But not all. To preserve consistency across all platforms,
+        //# We discard this input.
+        //#
+        return;
+    }
 
-    // TODO: Do not parse mouse location data when mouse cursor is shown. Only for now. In the future we will handle these cases in the LUserInput.
     if (this->IsShowMouseCursor())
     {
-        check( this->MouseLocation.has_value() == false )
+        this->MouseLocation = {XPos,YPos};
         return;
     }
 
@@ -915,7 +845,7 @@ void Jafg::LSurfaceGlfw3::KeyCallback(const i32 Key, const i32 Scancode, const i
                 RealKey = algo::find_pointer(this->GetCurrentlyPressedKeys(), JafgKey, &LRawInput::Key);
             }
 
-            check( RealKey )
+            check(RealKey)
             RealKey->bRepeated = true;
         }
     }
@@ -1055,6 +985,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     }
 
     {
+        // this->Vk_DesiredPresentMode = vk::PresentModeKHR::eFifo;
         auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(this->Vk_AvailablePresentModes, this->Vk_DesiredPresentMode)};
         if (AvailablePresentMode.has_value() == false)
         {
@@ -1415,30 +1346,5 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
     return;
 }
 
-static void TestPipeline(Jafg::LSurface const& Surface)
-{
-    checkNoEntry()
-    // using namespace Jafg;
-    // LOG_VERBOSE(LogVulkan, "Creating test pipeline...")
-    //
-    // auto& Frontend{Surface.GetFrontend()};
-
-    // VkTestPipeline = LDevicePipelineFactory{Frontend}
-    //     .Shader("Content/Shaders/Spir-V/VisualBox.jafg.spv",
-    //         vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
-    //     .VertexInput<LRhiVertex2D>()
-    //     .Build();
-    //
-    // VkTestVertexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
-    //     .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadVertices[0]) * QuadVertices.size()},
-    //     .Data = QuadVertices.data()
-    //     }));
-    // VkTestIndexBuffer = Frontend.Vk_StageBuffer(LStageBufferCreateInfo::Index({
-    //     .BufferCopy = vk::BufferCopy{0, 0, sizeof(QuadIndices[0]) * QuadIndices.size()},
-    //     .Data = QuadIndices.data()
-    //     }));
-
-    return;
-}
 
 #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */

@@ -24,7 +24,7 @@ public:
     //# Removes all loaded meshes that are not referenced anymore.
     void PurgeUnused() noexcept;
 
-    FORCEINLINE constexpr auto GetLoadedMeshCount() const noexcept { return this->Meshes.size(); }
+    FORCEINLINE auto GetLoadedMeshCount() const noexcept { return this->Meshes.size(); }
     FORCEINLINE constexpr auto const& GetMeshes() const noexcept { return this->Meshes; }
 
     //# Allocate the requested resource from a file.

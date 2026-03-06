@@ -18,6 +18,7 @@
 #pragma clang diagnostic error "-Wextra-tokens"
 #pragma clang diagnostic error "-Wignored-attributes"
 #pragma clang diagnostic error "-Winconsistent-missing-override"
+#pragma clang diagnostic error "-Winfinite-recursion"
 #pragma clang diagnostic error "-Winline-new-delete"
 #pragma clang diagnostic error "-Winvalid-noreturn"
 #pragma clang diagnostic error "-Wkeyword-macro"

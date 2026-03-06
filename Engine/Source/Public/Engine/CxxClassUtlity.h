@@ -109,6 +109,7 @@ struct TJxxDelete
     {
         static_assert(std::is_void_v<TCxxClass> == false, "Can't delete pointer to incomplete type.");
         static_assert(sizeof(TCxxClass) > 0, "Can't delete pointer to incomplete type.");
+        check(Ptr)
         Ptr->MarkAsGarbage_v2();
 
         return;

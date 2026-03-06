@@ -22,44 +22,46 @@ protected:
 
 public:
 
-    enum { NoActiveWidgetIndex = INDEX_NONE };
+    enum { NoActiveNodeIndex = INDEX_NONE };
 
-    void SetActiveWidgetIndex(const i32 Index);
-    FORCEINLINE void ResetWidgetIndex() { this->SetActiveWidgetIndex(NoActiveWidgetIndex); }
-    FORCEINLINE i32  GetActiveWidgetIndex() const { return this->ActiveIndex; }
+    // WParent implementation
+    virtual void AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild) override;
+    // ~WParent implementation
 
-    void SetActiveWidget(WNode* Widget);
-    FORCEINLINE WNode* GetActiveWidget() const noexcept
+    void SetActiveNode(WNode* Node);
+    void SetActiveNodeByIndex(i64 Index);
+
+    FORCEINLINE constexpr bool IsActiveNodeValid() const noexcept
     {
-        if (algo::is_valid_index(this->GetChildren(), this->ActiveIndex))
+        checkCode(if (algo::is_valid_index(this->GetChildren(), this->ActiveNodeIndex)) { check(this->GetChildren()[this->ActiveNodeIndex].get()) })
+        return algo::is_valid_index(this->GetChildren(), this->ActiveNodeIndex);
+    }
+    FORCEINLINE constexpr i64 GetActiveNodeIndex() const noexcept { return this->ActiveNodeIndex; }
+    FORCEINLINE WNode* GetActiveNode() noexcept
+    {
+        if (this->IsActiveNodeValid())
         {
-            return this->GetChildren()[this->ActiveIndex]->Content;
+            return &*this->GetChildren()[this->ActiveNodeIndex];
         }
         return nullptr;
     }
-    FORCEINLINE WNode* GetActiveWidgetChecked() const { const bool bOut = this->GetActiveWidget(); check( bOut ) return this->GetActiveWidget(); }
-    FORCEINLINE WNode* GetActiveWidgetAsserted() const { const bool bOut = this->GetActiveWidget(); jassert( bOut ) return this->GetActiveWidget(); }
-
-    FORCEINLINE bool IsIndexValid() const { return algo::is_valid_index(this->GetChildren(), this->ActiveIndex); }
-    FORCEINLINE auto GetActiveNode() -> WNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
-    FORCEINLINE auto GetActiveNode() const -> const WNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
-    FORCEINLINE auto GetActiveNodeChecked() -> WNode* { check(this->IsIndexValid()) return this->GetChildren()[this->ActiveIndex]->Content; }
-    FORCEINLINE auto GetActiveNodeChecked() const -> const WNode* { check(this->IsIndexValid()) return this->GetChildren()[this->ActiveIndex]->Content; }
-
-    // WParent implementation
-    virtual LWidgetSlot* AddChild(WNode* InChild) override;
-    virtual LWidgetSlot* AddChildAt(const i32 InIndex, WNode* InChild) override;
-    // ~WParent implementation
+    FORCEINLINE WNode const* GetActiveNode() const noexcept
+    {
+        if (this->IsActiveNodeValid())
+        {
+            return &*this->GetChildren()[this->ActiveNodeIndex];
+        }
+        return nullptr;
+    }
+    FORCEINLINE WNode* GetActiveNodeChecked() noexcept { auto* Widget{this->GetActiveNode()}; check(Widget) return Widget; }
+    FORCEINLINE WNode const* GetActiveNodeChecked() const noexcept { auto const* Widget{this->GetActiveNode()}; check(Widget) return Widget; }
+    FORCEINLINE WNode* GetActiveNodeAsserted() noexcept { auto* Widget{this->GetActiveNode()}; jassert(Widget) return Widget; }
+    FORCEINLINE WNode const* GetActiveNodeAsserted() const noexcept { auto const* Widget{this->GetActiveNode()}; jassert(Widget) return Widget; }
 
 private:
 
-    i32 ActiveIndex{ NoActiveWidgetIndex };
-    struct LRecentVisibility
-    {
-        const void* Target{};
-        ENodeVisibility Visibility{ ENodeVisibility::Visible };
-    };
-    TArray<LRecentVisibility> RecentVisibilities;
+    i64 ActiveNodeIndex{ NoActiveNodeIndex };
+    TArray<std::pair<void const*, ENodeVisibility>> RecentVisibilities;
 };
 
 } /* ~Namespace Jafg */

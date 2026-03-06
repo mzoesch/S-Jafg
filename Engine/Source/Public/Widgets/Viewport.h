@@ -5,6 +5,8 @@
 #include "Widgets/Node.h"
 #include "User/Input/Replies.h"
 #include "User/UserPreferencesForward.h"
+#include "Rhi/DeviceBuffers.h"
+#include "Rhi/Material.h"
 
 namespace Jafg
 {
@@ -39,9 +41,11 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() { this->TearDown(); }
 
+    void Vk_OnLateInit();
+
     void ClearInvalidWidgets();
     void DispatchInputs(LSurface& Surface, TOptional<LVec2F> const& CursorLocation);
-    void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
+    void OnMouseLeftViewport(LSurface& Context, bool bInvalidateAllInputs);
     void Tick();
     void Draw(LRenderInfo const& Info);
     void TearDown();
@@ -63,14 +67,9 @@ public:
     //#
     mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnLateTick, LViewport const& InViewport)
 
-    template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
-    FORCEINLINE TWidget* AddWidget();
-    void AddWidget(WUserWidget* Widget);
-    // template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
-    // FORCEINLINE TWidget* AddWidgetAt();
-    void AddWidgetAt(const i32 Index, WUserWidget* Widget);
-    ENGINE_API void RemoveWidget(WUserWidget* Widget);
-    ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
+    //# Internal methods used by Jafg. Do not call yourself.
+    ENGINE_API void _AddWidget(WUserWidget* Widget);
+    ENGINE_API void _RemoveWidget(WUserWidget* Widget);
 
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
     FORCEINLINE EApplicationScale GetMaxAllowApplicationScale() const noexcept;
@@ -89,11 +88,11 @@ public:
     FORCEINLINE f64     GetWidthD() const noexcept { return static_cast<f64>(this->GetDimensions().x); }
     FORCEINLINE f64     GetHeightD() const noexcept { return static_cast<f64>(this->GetDimensions().y); }
 
-    FORCEINLINE auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
-    ENGINE_API  WNode* GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const;
-    FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const;
-    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClass() const;
-    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClassChecked() const;
+    FORCEINLINE constexpr auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
+    ENGINE_API  WNode* GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const noexcept;
+    FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const noexcept{ auto* Widget{this->GetTopLevelWidgetByClass(Class)}; check(Widget); return Widget; }
+    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClass() const noexcept { return StaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass())); }
+    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClassChecked() const noexcept { return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass())); }
 
     template<typename TNode>
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget.GetPointer()); }
@@ -193,6 +192,13 @@ private:
     TOptional<LVec2F> CachedCursorLocation;
 
     LClassOuter Outer{ "SurfaceViewport" };
+
+    u64 MaxInstanceCount{ 128 };
+    TFrameArray<LMappedDeviceBuffer> VisualBatches;
+    TFrameArray<vk::raii::DescriptorSet> Vk_VisualSharedDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    TFrameArray<LMappedDeviceBuffer> Vk_VisualSharedBuffers;
+
+    LMaterialInstanceRef VisualBatchMaterial;
 };
 
 FORCEINLINE LViewportSweepTranslation::LViewportSweepTranslation(LViewport const& InViewport, LVec2F const& InOffset) noexcept
@@ -223,25 +229,6 @@ FORCEINLINE EApplicationScale LViewport::GetMaxAllowApplicationScale() const noe
     }
 
     return EApplicationScale::Triple;
-}
-
-FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const
-{
-    WNode* Widget{ this->GetTopLevelWidgetByClass(Class) };
-    check( Widget )
-    return Widget;
-}
-
-template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
-{
-    return StaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
-}
-
-template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClassChecked() const
-{
-    return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
 }
 
 FORCEINLINE constexpr bool LViewport::IsInBounds(const LVec2F& InTopLeft, const LVec2F& InSize, const LVec2F& InPoint) noexcept

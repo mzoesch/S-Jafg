@@ -69,7 +69,7 @@ void Jafg::LSurfaceBase::Tick()
     // }
 #endif /* PLATFORM_LINUX */
 
-    const bool bCheckInput = this->InputMode & EInputMode::UserInterface;
+    const bool bCheckInput = static_cast<bool>(this->InputMode & EInputModeBits::UserInterface);
 
     this->GetViewport().ClearInvalidWidgets();
 

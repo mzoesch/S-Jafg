@@ -22,14 +22,11 @@ void Jafg::WTabBarPanel::UpdateDesiredSize() const
     Super::UpdateDesiredSize();
 
     LVec2F DesiredSize{ maths::zero_vector<LVec2F> };
-    for (LWidgetSlot const* ChildSlot : this->GetChildren())
+    for (auto& Child : this->GetChildren())
     {
-        DesiredSize.x = maths::max(DesiredSize.x, ChildSlot->Content->GetDesiredSize_v2().x);
-        DesiredSize.y = maths::max(DesiredSize.y, ChildSlot->Content->GetDesiredSize_v2().y);
-
-        continue;
+        DesiredSize.x = maths::max(DesiredSize.x, Child->GetDesiredSize_v2().x);
+        DesiredSize.y = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
     }
-
     DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);

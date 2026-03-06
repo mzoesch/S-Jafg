@@ -32,7 +32,7 @@ protected:
 
 public:
 
-    virtual void Draw(LViewport& Context) const override;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     virtual void UpdateDesiredSize() const override;
 
@@ -63,7 +63,7 @@ public:
     FORCEINLINE constexpr void SetImageBehavior(const EImageBehavior InBehavior) noexcept { this->Brush.ImageBehavior = InBehavior; }
     FORCEINLINE constexpr void SetImageOobm(const EImageOobm InOobm) noexcept { this->Brush.ImageOobm = InOobm; }
     FORCEINLINE constexpr void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
-    FORCEINLINE constexpr void SetOutlineRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE constexpr void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE constexpr void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
     FORCEINLINE constexpr void SetOutlineTint(const LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
     FORCEINLINE constexpr void SetPadding(const LPadding& InPadding) noexcept { this->Brush.Padding = InPadding; }
@@ -119,7 +119,7 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
     }
     FORCEINLINE decltype(auto) OutlineRadii(this auto&& Self, const LVec4F& InOutlineRadii)
     {
-        NODE_FACTORY_SELF().SetOutlineRadii(InOutlineRadii);
+        NODE_FACTORY_SELF().SetRadii(InOutlineRadii);
         return NODE_FACTORY_RESULT();
     }
     FORCEINLINE decltype(auto) OutlineThickness(this auto&& Self, const f32 InOutlineThickness)

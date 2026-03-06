@@ -25,6 +25,9 @@ ghidra/
 /Saved/
 /Temp/
 
+# Third party
+/Vendor/
+
 # CLion CMake files
 /cmake-build-*/
 

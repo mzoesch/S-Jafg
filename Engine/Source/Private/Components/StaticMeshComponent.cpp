@@ -1,9 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Components/StaticMeshComponent.h"
-
-#include <User/UserPreferences.h>
-
+#include "User/UserPreferences.h"
 #include "Framework/ShaderSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/MeshSubsystem.h"
@@ -95,20 +93,20 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
     if (FetchedShader.Layouts.empty() == false)
     {
         // Vulkan specs states at least 4.
-        std::array<vk::DescriptorSet, 4> DescriptorSetToBind;
+        std::array<vk::DescriptorSet, 4> DescriptorSetsToBind;
         u32 NumDescriptorSets{0};
-        algo::for_each(Instance.InfrequentDescriptorSets, [&DescriptorSetToBind, &NumDescriptorSets](auto const& Set)
+        algo::for_each(Instance.InfrequentDescriptorSets, [&DescriptorSetsToBind, &NumDescriptorSets](auto const& Set)
         {
-            check(Set.first < DescriptorSetToBind.size())
-            check(DescriptorSetToBind[Set.first] == nullptr)
-            DescriptorSetToBind[Set.first] = *Set.second;
+            check(Set.first < DescriptorSetsToBind.size())
+            check(DescriptorSetsToBind[Set.first] == nullptr)
+            DescriptorSetsToBind[Set.first] = *Set.second;
             NumDescriptorSets = maths::max(NumDescriptorSets, Set.first + 1);
         });
-        algo::for_each(Instance.FrequentDescriptorSets[Info.Frame], [&DescriptorSetToBind, &NumDescriptorSets](auto const& Set)
+        algo::for_each(Instance.FrequentDescriptorSets[Info.Frame], [&DescriptorSetsToBind, &NumDescriptorSets](auto const& Set)
         {
-            check(Set.first < DescriptorSetToBind.size())
-            check(DescriptorSetToBind[Set.first] == nullptr)
-            DescriptorSetToBind[Set.first] = *Set.second;
+            check(Set.first < DescriptorSetsToBind.size())
+            check(DescriptorSetsToBind[Set.first] == nullptr)
+            DescriptorSetsToBind[Set.first] = *Set.second;
             NumDescriptorSets = maths::max(NumDescriptorSets, Set.first + 1);
         });
 
@@ -119,8 +117,8 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
                 check(Layout.Identifier.has_value())
                 if (Layout.Identifier.value() == "WorldData")
                 {
-                    check(DescriptorSetToBind[Idx] == nullptr)
-                    DescriptorSetToBind[Idx] = Info.WorldDataDescriptorSet;
+                    check(DescriptorSetsToBind[Idx] == nullptr)
+                    DescriptorSetsToBind[Idx] = Info.WorldDataDescriptorSet;
 
                     // TODO: ?
                     NumDescriptorSets = maths::max(NumDescriptorSets, static_cast<u32>(Idx + 1));
@@ -130,7 +128,7 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
 
         checkCode
         (
-            for (vk::DescriptorSet const& SetToBind : DescriptorSetToBind | std::views::take(NumDescriptorSets))
+            for (vk::DescriptorSet const& SetToBind : DescriptorSetsToBind | std::views::take(NumDescriptorSets))
             {
                 check(SetToBind != nullptr)
             }
@@ -142,7 +140,7 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
             .layout = *Pipeline.Layout,
             .firstSet = 0,
             .descriptorSetCount = NumDescriptorSets,
-            .pDescriptorSets = DescriptorSetToBind.data(),
+            .pDescriptorSets = DescriptorSetsToBind.data(),
             .dynamicOffsetCount = 0,
             .pDynamicOffsets = nullptr
             });

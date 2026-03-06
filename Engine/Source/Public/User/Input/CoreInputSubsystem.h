@@ -21,10 +21,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTORS(JCoreInputSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
-
-private:
-
-    void OnDebugScreenToggle(LInputActionValue& InValue) const;
 };
 
 } /* ~Namespace Jafg */

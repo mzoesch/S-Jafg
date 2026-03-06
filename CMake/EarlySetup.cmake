@@ -7,6 +7,7 @@ message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
 
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${JAFG_ENGINE_ROOT}/msys64/ucrt64")
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
 ###############################################################################
 # Ensure the compiler.

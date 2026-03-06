@@ -317,8 +317,8 @@ private:
     ASupremePolicies* SupremePolicies{};
 
     LLinearColor BackgroundColor;
-    std::array<vk::raii::DescriptorSet, Jafg::Vk_DesiredMaxFramesInFlight> Vk_WorldDescriptorSets;
-    std::array<LMappedDeviceBuffer, Jafg::Vk_DesiredMaxFramesInFlight> Vk_WorldBuffers;
+    TFrameArray<vk::raii::DescriptorSet> Vk_WorldDescriptorSets;
+    TFrameArray<LMappedDeviceBuffer> Vk_WorldBuffers;
 };
 
 template<>

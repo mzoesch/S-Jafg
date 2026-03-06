@@ -5,6 +5,7 @@
 #include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 #include "User/Input/InputContext.h"
+#include "User/Input/InputMode.h"
 
 namespace Jafg
 {
@@ -18,7 +19,7 @@ class LUserInput final
 {
 public:
 
-    typedef TArray<TArray<LUserInputTag>> LContextStack;
+    typedef TArray<std::pair<EInputMode, TArray<LUserInputTag>>> LContextStack;
 
     constexpr LUserInput() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
@@ -54,13 +55,13 @@ public:
     //# @param bEmpty If true, the current active contexts array will be emptied. This will result no active contexts
     //#               after this call.
     //#
-    ENGINE_API void PushContexts(bool bEmpty = true) noexcept;
+    ENGINE_API void PushContexts(EInputMode InputMode, bool bEmpty = true) noexcept;
     //#
     //# Removes a snapshot, pushed with #PushContexts, from the stack and applies it to the current active contexts.
     //# The active contexts will be removed.
-    //# @return True if a previous applied context snapshot was applied.
+    //# @return Has value if a previous applied context snapshot was applied.
     //#
-    ENGINE_API bool PopContexts() noexcept;
+    ENGINE_API TOptional<EInputMode> PopContexts() noexcept;
 
     FORCEINLINE auto const& GetActiveContexts() const noexcept { return this->ActiveContexts; }
     FORCEINLINE auto& GetMutableActiveContexts() noexcept { return this->ActiveContexts; }

@@ -19,7 +19,7 @@ class ASupremePolicies;
 struct LLevel final
 {
     LString Identifier;
-    EInputMode::Type InputMode{ EInputMode::None | EInputMode::ShowMouseCursor };
+    EInputMode InputMode{ EInputModeBits::ShowMouseCursor };
     TSubclassOf<ASupremePolicies> SupremePoliciesClass;
 };
 

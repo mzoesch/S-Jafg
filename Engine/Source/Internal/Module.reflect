@@ -1,9 +1,0 @@
-// Copyright mzoesch. All rights reserved.
-
-#ifdef __cplusplus
-    #include "Engine.afx"
-#endif /* __cplusplus */
-
-#if !JAFG_IS_REFLECTED
-    #error "Forbidden. Not reflecting."
-#endif /* !JAFG_IS_REFLECTED */

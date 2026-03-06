@@ -15,6 +15,7 @@ struct LFetchedMaterial final
     enum Type
     {
         Solid,
+        Translucent,
     };
 
     struct Property

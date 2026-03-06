@@ -6,11 +6,12 @@
 #include "Serialization/Json.h"
 #include "Rhi/PushConstants.h"
 #include "Rhi/FromString.h"
+#include "Rhi/FromJson.h"
 
 namespace
 {
 
-LPath Slangc{LPath{Jafg::SprintF("Binaries/{}/Vendor/Slang/bin/slangc{}",
+LPath Slangc{LPath{Jafg::SprintF("Vendor/Slang-{}/bin/slangc{}",
     Jafg::PlatformMisc::GetTargetPlatformCompound(),
 #if PLATFORM_WINDOWS
     ".exe"
@@ -56,15 +57,19 @@ void PopulateChildFromParent(Jafg::LFetchedShader* Child, Jafg::LFetchedShader c
         Child->DstPrefix = Parent.DstPrefix;
     }
 
-    if (Parent.VertexInput.has_value())
+    if (Child->PipelineInputAssemblyState.has_value() == false)
     {
-        if (Child->VertexInput.has_value())
-        {
-            LOG_FATAL(LogShaderSubsystem, "[{}]: Both child and parent specify vertex input. This is not allowed.", Child->Path)
-        }
-        Child->VertexInput = Parent.VertexInput;
+        Child->PipelineInputAssemblyState = Parent.PipelineInputAssemblyState;
+    }
+    if (Child->PipelineDepthStencilState.has_value() == false)
+    {
+        Child->PipelineDepthStencilState = Parent.PipelineDepthStencilState;
     }
 
+    if (Child->VertexInput.has_value() == false)
+    {
+        Child->VertexInput = Parent.VertexInput;
+    }
     if (Parent.PushConstants.empty() == false)
     {
         Child->PushConstants.insert_range(Child->PushConstants.begin(), Parent.PushConstants);
@@ -285,9 +290,12 @@ void Jafg::JShaderSubsystem::RefetchShaders()
     check(this->FetchedShaders.empty())
 
     LString MissingKey; Json::EError Error;
-    for (auto ShaderFiles{Finder::FindFilesRecursively(Finder::GetShadersDir(), true, ".*\\.shader.json")}; auto const& TextureViewFile : ShaderFiles)
+    for (auto ShaderFiles{Finder::FindFilesRecursively(Finder::GetShadersDir(), true, ".*\\.json")}; auto const& TextureViewFile : ShaderFiles)
     {
-        std::unique_ptr Shader{ std::make_unique<LFetchedShader>(TextureViewFile, TextureViewFile.stem().stem().string())};
+        std::unique_ptr Shader{ std::make_unique<LFetchedShader>(TextureViewFile, TextureViewFile.stem().string())};
+        LString _PathStr{Shader->Path.string()};
+        LStringView DN{_PathStr};
+
         json ShaderJson = json::parse(Finder::ReadFile(Shader->Path), nullptr, false);
         if (ShaderJson.is_discarded())
         {
@@ -406,6 +414,9 @@ void Jafg::JShaderSubsystem::RefetchShaders()
             Shader->DstPrefix = LPath{ShaderJson["DstPrefix"].get<LString>()}.make_preferred();
         }
 
+        Shader->PipelineInputAssemblyState = Vk_FromJson<vk::PipelineInputAssemblyStateCreateInfo>(DN, "PipelineInputAssemblyState", ShaderJson);
+        Shader->PipelineDepthStencilState = Vk_FromJson<vk::PipelineDepthStencilStateCreateInfo>(DN, "PipelineDepthStencilState", ShaderJson);
+
         if (ShaderJson.contains("VertexInput"))
         {
             if (ShaderJson["VertexInput"].is_string() == false)
@@ -440,7 +451,7 @@ void Jafg::JShaderSubsystem::RefetchShaders()
 
             if (LString SetType{LayoutJson["Type"].get<LString>()}; SetType == "eUnique")
             {
-                if (Json::DoesObjectContainTypeCheckedKeys(LayoutJson, {{"UpdateFrequency", Json::LKeyType::String}, {"Stage", Json::LKeyType::String}, {"Sets", Json::LKeyType::Array}}, &MissingKey, &Error) == false)
+                if (Json::DoesObjectContainTypeCheckedKeys(LayoutJson, {{"UpdateFrequency", Json::LKeyType::String}, {"Stages", Json::LKeyType::String}, {"Sets", Json::LKeyType::Array}}, &MissingKey, &Error) == false)
                 {
                     Json::DefaultFail(Shader->Path, MissingKey, Error);
                 }
@@ -477,7 +488,7 @@ void Jafg::JShaderSubsystem::RefetchShaders()
                 Shader->Layouts.emplace_back(LFetchedShader::Layout{
                     .Type=LFetchedShader::Layout::eUnique,
                     .UpdateFrequency = LFetchedShader::Layout::StringToUpdateFrequency(LayoutJson["UpdateFrequency"].get<LString>()),
-                    .Stage=Vk_FromString<vk::ShaderStageFlags>(LayoutJson["Stage"].get<LString>()),
+                    .Stage=Vk_FromString<vk::ShaderStageFlags>(LayoutJson["Stages"].get<LString>()),
                     .Sets=std::move(Sets)
                     });
                 check(SetType.contains("Identifier") == false)

@@ -25,9 +25,9 @@ protected:
 public:
 
     virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
-    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
+    virtual void UpdateAnchoredSize(const LViewport& Viewport) const override;
+    virtual void UpdateAnchoredSizeForChild(const LViewport& Viewport, const WNode* InDirectChild) const override;
+    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Viewport, const WNode* InDirectChild) const override;
 };
 
 } /* ~Namespace Jafg */

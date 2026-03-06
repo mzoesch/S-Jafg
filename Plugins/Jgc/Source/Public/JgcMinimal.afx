@@ -1,0 +1,13 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+//#
+//# File:
+//#     Minimal recommended includes to use the Jgc plugin.
+//#
+#if PREPROCESSOR_EXCLUDE_FF
+#endif /* PREPROCESSOR_EXCLUDE_FF */
+
+#include "Minimal.afx"
+#include "Logging/JgcCoreCategories.h"

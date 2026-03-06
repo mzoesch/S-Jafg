@@ -1,10 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine.afx"
+#include "Core/Application.h"
 #include "Core/LaunchProgress.h"
 #include "User/UserPreferences.h"
 #include "Platform/PlatformMisc.h"
 #include "Cli/ReSTCliPreferences.h"
+#include "Stats/Stats.h"
+#include "Engine/Engine.h"
+#include "Engine/Carnifex.h"
 
 #if WITH_TESTS
     #include "TestCore/TestRunner.h"
@@ -56,7 +59,7 @@ FORCEINLINE
 #endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    return ::HasCustomExitStatus()
+    return Jafg::HasCustomExitStatus()
         ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
         : EPlatformExit::Success;
 }

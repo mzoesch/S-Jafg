@@ -62,6 +62,7 @@ if(_guard)
         FetchContent_FastNoise2
         GIT_REPOSITORY      https://github.com/Auburn/FastNoise2.git
         GIT_TAG             v0.10.0-alpha
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/fastnoise2"
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
     DisableAllWarningsForTarget(FastNoise) # FastNoise2 is an alias of FastNoise
@@ -74,6 +75,7 @@ if(_guard)
         FetchContent_Freetype
         GIT_REPOSITORY      https://gitlab.freedesktop.org/freetype/freetype.git
         GIT_TAG             VER-2-13-3
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/freetype"
         )
     FetchContent_MakeAvailable(FetchContent_Freetype)
     target_link_libraries(${_scoped_module_name} PUBLIC freetype-interface)
@@ -85,6 +87,7 @@ if(_guard)
         FetchContent_Glfw3
         GIT_REPOSITORY      https://github.com/glfw/glfw.git
         GIT_TAG             master
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/glfw3"
         )
     FetchContent_MakeAvailable(FetchContent_Glfw3)
     target_link_libraries(${_scoped_module_name} PUBLIC glfw ${GLFW_LIBRARIES})
@@ -101,6 +104,7 @@ if(_guard)
         FetchContent_Sqlite3
         GIT_REPOSITORY      https://github.com/mzoesch/S-Jafg-Sqlite3-Amalgamation.git
         GIT_TAG             trunk
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/sqlite3"
         )
     FetchContent_MakeAvailable(FetchContent_Sqlite3)
     target_link_libraries(${_scoped_module_name} PUBLIC jafg_sqlite3_amalgamation)
@@ -112,6 +116,7 @@ if(_guard)
         FetchContent_Vma
         GIT_REPOSITORY      https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
         GIT_TAG             master
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/vma"
         )
     FetchContent_MakeAvailable(FetchContent_Vma)
     target_link_libraries(${_scoped_module_name} PUBLIC GPUOpen::VulkanMemoryAllocator)
@@ -123,6 +128,7 @@ if(_guard)
         FetchContent_Glm
         GIT_REPOSITORY      https://github.com/g-truc/glm
         GIT_TAG             master
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/glm"
         )
     FetchContent_MakeAvailable(FetchContent_Glm)
     target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_glm_SOURCE_DIR})
@@ -132,8 +138,9 @@ if(_guard)
     message(STATUS "Fetching Nlohmann JSON...")
     FetchContent_Declare(
         FetchContent_NlohmannJson
-        GIT_REPOSITORY          https://github.com/nlohmann/json
-        GIT_TAG                 master
+        GIT_REPOSITORY      https://github.com/nlohmann/json
+        GIT_TAG             master
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nlohmannjson"
         )
     FetchContent_MakeAvailable(FetchContent_NlohmannJson)
     target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_nlohmannjson_SOURCE_DIR}/include)
@@ -143,8 +150,9 @@ if(_guard)
     message(STATUS "Fetching Stb...")
     FetchContent_Declare(
         FetchContent_Stb
-        GIT_REPOSITORY          https://github.com/nothings/stb
-        GIT_TAG                 master
+        GIT_REPOSITORY      https://github.com/nothings/stb
+        GIT_TAG             master
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/stb"
         )
     FetchContent_MakeAvailable(FetchContent_Stb)
     target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_stb_SOURCE_DIR})
@@ -154,8 +162,9 @@ if(_guard)
     message(STATUS "Fetching cpp-httplib...")
     FetchContent_Declare(
         FetchContent_httplib
-        GIT_REPOSITORY          https://github.com/yhirose/cpp-httplib
-        GIT_TAG                 v0.28.0
+        GIT_REPOSITORY      https://github.com/yhirose/cpp-httplib
+        GIT_TAG             v0.28.0
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/httplib"
         )
     FetchContent_MakeAvailable(FetchContent_httplib)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_httplib_SOURCE_DIR})
@@ -165,8 +174,9 @@ if(_guard)
     message(STATUS "Fetching tinyobjloader...")
     FetchContent_Declare(
         FetchContent_tinyobjloader
-        GIT_REPOSITORY          https://github.com/tinyobjloader/tinyobjloader
-        GIT_TAG                 release
+        GIT_REPOSITORY      https://github.com/tinyobjloader/tinyobjloader
+        GIT_TAG             release
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinyobjloader"
         )
     FetchContent_MakeAvailable(FetchContent_tinyobjloader)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_tinyobjloader_SOURCE_DIR})
@@ -176,8 +186,9 @@ if(_guard)
     message(STATUS "Fetching tinygltf...")
     FetchContent_Declare(
         FetchContent_tinygltf
-        GIT_REPOSITORY          https://github.com/syoyo/tinygltf.git
-        GIT_TAG                 release
+        GIT_REPOSITORY      https://github.com/syoyo/tinygltf.git
+        GIT_TAG             release
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinygltf"
         )
     FetchContent_MakeAvailable(FetchContent_tinygltf)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_tinygltf_SOURCE_DIR})
@@ -202,7 +213,7 @@ if(_guard)
         else()
             message(STATUS "Slangc archive already exists at [${_archive}].")
         endif()
-        set(_dst_slang_extraction_dir "${JAFG_ENGINE_ROOT}/Binaries/${_os}/Vendor/Slang")
+        set(_dst_slang_extraction_dir "${JAFG_ENGINE_ROOT}/Vendor/Slang-${_os}")
         if(NOT EXISTS "${_dst_slang_extraction_dir}/LICENSE")
             file(MAKE_DIRECTORY "${_dst_slang_extraction_dir}")
             execute_process(
@@ -213,14 +224,14 @@ if(_guard)
             message(STATUS "Slangc already extracted for OS [${_os}] at [${_dst_slang_extraction_dir}].")
         endif()
     endfunction()
-    _DownalodSlangc("Windows-x86_64" "${CMAKE_BINARY_DIR}/windows-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
-    _DownalodSlangc("Linux-x86_64" "${CMAKE_BINARY_DIR}/linux-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
+    _DownalodSlangc("Windows-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/windows-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
+    _DownalodSlangc("Linux-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/linux-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
 
     ###############################################################################
     # Fonts
     message(STATUS "Including fonts...")
     set(CASCADIA_MONO_URL "https://github.com/microsoft/cascadia-code/releases/download/v2407.24/CascadiaCode-2407.24.zip")
-    set(CASCADIA_MONO_ZIP "${CMAKE_BINARY_DIR}/CascadiaCode.zip")
+    set(CASCADIA_MONO_ZIP "${JAFG_ENGINE_ROOT}/Vendor/CascadiaCode.zip")
     set(CASCADIA_MONO_DIR "${JAFG_ENGINE_ROOT}/Content/Fonts/CascadiaMono")
     if(NOT EXISTS "${CASCADIA_MONO_ZIP}")
         message(STATUS "Downloading Cascadia Mono font...")

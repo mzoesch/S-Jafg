@@ -51,9 +51,9 @@ void Jafg::JTextureSubsystem::RefetchingTextureViews()
     algo::orphan(&this->TextureViews);
 
     LString MissingKey; Json::EError Error;
-    for (auto TextureViewFiles{Finder::FindFilesRecursively("Content/TextureViews", true, ".*\\.tv.json")}; auto const& TextureViewFile : TextureViewFiles)
+    for (auto TextureViewFiles{Finder::FindFilesRecursively("Content/TextureViews", true, ".*\\.json")}; auto const& TextureViewFile : TextureViewFiles)
     {
-        LTextureView TextureView{.Path=TextureViewFile,.Name=Finder::Normalize(TextureViewFile.string().substr(21, TextureViewFile.string().size() - 21 - 8))};
+        LTextureView TextureView{.Path=TextureViewFile,.Name=Finder::Normalize(TextureViewFile.string().substr(21, TextureViewFile.string().size() - 21 - 5))};
         json TextureViewJson = json::parse(Finder::ReadFile(TextureView.Path), nullptr, false);
         if (TextureViewJson.is_discarded())
         {
@@ -97,7 +97,7 @@ void Jafg::JTextureSubsystem::RefetchingTextureViews()
                 {
                     LOG_FATAL(LogTextureSubsystem, "[{}]: MipLevels entry is not an unsinged number. Failed to load.", TextureView.Path)
                 }
-                u64 MipLevels{TextureViewJson["MipLevels"].get<u64>()};
+                u32 MipLevels{TextureViewJson["MipLevels"].get<u32>()};
                 if (MipLevels == 0)
                 {
                     LOG_FATAL(LogTextureSubsystem, "[{}]: MipLevels entry cannot be 0. Failed to load.", TextureView.Path)

@@ -201,7 +201,7 @@ public:
     virtual void BeginLife()
     {
 #if JAFG_DO_DOUBLE_CHECK_LIFETIMES
-        jassert( this->bHasBegunLife == false )
+        jassert(this->bHasBegunLife == false)
         this->bHasBegunLife = true;
 #endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
     }
@@ -401,8 +401,8 @@ struct TDeferredObjectExec
 
     inline constexpr TCxxClass* release() noexcept
     {
-        check( this->bReleased )
-        this->bReleased = false;
+        check(this->bReleased == false)
+        this->bReleased = true;
         return &this->Class;
     }
 

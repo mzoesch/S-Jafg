@@ -2,18 +2,47 @@
 
 #include "Widgets/Switcher.h"
 
-void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
+void Jafg::WSwitcher::AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild)
 {
-    if (this->ActiveIndex == Index)
+    Super::AddChildAt(InIndex, std::move(InChild));
+
+    check(algo::find_pointer(this->RecentVisibilities, &*InChild, algo::pair_first{}) == nullptr)
+    this->RecentVisibilities.emplace_back(&*InChild, InChild->GetVisibility());
+    InChild->SetVisibility(ENodeVisibility::Collapsed);
+
+    return;
+}
+
+void Jafg::WSwitcher::SetActiveNode(WNode* Node)
+{
+    check(Node)
+    if (auto It{algo::find(this->GetChildren(), Node, algo::unique_raw{})}; It != this->GetChildren().end())
+    {
+        this->SetActiveNodeByIndex(algo::distance(this->GetChildren(), It));
+    }
+    else
+    {
+        LOG_WARNING(LogWidgets
+            , "The node [{}] is not a child of switcher [{}]."
+            , Node->GetNameAsString(), this->GetNameAsString()
+        )
+    }
+
+    return;
+}
+
+void Jafg::WSwitcher::SetActiveNodeByIndex(i64 Index)
+{
+    if (this->ActiveNodeIndex == Index)
     {
         return;
     }
 
-    if (WNode* CurrentNode = this->GetActiveNode(); CurrentNode)
+    if (WNode* CurrentNode{this->GetActiveNode()}; CurrentNode)
     {
-        if (LRecentVisibility* Recent = algo::find_pointer(this->RecentVisibilities, CurrentNode, &LRecentVisibility::Target))
+        if (auto* Pair{algo::find_pointer(this->RecentVisibilities, CurrentNode, algo::pair_first{})})
         {
-            Recent->Visibility = CurrentNode->GetVisibility();
+            Pair->second = CurrentNode->GetVisibility();
         }
         else
         {
@@ -22,9 +51,9 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
         CurrentNode->SetVisibility(ENodeVisibility::Collapsed);
     }
 
-    this->ActiveIndex = Index;
+    this->ActiveNodeIndex = Index;
 
-    if (Index == NoActiveWidgetIndex)
+    if (Index == NoActiveNodeIndex)
     {
         return;
     }
@@ -32,65 +61,21 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
     if (algo::is_valid_index(this->GetChildren(), Index) == false)
     {
         LOG_WARNING(LogWidgets, "The index [{}] is out of bounds.", Index)
-        this->ActiveIndex = NoActiveWidgetIndex;
+        this->ActiveNodeIndex = NoActiveNodeIndex;
         return;
     }
 
-    if (WNode* NewNode = this->GetActiveNode(); NewNode)
+    WNode* Node{this->GetActiveNode()};
+    check(Node)
+    if (auto* Pair{algo::find_pointer(this->RecentVisibilities, Node, algo::pair_first{})})
     {
-        if (LRecentVisibility* Recent = algo::find_pointer(this->RecentVisibilities, NewNode, &LRecentVisibility::Target))
-        {
-            NewNode->SetVisibility(Recent->Visibility);
-            algo::erase_once_checked(&this->RecentVisibilities, NewNode, &LRecentVisibility::Target);
-        }
-        else
-        {
-            NewNode->SetVisibility(ENodeVisibility::Visible);
-        }
-    }
-
-    return;
-}
-
-void Jafg::WSwitcher::SetActiveWidget(WNode* Widget)
-{
-    checkSlow( Widget )
-
-    if (auto It{ algo::find(this->GetChildren(), Widget, &LWidgetSlot::Content) }; It != this->GetChildren().end())
-    {
-        this->SetActiveWidgetIndex(algo::distance(this->GetChildren(), It));
+        Node->SetVisibility(Pair->second);
+        algo::erase_once_checked(&this->RecentVisibilities, Node, algo::pair_first{});
     }
     else
     {
-        LOG_WARNING
-        (
-            LogWidgets,
-            "The widget [{}] is not a child of this [{}] switcher.",
-            Widget->GetNameAsString(), this->GetNameAsString()
-        )
+        Node->SetVisibility(ENodeVisibility::Visible);
     }
 
     return;
-}
-
-Jafg::LWidgetSlot* Jafg::WSwitcher::AddChild(WNode* InChild)
-{
-    LWidgetSlot* Ret = Super::AddChild(InChild);
-
-    check( algo::find_pointer(this->RecentVisibilities, InChild, &LRecentVisibility::Target) == nullptr )
-    this->RecentVisibilities.emplace_back(InChild, InChild->GetVisibility());
-    InChild->SetVisibility(ENodeVisibility::Collapsed);
-
-    return Ret;
-}
-
-Jafg::LWidgetSlot* Jafg::WSwitcher::AddChildAt(const i32 InIndex, WNode* InChild)
-{
-    LWidgetSlot* Ret = Super::AddChildAt(InIndex, InChild);
-
-    check( algo::find_pointer(this->RecentVisibilities, InChild, &LRecentVisibility::Target) == nullptr )
-    this->RecentVisibilities.emplace_back(InChild, InChild->GetVisibility());
-    InChild->SetVisibility(ENodeVisibility::Collapsed);
-
-    return Ret;
 }

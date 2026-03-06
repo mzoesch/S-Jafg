@@ -1,5 +1,5 @@
 {
-    "Inherits": "Jafg.Base",
+    "Inherits": "Jafg.Perspective",
     "VertexInput": "Jafg::LStaticMesh::Vertex",
     "PushConstants": [
         "Jafg::PC::MVP"

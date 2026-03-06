@@ -65,9 +65,9 @@ public:
     void Tick();
     void OnRender() { jassertNoEntry() }
 
-    FORCEINLINE void SetInputMode(EInputMode::Type InMode) noexcept { jassertNoEntry() }
-    FORCEINLINE EInputMode::Type GetInputMode() const noexcept { return this->InputMode; }
-    FORCEINLINE bool IsShowMouseCursor() const noexcept { return this->GetInputMode() & EInputMode::ShowMouseCursor; }
+    FORCEINLINE void SetInputMode(EInputMode InMode) noexcept { jassertNoEntry() }
+    FORCEINLINE EInputMode GetInputMode() const noexcept { return this->InputMode; }
+    FORCEINLINE bool IsShowMouseCursor() const noexcept { return static_cast<bool>(this->InputMode & EInputModeBits::ShowMouseCursor); }
 
     FORCEINLINE bool HasMouseLocation() const noexcept { return this->MouseLocation.has_value(); }
     FORCEINLINE auto const& GetMouseLocation() const noexcept { return this->MouseLocation; }
@@ -161,7 +161,7 @@ protected:
 #endif /* PLATFORM_LINUX */
 
     //# Input mode. The mouse cursor visibility might be ignored on some platform configurations.
-    EInputMode::Type InputMode{ EInputMode::UserInterface | EInputMode::ShowMouseCursor };
+    EInputMode InputMode{ EInputModeBits::UserInterface | EInputModeBits::InputSubsystem | EInputModeBits::ShowMouseCursor };
     //# Mouse inside surface.
     bool bIsMouseInsideSurface{ false };
     //# The mouse location if available. In some platform configurations, this value might always be missing.

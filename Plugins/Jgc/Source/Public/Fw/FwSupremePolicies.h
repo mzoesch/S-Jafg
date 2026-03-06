@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "JgcMinimal.afx"
 #include "Framework/SupremePolicies.h"
 #include "FwSupremePolicies.generated.h"
 
@@ -26,6 +27,7 @@ protected:
 public:
 
     virtual void OnWorldPreInit() override;
+    virtual void OnPersonaControllerCreated(Jafg::APersonaController& Pc) override;
     virtual Jafg::APawn* GetPawnForPersonaController(Jafg::APersonaController const& Pc) override;
 };
 

@@ -4,6 +4,7 @@
 
 #include "Framework/FrontendForward.h"
 #include "Framework/Frontend.h"
+#include "Rhi/ImmutableBuffer.h"
 
 namespace Jafg
 {
@@ -106,6 +107,16 @@ public:
     FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
     FORCEINLINE auto const& Vk_GetDescriptorSetLayouts() const noexcept { return this->Vk_DescriptorSetLayouts; }
     FORCEINLINE auto&       Vk_GetMutableDescriptorSetLayouts() noexcept { return this->Vk_DescriptorSetLayouts; }
+    FORCEINLINE auto const& Vk_GetImmutableBuffers() const noexcept { return this->Vk_ImmutableBuffers; }
+    FORCEINLINE bool RegisterImmutableBuffers(LString const& Identifier, LImmutableBuffer&& Buffer) noexcept
+    {
+        if (this->Vk_ImmutableBuffers.contains(Identifier))
+        {
+            return false;
+        }
+        this->Vk_ImmutableBuffers.emplace(Identifier, std::move(Buffer));
+        return true;
+    }
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
@@ -223,6 +234,7 @@ private:
     vk::raii::Sampler Vk_DefaultSampler{ nullptr };
     vk::raii::DescriptorPool Vk_DescriptorPool{ nullptr };
     std::unordered_map<LString, vk::raii::DescriptorSetLayout> Vk_DescriptorSetLayouts;
+    std::unordered_map<LString, LImmutableBuffer> Vk_ImmutableBuffers;
 };
 
 FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Vertex(LVertexCreateInfo const& Info) noexcept

@@ -16,26 +16,14 @@ namespace Jafg
 //#
 struct LInputAction final
 {
-    constexpr LInputAction() noexcept = default;
-    LInputAction
-    (
-        const LUserInputTag InName,
-        const EInputActionCategory::Type InCategory
-    ) noexcept
-        : Tag(InName), DisplayName(algo::add_spaces_to_camel_case(InName.ToString())), Category(InCategory) {  }
-    LInputAction
-    (
-        LUserInputTag InName,
-        LString InDisplayName,
-        const EInputActionCategory::Type InCategory
-    ) noexcept
-        : Tag(std::move(InName)), DisplayName(std::move(InDisplayName)), Category(InCategory) { }
-    LInputAction
-    (
-        LStringView InDisplayName,
-        const EInputActionCategory::Type InCategory
-    ) noexcept
-        : Tag(LUserInputTag::ToTag(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
+    constexpr LInputAction() noexcept = delete;
+    LInputAction(LUserInputTag InTag, LString InDisplayName, EInputActionCategory::Type InCategory) noexcept
+        : Tag(InTag), DisplayName(std::move(InDisplayName)), Category(InCategory) { check(this->Tag.IsSet()) }
+    LInputAction(LUserInputTag InTag,EInputActionCategory::Type InCategory) noexcept
+        : LInputAction{InTag, algo::add_spaces_to_camel_case(InTag.ToString()), InCategory} {}
+
+    LInputAction(LStringView InDisplayName, EInputActionCategory::Type InCategory) noexcept
+        : LInputAction{LUserInputTag::ToTag(InDisplayName), LString{InDisplayName}, InCategory} {}
     DEFAULT_REALLOC_OF_ANY_FORM(LInputAction)
     ~LInputAction() noexcept = default;
 

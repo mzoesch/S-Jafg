@@ -3,6 +3,8 @@
 #include "Foreign/ForeignInclude.h"
 #include "Runtime/Args.h"
 #include "Fw/FwSupremePolicies.h"
+#include "Engine/Engine.h"
+#include "Framework/PersonaController.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
@@ -35,7 +37,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
         Jafg::LLevel
         {
             .Identifier = "LevelFrontend",
-            .InputMode = Jafg::EInputMode::Both,
+            .InputMode = Jafg::EInputModeBits::UserInterface | Jafg::EInputModeBits::InputSubsystem,
             .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
         }
     ) == false)

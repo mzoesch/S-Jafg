@@ -1,10 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Fw/FwSupremePolicies.h"
-#include "Framework/MaterialSubsystem.h"
 #include "Framework/Actor.h"
+#include "Framework/MaterialSubsystem.h"
+#include "Framework/PersonaController.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/DebugCameraComponent.h"
+#include "User/LocalEgo.h"
+#include "User/Frontend/JgcPauseScreen.h"
 
 void Jgc::AFwSupremePolicies::OnWorldPreInit()
 {
@@ -78,6 +81,32 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetTranslation(LWorldVec3{12,0,-4});
     });
+
+    return;
+}
+
+void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaController& Pc)
+{
+    Super::OnPersonaControllerCreated(Pc);
+
+    if (Pc.IsLocallyPossessed())
+    {
+        if (Pc.IsOwningSurfaceValid())
+        {
+            // TODO:
+            //      Parent have TJxxUnique<T>.
+            //      A widget is constructed as soon as it is emplaced into a viewport.
+            //      If a child is emplaced into its parent. Query for outer viewport. If exits -> construct, else defer.
+            //      Once attached. Children cannot be removed unless they are destroyed. They can never change their parent again.
+
+            Jafg::ConstructWidget(Jafg::TWidgetStaticInit<WPauseScreen>{Pc.GetOwningSurfaceChecked()->GetViewport()});
+        }
+        else
+        {
+            LOG_WARNING(LogJgc, "PersonaController [{}] does not have a valid owning surface", Pc.GetNameAsString());
+        }
+
+    }
 
     return;
 }

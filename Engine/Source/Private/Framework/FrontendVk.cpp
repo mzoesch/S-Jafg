@@ -19,6 +19,7 @@
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
 #include "Engine/WorldData.h"
+#include "Rhi/VisualInstance.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -181,7 +182,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    const i32 Platform{ glfwGetPlatform() };
+    const i32 Platform{glfwGetPlatform()};
     if (Platform == GLFW_PLATFORM_WAYLAND)
     {
         LOG_VERBOSE(LogSurface, "Using Wayland platform.")
@@ -312,7 +313,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     std::array Sizes{
         vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eUniformBuffer,
+            .type = vk::DescriptorType::eSampler,
             .descriptorCount = 2048, /* Completely arbitrary limit. */
             },
         vk::DescriptorPoolSize{
@@ -320,7 +321,11 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
             .descriptorCount = 2048, /* Completely arbitrary limit. */
             },
         vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eSampler,
+            .type = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 2048, /* Completely arbitrary limit. */
+            },
+        vk::DescriptorPoolSize{
+            .type = vk::DescriptorType::eStorageBuffer,
             .descriptorCount = 2048, /* Completely arbitrary limit. */
             },
         };
@@ -345,6 +350,20 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
                 },
             });
     }
+    if (this->Vk_DescriptorSetLayouts.contains("Jafg.VisualShared"))
+    {
+        LOG_WARNING(LogRhi, "Descriptor set layout for Jafg.VisualShared already exists, skipping creation.")
+    }
+    else
+    {
+        this->Vk_DescriptorSetLayouts.emplace("Jafg.VisualShared", vk::raii::DescriptorSetLayout{
+            this->Vk_Device,
+            vk::DescriptorSetLayoutCreateInfo{
+                .bindingCount = static_cast<u32>(UBO::VisualShared::Bindings().size()),
+                .pBindings = UBO::VisualShared::Bindings().data(),
+                },
+            });
+    }
 
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
@@ -357,6 +376,8 @@ void Jafg::LFrontendVk::TearDown()
     LFrontendBase::TearDown();
 
     GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
+
+    algo::swap_default(&this->Vk_ImmutableBuffers);
 
     this->Vk_DefaultSampler.clear();
     this->Vk_DescriptorPool.reset();

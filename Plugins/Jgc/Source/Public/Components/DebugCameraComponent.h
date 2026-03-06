@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "JgcMinimal.afx"
 #include "Components/PawnComponent.h"
 #include "DebugCameraComponent.generated.h"
 

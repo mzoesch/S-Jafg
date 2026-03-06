@@ -29,8 +29,7 @@ inline vk::SampleCountFlagBits Vk_FromString<vk::SampleCountFlagBits>(LStringVie
     if (String == "e16") { return vk::SampleCountFlagBits::e16; }
     if (String == "e32") { return vk::SampleCountFlagBits::e32; }
     if (String == "e64") { return vk::SampleCountFlagBits::e64; }
-
-    LOG_FATAL(LogVulkan, "Unsupported sample count string [{}] for conversion to sample count flag bits.", String)
+    LOG_FATAL(LogVulkan, "[{}]: Unsupported sample count flag bits string.", String)
 }
 
 template<>
@@ -42,8 +41,7 @@ inline vk::ShaderStageFlagBits Vk_FromString<vk::ShaderStageFlagBits>(LStringVie
     if (String == "eGeometry") { return vk::ShaderStageFlagBits::eGeometry; }
     if (String == "eFragment") { return vk::ShaderStageFlagBits::eFragment; }
     if (String == "eCompute") { return vk::ShaderStageFlagBits::eCompute; }
-
-    LOG_FATAL(LogVulkan, "Unsupported shader stage string [{}] for conversion to shader stage flag bits.", String)
+    LOG_FATAL(LogVulkan, "[{}]: Unsupported shader stage flag bits string.", String)
 }
 
 template<>
@@ -61,8 +59,53 @@ inline vk::DescriptorType Vk_FromString<vk::DescriptorType>(LStringView String) 
     if (String == "eSampler") { return vk::DescriptorType::eSampler; }
     if (String == "eSampledImage") { return vk::DescriptorType::eSampledImage; }
     if (String == "eUniformBuffer") { return vk::DescriptorType::eUniformBuffer; }
+    if (String == "eStorageBuffer") { return vk::DescriptorType::eStorageBuffer; }
+    LOG_FATAL(LogVulkan, "[{}]: Unsupported descriptor type string.", String)
+}
 
-    LOG_FATAL(LogVulkan, "Unsupported descriptor type string [{}] for conversion to descriptor type.", String)
+template<>
+inline vk::PrimitiveTopology Vk_FromString<vk::PrimitiveTopology>(LStringView String) noexcept
+{
+    if (String == "ePointList") { return vk::PrimitiveTopology::ePointList; }
+    if (String == "eLineList") { return vk::PrimitiveTopology::eLineList; }
+    if (String == "eLineStrip") { return vk::PrimitiveTopology::eLineStrip; }
+    if (String == "eTriangleList") { return vk::PrimitiveTopology::eTriangleList; }
+    if (String == "eTriangleStrip") { return vk::PrimitiveTopology::eTriangleStrip; }
+    if (String == "eTriangleFan") { return vk::PrimitiveTopology::eTriangleFan; }
+    if (String == "eLineListWithAdjacency") { return vk::PrimitiveTopology::eLineListWithAdjacency; }
+    if (String == "eLineStripWithAdjacency") { return vk::PrimitiveTopology::eLineStripWithAdjacency; }
+    if (String == "eTriangleListWithAdjacency") { return vk::PrimitiveTopology::eTriangleListWithAdjacency; }
+    if (String == "eTriangleStripWithAdjacency") { return vk::PrimitiveTopology::eTriangleStripWithAdjacency; }
+    if (String == "ePatchList") { return vk::PrimitiveTopology::ePatchList; }
+    LOG_FATAL(LogVulkan, "[{}]: Unsupported primitive topology string.", String)
+}
+
+template<>
+inline vk::CompareOp Vk_FromString<vk::CompareOp>(LStringView String) noexcept
+{
+    if (String == "eNever") { return vk::CompareOp::eNever; }
+    if (String == "eLess") { return vk::CompareOp::eLess; }
+    if (String == "eEqual") { return vk::CompareOp::eEqual; }
+    if (String == "eLessOrEqual") { return vk::CompareOp::eLessOrEqual; }
+    if (String == "eGreater") { return vk::CompareOp::eGreater; }
+    if (String == "eNotEqual") { return vk::CompareOp::eNotEqual; }
+    if (String == "eGreaterOrEqual") { return vk::CompareOp::eGreaterOrEqual; }
+    if (String == "eAlways") { return vk::CompareOp::eAlways; }
+    LOG_FATAL(LogVulkan, " [{}]: Unsupported compare op string.", String)
+}
+
+template<>
+inline vk::StencilOp Vk_FromString<vk::StencilOp>(LStringView String) noexcept
+{
+    if (String == "eKeep") { return vk::StencilOp::eKeep; }
+    if (String == "eZero") { return vk::StencilOp::eZero; }
+    if (String == "eReplace") { return vk::StencilOp::eReplace; }
+    if (String == "eIncrementAndClamp") { return vk::StencilOp::eDecrementAndClamp; }
+    if (String == "eDecrementAndClamp") { return vk::StencilOp::eDecrementAndClamp; }
+    if (String == "eInvert") { return vk::StencilOp::eInvert; }
+    if (String == "eIncrementAndWrap") { return vk::StencilOp::eIncrementAndWrap; }
+    if (String == "eDecrementAndWrap") { return vk::StencilOp::eDecrementAndWrap; }
+    LOG_FATAL(LogVulkan, " [{}]: Unsupported stencil op.", String)
 }
 
 } /* ~Namespace Jafg */

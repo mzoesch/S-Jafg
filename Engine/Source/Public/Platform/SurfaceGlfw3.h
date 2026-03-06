@@ -50,7 +50,7 @@ public:
     void PollPlatformEvents();
     void OnRender();
 
-    ENGINE_API void SetInputMode(EInputMode::Type InMode) noexcept;
+    ENGINE_API void SetInputMode(EInputMode InMode) noexcept;
     ENGINE_API void _SetMouseCursor(const EMouseCursor::Type InCursor);
 
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }

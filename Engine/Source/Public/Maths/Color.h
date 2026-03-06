@@ -52,10 +52,10 @@ struct LLinearColor final
         : A(InA), R(InR), G(InG), B(InB)
 #endif /* !JAFG_PLATFORM_USES_LITTLE_ENDIAN */
     {
-        check( InR >= 0.0f && InR <= 1.0f )
-        check( InG >= 0.0f && InG <= 1.0f )
-        check( InB >= 0.0f && InB <= 1.0f )
-        check( InA >= 0.0f && InA <= 1.0f )
+        check(InR >= 0.0f && InR <= 1.0f)
+        check(InG >= 0.0f && InG <= 1.0f)
+        check(InB >= 0.0f && InB <= 1.0f)
+        check(InA >= 0.0f && InA <= 1.0f)
 
         return;
     }
@@ -63,14 +63,14 @@ struct LLinearColor final
     FORCEINLINE constexpr LLinearColor(const f32 InColor) noexcept
         : B(InColor), G(InColor), R(InColor), A(1.0f)
     {
-        check( InColor >= 0.0f && InColor <= 1.0f )
+        check(InColor >= 0.0f && InColor <= 1.0f)
         return;
     }
 
     FORCEINLINE constexpr LLinearColor(const f64 InColor) noexcept
         : B(static_cast<f32>(InColor)), G(static_cast<f32>(InColor)), R(static_cast<f32>(InColor)), A(1.0f)
     {
-        check( InColor >= 0.0f && InColor <= 1.0f )
+        check(InColor >= 0.0f && InColor <= 1.0f)
         return;
     }
 

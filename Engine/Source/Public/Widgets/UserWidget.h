@@ -51,25 +51,7 @@ public:
     //# Whether this is a top level widget inside the viewport.
     FORCEINLINE constexpr bool IsTopLevel() const noexcept { return this->bIsTopLevel; }
 
-    //# Set the root for this user widget.
-    void SetRoot(WNode* InRoot);
-    virtual void RemoveFromParent(bool bDestroy = true) override;
-
-    FORCEINLINE bool IsRootValid() const noexcept { return this->GetChildren().empty() == false; }
-    FORCEINLINE WNode* GetRoot() const noexcept { if (this->GetChildren().empty()) { return nullptr; } return this->GetChildren()[0]->Content; }
-    FORCEINLINE WNode* GetRootChecked() const noexcept { check(this->GetChildren().empty() == false) return this->GetChildren()[0]->Content; }
-    FORCEINLINE WNode* GetRootAsserted() const noexcept { jassert(this->GetChildren().empty() == false) return this->GetChildren()[0]->Content; }
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetRoot() const noexcept { return StaticCast<TNode>(this->GetRoot()); }
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetRootChecked() const noexcept { return StaticCast<TNode>(this->GetRootChecked()); }
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetRootAsserted() const noexcept { return StaticCast<TNode>(this->GetRootAsserted()); }
-
 private:
-
-    virtual LWidgetSlot* AddChild(WNode* InChild) override final { this->SetRoot(InChild); return this->GetChildren()[0]; }
-    virtual LWidgetSlot* AddChildAt(const i32 InIndex, WNode* InChild) override final { this->SetRoot(InChild); return this->GetChildren()[0]; }
 
     bool bIsTopLevel{};
 };
@@ -91,7 +73,8 @@ struct TDeferredUserWidgetExec : public TDeferredObjectExec<TCxxClass>
     {
         if (this->bReleased == false)
         {
-            this->Class.GetViewport().AddWidget(&this->Class);
+            this->bReleased = true;
+            this->Class.GetViewport()._AddWidget(&this->Class);
         }
     }
 };
@@ -100,11 +83,5 @@ struct TDeferredUserWidgetExec : public TDeferredObjectExec<TCxxClass>
 
 inline constexpr Detail::NewDeferredObjectFn<LWidgetDynamicInit, TWidgetStaticInit, Detail::TDeferredUserWidgetExec, WUserWidget> ConstructDeferredWidget{};
 inline constexpr Detail::NewObjectFn<decltype(ConstructDeferredWidget), LWidgetDynamicInit, TWidgetStaticInit, WUserWidget> ConstructWidget{ConstructDeferredWidget};
-
-template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
-FORCEINLINE TWidget* LViewport::AddWidget()
-{
-    return ConstructWidget(TWidgetStaticInit<TWidget>{*this});
-}
 
 } /* ~Namespace Jafg */

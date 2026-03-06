@@ -194,9 +194,9 @@ void Jafg::WTextButton::Construct()
     return;
 }
 
-void Jafg::WTextButton::Draw(LViewport& Context) const
+void Jafg::WTextButton::Draw(LNodeRenderInfo const& Info) const
 {
-    Super::Draw(Context);
+    Super::Draw(Info);
 }
 
 bool Jafg::WTextButton::SetContent(const LString& InContent)

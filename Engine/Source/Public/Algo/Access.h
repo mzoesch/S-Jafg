@@ -23,10 +23,9 @@ template<typename T> requires std::is_default_constructible_v<T>
 FORCEINLINE constexpr void swap_default(T* Element)
     noexcept(std::is_nothrow_default_constructible_v<T> && std::is_nothrow_swappable_v<T>)
 {
-    check( Element )
+    check(Element)
     T Default;
     swap(*Element, Default);
-    return;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,9 +39,9 @@ using std::identity;
 //# Projection to the raw underlying value of a unique pointer.
 struct unique_raw
 {
-    template<typename T>
+    template<typename T, typename Deleter>
     NODISCARD FORCEINLINE constexpr auto
-    operator()(const TUnique<T>& Ptr) const noexcept -> T*
+    operator()(const TUnique<T,Deleter>& Ptr) const noexcept -> T*
     {
         return Ptr.get();
     }
@@ -67,6 +66,26 @@ struct raw_pointer_deref
     {
         check( Ptr )
         return *Ptr;
+    }
+};
+//# Projection to the first item in a pair.
+struct pair_first
+{
+    template<typename T, typename U>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(std::pair<T,U>& Pair) -> T&
+    {
+        return Pair.first;
+    }
+};
+//# Projection to the second item in a pair.
+struct pair_second
+{
+    template<typename T, typename U>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(std::pair<T,U>& Pair) -> U&
+    {
+        return Pair.second;
     }
 };
 
@@ -111,7 +130,7 @@ using std::sized_sentinel_for;
 //# Trivial distance.
 using std::distance;
 template<input_range TRange, typename TIt>
-FORCEINLINE constexpr decltype(auto) distance(TRange Range, TIt It) noexcept
+FORCEINLINE constexpr decltype(auto) distance(TRange const& Range, TIt It) noexcept
 {
     return std::ranges::distance(begin(Range), It);
 }
@@ -573,17 +592,14 @@ concept void_mutable_predicate = requires(TFn&& Fn, TWhat What) { std::invoke(st
 template<typename TContainer>
 FORCEINLINE constexpr void orphan(TContainer* Container) noexcept
 {
-    Container->clear();
     swap_default(Container);
-    check( Container->size() == Container->capacity() )
-    return;
+    check(Container->size() == Container->capacity())
 }
 template<>
 FORCEINLINE constexpr void orphan<LString>(LString* Container) noexcept
 {
-    Container->clear();
     swap_default(Container);
-    return;
+    check(Container->size() == 0)
 }
 
 //# Whether a container can reserve memory.

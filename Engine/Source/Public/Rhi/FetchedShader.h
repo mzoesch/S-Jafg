@@ -67,7 +67,6 @@ struct LFetchedShader final
 
     TArray<LString> IncludeDirectories;
     TArray<LShaderEntrypoint> Entrypoints;
-
     TArray<CompileTimeDefinition> CompileTimeDefinitions;
 
     TOptional<LPath> Src;
@@ -75,12 +74,15 @@ struct LFetchedShader final
     TOptional<LPath> Dst;
     TOptional<LPath> DstPrefix;
 
+    TOptional<vk::PipelineInputAssemblyStateCreateInfo> PipelineInputAssemblyState;
+    TOptional<vk::PipelineDepthStencilStateCreateInfo> PipelineDepthStencilState;
+
     TOptional<LString> VertexInput;
     // Flatten this. with min vulkan guaranteed value.
     TArray<LString> PushConstants;
     TArray<Layout> Layouts;
 
-    inline LPath GetSrc() const
+    inline LPath GetSrc() const noexcept
     {
         if (this->Src.has_value() == false)
         {
@@ -93,7 +95,7 @@ struct LFetchedShader final
         return *this->Src;
     }
 
-    inline LPath GetDst() const
+    inline LPath GetDst() const noexcept
     {
         if (this->Dst.has_value() == false)
         {

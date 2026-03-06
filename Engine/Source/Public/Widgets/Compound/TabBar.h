@@ -114,29 +114,29 @@ public:
     virtual void Construct() override;
 
     FORCEINLINE void ResetWrapperClass() { this->WrapperClass = nullptr; }
-    FORCEINLINE void SetWrapperClass(const TSubclassOf<WParentBase>& InWrapperClass) { this->WrapperClass = InWrapperClass; }
+    FORCEINLINE void SetWrapperClass(const TSubclassOf<WParent>& InWrapperClass) { this->WrapperClass = InWrapperClass; }
     FORCEINLINE void ResetDefaultAlignmentPreference() { this->bIsVertical.reset(); }
     FORCEINLINE void SetVerticalPreference() { this->bIsVertical = true; }
     FORCEINLINE void SetHorizontalPreference() { this->bIsVertical = false; }
 
     FORCEINLINE bool IsButtonContainerValid() const { return this->ButtonsContainer != nullptr; }
-    FORCEINLINE auto GetButtonsContainer() -> WParentBase* { return this->ButtonsContainer; }
-    FORCEINLINE auto GetButtonsContainer() const -> const WParentBase* { return this->ButtonsContainer; }
+    FORCEINLINE auto GetButtonsContainer() -> WParent* { return this->ButtonsContainer; }
+    FORCEINLINE auto GetButtonsContainer() const -> const WParent* { return this->ButtonsContainer; }
     FORCEINLINE bool IsSwitcherValid() const { return this->Switcher != nullptr; }
     FORCEINLINE auto GetSwitcher() -> WSwitcher* { return this->Switcher; }
     FORCEINLINE auto GetSwitcher() const -> const WSwitcher* { return this->Switcher; }
 
     void RegisterTab(LTabBarTabDescriptor&& InTabDescriptor);
-    void AppendVSpace_v2(const LWidgetSize1 VSpace);
-    void AppendHSpace_v2(const LWidgetSize1 HSpace);
+    void AppendVSpace_v2(LWidgetSize1 VSpace);
+    void AppendHSpace_v2(LWidgetSize1 HSpace);
     void AppendStretch(const LAnchor& InStretch);
     bool UnregisterTab(const LString& Identifier);
     bool UnregisterTabChecked(const LString& Identifier) { const bool bOut = this->UnregisterTab(Identifier); check( bOut ); return bOut; }
 
     template<typename TNode>
     FORCEINLINE void SetButtonsContainerClass() { this->SetButtonsContainerClass(TNode::StaticClass()); }
-    FORCEINLINE void SetButtonsContainerClass(const TSubclassOf<WParentBase>& InButtonsContainerClass) { this->ButtonsContainerClass = InButtonsContainerClass; }
-    FORCEINLINE auto GetCurrentButtonsContainerClass() const -> const TSubclassOf<WParentBase>& { return this->ButtonsContainerClass; }
+    FORCEINLINE void SetButtonsContainerClass(const TSubclassOf<WParent>& InButtonsContainerClass) { this->ButtonsContainerClass = InButtonsContainerClass; }
+    FORCEINLINE auto GetCurrentButtonsContainerClass() const -> const TSubclassOf<WParent>& { return this->ButtonsContainerClass; }
 
     template<typename TNode>
     FORCEINLINE void SetSwitcherClass() { this->SetSwitcherClass(TNode::StaticClass()); }
@@ -161,26 +161,20 @@ protected:
 
     struct LAddedTabBarTab;
 
-    //#
     //# An optional class to set that wraps both the buttons section and the switcher.
-    //#
-    TSubclassOf<WParentBase> WrapperClass;
+    TSubclassOf<WParent> WrapperClass;
     //#
     //# The preference for alignment of buttons and switcher if the wrapper class is not set.
     //# If this is not set, then there will not occur any wrapping.
     //#
     TOptional<bool> bIsVertical{ false };
 
-    //#
     //# The container where the buttons are stored.
-    //#
-    WParentBase* ButtonsContainer{};
-    TSubclassOf<WParentBase> ButtonsContainerClass;
+    WParent* ButtonsContainer{};
+    TSubclassOf<WParent> ButtonsContainerClass;
     TSubclassOf<WNode> DefaultButtonClass;
 
-    //#
     //# The switcher where the panels are stored.
-    //#
     WSwitcher* Switcher{};
     TSubclassOf<WSwitcher> SwitcherClass;
 

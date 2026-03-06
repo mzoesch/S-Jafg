@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Minimal.afx"
+#include "Engine/EngineCompileTimeConstants.h"
 
 #if JAFG_WITH_FOREIGN_SUPPORT
 
