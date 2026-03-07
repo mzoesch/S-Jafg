@@ -115,6 +115,7 @@ struct LTexture2 final
 
     FORCEINLINE constexpr auto const& GetMetadata() const noexcept { return this->Meta; }
     FORCEINLINE constexpr auto const& GetExtent() const noexcept { return this->Meta.Extent; }
+    FORCEINLINE constexpr LVec2F GetExtentAsVec2F() const noexcept { return LVec2F{this->Meta.Extent.Width, this->Meta.Extent.Height}; }
     FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Meta.Extent.Width; }
     FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Meta.Extent.Height; }
     FORCEINLINE constexpr auto GetFormat() const noexcept { return this->Meta.Format; }
@@ -128,6 +129,15 @@ struct LTexture2 final
     FORCEINLINE constexpr LDeviceImage const& GetDeviceHandle() const noexcept { return this->Handle; }
     FORCEINLINE bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
     FORCEINLINE constexpr auto const& GetImageView() const noexcept { return this->View; }
+
+    FORCEINLINE constexpr bool IsBindless() const noexcept { return this->BindlessIndex != INDEX_NONE; }
+    FORCEINLINE constexpr u32 GetBindlessIndex() const noexcept
+    {
+        check(this->BindlessIndex >= std::numeric_limits<u32>::min() && this->BindlessIndex <= std::numeric_limits<u32>::max())
+        return static_cast<u32>(this->BindlessIndex);
+    }
+    //# Internal method. Do not use!!!
+    FORCEINLINE constexpr void _SetBindlessIndex(i64 Value) noexcept { this->BindlessIndex = Value; }
 
 private:
 
@@ -144,6 +154,7 @@ private:
     LByteBulkData MipMap0;
     LDeviceImage Handle;
     vk::raii::ImageView View{ nullptr };
+    i64 BindlessIndex{ INDEX_NONE };
 };
 
 typedef TSharedRef<LTexture2> LTexture2Ref;

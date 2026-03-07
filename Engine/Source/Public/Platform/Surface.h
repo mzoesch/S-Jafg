@@ -50,9 +50,9 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceBase)
     virtual ~LSurfaceBase() = default;
 
-    template<class T = LSurfaceBase>
+    template<typename T = LSurfaceBase>
     NODISCARD FORCEINLINE T* As();
-    template<class T = LSurfaceBase>
+    template<typename T = LSurfaceBase>
     NODISCARD FORCEINLINE T const* As() const;
     NODISCARD FORCEINLINE LSurface* AsSurface();
     NODISCARD FORCEINLINE LSurface const* AsSurface() const;
@@ -245,14 +245,14 @@ void Jafg::LSurfaceBase::AddKeyDown(LRawInput const& RawInput)
     return;
 }
 
-template<class T>
+template<typename T>
 NODISCARD FORCEINLINE T* Jafg::LSurfaceBase::As()
 {
     static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");
     return static_cast<T*>(this);
 }
 
-template<class T>
+template<typename T>
 NODISCARD FORCEINLINE T const* Jafg::LSurfaceBase::As() const
 {
     static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");

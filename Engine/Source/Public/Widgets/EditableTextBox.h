@@ -27,7 +27,6 @@ protected:
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetAnchor(EAnchor::Fill);
         this->SetPadding({5.0, 4.0});
-        this->SetType(ERegionBrush::Box);
         this->SetTint(Colors::Black);
         this->SetTextColor(Colors::White);
     }
@@ -37,7 +36,6 @@ protected:
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetAnchor(EAnchor::Fill);
         this->SetPadding({5.0, 4.0});
-        this->SetType(ERegionBrush::Box);
         this->SetTint(Colors::Black);
         this->SetTextColor(Colors::White);
     }

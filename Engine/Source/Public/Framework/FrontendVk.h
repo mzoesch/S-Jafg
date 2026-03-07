@@ -5,9 +5,12 @@
 #include "Framework/FrontendForward.h"
 #include "Framework/Frontend.h"
 #include "Rhi/ImmutableBuffer.h"
+#include "Rhi/BindlessTextureArray.h"
 
 namespace Jafg
 {
+
+struct LTexture2;
 
 struct LSlangCompilationRequest
 {
@@ -93,7 +96,7 @@ public:
     FORCEINLINE auto const& Vk_GetTransientCommandPool() const noexcept { return this->Vk_TransientCommandPool; }
 
     FORCEINLINE auto Vk_GetPreferredDepthFormat() const noexcept { return this->Vk_PreferredDepthFormat; }
-    FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check( this->Vk_SurfaceFormat.format != vk::Format::eUndefined ) return this->Vk_SurfaceFormat; }
+    FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check(this->Vk_SurfaceFormat.format != vk::Format::eUndefined) return this->Vk_SurfaceFormat; }
 
     FORCEINLINE auto Vk_GetNumberOfFramesInFlight() const noexcept { return this->Vk_FramesInFlight; }
     void _Vk_ReportFramesInFlight(u32 FramesInFlight) noexcept
@@ -102,9 +105,18 @@ public:
         this->Vk_FramesInFlight = FramesInFlight;
     }
 
-    FORCEINLINE auto const& Vk_GetDefaultSampler() const noexcept { return this->Vk_DefaultSampler; }
+    FORCEINLINE auto const& Vk_GetDefaultSamplers() const noexcept { return this->Vk_DefaultSamplers; }
+    FORCEINLINE auto const& Vk_GetSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::RepeatSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetSamplerClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetSamplerClampToBorder() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToBorderSamplerIdx]; }
+    // FORCEINLINE auto const& Vk_GetSamplerMirrorClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx]; }
+
     //# @return A descriptor pool that lives for as long the frontend lives.
     FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
+    FORCEINLINE u32 Vk_GetBindlessTextureCapacity() const noexcept { return this->Vk_BindlessTextureCapacity; }
+    FORCEINLINE auto const& Vk_GetBindlessTextureArrayDescriptorPool() const noexcept { return this->Vk_BindlessTextureArrayDescriptorPool; }
+    FORCEINLINE auto const& Vk_GetBindlessTextureArrayDescriptorSet() const noexcept { return this->Vk_BindlessTextureArrayDescriptorSet; }
     FORCEINLINE auto const& Vk_GetDescriptorSetLayouts() const noexcept { return this->Vk_DescriptorSetLayouts; }
     FORCEINLINE auto&       Vk_GetMutableDescriptorSetLayouts() noexcept { return this->Vk_DescriptorSetLayouts; }
     FORCEINLINE auto const& Vk_GetImmutableBuffers() const noexcept { return this->Vk_ImmutableBuffers; }
@@ -117,6 +129,8 @@ public:
         this->Vk_ImmutableBuffers.emplace(Identifier, std::move(Buffer));
         return true;
     }
+
+    ENGINE_API void Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture);
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
@@ -231,8 +245,12 @@ private:
 
     u32 Vk_FramesInFlight{};
 
-    vk::raii::Sampler Vk_DefaultSampler{ nullptr };
+    std::array<vk::raii::Sampler, UBO::BindlessTextureArray::SamplerCount> Vk_DefaultSamplers JAFG_INIT_FOUR(nullptr);
     vk::raii::DescriptorPool Vk_DescriptorPool{ nullptr };
+    u32 Vk_BindlessTextureCapacity{ 128u };
+    vk::raii::DescriptorPool Vk_BindlessTextureArrayDescriptorPool{ nullptr };
+    vk::raii::DescriptorSet Vk_BindlessTextureArrayDescriptorSet{ nullptr };
+    LDynamicBitset Vk_FreeBindlessTextures;
     std::unordered_map<LString, vk::raii::DescriptorSetLayout> Vk_DescriptorSetLayouts;
     std::unordered_map<LString, LImmutableBuffer> Vk_ImmutableBuffers;
 };

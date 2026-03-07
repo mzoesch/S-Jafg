@@ -18,7 +18,6 @@ void Jafg::WCommonMenuTabBarPanel::Construct()
 
     BeginStyling(*this).Root<WRegion>().SaveTo(&this->Panel)
         .Anchor(EAnchor::Fill)
-        .Type(ERegionBrush::Box)
         .Tint(Tint);
 
     return;
@@ -47,7 +46,6 @@ void Jafg::WCommonMenuTabBar::Construct()
         VRegion->SetMinDesiredSize({80_pt, 0});
 
         VRegion->SetAnchor(EAnchor::VFill);
-        VRegion->SetType(ERegionBrush::Box);
         VRegion->SetTint({0, 0, 0, WCommonMenuTabBar::GetAlphaTintBasedOfDepth(this->Depth)});
     }
 

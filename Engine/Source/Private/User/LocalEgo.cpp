@@ -71,13 +71,10 @@ void Jafg::LLocalEgo::Initialize()
         return;
     })});
 
-    this->Frontend.Initialize(&this->Outer);
-
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JLocalEgoSubsystem>();
 
-    this->Frontend.GetCollection()->InitializeDeferred(&this->Outer);
-    this->Frontend.GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
+    this->Frontend.Initialize(&this->Outer);
 
     return;
 }

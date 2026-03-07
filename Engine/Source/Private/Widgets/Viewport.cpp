@@ -430,7 +430,9 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         auto WorldDataWriteInfo{Shared.WriteInfo(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
         std::array Writes{vk::WriteDescriptorSet{
             .dstSet = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame],
-            .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
             .descriptorType = vk::DescriptorType::eUniformBuffer,
             .pBufferInfo = &WorldDataWriteInfo,
             }};
@@ -480,9 +482,10 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         };
     Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 
-    std::array<vk::DescriptorSet, 2> DescriptorSetsToBind;
-    DescriptorSetsToBind[0] = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
-    DescriptorSetsToBind[1] = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second;
+    std::array<vk::DescriptorSet, 3> DescriptorSetsToBind;
+    DescriptorSetsToBind[0] = *this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
+    DescriptorSetsToBind[1] = *Frontend.Vk_GetBindlessTextureArrayDescriptorSet();
+    DescriptorSetsToBind[2] = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second;
     NodeInfo.CommandBuffer.bindDescriptorSets2({
         .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
         .layout = *Instance.Material->Pipeline.Layout,

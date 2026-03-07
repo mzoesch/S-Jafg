@@ -1,19 +1,23 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/Frontend.h"
-#include "Core/Application.h"
+#include "Framework/TextureSubsystem.h"
 #include "Platform/Surface.h"
 #include "Subsystems/FrontendSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
-#include "Widgets/Node.h"
-#include "Widgets/Viewport.h"
 #include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
-#include "User/LocalEgo.h"
 #include "User/Input/UserInput.h"
-#include "Widgets/UserWidget.h"
-#include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
+#include "Stats/Stats.h"
+
+void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
+{
+    this->GetCollection()->InitializeDeferred(Outer);
+    this->GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
+
+    this->GuaranteedTextures.emplace_back(this->GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Jafg.IdentityMul"));
+}
 
 void Jafg::LFrontendBase::Tick()
 {
@@ -54,6 +58,7 @@ void Jafg::LFrontendBase::TearDown()
 
     LOG_VERBOSE(LogFrontEnd, "Tearing down frontend and all its surfaces.")
 
+    algo::orphan(&this->GuaranteedTextures);
     this->Collection.TearDownSubsystems();
     algo::orphan(&this->Surfaces);
 

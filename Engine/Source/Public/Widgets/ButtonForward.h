@@ -9,10 +9,10 @@ namespace Jafg
 
 struct LButtonStyle
 {
-    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = Colors::Gray,          .OutlineTint = Colors::Black };
-    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = Colors::Gray,          .OutlineTint = Colors::White };
-    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = Colors::Gray,          .OutlineTint = Colors::White };
-    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = Colors::NotSoDarkGray, .OutlineTint = Colors::Black };
+    LRegionBrush NormalBrush   { .Tint = Colors::Gray,          .OutlineTint = Colors::Black };
+    LRegionBrush HoverBrush    { .Tint = Colors::Gray,          .OutlineTint = Colors::White };
+    LRegionBrush PressBrush    { .Tint = Colors::Gray,          .OutlineTint = Colors::White };
+    LRegionBrush DisabledBrush { .Tint = Colors::NotSoDarkGray, .OutlineTint = Colors::Black };
 };
 
 //# Inherit from this to access common button logic.
@@ -38,20 +38,6 @@ public:
         this->Style.HoverBrush    = InBrush;
         this->Style.PressBrush    = InBrush;
         this->Style.DisabledBrush = InBrush;
-
-        return;
-    }
-
-    FORCEINLINE void SetNormalType(const ERegionBrush InType) noexcept { this->Style.NormalBrush.Type = InType; }
-    FORCEINLINE void SetHoverType(const ERegionBrush InType) noexcept { this->Style.HoverBrush.Type = InType; }
-    FORCEINLINE void SetPressType(const ERegionBrush InType) noexcept { this->Style.PressBrush.Type = InType; }
-    FORCEINLINE void SetDisabledType(const ERegionBrush InType) noexcept { this->Style.DisabledBrush.Type = InType; }
-    FORCEINLINE void SetOmniType(const ERegionBrush InType) noexcept
-    {
-        this->Style.NormalBrush.Type   = InType;
-        this->Style.HoverBrush.Type    = InType;
-        this->Style.PressBrush.Type    = InType;
-        this->Style.DisabledBrush.Type = InType;
 
         return;
     }
@@ -84,58 +70,44 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImageTint(LColor const& InImageTint) noexcept { this->Style.NormalBrush.Tint = InImageTint; }
-    FORCEINLINE void SetHoverImageTint(LColor const& InImageTint) noexcept { this->Style.HoverBrush.Tint = InImageTint; }
-    FORCEINLINE void SetPressImageTint(LColor const& InImageTint) noexcept { this->Style.PressBrush.Tint = InImageTint; }
-    FORCEINLINE void SetDisabledImageTint(LColor const& InImageTint) noexcept { this->Style.DisabledBrush.Tint = InImageTint; }
-    FORCEINLINE void SetOmniImageTint(LColor const& InImageTint) noexcept
-    {
-        this->Style.NormalBrush.ImageTint   = InImageTint;
-        this->Style.HoverBrush.ImageTint    = InImageTint;
-        this->Style.PressBrush.ImageTint    = InImageTint;
-        this->Style.DisabledBrush.ImageTint = InImageTint;
-
-        return;
-    }
-
-    FORCEINLINE void SetNormalImageScale(const f64 InImageScale) noexcept { this->Style.NormalBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetHoverImageScale(const f64 InImageScale) noexcept { this->Style.HoverBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetPressImageScale(const f64 InImageScale) noexcept { this->Style.PressBrush.ImageScale = InImageScale; }
-    FORCEINLINE void SetDisabledImageScale(const f64 InImageScale) noexcept { this->Style.DisabledBrush.ImageScale = InImageScale; }
+    FORCEINLINE void SetNormalImageScale(const f64 InImageScale) noexcept { this->Style.NormalBrush.TextureScale = InImageScale; }
+    FORCEINLINE void SetHoverImageScale(const f64 InImageScale) noexcept { this->Style.HoverBrush.TextureScale = InImageScale; }
+    FORCEINLINE void SetPressImageScale(const f64 InImageScale) noexcept { this->Style.PressBrush.TextureScale = InImageScale; }
+    FORCEINLINE void SetDisabledImageScale(const f64 InImageScale) noexcept { this->Style.DisabledBrush.TextureScale = InImageScale; }
     FORCEINLINE void SetOmniImageScale(const f64 InImageScale) noexcept
     {
-        this->Style.NormalBrush.ImageScale   = InImageScale;
-        this->Style.HoverBrush.ImageScale    = InImageScale;
-        this->Style.PressBrush.ImageScale    = InImageScale;
-        this->Style.DisabledBrush.ImageScale = InImageScale;
+        this->Style.NormalBrush.TextureScale   = InImageScale;
+        this->Style.HoverBrush.TextureScale    = InImageScale;
+        this->Style.PressBrush.TextureScale    = InImageScale;
+        this->Style.DisabledBrush.TextureScale = InImageScale;
 
         return;
     }
 
-    FORCEINLINE void SetNormalImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.NormalBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetHoverImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.HoverBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetPressImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.PressBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetDisabledImageBehavior(const EImageBehavior InImageBehavior) noexcept { this->Style.DisabledBrush.ImageBehavior = InImageBehavior; }
-    FORCEINLINE void SetOmniImageBehavior(const EImageBehavior InImageBehavior) noexcept
+    FORCEINLINE void SetNormalImageBehavior(const ETexCoordBehavior InImageBehavior) noexcept { this->Style.NormalBrush.TexCoordBehavior = InImageBehavior; }
+    FORCEINLINE void SetHoverImageBehavior(const ETexCoordBehavior InImageBehavior) noexcept { this->Style.HoverBrush.TexCoordBehavior = InImageBehavior; }
+    FORCEINLINE void SetPressImageBehavior(const ETexCoordBehavior InImageBehavior) noexcept { this->Style.PressBrush.TexCoordBehavior = InImageBehavior; }
+    FORCEINLINE void SetDisabledImageBehavior(const ETexCoordBehavior InImageBehavior) noexcept { this->Style.DisabledBrush.TexCoordBehavior = InImageBehavior; }
+    FORCEINLINE void SetOmniImageBehavior(const ETexCoordBehavior InImageBehavior) noexcept
     {
-        this->Style.NormalBrush.ImageBehavior   = InImageBehavior;
-        this->Style.HoverBrush.ImageBehavior    = InImageBehavior;
-        this->Style.PressBrush.ImageBehavior    = InImageBehavior;
-        this->Style.DisabledBrush.ImageBehavior = InImageBehavior;
+        this->Style.NormalBrush.TexCoordBehavior   = InImageBehavior;
+        this->Style.HoverBrush.TexCoordBehavior    = InImageBehavior;
+        this->Style.PressBrush.TexCoordBehavior    = InImageBehavior;
+        this->Style.DisabledBrush.TexCoordBehavior = InImageBehavior;
 
         return;
     }
 
-    FORCEINLINE void SetNormalImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.NormalBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetHoverImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.HoverBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetPressImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.PressBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetDisabledImageOobm(const EImageOobm InImageOobm) noexcept { this->Style.DisabledBrush.ImageOobm = InImageOobm; }
-    FORCEINLINE void SetOmniImageOobm(const EImageOobm InImageOobm) noexcept
+    FORCEINLINE void SetNormalSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Style.NormalBrush.SamplerAddressMode = InSamplerAddressMode; }
+    FORCEINLINE void SetHoverSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Style.HoverBrush.SamplerAddressMode = InSamplerAddressMode; }
+    FORCEINLINE void SetPressSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Style.PressBrush.SamplerAddressMode = InSamplerAddressMode; }
+    FORCEINLINE void SetDisabledSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Style.DisabledBrush.SamplerAddressMode = InSamplerAddressMode; }
+    FORCEINLINE void SetOmniSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept
     {
-        this->Style.NormalBrush.ImageOobm   = InImageOobm;
-        this->Style.HoverBrush.ImageOobm    = InImageOobm;
-        this->Style.PressBrush.ImageOobm    = InImageOobm;
-        this->Style.DisabledBrush.ImageOobm = InImageOobm;
+        this->Style.NormalBrush.SamplerAddressMode   = InSamplerAddressMode;
+        this->Style.HoverBrush.SamplerAddressMode    = InSamplerAddressMode;
+        this->Style.PressBrush.SamplerAddressMode    = InSamplerAddressMode;
+        this->Style.DisabledBrush.SamplerAddressMode = InSamplerAddressMode;
 
         return;
     }
@@ -278,32 +250,6 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TClass)
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalType(this auto&& Self, const ERegionBrush InType)
-    {
-        NODE_FACTORY_SELF().SetNormalType(InType);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) HoverType(this auto&& Self, const ERegionBrush InType)
-    {
-        NODE_FACTORY_SELF().SetHoverType(InType);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) PressType(this auto&& Self, const ERegionBrush InType)
-    {
-        NODE_FACTORY_SELF().SetPressType(InType);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) DisabledType(this auto&& Self, const ERegionBrush InType)
-    {
-        NODE_FACTORY_SELF().SetDisabledType(InType);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) OmniType(this auto&& Self, const ERegionBrush InType)
-    {
-        NODE_FACTORY_SELF().SetOmniType(InType);
-        return NODE_FACTORY_RESULT();
-    }
-
     decltype(auto) NormalTint(this auto&& Self, const LColor& InTint)
     {
         NODE_FACTORY_SELF().SetNormalTint(InTint);
@@ -356,32 +302,6 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TClass)
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalImageTint(this auto&& Self, const LColor& InImageTint)
-    {
-        NODE_FACTORY_SELF().SetNormalImageTint(InImageTint);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) HoverImageTint(this auto&& Self, const LColor& InImageTint)
-    {
-        NODE_FACTORY_SELF().SetHoverImageTint(InImageTint);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) PressImageTint(this auto&& Self, const LColor& InImageTint)
-    {
-        NODE_FACTORY_SELF().SetPressImageTint(InImageTint);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) DisabledImageTint(this auto&& Self, const LColor& InImageTint)
-    {
-        NODE_FACTORY_SELF().SetDisabledImageTint(InImageTint);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) OmniImageTint(this auto&& Self, const LColor& InImageTint)
-    {
-        NODE_FACTORY_SELF().SetOmniImageTint(InImageTint);
-        return NODE_FACTORY_RESULT();
-    }
-
     decltype(auto) NormalImageScale(this auto&& Self, const f32 InImageScale)
     {
         NODE_FACTORY_SELF().SetNormalImageScale(InImageScale);
@@ -407,55 +327,55 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TClass)
         NODE_FACTORY_SELF().SetOmniImageScale(InImageScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) NormalImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    decltype(auto) NormalImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
     {
         NODE_FACTORY_SELF().SetNormalImageBehavior(InImageBehavior);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) HoverImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    decltype(auto) HoverImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
     {
         NODE_FACTORY_SELF().SetHoverImageBehavior(InImageBehavior);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) PressImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    decltype(auto) PressImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
     {
         NODE_FACTORY_SELF().SetPressImageBehavior(InImageBehavior);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) DisabledImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    decltype(auto) DisabledImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
     {
         NODE_FACTORY_SELF().SetDisabledImageBehavior(InImageBehavior);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OmniImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    decltype(auto) OmniImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
     {
         NODE_FACTORY_SELF().SetOmniImageBehavior(InImageBehavior);
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    decltype(auto) NormalSamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
-        NODE_FACTORY_SELF().SetNormalImageOobm(InImageOobm);
+        NODE_FACTORY_SELF().SetNormalSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) HoverImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    decltype(auto) HoverSamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
-        NODE_FACTORY_SELF().SetHoverImageOobm(InImageOobm);
+        NODE_FACTORY_SELF().SetHoverSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) PressImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    decltype(auto) PressSamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
-        NODE_FACTORY_SELF().SetPressImageOobm(InImageOobm);
+        NODE_FACTORY_SELF().SetPressSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) DisabledImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    decltype(auto) DisabledSamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
-        NODE_FACTORY_SELF().SetDisabledImageOobm(InImageOobm);
+        NODE_FACTORY_SELF().SetDisabledSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OmniImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    decltype(auto) OmniSamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
-        NODE_FACTORY_SELF().SetOmniImageOobm(InImageOobm);
+        NODE_FACTORY_SELF().SetOmniSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
 

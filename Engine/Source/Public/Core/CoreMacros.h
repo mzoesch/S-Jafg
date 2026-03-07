@@ -67,6 +67,16 @@
 #define JAFG_JOIN_SCOPE_RESOLUTION_OUTER_EIGHT( A, B, C, D, E, F, G, H    ) JAFG_JOIN_SCOPE_RESOLUTION_INNER_EIGHT( A, B, C, D, E, F, G, H    )
 #define JAFG_JOIN_SCOPE_RESOLUTION_OUTER_NINE(  A, B, C, D, E, F, G, H, I ) JAFG_JOIN_SCOPE_RESOLUTION_INNER_NINE(  A, B, C, D, E, F, G, H, I )
 
+#define JAFG_INIT_ONE(   DefaultValue ) { DefaultValue }
+#define JAFG_INIT_TWO(   DefaultValue ) { DefaultValue, DefaultValue }
+#define JAFG_INIT_THREE( DefaultValue ) { DefaultValue, DefaultValue, DefaultValue }
+#define JAFG_INIT_FOUR(  DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue }
+#define JAFG_INIT_FIVE(  DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
+#define JAFG_INIT_SIX(   DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
+#define JAFG_INIT_SEVEN( DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
+#define JAFG_INIT_EIGHT( DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
+#define JAFG_INIT_NINE(  DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
+
 //#
 //# Use this macro for formatting raw string literals.
 //# @remark MSVC is by far more permissive, so it supports this feature natively as they always decay raw string

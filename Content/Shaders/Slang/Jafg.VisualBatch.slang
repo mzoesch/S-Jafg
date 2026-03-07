@@ -7,25 +7,28 @@ struct VisualShared
 };
 [[vk::binding(0, 0)]] ConstantBuffer<VisualShared> Shared;
 
+[[vk::binding(0, 1)]] SamplerState[] Samplers;
+[[vk::binding(1, 1)]] Texture2D[] BindlessTextures;
+
 struct InstanceData
 {
     /* (Position, Size) in px. */
     float4 Rect;
     float4 Tint;
+    float4 BackgroundTint;
     float4 Radii;
     float4 OutlineTint;
-    float4 TexCoordTint;
     /* (Min, Max) */
     float4 TexCoordRect;
     float  OutlineThickness;
+    uint TextureIndex;
+    uint SamplerIndex;
 };
-[[vk::binding(0, 1)]] StructuredBuffer<InstanceData> InstanceBuffer;
+[[vk::binding(0, 2)]] StructuredBuffer<InstanceData> InstanceBuffer;
 
 struct FRInput
 {
     float4 Position : SV_POSITION;
-    /* In NDC space */
-    float2 Size;
     float2 UV : TEXCOORD0;
     float2 TexUV : TEXCOORD1;
     uint InstanceID : SV_InstanceID;
@@ -39,7 +42,6 @@ FRInput vertMain(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID)
 
     FRInput Result;
     Result.Position = mul(Shared.Proj, float4(Instance.Rect.xy + Corner * Instance.Rect.zw, 0.0, 1.0));
-    Result.Size = mul(Shared.Proj, float4(Instance.Rect.zw, 0.0, 0.0)).xy;
     Result.UV = Corner;
     Result.TexUV = lerp(Instance.TexCoordRect.xy, Instance.TexCoordRect.zw, Corner);
     Result.InstanceID = instanceId;
@@ -52,15 +54,27 @@ float4 fragMain(FRInput Input) : SV_TARGET
 {
     InstanceData Instance = InstanceBuffer[Input.InstanceID];
 
-    float DistLeft   = (Input.UV.x - 0.0) * Input.Size.x;
-    float DistTop    = (Input.UV.y - 0.0) * Input.Size.y;
-    float DistRight  = (1.0 - Input.UV.x) * Input.Size.x;
-    float DistBottom = (1.0 - Input.UV.y) * Input.Size.y;
+    float DistLeft   = (Input.UV.x - 0.0) * Instance.Rect.z;
+    float DistTop    = (Input.UV.y - 0.0) * Instance.Rect.w;
+    float DistRight  = (1.0 - Input.UV.x) * Instance.Rect.z;
+    float DistBottom = (1.0 - Input.UV.y) * Instance.Rect.w;
 
     bool bCorner  = false;
     bool bOutline = false;
 
-    float4 Result = Instance.Tint;
+    float4 Result;
+    if (Instance.SamplerIndex == JAFG_SAMPLER_CLAMP_TO_BORDER)
+    {
+        Result = lerp(
+            Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
+            Instance.BackgroundTint,
+            (step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
+            );
+    }
+    else
+    {
+        Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+    }
 
     if (DistLeft < Instance.Radii.x && DistTop < Instance.Radii.x) /* TL */
     {
@@ -75,7 +89,7 @@ float4 fragMain(FRInput Input) : SV_TARGET
         }
         bCorner = true;
     }
-    else if (DistRight < Instance.Radii.y && DistTop < Instance.Radii.y) /* TR */
+    if (DistRight < Instance.Radii.y && DistTop < Instance.Radii.y) /* TR */
     {
         float dist = length(float2(Instance.Radii.y - DistRight, Instance.Radii.y - DistTop));
         if (dist > Instance.Radii.y)
@@ -88,7 +102,7 @@ float4 fragMain(FRInput Input) : SV_TARGET
         }
         bCorner = true;
     }
-    else if (DistRight < Instance.Radii.z && DistBottom < Instance.Radii.z) /* BR */
+    if (DistRight < Instance.Radii.z && DistBottom < Instance.Radii.z) /* BR */
     {
         float dist = length(float2(Instance.Radii.z - DistRight, Instance.Radii.z - DistBottom));
         if (dist > Instance.Radii.z)
@@ -101,7 +115,7 @@ float4 fragMain(FRInput Input) : SV_TARGET
         }
         bCorner = true;
     }
-    else if (DistLeft < Instance.Radii.w && DistBottom < Instance.Radii.w) /* BL */
+    if (DistLeft < Instance.Radii.w && DistBottom < Instance.Radii.w) /* BL */
     {
         float dist = length(float2(Instance.Radii.w - DistLeft, Instance.Radii.w - DistBottom));
         if (dist > Instance.Radii.w)

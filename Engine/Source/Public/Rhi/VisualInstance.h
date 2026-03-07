@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Minimal.afx"
 #include "Rhi/UniformBufferObjects.h"
 
 namespace Jafg
@@ -12,11 +11,13 @@ struct alignas(16) LVisualInstance final
 {
     LVec4F Rect;
     LVec4F Tint;
+    LVec4F BackgroundTint;
     LVec4F Radii;
     LVec4F OutlineTint;
-    LVec4F TextureTint;
     LVec4F TexCoordRect;
     f32 OutlineThickness;
+    u32 TextureIndex;
+    u32 SamplerIndex;
 };
 
 namespace UBO

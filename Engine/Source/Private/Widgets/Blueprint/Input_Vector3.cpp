@@ -9,13 +9,11 @@ void Jafg::WInput_Vector3::Construct()
     Super::Construct();
 
     LEditableTextBoxBrush Brush{LTextBoxBrush::Compact()};
-    Brush.Type = ERegionBrush::RoundedOutlineBox;
     Brush.Tint = Colors::Black;
     Brush.OutlineThickness = 1.0f;
     Brush.OutlineTint = Colors::Gray;
 
     BeginStyling(*this).Root<WTextBox>()
-        .Type(ERegionBrush::None)
         .Brush(Brush)
         .Content(this->DisplayName)
         .MinDesiredSize({128_pt, 0});

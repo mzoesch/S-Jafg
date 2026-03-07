@@ -3,19 +3,50 @@
 #include "Widgets/Region.h"
 #include "Engine/Engine.h"
 #include "Rhi/VisualInstance.h"
-#include "Rhi/GraphicsPipelineFactory.h"
 #include "Rhi/NodeRenderInfo.h"
+#include "Rhi/BindlessTextureArray.h"
 
 void Jafg::WRegion::Draw(LNodeRenderInfo const& Info) const
 {
+    auto AnchoredSize{this->GetAnchoredSize_v2()};
+
+    u32 TextureIndex{UBO::BindlessTextureArray::IdentityMulIdx};
+    if (this->Brush.Texture.get())
+    {
+        if (this->Brush.Texture->IsBindless() == false)
+        {
+            this->GetFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->Brush.Texture);
+            check(this->Brush.Texture->IsBindless())
+        }
+
+        TextureIndex = this->Brush.Texture->GetBindlessIndex();
+    }
+
+    LVec4F TexCoordRect{0.0f, 0.0f, 1.0f, 1.0f};
+    if (this->Brush.Texture.get())
+    {
+        if (this->Brush.TexCoordBehavior == ETexCoordBehavior::FitV)
+        {
+            TexCoordRect = TextureBehavior::FitV(TexCoordRect, this->Brush.Texture->GetExtentAsVec2F(), AnchoredSize);
+        }
+        else if (this->Brush.TexCoordBehavior == ETexCoordBehavior::FitH)
+        {
+            TexCoordRect = TextureBehavior::FitH(TexCoordRect, this->Brush.Texture->GetExtentAsVec2F(), AnchoredSize);
+        }
+    }
+
     Info.VisualInstances.emplace_back(LVisualInstance{
-        .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport), this->GetAnchoredSize_v2()},
+        .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport), AnchoredSize},
         .Tint = this->Brush.Tint.ToVector4(),
-        .Radii = this->Brush.Radii,
+        .BackgroundTint = this->Brush.BackgroundTint.ToVector4(),
+        .Radii = this->Brush.bClampRadii
+            ? maths::min(this->Brush.Radii, LVec4F{AnchoredSize.x, AnchoredSize.y, AnchoredSize.x, AnchoredSize.y} / 2.0f)
+            : this->Brush.Radii,
         .OutlineTint = this->Brush.OutlineTint.ToVector4(),
-        .TextureTint = this->Brush.ImageTint.ToVector4(),
-        .TexCoordRect = {0.0f, 0.0f, 1.0f, 1.0f},
+        .TexCoordRect = TexCoordRect,
         .OutlineThickness = this->Brush.OutlineThickness,
+        .TextureIndex = TextureIndex,
+        .SamplerIndex = static_cast<u32>(std::to_underlying(this->Brush.SamplerAddressMode)),
         });
 
     Super::Draw(Info);

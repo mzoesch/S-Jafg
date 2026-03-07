@@ -20,6 +20,7 @@
 #include "User/UserPreferences.h"
 #include "Engine/WorldData.h"
 #include "Rhi/VisualInstance.h"
+#include "Rhi/BindlessTextureArray.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -160,8 +161,6 @@ void Jafg::Detail::FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allo
 void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 {
     STAT_CYCLE_FUNCTION()
-
-    LFrontendBase::Initialize(Outer);
 
     LOG_VERBOSE(LogSurface, "Initializing glfw.")
 
@@ -309,32 +308,32 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         panic("Failed to find a supported depth format.")
     }
 
-    this->Vk_UpdateSamplers();
-
-    std::array Sizes{
-        vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eSampler,
-            .descriptorCount = 2048, /* Completely arbitrary limit. */
-            },
-        vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eSampledImage,
-            .descriptorCount = 2048, /* Completely arbitrary limit. */
-            },
-        vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = 2048, /* Completely arbitrary limit. */
-            },
-        vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eStorageBuffer,
-            .descriptorCount = 2048, /* Completely arbitrary limit. */
-            },
-        };
-    this->Vk_DescriptorPool = vk::raii::DescriptorPool{this->Vk_Device, vk::DescriptorPoolCreateInfo{
-            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, // TODO: Flags??
-            .maxSets = 1024, /* Completely arbitrary limit. */
-            .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
-            .pPoolSizes = Sizes.data(),
-        }};
+    {
+        std::array Sizes{
+            vk::DescriptorPoolSize{
+                .type = vk::DescriptorType::eSampler,
+                .descriptorCount = 2048, /* Completely arbitrary limit. */
+                },
+            vk::DescriptorPoolSize{
+                .type = vk::DescriptorType::eSampledImage,
+                .descriptorCount = 2048, /* Completely arbitrary limit. */
+                },
+            vk::DescriptorPoolSize{
+                .type = vk::DescriptorType::eUniformBuffer,
+                .descriptorCount = 2048, /* Completely arbitrary limit. */
+                },
+            vk::DescriptorPoolSize{
+                .type = vk::DescriptorType::eStorageBuffer,
+                .descriptorCount = 2048, /* Completely arbitrary limit. */
+                },
+            };
+        this->Vk_DescriptorPool = vk::raii::DescriptorPool{this->Vk_Device, vk::DescriptorPoolCreateInfo{
+                .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, // TODO: Flags??
+                .maxSets = 1024, /* Completely arbitrary limit. */
+                .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
+                .pPoolSizes = Sizes.data(),
+            }};
+    }
 
     if (this->Vk_DescriptorSetLayouts.contains("WorldData"))
     {
@@ -364,9 +363,70 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
                 },
             });
     }
+    if (this->Vk_DescriptorSetLayouts.contains("Jafg.BindlessTextures"))
+    {
+        LOG_WARNING(LogRhi, "Descriptor set layout for Jafg.BindlessTextures already exists, skipping creation.")
+    }
+    else
+    {
+        auto Bindings{UBO::BindlessTextureArray::GetBindings(this->Vk_BindlessTextureCapacity)};
+        this->Vk_DescriptorSetLayouts.emplace("Jafg.BindlessTextures", vk::raii::DescriptorSetLayout{
+            this->Vk_Device,
+            vk::DescriptorSetLayoutCreateInfo{
+                .pNext = &UBO::BindlessTextureArray::FlagsInfo(),
+                .flags = vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
+                .bindingCount = static_cast<u32>(Bindings.size()),
+                .pBindings = Bindings.data(),
+                },
+            });
+    }
+
+    {
+        std::array Sizes{
+            vk::DescriptorPoolSize{
+                .type = vk::DescriptorType::eSampledImage,
+                .descriptorCount = this->Vk_BindlessTextureCapacity,
+                },
+            vk::DescriptorPoolSize{
+                .type = vk::DescriptorType::eSampler,
+                .descriptorCount = UBO::BindlessTextureArray::SamplerCount,
+                },
+            };
+        this->Vk_BindlessTextureArrayDescriptorPool = vk::raii::DescriptorPool{this->Vk_Device, vk::DescriptorPoolCreateInfo{
+            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind,
+            .maxSets = 1,
+            .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
+            .pPoolSizes = Sizes.data(),
+            }};
+
+        vk::DescriptorSetVariableDescriptorCountAllocateInfo CountInfo{
+            .descriptorSetCount = 1,
+            .pDescriptorCounts = &this->Vk_BindlessTextureCapacity,
+            };
+        auto Sets{this->Vk_Device.allocateDescriptorSets({
+            .pNext = &CountInfo,
+            .descriptorPool = this->Vk_BindlessTextureArrayDescriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &*this->Vk_GetMutableDescriptorSetLayouts().at("Jafg.BindlessTextures"),
+            })};
+        check(Sets.size() == 1)
+        this->Vk_BindlessTextureArrayDescriptorSet = std::move(Sets[0]);
+    }
+
+    this->Vk_UpdateSamplers();
 
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
+
+    LFrontendBase::Initialize(Outer);
+
+    check(this->Vk_FreeBindlessTextures.GetWords().empty())
+    this->Vk_FreeBindlessTextures = LDynamicBitset{this->Vk_BindlessTextureCapacity};
+    check(this->Vk_FreeBindlessTextures.GetBitCount() == this->Vk_BindlessTextureCapacity)
+    for (auto& Gt : this->GetGuaranteedTextures())
+    {
+        this->Vk_AddTextureToGlobalBindlessArray(&*Gt);
+    }
 
     return;
 }
@@ -379,7 +439,6 @@ void Jafg::LFrontendVk::TearDown()
 
     algo::swap_default(&this->Vk_ImmutableBuffers);
 
-    this->Vk_DefaultSampler.clear();
     this->Vk_DescriptorPool.reset();
 
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")
@@ -387,6 +446,40 @@ void Jafg::LFrontendVk::TearDown()
 
     LOG_VERBOSE(LogSurface, "Terminating glfw.")
     glfwTerminate();
+
+    return;
+}
+
+void Jafg::LFrontendVk::Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture)
+{
+    check(Texture)
+    check(Texture->IsOnDevice())
+    check(Texture->IsBindless() == false)
+
+    u64 Idx{this->Vk_FreeBindlessTextures.Allocate()};
+    if (Idx == std::numeric_limits<u64>::max())
+    {
+        LOG_FATAL(LogVulkan, "[{}]: Failed to make texture bindless. Out of binding points.", Texture->GetPath())
+    }
+    check(Idx < this->Vk_BindlessTextureCapacity)
+    LOG_VERBOSE(LogVulkan, "[{}]: Binding resource to global bindless texture array slot [{}].", Texture->GetPath(), Idx)
+
+    vk::DescriptorImageInfo ImageInfo{
+        .imageView = Texture->GetImageView(),
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+    std::array Writes{vk::WriteDescriptorSet{
+        .dstSet = *this->Vk_BindlessTextureArrayDescriptorSet,
+        .dstBinding = UBO::BindlessTextureArray::ArrayBinding,
+        .dstArrayElement = static_cast<u32>(Idx),
+        .descriptorCount = 1,
+        .descriptorType = vk::DescriptorType::eSampledImage,
+        .pImageInfo = &ImageInfo,
+        }};
+    this->Vk_Device.updateDescriptorSets(Writes, {});
+
+    check(Idx <= std::numeric_limits<u64>::max())
+    Texture->_SetBindlessIndex(static_cast<i64>(Idx));
 
     return;
 }
@@ -693,8 +786,8 @@ void Jafg::LFrontendVk::Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format)
     }
     else
     {
-        jassert( this->Vk_SurfaceFormat.format == Format.format )
-        jassert( this->Vk_SurfaceFormat.colorSpace == Format.colorSpace )
+        jassert(this->Vk_SurfaceFormat.format == Format.format)
+        jassert(this->Vk_SurfaceFormat.colorSpace == Format.colorSpace)
     }
 
     return;
@@ -1160,8 +1253,6 @@ void AssertAvailablePhysicalDeviceFeature(TFeature const& AvailableFeature, TFea
     {
         LOG_FATAL(LogVulkan, "Required physical device feature [{}] is not available.", FeatureName)
     }
-
-    return;
 }
 
 } /* +Namespace <Anonymous> */
@@ -1235,12 +1326,14 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
     , vk::PhysicalDeviceVulkan11Features
     , vk::PhysicalDeviceVulkan13Features
     , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
-    , vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()};
+    , vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT
+    , vk::PhysicalDeviceDescriptorIndexingFeatures>()};
     auto& A1{AvailableFeatures.get<vk::PhysicalDeviceFeatures2>()};
     auto& A2{AvailableFeatures.get<vk::PhysicalDeviceVulkan11Features>()};
     auto& A3{AvailableFeatures.get<vk::PhysicalDeviceVulkan13Features>()};
     auto& A4{AvailableFeatures.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>()};
     auto& A5{AvailableFeatures.get<vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()};
+    auto& A6{AvailableFeatures.get<vk::PhysicalDeviceDescriptorIndexingFeatures>()};
 
     typedef vk::StructureChain<
           vk::PhysicalDeviceFeatures2
@@ -1248,6 +1341,7 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
         , vk::PhysicalDeviceVulkan13Features
         , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
         , vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT
+        , vk::PhysicalDeviceDescriptorIndexingFeatures
         > RequiredFeaturesChain;
     RequiredFeaturesChain FeaturesChain{
             /* vk::PhysicalDeviceFeatures2 */ {.features = {
@@ -1263,15 +1357,23 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
             /* vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT */{
                 .extendedDynamicState = vk::True,
             },
-            /* PhysicalDeviceExtendedDynamicState3FeaturesEXT */{
+            /* vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT */{
                 .extendedDynamicState3PolygonMode = vk::True,
-            }
+            },
+            /* vk::PhysicalDeviceDescriptorIndexingFeatures */{
+                .shaderSampledImageArrayNonUniformIndexing = vk::True,
+                .descriptorBindingSampledImageUpdateAfterBind = vk::True,
+                .descriptorBindingPartiallyBound = vk::True,
+                .descriptorBindingVariableDescriptorCount = vk::True,
+                .runtimeDescriptorArray = vk::True,
+            },
         };
     auto& R1{FeaturesChain.get<vk::PhysicalDeviceFeatures2>()};
     auto& R2{FeaturesChain.get<vk::PhysicalDeviceVulkan11Features>()};
     auto& R3{FeaturesChain.get<vk::PhysicalDeviceVulkan13Features>()};
     auto& R4{FeaturesChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>()};
     auto& R5{FeaturesChain.get<vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()};
+    auto& R6{FeaturesChain.get<vk::PhysicalDeviceDescriptorIndexingFeatures>()};
 
     #ifdef ASSERT_FEATURE
         #error "ASSERT_FEATURE is defined."
@@ -1284,6 +1386,11 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
     ASSERT_FEATURE(A3, R3, &vk::PhysicalDeviceVulkan13Features::dynamicRendering)
     ASSERT_FEATURE(A4, R4, &vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT::extendedDynamicState)
     ASSERT_FEATURE(A5, R5, &vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT::extendedDynamicState3PolygonMode)
+    ASSERT_FEATURE(A6, R6, &vk::PhysicalDeviceDescriptorIndexingFeatures::shaderSampledImageArrayNonUniformIndexing)
+    ASSERT_FEATURE(A6, R6, &vk::PhysicalDeviceDescriptorIndexingFeatures::descriptorBindingSampledImageUpdateAfterBind)
+    ASSERT_FEATURE(A6, R6, &vk::PhysicalDeviceDescriptorIndexingFeatures::descriptorBindingPartiallyBound)
+    ASSERT_FEATURE(A6, R6, &vk::PhysicalDeviceDescriptorIndexingFeatures::descriptorBindingVariableDescriptorCount)
+    ASSERT_FEATURE(A6, R6, &vk::PhysicalDeviceDescriptorIndexingFeatures::runtimeDescriptorArray)
     #undef ASSERT_FEATURE
 
     f32 QueuePriority{ 1.0f };
@@ -1356,7 +1463,9 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
 {
     LOG_VERBOSE(LogVulkan, "Updating Vulkan samplers.")
 
-    this->Vk_DefaultSampler = vk::raii::Sampler{this->Vk_Device, {
+    std::array<vk::DescriptorImageInfo, UBO::BindlessTextureArray::SamplerCount> DescriptorImageInfos;
+
+    vk::SamplerCreateInfo CreateInfo{
         .magFilter = vk::Filter::eLinear, .minFilter = vk::Filter::eLinear,
         .mipmapMode = vk::SamplerMipmapMode::eLinear,
         .addressModeU = vk::SamplerAddressMode::eRepeat, .addressModeV = vk::SamplerAddressMode::eRepeat, .addressModeW = vk::SamplerAddressMode::eRepeat,
@@ -1365,8 +1474,56 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
         .compareEnable = vk::False, .compareOp = vk::CompareOp::eAlways,
         .minLod = 0.0f, // Increase for worse texture quality.
         .maxLod = VK_LOD_CLAMP_NONE,
-        .borderColor = vk::BorderColor::eIntOpaqueBlack,
-        }};
+        .borderColor = vk::BorderColor::eFloatOpaqueWhite,
+        };
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::RepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::RepeatSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::RepeatSamplerIdx],
+        };
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eMirroredRepeat;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx],
+        };
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx],
+        };
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToBorder;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToBorder;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToBorder;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToBorderSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::ClampToBorderSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToBorderSamplerIdx],
+        };
+
+    // CreateInfo.addressModeU = vk::SamplerAddressMode::eMirrorClampToEdge;
+    // CreateInfo.addressModeV = vk::SamplerAddressMode::eMirrorClampToEdge;
+    // CreateInfo.addressModeW = vk::SamplerAddressMode::eMirrorClampToEdge;
+    // this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    // DescriptorImageInfos[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
+    //     .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx],
+    //     };
+
+    std::array Writes{
+        vk::WriteDescriptorSet{
+            .dstSet = this->Vk_BindlessTextureArrayDescriptorSet,
+            .dstBinding = UBO::BindlessTextureArray::SamplerBinding,
+            .dstArrayElement = 0,
+            .descriptorCount = static_cast<u32>(DescriptorImageInfos.size()),
+            .descriptorType = vk::DescriptorType::eSampler,
+            .pImageInfo = DescriptorImageInfos.data(),
+            },
+        };
+    this->Vk_Device.updateDescriptorSets(Writes, {});
 
     return;
 }

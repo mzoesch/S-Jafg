@@ -12,6 +12,10 @@
             "Identifier": "Jafg.VisualShared"
         },
         {
+            "Type": "eShared",
+            "Identifier": "Jafg.BindlessTextures"
+        },
+        {
             "Type": "eUnique",
             "UpdateFrequency": "ePerFrame",
             "Stages": "eVertex|eFragment",

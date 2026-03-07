@@ -33,37 +33,35 @@ protected:
 public:
 
     virtual void Draw(LNodeRenderInfo const& Info) const override;
+    virtual void UpdateDesiredSize() const override
+    {
+        Super::UpdateDesiredSize();
+        this->SetDesiredSize(this->Brush.Padding.GetDesiredSize());
+    }
 
-    virtual void UpdateDesiredSize() const override;
+    constexpr void SetBrush(LBoxBrush const& InBrush) noexcept { this->Brush = InBrush; }
+    constexpr LBoxBrush& GetMutableBrush() noexcept { return this->Brush; }
+    constexpr LBoxBrush const& GetBrush() const noexcept { return this->Brush; }
 
-    FORCEINLINE CONSTEXPR_CHECK void SetBrush(LBoxBrush const& InBrush) noexcept { this->Brush = InBrush; }
-    FORCEINLINE constexpr LBoxBrush& GetMutableBrush() noexcept { return this->Brush; }
-    FORCEINLINE constexpr LBoxBrush const& GetBrush() const noexcept { return this->Brush; }
-
-    FORCEINLINE constexpr ERegionBrush   GetType() const noexcept { return this->Brush.Type; }
-    FORCEINLINE constexpr const LColor&   GetTint() const noexcept { return this->Brush.Tint; }
-    // FORCEINLINE constexpr const LTexture2*     GetTexture() const noexcept { return this->Brush.Image.GetTexture(); }
-    // FORCEINLINE constexpr const LImage&        GetImage() const noexcept { return this->Brush.Image; }
-    FORCEINLINE constexpr const LColor&   GetImageTint() const noexcept { return this->Brush.ImageTint; }
-    FORCEINLINE constexpr f32           GetImageScale() const noexcept { return this->Brush.ImageScale; }
-    FORCEINLINE constexpr EImageBehavior     GetImageBehavior() const noexcept { return this->Brush.ImageBehavior; }
-    FORCEINLINE constexpr EImageOobm         GetImageOobm() const noexcept { return this->Brush.ImageOobm; }
+    FORCEINLINE constexpr LColor const& GetTint() const noexcept { return this->Brush.Tint; }
+    FORCEINLINE constexpr LTexture2Ref const& GetTexture() const noexcept { return this->Brush.Texture; }
+    FORCEINLINE constexpr f32 GetImageScale() const noexcept { return this->Brush.TextureScale; }
+    FORCEINLINE constexpr ETexCoordBehavior     GetImageBehavior() const noexcept { return this->Brush.TexCoordBehavior; }
+    FORCEINLINE constexpr vk::SamplerAddressMode GetSamplerAddressMode() const noexcept { return this->Brush.SamplerAddressMode; }
     FORCEINLINE constexpr f32                  GetImagePadding() const noexcept { return this->Brush.ImagePadding; }
     FORCEINLINE constexpr const LVec4F&       GetOutlineRadii() const noexcept { return this->Brush.Radii; }
     FORCEINLINE constexpr f32                  GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
     FORCEINLINE constexpr const LColor&   GetOutlineTint() const noexcept { return this->Brush.OutlineTint; }
     FORCEINLINE constexpr const LPadding&      GetPadding() const noexcept { return this->Brush.Padding; }
 
-    FORCEINLINE constexpr void SetType(const ERegionBrush InType) noexcept { this->Brush.Type = InType; }
-    FORCEINLINE constexpr void SetTint(const LColor& InTin) noexcept { this->Brush.Tint = InTin; }
-    // FORCEINLINE constexpr void SetTexture(const LTexture2* InTexture) noexcept { this->Brush.Image.SetTexture(InTexture); }
-    // FORCEINLINE constexpr void SetImage(const LImage& InImage) noexcept { this->Brush.Image = InImage; }
-    FORCEINLINE constexpr void SetImageTint(const LColor& InColor) noexcept { this->Brush.ImageTint = InColor; }
-    FORCEINLINE constexpr void SetImageScale(const f32& InScale) noexcept { this->Brush.ImageScale = InScale; }
-    FORCEINLINE constexpr void SetImageBehavior(const EImageBehavior InBehavior) noexcept { this->Brush.ImageBehavior = InBehavior; }
-    FORCEINLINE constexpr void SetImageOobm(const EImageOobm InOobm) noexcept { this->Brush.ImageOobm = InOobm; }
+    FORCEINLINE constexpr void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
+    FORCEINLINE constexpr void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
+    FORCEINLINE constexpr void SetImageScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
+    FORCEINLINE constexpr void SetImageBehavior(const ETexCoordBehavior InBehavior) noexcept { this->Brush.TexCoordBehavior = InBehavior; }
+    FORCEINLINE constexpr void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
     FORCEINLINE constexpr void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
     FORCEINLINE constexpr void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE void SetClampRadii(bool bClamp) noexcept { this->Brush.bClampRadii = bClamp; }
     FORCEINLINE constexpr void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
     FORCEINLINE constexpr void SetOutlineTint(const LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
     FORCEINLINE constexpr void SetPadding(const LPadding& InPadding) noexcept { this->Brush.Padding = InPadding; }
@@ -77,9 +75,9 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
 {
     NODE_FACTORY_BODY(WBox)
 
-    FORCEINLINE decltype(auto) Type(this auto&& Self, const ERegionBrush InType)
+    FORCEINLINE decltype(auto) Brush(this auto&& Self, LBoxBrush const& InBrush)
     {
-        NODE_FACTORY_SELF().SetType(InType);
+        NODE_FACTORY_SELF().SetBrush(InBrush);
         return NODE_FACTORY_RESULT();
     }
     FORCEINLINE decltype(auto) Tint(this auto&& Self, const LColor& InTint)
@@ -92,24 +90,19 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) ImageTint(this auto&& Self, const LColor& InImageTint)
-    {
-        NODE_FACTORY_SELF().SetImageTint(InImageTint);
-        return NODE_FACTORY_RESULT();
-    }
     FORCEINLINE decltype(auto) ImageScale(this auto&& Self, const f32 InImageScale)
     {
         NODE_FACTORY_SELF().SetImageScale(InImageScale);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) ImageBehavior(this auto&& Self, const EImageBehavior InImageBehavior)
+    FORCEINLINE decltype(auto) ImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
     {
-        NODE_FACTORY_SELF().SetImageBehavior(InImageBehavior);
+        NODE_FACTORY_SELF().SetTexCoordBehavior(InImageBehavior);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) ImageOobm(this auto&& Self, const EImageOobm InImageOobm)
+    FORCEINLINE decltype(auto) SamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
-        NODE_FACTORY_SELF().SetImageOobm(InImageOobm);
+        NODE_FACTORY_SELF().SetSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
     FORCEINLINE decltype(auto) ImagePadding(this auto&& Self, const f32 InImagePadding)
@@ -117,9 +110,14 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetImagePadding(InImagePadding);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) OutlineRadii(this auto&& Self, const LVec4F& InOutlineRadii)
+    decltype(auto) Radii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept
     {
         NODE_FACTORY_SELF().SetRadii(InOutlineRadii);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ClampRadii(this auto&& Self, bool bClamp) noexcept
+    {
+        NODE_FACTORY_SELF().SetClampRadii(bClamp);
         return NODE_FACTORY_RESULT();
     }
     FORCEINLINE decltype(auto) OutlineThickness(this auto&& Self, const f32 InOutlineThickness)
@@ -137,11 +135,7 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetPadding(InPadding);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) Brush(this auto&& Self, const LBoxBrush& InBrush)
-    {
-        NODE_FACTORY_SELF().SetBrush(InBrush);
-        return NODE_FACTORY_RESULT();
-    }
+
 };
 
 } /* ~Namespace Jafg */

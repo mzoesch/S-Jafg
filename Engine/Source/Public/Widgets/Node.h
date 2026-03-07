@@ -9,6 +9,7 @@
 #include "Platform/SurfaceForward.h"
 #include "Widgets/InterfaceTypes.h"
 #include "User/UserPreferencesForward.h"
+#include "Framework/FrontendForward.h"
 #include "Node.generated.h"
 
 namespace Jafg
@@ -676,7 +677,7 @@ public:
     FORCEINLINE constexpr LViewport const& GetViewport() const noexcept { return this->AttachedViewport; }
 
     //# Virtual update method for the desired size. Automatically called. Do not call manually.
-    virtual void UpdateDesiredSize() const { }
+    virtual void UpdateDesiredSize() const {}
     //#
     //# Update the #DesiredSize of a widget inside the overridden #UpdateDesiredSize method with this one.
     //# Do not call this method from outside the #UpdateDesiredSize method.
@@ -719,6 +720,8 @@ public:
     FORCEINLINE constexpr LAnchor const& GetAnchor() const noexcept { return this->Anchor; }
     FORCEINLINE constexpr void SetAnchor(LAnchor const& InAnchor) noexcept { this->Anchor = InAnchor; }
     FORCEINLINE constexpr void SetAnchor(EAnchor::Type  InAnchor) noexcept { this->Anchor = InAnchor; }
+
+    ENGINE_API LFrontend& GetFrontend() const noexcept;
 
     //# Internal function of Jafg. Do not call yourself.
     void _SetParentDangerous(WParent* InParent) noexcept { this->Parent = InParent; }

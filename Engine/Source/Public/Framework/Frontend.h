@@ -7,6 +7,7 @@
 #include "Widgets/Node.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/FrontendSubsystem.h"
+#include "Rhi/Texture2.h"
 
 namespace Jafg
 {
@@ -79,7 +80,15 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LFrontendBase)
     ~LFrontendBase() = default;
 
-    void Initialize(LClassOuter* Outer) {}
+    template<typename T = LFrontendBase>
+    NODISCARD FORCEINLINE T* As();
+    template<typename T = LFrontendBase>
+    NODISCARD FORCEINLINE T const* As() const;
+    NODISCARD FORCEINLINE LFrontend* AsFrontend();
+    NODISCARD FORCEINLINE LFrontend const* AsFrontend() const;
+
+    void Initialize(LClassOuter* Outer);
+
     void Tick();
     void TearDown();
 
@@ -104,6 +113,8 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
 
+    FORCEINLINE auto const& GetGuaranteedTextures() const noexcept { return this->GuaranteedTextures; }
+
 protected:
 
     //#
@@ -117,11 +128,38 @@ protected:
 
 private:
 
-    i32 FocusedSurface{};
+    i32 FocusedSurface{ INDEX_NONE };
     TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };
+
+    //# Textures the frontend owns and, therefore, are always loaded.
+    TArray<LTexture2Ref> GuaranteedTextures;
 };
 
 } /* ~Namespace Jafg */
 
 #include "Framework/FrontendVk.h"
+
+template<typename T>
+NODISCARD FORCEINLINE T* Jafg::LFrontendBase::As()
+{
+    static_assert(std::is_base_of_v<LFrontendBase, T>, "T must be derived from LFrontendBase");
+    return static_cast<T*>(this);
+}
+
+template<typename T>
+NODISCARD FORCEINLINE T const* Jafg::LFrontendBase::As() const
+{
+    static_assert(std::is_base_of_v<LFrontendBase, T>, "T must be derived from LFrontendBase");
+    return static_cast<T const*>(this);
+}
+
+NODISCARD FORCEINLINE Jafg::LFrontend* Jafg::LFrontendBase::AsFrontend()
+{
+    return this->As<LFrontend>();
+}
+
+NODISCARD FORCEINLINE Jafg::LFrontend const* Jafg::LFrontendBase::AsFrontend() const
+{
+    return this->As<LFrontend>();
+}

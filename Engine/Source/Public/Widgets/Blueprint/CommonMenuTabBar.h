@@ -73,9 +73,9 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WCommonMenuTabBarButton)
     {
-        this->SetNormalBrush({ERegionBrush::None});
-        this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
-        this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
+        this->SetNormalBrush({});
+        this->SetHoverBrush({{0, 0, 0, 128}});
+        this->SetPressBrush({{0, 0, 0, 192}});
 
         this->SetPadding({2, 4});
         this->SetMinDesiredSize(5_pt2);

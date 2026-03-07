@@ -269,7 +269,7 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
     TArray<vk::DescriptorSetLayout> LayoutsToAllocate;
     for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
     {
-        auto& Layout{ FetchedShader.Layouts[Idx] };
+        auto& Layout{FetchedShader.Layouts[Idx]};
         if (Layout.Type == LFetchedShader::Layout::eShared)
         {
             continue;
@@ -278,10 +278,10 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
         {
             check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
-                for (auto FramesInFlight{ 0uz }; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
-                {
-                    LayoutsToAllocate.emplace_back(*Material->Pipeline._UniqueDescriptorSetLayout[UniqueIdx]);
-                }
+            for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
+            {
+                LayoutsToAllocate.emplace_back(*Material->Pipeline._UniqueDescriptorSetLayout[UniqueIdx]);
+            }
         }
         else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
         {
@@ -297,44 +297,44 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
     }
     check(UniqueIdx == Material->Pipeline._UniqueDescriptorSetLayout.size())
 
-        if (LayoutsToAllocate.empty() == false)
+    if (LayoutsToAllocate.empty() == false)
+    {
+        auto SetIdx{0uz};
+        auto DescriptorSets{Frontend.Vk_GetDevice().allocateDescriptorSets({
+            .descriptorPool = Frontend.Vk_GetDescriptorPool(),
+            .descriptorSetCount = static_cast<u32>(LayoutsToAllocate.size()),
+            .pSetLayouts = LayoutsToAllocate.data(),
+            })};
+
+        for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
         {
-            auto SetIdx{0uz};
-            auto DescriptorSets{Frontend.Vk_GetDevice().allocateDescriptorSets({
-                .descriptorPool = Frontend.Vk_GetDescriptorPool(),
-                .descriptorSetCount = static_cast<u32>(LayoutsToAllocate.size()),
-                .pSetLayouts = LayoutsToAllocate.data(),
-                })};
-
-            for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
+            auto& Layout{FetchedShader.Layouts[Idx]};
+            if (Layout.Type == LFetchedShader::Layout::eShared)
             {
-                auto& Layout{FetchedShader.Layouts[Idx]};
-                if (Layout.Type == LFetchedShader::Layout::eShared)
-                {
-                    continue;
-                }
-                if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
-                {
-                    check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
-                    for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
-                    {
-                        Instance->FrequentDescriptorSets[FramesInFlight].emplace_back(static_cast<u32>(Idx), std::move(DescriptorSets[SetIdx++]));
-                    }
-                }
-                else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
-                {
-                    Instance->InfrequentDescriptorSets.emplace_back(static_cast<u32>(Idx), std::move(DescriptorSets[SetIdx++]));
-                }
-                else
-                {
-                    unreachable()
-                }
-
                 continue;
             }
+            if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
+            {
+                check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+                for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
+                {
+                    Instance->FrequentDescriptorSets[FramesInFlight].emplace_back(static_cast<u32>(Idx), std::move(DescriptorSets[SetIdx++]));
+                }
+            }
+            else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
+            {
+                Instance->InfrequentDescriptorSets.emplace_back(static_cast<u32>(Idx), std::move(DescriptorSets[SetIdx++]));
+            }
+            else
+            {
+                unreachable()
+            }
 
-            check(SetIdx == DescriptorSets.size())
+            continue;
         }
+
+        check(SetIdx == DescriptorSets.size())
+    }
 
     for (auto const& [Key, Value] : FetchedMaterial.Properties)
     {
@@ -387,7 +387,7 @@ void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Insta
     {
         if (Value == "Jafg.DefaultSampler")
         {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetDefaultSampler());
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetSamplerRepeat());
         }
         else
         {
@@ -448,7 +448,7 @@ void Jafg::JMaterialSubsystem::SetSampledImage(LMaterialInstance& Instance, LBin
 
     vk::DescriptorImageInfo ImageInfo{
         .imageView = Texture.GetImageView(),
-        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
         };
     check(ImageInfo.sampler == nullptr)
     std::array Writes{

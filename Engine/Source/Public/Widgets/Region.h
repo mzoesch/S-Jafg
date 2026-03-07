@@ -9,69 +9,69 @@
 namespace Jafg
 {
 
-//# How the #LRegionBrush behaves at a high level.
-enum struct ERegionBrush
-{
-    //# Do not draw.
-    None,
-    //# Draw as a normal box.
-    Box,
-    //# Draw as a rounded box.
-    RoundedBox,
-    //# Draw as a box with an outline.
-    OutlineBox,
-    //# Draw as a box with a rounded outline.
-    RoundedOutlineBox,
-};
-
 //# High-level image behavior.
-enum struct EImageBehavior
+enum struct ETexCoordBehavior
 {
-    //# Scale the image to the size of the parent.
+    //# Scale UVs normalized.
     Scale,
-    //# Preserve the aspect ratio of the image.
-    Aspect,
+    //# Scale UVs so that the vertical component of the texture is always [0,1] while preserving aspect.
+    FitV,
+    //# Scale UVs so that the horizontal component of the texture is always [0,1] while preserving aspect.
+    FitH,
 };
 
-//# The image out of bounds mode. How the image should behave if its UVs are going out of bounds.
-enum struct EImageOobm
+namespace TextureBehavior
 {
-    //# Wrap the image. The default behavior.
-    Wrap,
-    //# Clamp the image sides.
-    Clamp,
-    //# Discard the image channels.
-    Discard,
-};
+
+inline LVec4F FitV(LVec4F UVs, LVec2F NodeSize, LVec2F TargetSize) noexcept
+{
+    f32 CenterU{(UVs.x + UVs.z) * 0.5f};
+    f32 ScaledU{(UVs.w - UVs.y) * ((TargetSize.x  / TargetSize.y) / (NodeSize.x / NodeSize.y))};
+    return {
+        CenterU - ScaledU * 0.5f, UVs.y,
+        CenterU + ScaledU * 0.5f, UVs.w
+        };
+}
+
+inline LVec4F FitH(LVec4F UVs, LVec2F NodeSize, LVec2F TargetSize) noexcept
+{
+    f32 CenterV{(UVs.y + UVs.w) * 0.5f};
+    f32 ScaledV{(UVs.z - UVs.x) * ((NodeSize.x / NodeSize.y) / (TargetSize.x  / TargetSize.y))};
+    return {
+        UVs.x, CenterV - ScaledV * 0.5f,
+        UVs.z, CenterV + ScaledV * 0.5f
+        };
+}
+
+} /* ~Namespace TextureBehavior */
 
 struct LRegionBrush
 {
-    //# The type of the region brush.
-    ERegionBrush Type{ ERegionBrush::None };
-
     //# The tint of the draw area from this region.
     LColor Tint{ Colors::White };
 
     //# An optional texture to use as a background.
     LTexture2Ref Texture;
 
-    //# The tint of the image.
-    LColor ImageTint{ Colors::White };
-
     //# The scale of the image.
-    f32 ImageScale{ 1.0 };
+    f32 TextureScale{ 1.0 };
 
-    //# How the #Image should behave.
-    EImageBehavior ImageBehavior{ EImageBehavior::Scale };
+    //# How the texture's UV should behave.
+    ETexCoordBehavior TexCoordBehavior{ ETexCoordBehavior::Scale };
 
-    //# The image out of bounds mode. @see #EImageOobm.
-    EImageOobm ImageOobm{ EImageOobm::Wrap };
+    //# Texture UV out-of-bounds behavior.
+    vk::SamplerAddressMode SamplerAddressMode{ vk::SamplerAddressMode::eClampToBorder };
 
     //# How much padding to apply to the image.
     f32 ImagePadding{};
 
+    //# Tint of the background if any.
+    LColor BackgroundTint{ Colors::Black };
+
     //# The radii to use for the edges. TL => TR => BR => BL.
     LVec4F Radii{ maths::zero_vector<LVec4F> };
+    //# Whether to clamp radii based on their size.
+    bool bClampRadii{ true };
 
     //# The thickness of the outline.
     f32 OutlineThickness{};
@@ -99,22 +99,21 @@ public:
 
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    void SetBrush(LRegionBrush const& InBrush) { this->Brush = InBrush; }
-    void SetBrush(LRegionBrush&& InBrush) { this->Brush = std::move(InBrush); }
-    LRegionBrush& GetMutableBrush() { return this->Brush; }
-    const LRegionBrush& GetBrush() const { return this->Brush; }
+    constexpr void SetBrush(LRegionBrush const& InBrush) noexcept { this->Brush = InBrush; }
+    constexpr LRegionBrush& GetMutableBrush() noexcept { return this->Brush; }
+    constexpr LRegionBrush const& GetBrush() const noexcept { return this->Brush; }
 
-    FORCEINLINE void SetType(const ERegionBrush InType) noexcept { this->Brush.Type = InType; }
-    FORCEINLINE void SetTint(const LColor& InTint) noexcept { this->Brush.Tint = InTint; }
+    FORCEINLINE void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
     FORCEINLINE void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
-    FORCEINLINE void SetImageTint(const LColor& InColor) noexcept { this->Brush.ImageTint = InColor; }
-    FORCEINLINE void SetImageScale(const f32 InScale) noexcept { this->Brush.ImageScale = InScale; }
-    FORCEINLINE void SetImageBehavior(const EImageBehavior InType) noexcept { this->Brush.ImageBehavior = InType; }
-    FORCEINLINE void SetImageOobm(const EImageOobm InType) noexcept { this->Brush.ImageOobm = InType; }
-    FORCEINLINE void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
-    FORCEINLINE void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
-    FORCEINLINE void SetOutlineTint(const LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetImageScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
+    FORCEINLINE void SetTexCoordBehavior(ETexCoordBehavior InTexCoordBehavior) noexcept { this->Brush.TexCoordBehavior = InTexCoordBehavior; }
+    FORCEINLINE void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
+    FORCEINLINE void SetImagePadding(f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
+    FORCEINLINE void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
+    FORCEINLINE void SetOutlineThickness(f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE void SetRadii(LVec4F const& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE void SetClampRadii(bool bClamp) noexcept { this->Brush.bClampRadii = bClamp; }
+    FORCEINLINE void SetOutlineTint(LColor const& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
 
 private:
 
@@ -130,11 +129,6 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetBrush(InBrush);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Type(this auto&& Self, ERegionBrush InType) noexcept
-    {
-        NODE_FACTORY_SELF().SetType(InType);
-        return NODE_FACTORY_RESULT();
-    }
     decltype(auto) Tint(this auto&& Self, LColor const& InTint) noexcept
     {
         NODE_FACTORY_SELF().SetTint(InTint);
@@ -145,29 +139,29 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) ImageTint(this auto&& Self, LColor const& InColor) noexcept
-    {
-        NODE_FACTORY_SELF().SetImageTint(InColor);
-        return NODE_FACTORY_RESULT();
-    }
     decltype(auto) ImageScale(this auto&& Self, const f32 InScale) noexcept
     {
         NODE_FACTORY_SELF().SetImageScale(InScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) ImageBehavior(this auto&& Self, const EImageBehavior InType) noexcept
+    decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior InTexCoordBehavior) noexcept
     {
-        NODE_FACTORY_SELF().SetImageBehavior(InType);
+        NODE_FACTORY_SELF().SetTexCoordBehavior(InTexCoordBehavior);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) ImageOobm(this auto&& Self, const EImageOobm InType) noexcept
+    decltype(auto) SamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode) noexcept
     {
-        NODE_FACTORY_SELF().SetImageOobm(InType);
+        NODE_FACTORY_SELF().SetSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) ImagePadding(this auto&& Self, const f32 InPadding) noexcept
     {
         NODE_FACTORY_SELF().SetImagePadding(InPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) BackgroundTint(this auto&& Self, LColor const& InBackgroundTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetBackgroundTint(InBackgroundTint);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) OutlineThickness(this auto&& Self, const f32 InOutlineThickness) noexcept
@@ -178,6 +172,11 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
     decltype(auto) Radii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept
     {
         NODE_FACTORY_SELF().SetRadii(InOutlineRadii);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ClampRadii(this auto&& Self, bool bClamp) noexcept
+    {
+        NODE_FACTORY_SELF().SetClampRadii(bClamp);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) OutlineTint(this auto&& Self, LColor const& InOutlineTint) noexcept

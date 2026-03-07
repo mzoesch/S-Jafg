@@ -314,6 +314,12 @@ TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept
     return {};
 }
 
+Jafg::LFrontend& Jafg::WNode::GetFrontend() const noexcept
+{
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+    return GEngine->GetLocalEgo().GetFrontend();
+}
+
 #if JAFG_DO_CHECKS
 void Jafg::WNode::_check_Destruct()
 {

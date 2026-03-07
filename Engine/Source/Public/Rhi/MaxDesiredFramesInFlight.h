@@ -25,11 +25,11 @@ using TFrameArray = std::array<T, Vk_DesiredMaxFramesInFlight>;
 
 #ifndef JAFG_VK_FRAME_ARRAY_INIT
     #if JAFG_VK_DESIRED_MAX_FRAMES_IN_FLIGHT == 1
-        #define JAFG_VK_FRAME_ARRAY_INIT(DefaultValue) { DefaultValue }
+        #define JAFG_VK_FRAME_ARRAY_INIT(DefaultValue) JAFG_INIT_ONE(JAFG_COMBINE_ANY_OUTER(DefaultValue))
     #elif JAFG_VK_DESIRED_MAX_FRAMES_IN_FLIGHT == 2
-        #define JAFG_VK_FRAME_ARRAY_INIT(DefaultValue) { DefaultValue, DefaultValue }
+        #define JAFG_VK_FRAME_ARRAY_INIT(DefaultValue) JAFG_INIT_TWO(JAFG_COMBINE_ANY_OUTER(DefaultValue))
     #elif JAFG_VK_DESIRED_MAX_FRAMES_IN_FLIGHT == 3
-        #define JAFG_VK_FRAME_ARRAY_INIT(DefaultValue) { DefaultValue, DefaultValue, DefaultValue }
+        #define JAFG_VK_FRAME_ARRAY_INIT(DefaultValue) JAFG_INIT_THREE(JAFG_COMBINE_ANY_OUTER(DefaultValue))
     #else /* JAFG_VK_DESIRED_MAX_FRAMES_IN_FLIGHT */
         #error "Unsupported value for JAFG_VK_DESIRED_MAX_FRAMES_IN_FLIGHT. Only 1, 2, and 3 are supported."
     #endif /* !JAFG_VK_DESIRED_MAX_FRAMES_IN_FLIGHT */
