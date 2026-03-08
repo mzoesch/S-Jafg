@@ -48,7 +48,7 @@ public:
     FORCEINLINE constexpr f32 GetImageScale() const noexcept { return this->Brush.TextureScale; }
     FORCEINLINE constexpr ETexCoordBehavior     GetImageBehavior() const noexcept { return this->Brush.TexCoordBehavior; }
     FORCEINLINE constexpr vk::SamplerAddressMode GetSamplerAddressMode() const noexcept { return this->Brush.SamplerAddressMode; }
-    FORCEINLINE constexpr f32                  GetImagePadding() const noexcept { return this->Brush.ImagePadding; }
+    FORCEINLINE constexpr f32                  GetImagePadding() const noexcept { return this->Brush.TexturePadding; }
     FORCEINLINE constexpr const LVec4F&       GetOutlineRadii() const noexcept { return this->Brush.Radii; }
     FORCEINLINE constexpr f32                  GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
     FORCEINLINE constexpr const LColor&   GetOutlineTint() const noexcept { return this->Brush.OutlineTint; }
@@ -56,10 +56,10 @@ public:
 
     FORCEINLINE constexpr void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
     FORCEINLINE constexpr void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
-    FORCEINLINE constexpr void SetImageScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
+    FORCEINLINE constexpr void SetTextureScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
     FORCEINLINE constexpr void SetImageBehavior(const ETexCoordBehavior InBehavior) noexcept { this->Brush.TexCoordBehavior = InBehavior; }
     FORCEINLINE constexpr void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
-    FORCEINLINE constexpr void SetImagePadding(const f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
+    FORCEINLINE constexpr void SetTexturePadding(const f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
     FORCEINLINE constexpr void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE void SetClampRadii(bool bClamp) noexcept { this->Brush.bClampRadii = bClamp; }
     FORCEINLINE constexpr void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
@@ -90,14 +90,14 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) ImageScale(this auto&& Self, const f32 InImageScale)
+    FORCEINLINE decltype(auto) TextureScale(this auto&& Self, const f32 InTextureScale)
     {
-        NODE_FACTORY_SELF().SetImageScale(InImageScale);
+        NODE_FACTORY_SELF().SetTextureScale(InTextureScale);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) ImageBehavior(this auto&& Self, const ETexCoordBehavior InImageBehavior)
+    FORCEINLINE decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior InTexCoordBehavior)
     {
-        NODE_FACTORY_SELF().SetTexCoordBehavior(InImageBehavior);
+        NODE_FACTORY_SELF().SetTexCoordBehavior(InTexCoordBehavior);
         return NODE_FACTORY_RESULT();
     }
     FORCEINLINE decltype(auto) SamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
@@ -105,9 +105,9 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) ImagePadding(this auto&& Self, const f32 InImagePadding)
+    FORCEINLINE decltype(auto) TexturePadding(this auto&& Self, const f32 InTexturePadding)
     {
-        NODE_FACTORY_SELF().SetImagePadding(InImagePadding);
+        NODE_FACTORY_SELF().SetTexturePadding(InTexturePadding);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) Radii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept

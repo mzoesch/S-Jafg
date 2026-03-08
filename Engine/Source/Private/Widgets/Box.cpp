@@ -25,14 +25,17 @@ void Jafg::WBox::Draw(LNodeRenderInfo const& Info) const
     LVec4F TexCoordRect{0.0f, 0.0f, 1.0f, 1.0f};
     if (this->Brush.Texture.get())
     {
+        auto Extend{this->Brush.Texture->GetExtentAsVec2F()};
         if (this->Brush.TexCoordBehavior == ETexCoordBehavior::FitV)
         {
-            TexCoordRect = TextureBehavior::FitV(TexCoordRect, this->Brush.Texture->GetExtentAsVec2F(), AnchoredSize);
+            TexCoordRect = MiscUV::FitV(TexCoordRect, Extend, AnchoredSize);
         }
         else if (this->Brush.TexCoordBehavior == ETexCoordBehavior::FitH)
         {
-            TexCoordRect = TextureBehavior::FitH(TexCoordRect, this->Brush.Texture->GetExtentAsVec2F(), AnchoredSize);
+            TexCoordRect = MiscUV::FitH(TexCoordRect, Extend, AnchoredSize);
         }
+
+        TexCoordRect = MiscUV::ApplyPadding(MiscUV::ApplyScale(TexCoordRect, this->Brush.TextureScale), this->Brush.TexturePadding, Extend);
     }
 
     Info.VisualInstances.emplace_back(LVisualInstance{

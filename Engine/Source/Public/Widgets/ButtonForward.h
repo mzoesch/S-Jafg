@@ -112,16 +112,16 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImagePadding(const f64 InImagePadding) noexcept { this->Style.NormalBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetHoverImagePadding(const f64 InImagePadding) noexcept { this->Style.HoverBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetPressImagePadding(const f64 InImagePadding) noexcept { this->Style.PressBrush.ImagePadding = InImagePadding; }
-    FORCEINLINE void SetDisabledImagePadding(const f64 InImagePadding) noexcept { this->Style.DisabledBrush.ImagePadding = InImagePadding; }
+    FORCEINLINE void SetNormalImagePadding(const f64 InImagePadding) noexcept { this->Style.NormalBrush.TexturePadding = InImagePadding; }
+    FORCEINLINE void SetHoverImagePadding(const f64 InImagePadding) noexcept { this->Style.HoverBrush.TexturePadding = InImagePadding; }
+    FORCEINLINE void SetPressImagePadding(const f64 InImagePadding) noexcept { this->Style.PressBrush.TexturePadding = InImagePadding; }
+    FORCEINLINE void SetDisabledImagePadding(const f64 InImagePadding) noexcept { this->Style.DisabledBrush.TexturePadding = InImagePadding; }
     FORCEINLINE void SetOmniImagePadding(const f64 InImagePadding) noexcept
     {
-        this->Style.NormalBrush.ImagePadding   = InImagePadding;
-        this->Style.HoverBrush.ImagePadding    = InImagePadding;
-        this->Style.PressBrush.ImagePadding    = InImagePadding;
-        this->Style.DisabledBrush.ImagePadding = InImagePadding;
+        this->Style.NormalBrush.TexturePadding   = InImagePadding;
+        this->Style.HoverBrush.TexturePadding    = InImagePadding;
+        this->Style.PressBrush.TexturePadding    = InImagePadding;
+        this->Style.DisabledBrush.TexturePadding = InImagePadding;
 
         return;
     }

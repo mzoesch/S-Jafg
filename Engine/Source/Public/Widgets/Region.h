@@ -9,7 +9,7 @@
 namespace Jafg
 {
 
-//# High-level image behavior.
+//# High-level texture coordinates behavior.
 enum struct ETexCoordBehavior
 {
     //# Scale UVs normalized.
@@ -20,30 +20,50 @@ enum struct ETexCoordBehavior
     FitH,
 };
 
-namespace TextureBehavior
+namespace MiscUV
 {
 
-inline LVec4F FitV(LVec4F UVs, LVec2F NodeSize, LVec2F TargetSize) noexcept
+inline constexpr LVec4F FitV(LVec4F UVs, LVec2F TextureExtend, LVec2F TargetSize) noexcept
 {
     f32 CenterU{(UVs.x + UVs.z) * 0.5f};
-    f32 ScaledU{(UVs.w - UVs.y) * ((TargetSize.x  / TargetSize.y) / (NodeSize.x / NodeSize.y))};
+    f32 ScaledU{(UVs.w - UVs.y) * ((TargetSize.x  / TargetSize.y) / (TextureExtend.x / TextureExtend.y))};
     return {
         CenterU - ScaledU * 0.5f, UVs.y,
         CenterU + ScaledU * 0.5f, UVs.w
         };
 }
 
-inline LVec4F FitH(LVec4F UVs, LVec2F NodeSize, LVec2F TargetSize) noexcept
+inline constexpr LVec4F FitH(LVec4F UVs, LVec2F TextureExtend, LVec2F TargetSize) noexcept
 {
     f32 CenterV{(UVs.y + UVs.w) * 0.5f};
-    f32 ScaledV{(UVs.z - UVs.x) * ((NodeSize.x / NodeSize.y) / (TargetSize.x  / TargetSize.y))};
+    f32 ScaledV{(UVs.z - UVs.x) * ((TextureExtend.x / TextureExtend.y) / (TargetSize.x  / TargetSize.y))};
     return {
         UVs.x, CenterV - ScaledV * 0.5f,
         UVs.z, CenterV + ScaledV * 0.5f
         };
 }
 
-} /* ~Namespace TextureBehavior */
+inline constexpr LVec4F ApplyScale(LVec4F const& UVs, f32 Scale) noexcept
+{
+    check(Scale != 0.0f)
+    LVec2F Center{(maths::xy(UVs) + maths::zw(UVs)) * 0.5f};
+    LVec2F HalfSize{(maths::zw(UVs) - maths::xy(UVs)) * 0.5f / Scale};
+    return {
+        Center - HalfSize,
+        Center + HalfSize,
+        };
+}
+
+inline constexpr LVec4F ApplyPadding(LVec4F UVs, f32 Padding, LVec2F const& Extend) noexcept
+{
+    LVec2F PaddingUV{Padding / Extend.x, Padding / Extend.y};
+    return {
+        maths::xy(UVs) + PaddingUV,
+        maths::zw(UVs) - PaddingUV,
+        };
+}
+
+} /* ~Namespace MiscUV */
 
 struct LRegionBrush
 {
@@ -53,7 +73,7 @@ struct LRegionBrush
     //# An optional texture to use as a background.
     LTexture2Ref Texture;
 
-    //# The scale of the image.
+    //# The scale of the texture.
     f32 TextureScale{ 1.0 };
 
     //# How the texture's UV should behave.
@@ -62,8 +82,8 @@ struct LRegionBrush
     //# Texture UV out-of-bounds behavior.
     vk::SamplerAddressMode SamplerAddressMode{ vk::SamplerAddressMode::eClampToBorder };
 
-    //# How much padding to apply to the image.
-    f32 ImagePadding{};
+    //# How much padding to apply to the texture.
+    f32 TexturePadding{};
 
     //# Tint of the background if any.
     LColor BackgroundTint{ Colors::Black };
@@ -105,10 +125,10 @@ public:
 
     FORCEINLINE void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
     FORCEINLINE void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
-    FORCEINLINE void SetImageScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
+    FORCEINLINE void SetTextureScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
     FORCEINLINE void SetTexCoordBehavior(ETexCoordBehavior InTexCoordBehavior) noexcept { this->Brush.TexCoordBehavior = InTexCoordBehavior; }
     FORCEINLINE void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
-    FORCEINLINE void SetImagePadding(f32 InPadding) noexcept { this->Brush.ImagePadding = InPadding; }
+    FORCEINLINE void SetTexturePadding(f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
     FORCEINLINE void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
     FORCEINLINE void SetOutlineThickness(f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
     FORCEINLINE void SetRadii(LVec4F const& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
@@ -139,9 +159,9 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) ImageScale(this auto&& Self, const f32 InScale) noexcept
+    decltype(auto) TextureScale(this auto&& Self, const f32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetImageScale(InScale);
+        NODE_FACTORY_SELF().SetTextureScale(InScale);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior InTexCoordBehavior) noexcept
@@ -154,9 +174,9 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) ImagePadding(this auto&& Self, const f32 InPadding) noexcept
+    decltype(auto) TexturePadding(this auto&& Self, const f32 InPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetImagePadding(InPadding);
+        NODE_FACTORY_SELF().SetTexturePadding(InPadding);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) BackgroundTint(this auto&& Self, LColor const& InBackgroundTint) noexcept

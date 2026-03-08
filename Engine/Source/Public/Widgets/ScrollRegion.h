@@ -326,7 +326,7 @@ FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept
     Result.TextureScale = this->Super::GetBrush().TextureScale;
     Result.TexCoordBehavior = this->Super::GetBrush().TexCoordBehavior;
     Result.SamplerAddressMode = this->Super::GetBrush().SamplerAddressMode;
-    Result.ImagePadding = this->Super::GetBrush().ImagePadding;
+    Result.TexturePadding = this->Super::GetBrush().TexturePadding;
     Result.Radii = this->Super::GetBrush().Radii;
     Result.OutlineThickness = this->Super::GetBrush().OutlineThickness;
     Result.OutlineTint = this->Super::GetBrush().OutlineTint;
