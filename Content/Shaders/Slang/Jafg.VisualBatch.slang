@@ -23,6 +23,7 @@ struct InstanceData
     float  OutlineThickness;
     uint TextureIndex;
     uint SamplerIndex;
+    float ScreenPxRange;
 };
 [[vk::binding(0, 2)]] StructuredBuffer<InstanceData> InstanceBuffer;
 
@@ -49,6 +50,10 @@ FRInput vertMain(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID)
     return Result;
 }
 
+float median(float r, float g, float b) {
+    return max(min(r, g), min(max(r, g), b));
+}
+
 [shader("fragment")]
 float4 fragMain(FRInput Input) : SV_TARGET
 {
@@ -63,17 +68,28 @@ float4 fragMain(FRInput Input) : SV_TARGET
     bool bOutline = false;
 
     float4 Result;
-    if (Instance.SamplerIndex == JAFG_SAMPLER_CLAMP_TO_BORDER)
+    if (Instance.TextureIndex == 1)
     {
-        Result = lerp(
-            Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
-            Instance.BackgroundTint,
-            saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
-            );
+        float3 msd = (BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV)).rgb;
+        float sd = median(msd.r, msd.g, msd.b);
+        float screenPxDist = Instance.ScreenPxRange * (sd - 0.5);
+        float opacity = clamp(screenPxDist + 0.5, 0.0, 1.0);
+        Result = float4(1, 1, 1, 1 * opacity);
     }
     else
     {
-        Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+        if (Instance.SamplerIndex == JAFG_SAMPLER_CLAMP_TO_BORDER)
+        {
+            Result = lerp(
+                Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
+                Instance.BackgroundTint,
+                saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
+                );
+        }
+        else
+        {
+            Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+        }
     }
 
     if (DistLeft < Instance.Radii.x && DistTop < Instance.Radii.x) /* TL */

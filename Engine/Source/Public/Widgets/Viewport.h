@@ -104,8 +104,6 @@ public:
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WNode* Node);
 
-    FORCEINLINE f32 GetFrameOrthoZLayerDepth() const noexcept { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
-
     //#
     //# The translation that is recommended for children of a #WNode to use while drawing.
     //# This translation should be removed after said #WNode is finished drawing.
@@ -183,7 +181,6 @@ private:
     TArray<TClassStorage<WNode>> HoveredWidgets;
     TArray<TClassStorage<WNode>> LastFrameHoveredWidgets;
 
-    mutable f32 FrameZLayerDepth { 0.0f };
     mutable LVec2F FrameTranslation;
     mutable LVec2F SweepTranslation;
     TArray<LVec4F> FrameCulls;

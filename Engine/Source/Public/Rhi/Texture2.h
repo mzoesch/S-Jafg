@@ -90,11 +90,13 @@ struct LTexture2 final
 
         return;
     }
+    static TSharedRef<LTexture2> FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, LTexture2Extent Extent, HostInfo Info);
     PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
     ~LTexture2() = default;
 
     FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->MipMap0.IsAllocated(); }
     ENGINE_API EResult LoadToHost(HostInfo const& Info);
+    ENGINE_API EResult LoadToHostFromMemory();
     inline void FreeFromHost() noexcept
     {
         if (this->MipMap0.IsAllocated())

@@ -43,23 +43,14 @@ public:
     constexpr LBoxBrush& GetMutableBrush() noexcept { return this->Brush; }
     constexpr LBoxBrush const& GetBrush() const noexcept { return this->Brush; }
 
-    FORCEINLINE constexpr LColor const& GetTint() const noexcept { return this->Brush.Tint; }
-    FORCEINLINE constexpr LTexture2Ref const& GetTexture() const noexcept { return this->Brush.Texture; }
-    FORCEINLINE constexpr f32 GetImageScale() const noexcept { return this->Brush.TextureScale; }
-    FORCEINLINE constexpr ETexCoordBehavior     GetImageBehavior() const noexcept { return this->Brush.TexCoordBehavior; }
-    FORCEINLINE constexpr vk::SamplerAddressMode GetSamplerAddressMode() const noexcept { return this->Brush.SamplerAddressMode; }
-    FORCEINLINE constexpr f32                  GetImagePadding() const noexcept { return this->Brush.TexturePadding; }
-    FORCEINLINE constexpr const LVec4F&       GetOutlineRadii() const noexcept { return this->Brush.Radii; }
-    FORCEINLINE constexpr f32                  GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
-    FORCEINLINE constexpr const LColor&   GetOutlineTint() const noexcept { return this->Brush.OutlineTint; }
-    FORCEINLINE constexpr const LPadding&      GetPadding() const noexcept { return this->Brush.Padding; }
-
+    FORCEINLINE void SetSkipBrushDraw(bool bInSkipBrushDraw) noexcept { this->Brush.bSkipBrushDraw = bInSkipBrushDraw; }
     FORCEINLINE constexpr void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
     FORCEINLINE constexpr void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
     FORCEINLINE constexpr void SetTextureScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
     FORCEINLINE constexpr void SetImageBehavior(const ETexCoordBehavior InBehavior) noexcept { this->Brush.TexCoordBehavior = InBehavior; }
     FORCEINLINE constexpr void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
     FORCEINLINE constexpr void SetTexturePadding(const f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
+    FORCEINLINE constexpr void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
     FORCEINLINE constexpr void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE void SetClampRadii(bool bClamp) noexcept { this->Brush.bClampRadii = bClamp; }
     FORCEINLINE constexpr void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
@@ -75,39 +66,49 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
 {
     NODE_FACTORY_BODY(WBox)
 
-    FORCEINLINE decltype(auto) Brush(this auto&& Self, LBoxBrush const& InBrush)
+    decltype(auto) SkipBrushDraw(this auto&& Self, bool bInSkipBrushDraw) noexcept
+    {
+        NODE_FACTORY_SELF().SetSkipBrushDraw(bInSkipBrushDraw);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Brush(this auto&& Self, LBoxBrush const& InBrush)
     {
         NODE_FACTORY_SELF().SetBrush(InBrush);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) Tint(this auto&& Self, const LColor& InTint)
+    decltype(auto) Tint(this auto&& Self, const LColor& InTint)
     {
         NODE_FACTORY_SELF().SetTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) Texture(this auto&& Self, LTexture2Ref InTexture)
+    decltype(auto) Texture(this auto&& Self, LTexture2Ref InTexture)
     {
         NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) TextureScale(this auto&& Self, const f32 InTextureScale)
+    decltype(auto) TextureScale(this auto&& Self, const f32 InTextureScale)
     {
         NODE_FACTORY_SELF().SetTextureScale(InTextureScale);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior InTexCoordBehavior)
+    decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior InTexCoordBehavior)
     {
         NODE_FACTORY_SELF().SetTexCoordBehavior(InTexCoordBehavior);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) SamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
+    decltype(auto) SamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InSamplerAddressMode)
     {
         NODE_FACTORY_SELF().SetSamplerAddressMode(InSamplerAddressMode);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) TexturePadding(this auto&& Self, const f32 InTexturePadding)
+    decltype(auto) TexturePadding(this auto&& Self, const f32 InTexturePadding)
     {
         NODE_FACTORY_SELF().SetTexturePadding(InTexturePadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) BackgroundTint(this auto&& Self, LColor const& InBackgroundTint)
+    {
+        NODE_FACTORY_SELF().SetBackgroundTint(InBackgroundTint);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) Radii(this auto&& Self, LVec4F const& InOutlineRadii) noexcept
@@ -120,22 +121,21 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().SetClampRadii(bClamp);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) OutlineThickness(this auto&& Self, const f32 InOutlineThickness)
+    decltype(auto) OutlineThickness(this auto&& Self, const f32 InOutlineThickness)
     {
         NODE_FACTORY_SELF().SetOutlineThickness(InOutlineThickness);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) OutlineTint(this auto&& Self, const LColor& InOutlineTint)
+    decltype(auto) OutlineTint(this auto&& Self, const LColor& InOutlineTint)
     {
         NODE_FACTORY_SELF().SetOutlineTint(InOutlineTint);
         return NODE_FACTORY_RESULT();
     }
-    FORCEINLINE decltype(auto) Padding(this auto&& Self, const LPadding& InPadding)
+    decltype(auto) Padding(this auto&& Self, const LPadding& InPadding)
     {
         NODE_FACTORY_SELF().SetPadding(InPadding);
         return NODE_FACTORY_RESULT();
     }
-
 };
 
 } /* ~Namespace Jafg */

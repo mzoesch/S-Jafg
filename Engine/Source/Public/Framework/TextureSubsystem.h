@@ -47,6 +47,8 @@ public:
 private:
 
     TArray<LTextureView> TextureViews;
+    TArray<LString> GuaranteedTextureIdentifiers{ "Jafg.IdentityMul" };
+    TArray<LTexture2Ref> GuaranteedTextures;
     std::unordered_map<LPath, std::shared_ptr<LTexture2>> Textures;
 };
 

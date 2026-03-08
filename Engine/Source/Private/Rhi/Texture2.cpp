@@ -27,6 +27,44 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, LTexture2Extent Extent, HostInfo Info)
+{
+    check(HumanReadableName.empty() == false)
+
+    auto Result{std::make_shared<LTexture2>()};
+    auto& Tex{*Result};
+    check(Tex.IsOnHost() == false && Tex.IsOnDevice() == false)
+    Tex.Path = LPath{"@"}; Tex.Path.concat(HumanReadableName);
+
+    Tex.Meta.Format = Info.Format;
+    Tex.Meta.Extent = Extent;
+
+    if (SrcFormat == Info.Format)
+    {
+        Tex.MipMap0 = std::move(Data);
+    }
+    else if (SrcFormat == vk::Format::eR8G8B8Unorm && Info.Format == vk::Format::eR8G8B8A8Srgb)
+    {
+        Tex.MipMap0.Allocate(Vk_GetBytesPerPixel(Info.Format) * Tex.GetWidth() * Tex.GetHeight());
+        for (u32 i{0}; i < Tex.GetWidth() * Tex.GetHeight(); ++i)
+        {
+            Tex.MipMap0[i * 4 + 0] = Data[i * 3 + 0];
+            Tex.MipMap0[i * 4 + 1] = Data[i * 3 + 1];
+            Tex.MipMap0[i * 4 + 2] = Data[i * 3 + 2];
+            Tex.MipMap0[i * 4 + 3] = std::numeric_limits<u8>::max();
+        }
+    }
+    else
+    {
+        LOG_FATAL(LogTextureSubsystem, "[{}]: Unsupported format conversion from [{}] to [{}] when loading texture from memory."
+            , HumanReadableName, vk::to_string(SrcFormat), vk::to_string(Info.Format)
+            )
+    }
+    check(Tex.MipMap0.IsAllocated())
+
+    return Result;
+}
+
 Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
 {
     check(this->Path.empty() == false)

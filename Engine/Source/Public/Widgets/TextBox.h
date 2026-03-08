@@ -18,17 +18,18 @@ class ENGINE_API WTextBox : public WBox
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS(WTextBox)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WTextBox)
+    {
+        this->SetOutlineTint(Colors::Transparent);
+    }
 
 public:
 
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    FORCEINLINE void UpdateDesiredSize() const override { this->UpdateDesiredSizeForString(this->Content); }
-    void UpdateDesiredSizeForString(LString const& String) const noexcept;
-    FORCEINLINE f32 GetDesiredWidthForString(LString const& String) const noexcept { return this->GetDesiredSizeForString(String).x; }
-    LVec2F GetDesiredSizeForString(LString const& String) const noexcept;
-    i32 GoToWidth(LString const& InString, const f32 InWidth) const noexcept;
+    void UpdateDesiredSize() const override;
+
+    i32 GoToWidth(LString const& InString, f32 InWidth) const noexcept;
 
     //# Called if the text box content changes.
     LTextBoxChangedDelegate OnChanged;
@@ -39,7 +40,7 @@ public:
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }
 
     FORCEINLINE constexpr void SetTextColor(const LColor& InColor) noexcept { this->TextColor = InColor; }
-    FORCEINLINE CONSTEXPR_CHECK void SetTextScale(const LTextScale InScale) noexcept { this->TextScale = InScale; }
+    FORCEINLINE constexpr void SetTextScale(const LTextScale InScale) noexcept { this->TextScale = InScale; }
     FORCEINLINE constexpr void SetTextAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
     FORCEINLINE constexpr void SetTextAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
     FORCEINLINE constexpr void SetTextHAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }

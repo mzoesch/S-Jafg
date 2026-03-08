@@ -418,15 +418,11 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     this->AddSurface(std::move(QuerySurface), ENewSurfaceBehavior::FocusIfNonePresent);
     this->GetSurfaces().back()->LateSetupVk();
 
-    LFrontendBase::Initialize(Outer);
-
     check(this->Vk_FreeBindlessTextures.GetWords().empty())
     this->Vk_FreeBindlessTextures = LDynamicBitset{this->Vk_BindlessTextureCapacity};
     check(this->Vk_FreeBindlessTextures.GetBitCount() == this->Vk_BindlessTextureCapacity)
-    for (auto& Gt : this->GetGuaranteedTextures())
-    {
-        this->Vk_AddTextureToGlobalBindlessArray(&*Gt);
-    }
+
+    LFrontendBase::Initialize(Outer);
 
     return;
 }
@@ -663,7 +659,7 @@ Jafg::LDeviceBuffer Jafg::LFrontendVk::Vk_StageBuffer(LStageBufferCreateInfo con
     return { DeviceBuffer, DeviceAllocation };
 }
 
-Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo)
+Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo) const
 {
     VkImage Image;
     VmaAllocation Allocation;
@@ -681,29 +677,23 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateImage(vk::ImageCreateInfo const& 
     return LDeviceImage{ Image, Allocation };
 }
 
-Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info)
+Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info) const
 {
     VmaAllocationCreateInfo AllocationInfo{
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
         .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         };
-
     return this->Vk_CreateImage(Info, AllocationInfo);
 }
 
-Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info)
+Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info) const
 {
-    check( Info.Data )
-
-    auto N{ static_cast<size_t>(Vk_GetBytesPerPixel(Info.Info.format) * Info.Info.extent.width * Info.Info.extent.height) };
-
-    auto StagingBuffer{this->Vk_CreateMappedBuffer({
-        .size = N,
-        .usage = vk::BufferUsageFlagBits::eTransferSrc
-        })};
+    check(Info.Data)
+    auto N{static_cast<size_t>(Vk_GetBytesPerPixel(Info.Info.format) * Info.Info.extent.width * Info.Info.extent.height)};
+    auto StagingBuffer{this->Vk_CreateMappedBuffer({.size = N, .usage = vk::BufferUsageFlagBits::eTransferSrc})};
     std::memcpy(StagingBuffer.GetData(), Info.Data, N);
 
-    auto Image{ this->Vk_CreateDeviceLocalImage(Info.Info) };
+    auto Image{this->Vk_CreateDeviceLocalImage(Info.Info)};
 
     this->Vk_TransitionImageLayout({
         .oldLayout = vk::ImageLayout::eUndefined,
@@ -719,7 +709,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
         });
 
     {
-        auto CommandBuffer{ this->Vk_BeginSingleTimeCommands() };
+        auto CommandBuffer{this->Vk_BeginSingleTimeCommands()};
         vk::BufferImageCopy Region{
             .bufferOffset = 0,
             .bufferRowLength = 0,
@@ -737,7 +727,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
         check( Info.Info.extent.depth == 1 && "Vk_StageLinearImage does currently only support 2D images with mipmaps." )
         this->Vk_Generate2DMipMaps(
               Image.GetBuffer(), Info.Info.format
-            , vk::Extent2D{ Info.Info.extent.width, Info.Info.extent.height }
+            , vk::Extent2D{Info.Info.extent.width, Info.Info.extent.height}
             , Info.Info.mipLevels
             );
     }
@@ -760,7 +750,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreat
     return Image;
 }
 
-void Jafg::LFrontendVk::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier)
+void Jafg::LFrontendVk::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier) const
 {
     auto Buffer{ this->Vk_BeginSingleTimeCommands() };
 
@@ -1637,7 +1627,7 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
     return Out;
 }
 
-void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format, vk::Extent2D Extent, u32 MipLevels)
+void Jafg::LFrontendVk::Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format, vk::Extent2D Extent, u32 MipLevels) const
 {
     check( MipLevels > 1 )
 

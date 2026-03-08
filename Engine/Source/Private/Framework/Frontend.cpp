@@ -16,7 +16,7 @@ void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
     this->GetCollection()->InitializeDeferred(Outer);
     this->GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
 
-    this->GuaranteedTextures.emplace_back(this->GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Jafg.IdentityMul"));
+    return;
 }
 
 void Jafg::LFrontendBase::Tick()
@@ -58,7 +58,6 @@ void Jafg::LFrontendBase::TearDown()
 
     LOG_VERBOSE(LogFrontEnd, "Tearing down frontend and all its surfaces.")
 
-    algo::orphan(&this->GuaranteedTextures);
     this->Collection.TearDownSubsystems();
     algo::orphan(&this->Surfaces);
 

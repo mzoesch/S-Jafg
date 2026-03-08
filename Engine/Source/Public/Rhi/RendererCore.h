@@ -33,11 +33,6 @@
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
 
-#if !JAFG_NO_FREETYPE
-    #include <ft2build.h>
-    #include FT_FREETYPE_H
-#endif /* !JAFG_NO_FREETYPE */
-
 #if PLATFORM_USES_WEBGL_TWO
     #include <GLES3/gl3.h>
 #endif /* PLATFORM_USES_WEBGL_TWO */

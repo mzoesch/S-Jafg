@@ -81,6 +81,52 @@ if(_guard)
     target_link_libraries(${_scoped_module_name} PUBLIC freetype-interface)
 
     ###############################################################################
+    # harfbuzz
+    message(STATUS "Fetching harfbuzz...")
+    FetchContent_Declare(
+        FetchContent_Harfbuzz
+        GIT_REPOSITORY      https://github.com/harfbuzz/harfbuzz.git
+        GIT_TAG             13.0.1
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/harfbuzz"
+        )
+    FetchContent_MakeAvailable(FetchContent_Harfbuzz)
+    target_link_libraries(${_scoped_module_name} PRIVATE harfbuzz)
+
+    ###############################################################################
+    # msdfgen
+    set(MSDFGEN_CORE_ONLY OFF)
+    set(MSDFGEN_BUILD_STANDALONE OFF)
+    set(MSDFGEN_USE_VCPKG OFF)
+    set(MSDFGEN_USE_SKIA OFF)
+    set(MSDFGEN_DISABLE_SVG ON)
+    message(STATUS "Fetching msdfgen...")
+    FetchContent_Declare(
+            FetchContent_MsdfGen
+            GIT_REPOSITORY      https://github.com/Chlumsky/msdfgen.git
+            GIT_TAG             v1.13
+            SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdfgen"
+            )
+    FetchContent_MakeAvailable(FetchContent_MsdfGen)
+    target_link_libraries(${_scoped_module_name} PRIVATE msdfgen-core)
+    target_link_libraries(${_scoped_module_name} PRIVATE msdfgen-ext)
+
+    ###############################################################################
+    # msdf-adtlas-gen
+    set(MSDF_ATLAS_BUILD_STANDALONE OFF)
+    set(MSDF_ATLAS_USE_VCPKG OFF)
+    set(MSDF_ATLAS_USE_SKIA OFF)
+    set(MSDF_ATLAS_MSDFGEN_EXTERNAL ON)
+    message(STATUS "Fetching msdf-adtlas-gen...")
+    FetchContent_Declare(
+            FetchContent_MsdfAtlasGen
+            GIT_REPOSITORY      https://github.com/Chlumsky/msdf-atlas-gen.git
+            GIT_TAG             v1.4
+            SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdf-atlas-gen"
+            )
+    FetchContent_MakeAvailable(FetchContent_MsdfAtlasGen)
+    target_link_libraries(${_scoped_module_name} PRIVATE msdf-atlas-gen)
+
+    ###############################################################################
     # Glfw3
     message(STATUS "Fetching Glfw3...")
     FetchContent_Declare(

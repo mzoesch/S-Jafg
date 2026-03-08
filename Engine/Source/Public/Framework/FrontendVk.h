@@ -158,14 +158,14 @@ public:
     //#
     ENGINE_API LDeviceBuffer Vk_StageBuffer(LStageBufferCreateInfo const& Info);
 
-    ENGINE_API LDeviceImage Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo);
-    ENGINE_API LDeviceImage Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info);
+    ENGINE_API LDeviceImage Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo) const;
+    ENGINE_API LDeviceImage Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info) const;
 
     //# The resulting image will be in optimal shader read only layout.
-    ENGINE_API LDeviceImage Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info);
+    ENGINE_API LDeviceImage Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info) const;
 
     //# Transitions an image layout. !!This is not for flight frame command buffers!!
-    ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier);
+    ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier) const;
 
     ENGINE_API void Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format);
 
@@ -196,7 +196,7 @@ private:
     std::multimap<u64, vk::raii::PhysicalDevice> Vk_RankPhysicalDevices(TArray<vk::raii::PhysicalDevice> const& PhysicalDevices) const;
 
     //# @note All mip levels (including zero) will be in the optimal shader read only layout after this method completes.
-    void Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format, vk::Extent2D Extent, u32 MipLevels);
+    void Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format, vk::Extent2D Extent, u32 MipLevels) const;
 
     vk::raii::Context Vk_Context;
 

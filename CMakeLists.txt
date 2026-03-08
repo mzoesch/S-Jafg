@@ -38,7 +38,17 @@ include(CMake/ValidateTargetInput.cmake)
 include(CMake/ValidateCompiler.cmake)
 include(CMake/RetrieveVersionNumber.cmake)
 include(CMake/RetrieveMinCPlusPlus.cmake)
-
+if(NOT CMAKE_BUILD_TYPE)
+    if(JAFG_TARGET_CONFIG STREQUAL "Debug")
+        set(CMAKE_BUILD_TYPE Debug)
+    elseif(JAFG_TARGET_CONFIG STREQUAL "Development")
+        set(CMAKE_BUILD_TYPE RelWithDebInfo)
+    elseif(JAFG_TARGET_CONFIG STREQUAL "Shipping")
+        set(CMAKE_BUILD_TYPE Release)
+    else()
+        message(FATAL_ERROR "Could not infer CMAKE_BUILD_TYPE.")
+    endif()
+endif()
 
 project(
     Jafg

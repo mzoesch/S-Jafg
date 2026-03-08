@@ -7,7 +7,9 @@
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
+#include "Framework/TextureSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
+#include "Framework/FontSubsystem.h"
 #include "Rhi/VisualInstance.h"
 #include "Rhi/NodeRenderInfo.h"
 
@@ -374,17 +376,14 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     STAT_CYCLE_FUNCTION()
 
     auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
-    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
 
     this->ClearInvalidWidgets();
 
-    this->FrameZLayerDepth = 0.0f;
     this->FrameTranslation = maths::zero_vector<LVec2F>;
     this->RecalculateScaleFactor();
 
     // this->IntermediateBuffer.MakeDrawTarget();
 
-    const auto Dimensions{ this->GetDimensions() };
     // this->CachedOrthographicProjectionMatrix = Maths::MakeOrthographicProjectionMatrix
     // (
     //     LVector2(static_cast<f32>(Dimensions.X), static_cast<f32>(Dimensions.Y))
@@ -417,27 +416,11 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     //     continue;
     // }
 
-    LNodeRenderInfo NodeInfo{Info, *this};
-
-    {
-        auto Dims{this->GetDimensionsF()};
-        UBO::VisualShared Shared{.Proj = glm::orthoRH_ZO(
-            0.0f, Dims.x,
-            0.0f,Dims.y,
-            0.0f, 1.0f
-            )};
-        Shared.Upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
-        auto WorldDataWriteInfo{Shared.WriteInfo(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
-        std::array Writes{vk::WriteDescriptorSet{
-            .dstSet = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &WorldDataWriteInfo,
-            }};
-        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-    }
+    LNodeRenderInfo NodeInfo{Info, *this, {},
+        *Frontend.GetSubsystemChecked<JTextureSubsystem>(),
+        *Frontend.GetSubsystemChecked<JMaterialSubsystem>(),
+        *Frontend.GetSubsystemChecked<JFontSubsystem>()
+        };
 
     for (auto const* Widget : this->TopLevelWidgets)
     {
@@ -456,48 +439,68 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     }
 
     check(this->VisualBatches[NodeInfo.Frame].GetData())
-    std::memcpy(
-          this->VisualBatches[NodeInfo.Frame].GetData()
-        , NodeInfo.VisualInstances.data()
-        , sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
-        );
 
-    LMaterialInstance& Instance{*MaterialSubsystem.GetSharedMaterialInstances().at("Jafg.VisualBatch")};
-    auto& FetchedMaterial{Instance.Material->FetchedMaterial};
-    auto& FetchedShader{FetchedMaterial.FetchedShader};
-    vk::DescriptorBufferInfo BufferInfo{
-        .buffer = *this->VisualBatches[NodeInfo.Frame],
-        .offset = 0,
-        .range = sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
-        };
-    std::array Writes{
-        vk::WriteDescriptorSet{
-            .dstSet = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second,
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eStorageBuffer,
-            .pBufferInfo = &BufferInfo
-            },
-        };
-    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    if (NodeInfo.VisualInstances.empty() == false)
+    {
+        LMaterialInstance& Instance{*NodeInfo.MaterialSubsystem.GetSharedMaterialInstances().at("Jafg.VisualBatch")};
 
-    std::array<vk::DescriptorSet, 3> DescriptorSetsToBind;
-    DescriptorSetsToBind[0] = *this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
-    DescriptorSetsToBind[1] = *Frontend.Vk_GetBindlessTextureArrayDescriptorSet();
-    DescriptorSetsToBind[2] = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second;
-    NodeInfo.CommandBuffer.bindDescriptorSets2({
-        .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-        .layout = *Instance.Material->Pipeline.Layout,
-        .firstSet = 0,
-        .descriptorSetCount = DescriptorSetsToBind.size(),
-        .pDescriptorSets = DescriptorSetsToBind.data(),
-        .dynamicOffsetCount = 0,
-        .pDynamicOffsets = nullptr
-        });
+        auto Dimensions{this->GetDimensionsF()};
+        UBO::VisualShared Shared{.Proj = glm::orthoRH_ZO(
+            0.0f, Dimensions.x,
+            0.0f, Dimensions.y,
+            0.0f, 1.0f
+            )};
+        Shared.Upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
+        auto WorldDataWriteInfo{Shared.WriteInfo(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
 
-    NodeInfo.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Instance.Material->Pipeline);
-    NodeInfo.CommandBuffer.draw(4, NodeInfo.VisualInstances.size(), 0, 0);
+        std::memcpy(
+              this->VisualBatches[NodeInfo.Frame].GetData()
+            , NodeInfo.VisualInstances.data()
+            , sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
+            );
+        vk::DescriptorBufferInfo BufferInfo{
+            .buffer = *this->VisualBatches[NodeInfo.Frame],
+            .offset = 0,
+            .range = sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
+            };
+
+        std::array Writes{
+            vk::WriteDescriptorSet{
+                .dstSet = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .pBufferInfo = &WorldDataWriteInfo,
+                },
+            vk::WriteDescriptorSet{
+                .dstSet = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second,
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eStorageBuffer,
+                .pBufferInfo = &BufferInfo
+                },
+            };
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+        std::array<vk::DescriptorSet, 3> DescriptorSetsToBind;
+        DescriptorSetsToBind[0] = *this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
+        DescriptorSetsToBind[1] = *Frontend.Vk_GetBindlessTextureArrayDescriptorSet();
+        DescriptorSetsToBind[2] = *Instance.FrequentDescriptorSets[NodeInfo.Frame].front().second;
+        NodeInfo.CommandBuffer.bindDescriptorSets2({
+            .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+            .layout = *Instance.Material->Pipeline.Layout,
+            .firstSet = 0,
+            .descriptorSetCount = DescriptorSetsToBind.size(),
+            .pDescriptorSets = DescriptorSetsToBind.data(),
+            .dynamicOffsetCount = 0,
+            .pDynamicOffsets = nullptr
+            });
+
+        NodeInfo.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Instance.Material->Pipeline);
+        NodeInfo.CommandBuffer.draw(4, NodeInfo.VisualInstances.size(), 0, 0);
+    }
 
     checkCode
     (

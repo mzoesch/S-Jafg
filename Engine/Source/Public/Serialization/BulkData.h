@@ -68,6 +68,19 @@ public:
     FORCEINLINE constexpr auto end() noexcept { return this->Bulk + this->Number; }
     FORCEINLINE constexpr auto end() const noexcept { return this->Bulk + this->Number; }
 
+    FORCEINLINE constexpr LDomain& operator[](LSize Idx) noexcept
+    {
+        check(this->Bulk)
+        check(Idx < this->Number)
+        return this->Bulk[Idx];
+    }
+    FORCEINLINE constexpr LDomain const& operator[](LSize Idx) const noexcept
+    {
+        check(this->Bulk)
+        check(Idx < this->Number)
+        return this->Bulk[Idx];
+    }
+
     FORCEINLINE constexpr void Allocate(const LSize DomainNumber)
     {
         check( this->IsAllocated() == false )

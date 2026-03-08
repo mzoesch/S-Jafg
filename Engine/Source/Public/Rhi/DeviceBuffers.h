@@ -46,6 +46,7 @@ struct TGenericDeviceBuffer
     ~TGenericDeviceBuffer() noexcept { Detail::FreeDeviceAllocation(this->Buffer, this->Allocation); }
 
     FORCEINLINE constexpr T GetBuffer() const noexcept { return this->Buffer; }
+    FORCEINLINE constexpr T operator*() const noexcept { return this->Buffer; }
     FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return this->Allocation; }
 
     constexpr inline void Release() noexcept

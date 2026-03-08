@@ -113,8 +113,6 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
 
-    FORCEINLINE auto const& GetGuaranteedTextures() const noexcept { return this->GuaranteedTextures; }
-
 protected:
 
     //#
@@ -131,9 +129,6 @@ private:
     i32 FocusedSurface{ INDEX_NONE };
     TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };
-
-    //# Textures the frontend owns and, therefore, are always loaded.
-    TArray<LTexture2Ref> GuaranteedTextures;
 };
 
 } /* ~Namespace Jafg */

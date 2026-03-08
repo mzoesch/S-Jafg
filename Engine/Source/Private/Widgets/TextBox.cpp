@@ -1,6 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/TextBox.h"
+
+#include <Framework/FontSubsystem.h>
+#include <Rhi/NodeRenderInfo.h>
+
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
@@ -83,30 +87,32 @@ f32 Jafg::LTextScale::InSpt(WNode const& Node) const noexcept
     return this->InSpt(Node.GetViewport());
 }
 
-// void Jafg::WTextBox::BeginLifeCDR()
-// {
-//     Super::BeginLifeCDR();
-//
-    // if (GEngine)
-    // {
-    //     this->RegisterShaders();
-    // }
-    // else
-    // {
-    //     Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this](void) -> void
-    //     {
-    //         this->RegisterShaders();
-    //
-    //         return;
-    //     });
-    // }
-//
-//     return;
-// }
-
 void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 {
     Super::Draw(Info);
+
+    if (this->Content.empty() == false)
+    {
+        for (auto GlyphInfos{Info.FontSubsystem.GetGlyphInfos(this->Content
+            , 11//this->TextScale.InSpt(Info.Viewport)
+            , this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport)
+            , 0
+            )}; auto GlyphInfo : GlyphInfos)
+        {
+            Info.VisualInstances.emplace_back(LVisualInstance{
+                .Rect = GlyphInfo.Rect,
+                .Tint = this->GetBrush().Tint.ToVector4(),
+                .BackgroundTint = this->GetBrush().BackgroundTint.ToVector4(),
+                .Radii = this->GetBrush().Radii,
+                .OutlineTint = this->GetBrush().OutlineTint.ToVector4(),
+                .TexCoordRect = GlyphInfo.TexCoordRect,
+                .OutlineThickness = this->GetBrush().OutlineThickness,
+                .TextureIndex = GlyphInfo.BindlessTextureIndex,
+                .SamplerIndex = GlyphInfo.SamplerIndex,
+                .ScreenPxRange = GlyphInfo.ScreenPxRange,
+                });
+        }
+    }
 
     // GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
     // (
@@ -125,31 +131,38 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
     return;
 }
 
-void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noexcept
+void Jafg::WTextBox::UpdateDesiredSize() const
 {
-    LVec2F DesiredSize{ this->GetDesiredSizeForString(String) };
-
-    // if (!GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText))
-    // {
-    //     return;
-    // }
-    //
-    // if (this->bRespectContentHeight == false)
-    // {
-    //     DesiredSize.Y = GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)
-    //         ->GetApproxBearingHeight(this->TextScale.InSpt(this->GetViewport()));
-    // }
-
-    this->TextDesiredSize = DesiredSize;
-
-    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(this->GetViewport());
-    this->SetDesiredSizeInSpt(DesiredSize);
+    Super::UpdateDesiredSize();
 
     return;
 }
 
-LVec2F Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noexcept
-{
+// void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noexcept
+// {
+    // LVec2F DesiredSize{ this->GetDesiredSizeForString(String) };
+    //
+    // // if (!GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText))
+    // // {
+    // //     return;
+    // // }
+    // //
+    // // if (this->bRespectContentHeight == false)
+    // // {
+    // //     DesiredSize.Y = GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)
+    // //         ->GetApproxBearingHeight(this->TextScale.InSpt(this->GetViewport()));
+    // // }
+    //
+    // this->TextDesiredSize = DesiredSize;
+    //
+    // DesiredSize += this->GetPadding().GetDesiredSizeInSpt(this->GetViewport());
+    // this->SetDesiredSizeInSpt(DesiredSize);
+
+//     return;
+// }
+
+// LVec2F Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noexcept
+// {
     // const LOrthographicTextShader* Shader{ GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
     // if (!Shader) { return LVector2::ZeroVector; }
@@ -185,10 +198,10 @@ LVec2F Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noex
 
     // return Out;
 
-    return maths::zero_vector<LVec2F>;
-}
+//     return maths::zero_vector<LVec2F>;
+// }
 
-i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const noexcept
+i32 Jafg::WTextBox::GoToWidth(const LString& InString, f32 InWidth) const noexcept
 {
     if (InString.empty())
     {

@@ -12,6 +12,16 @@ void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
     Super::Initialize(Collection);
     this->RefetchingTextureViews();
 
+    auto& Frontend{this->GetFrontend()};
+    for (auto const& Gti : this->GuaranteedTextureIdentifiers)
+    {
+        this->GuaranteedTextures.emplace_back(this->FromTextureViewIdentifier(Gti));
+    }
+    for (auto& Gt : this->GuaranteedTextures)
+    {
+        Frontend.Vk_AddTextureToGlobalBindlessArray(&*Gt);
+    }
+
     return;
 }
 

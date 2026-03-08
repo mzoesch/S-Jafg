@@ -93,6 +93,9 @@ struct LRegionBrush
     //# Whether to clamp radii based on their size.
     bool bClampRadii{ true };
 
+    //# Whether to skip drawing this region.
+    bool bSkipBrushDraw{ false };
+
     //# The thickness of the outline.
     f32 OutlineThickness{};
 
@@ -123,17 +126,18 @@ public:
     constexpr LRegionBrush& GetMutableBrush() noexcept { return this->Brush; }
     constexpr LRegionBrush const& GetBrush() const noexcept { return this->Brush; }
 
-    FORCEINLINE void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
-    FORCEINLINE void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
-    FORCEINLINE void SetTextureScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
-    FORCEINLINE void SetTexCoordBehavior(ETexCoordBehavior InTexCoordBehavior) noexcept { this->Brush.TexCoordBehavior = InTexCoordBehavior; }
-    FORCEINLINE void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
-    FORCEINLINE void SetTexturePadding(f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
-    FORCEINLINE void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
-    FORCEINLINE void SetOutlineThickness(f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
-    FORCEINLINE void SetRadii(LVec4F const& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
+    FORCEINLINE void SetSkipBrushDraw(bool bInSkipBrushDraw) noexcept { this->Brush.bSkipBrushDraw = bInSkipBrushDraw; }
+    FORCEINLINE constexpr void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
+    FORCEINLINE constexpr void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
+    FORCEINLINE constexpr void SetTextureScale(f32 InTextureScale) noexcept { this->Brush.TextureScale = InTextureScale; }
+    FORCEINLINE constexpr void SetImageBehavior(const ETexCoordBehavior InBehavior) noexcept { this->Brush.TexCoordBehavior = InBehavior; }
+    FORCEINLINE constexpr void SetSamplerAddressMode(vk::SamplerAddressMode InSamplerAddressMode) noexcept { this->Brush.SamplerAddressMode = InSamplerAddressMode; }
+    FORCEINLINE constexpr void SetTexturePadding(const f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
+    FORCEINLINE constexpr void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
+    FORCEINLINE constexpr void SetRadii(const LVec4F& InOutlineRadii) noexcept { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE void SetClampRadii(bool bClamp) noexcept { this->Brush.bClampRadii = bClamp; }
-    FORCEINLINE void SetOutlineTint(LColor const& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
+    FORCEINLINE constexpr void SetOutlineThickness(const f32 InOutlineThickness) noexcept { this->Brush.OutlineThickness = InOutlineThickness; }
+    FORCEINLINE constexpr void SetOutlineTint(const LColor& InOutlineTint) noexcept { this->Brush.OutlineTint = InOutlineTint; }
 
 private:
 
@@ -144,6 +148,11 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
 {
     NODE_FACTORY_BODY(WRegion)
 
+    decltype(auto) SkipBrushDraw(this auto&& Self, bool bInSkipBrushDraw) noexcept
+    {
+        NODE_FACTORY_SELF().SetSkipBrushDraw(bInSkipBrushDraw);
+        return NODE_FACTORY_RESULT();
+    }
     decltype(auto) Brush(this auto&& Self, LRegionBrush const& InBrush) noexcept
     {
         NODE_FACTORY_SELF().SetBrush(InBrush);
@@ -179,7 +188,7 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetTexturePadding(InPadding);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) BackgroundTint(this auto&& Self, LColor const& InBackgroundTint) noexcept
+    decltype(auto) BackgroundTint(this auto&& Self, LColor const& InBackgroundTint)
     {
         NODE_FACTORY_SELF().SetBackgroundTint(InBackgroundTint);
         return NODE_FACTORY_RESULT();
