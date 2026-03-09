@@ -2,13 +2,10 @@
 
 #pragma once
 
-#include <Rhi/Texture2.h>
-
 #include "Subsystems/FrontendSubsystem.h"
-#include "Rhi/Glyph.h"
+#include "Framework/FontSubsystemForward.h"
 #include "Rhi/RendererCore.h"
-#include "Rhi/DeviceBuffers.h"
-#include "Rhi/VisualInstance.h"
+#include "Rhi/Texture2.h"
 #include "FontSubsystem.generated.h"
 
 typedef struct FT_LibraryRec_* FT_Library;
@@ -50,6 +47,8 @@ public:
         f32 MaxAtlasGlyphSize{ 64.0f };
         //# This value or clamped by user preferences.
         f32 MaxPixelRange{ 6.0f };
+        //# Inner and outer padding to apply to each quad.
+        LVec2F Padding{ maths::zero_vector<LVec2F> };
         //# The base glyphes to add. Has to be non-empty.
         LString BaseSet{ AsciiSet() };
     };
@@ -64,16 +63,7 @@ public:
     }
     void ReloadFont(FontCreateInfo Info) noexcept;
 
-    struct GlyphInfo final
-    {
-        LVec4F Rect;
-        LVec4F TexCoordRect;
-        u32 BindlessTextureIndex;
-        u32 SamplerIndex;
-        f32 ScreenPxRange;
-    };
-
-    TArray<GlyphInfo> GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F Pencil, u32 FontIndex) const noexcept;
+    TArray<LGlyphInfo> GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F Pencil, u32 FontIndex) const noexcept;
 
 private:
 
@@ -96,6 +86,7 @@ private:
         msdfgen::FontHandle* Font{};
         f32 AtlasGlyphSize{};
         f32 PixelRange{};
+        LVec2D Ascender{ maths::zero_vector<LVec2D> };
         LTexture2Ref Atlas;
         std::unordered_map<u32, GlyphUVs> GlyphUVsMap;
     };

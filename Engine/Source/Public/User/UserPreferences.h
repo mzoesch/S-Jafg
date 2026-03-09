@@ -71,43 +71,43 @@ public:
     TPreference<f32> MouseWheelScrollSpeed{ 35.0f };
 
     CLASS_FIELD(Config)
-    TPreference<f32> HeaderFontSizeSingle    { 0.40f };
+    TPreference<f32> HeaderFontSizeSingle    { 16.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SubHeaderFontSizeSingle { 0.25f };
+    TPreference<f32> SubHeaderFontSizeSingle { 15.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> BodyFontSizeSingle      { 0.20f };
+    TPreference<f32> BodyFontSizeSingle      { 11.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> CompactFontSizeSingle   { 0.20f };
+    TPreference<f32> CompactFontSizeSingle   { 10.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SmallFontSizeSingle     { 0.20f };
+    TPreference<f32> SmallFontSizeSingle     {  9.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> TinyFontSizeSingle      { 0.18f };
+    TPreference<f32> TinyFontSizeSingle      {  8.0f };
 
     CLASS_FIELD(Config)
-    TPreference<f32> HeaderFontSizeDouble    { 0.70f };
+    TPreference<f32> HeaderFontSizeDouble    { 20.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SubHeaderFontSizeDouble { 0.40f };
+    TPreference<f32> SubHeaderFontSizeDouble { 18.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> BodyFontSizeDouble      { 0.30f };
+    TPreference<f32> BodyFontSizeDouble      { 16.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> CompactFontSizeDouble   { 0.25f };
+    TPreference<f32> CompactFontSizeDouble   { 15.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SmallFontSizeDouble     { 0.20f };
+    TPreference<f32> SmallFontSizeDouble     { 14.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> TinyFontSizeDouble      { 0.18f };
+    TPreference<f32> TinyFontSizeDouble      { 13.0f };
 
     CLASS_FIELD(Config)
-    TPreference<f32> HeaderFontSizeTriple    { 1.40f };
+    TPreference<f32> HeaderFontSizeTriple    { 22.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SubHeaderFontSizeTriple { 0.80f };
+    TPreference<f32> SubHeaderFontSizeTriple { 20.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> BodyFontSizeTriple      { 0.60f };
+    TPreference<f32> BodyFontSizeTriple      { 18.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> CompactFontSizeTriple   { 0.50f };
+    TPreference<f32> CompactFontSizeTriple   { 17.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SmallFontSizeTriple     { 0.40f };
+    TPreference<f32> SmallFontSizeTriple     { 16.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> TinyFontSizeTriple      { 0.36f };
+    TPreference<f32> TinyFontSizeTriple      { 15.0f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

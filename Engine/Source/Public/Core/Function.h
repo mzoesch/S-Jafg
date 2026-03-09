@@ -212,6 +212,15 @@ private:
             return;
         }
 
+        FORCEINLINE constexpr LCallableStrong(TFunction* Function, const TFunctor& Functor) noexcept requires(std::is_copy_constructible_v<TFunctor>)
+           : Inner(Functor)
+        {
+            check( Function )
+            Function->CopyImplDelegate = LCallableStrong<TFunctor>::Copy;
+
+            return;
+        }
+
         FORCEINLINE static constexpr void Copy(const LCallableBase* Base, TFunction* OutFunction) noexcept requires(std::is_copy_constructible_v<TFunctor>)
         {
             check( Base && OutFunction )
@@ -227,17 +236,6 @@ private:
         FORCEINLINE virtual TRet Invoke(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, TFunctor, TParams...>) override
         {
             return this->Inner(std::forward<TParams>(Params)...);
-        }
-
-        private:
-
-        FORCEINLINE constexpr LCallableStrong(TFunction* Function, const TFunctor& Functor) noexcept requires(std::is_copy_constructible_v<TFunctor>)
-            : Inner(Functor)
-        {
-            check( Function )
-            Function->CopyImplDelegate = LCallableStrong<TFunctor>::Copy;
-
-            return;
         }
     };
 

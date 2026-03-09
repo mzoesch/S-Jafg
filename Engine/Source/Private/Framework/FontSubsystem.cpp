@@ -2,7 +2,6 @@
 
 #include "Framework/FontSubsystem.h"
 #include "Framework/Frontend.h"
-#include "Rhi/Glyph.h"
 #include "Rhi/RendererCore.h"
 #include "Framework/TextureSubsystem.h"
 #include "Rhi/VisualInstance.h"
@@ -17,9 +16,12 @@
     #include FT_FREETYPE_H
     #include <msdfgen.h>
     #include <msdf-atlas-gen/msdf-atlas-gen.h>
+#include <Runtime/Args.h>
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
+
+#include <stb_image_write.h>
 
 namespace
 {
@@ -31,34 +33,49 @@ inline constexpr f32 HarfBuzzScale{ 1.0f / 64.0f };
 Lu32String utf8_to_utf32(LString const& UTF8)
 {
     Lu32String Result;
-    size_t i = 0;
 
-    while (i < UTF8.size())
+    auto Idx{0uz};
+    while (Idx < UTF8.size())
     {
-        uint8_t  C  = static_cast<uint8_t>(UTF8[i]);
-        uint32_t CP = 0;
-        int      Bytes = 0;
+        uint8_t C{static_cast<uint8_t>(UTF8[Idx])};
+        uint32_t CP{0};
+        auto Bytes{0uz};
 
         if      (C < 0x80)           { CP = C & 0x7F; Bytes = 1; }
         else if ((C & 0xE0) == 0xC0) { CP = C & 0x1F; Bytes = 2; }
         else if ((C & 0xF0) == 0xE0) { CP = C & 0x0F; Bytes = 3; }
         else if ((C & 0xF8) == 0xF0) { CP = C & 0x07; Bytes = 4; }
-        else { ++i; continue; } // invalid lead byte, skip
-
-        // Validate we have enough bytes
-        if (i + Bytes > UTF8.size()) break;
-
-        for (int j = 1; j < Bytes; ++j)
+        else
         {
-            uint8_t Cont = static_cast<uint8_t>(UTF8[i + j]);
-            if ((Cont & 0xC0) != 0x80) { Bytes = 0; break; } // invalid continuation
+            /* Invalid lead byte => skip. */
+            ++Idx;
+            continue;
+        }
+
+        /* Validate that enough bytes exist. */
+        if (Idx + Bytes > UTF8.size())
+        {
+            break;
+        }
+
+        for (auto SubIdx{1uz}; SubIdx < Bytes; ++SubIdx)
+        {
+            uint8_t Cont{static_cast<uint8_t>(UTF8[Idx + SubIdx])};
+            if ((Cont & 0xC0) != 0x80)
+            {
+                /* Invalid continuation. */
+                Bytes = 0;
+                break;
+            }
+
             CP = (CP << 6) | (Cont & 0x3F);
         }
 
         if (Bytes > 0)
+        {
             Result.push_back(static_cast<char32_t>(CP));
-
-        i += Bytes > 0 ? Bytes : 1;
+        }
+        Idx += Bytes > 0 ? Bytes : 1;
     }
 
     return Result;
@@ -141,6 +158,8 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
     Packer.setMinimumScale(Result.AtlasGlyphSize);
     Packer.setPixelRange(Result.PixelRange); /* Also consider setUnitRange. */
     Packer.setMiterLimit(1.0);
+    Packer.setInnerPixelPadding(Info.Padding.x);
+    Packer.setOuterPixelPadding(Info.Padding.y);
     Packer.pack(Glyphes.data(), Glyphes.size());
     LVec2i32 AtlasDimensions; Packer.getDimensions(AtlasDimensions.x, AtlasDimensions.y);
 
@@ -168,6 +187,11 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
         Glyph.getQuadAtlasBounds(UVs.AtlasBounds[0], UVs.AtlasBounds[1], UVs.AtlasBounds[2], UVs.AtlasBounds[3]);
         Result.GlyphUVsMap[Glyph.getGlyphIndex().getIndex()] = UVs;
     }
+
+    Result.Ascender = LVec2D{FontGeometry.getMetrics().ascenderY, FontGeometry.getMetrics().descenderY};
+
+    stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, AtlasColorChannels, Bitmap.pixels, Bitmap.width * AtlasColorChannels);
+
     check(Result.Atlas->GetExtent().Width == static_cast<u32>(AtlasDimensions.x) && Result.Atlas->GetExtent().Height == static_cast<u32>(AtlasDimensions.y))
     check(Result.Atlas->IsOnHost() == false && Result.Atlas->IsOnDevice())
     this->My_Fonts.push_back(std::move(Result));
@@ -176,7 +200,7 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
     return;
 }
 
-TArray<Jafg::JFontSubsystem::GlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F Pencil, u32 FontIndex) const noexcept
+TArray<Jafg::LGlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F Pencil, u32 FontIndex) const noexcept
 {
     auto& Font{this->My_Fonts[FontIndex]};
     check(Font.Source.empty() == false)
@@ -200,7 +224,10 @@ TArray<Jafg::JFontSubsystem::GlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LStr
     hb_glyph_info_t* GlyphInfos{hb_buffer_get_glyph_infos(HBBuffer, &GlyphCount)};
     hb_glyph_position_t* GlyphPositions{hb_buffer_get_glyph_positions(HBBuffer, &GlyphCount)};
 
-    TArray<GlyphInfo> Result; Result.reserve(GlyphCount);
+    /* Move to baseline. */
+    Pencil.y += FontSize * Font.Ascender.x;
+
+    TArray<LGlyphInfo> Result; Result.reserve(GlyphCount);
     for (auto Idx{0uz}; Idx < GlyphCount; ++Idx)
     {
         uint32_t GlyphIndex{GlyphInfos[Idx].codepoint}; /* After shaping, this is the Glyph-ID. */
@@ -233,7 +260,7 @@ TArray<Jafg::JFontSubsystem::GlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LStr
                 static_cast<f32>(GlyphUV.AtlasBounds[1]) / AtlasExtend.y,
                 },
             Font.Atlas->GetBindlessIndex(),
-            UBO::BindlessTextureArray::ClampToBorderSamplerIdx,
+            UBO::BindlessTextureArray::ClampToEdgeSamplerIdx,
             (Font.PixelRange / Font.AtlasGlyphSize) * FontSize
             );
 

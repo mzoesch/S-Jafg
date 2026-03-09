@@ -23,7 +23,7 @@ struct InstanceData
     float  OutlineThickness;
     uint TextureIndex;
     uint SamplerIndex;
-    float ScreenPxRange;
+    float MsdfPixelRange;
 };
 [[vk::binding(0, 2)]] StructuredBuffer<InstanceData> InstanceBuffer;
 
@@ -50,10 +50,6 @@ FRInput vertMain(uint vertexId : SV_VertexID, uint instanceId : SV_InstanceID)
     return Result;
 }
 
-float median(float r, float g, float b) {
-    return max(min(r, g), min(max(r, g), b));
-}
-
 [shader("fragment")]
 float4 fragMain(FRInput Input) : SV_TARGET
 {
@@ -68,28 +64,31 @@ float4 fragMain(FRInput Input) : SV_TARGET
     bool bOutline = false;
 
     float4 Result;
-    if (Instance.TextureIndex == 1)
+    if (Instance.MsdfPixelRange != 0.0f)
     {
-        float3 msd = (BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV)).rgb;
-        float sd = median(msd.r, msd.g, msd.b);
-        float screenPxDist = Instance.ScreenPxRange * (sd - 0.5);
-        float opacity = clamp(screenPxDist + 0.5, 0.0, 1.0);
-        Result = float4(1, 1, 1, 1 * opacity);
+        float3 msdf = (BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV)).rgb;
+        Result = float4(Instance.Tint.rgb, Instance.Tint.w * clamp(Instance.MsdfPixelRange * (jafg_median_of_three(msdf.r, msdf.g, msdf.b) - 0.5) + 0.5, 0.0, 1.0));
     }
-    else
+    else if (Instance.SamplerIndex == JAFG_SAMPLER_CLAMP_TO_BORDER)
     {
-        if (Instance.SamplerIndex == JAFG_SAMPLER_CLAMP_TO_BORDER)
+        // This is prob. better, but produces sometimes wrong results...
+        // Result = lerp(
+        //     Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
+        //     Instance.BackgroundTint,
+        //     saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
+        //     );
+        if (Input.TexUV.x < 0.0 || Input.TexUV.x > 1.0 || Input.TexUV.y < 0.0 || Input.TexUV.y > 1.0)
         {
-            Result = lerp(
-                Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
-                Instance.BackgroundTint,
-                saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
-                );
+            Result = Instance.BackgroundTint;
         }
         else
         {
             Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
         }
+    }
+    else
+    {
+        Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
     }
 
     if (DistLeft < Instance.Radii.x && DistTop < Instance.Radii.x) /* TL */
@@ -145,23 +144,25 @@ float4 fragMain(FRInput Input) : SV_TARGET
         bCorner = true;
     }
 
-    if (!bCorner) 
+    if (Instance.OutlineThickness > 0.0)
     {
-        if 
-        (
-               DistLeft   < Instance.OutlineThickness 
-            || DistRight  < Instance.OutlineThickness 
-            || DistTop    < Instance.OutlineThickness 
-            || DistBottom < Instance.OutlineThickness
-        )
+        if (!bCorner) 
         {
-            bOutline = true;
+            if 
+            (
+                   DistLeft   < Instance.OutlineThickness 
+                || DistRight  < Instance.OutlineThickness 
+                || DistTop    < Instance.OutlineThickness 
+                || DistBottom < Instance.OutlineThickness
+            )
+            {
+                bOutline = true;
+            }
         }
-    }
-
-    if (bOutline)
-    {
-        Result = Instance.OutlineTint;
+        if (bOutline)
+        {
+            Result = Instance.OutlineTint;
+        }
     }
 
     return Result;

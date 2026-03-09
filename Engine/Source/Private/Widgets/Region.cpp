@@ -50,7 +50,7 @@ void Jafg::WRegion::Draw(LNodeRenderInfo const& Info) const
             .OutlineThickness = this->Brush.OutlineThickness,
             .TextureIndex = TextureIndex,
             .SamplerIndex = static_cast<u32>(std::to_underlying(this->Brush.SamplerAddressMode)),
-            .ScreenPxRange = 0.0f,
+            .MsdfPixelRange = 0.0f,
             });
     }
 

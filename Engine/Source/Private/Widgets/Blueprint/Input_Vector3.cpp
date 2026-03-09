@@ -3,40 +3,42 @@
 #include "Widgets/Blueprint/Input_Vector3.h"
 #include "Widgets/EditableTextBox.h"
 #include "Widgets/TextBox.h"
+#include "Serialization/StringStatements.h"
 
 void Jafg::WInput_Vector3::Construct()
 {
     Super::Construct();
 
-    LEditableTextBoxBrush Brush{LTextBoxBrush::Compact()};
+    LEditableTextBrush Brush;
     Brush.Tint = Colors::Black;
     Brush.OutlineThickness = 1.0f;
     Brush.OutlineTint = Colors::Gray;
+    Brush.TextScale = ETextScale::Body;
 
     BeginStyling(*this).Root<WTextBox>()
-        .Brush(Brush)
+        .TextBrush(Brush)
         .Content(this->DisplayName)
         .MinDesiredSize({128_pt, 0});
 
     BeginStyling(*this).Root<WEditableTextBox>()
-        .Brush(Brush)
+        .TextBrush(Brush)
         .Content("1.0")
         .MinDesiredSize({48_pt, 0})
-        .ContentPredicate(WEditableTextBox::IsContentFloatingPoint)
+        .ContentPredicate(Serde::IsNumeric)
         ;
 
     BeginStyling(*this).Root<WEditableTextBox>()
-        .Brush(Brush)
+        .TextBrush(Brush)
         .Content("1.0")
         .MinDesiredSize({48_pt, 0})
-        .ContentPredicate(WEditableTextBox::IsContentFloatingPoint)
+        .ContentPredicate(Serde::IsNumeric)
         ;
 
     BeginStyling(*this).Root<WEditableTextBox>()
-        .Brush(Brush)
+        .TextBrush(Brush)
         .Content("1.0")
         .MinDesiredSize({48_pt, 0})
-        .ContentPredicate(WEditableTextBox::IsContentFloatingPoint)
+        .ContentPredicate(Serde::IsNumeric)
         ;
 
     return;

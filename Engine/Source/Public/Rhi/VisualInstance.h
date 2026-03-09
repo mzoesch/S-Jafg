@@ -18,7 +18,7 @@ struct alignas(16) LVisualInstance final
     f32 OutlineThickness;
     u32 TextureIndex;
     u32 SamplerIndex;
-    f32 ScreenPxRange;
+    f32 MsdfPixelRange;
 };
 
 namespace UBO

@@ -17,7 +17,7 @@ bool Jafg::WTabBarButton::AddData(JNodeData& Data)
     if (TbData->Descriptor->DisplayNameField.empty() == false)
     {
         BeginStyling(*this).Root<WTextBox>().SaveTo(&this->ButtonText)
-            .Brush(LTextBoxBrush::SubHeader())
+            .TextBrush({ETextScale::SubHeader})
             .Content(TbData->Descriptor->DisplayNameField)
             .Anchor(EAnchor::CenterCenter)
             .Padding(TbData->Descriptor->PaddingField)
@@ -53,12 +53,12 @@ void Jafg::WTabBarButton::OnTabBarFocus(const bool bInFocus)
 {
     if (bInFocus)
     {
-        this->SetLetUiReactToEvents(false);
+        // this->SetLetUiReactToEvents(false);
         this->SetBrush(this->Style.HoverBrush);
     }
     else
     {
-        this->SetLetUiReactToEvents(true);
+        // this->SetLetUiReactToEvents(true);
         this->SetBrush(this->Style.NormalBrush);
     }
 

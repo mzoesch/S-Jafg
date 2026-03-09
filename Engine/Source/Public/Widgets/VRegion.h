@@ -10,9 +10,7 @@ namespace Jafg
 
 struct LFactoryVRegion;
 
-//#
 //# Vertical region widget. Children are stacked underneath each other. From top to bottom.
-//#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryVRegion)
 class ENGINE_API WVRegion : public WRegion
 {
@@ -28,8 +26,8 @@ public:
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
 
-    FORCEINLINE void SetVSpace(const LWidgetSize1 InVSpace) { this->VSpace = InVSpace; }
-    FORCEINLINE LWidgetSize1 GetVSpace() const { return this->VSpace; }
+    constexpr void SetVSpace(const LWidgetSize1 InVSpace) { this->VSpace = InVSpace; }
+    constexpr LWidgetSize1 GetVSpace() const { return this->VSpace; }
 
 private:
 
@@ -41,7 +39,7 @@ struct LFactoryVRegion : NODE_FACTORY_PARENT(WVRegion)
 {
     NODE_FACTORY_BODY(WVRegion)
 
-    FORCEINLINE decltype(auto) VSpace(this auto&& Self, const LWidgetSize1 InHSpace) noexcept
+    FORCEINLINE decltype(auto) VSpace(this auto&& Self, LWidgetSize1 InHSpace) noexcept
     {
         NODE_FACTORY_SELF().SetVSpace(InHSpace);
         return NODE_FACTORY_RESULT();

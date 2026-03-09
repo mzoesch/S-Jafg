@@ -657,10 +657,8 @@ public:
     FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
     FORCEINLINE WParent* GetParent() { return this->Parent; }
     FORCEINLINE WParent* GetParentChecked() { auto* Out{this->GetParent()}; check(Out); return Out; }
-    FORCEINLINE WParent* GetParentAsserted() { auto* Out{this->GetParent()}; jassert(Out); return Out; }
     FORCEINLINE WParent const* GetParent() const { return this->Parent; }
     FORCEINLINE WParent const* GetParentChecked() const { auto const* Out{this->GetParent()}; check(Out); return Out; }
-    FORCEINLINE WParent const* GetParentAsserted() const { auto const* Out{this->GetParent()}; jassert(Out); return Out; }
     //# @return The most outer parent of this widget or the widget itself if no outer parent.
     WNode* GetMostOuterParent() noexcept;
     WNode const* GetMostOuterParent() const noexcept;

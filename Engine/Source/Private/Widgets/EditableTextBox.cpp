@@ -6,7 +6,6 @@
 #include "User/LocalEgo.h"
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
-#include "Core/CoreNames.h"
 #include "Rhi/NodeRenderInfo.h"
 
 void Jafg::WEditableTextBox::Construct()
@@ -123,7 +122,7 @@ void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
                 this->SafelyIncreaseCaretCursor();
             }
 
-            ensureDiscard(this->OnChanged.InvokeIfBound(this->GetContent()));
+            ensureDiscard(this->InvokeOnChanged());
         }
     }
 
@@ -195,7 +194,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
                 this->SafelyReduceCaretCursor();
             }
 
-            ensureDiscard(this->OnChanged.InvokeIfBound(this->GetContent()));
+            ensureDiscard(this->InvokeOnChanged());
         }
 
         return LReply::Handled();
@@ -293,21 +292,6 @@ i32 Jafg::WEditableTextBox::SetCaretCursorToEnd()
     return this->CaretCursor;
 }
 
-bool Jafg::WEditableTextBox::IsContentFloatingPoint(LString const& InContent) noexcept
-{
-    for (auto& Rune : InContent)
-    {
-        if (Rune != '.' && (Rune < '0' || Rune > '9'))
-        {
-            return false;
-        }
-
-        continue;
-    }
-
-    return true;
-}
-
 void Jafg::WEditableTextBox::OnSuperContentChanged(const LString& InNewContent)
 {
     this->CaretBlinker = 0.0f;
@@ -341,8 +325,8 @@ void Jafg::WEditableTextBox::MoveCaretToMouseCursor(LViewport const& Viewport)
     }
     else
     {
-        const i32 Rune{this->GoToWidth(this->GetContent(), RelativeTopLeft)};
-        this->SetCaretCursor(Rune);
+        // const i32 Rune{this->GoToWidth(this->GetContent(), RelativeTopLeft)};
+        // this->SetCaretCursor(Rune);
     }
 
     return;

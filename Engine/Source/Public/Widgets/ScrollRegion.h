@@ -12,10 +12,12 @@ struct LScrollRegionBrush : public LRegionBrush
 {
     enum { NoScrollBarBackground = 0 };
 
+    //# Whether to always show the vertical scroll bar.
     bool bAlwaysShowVScrollbar{};
     //# Requires that #bAlwaysShowVScrollbar is false.
     bool bAlwaysHideVScrollbar{};
 
+    //# Whether to always show the horizontal scroll bar.
     bool bAlwaysShowHScrollbar{};
     //# Requires that #bAlwaysShowHScrollbar is false.
     bool bAlwaysHideHScrollbar{};
@@ -25,34 +27,22 @@ struct LScrollRegionBrush : public LRegionBrush
     LColor HBackgroundTint{ Colors::Black };
     LColor HTint{ Colors::White };
 
-    //#
     //# The padding from the top right of the vertical scroll bar.
-    //#
     LVec2F VScrollBarPadding{ maths::zero_vector<LVec2F> };
 
-    //#
     //# The width of the vertical scroll bar.
-    //#
     f32 VScrollBarWidth{ 5.0f };
 
-    //#
     //# The width of the vertical scroll bar background. Zero means no background.
-    //#
     f32 VScrollBarBackgroundWidth{ NoScrollBarBackground };
 
-    //#
     //# The padding from the left bottom of the horizontal scroll bar.
-    //#
     LVec2F HScrollBarPadding{ 5.0f, 0.0f };
 
-    //#
     //# The height of the horizontal scroll bar.
-    //#
     f32 HScrollBarHeight{ 5.0f };
 
-    //#
     //# The height of the horizontal scroll bar background. Zero means no background.
-    //#
     f32 HScrollBarBackgroundHeight{ NoScrollBarBackground };
 };
 
@@ -173,11 +163,9 @@ public:
     FORCEINLINE void ApplyVScroll(const f32 InScroll) { this->ScrollPosition.y = maths::clamp(InScroll, static_cast<f32>(MaxScrollUp), static_cast<f32>(MaxScrollDown)); }
     FORCEINLINE void ApplyHScroll(const f32 InScroll) { this->ScrollPosition.x = maths::clamp(InScroll, static_cast<f32>(MaxScrollLeft), static_cast<f32>(MaxScrollRight)); }
 
-    using Super::SetBrush;
     FORCEINLINE void SetBrush(const LScrollRegionBrush& InBrush) noexcept;
     FORCEINLINE void SetScrollRegionBrushOnly(const LScrollRegionBrush& InBrush) noexcept;
-    //# WARNING: This returns a new brush and not a reference. Use #GetScrollRegionBrush for just vising items.
-    FORCEINLINE LScrollRegionBrush GetBrush() const noexcept;
+    FORCEINLINE LScrollRegionBrush CopyScrollRegionBrush() const noexcept;
     FORCEINLINE const LScrollRegionBrushImpl& GetScrollRegionBrush() const noexcept { return this->Brush; }
 
     FORCEINLINE constexpr bool GetAlwaysShowVScrollbar() const noexcept { return this->Brush.bAlwaysShowVScrollbar; }
@@ -315,21 +303,9 @@ FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrus
     this->Brush.Copy(InBrush);
 }
 
-FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept
+FORCEINLINE LScrollRegionBrush WScrollRegion::CopyScrollRegionBrush() const noexcept
 {
-    static_assert(sizeof(LRegionBrush) == 72, "LRegionBrush has changed. Please modify this function.");
-
-    LScrollRegionBrush Result;
-
-    Result.Tint = this->Super::GetBrush().Tint;
-    Result.Texture = this->Super::GetBrush().Texture;
-    Result.TextureScale = this->Super::GetBrush().TextureScale;
-    Result.TexCoordBehavior = this->Super::GetBrush().TexCoordBehavior;
-    Result.SamplerAddressMode = this->Super::GetBrush().SamplerAddressMode;
-    Result.TexturePadding = this->Super::GetBrush().TexturePadding;
-    Result.Radii = this->Super::GetBrush().Radii;
-    Result.OutlineThickness = this->Super::GetBrush().OutlineThickness;
-    Result.OutlineTint = this->Super::GetBrush().OutlineTint;
+    LScrollRegionBrush Result{this->GetBrush()};
 
     Result.bAlwaysShowVScrollbar = this->Brush.bAlwaysShowVScrollbar;
     Result.bAlwaysHideVScrollbar = this->Brush.bAlwaysHideVScrollbar;

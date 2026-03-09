@@ -13,9 +13,7 @@ void Jafg::WVRegion::UpdateDesiredSize() const
         DesiredSize.x  = maths::max(DesiredSize.x, Child->GetDesiredSize_v2().x);
         DesiredSize.y += Child->GetDesiredSize_v2().y;
     }
-
     DesiredSize.y += InSpt(this->GetViewport(), this->VSpace) * (this->GetChildren().size() - 1);
-
     DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);

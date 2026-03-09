@@ -5,6 +5,7 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/Region.h"
 #include "Widgets/Button.h"
+#include "Widgets/TextButton.h"
 
 void Jafg::WFloatingWindow::Construct()
 {
@@ -23,15 +24,15 @@ void Jafg::WFloatingWindow::Construct()
             NewStaticNode(WTextBox).SaveTo(&this->WindowTitle)
                 .Anchor(EAnchor::CenterCenter)
                 .Content("Floating Window")
-                .TextColor(Colors::White)
+                .TextTint(Colors::White)
             +
             NewStaticNode(WTextButton)
                 .Anchor(EAnchor::CenterRight)
                 .Content("X")
                 .OmniTint(Colors::Transparent)
                 .OmniOutlineThickness(1)
-                .TextBlockBrush(LTextBoxBrush::Compact())
-                .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent)
+                .TextBrush({ETextScale::Compact})
+                .OnPrimaryRelease([this](auto&, LKeyEvent const& KeyEvent)
                 {
                     if (this->OnWindowClosed.IsValid())
                     {
@@ -40,10 +41,7 @@ void Jafg::WFloatingWindow::Construct()
                             return;
                         }
                     }
-
                     this->RemoveFromParent2();
-
-                    return;
                 })
         ]
     ]

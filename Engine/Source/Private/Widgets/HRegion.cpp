@@ -9,10 +9,11 @@ void Jafg::WHRegion::UpdateDesiredSize() const
     LVec2F DesiredSize{maths::zero_vector<LVec2F>};
     for (auto& Child : this->GetChildren())
     {
+        check(Child.get())
         DesiredSize.x += Child->GetDesiredSize_v2().x;
         DesiredSize.y  = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
     }
-    DesiredSize.x += this->HSpace * (this->GetChildren().size() - 1);
+    DesiredSize.x += InSpt(this->GetViewport(), this->HSpace * (this->GetChildren().size() - 1));
     DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
@@ -47,7 +48,7 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     {
         (this->GetAnchoredSize_v2().x - this->GetPadding().GetDesiredSizeXInSpt(Context))
         - TotalDesiredSize
-        - this->GetHSpace() * (this->GetChildren().size() - 1)
+        - InSpt(this->GetViewport(), this->GetHSpace()) * (this->GetChildren().size() - 1)
     };
 
     const f32 InverseFreeUsage { 1.0f / TotalFreeUsage };
@@ -80,7 +81,7 @@ LVec2F Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& 
         }
 
         Offset += Child->GetAnchoredSize_v2().x;
-        Offset += this->GetHSpace();
+        Offset += InSpt(this->GetViewport(), this->GetHSpace());
 
         continue;
     }

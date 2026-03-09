@@ -3,42 +3,43 @@
 #pragma once
 
 #include "Widgets/VRegion.h"
-#include "Widgets/ButtonForward.h"
+#include "Widgets/ButtonBase.h"
 #include "VButton.generated.h"
 
 namespace Jafg
 {
 
 class WVButton;
-typedef TFunction<void(WVButton* Self, LKeyEvent const& InKeyEvent)> LOnVButtonKeyEvent;
 typedef TFactoryButtonBase<WVButton> LFactoryVButton;
 
+//# A generic vertical button.
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryVButton)
-class ENGINE_API WVButton : public WVRegion, public LButtonBase
+class ENGINE_API WVButton : public WVRegion, public TButtonBase<WVButton, LRegionBrush, decltype(&WVRegion::SetBrush)>
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS_BODY(WVButton) noexcept
+    explicit WVButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    {
+        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+    }
+
+    template<typename TCxxClass>
+    explicit WVButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
 
 public:
 
-    virtual void Construct() override;
-    virtual LCursorReply OnCursorEnter() override;
-    virtual LCursorReply OnCursorLeave() override;
-    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual void Construct() override
+    {
+        Super::Construct();
+        this->ButtonBase_Construct();
+    }
 
-    LOnVButtonKeyEvent OnPrimaryPressDelegate;
-    LOnVButtonKeyEvent OnPrimaryReleaseDelegate;
-    LOnVButtonKeyEvent OnSecondaryPressDelegate;
-    LOnVButtonKeyEvent OnSecondaryReleaseDelegate;
-
-    void SetEnabled(const bool bInEnabled) override;
+    JAFG_NODE_BUTTON_BOILERPLATE()
 };
 
 } /* ~Namespace Jafg */

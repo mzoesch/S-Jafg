@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/ScrollRegion.h"
-#include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
 

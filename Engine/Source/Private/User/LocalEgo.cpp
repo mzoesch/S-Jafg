@@ -2,7 +2,6 @@
 
 #include "User/LocalEgo.h"
 #include "Engine/Carnifex.h"
-#include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
 #include "Framework/Frontend.h"

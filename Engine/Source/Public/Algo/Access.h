@@ -92,6 +92,8 @@ struct pair_second
 using std::ranges::range;
 using std::ranges::borrowed_range;
 
+using std::ranges::range_value_t;
+
 using std::ranges::iterator_t;
 using std::ranges::const_iterator_t;
 using std::ranges::range_const_reference_t;
@@ -589,6 +591,8 @@ concept void_mutable_predicate = requires(TFn&& Fn, TWhat What) { std::invoke(st
 
 ///////////////////////////////////////////////////////////////////////////////
 // Extended
+template<typename TContainer>
+FORCEINLINE constexpr void orphan(TContainer const* Container) noexcept = delete;
 template<typename TContainer>
 FORCEINLINE constexpr void orphan(TContainer* Container) noexcept
 {

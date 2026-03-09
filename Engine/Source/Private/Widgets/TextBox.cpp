@@ -1,20 +1,17 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/TextBox.h"
-
-#include <Framework/FontSubsystem.h>
-#include <Rhi/NodeRenderInfo.h>
-
-#include "Core/CoreNames.h"
+#include "Framework/FontSubsystem.h"
+#include "Rhi/NodeRenderInfo.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
 
 namespace
 {
 
-f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale Scale) noexcept
+f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) noexcept
 {
-    auto* const Prefs{ &Jafg::GetSingleton<Jafg::JUserPreferences>() };
+    auto const& Prefs{Jafg::GetSingleton<Jafg::JUserPreferences>()};
 
     switch (Scale)
     {
@@ -22,12 +19,12 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale S
     {
         switch (TextScale)
         {
-        case Jafg::ETextScale::Header:    return *Prefs->HeaderFontSizeSingle;
-        case Jafg::ETextScale::SubHeader: return *Prefs->SubHeaderFontSizeSingle;
-        case Jafg::ETextScale::Body:      return *Prefs->BodyFontSizeSingle;
-        case Jafg::ETextScale::Compact:   return *Prefs->CompactFontSizeSingle;
-        case Jafg::ETextScale::Small:     return *Prefs->SmallFontSizeSingle;
-        case Jafg::ETextScale::Tiny:      return *Prefs->TinyFontSizeSingle;
+        case Jafg::ETextScale::Header:    { return *Prefs.HeaderFontSizeSingle; }
+        case Jafg::ETextScale::SubHeader: { return *Prefs.SubHeaderFontSizeSingle; }
+        case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeSingle; }
+        case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeSingle; }
+        case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeSingle; }
+        case Jafg::ETextScale::Tiny:      { return *Prefs.TinyFontSizeSingle; }
         default: break;
         }
     }
@@ -35,12 +32,12 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale S
     {
         switch (TextScale)
         {
-        case Jafg::ETextScale::Header:    return *Prefs->HeaderFontSizeDouble;
-        case Jafg::ETextScale::SubHeader: return *Prefs->SubHeaderFontSizeDouble;
-        case Jafg::ETextScale::Body:      return *Prefs->BodyFontSizeDouble;
-        case Jafg::ETextScale::Compact:   return *Prefs->CompactFontSizeDouble;
-        case Jafg::ETextScale::Small:     return *Prefs->SmallFontSizeDouble;
-        case Jafg::ETextScale::Tiny:      return *Prefs->TinyFontSizeDouble;
+        case Jafg::ETextScale::Header:    { return *Prefs.HeaderFontSizeDouble; }
+        case Jafg::ETextScale::SubHeader: { return *Prefs.SubHeaderFontSizeDouble; }
+        case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeDouble; }
+        case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeDouble; }
+        case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeDouble; }
+        case Jafg::ETextScale::Tiny:      { return *Prefs.TinyFontSizeDouble; }
         default: break;
         }
     }
@@ -48,12 +45,12 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale S
     {
         switch (TextScale)
         {
-        case Jafg::ETextScale::Header:    return *Prefs->HeaderFontSizeTriple;
-        case Jafg::ETextScale::SubHeader: return *Prefs->SubHeaderFontSizeTriple;
-        case Jafg::ETextScale::Body:      return *Prefs->BodyFontSizeTriple;
-        case Jafg::ETextScale::Compact:   return *Prefs->CompactFontSizeTriple;
-        case Jafg::ETextScale::Small:     return *Prefs->SmallFontSizeTriple;
-        case Jafg::ETextScale::Tiny:      return *Prefs->TinyFontSizeTriple;
+        case Jafg::ETextScale::Header:    { return *Prefs.HeaderFontSizeTriple; }
+        case Jafg::ETextScale::SubHeader: { return *Prefs.SubHeaderFontSizeTriple; }
+        case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeTriple; }
+        case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeTriple; }
+        case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeTriple; }
+        case Jafg::ETextScale::Tiny:      { return *Prefs.TinyFontSizeTriple; }
         default: break;
         }
     }
@@ -65,26 +62,14 @@ f32 TextBoxInSptImpl(Jafg::ETextScale::Type TextScale, Jafg::EApplicationScale S
 
 } /* ~Namespace <Anonymous> */
 
-f32 Jafg::LTextScale::InSpt(LViewport const& Viewport) const noexcept
+f32 Jafg::LTextScale::InSptImpl(LViewport const& Viewport, ETextScale TextScale) noexcept
 {
-    if (this->IsCustom())
-    {
-        return this->GetCustomScale();
-    }
-
-    EApplicationScale Scale{ Viewport.GetMaxAllowApplicationScale() };
-
-    if (const EApplicationScale UserMaxScale{ *GetSingleton<JUserPreferences>().ApplicationScaleMode }; UserMaxScale != EApplicationScale::Auto)
+    EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
+    if (const EApplicationScale UserMaxScale{*GetSingleton<JUserPreferences>().ApplicationScaleMode}; UserMaxScale != EApplicationScale::Auto)
     {
         Scale = EApplicationScale{maths::min(std::to_underlying(Scale), std::to_underlying(UserMaxScale))};
     }
-
-    return ::TextBoxInSptImpl(this->GetPredefinedScale(), Scale);
-}
-
-f32 Jafg::LTextScale::InSpt(WNode const& Node) const noexcept
-{
-    return this->InSpt(Node.GetViewport());
+    return ::TextBoxInSptImpl(TextScale, Scale);
 }
 
 void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
@@ -93,120 +78,57 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 
     if (this->Content.empty() == false)
     {
-        for (auto GlyphInfos{Info.FontSubsystem.GetGlyphInfos(this->Content
-            , 11//this->TextScale.InSpt(Info.Viewport)
-            , this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport)
-            , 0
-            )}; auto GlyphInfo : GlyphInfos)
+        if (this->RenderData.bDirty)
+        {
+            this->UpdateRenderData(Info.FontSubsystem, this->TextBrush.TextScale.InSpt(Info.Viewport));
+        }
+
+        LVec2F TopLeft{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport) + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())};
+        LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) - this->RenderData.DesiredSize};
+        TopLeft += LVec2F
+        {
+            this->IsTextLeftAligned() ? 0.0f : (this->IsTextHCenterAligned() ? PlayRoom.x * 0.5f : PlayRoom.x),
+            this->IsTextTopAligned()  ? 0.0f : (this->IsTextVCenterAligned() ? PlayRoom.y * 0.5f : PlayRoom.y)
+        };
+
+        for (auto const& GlyphInfo : this->RenderData.Glyphes)
         {
             Info.VisualInstances.emplace_back(LVisualInstance{
-                .Rect = GlyphInfo.Rect,
-                .Tint = this->GetBrush().Tint.ToVector4(),
-                .BackgroundTint = this->GetBrush().BackgroundTint.ToVector4(),
-                .Radii = this->GetBrush().Radii,
-                .OutlineTint = this->GetBrush().OutlineTint.ToVector4(),
+                .Rect = { TopLeft.x + GlyphInfo.Rect.x, TopLeft.y + GlyphInfo.Rect.y, GlyphInfo.Rect.z, GlyphInfo.Rect.w },
+                .Tint = this->TextBrush.Tint.ToVector4(),
+                .BackgroundTint = Colors::Transparent.ToVector4(),
+                .Radii = maths::zero_vector<LVec4F>,
+                .OutlineTint = this->TextBrush.OutlineTint.ToVector4(),
                 .TexCoordRect = GlyphInfo.TexCoordRect,
-                .OutlineThickness = this->GetBrush().OutlineThickness,
+                .OutlineThickness = this->TextBrush.OutlineThickness,
                 .TextureIndex = GlyphInfo.BindlessTextureIndex,
                 .SamplerIndex = GlyphInfo.SamplerIndex,
-                .ScreenPxRange = GlyphInfo.ScreenPxRange,
+                .MsdfPixelRange = GlyphInfo.MsdfPixelRange,
                 });
         }
     }
-
-    // GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
-    // (
-    //     Context,
-    //     this->GetAnchoredSize_v2(),
-    //     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-    //     this->GetPadding(),
-    //     this->TextDesiredSize,
-    //     this->TextHAlign,
-    //     this->TextVAlign,
-    //     this->TextColor,
-    //     this->TextScale.InSpt(Context),
-    //     this->Content
-    // );
 
     return;
 }
 
 void Jafg::WTextBox::UpdateDesiredSize() const
 {
-    Super::UpdateDesiredSize();
+    if (this->RenderData.bDirty)
+    {
+        this->UpdateRenderData(*this->GetFrontend().GetSubsystemChecked<JFontSubsystem>(), this->TextBrush.TextScale.InSpt(this->GetViewport()));
+    }
+
+    this->SetDesiredSizeInSpt(this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) + this->RenderData.DesiredSize);
 
     return;
 }
 
-// void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noexcept
+// i32 Jafg::WTextBox::GoToWidth(const LString& InString, f32 InWidth) const noexcept
 // {
-    // LVec2F DesiredSize{ this->GetDesiredSizeForString(String) };
-    //
-    // // if (!GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText))
-    // // {
-    // //     return;
-    // // }
-    // //
-    // // if (this->bRespectContentHeight == false)
-    // // {
-    // //     DesiredSize.Y = GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)
-    // //         ->GetApproxBearingHeight(this->TextScale.InSpt(this->GetViewport()));
-    // // }
-    //
-    // this->TextDesiredSize = DesiredSize;
-    //
-    // DesiredSize += this->GetPadding().GetDesiredSizeInSpt(this->GetViewport());
-    // this->SetDesiredSizeInSpt(DesiredSize);
-
-//     return;
-// }
-
-// LVec2F Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noexcept
-// {
-    // const LOrthographicTextShader* Shader{ GEngine->GetShader<LOrthographicTextShader>(Name_ShaderOrthographicText) };
-
-    // if (!Shader) { return LVector2::ZeroVector; }
-    //
-    // const f32 TextScaleInSpt{ this->TextScale.InSpt(this->GetViewport()) };
-    //
-    // LVector2 Out;
-    // LOrthographicTextShader::LCharacterMap::const_iterator LastIt{ Shader->GetCharacters().end() };
-    // for (auto Rune : String)
-    // {
-    //     if (auto It{ Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
-    //     {
-    //         // if (LastIt != Shader->GetCharacters().end())
-    //         // {
-    //         //     Out.X += (static_cast<f32>(LastIt->second.Advance.X) / 64.0f) * TextScaleInSpt;
-    //         //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
-    //         // }
-    //         //
-    //         // LastIt = It;
-    //
-    //         Out.X += (static_cast<f32>(It->second.Advance.X) / 64.0f) * TextScaleInSpt;
-    //         Out.Y  = Maths::Max(Out.Y, static_cast<f32>(It->second.Size.Y) * TextScaleInSpt);
-    //     }
-    //
-    //     continue;
-    // }
-
-    // if (LastIt != Shader->GetCharacters().end())
-    // {
-    //     Out.X += (static_cast<f32>(LastIt->second.Size.X)) * TextScaleInSpt;
-    //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
-    // }
-
-    // return Out;
-
-//     return maths::zero_vector<LVec2F>;
-// }
-
-i32 Jafg::WTextBox::GoToWidth(const LString& InString, f32 InWidth) const noexcept
-{
-    if (InString.empty())
-    {
-        return 0;
-    }
+//     if (InString.empty())
+//     {
+//         return 0;
+//     }
 
     // const LOrthographicTextShader* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
@@ -249,5 +171,30 @@ i32 Jafg::WTextBox::GoToWidth(const LString& InString, f32 InWidth) const noexce
     //
     // return Index;
 
-    return {};
+//     return {};
+// }
+
+void Jafg::WTextBox::UpdateRenderData(JFontSubsystem const& FontSubsystem, f32 TargetFontSize) const
+{
+    this->RenderData.bDirty = false;
+    this->RenderData.FontSize = TargetFontSize;
+
+    LVec2F Pencil{maths::zero_vector<LVec2F>};
+    this->RenderData.Glyphes = FontSubsystem.GetGlyphInfos(this->Content
+        , this->RenderData.FontSize
+        , Pencil
+        , 0
+        );
+
+    LVec4F GlyphesRect{Pencil.x, Pencil.y, Pencil.x, Pencil.y};
+    for (auto const& GlyphInfo : this->RenderData.Glyphes)
+    {
+        GlyphesRect.x = maths::min(GlyphesRect.x, GlyphInfo.Rect.x);
+        GlyphesRect.y = maths::min(GlyphesRect.y, GlyphInfo.Rect.y);
+        GlyphesRect.z = maths::max(GlyphesRect.z, GlyphInfo.Rect.x + GlyphInfo.Rect.z);
+        GlyphesRect.w = maths::max(GlyphesRect.w, GlyphInfo.Rect.y + GlyphInfo.Rect.w);
+    }
+    this->RenderData.DesiredSize = LVec2F{GlyphesRect.z - GlyphesRect.x, GlyphesRect.w - GlyphesRect.y};
+
+    return;
 }
