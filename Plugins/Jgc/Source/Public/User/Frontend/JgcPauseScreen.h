@@ -3,7 +3,7 @@
 #pragma once
 
 #include "JgcMinimal.afx"
-#include "Widgets/UserWidget.h"
+#include "Nodes/UserWidget.h"
 #include "JgcPauseScreen.generated.h"
 
 namespace Jgc

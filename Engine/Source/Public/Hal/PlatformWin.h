@@ -343,9 +343,9 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
             #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("int {$}3":); }
         #elif defined(__arm__)
             #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("udf #0xfe"); }
-        #else
+        #else /* defined(__arm__) */
             #define JAFG_PLATFORM_BREAK()                               { __asm__ __volatile__("unimplemented"); }
-        #endif
+        #endif /* !defined(__arm__) */
     #endif /* !JAFG_WITH_MSVC */
 #endif  /* !JAFG_PLATFORM_BREAK */
 

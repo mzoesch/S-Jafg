@@ -100,12 +100,12 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 
 #if AS_CLIENT
     #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
-        #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER             1
+        #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER              1
     #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
 #endif /* AS_CLIENT */
 
 #ifndef JAFG_WITH_REST_CLS
-    #define JAFG_WITH_REST_CLS                                         1
+    #define JAFG_WITH_REST_CLS                                          1
 #endif /* !JAFG_WITH_REST_CLS */
 
 #ifndef JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS

@@ -7,6 +7,7 @@
 namespace Jafg
 {
 
+//# Device instance of a rendered visual node.
 struct alignas(16) LVisualInstance final
 {
     LVec4F Rect;
@@ -24,7 +25,6 @@ struct alignas(16) LVisualInstance final
 namespace UBO
 {
 
-//# Device instance of a rendered visual node.
 struct VisualShared final : public TUbo<VisualShared, 0, vk::ShaderStageFlagBits::eVertex>
 {
     LMat4F Proj;

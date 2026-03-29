@@ -17,12 +17,12 @@ enum struct EResourceStateBits
     //#
     None = 0 << 0,
     //#
-    //# The mesh data will be loaded to host memory. If another client already requested device memory
+    //# The resource data will be loaded to host memory. If another client already requested device memory
     //# then the resource will be loaded to host and device memory.
     //#
     Host = 1 << 0,
     //#
-    //# The mesh data will be loaded to device memory. Host memory will be orphaned if host memory was
+    //# The resource data will be loaded to device memory. Host memory will be orphaned if host memory was
     //# not requested by another client.
     //#
     Device = 1 << 1,

@@ -3,7 +3,7 @@
 #include "Platform/Surface.h"
 #include "Framework/PersonaController.h"
 #include "Platform/PlatformMisc.h"
-#include "Widgets/Viewport.h"
+#include "Nodes/Viewport.h"
 #include "Engine/Engine.h"
 
 void Jafg::LSurfaceBase::BeginNewFrame()

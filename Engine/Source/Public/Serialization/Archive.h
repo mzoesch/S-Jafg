@@ -492,7 +492,10 @@ FORCEINLINE void FromString(T* Field, LStringView Value) noexcept
     return;
 }
 
-//# Quick conversion of the formation from T to T. If an error occurs it will return false and log a message.
+//#
+//# Quick conversion of the formation from T to T. If an error occurs it will return false and log a message
+//# if logging for LogSerialization at error verbosity is enabled.
+//#
 template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EBehavior::Log>>
 FORCEINLINE bool FromStringLogged(T* Field, LStringView Value) noexcept
 {

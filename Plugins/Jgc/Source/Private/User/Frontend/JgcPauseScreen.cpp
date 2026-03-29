@@ -1,7 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/Frontend/JgcPauseScreen.h"
-#include "Widgets/Region.h"
+#include "Framework/Frontend.h"
+#include "Nodes/Region.h"
+#include "Nodes/Box.h"
+#include "Nodes/TextBox.h"
+#include "Framework/TextureSubsystem.h"
+#include "Framework/FontSubsystem.h"
 
 void Jgc::WPauseScreen::Construct()
 {

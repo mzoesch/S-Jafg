@@ -1,0 +1,93 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+#include "Nodes/UserWidget.h"
+#include "Nodes/VRegion.h"
+#include "TextBox.h"
+#include "FloatingWindow.generated.h"
+
+namespace Jafg
+{
+
+class WTextBox;
+class WVRegion;
+class WFloatingWindow;
+
+typedef TFunction<bool(WFloatingWindow& InWindow)> OnFloatingWindowClosedSignature;
+
+DECLARE_JAFG_WIDGET()
+class WFloatingWindow : public WUserWidget
+{
+    GENERATED_CLASS_BODY(ENGINE_API)
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WFloatingWindow)
+
+public:
+
+    virtual void Construct() override;
+
+    FORCEINLINE WVRegion* GetWindow() noexcept
+    {
+        check(this->GetChildren().size() > 0 && this->GetChildren()[0].get())
+        return this->GetChildren()[0]->AsStatic<WVRegion>();
+    }
+    FORCEINLINE WVRegion const* GetWindow() const noexcept
+    {
+        check(this->GetChildren().size() > 0 && this->GetChildren()[0].get())
+        return this->GetChildren()[0]->AsStatic<WVRegion>();
+    }
+
+    FORCEINLINE void SetWindowSize(LVec2F SizeInSpt) noexcept
+    {
+        this->GetWindow()->SetMinDesiredSize(
+        {
+              EWidgetSize::StaticPoints
+            , maths::max(SizeInSpt.x, WFloatingWindow::MinWindowSizeInSpt.x)
+            , maths::max(SizeInSpt.y, WFloatingWindow::MinWindowSizeInSpt.y)
+        });
+    }
+    FORCEINLINE void SetWindowPosition(LVec2F PositionInSpt) noexcept
+    {
+        this->GetWindow()->GetParent()->SetPadding({EWidgetSize::StaticPoints, PositionInSpt, 0, 0});
+    }
+
+    // ENGINE_API void SetContentNode(WNode& Content) noexcept;
+
+    FORCEINLINE bool CreateResizeUi() const noexcept { return this->bCreateResizeUi; }
+    FORCEINLINE void SetCreateResizeUi(const bool bInCreateResizeUi) noexcept { this->bCreateResizeUi = bInCreateResizeUi; }
+
+    //#
+    //# Event called when the window is closed.
+    //#
+    //# Return true, if the event was handled. Nothing will be further done.
+    //# Return false, if the event was not handled. The default behavior will be executed.
+    //#
+    //# The default behavior is to destroy the window.
+    //#
+    OnFloatingWindowClosedSignature OnWindowClosed;
+
+    FORCEINLINE void SetWindowTitle(LString Title) noexcept { this->GetMutableWindowTitle().SetContent(std::move(Title)); }
+    FORCEINLINE WTextBox const& GetWindowTitle() const noexcept { check( this->WindowTitle != nullptr ) return *this->WindowTitle; }
+    FORCEINLINE WTextBox& GetMutableWindowTitle() noexcept { check( this->WindowTitle != nullptr ) return *this->WindowTitle; }
+
+protected:
+
+    LDelegateHandle UiTickMoveHandle{ nullptr };
+    void UiTickMove(LViewport const& Viewport);
+    TOptional<LVec2F> MoveDragOffset;
+
+    bool bCreateResizeUi{ true };
+    LDelegateHandle UiTickResizeHandle{ nullptr };
+    void UiTickResize(LViewport const& Viewport);
+    TOptional<LVec2F> ResizeDragOffset;
+
+private:
+
+    WTextBox* WindowTitle{};
+    static constexpr LVec2F MinWindowSizeInSpt{ 320, 180 };
+};
+
+} /* ~Namespace Jafg */

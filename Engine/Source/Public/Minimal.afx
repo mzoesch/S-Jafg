@@ -101,7 +101,7 @@
 //# Functors
 //#
 #include "Core/Function.h"
-#include "Delegates/Delegatev.h"
+#include "Delegates/Delegate.h"
 #include "Delegates/Event.h"
 #include "Delegates/EventMacros.h"
 

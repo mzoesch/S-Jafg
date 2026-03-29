@@ -4,7 +4,7 @@
 
 #if PLATFORM_WINDOWS
 
-#include "Widgets/InterfaceTypes.h"
+#include "Nodes/InterfaceTypes.h"
 #include "Platform/PlatformMisc.h"
 
 #include <cfgmgr32.h> /* MAX_DEVICE_ID_LEN */

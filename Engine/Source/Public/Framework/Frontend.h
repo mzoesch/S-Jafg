@@ -4,7 +4,7 @@
 
 #include "Framework/FrontendForward.h"
 #include "Platform/Surface.h"
-#include "Widgets/Node.h"
+#include "Nodes/Node.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/FrontendSubsystem.h"
 #include "Rhi/Texture2.h"

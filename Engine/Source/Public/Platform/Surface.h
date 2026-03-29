@@ -15,7 +15,7 @@
 #include "User/Input/RawInput.h"
 #include "User/Input/InputMode.h"
 #include "Platform/MouseCursor.h"
-#include "Widgets/Viewport.h"
+#include "Nodes/Viewport.h"
 #include "User/Input/UserInput.h"
 #include "Framework/FrontendForward.h"
 

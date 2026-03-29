@@ -22,7 +22,7 @@
 #include "Framework/Eye.h"
 #include "Framework/PersonaController.h"
 #include "User/Input/GlfwInputTranslation.h"
-#include "Widgets/Viewport.h"
+#include "Nodes/Viewport.h"
 #include "Stats/Stats.h"
 #include "Components/SceneComponent.h"
 
