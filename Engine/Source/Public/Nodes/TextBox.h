@@ -107,7 +107,7 @@ public:
     virtual void UpdateDesiredSize() const override;
 
     //# Called if the text box content changes.
-    EVENT_DECL(OnChanged, void, LString const& NewContent)
+    EVENT_DECL(OnChanged, void(LString const& NewContent))
     FORCEINLINE void EmptyContent() { algo::orphan(&this->Content); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE void SetContent(LString const& InContent) { this->Content = InContent; this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE void SetContent(LString&& InContent) { this->Content = std::move(InContent); this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }

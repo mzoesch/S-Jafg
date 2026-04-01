@@ -3,11 +3,9 @@
 #include "User/LocalEgo.h"
 #include "Engine/Carnifex.h"
 #include "Engine/Engine.h"
-#include "Platform/Surface.h"
 #include "Framework/Frontend.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
-#include "Framework/Lackey.h"
 #include "Subsystems/LocalEgoSubsystem.h"
 #include "Stats/Stats.h"
 
@@ -29,17 +27,22 @@ void Jafg::LLocalEgo::Initialize()
             f32 NearFrustum; Serde::FromString(&NearFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes near frustum to [{}].", NearFrustum)
 
-            for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
+            for (auto& Track : GEngine->GetTracks())
             {
-                if (auto* Ctrl{Surface->GetOwnedController()})
+                if (Track.ChildWorld)
                 {
-                    if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                    auto& World{*Track.ChildWorld};
+                    for (auto& Employee : World.GetEmployees())
                     {
-                        Pawn->SetNearFrustum(NearFrustum);
+                        if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
+                        {
+                            if (Pawn->IsPossessedLocally())
+                            {
+                                Pawn->SetNearFrustum(NearFrustum);
+                            }
+                        }
                     }
                 }
-
-                continue;
             }
         }
 
@@ -53,17 +56,22 @@ void Jafg::LLocalEgo::Initialize()
             f32 FarFrustum; Serde::FromString(&FarFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes far frustum to [{}].", FarFrustum)
 
-            for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
+            for (auto& Track : GEngine->GetTracks())
             {
-                if (auto* Ctrl{Surface->GetOwnedController()})
+                if (Track.ChildWorld)
                 {
-                    if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                    auto& World{*Track.ChildWorld};
+                    for (auto& Employee : World.GetEmployees())
                     {
-                        Pawn->SetFarFrustum(FarFrustum);
+                        if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
+                        {
+                            if (Pawn->IsPossessedLocally())
+                            {
+                                Pawn->SetFarFrustum(FarFrustum);
+                            }
+                        }
                     }
                 }
-
-                continue;
             }
         }
 

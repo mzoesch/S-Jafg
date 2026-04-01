@@ -17,6 +17,16 @@ class TFunction<TRet(TParams...)>
 
 public:
 
+    template<typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false)
+    struct IsInvocableWith : std::is_invocable_r<TRet, TFunctor, TParams...> {};
+    template<typename TObj, typename TMemberFunctor>
+    struct IsInvocableWithMember : std::is_invocable_r<TRet, TMemberFunctor, TObj*, TParams...> {};
+
+    template<typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false)
+    inline static constexpr bool IsInvocableWith_v{IsInvocableWith<TFunctor>::value};
+    template<typename TObj, typename TMemberFunctor>
+    inline static constexpr bool IsInvocableWithMember_v{IsInvocableWithMember<TObj, TMemberFunctor>::value};
+
     FORCEINLINE static constexpr u64 NumParams() noexcept { return sizeof... (TParams); }
 
 private:

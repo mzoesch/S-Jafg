@@ -59,7 +59,7 @@ void Jafg::APawn::OnGarbage(ECxxRecordTearDownReason::Type Reason)
     Super::OnGarbage(Reason);
     if (this->IsOwningControllerValid())
     {
-        this->GetOwningControllerChecked()->PossessPawn(nullptr, false);
+        this->GetOwningControllerChecked()->PossessPawn(nullptr, true);
     }
     return;
 }
@@ -80,7 +80,7 @@ Jafg::LEye_v2 Jafg::APawn::GetEye() const noexcept
 
 bool Jafg::APawn::IsPossessedLocally() const noexcept
 {
-    return this->IsOwningControllerValid() && this->GetOwningControllerChecked()->IsOwningSurfaceValid();
+    return this->IsOwningControllerValid() && this->GetOwningControllerChecked()->IsOwningNodeValid();
 }
 
 Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept

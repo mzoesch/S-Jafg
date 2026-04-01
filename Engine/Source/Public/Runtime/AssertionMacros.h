@@ -372,10 +372,8 @@
         PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR_GET_MSG_ANSI(Expr) \
     );
 
-consteval void assert_fail_compiletime()
+consteval void ConstevalAssertionFailure()
 {
-    // Dereferencing a nullptr is not a constant expression → hard compile error
-    // Most compilers will show the call stack, making the failed assertion visible
     int* p = nullptr;
     (void)*p;
 }
@@ -386,7 +384,7 @@ consteval void assert_fail_compiletime()
     { \
         if (!(Expr))\
         {\
-            assert_fail_compiletime();\
+            ConstevalAssertionFailure();\
         }\
     } \
     else \

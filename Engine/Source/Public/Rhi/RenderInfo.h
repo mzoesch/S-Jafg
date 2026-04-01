@@ -32,9 +32,6 @@ struct LRenderInfo
     u32 Frame;
     //# The image in question.
     u32 Image;
-
-    //# The perspective eye. An absence of a value means to not submit perspective draw calls.
-    TOptional<LEye_v2> PerspectiveEye;
 };
 
 } /* ~Namespace Jafg */

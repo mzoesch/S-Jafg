@@ -23,7 +23,22 @@ public:
     using TSuper::TSuper;
     using TSuper::operator=;
 
+    NODISCARD FORCEINLINE constexpr auto&& reflexive_push_back(this auto&& self, T const& What)
+        requires std::is_copy_constructible_v<T>
+    {
+        self.push_back(What);
+        return std::forward<decltype(self)>(self);
+    }
+
+    NODISCARD FORCEINLINE constexpr auto&& reflexive_push_back(this auto&& self, T&& What)
+        requires std::is_move_constructible_v<T>
+    {
+        self.push_back(std::move(What));
+        return std::forward<decltype(self)>(self);
+    }
+
     NODISCARD FORCEINLINE constexpr auto&& reflexive_emplace_back(this auto&& self, auto&&... args)
+        requires std::is_constructible_v<T, decltype(args)&&...>
     {
         self.emplace_back(std::forward<decltype(args)>(args)...);
         return std::forward<decltype(self)>(self);

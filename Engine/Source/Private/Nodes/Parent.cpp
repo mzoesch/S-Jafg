@@ -3,6 +3,7 @@
 #include "Nodes/Parent.h"
 #include "Nodes/UserWidget.h"
 #include "Nodes/Viewport.h"
+#include "Platform/Surface.h"
 
 void Jafg::WParent::Construct()
 {
@@ -93,18 +94,18 @@ Jafg::LReply Jafg::WParent::SweepFocusTest(LViewport const& Viewport, const LVec
     return Super::SweepFocusTest(Viewport, Location);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& Viewport, LKeyEvent const& KeyEvent)
+Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {
         check(Child.get())
-        if (Child->ShouldCheckForInputs() == false || &*Child == Viewport.GetFocusedWidget())
+        if (Child->ShouldCheckForInputs() == false || &*Child == Data.Viewport.GetFocusedWidget())
         {
             continue;
         }
-        if (Child->IsInBounds(Viewport, *Viewport.GetCachedCursorLocationChecked()))
+        if (Child->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
         {
-            if (LReply Reply{Child->OnKeyDownNoFocus(Viewport, KeyEvent)}; Reply.IsHandled())
+            if (LReply Reply{Child->OnKeyDownNoFocus(Data, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -113,21 +114,21 @@ Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& Viewport, LKeyEven
         continue;
     }
 
-    return Super::OnKeyDownNoFocus(Viewport, KeyEvent);
+    return Super::OnKeyDownNoFocus(Data, Event);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& Viewport, const LKeyEvent& KeyEvent)
+Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {
         check(Child.get())
-        if (Child->ShouldCheckForInputs() == false || &*Child == Viewport.GetFocusedWidget())
+        if (Child->ShouldCheckForInputs() == false || &*Child == Data.Viewport.GetFocusedWidget())
         {
             continue;
         }
-        if (Child->IsInBounds(Viewport, *Viewport.GetCachedCursorLocationChecked()))
+        if (Child->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
         {
-            if (LReply Reply{Child->OnKeyUpNoFocus(Viewport, KeyEvent)}; Reply.IsHandled())
+            if (LReply Reply{Child->OnKeyUpNoFocus(Data, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -136,7 +137,7 @@ Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& Viewport, const LKey
         continue;
     }
 
-    return Super::OnKeyUpNoFocus(Viewport, KeyEvent);
+    return Super::OnKeyUpNoFocus(Data, Event);
 }
 
 bool Jafg::WParent::IsFocusWidgetTransitive(LViewport const* Viewport) const
@@ -160,6 +161,20 @@ bool Jafg::WParent::IsFocusWidgetTransitive(LViewport const* Viewport) const
     }
 
     return false;
+}
+
+void Jafg::WParent::OnSurfaceResize()
+{
+    Super::OnSurfaceResize();
+
+    for (auto& Child : this->Children)
+    {
+        check(Child.get())
+        Child->OnSurfaceResize();
+        continue;
+    }
+
+    return;
 }
 
 bool Jafg::WParent::FindNodeInVisiblePath(const WNode* Node) const

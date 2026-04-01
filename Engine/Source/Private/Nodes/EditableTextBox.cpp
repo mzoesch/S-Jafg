@@ -95,15 +95,15 @@ void Jafg::WEditableTextBox::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
+void Jafg::WEditableTextBox::UserInterfaceTick()
 {
     bool bHandled{ false };
 
-    if (InViewport.GetSurface().HasBufferedPlatformInput())
+    if (this->GetViewport().GetSurface().HasBufferedPlatformInput())
     {
-        const LString BufferedInput{ InViewport.GetSurface().GetBufferedPlatformInputAsStr() };
+        LString BufferedInput{this->GetViewport().GetSurface().GetBufferedPlatformInputAsStr()};
 
-        LString NewContent { this->GetContent() };
+        LString NewContent{this->GetContent()};
         NewContent.insert(this->CaretCursor, BufferedInput);
 
         if (this->ContentPredicate.IsValid() && this->ContentPredicate.Invoke(NewContent) == false)
@@ -117,7 +117,7 @@ void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
             this->GetMutableContent() = std::move(NewContent);
 
             const LString::size_type Length { BufferedInput.size() };
-            for (LString::size_type Idx { 0 }; Idx < Length; ++Idx)
+            for (auto Idx{ 0uz }; Idx < Length; ++Idx)
             {
                 this->SafelyIncreaseCaretCursor();
             }
@@ -181,9 +181,9 @@ void Jafg::WEditableTextBox::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
-    if (InKeyEvent.GetKey() == EKeys::BackSpace || InKeyEvent.GetKey() == EKeys::PlatformDelete)
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::BackSpace)) // || PlatformDelete?
     {
         if (this->GetContent().empty() == false && this->CaretCursor > 0)
         {
@@ -200,7 +200,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
         return LReply::Handled();
     }
 
-    if (InKeyEvent.GetKey() == EKeys::Left)
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Left))
     {
         if (algo::is_valid_index(this->GetContent(), this->CaretCursor - 1))
         {
@@ -216,7 +216,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
         return LReply::Handled();
     }
 
-    if (InKeyEvent.GetKey() == EKeys::Right)
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Right))
     {
         if (algo::is_valid_index(this->GetContent(), this->CaretCursor))
         {
@@ -232,7 +232,8 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
         return LReply::Handled();
     }
 
-    if (InKeyEvent.GetKey() == EKeys::Enter || InKeyEvent.GetKey() == EKeys::NumPadEnter)
+    if (   Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Enter)
+        || Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::NumPadEnter))
     {
         if (this->OnAllowContentCommit.IsValid())
         {
@@ -247,17 +248,17 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
         return LReply::Handled();
     }
 
-    if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
     {
-        if (InViewport.GetSurface().HasMouseLocation())
+        if (Data.Surface.HasMouseLocation())
         {
-            this->MoveCaretToMouseCursor(InViewport);
+            this->MoveCaretToMouseCursor(Data.Viewport);
         }
 
         return LReply::Handled();
     }
 
-    if (InKeyEvent.GetKey() == EKeys::Escape)
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Escape))
     {
         if (this->GetViewport().GetFocusedWidget() == this)
         {
@@ -266,7 +267,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
         }
     }
 
-    return Super::OnKeyDown(InViewport, InKeyEvent);
+    return Super::OnKeyDown(Data, Event);
 }
 
 void Jafg::WEditableTextBox::OnTextCommit(const LString& InText, const ETextCommit InCommitType)

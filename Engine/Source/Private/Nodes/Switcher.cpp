@@ -4,11 +4,11 @@
 
 void Jafg::WSwitcher::AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild)
 {
-    Super::AddChildAt(InIndex, std::move(InChild));
-
     check(algo::find_pointer(this->RecentVisibilities, &*InChild, algo::pair_first{}) == nullptr)
     this->RecentVisibilities.emplace_back(&*InChild, InChild->GetVisibility());
     InChild->SetVisibility(ENodeVisibility::Collapsed);
+
+    Super::AddChildAt(InIndex, std::move(InChild));
 
     return;
 }

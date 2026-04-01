@@ -14,6 +14,9 @@
 #include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
 #include "User/UserPreferences.h"
+#include "Nodes/WorldNode.h"
+#include "Rhi/NodeRenderInfo.h"
+#include "Components/ActorComponentForward.h"
 
 LString Jafg::LWorldParameters::ToString() const
 {
@@ -180,12 +183,12 @@ void Jafg::LWorld::Tick(const f32 Dt)
     {
         algo::erase_once_checked(&this->TickableObjects, Tickable);
     }
-    algo::orphan(&this->DeletedTickableObjects);
+    this->DeletedTickableObjects.clear();
 
     return;
 }
 
-void Jafg::LWorld::Draw(LRenderInfo& Info) const
+void Jafg::LWorld::Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const
 {
     STAT_CYCLE_FUNCTION()
 
@@ -233,13 +236,9 @@ void Jafg::LWorld::Draw(LRenderInfo& Info) const
     // };
     // const std::span CornersSpan{Corners};
 
-    LActorRenderInfo ActorInfo{Info};
-
+    LActorRenderInfo ActorInfo{static_cast<LRenderInfo const&>(Info), Eye};
     auto& Frontend{ActorInfo.Frontend};
     auto& Surface{ActorInfo.Surface};
-    check(ActorInfo.PerspectiveEye.has_value())
-    auto& Eye{*ActorInfo.PerspectiveEye};
-
     if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
     {
         ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
@@ -351,26 +350,26 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
     (
         if (Persona.Type == EIncomingConnectionRequest::Local)
         {
-            check(Persona.Surface)
+            check(Persona.Node)
         }
     )
 
-    if (Persona.Surface)
+    if (Persona.Node)
     {
-        if (Persona.Surface->IsOwnedControllerValid())
+        if (Persona.Node->IsOwnedPersonaControllerValid())
         {
             LOG_WARNING(LogWorld,
-                "Surface [{}] already possesses persona controller [{}]. Rejecting login request.",
-                Persona.Surface->GetHumanReadableName(),
-                Persona.Surface->GetOwnedControllerChecked()->GetNameAsString()
+                "World node [{}] already possesses persona controller [{}]. Rejecting login request.",
+                Persona.Node->GetNameAsString(),
+                Persona.Node->GetOwnedPersonaControllerChecked()->GetNameAsString()
                 )
 
             if (OutRejectionReason)
             {
                 *OutRejectionReason = Jafg::SprintF(
                     "Surface [{}] already possesses persona controller [{}].",
-                    Persona.Surface->GetHumanReadableName(),
-                    Persona.Surface->GetOwnedControllerChecked()->GetNameAsString()
+                    Persona.Node->GetNameAsString(),
+                    Persona.Node->GetOwnedPersonaControllerChecked()->GetNameAsString()
                     );
             }
 
@@ -378,24 +377,17 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
         }
     }
 
-    auto* Pc{this->SupremePolicies->OnIncomingConnectionRequest(Persona.Type, OutRejectionReason)};
-    if (Pc == nullptr)
+    auto Pc{this->SupremePolicies->OnIncomingConnectionRequest(Persona.Type, OutRejectionReason)};
+    if (Pc.get() == nullptr)
     {
         return nullptr;
     }
+    auto* Result{Pc.get()};
 
     if (Persona.Type == EIncomingConnectionRequest::Local)
     {
-        //# Sideeffect from creation, we do not really care.
-        if (Persona.Surface->IsOwnedControllerValid())
-        {
-            check(Persona.Surface->GetOwnedControllerChecked() == Pc)
-            check(Pc->IsOwningSurfaceValid())
-        }
-        else
-        {
-            Persona.Surface->PossessController(Pc);
-        }
+        check(Persona.Node->IsOwnedPersonaControllerValid() == false)
+        Persona.Node->PossessPersonaController(std::move(Pc));
     }
     else if (Persona.Type == EIncomingConnectionRequest::Remote)
     {
@@ -406,9 +398,11 @@ Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString
         jassertNoEntry()
     }
 
-    this->SupremePolicies->OnPersonaControllerCreated(*Pc);
-
-    return Pc;
+    Pc.release();
+    check(Persona.Node == nullptr || Persona.Node->IsOwnedPersonaControllerValid())
+    this->SupremePolicies->OnPersonaControllerCreated(*Result);
+    check(Persona.Node == nullptr || Persona.Node->IsOwnedPersonaControllerValid())
+    return Result;
 }
 
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
@@ -485,38 +479,6 @@ Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(LStringView InHumanRea
         };
 
         return Track ? Track->ChildWorld.get() : nullptr;
-    }
-
-    return nullptr;
-}
-
-Jafg::APersonaController* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow() noexcept
-{
-    for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
-    {
-        if (auto* Ctrl{Surface->GetOwnedController()})
-        {
-            if (&Ctrl->GetWorld() == this)
-            {
-                return Ctrl;
-            }
-        }
-    }
-
-    return nullptr;
-}
-
-Jafg::APersonaController const* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow() const noexcept
-{
-    for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
-    {
-        if (auto* Ctrl{Surface->GetOwnedController()})
-        {
-            if (&Ctrl->GetWorld() == this)
-            {
-                return Ctrl;
-            }
-        }
     }
 
     return nullptr;

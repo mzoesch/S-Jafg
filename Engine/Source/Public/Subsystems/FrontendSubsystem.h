@@ -26,7 +26,7 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JFrontendSubsystem)
 
-    virtual void Tick() { }
+    virtual void Tick() {}
 
     FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(const bool bShouldTick) noexcept { this->bShouldTick = bShouldTick; }

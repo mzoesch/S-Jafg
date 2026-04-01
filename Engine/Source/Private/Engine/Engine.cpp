@@ -316,7 +316,7 @@ void Jafg::LEngine::Initialize()
     return;
 }
 
-void Jafg::LEngine::Tick(const f32 Dt)
+void Jafg::LEngine::Tick(f32 Dt)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -328,7 +328,7 @@ void Jafg::LEngine::Tick(const f32 Dt)
 
     for (Detail::LWorldTrack& Track : this->Tracks)
     {
-        bool bTraveled{ false };
+        bool bTraveled{};
 
         if (Track.IsWaitingForTravel())
         {
@@ -338,7 +338,7 @@ void Jafg::LEngine::Tick(const f32 Dt)
             }
         }
 
-        check( Track.IsValid() )
+        check(Track.IsValid())
         if (bTraveled == false && Track.ChildWorld->CanTick())
         {
             Track.ChildWorld->Tick(Dt);

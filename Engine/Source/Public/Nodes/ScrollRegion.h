@@ -145,23 +145,17 @@ public:
     virtual LReply SweepFocusTest(const LViewport& Context, const LVec2F& InLocation) override;
 
     //# This only the user interface.
-    void UserInterfaceTick(const LViewport& InViewport);
+    void UserInterfaceTick();
 
-    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent) override;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent) override;
 
     virtual void UpdateDesiredSize() const override;
 
     FORCEINLINE void SetScrollRegionSize(const LWidgetSize2& InSize) { this->ScrollRegionSize = InSize; }
     FORCEINLINE const LWidgetSize2& GetScrollRegionSize() const { return this->ScrollRegionSize; }
-
-    void ApplyScroll(const LKeyEvent& InKeyEvent);
-
-    FORCEINLINE void ApplyScroll(const LVec2F& InScroll) { this->ScrollPosition = InScroll; }
-    FORCEINLINE void ApplyVScroll(const f32 InScroll) { this->ScrollPosition.y = maths::clamp(InScroll, static_cast<f32>(MaxScrollUp), static_cast<f32>(MaxScrollDown)); }
-    FORCEINLINE void ApplyHScroll(const f32 InScroll) { this->ScrollPosition.x = maths::clamp(InScroll, static_cast<f32>(MaxScrollLeft), static_cast<f32>(MaxScrollRight)); }
 
     FORCEINLINE void SetBrush(const LScrollRegionBrush& InBrush) noexcept;
     FORCEINLINE void SetScrollRegionBrushOnly(const LScrollRegionBrush& InBrush) noexcept;
@@ -238,6 +232,9 @@ protected:
     LVec2F GetHForegroundScrollPositionFromOuter(const f32 InScrollOffsetXPercent) const;
 
 private:
+
+    void HandleMouseWheelUp(f32 Value);
+    void HandleMouseWheelDown(f32 Value);
 
     LScrollRegionBrushImpl Brush;
 

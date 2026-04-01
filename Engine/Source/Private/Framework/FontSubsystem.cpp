@@ -190,7 +190,7 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
 
     Result.Ascender = LVec2D{FontGeometry.getMetrics().ascenderY, FontGeometry.getMetrics().descenderY};
 
-    stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, AtlasColorChannels, Bitmap.pixels, Bitmap.width * AtlasColorChannels);
+    // stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, AtlasColorChannels, Bitmap.pixels, Bitmap.width * AtlasColorChannels);
 
     check(Result.Atlas->GetExtent().Width == static_cast<u32>(AtlasDimensions.x) && Result.Atlas->GetExtent().Height == static_cast<u32>(AtlasDimensions.y))
     check(Result.Atlas->IsOnHost() == false && Result.Atlas->IsOnDevice())

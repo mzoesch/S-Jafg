@@ -7,12 +7,9 @@
 namespace Jafg
 {
 
-namespace EInputActionTrigger
+enum struct EInputActionTriggerBits
 {
-
-enum Type : u8
-{
-    None      = 0x0 << 0,
+    Identity = 0x0 << 0,
 
     //#
     //# Marks an action that was just triggered.
@@ -30,8 +27,28 @@ enum Type : u8
     //#
     Completed = 0x1 << 2,
 };
+ENUM_STRUCT_FLAGS(EInputActionTriggerBits, EInputActionTriggerFlags)
+inline LStringView LexToString(EInputActionTriggerBits Bit) noexcept
+{
+    switch (Bit)
+    {
+    case EInputActionTriggerBits::Identity: return "None";
+    case EInputActionTriggerBits::Triggered: return "Triggered";
+    case EInputActionTriggerBits::Ongoing: return "Ongoing";
+    case EInputActionTriggerBits::Completed: return "Completed";
+    }
+    unreachable()
+}
+inline LString LexToString(EInputActionTriggerFlags Flags) noexcept
+{
+    std::stringstream Stream;
+    if (Flags & EInputActionTriggerBits::Triggered) { Stream << "Triggered|"; }
+    if (Flags & EInputActionTriggerBits::Ongoing) { Stream << "Ongoing|"; }
+    if (Flags & EInputActionTriggerBits::Completed) { Stream << "Completed|"; }
 
-} /* ~Namespace EUserInputActionTrigger */
-ENUM_CLASS_FLAGS(EInputActionTrigger::Type)
+    LString Result{Stream.str()};
+    if (Result.empty()) { return "Identity"; }
+    return Stream.str();
+}
 
 } /* ~Namespace Jafg */

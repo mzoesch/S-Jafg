@@ -80,12 +80,14 @@ Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(const LViewport& Context, const
     return WNode::SweepFocusTest(Context, InLocation);
 }
 
-void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
+void Jafg::WScrollRegion::UserInterfaceTick()
 {
-    if (InViewport.GetCachedCursorLocation().has_value() == false)
+    if (this->GetViewport().GetSurface().GetMouseLocation().has_value() == false)
     {
         return;
     }
+
+    auto MouseLocation{this->GetViewport().GetSurface().GetMouseLocationValue()};
 
     if (this->bUiTickV)
     {
@@ -93,8 +95,8 @@ void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
         this->ScrollPosition.y = maths::clamp
         (
             (
-                InViewport.GetCachedCursorLocationChecked()->y
-                - (this->GetAnchoredTopLeftFromMostOuter(InViewport) + this->GetVBackgroundScrollPositionFromOuter()).y
+                MouseLocation.y
+                - (this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + this->GetVBackgroundScrollPositionFromOuter()).y
                 - (maths::eq_zero_e(this->MbVOffset) ? (VForegroundScrollHeight * 0.5f) : 0.0f) + this->MbVOffset
             )
             /
@@ -110,8 +112,8 @@ void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
         this->ScrollPosition.x = maths::clamp
         (
             (
-                InViewport.GetCachedCursorLocationChecked()->x
-                - (this->GetAnchoredTopLeftFromMostOuter(InViewport) + this->GetHBackgroundScrollPositionFromOuter()).x
+                MouseLocation.x
+                - (this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + this->GetHBackgroundScrollPositionFromOuter()).x
                 - (maths::eq_zero_e(this->MbHOffset) ? (HForegroundScrollWidth * 0.5f) : 0.0f) + this->MbHOffset
             )
             /
@@ -124,89 +126,96 @@ void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
     return;
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
-    if (InKeyEvent.GetKey() == EKeys::MouseWheelAxis)
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp))
     {
-        this->ApplyScroll(InKeyEvent);
+        this->HandleMouseWheelUp(Event.Value);
+        return LReply::Handled();
+    }
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown))
+    {
+        this->HandleMouseWheelDown(Event.Value);
         return LReply::Handled();
     }
 
-    if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
     {
-        if (this->MBDownOnScrollbar(InViewport))
+        if (this->MBDownOnScrollbar(Data.Viewport))
         {
             return LReply::Handled();
         }
     }
 
-    return Super::OnKeyDown(InViewport, InKeyEvent);
+    return Super::OnKeyDown(Data, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
     {
-       if (this->MBUpOnScrollbar(InViewport))
+       if (this->MBUpOnScrollbar(Data.Viewport))
        {
            return LReply::Handled();
        }
     }
 
-    return Super::OnKeyUp(InViewport, InKeyEvent);
+    return Super::OnKeyUp(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
-    check( this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f )
+    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
     {
-        const f32 maxScrollY { maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f) };
-        const f32 ScrollOffsetY { this->ScrollPosition.y * maxScrollY };
+        const f32 maxScrollY{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)};
+        const f32 ScrollOffsetY{this->ScrollPosition.y * maxScrollY};
 
-        const f32 maxScrollX { maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f) };
-        const f32 ScrollOffsetX { this->ScrollPosition.x * maxScrollX };
+        const f32 maxScrollX{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f)};
+        const f32 ScrollOffsetX{this->ScrollPosition.x * maxScrollX};
 
-        LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
+        LViewportSweepTranslation Translation{Data.Viewport, {-ScrollOffsetX, -ScrollOffsetY}};
 
         for (auto& Child : this->GetChildren())
         {
             check(Child.get())
-
-            if (&*Child == InViewport.GetFocusedWidget())
+            if (&*Child == Data.Viewport.GetFocusedWidget())
             {
                 continue;
             }
-
             if (Child->ShouldCheckForInputs() == false)
             {
                 continue;
             }
-
-            if (Child->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+            if (Child->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()) == false)
             {
                 continue;
             }
 
-            if (const LReply Reply = Child->OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+            if (LReply Reply{Child->OnKeyDownNoFocus(Data, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
-
             continue;
         }
     }
 
-    if (InKeyEvent.GetKey() == EKeys::MouseWheelAxis)
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp))
     {
-        this->ApplyScroll(InKeyEvent);
+        this->HandleMouseWheelUp(Event.Value);
+        return LReply::Handled();
+    }
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown))
+    {
+        this->HandleMouseWheelDown(Event.Value);
         return LReply::Handled();
     }
 
-    return WNode::OnKeyDownNoFocus(InViewport, InKeyEvent);
+    /* Not super. */
+    return WNode::OnKeyDownNoFocus(Data, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
 {
     check( this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f )
 
@@ -217,13 +226,13 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, co
         const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
         const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
 
-        LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
+        LViewportSweepTranslation Translation{Data.Viewport, {-ScrollOffsetX, -ScrollOffsetY}};
 
         for (auto& Child : this->GetChildren())
         {
             check(Child.get())
 
-            if (&*Child == InViewport.GetFocusedWidget())
+            if (&*Child == Data.Viewport.GetFocusedWidget())
             {
                 continue;
             }
@@ -233,12 +242,12 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, co
                 continue;
             }
 
-            if (Child->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+            if (Child->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()) == false)
             {
                 continue;
             }
 
-            if (const LReply Reply = Child->OnKeyUpNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+            if (const LReply Reply = Child->OnKeyUpNoFocus(Data, InKeyEvent); Reply.IsHandled())
             {
                 return Reply;
             }
@@ -247,7 +256,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, co
         }
     }
 
-    return WNode::OnKeyUpNoFocus(InViewport, InKeyEvent);
+    return WNode::OnKeyUpNoFocus(Data, InKeyEvent);
 }
 
 void Jafg::WScrollRegion::UpdateDesiredSize() const
@@ -264,45 +273,23 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WScrollRegion::ApplyScroll(const LKeyEvent& InKeyEvent)
-{
-    const JUserPreferences* Prefs = &GetSingleton<JUserPreferences>();
-
-    this->ScrollPosition.y = maths::clamp
-    (
-        this->ScrollPosition.y
-        + maths::sign(InKeyEvent.GetValue())
-        *
-        (
-            *Prefs->MouseWheelScrollSpeed
-            /
-            maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)
-        )
-        * (Prefs->bInvertVerticalScrollWheel ? -1.0f : 1.0f),
-        0.0f,
-        1.0f
-    );
-
-    return;
-}
-
-bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
+bool Jafg::WScrollRegion::MBDownOnScrollbar(LViewport const& InViewport)
 {
     check( this->UserInterfaceTickDelegateHandle.IsValid() == false )
 
-    if (InViewport.GetCachedCursorLocation().has_value() == false)
+    if (InViewport.GetSurface().GetMouseLocation().has_value() == false)
     {
         return false;
     }
 
-    const LVec2F CachedCursorLocation = *InViewport.GetCachedCursorLocationChecked();
-    const LVec2F TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(InViewport);
+    auto MouseLocation{InViewport.GetSurface().GetMouseLocationValue()};
+    LVec2F TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter(InViewport)};
 
     if (LViewport::IsInBounds
     (
         TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
         this->GetVInteractiveAreaScrollSize(),
-        CachedCursorLocation
+        MouseLocation
     ))
     {
         if
@@ -312,11 +299,11 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
             (
                 TopLeftForeground,
                 this->GetVForegroundScrollSize(),
-                CachedCursorLocation
+                MouseLocation
             )
         )
         {
-            this->MbVOffset = (CachedCursorLocation.y - TopLeftForeground.y) * -1.0f;
+            this->MbVOffset = (MouseLocation.y - TopLeftForeground.y) * -1.0f;
         }
 
         this->bUiTickV = true;
@@ -328,7 +315,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
     (
         TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
         this->GetHInteractiveAreaScrollSize(),
-        CachedCursorLocation
+        MouseLocation
     ))
     {
         if
@@ -338,11 +325,11 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
             (
                 TopLeftForeground,
                 this->GetHForegroundScrollSize(),
-                CachedCursorLocation
+                MouseLocation
             )
         )
         {
-            this->MbHOffset = (CachedCursorLocation.x - TopLeftForeground.x) * -1.0f;
+            this->MbHOffset = (MouseLocation.x - TopLeftForeground.x) * -1.0f;
         }
 
         this->bUiTickH = true;
@@ -536,4 +523,37 @@ LVec2F Jafg::WScrollRegion::GetHForegroundScrollPositionFromOuter(const f32 InSc
         this->GetAnchoredSize_v2().y - this->Brush.HScrollBarHeight - this->Brush.HScrollBarPadding.y
         - maths::max(this->Brush.HScrollBarBackgroundHeight - this->Brush.HScrollBarHeight, 0.0f) / 2.0,
     };
+}
+
+void Jafg::WScrollRegion::HandleMouseWheelUp(f32 Value)
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    this->ScrollPosition.y = maths::clamp(
+        this->ScrollPosition.y
+        + maths::sign(Value)
+        *   (*Prefs.MouseWheelScrollSpeed /
+            maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f))
+        * (Prefs.bInvertVerticalScrollWheel ? -1.0f : 1.0f),
+        0.0f,
+        1.0f
+        );
+
+    return;
+}
+
+void Jafg::WScrollRegion::HandleMouseWheelDown(f32 Value)
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    this->ScrollPosition.y = maths::clamp(
+        this->ScrollPosition.y
+        + maths::sign(-Value)
+        *   (*Prefs.MouseWheelScrollSpeed /
+            maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f))
+        * (Prefs.bInvertVerticalScrollWheel ? -1.0f : 1.0f),
+        0.0f,
+        1.0f
+        );
+
+    return;
 }

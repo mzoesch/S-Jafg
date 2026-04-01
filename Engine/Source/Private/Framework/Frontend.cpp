@@ -27,20 +27,10 @@ void Jafg::LFrontendBase::Tick()
     {
         Surface->BeginNewFrame();
     }
-
     for (auto const& Surface : this->Surfaces)
     {
         Surface->Tick();
     }
-
-    if (this->IsFocusedSurfaceValid())
-    {
-        if (auto* Fs{this->GetFocusedSurface()}; Fs->GetInputMode() & EInputModeBits::InputSubsystem)
-        {
-            Fs->GetUserInput().DispatchInputDelegates(*Fs);
-        }
-    }
-
     this->ForEachMutableSubsystem([](JFrontendSubsystem* E)
     {
         if (E->ShouldTick())

@@ -1,93 +1,87 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Platform/Surface.h"
-#include "Framework/PersonaController.h"
 #include "Platform/PlatformMisc.h"
 #include "Nodes/Viewport.h"
 #include "Engine/Engine.h"
 
 void Jafg::LSurfaceBase::BeginNewFrame()
 {
-    algo::orphan(&this->PlatformInput);
+    this->PlatformInput.clear();
 
-    this->DownKeys.swap(this->LastFrameDownKeys);
-    this->DownKeys.clear();
+    for (auto Idx{0uz}; Idx < this->RawInputs.size();)
+    {
+        auto& Input{this->RawInputs[Idx]};
+
+        check(Input.PhysicalKey != LPhysicalKey{})
+        check(Input.State != ERawInputStateBits::Identity)
+
+        if (   Input.PhysicalKey.IsLogical(ENamedPhysicalKey::MouseXY)
+            || Input.PhysicalKey.IsLogical(ENamedPhysicalKey::MouseWheelUp)
+            || Input.PhysicalKey.IsLogical(ENamedPhysicalKey::MouseWheelDown)
+            )
+        {
+            this->RawInputs.erase(this->RawInputs.begin() + Idx);
+            continue;
+        }
+
+        if (Input.State & ERawInputStateBits::Press)
+        {
+#if JAFG_DO_CHECKS
+            auto OldState{Input.State};
+#endif /* JAFG_DO_CHECKS */
+            Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Press};
+            check((Input.State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
+            check((Input.State | ERawInputStateBits::Press) == OldState)
+            Input.State |= ERawInputStateBits::Hold;
+        }
+
+        if (Input.State & ERawInputStateBits::Repeat)
+        {
+#if JAFG_DO_CHECKS
+            auto OldState{Input.State};
+#endif /* JAFG_DO_CHECKS */
+            Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Repeat};
+            check((Input.State & ERawInputStateBits::Repeat) == ERawInputStateBits::Identity)
+            check((Input.State | ERawInputStateBits::Repeat) == OldState)
+        }
+
+        if (Input.State & ERawInputStateBits::Release)
+        {
+            this->RawInputs.erase(this->RawInputs.begin() + Idx);
+            continue;
+        }
+
+        ++Idx;
+    }
 
     this->AsSurface()->PollPlatformEvents();
 
     for (auto const& Input : this->VirtualInput)
     {
-        if (algo::contains(this->DownKeys, Input.Key, &LRawInput::Key) == false)
+        if (algo::contains(this->RawInputs, Input.PhysicalKey, &LRawInput::PhysicalKey) == false)
         {
-            this->AddKeyDown(Input);
+            this->UpdateKeyState(Input);
         }
     }
     this->VirtualInput.clear();
+
+    this->UnconsumedInputs = this->RawInputs;
 
     return;
 }
 
 void Jafg::LSurfaceBase::Tick()
 {
-#if PLATFORM_LINUX
-    // if (this->IsPlatformSupportsRepeatedKey() == false)
-    // {
-    //     this->bThisFrameRepeatedKeyDown = false;
-    //     if (this->IsCurrenRepeatedKeyInQuestionValid())
-    //     {
-    //         if (this->IsKeyDown(this->GetCurrenRepeatedKeyInQuestion()))
-    //         {
-    //             if
-    //             (
-    //                 Application::GetTimeDiffFromNow(this->LastPressTimePoint) >= this->RepeatedDelay
-    //             )
-    //             {
-    //                 if (this->RepeatedBufferTime >= this->RepeatedRate)
-    //                 {
-    //                     this->RepeatedBufferTime -= this->RepeatedRate;
-    //                     this->bThisFrameRepeatedKeyDown = true;
-    //                     if (LRawInput* RealKey { algo::find_pointer(this->GetCurrentlyPressedKeys(), this->GetCurrenRepeatedKeyInQuestion(), &LRawInput::Key) })
-    //                     {
-    //                         RealKey->bRepeated = true;
-    //                     }
-    //                     else
-    //                     {
-    //                         LOG_ERROR(LogSurface, "Key [{}] is not in the currently pressed keys.", this->GetCurrenRepeatedKeyInQuestion())
-    //                     }
-    //                     this->EmulateRepeatedContentForBufferedInput();
-    //                 }
-    //
-    //                 this->RepeatedBufferTime += Application::GetDeltaTimeAsFloat();
-    //             }
-    //         }
-    //         else
-    //         {
-    //             this->LastNewKey = EKeys::Unresolved;
-    //             this->RepeatedBufferTime = this->RepeatedRate;
-    //         }
-    //     }
-    // }
-#endif /* PLATFORM_LINUX */
-
-    const bool bCheckInput = static_cast<bool>(this->InputMode & EInputModeBits::UserInterface);
-
     this->GetViewport().ClearInvalidWidgets();
 
-    if (bCheckInput)
+    if (this->HasMouseLocation())
     {
-        if (this->HasMouseLocation())
-        {
-            this->GetViewport().DispatchInputs(*this->AsSurface(), this->GetMouseLocationValue());
-        }
-        else
-        {
-            this->GetViewport().DispatchInputs(*this->AsSurface(), LVec2D{-1.0f});
-        }
+        this->GetViewport().DispatchInputs();
     }
-
-    if (bCheckInput == false || this->HasMouseLocation() == false)
+    else
     {
-        this->GetViewport().OnMouseLeftViewport(*this->AsSurface(), bCheckInput == false);
+        this->GetViewport().OnMouseLeftViewport(false);
     }
 
     this->SurfaceViewport.Tick();
@@ -95,35 +89,38 @@ void Jafg::LSurfaceBase::Tick()
     return;
 }
 
-void Jafg::LSurfaceBase::PossessController(APersonaController* New, const bool bKillOld /* = true */)
+void Jafg::LSurfaceBase::UpdateKeyState(LRawInput const& InRawInput)
 {
-    if (this->Controller)
-    {
-        this->Controller->_SetOwningSurface(nullptr);
-        if (bKillOld)
+    check(Tasks::IsOnMasterThread())
+
+    check(InRawInput.PhysicalKey != LPhysicalKey{})
+    // This is not allowed.
+    // If an action requires XY then it will be built on the spot from X and Y respectively.
+    check(InRawInput.PhysicalKey != LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseXY))
+    // Same as above.
+    // check(InRawInput.PhysicalKey != LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelAxis))
+    checkCode
+    (
+        if (   InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp)
+            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown)
+            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX)
+            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY)
+            )
         {
-            this->Controller->MarkAsGarbage_v2();
+            check(InRawInput.State == ERawInputStateBits::Press)
         }
-    }
+    )
 
-    this->Controller = New;
-    if (this->Controller)
+    if (auto It{algo::find(this->RawInputs, InRawInput.PhysicalKey, &LRawInput::PhysicalKey)}; It != this->RawInputs.end())
     {
-        this->Controller->_SetOwningSurface(this->AsSurface());
+        It->Mods = InRawInput.Mods;
+        It->Value = InRawInput.Value;
+        It->State |= InRawInput.State;
     }
-
-    if (this->Controller)
+    else
     {
-        if (auto const& World{this->Controller->GetWorld()}; World.IsUnderlyingLevelValid())
-        {
-            this->AsSurface()->SetInputMode(World.GetUnderlyingLevelChecked().InputMode);
-        }
+        this->RawInputs.emplace_back(InRawInput);
     }
-
-    this->GetLocalEgo().ForEachMutableSubsystem([New](JLocalEgoSubsystem* Subsystem)
-    {
-        Subsystem->OnNewPersonaController(New);
-    });
 
     return;
 }

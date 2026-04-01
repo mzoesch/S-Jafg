@@ -1,25 +1,24 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/PersonaController.h"
-#include "Framework/Pawn.h"
-#include "User/LocalEgo.h"
+#include "Nodes/WorldNode.h"
 #include "Engine/Engine.h"
 
 void Jafg::APersonaController::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
     Super::OnGarbage(Reason);
 
-    if (this->IsOwningSurfaceValid())
+    if (this->IsOwningNodeValid())
     {
         if (Jafg::IsTearingDown() == false)
         {
             LOG_WARNING(LogEgo,
-                "Persona controller [{}] is ending life while still possessed by a surface. Surface will no longer posses a controller.",
+                "Persona controller [{}] is ending life while still possessed by a world node. World node will no longer posses a controller.",
                 this->GetNameAsString()
                 )
         }
 
-        this->GetOwningSurfaceChecked()->PossessController(nullptr, false);
+        this->GetOwningNodeChecked()->PossessPersonaController(nullptr, true);
     }
 
     if (this->IsOwnedPawnValid())
@@ -30,20 +29,20 @@ void Jafg::APersonaController::OnGarbage(ECxxRecordTearDownReason::Type Reason)
     return;
 }
 
-void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = true */)
+void Jafg::APersonaController::PossessPawn(TJxxUnique<APawn> New, const bool bReleaseOld /* = true */)
 {
     check(this->_Lives())
 
     if (this->Pawn)
     {
         this->Pawn->_SetOwningController(nullptr);
-        if (bKillOld)
+        if (bReleaseOld == false)
         {
             this->Pawn->MarkAsGarbage_v2();
         }
     }
 
-    this->Pawn = New;
+    this->Pawn = std::move(New);
     if (this->Pawn)
     {
         this->Pawn->_SetOwningController(this);

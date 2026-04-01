@@ -51,26 +51,21 @@ void Jafg::WOverlay::UpdateAnchoredSize(LViewport const& Viewport) const
     return;
 }
 
-void Jafg::WOverlay::UpdateAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const
+LVec2F Jafg::WOverlay::GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const
 {
     check(InDirectChild)
     check(InDirectChild->TransformsWidgetLayout())
 
-    InDirectChild->SetAnchoredSize
-    ({
-        maths::max
-        (
+    return {
+        maths::max(
             InDirectChild->GetDesiredSize_v2().x,
             InDirectChild->GetAnchor().MaxX * (this->GetAnchoredSize_v2().x - this->GetPadding().GetDesiredSizeXInSpt(Viewport))
-        ),
-        maths::max
-        (
+            ),
+        maths::max(
             InDirectChild->GetDesiredSize_v2().y,
             InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeYInSpt(Viewport))
-        )
-    });
-
-    return;
+            )
+    };
 }
 
 LVec2F Jafg::WOverlay::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Viewport, WNode const* InDirectChild) const

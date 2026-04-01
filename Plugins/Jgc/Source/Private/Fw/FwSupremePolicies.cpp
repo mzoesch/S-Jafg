@@ -8,6 +8,7 @@
 #include "Components/DebugCameraComponent.h"
 #include "User/LocalEgo.h"
 #include "User/Frontend/JgcPauseScreen.h"
+#include "Nodes/WorldNode.h"
 
 void Jgc::AFwSupremePolicies::OnWorldPreInit()
 {
@@ -91,7 +92,7 @@ void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControlle
 
     if (Pc.IsLocallyPossessed())
     {
-        if (Pc.IsOwningSurfaceValid())
+        if (Pc.IsOwningNodeValid())
         {
             // TODO:
             //      Parent have TJxxUnique<T>.
@@ -99,22 +100,21 @@ void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControlle
             //      If a child is emplaced into its parent. Query for outer viewport. If exits -> construct, else defer.
             //      Once attached. Children cannot be removed unless they are destroyed. They can never change their parent again.
 
-            Jafg::ConstructWidget(Jafg::TWidgetStaticInit<WPauseScreen>{Pc.GetOwningSurfaceChecked()->GetViewport()});
+            Jafg::ConstructWidget(Jafg::TWidgetStaticInit<WPauseScreen>{Pc.GetOwningNodeChecked()->GetViewport()});
         }
         else
         {
             LOG_WARNING(LogJgc, "PersonaController [{}] does not have a valid owning surface", Pc.GetNameAsString());
         }
-
     }
 
     return;
 }
 
-Jafg::APawn* Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jafg::APersonaController const& Pc)
+Jafg::TJxxUnique<Jafg::APawn> Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jafg::APersonaController const& Pc)
 {
-    auto* Pawn{Super::GetPawnForPersonaController(Pc)};
-    if (Pawn == nullptr)
+    auto Pawn{Super::GetPawnForPersonaController(Pc)};
+    if (Pawn.get() == nullptr)
     {
         return nullptr;
     }

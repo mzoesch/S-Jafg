@@ -75,7 +75,7 @@ public:
     virtual LCursorReply OnCursorLeave() override;
     virtual void         OnFocusReceived() override;
     virtual void         OnFocusLost() override;
-    virtual LReply       OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply       OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
 
     //#
     //# Delegate, which is invoked when the user tries to commit the content of the editable text box.
@@ -83,17 +83,17 @@ public:
     //# @note   This is useful if the content cannot be applied due to some validation, and handling the content validation
     //#         directly with the #LEditableTextBoxPredicateDelegate is not desired or viable.
     //#
-    EVENT_DECL(OnAllowContentCommit, bool)
+    EVENT_DECL(OnAllowContentCommit, bool())
 
     //#
     //# Delegate, which is invoked when the user commits the content of the editable text box.
     //#
-    EVENT_DECL(OnContentCommitted, void, LString const&, ETextCommit)
+    EVENT_DECL(OnContentCommitted, void(LString const&, ETextCommit))
 
     //#
     //# Delegate, which is invoked when the contents of the editable text box changed in any way.
     //#
-    EVENT_DECL(OnContentChanged, void, LString const&)
+    EVENT_DECL(OnContentChanged, void(LString const&))
 
     //#
     //# A delegate that is invoked, if bounded, when the user tries to change the content of the editable text box.
@@ -104,7 +104,7 @@ public:
     //#         will still be invoked. Change events should be handled there. This should only be used for validation.
     //#         If this validation fails, the #LEditableTextBoxChangedDelegate will not be invoked.
     //#
-    EVENT_DECL(ContentPredicate, bool, LString const&)
+    EVENT_DECL(ContentPredicate, bool(LString const&))
 
     constexpr void SetPlaceholderContent(LString const& InPlaceholderContent) noexcept { this->PlaceholderContent = InPlaceholderContent; }
     constexpr void SetPlaceholderContent(LString&& InPlaceholderContent) noexcept { this->PlaceholderContent = std::move(InPlaceholderContent); }
@@ -144,7 +144,7 @@ public:
 
 private:
 
-    void UserInterfaceTick(LViewport const& Viewport);
+    void UserInterfaceTick();
 
     void OnTextCommit(LString const& InText, ETextCommit InCommitType);
 

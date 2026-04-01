@@ -6,14 +6,15 @@
 #include "Platform/Surface.h"
 #include "User/Input/InputTypes.h"
 #include "User/Input/InputActionValue.h"
+#include "Nodes/WorldNode.h"
 
 bool Jgc::ADebugCameraComponent::ActivateUserInputContext() const noexcept
 {
     if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
     {
-        if (auto* Surface{Ctrl->GetOwningSurface()})
+        if (auto* Node{Ctrl->GetOwningNode()})
         {
-            auto& UserInput{Surface->GetUserInput()};
+            auto& UserInput{Node->GetUserInput()};
             (void) UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("RhiDebug"));
             return UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"));
         }

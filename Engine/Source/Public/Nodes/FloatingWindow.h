@@ -75,13 +75,13 @@ public:
 
 protected:
 
+    void UiTickMove();
     LDelegateHandle UiTickMoveHandle{ nullptr };
-    void UiTickMove(LViewport const& Viewport);
     TOptional<LVec2F> MoveDragOffset;
 
     bool bCreateResizeUi{ true };
     LDelegateHandle UiTickResizeHandle{ nullptr };
-    void UiTickResize(LViewport const& Viewport);
+    void UiTickResize();
     TOptional<LVec2F> ResizeDragOffset;
 
 private:

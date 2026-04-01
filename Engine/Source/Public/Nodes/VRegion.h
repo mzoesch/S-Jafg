@@ -23,7 +23,7 @@ protected:
 public:
 
     virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
+    virtual LVec2F GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const override;
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
 
     constexpr void SetVSpace(const LWidgetSize1 InVSpace) { this->VSpace = InVSpace; }

@@ -62,6 +62,18 @@ public:
     void Initialize(LClassOuter* Outer);
     void TearDown();
 
+    //# TODO: Remove this... this has nothing to do with VK.
+    NODISCARD ENGINE_API TOptional<LPhysicalKey> GetPhysicalKey(ENamedPhysicalKey LogicalKey) const noexcept;
+    NODISCARD ENGINE_API TOptional<LString> Glfw_GetPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept;
+    LString Glfw_GetSanitizedPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept
+    {
+        if (auto Result{this->Glfw_GetPhysicalKeyLocalizedRepr(Key, Hint)}; Result.has_value())
+        {
+            return std::move(Result).value();
+        }
+        return SprintF("SC: {}", Key.Scancode);
+    }
+
     FORCEINLINE auto const& Vk_GetContext() const noexcept { return this->Vk_Context; }
 
     FORCEINLINE auto const& Vk_GetAvailableInstanceExtensions() const noexcept { return this->Vk_AvailableInstanceExtensions; }

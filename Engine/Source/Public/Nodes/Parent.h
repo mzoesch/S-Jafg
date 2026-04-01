@@ -44,10 +44,11 @@ public:
     virtual LCursorReply SweepMouse(LViewport& Viewport, LVec2F const& Location) override;
     virtual LReply       SweepFocusTest(LViewport const& Viewport, LVec2F const& Location) override;
 
-    virtual LReply OnKeyDownNoFocus(LViewport const& Viewport, LKeyEvent const& KeyEvent) override;
-    virtual LReply OnKeyUpNoFocus(LViewport const& Viewport, LKeyEvent const& KeyEvent) override;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
 
     virtual bool IsFocusWidgetTransitive(LViewport const* Viewport) const override;
+    virtual void OnSurfaceResize() override;
     virtual bool FindNodeInVisiblePath(WNode const* Node) const override;
 
     FORCEINLINE
@@ -88,7 +89,7 @@ struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
     FORCEINLINE decltype(auto) operator[](this auto&& Self, LNodeFactoryBase&& F) noexcept
     {
         check(F._IsReleased() == false)
-        auto& Node{NODE_FACTORY_SELF()};
+        auto& Node{DETAIL_JAFG_NODE_FACTORY_SELF()};
         Node.AddChild(TJxxUnique<WNode>{&F.GetRawNode()});
         for (auto* Sibling : F.GetSiblings())
         {
@@ -96,6 +97,7 @@ struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
         }
         algo::orphan(&F.GetMutableSiblings());
         checkCode(F._Release())
+        checkCode(F._Decommission())
         return NODE_FACTORY_RESULT();
     }
 

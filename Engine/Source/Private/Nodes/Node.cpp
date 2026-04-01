@@ -71,12 +71,12 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVec2F& InL
 
     if (Context.AddHoveredWidgetForFrame(this))
     {
-        if (LCursorReply Reply{ this->OnCursorEnter() }; Reply.IsHandled())
-        {
-            return Reply;
-        }
-
-        return LCursorReply::Handled();
+        return this->OnCursorEnter();
+        // if (LCursorReply Reply{this->OnCursorEnter()}; Reply.IsHandled())
+        // {
+        //     return Reply;
+        // }
+        // return LCursorReply::Handled();
     }
 
     return this->OnCursorMoved(InLocation);
@@ -89,48 +89,48 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVec2F&
         return LReply::Unhandled();
     }
 
-    return { this };
+    return {this};
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
     if (this->OnKeyDownEvent.IsValid())
     {
-        return this->OnKeyDownEvent.Invoke(*this, InViewport, InKeyEvent);
+        return this->OnKeyDownEvent.Invoke(*this, Data, Event);
     }
 
     if (this->Parent)
     {
-        return this->Parent->OnKeyDown(InViewport, InKeyEvent);
+        return this->Parent->OnKeyDown(Data, Event);
     }
 
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
     if (this->OnKeyUpEvent.IsValid())
     {
-        return this->OnKeyUpEvent.Invoke(*this, InViewport, InKeyEvent);
+        return this->OnKeyUpEvent.Invoke(*this, Data, Event);
     }
 
     if (this->Parent)
     {
-        return this->Parent->OnKeyUp(InViewport, InKeyEvent);
+        return this->Parent->OnKeyUp(Data, Event);
     }
 
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
-    check( this->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked() ) )
+    check(this->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
 {
-    check( this->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked() ) )
+    check(this->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
     return LReply::Unhandled();
 }
 
@@ -253,7 +253,7 @@ void Jafg::WNode::UpdateAnchoredSize(LViewport const& Context) const
 
     if (this->Parent)
     {
-        this->Parent->UpdateAnchoredSizeForChild(Context, this);
+        this->SetAnchoredSize(this->Parent->GetAnchoredSizeForChild(Context, this));
         return;
     }
 
@@ -265,20 +265,20 @@ void Jafg::WNode::UpdateAnchoredSize(LViewport const& Context) const
     return;
 }
 
-void Jafg::WNode::SetAnchoredSize(LVec2F&& InSize) const noexcept
+void Jafg::WNode::SetAnchoredSize(LVec2F const& InSize) const noexcept
 {
+    this->AnchoredSize_v2 = InSize;
     this->LostAnchoredSize_v2 = maths::zero_vector<LVec2F>;
-    this->AnchoredSize_v2 = std::move(InSize);
 
     if (this->MaxDesiredSize.X > 0.0)
     {
-        this->LostAnchoredSize_v2.x = maths::max(this->AnchoredSize_v2.x - this->MaxDesiredSize.X, 0.0f);
-        this->AnchoredSize_v2.x = maths::min(this->AnchoredSize_v2.x, this->MaxDesiredSize.X);
+        this->LostAnchoredSize_v2.x = maths::max(this->AnchoredSize_v2.x - InSpt(this->GetViewport(), this->MaxDesiredSize).x, 0.0f);
+        this->AnchoredSize_v2.x = maths::min(this->AnchoredSize_v2.x, InSpt(this->GetViewport(), this->MaxDesiredSize).x);
     }
     if (this->MaxDesiredSize.Y > 0.0)
     {
-        this->LostAnchoredSize_v2.y = maths::max(this->AnchoredSize_v2.y - this->MaxDesiredSize.Y, 0.0f);
-        this->AnchoredSize_v2.y = maths::min(this->AnchoredSize_v2.y, this->MaxDesiredSize.Y);
+        this->LostAnchoredSize_v2.y = maths::max(this->AnchoredSize_v2.y - InSpt(this->GetViewport(), this->MaxDesiredSize).y, 0.0f);
+        this->AnchoredSize_v2.y = maths::min(this->AnchoredSize_v2.y, InSpt(this->GetViewport(), this->MaxDesiredSize).y);
     }
 
     return;

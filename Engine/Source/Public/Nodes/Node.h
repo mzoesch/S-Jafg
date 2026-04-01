@@ -145,9 +145,9 @@ struct LAnchor final
     }
     constexpr void Normalize() noexcept
     {
-#if LAL_DO_CHECKS
+#if JAFG_DO_CHECKS
         LAnchor Old{*this};
-#endif /* LAL_DO_CHECKS */
+#endif /* JAFG_DO_CHECKS */
 
         this->Anchors.x = maths::clamp(this->Anchors.x, 0.0f, 1.0f);
         this->Anchors.y = maths::clamp(this->Anchors.y, 0.0f, 1.0f);
@@ -157,12 +157,12 @@ struct LAnchor final
         this->MaxX = maths::min(this->MaxX, 1.0f - this->MinX);
         this->MaxY = maths::min(this->MaxY, 1.0f - this->MinY);
 
-#if LAL_DO_CHECKS
+#if JAFG_DO_CHECKS
         if (Old != *this)
         {
             LOG_WARNING(LogWidgetFramework, "Anchor was not normalized correctly [{} -> {}].", Old.ToString(), this->ToString())
         }
-#endif /* LAL_DO_CHECKS */
+#endif /* JAFG_DO_CHECKS */
 
         return;
     }
@@ -319,27 +319,32 @@ struct LNodeFactoryBase
         , Siblings{std::move(O.Siblings)}
 #if JAFG_DO_CHECKS
         , _bReleased{O._bReleased}
+        , _bDecommissioned{O._bDecommissioned}
 #endif /* JAFG_DO_CHECKS */
     {
         check(O.Siblings.empty())
         checkCode(O._bReleased = true)
+        checkCode(O._bDecommissioned = true)
     }
     LNodeFactoryBase& operator=(LNodeFactoryBase&& Rhs) noexcept = delete;
     ~LNodeFactoryBase()
     {
+        /* A factory does not have to be decommissioned in order to be destroyed. */
         check(this->_bReleased && this->Siblings.empty())
     }
 
 #if JAFG_DO_CHECKS
-    FORCEINLINE void _Release() noexcept { check(this->_bReleased == false) this->_bReleased = true; }
-    FORCEINLINE bool _IsReleased() const noexcept { return this->_bReleased; }
+    FORCEINLINE constexpr void _Release() noexcept { check(this->_bReleased == false) this->_bReleased = true; }
+    FORCEINLINE constexpr bool _IsReleased() const noexcept { return this->_bReleased; }
+    FORCEINLINE constexpr void _Decommission() noexcept { check(this->_bDecommissioned == false) this->_bDecommissioned = true; }
+    FORCEINLINE constexpr bool _IsDecommissioned() const noexcept { return this->_bDecommissioned; }
 #endif /* JAFG_DO_CHECKS */
 
-    FORCEINLINE auto& GetRawNode() noexcept { return this->Node; }
-    FORCEINLINE auto const& GetRawNode() const noexcept { return this->Node; }
+    FORCEINLINE auto& GetRawNode() noexcept { check(this->_IsDecommissioned() == false) return this->Node; }
+    FORCEINLINE auto const& GetRawNode() const noexcept { check(this->_IsDecommissioned() == false) return this->Node; }
 
-    FORCEINLINE auto& GetMutableSiblings() noexcept { return this->Siblings; }
-    FORCEINLINE auto const& GetSiblings() const noexcept { return this->Siblings; }
+    FORCEINLINE auto& GetMutableSiblings() noexcept { check(this->_IsDecommissioned() == false) return this->Siblings; }
+    FORCEINLINE auto const& GetSiblings() const noexcept { check(this->_IsDecommissioned() == false) return this->Siblings; }
 
 private:
 
@@ -347,6 +352,7 @@ private:
     TArray<WNode*> Siblings;
 #if JAFG_DO_CHECKS
     bool _bReleased{};
+    bool _bDecommissioned{};
 #endif /* JAFG_DO_CHECKS */
 };
 
@@ -383,8 +389,71 @@ public:
 
 #define NODE_FACTORY_PARENT(Node) public Node::Super::LFactory
 #define NODE_FACTORY_BODY(Node) typedef Node TSelf;
-#define NODE_FACTORY_SELF() (*StaticCastChecked<typename std::remove_cvref_t<decltype(Self)>::TSelf>(&Self.GetRawNode()))
+#define DETAIL_JAFG_NODE_FACTORY_SELF() (*StaticCastChecked<typename std::remove_cvref_t<decltype(Self)>::TSelf>(&Self.GetRawNode()))
+#define NODE_FACTORY_SELF() check(Self._IsDecommissioned() == false) DETAIL_JAFG_NODE_FACTORY_SELF()
 #define NODE_FACTORY_RESULT() std::forward<decltype(Self)>(Self)
+
+struct LNodeKeyDownData final
+{
+    LFrontend const& Frontend;
+    LSurface& Surface;
+    LViewport& Viewport;
+    WNode& Node;
+};
+
+//# Initializer for the dynamic ctors for WNodes.
+typedef Detail::TCxxDynamicInit<LViewport, Detail::LViewport2OuterProj> LNodeDynamicInit;
+//# Initializer for the static ctors for WNodes.
+template<typename TCxxClass>
+using TNodeStaticInit = Detail::TCxxStaticInitBase<LViewport, TCxxClass, Detail::LViewport2OuterProj>;
+
+namespace Detail
+{
+
+struct LOuter2ViewportProj
+{
+    NODISCARD inline constexpr LNodeDynamicInit operator()(LCxxDynamicInit const& Init) const noexcept;
+};
+
+} /* ~Namespace Detail */
+
+#define JAFG_NODE_FACTORY_DELEGATE_BINDINGS(Prefix, Event) \
+    decltype(auto) Prefix(this auto&& Self, LNullptrTy) noexcept \
+    { \
+        NODE_FACTORY_SELF().Event.Bind(nullptr); \
+        return NODE_FACTORY_RESULT(); \
+    } \
+    decltype(auto) Prefix(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event) const& InEvent) noexcept \
+    { \
+        NODE_FACTORY_SELF().Event.Bind(InEvent); \
+        return NODE_FACTORY_RESULT(); \
+    } \
+    decltype(auto) Prefix(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)&& InEvent) noexcept \
+    { \
+        NODE_FACTORY_SELF().Event.Bind(std::move(InEvent)); \
+        return NODE_FACTORY_RESULT(); \
+    } \
+    template<typename TFunctor> \
+    decltype(auto) Prefix(this auto&& Self, TFunctor&& Functor) \
+        requires(decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)::template IsInvocableWith_v<TFunctor>) \
+    { \
+        NODE_FACTORY_SELF().Event.Bind(std::forward<TFunctor>(Functor)); \
+        return NODE_FACTORY_RESULT(); \
+    } \
+    template<typename TFunctor> \
+    decltype(auto) Prefix(this auto&& Self, TFunctor* Functor) \
+        requires(decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)::template IsInvocableWith_v<TFunctor>) \
+    { \
+        NODE_FACTORY_SELF().Event.Bind(Functor); \
+        return NODE_FACTORY_RESULT(); \
+    } \
+    template<typename TObj, typename TMemberFunctor> \
+    decltype(auto) Prefix(this auto&& Self, TObj* Object, TMemberFunctor MemberFunctor) \
+        requires(decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)::template IsInvocableWithMember_v<TObj, TMemberFunctor>) \
+    { \
+        NODE_FACTORY_SELF().Event.Bind(Object, MemberFunctor); \
+        return NODE_FACTORY_RESULT(); \
+    }
 
 struct LFactoryNode : public Detail::LNodeFactoryBase
 {
@@ -424,6 +493,9 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         return NODE_FACTORY_RESULT();
     }
 
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDown, OnKeyDownEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUp, OnKeyUpEvent)
+
     template<typename T> requires std::is_base_of_v<WNode, T>
     decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept
     {
@@ -455,25 +527,6 @@ ENGINE_API  f32 InSptFromRelative(LViewport const& Viewport, f32 Relative) noexc
 FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
 ENGINE_API  LVec2F InSptFromRelative(LViewport const& Viewport, LVec2F Relative) noexcept;
 FORCEINLINE LVec2F InSptFromRelative(WNode const& Node, LVec2F Relative) noexcept;
-
-typedef TFunction<LCursorReply(WNode& Widget)> OnWidgetCursorEventSignature;
-typedef TFunction<LReply(WNode& Widget, LViewport& Viewport, LKeyEvent const& KeyEvent)> OnWidgetKeyEventSignature;
-
-//# Initializer for the dynamic ctors for WNodes.
-typedef Detail::TCxxDynamicInit<LViewport, Detail::LViewport2OuterProj> LNodeDynamicInit;
-//# Initializer for the static ctors for WNodes.
-template<typename TCxxClass>
-using TNodeStaticInit = Detail::TCxxStaticInitBase<LViewport, TCxxClass, Detail::LViewport2OuterProj>;
-
-namespace Detail
-{
-
-struct LOuter2ViewportProj
-{
-    NODISCARD inline constexpr LNodeDynamicInit operator()(LCxxDynamicInit const& Init) const noexcept;
-};
-
-} /* ~Namespace Detail */
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
@@ -524,7 +577,7 @@ public:
     //# Called when this widget is being ticked.
     //# See #EWidgetVisibility for more information about when to tick a widget.
     //#
-    virtual void Tick() { }
+    virtual void Tick() {}
 
     //#
     //# Called when this widget is being destructed. This does not mean being removed from its parent. This method
@@ -556,13 +609,12 @@ public:
     bool IsInBounds(const LViewport& Context, const LVec2F& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVec2F& InLocation);
 
+    TFunction<LCursorReply(WNode& Node)> OnCursorEnterEvent;
+    TFunction<LCursorReply(WNode& Node)> OnCursorMovedEvent;
+    TFunction<LCursorReply(WNode& Node)> OnCursorLeaveEvent;
     virtual LCursorReply OnCursorEnter() { if (this->OnCursorEnterEvent.IsValid()) { return this->OnCursorEnterEvent.Invoke(*this); } return LCursorReply::Handled(); }
     virtual LCursorReply OnCursorMoved(const LVec2F& InLocation) { if (this->OnCursorMovedEvent.IsValid()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
     virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsValid()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
-
-    OnWidgetCursorEventSignature OnCursorEnterEvent;
-    OnWidgetCursorEventSignature OnCursorMovedEvent;
-    OnWidgetCursorEventSignature OnCursorLeaveEvent;
 
     virtual LReply SweepFocusTest(const LViewport& Context, const LVec2F& InLocation);
 
@@ -573,8 +625,8 @@ public:
     //# Note that the #WParent node will not bubble this event in any direction as it is usually meant for the
     //# most inner node only.
     //#
-    virtual void OnFocusReceived() { }
-    virtual void OnFocusLost() { }
+    virtual void OnFocusReceived() {}
+    virtual void OnFocusLost() {}
 
     //#
     //# These events are for the focused widget only. You may want to bubble these events down to children if you want.
@@ -588,11 +640,11 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent);
-    virtual LReply OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent);
+    virtual LReply OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event);
 
-    OnWidgetKeyEventSignature OnKeyDownEvent;
-    OnWidgetKeyEventSignature OnKeyUpEvent;
+    EVENT_DECL(OnKeyDownEvent, LReply(WNode& Widget, LNodeKeyDownData const& Data, LKeyEvent const& Event))
+    EVENT_DECL(OnKeyUpEvent, LReply(WNode& Widget, LNodeKeyDownData const& Data, LKeyEvent const& Event))
 
     //#
     //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle
@@ -604,8 +656,8 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
-    virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
+    virtual LReply OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event);
 
     //#
     //# @return Whether this is the focused widget.
@@ -616,7 +668,7 @@ public:
     //# @param InViewport The viewport to check for or null.
     //# @return Whether this is the focused widget.
     //#
-    bool IsFocusWidget(const LViewport* InViewport) const;
+    bool IsFocusWidget(LViewport const* InViewport) const;
 
     //#
     //# @return Whether this is the focused widget or any of its children.
@@ -649,7 +701,9 @@ public:
                 void SetVisibility(ENodeVisibility InVisibility);
 
     //# Only if old and new are different.
-    virtual void OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility) { }
+    virtual void OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility) {}
+    //# Called if the surface was resized.
+    virtual void OnSurfaceResize() {}
 
     //# Mark this node and alls its children as garbage and remove them, from their parent.
     virtual void RemoveFromParent2();
@@ -696,9 +750,8 @@ public:
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSize(LViewport const& Context) const;
     //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
-    virtual void UpdateAnchoredSizeForChild(LViewport const& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
-    FORCEINLINE void SetAnchoredSize(LVec2F const& Size) const noexcept { this->SetAnchoredSize(LVec2F{ Size }); }
-    void SetAnchoredSize(LVec2F&& Size) const noexcept;
+    virtual LVec2F GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const PURE_VIRTUAL()
+    void SetAnchoredSize(LVec2F const& Size) const noexcept;
     FORCEINLINE LVec2F const& GetAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
     FORCEINLINE LVec2F CopyAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
     //# The anchored size that was lost during #MaxDesiredSize clamp.
@@ -757,11 +810,14 @@ private:
 
 inline decltype(auto) LFactoryNode::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
 {
-    Self.GetMutableSiblings().emplace_back(&F.GetRawNode()); check(F.GetSiblings().empty())
-    // for (auto* Sibling : F.GetSiblings())
-    // {
-    //     Self.GetMutableSiblings().emplace_back(Sibling);
-    // }
+    Self.GetMutableSiblings().emplace_back(&F.GetRawNode());
+
+    // If this hits, but usage is correct append siblings to self.
+    // But I do not see a case where a correct usage would lead to this.
+    check(F.GetSiblings().empty())
+
+    checkCode(F._Release())
+    checkCode(F._Decommission())
     return NODE_FACTORY_RESULT();
 }
 

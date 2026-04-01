@@ -3,7 +3,6 @@
 #include "User/Input/CoreInputSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/Frontend.h"
-#include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "User/Input/InputAction.h"
@@ -14,12 +13,13 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     Super::Initialize(Collection);
     LUserInputRegistry& Registry{this->GetLocalEgo().GetUserInputRegistry()};
 
+    auto& Frontend{this->GetLocalEgo().GetFrontend()};
     if (LUserInputContext* Context{Registry.RegisterContext({LUserInputTag::ToTag("RhiDebug"), "Rhi Debug"})})
     {
         Context->MapAction(&Registry,
             {LUserInputTag::ToTag("ToggleRhiPolygonMode"), EInputActionCategory::Boolean},
-            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{EKeys::F1, EInputActionTrigger::Triggered}),
-            [](LViewport&, LInputActionValue&) -> LOnUserInputActionResult
+            TArray<LInputTrigger>{}.reflexive_push_back(LInputTrigger{.Keys = {Frontend.GetPhysicalKey(ENamedPhysicalKey::F1).value()}, .TriggerFlags = EInputActionTriggerBits::Triggered,}),
+            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 if (auto& Prefs{GetMutableSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
                 {
@@ -36,8 +36,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
         Context->MapAction(&Registry,
             {LUserInputTag::ToTag("ClearMeshMaterialPreference"), EInputActionCategory::Boolean},
-            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{EKeys::F9, EInputActionTrigger::Triggered}),
-            [](LViewport&, LInputActionValue&) -> LOnUserInputActionResult
+            TArray<LInputTrigger>{}.reflexive_push_back({.Keys = {Frontend.GetPhysicalKey(ENamedPhysicalKey::F9).value()}, .TriggerFlags = EInputActionTriggerBits::Triggered}),
+            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Clearing mesh material preference.")
                 GetMutableSingleton<JUserPreferences>().MeshMaterialPreference.reset();
@@ -46,8 +46,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
         Context->MapAction(&Registry,
             {LUserInputTag::ToTag("SetNormalMeshMaterialPreference"), EInputActionCategory::Boolean},
-            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{EKeys::F5, EInputActionTrigger::Triggered}),
-            [](LViewport&, LInputActionValue&) -> LOnUserInputActionResult
+            TArray<LInputTrigger>{}.reflexive_push_back({.Keys = {Frontend.GetPhysicalKey(ENamedPhysicalKey::F5).value()}, .TriggerFlags = EInputActionTriggerBits::Triggered}),
+            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.Normal].")
                 check(GEngine)
@@ -58,8 +58,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
         Context->MapAction(&Registry,
             {LUserInputTag::ToTag("SetUVMeshMaterialPreference"), EInputActionCategory::Boolean},
-            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{EKeys::F6, EInputActionTrigger::Triggered}),
-            [](LViewport&, LInputActionValue&) -> LOnUserInputActionResult
+            TArray<LInputTrigger>{}.reflexive_push_back({.Keys = {Frontend.GetPhysicalKey(ENamedPhysicalKey::F6).value()}, .TriggerFlags = EInputActionTriggerBits::Triggered}),
+            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.UV].")
                 check(GEngine)
@@ -70,8 +70,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
         Context->MapAction(&Registry,
             {LUserInputTag::ToTag("SetTangentMaterialPreference"), EInputActionCategory::Boolean},
-            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{EKeys::F7, EInputActionTrigger::Triggered}),
-            [](LViewport&, LInputActionValue&) -> LOnUserInputActionResult
+            TArray<LInputTrigger>{}.reflexive_push_back({.Keys = {Frontend.GetPhysicalKey(ENamedPhysicalKey::F7).value()}, .TriggerFlags = EInputActionTriggerBits::Triggered}),
+            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.Tangent].")
                 check(GEngine)
@@ -82,8 +82,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
         Context->MapAction(&Registry,
             {LUserInputTag::ToTag("SetHandednessMaterialPreference"), EInputActionCategory::Boolean},
-            TArray<LInputTrigger>{}.reflexive_emplace_back(LInputTrigger{EKeys::F8, EInputActionTrigger::Triggered}),
-            [](LViewport&, LInputActionValue&) -> LOnUserInputActionResult
+            TArray<LInputTrigger>{}.reflexive_push_back({.Keys = {Frontend.GetPhysicalKey(ENamedPhysicalKey::F8).value()}, .TriggerFlags = EInputActionTriggerBits::Triggered}),
+            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.Handedness].")
                 check(GEngine)

@@ -7,8 +7,8 @@
 #define JAFG_NODE_BUTTON_BOILERPLATE() \
     virtual LCursorReply OnCursorEnter() override{ return this->ButtonBase_OnCursorEnter(); } \
     virtual LCursorReply OnCursorLeave() override{ return this->ButtonBase_OnCursorLeave(); } \
-    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override { return this->ButtonBase_OnKeyDown(InViewport, InKeyEvent); } \
-    virtual LReply OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent) override { return this->ButtonBase_OnKeyUp(InViewport, InKeyEvent); }
+    virtual LReply OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyDown(Data, Event); } \
+    virtual LReply OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyUp(Data, Event); }
 
 namespace Jafg
 {
@@ -36,10 +36,10 @@ public:
         : Owner(InOwner), BrushProj(std::move(BrushProj)) {}
     virtual ~TButtonBase() = default;
 
-    EVENT_DECL(OnPrimaryPressDelegate, void, TNode& Node, LKeyEvent const& InKeyEvent)
-    EVENT_DECL(OnPrimaryReleaseDelegate, void, TNode& Node, LKeyEvent const& InKeyEvent)
-    EVENT_DECL(OnSecondaryPressDelegate, void, TNode& Node, LKeyEvent const& InKeyEvent)
-    EVENT_DECL(OnSecondaryReleaseDelegate, void, TNode& Node, LKeyEvent const& InKeyEvent)
+    EVENT_DECL(OnPrimaryPressDelegate, void(TNode& Node, LKeyEvent const& InKeyEvent))
+    EVENT_DECL(OnPrimaryReleaseDelegate, void(TNode& Node, LKeyEvent const& InKeyEvent))
+    EVENT_DECL(OnSecondaryPressDelegate, void(TNode& Node, LKeyEvent const& InKeyEvent))
+    EVENT_DECL(OnSecondaryReleaseDelegate, void(TNode& Node, LKeyEvent const& InKeyEvent))
     //# These methods will only be called if the delegates are not bound.
     virtual void OnPrimaryPress() { }
     virtual void OnPrimaryRelease() { }
@@ -284,24 +284,24 @@ protected:
         return LCursorReply::Handled();
     }
 
-    LReply ButtonBase_OnKeyDown(LViewport& Viewport, LKeyEvent const& KeyEvent)
+    LReply ButtonBase_OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
     {
         if (this->bEnabled == false)
         {
             if (this->Owner.IsParentValid())
             {
-                return this->Owner.GetParentChecked()->OnKeyDown(Viewport, KeyEvent);
+                return this->Owner.GetParentChecked()->OnKeyDown(Data, Event);
             }
 
             return LReply::Unhandled();
         }
 
-        if (KeyEvent.GetKey() == EKeys::LeftMouseButton)
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
         {
             std::invoke(this->BrushProj, this->Owner, this->Style.PressBrush);
             if (this->OnPrimaryPressDelegate.IsValid())
             {
-                this->OnPrimaryPressDelegate.Invoke(this->Owner, KeyEvent);
+                this->OnPrimaryPressDelegate.Invoke(this->Owner, Event);
             }
             else
             {
@@ -310,12 +310,12 @@ protected:
             return LReply::Handled();
         }
 
-        if (KeyEvent.GetKey() == EKeys::RightMouseButton)
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
         {
             std::invoke(this->BrushProj, this->Owner, this->Style.PressBrush);
             if (this->OnSecondaryPressDelegate.IsValid())
             {
-                this->OnSecondaryPressDelegate.Invoke(this->Owner, KeyEvent);
+                this->OnSecondaryPressDelegate.Invoke(this->Owner, Event);
             }
             else
             {
@@ -324,27 +324,27 @@ protected:
             return LReply::Handled();
         }
 
-        return static_cast<typename TNode::Super*>(&this->Owner)->OnKeyDown(Viewport, KeyEvent);
+        return static_cast<typename TNode::Super*>(&this->Owner)->OnKeyDown(Data, Event);
     }
 
-    LReply ButtonBase_OnKeyUp(LViewport& Viewport, LKeyEvent const& KeyEvent)
+    LReply ButtonBase_OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event)
     {
         if (this->bEnabled == false)
         {
             if (this->Owner.IsParentValid())
             {
-                return this->Owner.GetParentChecked()->OnKeyUp(Viewport, KeyEvent);
+                return this->Owner.GetParentChecked()->OnKeyUp(Data, Event);
             }
 
             return LReply::Unhandled();
         }
 
-        if (KeyEvent.GetKey() == EKeys::LeftMouseButton)
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
         {
             std::invoke(this->BrushProj, this->Owner, this->Style.HoverBrush);
             if (this->OnPrimaryReleaseDelegate.IsValid())
             {
-                this->OnPrimaryReleaseDelegate.Invoke(this->Owner, KeyEvent);
+                this->OnPrimaryReleaseDelegate.Invoke(this->Owner, Event);
             }
             else
             {
@@ -353,12 +353,12 @@ protected:
             return LReply::Handled();
         }
 
-        if (KeyEvent.GetKey() == EKeys::RightMouseButton)
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
         {
             std::invoke(this->BrushProj, this->Owner, this->Style.HoverBrush);
             if (this->OnSecondaryReleaseDelegate.IsValid())
             {
-                this->OnSecondaryReleaseDelegate.Invoke(this->Owner, KeyEvent);
+                this->OnSecondaryReleaseDelegate.Invoke(this->Owner, Event);
             }
             else
             {
@@ -367,7 +367,7 @@ protected:
             return LReply::Handled();
         }
 
-        return static_cast<typename TNode::Super*>(&this->Owner)->OnKeyUp(Viewport, KeyEvent);
+        return static_cast<typename TNode::Super*>(&this->Owner)->OnKeyUp(Data, Event);
     }
 
     TNode& Owner;

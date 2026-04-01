@@ -22,26 +22,11 @@ LString Jafg::LexToString(EInputActionCategory::Type InType)
     return "Invalid";
 }
 
-void Jafg::LUserInput::DispatchInputDelegates(LSurface& Surface)
+void Jafg::LUserInput::DispatchInputDelegates(APersonaController& ActingController)
 {
-    TArray TriggeredKeys{Surface.GetTriggeredKeys()};
-    TArray OngoingKeys{Surface.GetOngoingKeys()};
-    TArray CompletedKeys{Surface.GetCompletedKeys()};
-
-    if (TriggeredKeys.empty() == false)
-    {
-        this->DispatchInputDelegatesForKeyCategory(Surface, &TriggeredKeys, EInputActionTrigger::Triggered);
-    }
-    if (OngoingKeys.empty() == false)
-    {
-        this->DispatchInputDelegatesForKeyCategory(Surface, &OngoingKeys,   EInputActionTrigger::Ongoing);
-    }
-    if (CompletedKeys.empty() == false)
-    {
-        this->DispatchInputDelegatesForKeyCategory(Surface, &CompletedKeys, EInputActionTrigger::Completed);
-    }
-
-    return;
+    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Triggered);
+    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Ongoing);
+    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Completed);
 }
 
 bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, LSize Where /* = INDEX_NONE */) noexcept
@@ -189,16 +174,18 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LStringView> const& Contexts) n
     return bOut;
 }
 
-void Jafg::LUserInput::PushContexts(EInputMode InputMode, const bool bEmpty /* = true */) noexcept
+void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */) noexcept
 {
+    check(this->Surface)
+
     if (bEmpty)
     {
-        this->ContextStack.emplace_back(InputMode, std::move(this->ActiveContexts));
+        this->ContextStack.emplace_back(this->Surface->GetInputMode(), std::move(this->ActiveContexts));
         check(this->ActiveContexts.empty())
     }
     else
     {
-        this->ContextStack.emplace_back(InputMode, this->ActiveContexts);
+        this->ContextStack.emplace_back(this->Surface->GetInputMode(), this->ActiveContexts);
         check(this->ContextStack.back().second.size() == this->ActiveContexts.size())
     }
 
@@ -224,15 +211,14 @@ TOptional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
     return Result;
 }
 
-void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, TArray<LRawInput>* Inputs, EInputActionTrigger::Type TriggerType)
+void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& ActingController, TArray<LRawInput>* Inputs, EInputActionTriggerBits TriggerMask)
 {
-    STAT_QUICK_CYCLE_START(Jafg::SprintF("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerType)))
+    STAT_QUICK_CYCLE_START(Jafg::SprintF("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerMask)))
 
     check(Inputs)
-    check(TriggerType != EInputActionTrigger::None)
+    check(TriggerMask != EInputActionTriggerBits::Identity)
 
-    LUserInputRegistry const& Registry{Surface.GetLocalEgo().GetUserInputRegistry()};
-
+    LUserInputRegistry const& Registry{this->Surface->GetLocalEgo().GetUserInputRegistry()};
     for (auto ContextName : this->ActiveContexts)
     {
         auto& Context{*Registry.GetContextByNameChecked(ContextName)};
@@ -241,41 +227,68 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
         {
             for (auto const& Trigger : Action.Triggers)
             {
-                if (Trigger.Type != TriggerType)
+                if (!(Trigger.TriggerFlags & TriggerMask))
                 {
                     continue;
                 }
 
+                //# TODO: Check that if a key is doubly bound and triggered: Will this not increase the Value by two?
                 LInputActionValue Value{Registry.GetActionByNameChecked(Action.ActionTag)->GetCategory()};
                 for (auto It{Inputs->begin()}; It != Inputs->end();)
                 {
-                    LInputActionValue::Axis3D Magnitude;
-
-                    if (algo::contains(Trigger.Keys, It->Key) == false)
+                    if (TriggerMask == EInputActionTriggerBits::Triggered)
                     {
-                        if (algo::contains(Trigger.Keys, EKeys::MouseXY) == false)
+                        if ((It->State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
                         {
                             ++It;
                             continue;
                         }
-
-                        if (It->Key == EKeys::MouseX)
+                    }
+                    else if (TriggerMask == EInputActionTriggerBits::Ongoing)
+                    {
+                        if ((It->State & ERawInputStateBits::Hold) == ERawInputStateBits::Identity)
                         {
-                            Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
+                            ++It;
+                            continue;
                         }
-                        else if (It->Key == EKeys::MouseY)
+                    }
+                    else if (TriggerMask == EInputActionTriggerBits::Completed)
+                    {
+                        if ((It->State & ERawInputStateBits::Release) == ERawInputStateBits::Identity)
                         {
-                            Magnitude = LInputActionValue::Axis3D{0.0f, It->Value, 0.0f};
+                            ++It;
+                            continue;
+                        }
+                    }
+
+                    LInputActionValue::Axis3D Magnitude;
+                    if (algo::contains(Trigger.Keys, It->PhysicalKey))
+                    {
+                        Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
+                    }
+                    else
+                    {
+                        if (algo::contains(Trigger.Keys, LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseXY)))
+                        {
+                            if (It->PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX))
+                            {
+                                Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
+                            }
+                            else if (It->PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY))
+                            {
+                                Magnitude = LInputActionValue::Axis3D{0.0f, It->Value, 0.0f};
+                            }
+                            else
+                            {
+                                ++It;
+                                continue;
+                            }
                         }
                         else
                         {
                             ++It;
                             continue;
                         }
-                    }
-                    else
-                    {
-                        Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
                     }
 
                     for (auto& Modifier : Trigger.Modifiers)
@@ -284,6 +297,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
                     }
                     Value += Magnitude;
 
+                    // TODO: Add bConsumes as an option?
                     It = Inputs->erase(It);
 
                     continue;
@@ -291,7 +305,11 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, T
 
                 if (Value.IsNonZero())
                 {
-                    if (auto Result{Action.Callback(Surface.GetViewport(), Value)}; Result.bDirty)
+                    if (auto Result{Action.Callback({
+                        .Viewport = this->Surface->GetViewport(),
+                        .Controller = ActingController,
+                        .UserInput = *this,
+                        }, Value)}; Result.bDirty)
                     {
                         /* Do not proces any further. This is not optimal, as this can result in discarded inputs. */
                         return;

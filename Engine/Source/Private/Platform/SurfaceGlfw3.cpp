@@ -11,20 +11,15 @@
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include <Framework/MaterialSubsystem.h>
-
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
-#include "Framework/Pawn.h"
-#include "Framework/Eye.h"
-#include "Framework/PersonaController.h"
-#include "User/Input/GlfwInputTranslation.h"
 #include "Nodes/Viewport.h"
 #include "Stats/Stats.h"
 #include "Components/SceneComponent.h"
+#include "Nodes/UserWidget.h"
 
 static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
 
@@ -52,49 +47,45 @@ struct LGlfw3Bridge final
         // LOG_WARNING(LogSurface, "Focused: {}", Focused)
     }
 
-    static void CharCallback(::GLFWwindow* Window, const u32 Codepoint)
+    static void CharCallback(::GLFWwindow* Window, u32 Codepoint)
     {
-        // LOG_WARNING(LogSurface, "Codepoint: {}", Codepoint)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
     }
 
-    static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
+    static void KeyCallback(::GLFWwindow* Window, i32 Key, i32 Scancode, i32 Action, i32 Mods)
     {
-        // LOG_WARNING(LogSurface, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
     }
 
-    static void CursorPosCallback(::GLFWwindow* Window, const f64 XPos, const f64 YPos)
+    static void CursorPosCallback(::GLFWwindow* Window, f64 XPos, f64 YPos)
     {
-        // LOG_TRACE(LogSurface, "XPos: {}, YPos: {}", XPos, YPos)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
     }
 
-    static void MouseButtonCallback(::GLFWwindow* Window, const i32 Button, const i32 Action, const i32 Mods)
+    static void MouseButtonCallback(::GLFWwindow* Window, i32 Button, i32 Action, i32 Mods)
     {
-        // LOG_WARNING(LogSurface, "Button: {}, Action: {}, Mods: {}", Button, Action, Mods)
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseButtonCallback(Button, Action, Mods);
     }
 
-    static void CursorEnterCallback(::GLFWwindow* Window, const i32 Entered)
+    static void CursorEnterCallback(::GLFWwindow* Window, i32 Entered)
     {
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
     }
 
-    static void FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height)
+    static void FramebufferSizeCallback(::GLFWwindow* Window, i32 Width, i32 Height)
     {
-        // LOG_TRACE(LogSurface, "Width: {}, Height: {}", Width, Height)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
     }
 
-    static void ScrollCallback(::GLFWwindow* Window, const f64 XOffset, const f64 YOffset)
+    static void ScrollCallback(::GLFWwindow* Window, f64 XOffset, f64 YOffset)
     {
-        // LOG_WARNING(LogSurface, "XOffset: {}, YOffset: {}", XOffset, YOffset)
-        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window )
+        check(static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->_GetNativeHandleDangerous() == Window)
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
     }
 };
@@ -141,17 +132,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     STAT_CYCLE_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
-
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
-
-#if PLATFORM_LINUX
-    // TODO: Do we need this still??
-    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
-    {
-        this->SetPlatformSupportsRepeatedKey(false);
-    }
-#endif /* PLATFORM_LINUX */
-
     check(Info.bFullScreen == false && "Full screen windows are not yet supported.")
 
     if (this->CanEverResize())
@@ -194,8 +175,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     glfwSetWindowSizeCallback(this->Handle, Private::LGlfw3Bridge::WindowSizeCallback);
     glfwSetWindowFocusCallback(this->Handle, Private::LGlfw3Bridge::WindowFocusCallback);
     glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
-    // if (this->IsPlatformSupportsRepeatedKey())
-        glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
+    glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
     glfwSetCursorPosCallback(this->Handle, Private::LGlfw3Bridge::CursorPosCallback);
     glfwSetMouseButtonCallback(this->Handle, Private::LGlfw3Bridge::MouseButtonCallback);
     glfwSetCursorEnterCallback(this->Handle, Private::LGlfw3Bridge::CursorEnterCallback);
@@ -278,50 +258,6 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
         GEngine->RequestEngineExit("Window closed by user.");
     }
 
-    LKey KeyCursor{EKeys::FirstKey};
-    while (KeyCursor <= EKeys::LastKey)
-    {
-        i32 TranslatedKey{Glfw3::TranslateKeyToGlfw(KeyCursor)};
-        if (TranslatedKey == INDEX_NONE)
-        {
-            ++KeyCursor;
-            continue;
-        }
-
-        if (glfwGetKey(this->Handle, TranslatedKey) == GLFW_PRESS)
-        {
-            this->AddKeyDown(KeyCursor);
-
-#if PLATFORM_LINUX
-            if (this->IsPlatformSupportsRepeatedKey() == false && this->IsNewKeyDown(KeyCursor))
-            {
-                Application::LHrcTimePoint Now { Application::GetHighestNow() };
-                this->SetLastPressTimePoint(Now);
-                this->SetCurrentRepeatedKeyInQuestion(KeyCursor);
-                this->Glfw3LastNewKey = TranslatedKey;
-                // this->EmulateContentForBufferedInputGlfw3(TranslatedKey);
-            }
-#endif /* PLATFORM_LINUX */
-        }
-
-        ++KeyCursor;
-
-        continue;
-    }
-
-    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::LeftMouseButton);
-    // }
-    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::RightMouseButton);
-    // }
-    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::MiddleMouseButton);
-    // }
-
     glfwPollEvents();
 
     return;
@@ -349,7 +285,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
     auto [Result, ImageIndex] = this->Vk_VkMySwapchain.acquireNextImage(
         std::numeric_limits<u64>::max(), this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex], nullptr
         );
-    check( ImageIndex < this->Vk_SwapchainImageViews.size() )
+    check(ImageIndex < this->Vk_SwapchainImageViews.size())
 
     if (Result == vk::Result::eErrorOutOfDateKHR)
     {
@@ -374,7 +310,11 @@ void Jafg::LSurfaceGlfw3::OnRender()
             LOG_VERBOSE(LogSurface, "Recreating swapchain due to suboptimal state and pending resize.")
             this->Vk_CurrentFrameInFlightIndex.reset();
             this->Vk_CreateSwapchain();
-            check( this->bPendingResize == false )
+            check(this->bPendingResize == false)
+            for (auto& Widget : this->GetViewport().GetTopLevelWidgets())
+            {
+                Widget->OnSurfaceResize();
+            }
             return;
         }
     }
@@ -390,7 +330,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         Result != vk::Result::eSuboptimalKHR /* Not an error. Just ignore. */
         )
     {
-        panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", vk::to_string(Result) )
+        panicMsgf("Failed to acquire swapchain image. vk::Result: [{}].", vk::to_string(Result))
     }
 
     Frontend.Vk_GetDevice().resetFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
@@ -468,16 +408,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
             },
         });
 
-    vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
-    if (this->IsOwnedControllerValid())
-    {
-        auto const& Color{this->GetOwnedControllerChecked()->GetWorld().GetBackgroundColor()};
-        ClearColor.color.float32[0] = Color.R;
-        ClearColor.color.float32[1] = Color.G;
-        ClearColor.color.float32[2] = Color.B;
-        ClearColor.color.float32[3] = Color.A;
-    }
-
+    constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
     constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
 
     vk::RenderingAttachmentInfo ColorAttachmentInfo{
@@ -515,12 +446,6 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .minDepth = 0.0f, .maxDepth = 1.0f
         });
     Info.CommandBuffer.setScissor(0, {vk::Rect2D{{0, 0}, this->Vk_SwapchainExtent}});
-
-    if (this->IsOwnedControllerValid() && this->GetOwnedControllerChecked()->IsOwnedPawnValid())
-    {
-        Info.PerspectiveEye = this->GetOwnedControllerChecked()->GetOwnedPawnChecked()->GetEye();
-        this->GetOwnedController()->GetWorld().Draw(Info);
-    }
 
     this->GetViewport().Draw(Info);
 
@@ -607,16 +532,14 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     return;
 }
 
-void Jafg::LSurfaceGlfw3::_SetMouseCursor(const EMouseCursor::Type InCursor)
+void Jafg::LSurfaceGlfw3::_SetMouseCursor(EMouseCursor::Type InCursor)
 {
-    check( Tasks::IsOnMasterThread() )
-    check( this->Handle )
+    check(Tasks::IsOnMasterThread())
+    check(this->Handle)
 
-    LOG_WARNING(LogPlatform, "Setting mouse cursor from to [{}].",
+    LOG_TRACE(LogPlatform, "Setting mouse cursor from to [{}].",
         LexToString(InCursor)
         )
-
-    glfwMakeContextCurrent(this->Handle);
 
     if (this->Cursor)
     {
@@ -626,56 +549,56 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(const EMouseCursor::Type InCursor)
 
     if (InCursor == EMouseCursor::Default)
     {
-        check( this->Cursor == nullptr )
+        check(this->Cursor == nullptr)
     }
     else if (InCursor == EMouseCursor::Arrow)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
     }
     else if (InCursor == EMouseCursor::Beam)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
     }
     else if (InCursor == EMouseCursor::Crosshair)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
     }
     else if (InCursor == EMouseCursor::Hand)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeNS)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NS_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NS_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeEW)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeNESW)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeNWSE)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeOmni)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
     }
     else if (InCursor == EMouseCursor::NotAllowed)
     {
-        // this->Cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
+        this->Cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
     }
     else
     {
         LOG_WARNING(LogSystem, "Unknown cursor type {}[{}].", static_cast<i32>(InCursor), LexToString(InCursor))
     }
 
-    if (InCursor != EMouseCursor::None)
+    if (this->Cursor)
     {
-        // glfwSetCursor(this->Handle, this->Cursor);
+        glfwSetCursor(this->Handle, this->Cursor);
     }
 
     return;
@@ -683,8 +606,8 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(const EMouseCursor::Type InCursor)
 
 void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 {
-    checkSlow(Tasks::IsOnMasterThread())
-    checkSlow(this->Handle)
+    check(Tasks::IsOnMasterThread())
+    check(this->Handle)
 
     if (this->IsVSync() == bEnabled)
     {
@@ -703,8 +626,8 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 
 void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
 {
-    check( Tasks::IsOnMasterThread() )
-    check( this->Handle )
+    check(Tasks::IsOnMasterThread())
+    check(this->Handle)
 
     if (this->IsResizable() == bResizable)
     {
@@ -712,7 +635,7 @@ void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
     }
 
     this->bResizable = bResizable;
-    check( this->IsResizable() == bResizable )
+    check(this->IsResizable() == bResizable)
 
     LOG_VERBOSE(LogSurface, "Setting window resizeability to [{}].", this->IsResizable() ? "true" : "false")
     glfwSetWindowAttrib(this->Handle, GLFW_RESIZABLE, this->IsResizable() ? GLFW_TRUE : GLFW_FALSE);
@@ -722,7 +645,7 @@ void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
 
 void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier)
 {
-    check( this->Vk_CurrentFrameInFlightIndex.has_value() )
+    check(this->Vk_CurrentFrameInFlightIndex.has_value())
 
     vk::DependencyInfo DependencyInfo{
         .dependencyFlags = {},
@@ -752,7 +675,7 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
 
 void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
 {
-    if (this->bIsMouseInsideSurface == false)
+    if (this->bMouseInsideSurface == false)
     {
         //#
         //# So some platforms allow this. But not all. To preserve consistency across all platforms,
@@ -767,44 +690,53 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
         return;
     }
 
-    if (   algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseX, &LRawInput::Key)
-        || algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseY, &LRawInput::Key))
-    {
-        return;
-    }
-
     if (this->MouseLocation.has_value() == false)
     {
         this->MouseLocation = {XPos,YPos};
         return;
     }
 
-    const LVec2D Offset{XPos - this->MouseLocation->x, this->MouseLocation->y - YPos};
+    LVec2D Offset{XPos - this->MouseLocation->x, this->MouseLocation->y - YPos};
     this->MouseLocation = {XPos,YPos};
 
-    this->AddKeyDown(EKeys::MouseX, static_cast<f32>(Offset.x));
-    this->AddKeyDown(EKeys::MouseY, static_cast<f32>(Offset.y));
+    if (Offset.x != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX), &LRawInput::PhysicalKey) == false)
+    {
+        this->UpdateKeyState({
+            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX),
+            .Value = static_cast<f32>(Offset.x),
+            .State = ERawInputStateBits::Press,
+            });
+    }
+    if (Offset.y != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY), &LRawInput::PhysicalKey) == false)
+    {
+        this->UpdateKeyState({
+            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY),
+            .Value = static_cast<f32>(Offset.y),
+            .State = ERawInputStateBits::Press,
+            });
+    }
 
     return;
 }
 
 void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOffset)
 {
-    if (algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseWheelAxis, &LRawInput::Key))
+    if (YOffset > 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp), &LRawInput::PhysicalKey) == false)
     {
-        return;
+        this->UpdateKeyState({
+            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp),
+            .Value = static_cast<f32>(YOffset),
+            .State = ERawInputStateBits::Press,
+            });
     }
-
-    if (YOffset > 0.0f)
+    else if (YOffset < 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown), &LRawInput::PhysicalKey) == false)
     {
-        this->AddKeyDown(EKeys::MouseWheelUp, static_cast<float>(YOffset));
+        this->UpdateKeyState({
+            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown),
+            .Value = static_cast<f32>(YOffset),
+            .State = ERawInputStateBits::Press,
+            });
     }
-    else if (YOffset < 0.0f)
-    {
-        this->AddKeyDown(EKeys::MouseWheelDown, static_cast<float>(YOffset));
-    }
-
-    this->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(YOffset));
 
     return;
 }
@@ -815,11 +747,11 @@ void Jafg::LSurfaceGlfw3::MouseEnterCallback(const i32 Entered)
 
     if (Entered == GLFW_TRUE)
     {
-        this->bIsMouseInsideSurface = true;
+        this->bMouseInsideSurface = true;
     }
     else
     {
-        this->bIsMouseInsideSurface = false;
+        this->bMouseInsideSurface = false;
     }
 
     return;
@@ -830,54 +762,104 @@ void Jafg::LSurfaceGlfw3::CharCallback(const u32 Codepoint)
     this->AddBufferedPlatformInput(::Glfw3CodePoint2Utf8(Codepoint));
 }
 
-void Jafg::LSurfaceGlfw3::KeyCallback(const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
+void Jafg::LSurfaceGlfw3::KeyCallback(i32 Key, i32 Scancode, i32 Action, i32 Mods)
 {
-    if (Action == GLFW_REPEAT)
+    ERawInputStateBits State{ ERawInputStateBits::Identity };
+    if (Action == GLFW_PRESS) { State = ERawInputStateBits::Press; }
+    else if (Action == GLFW_REPEAT) { State = ERawInputStateBits::Repeat; }
+    else if (Action == GLFW_RELEASE) { State = ERawInputStateBits::Release; }
+    else { unreachable() }
+
+    EModFlags ModFlags;
+    if (Mods & GLFW_MOD_SHIFT)     { ModFlags |= EModBits::Shift; }
+    if (Mods & GLFW_MOD_CONTROL)   { ModFlags |= EModBits::Control; }
+    if (Mods & GLFW_MOD_ALT)       { ModFlags |= EModBits::Alt; }
+    if (Mods & GLFW_MOD_SUPER)     { ModFlags |= EModBits::Super; }
+    if (Mods & GLFW_MOD_CAPS_LOCK) { ModFlags |= EModBits::CapsLock; }
+    if (Mods & GLFW_MOD_NUM_LOCK)  { ModFlags |= EModBits::NumLock; }
+
+    this->UpdateKeyState({
+        .PhysicalKey = {.Scancode = Scancode,},
+        .Mods = ModFlags,
+        .State = State,
+        });
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::MouseButtonCallback(i32 Button, i32 Action, i32 Mods)
+{
+    ERawInputStateBits State{ ERawInputStateBits::Identity };
+    if (Action == GLFW_PRESS) { State = ERawInputStateBits::Press; }
+    else if (Action == GLFW_REPEAT) { State = ERawInputStateBits::Repeat; }
+    else if (Action == GLFW_RELEASE) { State = ERawInputStateBits::Release; }
+    else { unreachable() }
+
+    EModFlags ModFlags;
+    if (Mods & GLFW_MOD_SHIFT)     { ModFlags |= EModBits::Shift; }
+    if (Mods & GLFW_MOD_CONTROL)   { ModFlags |= EModBits::Control; }
+    if (Mods & GLFW_MOD_ALT)       { ModFlags |= EModBits::Alt; }
+    if (Mods & GLFW_MOD_SUPER)     { ModFlags |= EModBits::Super; }
+    if (Mods & GLFW_MOD_CAPS_LOCK) { ModFlags |= EModBits::CapsLock; }
+    if (Mods & GLFW_MOD_NUM_LOCK)  { ModFlags |= EModBits::NumLock; }
+
+    if (Button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        const LKey JafgKey { Glfw3::TranslateKeyFromGlfw(Key) };
-
-        if (JafgKey != EKeys::Unresolved)
-        {
-            LRawInput* RealKey = algo::find_pointer(this->GetCurrentlyPressedKeys(), JafgKey, &LRawInput::Key);
-            if (RealKey == nullptr)
-            {
-                this->AddKeyDown(JafgKey);
-                RealKey = algo::find_pointer(this->GetCurrentlyPressedKeys(), JafgKey, &LRawInput::Key);
-            }
-
-            check(RealKey)
-            RealKey->bRepeated = true;
-        }
+        Button = static_cast<i32>(ENamedPhysicalKey::LeftMouseButton);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_RIGHT)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::RightMouseButton);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_MIDDLE)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::MiddleMouseButton);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_1)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton1);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_2)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton2);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_3)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton3);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_4)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton4);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_5)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton5);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_6)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton6);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_7)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton7);
+    }
+    else if (Button == GLFW_MOUSE_BUTTON_8)
+    {
+        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton8);
+    }
+    else
+    {
+        LOG_FATAL(LogPlatform, "Unknown code [{}].", Button)
     }
 
-    return;
-}
-
-#if PLATFORM_LINUX
-void Jafg::LSurfaceGlfw3::EmulateRepeatedContentForBufferedInput()
-{
-    this->EmulateContentForBufferedInputGlfw3(this->Glfw3LastNewKey);
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInput(const LKey InKey)
-{
-    this->EmulateContentForBufferedInputGlfw3(Glfw3::TranslateKeyToGlfw(InKey));
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInputGlfw3(const i32 InKey)
-{
-    if (InKey == GLFW_DONT_CARE)
-    {
-        return;
-    }
-
-    // Somehow native access wayland? Glfw3 does not have an Api for this.
+    this->UpdateKeyState({
+        .PhysicalKey = {.Logical = Button,},
+        .Mods = ModFlags,
+        .State = State,
+        });
 
     return;
 }
-#endif /* PLATFORM_LINUX */
 
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 {

@@ -29,10 +29,12 @@ class APawn;
 class LCommandLineInterface;
 class LWorld;
 class ASupremePolicies;
+class WWorldNode;
 struct LEye_v2;
 struct LLevel;
 struct LSubsystemCollection;
 struct LRenderInfo;
+struct LNodeRenderInfo;
 
 enum struct EWorldState : u8
 {
@@ -103,7 +105,7 @@ inline LStringView LexToString(EIncomingConnectionRequest Type) noexcept
 struct LTransientPersona final
 {
     EIncomingConnectionRequest Type;
-    LSurface* Surface;
+    WWorldNode* Node{};
     //# TODO: Net stuff etc.
 };
 
@@ -202,9 +204,9 @@ public:
     FORCEINLINE EWorldState GetWorldState() const noexcept { return this->WorldState; }
 
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
-    void Tick(const f32 Dt);
+    void Tick(f32 Dt);
 
-    void Draw(LRenderInfo& Info) const;
+    void Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const;
 
     ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
 
@@ -269,13 +271,6 @@ public:
         jassert(Out)
         return Out;
     }
-
-    ENGINE_API  APersonaController* GetThisWorldsLocalPersonaControllerSlow() noexcept;
-    FORCEINLINE APersonaController* GetThisWorldsLocalPersonaControllerSlowAsserted() noexceptcheck { auto* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; check( Out ) return Out; }
-    FORCEINLINE APersonaController* GetThisWorldsLocalPersonaControllerSlowChecked() { auto* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; jassert( Out ) return Out; }
-    ENGINE_API  APersonaController const* GetThisWorldsLocalPersonaControllerSlow() const noexcept;
-    FORCEINLINE APersonaController const* GetThisWorldsLocalPersonaControllerSlowAsserted() const noexceptcheck { auto* const Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; check( Out ) return Out; }
-    FORCEINLINE APersonaController const* GetThisWorldsLocalPersonaControllerSlowChecked() const { auto const* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; jassert( Out ) return Out; }
 
 protected:
 

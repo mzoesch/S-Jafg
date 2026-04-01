@@ -2,33 +2,60 @@
 
 #pragma once
 
-#include "InputTypes.h"
+#include "User/Input/InputTypes.h"
 
 namespace Jafg
 {
 
-struct LRawInput
+enum struct ERawInputStateBits
 {
-    FORCEINLINE constexpr explicit LRawInput() noexcept : Key(EKeys::Unresolved), bRepeated(false), Value(0.0f) { }
-    FORCEINLINE constexpr explicit LRawInput(const LKey Key) noexcept : Key(Key), bRepeated(false), Value(1.0f) { }
-    FORCEINLINE constexpr explicit LRawInput(const LKey Key, const f32 Value) noexcept : Key(Key), bRepeated(false), Value(Value){ }
+    Identity = 0x00,
 
-    LKey Key;
-    bool bRepeated;
-    f32  Value;
-
-    FORCEINLINE constexpr std::strong_ordering operator<=>(const LRawInput& Other) const noexcept { return this->Key <=> Other.Key; }
-
-    FORCEINLINE constexpr void Reset() noexcept
+    //# The key was just pressed inbetween this and the last frame.
+    Press   = 0x01 << 0,
+    //# The key is being held down.
+    Hold    = 0x01 << 1,
+    //# The key is being repeated by the platform's key repeat system.
+    Repeat  = 0x01 << 2,
+    //# The key was just released inbetween this and the last frame.
+    Release = 0x01 << 3,
+};
+ENUM_STRUCT_FLAGS(ERawInputStateBits, ERawInputStateFlags)
+inline LStringView LexToString(ERawInputStateBits Bits) noexcept
+{
+    switch (Bits)
     {
-        this->Key = EKeys::Unresolved;
-        this->bRepeated = false;
-        this->Value = 0.0f;
+    case ERawInputStateBits::Identity: return "Identity";
+    case ERawInputStateBits::Press:    return "Press";
+    case ERawInputStateBits::Hold:     return "Hold";
+    case ERawInputStateBits::Repeat:   return "Repeat";
+    case ERawInputStateBits::Release:  return "Release";
     }
+    unreachable()
+}
+inline LString LexToString(ERawInputStateFlags Flags) noexcept
+{
+    std::stringstream Stream;
+    if (Flags & ERawInputStateBits::Press)   { Stream << "Press|"; }
+    if (Flags & ERawInputStateBits::Hold)    { Stream << "Hold|"; }
+    if (Flags & ERawInputStateBits::Repeat)  { Stream << "Repeat|"; }
+    if (Flags & ERawInputStateBits::Release) { Stream << "Release|"; }
 
-    FORCEINLINE LString ToString() const noexcept
+    LString Result{Stream.str()};
+    if (Result.empty()) { Result = "Identity"; }
+    return Result;
+}
+
+struct LRawInput final
+{
+    LPhysicalKey PhysicalKey;
+    EModFlags Mods;
+    f32 Value{ 1.0f };
+    ERawInputStateFlags State;
+
+    LString ToString() const noexcept
     {
-        return Jafg::SprintF("{{{}: {:.2f}}}", LexToString(this->Key), this->Value);
+        return SprintF("{{{}: {:.2f} M:{} S:{}}}", this->PhysicalKey.ToString(), this->Value, LexToString(this->Mods), LexToString(this->State));
     }
 };
 

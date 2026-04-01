@@ -8,6 +8,9 @@
 namespace Jafg
 {
 
+class APawn;
+class APersonaController;
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API ASupremePolicies : public AWorldObject
 {
@@ -44,7 +47,7 @@ public:
     //# @return The persona controller to use for this connection. If nullptr is returned, the connection is rejected.
     //#         The persona controller must be deferred.
     //#
-    virtual APersonaController* OnIncomingConnectionRequest(EIncomingConnectionRequest IncomingConnection, LString* OutRejectionReason = nullptr);
+    virtual TJxxUnique<APersonaController> OnIncomingConnectionRequest(EIncomingConnectionRequest IncomingConnection, LString* OutRejectionReason = nullptr);
 
     //#
     //# Called after a persona controller has been created.
@@ -55,14 +58,14 @@ public:
     //# Called whenever a pawn is spawned/used for a persona controller.
     //# @return A valid pointer to a possessable pawn.
     //#
-    virtual APawn* GetPawnForPersonaController(APersonaController const& Pc);
+    virtual TJxxUnique<APawn> GetPawnForPersonaController(APersonaController const& Pc);
 
     //# Whether a pawn should be automatically created for a new persona controller.
     bool bCreatePawn{ true };
 
-	//# The default class for all persona controllers unless overridden by #OnIncomingConnectionRequest.
+    //# The default class for all persona controllers unless overridden by #OnIncomingConnectionRequest.
     TSubclassOf<APersonaController> PersonaControllerClass;
-	//# The default class for all spawned pawns unless overridden by #GetPawnForPersonaController.
+    //# The default class for all spawned pawns unless overridden by #GetPawnForPersonaController.
     TSubclassOf<APawn> DefaultPawnClass;
 };
 

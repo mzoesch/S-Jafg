@@ -24,34 +24,32 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInputTag Actio
     return &this->MappedActions.back();
 }
 
-Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
-(
+Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(
     LUserInputRegistry* Registry,
     LInputAction&& TransientAction,
-    LKey DefaultKey,
-    EInputActionTrigger::Type ActionTrigger,
+    LPhysicalKey DefaultKey,
+    EInputActionTriggerFlags TriggerFlags,
     TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
     LOnUserInputAction&& Callback
-) noexcept
+    ) noexcept
 {
     check(Tasks::IsOnMasterThread())
     check(Registry)
     return this->MapAction(
         Registry->RegisterAction(std::move(TransientAction))->GetTag(),
         DefaultKey,
-        ActionTrigger,
+        TriggerFlags,
         std::move(Modifiers),
         std::move(Callback)
         );
 }
 
-Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
-(
+Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(
     LUserInputRegistry* Registry,
     LInputAction&& TransientAction,
-    TArray<LInputMappedAction::LTrigger>&& Triggers,
+    TArray<LInputTrigger>&& Triggers,
     LOnUserInputAction&& Callback
-) noexcept
+    ) noexcept
 {
     check(Tasks::IsOnMasterThread())
     return this->MapAction(

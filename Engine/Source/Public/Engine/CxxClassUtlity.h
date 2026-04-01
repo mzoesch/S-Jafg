@@ -99,11 +99,11 @@ ENGINE_API void PushConfigFromCxxObject(JCxxClass const& Object, LCxxClass const
 namespace Detail
 {
 
-template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
+template<typename TCxxClass>
 struct TJxxDelete
 {
     constexpr TJxxDelete() noexcept = default;
-    template<typename TUp, typename = std::enable_if_t<std::is_convertible_v<TUp*, TCxxClass*>>> requires std::is_base_of_v<JCxxClass, TUp>
+    template<typename TUp, typename = std::enable_if_t<std::is_convertible_v<TUp*, TCxxClass*>>>
     constexpr TJxxDelete(TJxxDelete<TUp> const&) noexcept {}
     void operator()(TCxxClass* Ptr) const
     {
@@ -119,7 +119,7 @@ struct TJxxDelete
 } /* ~Namespace Detail */
 
 //# Unique pointer for jcxx classes.
-template<typename TCxxClass, typename Deleter = Detail::TJxxDelete<TCxxClass>> requires std::is_base_of_v<JCxxClass, TCxxClass>
+template<typename TCxxClass, typename Deleter = Detail::TJxxDelete<TCxxClass>>
 using TJxxUnique = TUnique<TCxxClass, Deleter>;
 
 ///////////////////////////////////////////////////////////////////////////////

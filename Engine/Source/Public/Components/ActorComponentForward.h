@@ -11,6 +11,9 @@ namespace Jafg
 
 struct LActorRenderInfo : public LRenderInfo
 {
+    //# The perspective eye.
+    LEye_v2 const& PerspectiveEye;
+
     //#
     //# The default perspective polygon mode. If rendering does not require a specific polygon mode,
     //# this one should be used.

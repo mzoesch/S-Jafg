@@ -4,22 +4,47 @@
 #include "Platform/Surface.h"
 #include "Nodes/Viewport.h"
 #include "Nodes/Region.h"
-#include "Nodes/Button.h"
 #include "Nodes/TextButton.h"
 
 void Jafg::WFloatingWindow::Construct()
 {
     Super::Construct();
 
-    WRegion* WindowTopBar{};
     BeginStyling(*this).Root<WVRegion>()
         .Anchor(EAnchor::TopLeft)
     [
-        NewStaticNode(WRegion).SaveTo(&WindowTopBar)
+        NewStaticNode(WRegion)
             .Visibility(ENodeVisibility::Visible)
             .MinDesiredSize({0_spt, 16})
             .Anchor(EAnchor::HFill)
             .Tint(Colors::DarkerGray)
+            .OnKeyDown([](WNode& Self, LNodeKeyDownData const& Data, LKeyEvent const& Event) -> LReply
+            {
+                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+                {
+                    Data.Surface._SetMouseCursor(EMouseCursor::Hand);
+                    WFloatingWindow* Window{StaticCast<WFloatingWindow>(Self.GetParent()->GetParent())};
+                    check(Window->UiTickMoveHandle.IsValid() == false)
+                    Window->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(Window, &WFloatingWindow::UiTickMove);
+                    return LReply::Handled();
+                }
+                return {};
+            })
+            .OnKeyUp([](WNode& Self, LNodeKeyDownData const& Data, LKeyEvent const& Event) -> LReply
+            {
+                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+                {
+                    Data.Surface._SetMouseCursor(EMouseCursor::Default);
+                    auto* Window{StaticCast<WFloatingWindow>(Self.GetParent()->GetParent())};
+                    if (Window->UiTickMoveHandle.IsValid())
+                    {
+                        Data.Viewport.OnLateTick.Remove(&Window->UiTickMoveHandle);
+                    }
+                    Window->MoveDragOffset.reset();
+                    return LReply::Handled();
+                }
+                return {};
+            })
         [
             NewStaticNode(WTextBox).SaveTo(&this->WindowTitle)
                 .Anchor(EAnchor::CenterCenter)
@@ -48,40 +73,6 @@ void Jafg::WFloatingWindow::Construct()
     ;
 
     this->SetWindowSize({640, 360});
-
-    WindowTopBar->OnKeyDownEvent.BindStrong([](WNode& Self, LViewport& Viewport, LKeyEvent const& KeyEvent) -> LReply
-    {
-        if (KeyEvent.GetKey() == EKeys::LeftMouseButton)
-        {
-            Viewport.GetSurface()._SetMouseCursor(EMouseCursor::Hand);
-
-            WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
-            Window->UiTickMoveHandle = Viewport.OnLateTick.Emplace(Window, &WFloatingWindow::UiTickMove);
-
-            return LReply::Handled();
-        }
-
-        return {};
-    });
-
-    WindowTopBar->OnKeyUpEvent.BindStrong([](WNode& Self, LViewport& Viewport, LKeyEvent const& KeyEvent) -> LReply
-    {
-        if (KeyEvent.GetKey() == EKeys::LeftMouseButton)
-        {
-            Viewport.GetSurface()._SetMouseCursor(EMouseCursor::Default);
-
-            auto* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
-            if (Window->UiTickMoveHandle.IsValid())
-            {
-                Viewport.OnLateTick.Remove(&Window->UiTickMoveHandle);
-            }
-            Window->MoveDragOffset.reset();
-
-            return LReply::Handled();
-        }
-
-        return {};
-    });
 
     return;
 }
@@ -127,26 +118,26 @@ void Jafg::WFloatingWindow::Construct()
 //     return;
 // }
 
-void Jafg::WFloatingWindow::UiTickMove(LViewport const& Viewport)
+void Jafg::WFloatingWindow::UiTickMove()
 {
     if (this->MoveDragOffset.has_value() == false)
     {
         this->MoveDragOffset =
-            Viewport.GetSurface().GetMouseLocationValue()
-                - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport);
+            this->GetViewport().GetSurface().GetMouseLocationValue()
+                - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport());
 
         return;
     }
 
-    LVec2F NewPos{Viewport.GetSurface().GetMouseLocationValue() - this->MoveDragOffset.value()};
+    LVec2F NewPos{this->GetViewport().GetSurface().GetMouseLocationValue() - this->MoveDragOffset.value()};
 
-    if (NewPos.x + 25.0 > Viewport.GetDimensions().x)
+    if (NewPos.x + 25.0 > this->GetViewport().GetDimensions().x)
     {
-        NewPos.x = Viewport.GetDimensions().x - 25.0;
+        NewPos.x = this->GetViewport().GetDimensions().x - 25.0;
     }
-    if (NewPos.y + 25.0 > Viewport.GetDimensions().y)
+    if (NewPos.y + 25.0 > this->GetViewport().GetDimensions().y)
     {
-        NewPos.y = Viewport.GetDimensions().y - 25.0;
+        NewPos.y = this->GetViewport().GetDimensions().y - 25.0;
     }
 
     if (NewPos.x - 75.0 + this->GetWindow()->GetDesiredSize_v2().x < 0.0)
@@ -163,27 +154,27 @@ void Jafg::WFloatingWindow::UiTickMove(LViewport const& Viewport)
     return;
 }
 
-void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
+void Jafg::WFloatingWindow::UiTickResize()
 {
     if (this->ResizeDragOffset.has_value() == false)
     {
         this->ResizeDragOffset =
-            Viewport.GetSurface().GetMouseLocationValue()
-                - (this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport)
+            this->GetViewport().GetSurface().GetMouseLocationValue()
+                - (this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport())
                     + this->GetWindow()->GetDesiredSize_v2());
 
         return;
     }
 
     LVec2F NewSize{
-        Viewport.GetSurface().GetMouseLocationValue().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).x - this->ResizeDragOffset.value().x,
-        Viewport.GetSurface().GetMouseLocationValue().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).y - this->ResizeDragOffset.value().y
-    };
+        this->GetViewport().GetSurface().GetMouseLocationValue().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).x - this->ResizeDragOffset.value().x,
+        this->GetViewport().GetSurface().GetMouseLocationValue().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).y - this->ResizeDragOffset.value().y
+        };
 
     LVec2F MaxSize{
-        Viewport.GetDimensions().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).x,
-        Viewport.GetDimensions().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).y
-    };
+        this->GetViewport().GetDimensions().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).x,
+        this->GetViewport().GetDimensions().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).y
+        };
 
     if (NewSize.x < 0.0)
     {
@@ -203,7 +194,7 @@ void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
         NewSize.y = MaxSize.y;
     }
 
-    check( NewSize.x >= 0.0 && NewSize.y >= 0.0 )
+    check(NewSize.x >= 0.0 && NewSize.y >= 0.0)
 
     this->SetWindowSize(NewSize);
 

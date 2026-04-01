@@ -113,6 +113,8 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
 
+    NODISCARD TOptional<LPhysicalKey> GetPhysicalKey(ENamedPhysicalKey LogicalKey) const noexcept PURE_VIRTUAL()
+
 protected:
 
     //#

@@ -20,20 +20,20 @@ public:
 
     FORCEINLINE constexpr auto operator<=>(TFlags const&) const = default;
 
-    FORCEINLINE constexpr bool operator!() const noexcept { return !Mask; }
+    FORCEINLINE constexpr bool operator!() const noexcept { return !this->Mask; }
     FORCEINLINE explicit constexpr operator bool() const noexcept { return !!this->Mask; }
     FORCEINLINE explicit constexpr operator mask() const noexcept { return this->Mask; }
 
-    FORCEINLINE constexpr TFlags& operator|=(TFlags const& Rhs) noexcept { this->Mask |= Rhs.Mask; return *this; }
-    FORCEINLINE constexpr TFlags& operator&=(TFlags const& Rhs) noexcept { this->Mask &= Rhs.Mask; return *this; }
-    FORCEINLINE constexpr TFlags& operator^=(TFlags const& Rhs) noexcept { this->Mask ^= Rhs.Mask; return *this; }
+    FORCEINLINE constexpr TFlags& operator|=(TFlags Rhs) noexcept { this->Mask |= Rhs.Mask; return *this; }
+    FORCEINLINE constexpr TFlags& operator&=(TFlags Rhs) noexcept { this->Mask &= Rhs.Mask; return *this; }
+    FORCEINLINE constexpr TFlags& operator^=(TFlags Rhs) noexcept { this->Mask ^= Rhs.Mask; return *this; }
 
-    FORCEINLINE constexpr TFlags operator|(TFlags const& Rhs) const noexcept { return TFlags{this->Mask | Rhs.Mask}; }
-    FORCEINLINE constexpr TFlags operator&(TFlags const& Rhs) const noexcept { return TFlags{this->Mask & Rhs.Mask}; }
-    FORCEINLINE constexpr TFlags operator^(TFlags const& Rhs) const noexcept { return TFlags{this->Mask ^ Rhs.Mask}; }
+    FORCEINLINE constexpr TFlags operator|(TFlags Rhs) const noexcept { return TFlags{this->Mask | Rhs.Mask}; }
+    FORCEINLINE constexpr TFlags operator&(TFlags Rhs) const noexcept { return TFlags{this->Mask & Rhs.Mask}; }
+    FORCEINLINE constexpr TFlags operator^(TFlags Rhs) const noexcept { return TFlags{this->Mask ^ Rhs.Mask}; }
 
-    //# TODO: This essentially requires reflection...
-    FORCEINLINE constexpr TFlags operator~() const noexcept = delete;
+    //# Remember to _and_ the result into a valid bitmask to preserve type safety.
+    FORCEINLINE constexpr TFlags operator~() const noexcept { return TFlags{~this->Mask}; }
 
     FORCEINLINE constexpr TFlags& operator=(TFlags const& Rhs ) noexcept = default;
 

@@ -51,7 +51,7 @@ public:
     void OnRender();
 
     ENGINE_API void SetInputMode(EInputMode InMode) noexcept;
-    ENGINE_API void _SetMouseCursor(const EMouseCursor::Type InCursor);
+    ENGINE_API void _SetMouseCursor(EMouseCursor::Type InCursor);
 
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
@@ -59,7 +59,7 @@ public:
     FORCEINLINE LVec2u32 GetDimensions() const noexcept { return {this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height}; }
 
     NODISCARD FORCEINLINE bool CanEverVSync() const noexcept { return true; }
-    ENGINE_API void SetVSync(const bool bEnabled);
+    ENGINE_API void SetVSync(bool bEnabled);
     NODISCARD FORCEINLINE bool IsVSync() const noexcept { return this->bVSync; }
     NODISCARD FORCEINLINE bool CanEverResize() const noexcept { return true; }
     ENGINE_API void SetResizable(const bool bResizable);
@@ -123,12 +123,7 @@ private:
     void MouseEnterCallback(i32 Entered);
     void CharCallback(u32 Codepoint);
     void KeyCallback(i32 Key, i32 Scancode, i32 Action, i32 Mods);
-
-#if PLATFORM_LINUX
-    virtual void EmulateRepeatedContentForBufferedInput() override;
-    virtual void EmulateContentForBufferedInput(LKey InKey) override;
-    void EmulateContentForBufferedInputGlfw3(i32 InKey);
-#endif /* PLATFORM_LINUX */
+    void MouseButtonCallback(i32 Button, i32 Action, i32 Mods);
 
     void Vk_CreateCommandPool();
 
@@ -159,19 +154,10 @@ private:
     LVec2u32 PendingResizeExtent{ maths::zero_vector<LVec2u32> };
     f32 PendingTimeForResizeApply{};
 
-#if PLATFORM_LINUX
-    //#
-    //# This is not in the EKeys::Type format but in the Glfw3 format.
-    //#
-    i32 Glfw3LastNewKey{ INDEX_NONE };
-#endif /* PLATFORM_LINUX */
-
     vk::raii::SurfaceKHR Vk_Surface{ nullptr };
-
     vk::raii::CommandPool Vk_CommandPool{ nullptr };
 
     vk::SurfaceCapabilitiesKHR Vk_SurfaceCapabilities;
-
     std::vector<vk::SurfaceFormatKHR> Vk_AvailableSurfaceFormats;
     vk::SurfaceFormatKHR Vk_DesiredSurfaceFormat{.format = vk::Format::eB8G8R8A8Srgb, .colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear};
 

@@ -21,15 +21,14 @@ void Jafg::WHRegion::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const
+LVec2F Jafg::WHRegion::GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const
 {
-    check( InDirectChild )
-    checkSlow( InDirectChild->TransformsWidgetLayout() )
+    check(InDirectChild)
+    checkSlow(InDirectChild->TransformsWidgetLayout())
 
     if (InDirectChild->GetAnchor().IsStretchedHorizontal() == false)
     {
-        Super::UpdateAnchoredSizeForChild(Context, InDirectChild);
-        return;
+        return Super::GetAnchoredSizeForChild(Viewport, InDirectChild);
     }
 
     f32 TotalDesiredSize { 0.0 };
@@ -46,25 +45,21 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
 
     const f32 FreeSpace
     {
-        (this->GetAnchoredSize_v2().x - this->GetPadding().GetDesiredSizeXInSpt(Context))
+        (this->GetAnchoredSize_v2().x - this->GetPadding().GetDesiredSizeXInSpt(Viewport))
         - TotalDesiredSize
         - InSpt(this->GetViewport(), this->GetHSpace()) * (this->GetChildren().size() - 1)
     };
 
     const f32 InverseFreeUsage { 1.0f / TotalFreeUsage };
 
-    InDirectChild->SetAnchoredSize
-    ({
-        InDirectChild->GetDesiredSize_v2().x
-        + InDirectChild->GetAnchor().MaxX * InverseFreeUsage * FreeSpace,
-        maths::max
-        (
+    return {
+          InDirectChild->GetDesiredSize_v2().x
+        + InDirectChild->GetAnchor().MaxX * InverseFreeUsage * FreeSpace
+        , maths::max(
             InDirectChild->GetDesiredSize_v2().y,
-            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeYInSpt(Context))
-        )
-    });
-
-    return;
+            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeYInSpt(Viewport))
+            )
+        };
 }
 
 LVec2F Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Context, WNode const* InDirectChild) const

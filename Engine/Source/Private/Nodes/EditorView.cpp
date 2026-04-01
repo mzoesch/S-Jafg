@@ -9,7 +9,8 @@ void Jafg::WEditorView::Tick()
 {
     Super::Tick();
 
-    if (this->GetViewport().GetSurface().IsKeyUp(EKeys::RightMouseButton))
+    if (this->GetViewport().GetSurface()
+        .HasConsumableKeyState(LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton), ERawInputStateBits::Release))
     {
         this->OnSecondaryUp();
     }
@@ -17,49 +18,49 @@ void Jafg::WEditorView::Tick()
     return;
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditorView::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
     {
         this->OnSecondaryDown();
     }
 
-    return Super::OnKeyDown(InViewport, InKeyEvent);
+    return Super::OnKeyDown(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditorView::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
     {
         this->OnSecondaryDown();
     }
 
-    return Super::OnKeyDownNoFocus(InViewport, InKeyEvent);
+    return Super::OnKeyDownNoFocus(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditorView::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
     {
         this->OnSecondaryUp();
     }
 
-    return Super::OnKeyUp(InViewport, InKeyEvent);
+    return Super::OnKeyUp(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
     {
         this->OnSecondaryUp();
     }
 
-    return Super::OnKeyUpNoFocus(InViewport, InKeyEvent);
+    return Super::OnKeyUpNoFocus(Data, InKeyEvent);
 }
 
 void Jafg::WEditorView::OnSecondaryDown()
 {
-    this->GetViewport().GetSurface().SetInputMode(EInputModeBits::UserInterface | EInputModeBits::InputSubsystem);
+    this->GetViewport().GetSurface().SetInputMode(EInputModeBits::HideMouseCursor);
     this->SetShouldTick(true);
 
     // LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
@@ -71,7 +72,7 @@ void Jafg::WEditorView::OnSecondaryDown()
 
 void Jafg::WEditorView::OnSecondaryUp()
 {
-    this->GetViewport().GetSurface().SetInputMode(EInputModeBits::UserInterface | EInputModeBits::InputSubsystem | EInputModeBits::ShowMouseCursor);
+    this->GetViewport().GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
     this->SetShouldTick(false);
     //
     // LUserInput& Input{ this->GetLocalEgo().GetUserInput() };

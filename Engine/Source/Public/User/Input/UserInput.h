@@ -11,6 +11,7 @@ namespace Jafg
 {
 
 class LLocalEgo;
+class APersonaController;
 
 //#
 //# Proxy for the raw platform physical input data and the dispatching of input delegates.
@@ -24,8 +25,10 @@ public:
     constexpr LUserInput() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
     constexpr ~LUserInput() noexcept = default;
+    //# Jafg internal method. Do not use!
+    FORCEINLINE constexpr void _SetSurface(LSurface& InSurface) noexcept { this->Surface = &InSurface; }
 
-    void DispatchInputDelegates(LSurface& Surface);
+    void DispatchInputDelegates(APersonaController& ActingController);
 
     //#
     //# Activate a context.
@@ -55,7 +58,7 @@ public:
     //# @param bEmpty If true, the current active contexts array will be emptied. This will result no active contexts
     //#               after this call.
     //#
-    ENGINE_API void PushContexts(EInputMode InputMode, bool bEmpty = true) noexcept;
+    ENGINE_API void PushContexts(bool bEmpty = true) noexcept;
     //#
     //# Removes a snapshot, pushed with #PushContexts, from the stack and applies it to the current active contexts.
     //# The active contexts will be removed.
@@ -71,11 +74,12 @@ public:
 
 private:
 
-    void DispatchInputDelegatesForKeyCategory(LSurface& Surface, TArray<LRawInput>* Inputs, EInputActionTrigger::Type TriggerType);
+    void DispatchInputDelegatesForKeyCategory(APersonaController& ActingController, TArray<LRawInput>* Inputs, EInputActionTriggerBits Trigger);
 
     //# Early contexts will be processed first.
     TArray<LUserInputTag> ActiveContexts;
     LContextStack ContextStack;
+    LSurface* Surface{};
 };
 
 } /* ~Namespace Jafg */

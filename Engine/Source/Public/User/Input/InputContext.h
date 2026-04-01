@@ -6,6 +6,7 @@
 #include "User/Input/InputActionTrigger.h"
 #include "User/Input/InputActionModifiers.h"
 #include "User/Input/InputAction.h"
+#include "User/Input/InputCallback.h"
 
 namespace Jafg
 {
@@ -18,71 +19,51 @@ struct LInputActionValue;
 struct LInputMappedAction;
 struct LUserInputContext;
 
-struct LOnUserInputActionResult
+struct LOnUserInputActionResult final
 {
     //# Whether active contexts changed.
     bool bDirty{};
 };
 
-//#
-//# @param Value    The value of the action that was triggered.
-//# @param Viewport The viewport on which the action was triggered.
-//#
-typedef TFunction<LOnUserInputActionResult(LViewport& Viewport, LInputActionValue& Value)> LOnUserInputAction;
-
-//#
-//# A mapped action that is owned by a context.
-//#
-struct LInputMappedAction
-{
-    struct LTrigger
-    {
-        constexpr LTrigger() noexcept = default;
-        constexpr LTrigger(TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
-            : Keys(std::move(InDefaultKeys)), Type(InType), Modifiers(std::move(InModifiers)) { }
-        constexpr LTrigger(const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
-            : Keys(), Type(InType), Modifiers(std::move(InModifiers)) { this->Keys.emplace_back(InDefaultKey); }
-        constexpr LTrigger(LString&& InName, TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
-            : Name(std::move(InName)), Keys(std::move(InDefaultKeys)), Type(InType), Modifiers(std::move(InModifiers)) { }
-        constexpr LTrigger(LString&& InName, const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
-            : Name(std::move(InName)), Keys(), Type(InType), Modifiers(std::move(InModifiers)) { this->Keys.emplace_back(InDefaultKey); }
-        PROHIBIT_COPY(LTrigger)
-        DEFAULT_MOVE(LTrigger)
-        ~LTrigger() = default;
-
-        LString Name;
-        TArray<LKey> Keys;
-        EInputActionTrigger::Type Type;
-        TArray<TUnique<LInputActionMappedTriggerModifier>> Modifiers;
-    };
-
-    LInputMappedAction() = delete;
-    explicit LInputMappedAction(LUserInputTag ActionTag) noexcept : ActionTag(ActionTag) { check( this->ActionTag.IsSet() ) }
-    DEFAULT_MOVE(LInputMappedAction)
-    PROHIBIT_COPY(LInputMappedAction)
-    ~LInputMappedAction() = default;
-
-    FORCEINLINE bool operator==(const LInputMappedAction& InOther) const noexcept { return this->ActionTag == InOther.ActionTag; }
-
-    //# The mapped action.
-    LUserInputTag ActionTag;
-
-    //#
-    //# Through what the action can be triggerd in this context.
-    //#
-    TArray<LTrigger> Triggers;
-
-    //#
-    //# The callback to call if the action was triggered while the owing context is active and valid.
-    //#
-    LOnUserInputAction Callback;
-};
+typedef TFunction<LOnUserInputActionResult(LInputCallback const& Data, LInputActionValue& Value)> LOnUserInputAction;
 
 //#
 //# A trigger for a mapped action on a context.
 //# This trigger is usually tightly coupled to a physical / virtual key.
 //#
-using LInputTrigger = LInputMappedAction::LTrigger;
+struct LInputTrigger final
+{
+    // LInputTrigger(LString Name, EKey Key, EInputActionTriggerFlags TriggerFlags, TArray<TUnique<LInputActionMappedTriggerModifier>> Modifiers) noexcept
+    //     : Name(std::move(Name)), Keys{TArray<EKey>{Key}}, TriggerFlags(TriggerFlags), Modifiers(std::move(Modifiers)) {}
+    // LInputTrigger(LString Name, TArray<EKey> Keys, EInputActionTriggerFlags TriggerFlags, TArray<TUnique<LInputActionMappedTriggerModifier>> Modifiers) noexcept
+    //     : Name(std::move(Name)), Keys(std::move(Keys)), TriggerFlags(TriggerFlags), Modifiers(std::move(Modifiers)) {}
+    // PROHIBIT_COPY(LInputTrigger)
+    // DEFAULT_MOVE(LInputTrigger)
+
+    LString Name;
+    TArray<LPhysicalKey> Keys;
+    EInputActionTriggerFlags TriggerFlags;
+    TArray<TUnique<LInputActionMappedTriggerModifier>> Modifiers;
+};
+
+//# A mapped action that is owned by a context.
+struct LInputMappedAction final
+{
+    LInputMappedAction() = delete;
+    explicit LInputMappedAction(LUserInputTag ActionTag) noexcept : ActionTag{ActionTag} { check(this->ActionTag.IsSet()) }
+    DEFAULT_MOVE(LInputMappedAction)
+    PROHIBIT_COPY(LInputMappedAction)
+    ~LInputMappedAction() noexcept = default;
+
+    FORCEINLINE bool operator==(LInputMappedAction const& InOther) const noexcept { return this->ActionTag == InOther.ActionTag; }
+
+    //# The mapped action.
+    LUserInputTag ActionTag;
+    //# Through what the action can be triggerd in this context.
+    TArray<LInputTrigger> Triggers;
+    //# The callback to call if the action was triggered while the owing context is active and valid.
+    LOnUserInputAction Callback;
+};
 
 //#
 //# A context that can be used to have a set of actions that are mapped to keys and callbacks.
@@ -123,63 +104,47 @@ struct LUserInputContext final
 
     FORCEINLINE TArray<LInputMappedAction> const& GetMappedActions() const noexcept { return this->MappedActions; }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Helper methods for faster and less boilerplate action registration.
-#pragma region "Helper methods for faster and less boilerplate action registration."
-
-    ENGINE_API LInputMappedAction* MapAction
-    (
+    ENGINE_API LInputMappedAction* MapAction(
         LUserInputRegistry* Registry,
         LInputAction&& TransientAction,
-        LKey DefaultKey,
-        EInputActionTrigger::Type ActionTrigger,
+        LPhysicalKey DefaultKey,
+        EInputActionTriggerFlags TriggerFlags,
         TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
         LOnUserInputAction&& Callback
-    ) noexcept;
-
-    FORCEINLINE LInputMappedAction* MapAction
-    (
+        ) noexcept;
+    FORCEINLINE LInputMappedAction* MapAction(
         LUserInputTag ActionTag,
-        LKey DefaultKey,
-        EInputActionTrigger::Type ActionTrigger,
+        LPhysicalKey Key,
+        EInputActionTriggerFlags TriggerFlags,
         TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
         LOnUserInputAction&& Callback
-    ) noexcept
+        ) noexcept
     {
         LInputMappedAction* MappedAction{this->MapAction(ActionTag)};
-        check( MappedAction )
-        MappedAction->Triggers.emplace_back("", DefaultKey, ActionTrigger, std::move(Modifiers));
+        check(MappedAction)
+        MappedAction->Triggers.emplace_back(LString{}, TArray<LPhysicalKey>{Key}, TriggerFlags, std::move(Modifiers));
         MappedAction->Callback = std::move(Callback);
-
         return MappedAction;
     }
 
-    ENGINE_API LInputMappedAction* MapAction
-    (
+    ENGINE_API LInputMappedAction* MapAction(
         LUserInputRegistry* Registry,
         LInputAction&& TransientAction,
-        TArray<LInputMappedAction::LTrigger>&& Triggers,
+        TArray<LInputTrigger>&& Triggers,
         LOnUserInputAction&& Callback
-    ) noexcept;
-
-    FORCEINLINE LInputMappedAction* MapAction
-    (
+        ) noexcept;
+    FORCEINLINE LInputMappedAction* MapAction(
         LUserInputTag ActionTag,
-        TArray<LInputMappedAction::LTrigger>&& Triggers,
+        TArray<LInputTrigger>&& Triggers,
         LOnUserInputAction&& Callback
-    ) noexcept
+        ) noexcept
     {
         LInputMappedAction* MappedAction{ this->MapAction(ActionTag) };
         check(MappedAction)
         MappedAction->Triggers = std::move(Triggers);
         MappedAction->Callback = std::move(Callback);
-
         return MappedAction;
     }
-
-#pragma endregion "Helper methods for faster and less boilerplate action registration."
-    // ~Helper methods for faster and less boilerplate action registration.
-    ///////////////////////////////////////////////////////////////////////////////
 
 private:
 

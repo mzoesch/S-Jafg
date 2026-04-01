@@ -44,8 +44,8 @@ public:
     void Vk_OnLateInit();
 
     void ClearInvalidWidgets();
-    void DispatchInputs(LSurface& Surface, TOptional<LVec2F> const& CursorLocation);
-    void OnMouseLeftViewport(LSurface& Context, bool bInvalidateAllInputs);
+    void DispatchInputs();
+    void OnMouseLeftViewport(bool bInvalidateAllInputs);
     void Tick();
     void Draw(LRenderInfo const& Info);
     void TearDown();
@@ -65,7 +65,7 @@ public:
     //# allow tick inside the widget's #Tick, then you have to be satisfied with that.
     //# This event is for very, very few widgets - do not abuse its abilities to justify bad object structure design.
     //#
-    mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnLateTick, LViewport const& InViewport)
+    mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnLateTick)
 
     //# Internal methods used by Jafg. Do not call yourself.
     ENGINE_API void _AddWidget(WUserWidget* Widget);
@@ -141,18 +141,9 @@ public:
     FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
     FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
 
-    FORCEINLINE auto const& GetCachedCursorLocation() const noexcept { return this->CachedCursorLocation; }
-    FORCEINLINE auto const& GetCachedCursorLocationChecked() const noexcept { check( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
-    FORCEINLINE auto const& GetCachedCursorLocationAsserted() const noexcept { jassert( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
-
-    //#
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
-    //#
     FORCEINLINE CONSTEXPR_CHECK_SLOW void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept;
-
-    //#
     //# @return True if the point is inside the bounds of the viewport.
-    //#
     FORCEINLINE static constexpr bool IsInBounds(const LVec2F& InTopLeft, const LVec2F& InSize, const LVec2F& InPoint) noexcept;
 
 private:
@@ -186,7 +177,6 @@ private:
     TArray<LVec4F> FrameCulls;
 
     LSurface& Surface;
-    TOptional<LVec2F> CachedCursorLocation;
 
     LClassOuter Outer{ "SurfaceViewport" };
 
@@ -240,7 +230,7 @@ FORCEINLINE constexpr bool LViewport::IsInBounds(const LVec2F& InTopLeft, const 
 
 FORCEINLINE CONSTEXPR_CHECK_SLOW void LViewport::ConvertTLToBLOrigin(LVec2F* Vector) const noexcept
 {
-    checkSlow( Vector )
+    check(Vector)
     Vector->y = this->GetDimensions().y - Vector->y;
 }
 

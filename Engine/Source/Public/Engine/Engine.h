@@ -108,7 +108,7 @@ public:
 
     ENGINE_API LEngine();
     ENGINE_API void Initialize();
-    ENGINE_API void Tick(const f32 Dt);
+    ENGINE_API void Tick(f32 Dt);
     ENGINE_API void TearDown();
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -119,9 +119,9 @@ public:
     ENGINE_API static void _BeginExitIfRequested();
 
     ENGINE_API void RequestEngineExit();
-    ENGINE_API void RequestEngineExit(const LString& Reason);
-    ENGINE_API void RequestEngineExit(const i32 CustomExitStatus);
-    ENGINE_API void RequestEngineExit(const i32 CustomExitStatus, const LString& Reason);
+    ENGINE_API void RequestEngineExit(LString const& Reason);
+    ENGINE_API void RequestEngineExit(i32 CustomExitStatus);
+    ENGINE_API void RequestEngineExit(i32 CustomExitStatus, LString const& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff.

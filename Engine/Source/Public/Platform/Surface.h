@@ -16,13 +16,10 @@
 #include "User/Input/InputMode.h"
 #include "Platform/MouseCursor.h"
 #include "Nodes/Viewport.h"
-#include "User/Input/UserInput.h"
 #include "Framework/FrontendForward.h"
 
 namespace Jafg
 {
-
-class APersonaController;
 
 struct LSurfaceCreateInfo
 {
@@ -51,9 +48,9 @@ public:
     virtual ~LSurfaceBase() = default;
 
     template<typename T = LSurfaceBase>
-    NODISCARD FORCEINLINE T* As();
+    NODISCARD FORCEINLINE T* As() { static_assert(std::is_base_of_v<LSurfaceBase, T>); return static_cast<T*>(this); }
     template<typename T = LSurfaceBase>
-    NODISCARD FORCEINLINE T const* As() const;
+    NODISCARD FORCEINLINE T const* As() const { static_assert(std::is_base_of_v<LSurfaceBase, T>); return static_cast<T const*>(this); }
     NODISCARD FORCEINLINE LSurface* AsSurface();
     NODISCARD FORCEINLINE LSurface const* AsSurface() const;
 
@@ -61,11 +58,11 @@ public:
     FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
 
     void BeginNewFrame();
-    void PollPlatformEvents() { jassertNoEntry() }
+    void PollPlatformEvents() PURE_VIRTUAL()
     void Tick();
-    void OnRender() { jassertNoEntry() }
+    void OnRender() PURE_VIRTUAL()
 
-    FORCEINLINE void SetInputMode(EInputMode InMode) noexcept { jassertNoEntry() }
+    FORCEINLINE void SetInputMode(EInputMode InMode) noexcept PURE_VIRTUAL()
     FORCEINLINE EInputMode GetInputMode() const noexcept { return this->InputMode; }
     FORCEINLINE bool IsShowMouseCursor() const noexcept { return static_cast<bool>(this->InputMode & EInputModeBits::ShowMouseCursor); }
 
@@ -79,58 +76,53 @@ public:
     //# In physical pixels.
     NODISCARD u32 GetWidth() const noexcept { return this->GetDimensions().x; }
     NODISCARD u32 GetHeight() const noexcept { return this->GetDimensions().y; }
-    NODISCARD LVec2u32 GetDimensions() const noexcept { jassertNoEntry() }
+    NODISCARD LVec2u32 GetDimensions() const noexcept PURE_VIRTUAL()
 
-    NODISCARD bool CanEverVSync() const noexcept { jassertNoEntry() }
-              void SetVSync(const bool bEnabled) { jassertNoEntry() }
-    NODISCARD bool IsVSync() const noexcept { jassertNoEntry() }
-    NODISCARD bool CanEverResize() const { jassertNoEntry() }
-              void SetResizable(const bool bResizable) { jassertNoEntry() }
-    NODISCARD bool IsResizable() const noexcept { jassertNoEntry() }
+    NODISCARD bool CanEverVSync() const noexcept PURE_VIRTUAL()
+              void SetVSync(const bool bEnabled) PURE_VIRTUAL()
+    NODISCARD bool IsVSync() const noexcept PURE_VIRTUAL()
+    NODISCARD bool CanEverResize() const PURE_VIRTUAL()
+              void SetResizable(bool bResizable) PURE_VIRTUAL()
+    NODISCARD bool IsResizable() const noexcept PURE_VIRTUAL()
 
-    FORCEINLINE void AddKeyDown(const LKey Key);
-    FORCEINLINE void AddKeyDown(const LKey Key, const f32 Value);
-    FORCEINLINE void AddKeyDown(LRawInput const& RawInput);
-    FORCEINLINE void AddVirtualKeyDown(const LKey InKey) { this->VirtualInput.emplace_back(InKey); }
-    FORCEINLINE void AddVirtualKeyDown(const LKey InKey, const float InValue) { this->VirtualInput.emplace_back(InKey, InValue); }
-    FORCEINLINE void AddVirtualKeyDown(const LRawInput& InRawInput) { this->VirtualInput.emplace_back(InRawInput); }
-    FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TArray<LRawInput>& { return this->DownKeys;          }
-    FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TArray<LRawInput>& { return this->DownKeys;          }
-    FORCEINLINE auto GetLastFramePressedKeys()       ->       TArray<LRawInput>& { return this->LastFrameDownKeys; }
-    FORCEINLINE auto GetLastFramePressedKeys() const -> const TArray<LRawInput>& { return this->LastFrameDownKeys; }
-    FORCEINLINE auto GetVirtualInput()       ->       TArray<LRawInput>& { return this->VirtualInput; }
-    FORCEINLINE auto GetVirtualInput() const -> const TArray<LRawInput>& { return this->VirtualInput; }
-    //# @return Whether the key is currently down.
-    FORCEINLINE bool IsKeyDown(const LKey InKey) const { return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key); }
-    FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
-    //# @return Whether the key was just downed this frame.
-    FORCEINLINE bool IsNewKeyDown(const LKey InKey) const;
-    FORCEINLINE bool IsNewKeyDown(const LRawInput& InRawInput) const { return this->IsNewKeyDown(InRawInput.Key); }
-    //# @return Whether the key was just released this frame.
-    FORCEINLINE bool IsKeyUp(const LKey InKey) const;
-    FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
-    FORCEINLINE TArray<LRawInput> GetTriggeredKeys() const noexcept;
-    FORCEINLINE TArray<LRawInput> const& GetOngoingKeys() const noexcept { return this->GetCurrentlyPressedKeys(); }
-    FORCEINLINE TArray<LRawInput> GetCompletedKeys() const noexcept;
+    ENGINE_API void UpdateKeyState(LRawInput const& InRawInput);
+
+    template<typename... TArgs> requires std::is_constructible_v<LRawInput, TArgs&&...>
+    FORCEINLINE void EmplaceVirtualKey(TArgs&&... Args) noexcept { this->VirtualInput.emplace_back(std::forward<TArgs>(Args)...); }
+    FORCEINLINE auto& GetVirtualInput() noexcept { return this->VirtualInput; }
+    FORCEINLINE auto const& GetVirtualInput() const noexcept { return this->VirtualInput; }
+
+    FORCEINLINE auto& GetMutableRawInputsDangerous() noexcept { return this->RawInputs; }
+    FORCEINLINE auto const& GetRawInputs() const noexcept { return this->RawInputs; }
+    FORCEINLINE auto& GetMutableUnconsumedInputsDangerous() noexcept { return this->UnconsumedInputs; }
+    FORCEINLINE auto const& GetUnconsumedInputs() const noexcept { return this->UnconsumedInputs; }
+    FORCEINLINE bool HasPlatformKeyState(LPhysicalKey Key, ERawInputStateFlags Flags) const noexcept
+    {
+        check(Key != LPhysicalKey{})
+        if (auto It{algo::find(this->RawInputs, Key, &LRawInput::PhysicalKey)}; It != this->RawInputs.end())
+        {
+            return (It->State & Flags) != ERawInputStateBits::Identity;
+        }
+        return false;
+    }
+    FORCEINLINE bool HasConsumableKeyState(LPhysicalKey Key, ERawInputStateFlags Flags) const noexcept
+    {
+        check(Key != LPhysicalKey{})
+        if (auto It{algo::find(this->UnconsumedInputs, Key, &LRawInput::PhysicalKey)}; It != this->UnconsumedInputs.end())
+        {
+            return (It->State & Flags) != ERawInputStateBits::Identity;
+        }
+        return false;
+    }
 
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.empty() == false; }
     FORCEINLINE const TArray<LString>& GetBufferedPlatformInput() const { return this->PlatformInput; }
-    FORCEINLINE LString GetBufferedPlatformInputAsStr() const;
-
-    template<typename TPredicate>
-    FORCEINLINE void ForEachNewKeyDown(TPredicate&& Predicate);
-
-    FORCEINLINE LUserInput& GetUserInput() noexcept { return this->UserInput; }
-    FORCEINLINE LUserInput const& GetUserInput() const noexcept { return this->UserInput; }
-
-    FORCEINLINE bool IsOwnedControllerValid() const { return this->Controller != nullptr; }
-    FORCEINLINE APersonaController* GetOwnedController() noexcept { return this->Controller; }
-    FORCEINLINE APersonaController const* GetOwnedController() const noexcept { return this->Controller; }
-    FORCEINLINE APersonaController* GetOwnedControllerChecked() noexcept{ check(this->IsOwnedControllerValid()) return this->Controller; }
-    FORCEINLINE APersonaController const* GetOwnedControllerChecked() const noexceptcheck { check(this->IsOwnedControllerValid()) return this->Controller; }
-    FORCEINLINE APersonaController* GetOwnedControllerAsserted() noexcept { jassert(this->IsOwnedControllerValid()) return this->Controller; }
-    FORCEINLINE APersonaController const* GetOwnedControllerAsserted() const noexcept { jassert(this->IsOwnedControllerValid()) return this->Controller; }
-    ENGINE_API  void PossessController(APersonaController* New, const bool bKillOld = true);
+    FORCEINLINE LString GetBufferedPlatformInputAsStr() const noexcept
+    {
+        std::stringstream Result;
+        for (auto& Input : this->PlatformInput) { Result << Input; }
+        return Result.str();
+    }
 
     ENGINE_API LEngine& GetEngine() const noexcept;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
@@ -138,56 +130,35 @@ public:
 
 protected:
 
-    FORCEINLINE void AddBufferedPlatformInput(const char* InInput) { this->PlatformInput.emplace_back(InInput); }
-    FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput.emplace_back(InInput); }
-    FORCEINLINE void AddBufferedPlatformInput(LString&& InInput) { this->PlatformInput.emplace_back(std::move(InInput)); }
-
-#if PLATFORM_LINUX
-    FORCEINLINE void SetPlatformSupportsRepeatedKey(const bool bInSupportsRepeatedKey) noexcept { this->bPlatformSupportsRepeatedKeyDown = bInSupportsRepeatedKey; }
-    FORCEINLINE bool IsPlatformSupportsRepeatedKey() const noexcept { return this->bPlatformSupportsRepeatedKeyDown; }
-    FORCEINLINE void SetRepeatedDelay(const f32 InDelay) noexcept { this->RepeatedDelay = InDelay; }
-    FORCEINLINE f32  GetRepeatedDelay() const noexcept { return this->RepeatedDelay; }
-    FORCEINLINE void SetRepeatedRate(const f32 InRate) noexcept { this->RepeatedRate = InRate; this->RepeatedBufferTime = InRate; }
-    FORCEINLINE f32  GetRepeatedRate() const noexcept { return this->RepeatedRate; }
-    FORCEINLINE void SetLastPressTimePoint(const Application::LHrcTimePoint& InTimePoint) noexcept { this->LastPressTimePoint = InTimePoint; this->RepeatedBufferTime = this->RepeatedRate; }
-    FORCEINLINE void SetLastPressTimePoint(Application::LHrcTimePoint&& InTimePoint) noexcept { this->LastPressTimePoint = std::move(InTimePoint); }
-
-    FORCEINLINE bool IsThisKeyRepeatedThisFrame(const LKey InKey) const noexcept { return this->bThisFrameRepeatedKeyDown && this->LastNewKey == InKey; }
-    FORCEINLINE bool IsCurrenRepeatedKeyInQuestionValid() const noexcept { return this->LastNewKey != EKeys::Unresolved; }
-    FORCEINLINE LKey GetCurrenRepeatedKeyInQuestion() const noexcept { return this->LastNewKey; }
-    FORCEINLINE void SetCurrentRepeatedKeyInQuestion(const LKey InKey) noexcept { check( this->IsPlatformSupportsRepeatedKey() == false) this->LastNewKey = InKey; }
-    virtual     void EmulateRepeatedContentForBufferedInput() = 0;
-    virtual     void EmulateContentForBufferedInput(const LKey InKey) = 0;
-#endif /* PLATFORM_LINUX */
+    FORCEINLINE void AddBufferedPlatformInput(LString InInput) noexcept { this->PlatformInput.emplace_back(std::move(InInput)); }
 
     //# Input mode. The mouse cursor visibility might be ignored on some platform configurations.
-    EInputMode InputMode{ EInputModeBits::UserInterface | EInputModeBits::InputSubsystem | EInputModeBits::ShowMouseCursor };
+    EInputMode InputMode{ EInputModeBits::ShowMouseCursor };
     //# Mouse inside surface.
-    bool bIsMouseInsideSurface{ false };
+    bool bMouseInsideSurface{};
     //# The mouse location if available. In some platform configurations, this value might always be missing.
     TOptional<LVec2F> MouseLocation;
 
 private:
 
     LString HumanReadableName{ "Transient" };
-
-    //#
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
-    //#
     LViewport SurfaceViewport;
 
-    //# The keys that are currently down for this surface this frame.
-    TArray<LRawInput> DownKeys;
-
-    //# The keys that were down for this surface last frame.
-    TArray<LRawInput> LastFrameDownKeys;
-
-    //# Input for this frame that is not consumed yet.
-    TArray<LRawInput> UnconsumedInput; // TODO: How??
+    //#
+    //# The current raw inputs.
+    //# - ERawInputStateBits::Press decay after one frame to ERawInputStateBits::Hold.
+    //# - ERawInputStateBits::Repeat decay after one frame.
+    //# - ERawInputStateBits::Release will result in the removal of the key from this array after one frame.
+    //#
+    TArray<LRawInput> RawInputs;
+    //# The current frame raw inputs that are still unconsumed.
+    TArray<LRawInput> UnconsumedInputs;
 
     //#
     //# Virtual input for mock input.
     //# Only mocked if physical input is not available for said physical action.
+    //# This array is cleared every frame.
     //#
     TArray<LRawInput> VirtualInput;
 
@@ -196,68 +167,17 @@ private:
     //# So if you need this for later reference, you have to copy it.
     //#
     TArray<LString> PlatformInput;
-
-#if PLATFORM_LINUX
-    //#
-    //# If this is false, the underlying platform does not support repeated key down events.
-    //# This depends on the current desktop environment session. Primary X11 and Wayland.
-    //# This is not an issue on Windows or macOS.
-    //# If this is not supported, the engine will not send repeated key down events - except emulated Utf-8 input
-    //# ones which may be inaccurate and not represent the actual user preferences of the underlying linux session.
-    //#
-    //# Not that this is not a good solution - but works for basic stuff. If the main loop lags, some input may be
-    //# lost that would usually be repeated (when using the underlying operating system directly).
-    //#
-    bool bPlatformSupportsRepeatedKeyDown{ true };
-    Application::LHrcTimePoint LastPressTimePoint;
-    f32 RepeatedBufferTime{ 1.0f / 25.0f };
-    f32 RepeatedDelay{ 0.6f };
-    f32 RepeatedRate{ 1.0f / 25.0f };
-    bool bThisFrameRepeatedKeyDown{ false };
-    LKey LastNewKey{ EKeys::Unresolved };
-#endif /* PLATFORM_LINUX */
-
-    LUserInput UserInput;
-
-    APersonaController* Controller{ nullptr };
 };
 
 } /* ~Namespace Jafg */
 
-void Jafg::LSurfaceBase::AddKeyDown(const LKey Key)
-{
-    check(algo::contains(this->DownKeys, Key, &LRawInput::Key) == false)
-    this->DownKeys.emplace_back(Key);
-    return;
-}
-
-void Jafg::LSurfaceBase::AddKeyDown(const LKey Key, const float Value)
-{
-    check(algo::contains(this->DownKeys, Key, &LRawInput::Key) == false)
-    this->DownKeys.emplace_back(Key, Value);
-    return;
-}
-
-void Jafg::LSurfaceBase::AddKeyDown(LRawInput const& RawInput)
-{
-    check(algo::contains(this->DownKeys, RawInput.Key, &LRawInput::Key) == false)
-    this->DownKeys.emplace_back(RawInput);
-    return;
-}
-
-template<typename T>
-NODISCARD FORCEINLINE T* Jafg::LSurfaceBase::As()
-{
-    static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");
-    return static_cast<T*>(this);
-}
-
-template<typename T>
-NODISCARD FORCEINLINE T const* Jafg::LSurfaceBase::As() const
-{
-    static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");
-    return static_cast<T const*>(this);
-}
+#if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+    #include "Platform/SurfaceGlfw3.h"
+#elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
+    #include "Platform/SurfaceWasm.h"
+#else /* PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
+    #error "Could not resolve PLATFORM."
+#endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
 
 NODISCARD FORCEINLINE Jafg::LSurface* Jafg::LSurfaceBase::AsSurface()
 {
@@ -268,83 +188,3 @@ NODISCARD FORCEINLINE Jafg::LSurface const* Jafg::LSurfaceBase::AsSurface() cons
 {
     return this->As<LSurface>();
 }
-
-FORCEINLINE bool Jafg::LSurfaceBase::IsNewKeyDown(const LKey InKey) const
-{
-    return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key) && (algo::contains(this->GetLastFramePressedKeys(), InKey, &LRawInput::Key) == false);
-}
-
-FORCEINLINE bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
-{
-    return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key) == false && algo::contains(this->GetLastFramePressedKeys(), InKey, &LRawInput::Key);
-}
-
-FORCEINLINE TArray<Jafg::LRawInput> Jafg::LSurfaceBase::GetTriggeredKeys() const noexcept
-{
-    TArray<LRawInput> Out;
-
-    for (auto const& Input : this->GetCurrentlyPressedKeys())
-    {
-        if (algo::contains(this->GetLastFramePressedKeys(), Input.Key, &LRawInput::Key) == false)
-        {
-            Out.emplace_back(Input);
-        }
-
-        continue;
-    }
-
-    return Out;
-}
-
-FORCEINLINE TArray<Jafg::LRawInput> Jafg::LSurfaceBase::GetCompletedKeys() const noexcept
-{
-    TArray<LRawInput> Out;
-
-    for (auto const& Input : this->GetLastFramePressedKeys())
-    {
-        if (algo::contains(this->GetCurrentlyPressedKeys(), Input.Key, &LRawInput::Key) == false)
-        {
-            Out.emplace_back(Input);
-        }
-
-        continue;
-    }
-
-    return Out;
-}
-
-FORCEINLINE LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
-{
-    LString Out;
-
-    for (const LString& Input : this->PlatformInput)
-    {
-        Out.append(Input);
-    }
-
-    return Out;
-}
-
-template<typename TPredicate>
-FORCEINLINE void Jafg::LSurfaceBase::ForEachNewKeyDown(TPredicate&& Predicate)
-{
-    for (const LRawInput& Input : this->DownKeys)
-    {
-        if (this->IsNewKeyDown(Input.Key))
-        {
-            Predicate(Input);
-        }
-
-        continue;
-    }
-
-    return;
-}
-
-#if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
-    #include "Platform/SurfaceGlfw3.h"
-#elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
-    #include "Platform/SurfaceWasm.h"
-#else /* PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
-    #error "Could not resolve PLATFORM."
-#endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
