@@ -75,7 +75,7 @@ public:
     virtual LCursorReply OnCursorLeave() override;
     virtual void         OnFocusReceived() override;
     virtual void         OnFocusLost() override;
-    virtual LReply       OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
+    virtual LReply       OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
 
     //#
     //# Delegate, which is invoked when the user tries to commit the content of the editable text box.

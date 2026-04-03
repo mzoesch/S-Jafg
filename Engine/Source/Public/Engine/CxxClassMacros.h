@@ -9,6 +9,7 @@
     Generated macro bodies.
 -----------------------------------------------------------------------------*/
 
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
@@ -45,6 +46,7 @@
         inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };  \
     };
 
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
@@ -62,6 +64,7 @@
         Line,                                                                                       \
         __VA_ARGS__                                                                                 \
     )
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
@@ -100,6 +103,7 @@
         inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };                \
         typedef FactoryType LFactory;                                                             \
     };
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION already defined."
@@ -221,8 +225,9 @@ ConstructionHelper                                                    \
         return Instance; \
     }
 
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET
-#error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET already defined."
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(ObjectType, Name) \
     ::Jafg::LSetCxxClassField::CreateStrong([](::Jafg::JCxxClass* Object, ::LStringView Value) -> void \
@@ -233,8 +238,9 @@ ConstructionHelper                                                    \
             (CastedObject, Value); \
     })
 
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET
-#error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET already defined."
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(ObjectType, Name) \
     ::Jafg::LGetCxxClassField::CreateStrong([](::Jafg::JCxxClass const& Object) -> ::LString \
@@ -245,6 +251,16 @@ ConstructionHelper                                                    \
             (CastedObject); \
     })
 
+
+#ifndef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION
+    #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION( \
+    MyClassName,                                                                         \
+    MyClassSpaces,                                                                       \
+    SuperClassName,                                                                      \
+    ConstructionHelperLine,                                                              \
+    ... /*OptionalAPI*/ \
+    )
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION */
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL */
@@ -278,6 +294,13 @@ public:                                                                         
     {                                                                                        \
         return MyClassName::MutableStaticClass();                                                 \
     }                                                                                        \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION( \
+    MyClassName,                                                                         \
+    MyClassSpaces,                                                                       \
+    SuperClassName,                                                                      \
+    ConstructionHelperLine,                                                              \
+    __VA_ARGS__ \
+        )  \
     __VA_ARGS__/*OptionalAPI*/ static ::Jafg::LCxxClass& MutableStaticClass() noexcept;      \
     MyClassName() = delete;                                                                  \
     PROHIBIT_REALLOC_OF_ANY_FORM(MyClassName)                                                               \
@@ -375,6 +398,7 @@ private: /* Restore default visibility. */
     {                                                                                      \
         return ::Serde::ToString(Class.MyClassMember);                                \
     }
+
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly already defined."

@@ -94,7 +94,7 @@ Jafg::LReply Jafg::WParent::SweepFocusTest(LViewport const& Viewport, const LVec
     return Super::SweepFocusTest(Viewport, Location);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {
@@ -117,7 +117,7 @@ Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyE
     return Super::OnKeyDownNoFocus(Data, Event);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {

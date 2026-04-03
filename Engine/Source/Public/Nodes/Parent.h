@@ -44,8 +44,8 @@ public:
     virtual LCursorReply SweepMouse(LViewport& Viewport, LVec2F const& Location) override;
     virtual LReply       SweepFocusTest(LViewport const& Viewport, LVec2F const& Location) override;
 
-    virtual LReply OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
 
     virtual bool IsFocusWidgetTransitive(LViewport const* Viewport) const override;
     virtual void OnSurfaceResize() override;
@@ -86,7 +86,7 @@ struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
 {
     NODE_FACTORY_BODY(WParent)
 
-    FORCEINLINE decltype(auto) operator[](this auto&& Self, LNodeFactoryBase&& F) noexcept
+    decltype(auto) operator[](this auto&& Self, Detail::LNodeFactoryBase&& F) noexcept
     {
         check(F._IsReleased() == false)
         auto& Node{DETAIL_JAFG_NODE_FACTORY_SELF()};
@@ -101,10 +101,10 @@ struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
         return NODE_FACTORY_RESULT();
     }
 
-    FORCEINLINE decltype(auto) Padding(this auto&& Self, LPadding const& P) noexcept
+    decltype(auto) Padding(this auto&& Self, LPadding const& P) noexcept
     {
         NODE_FACTORY_SELF().SetPadding(P);
-        return std::forward<decltype(Self)>(Self);
+        return NODE_FACTORY_RESULT();
     }
 };
 
@@ -128,12 +128,29 @@ inline Detail::LBeginStylingFnResult::~LBeginStylingFnResult()
     return;
 }
 
-template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+template<typename TNode /* = WNode */> requires std::is_base_of_v<WNode, TNode>
 inline typename TNode::LFactory& Detail::LBeginStylingFnResult::Root(LCxxClass const& Class)
 {
     check(this->Factory.get() == nullptr)
     this->Factory = TUnique<typename TNode::LFactory>{
-        new typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Parent.GetViewport(),.Class=Class}).release()}};
+        new typename TNode::LFactory{
+            *ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Parent.GetViewport(),.Class=Class}).release()
+            }
+        };
+    return *static_cast<typename TNode::LFactory*>(&*this->Factory);
+}
+
+template<typename TNode, typename... TArgs>
+    requires std::is_base_of_v<WNode, TNode>
+          // && std::is_constructible_v<TNode, TNodeStaticInit<TNode> const&, TArgs&&...>
+inline typename TNode::LFactory& Detail::LBeginStylingFnResult::StaticRoot(TArgs&&... Args) noexcept
+{
+    check(this->Factory.get() == nullptr)
+    this->Factory = TUnique<typename TNode::LFactory>{
+        new typename TNode::LFactory{
+            *ConstructNodeImpl(TNodeStaticInit<TNode>{.Outer=this->Parent.GetViewport()}, std::forward<TArgs>(Args)...).release()
+            }
+        };
     return *static_cast<typename TNode::LFactory*>(&*this->Factory);
 }
 

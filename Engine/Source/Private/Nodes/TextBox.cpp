@@ -24,7 +24,6 @@ f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) 
         case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeSingle; }
         case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeSingle; }
         case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeSingle; }
-        case Jafg::ETextScale::Tiny:      { return *Prefs.TinyFontSizeSingle; }
         default: break;
         }
     }
@@ -37,7 +36,6 @@ f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) 
         case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeDouble; }
         case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeDouble; }
         case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeDouble; }
-        case Jafg::ETextScale::Tiny:      { return *Prefs.TinyFontSizeDouble; }
         default: break;
         }
     }
@@ -50,7 +48,6 @@ f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) 
         case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeTriple; }
         case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeTriple; }
         case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeTriple; }
-        case Jafg::ETextScale::Tiny:      { return *Prefs.TinyFontSizeTriple; }
         default: break;
         }
     }
@@ -83,7 +80,11 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
             this->UpdateRenderData(Info.FontSubsystem, this->TextBrush.TextScale.InSpt(Info.Viewport));
         }
 
-        LVec2F TopLeft{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport) + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())};
+        LVec2F TopLeft{
+              this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport)
+            + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())
+            + this->DrawOffset
+            };
         LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) - this->RenderData.DesiredSize};
         TopLeft += LVec2F
         {

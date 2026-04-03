@@ -16,7 +16,7 @@ __pycache__/
 /Binaries/
 
 # Decompiling
-ghidra/
+/ghidra/
 
 # Compiled source files
 /Intermediates/

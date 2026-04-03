@@ -57,8 +57,8 @@ public:
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;
 
-    virtual LReply OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
 
 private:
 

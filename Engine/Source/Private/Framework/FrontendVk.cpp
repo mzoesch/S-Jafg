@@ -316,6 +316,9 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     // TODO: Do we want to use this sometimes/always? Or make a user flag for this??
     // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    // TODO: This does not work for wayland - but with x11.
+    //       So we want that?
+    // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
     //# TODO: Move tis somewhere else? This has nothing to do with VK.
     if (!glfwInit())
@@ -1725,41 +1728,85 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
         .maxLod = VK_LOD_CLAMP_NONE,
         .borderColor = vk::BorderColor::eFloatOpaqueWhite,
         };
-    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::RepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
-    DescriptorImageInfos[UBO::BindlessTextureArray::RepeatSamplerIdx] = vk::DescriptorImageInfo{
-        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::RepeatSamplerIdx],
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::Sampler::LinearRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::LinearRepeatSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearRepeatSamplerIdx],
         };
 
     CreateInfo.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eMirroredRepeat;
-    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
-    DescriptorImageInfos[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx] = vk::DescriptorImageInfo{
-        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx],
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearMirroredRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::LinearMirroredRepeatSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearMirroredRepeatSamplerIdx],
         };
 
     CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
-    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
-    DescriptorImageInfos[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
-        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx],
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx],
         };
 
     CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToBorder;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToBorder;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToBorder;
-    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToBorderSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
-    DescriptorImageInfos[UBO::BindlessTextureArray::ClampToBorderSamplerIdx] = vk::DescriptorImageInfo{
-        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToBorderSamplerIdx],
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearClampToBorderSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::LinearClampToBorderSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearClampToBorderSamplerIdx],
         };
 
     // CreateInfo.addressModeU = vk::SamplerAddressMode::eMirrorClampToEdge;
     // CreateInfo.addressModeV = vk::SamplerAddressMode::eMirrorClampToEdge;
     // CreateInfo.addressModeW = vk::SamplerAddressMode::eMirrorClampToEdge;
-    // this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
-    // DescriptorImageInfos[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
-    //     .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx],
+    // this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearMirrorClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    // DescriptorImageInfos[UBO::BindlessTextureArray::LinearMirrorClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
+    //     .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearMirrorClampToEdgeSamplerIdx],
+    //     };
+
+    CreateInfo.magFilter = vk::Filter::eNearest;
+    CreateInfo.minFilter = vk::Filter::eNearest;
+    CreateInfo.mipmapMode = vk::SamplerMipmapMode::eNearest;
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::Sampler::NearestRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::NearestRepeatSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestRepeatSamplerIdx],
+        };
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eMirroredRepeat;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirroredRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::NearestMirroredRepeatSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirroredRepeatSamplerIdx],
+        };
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx],
+        };
+
+    CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToBorder;
+    CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToBorder;
+    CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToBorder;
+    this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestClampToBorderSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    DescriptorImageInfos[UBO::BindlessTextureArray::NearestClampToBorderSamplerIdx] = vk::DescriptorImageInfo{
+        .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestClampToBorderSamplerIdx],
+        };
+
+    // CreateInfo.addressModeU = vk::SamplerAddressMode::eMirrorClampToEdge;
+    // CreateInfo.addressModeV = vk::SamplerAddressMode::eMirrorClampToEdge;
+    // CreateInfo.addressModeW = vk::SamplerAddressMode::eMirrorClampToEdge;
+    // this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    // DescriptorImageInfos[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
+    //     .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx],
     //     };
 
     std::array Writes{

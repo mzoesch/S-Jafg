@@ -126,7 +126,7 @@ void Jafg::WScrollRegion::UserInterfaceTick()
     return;
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp))
     {
@@ -150,9 +150,9 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyDownData const& Data, LKeyEv
     return Super::OnKeyDown(Data, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
-    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
     {
        if (this->MBUpOnScrollbar(Data.Viewport))
        {
@@ -160,10 +160,10 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LNodeKeyDownData const& Data, LKeyEven
        }
     }
 
-    return Super::OnKeyUp(Data, InKeyEvent);
+    return Super::OnKeyUp(Data, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
@@ -215,7 +215,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyDownData const& Data,
     return WNode::OnKeyDownNoFocus(Data, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent)
 {
     check( this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f )
 

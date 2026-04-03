@@ -71,43 +71,62 @@ public:
     TPreference<f32> MouseWheelScrollSpeed{ 35.0f };
 
     CLASS_FIELD(Config)
-    TPreference<f32> HeaderFontSizeSingle    { 16.0f };
+    TPreference<f32> HeaderFontSizeSingle    { 15.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SubHeaderFontSizeSingle { 15.0f };
+    TPreference<f32> SubHeaderFontSizeSingle { 14.0f };
     CLASS_FIELD(Config)
     TPreference<f32> BodyFontSizeSingle      { 11.0f };
     CLASS_FIELD(Config)
     TPreference<f32> CompactFontSizeSingle   { 10.0f };
     CLASS_FIELD(Config)
     TPreference<f32> SmallFontSizeSingle     {  9.0f };
-    CLASS_FIELD(Config)
-    TPreference<f32> TinyFontSizeSingle      {  8.0f };
 
     CLASS_FIELD(Config)
-    TPreference<f32> HeaderFontSizeDouble    { 20.0f };
+    TPreference<f32> HeaderFontSizeDouble    { 19.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SubHeaderFontSizeDouble { 18.0f };
+    TPreference<f32> SubHeaderFontSizeDouble { 17.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> BodyFontSizeDouble      { 16.0f };
+    TPreference<f32> BodyFontSizeDouble      { 12.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> CompactFontSizeDouble   { 15.0f };
+    TPreference<f32> CompactFontSizeDouble   { 11.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SmallFontSizeDouble     { 14.0f };
-    CLASS_FIELD(Config)
-    TPreference<f32> TinyFontSizeDouble      { 13.0f };
+    TPreference<f32> SmallFontSizeDouble     { 10.0f };
 
     CLASS_FIELD(Config)
-    TPreference<f32> HeaderFontSizeTriple    { 22.0f };
+    TPreference<f32> HeaderFontSizeTriple    { 21.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SubHeaderFontSizeTriple { 20.0f };
+    TPreference<f32> SubHeaderFontSizeTriple { 19.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> BodyFontSizeTriple      { 18.0f };
+    TPreference<f32> BodyFontSizeTriple      { 13.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> CompactFontSizeTriple   { 17.0f };
+    TPreference<f32> CompactFontSizeTriple   { 12.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> SmallFontSizeTriple     { 16.0f };
+    TPreference<f32> SmallFontSizeTriple     { 10.0f };
+
     CLASS_FIELD(Config)
-    TPreference<f32> TinyFontSizeTriple      { 15.0f };
+    TPreference<LColor> BackgroundColor         { 0x15 };
+    CLASS_FIELD(Config)
+    TPreference<LColor> AccentColor             { 0x1C };
+    CLASS_FIELD(Config)
+    TPreference<LColor> ForegroundColor         { 0x24 };
+    CLASS_FIELD(Config)
+    TPreference<LColor> ForegroundColorVariant  { 0x0F };
+    CLASS_FIELD(Config)
+    TPreference<LColor> DisabledColor           { 0x0F };
+    CLASS_FIELD(Config)
+    TPreference<LColor> TextColor               { 0xFF };
+    CLASS_FIELD(Config)
+    TPreference<LColor> PrimaryColor            { LColor{0x1D, 0x78, 0xD6} };
+    CLASS_FIELD(Config)
+    TPreference<LColor> PrimaryColorVariant     { LColor{0x02, 0x1B, 0x35} };
+    CLASS_FIELD(Config)
+    TPreference<LColor> PrimaryColor2           { LColor{0x40, 0x57, 0x6F} };
+    CLASS_FIELD(Config)
+    TPreference<LColor> PrimaryColorVariant2    { LColor{0x2C, 0x32, 0x3A} };
+    CLASS_FIELD(Config)
+    TPreference<LColor> ProximityColorA         { 0x1A };
+    CLASS_FIELD(Config)
+    TPreference<LColor> ProximityColorB         { 0x15 };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

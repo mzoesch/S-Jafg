@@ -385,9 +385,37 @@ void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Insta
     {
     case vk::DescriptorType::eSampler:
     {
-        if (Value == "Jafg.DefaultSampler")
+        if (Value == "Jafg.LinearRepeatSampler")
         {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetSamplerRepeat());
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerRepeat());
+        }
+        else if (Value == "Jafg.LinearMirroredRepeatSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerMirroredRepeat());
+        }
+        else if (Value == "Jafg.LinearClampToEdgeSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerClampToEdge());
+        }
+        else if (Value == "Jafg.LinearClampToBorderSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerClampToBorder());
+        }
+        else if (Value == "Jafg.NearestRepeatSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerRepeat());
+        }
+        else if (Value == "Jafg.NearestMirroredRepeatSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerMirroredRepeat());
+        }
+        else if (Value == "Jafg.NearestClampToEdgeSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerClampToEdge());
+        }
+        else if (Value == "Jafg.NearestClampToBorderSampler")
+        {
+            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerClampToBorder());
         }
         else
         {

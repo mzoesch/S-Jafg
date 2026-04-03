@@ -40,12 +40,12 @@ void Jafg::WTabBar::Construct()
     {
         if (this->bIsVertical.value() == true)
         {
-            BeginStyling(*this).Root<WVRegion>().SaveTo(&Container)
+            BeginStyling(*this).StaticRoot<WVRegion>().SaveTo(&Container)
                 .Anchor(EAnchor::Fill);
         }
         else
         {
-            BeginStyling(*this).Root<WHRegion>().SaveTo(&Container)
+            BeginStyling(*this).StaticRoot<WHRegion>().SaveTo(&Container)
                 .Anchor(EAnchor::Fill);
         }
     }
@@ -106,21 +106,21 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
 void Jafg::WTabBar::AppendVSpace_v2(const LWidgetSize1 VSpace)
 {
     check(this->ButtonsContainer)
-    BeginStyling(*this->ButtonsContainer).Root<WSpacer>()
+    BeginStyling(*this->ButtonsContainer).StaticRoot<WSpacer>()
         .Height(VSpace);
 }
 
 void Jafg::WTabBar::AppendHSpace_v2(const LWidgetSize1 HSpace)
 {
     check(this->ButtonsContainer)
-    BeginStyling(*this->ButtonsContainer).Root<WSpacer>()
+    BeginStyling(*this->ButtonsContainer).StaticRoot<WSpacer>()
         .Width(HSpace);
 }
 
 void Jafg::WTabBar::AppendStretch(const LAnchor& InStretch)
 {
     check(this->ButtonsContainer)
-    BeginStyling(*this->ButtonsContainer).Root<WSpacer>()
+    BeginStyling(*this->ButtonsContainer).StaticRoot<WSpacer>()
         .Anchor(InStretch);
 }
 

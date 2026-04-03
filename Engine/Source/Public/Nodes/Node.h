@@ -356,35 +356,6 @@ private:
 #endif /* JAFG_DO_CHECKS */
 };
 
-struct LBeginStylingFnResult final
-{
-public:
-
-    inline constexpr LBeginStylingFnResult(WParent& P) noexcept : Parent{P} {}
-    PROHIBIT_REALLOC_OF_ANY_FORM(LBeginStylingFnResult)
-    inline ~LBeginStylingFnResult();
-
-    WParent& Parent;
-    std::optional<i32> Where;
-    TUnique<LNodeFactoryBase> Factory;
-
-    decltype(auto) At(this auto&& Self, i32 InIndex) noexcept
-    {
-        Self.Where = InIndex;
-        return std::forward<decltype(Self)>(Self);
-    }
-
-    template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
-    inline typename TNode::LFactory& Root(LCxxClass const& Class);
-
-    template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
-    inline typename TNode::LFactory& Root()
-    {
-        // TODO: Call static init dot dynamic.
-        return this->Root<TNode>(TNode::StaticClass());
-    }
-};
-
 } /* ~Namespace Detail */
 
 #define NODE_FACTORY_PARENT(Node) public Node::Super::LFactory
@@ -393,7 +364,7 @@ public:
 #define NODE_FACTORY_SELF() check(Self._IsDecommissioned() == false) DETAIL_JAFG_NODE_FACTORY_SELF()
 #define NODE_FACTORY_RESULT() std::forward<decltype(Self)>(Self)
 
-struct LNodeKeyDownData final
+struct LNodeKeyEventData final
 {
     LFrontend const& Frontend;
     LSurface& Surface;
@@ -413,6 +384,34 @@ namespace Detail
 struct LOuter2ViewportProj
 {
     NODISCARD inline constexpr LNodeDynamicInit operator()(LCxxDynamicInit const& Init) const noexcept;
+};
+
+struct LBeginStylingFnResult final
+{
+public:
+
+    inline constexpr LBeginStylingFnResult(WParent& P) noexcept : Parent{P} {}
+    PROHIBIT_REALLOC_OF_ANY_FORM(LBeginStylingFnResult)
+    inline ~LBeginStylingFnResult();
+
+    WParent& Parent;
+    std::optional<i32> Where;
+    TUnique<LNodeFactoryBase> Factory;
+
+    decltype(auto) At(this auto&& Self, i32 InIndex) noexcept
+    {
+        Self.Where = InIndex;
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    //# Set the root with a dynamic type specified at runtime.
+    template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
+    inline typename TNode::LFactory& Root(LCxxClass const& Class);
+    //# Set the root with the provided static type directly.
+    template<typename TNode, typename... TArgs>
+        requires std::is_base_of_v<WNode, TNode>
+              // && std::is_constructible_v<TNode, TNodeStaticInit<TNode> const&, TArgs&&...>
+    inline typename TNode::LFactory& StaticRoot(TArgs&&... Args) noexcept;
 };
 
 } /* ~Namespace Detail */
@@ -484,6 +483,15 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
     decltype(auto) MaxDesiredSize(this auto&& Self, LWidgetSize2 Size) noexcept
     {
         NODE_FACTORY_SELF().SetMaxDesiredSize(Size);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) Delegate(this auto&& Self, TFunction<void(LFactoryNode& Factory)>& Delegate) noexcept
+    {
+        if (Delegate.IsValid())
+        {
+            Delegate(Self);
+        }
         return NODE_FACTORY_RESULT();
     }
 
@@ -640,11 +648,11 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event);
-    virtual LReply OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event);
 
-    EVENT_DECL(OnKeyDownEvent, LReply(WNode& Widget, LNodeKeyDownData const& Data, LKeyEvent const& Event))
-    EVENT_DECL(OnKeyUpEvent, LReply(WNode& Widget, LNodeKeyDownData const& Data, LKeyEvent const& Event))
+    TFunction<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyDownEvent;
+    TFunction<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyUpEvent;
 
     //#
     //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle
@@ -656,8 +664,8 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event);
-    virtual LReply OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
 
     //#
     //# @return Whether this is the focused widget.
@@ -850,6 +858,11 @@ struct LNewNodeFnResult final
     {
         return typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class}).release()};
     }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    typename TNode::LFactory Class(TSubclassOf<TNode> Class) const
+    {
+        return typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class.GetClassOrDefault()}).release()};
+    }
 };
 
 struct NewNodeFn final
@@ -868,6 +881,8 @@ inline constexpr Detail::BeginStylingFn BeginStyling{};
 inline constexpr Detail::NewNodeFn NewNode{};
 #define NewStaticNode(NodeClass) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>()
 #define NewStaticNodeVp(Vp, NodeClass) ::Jafg::NewNode(Vp).Class<NodeClass>()
+#define NewSubNode(Subclass) ::Jafg::NewNode(this->GetViewport()).Class(Subclass)
+#define NewSubNodeVp(Vp, Subclass) ::Jafg::NewNode(Vp).Class(Subclass)
 
 FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
 {

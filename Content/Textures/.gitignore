@@ -1,5 +1,7 @@
 *
-!.gitignore
+!/.gitignore
+!/Icons/
+
 !/Jafg.IdentityAdd.png
 !/Jafg.IdentityMul.png
 !/Jafg.IdentityNormal.png

@@ -92,11 +92,14 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVec2F&
     return {this};
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     if (this->OnKeyDownEvent.IsValid())
     {
-        return this->OnKeyDownEvent.Invoke(*this, Data, Event);
+        if (auto Reply{this->OnKeyDownEvent.Invoke(*this, Data, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
     }
 
     if (this->Parent)
@@ -107,11 +110,14 @@ Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent cons
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     if (this->OnKeyUpEvent.IsValid())
     {
-        return this->OnKeyUpEvent.Invoke(*this, Data, Event);
+        if (auto Reply{this->OnKeyUpEvent.Invoke(*this, Data, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
     }
 
     if (this->Parent)
@@ -122,13 +128,13 @@ Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const&
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     check(this->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     check(this->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
     return LReply::Unhandled();

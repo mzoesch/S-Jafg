@@ -13,18 +13,17 @@ void Jafg::WSwitcher::AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild)
     return;
 }
 
-void Jafg::WSwitcher::SetActiveNode(WNode* Node)
+void Jafg::WSwitcher::SetActiveNode(WNode const& Node)
 {
-    check(Node)
-    if (auto It{algo::find(this->GetChildren(), Node, algo::unique_raw{})}; It != this->GetChildren().end())
+    if (auto It{algo::find(this->GetChildren(), &Node, algo::unique_raw{})}; It != this->GetChildren().end())
     {
         this->SetActiveNodeByIndex(algo::distance(this->GetChildren(), It));
     }
     else
     {
-        LOG_WARNING(LogWidgets
+        LOG_FATAL(LogWidgets
             , "The node [{}] is not a child of switcher [{}]."
-            , Node->GetNameAsString(), this->GetNameAsString()
+            , Node.GetNameAsString(), this->GetNameAsString()
         )
     }
 

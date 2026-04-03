@@ -4,6 +4,7 @@
 
 #include "Nodes/Overlay.h"
 #include "Rhi/Texture2.h"
+#include "Rhi/BindlessTextureArray.h"
 #include "Region.generated.h"
 
 namespace Jafg
@@ -82,7 +83,7 @@ struct LRegionBrush
     ETexCoordBehavior TexCoordBehavior{ ETexCoordBehavior::Scale };
 
     //# Texture UV out-of-bounds behavior.
-    vk::SamplerAddressMode SamplerAddressMode{ vk::SamplerAddressMode::eClampToEdge };
+    UBO::BindlessTextureArray::Sampler SamplerAddressMode{ UBO::BindlessTextureArray::Sampler::LinearClampToEdgeSamplerIdx };
 
     //# How much padding to apply to the texture.
     f32 TexturePadding{};
@@ -127,7 +128,7 @@ public:
     constexpr void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
     constexpr void SetTextureScale(f32 InScale) noexcept { this->Brush.TextureScale = InScale; }
     constexpr void SetTexCoordBehavior(ETexCoordBehavior InBehavior) noexcept { this->Brush.TexCoordBehavior = InBehavior; }
-    constexpr void SetSamplerAddressMode(vk::SamplerAddressMode InAddressMode) noexcept { this->Brush.SamplerAddressMode = InAddressMode; }
+    constexpr void SetSamplerAddressMode(UBO::BindlessTextureArray::Sampler InAddressMode) noexcept { this->Brush.SamplerAddressMode = InAddressMode; }
     constexpr void SetTexturePadding(f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
     constexpr void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
     constexpr void SetRadii(LVec4F const& InRadii) noexcept { this->Brush.Radii = InRadii; }
@@ -140,7 +141,7 @@ public:
     constexpr LTexture2Ref const& GetTexture() const noexcept { return this->Brush.Texture; }
     constexpr f32 GetTextureScale() const noexcept { return this->Brush.TextureScale; }
     constexpr ETexCoordBehavior GetTexCoordBehavior() const noexcept { return this->Brush.TexCoordBehavior; }
-    constexpr vk::SamplerAddressMode GetSamplerAddressMode() const noexcept { return this->Brush.SamplerAddressMode; }
+    constexpr UBO::BindlessTextureArray::Sampler GetSamplerAddressMode() const noexcept { return this->Brush.SamplerAddressMode; }
     constexpr f32 GetTexturePadding() const noexcept { return this->Brush.TexturePadding; }
     constexpr LColor const& GetBackgroundTint() const noexcept { return this->Brush.BackgroundTint; }
     constexpr LVec4F const& GetRadii() const noexcept { return this->Brush.Radii; }
@@ -183,7 +184,7 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().SetTexCoordBehavior(InBehavior);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) SamplerAddressMode(this auto&& Self, vk::SamplerAddressMode InAddressMode) noexcept
+    decltype(auto) SamplerAddressMode(this auto&& Self, UBO::BindlessTextureArray::Sampler InAddressMode) noexcept
     {
         NODE_FACTORY_SELF().SetSamplerAddressMode(InAddressMode);
         return NODE_FACTORY_RESULT();

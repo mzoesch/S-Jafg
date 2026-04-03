@@ -24,11 +24,9 @@ public:
 
     enum { NoActiveNodeIndex = INDEX_NONE };
 
-    // WParent implementation
     virtual void AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild) override;
-    // ~WParent implementation
 
-    void SetActiveNode(WNode* Node);
+    void SetActiveNode(WNode const& Node);
     void SetActiveNodeByIndex(i64 Index);
 
     FORCEINLINE constexpr bool IsActiveNodeValid() const noexcept

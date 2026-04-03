@@ -5,6 +5,6 @@
         "baseColorMap": "Jafg.MetallicGold/Base",
         "metallicRoughnessMap": "Jafg.MetallicGold/Roughness",
         "normalMap": "Jafg.MetallicGold/Normal",
-        "sampler": "Jafg.DefaultSampler"
+        "sampler": "Jafg.LinearRepeatSampler"
     }
 }

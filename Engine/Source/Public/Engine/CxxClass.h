@@ -232,7 +232,7 @@ public:
 
     //#
     //# Delegate called when this object was marked as garbage.
-    //# Use this for immediate reaction to be killed. Otherwise use the dctor that will usually be called at the end
+    //# Use this for immediate reaction to be killed. Otherwise, use the dctor that will usually be called at the end
     //# of the tick this delegate was called.
     //#
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) { check( this->_IsGarbage() ) }
@@ -302,6 +302,22 @@ private:
 };
 
 } /* ~Namespace Jafg */
+
+#ifndef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION is not defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION */
+#undef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION( \
+    MyClassName,                                                                \
+    MyClassSpaces,                                                              \
+    SuperClassName,                                                             \
+    ConstructionHelperLine,                                                     \
+    ... /*OptionalAPI*/                                                         \
+    )                                                                           \
+    inline static ::TSubclassOf<MyClassName> StaticSubclass() noexcept          \
+    {                                                                           \
+        return TSubclassOf<MyClassName>(MyClassName::StaticClass());            \
+    }
 
 #include "Engine/CxxClassStatic.h"
 

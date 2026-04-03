@@ -29,7 +29,6 @@ enum struct ETextScale : u8
     Body,
     Compact,
     Small,
-    Tiny
 };
 
 struct LTextScale final
@@ -39,7 +38,6 @@ struct LTextScale final
     inline static constexpr LTextScale Body() noexcept { return LTextScale{ETextScale::Body}; }
     inline static constexpr LTextScale Compact() noexcept { return LTextScale{ETextScale::Compact}; }
     inline static constexpr LTextScale Small() noexcept { return LTextScale{ETextScale::Small}; }
-    inline static constexpr LTextScale Tiny() noexcept { return LTextScale{ETextScale::Tiny}; }
 
     FORCEINLINE constexpr LTextScale() noexcept = delete;
     FORCEINLINE constexpr LTextScale(ETextScale InScale) noexcept : Scale(InScale) {}
@@ -142,6 +140,10 @@ public:
     constexpr bool IsTextVCenterAligned() const noexcept { return this->TextBrush.TextVAlign == ETextVAlign::Center; }
     constexpr bool IsTextBottomAligned() const noexcept { return this->TextBrush.TextVAlign == ETextVAlign::Bottom; }
 
+    //# Offset is only for drawing and does not affect the desired size in any way.
+    constexpr void SetTextDrawOffset(LVec2F InOffset) const noexcept { this->DrawOffset = InOffset; }
+    constexpr LVec2F GetTextDrawOffset() const noexcept { return this->DrawOffset; }
+
 protected:
 
     //# @note Do not forget to call the #InvokeOnChanged delegate.
@@ -154,7 +156,8 @@ private:
 
     LString Content;
     LTextBrush TextBrush;
-    mutable LVec2F TextDesiredSize;
+    mutable LVec2F DrawOffset{};
+    mutable LVec2F TextDesiredSize{};
 
     mutable struct
     {

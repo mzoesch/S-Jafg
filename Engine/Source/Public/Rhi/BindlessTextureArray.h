@@ -12,12 +12,20 @@ struct BindlessTextureArray
     static inline constexpr u32 SamplerBinding{ 0 };
     static inline constexpr u32 ArrayBinding{ 1 };
 
-    static inline constexpr u32 ClampToEdgeSamplerIdx{ 0 };
-    static inline constexpr u32 RepeatSamplerIdx{ 1 };
-    static inline constexpr u32 MirroredRepeatSamplerIdx{ 2 };
-    static inline constexpr u32 ClampToBorderSamplerIdx{ 3 };
-    // static inline constexpr u32 MirrorClampToEdgeSamplerIdx{ 4 };
-    static inline constexpr u32 SamplerCount{ 4 };
+    enum Sampler : u32
+    {
+        LinearRepeatSamplerIdx = 0,
+        LinearMirroredRepeatSamplerIdx,
+        LinearClampToEdgeSamplerIdx,
+        LinearClampToBorderSamplerIdx,
+        // LinearMirrorClampToEdgeSamplerIdx,
+        NearestRepeatSamplerIdx,
+        NearestMirroredRepeatSamplerIdx,
+        NearestClampToEdgeSamplerIdx,
+        NearestClampToBorderSamplerIdx,
+        // NearestMirrorClampToEdgeSamplerIdx,
+    };
+    static inline constexpr u32 SamplerCount{NearestClampToBorderSamplerIdx + 1};
 
     static inline constexpr u32 IdentityMulIdx{ 0 };
     static std::array<vk::DescriptorSetLayoutBinding, 2> GetBindings(u32 Capacity) noexcept

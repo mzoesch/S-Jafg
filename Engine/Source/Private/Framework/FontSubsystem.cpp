@@ -260,7 +260,7 @@ TArray<Jafg::LGlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text
                 static_cast<f32>(GlyphUV.AtlasBounds[1]) / AtlasExtend.y,
                 },
             Font.Atlas->GetBindlessIndex(),
-            UBO::BindlessTextureArray::ClampToEdgeSamplerIdx,
+            UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx,
             (Font.PixelRange / Font.AtlasGlyphSize) * FontSize
             );
 

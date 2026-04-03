@@ -147,10 +147,10 @@ public:
     //# This only the user interface.
     void UserInterfaceTick();
 
-    virtual LReply OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent) override;
-    virtual LReply OnKeyDownNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyDownData const& Data, LKeyEvent const& InKeyEvent) override;
+    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent) override;
 
     virtual void UpdateDesiredSize() const override;
 

@@ -182,7 +182,7 @@ struct TPreference<T, std::enable_if_t<TUseDefaultPreferenceImpl_v<T>>>
 template<typename T> requires std::is_copy_constructible_v<T>
     && (!requires(T t){{t < t}->std::convertible_to<bool>;} || !std::is_copy_assignable_v<T>)
     && (!requires(T t){{t > t}->std::convertible_to<bool>;} || !std::is_copy_assignable_v<T>)
-struct TPreference<T, TEnableIfTy<TUseDefaultPreferenceImpl_v<T>>>
+struct TPreference<T, std::enable_if_t<TUseDefaultPreferenceImpl_v<T>>>
 {
     inline static constexpr bool HasMinMax_v{};
 

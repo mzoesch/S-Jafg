@@ -118,11 +118,16 @@ public:
     }
 
     FORCEINLINE auto const& Vk_GetDefaultSamplers() const noexcept { return this->Vk_DefaultSamplers; }
-    FORCEINLINE auto const& Vk_GetSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::RepeatSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirroredRepeatSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetSamplerClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToEdgeSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetSamplerClampToBorder() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::ClampToBorderSamplerIdx]; }
-    // FORCEINLINE auto const& Vk_GetSamplerMirrorClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::MirrorClampToEdgeSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetLinearSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearRepeatSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetLinearSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearMirroredRepeatSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetLinearSamplerClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetLinearSamplerClampToBorder() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearClampToBorderSamplerIdx]; }
+    // FORCEINLINE auto const& Vk_GetLinearSamplerMirrorClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::LinearMirrorClampToEdgeSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetNearestSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestRepeatSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetNearestSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirroredRepeatSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetNearestSamplerClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx]; }
+    FORCEINLINE auto const& Vk_GetNearestSamplerClampToBorder() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestClampToBorderSamplerIdx]; }
+    // FORCEINLINE auto const& Vk_GetNearestSamplerMirrorClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx]; }
 
     //# @return A descriptor pool that lives for as long the frontend lives.
     FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
@@ -257,7 +262,7 @@ private:
 
     u32 Vk_FramesInFlight{};
 
-    std::array<vk::raii::Sampler, UBO::BindlessTextureArray::SamplerCount> Vk_DefaultSamplers JAFG_INIT_FOUR(nullptr);
+    std::array<vk::raii::Sampler, UBO::BindlessTextureArray::SamplerCount> Vk_DefaultSamplers JAFG_INIT_EIGHT(nullptr);
     vk::raii::DescriptorPool Vk_DescriptorPool{ nullptr };
     u32 Vk_BindlessTextureCapacity{ 128u };
     vk::raii::DescriptorPool Vk_BindlessTextureArrayDescriptorPool{ nullptr };

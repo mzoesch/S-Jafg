@@ -181,7 +181,7 @@ void Jafg::WEditableTextBox::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::BackSpace)) // || PlatformDelete?
     {

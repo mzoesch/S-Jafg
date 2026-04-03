@@ -89,6 +89,7 @@ void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
             f32 InitialDistribution{
                   this->GetAnchoredSize_v2().x
                 - InSpt(this->GetViewport(), this->GetHSpace()) * (this->GetChildren().size() - 1)
+                - this->GetPadding().GetDesiredSizeXInSpt(this->GetViewport())
                 };
             f32 Distribution{InitialDistribution};
             u32 Clients{};
@@ -242,7 +243,7 @@ Jafg::LCursorReply Jafg::WHDragRegion::OnCursorLeave()
     return {EMouseCursor::Default};
 }
 
-Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     if (this == &Data.Node)
     {
@@ -261,7 +262,7 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyDownData const& Data, LKeyEve
     return Super::OnKeyDown(Data, Event);
 }
 
-Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyDownData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
     if (this == &Data.Node)
     {
@@ -336,7 +337,7 @@ void Jafg::WHDragRegion::UiTickMove()
     check(DragChild->GetAnchor() == EAnchor::VFill)
     check(this->DragChildSlots.contains(DragChild.get()))
     auto& Slot{this->DragChildSlots.at(DragChild.get())};
-    LVec2F AnchoredSize{this->GetAnchoredSize_v2()};
+    LVec2F AnchoredSize{this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport())};
     f32 HSpaceSpt{InSpt(this->GetViewport(), this->GetHSpace())};
 
     f32 Offset{};

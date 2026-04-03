@@ -15,26 +15,26 @@ void Jafg::WInput_Vector3::Construct()
     Brush.OutlineTint = Colors::Gray;
     Brush.TextScale = ETextScale::Body;
 
-    BeginStyling(*this).Root<WTextBox>()
+    BeginStyling(*this).StaticRoot<WTextBox>()
         .TextBrush(Brush)
         .Content(this->DisplayName)
         .MinDesiredSize({128_pt, 0});
 
-    BeginStyling(*this).Root<WEditableTextBox>()
+    BeginStyling(*this).StaticRoot<WEditableTextBox>()
         .TextBrush(Brush)
         .Content("1.0")
         .MinDesiredSize({48_pt, 0})
         .ContentPredicate(Serde::IsNumeric)
         ;
 
-    BeginStyling(*this).Root<WEditableTextBox>()
+    BeginStyling(*this).StaticRoot<WEditableTextBox>()
         .TextBrush(Brush)
         .Content("1.0")
         .MinDesiredSize({48_pt, 0})
         .ContentPredicate(Serde::IsNumeric)
         ;
 
-    BeginStyling(*this).Root<WEditableTextBox>()
+    BeginStyling(*this).StaticRoot<WEditableTextBox>()
         .TextBrush(Brush)
         .Content("1.0")
         .MinDesiredSize({48_pt, 0})

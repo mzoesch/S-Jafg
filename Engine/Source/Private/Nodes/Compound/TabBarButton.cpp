@@ -16,7 +16,7 @@ bool Jafg::WTabBarButton::AddData(JNodeData& Data)
 
     if (TbData->Descriptor->DisplayNameField.empty() == false)
     {
-        BeginStyling(*this).Root<WTextBox>().SaveTo(&this->ButtonText)
+        BeginStyling(*this).StaticRoot<WTextBox>().SaveTo(&this->ButtonText)
             .TextBrush({ETextScale::SubHeader})
             .Content(TbData->Descriptor->DisplayNameField)
             .Anchor(EAnchor::CenterCenter)

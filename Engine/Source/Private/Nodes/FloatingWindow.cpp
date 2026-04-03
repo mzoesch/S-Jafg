@@ -10,7 +10,7 @@ void Jafg::WFloatingWindow::Construct()
 {
     Super::Construct();
 
-    BeginStyling(*this).Root<WVRegion>()
+    BeginStyling(*this).StaticRoot<WVRegion>()
         .Anchor(EAnchor::TopLeft)
     [
         NewStaticNode(WRegion)
@@ -18,7 +18,7 @@ void Jafg::WFloatingWindow::Construct()
             .MinDesiredSize({0_spt, 16})
             .Anchor(EAnchor::HFill)
             .Tint(Colors::DarkerGray)
-            .OnKeyDown([](WNode& Self, LNodeKeyDownData const& Data, LKeyEvent const& Event) -> LReply
+            .OnKeyDown([](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
             {
                 if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
                 {
@@ -30,7 +30,7 @@ void Jafg::WFloatingWindow::Construct()
                 }
                 return {};
             })
-            .OnKeyUp([](WNode& Self, LNodeKeyDownData const& Data, LKeyEvent const& Event) -> LReply
+            .OnKeyUp([](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
             {
                 if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
                 {

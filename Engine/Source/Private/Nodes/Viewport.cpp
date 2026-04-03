@@ -611,7 +611,7 @@ bool Jafg::LViewport::FocusWidgetNode(WNode* InNode)
 
 bool Jafg::LViewport::AddHoveredWidgetForFrame(WNode* Node)
 {
-    check( algo::contains(this->HoveredWidgets, Node) == false )
+    check(algo::contains(this->HoveredWidgets, Node) == false)
     this->HoveredWidgets.emplace_back(Node);
     return algo::contains(this->LastFrameHoveredWidgets, Node) == false;
 }
@@ -620,7 +620,7 @@ void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 {
     if (this->FocusedWidget.IsNotNull())
     {
-        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
+        LOG_TRACE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusLost();
     }
 
@@ -628,7 +628,7 @@ void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 
     if (this->FocusedWidget.IsNotNull())
     {
-        LOG_VERBOSE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
+        LOG_TRACE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusReceived();
     }
 
