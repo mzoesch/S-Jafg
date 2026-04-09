@@ -7,6 +7,7 @@
 
 void Jafg::WParent::Construct()
 {
+    Super::Construct();
     check(this->_HasBegunLife())
 
     for (auto& Child : this->GetChildren())

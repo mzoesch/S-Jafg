@@ -93,9 +93,6 @@ NODISCARD FORCEINLINE TCxxClass const& GetSingleton() noexcept { return TCxxClas
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
 NODISCARD FORCEINLINE TCxxClass& GetMutableSingleton() noexcept { return TCxxClass::MutableStaticClass().template GetSingleton<TCxxClass>(); }
 
-ENGINE_API void PullConfigForCxxObject(JCxxClass* Object, LCxxClass* Class);
-ENGINE_API void PushConfigFromCxxObject(JCxxClass const& Object, LCxxClass const& Class);
-
 namespace Detail
 {
 

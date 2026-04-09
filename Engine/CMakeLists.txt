@@ -66,7 +66,7 @@ if(_guard)
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
     DisableAllWarningsForTarget(FastNoise) # FastNoise2 is an alias of FastNoise
-    target_link_libraries(${_scoped_module_name} PUBLIC FastNoise2)
+    target_link_libraries(${_scoped_module_name} PRIVATE FastNoise2)
 
     ###############################################################################
     # Freetype
@@ -78,7 +78,7 @@ if(_guard)
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/freetype"
         )
     FetchContent_MakeAvailable(FetchContent_Freetype)
-    target_link_libraries(${_scoped_module_name} PUBLIC freetype-interface)
+    target_link_libraries(${_scoped_module_name} PRIVATE freetype-interface)
 
     ###############################################################################
     # harfbuzz
@@ -101,11 +101,11 @@ if(_guard)
     set(MSDFGEN_DISABLE_SVG ON)
     message(STATUS "Fetching msdfgen...")
     FetchContent_Declare(
-            FetchContent_MsdfGen
-            GIT_REPOSITORY      https://github.com/Chlumsky/msdfgen.git
-            GIT_TAG             v1.13
-            SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdfgen"
-            )
+        FetchContent_MsdfGen
+        GIT_REPOSITORY      https://github.com/Chlumsky/msdfgen.git
+        GIT_TAG             v1.13
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdfgen"
+        )
     FetchContent_MakeAvailable(FetchContent_MsdfGen)
     target_link_libraries(${_scoped_module_name} PRIVATE msdfgen-core)
     target_link_libraries(${_scoped_module_name} PRIVATE msdfgen-ext)
@@ -118,11 +118,11 @@ if(_guard)
     set(MSDF_ATLAS_MSDFGEN_EXTERNAL ON)
     message(STATUS "Fetching msdf-adtlas-gen...")
     FetchContent_Declare(
-            FetchContent_MsdfAtlasGen
-            GIT_REPOSITORY      https://github.com/Chlumsky/msdf-atlas-gen.git
-            GIT_TAG             v1.4
-            SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdf-atlas-gen"
-            )
+        FetchContent_MsdfAtlasGen
+        GIT_REPOSITORY      https://github.com/Chlumsky/msdf-atlas-gen.git
+        GIT_TAG             v1.4
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdf-atlas-gen"
+        )
     FetchContent_MakeAvailable(FetchContent_MsdfAtlasGen)
     target_link_libraries(${_scoped_module_name} PRIVATE msdf-atlas-gen)
 

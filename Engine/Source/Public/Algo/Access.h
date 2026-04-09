@@ -357,24 +357,17 @@ FORCEINLINE UContainer sub(TContainer const& Container, const LSize Begin, const
     UContainer Out{Container.begin() + Begin, Container.begin() + End};
     return Out;
 }
-//# Cuts the left.
-template<typename TContainer, typename UContainer = TContainer>
-FORCEINLINE UContainer right_sub(TContainer const& Container, const LSize Begin)
-{
-    check( Begin <= algo::size(Container) )
-    return UContainer{Container.begin() + Begin, Container.end()};
-}
 
 //# Chops N elements from the left.
 template<typename TContainer, typename UContainer = TContainer>
 FORCEINLINE UContainer right_chop(TContainer const& Container, const LSize N)
 {
-    check( N <= algo::size(Container) )
+    check(N <= algo::size(Container))
     return UContainer{Container.begin() + N, Container.end()};
 }
 FORCEINLINE void inline_right_chop(auto* Container, const LSize N, const bool bAllowShrinking = true) noexcept
 {
-    check( N <= algo::size(*Container) )
+    check(N <= algo::size(*Container))
     Container->erase(Container->begin(), Container->begin() + N);
     if (bAllowShrinking) { Container->shrink_to_fit(); }
     return;
@@ -384,12 +377,12 @@ FORCEINLINE void inline_right_chop(auto* Container, const LSize N, const bool bA
 template<typename TContainer, typename UContainer = TContainer>
 FORCEINLINE UContainer left_chop(TContainer const& Container, const LSize N)
 {
-    check( N <= algo::size(Container) )
+    check(N <= algo::size(Container))
     return UContainer{Container.begin(), Container.end() - N};
 }
 FORCEINLINE void inline_left_chop(auto* Container, const LSize N, const bool bAllowShrinking = true) noexcept
 {
-    check( N <= algo::size(*Container) )
+    check(N <= algo::size(*Container))
     Container->erase(Container->end() - N, Container->end());
     if (bAllowShrinking) { Container->shrink_to_fit(); }
     return;
@@ -819,6 +812,16 @@ struct join_fn
 } /* ~Namespace detail */
 
 inline constexpr detail::join_fn join{};
+
+inline decltype(auto) now() noexcept
+{
+    return std::chrono::high_resolution_clock::now();
+}
+
+inline f64 time_diff(std::chrono::high_resolution_clock::time_point A, std::chrono::high_resolution_clock::time_point B) noexcept
+{
+    return std::chrono::duration_cast<std::chrono::duration<f64>>(B - A).count();
+}
 
 } /* ~Namespace algo */
 

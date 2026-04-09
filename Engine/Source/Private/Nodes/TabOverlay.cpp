@@ -2,6 +2,8 @@
 
 #include "Nodes/TabOverlay.h"
 #include "User/UserPreferences.h"
+#include "Framework/Frontend.h"
+#include "Framework/TextureSubsystem.h"
 
 void Jafg::WTabOverlay::Construct()
 {
@@ -37,7 +39,7 @@ void Jafg::WTabOverlay::RegisterTab(LTabOverlayElement&& Descriptor)
     if (Descriptor.Selector.index() == 0)
     {
         BeginStyling(*this->Selectors)
-            .StaticRoot<WTabOverlaySelector>(std::move(std::get<LTabOverlayElement::Info>(Descriptor.Selector)))
+            .StaticRoot<WTabOverlaySelector>(std::move(std::get<LTabOverlayElement::CreateInfo>(Descriptor.Selector)))
             .Delegate(this->DefaultSelectorDelegate);
         auto& Selector{*StaticCast<WTabOverlaySelector>(&*this->Selectors->GetChildren().back())};
         check(Selector.OnKeyDownEvent.IsValid() == false)
@@ -114,4 +116,10 @@ void Jafg::WTabOverlay::InitializeBoilerplate()
     ];
 
     return;
+}
+
+
+void Jafg::WTabOverlaySelector::LoadIconFromTextureViewIdentifier(LString const& Identifier) noexcept
+{
+    this->SetIcon(this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier(Identifier));
 }

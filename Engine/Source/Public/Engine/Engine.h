@@ -16,6 +16,7 @@
 #if JAFG_WITH_REST_CLS
     #include "Cli/ReSTCli.h"
 #endif /* JAFG_WITH_REST_CLS */
+#include "Storage/Config.h"
 
 namespace Jafg
 {
@@ -27,43 +28,11 @@ class LCommandLineInterface;
 
 } /* ~Namespace Jafg */
 
-//#
 //# The engine singleton.
-//#
 ENGINE_API extern Jafg::LEngine* GEngine;
 
 namespace Jafg
 {
-
-///////////////////////////////////////////////////////////////////////////////
-// Engine Globals
-
-//#
-//# Whether the engine should exit at the next opportunity.
-//#
-ENGINE_API extern bool bGShouldRequestExit;
-//#
-//# Whether the engine has successfully received an exit request and is now beginning to tear down.
-//#
-ENGINE_API extern bool bGEngineRequestingExit;
-
-ENGINE_API extern i32     GCustomExitStatusOverride;
-ENGINE_API extern LString GCustomExitReason;
-
-FORCEINLINE bool IsEngineValid() { return GEngine; }
-FORCEINLINE auto GetEngine() -> LEngine* { return GEngine; }
-
-FORCEINLINE bool IsEngineExitRequested() { return bGShouldRequestExit; }
-FORCEINLINE bool IsTearingDown() { return bGEngineRequestingExit; }
-FORCEINLINE bool WillShortlyTerminate() { return bGShouldRequestExit || bGEngineRequestingExit; }
-
-FORCEINLINE bool HasCustomExitStatus() { return GCustomExitStatusOverride != INDEX_NONE; }
-FORCEINLINE i32  GetCustomExitStatus() { return GCustomExitStatusOverride; }
-FORCEINLINE bool HasCustomExitReason() { return GCustomExitReason.empty() == false; }
-FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
-
-// ~Engine Globals
-///////////////////////////////////////////////////////////////////////////////
 
 namespace Detail
 {
@@ -97,31 +66,63 @@ struct LWorldTrack final
 
 } /* ~Namespace Detail */
 
-//#
 //# The engine - only one will be valid ever. Access its singleton with #GEngine.
-//#
 class LEngine final
 {
-    typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
-
 public:
 
     ENGINE_API LEngine();
     ENGINE_API void Initialize();
-    ENGINE_API void Tick(f32 Dt);
+    ENGINE_API void Tick();
     ENGINE_API void TearDown();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Private Function Redirects.
+    // Time Related Stuff.
     ///////////////////////////////////////////////////////////////////////////////
 
-    //# Internal public method. Do not use.
-    ENGINE_API static void _BeginExitIfRequested();
+    typedef std::chrono::high_resolution_clock Clock;
+    typedef Clock::time_point Timepoint;
 
-    ENGINE_API void RequestEngineExit();
-    ENGINE_API void RequestEngineExit(LString const& Reason);
-    ENGINE_API void RequestEngineExit(i32 CustomExitStatus);
-    ENGINE_API void RequestEngineExit(i32 CustomExitStatus, LString const& Reason);
+    ENGINE_API void DefaultTimeAdvance();
+
+    Timepoint LastStdOutFlush;
+
+    //#
+    //# The maximum delta time allowed between frames.
+    //# See the #LEngine::TimeStat::LostDeltaTime for the time that is lost when lag spikes occur.
+    //#
+    static inline constexpr f64 MaxDeltaTime{ 1.0 / 3.0 };
+
+    f64 FrameTime{};
+    f64 PreviousFrameTime{};
+
+    f64 DeltaTime{};
+    f64 RealDeltaTime{};
+    f64 LostDeltaTime{};
+    f64 IdleDeltaTime{};
+    constexpr bool HasLostDeltaTime() const noexcept { return this->LostDeltaTime > 0.0; }
+    constexpr bool HasIdleDeltaTime() const noexcept { return this->IdleDeltaTime > 0.0; }
+    constexpr f64 GetRealDeltaTimeAsFps() const noexcept { check(this->RealDeltaTime != 0.0) return 1.0 / this->RealDeltaTime; }
+
+    u64 FrameCount{};
+
+    //# All time related members are measured in seconds except stated otherwise.
+    struct TimeStat final
+    {
+        Timepoint Start{ Clock::now() };
+        u64 FrameCount{};
+        f64 Low{ std::numeric_limits<f64>::max() };
+        f64 High{ -1.0 };
+        f64 HighestLoss{};
+        f64 HighestIdle{};
+    };
+    //# How often stats should be averaged.
+    f64 StatisticsPeriod{ 1.0 };
+    //# How many frames have passed in this statistic sweep.
+    u64 StatisticsFrameCount{};
+    Timepoint LastStatisticsTime{ Clock::now() };
+    TimeStat CurrentStat;
+    TimeStat PreviousStat;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff.
@@ -257,6 +258,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     // Misc.
     ///////////////////////////////////////////////////////////////////////////////
+
+    LConfig Config;
 
     FORCEINLINE LCommandLineInterface& GetCommandLineInterface() noexcept { return this->CommandLineInterface; }
     FORCEINLINE LCommandLineInterface const& GetCommandLineInterface() const noexcept { return this->CommandLineInterface; }

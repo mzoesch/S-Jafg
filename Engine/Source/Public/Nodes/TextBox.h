@@ -72,6 +72,9 @@ struct LTextBrush
 
     bool bSkipBrushDraw{ false };
 
+    //# Vertical text tightening of the ascender and descender in percent.
+    f32 Tightening{ 1.0f };
+
     f32 OutlineThickness{};
     LColor OutlineTint{ Colors::White };
 
@@ -96,7 +99,7 @@ protected:
     DEFAULT_NODE_CONSTRUCTORS_BODY(WTextBox)
     {
         this->SetTint(Colors::Black);
-        this->SetPadding({4,2});
+        this->SetPadding({4_spt, 0});
     }
 
 public:
@@ -115,21 +118,23 @@ public:
     constexpr LTextBrush& GetMutableTextBrush() noexcept { this->RenderData.Dirty(); return this->TextBrush; }
     constexpr LTextBrush const& GetTextBrush() const noexcept { return this->TextBrush; }
 
+    constexpr void SetTextScale(LTextScale InScale) noexcept { this->TextBrush.TextScale = InScale; this->RenderData.Dirty(); }
     constexpr void SetTextTint(LColor const& InTint) noexcept { this->TextBrush.Tint = InTint; }
     constexpr void SetSkipTextBrushDraw(bool bInSkip) noexcept { this->TextBrush.bSkipBrushDraw = bInSkip; }
+    constexpr void SetTextTightening(f32 InTightening) noexcept { this->TextBrush.Tightening = InTightening; }
     constexpr void SetTextOutlineThickness(f32 InThickness) noexcept { this->TextBrush.OutlineThickness = InThickness; }
     constexpr void SetTextOutlineTint(LColor const& InTint) noexcept { this->TextBrush.OutlineTint = InTint; }
-    constexpr void SetTextScale(LTextScale InScale) noexcept { this->TextBrush.TextScale = InScale; this->RenderData.Dirty(); }
     constexpr void SetTextAlign(ETextHAlign InAlign) noexcept { this->TextBrush.TextHAlign = InAlign; }
     constexpr void SetTextAlign(ETextVAlign InAlign) noexcept { this->TextBrush.TextVAlign = InAlign; }
     constexpr void SetTextHAlign(ETextHAlign InAlign) noexcept { this->TextBrush.TextHAlign = InAlign; }
     constexpr void SetTextVAlign(ETextVAlign InAlign) noexcept { this->TextBrush.TextVAlign = InAlign; }
 
+    constexpr LTextScale GetTextScale() const noexcept { return this->TextBrush.TextScale; }
     constexpr LColor const& GetTextTint() const noexcept { return this->TextBrush.Tint; }
     constexpr bool GetSkipTextBrushDraw() const noexcept { return this->TextBrush.bSkipBrushDraw; }
+    constexpr f32 GetTextTightening() const noexcept { return this->TextBrush.Tightening; }
     constexpr f32 GetTextOutlineThickness() const noexcept { return this->TextBrush.OutlineThickness; }
     constexpr LColor const& GetTextOutlineTint() const noexcept { return this->TextBrush.OutlineTint; }
-    constexpr LTextScale GetTextScale() const noexcept { return this->TextBrush.TextScale; }
     constexpr ETextHAlign GetTextHAlign() const noexcept { return this->TextBrush.TextHAlign; }
     constexpr ETextVAlign GetTextVAlign() const noexcept { return this->TextBrush.TextVAlign; }
 
@@ -165,7 +170,7 @@ private:
 
         bool bDirty{ true };
         f32 FontSize{};
-        TArray<LGlyphInfo> Glyphes;
+        LGetGlyphInfosResult Result;
         LVec2F DesiredSize;
     } RenderData;
 };
@@ -185,6 +190,11 @@ struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
         return NODE_FACTORY_RESULT();
     }
 
+    constexpr decltype(auto) TextScale(this auto&& Self, LTextScale InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetTextScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
     constexpr decltype(auto) TextBrush(this auto&& Self, LTextBrush const& InBrush) noexcept
     {
         NODE_FACTORY_SELF().SetTextBrush(InBrush);
@@ -200,6 +210,11 @@ struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
         NODE_FACTORY_SELF().SetSkipTextBrushDraw(bInSkip);
         return NODE_FACTORY_RESULT();
     }
+    constexpr decltype(auto) TextTightening(this auto&& Self, f32 InTightening) noexcept
+    {
+        NODE_FACTORY_SELF().SetTextTightening(InTightening);
+        return NODE_FACTORY_RESULT();
+    }
     constexpr decltype(auto) TextOutlineThickness(this auto&& Self, f32 InThickness) noexcept
     {
         NODE_FACTORY_SELF().SetTextOutlineThickness(InThickness);
@@ -210,11 +225,7 @@ struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
         NODE_FACTORY_SELF().SetTextOutlineTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextScale(this auto&& Self, LTextScale InScale) noexcept
-    {
-        NODE_FACTORY_SELF().SetTextScale(InScale);
-        return NODE_FACTORY_RESULT();
-    }
+
     constexpr decltype(auto) TextAlign(this auto&& Self, ETextHAlign InAlign) noexcept
     {
         NODE_FACTORY_SELF().SetTextHAlign(InAlign);

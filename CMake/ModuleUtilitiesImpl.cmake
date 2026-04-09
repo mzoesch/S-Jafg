@@ -148,7 +148,6 @@ function(_jafg_add_module_impl
         "${module_int_dir}/gh"
         )
     target_include_directories(${module_name} PRIVATE
-        "${JAFG_ENGINE_ROOT}"
         "${module_dir}/Source/Internal"
         "${JAFG_ENGINE_ROOT}/Intermediates/${module_rel_dir}"
         )

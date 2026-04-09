@@ -50,26 +50,3 @@ bool Jafg::IsValidSlow(LClassOuter const* Outer, JCxxClass const* Obj)
 
     return Obj->_IsGarbage() == false;
 }
-
-void Jafg::PullConfigForCxxObject(JCxxClass* Object, LCxxClass* Class)
-{
-}
-
-void Jafg::PushConfigFromCxxObject(JCxxClass const& Object, LCxxClass const& Class)
-{
-    check(Class.IsConfig())
-    check(Object.IsA(Class))
-
-    for (auto const& Field : Class.GetFields())
-    {
-        LString FieldStr{Field.Get(Object)};
-
-        LOG_WARNING(LogTemporal, "[{}]: {} == {}",
-            Object.GetNameAsString(),
-            Field.Identifier,
-            FieldStr
-            )
-    }
-
-    return;
-}

@@ -391,7 +391,8 @@ private: /* Restore default visibility. */
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember) \
     inline static void JAFG_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(Derived* Class, ::LStringView _InValue) \
-    {                check( Class )                                                                         \
+    {                \
+        check( Class )                                                                         \
         ::Serde::FromString(&Class->MyClassMember, _InValue);                          \
     }                                                                                         \
     inline static ::LString JAFG_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)(Derived const& Class)                       \
@@ -550,32 +551,6 @@ private: /* Restore default visibility. */
     void _CommonCtorLogic(auto const& Init)
 
 //#
-//# Default behavior for all memory allocations.
-//#
-#ifdef DEFAULT_WIDGET_CONSTRUCTORS
-    #error "DEFAULT_WIDGET_CONSTRUCTORS already defined."
-#endif /* DEFAULT_WIDGET_CONSTRUCTORS */
-#define DEFAULT_WIDGET_CONSTRUCTORS(MyClassName) \
-    DEFAULT_WIDGET_DYNAMIC_CTOR(MyClassName)            \
-    DEFAULT_WIDGET_STATIC_CTOR(MyClassName)
-//#
-//# Default behavior for all memory allocations with an additional body to execute code.
-//#
-//# Use as follows:
-//#     DEFAULT_WIDGET_CONSTRUCTORS_BODY(CxxClass)
-//#     {
-//#         <...>
-//#     }
-//#
-#ifdef DEFAULT_WIDGET_CONSTRUCTORS_BODY
-    #error "DEFAULT_WIDGET_CONSTRUCTORS_BODY already defined."
-#endif /* DEFAULT_WIDGET_CONSTRUCTORS_BODY */
-#define DEFAULT_WIDGET_CONSTRUCTORS_BODY(MyClassName) \
-    DEFAULT_WIDGET_DYNAMIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); }           \
-    DEFAULT_WIDGET_STATIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); } \
-    void _CommonCtorLogic(auto const& Init)
-
-//#
 //# Default dynamic ctor for a JCxxClasses. Mandatory. It may be used to declare extra information for all
 //# objects of this type. The new ctor is prohibited from changing the arguments of the super dynamic ctor.
 //#
@@ -659,32 +634,6 @@ private: /* Restore default visibility. */
 #define DEFAULT_NODE_STATIC_CTOR_BODY(MyClassName) \
     template<typename TCxxClass> \
     explicit MyClassName(::Jafg::TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
-
-//# Default widget ctors for subclasses of Jafg::WUserWidget.
-#ifdef DEFAULT_WIDGET_DYNAMIC_CTOR
-    #error "DEFAULT_WIDGET_DYNAMIC_CTOR already defined."
-#endif /* DEFAULT_WIDGET_DYNAMIC_CTOR */
-#define DEFAULT_WIDGET_DYNAMIC_CTOR(MyClassName)                                         \
-    explicit MyClassName(::Jafg::LWidgetDynamicInit const& Init) noexcept : Super{Init} {}
-#ifdef DEFAULT_WIDGET_STATIC_CTOR
-    #undef DEFAULT_WIDGET_STATIC_CTOR
-#endif /* DEFAULT_WIDGET_STATIC_CTOR */
-#define DEFAULT_WIDGET_STATIC_CTOR(MyClassName) \
-    template<typename TCxxClass> \
-    explicit MyClassName(::Jafg::TWidgetStaticInit<TCxxClass> const& Init) noexcept : Super{Init} {}
-
-//# Default widget ctors for subclasses of Jafg::WUserWidget with no body attached.
-#ifdef DEFAULT_WIDGET_DYNAMIC_CTOR_BODY
-    #error "DEFAULT_WIDGET_DYNAMIC_CTOR_BODY already defined."
-#endif /* DEFAULT_WIDGET_DYNAMIC_CTOR_BODY */
-#define DEFAULT_WIDGET_DYNAMIC_CTOR_BODY(MyClassName)                                         \
-    explicit MyClassName(::Jafg::LWidgetDynamicInit const& Init) noexcept : Super{Init}
-#ifdef DEFAULT_WIDGET_STATIC_CTOR_BODY
-    #undef DEFAULT_WIDGET_STATIC_CTOR_BODY
-#endif /* DEFAULT_WIDGET_STATIC_CTOR_BODY */
-#define DEFAULT_WIDGET_STATIC_CTOR_BODY(MyClassName) \
-    template<typename TCxxClass> \
-    explicit MyClassName(::Jafg::TWidgetStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
 
 //#
 //# Mark a member of a j-class as something special.

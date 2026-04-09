@@ -19,7 +19,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
     .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
     {
         LOG_VERBOSE(LogCoreCommands, "Received quit request.")
-        GEngine->RequestEngineExit("Invoked by CLI command.");
+        Application::RequestEngineExit("Invoked by CLI command.");
         OutResponse.Rc = ECommandReturnCode::SuccessNoResponse;
     })});
 

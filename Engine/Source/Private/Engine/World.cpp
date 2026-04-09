@@ -52,7 +52,7 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
 {
     STAT_CYCLE_FUNCTION()
 
-    this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
+    this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetElapsedTime());
     check(this->RealTimeWhenWorldWasLaunched > 0.0f)
 
     check(this->WorldState == EWorldState::PreInitializing)
@@ -112,7 +112,7 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     }
     check(this->SupremePolicies)
 
-    this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
+    this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetElapsedTime());
     check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
 
     if (auto& Track{GEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
@@ -169,14 +169,16 @@ Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexcept
     return GEngine->GetLocalEgo();
 }
 
-void Jafg::LWorld::Tick(const f32 Dt)
+void Jafg::LWorld::Tick(f32 Dt)
 {
     STAT_CYCLE_FUNCTION()
+
+    this->DeltaTime = Dt;
 
     this->AcquireTickableObjectsLock();
     for (LTickableObject* Tickable : this->TickableObjects)
     {
-        Tickable->Tick(Dt);
+        Tickable->Tick(this->DeltaTime);
     }
     this->ReleaseTickableObjectsLock();
     for (LTickableObject* Tickable : this->DeletedTickableObjects)
@@ -424,15 +426,12 @@ void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
     {
         return;
     }
-
     panic("Failed to find tickable object")
-    return;
 }
 
 f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const noexcept
 {
-    const f32 Now { static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization()) };
-    return Now - this->RealTimeWhenWorldWasLaunched;
+    return static_cast<f32>(Application::GetElapsedTime()) - this->RealTimeWhenWorldWasLaunched;
 }
 
 bool Jafg::LWorld::LineTraceByChannel(
@@ -444,8 +443,8 @@ bool Jafg::LWorld::LineTraceByChannel(
 ) const
 {
     STAT_CYCLE_FUNCTION()
-    check( OutHits )
-    check( maths::magnitude(Begin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances." )
+    check(OutHits )
+    check(maths::magnitude(Begin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
 
     STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
     /* TODO: Save (as the tickables) the physics in a separate cached vector. */

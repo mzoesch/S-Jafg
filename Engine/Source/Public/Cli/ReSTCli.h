@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Minimal.afx"
+#include "Runtime/Parameter.h"
 
 #if !JAFG_WITH_REST_CLS
     #error "JAFG_WITH_REST_CLS is required to include this header."
@@ -99,28 +99,38 @@ enum EStatusCode : i32 /* cpp-httplib */
 
 struct LRequest final
 {
-    inline LRequest(void const* InPimpl) noexcept : Pimpl{ InPimpl } { check( this->Pimpl ) return; }
+    inline constexpr LRequest(void const* InPimpl) noexcept : Pimpl{InPimpl} { check(this->Pimpl) return; }
 
     ENGINE_API bool HasParameter(LString const& Key) const noexcept;
     ENGINE_API LString GetParameter(LString const& Key) const noexcept;
 
 private:
-    void const* Pimpl{ nullptr };
+    void const* Pimpl{};
 };
 
 struct LResponse final
 {
-    inline LResponse(void* InPimpl) noexcept : Pimpl{ InPimpl } { check( this->Pimpl ) return; }
+    inline constexpr LResponse(void* InPimpl) noexcept : Pimpl{InPimpl} { check(this->Pimpl) return; }
 
     ENGINE_API void SetStatusCode(EStatusCode InStatusCode) noexcept;
     ENGINE_API void AddHeader(std::string&& InKey, std::string&& InValue) noexcept;
     ENGINE_API void SetContent(std::string&& Content, std::string&& ContentType) noexcept;
 
 private:
-    void* Pimpl{ nullptr };
+    void* Pimpl{};
 };
 
 } /* ~Namespace ReST */
+
+namespace Params
+{
+
+ENGINE_API extern LProgramParameter ReST_DisableAutoStart;
+ENGINE_API extern LProgramParameter ReST_InstantStart;
+ENGINE_API extern LProgramParameter ReST_Host;
+ENGINE_API extern LProgramParameter ReST_Port;
+
+} /* ~Namespace Params */
 
 class LReStCli final : public LRunnable
 {

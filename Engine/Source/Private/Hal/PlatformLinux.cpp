@@ -106,7 +106,7 @@ void Jafg::LOnPlatformBreakLinux::OnProgramPanicImpl
     LOG_ERROR(LogJafgInternal, "Stacktrace:\n{}", TraceStream.str());
 
 #if WITH_LOCAL_LAYER
-    if (Application::Private::bGSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
+    if (Application::Detail::bSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
     {
         std::string ZenityMessage;
         ZenityMessage.reserve(strlen(InMessage));
@@ -166,7 +166,7 @@ void Jafg::LOnPlatformBreakLinux::OnProgramPanicImpl
             TraceStream.str()
         )
     };
-    Finder::OverrideFile("Saved/Dumps/stack.trace", TraceContent);
+    Finder::OverrideFile(Finder::GetMostRecentStackTraceFile(), TraceContent);
 
     // Flush, because some streams may be buffered and missing while aborting.
     Jafg::FlushOutStreams();

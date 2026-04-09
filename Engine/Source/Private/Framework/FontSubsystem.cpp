@@ -2,8 +2,8 @@
 
 #include "Framework/FontSubsystem.h"
 #include "Framework/Frontend.h"
-#include "Rhi/RendererCore.h"
 #include "Framework/TextureSubsystem.h"
+#include "Rhi/RendererCore.h"
 #include "Rhi/VisualInstance.h"
 
 #if JAFG_WITH_CLANG
@@ -16,12 +16,10 @@
     #include FT_FREETYPE_H
     #include <msdfgen.h>
     #include <msdf-atlas-gen/msdf-atlas-gen.h>
-#include <Runtime/Args.h>
+    #include <stb_image_write.h>
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
-
-#include <stb_image_write.h>
 
 namespace
 {
@@ -30,14 +28,14 @@ inline constexpr u32 AtlasColorChannels{ 3 };
 /* Positions are in 26.6 fixed-point (1/64px) scale to pixels. */
 inline constexpr f32 HarfBuzzScale{ 1.0f / 64.0f };
 
-Lu32String utf8_to_utf32(LString const& UTF8)
+Lu32String utf8_to_utf32(LString const& Utf8)
 {
     Lu32String Result;
 
     auto Idx{0uz};
-    while (Idx < UTF8.size())
+    while (Idx < Utf8.size())
     {
-        uint8_t C{static_cast<uint8_t>(UTF8[Idx])};
+        uint8_t C{static_cast<uint8_t>(Utf8[Idx])};
         uint32_t CP{0};
         auto Bytes{0uz};
 
@@ -53,14 +51,14 @@ Lu32String utf8_to_utf32(LString const& UTF8)
         }
 
         /* Validate that enough bytes exist. */
-        if (Idx + Bytes > UTF8.size())
+        if (Idx + Bytes > Utf8.size())
         {
             break;
         }
 
         for (auto SubIdx{1uz}; SubIdx < Bytes; ++SubIdx)
         {
-            uint8_t Cont{static_cast<uint8_t>(UTF8[Idx + SubIdx])};
+            uint8_t Cont{static_cast<uint8_t>(Utf8[Idx + SubIdx])};
             if ((Cont & 0xC0) != 0x80)
             {
                 /* Invalid continuation. */
@@ -93,7 +91,7 @@ void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
     check(this->My_FT_Library)
 
     check(this->My_Fonts.empty())
-    this->ReloadFont({"Content/Fonts/Noto_Sans/static/NotoSans-Bold.ttf"});
+    (void)this->ReloadFont({"Content/Fonts/Noto_Sans/static/NotoSans-Bold.ttf"});
     check(this->My_Fonts.size() == 1)
 
     return;
@@ -123,9 +121,19 @@ void Jafg::JFontSubsystem::TearDown()
     return;
 }
 
-void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
+u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
 {
-    MyFont Result; Result.Source = std::move(Info.Source);
+    if (this->My_Fonts.size() >= JFontSubsystem::MaxAllowedFonts)
+    {
+        LOG_FATAL(LogFontSubsystem
+            , "Cannot load [{}] because the maximum allowed font count [{}] has been reached."
+            , Info.Source, JFontSubsystem::MaxAllowedFonts
+            )
+    }
+
+    //# TODO: Fix existing font and update it instead.
+    //#       Also msdf-gen supports on the fly atlas updates. We need to support this as well.
+    MyFont Result; Result.Source = Info.Source;
 
     // TODO: Ask user preferences to clamp this.
     Result.AtlasGlyphSize = Info.MaxAtlasGlyphSize;
@@ -164,7 +172,9 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
     LVec2i32 AtlasDimensions; Packer.getDimensions(AtlasDimensions.x, AtlasDimensions.y);
 
     msdf_atlas::GeneratorAttributes Attributes;
-    msdf_atlas::ImmediateAtlasGenerator<f32, AtlasColorChannels, msdf_atlas::msdfGenerator, msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, AtlasColorChannels>> Generator(AtlasDimensions.x, AtlasDimensions.y);
+    msdf_atlas::ImmediateAtlasGenerator<
+        f32, AtlasColorChannels, msdf_atlas::msdfGenerator, msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, AtlasColorChannels>>
+        Generator(AtlasDimensions.x, AtlasDimensions.y);
     Generator.setAttributes(Attributes);
     Generator.setThreadCount(4);
     Generator.generate(Glyphes.data(), Glyphes.size());
@@ -188,8 +198,11 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
         Result.GlyphUVsMap[Glyph.getGlyphIndex().getIndex()] = UVs;
     }
 
-    Result.Ascender = LVec2D{FontGeometry.getMetrics().ascenderY, FontGeometry.getMetrics().descenderY};
+    Result.Ascender = FontGeometry.getMetrics().ascenderY;
+    Result.Descender = FontGeometry.getMetrics().descenderY;
+    Result.LineHeight = FontGeometry.getMetrics().lineHeight;
 
+    //# TODO: Make this a program arg.
     // stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, AtlasColorChannels, Bitmap.pixels, Bitmap.width * AtlasColorChannels);
 
     check(Result.Atlas->GetExtent().Width == static_cast<u32>(AtlasDimensions.x) && Result.Atlas->GetExtent().Height == static_cast<u32>(AtlasDimensions.y))
@@ -197,20 +210,29 @@ void Jafg::JFontSubsystem::ReloadFont(FontCreateInfo Info) noexcept
     this->My_Fonts.push_back(std::move(Result));
     check(Result.Atlas.get() == nullptr)
 
-    return;
+    return this->My_Fonts.size() - 1;
 }
 
-TArray<Jafg::LGlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F Pencil, u32 FontIndex) const noexcept
+Jafg::LGetGlyphInfosResult Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept
 {
+    check(Pencil)
+
+
     auto& Font{this->My_Fonts[FontIndex]};
     check(Font.Source.empty() == false)
     check(Font.My_FT_Face && Font.Font)
     check(Font.Atlas.get())
     check(Font.GlyphUVsMap.empty() == false)
 
-    auto AtlasExtend{Font.Atlas->GetExtentAsVec2F()};
-
     FT_Set_Pixel_Sizes(Font.My_FT_Face, 0, FontSize);
+
+    LGetGlyphInfosResult Result{
+        .Ascender = Font.My_FT_Face->size->metrics.ascender * HarfBuzzScale,
+        .Descender = Font.My_FT_Face->size->metrics.descender * HarfBuzzScale,
+        };
+    // TODO: Is this correct? Or should we use the absolute descender value?
+    Result.LineHeight = Result.Ascender - Result.Descender;
+
     hb_font_t* HBFont{hb_ft_font_create(Font.My_FT_Face, nullptr)};
     hb_buffer_t* HBBuffer{hb_buffer_create()};
 
@@ -225,9 +247,10 @@ TArray<Jafg::LGlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text
     hb_glyph_position_t* GlyphPositions{hb_buffer_get_glyph_positions(HBBuffer, &GlyphCount)};
 
     /* Move to baseline. */
-    Pencil.y += FontSize * Font.Ascender.x;
+    Pencil->y += FontSize * Font.Ascender;
 
-    TArray<LGlyphInfo> Result; Result.reserve(GlyphCount);
+    auto AtlasExtend{Font.Atlas->GetExtentAsVec2F()};
+    Result.GlyphInfos.reserve(GlyphCount);
     for (auto Idx{0uz}; Idx < GlyphCount; ++Idx)
     {
         uint32_t GlyphIndex{GlyphInfos[Idx].codepoint}; /* After shaping, this is the Glyph-ID. */
@@ -236,22 +259,24 @@ TArray<Jafg::LGlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text
         auto It{Font.GlyphUVsMap.find(GlyphIndex)};
         if (It == Font.GlyphUVsMap.end()) /* Non-printable or missing. */
         {
-            Pencil += Advance;
+            *Pencil += Advance;
             continue;
         }
 
         GlyphUVs const& GlyphUV{It->second};
         LVec2F Offset{GlyphPositions[Idx].x_offset * HarfBuzzScale, GlyphPositions[Idx].y_offset * HarfBuzzScale};
         LVec2F LeftTop{
-            Pencil.x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[0]) * FontSize,
-            Pencil.y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[3]) * FontSize,
+            Pencil->x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[0]) * FontSize,
+            Pencil->y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[3]) * FontSize,
             };
-        Result.emplace_back(
+        Result.GlyphInfos.emplace_back(
             LVec4F{
                 LeftTop.x,
                 LeftTop.y,
-                (Pencil.x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[2]) * FontSize) - LeftTop.x,
-                (Pencil.y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[1]) * FontSize) - LeftTop.y,
+                // (Pencil->x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[2]) * FontSize) - LeftTop.x,
+                // (Pencil->y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[1]) * FontSize) - LeftTop.y,
+                static_cast<f32>(GlyphUV.PlaneBounds[2] - GlyphUV.PlaneBounds[0]) * FontSize,
+                static_cast<f32>(GlyphUV.PlaneBounds[3] - GlyphUV.PlaneBounds[1]) * FontSize,
                 },
             LVec4F{
                 static_cast<f32>(GlyphUV.AtlasBounds[0]) / AtlasExtend.x,
@@ -264,7 +289,7 @@ TArray<Jafg::LGlyphInfo> Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text
             (Font.PixelRange / Font.AtlasGlyphSize) * FontSize
             );
 
-        Pencil += Advance;
+        *Pencil += Advance;
         continue;
     }
 

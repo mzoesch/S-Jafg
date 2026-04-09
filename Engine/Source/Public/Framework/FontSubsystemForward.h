@@ -16,4 +16,12 @@ struct LGlyphInfo final
     f32 MsdfPixelRange;
 };
 
+struct LGetGlyphInfosResult
+{
+    TArray<LGlyphInfo> GlyphInfos;
+    f32 Ascender;
+    f32 Descender;
+    f32 LineHeight;
+};
+
 } /* ~Namespace Jafg */

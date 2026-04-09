@@ -1,17 +1,15 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Editor.h"
-
-#include <Framework/FrontendVk.h>
-#include <Framework/TextureSubsystem.h>
-
 #include "Nodes/HDragRegion.h"
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
 #include "Nodes/HRegion.h"
+#include "Framework/Frontend.h"
+#include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
 
-
+#include "Widgets/TagInspector.h"
 #include "Nodes/TextBox.h"
 
 void Jafg::WEditor::Construct()
@@ -19,7 +17,6 @@ void Jafg::WEditor::Construct()
     Super::Construct();
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
-
     BeginStyling(*this).StaticRoot<WHDragRegion>()
         // .SetInitialState(LInitialHDragRegionState{100_pt,{},100_pt})
         .Padding(3_spt)
@@ -31,7 +28,7 @@ void Jafg::WEditor::Construct()
             .MinDesiredSize({25_pt, 0.0f})
         +
         NewStaticNode(WRegion)
-            .Tint(Colors::Green)
+            .Tint(Colors::Lime)
             .Visibility(ENodeVisibility::Visible)
             .MinDesiredSize({25_pt, 0.0f})
         +
@@ -41,9 +38,11 @@ void Jafg::WEditor::Construct()
             .WrapperClass(WVRegion::StaticSubclass(), [](LFactoryVRegion& Factory){ Factory.SkipBrushDraw(true); })
             .SelectorsClass(WHRegion::StaticSubclass())
         [
+            WTagInspector::CreateTabDescriptor(this->GetViewport())
+            +
             LTabOverlayElement{
-                .Selector = LTabOverlayElement::Info{
-                    .DisplayName = "Tab_1",
+                .Selector = LTabOverlayElement::CreateInfo{
+                    .DisplayName = "Tab 2",
                     .Icon = this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.Preferences"),
                     },
                 .Panel = NewStaticNode(WVRegion)
@@ -60,7 +59,7 @@ void Jafg::WEditor::Construct()
                 }
             +
             LTabOverlayElement{
-                .Selector = LTabOverlayElement::Info{.DisplayName = "Tab_2"},
+                .Selector = LTabOverlayElement::CreateInfo{.DisplayName = "Tab 3"},
                 .Panel = NewStaticNode(WVRegion)
                     .Anchor(EAnchor::Fill)
                     .Tint(*Prefs.ForegroundColor)

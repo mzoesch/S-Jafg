@@ -23,14 +23,6 @@ using namespace Jafg;
     #endif /* !IN_SHIPPING */
 #endif /* JAFG_FORCE_LOG_FLUSH_INTERVAL */
 
-#ifndef JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES
-    #if IN_SHIPPING
-        #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      2.0
-    #else /* IN_SHIPPING */
-        #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      0.7
-    #endif /* !IN_SHIPPING */
-#endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
-
 namespace
 {
 
@@ -50,7 +42,10 @@ FORCEINLINE
 void FlushLogs()
 {
     Jafg::FlushOutStreams();
-    Application::Private::LastStdOutFlushTime = Application::GetHighestNow();
+    if (GEngine)
+    {
+        GEngine->LastStdOutFlush = LEngine::Clock::now();
+    }
     return;
 }
 
@@ -59,8 +54,8 @@ FORCEINLINE
 #endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    return Jafg::HasCustomExitStatus()
-        ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
+    return Application::HasCustomExitStatus()
+        ? static_cast<EPlatformExit::Type>(Application::GetCustomExitStatus())
         : EPlatformExit::Success;
 }
 
@@ -70,87 +65,17 @@ FORCEINLINE
 void EngineTick()
 {
     STAT_CYCLE_FUNCTION()
+    check(GEngine)
+    check(Tasks::IsOnMasterThread())
 
-    checkSlow( Tasks::IsOnMasterThread() )
-
-    if (Application::GetTimeDiff(Application::Private::LastStdOutFlushTime, Application::GetHighestNow()) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
+    if (algo::time_diff(GEngine->LastStdOutFlush, std::chrono::high_resolution_clock::now()) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
     {
         ::FlushLogs();
     }
 
-    LEngine::_BeginExitIfRequested();
-
-    {
-        STAT_QUICK_CYCLE_START("UpdateTime")
-        JUserPreferences const& UserPreferences{GetSingleton<JUserPreferences>()};
-
-        Application::Private::LostDeltaTime = 0.0;
-        Application::Private::IdleDeltaTime = 0.0;
-
-        const f64 ThisFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow()) - Application::GetCurrentFrameTime();
-        if (UserPreferences.bVSyncEnabled == false && UserPreferences.MaxFps != JUserPreferences::UnlimitedFps)
-        {
-            if (ThisFrameTime < 1.0 / *UserPreferences.MaxFps)
-            {
-                const Application::LHrcTimePoint SleepStart = Application::GetHighestNow();
-                const f64 SleepTime = (1.0 / *UserPreferences.MaxFps) - ThisFrameTime;
-                Jafg::Hal::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
-                Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
-                if (Application::GetIdleDeltaTime() > Application::GetHighestIdleDeltaTime())
-                {
-                    Application::Private::HighestIdleDeltaTime = Application::GetIdleDeltaTime();
-                }
-            }
-        }
-
-        Application::Private::PreviousFrameTime = Application::GetCurrentFrameTime();
-        Application::Private::CurrentFrameTime  = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
-        Application::Private::DeltaTime         = Application::GetCurrentFrameTime() - Application::GetPreviousFrameTime();
-        Application::Private::RealDeltaTime     = Application::GetDeltaTime();
-
-        if (Application::GetDeltaTime() < Application::GetLowestDeltaTime())
-        {
-            Application::Private::LowestDeltaTime = Application::GetDeltaTime();
-        }
-        if (Application::GetDeltaTime() > Application::GetHighestDeltaTime())
-        {
-            Application::Private::HighestDeltaTime = Application::GetDeltaTime();
-        }
-
-        ++Application::Private::FrameCount;
-        ++Application::Private::StatisticsFrameCount;
-
-        if (Application::GetDeltaTime() > Application::MaxDeltaTime)
-        {
-            if constexpr (IS_COMPILED_LOG(LogGuardedMain, Warning))
-            {
-                if (Application::GetDeltaTime() > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
-                {
-                    LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", Application::GetDeltaTime())
-                }
-            }
-            Application::Private::LostDeltaTime += Application::GetDeltaTime() - Application::MaxDeltaTime;
-            if (Application::GetHighestLostDeltaTime() < Application::GetLostDeltaTime())
-            {
-                Application::Private::HighestLostDeltaTime = Application::GetLostDeltaTime();
-            }
-            Application::Private::DeltaTime = Application::MaxDeltaTime;
-        }
-
-        const Application::LHrcTimePoint CurrentSteadyTime = Application::GetHighestNow();
-        if
-        (
-                std::chrono::duration<double>(CurrentSteadyTime - Application::GetLastStatisticsTime()).count()
-            >
-                Application::GetStatisticsPeriod()
-        )
-        {
-            Application::ResetStatistics();
-        }
-    }
-
-    GEngine->Tick(Application::GetDeltaTimeAsFloat());
-
+    Application::Detail::BeginExitIfRequested();
+    GEngine->DefaultTimeAdvance();
+    GEngine->Tick();
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;
@@ -183,26 +108,26 @@ void EngineExit()
 
     (void)Detail::GetNameRegistry().Destroy();
 
-    if (::HasCustomExitReason())
+    if (Application::HasCustomExitReason())
     {
         if ((::GetMostSignificantExitReason() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
         {
-            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit reason: {}", ::GetCustomExitReason())
+            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit reason: {}", Application::GetCustomExitReason())
         }
         else
         {
-            LOG_INFO(LogGuardedMain, "Engine exit with custom exit reason: {}", ::GetCustomExitReason())
+            LOG_INFO(LogGuardedMain, "Engine exit with custom exit reason: {}", Application::GetCustomExitReason())
         }
     }
-    if (::HasCustomExitStatus())
+    if (Application::HasCustomExitStatus())
     {
-        if ((::GetCustomExitStatus() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
+        if ((Application::GetCustomExitStatus() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
         {
-            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit status: {}", ::GetCustomExitStatus())
+            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit status: {}", Application::GetCustomExitStatus())
         }
         else
         {
-            LOG_INFO(LogGuardedMain, "Engine exit with custom exit status: {}", ::GetCustomExitStatus())
+            LOG_INFO(LogGuardedMain, "Engine exit with custom exit status: {}", Application::GetCustomExitStatus())
         }
     }
 
@@ -222,23 +147,57 @@ void EngineExit()
 //# A function "guarded" by platform-specific code implementing error handlers and user interface crash reporters.
 EPlatformExit::Type GuardedMain()
 {
+    {
+        check(Application::Detail::ProcessedCommandLine.empty())
+        LProgramArgument* CurrentList{};
+        algo::for_each(Application::Detail::RawCommandLine, [&CurrentList](LString const& Parameter)
+        {
+            if (Parameter.starts_with('-'))
+            {
+                CurrentList = nullptr;
+                if (auto Idx{Parameter.find('=')}; Idx != LString::npos)
+                {
+                    Application::Detail::ProcessedCommandLine.emplace_back(algo::sub(Parameter, 1, Idx), algo::right_chop(Parameter, Idx + 1));
+                }
+                else
+                {
+                    Application::Detail::ProcessedCommandLine.emplace_back(algo::right_chop(Parameter, 1));
+                    CurrentList = &Application::Detail::ProcessedCommandLine.back();
+                }
+            }
+            else
+            {
+                if (CurrentList)
+                {
+                    check(CurrentList->IsValue() == false)
+                    if (CurrentList->IsStoreTrue())
+                    {
+                        CurrentList->Variant = TArray<LString>{};
+                    }
+                    std::get<TArray<LString>>(CurrentList->Variant).emplace_back(Parameter);
+                }
+                else
+                {
+                    LOG_WARNING(LogGuardedMain, "Command line argument [{}] is not associated with any parameter.", Parameter)
+                }
+            }
+        });
+    }
+
+    if (Application::GetCommandLineArgument("h") || Application::GetCommandLineArgument("help") || Application::GetCommandLineArgument("Help"))
+    {
+        Application::PrettyPrintApiUsage();
+        Application::RequestEngineExit("Help shown");
+        return ::GetMostSignificantExitReason();
+    }
+    if (Application::GetCommandLineArgument("v") || Application::GetCommandLineArgument("version") || Application::GetCommandLineArgument("Version"))
+    {
+        Application::PrettyPrintVersion();
+        Application::RequestEngineExit("Version shown");
+        return ::GetMostSignificantExitReason();
+    }
+
 #if !WITH_TESTS
-    Application::Private::ProcessCommandLineVariables();
-
-    if (auto const Ret{Application::Private::ConditionallyShowHelpAndExit()}; std::get<0>(Ret))
-    {
-        GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
-        GCustomExitReason = "Help shown.";
-        return ::GetMostSignificantExitReason();
-    }
-
-    if (auto const Ret{Application::Private::ConditionallyShowVersionAndExit()}; std::get<0>(Ret))
-    {
-        GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
-        GCustomExitReason = "Version shown.";
-        return ::GetMostSignificantExitReason();
-    }
-
 #if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
     struct GuardedMainScope
     {
@@ -249,23 +208,21 @@ EPlatformExit::Type GuardedMain()
     } GuardedMainScope;
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
 
-    LOG_INFO(LogGuardedMain, "Finished static storage initialization after {} seconds.",
-        Application::GetDeltaSinceStaticStorageInitialization()
-        )
+    LOG_INFO(LogGuardedMain, "Finished static storage initialization after {} seconds.", Application::GetElapsedTime())
 
-    Application::Private::bPauseBeforeExit = Application::HasCmdLineParameter("PauseBeforeExit");
-    Application::Private::bAlwaysReportCrash = Application::HasCmdLineParameter("AlwaysReportCrash");
+    Application::Detail::PauseBeforeExit = !!Application::GetCommandLineArgument("Jafg.PauseBeforeExit");
+    Application::Detail::AlwaysReportCrash = !!Application::GetCommandLineArgument("Jafg.AlwaysReportCrash");
 #if WITH_STATS
-    Application::Private::bAllowProfiling = Application::CanEverProfile() && Application::HasCmdLineParameter("AllowProfiling");
+    Application::Detail::AllowProfiling = Application::CanEverProfile() && !!Application::GetCommandLineArgument("Jafg.AllowProfiling");
 #endif /* WITH_STATS */
+#endif /* !WITH_TESTS */
 
     Tasks::RegisterThread(ENamedThreads::Master);
-#endif /* !WITH_TESTS */
 
     std::filesystem::current_path(PlatformMisc::GetEngineRootDir());
     Finder::CreateDirectories(Finder::GetTempDir());
-    Finder::CreateDirectories(Finder::GetSavedDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
+    Finder::CreateDirectories(Finder::GetSavedDir());
 
     LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", PlatformMisc::GetEngineRootDir())
     LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", PlatformMisc::GetSelfProcDir())
@@ -293,38 +250,23 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineInit, "EngineInit")
     check(GEngine == nullptr)
-    GEngine = new LEngine();
+    GEngine = new LEngine{};
     check(GEngine)
-    if (::IsEngineExitRequested())
-    {
-        return EPlatformExit::Fatal;
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
-    if (::IsEngineExitRequested())
-    {
-        return EPlatformExit::Fatal;
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
 
     STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
     Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
     Detail::GetGlobalCxxRecordRegistry().LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
-    if (::IsEngineExitRequested())
-    {
-        return EPlatformExit::Fatal;
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::RunAllTasks);
-    if (::IsEngineExitRequested())
-    {
-        return EPlatformExit::Fatal;
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmObjects)
 
     GEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
-    if (::IsEngineExitRequested())
-    {
-        return ::GetMostSignificantExitReason();
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmEngineInit)
 
 #if JAFG_WITH_FOREIGN_SUPPORT
@@ -335,17 +277,14 @@ EPlatformExit::Type GuardedMain()
     {
         GEngine->LoadPluginNoFailure(Plugin);
     }
-    if (::IsEngineExitRequested())
-    {
-        return ::GetMostSignificantExitReason();
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmEnabledEnginePluginsLoad)
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
-    if (auto const Ret{Application::Private::ConditionallyShowVerboseHelpAndExit()}; std::get<0>(Ret))
+    if (Application::GetCommandLineArgument("Jafg.VerboseHelp"))
     {
-        GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
-        GCustomExitReason = "Verbose help shown.";
+        Application::PrettyPrintApiUsage();
+        Application::RequestEngineExit("Verbose help shown");
         return ::GetMostSignificantExitReason();
     }
 
@@ -354,19 +293,13 @@ EPlatformExit::Type GuardedMain()
     GEngine->SetReSTCliCorePaths();
     if (auto const& ReSTCliPrefs{GetSingleton<JReSTCliPreferences>()}; ReSTCliPrefs.bAlwaysDisable == false)
     {
-        if
-        (
-               (ReSTCliPrefs.bAutoStart && !Application::HasCmdLineParameter("ReSTCli.DisableAutoStart"))
-            || (Application::HasCmdLineParameter("ReSTCli.InstantStart"))
-        )
+        if ((ReSTCliPrefs.bAutoStart && !Application::GetCommandLineArgument("ReSTCli.DisableAutoStart"))
+            || !!Application::GetCommandLineArgument("ReSTCli.InstantStart"))
         {
             GEngine->StartReSTCliServer();
         }
     }
-    if (::IsEngineExitRequested())
-    {
-        return ::GetMostSignificantExitReason();
-    }
+    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmReSTCliLoad)
 #endif /* JAFG_WITH_REST_CLS */
 
@@ -374,9 +307,9 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     LaunchProgress::FinishAndGiveUpMemory();
 
-    Application::Private::PreviousFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
+    GEngine->PreviousFrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
     Hal::YieldThread();
-    Application::Private::CurrentFrameTime  = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
+    GEngine->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")
@@ -384,7 +317,7 @@ EPlatformExit::Type GuardedMain()
 #if JAFG_PLATFORM_USES_NON_GENERIC_LOOP
     JAFG_PLATFORM_GUARDED_LOOP;
 #else /* JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
-    while (IsTearingDown() == false)
+    while (Application::IsTearingDown() == false)
     {
         ::EngineTick();
     }

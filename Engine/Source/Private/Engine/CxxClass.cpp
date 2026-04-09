@@ -77,6 +77,64 @@ Jafg::LCommandLineInterface& Jafg::JCxxClass::GetCommandLineInterface() const no
     return GEngine->GetCommandLineInterface();
 }
 
+void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
+{
+    // TODO: Add arg to ignore pulling
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+
+    LPath Path{InPath};
+    if (Path == LPath{})
+    {
+        Path = Finder::GetUserPreferencesFile();
+    }
+
+    auto& Class{this->GetVirtualTable()};
+    LOG_VERBOSE(LogObjectInternal, "Pulling config for [{}]", this->GetNameAsString())
+    check(Class.IsConfig())
+
+    GEngine->Config.PullConfigFile(Path);
+    if (auto* Section{GEngine->Config.GetConfigSection(Path, this->GetNameAsString())})
+    {
+        for (auto& [Key, Value] : *Section)
+        {
+            if (auto It{algo::find(Class.GetFields(), Key, &LCxxClassField::Identifier)}; It != Class.GetFields().end())
+            {
+                It->Set(this, Value);
+            }
+        }
+    }
+
+    return;
+}
+
+void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
+{
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+
+    LPath Path{InPath};
+    if (Path == LPath{})
+    {
+        Path = Finder::GetUserPreferencesFile();
+    }
+
+    auto& Class{this->GetVirtualTable()};
+    LOG_VERBOSE(LogObjectInternal, "Pushing config for [{}]", this->GetNameAsString())
+    check(Class.IsConfig())
+
+    std::unordered_map<LString, LString> Entries;
+    Entries.reserve(Class.GetFields().size());
+    for (LCxxClassField const& Field : Class.GetFields())
+    {
+        Entries[LString{Field.Identifier}] = Field.Get(*this);
+    }
+    if (Entries.empty() == false)
+    {
+        GEngine->Config.AddConfigSection(Path, this->GetNameAsString(), Entries);
+    }
+
+    return;
+}
+
 void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordTearDownReason::Type Reason)
 {
     check(Tasks::IsOnMasterThread())
@@ -95,7 +153,7 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
     {
         Self = this->Outer.Poach(this);
     }
-    check( Self.get() == this )
+    check(Self.get() == this)
 
     if (Behavior == EMarkAsGarbageBehavior::Default)
     {

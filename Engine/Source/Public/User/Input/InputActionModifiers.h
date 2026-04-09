@@ -20,9 +20,6 @@ struct LInputActionMappedKeySwizzleXYModifier;
 struct LInputActionMappedKeySwizzleXZModifier;
 struct LInputActionMappedKeySwizzleYZModifier;
 
-//# Apply current application wide delta time to the input value.
-struct LInputActionMappedKeyDeltaTimeModifier;
-
 //#
 //# Factory function to create a modifier of type TModifier.
 //#
@@ -57,12 +54,6 @@ struct LInputActionMappedKeySwizzleYZModifier final : public LInputActionMappedT
 {
     ~LInputActionMappedKeySwizzleYZModifier() override = default;
     virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::xzy(InValue); }
-};
-
-struct LInputActionMappedKeyDeltaTimeModifier final : public LInputActionMappedTriggerModifier
-{
-    ~LInputActionMappedKeyDeltaTimeModifier() override = default;
-    virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return InValue * Application::GetDeltaTimeAsFloat(); }
 };
 
 template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)

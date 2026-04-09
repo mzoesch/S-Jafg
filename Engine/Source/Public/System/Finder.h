@@ -23,6 +23,7 @@ inline LPath GetCwd();
 inline LPath GetTempDir() noexcept { return LPath{"Temp"}; }
 inline LPath GetDumpsDir() noexcept { return GetTempDir() / "Dumps"; }
 inline LPath GetMostRecentMemDumpFile() noexcept { return GetDumpsDir() / "proc.dmp"; }
+inline LPath GetMostRecentStackTraceFile() noexcept { return GetDumpsDir() / "stack.trace"; }
 
 //#
 //# User folder. Store user specific stuff here. That should be saved between sessions and for a long time.
@@ -77,9 +78,9 @@ inline TArray<u8> ReadFileAsBinary(const LPath& File);
 inline TOptional<LString>    TryReadFile(const LPath& File, LString* OutHumanReadableError = nullptr);
 inline TOptional<TArray<u8>> TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError = nullptr);
 
-inline void OverrideFile(const LPath& File, const LStringView& Content, const bool bUseNativeLineEndings = false);
+inline void OverrideFile(LPath const& File, LStringView Content, bool bUseNativeLineEndings = false);
 
-inline void MakeFileBackup(const LPath& File, const bool bMakeIfSame = false, i32 Count = 5, const LStringView& Extension = ".old");
+inline void MakeFileBackup(LPath const& File, bool bMakeIfSame = false, i32 Count = 5, LStringView Extension = ".old");
 
 inline LString Normalize(LString File) noexcept
 {

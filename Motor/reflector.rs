@@ -361,6 +361,17 @@ fn write_packet(args: &Cli, unit: JPacketUnit) -> i32
 "##,
     ));
 
+    let mut include_path = unit.name;
+    include_path = match include_path.find("/Source/Public/")
+    {
+        Some(i) => include_path[i+15..].to_string(),
+        None => match include_path.find("/Source/Internal/")
+        {
+            Some(i) => include_path[i+17..].to_string(),
+            None => panic!("Could not find the include path for [{}].", include_path),
+        }
+    };
+
     t_builder.push_str(&format!(r##"
 // Copyright mzoesch. All rights reserved.
 
@@ -386,7 +397,7 @@ fn write_packet(args: &Cli, unit: JPacketUnit) -> i32
 -----------------------------------------------------------------------------*/
 
 "##,
-        unit.name
+        include_path
     ));
 
     h_file_id = format!("FILE_ID_{}", h_file_id);

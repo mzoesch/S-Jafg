@@ -1,36 +1,38 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Core/Application.h"
-#include "Runtime/Args.h"
-#include "Serialization/Json.h"
 
-namespace
+namespace Jafg::Params
 {
+ENGINE_API LProgramParameter ReST_DisableAutoStart{{
+    .Identifier = "Jafg.ReSTCli.DisableAutoStart",
+    .Description = "Whether to disable automatic starting of the ReST CLI server on engine start "
+                   "(only effective if Jafg::JReSTCliPreferences::bAutoStart is true).",
+    }};
 
-Jafg::LProgramParameter _bDisableAutoStart{
-    "ReSTCli.DisableAutoStart",
-    "Whether to disable automatic starting of the ReST CLI server on engine start (only effective if Jafg::JReSTCliPreferences::bAutoStart is true).",
-    };
+ENGINE_API LProgramParameter ReST_InstantStart{{
+    .Identifier = "Jafg.ReSTCli.InstantStart",
+    .Description = "Whether to start the ReST CLI server on engine start "
+                   "(only effective if Jafg::JReSTCliPreferences::bAlwaysDisable is false).",
+    }};
 
-Jafg::LProgramParameter _bStart{
-    "ReSTCli.InstantStart",
-    "Whether to start the ReST CLI server on engine start (only effective if Jafg::JReSTCliPreferences::bAlwaysDisable is false).",
-    };
+ENGINE_API LProgramParameter ReST_Host{{
+    .Identifier = "Jafg.ReSTCli.Host",
+    .Description = "Override the default host to bind the ReST CLI server to (default is Jafg::JReSTCliPreferences::Host).",
+    .Flags = EProgramParameterBits::Value,
+    }};
 
-Jafg::LProgramParameter _Host{
-    "ReSTCli.Host",
-    "Override the default host to bind the ReST CLI server to (default is Jafg::JReSTCliPreferences::Host).",
-    };
+ENGINE_API LProgramParameter ReST_Port{{
+    .Identifier = "Jafg.ReSTCli.Port",
+    .Description = "Override the default port to start the ReST CLI server on (default is Jafg::JReSTCliPreferences::Port).",
+    .Flags = EProgramParameterBits::Value,
+    }};
 
-Jafg::LProgramParameter _Port{
-    "ReSTCli.Port",
-    "Override the default port to start the ReST CLI server on (default is Jafg::JReSTCliPreferences::Port).",
-    };
-
-} /* ~Namespace <Anonymous> */
+} /* ~Namespace Jafg::Params */
 
 #if JAFG_WITH_REST_CLS
 
+#include "Serialization/Json.h"
 #include "Cli/ReSTCli.h"
 #include "Async/TaskUtility.h"
 #include "Cli/ReSTCliPreferences.h"
@@ -72,8 +74,7 @@ void Jafg::ReST::LResponse::SetContent(std::string&& Content, std::string&& Cont
     static_cast<httplib::Response*>(this->Pimpl)->set_content(std::move(Content), std::move(ContentType));
 }
 
-Jafg::LReStCli::LReStCli() noexcept
-    : LRunnable("ReSTCli")
+Jafg::LReStCli::LReStCli() noexcept : LRunnable("ReSTCli")
 {
     this->Get("/help", [this](ReST::LRequest const& Req, ReST::LResponse* Res)
     {
@@ -191,15 +192,15 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
 
     ::Server->set_default_headers(
     {
-        { "Access-Control-Allow-Origin", "*" },
-        { "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" },
-        { "Access-Control-Allow-Headers", "Content-Type, Authorization" }
+        {"Access-Control-Allow-Origin", "*"},
+        {"Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"},
+        {"Access-Control-Allow-Headers", "Content-Type, Authorization"}
     });
 
     ::Server->Get("/docs", [](httplib::Request const& Req, httplib::Response& Res)
     {
-        check( ::Server.get() )
-        // Fork the repo and add visitors...
+        check(::Server.get())
+        // TODO: Fork the repo and add visitors...
         Res.set_content("{}", "application/json");
         return;
     });
@@ -209,88 +210,51 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
 
 Jafg::ETaskExit::Type Jafg::LReStCli::Run()
 {
-    check( Tasks::IsOnMasterThread() == false )
-    check( Tasks::IsOnReSTCliThread() )
+    check(Tasks::IsOnReSTCliThread())
 
     if (::Server.get() == nullptr)
     {
         LOG_WARNING(LogReST, "Started ReSTCli thread without its server being initialized.")
         return ETaskExit::Success;
     }
+    check(::Server->is_running() == false)
 
     LOG_VERBOSE(LogReST, "Starting ReSTCli.")
     auto& Prefs{GetSingleton<JReSTCliPreferences>()};
 
-    check( ::Server->is_running() == false )
-
-    LString Host{ Prefs.Host };
-    if (Application::LProgramArgument const* ArgHost{ nullptr }; Application::HasCmdLineParameter(_bDisableAutoStart.Identifier, &ArgHost))
+    LString Host{*Prefs.Host};
+    if (auto* Arg{Application::GetCommandLineArgument(Params::ReST_Host)})
     {
-        if (ArgHost->HasValue())
-        {
-            Host = ArgHost->Value.value();
-        }
-        else if (ArgHost->HasValues())
-        {
-            LOG_WARNING(LogReST,
-                "Program argument [{}] does not take multiple values.",
-                _bDisableAutoStart.Identifier
-                )
-        }
-        else
-        {
-            LOG_WARNING(LogReST,
-                "Program argument [{}] requires a value.",
-                _bDisableAutoStart.Identifier
-                )
-        }
+        Host = Arg->GetValue();
     }
-    i32 Port{ Prefs.Port };
-    if (Application::LProgramArgument const* ArgPort{ nullptr }; Application::HasCmdLineParameter(_Port.Identifier, &ArgPort))
+    i32 Port{*Prefs.Port};
+    if (auto* Arg{Application::GetCommandLineArgument(Params::ReST_Port)})
     {
-        if (ArgPort->HasValue())
-        {
-            Serde::FromString(&Port, ArgPort->Value.value());
-        }
-        else if (ArgPort->HasValues())
-        {
-            LOG_WARNING(LogReST,
-                "Program argument [{}] does not take multiple values.",
-                _Port.Identifier
-                )
-        }
-        else
-        {
-            LOG_WARNING(LogReST,
-                "Program argument [{}] requires a value.",
-                _Port.Identifier
-                )
-        }
+        Serde::FromString(&Port, Arg->GetValue());
     }
+    LOG_VERBOSE(LogReST, "Listening on [{}:{}].", Host, Port)
 
     this->InitializeDeferred();
 
-    LOG_VERBOSE(LogReST, "Listening on [{}:{}].", Host, Port)
-
-    ::Server->set_keep_alive_max_count(Prefs.KeepAliveMaxRequests);
-    ::Server->set_keep_alive_timeout(static_cast<time_t>(Prefs.KeepAliveTimeoutInSeconds));
+    ::Server->set_keep_alive_max_count(*Prefs.KeepAliveMaxRequests);
+    ::Server->set_keep_alive_timeout(static_cast<time_t>(*Prefs.KeepAliveTimeoutInSeconds));
     ::Server->set_read_timeout(
-        static_cast<time_t>(Prefs.ReadTimeoutInSeconds),
-        static_cast<time_t>((Prefs.ReadTimeoutInSeconds - static_cast<time_t>(Prefs.ReadTimeoutInSeconds)) * maths::s2mus_d)
+        static_cast<time_t>(*Prefs.ReadTimeoutInSeconds),
+        static_cast<time_t>((*Prefs.ReadTimeoutInSeconds - static_cast<time_t>(*Prefs.ReadTimeoutInSeconds)) * maths::s2mus_d)
         );
     ::Server->set_write_timeout(
-        static_cast<time_t>(Prefs.WriteTimeoutInSeconds),
-        static_cast<time_t>((Prefs.WriteTimeoutInSeconds - static_cast<time_t>(Prefs.WriteTimeoutInSeconds)) * maths::s2mus_d)
+        static_cast<time_t>(*Prefs.WriteTimeoutInSeconds),
+        static_cast<time_t>((*Prefs.WriteTimeoutInSeconds - static_cast<time_t>(*Prefs.WriteTimeoutInSeconds)) * maths::s2mus_d)
         );
     ::Server->set_idle_interval(
-        static_cast<time_t>(Prefs.IdleIntervalInSeconds),
-        static_cast<time_t>((Prefs.IdleIntervalInSeconds - static_cast<time_t>(Prefs.IdleIntervalInSeconds)) * maths::s2mus_d)
+        static_cast<time_t>(*Prefs.IdleIntervalInSeconds),
+        static_cast<time_t>((*Prefs.IdleIntervalInSeconds - static_cast<time_t>(*Prefs.IdleIntervalInSeconds)) * maths::s2mus_d)
         );
 
     ::Server->set_payload_max_length(static_cast<size_t>(Prefs.PayLoadMaxLength));
 
-    ::Server->set_tcp_nodelay(Prefs.TcpNoDelay);
-    ::Server->set_ipv6_v6only(Prefs.Ipv6_v6Only);
+    ::Server->set_tcp_nodelay(*Prefs.TcpNoDelay);
+    ::Server->set_ipv6_v6only(*Prefs.Ipv6_v6Only);
 
     ::Server->listen(Host, 8080);
 
@@ -301,18 +265,17 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
 
 void Jafg::LReStCli::Exit()
 {
-    check( Tasks::IsOnMasterThread() == false )
-    check( Tasks::IsOnReSTCliThread() )
+    check(Tasks::IsOnReSTCliThread())
 
     LRunnable::Exit();
 
     if (::Server.get())
     {
-        check( ::Server->is_running() == false )
+        check(::Server->is_running() == false)
         ::Server.reset();
     }
 
-    check( ::Server.get() == nullptr )
+    check(::Server.get() == nullptr)
 
     return;
 }
@@ -324,7 +287,7 @@ Jafg::LReStCli& Jafg::LReStCli::Get(std::string&& Pattern, ReST::LCallback&& Cal
 
 Jafg::LReStCli& Jafg::LReStCli::Get(std::string&& Pattern, LString&& Help, ReST::LCallback&& Callback) noexcept
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
     this->GetRegisteredPatterns.emplace_back(std::move(Pattern), std::move(Help), std::move(Callback));
 
@@ -334,7 +297,6 @@ Jafg::LReStCli& Jafg::LReStCli::Get(std::string&& Pattern, LString&& Help, ReST:
     }
 
     this->RegisterPattern(--this->GetRegisteredPatterns.end());
-
     return *this;
 }
 
@@ -347,31 +309,24 @@ void Jafg::LReStCli::OnStop(const ERunnableStopReason::Type InType)
 {
     LOG_VERBOSE(LogReST, "Stopping ReSTCli.")
     LRunnable::OnStop(InType);
-
     if (::Server.get() && ::Server->is_running())
     {
         ::Server->stop();
     }
-
     return;
 }
 
 void Jafg::LReStCli::RegisterPattern(TArray<LReSTPattern>::iterator It)
 {
-    check( ::Server.get() )
-    check( It->Callback.IsValid() )
-
+    check(::Server.get())
+    check(It->Callback.IsValid())
     ::Server->Get(It->Pattern, [Callback = std::move(It->Callback)](httplib::Request const& Req, httplib::Response& Res)
     {
         ReST::LRequest Request{ &Req };
         ReST::LResponse Response{ &Res };
-
         Callback(Request, &Response);
-
-        return;
     });
-
-    check( It->Callback.IsValid() == false )
+    check(It->Callback.IsValid() == false)
 
     LOG_VERBOSE(LogReST, "Registered ReSTCli pattern [{}] to server backend.", It->Pattern)
 
@@ -381,17 +336,13 @@ void Jafg::LReStCli::RegisterPattern(TArray<LReSTPattern>::iterator It)
 void Jafg::LReStCli::InitializeDeferred()
 {
     LOG_VERBOSE(LogReST, "Initializing deferred ReSTCli patterns...")
-
-    for (auto It{ this->GetRegisteredPatterns.begin() }; It != this->GetRegisteredPatterns.end(); ++It)
+    for (auto It{this->GetRegisteredPatterns.begin()}; It != this->GetRegisteredPatterns.end(); ++It)
     {
         if (It->Callback.IsValid())
         {
             this->RegisterPattern(It);
         }
-
-        continue;
     }
-
     return;
 }
 

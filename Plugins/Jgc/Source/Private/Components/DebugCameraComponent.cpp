@@ -30,6 +30,8 @@ void Jgc::ADebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
 
         auto Value3D{Value.GetAxis3DValue() * 10.0f};
 
+        Value3D *= this->GetWorld().GetDeltaTime();
+
         LWorldVec3 Delta{maths::zero_vector<LWorldVec3>};
         Delta += Front * Value3D.x;
         Delta += glm::normalize(glm::cross(Front, maths::up_vector<LWorldVec3>)) * Value3D.y;

@@ -128,7 +128,7 @@ void Jafg::WEditableTextBox::UserInterfaceTick()
 
     if (bHandled == false)
     {
-        this->CaretBlinker += Application::GetDeltaTimeAsFloat();
+        this->CaretBlinker += GEngine->DeltaTime;
         if (this->CaretBlinker > this->CaretBrush.CaretBlinkerSpeed * 2.0f)
         {
             this->CaretBlinker = 0.0f;

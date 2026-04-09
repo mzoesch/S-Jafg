@@ -11,16 +11,13 @@ namespace Jafg
 class LViewport;
 class WParent;
 
-//# Initializer for the dynamic ctors for WUserWidgets.
-typedef Detail::TCxxDynamicInit<LViewport, Detail::LViewport2OuterProj> LWidgetDynamicInit;
-//# Initializer for the static ctors for WUserWidgets.
-template<typename TCxxClass>
-using TWidgetStaticInit = Detail::TCxxStaticInitBase<LViewport, TCxxClass, Detail::LViewport2OuterProj>;
-
 //#
-//# A user widget is a widget node that can be added to the local ego widget viewport.
-//# A user widget can consist of multiple widget nodes and can be used to create complex
-//# user interfaces.
+//# A user widget is a visual node that can be added to #Viewport of a surface as a top level node.
+//# A user widget can consist of many widgets and nodes and can be used to create complex
+//# user interfaces. User widgets are there to only orchestrate the overall flow of UI events and
+//# serve as the API for the logic it contains. Therefore, they have no painting capabilities for themselves.
+//# If you see yourself digging through the children of a user widget, then this action should be implemented
+//# as a method of the user widget itself.
 //#
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WUserWidget : public WOverlay
@@ -30,15 +27,7 @@ class ENGINE_API WUserWidget : public WOverlay
 
 protected:
 
-    inline explicit WUserWidget(LWidgetDynamicInit const& Init)
-        : Super{LNodeDynamicInit{.Outer=Init.Outer,.Class=Init.Class}}
-    {
-        this->SetAnchor(EAnchor::Fill);
-        this->SetShouldTick(false);
-    }
-    template<typename TCxxClass>
-    inline explicit WUserWidget(TWidgetStaticInit<TCxxClass> const& Init) noexcept
-        : Super{TNodeStaticInit<TCxxClass>{.Outer=Init.Outer}}
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WUserWidget)
     {
         this->SetAnchor(EAnchor::Fill);
         this->SetShouldTick(false);
@@ -81,7 +70,7 @@ struct TDeferredUserWidgetExec : public TDeferredObjectExec<TCxxClass>
 
 } /* ~Namespace Detail */
 
-inline constexpr Detail::NewDeferredObjectFn<LWidgetDynamicInit, TWidgetStaticInit, Detail::TDeferredUserWidgetExec, WUserWidget> ConstructDeferredWidget{};
-inline constexpr Detail::NewObjectFn<decltype(ConstructDeferredWidget), LWidgetDynamicInit, TWidgetStaticInit, WUserWidget> ConstructWidget{ConstructDeferredWidget};
+inline constexpr Detail::NewDeferredObjectFn<LNodeDynamicInit, TNodeStaticInit, Detail::TDeferredUserWidgetExec, WUserWidget> ConstructDeferredWidget{};
+inline constexpr Detail::NewObjectFn<decltype(ConstructDeferredWidget), LNodeDynamicInit, TNodeStaticInit, WUserWidget> ConstructWidget{ConstructDeferredWidget};
 
 } /* ~Namespace Jafg */

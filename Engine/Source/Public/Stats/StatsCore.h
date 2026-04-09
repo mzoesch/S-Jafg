@@ -28,7 +28,7 @@ private:
 
     std::string_view Name;
     bool bStopped = false;
-    Application::LHrcTimePoint BeginTime;
+    std::chrono::high_resolution_clock::time_point BeginTime;
 };
 
 FORCEINLINE LStat::LStat(const std::string_view& InName) noexcept
@@ -36,7 +36,7 @@ FORCEINLINE LStat::LStat(const std::string_view& InName) noexcept
     if (GTracer)
     {
         this->Name = InName;
-        this->BeginTime = Application::GetHighestNow();
+        this->BeginTime = std::chrono::high_resolution_clock::now();
     }
     else
     {
@@ -53,14 +53,12 @@ FORCEINLINE void LStat::Stop()
         return;
     }
 
-    GTracer->AddEvent(
-    {
+    GTracer->AddEvent({
         this->Name,
-        static_cast<i64>(Application::GetTimeDifferenceFromStaticStorageInitialization(this->BeginTime) * maths::s2mus_d),
-        static_cast<i64>(Application::GetDeltaSinceStaticStorageInitialization() * maths::s2mus_d),
+        static_cast<i64>(algo::time_diff(Application::GetStaticStorageInitializationTime(), this->BeginTime) * maths::s2mus_d),
+        static_cast<i64>(Application::GetElapsedTime() * maths::s2mus_d),
         Tasks::GetCurrentThreadId()
-    });
-
+        });
     this->bStopped = true;
 
     return;

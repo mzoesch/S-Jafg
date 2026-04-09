@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Async/TaskUtility.h"
-#include "Engine/CoreGlobals.h"
 #include "Async/Runnable.h"
 #include "Containers/ComplexQueue.h"
 #include "Core/Application.h"
@@ -585,7 +584,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             }
 
             LOG_ERROR(LogTaskSystem, "{}", ErrorLevelStr)
-            ::Jafg::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
+            Application::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
 
             return ErrorLevel;
         }
@@ -691,7 +690,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         );
 
                     LOG_ERROR(LogTaskSystem, "{}", ErrorLevelStr)
-                    ::Jafg::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
+                    Application::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
                 }
                 else if (LambdaErrorLevel >= ETaskExit::TransientFailure)
                 {
@@ -782,24 +781,23 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
         TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, RunAllTasks);
     }
 
-    const Application::LHrcTimePoint TimeBeforeJoinedAllThreads{ Application::GetHighestNow() };
+    auto TimeBeforeJoinedAllThreads{algo::now()};
     for (LEngineThread& Thread : ::EngineThreads)
     {
-        check( ::EngineThreads.size() == EngineThreadsSize )
+        check(::EngineThreads.size() == EngineThreadsSize)
 
         if (Thread.Runnable)
         {
             check( Thread.Thread.has_value())
             Thread.Runnable->Stop(ERunnableStopReason::EngineTermination);
-            const Application::LHrcTimePoint TimeBeforeJoin{ Application::GetHighestNow() };
+            auto TimeBeforeJoin{std::chrono::high_resolution_clock::now()};
             if (Thread.Thread->joinable())
             {
                 Thread.Thread->join();
             }
-            LOG_VERBOSE(LogTaskSystem, "Joined thread {}[{}] after {} seconds.",
-                Thread.Runnable->GetHumanReadableName(),
-                LexToString(Thread.ThreadName),
-                Application::GetTimeDiff(TimeBeforeJoin, Application::GetHighestNow())
+            LOG_VERBOSE(LogTaskSystem, "Joined thread {}[{}] after {} seconds."
+                , Thread.Runnable->GetHumanReadableName(), LexToString(Thread.ThreadName)
+                , algo::time_diff(TimeBeforeJoin, algo::now())
                 )
         }
 
@@ -823,13 +821,9 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     algo::orphan(&::EngineThreads);
     ::EngineThreadsMutex.unlock();
 
-    LOG_VERBOSE
-    (
-        LogTaskSystem,
-        "Joined {} threads after {} seconds.",
-        EngineThreadsSize - /* Master */ 1,
-        Application::GetTimeDiff(TimeBeforeJoinedAllThreads, Application::GetHighestNow())
-    )
+    LOG_VERBOSE(LogTaskSystem, "Joined {} threads after {} seconds."
+        , EngineThreadsSize - /* Master */ 1, algo::time_diff(TimeBeforeJoinedAllThreads, algo::now())
+        )
 
     return;
 }

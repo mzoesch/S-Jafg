@@ -114,11 +114,10 @@ struct LIStringArchive final
     constexpr ~LIStringArchive() noexcept = default;
 
     template<typename T> requires (Behavior == EBehavior::Panic)
-    inline decltype(auto) operator>>(this auto&& Self, T* t) noexcept
+    inline decltype(auto) operator>>(this auto&& Self, T& t) noexcept
         requires CDeserializable<T, std::remove_cvref_t<decltype(Self)>>
     {
-        check(t)
-        if (auto R{TDeserializer<T, LIStringArchive>{}(Self, *t)}; R.Errc != decltype(R.Errc){})
+        if (auto R{TDeserializer<T, LIStringArchive>{}(Self, t)}; R.Errc != decltype(R.Errc){})
         {
             if (R.Error.has_value())
             {
@@ -130,11 +129,10 @@ struct LIStringArchive final
     }
 
     template<typename T> requires (Behavior != EBehavior::Panic)
-    inline bool operator>>(this auto&& Self, T* t) noexcept
+    inline bool operator>>(this auto&& Self, T& t) noexcept
         requires CDeserializable<T, std::remove_cvref_t<decltype(Self)>>
     {
-        check(t)
-        if (auto R{TDeserializer<T, LIStringArchive>{}(Self, *t)}; R.Errc != decltype(R.Errc){})
+        if (auto R{TDeserializer<T, LIStringArchive>{}(Self, t)}; R.Errc != decltype(R.Errc){})
         {
             if constexpr (Behavior == EBehavior::Log || Behavior == EBehavior::Panic)
             {
@@ -376,7 +374,16 @@ struct TSerializer<T, TArchive>
 {
     void operator()(TArchive& Ar, T const& Field) const noexcept
     {
-        TSerializer<std::underlying_type_t<T>, TArchive>{}(Ar, std::to_underlying(Field));
+        // As this is a text o archive,
+        // we have to avoid printing something like a char that is null, as this would end the string.
+        if constexpr (std::is_signed_v<std::underlying_type_t<T>>)
+        {
+            TSerializer<i64, TArchive>{}(Ar, static_cast<i64>(std::to_underlying(Field)));
+        }
+        else
+        {
+            TSerializer<u64, TArchive>{}(Ar, static_cast<u64>(std::to_underlying(Field)));
+        }
     }
 };
 template<typename T, typename TArchive> requires std::is_enum_v<T>
@@ -488,7 +495,7 @@ template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EB
 FORCEINLINE void FromString(T* Field, LStringView Value) noexcept
 {
     LIStringArchive<LStringView, EBehavior::Panic> Ar{Value};
-    Ar >> Field;
+    Ar >> *Field;
     return;
 }
 
@@ -500,7 +507,7 @@ template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EB
 FORCEINLINE bool FromStringLogged(T* Field, LStringView Value) noexcept
 {
     LIStringArchive<LStringView, EBehavior::Log> Ar{Value};
-    return Ar >> Field;
+    return Ar >> *Field;
 }
 
 //# Quick conversion of the formation from T to T. If an error occurs it will return false.
@@ -508,7 +515,7 @@ template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EB
 FORCEINLINE bool FromStringRelaxed(T* Field, LStringView Value) noexcept
 {
     LIStringArchive<LStringView, EBehavior::Ignore> Ar{Value};
-    return Ar >> Field;
+    return Ar >> *Field;
 }
 
 } /* ~Namespace Serde */

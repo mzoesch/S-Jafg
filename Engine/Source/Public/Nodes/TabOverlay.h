@@ -5,6 +5,7 @@
 #include "Nodes/Overlay.h"
 #include "Nodes/Switcher.h"
 #include "Nodes/TextButton.h"
+#include "Nodes/TabOverlayForward.h"
 #include "TabOverlay.generated.h"
 
 namespace Jafg
@@ -56,28 +57,6 @@ private:
     WSwitcher* Switcher{};
 };
 
-//# Use this struct to describe a tap you want to add to #WTabOverlay.
-struct LTabOverlayElement
-{
-    struct Info
-    {
-        LString DisplayName;
-        LTexture2Ref Icon;
-    };
-
-    std::variant<Info, Detail::LNodeFactoryBase> Selector;
-    Detail::LNodeFactoryBase Panel;
-
-    decltype(auto) operator+(LTabOverlayElement&& Sibling) && noexcept
-    {
-        this->_Siblings.emplace_back(std::move(Sibling));
-        return std::move(*this);
-    }
-
-    /* Jafg internal member. Do not use. */
-    TArray<LTabOverlayElement> _Siblings;
-};
-
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WTabOverlaySelector final : public WTextButton
 {
@@ -87,22 +66,38 @@ protected:
 
     explicit WTabOverlaySelector(LNodeDynamicInit const& Init) noexcept : Super{Init}
     {
-        this->SetOmniPadding({3_pt, 2});
+        this->SetOmniPadding({3_spt, 0});
         this->SetNormalTextTint({0x90});
         this->SetNormalIconTint({0x90});
         this->SetSelectable(true);
+
+        return;
     }
 
     template<typename TCxxClass>
-    explicit WTabOverlaySelector(TNodeStaticInit<TCxxClass> const& Init, LTabOverlayElement::Info TabInfo) noexcept : Super{Init}
+    explicit WTabOverlaySelector(TNodeStaticInit<TCxxClass> const& Init, LTabOverlayElement::CreateInfo TabInfo) noexcept : Super{Init}
     {
-        this->SetOmniPadding({3_pt, 2});
+        this->SetOmniPadding({3_spt, 0});
         this->SetNormalTextTint({0x90});
         this->SetNormalIconTint({0x90});
         this->SetSelectable(true);
+
         this->SetContent(std::move(TabInfo.DisplayName));
-        this->SetIcon(std::move(TabInfo.Icon));
+        if (std::holds_alternative<LTexture2Ref>(TabInfo.Icon))
+        {
+            this->SetIcon(std::move(std::get<LTexture2Ref>(TabInfo.Icon)));
+        }
+        else if (std::holds_alternative<LString>(TabInfo.Icon))
+        {
+            this->LoadIconFromTextureViewIdentifier(std::get<LString>(TabInfo.Icon));
+        }
+
+        return;
     }
+
+private:
+
+    void LoadIconFromTextureViewIdentifier(LString const& Identifier) noexcept;
 };
 
 struct LFactoryTabOverlay : NODE_FACTORY_PARENT(WTabOverlay)

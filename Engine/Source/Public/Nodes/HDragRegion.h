@@ -25,6 +25,7 @@ typedef TArray<TOptional<LWidgetSize1>> LInitialHDragRegionState;
 //#
 //# TODO: Fix initial state clamping. We can charge a lot of initial space that does not exist => In this case all
 //#       all children have to be clamped.
+//# TODO: Do not drag if mouse if over the padding.
 //# TODO: When resizing store percentage and reapply them.
 //# TODO: Detect size changes when the parent dictates them?
 //#

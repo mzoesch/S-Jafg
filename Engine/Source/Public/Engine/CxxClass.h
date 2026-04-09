@@ -104,7 +104,7 @@ struct LCxxClassField final
 static_assert(Jafg::TIsCompleteType_v<NextIsBaseCxxClass> == false);
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsBaseCxxClass")
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class JCxxClass
+class ENGINE_API JCxxClass
 {
     GENERATED_CLASS_BODY()
 
@@ -198,13 +198,7 @@ public:
     //#
     //# Use it as a deferred constructor that needs runtime information.
     //#
-    virtual void BeginLife()
-    {
-#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
-        jassert(this->bHasBegunLife == false)
-        this->bHasBegunLife = true;
-#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
-    }
+    inline virtual void BeginLife();
 #if JAFG_DO_DOUBLE_CHECK_LIFETIMES
     NODISCARD FORCEINLINE constexpr bool _HasBegunLife() const noexcept { return this->bHasBegunLife; }
 #endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
@@ -235,7 +229,7 @@ public:
     //# Use this for immediate reaction to be killed. Otherwise, use the dctor that will usually be called at the end
     //# of the tick this delegate was called.
     //#
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) { check( this->_IsGarbage() ) }
+    inline virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason);
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.
@@ -277,6 +271,10 @@ public:
     ENGINE_API LEngine& GetEngine() const noexcept;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
     ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexcept;
+
+    //# If you want a custom path, the override this and call super with your path.
+    ENGINE_API virtual void PullConfig(LPath const& InPath = {}) noexcept;
+    ENGINE_API virtual void PushConfig(LPath const& InPath = {}) const noexcept;
 
 private:
 
@@ -323,6 +321,33 @@ private:
 
 namespace Jafg
 {
+
+void JCxxClass::BeginLife()
+{
+#if JAFG_DO_DOUBLE_CHECK_LIFETIMES
+    jassert(this->bHasBegunLife == false)
+    this->bHasBegunLife = true;
+#endif /* JAFG_DO_DOUBLE_CHECK_LIFETIMES */
+
+    if (this->GetVirtualTable().IsConfig())
+    {
+        this->PullConfig();
+    }
+
+    return;
+}
+
+inline void JCxxClass::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+{
+    check(this->_IsGarbage())
+
+    if (this->GetVirtualTable().IsConfig())
+    {
+        this->PushConfig();
+    }
+
+    return;
+}
 
 NODISCARD LName JCxxClass::GetName() const noexcept
 {

@@ -8,12 +8,11 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 {
     STAT_CYCLE_FUNCTION()
 
-    f64 LastTickTime { Application::GetDeltaSinceStaticStorageInitialization() };
-
+    f64 LastTickTime{Application::GetElapsedTime()};
     while (this->bShouldTick)
     {
-        const f64 Now { Application::GetDeltaSinceStaticStorageInitialization() };
-        const f64 DeltaTime { Now - LastTickTime };
+        const f64 Now{Application::GetElapsedTime()};
+        const f64 DeltaTime{Now - LastTickTime};
 
         if (DeltaTime > this->TickInterval)
         {
@@ -23,7 +22,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 #if !PLATFORM_WASM
         else
         {
-            if (const f64 TimeRemaining { this->TickInterval - DeltaTime }; TimeRemaining > 0.001)
+            if (f64 TimeRemaining{this->TickInterval - DeltaTime}; TimeRemaining > 0.001)
             {
                 /* Spare cpu time for other tasks. */
                 Jafg::Hal::SleepNoStats(TimeRemaining * 0.997);

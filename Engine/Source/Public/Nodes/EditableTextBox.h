@@ -62,7 +62,7 @@ protected:
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetAnchor(EAnchor::Fill);
         this->SetTint(Colors::Black);
-        this->SetPadding({5.0, 4.0});
+        this->SetPadding({5_spt, 2});
     }
 
 public:

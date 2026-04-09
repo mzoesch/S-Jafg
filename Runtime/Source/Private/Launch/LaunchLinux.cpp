@@ -7,9 +7,9 @@
 #include "Engine/Engine.h"
 #include <csignal>
 
-using namespace Jafg;
-
 extern EPlatformExit::Type GuardedMain();
+
+using namespace Jafg;
 
 namespace
 {
@@ -19,21 +19,21 @@ void SignumPosixAction_JafgHandler_Fatal(i32 Signal, siginfo_t* Info, void* InCo
 {
     (void)InContext;
 
-    if (Application::Private::bGAlreadyCrashed)
+    if (Application::Detail::bAlreadyCrashed)
     {
         LOG_ERROR(LogJafgInternal, "Already crashed - ignoring signal [{}].", Signal)
         LOnPlatformBreak::ExitQuietly();
     }
 
-    Application::Private::bGAlreadyCrashed = true;
+    Application::Detail::bAlreadyCrashed = true;
 
-    u64 Cursor { 0 };
+    u64 Cursor{};
     char Emitted[37 + 7 + 30 /* 30 padding */];
 
     ::strcpy(Emitted, "Low Level Fatal Error: Posix Signum [");
     Cursor += 37;
 
-    if (const char* Name { ::strsignal(Signal) }; Name)
+    if (const char* Name{::strsignal(Signal)}; Name)
     {
         ::strcpy(Emitted + Cursor, Name);
         Cursor += ::strlen(Name);
@@ -61,38 +61,40 @@ void SignumPosixAction_JafgHandler_Fatal(i32 Signal, siginfo_t* Info, void* InCo
     }
     ::write(STDERR_FILENO, "].\n", 3);
 
-    Jafg::LOnPlatformBreak::OnProgramPanicImpl(Emitted);
+    LOnPlatformBreak::OnProgramPanicImpl(Emitted);
 }
 
 NORETURN
 void SignumPosixAction_JafgHandler_NotSoFatal(i32 Signal, siginfo_t* Info, void* Context)
 {
     /* Just do anything normally, but do not show the annoying crash report dialog window. */
-    Application::Private::bGSuppressCrashDialog = true;
+    Application::Detail::bSuppressCrashDialog = true;
     SignumPosixAction_JafgHandler_Fatal(Signal, Info, Context);
 }
 
 void SignumPosixAction_JafgHandler_Exit(i32 InSignal, siginfo_t*, void*)
 {
-    GEngine->RequestEngineExit(InSignal);
+    LString Signal{"<unknown>"};
+    if (const char* Name{::strsignal(InSignal)}; Name)
+    {
+        Signal = Name;
+    }
+    Application::RequestEngineExit(SprintF("Received signal [{}]: {}", InSignal, Signal));
 }
 
 } /* ~Namespace <Anonymous> */
 
-i32 main(const i32 ArgC, const char* ArgV[])
+i32 main(i32 c, char const* v[])
 {
     i32 ErrorLevel{};
 
-    TArray<LString> Arguments;
-    for (i32 Idx{ 1 }; Idx < ArgC; ++Idx)
-    {
-        Arguments.emplace_back(ArgV[Idx]);
-    }
-    Application::Private::RawCommandLine = std::move(Arguments);
+    check(c > 0)
+    TArray<LString> Arguments; algo::for_each(v + 1, v + c, [&Arguments](auto* Arg){ Arguments.emplace_back(Arg); });
+    Application::Detail::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(Application::GetRawCmdLine(), "-WaitForDebugger"))
+    if (algo::contains(Application::GetRawCommandLine(), "-Jafg.WaitForDebugger"))
     {
-        Application::Private::WaitForDebuggerGracefully(true);
+        Application::Detail::WaitForDebuggerGracefully(true);
     }
 
     //
@@ -131,7 +133,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     ::sigaction(SIGFPE,  &Action_Fatal, nullptr); /* Erroneous arithmetic operation. */
     ::sigaction(SIGHUP,  &Action_Error, nullptr); /* Hangup signal of terminal or helicopter parent. */ // We do not really care.
     ::sigaction(SIGILL,  &Action_Fatal, nullptr); /* Illegal instruction. */
-    ::sigaction(SIGINT,  &Action_Error, nullptr); /* Interactive attention signal. */ // -> Non-fatal because the user is at fault then (because he cannot use his keyboard), not us.
+    ::sigaction(SIGINT,  &Action_Exit,  nullptr); /* Interactive attention signal. */
     ::sigaction(SIGSEGV, &Action_Fatal, nullptr); /* Invalid memory reference */ // <- The usual suspect
     ::sigaction(SIGTERM, &Action_Exit,  nullptr); /* Termination signal. */ // The default behavior for SIGTERM is to terminate the process, but we want to handle it gracefully.
 

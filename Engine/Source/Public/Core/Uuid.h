@@ -9,12 +9,12 @@ namespace Jafg
 
 typedef u32 LUnderlyingUuidType;
 
-namespace Private
+namespace Detail
 {
 
 ENGINE_API extern LUnderlyingUuidType CurrentUuidValue;
 
-} /* ~Namespace Private */
+} /* ~Namespace Detail */
 
 struct LUuid final
 {
@@ -59,12 +59,12 @@ FORCEINLINE constexpr LUuid& LUuid::operator=(LUuid&& InOther) noexcept
 
 FORCEINLINE void LUuid::GenerateNew() noexcept
 {
-    this->Value = ++Private::CurrentUuidValue;
+    this->Value = ++Detail::CurrentUuidValue;
 }
 
 FORCEINLINE LUuid LUuid::Generate()
 {
-    return LUuid{ ++Private::CurrentUuidValue };
+    return LUuid{ ++Detail::CurrentUuidValue };
 }
 
 FORCEINLINE constexpr LUuid::LUuid(const LUnderlyingUuidType InValue) noexcept: Value(InValue)

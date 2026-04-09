@@ -26,6 +26,30 @@ class ENGINE_API JFontSubsystem : public JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 
+    struct GlyphUVs
+    {
+        /* LBRT in pixels. */
+        f64 PlaneBounds[4];
+        /* LBRT in normal space. */
+        f64 AtlasBounds[4];
+    };
+
+    struct MyFont
+    {
+        MyFont() noexcept = default;
+
+        LPath Source;
+        FT_Face My_FT_Face{};
+        msdfgen::FontHandle* Font{};
+        f32 AtlasGlyphSize{};
+        f32 PixelRange{};
+        f64 Ascender{};
+        f64 Descender{};
+        f64 LineHeight{};
+        LTexture2Ref Atlas;
+        std::unordered_map<u32, GlyphUVs> GlyphUVsMap;
+    };
+
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JFontSubsystem)
@@ -61,36 +85,22 @@ public:
         }
         return Result;
     }
-    void ReloadFont(FontCreateInfo Info) noexcept;
 
-    TArray<LGlyphInfo> GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F Pencil, u32 FontIndex) const noexcept;
+    //#
+    //# Completely reloads a font.
+    //# @return The index of the font for reference.
+    //#
+    NODISCARD u32 ReloadFont(FontCreateInfo const& Info) noexcept;
+    //# TODO: Update existing font atlas with new set...
+
+    NODISCARD bool IsFontValid(u32 FontIndex) const noexcept { return FontIndex < this->My_Fonts.size(); }
+    NODISCARD MyFont const& GetFont(u32 FontIndex) const noexcept { return this->My_Fonts[FontIndex]; }
+
+    LGetGlyphInfosResult GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept;
 
 private:
 
     inline static constexpr u32 MaxAllowedFonts{10};
-
-    struct GlyphUVs
-    {
-        /* LBRT in pixels. */
-        f64 PlaneBounds[4];
-        /* LBRT in normal space. */
-        f64 AtlasBounds[4];
-    };
-
-    struct MyFont
-    {
-        MyFont() noexcept = default;
-
-        LPath Source;
-        FT_Face My_FT_Face{};
-        msdfgen::FontHandle* Font{};
-        f32 AtlasGlyphSize{};
-        f32 PixelRange{};
-        LVec2D Ascender{ maths::zero_vector<LVec2D> };
-        LTexture2Ref Atlas;
-        std::unordered_map<u32, GlyphUVs> GlyphUVsMap;
-    };
-
     FT_Library My_FT_Library{};
     TStackArray<MyFont, MaxAllowedFonts> My_Fonts;
 };

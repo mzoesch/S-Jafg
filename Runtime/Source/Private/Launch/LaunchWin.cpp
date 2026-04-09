@@ -85,7 +85,7 @@ i32 main(i32 ArgC, char* ArgV[])
     }
     Application::Private::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(Application::GetRawCmdLine(), "-WaitForDebugger"))
+    if (algo::contains(Application::GetRawCmdLine(), "-Jafg.WaitForDebugger"))
     {
         Application::Private::WaitForDebuggerGracefully(true);
     }

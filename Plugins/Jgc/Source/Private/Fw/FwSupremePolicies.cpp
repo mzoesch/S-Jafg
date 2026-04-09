@@ -14,8 +14,6 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
 {
     Super::OnWorldPreInit();
 
-    this->GetWorld().SetBackgroundColor(LinearColors::DeepSkyBlue);
-
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
     auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.MetallicGold")};
 
@@ -100,7 +98,7 @@ void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControlle
             //      If a child is emplaced into its parent. Query for outer viewport. If exits -> construct, else defer.
             //      Once attached. Children cannot be removed unless they are destroyed. They can never change their parent again.
 
-            Jafg::ConstructWidget(Jafg::TWidgetStaticInit<WPauseScreen>{Pc.GetOwningNodeChecked()->GetViewport()});
+            Jafg::ConstructWidget(Jafg::TNodeStaticInit<WPauseScreen>{Pc.GetOwningNodeChecked()->GetViewport()});
         }
         else
         {

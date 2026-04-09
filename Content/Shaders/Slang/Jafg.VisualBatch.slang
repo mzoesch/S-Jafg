@@ -14,10 +14,10 @@ struct InstanceData
 {
     /* (Position, Size) in px. */
     float4 Rect;
-    float4 Tint;
-    float4 BackgroundTint;
+    uint Tint;
+    uint BackgroundTint;
     float4 Radii;
-    float4 OutlineTint;
+    uint OutlineTint;
     /* (Min, Max) */
     float4 TexCoordRect;
     float  OutlineThickness;
@@ -66,29 +66,31 @@ float4 fragMain(FRInput Input) : SV_TARGET
     float4 Result;
     if (Instance.MsdfPixelRange != 0.0f)
     {
+        float4 Tint = jafg_color_to_linear(Instance.Tint);
         float3 msdf = (BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV)).rgb;
-        Result = float4(Instance.Tint.rgb, Instance.Tint.w * clamp(Instance.MsdfPixelRange * (jafg_median_of_three(msdf.r, msdf.g, msdf.b) - 0.5) + 0.5, 0.0, 1.0));
+        Result = float4(Tint.rgb, Tint.w * clamp(Instance.MsdfPixelRange * (jafg_median_of_three(msdf.r, msdf.g, msdf.b) - 0.5) + 0.5, 0.0, 1.0));
     }
-    else if (Instance.SamplerIndex == JAFG_SAMPLER_CLAMP_TO_BORDER)
+    else if (Instance.SamplerIndex == JAFG_SAMPLER_LINEAR_CLAMP_TO_BORDER || Instance.SamplerIndex == JAFG_SAMPLER_NEAREST_CLAMP_TO_BORDER)
     {
         // This is prob. better, but produces sometimes wrong results...
         // Result = lerp(
-        //     Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
-        //     Instance.BackgroundTint,
+        //     jafg_color_to_linear(Instance.Tint) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
+        //     jafg_color_to_linear(Instance.BackgroundTint),
         //     saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
         //     );
+        
         if (Input.TexUV.x < 0.0 || Input.TexUV.x > 1.0 || Input.TexUV.y < 0.0 || Input.TexUV.y > 1.0)
         {
-            Result = Instance.BackgroundTint;
+            Result = jafg_color_to_linear(Instance.BackgroundTint);
         }
         else
         {
-            Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+            Result = jafg_color_to_linear(Instance.Tint) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
         }
     }
     else
     {
-        Result = Instance.Tint * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+        Result = jafg_color_to_linear(Instance.Tint) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
     }
 
     if (DistLeft < Instance.Radii.x && DistTop < Instance.Radii.x) /* TL */
@@ -161,7 +163,7 @@ float4 fragMain(FRInput Input) : SV_TARGET
         }
         if (bOutline)
         {
-            Result = Instance.OutlineTint;
+            Result = jafg_color_to_linear(Instance.OutlineTint);
         }
     }
 

@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Foreign/ForeignInclude.h"
-#include "Runtime/Args.h"
+#include "Runtime/Parameter.h"
 #include "Fw/FwSupremePolicies.h"
 #include "Engine/Engine.h"
 #include "Widgets/Editor.h"
@@ -47,7 +47,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     else
     {
         auto const& Surface{Frontend.GetSurfaces()[0]};
-        Jafg::ConstructWidget(Jafg::TWidgetStaticInit<Jafg::WEditor>{Surface->GetViewport()});
+        Jafg::ConstructWidget(Jafg::TNodeStaticInit<Jafg::WEditor>{Surface->GetViewport()});
     }
 
     return;

@@ -13,7 +13,6 @@
 
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
-#include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
 #include "Nodes/Viewport.h"
@@ -255,7 +254,7 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
 
     if (glfwWindowShouldClose(this->Handle))
     {
-        GEngine->RequestEngineExit("Window closed by user.");
+        Application::RequestEngineExit("Window closed by user.");
     }
 
     glfwPollEvents();
@@ -297,7 +296,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
 
     if (this->bPendingResize)
     {
-        this->PendingTimeForResizeApply -= Application::GetDeltaTimeAsFloat();
+        this->PendingTimeForResizeApply -= GEngine->DeltaTime;
 
         if (this->PendingTimeForResizeApply <= 0.0f)
         {

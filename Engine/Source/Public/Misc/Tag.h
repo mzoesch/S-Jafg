@@ -66,6 +66,7 @@ struct TTagRegistry
         return;
     }
 
+    FORCEINLINE auto const& GetAllocator() const noexcept { return this->Tags; }
     FORCEINLINE u64 GetTagCount() const noexcept { return this->Tags.size(); }
 
     FORCEINLINE TagType GetTag(LStringView InRepr) const noexcept

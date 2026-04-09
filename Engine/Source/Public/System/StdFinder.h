@@ -202,7 +202,7 @@ inline TOptional<TArray<u8>> Finder::TryReadFileAsBinary(const LPath& File, LStr
     return Buffer;
 }
 
-inline void Finder::OverrideFile(const LPath& File, const LStringView& Content, const bool bUseNativeLineEndings)
+inline void Finder::OverrideFile(LPath const& File, LStringView Content, bool bUseNativeLineEndings)
 {
     if (DoesFileExist(File) == false)
     {
@@ -223,7 +223,7 @@ inline void Finder::OverrideFile(const LPath& File, const LStringView& Content, 
     return;
 }
 
-inline void Finder::MakeFileBackup(const LPath& File, const bool bMakeIfSame /* = false */, i32 Count /* = 5 */, const LStringView& Extension /* = ".old" */)
+inline void Finder::MakeFileBackup(LPath const& File, bool bMakeIfSame /* = false */, i32 Count /* = 5 */, LStringView Extension /* = ".old" */)
 {
     LOG_VERBOSE(LogSystem, "Making backup of file [{}].", File)
 

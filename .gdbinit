@@ -1,5 +1,7 @@
 # Copyright mzoesch. All rights reserved.
 
+# Please see Documentation/GdbDebug.md for details on how to load this file.
+
 python
 
 import sys

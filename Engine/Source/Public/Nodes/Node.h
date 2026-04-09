@@ -19,7 +19,6 @@ class JNodeData;
 class LLocalEgo;
 class WNode;
 class WParent;
-class WUserWidget;
 class LViewport;
 struct LWidgetConstructor;
 struct LMappedDeviceBuffer;
@@ -514,12 +513,17 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         return NODE_FACTORY_RESULT();
     }
 
+    decltype(auto) Unique(this auto&& Self) noexcept
+    {
+        return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TSelf>(std::forward<decltype(Self)>(Self));
+    }
+
     inline decltype(auto) operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept;
 };
 
 //# Pass arbitrary data typesafe down the hierarchy. Using this often is a good indicator for bad design.
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class JNodeData : public JCxxClass
+class ENGINE_API JNodeData : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 protected:
@@ -545,7 +549,6 @@ class ENGINE_API WNode : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 
-    friend WUserWidget;
     friend LWidgetConstructor;
 
 protected:
@@ -833,7 +836,7 @@ namespace Detail
 {
 
 //# Do not use NewObject for WNodes; instead use these.
-inline constexpr NewDeferredObjectFn<LNodeDynamicInit, TNodeStaticInit, TDeferredObjectExec, WNode, WUserWidget> ConstructNodeImpl{};
+inline constexpr NewDeferredObjectFn<LNodeDynamicInit, TNodeStaticInit, TDeferredObjectExec, WNode> ConstructNodeImpl{};
 
 struct BeginStylingFn final
 {
@@ -875,10 +878,14 @@ struct NewNodeFn final
 
 } /* ~Namespace Detail */
 
-//# Call this if you want to begin styling a new WNode other than WUserWidgets.
+//#
+//# Call this if you want to begin styling a new WNode.
+//# If you want to create a new Node that is top level to a #Viewport use @see #WUserWidget.
+//#
 inline constexpr Detail::BeginStylingFn BeginStyling{};
 //# Call this inside #BeginStyling to create new child/sibling nodes.
 inline constexpr Detail::NewNodeFn NewNode{};
+//# Just some boilerplate helpers. Completely optional.
 #define NewStaticNode(NodeClass) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>()
 #define NewStaticNodeVp(Vp, NodeClass) ::Jafg::NewNode(Vp).Class<NodeClass>()
 #define NewSubNode(Subclass) ::Jafg::NewNode(this->GetViewport()).Class(Subclass)

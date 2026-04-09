@@ -40,12 +40,12 @@ void Jafg::WRegion::Draw(LNodeRenderInfo const& Info) const
 
         Info.VisualInstances.emplace_back(LVisualInstance{
             .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport), AnchoredSize},
-            .Tint = this->Brush.Tint.ToVector4(),
-            .BackgroundTint = this->Brush.BackgroundTint.ToVector4(),
+            .Tint = this->Brush.Tint.Bits,
+            .BackgroundTint = this->Brush.BackgroundTint.Bits,
             .Radii = this->Brush.bClampRadii
                 ? maths::min(this->Brush.Radii, LVec4F{AnchoredSize.x, AnchoredSize.y, AnchoredSize.x, AnchoredSize.y} / 2.0f)
                 : this->Brush.Radii,
-            .OutlineTint = this->Brush.OutlineTint.ToVector4(),
+            .OutlineTint = this->Brush.OutlineTint.Bits,
             .TexCoordRect = TexCoordRect,
             .OutlineThickness = this->Brush.OutlineThickness,
             .TextureIndex = TextureIndex,

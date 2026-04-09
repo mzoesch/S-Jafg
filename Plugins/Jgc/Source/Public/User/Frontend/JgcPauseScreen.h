@@ -16,7 +16,7 @@ class WPauseScreen : public Jafg::WUserWidget
 
 protected:
 
-    DEFAULT_WIDGET_CONSTRUCTORS(WPauseScreen)
+    DEFAULT_NODE_CONSTRUCTORS(WPauseScreen)
 
 public:
 

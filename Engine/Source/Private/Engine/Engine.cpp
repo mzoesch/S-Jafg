@@ -3,7 +3,6 @@
 #include "Engine/Engine.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/MeshSubsystem.h"
-#include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
 #include "Async/TickedRunnable.h"
 #include "Build/EngineBuildInfo.h"
@@ -20,45 +19,34 @@
 #include "Engine/Carnifex.h"
 #include "Cli/ReSTCliPreferences.h"
 #include "Serialization/Json.h"
+#include "User/UserPreferences.h"
 
-///////////////////////////////////////////////////////////////////////////////
-// Engine Globals
+#ifndef JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES
+    #if IN_SHIPPING
+        #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      2.0
+    #else /* IN_SHIPPING */
+        #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      0.7
+    #endif /* !IN_SHIPPING */
+#endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
 
-ENGINE_API Jafg::LEngine* GEngine{ nullptr };
-
-namespace Jafg
-{
-
-ENGINE_API bool bGShouldRequestExit{ false };
-ENGINE_API bool bGEngineRequestingExit{ false };
-
-ENGINE_API i32     GCustomExitStatusOverride{ INDEX_NONE };
-ENGINE_API LString GCustomExitReason;
-
-} /* ~Namespace Jafg */
-
-// ~Engine Globals
-///////////////////////////////////////////////////////////////////////////////
+ENGINE_API Jafg::LEngine* GEngine{};
 
 bool Jafg::LWorldStorage::IsValid() const noexcept
 {
-    if (this->World == nullptr || GEngine == nullptr)
+    check(GEngine && "Absence of GEngine if undefined behavior.")
+    if (this->World == nullptr)
     {
         return false;
     }
-
     return GEngine->IsWorldValid(this->World);
 }
 
 Jafg::LEngine::LEngine()
 {
     STAT_CYCLE_FUNCTION()
-
-    if
-    (
-        ETaskExit::Type const Rc{ Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread") };
+    if (ETaskExit::Type const Rc{Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread")};
         Rc != ETaskExit::Success
-    )
+        )
     {
         LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", static_cast<i32>(Rc));
     }
@@ -87,7 +75,10 @@ void Jafg::LEngine::Initialize()
                 return false;
             }
 
-            const bool bValid { algo::contains(GEngine->GetTracks(), Args[*Cursor].Name, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }) };
+            const bool bValid{algo::contains(
+                GEngine->GetTracks(), Args[*Cursor].Name
+                , [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }
+                )};
             if (bValid)
             {
                 ++*Cursor;
@@ -316,14 +307,14 @@ void Jafg::LEngine::Initialize()
     return;
 }
 
-void Jafg::LEngine::Tick(f32 Dt)
+void Jafg::LEngine::Tick()
 {
     STAT_CYCLE_FUNCTION()
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
 #if WITH_LOCAL_LAYER
-    this->LocalEgo.Tick(Dt);
+    this->LocalEgo.Tick(static_cast<f32>(this->DeltaTime));
 #endif /* WITH_LOCAL_LAYER */
 
     for (Detail::LWorldTrack& Track : this->Tracks)
@@ -341,7 +332,7 @@ void Jafg::LEngine::Tick(f32 Dt)
         check(Track.IsValid())
         if (bTraveled == false && Track.ChildWorld->CanTick())
         {
-            Track.ChildWorld->Tick(Dt);
+            Track.ChildWorld->Tick(static_cast<f32>(this->DeltaTime));
         }
 
         continue;
@@ -454,37 +445,72 @@ void Jafg::LEngine::TearDown()
     return;
 }
 
-void Jafg::LEngine::_BeginExitIfRequested()
+void Jafg::LEngine::DefaultTimeAdvance()
 {
-    ::Jafg::Private::BeginExitIfRequested();
-}
+    STAT_CYCLE_FUNCTION()
+    JUserPreferences const& UserPreferences{GetSingleton<JUserPreferences>()};
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit()
-{
-    ::Jafg::RequestEngineExit();
-}
+    GEngine->LostDeltaTime = 0.0;
+    GEngine->IdleDeltaTime = 0.0;
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(LString const& Reason)
-{
-    ::Jafg::RequestEngineExit(Reason);
-}
+    if (UserPreferences.bVSyncEnabled == false && UserPreferences.MaxFps != JUserPreferences::UnlimitedFps)
+    {
+        if (f64 ElapsedTime{algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now()) - GEngine->FrameTime};
+            ElapsedTime < 1.0 / *UserPreferences.MaxFps)
+        {
+            LEngine::Timepoint SleepStart{LEngine::Clock::now()};
+            f64 SleepTime{(1.0 / *UserPreferences.MaxFps) - ElapsedTime};
+            Hal::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
+            GEngine->IdleDeltaTime = algo::time_diff(SleepStart, LEngine::Clock::now());
+            if (GEngine->IdleDeltaTime > GEngine->CurrentStat.HighestIdle)
+            {
+                GEngine->CurrentStat.HighestIdle = GEngine->IdleDeltaTime;
+            }
+        }
+    }
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus)
-{
-    ::Jafg::RequestEngineExit(CustomExitStatus);
-}
+    GEngine->PreviousFrameTime = GEngine->FrameTime;
+    GEngine->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus, LString const& Reason)
-{
-    ::Jafg::RequestEngineExit(CustomExitStatus, Reason);
+    GEngine->DeltaTime = GEngine->FrameTime - GEngine->PreviousFrameTime;
+    if (GEngine->DeltaTime < GEngine->CurrentStat.Low)
+    {
+        GEngine->CurrentStat.Low = GEngine->DeltaTime;
+    }
+    if (GEngine->DeltaTime > GEngine->CurrentStat.High)
+    {
+        GEngine->CurrentStat.High = GEngine->DeltaTime;
+    }
+
+    GEngine->RealDeltaTime = GEngine->DeltaTime;
+
+    ++GEngine->FrameCount;
+    ++GEngine->StatisticsFrameCount;
+
+    if (GEngine->DeltaTime > LEngine::MaxDeltaTime)
+    {
+        if constexpr (IS_COMPILED_LOG(LogGuardedMain, Warning))
+        {
+            if (GEngine->DeltaTime > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
+            {
+                LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", GEngine->DeltaTime)
+            }
+        }
+        GEngine->LostDeltaTime = GEngine->DeltaTime - LEngine::MaxDeltaTime;
+        if (GEngine->CurrentStat.HighestLoss < GEngine->LostDeltaTime)
+        {
+            GEngine->CurrentStat.HighestLoss = GEngine->LostDeltaTime;
+        }
+        GEngine->DeltaTime = LEngine::MaxDeltaTime;
+    }
+
+    if (std::chrono::duration<f64>(LEngine::Clock::now() - GEngine->LastStatisticsTime).count() > GEngine->StatisticsPeriod)
+    {
+        GEngine->PreviousStat = GEngine->CurrentStat;
+        algo::swap_default(&GEngine->CurrentStat);
+    }
+
+    return;
 }
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot check for rendering state. */
@@ -1028,8 +1054,8 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
     this->ReSTCli.Get("/info", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
     {
-        check( OutResponse )
-        check( GEngine )
+        check(OutResponse)
+        check(GEngine)
 
         json Info;
         Info["BuildTime"] = BuildInfo::GetBuildTime();
@@ -1048,16 +1074,16 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         Info["TargetConfig"] = PlatformMisc::GetTargetConfiguration();
         Info["bEverRender"] = GEngine->CanEverRender();
 
-        Info["Uptime"] = Application::GetCurrentFrameTime();
-        Info["Ticks"] = Application::GetFrameCount();
-        Info["AvgDeltaTime"] = Application::GetRealDeltaTime();
-        Info["AvgTickRate"] = Application::GetCurrentFps();
-        Info["MaxDeltaTime"] = Application::MaxDeltaTime;
-        Info["LowestDeltaTime"] = Application::GetPreviousLowestDeltaTime();
-        Info["HighestDeltaTime"] = Application::GetPreviousHighestDeltaTime();
-        Info["HighestLostDeltaTime"] = Application::GetPreviousHighestLostDeltaTime();
-        Info["HighestIdleTime"] = Application::GetPreviousHighestIdleDeltaTime();
-        Info["bTracerPid"] = Application::HasTracerPid();
+        Info["Uptime"] = GEngine->FrameTime;
+        Info["Ticks"] = GEngine->FrameCount;
+        Info["AvgDeltaTime"] = algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start) / GEngine->PreviousStat.FrameCount;
+        Info["AvgTickRate"] = GEngine->PreviousStat.FrameCount / algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start);
+        Info["MaxDeltaTime"] = LEngine::MaxDeltaTime;
+        Info["LowestDeltaTime"] = GEngine->PreviousStat.Low;
+        Info["HighestDeltaTime"] = GEngine->PreviousStat.High;
+        Info["HighestLostDeltaTime"] = GEngine->PreviousStat.HighestLoss;
+        Info["HighestIdleTime"] = GEngine->PreviousStat.HighestIdle;
+        Info["bTracerPid"] = Application::IsTracerPidValid();
         Info["bEverProfile"] = Application::CanEverProfile();
         Info["bProfiling"] = Application::IsAllowProfiling();
 
@@ -1068,7 +1094,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
     this->ReSTCli.Get("/", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
     {
-        check( OutResponse )
+        check(OutResponse)
 
         OutResponse->SetStatusCode(ReST::Found_302);
         OutResponse->AddHeader("Location", "/info");
@@ -1079,7 +1105,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
     this->ReSTCli.Get("/logs", [](ReST::LRequest const& Request, ReST::LResponse* OutResponse) -> void
     {
-        check( OutResponse )
+        check(OutResponse)
 
 #if JAFG_SAVE_LOGS_IN_MEMORY
         if (Request.HasParameter("id"))

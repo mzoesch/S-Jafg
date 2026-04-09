@@ -62,7 +62,7 @@ f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) 
 f32 Jafg::LTextScale::InSptImpl(LViewport const& Viewport, ETextScale TextScale) noexcept
 {
     EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
-    if (const EApplicationScale UserMaxScale{*GetSingleton<JUserPreferences>().ApplicationScaleMode}; UserMaxScale != EApplicationScale::Auto)
+    if (EApplicationScale UserMaxScale{*GetSingleton<JUserPreferences>().ApplicationScaleMode}; UserMaxScale != EApplicationScale::Auto)
     {
         Scale = EApplicationScale{maths::min(std::to_underlying(Scale), std::to_underlying(UserMaxScale))};
     }
@@ -73,7 +73,7 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 {
     Super::Draw(Info);
 
-    if (this->Content.empty() == false)
+    if (this->Content.empty() == false && this->TextBrush.bSkipBrushDraw == false)
     {
         if (this->RenderData.bDirty)
         {
@@ -86,20 +86,20 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
             + this->DrawOffset
             };
         LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) - this->RenderData.DesiredSize};
-        TopLeft += LVec2F
-        {
+        TopLeft += maths::min(LVec2F{
             this->IsTextLeftAligned() ? 0.0f : (this->IsTextHCenterAligned() ? PlayRoom.x * 0.5f : PlayRoom.x),
             this->IsTextTopAligned()  ? 0.0f : (this->IsTextVCenterAligned() ? PlayRoom.y * 0.5f : PlayRoom.y)
-        };
+            }, 0.0f);
 
-        for (auto const& GlyphInfo : this->RenderData.Glyphes)
+        for (auto const& GlyphInfo : this->RenderData.Result.GlyphInfos)
         {
+            // TODO: Clamp to pixels? Currently sometimes a little bit blurry.
             Info.VisualInstances.emplace_back(LVisualInstance{
                 .Rect = { TopLeft.x + GlyphInfo.Rect.x, TopLeft.y + GlyphInfo.Rect.y, GlyphInfo.Rect.z, GlyphInfo.Rect.w },
-                .Tint = this->TextBrush.Tint.ToVector4(),
-                .BackgroundTint = Colors::Transparent.ToVector4(),
+                .Tint = this->TextBrush.Tint.Bits,
+                .BackgroundTint = Colors::Transparent.Bits,
                 .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = this->TextBrush.OutlineTint.ToVector4(),
+                .OutlineTint = this->TextBrush.OutlineTint.Bits,
                 .TexCoordRect = GlyphInfo.TexCoordRect,
                 .OutlineThickness = this->TextBrush.OutlineThickness,
                 .TextureIndex = GlyphInfo.BindlessTextureIndex,
@@ -118,62 +118,9 @@ void Jafg::WTextBox::UpdateDesiredSize() const
     {
         this->UpdateRenderData(*this->GetFrontend().GetSubsystemChecked<JFontSubsystem>(), this->TextBrush.TextScale.InSpt(this->GetViewport()));
     }
-
     this->SetDesiredSizeInSpt(this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) + this->RenderData.DesiredSize);
-
     return;
 }
-
-// i32 Jafg::WTextBox::GoToWidth(const LString& InString, f32 InWidth) const noexcept
-// {
-//     if (InString.empty())
-//     {
-//         return 0;
-//     }
-
-    // const LOrthographicTextShader* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
-
-    // f32 Width { 0.0f };
-    // i32 Index { 0 };
-    // for (auto const Rune : InString)
-    // {
-    //     ++Index;
-    //
-    //     if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
-    //     {
-    //         // TODO: Improve this algorithm to better reflect the actual width of one single character instead of the advance.
-    //
-    //         const f32 OldWidth { Width };
-    //         Width += static_cast<f32>(It->second.Advance.X) * this->TextScale.InSpt(this->GetViewport()) / 64.0f;
-    //
-    //         if (Width >= InWidth)
-    //         {
-    //             const f32 A
-    //             {
-    //                 Maths::Absolute
-    //                 (
-    //                     OldWidth - InWidth
-    //                     /* Super sketchy solution. This calculation should just not be based of the advance of the character. */
-    //                     + (15.0f * this->TextScale.InSpt(this->GetViewport()))
-    //                 )
-    //             };
-    //
-    //             if (Maths::IsNearlyEqual(A, Maths::Min(A, Maths::Absolute(Width - InWidth))))
-    //             {
-    //                 return --Index;
-    //             }
-    //
-    //             return Index;
-    //         }
-    //     }
-    //
-    //     continue;
-    // }
-    //
-    // return Index;
-
-//     return {};
-// }
 
 void Jafg::WTextBox::UpdateRenderData(JFontSubsystem const& FontSubsystem, f32 TargetFontSize) const
 {
@@ -181,21 +128,14 @@ void Jafg::WTextBox::UpdateRenderData(JFontSubsystem const& FontSubsystem, f32 T
     this->RenderData.FontSize = TargetFontSize;
 
     LVec2F Pencil{maths::zero_vector<LVec2F>};
-    this->RenderData.Glyphes = FontSubsystem.GetGlyphInfos(this->Content
+    this->RenderData.Result = FontSubsystem.GetGlyphInfos(this->Content
         , this->RenderData.FontSize
-        , Pencil
+        , &Pencil
         , 0
         );
 
-    LVec4F GlyphesRect{Pencil.x, Pencil.y, Pencil.x, Pencil.y};
-    for (auto const& GlyphInfo : this->RenderData.Glyphes)
-    {
-        GlyphesRect.x = maths::min(GlyphesRect.x, GlyphInfo.Rect.x);
-        GlyphesRect.y = maths::min(GlyphesRect.y, GlyphInfo.Rect.y);
-        GlyphesRect.z = maths::max(GlyphesRect.z, GlyphInfo.Rect.x + GlyphInfo.Rect.z);
-        GlyphesRect.w = maths::max(GlyphesRect.w, GlyphInfo.Rect.y + GlyphInfo.Rect.w);
-    }
-    this->RenderData.DesiredSize = LVec2F{GlyphesRect.z - GlyphesRect.x, GlyphesRect.w - GlyphesRect.y};
+    //# TODO: This for line gaps. LineHeight + line_gap
+    this->RenderData.DesiredSize = LVec2F{Pencil.x, this->RenderData.Result.LineHeight * this->TextBrush.Tightening};
 
     return;
 }

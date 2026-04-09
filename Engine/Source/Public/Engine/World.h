@@ -243,15 +243,18 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
+    //#
+    //# The delta time of this world. This value should be used instead of the LEngine::DeltaTime as this
+    //# value is dilated according to world physics.
+    //#
+    FORCEINLINE constexpr f64 GetDeltaTime() const noexcept { return this->DeltaTime; }
+
     FORCEINLINE ASupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies* GetSupremePoliciesChecked() noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies* GetSupremePoliciesAsserted() { jassert(this->SupremePolicies) return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies const* GetSupremePoliciesAsserted() const { jassert(this->SupremePolicies) return this->SupremePolicies; }
-
-    FORCEINLINE LLinearColor const& GetBackgroundColor() const noexcept { return this->BackgroundColor; }
-    FORCEINLINE void SetBackgroundColor(LLinearColor const& Color) noexcept { this->BackgroundColor = Color; }
 
     template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
     FORCEINLINE auto const& Vk_GetWorldDataDescriptorSet(TRenderInfo const& Info) const noexcept { return this->Vk_WorldDescriptorSets[Info.Frame]; }
@@ -302,8 +305,9 @@ private:
     //# The real time (not stopped or dilated / clamped) when this world was launched.
     //# Real time is relative to the static storage initialization of the engine shared library.
     //#
-    f32 RealTimeWhenWorldWasLaunched { -1.0f };
+    f32 RealTimeWhenWorldWasLaunched{ -1.0f };
     f32 RealTimeWhenWorldStarted{ -1.0f };
+    f64 DeltaTime{};
 
     //#
     //# Policies for this world. Cannot change. Can only be set during world initialization with the level blueprint.
@@ -311,7 +315,6 @@ private:
     //#
     ASupremePolicies* SupremePolicies{};
 
-    LLinearColor BackgroundColor;
     TFrameArray<vk::raii::DescriptorSet> Vk_WorldDescriptorSets;
     TFrameArray<LMappedDeviceBuffer> Vk_WorldBuffers;
 };
