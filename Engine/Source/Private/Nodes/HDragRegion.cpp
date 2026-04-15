@@ -254,7 +254,7 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEv
             this->InitialMouseLocation = Data.Surface.GetMouseLocation();
             if (this->InitialMouseLocation.has_value())
             {
-                this->DragChildOffset = this->CalculateDragChildOffset();
+                this->DragChildOffset = this->CalculateDragChildOffset(Data.Translation);
             }
             return LReply::Handled();
         }
@@ -283,12 +283,12 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEven
     return Super::OnKeyUp(Data, Event);
 }
 
-TOptional<Jafg::WHDragRegion::LDragChildOffset> Jafg::WHDragRegion::CalculateDragChildOffset()
+TOptional<Jafg::WHDragRegion::LDragChildOffset> Jafg::WHDragRegion::CalculateDragChildOffset(LVec2F const& Translation)
 {
     for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
     {
         auto& Child{this->GetChildren()[Idx]};
-        if (Child->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).x >= this->InitialMouseLocation->x)
+        if (Child->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation).x >= this->InitialMouseLocation->x)
         {
             if (Idx == 0)
             {
@@ -314,7 +314,8 @@ void Jafg::WHDragRegion::UiTickMove()
 
     if (this->DragChildOffset.has_value() == false)
     {
-        this->DragChildOffset = this->CalculateDragChildOffset();
+        // TODO: This is wrong. How do we get the translation here?
+        this->DragChildOffset = this->CalculateDragChildOffset(maths::zero_vector<LVec2F>);
         if (this->DragChildOffset.has_value() == false)
         {
             return;

@@ -19,9 +19,9 @@ static const float PI = 3.14159265359;
 //# Equivalent to the LColor in C++. @see Maths/Color.h
 typedef uint32_t LColor;
 
-float3 jafg_srgb_to_linear(float3 srgb)
+float3 jafg_srgb_to_linear(float3 srgb, float gamma)
 {
-    return pow(srgb, 2.2);
+    return pow(srgb, gamma);
 }
 
 float4 jafg_color_to_srgb(LColor color)
@@ -34,11 +34,11 @@ float4 jafg_color_to_srgb(LColor color)
         );
 }
 
-float4 jafg_color_to_linear(LColor color)
+float4 jafg_color_to_linear(LColor color, float gamma)
 {
     float4 srgb = jafg_color_to_srgb(color);
     return float4(
-        jafg_srgb_to_linear(srgb.rgb),
+        jafg_srgb_to_linear(srgb.rgb, gamma),
         srgb.a 
         );
 }

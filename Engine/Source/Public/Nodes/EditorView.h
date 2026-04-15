@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "UserWidget.h"
+#include "Nodes/UserWidget.h"
 #include "EditorView.generated.h"
 
 namespace Jafg

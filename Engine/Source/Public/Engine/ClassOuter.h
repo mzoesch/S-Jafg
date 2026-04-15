@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CxxClass.h"
+#include "Engine/CxxClass.h"
 #include "Engine/CxxRecordTearDownReason.h"
 #include "Foreign/PluginForward.h"
 

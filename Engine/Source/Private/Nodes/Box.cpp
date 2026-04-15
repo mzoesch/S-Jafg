@@ -38,8 +38,8 @@ void Jafg::WBox::Draw(LNodeRenderInfo const& Info) const
             TexCoordRect = MiscUV::ApplyPadding(MiscUV::ApplyScale(TexCoordRect, this->Brush.TextureScale), this->Brush.TexturePadding, Extend);
         }
 
-        Info.VisualInstances.emplace_back(LVisualInstance{
-            .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport), AnchoredSize},
+        Info.AddInstance(LVisualInstance{
+            .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation), AnchoredSize},
             .Tint = this->Brush.Tint.Bits,
             .BackgroundTint = this->Brush.BackgroundTint.Bits,
             .Radii = this->Brush.bClampRadii

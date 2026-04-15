@@ -21,6 +21,7 @@
 #include "Engine/WorldData.h"
 #include "Rhi/VisualInstance.h"
 #include "Rhi/BindlessTextureArray.h"
+#include "Runtime/Parameter.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -35,6 +36,12 @@ constexpr u32 Vk_ApiVersion{ vk::ApiVersion14 };
 
 namespace
 {
+
+Jafg::LProgramParameter Glfw_PlatformHint({
+    .Identifier = "Jafg.PlatformHint",
+    .Description = "Hints the platform to use. Valid are: [auto, wayland, x11, cocoa, win32].",
+    .Flags = Jafg::EProgramParameterBits::Value,
+    });
 
 void GlfwErrorCallback(i32 Error, char const* Description)
 {
@@ -314,8 +321,37 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     check(Tasks::IsOnMasterThread())
 
-    // TODO: Do we want to use this sometimes/always? Or make a user flag for this??
-    // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    if (auto* Arg{Application::GetCommandLineArgument(::Glfw_PlatformHint)})
+    {
+        auto Value{Arg->GetValue()};
+        if (Value == "auto")
+        {
+        }
+        else if (Value == "wayland")
+        {
+            glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+        }
+        else if (Value == "x11")
+        {
+            glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+        }
+        else if (Value == "cocoa")
+        {
+            glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_COCOA);
+        }
+        else if (Value == "win32")
+        {
+            glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WIN32);
+        }
+        else
+        {
+            LOG_FATAL(LogSurface
+                , "Invalid value [{}] for command line argument [{}]. Valid values are: [auto, wayland, x11, cocoa, win32]."
+                , Value, ::Glfw_PlatformHint.Identifier
+                )
+        }
+    }
+
     // TODO: This does not work for wayland - but with x11.
     //       So we want that?
     // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
@@ -1857,14 +1893,14 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
 
     for (auto const& PhysicalDevice : PhysicalDevices)
     {
-        u64 Rating{ 0 };
+        u64 Rating{};
 
-        bool bSupportsGeometryShaders{ false };
-        bool bSupportsVulkan14{ false };
-        bool bSupportsGraphicsQueue{ false };
-        // bool bSupportsPresentQueue{ false }; // TODO: How can we check this? Or is this obsolete?
-        bool bSupportsRequiredExtensions{ false };
-        bool bSupportsRequiredFeatures{ false };
+        bool bSupportsGeometryShaders{};
+        bool bSupportsVulkan14{};
+        bool bSupportsGraphicsQueue{};
+        // bool bSupportsPresentQueue{}; // TODO: How can we check this? Or is this obsolete?
+        bool bSupportsRequiredExtensions{};
+        bool bSupportsRequiredFeatures{};
 
         auto Properties = PhysicalDevice.getProperties();
         auto Features = PhysicalDevice.template getFeatures2<

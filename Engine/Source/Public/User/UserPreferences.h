@@ -61,6 +61,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
+    TPreference<f32> InterfaceGamma{ 2.2f };
+
+    CLASS_FIELD(Config)
     TPreference<EApplicationScale> ApplicationScaleMode{ EApplicationScale::Double };
 
     CLASS_FIELD(Config)

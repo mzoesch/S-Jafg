@@ -120,6 +120,15 @@ struct TTrans final
 using LTransformF = TTrans<maths::single_precision,maths::defaultp>;
 using LTransformD = TTrans<maths::double_precision,maths::defaultp>;
 
+template<typename T,maths::qual_t Q>
+struct TRect2 final
+{
+    TVec2<T,Q> Offset;
+    TVec2<T,Q> Extent;
+};
+using LRect2F = TRect2<f32,maths::defaultp>;
+using LRect2D = TRect2<f32,maths::defaultp>;
+
 //#
 //# Types used for world coordinates.
 //#
@@ -200,7 +209,7 @@ MATHS_CONSTANT(left_vector)
 MATHS_CONSTANT(up_vector)
 //# Global down vector constant (0, -1, 0).
 MATHS_CONSTANT(down_vector)
-///# Global 2d unit vector constant along the 45-degree angle.
+//# Global 2d unit vector constant along the 45-degree angle.
 MATHS_CONSTANT(unit_vector_2d)
 //# Global unit vector constant along the x-axis (1, 0, 0, 0).
 MATHS_CONSTANT(unit_vector_x)
@@ -666,6 +675,7 @@ inline constexpr decltype(auto) sextic(auto&& value) noexcept  { return value * 
 //# For generic pow. But should be avoided when dealing with exponents less than seven due to performance.
 using glm::pow;
 
+using std::log10;
 using glm::log2;
 using glm::exp;
 using glm::log;
@@ -695,10 +705,20 @@ using glm::dot;
 using glm::distance;
 using glm::cross;
 using glm::normalize;
-template<length_t L, typename T, qual_t Q>
+template<length_t L, typename T,qual_t Q>
 inline constexpr T squared_magnitude(TVec<L,T,Q> const& v) noexcept { return maths::dot(v, v); }
-template<length_t L, typename T, qual_t Q>
+template<length_t L, typename T,qual_t Q>
 inline constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt(maths::squared_magnitude(v)); }
+
+template<typename T,qual_t Q>
+inline constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
+{
+    return !(a.Offset.x > b.Offset.x + b.Extent.x
+          || a.Offset.x + a.Extent.x < b.Offset.x
+          || a.Offset.y > b.Offset.y + b.Extent.y
+          || a.Offset.y + a.Extent.y < b.Offset.y
+          );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Matrix

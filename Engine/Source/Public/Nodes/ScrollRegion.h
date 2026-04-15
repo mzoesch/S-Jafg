@@ -8,10 +8,10 @@
 namespace Jafg
 {
 
-struct LScrollRegionBrush : public LRegionBrush
-{
-    enum { NoScrollBarBackground = 0 };
+struct LFactoryScrollRegion;
 
+struct LScrollRegionBehavior
+{
     //# Whether to always show the vertical scroll bar.
     bool bAlwaysShowVScrollbar{};
     //# Requires that #bAlwaysShowVScrollbar is false.
@@ -21,131 +21,62 @@ struct LScrollRegionBrush : public LRegionBrush
     bool bAlwaysShowHScrollbar{};
     //# Requires that #bAlwaysShowHScrollbar is false.
     bool bAlwaysHideHScrollbar{};
+};
+
+struct LScrollRegionBarBrush
+{
+    enum { NoScrollBarBackground = 0 };
 
     LColor VBackgroundTint{ Colors::Black };
     LColor VTint{ Colors::White };
-    LColor HBackgroundTint{ Colors::Black };
-    LColor HTint{ Colors::White };
-
     //# The padding from the top right of the vertical scroll bar.
     LVec2F VScrollBarPadding{ maths::zero_vector<LVec2F> };
-
     //# The width of the vertical scroll bar.
     f32 VScrollBarWidth{ 5.0f };
-
     //# The width of the vertical scroll bar background. Zero means no background.
     f32 VScrollBarBackgroundWidth{ NoScrollBarBackground };
 
+    LColor HBackgroundTint{ Colors::Black };
+    LColor HTint{ Colors::White };
     //# The padding from the left bottom of the horizontal scroll bar.
     LVec2F HScrollBarPadding{ 5.0f, 0.0f };
-
     //# The height of the horizontal scroll bar.
     f32 HScrollBarHeight{ 5.0f };
-
     //# The height of the horizontal scroll bar background. Zero means no background.
     f32 HScrollBarBackgroundHeight{ NoScrollBarBackground };
 };
 
-struct LFactoryScrollRegion;
-
-//#
-//# A #WScrollRegion is a parent node that may have many children.
-//# The children that can be individually anchored with the #EAnchor enum.
-//# Children are, as the name suggests, overlaid on top of each other and are independent of each of their siblings.
-//# The scroll overlay usually should be anchored to its parent, and for unanchored sides the #SetScrollRegionSize in
-//# should be used to define the size of the scroll overlay.
-//#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryScrollRegion)
-class WScrollRegion : public WRegion
+class WScrollRegion final : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WScrollRegion(LNodeDynamicInit const& Init) noexcept : Super{Init}
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WScrollRegion)
     {
-        this->SetVisibility(ENodeVisibility::Visible);
-    }
-    template<typename TCxxClass>
-    explicit WScrollRegion(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
-    {
+        this->SetAnchor(EAnchor::Fill);
         this->SetVisibility(ENodeVisibility::Visible);
     }
 
 public:
 
-    enum : i32
+    enum
     {
-        //#
         //# The maximal position the scroll region can be up.
-        //#
         MaxScrollUp     = 0,
-
-        //#
         //# The maximal position the scroll region can be down.
-        //#
         MaxScrollDown   = 1,
-
-        //#
         //# The maximal position the scroll region can be left.
-        //#
         MaxScrollLeft   = 0,
-
-        //#
         //# The maximal position the scroll region can be right.
-        //#
         MaxScrollRight  = 1,
     };
 
-    struct LScrollRegionBrushImpl final
-    {
-        friend WScrollRegion;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    private:
-
-        FORCEINLINE LScrollRegionBrushImpl() noexcept = default;
-
-        DEFAULT_REALLOC_OF_ANY_FORM(LScrollRegionBrushImpl)
-
-        FORCEINLINE void Copy(const LScrollRegionBrush& InBrush) noexcept;
-        FORCEINLINE void Move(LScrollRegionBrush&& InBrush) noexcept;
-        FORCEINLINE LScrollRegionBrushImpl(const LScrollRegionBrush& InBrush) noexcept;
-        FORCEINLINE LScrollRegionBrushImpl(LScrollRegionBrush&& InBrush) noexcept;
-        FORCEINLINE LScrollRegionBrushImpl& operator=(const LScrollRegionBrush& InBrush) noexcept;
-        FORCEINLINE LScrollRegionBrushImpl& operator=(LScrollRegionBrush&& InBrush) noexcept;
-
-    public:
-
-        FORCEINLINE ~LScrollRegionBrushImpl() noexcept = default;
-
-        bool bAlwaysShowVScrollbar { false };
-        bool bAlwaysHideVScrollbar { false };
-
-        bool bAlwaysShowHScrollbar { false };
-        bool bAlwaysHideHScrollbar { false };
-
-        LColor VBackgroundTint { Colors::Black };
-        LColor VTint { Colors::White };
-        LColor HBackgroundTint { Colors::Black };
-        LColor HTint { Colors::White };
-
-        LVec2F VScrollBarPadding { 0.0f };
-        f32 VScrollBarWidth { 5.0f };
-        f32 VScrollBarBackgroundWidth { LScrollRegionBrush::NoScrollBarBackground };
-
-        LVec2F HScrollBarPadding { 5.0f, 0.0f };
-        f32 HScrollBarHeight { 5.0f };
-        f32 HScrollBarBackgroundHeight { LScrollRegionBrush::NoScrollBarBackground };
-    };
-
-    // virtual void Draw(LNodeRenderInfo const& Info) const override; // TODO
-
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVec2F& InLocation) override;
-
-    virtual LReply SweepFocusTest(const LViewport& Context, const LVec2F& InLocation) override;
-
-    //# This only the user interface.
-    void UserInterfaceTick();
+    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
+    virtual LReply SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location) override;
 
     virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
     virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
@@ -154,62 +85,73 @@ public:
 
     virtual void UpdateDesiredSize() const override;
 
-    FORCEINLINE void SetScrollRegionSize(const LWidgetSize2& InSize) { this->ScrollRegionSize = InSize; }
-    FORCEINLINE const LWidgetSize2& GetScrollRegionSize() const { return this->ScrollRegionSize; }
+    constexpr void SetScrollRegionSize(LWidgetSize2 const& InSize) noexcept { this->ScrollRegionSize = InSize; }
+    constexpr LWidgetSize2 const& GetScrollRegionSize() const noexcept { return this->ScrollRegionSize; }
 
-    FORCEINLINE void SetBrush(const LScrollRegionBrush& InBrush) noexcept;
-    FORCEINLINE void SetScrollRegionBrushOnly(const LScrollRegionBrush& InBrush) noexcept;
-    FORCEINLINE LScrollRegionBrush CopyScrollRegionBrush() const noexcept;
-    FORCEINLINE const LScrollRegionBrushImpl& GetScrollRegionBrush() const noexcept { return this->Brush; }
+    constexpr void SetBehavior(LScrollRegionBehavior const& InBehavior) noexcept { this->Behavior = InBehavior; }
+    constexpr LScrollRegionBehavior const& GetBehavior() const noexcept { return this->Behavior; }
+    constexpr LScrollRegionBehavior& GetMutableBehavior() noexcept { return this->Behavior; }
+    constexpr bool GetAlwaysShowVScrollbar() const noexcept { return this->Behavior.bAlwaysShowVScrollbar; }
+    constexpr bool GetAlwaysHideVScrollbar() const noexcept { return this->Behavior.bAlwaysHideVScrollbar; }
+    constexpr void SetAlwaysShowVScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysShowVScrollbar = InValue; }
+    constexpr void SetAlwaysHideVScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysHideVScrollbar = InValue; }
+    constexpr bool GetAlwaysShowHScrollbar() const noexcept { return this->Behavior.bAlwaysShowHScrollbar; }
+    constexpr bool GetAlwaysHideHScrollbar() const noexcept { return this->Behavior.bAlwaysHideHScrollbar; }
+    constexpr void SetAlwaysShowHScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysShowHScrollbar = InValue; }
+    constexpr void SetAlwaysHideHScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysHideHScrollbar = InValue; }
 
-    FORCEINLINE constexpr bool GetAlwaysShowVScrollbar() const noexcept { return this->Brush.bAlwaysShowVScrollbar; }
-    FORCEINLINE constexpr bool GetAlwaysHideVScrollbar() const noexcept { return this->Brush.bAlwaysHideVScrollbar; }
-    FORCEINLINE constexpr void SetAlwaysShowVScrollbar(const bool InValue) noexcept { this->Brush.bAlwaysShowVScrollbar = InValue; }
-    FORCEINLINE constexpr void SetAlwaysHideVScrollbar(const bool InValue) noexcept { this->Brush.bAlwaysHideVScrollbar = InValue; }
+    constexpr void SetBarBrush(LScrollRegionBarBrush const& InBrush) noexcept { this->BarBrush = InBrush; }
+    constexpr LScrollRegionBarBrush const& GetBarBrush() const noexcept { return this->BarBrush; }
+    constexpr LScrollRegionBarBrush& GetMutableBarBrush() noexcept { return this->BarBrush; }
 
-    FORCEINLINE constexpr bool GetAlwaysShowHScrollbar() const noexcept { return this->Brush.bAlwaysShowHScrollbar; }
-    FORCEINLINE constexpr bool GetAlwaysHideHScrollbar() const noexcept { return this->Brush.bAlwaysHideHScrollbar; }
-    FORCEINLINE constexpr void SetAlwaysShowHScrollbar(const bool InValue) noexcept { this->Brush.bAlwaysShowHScrollbar = InValue; }
-    FORCEINLINE constexpr void SetAlwaysHideHScrollbar(const bool InValue) noexcept { this->Brush.bAlwaysHideHScrollbar = InValue; }
+    constexpr void SetVBackgroundTint(LColor const& InValue) noexcept { this->BarBrush.VBackgroundTint = InValue; }
+    constexpr void SetVTint(LColor const& InValue) noexcept { this->BarBrush.VTint = InValue; }
+    constexpr void SetVScrollBarPadding(LVec2F InValue) noexcept { this->BarBrush.VScrollBarPadding = InValue; }
+    constexpr void SetVScrollBarWidth(f32 InValue) noexcept { this->BarBrush.VScrollBarWidth = InValue; }
+    constexpr void SetVScrollBarBackgroundWidth(f32 InValue) noexcept { this->BarBrush.VScrollBarBackgroundWidth = InValue; }
+    constexpr LColor GetVBackgroundTint() const noexcept { return this->BarBrush.VBackgroundTint; }
+    constexpr LColor GetVTint() const noexcept { return this->BarBrush.VTint; }
+    constexpr LVec2F GetVScrollBarPadding() const noexcept { return this->BarBrush.VScrollBarPadding; }
+    constexpr f32 GetVScrollBarWidth() const noexcept { return this->BarBrush.VScrollBarWidth; }
+    constexpr f32 GetVScrollBarBackgroundWidth() const noexcept { return this->BarBrush.VScrollBarBackgroundWidth; }
 
-    FORCEINLINE constexpr LColor GetVBackgroundTint() const noexcept { return this->Brush.VBackgroundTint; }
-    FORCEINLINE constexpr LColor GetVTint() const noexcept { return this->Brush.VTint; }
-    FORCEINLINE constexpr LColor GetHBackgroundTint() const noexcept { return this->Brush.HBackgroundTint; }
-    FORCEINLINE constexpr LColor GetHTint() const noexcept { return this->Brush.HTint; }
-    FORCEINLINE constexpr void SetVBackgroundTint(const LColor& InValue) noexcept { this->Brush.VBackgroundTint = InValue; }
-    FORCEINLINE constexpr void SetVTint(const LColor& InValue) noexcept { this->Brush.VTint = InValue; }
-    FORCEINLINE constexpr void SetHBackgroundTint(const LColor& InValue) noexcept { this->Brush.HBackgroundTint = InValue; }
-    FORCEINLINE constexpr void SetHTint(const LColor& InValue) noexcept { this->Brush.HTint = InValue; }
+    constexpr void SetHBackgroundTint(const LColor& InValue) noexcept { this->BarBrush.HBackgroundTint = InValue; }
+    constexpr void SetHTint(LColor const& InValue) noexcept { this->BarBrush.HTint = InValue; }
+    constexpr void SetHScrollBarPadding(LVec2F InValue) noexcept { this->BarBrush.HScrollBarPadding = InValue; }
+    constexpr void SetHScrollBarHeight(f32 InValue) noexcept { this->BarBrush.HScrollBarHeight = InValue; }
+    constexpr void SetHScrollBarBackgroundHeight(f32 InValue) noexcept { this->BarBrush.HScrollBarBackgroundHeight = InValue; }
+    constexpr LColor GetHBackgroundTint() const noexcept { return this->BarBrush.HBackgroundTint; }
+    constexpr LColor GetHTint() const noexcept { return this->BarBrush.HTint; }
+    constexpr LVec2F GetHScrollBarPadding() const noexcept { return this->BarBrush.HScrollBarPadding; }
+    constexpr f32 GetHScrollBarHeight() const noexcept { return this->BarBrush.HScrollBarHeight; }
+    constexpr f32 GetHScrollBarBackgroundHeight() const noexcept { return this->BarBrush.HScrollBarBackgroundHeight; }
 
-    FORCEINLINE constexpr LVec2F GetVScrollBarPadding() const noexcept { return this->Brush.VScrollBarPadding; }
-    FORCEINLINE constexpr f32 GetVScrollBarWidth() const noexcept { return this->Brush.VScrollBarWidth; }
-    FORCEINLINE constexpr f32 GetVScrollBarBackgroundWidth() const noexcept { return this->Brush.VScrollBarBackgroundWidth; }
-    FORCEINLINE constexpr void SetVScrollBarPadding(const LVec2F& InValue) noexcept { this->Brush.VScrollBarPadding = InValue; }
-    FORCEINLINE constexpr void SetVScrollBarWidth(const f32 InValue) noexcept { this->Brush.VScrollBarWidth = InValue; }
-    FORCEINLINE constexpr void SetVScrollBarBackgroundWidth(const f32 InValue) noexcept { this->Brush.VScrollBarBackgroundWidth = InValue; }
+    constexpr void SetCullNonVisible(bool InValue) noexcept { this->bCullNonVisible = InValue; }
+    constexpr bool GetCullNonVisible() const noexcept { return this->bCullNonVisible; }
+    constexpr void SetUseChildrenDesiredSize(bool InValue) noexcept { this->bUseChildrenDesiredSize = InValue; }
+    constexpr bool GetUseChildrenDesiredSize() const noexcept { return this->bUseChildrenDesiredSize; }
 
-    FORCEINLINE constexpr LVec2F GetHScrollBarPadding() const noexcept { return this->Brush.HScrollBarPadding; }
-    FORCEINLINE constexpr f32 GetHScrollBarHeight() const noexcept { return this->Brush.HScrollBarHeight; }
-    FORCEINLINE constexpr f32 GetHScrollBarBackgroundHeight() const noexcept { return this->Brush.HScrollBarBackgroundHeight; }
-    FORCEINLINE constexpr void SetHScrollBarPadding(const LVec2F& InValue) noexcept { this->Brush.HScrollBarPadding = InValue; }
-    FORCEINLINE constexpr void SetHScrollBarHeight(const f32 InValue) noexcept { this->Brush.HScrollBarHeight = InValue; }
-    FORCEINLINE constexpr void SetHScrollBarBackgroundHeight(const f32 InValue) noexcept { this->Brush.HScrollBarBackgroundHeight = InValue; }
+private:
 
-    FORCEINLINE constexpr void SetCullNonVisible(const bool InValue) noexcept { this->bCullNonVisible = InValue; }
-    FORCEINLINE constexpr bool GetCullNonVisible() const noexcept { return this->bCullNonVisible; }
-
-    FORCEINLINE constexpr void SetUseChildrenDesiredSize(const bool InValue) noexcept { this->bUseChildrenDesiredSize = InValue; }
-    FORCEINLINE constexpr bool GetUseChildrenDesiredSize() const noexcept { return this->bUseChildrenDesiredSize; }
-
-protected:
+    void UserInterfaceTick();
 
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
-    bool MBDownOnScrollbar(const LViewport& InViewport);
+    bool MBDownOnScrollbar(LViewport const& InViewport);
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
-    bool MBUpOnScrollbar(const LViewport& InViewport);
+    bool MBUpOnScrollbar(LViewport const& InViewport);
 
-    bool DrawVScrollbar(const f32 InVisibleY) const;
-    bool DrawHScrollbar(const f32 InVisibleX) const;
+    inline constexpr bool ShouldDrawVScrollbar(f32 InVisibleY) const noexcept
+    {
+        if (this->Behavior.bAlwaysShowVScrollbar) { return true; }
+        if (this->Behavior.bAlwaysHideHScrollbar) { return false; }
+        return maths::eq_e(InVisibleY, 1.0) == false;
+    }
+    inline constexpr bool ShouldDrawHScrollbar(f32 InVisibleX) const noexcept
+    {
+        if (this->Behavior.bAlwaysShowHScrollbar) { return true; }
+        if (this->Behavior.bAlwaysHideVScrollbar) { return false; }
+        return maths::eq_e(InVisibleX, 1.0) == false;
+    }
 
     LVec2F GetVInteractiveAreaScrollSize() const;
     LVec2F GetVInteractiveAreaScrollPositionFromOuter() const;
@@ -220,61 +162,43 @@ protected:
     LVec2F GetVBackgroundScrollSize() const;
     LVec2F GetVBackgroundScrollPositionFromOuter() const;
     LVec2F GetVForegroundScrollSize() const;
-    LVec2F GetVForegroundScrollSize(const f32 InVisibleY) const;
+    LVec2F GetVForegroundScrollSize(f32 InVisibleY) const;
     LVec2F GetVForegroundScrollPositionFromOuter() const;
-    LVec2F GetVForegroundScrollPositionFromOuter(const f32 InScrollOffsetYPercent) const;
+    LVec2F GetVForegroundScrollPositionFromOuter(f32 InScrollOffsetYPercent) const;
 
     LVec2F GetHBackgroundScrollSize() const;
     LVec2F GetHBackgroundScrollPositionFromOuter() const;
     LVec2F GetHForegroundScrollSize() const;
-    LVec2F GetHForegroundScrollSize(const f32 InVisibleX) const;
+    LVec2F GetHForegroundScrollSize(f32 InVisibleX) const;
     LVec2F GetHForegroundScrollPositionFromOuter() const;
-    LVec2F GetHForegroundScrollPositionFromOuter(const f32 InScrollOffsetXPercent) const;
-
-private:
+    LVec2F GetHForegroundScrollPositionFromOuter(f32 InScrollOffsetXPercent) const;
 
     void HandleMouseWheelUp(f32 Value);
     void HandleMouseWheelDown(f32 Value);
 
-    LScrollRegionBrushImpl Brush;
+    LScrollRegionBehavior Behavior;
+    LScrollRegionBarBrush BarBrush;
 
-    //#
     //# The size to use for the whole scroll region if it was not anchored.
-    //#
     LWidgetSize2 ScrollRegionSize;
 
-    //#
     //# The scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
-    //#
-    LVec2F ScrollPosition;
-
-    mutable LVec2F DesiredSizeOfChildren;
-
-    LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
+    LVec2F ScrollPosition{ maths::zero_vector<LVec2F> };
 
     bool bCullNonVisible:1{ true };
-    bool bUiTickV:1{ false };
-    bool bUiTickH:1{ false };
-    bool bUseChildrenDesiredSize:1{ false };
-    f32 MbVOffset { 0.0 };
-    f32 MbHOffset { 0.0 };
+    bool bUseChildrenDesiredSize:1{};
+    mutable LVec2F DesiredSizeOfChildren{ maths::zero_vector<LVec2F> };
+
+    LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
+    bool bUiTickV:1{};
+    bool bUiTickH:1{};
+    f32 MbVOffset{};
+    f32 MbHOffset{};
 };
 
 struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)
 {
     NODE_FACTORY_BODY(WScrollRegion)
-
-    decltype(auto) Brush(this auto&& Self, LScrollRegionBrush const& InBrush) noexcept
-    {
-        NODE_FACTORY_SELF().SetBrush(InBrush);
-        return NODE_FACTORY_RESULT();
-    }
-
-    decltype(auto) CullNonVisible(this auto&& Self, const bool bCull) noexcept
-    {
-        NODE_FACTORY_SELF().SetCullNonVisible(bCull);
-        return NODE_FACTORY_RESULT();
-    }
 
     decltype(auto) ScrollRegionSize(this auto&& Self, LWidgetSize2 const& InSize) noexcept
     {
@@ -282,118 +206,100 @@ struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)
         return NODE_FACTORY_RESULT();
     }
 
+    decltype(auto) Behavior(this auto&& Self, LScrollRegionBehavior const& InBehavior) noexcept
+    {
+        NODE_FACTORY_SELF().SetBehavior(InBehavior);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) AlwaysShowVScrollbar(this auto&& Self, bool bValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetAlwaysShowVScrollbar(bValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) AlwaysHideVScrollbar(this auto&& Self, bool bValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetAlwaysHideVScrollbar(bValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) AlwaysShowHScrollbar(this auto&& Self, bool bValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetAlwaysShowHScrollbar(bValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) AlwaysHideHScrollbar(this auto&& Self, bool bValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetAlwaysHideHScrollbar(bValue);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) BarBrush(this auto&& Self, LScrollRegionBarBrush const& InBrush) noexcept
+    {
+        NODE_FACTORY_SELF().SetBarBrush(InBrush);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) VBackgroundTint(this auto&& Self, LColor const& InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetVBackgroundTint(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) VTint(this auto&& Self, LColor const& InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetVTint(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) VScrollBarPadding(this auto&& Self, LVec2F InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetVScrollBarPadding(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) VScrollBarHeight(this auto&& Self, f32 InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetVScrollBarWidth(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) VScrollBarBackgroundWith(this auto&& Self, f32 InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetVScrollBarBackgroundWidth(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) HBackgroundTint(this auto&& Self, LColor const& InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetHBackgroundTint(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HTint(this auto&& Self, LColor const& InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetHTint(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HScrollBarPadding(this auto&& Self, LVec2F InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetHScrollBarPadding(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HScrollBarHeight(this auto&& Self, f32 InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetHScrollBarHeight(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HScrollBarBackgroundHeight(this auto&& Self, f32 InValue) noexcept
+    {
+        NODE_FACTORY_SELF().SetHScrollBarBackgroundHeight(InValue);
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) CullNonVisible(this auto&& Self, bool bCull) noexcept
+    {
+        NODE_FACTORY_SELF().SetCullNonVisible(bCull);
+        return NODE_FACTORY_RESULT();
+    }
     decltype(auto) UseChildrenDesiredSize(this auto&& Self, const bool bValue) noexcept
     {
         NODE_FACTORY_SELF().SetUseChildrenDesiredSize(bValue);
         return NODE_FACTORY_RESULT();
     }
 };
-
-FORCEINLINE void WScrollRegion::SetBrush(const LScrollRegionBrush& InBrush) noexcept
-{
-    this->Super::SetBrush(InBrush);
-    this->Brush.Copy(InBrush);
-}
-
-FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrush& InBrush) noexcept
-{
-    this->Brush.Copy(InBrush);
-}
-
-FORCEINLINE LScrollRegionBrush WScrollRegion::CopyScrollRegionBrush() const noexcept
-{
-    LScrollRegionBrush Result{this->GetBrush()};
-
-    Result.bAlwaysShowVScrollbar = this->Brush.bAlwaysShowVScrollbar;
-    Result.bAlwaysHideVScrollbar = this->Brush.bAlwaysHideVScrollbar;
-
-    Result.bAlwaysShowHScrollbar = this->Brush.bAlwaysShowHScrollbar;
-    Result.bAlwaysHideHScrollbar = this->Brush.bAlwaysHideHScrollbar;
-
-    Result.VBackgroundTint = this->Brush.VBackgroundTint;
-    Result.VTint = this->Brush.VTint;
-    Result.HBackgroundTint = this->Brush.HBackgroundTint;
-    Result.HTint = this->Brush.HTint;
-
-    Result.VScrollBarPadding = this->Brush.VScrollBarPadding;
-    Result.VScrollBarWidth = this->Brush.VScrollBarWidth;
-    Result.VScrollBarBackgroundWidth = this->Brush.VScrollBarBackgroundWidth;
-
-    Result.HScrollBarPadding = this->Brush.HScrollBarPadding;
-    Result.HScrollBarHeight = this->Brush.HScrollBarHeight;
-    Result.HScrollBarBackgroundHeight = this->Brush.HScrollBarBackgroundHeight;
-
-    return Result;
-}
-
-FORCEINLINE void WScrollRegion::LScrollRegionBrushImpl::Copy(const LScrollRegionBrush& InBrush) noexcept
-{
-    this->bAlwaysShowVScrollbar = InBrush.bAlwaysShowVScrollbar;
-    this->bAlwaysHideVScrollbar = InBrush.bAlwaysHideVScrollbar;
-
-    this->bAlwaysShowHScrollbar = InBrush.bAlwaysShowHScrollbar;
-    this->bAlwaysHideHScrollbar = InBrush.bAlwaysHideHScrollbar;
-
-    this->VBackgroundTint = InBrush.VBackgroundTint;
-    this->VTint = InBrush.VTint;
-    this->HBackgroundTint = InBrush.HBackgroundTint;
-    this->HTint = InBrush.HTint;
-
-    this->VScrollBarPadding = InBrush.VScrollBarPadding;
-    this->VScrollBarWidth = InBrush.VScrollBarWidth;
-    this->VScrollBarBackgroundWidth = InBrush.VScrollBarBackgroundWidth;
-
-    this->HScrollBarPadding = InBrush.HScrollBarPadding;
-    this->HScrollBarHeight = InBrush.HScrollBarHeight;
-    this->HScrollBarBackgroundHeight = InBrush.HScrollBarBackgroundHeight;
-
-    return;
-}
-
-FORCEINLINE void WScrollRegion::LScrollRegionBrushImpl::Move(LScrollRegionBrush&& InBrush) noexcept
-{
-    this->bAlwaysShowVScrollbar = std::move(InBrush.bAlwaysShowVScrollbar);
-    this->bAlwaysHideVScrollbar = std::move(InBrush.bAlwaysHideVScrollbar);
-
-    this->bAlwaysShowHScrollbar = std::move(InBrush.bAlwaysShowHScrollbar);
-    this->bAlwaysHideHScrollbar = std::move(InBrush.bAlwaysHideHScrollbar);
-
-    this->VBackgroundTint = std::move(InBrush.VBackgroundTint);
-    this->VTint = std::move(InBrush.VTint);
-    this->HBackgroundTint = std::move(InBrush.HBackgroundTint);
-    this->HTint = std::move(InBrush.HTint);
-
-    this->VScrollBarPadding = std::move(InBrush.VScrollBarPadding);
-    this->VScrollBarWidth = std::move(InBrush.VScrollBarWidth);
-    this->VScrollBarBackgroundWidth = std::move(InBrush.VScrollBarBackgroundWidth);
-
-    this->HScrollBarPadding = std::move(InBrush.HScrollBarPadding);
-    this->HScrollBarHeight = std::move(InBrush.HScrollBarHeight);
-    this->HScrollBarBackgroundHeight = std::move(InBrush.HScrollBarBackgroundHeight);
-
-    return;
-}
-
-FORCEINLINE WScrollRegion::LScrollRegionBrushImpl::LScrollRegionBrushImpl(const LScrollRegionBrush& InBrush) noexcept
-{
-    this->Copy(InBrush);
-}
-
-FORCEINLINE WScrollRegion::LScrollRegionBrushImpl::LScrollRegionBrushImpl(LScrollRegionBrush&& InBrush) noexcept
-{
-    this->Move(std::move(InBrush));
-}
-
-FORCEINLINE WScrollRegion::LScrollRegionBrushImpl& WScrollRegion::LScrollRegionBrushImpl::operator=(const LScrollRegionBrush& InBrush) noexcept
-{
-    this->Copy(InBrush);
-    return *this;
-}
-
-FORCEINLINE WScrollRegion::LScrollRegionBrushImpl& WScrollRegion::LScrollRegionBrushImpl::operator=(LScrollRegionBrush&& InBrush) noexcept
-{
-    this->Move(std::move(InBrush));
-    return *this;
-}
 
 } /* ~Namespace Jafg */

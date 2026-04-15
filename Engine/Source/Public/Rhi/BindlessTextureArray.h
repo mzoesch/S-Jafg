@@ -9,8 +9,8 @@ namespace Jafg::UBO
 
 struct BindlessTextureArray
 {
-    static inline constexpr u32 SamplerBinding{ 0 };
-    static inline constexpr u32 ArrayBinding{ 1 };
+    inline static constexpr u32 SamplerBinding{ 0 };
+    inline static constexpr u32 ArrayBinding{ 1 };
 
     enum Sampler : u32
     {
@@ -25,9 +25,9 @@ struct BindlessTextureArray
         NearestClampToBorderSamplerIdx,
         // NearestMirrorClampToEdgeSamplerIdx,
     };
-    static inline constexpr u32 SamplerCount{NearestClampToBorderSamplerIdx + 1};
+    inline static constexpr u32 SamplerCount{NearestClampToBorderSamplerIdx + 1};
 
-    static inline constexpr u32 IdentityMulIdx{ 0 };
+    inline static constexpr u32 IdentityMulIdx{ 0 };
     static std::array<vk::DescriptorSetLayoutBinding, 2> GetBindings(u32 Capacity) noexcept
     {
         return std::array{

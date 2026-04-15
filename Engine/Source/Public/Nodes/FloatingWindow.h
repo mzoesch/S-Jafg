@@ -4,7 +4,7 @@
 
 #include "Nodes/UserWidget.h"
 #include "Nodes/VRegion.h"
-#include "TextBox.h"
+#include "Nodes/TextBox.h"
 #include "FloatingWindow.generated.h"
 
 namespace Jafg

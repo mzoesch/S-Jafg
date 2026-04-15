@@ -41,8 +41,8 @@ public:
     virtual void Destruct() override { Super::Destruct(); this->RemoveChildren(); }
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    virtual LCursorReply SweepMouse(LViewport& Viewport, LVec2F const& Location) override;
-    virtual LReply       SweepFocusTest(LViewport const& Viewport, LVec2F const& Location) override;
+    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
+    virtual LReply       SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location) override;
 
     virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
     virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;

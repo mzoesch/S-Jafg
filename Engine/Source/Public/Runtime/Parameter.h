@@ -53,6 +53,13 @@ struct LProgramParameter
             LOG_WARNING(LogProgramArguments, "Program argument [{}] already registered.", this->Identifier)
             Application::Detail::RegisteredProgramParameters.erase(It);
         }
+        if (auto It{algo::find_if(Application::Detail::RegisteredProgramParameters, [&Identifier = this->Identifier](LProgramParameter* Param)
+        {
+            return Param->Identifier == Identifier;
+        })}; It != Application::Detail::RegisteredProgramParameters.end())
+        {
+            LOG_FATAL(LogProgramArguments, "Program argument [{}] already registered by another parameter.", this->Identifier)
+        }
         Application::Detail::RegisteredProgramParameters.emplace_back(this);
     }
     ENGINE_API ~LProgramParameter();

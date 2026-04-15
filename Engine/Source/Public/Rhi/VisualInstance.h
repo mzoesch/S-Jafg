@@ -24,7 +24,7 @@ namespace Jafg
 
 struct alignas(16) LVisualInstance final
 {
-    LVec4F Rect;
+    LRect2F Rect;
 
     u32 Tint;
     u32 BackgroundTint;
@@ -50,9 +50,10 @@ static_assert(sizeof(LVisualInstance) % 16 == 0);
 namespace UBO
 {
 
-struct VisualShared final : public TUbo<VisualShared, 0, vk::ShaderStageFlagBits::eVertex>
+struct VisualShared final : public TUbo<VisualShared, 0, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
     LMat4F Proj;
+    f32 Gamma;
 };
 static_assert(CUniformBufferObject<VisualShared>);
 

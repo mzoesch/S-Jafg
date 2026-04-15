@@ -12,6 +12,7 @@
 #include "Framework/FontSubsystem.h"
 #include "Rhi/VisualInstance.h"
 #include "Rhi/NodeRenderInfo.h"
+#include "User/UserPreferences.h"
 
 void Jafg::LViewport::Vk_OnLateInit()
 {
@@ -24,7 +25,7 @@ void Jafg::LViewport::Vk_OnLateInit()
     for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
     {
         this->VisualBatches[Idx] = Frontend.Vk_CreateMappedBuffer({
-            .size = sizeof(LVisualInstance) * this->MaxInstanceCount,
+            .size = sizeof(LVisualInstance) * LNodeRenderInfo::MaxInstanceCount,
             .usage = vk::BufferUsageFlagBits::eStorageBuffer,
             .sharingMode = vk::SharingMode::eExclusive
             });
@@ -106,8 +107,6 @@ void Jafg::LViewport::DispatchInputs()
 {
     auto& CursorLocation{this->Surface.GetMouseLocation()};
 
-    this->SweepTranslation = maths::zero_vector<LVec2F>;
-
     this->LastFrameHoveredWidgets = this->HoveredWidgets;
     if (CursorLocation.has_value())
     {
@@ -125,7 +124,7 @@ void Jafg::LViewport::DispatchInputs()
             {
                 continue;
             }
-            if (LCursorReply Reply{(*It)->SweepMouse(*this, CursorLocation.value())}; Reply.IsHandled())
+            if (LCursorReply Reply{(*It)->SweepMouse({maths::zero_vector<LVec2F>}, CursorLocation.value())}; Reply.IsHandled())
             {
                 SweepReply = std::move(Reply);
                 break;
@@ -175,7 +174,7 @@ void Jafg::LViewport::DispatchInputs()
             {
                 continue;
             }
-            if (LReply Reply{Widget->SweepFocusTest(*this, CursorLocation.value())}; Reply.IsHandled())
+            if (LReply Reply{Widget->SweepFocusTest({maths::zero_vector<LVec2F>}, CursorLocation.value())}; Reply.IsHandled())
             {
                 this->HandleReply(this->Surface, Reply);
                 bHandled = true;
@@ -239,7 +238,7 @@ void Jafg::LViewport::DispatchInputs()
                 {
                     continue;
                 }
-                if ((*It)->IsInBounds(*this, CursorLocation.value()) == false)
+                if ((*It)->IsInBounds({maths::zero_vector<LVec2F>}, CursorLocation.value()) == false)
                 {
                     continue;
                 }
@@ -289,7 +288,7 @@ void Jafg::LViewport::DispatchInputs()
                 {
                     continue;
                 }
-                if ((*It)->IsInBounds(*this, CursorLocation.value()) == false)
+                if ((*It)->IsInBounds({maths::zero_vector<LVec2F>}, CursorLocation.value()) == false)
                 {
                     continue;
                 }
@@ -369,62 +368,38 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 {
     STAT_CYCLE_FUNCTION()
 
+    check(GEngine)
     auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
 
     this->ClearInvalidWidgets();
-
-    this->FrameTranslation = maths::zero_vector<LVec2F>;
     this->RecalculateScaleFactor();
 
-    // this->IntermediateBuffer.MakeDrawTarget();
-
-    // this->CachedOrthographicProjectionMatrix = Maths::MakeOrthographicProjectionMatrix
-    // (
-    //     LVector2(static_cast<f32>(Dimensions.X), static_cast<f32>(Dimensions.Y))
-    // );
-
-    // RendererStateMachine::PrepareForPerspectivePainting();
-    // for (auto const& [Eye, World] : this->PerspectiveViews)
-    // {
-    //     Eye->UpdateViewMatrix();
-    //
-    //     // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
-    //     // {
-    //     //     checkSlow( Shader && Shader->IsValid() )
-    //     //     Shader->UpdateWorldUniforms(*this, *World, *Eye);
-    //     //     continue;
-    //     // }
-    //
-    //     // Info.Surface.GetDimensions()
-    //
-    //     World->Draw(Info, *Eye);
-    //
-    //     continue;
-    // }
-
-    // RendererStateMachine::PrepareForOrthographicPainting();
-    // for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
-    // {
-    //     checkSlow( Shader && Shader->IsValid() )
-    //     Shader->UpdateViewportUniforms(*this);
-    //     continue;
-    // }
-
-    LNodeRenderInfo NodeInfo{Info, *this, {},
+    TArray<std::pair<vk::Rect2D, u64>> _Dummy1;
+    TArray<LVisualInstance> _Dummy2;
+    LNodeRenderInfo NodeInfo{Info, *this,
         *Frontend.GetSubsystemChecked<JTextureSubsystem>(),
         *Frontend.GetSubsystemChecked<JMaterialSubsystem>(),
-        *Frontend.GetSubsystemChecked<JFontSubsystem>()
+        *Frontend.GetSubsystemChecked<JFontSubsystem>(),
+        maths::zero_vector<LVec2F>, {},
+        _Dummy1, _Dummy2,
         };
+    NodeInfo.Batches.reserve(LNodeRenderInfo::MaxBatchCount);
+    NodeInfo.VisualInstances.reserve(LNodeRenderInfo::MaxInstanceCount);
+    NodeInfo.BeginNewBatch(vk::Rect2D{
+        .offset = vk::Offset2D{0, 0},
+        .extent = vk::Extent2D{this->GetDimensions().x, this->GetDimensions().y}
+        });
 
     for (auto const* Widget : this->TopLevelWidgets)
     {
+        check(Widget)
         if (Widget->TransformsWidgetLayout())
         {
+            STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
             Widget->UpdateDesiredSize();
             Widget->UpdateAnchoredSize(*this);
             if (Widget->ShouldNowDraw())
             {
-                STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
                 Widget->Draw(NodeInfo);
             }
         }
@@ -440,26 +415,31 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 
     if (NodeInfo.VisualInstances.empty() == false)
     {
+        if (JAFG_UNLIKELY(NodeInfo.VisualInstances.size() > LNodeRenderInfo::MaxInstanceCount))
+        {
+            LOG_FATAL(LogWidgetFramework, "Number of visual instances [{}] exceeds the maximum instance count [{}]."
+                , NodeInfo.VisualInstances.size(), LNodeRenderInfo::MaxInstanceCount)
+        }
+
         LMaterialInstance& Instance{*NodeInfo.MaterialSubsystem.GetSharedMaterialInstances().at("Jafg.VisualBatch")};
 
         auto Dimensions{this->GetDimensionsF()};
-        UBO::VisualShared Shared{.Proj = glm::orthoRH_ZO(
-            0.0f, Dimensions.x,
-            0.0f, Dimensions.y,
-            0.0f, 1.0f
-            )};
+        UBO::VisualShared Shared{
+            .Proj = glm::orthoRH_ZO(0.0f, Dimensions.x, 0.0f, Dimensions.y, 0.0f, 1.0f),
+            .Gamma = *GetSingleton<JUserPreferences>().InterfaceGamma,
+            };
         Shared.Upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
         auto WorldDataWriteInfo{Shared.WriteInfo(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
 
         std::memcpy(
               this->VisualBatches[NodeInfo.Frame].GetData()
             , NodeInfo.VisualInstances.data()
-            , sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
+            , sizeof(std::remove_cvref_t<decltype(NodeInfo.VisualInstances)>::value_type) * NodeInfo.VisualInstances.size()
             );
         vk::DescriptorBufferInfo BufferInfo{
             .buffer = *this->VisualBatches[NodeInfo.Frame],
             .offset = 0,
-            .range = sizeof(decltype(NodeInfo.VisualInstances)::value_type) * NodeInfo.VisualInstances.size()
+            .range = sizeof(std::remove_cvref_t<decltype(NodeInfo.VisualInstances)>::value_type) * NodeInfo.VisualInstances.size()
             };
 
         std::array Writes{
@@ -498,19 +478,22 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 
         NodeInfo.CommandBuffer.setPolygonModeEXT(vk::PolygonMode::eFill);
         NodeInfo.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Instance.Material->Pipeline);
-        NodeInfo.CommandBuffer.draw(4, NodeInfo.VisualInstances.size(), 0, 0);
-    }
 
-    checkCode
-    (
-        if (maths::eq_zero_e(this->FrameTranslation) == false)
+        for (auto Idx{0uz}; Idx < NodeInfo.Batches.size(); ++Idx)
         {
-            LOG_WARNING(LogWidgetFramework, "Viewport translation state is not zero: [{}].", maths::to_string(this->FrameTranslation))
+            u64 NextBegin{NodeInfo.VisualInstances.size()};
+            if (Idx + 1 < NodeInfo.Batches.size())
+            {
+                NextBegin = NodeInfo.Batches[Idx + 1].second;
+            }
+            auto& Batch{NodeInfo.Batches[Idx]};
+            NodeInfo.CommandBuffer.setScissor(0, Batch.first);
+            NodeInfo.CommandBuffer.draw(
+                4, NextBegin - Batch.second,
+                0, Batch.second
+                );
         }
-    )
-
-    // LFrameBuffer::MakeDefaultDrawTarget();
-    // this->IntermediateBuffer.PaintToViewport(*this);
+    }
 
     return;
 }

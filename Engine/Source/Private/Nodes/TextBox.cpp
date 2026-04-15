@@ -81,7 +81,7 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
         }
 
         LVec2F TopLeft{
-              this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport)
+              this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)
             + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())
             + this->DrawOffset
             };
@@ -94,8 +94,8 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
         for (auto const& GlyphInfo : this->RenderData.Result.GlyphInfos)
         {
             // TODO: Clamp to pixels? Currently sometimes a little bit blurry.
-            Info.VisualInstances.emplace_back(LVisualInstance{
-                .Rect = { TopLeft.x + GlyphInfo.Rect.x, TopLeft.y + GlyphInfo.Rect.y, GlyphInfo.Rect.z, GlyphInfo.Rect.w },
+            Info.AddInstance(LVisualInstance{
+                .Rect = { {TopLeft.x + GlyphInfo.Rect.x, TopLeft.y + GlyphInfo.Rect.y}, {GlyphInfo.Rect.z, GlyphInfo.Rect.w} },
                 .Tint = this->TextBrush.Tint.Bits,
                 .BackgroundTint = Colors::Transparent.Bits,
                 .Radii = maths::zero_vector<LVec4F>,

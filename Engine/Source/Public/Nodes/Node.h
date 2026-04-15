@@ -363,12 +363,25 @@ private:
 #define NODE_FACTORY_SELF() check(Self._IsDecommissioned() == false) DETAIL_JAFG_NODE_FACTORY_SELF()
 #define NODE_FACTORY_RESULT() std::forward<decltype(Self)>(Self)
 
+struct LNodeSweepData final
+{
+    //#
+    //# The translation that is recommended for children of a #WParentBase to use while sweeping.
+    //# This translation should be removed if a parent widget finished its sweep logic.
+    //# This value is reset every frame.
+    //# @remark Use the #LViewportSweepTranslation for easy RAII style translation logic.
+    //#
+    const LVec2F Translation;
+};
+
 struct LNodeKeyEventData final
 {
     LFrontend const& Frontend;
     LSurface& Surface;
     LViewport& Viewport;
     WNode& Node;
+
+    const LVec2F Translation;
 };
 
 //# Initializer for the dynamic ctors for WNodes.
@@ -515,7 +528,14 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
 
     decltype(auto) Unique(this auto&& Self) noexcept
     {
-        return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TSelf>(std::forward<decltype(Self)>(Self));
+        auto& Cache{Self.GetRawNode()};
+#if JAFG_DO_CHECKS
+        Self._Release();
+        Self._Decommission();
+#endif /* JAFG_DO_CHECKS */
+        return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TSelf>(
+            static_cast<typename std::remove_cvref_t<decltype(Self)>::TSelf*>(&Cache)
+            );
     }
 
     inline decltype(auto) operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept;
@@ -617,8 +637,8 @@ public:
     //#
     virtual bool AddData(JNodeData& Data) { return false; }
 
-    bool IsInBounds(const LViewport& Context, const LVec2F& InLocation) const;
-    virtual LCursorReply SweepMouse(LViewport& Context, const LVec2F& InLocation);
+    bool IsInBounds(LNodeSweepData const& Data, LVec2F const& Location) const;
+    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location);
 
     TFunction<LCursorReply(WNode& Node)> OnCursorEnterEvent;
     TFunction<LCursorReply(WNode& Node)> OnCursorMovedEvent;
@@ -627,7 +647,7 @@ public:
     virtual LCursorReply OnCursorMoved(const LVec2F& InLocation) { if (this->OnCursorMovedEvent.IsValid()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
     virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsValid()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
 
-    virtual LReply SweepFocusTest(const LViewport& Context, const LVec2F& InLocation);
+    virtual LReply SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location);
 
     //#
     //# Called if this widget is being focused / unfocused. Extra care is given by the owing viewport for special
@@ -667,8 +687,8 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) { return LReply::Unhandled(); }
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) { return LReply::Unhandled(); }
 
     //#
     //# @return Whether this is the focused widget.
@@ -770,7 +790,7 @@ public:
     FORCEINLINE LVec2F CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
     virtual LVec2F GetAnchoredTopLeftFromMostOuter(LViewport const& Viewport) const;
-    LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LViewport const& Viewport) const;
+    LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const;
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Viewport, WNode const* InDirectChild) const PURE_VIRTUAL(return { })
 

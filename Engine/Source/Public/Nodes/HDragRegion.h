@@ -73,7 +73,7 @@ private:
         u32 Idx{};
         f32 Offset{};
     };
-    TOptional<LDragChildOffset> CalculateDragChildOffset();
+    TOptional<LDragChildOffset> CalculateDragChildOffset(LVec2F const& Translation);
     TOptional<LDragChildOffset> DragChildOffset;
 
     void UiTickMove();

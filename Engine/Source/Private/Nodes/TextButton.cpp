@@ -18,11 +18,11 @@ void Jafg::WTextButton::Draw(LNodeRenderInfo const& Info) const
 
         f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()).y)};
         LVec2F TopLeft{
-              this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Viewport)
+              this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)
             + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())
             + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->Icon->GetExtent().Height * this->IconBrush.Scale)) * 0.5f}
             };
-        Info.VisualInstances.emplace_back(LVisualInstance{
+        Info.AddInstance(LVisualInstance{
             .Rect = {maths::round(TopLeft), this->Icon->GetExtentAsVec2F() * static_cast<f32>(this->IconBrush.Scale)},
             .Tint = this->IconBrush.Tint.Bits,
             .BackgroundTint = Colors::Black.Bits,

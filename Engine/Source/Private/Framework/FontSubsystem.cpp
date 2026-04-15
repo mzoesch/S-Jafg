@@ -131,6 +131,14 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
             )
     }
 
+    if (Finder::DoesFileExist(Info.Source) == false)
+    {
+        LOG_FATAL(LogFontSubsystem
+            , "No such font [{}]."
+            , Info.Source
+            )
+    }
+
     //# TODO: Fix existing font and update it instead.
     //#       Also msdf-gen supports on the fly atlas updates. We need to support this as well.
     MyFont Result; Result.Source = Info.Source;

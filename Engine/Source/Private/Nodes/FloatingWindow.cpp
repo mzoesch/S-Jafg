@@ -124,7 +124,8 @@ void Jafg::WFloatingWindow::UiTickMove()
     {
         this->MoveDragOffset =
             this->GetViewport().GetSurface().GetMouseLocationValue()
-                - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport());
+                // TODO: This is wrong. How do we get the translation here?
+                - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>);
 
         return;
     }
@@ -160,20 +161,22 @@ void Jafg::WFloatingWindow::UiTickResize()
     {
         this->ResizeDragOffset =
             this->GetViewport().GetSurface().GetMouseLocationValue()
-                - (this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport())
+                // TODO: This is wrong. How do we get the translation here? Same for below
+                - (this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
                     + this->GetWindow()->GetDesiredSize_v2());
-
         return;
     }
 
     LVec2F NewSize{
-        this->GetViewport().GetSurface().GetMouseLocationValue().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).x - this->ResizeDragOffset.value().x,
-        this->GetViewport().GetSurface().GetMouseLocationValue().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).y - this->ResizeDragOffset.value().y
+        this->GetViewport().GetSurface().GetMouseLocationValue().x
+        - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).x - this->ResizeDragOffset.value().x,
+        this->GetViewport().GetSurface().GetMouseLocationValue().y
+        - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).y - this->ResizeDragOffset.value().y
         };
 
     LVec2F MaxSize{
-        this->GetViewport().GetDimensions().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).x,
-        this->GetViewport().GetDimensions().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetViewport()).y
+        this->GetViewport().GetDimensions().x - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).x,
+        this->GetViewport().GetDimensions().y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).y
         };
 
     if (NewSize.x < 0.0)

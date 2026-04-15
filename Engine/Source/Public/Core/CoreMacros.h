@@ -267,3 +267,14 @@
 
 //# This or that ::Jafg::Xor(bA, bB);
 #define JAFG_XOR(A, B) ( !(!!(A)) != !(!!(B)) )
+
+//# Allows one to use "anonymous" structs in templated paths.
+#define JAFG_ANONYMOUS_STRUCT(...) \
+    decltype([]         \
+    {                   \
+        struct _        \
+        {               \
+            __VA_ARGS__ \
+        } _ret;         \
+        return _ret;    \
+    }())

@@ -150,6 +150,10 @@ public:
     constexpr f32 GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
     constexpr LColor const& GetOutlineTint() const noexcept { return this->Brush.OutlineTint; }
 
+protected:
+
+    void DrawRegionBrush(LNodeRenderInfo const& Info) const;
+
 private:
 
     LRegionBrush Brush;

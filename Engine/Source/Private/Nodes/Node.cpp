@@ -41,35 +41,35 @@ LVec2F Jafg::InSptFromRelative(LViewport const& Viewport, LVec2F Relative) noexc
     return Relative * LexToFloat(Scale);
 }
 
-bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVec2F& InLocation) const
+bool Jafg::WNode::IsInBounds(LNodeSweepData const& Data, LVec2F const& Location) const
 {
     if (this->TransformsWidgetLayout() == false)
     {
         return false;
     }
 
-    const LVec2D TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetSweepTranslation()};
+    LVec2D TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + Data.Translation};
     return
-            TopLeftMostOuter.x <= InLocation.x
-         && InLocation.x       <= TopLeftMostOuter.x + this->GetAnchoredSize_v2().x
-         && TopLeftMostOuter.y <= InLocation.y
-         && InLocation.y       <= TopLeftMostOuter.y + this->GetAnchoredSize_v2().y
+            TopLeftMostOuter.x <= Location.x
+         && Location.x         <= TopLeftMostOuter.x + this->GetAnchoredSize_v2().x
+         && TopLeftMostOuter.y <= Location.y
+         && Location.y         <= TopLeftMostOuter.y + this->GetAnchoredSize_v2().y
          ;
 }
 
-Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVec2F& InLocation)
+Jafg::LCursorReply Jafg::WNode::SweepMouse(LNodeSweepData const& Data, LVec2F const& Location)
 {
     if (this->IsHitTestable() == false)
     {
         return LCursorReply::Unhandled();
     }
 
-    if (this->IsInBounds(Context, InLocation) == false)
+    if (this->IsInBounds(Data, Location) == false)
     {
         return LCursorReply::Unhandled();
     }
 
-    if (Context.AddHoveredWidgetForFrame(this))
+    if (this->GetViewport().AddHoveredWidgetForFrame(this))
     {
         return this->OnCursorEnter();
         // if (LCursorReply Reply{this->OnCursorEnter()}; Reply.IsHandled())
@@ -79,16 +79,15 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVec2F& InL
         // return LCursorReply::Handled();
     }
 
-    return this->OnCursorMoved(InLocation);
+    return this->OnCursorMoved(Location);
 }
 
-Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVec2F& InLocation)
+Jafg::LReply Jafg::WNode::SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location)
 {
-    if (this->IsInBounds(Context, InLocation) == false || this->IsHitTestable() == false)
+    if (this->IsHitTestable() == false || this->IsInBounds(Data, Location) == false)
     {
         return LReply::Unhandled();
     }
-
     return {this};
 }
 
@@ -125,18 +124,6 @@ Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const
         return this->Parent->OnKeyUp(Data, Event);
     }
 
-    return LReply::Unhandled();
-}
-
-Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
-{
-    check(this->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
-    return LReply::Unhandled();
-}
-
-Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
-{
-    check(this->IsInBounds(Data.Viewport, Data.Surface.GetMouseLocationValue()))
     return LReply::Unhandled();
 }
 
@@ -306,9 +293,9 @@ LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter(LViewport const& Viewport) c
         };
 }
 
-LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Viewport) const
+LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const
 {
-    return this->GetAnchoredTopLeftFromMostOuter(Viewport) + Viewport.GetFrameTranslation();
+    return this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + Translation;
 }
 
 TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept

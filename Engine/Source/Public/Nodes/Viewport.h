@@ -16,17 +16,6 @@ class WUserWidget;
 class LWorld;
 struct LRenderInfo;
 
-//# @see #LViewport::ApplySweepTranslation.
-struct LViewportSweepTranslation final
-{
-    LViewportSweepTranslation() = delete;
-    explicit LViewportSweepTranslation(LViewport const& InViewport, LVec2F const& InOffset) noexcept;
-    ~LViewportSweepTranslation() noexcept;
-
-    const LViewport& Viewport;
-    LVec2F Offset;
-};
-
 //#
 //# Represents a viewport that can contain widgets.
 //# A viewport has in most cases a handle to some sort of platform-specific window instance.
@@ -104,40 +93,6 @@ public:
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WNode* Node);
 
-    //#
-    //# The translation that is recommended for children of a #WNode to use while drawing.
-    //# This translation should be removed after said #WNode is finished drawing.
-    //# This value is reset every frame.
-    //#
-    FORCEINLINE void ApplyFrameTranslation(LVec2F const& InTranslation) const noexcept { this->FrameTranslation += InTranslation; }
-    FORCEINLINE LVec2F const& GetFrameTranslation() const noexcept { return this->FrameTranslation; }
-
-    //#
-    //# The translation that is recommended for children of a #WParentBase to use while sweeping.
-    //# This translation should be removed if a parent widget finished its sweep logic.
-    //# This value is reset every frame.
-    //# @remark Use the #LViewportSweepTranslation for easy RAII style translation logic.
-    //#
-    FORCEINLINE void ApplySweepTranslation(const LVec2F& InTranslation) const noexcept { this->SweepTranslation += InTranslation; }
-    FORCEINLINE LVec2F const& GetSweepTranslation() const noexcept { return this->SweepTranslation; }
-
-    FORCEINLINE bool HasFrameCulls() const noexcept { return this->FrameCulls.empty() == false; }
-    FORCEINLINE TArray<LVec4F> const& GetFrameCulls() const noexcept { return this->FrameCulls; }
-    FORCEINLINE LVec2F GetFrameCullTopLeft() const noexcept
-    {
-        check( this->HasFrameCulls() )
-        const LVec4F& CullDimensions{ this->FrameCulls.back() };
-        return LVec2F{ CullDimensions.x, CullDimensions.y };
-    }
-    FORCEINLINE LVec2F GetFrameCullSize() const noexcept
-    {
-        check( this->HasFrameCulls() )
-        const LVec4F& CullDimensions{ this->FrameCulls.back() };
-        return LVec2F{ CullDimensions.z, CullDimensions.w };
-    }
-    FORCEINLINE void PushFrameCull(LVec4F const& CullDimensions) noexcept { this->FrameCulls.emplace_back(CullDimensions); }
-    FORCEINLINE void PopFrameCull() noexcept { this->FrameCulls.pop_back(); }
-
     FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
     FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
 
@@ -172,34 +127,16 @@ private:
     TArray<TClassStorage<WNode>> HoveredWidgets;
     TArray<TClassStorage<WNode>> LastFrameHoveredWidgets;
 
-    mutable LVec2F FrameTranslation;
-    mutable LVec2F SweepTranslation;
-    TArray<LVec4F> FrameCulls;
-
     LSurface& Surface;
 
     LClassOuter Outer{ "SurfaceViewport" };
 
-    u64 MaxInstanceCount{ 128 };
     TFrameArray<LMappedDeviceBuffer> VisualBatches;
     TFrameArray<vk::raii::DescriptorSet> Vk_VisualSharedDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<LMappedDeviceBuffer> Vk_VisualSharedBuffers;
 
     LMaterialInstanceRef VisualBatchMaterial;
 };
-
-FORCEINLINE LViewportSweepTranslation::LViewportSweepTranslation(LViewport const& InViewport, LVec2F const& InOffset) noexcept
-    : Viewport(InViewport), Offset(InOffset)
-{
-    this->Viewport.ApplySweepTranslation(this->Offset);
-    return;
-}
-
-FORCEINLINE LViewportSweepTranslation::~LViewportSweepTranslation() noexcept
-{
-    this->Viewport.ApplySweepTranslation(-this->Offset);
-    return;
-}
 
 FORCEINLINE EApplicationScale LViewport::GetMaxAllowApplicationScale() const noexcept
 {
