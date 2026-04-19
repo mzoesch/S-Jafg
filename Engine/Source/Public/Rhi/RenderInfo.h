@@ -19,9 +19,9 @@ struct LRenderInfo
     JUserPreferences const& UserPreferences;
 
     //# The frontend to submit to.
-    LFrontend const& Frontend;
+    LFrontend& Frontend;
     //# The surface to submit to.
-    LSurface const& Surface;
+    LSurface& Surface;
 
     //# The command buffer to submit graphics stuff to.
     vk::CommandBuffer CommandBuffer;

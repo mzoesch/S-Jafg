@@ -14,7 +14,7 @@ void Jafg::WHRegion::UpdateDesiredSize() const
         DesiredSize.y  = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
     }
     DesiredSize.x += InSpt(this->GetViewport(), this->HSpace * (this->GetChildren().size() - 1));
-    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
+    DesiredSize += this->Padding.GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
 
@@ -26,7 +26,7 @@ LVec2F Jafg::WHRegion::GetAnchoredSizeForChild(LViewport const& Viewport, WNode 
     check(InDirectChild)
     checkSlow(InDirectChild->TransformsWidgetLayout())
 
-    if (InDirectChild->GetAnchor().IsStretchedHorizontal() == false)
+    if (InDirectChild->Anchor.IsStretchedHorizontal() == false)
     {
         return Super::GetAnchoredSizeForChild(Viewport, InDirectChild);
     }
@@ -40,24 +40,24 @@ LVec2F Jafg::WHRegion::GetAnchoredSizeForChild(LViewport const& Viewport, WNode 
     {
         check(Child.get())
         TotalDesiredSize += Child->GetDesiredSize_v2().x;
-        TotalFreeUsage   += Child->GetAnchor().MaxX;
+        TotalFreeUsage   += Child->Anchor.MaxX;
     }
 
     const f32 FreeSpace
     {
-        (this->GetAnchoredSize_v2().x - this->GetPadding().GetDesiredSizeXInSpt(Viewport))
+        (this->GetAnchoredSize_v2().x - this->Padding.GetDesiredSizeXInSpt(Viewport))
         - TotalDesiredSize
-        - InSpt(this->GetViewport(), this->GetHSpace()) * (this->GetChildren().size() - 1)
+        - InSpt(this->GetViewport(), this->HSpace) * (this->GetChildren().size() - 1)
     };
 
     const f32 InverseFreeUsage { 1.0f / TotalFreeUsage };
 
     return {
           InDirectChild->GetDesiredSize_v2().x
-        + InDirectChild->GetAnchor().MaxX * InverseFreeUsage * FreeSpace
+        + InDirectChild->Anchor.MaxX * InverseFreeUsage * FreeSpace
         , maths::max(
             InDirectChild->GetDesiredSize_v2().y,
-            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeYInSpt(Viewport))
+            InDirectChild->Anchor.MaxY * (this->GetAnchoredSize_v2().y - this->Padding.GetDesiredSizeYInSpt(Viewport))
             )
         };
 }
@@ -76,21 +76,21 @@ LVec2F Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& 
         }
 
         Offset += Child->GetAnchoredSize_v2().x;
-        Offset += InSpt(this->GetViewport(), this->GetHSpace());
+        Offset += InSpt(this->GetViewport(), this->HSpace);
 
         continue;
     }
 
     LVec2F Out
     {
-        this->GetPadding().GetLeftOffsetInSpt(Context)
+        this->Padding.GetLeftOffsetInSpt(Context)
         + Offset
         + InDirectChild->GetLostAnchoredSize_v2().x,
-        this->GetPadding().GetTopOffsetInSpt(Context)
-        + InDirectChild->GetAnchor().MinY *
+        this->Padding.GetTopOffsetInSpt(Context)
+        + InDirectChild->Anchor.MinY *
         (
             this->GetAnchoredSize_v2().y
-            - this->GetPadding().GetDesiredSizeYInSpt(Context)
+            - this->Padding.GetDesiredSizeYInSpt(Context)
             - InDirectChild->GetAnchoredSize_v2().y
         )
         + InDirectChild->GetLostAnchoredSize_v2().y

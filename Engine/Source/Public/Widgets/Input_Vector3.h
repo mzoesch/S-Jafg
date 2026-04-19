@@ -19,9 +19,11 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WInput_Vector3) noexcept
     {
-        this->SetPadding(5.0f);
-        this->SetOmniOutlineThickness(1.0f);
-        this->SetOmniTint(Colors::Transparent);
+        this->Padding = 5.0f;
+        this->Style.ChainEverywhere<
+            &LRegionBrush::OutlineThickness,
+            &LRegionBrush::Tint
+            >(1.0f, Colors::Transparent);
     }
 
 public:

@@ -14,22 +14,22 @@ void Jafg::WTextButton::Construct()
         {
             if (this->bSelected)
             {
-                this->SetTextBrush(this->TextStyle.SelectedBrush);
-                this->SetLeftIconBrush(this->LeftIconStyle.SelectedBrush);
-                this->SetRightIconBrush(this->RightIconStyle.SelectedBrush);
+                this->TextBrush = this->TextStyle.SelectedBrush;
+                this->LeftIconBrush = this->LeftIconStyle.SelectedBrush;
+                this->RightIconBrush = this->RightIconStyle.SelectedBrush;
             }
             else
             {
-                this->SetTextBrush(this->TextStyle.NormalBrush);
-                this->SetLeftIconBrush(this->LeftIconStyle.NormalBrush);
-                this->SetRightIconBrush(this->RightIconStyle.NormalBrush);
+                this->TextBrush = this->TextStyle.NormalBrush;
+                this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
+                this->RightIconBrush = this->RightIconStyle.NormalBrush;
             }
         }
         else
         {
-            this->SetTextBrush(this->TextStyle.DisabledBrush);
-            this->SetLeftIconBrush(this->LeftIconStyle.DisabledBrush);
-            this->SetRightIconBrush(this->RightIconStyle.DisabledBrush);
+            this->TextBrush = this->TextStyle.DisabledBrush;
+            this->LeftIconBrush = this->LeftIconStyle.DisabledBrush;
+            this->RightIconBrush = this->RightIconStyle.DisabledBrush;
         }
     }
     this->ButtonBase_Construct();
@@ -111,9 +111,9 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorEnter()
 {
     if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
     {
-        this->SetTextBrush(this->TextStyle.HoverBrush);
-        this->SetLeftIconBrush(this->LeftIconStyle.HoverBrush);
-        this->SetRightIconBrush(this->RightIconStyle.HoverBrush);
+        this->TextBrush = this->TextStyle.HoverBrush;
+        this->LeftIconBrush = this->LeftIconStyle.HoverBrush;
+        this->RightIconBrush = this->RightIconStyle.HoverBrush;
     }
     return this->ButtonBase_OnCursorEnter();
 }
@@ -131,7 +131,7 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
                 },
             }, InLocation))
         {
-            this->SetLeftIconBrush(this->DecoupledLeftIconBrush);
+            this->LeftIconBrush = this->LeftIconStyle.DecoupledBrush;
             this->DecoupledLeftIconFrame = GEngine->FrameCount;
             if (this->GetViewport().OnLateTick.IsStillBound(this->LeftHandle) == false)
             {
@@ -143,17 +143,17 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
                         {
                             if (this->IsSelected())
                             {
-                                this->SetLeftIconBrush(this->LeftIconStyle.SelectedBrush);
+                                this->LeftIconBrush = this->LeftIconStyle.SelectedBrush;
                             }
                             else
                             {
-                                this->SetLeftIconBrush(this->LeftIconStyle.NormalBrush);
+                                this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
                             }
                         }
                         else
                         {
                             check(this->IsSelected() == false)
-                            this->SetLeftIconBrush(this->LeftIconStyle.DisabledBrush);
+                            this->LeftIconBrush = this->LeftIconStyle.DisabledBrush;
                         }
                         return true;
                     }
@@ -170,7 +170,7 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
                 },
             }, InLocation))
         {
-            this->SetRightIconBrush(this->DecoupledRightIconBrush);
+            this->RightIconBrush = this->RightIconStyle.DecoupledBrush;
             this->DecoupledRightIconFrame = GEngine->FrameCount;
             if (this->GetViewport().OnLateTick.IsStillBound(this->RightHandle) == false)
             {
@@ -182,17 +182,17 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
                         {
                             if (this->IsSelected())
                             {
-                                this->SetRightIconBrush(this->RightIconStyle.SelectedBrush);
+                                this->RightIconBrush = this->RightIconStyle.SelectedBrush;
                             }
                             else
                             {
-                                this->SetRightIconBrush(this->RightIconStyle.NormalBrush);
+                                this->RightIconBrush = this->RightIconStyle.NormalBrush;
                             }
                         }
                         else
                         {
                             check(this->IsSelected() == false)
-                            this->SetRightIconBrush(this->RightIconStyle.DisabledBrush);
+                            this->RightIconBrush = this->RightIconStyle.DisabledBrush;
                         }
                         return true;
                     }
@@ -208,9 +208,9 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorLeave()
 {
     if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
     {
-        this->SetTextBrush(this->TextStyle.NormalBrush);
-        this->SetLeftIconBrush(this->LeftIconStyle.NormalBrush);
-        this->SetRightIconBrush(this->RightIconStyle.NormalBrush);
+        this->TextBrush = this->TextStyle.NormalBrush;
+        this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
+        this->RightIconBrush = this->RightIconStyle.NormalBrush;
     }
     return this->ButtonBase_OnCursorLeave();
 }
@@ -254,9 +254,9 @@ Jafg::LReply Jafg::WTextButton::OnKeyDown(LNodeKeyEventData const& Data, LKeyEve
             if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
                 || Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
             {
-                this->SetTextBrush(this->TextStyle.PressBrush);
-                this->SetLeftIconBrush(this->LeftIconStyle.PressBrush);
-                this->SetRightIconBrush(this->RightIconStyle.PressBrush);
+                this->TextBrush = this->TextStyle.PressBrush;
+                this->LeftIconBrush = this->LeftIconStyle.PressBrush;
+                this->RightIconBrush = this->RightIconStyle.PressBrush;
             }
         }
     }
@@ -302,9 +302,9 @@ Jafg::LReply Jafg::WTextButton::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent
             if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
                 || Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
             {
-                this->SetTextBrush(this->TextStyle.HoverBrush);
-                this->SetLeftIconBrush(this->LeftIconStyle.HoverBrush);
-                this->SetRightIconBrush(this->RightIconStyle.HoverBrush);
+                this->TextBrush = this->TextStyle.HoverBrush;
+                this->LeftIconBrush = this->LeftIconStyle.HoverBrush;
+                this->RightIconBrush = this->RightIconStyle.HoverBrush;
             }
         }
     }
@@ -313,20 +313,20 @@ Jafg::LReply Jafg::WTextButton::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent
 
 void Jafg::WTextButton::OnEnabledStateChanged()
 {
-    SuperButton::OnEnabledStateChanged();
+    TButtonBase::OnEnabledStateChanged();
     if (this->bUpdateBrushOnStateChange)
     {
         if (this->bEnabled)
         {
-            this->SetTextBrush(this->TextStyle.NormalBrush);
-            this->SetLeftIconBrush(this->LeftIconStyle.NormalBrush);
-            this->SetRightIconBrush(this->RightIconStyle.NormalBrush);
+            this->TextBrush = this->TextStyle.NormalBrush;
+            this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
+            this->RightIconBrush = this->RightIconStyle.NormalBrush;
         }
         else
         {
-            this->SetTextBrush(this->TextStyle.DisabledBrush);
-            this->SetLeftIconBrush(this->LeftIconStyle.DisabledBrush);
-            this->SetRightIconBrush(this->RightIconStyle.DisabledBrush);
+            this->TextBrush = this->TextStyle.DisabledBrush;
+            this->LeftIconBrush = this->LeftIconStyle.DisabledBrush;
+            this->RightIconBrush = this->RightIconStyle.DisabledBrush;
         }
     }
     return;
@@ -334,20 +334,20 @@ void Jafg::WTextButton::OnEnabledStateChanged()
 
 void Jafg::WTextButton::OnSelectedStateChanged()
 {
-    SuperButton::OnSelectedStateChanged();
+    TButtonBase::OnSelectedStateChanged();
     if (this->bUpdateBrushOnStateChange)
     {
         if (this->bSelected)
         {
-            this->SetTextBrush(this->TextStyle.SelectedBrush);
-            this->SetLeftIconBrush(this->LeftIconStyle.SelectedBrush);
-            this->SetRightIconBrush(this->RightIconStyle.SelectedBrush);
+            this->TextBrush = this->TextStyle.SelectedBrush;
+            this->LeftIconBrush = this->LeftIconStyle.SelectedBrush;
+            this->RightIconBrush = this->RightIconStyle.SelectedBrush;
         }
         else
         {
-            this->SetTextBrush(this->TextStyle.NormalBrush);
-            this->SetLeftIconBrush(this->LeftIconStyle.NormalBrush);
-            this->SetRightIconBrush(this->RightIconStyle.NormalBrush);
+            this->TextBrush = this->TextStyle.NormalBrush;
+            this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
+            this->RightIconBrush = this->RightIconStyle.NormalBrush;
         }
     }
     return;
@@ -356,19 +356,19 @@ void Jafg::WTextButton::OnSelectedStateChanged()
 LVec2F Jafg::WTextButton::GetLeftIconTopLeft(LVec2F Translation) const noexcept
 {
     check(this->LeftIcon.get())
-    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()).y)};
+    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()).y)};
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
-        + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())
+        + this->Brush.Padding.GetTopLeftOffsetInSpt(this->GetViewport())
         + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)) * 0.5f};
 }
 
 LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
 {
     check(this->RightIcon.get())
-    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()).y)};
+    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()).y)};
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
         + LVec2F{this->GetAnchoredSize_v2().x, 0.0f}
-        - LVec2F{this->GetPadding().GetRightOffsetInSpt(this->GetViewport()), this->GetPadding().GetTopOffsetInSpt(this->GetViewport())}
+        - LVec2F{this->Brush.Padding.GetRightOffsetInSpt(this->GetViewport()), this->Brush.Padding.GetTopOffsetInSpt(this->GetViewport())}
         - LVec2F{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale), 0.0f}
         + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)) * 0.5f};
 }

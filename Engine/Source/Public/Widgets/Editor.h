@@ -23,6 +23,7 @@ protected:
 public:
 
     virtual void Construct() override;
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     WUserWidget& AddWindow(LTabCreateInfo Info);
     template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget> && CTabCandidate<TWidget>

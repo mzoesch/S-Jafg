@@ -14,19 +14,19 @@ typedef TFactoryButtonBase<WHButton> LFactoryHButton;
 
 //# A generic horizontal button.
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryHButton)
-class ENGINE_API WHButton : public WHRegion, public TButtonBase<WHButton, LRegionBrush, decltype(&WHRegion::SetBrush)>
+class ENGINE_API WHButton : public WHRegion, public TButtonBase<WHButton, LRegionBrush, &WHRegion::Brush>
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WHButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    explicit WHButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
 
     template<typename TCxxClass>
-    explicit WHButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    explicit WHButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }

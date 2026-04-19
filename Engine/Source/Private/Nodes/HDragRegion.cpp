@@ -13,8 +13,8 @@ void Jafg::WHDragRegion::OnSurfaceResize()
     {
         check(Child.get())
         check(this->DragChildSlots.contains(Child.get()))
-        Child->SetMinDesiredSize({});
-        Child->SetMaxDesiredSize({});
+        Child->MinDesiredSize = {};
+        Child->MaxDesiredSize = {};
         continue;
     }
 
@@ -27,11 +27,11 @@ void Jafg::WHDragRegion::UpdateDesiredSize() const
     (
         for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
         {
-            check(this->GetChildren()[Idx]->GetAnchor() == EAnchor::VFill)
+            check(this->GetChildren()[Idx]->Anchor == EAnchor::VFill)
         }
         if (this->GetChildren().empty() == false)
         {
-            check(this->GetChildren().back()->GetAnchor() == EAnchor::Fill)
+            check(this->GetChildren().back()->Anchor == EAnchor::Fill)
         }
     )
 
@@ -40,19 +40,19 @@ void Jafg::WHDragRegion::UpdateDesiredSize() const
         check(Child.get())
         check(this->DragChildSlots.contains(Child.get()))
         auto& Slot{this->DragChildSlots.at(Child.get()) };
-        check(Slot.Anchor == Child->GetAnchor())
-        if (Slot.MinDesiredSize.has_value() && InSpt(this->GetViewport(), *Slot.MinDesiredSize) > InSpt(this->GetViewport(), Child->GetMinDesiredSize()).x)
+        check(Slot.Anchor == Child->Anchor)
+        if (Slot.MinDesiredSize.has_value() && InSpt(this->GetViewport(), *Slot.MinDesiredSize) > InSpt(this->GetViewport(), Child->MinDesiredSize).x)
         {
-            Child->SetMinDesiredSize({*Slot.MinDesiredSize, 0.0f});
+            Child->MinDesiredSize = {*Slot.MinDesiredSize, 0.0f};
         }
         /* Querying here for min desired size is correct as the UITick only updates the min desired size. */
-        if (Slot.MaxDesiredSize.has_value() && InSpt(this->GetViewport(), *Slot.MaxDesiredSize) < InSpt(this->GetViewport(), Child->GetMinDesiredSize()).x)
+        if (Slot.MaxDesiredSize.has_value() && InSpt(this->GetViewport(), *Slot.MaxDesiredSize) < InSpt(this->GetViewport(), Child->MinDesiredSize).x)
         {
-            Child->SetMaxDesiredSize({*Slot.MaxDesiredSize, 0.0f});
+            Child->MaxDesiredSize = {*Slot.MaxDesiredSize, 0.0f};
         }
         else
         {
-            Child->SetMaxDesiredSize({});
+            Child->MaxDesiredSize= {};
         }
         continue;
     }
@@ -88,8 +88,8 @@ void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
 
             f32 InitialDistribution{
                   this->GetAnchoredSize_v2().x
-                - InSpt(this->GetViewport(), this->GetHSpace()) * (this->GetChildren().size() - 1)
-                - this->GetPadding().GetDesiredSizeXInSpt(this->GetViewport())
+                - InSpt(this->GetViewport(), this->HSpace) * (this->GetChildren().size() - 1)
+                - this->Padding.GetDesiredSizeXInSpt(this->GetViewport())
                 };
             f32 Distribution{InitialDistribution};
             u32 Clients{};
@@ -119,7 +119,7 @@ void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
                             StateSpt = Max;
                         }
                     }
-                    Child->SetMinDesiredSize({EWidgetSize::StaticPoints, StateSpt, 0.0f});
+                    Child->MinDesiredSize = {EWidgetSize::StaticPoints, StateSpt, 0.0f};
                     Distribution -= StateSpt;
                     Skips[Idx] = true;
                 }
@@ -128,7 +128,7 @@ void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
                     if (   Slot.MaxDesiredSize.has_value()
                         && InSpt(this->GetViewport(), *Slot.MaxDesiredSize) < (InitialDistribution / static_cast<f32>(this->GetChildren().size())))
                     {
-                        Child->SetMinDesiredSize({Slot.MaxDesiredSize->Type, Slot.MaxDesiredSize->Size, 0.0f});
+                        Child->MinDesiredSize = {Slot.MaxDesiredSize->Type, Slot.MaxDesiredSize->Size, 0.0f};
                         Distribution -= InSpt(this->GetViewport(), *Slot.MaxDesiredSize);
                         Skips[Idx] = true;
                     }
@@ -152,17 +152,17 @@ void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
                     {
                         if (auto Min{InSpt(this->GetViewport(), *Slot.MinDesiredSize)}; (Distribution / static_cast<f32>(Clients)) < Min)
                         {
-                            Child->SetMinDesiredSize({Slot.MinDesiredSize->Type
+                            Child->MinDesiredSize = {Slot.MinDesiredSize->Type
                                 , Slot.MinDesiredSize->Size
                                 , 0.0f
-                                });
+                                };
                             continue;
                         }
                     }
-                    Child->SetMinDesiredSize({EWidgetSize::StaticPoints
+                    Child->MinDesiredSize = {EWidgetSize::StaticPoints
                         , maths::max(Distribution / static_cast<f32>(Clients), 0.0f)
                         , 0.0f
-                        });
+                        };
                 }
                 continue;
             }
@@ -177,18 +177,18 @@ void Jafg::WHDragRegion::AddChildAt(u64 Index, TJxxUnique<WNode> Child)
     check(this->bInitialStateExecuted == false && "It is currently only allowed to add children during construction of this node.")
 
     check(Child.get())
-    check(Child->GetAnchor() == EAnchor::TopLeft && "Expected default anchor as this parent does not allow messing with the anchors.")
+    check(Child->Anchor == EAnchor::TopLeft && "Expected default anchor as this parent does not allow messing with the anchors.")
 
-    check(Child->GetMinDesiredSize().Y == 0.0f)
-    check(Child->GetMaxDesiredSize().Y == 0.0f)
+    check(Child->MinDesiredSize.Y == 0.0f)
+    check(Child->MaxDesiredSize.Y == 0.0f)
 
-    Child->SetAnchor(EAnchor::VFill);
-    this->DragChildSlots[Child.get()] = LChildSlot{Child->GetAnchor()
-        , (Child->GetMinDesiredSize().X > 0.0f) ? LWidgetSize1{Child->GetMinDesiredSize().Type, Child->GetMinDesiredSize().X} : TOptional<LWidgetSize1>{}
-        , (Child->GetMaxDesiredSize().X > 0.0f) ? LWidgetSize1{Child->GetMaxDesiredSize().Type, Child->GetMaxDesiredSize().X} : TOptional<LWidgetSize1>{}
+    Child->Anchor = EAnchor::VFill;
+    this->DragChildSlots[Child.get()] = LChildSlot{Child->Anchor
+        , (Child->MinDesiredSize.X > 0.0f) ? LWidgetSize1{Child->MinDesiredSize.Type, Child->MinDesiredSize.X} : TOptional<LWidgetSize1>{}
+        , (Child->MaxDesiredSize.X > 0.0f) ? LWidgetSize1{Child->MaxDesiredSize.Type, Child->MaxDesiredSize.X} : TOptional<LWidgetSize1>{}
         };
-    Child->SetMinDesiredSize({});
-    Child->SetMaxDesiredSize({});
+    Child->MinDesiredSize = {};
+    Child->MaxDesiredSize = {};
 
     Super::AddChildAt(Index, std::move(Child));
 
@@ -197,20 +197,20 @@ void Jafg::WHDragRegion::AddChildAt(u64 Index, TJxxUnique<WNode> Child)
         auto& Child{this->GetChildren()[Idx]};
         check(Child.get())
         check(this->DragChildSlots.contains(Child.get()))
-        check(this->DragChildSlots.at(Child.get()).Anchor == Child->GetAnchor())
-        check(Child->GetAnchor() == EAnchor::VFill || Child->GetAnchor() == EAnchor::Fill)
-        Child->SetAnchor(EAnchor::VFill);
-        checkCode(this->DragChildSlots.at(Child.get()).Anchor = Child->GetAnchor())
+        check(this->DragChildSlots.at(Child.get()).Anchor == Child->Anchor)
+        check(Child->Anchor == EAnchor::VFill || Child->Anchor == EAnchor::Fill)
+        Child->Anchor = EAnchor::VFill;
+        checkCode(this->DragChildSlots.at(Child.get()).Anchor = Child->Anchor)
     }
 
     check(this->GetChildren().empty() == false)
     auto& Back{this->GetChildren().back()};
     check(Back.get())
     check(this->DragChildSlots.contains(Back.get()))
-    check(this->DragChildSlots.at(Back.get()).Anchor == Back->GetAnchor())
-    check(Back->GetAnchor() == EAnchor::VFill || Back->GetAnchor() == EAnchor::Fill)
-    Back->SetAnchor(EAnchor::Fill);
-    checkCode(this->DragChildSlots.at(Back.get()).Anchor = Back->GetAnchor())
+    check(this->DragChildSlots.at(Back.get()).Anchor == Back->Anchor)
+    check(Back->Anchor == EAnchor::VFill || Back->Anchor == EAnchor::Fill)
+    Back->Anchor = EAnchor::Fill;
+    checkCode(this->DragChildSlots.at(Back.get()).Anchor = Back->Anchor)
 
     return;
 }
@@ -335,11 +335,11 @@ bool Jafg::WHDragRegion::UiTickMove()
     }
 
     auto& DragChild{this->GetChildren()[this->DragChildOffset->Idx]};
-    check(DragChild->GetAnchor() == EAnchor::VFill)
+    check(DragChild->Anchor == EAnchor::VFill)
     check(this->DragChildSlots.contains(DragChild.get()))
     auto& Slot{this->DragChildSlots.at(DragChild.get())};
-    LVec2F AnchoredSize{this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport())};
-    f32 HSpaceSpt{InSpt(this->GetViewport(), this->GetHSpace())};
+    LVec2F AnchoredSize{this->GetAnchoredSize_v2() - this->Padding.GetDesiredSizeInSpt(this->GetViewport())};
+    f32 HSpaceSpt{InSpt(this->GetViewport(), this->HSpace)};
 
     f32 Offset{};
     for (auto Idx{0uz}; Idx < this->DragChildOffset->Idx; ++Idx)
@@ -375,7 +375,7 @@ bool Jafg::WHDragRegion::UiTickMove()
     }
     f32 NewSize{maths::min(MaxSize, DesiredSize)};
     f32 Delta{DesiredSize - NewSize};
-    DragChild->SetMinDesiredSize({EWidgetSize::StaticPoints, NewSize, 0.0f});
+    DragChild->MinDesiredSize = {EWidgetSize::StaticPoints, NewSize, 0.0f};
 
     if (Delta > 0.0f && maths::eq_zero_e(Delta) == false)
     {
@@ -389,7 +389,7 @@ bool Jafg::WHDragRegion::UiTickMove()
             auto& Child{this->GetChildren()[Idx]};
             check(this->DragChildSlots.contains(Child.get()))
             auto& Slot{this->DragChildSlots.at(Child.get())};
-            f32 ChildMinDesiredSize{InSpt(this->GetViewport(), Child->GetMinDesiredSize()).x};
+            f32 ChildMinDesiredSize{InSpt(this->GetViewport(), Child->MinDesiredSize).x};
             f32 TrueMinDesiredSize{Slot.MinDesiredSize.has_value() ? InSpt(this->GetViewport(), *Slot.MinDesiredSize) : 0.0f};
 
             f32 RemovableSpace{ChildMinDesiredSize - TrueMinDesiredSize};
@@ -399,12 +399,12 @@ bool Jafg::WHDragRegion::UiTickMove()
             }
             if (RemovableSpace > Delta)
             {
-                Child->SetMinDesiredSize({EWidgetSize::StaticPoints, TrueMinDesiredSize + RemovableSpace - Delta, 0.0f});
+                Child->MinDesiredSize = {EWidgetSize::StaticPoints, TrueMinDesiredSize + RemovableSpace - Delta, 0.0f};
                 Delta = 0.0f;
                 continue;
             }
             Delta -= RemovableSpace;
-            Child->SetMinDesiredSize({EWidgetSize::StaticPoints, TrueMinDesiredSize, 0.0f});
+            Child->MinDesiredSize = {EWidgetSize::StaticPoints, TrueMinDesiredSize, 0.0f};
             continue;
         }
     }

@@ -104,6 +104,8 @@ struct LRegionBrush
 
     //# The outline color to use.
     LColor OutlineTint{ Colors::White };
+
+    ENGINE_API void Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) const noexcept;
 };
 
 //# A region is an overlay node that can be customized with a #LRegionBrush.
@@ -120,42 +122,6 @@ public:
 
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    constexpr void SetBrush(LRegionBrush const& InBrush) noexcept { this->Brush = InBrush; }
-    constexpr LRegionBrush& GetMutableBrush() noexcept { return this->Brush; }
-    constexpr LRegionBrush const& GetBrush() const noexcept { return this->Brush; }
-
-    constexpr void SetTint(LColor const& InTint) noexcept { this->Brush.Tint = InTint; }
-    constexpr void SetTexture(LTexture2Ref InTexture) noexcept { this->Brush.Texture = std::move(InTexture); }
-    constexpr void SetTextureScale(f32 InScale) noexcept { this->Brush.TextureScale = InScale; }
-    constexpr void SetTexCoordBehavior(ETexCoordBehavior InBehavior) noexcept { this->Brush.TexCoordBehavior = InBehavior; }
-    constexpr void SetSamplerAddressMode(UBO::BindlessTextureArray::Sampler InAddressMode) noexcept { this->Brush.SamplerAddressMode = InAddressMode; }
-    constexpr void SetTexturePadding(f32 InPadding) noexcept { this->Brush.TexturePadding = InPadding; }
-    constexpr void SetBackgroundTint(LColor const& InBackgroundTint) noexcept { this->Brush.BackgroundTint = InBackgroundTint; }
-    constexpr void SetRadii(LVec4F const& InRadii) noexcept { this->Brush.Radii = InRadii; }
-    constexpr void SetClampRadii(bool bInClamp) noexcept { this->Brush.bClampRadii = bInClamp; }
-    constexpr void SetSkipBrushDraw(bool bInSkip) noexcept { this->Brush.bSkipBrushDraw = bInSkip; }
-    constexpr void SetOutlineThickness(const f32 InThickness) noexcept { this->Brush.OutlineThickness = InThickness; }
-    constexpr void SetOutlineTint(LColor const& InTint) noexcept { this->Brush.OutlineTint = InTint; }
-
-    constexpr LColor const& GetTint() const noexcept { return this->Brush.Tint; }
-    constexpr LTexture2Ref const& GetTexture() const noexcept { return this->Brush.Texture; }
-    constexpr f32 GetTextureScale() const noexcept { return this->Brush.TextureScale; }
-    constexpr ETexCoordBehavior GetTexCoordBehavior() const noexcept { return this->Brush.TexCoordBehavior; }
-    constexpr UBO::BindlessTextureArray::Sampler GetSamplerAddressMode() const noexcept { return this->Brush.SamplerAddressMode; }
-    constexpr f32 GetTexturePadding() const noexcept { return this->Brush.TexturePadding; }
-    constexpr LColor const& GetBackgroundTint() const noexcept { return this->Brush.BackgroundTint; }
-    constexpr LVec4F const& GetRadii() const noexcept { return this->Brush.Radii; }
-    constexpr bool GetClampRadii() const noexcept { return this->Brush.bClampRadii; }
-    constexpr bool GetSkipBrushDraw() const noexcept { return this->Brush.bSkipBrushDraw; }
-    constexpr f32 GetOutlineThickness() const noexcept { return this->Brush.OutlineThickness; }
-    constexpr LColor const& GetOutlineTint() const noexcept { return this->Brush.OutlineTint; }
-
-protected:
-
-    void DrawRegionBrush(LNodeRenderInfo const& Info) const;
-
-private:
-
     LRegionBrush Brush;
 };
 
@@ -163,69 +129,69 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
 {
     NODE_FACTORY_BODY(WRegion)
 
-    decltype(auto) Brush(this auto&& Self, LRegionBrush const& InBrush) noexcept
+    decltype(auto) Brush(this auto&& Self, LRegionBrush const& Brush) noexcept
     {
-        NODE_FACTORY_SELF().SetBrush(InBrush);
+        NODE_FACTORY_SELF().Brush = Brush;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Tint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) Tint(this auto&& Self, LColor const& Tint) noexcept
     {
-        NODE_FACTORY_SELF().SetTint(InTint);
+        NODE_FACTORY_SELF().Brush.Tint = Tint;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Texture(this auto&& Self, LTexture2Ref InTexture) noexcept
+    decltype(auto) Texture(this auto&& Self, LTexture2Ref Texture) noexcept
     {
-        NODE_FACTORY_SELF().SetTexture(std::move(InTexture));
+        NODE_FACTORY_SELF().Brush.Texture = std::move(Texture);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) TextureScale(this auto&& Self, f32 InScale) noexcept
+    decltype(auto) TextureScale(this auto&& Self, f32 Scale) noexcept
     {
-        NODE_FACTORY_SELF().SetTextureScale(InScale);
+        NODE_FACTORY_SELF().Brush.TextureScale = Scale;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior InBehavior) noexcept
+    decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior Behavior) noexcept
     {
-        NODE_FACTORY_SELF().SetTexCoordBehavior(InBehavior);
+        NODE_FACTORY_SELF().Brush.TexCoordBehavior = Behavior;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) SamplerAddressMode(this auto&& Self, UBO::BindlessTextureArray::Sampler InAddressMode) noexcept
+    decltype(auto) SamplerAddressMode(this auto&& Self, UBO::BindlessTextureArray::Sampler AddressMode) noexcept
     {
-        NODE_FACTORY_SELF().SetSamplerAddressMode(InAddressMode);
+        NODE_FACTORY_SELF().Brush.SamplerAddressMode = AddressMode;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) TexturePadding(this auto&& Self, f32 InPadding) noexcept
+    decltype(auto) TexturePadding(this auto&& Self, f32 Padding) noexcept
     {
-        NODE_FACTORY_SELF().SetTexturePadding(InPadding);
+        NODE_FACTORY_SELF().Brush.TexturePadding = Padding;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) BackgroundTint(this auto&& Self, LColor const& InBackgroundTint) noexcept
+    decltype(auto) BackgroundTint(this auto&& Self, LColor const& BackgroundTint) noexcept
     {
-        NODE_FACTORY_SELF().SetBackgroundTint(InBackgroundTint);
+        NODE_FACTORY_SELF().Brush.BackgroundTint = BackgroundTint;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Radii(this auto&& Self, LVec4F const& InRadii) noexcept
+    decltype(auto) Radii(this auto&& Self, LVec4F const& Radii) noexcept
     {
-        NODE_FACTORY_SELF().SetRadii(InRadii);
+        NODE_FACTORY_SELF().Brush.Radii = Radii;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) ClampRadii(this auto&& Self, bool bInClamp) noexcept
+    decltype(auto) ClampRadii(this auto&& Self, bool bClamp) noexcept
     {
-        NODE_FACTORY_SELF().SetClampRadii(bInClamp);
+        NODE_FACTORY_SELF().Brush.bClampRadii = bClamp;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) SkipBrushDraw(this auto&& Self, bool bInSkip) noexcept
     {
-        NODE_FACTORY_SELF().SetSkipBrushDraw(bInSkip);
+        NODE_FACTORY_SELF().Brush.bSkipBrushDraw = bInSkip;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OutlineThickness(this auto&& Self, f32 InThickness) noexcept
+    decltype(auto) OutlineThickness(this auto&& Self, f32 Thickness) noexcept
     {
-        NODE_FACTORY_SELF().SetOutlineThickness(InThickness);
+        NODE_FACTORY_SELF().Brush.OutlineThickness = Thickness;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OutlineTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) OutlineTint(this auto&& Self, LColor const& Tint) noexcept
     {
-        NODE_FACTORY_SELF().SetOutlineTint(InTint);
+        NODE_FACTORY_SELF().Brush.OutlineTint = Tint;
         return NODE_FACTORY_RESULT();
     }
 };

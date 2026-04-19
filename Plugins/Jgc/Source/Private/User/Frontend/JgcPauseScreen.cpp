@@ -16,7 +16,7 @@ void Jgc::WPauseScreen::Construct()
 
     auto& TextureSubsystem{*Frontend.GetSubsystemChecked<Jafg::JTextureSubsystem>()};
 
-    this->SetPadding(Jafg::LPadding{5});
+    this->Padding = 5;
 
     // auto Tex = TextureSubsystem.FromTextureViewIdentifier("Jafg.Test");
 
@@ -32,8 +32,8 @@ void Jgc::WPauseScreen::Construct()
             .BackgroundTint(Colors::Red)
             .OutlineTint(Colors::Blue)
             .MinDesiredSize({400_pt, 150})
-            .TextHAlign(Jafg::ETextHAlign::Right)
-            .TextVAlign(Jafg::ETextVAlign::Bottom)
+            .TextAlign(Jafg::ETextHAlign::Right)
+            .TextAlign(Jafg::ETextVAlign::Bottom)
             .Content("hioasdfphjkoasdfhpjoasdfhpjasdfhjp")
     ];
 

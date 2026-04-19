@@ -19,8 +19,8 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WEditorView)
     {
-        this->SetAnchor(EAnchor::Fill);
         this->SetVisibility(ENodeVisibility::Visible);
+        this->Anchor = EAnchor::Fill;
     }
 
 public:

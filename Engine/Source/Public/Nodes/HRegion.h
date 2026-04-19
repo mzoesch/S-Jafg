@@ -26,11 +26,6 @@ public:
     virtual LVec2F GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const override;
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
 
-    constexpr void SetHSpace(LWidgetSize1 InHSpace) noexcept { this->HSpace = InHSpace; }
-    constexpr LWidgetSize1 GetHSpace() const noexcept { return this->HSpace; }
-
-private:
-
     //# Horizontal space between children.
     LWidgetSize1 HSpace{};
 };
@@ -39,9 +34,9 @@ struct LFactoryHRegion : NODE_FACTORY_PARENT(WHRegion)
 {
     NODE_FACTORY_BODY(WHRegion)
 
-    FORCEINLINE decltype(auto) HSpace(this auto&& Self, LWidgetSize1 InHSpace) noexcept
+    FORCEINLINE decltype(auto) HSpace(this auto&& Self, LWidgetSize1 HSpace) noexcept
     {
-        NODE_FACTORY_SELF().SetHSpace(InHSpace);
+        NODE_FACTORY_SELF().HSpace = HSpace;
         return NODE_FACTORY_RESULT();
     }
 };

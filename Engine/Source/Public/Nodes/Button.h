@@ -14,19 +14,19 @@ typedef TFactoryButtonBase<WButton> LFactoryButton;
 
 //# A generic overlay button.
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryButton)
-class ENGINE_API WButton : public WRegion, public TButtonBase<WButton, LRegionBrush, decltype(&WRegion::SetBrush)>
+class ENGINE_API WButton : public WRegion, public TButtonBase<WButton, LRegionBrush, &WRegion::Brush>
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    explicit WButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
 
     template<typename TCxxClass>
-    explicit WButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    explicit WButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }

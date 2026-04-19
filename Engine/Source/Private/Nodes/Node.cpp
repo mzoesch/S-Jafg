@@ -302,7 +302,7 @@ TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept
 {
     if (this->Parent)
     {
-        return this->Parent->GetPadding();
+        return this->Parent->Padding;
     }
     return {};
 }

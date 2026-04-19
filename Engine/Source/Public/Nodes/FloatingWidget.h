@@ -25,7 +25,7 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WFloatingWidget)
     {
-        this->SetAnchor(EAnchor::TopLeft);
+        this->Anchor = EAnchor::TopLeft;
     }
 
 public:
@@ -50,14 +50,14 @@ public:
     FORCEINLINE void SetWindowSize(LWidgetSize2 Size) noexcept
     {
         auto SptSize{InSpt(this->GetViewport(), Size)};
-        this->GetWindow().SetMinDesiredSize({EWidgetSize::StaticPoints
+        this->GetWindow().MinDesiredSize = {EWidgetSize::StaticPoints
             , maths::max(SptSize.x, WFloatingWidget::MinWindowSizeInSpt.x)
             , maths::max(SptSize.y, WFloatingWidget::MinWindowSizeInSpt.y)
-            });
+            };
     }
     FORCEINLINE void SetWindowPosition(LVec2F Offset) noexcept
     {
-        this->GetWindow().GetParent()->SetPadding({EWidgetSize::StaticPoints, Offset, 0, 0});
+        this->GetWindow().GetParent()->Padding = {EWidgetSize::StaticPoints, Offset, 0, 0};
     }
 
     FORCEINLINE constexpr bool IsDecorated() const noexcept { return this->bDecorate; }

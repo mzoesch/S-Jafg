@@ -29,8 +29,8 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WUserWidget)
     {
-        this->SetAnchor(EAnchor::Fill);
         this->SetShouldTick(false);
+        this->Anchor = EAnchor::Fill;
     }
 
 public:

@@ -75,6 +75,20 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 
     if (this->Content.empty() == false && this->TextBrush.bSkipBrushDraw == false)
     {
+        if (this->LastTextScale.has_value())
+        {
+            if (*this->LastTextScale != this->TextBrush.TextScale)
+            {
+                this->LastTextScale = this->TextBrush.TextScale;
+                this->RenderData.bDirty = true;
+            }
+        }
+        else
+        {
+            this->LastTextScale = this->TextBrush.TextScale;
+            this->RenderData.bDirty = true;
+        }
+
         if (this->RenderData.bDirty)
         {
             this->UpdateRenderData(Info.FontSubsystem, this->TextBrush.TextScale.InSpt(Info.Viewport));
@@ -82,10 +96,10 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 
         LVec2F TopLeft{
               this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)
-            + this->GetPadding().GetTopLeftOffsetInSpt(this->GetViewport())
+            + this->Brush.Padding.GetTopLeftOffsetInSpt(this->GetViewport())
             + this->DrawOffset
             };
-        LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) - this->RenderData.DesiredSize};
+        LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()) - this->RenderData.DesiredSize};
         TopLeft += maths::min(LVec2F{
             this->IsTextLeftAligned() ? 0.0f : (this->IsTextHCenterAligned() ? PlayRoom.x * 0.5f : PlayRoom.x),
             this->IsTextTopAligned()  ? 0.0f : (this->IsTextVCenterAligned() ? PlayRoom.y * 0.5f : PlayRoom.y)
@@ -118,7 +132,7 @@ void Jafg::WTextBox::UpdateDesiredSize() const
     {
         this->UpdateRenderData(*this->GetFrontend().GetSubsystemChecked<JFontSubsystem>(), this->TextBrush.TextScale.InSpt(this->GetViewport()));
     }
-    this->SetDesiredSizeInSpt(this->GetPadding().GetDesiredSizeInSpt(this->GetViewport()) + this->RenderData.DesiredSize);
+    this->SetDesiredSizeInSpt(this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()) + this->RenderData.DesiredSize);
     return;
 }
 

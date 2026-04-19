@@ -13,14 +13,14 @@ struct LFactoryScrollRegion;
 struct LScrollRegionBehavior
 {
     //# Whether to always show the vertical scroll bar.
-    bool bAlwaysShowVScrollbar{};
+    bool bAlwaysShowVScrollbar:1{};
     //# Requires that #bAlwaysShowVScrollbar is false.
-    bool bAlwaysHideVScrollbar{};
+    bool bAlwaysHideVScrollbar:1{};
 
     //# Whether to always show the horizontal scroll bar.
-    bool bAlwaysShowHScrollbar{};
+    bool bAlwaysShowHScrollbar:1{};
     //# Requires that #bAlwaysShowHScrollbar is false.
-    bool bAlwaysHideHScrollbar{};
+    bool bAlwaysHideHScrollbar:1{};
 };
 
 struct LScrollRegionBarBrush
@@ -55,8 +55,8 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WScrollRegion)
     {
-        this->SetAnchor(EAnchor::Fill);
         this->SetVisibility(ENodeVisibility::Visible);
+        this->Anchor = EAnchor::Fill;
     }
 
 public:
@@ -85,51 +85,13 @@ public:
 
     virtual void UpdateDesiredSize() const override;
 
-    constexpr void SetScrollRegionSize(LWidgetSize2 const& InSize) noexcept { this->ScrollRegionSize = InSize; }
-    constexpr LWidgetSize2 const& GetScrollRegionSize() const noexcept { return this->ScrollRegionSize; }
+    //# The size to use for the whole scroll region if it was not anchored.
+    LWidgetSize2 ScrollRegionSize;
 
-    constexpr void SetBehavior(LScrollRegionBehavior const& InBehavior) noexcept { this->Behavior = InBehavior; }
-    constexpr LScrollRegionBehavior const& GetBehavior() const noexcept { return this->Behavior; }
-    constexpr LScrollRegionBehavior& GetMutableBehavior() noexcept { return this->Behavior; }
-    constexpr bool GetAlwaysShowVScrollbar() const noexcept { return this->Behavior.bAlwaysShowVScrollbar; }
-    constexpr bool GetAlwaysHideVScrollbar() const noexcept { return this->Behavior.bAlwaysHideVScrollbar; }
-    constexpr void SetAlwaysShowVScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysShowVScrollbar = InValue; }
-    constexpr void SetAlwaysHideVScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysHideVScrollbar = InValue; }
-    constexpr bool GetAlwaysShowHScrollbar() const noexcept { return this->Behavior.bAlwaysShowHScrollbar; }
-    constexpr bool GetAlwaysHideHScrollbar() const noexcept { return this->Behavior.bAlwaysHideHScrollbar; }
-    constexpr void SetAlwaysShowHScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysShowHScrollbar = InValue; }
-    constexpr void SetAlwaysHideHScrollbar(bool InValue) noexcept { this->Behavior.bAlwaysHideHScrollbar = InValue; }
-
-    constexpr void SetBarBrush(LScrollRegionBarBrush const& InBrush) noexcept { this->BarBrush = InBrush; }
-    constexpr LScrollRegionBarBrush const& GetBarBrush() const noexcept { return this->BarBrush; }
-    constexpr LScrollRegionBarBrush& GetMutableBarBrush() noexcept { return this->BarBrush; }
-
-    constexpr void SetVBackgroundTint(LColor const& InValue) noexcept { this->BarBrush.VBackgroundTint = InValue; }
-    constexpr void SetVTint(LColor const& InValue) noexcept { this->BarBrush.VTint = InValue; }
-    constexpr void SetVScrollBarPadding(LVec2F InValue) noexcept { this->BarBrush.VScrollBarPadding = InValue; }
-    constexpr void SetVScrollBarWidth(f32 InValue) noexcept { this->BarBrush.VScrollBarWidth = InValue; }
-    constexpr void SetVScrollBarBackgroundWidth(f32 InValue) noexcept { this->BarBrush.VScrollBarBackgroundWidth = InValue; }
-    constexpr LColor GetVBackgroundTint() const noexcept { return this->BarBrush.VBackgroundTint; }
-    constexpr LColor GetVTint() const noexcept { return this->BarBrush.VTint; }
-    constexpr LVec2F GetVScrollBarPadding() const noexcept { return this->BarBrush.VScrollBarPadding; }
-    constexpr f32 GetVScrollBarWidth() const noexcept { return this->BarBrush.VScrollBarWidth; }
-    constexpr f32 GetVScrollBarBackgroundWidth() const noexcept { return this->BarBrush.VScrollBarBackgroundWidth; }
-
-    constexpr void SetHBackgroundTint(const LColor& InValue) noexcept { this->BarBrush.HBackgroundTint = InValue; }
-    constexpr void SetHTint(LColor const& InValue) noexcept { this->BarBrush.HTint = InValue; }
-    constexpr void SetHScrollBarPadding(LVec2F InValue) noexcept { this->BarBrush.HScrollBarPadding = InValue; }
-    constexpr void SetHScrollBarHeight(f32 InValue) noexcept { this->BarBrush.HScrollBarHeight = InValue; }
-    constexpr void SetHScrollBarBackgroundHeight(f32 InValue) noexcept { this->BarBrush.HScrollBarBackgroundHeight = InValue; }
-    constexpr LColor GetHBackgroundTint() const noexcept { return this->BarBrush.HBackgroundTint; }
-    constexpr LColor GetHTint() const noexcept { return this->BarBrush.HTint; }
-    constexpr LVec2F GetHScrollBarPadding() const noexcept { return this->BarBrush.HScrollBarPadding; }
-    constexpr f32 GetHScrollBarHeight() const noexcept { return this->BarBrush.HScrollBarHeight; }
-    constexpr f32 GetHScrollBarBackgroundHeight() const noexcept { return this->BarBrush.HScrollBarBackgroundHeight; }
-
-    constexpr void SetCullNonVisible(bool InValue) noexcept { this->bCullNonVisible = InValue; }
-    constexpr bool GetCullNonVisible() const noexcept { return this->bCullNonVisible; }
-    constexpr void SetUseChildrenDesiredSize(bool InValue) noexcept { this->bUseChildrenDesiredSize = InValue; }
-    constexpr bool GetUseChildrenDesiredSize() const noexcept { return this->bUseChildrenDesiredSize; }
+    LScrollRegionBehavior Behavior;
+    LScrollRegionBarBrush BarBrush;
+    bool bCullNonVisible:1{ true };
+    bool bUseChildrenDesiredSize:1{};
 
 private:
 
@@ -176,17 +138,9 @@ private:
     void HandleMouseWheelUp(f32 Value);
     void HandleMouseWheelDown(f32 Value);
 
-    LScrollRegionBehavior Behavior;
-    LScrollRegionBarBrush BarBrush;
-
-    //# The size to use for the whole scroll region if it was not anchored.
-    LWidgetSize2 ScrollRegionSize;
-
     //# The scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
     LVec2F ScrollPosition{ maths::zero_vector<LVec2F> };
 
-    bool bCullNonVisible:1{ true };
-    bool bUseChildrenDesiredSize:1{};
     mutable LVec2F DesiredSizeOfChildren{ maths::zero_vector<LVec2F> };
 
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
@@ -200,104 +154,104 @@ struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)
 {
     NODE_FACTORY_BODY(WScrollRegion)
 
-    decltype(auto) ScrollRegionSize(this auto&& Self, LWidgetSize2 const& InSize) noexcept
+    decltype(auto) ScrollRegionSize(this auto&& Self, LWidgetSize2 const& Size) noexcept
     {
-        NODE_FACTORY_SELF().SetScrollRegionSize(InSize);
+        NODE_FACTORY_SELF().ScrollRegionSize = Size;
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) Behavior(this auto&& Self, LScrollRegionBehavior const& InBehavior) noexcept
+    decltype(auto) Behavior(this auto&& Self, LScrollRegionBehavior Behavior) noexcept
     {
-        NODE_FACTORY_SELF().SetBehavior(InBehavior);
+        NODE_FACTORY_SELF().Behavior = Behavior;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) AlwaysShowVScrollbar(this auto&& Self, bool bValue) noexcept
     {
-        NODE_FACTORY_SELF().SetAlwaysShowVScrollbar(bValue);
+        NODE_FACTORY_SELF().Behavior.bAlwaysShowVScrollbar = bValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) AlwaysHideVScrollbar(this auto&& Self, bool bValue) noexcept
     {
-        NODE_FACTORY_SELF().SetAlwaysHideVScrollbar(bValue);
+        NODE_FACTORY_SELF().Behavior.bAlwaysHideVScrollbar = bValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) AlwaysShowHScrollbar(this auto&& Self, bool bValue) noexcept
     {
-        NODE_FACTORY_SELF().SetAlwaysShowHScrollbar(bValue);
+        NODE_FACTORY_SELF().Behavior.bAlwaysShowHScrollbar = bValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) AlwaysHideHScrollbar(this auto&& Self, bool bValue) noexcept
     {
-        NODE_FACTORY_SELF().SetAlwaysHideHScrollbar(bValue);
+        NODE_FACTORY_SELF().Behavior.bAlwaysHideHScrollbar = bValue;
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) BarBrush(this auto&& Self, LScrollRegionBarBrush const& InBrush) noexcept
+    decltype(auto) BarBrush(this auto&& Self, LScrollRegionBarBrush const& Brush) noexcept
     {
-        NODE_FACTORY_SELF().SetBarBrush(InBrush);
+        NODE_FACTORY_SELF().BarBrush = Brush;
         return NODE_FACTORY_RESULT();
     }
 
     decltype(auto) VBackgroundTint(this auto&& Self, LColor const& InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetVBackgroundTint(InValue);
+        NODE_FACTORY_SELF().BarBrush.VBackgroundTint = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) VTint(this auto&& Self, LColor const& InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetVTint(InValue);
+        NODE_FACTORY_SELF().BarBrush.VTint = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) VScrollBarPadding(this auto&& Self, LVec2F InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetVScrollBarPadding(InValue);
+        NODE_FACTORY_SELF().BarBrush.VScrollBarPadding = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) VScrollBarHeight(this auto&& Self, f32 InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetVScrollBarWidth(InValue);
+        NODE_FACTORY_SELF().BarBrush.VScrollBarWidth = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) VScrollBarBackgroundWith(this auto&& Self, f32 InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetVScrollBarBackgroundWidth(InValue);
+        NODE_FACTORY_SELF().BarBrush.VScrollBarBackgroundWidth = InValue;
         return NODE_FACTORY_RESULT();
     }
 
     decltype(auto) HBackgroundTint(this auto&& Self, LColor const& InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetHBackgroundTint(InValue);
+        NODE_FACTORY_SELF().BarBrush.HBackgroundTint = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) HTint(this auto&& Self, LColor const& InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetHTint(InValue);
+        NODE_FACTORY_SELF().BarBrush.HTint = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) HScrollBarPadding(this auto&& Self, LVec2F InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetHScrollBarPadding(InValue);
+        NODE_FACTORY_SELF().BarBrush.HScrollBarPadding = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) HScrollBarHeight(this auto&& Self, f32 InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetHScrollBarHeight(InValue);
+        NODE_FACTORY_SELF().BarBrush.HScrollBarHeight = InValue;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) HScrollBarBackgroundHeight(this auto&& Self, f32 InValue) noexcept
     {
-        NODE_FACTORY_SELF().SetHScrollBarBackgroundHeight(InValue);
+        NODE_FACTORY_SELF().BarBrush.HScrollBarBackgroundHeight = InValue;
         return NODE_FACTORY_RESULT();
     }
 
     decltype(auto) CullNonVisible(this auto&& Self, bool bCull) noexcept
     {
-        NODE_FACTORY_SELF().SetCullNonVisible(bCull);
+        NODE_FACTORY_SELF().bCullNonVisible = bCull;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) UseChildrenDesiredSize(this auto&& Self, const bool bValue) noexcept
+    decltype(auto) UseChildrenDesiredSize(this auto&& Self, bool bValue) noexcept
     {
-        NODE_FACTORY_SELF().SetUseChildrenDesiredSize(bValue);
+        NODE_FACTORY_SELF().bUseChildrenDesiredSize = bValue;
         return NODE_FACTORY_RESULT();
     }
 };

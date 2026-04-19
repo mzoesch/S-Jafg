@@ -60,9 +60,9 @@ protected:
     DEFAULT_NODE_CONSTRUCTORS_BODY(WEditableTextBox)
     {
         this->SetVisibility(ENodeVisibility::Visible);
-        this->SetAnchor(EAnchor::Fill);
-        this->SetTint(Colors::Black);
-        this->SetPadding({5_spt, 2});
+        this->Anchor = EAnchor::Fill;
+        this->Brush.Tint = Colors::Black;
+        this->Brush.Padding = {5_spt, 2};
     }
 
 public:
@@ -110,14 +110,15 @@ public:
     constexpr void SetPlaceholderContent(LString&& InPlaceholderContent) noexcept { this->PlaceholderContent = std::move(InPlaceholderContent); }
     constexpr LString const& GetPlaceHolderContent() const noexcept { return this->PlaceholderContent; }
 
+    LColor PlaceholderTint{ Colors::Gray };
     constexpr void SetEditableTextBrush(LEditableTextBrush const& InBrush) noexcept
     {
         this->PlaceholderTint = InBrush.PlaceholderTint;
-        Super::SetTextBrush(InBrush);
+        this->TextBrush = static_cast<LTextBrush const&>(InBrush);
     }
     constexpr LEditableTextBrush CopyEditableTextBrush() const noexcept
     {
-        LEditableTextBrush Brush{this->GetTextBrush()};
+        LEditableTextBrush Brush{this->TextBrush};
         Brush.PlaceholderTint = this->PlaceholderTint;
         return Brush;
     }
@@ -158,7 +159,6 @@ private:
     //# The placeholder text is a text that is displayed when no content is available.
     //#
     LString PlaceholderContent;
-    LColor PlaceholderTint{ Colors::Gray };
 
     LCaretBrush CaretBrush;
     i32 CaretCursor{};

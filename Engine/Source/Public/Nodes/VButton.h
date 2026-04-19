@@ -14,19 +14,19 @@ typedef TFactoryButtonBase<WVButton> LFactoryVButton;
 
 //# A generic vertical button.
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryVButton)
-class ENGINE_API WVButton : public WVRegion, public TButtonBase<WVButton, LRegionBrush, decltype(&WVRegion::SetBrush)>
+class ENGINE_API WVButton : public WVRegion, public TButtonBase<WVButton, LRegionBrush, &WVRegion::Brush>
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WVButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    explicit WVButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }
 
     template<typename TCxxClass>
-    explicit WVButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this, &WRegion::SetBrush}
+    explicit WVButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
         this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
     }

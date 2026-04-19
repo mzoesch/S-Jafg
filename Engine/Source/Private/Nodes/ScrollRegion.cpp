@@ -8,14 +8,17 @@
 void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
 {
     WNode::Draw(Info);
-    this->DrawRegionBrush(Info);
+    this->Brush.Draw(Info, {
+        .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+        .Extent = this->GetAnchoredSize_v2(),
+        });
 
     check(this->ScrollPosition.x >= 0.0f && this->ScrollPosition.x <= 1.0f)
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
     const LVec2F AnchoredTopLeftFromMostOuter{this->GetAnchoredTopLeftFromMostOuter(Info.Viewport)};
-    const LVec2F MostOuterTopLeftContentArea {AnchoredTopLeftFromMostOuter + this->GetPadding().GetTopLeftOffsetInSpt(Info.Viewport)};
-    const LVec2F MaxContentAreaSize {this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(Info.Viewport)};
+    const LVec2F MostOuterTopLeftContentArea {AnchoredTopLeftFromMostOuter + this->Padding.GetTopLeftOffsetInSpt(Info.Viewport)};
+    const LVec2F MaxContentAreaSize {this->GetAnchoredSize_v2() - this->Padding.GetDesiredSizeInSpt(Info.Viewport)};
 
     const f64 MaxScrollY{maths::max(static_cast<f64>(this->DesiredSizeOfChildren.y) - static_cast<f64>(this->GetAnchoredSize_v2().y), 0.0)};
     const f64 ScrollOffsetY{ this->ScrollPosition.y * MaxScrollY};
@@ -59,14 +62,14 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
             {
                 check(Child.get())
                 LVec2D Translation{ -ScrollOffsetX, -ScrollOffsetY };
-                if (Child->GetAnchor().IsPushedHorizontal())
+                if (Child->Anchor.IsPushedHorizontal())
                 {
                     if (f32 Diff{Child->GetAnchoredSize_v2().x - this->GetAnchoredSize_v2().x}; Diff > 0.0f)
                     {
                         Translation.x += Diff;
                     }
                 }
-                if (Child->GetAnchor().IsPushedVertical())
+                if (Child->Anchor.IsPushedVertical())
                 {
                     if (f32 Diff{Child->GetAnchoredSize_v2().y - this->GetAnchoredSize_v2().y}; Diff > 0.0f)
                     {
@@ -408,7 +411,7 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     this->DesiredSizeOfChildren = this->GetDesiredSize_v2();
     this->SetDesiredSizeInSpt(
           InSpt(this->GetViewport(), this->ScrollRegionSize)
-        + this->GetPadding().GetDesiredSizeInSpt(*this)
+        + this->Padding.GetDesiredSizeInSpt(*this)
         + (this->bUseChildrenDesiredSize ? this->DesiredSizeOfChildren : maths::zero_vector<LVec2F>)
         );
     return;

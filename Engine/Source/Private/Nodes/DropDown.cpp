@@ -37,7 +37,7 @@ void Jafg::WDropDown::OnDismiss(WFloatingWidget& FloatingWidget)
     for (auto& Child: this->RootSubmenuContainer->GetChildren())
     {
         check(Child.get())
-        StaticCast<WTextBox>(&*Child)->SetSkipBrushDraw(true);
+        StaticCast<WTextBox>(&*Child)->Brush.bSkipBrushDraw = true;
     }
     for (auto& [SubMenu, Widget] : this->OpenSubmenus)
     {
@@ -58,16 +58,16 @@ Jafg::LCursorReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNod
     {
         check(this->OpenSubmenus[&Submenu])
         check(Node.As<WTextBox>())
-        check(Node.As<WTextBox>()->GetSkipBrushDraw() == false)
+        check(Node.As<WTextBox>()->Brush.bSkipBrushDraw == false)
         return LCursorReply::Handled();
     }
 
     for (auto& Child: this->RootSubmenuContainer->GetChildren())
     {
         check(Child.get())
-        StaticCast<WTextBox>(&*Child)->SetSkipBrushDraw(true);
+        StaticCast<WTextBox>(&*Child)->Brush.bSkipBrushDraw = true;
     }
-    StaticCast<WTextBox>(&Node)->SetSkipBrushDraw(false);
+    StaticCast<WTextBox>(&Node)->Brush.bSkipBrushDraw = false;
 
     TArray<TJxxUnique<WFloatingWidget>> SubmenusToClose; SubmenusToClose.reserve(this->OpenSubmenus.size());
     for (auto& FloatingWidget: this->OpenSubmenus | std::views::values) { SubmenusToClose.push_back(std::move(FloatingWidget)); }
@@ -107,9 +107,9 @@ Jafg::LCursorReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNod
                         auto& Prefs{GetSingleton<JUserPreferences>()};
                         Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButton>()
                             .Anchor(EAnchor::Fill)
-                            .NormalSkipBrushDraw(true)
-                            .HoverTint(*Prefs.PrimaryColor)
-                            .PressTint(*Prefs.PrimaryColor2)
+                            .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
+                            .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
+                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
                             .OnPrimaryRelease([Option = &Node](WTextButton&,LKeyEvent const&){ Option->OnAction(*Option); })
                             .Content(Node.Selector.DisplayName)
                             .LeftIcon(Node.Selector.Icon.GetResolved())

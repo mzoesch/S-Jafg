@@ -126,6 +126,11 @@ void Jafg::WEditor::Construct()
     return;
 }
 
+void Jafg::WEditor::Draw(LNodeRenderInfo const& Info) const
+{
+    Super::Draw(Info);
+}
+
 Jafg::WUserWidget& Jafg::WEditor::AddWindow(LTabCreateInfo Info)
 {
     if (this->Selected)

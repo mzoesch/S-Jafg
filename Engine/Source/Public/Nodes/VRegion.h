@@ -26,11 +26,6 @@ public:
     virtual LVec2F GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const override;
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
 
-    constexpr void SetVSpace(const LWidgetSize1 InVSpace) { this->VSpace = InVSpace; }
-    constexpr LWidgetSize1 GetVSpace() const { return this->VSpace; }
-
-private:
-
     //# Vertical space between children.
     LWidgetSize1 VSpace;
 };
@@ -39,9 +34,9 @@ struct LFactoryVRegion : NODE_FACTORY_PARENT(WVRegion)
 {
     NODE_FACTORY_BODY(WVRegion)
 
-    FORCEINLINE decltype(auto) VSpace(this auto&& Self, LWidgetSize1 InHSpace) noexcept
+    decltype(auto) VSpace(this auto&& Self, LWidgetSize1 VSpace) noexcept
     {
-        NODE_FACTORY_SELF().SetVSpace(InHSpace);
+        NODE_FACTORY_SELF().VSpace = VSpace;
         return NODE_FACTORY_RESULT();
     }
 };

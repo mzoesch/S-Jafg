@@ -29,10 +29,7 @@ FORCEINLINE constexpr void swap_default(T* Element)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Core
-
-//# Convert something to a raw pointer.
-using std::to_address;
+// Projection
 
 //# Identity projection.
 using std::identity;
@@ -88,6 +85,21 @@ struct pair_second
         return Pair.second;
     }
 };
+
+//# The record from a projection to a member of said record.
+template<typename T> struct proj_record;
+template<typename T, typename U> struct proj_record<U T::*> { typedef T type; };
+template<typename T> using proj_record_t = typename proj_record<T>::type;
+//# The member from a projection to this member of any record.
+template<typename T> struct proj_member;
+template<typename T, typename U> struct proj_member<U T::*> { typedef U type; };
+template<typename T> using proj_member_t = typename proj_member<T>::type;
+
+///////////////////////////////////////////////////////////////////////////////
+// Core
+
+//# Convert something to a raw pointer.
+using std::to_address;
 
 using std::ranges::range;
 using std::ranges::borrowed_range;

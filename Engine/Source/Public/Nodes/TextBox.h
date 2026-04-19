@@ -33,15 +33,9 @@ enum struct ETextScale : u8
 
 struct LTextScale final
 {
-    inline static constexpr LTextScale Header() noexcept { return LTextScale{ETextScale::Header}; }
-    inline static constexpr LTextScale SubHeader() noexcept { return LTextScale{ETextScale::SubHeader}; }
-    inline static constexpr LTextScale Body() noexcept { return LTextScale{ETextScale::Body}; }
-    inline static constexpr LTextScale Compact() noexcept { return LTextScale{ETextScale::Compact}; }
-    inline static constexpr LTextScale Small() noexcept { return LTextScale{ETextScale::Small}; }
-
     FORCEINLINE constexpr LTextScale() noexcept = delete;
-    FORCEINLINE constexpr LTextScale(ETextScale InScale) noexcept : Scale(InScale) {}
-    FORCEINLINE constexpr LTextScale(LWidgetSize1 InScale) noexcept : Scale(InScale) {}
+    FORCEINLINE constexpr LTextScale(ETextScale InScale) noexcept : Scale{InScale} {}
+    FORCEINLINE constexpr LTextScale(LWidgetSize1 InScale) noexcept : Scale{InScale} {}
     FORCEINLINE constexpr LTextScale(LTextScale const& Other) noexcept { this->Scale = Other.Scale; }
     FORCEINLINE constexpr LTextScale& operator=(ETextScale InScale) noexcept { this->Scale = InScale; return *this; }
     FORCEINLINE constexpr LTextScale& operator=(LWidgetSize1 InScale) noexcept { this->Scale = InScale; return *this; }
@@ -53,9 +47,19 @@ struct LTextScale final
     {
         if (std::holds_alternative<LWidgetSize1>(this->Scale))
         {
-            return ::Jafg::InSpt(Viewport, std::get<LWidgetSize1>(this->Scale));
+            return Jafg::InSpt(Viewport, std::get<LWidgetSize1>(this->Scale));
         }
         return LTextScale::InSptImpl(Viewport, std::get<ETextScale>(this->Scale));
+    }
+
+    FORCEINLINE constexpr bool operator==(LTextScale const& Other) const noexcept
+    {
+        if (this->Scale.index() != Other.Scale.index()) { return false; }
+        if (std::holds_alternative<LWidgetSize1>(this->Scale))
+        {
+            return std::get<LWidgetSize1>(this->Scale) == std::get<LWidgetSize1>(Other.Scale);
+        }
+        return std::get<ETextScale>(this->Scale) == std::get<ETextScale>(Other.Scale);
     }
 
 private:
@@ -98,8 +102,8 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WTextBox)
     {
-        this->SetTint(Colors::Black);
-        this->SetPadding({4_spt, 0});
+        this->Brush.Tint = Colors::Black;
+        this->Brush.Padding = {4_spt, 0};
     }
 
 public:
@@ -109,34 +113,11 @@ public:
 
     //# Called if the text box content changes.
     EVENT_DECL(OnChanged, void(LString const& NewContent))
-    FORCEINLINE void EmptyContent() { algo::orphan(&this->Content); this->OnChanged.InvokeIfBound(this->Content); }
+    FORCEINLINE void EmptyContent() { algo::swap_default(&this->Content); this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE void SetContent(LString InContent) { this->Content = std::move(InContent); this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE constexpr LString const& GetContent() const noexcept { return this->Content; }
 
-    constexpr void SetTextBrush(LTextBrush const& InBrush) noexcept { this->TextBrush = InBrush; this->RenderData.Dirty(); }
-    constexpr LTextBrush& GetMutableTextBrush() noexcept { this->RenderData.Dirty(); return this->TextBrush; }
-    constexpr LTextBrush const& GetTextBrush() const noexcept { return this->TextBrush; }
-
-    constexpr void SetTextScale(LTextScale InScale) noexcept { this->TextBrush.TextScale = InScale; this->RenderData.Dirty(); }
-    constexpr void SetTextTint(LColor const& InTint) noexcept { this->TextBrush.Tint = InTint; }
-    constexpr void SetSkipTextBrushDraw(bool bInSkip) noexcept { this->TextBrush.bSkipBrushDraw = bInSkip; }
-    constexpr void SetTextTightening(f32 InTightening) noexcept { this->TextBrush.Tightening = InTightening; }
-    constexpr void SetTextOutlineThickness(f32 InThickness) noexcept { this->TextBrush.OutlineThickness = InThickness; }
-    constexpr void SetTextOutlineTint(LColor const& InTint) noexcept { this->TextBrush.OutlineTint = InTint; }
-    constexpr void SetTextAlign(ETextHAlign InAlign) noexcept { this->TextBrush.TextHAlign = InAlign; }
-    constexpr void SetTextAlign(ETextVAlign InAlign) noexcept { this->TextBrush.TextVAlign = InAlign; }
-    constexpr void SetTextHAlign(ETextHAlign InAlign) noexcept { this->TextBrush.TextHAlign = InAlign; }
-    constexpr void SetTextVAlign(ETextVAlign InAlign) noexcept { this->TextBrush.TextVAlign = InAlign; }
-
-    constexpr LTextScale GetTextScale() const noexcept { return this->TextBrush.TextScale; }
-    constexpr LColor const& GetTextTint() const noexcept { return this->TextBrush.Tint; }
-    constexpr bool GetSkipTextBrushDraw() const noexcept { return this->TextBrush.bSkipBrushDraw; }
-    constexpr f32 GetTextTightening() const noexcept { return this->TextBrush.Tightening; }
-    constexpr f32 GetTextOutlineThickness() const noexcept { return this->TextBrush.OutlineThickness; }
-    constexpr LColor const& GetTextOutlineTint() const noexcept { return this->TextBrush.OutlineTint; }
-    constexpr ETextHAlign GetTextHAlign() const noexcept { return this->TextBrush.TextHAlign; }
-    constexpr ETextVAlign GetTextVAlign() const noexcept { return this->TextBrush.TextVAlign; }
-
+    LTextBrush TextBrush;
     constexpr bool IsTextLeftAligned() const noexcept { return this->TextBrush.TextHAlign == ETextHAlign::Left; }
     constexpr bool IsTextHCenterAligned() const noexcept { return this->TextBrush.TextHAlign == ETextHAlign::Center; }
     constexpr bool IsTextRightAligned() const noexcept { return this->TextBrush.TextHAlign == ETextHAlign::Right;  }
@@ -159,7 +140,7 @@ private:
     void UpdateRenderData(JFontSubsystem const& FontSubsystem, f32 TargetFontSize) const;
 
     LString Content;
-    LTextBrush TextBrush;
+    mutable TOptional<LTextScale> LastTextScale;
     mutable LVec2F DrawOffset{};
     mutable LVec2F TextDesiredSize{};
 
@@ -178,66 +159,55 @@ struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
 {
     NODE_FACTORY_BODY(WTextBox)
 
-    constexpr decltype(auto) Content(this auto&& Self, LString InContent) noexcept
+    constexpr decltype(auto) Content(this auto&& Self, LString Content) noexcept
     {
-        NODE_FACTORY_SELF().SetContent(std::move(InContent));
+        NODE_FACTORY_SELF().SetContent(std::move(Content));
         return NODE_FACTORY_RESULT();
     }
 
-    constexpr decltype(auto) TextScale(this auto&& Self, LTextScale InScale) noexcept
+    constexpr decltype(auto) TextScale(this auto&& Self, LTextScale Scale) noexcept
     {
-        NODE_FACTORY_SELF().SetTextScale(InScale);
+        NODE_FACTORY_SELF().TextBrush.TextScale = Scale;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextBrush(this auto&& Self, LTextBrush const& InBrush) noexcept
+    constexpr decltype(auto) TextBrush(this auto&& Self, LTextBrush const& Brush) noexcept
     {
-        NODE_FACTORY_SELF().SetTextBrush(InBrush);
+        NODE_FACTORY_SELF().TextBrush = Brush;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextTint(this auto&& Self, LColor const& InTint) noexcept
+    constexpr decltype(auto) TextTint(this auto&& Self, LColor const& Tint) noexcept
     {
-        NODE_FACTORY_SELF().SetTextTint(InTint);
+        NODE_FACTORY_SELF().TextBrush.Tint = Tint;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) SkipTextBrushDraw(this auto&& Self, bool bInSkip) noexcept
+    constexpr decltype(auto) SkipTextBrushDraw(this auto&& Self, bool bSkip) noexcept
     {
-        NODE_FACTORY_SELF().SetSkipTextBrushDraw(bInSkip);
+        NODE_FACTORY_SELF().TextBrush.bSkipBrushDraw = bSkip;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextTightening(this auto&& Self, f32 InTightening) noexcept
+    constexpr decltype(auto) TextTightening(this auto&& Self, f32 Tightening) noexcept
     {
-        NODE_FACTORY_SELF().SetTextTightening(InTightening);
+        NODE_FACTORY_SELF().TextBrush.Tightening = Tightening;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextOutlineThickness(this auto&& Self, f32 InThickness) noexcept
+    constexpr decltype(auto) TextOutlineThickness(this auto&& Self, f32 Thickness) noexcept
     {
-        NODE_FACTORY_SELF().SetTextOutlineThickness(InThickness);
+        NODE_FACTORY_SELF().TextBrush.OutlineThickness = Thickness;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextOutlineTint(this auto&& Self, LColor const& InTint) noexcept
+    constexpr decltype(auto) TextOutlineTint(this auto&& Self, LColor const& Tint) noexcept
     {
-        NODE_FACTORY_SELF().SetTextOutlineTint(InTint);
+        NODE_FACTORY_SELF().TextBrush.OutlineTint = Tint;
         return NODE_FACTORY_RESULT();
     }
-
-    constexpr decltype(auto) TextAlign(this auto&& Self, ETextHAlign InAlign) noexcept
+    constexpr decltype(auto) TextAlign(this auto&& Self, ETextHAlign Align) noexcept
     {
-        NODE_FACTORY_SELF().SetTextHAlign(InAlign);
+        NODE_FACTORY_SELF().TextBrush.TextHAlign = Align;
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) TextAlign(this auto&& Self, ETextVAlign InAlign) noexcept
+    constexpr decltype(auto) TextAlign(this auto&& Self, ETextVAlign Align) noexcept
     {
-        NODE_FACTORY_SELF().SetTextVAlign(InAlign);
-        return NODE_FACTORY_RESULT();
-    }
-    constexpr decltype(auto) TextHAlign(this auto&& Self, ETextHAlign InAlign) noexcept
-    {
-        NODE_FACTORY_SELF().SetTextHAlign(InAlign);
-        return NODE_FACTORY_RESULT();
-    }
-    constexpr decltype(auto) TextVAlign(this auto&& Self, ETextVAlign InAlign) noexcept
-    {
-        NODE_FACTORY_SELF().SetTextVAlign(InAlign);
+        NODE_FACTORY_SELF().TextBrush.TextVAlign = Align;
         return NODE_FACTORY_RESULT();
     }
 };

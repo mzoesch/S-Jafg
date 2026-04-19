@@ -23,31 +23,6 @@ public:
 
     virtual void UpdateDesiredSize() const override { this->SetDesiredSize(this->Size); }
 
-    FORCEINLINE constexpr WSpacer& SetSize(LWidgetSize2 Size) noexcept
-    {
-        this->Size = Size;
-        return *this;
-    }
-
-    FORCEINLINE constexpr WSpacer& SetHeight(LWidgetSize1 Height) noexcept
-    {
-        this->Size.SetYAxis(Height);
-        return *this;
-    }
-
-    FORCEINLINE constexpr WSpacer& SetWidth(LWidgetSize1 Width) noexcept
-    {
-        this->Size.SetXAxis(Width);
-        return *this;
-    }
-
-    FORCEINLINE constexpr LWidgetSize2 const& GetSize() const noexcept
-    {
-        return this->Size;
-    }
-
-private:
-
     LWidgetSize2 Size;
 };
 
@@ -57,17 +32,19 @@ struct LFactorySpacer : NODE_FACTORY_PARENT(WSpacer)
 
     decltype(auto) Size(this auto&& Self, LWidgetSize2 const& Size) noexcept
     {
-        NODE_FACTORY_SELF().SetSize(Size);
+        NODE_FACTORY_SELF().Size = Size;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Height(this auto&& Self, const LWidgetSize1 Height) noexcept
+    decltype(auto) Height(this auto&& Self, LWidgetSize1 Height) noexcept
     {
-        NODE_FACTORY_SELF().SetHeight(Height);
+        check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.X == 0.0f)
+        NODE_FACTORY_SELF().Size = LWidgetSize2{0.0f, Height};
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Width(this auto&& Self, const LWidgetSize1 Width) noexcept
+    decltype(auto) Width(this auto&& Self, LWidgetSize1 Width) noexcept
     {
-        NODE_FACTORY_SELF().SetWidth(Width);
+        check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.Y == 0.0f)
+        NODE_FACTORY_SELF().Size = LWidgetSize2{Width, 0.0f};
         return NODE_FACTORY_RESULT();
     }
 };

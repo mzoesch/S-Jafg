@@ -71,15 +71,12 @@ public:
     void AddChild(TJxxUnique<WNode> Child) { this->AddChildAt(this->GetChildren().size(), std::move(Child)); }
     virtual void AddChildAt(u64 Index, TJxxUnique<WNode> Child);
 
-    FORCEINLINE constexpr void SetPadding(LPadding const& InPadding) noexcept { this->Padding = InPadding; }
-    FORCEINLINE constexpr LPadding const& GetPadding() const noexcept { return this->Padding; }
+    //# The padding area between the slot and the content it contains.
+    LPadding Padding;
 
 private:
 
     TArray<TJxxUnique<WNode>> Children;
-
-    //# The padding area between the slot and the content it contains.
-    LPadding Padding;
 };
 
 struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
@@ -101,9 +98,9 @@ struct LFactoryParent : NODE_FACTORY_PARENT(WParent)
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) Padding(this auto&& Self, LPadding const& P) noexcept
+    decltype(auto) Padding(this auto&& Self, LPadding const& Padding) noexcept
     {
-        NODE_FACTORY_SELF().SetPadding(P);
+        NODE_FACTORY_SELF().Padding = Padding;
         return NODE_FACTORY_RESULT();
     }
 };

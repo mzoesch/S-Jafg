@@ -21,7 +21,7 @@ protected:
     DEFAULT_NODE_CONSTRUCTORS_BODY(WDismissibleFloatingWidget)
     {
         this->SetVisibility(ENodeVisibility::Visible);
-        this->SetAnchor(EAnchor::Fill);
+        this->Anchor = EAnchor::Fill;
     }
 
 public:

@@ -53,7 +53,7 @@ void Jafg::WEditableTextBox::Draw(LNodeRenderInfo const& Info) const
         {
               AnchoredTopLeftFromMostOuter
             + LVec2F{0.0, (this->GetDesiredSize_v2().y - CaretSize.y) * 0.5}
-            + LVec2F{this->GetBrush().Padding.Left, 0.0}
+            + LVec2F{this->Brush.Padding.Left, 0.0}
         }
         ;
 

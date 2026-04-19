@@ -42,9 +42,8 @@ protected:
     DEFAULT_NODE_CONSTRUCTORS_BODY(WHDragRegion)
     {
         this->SetVisibility(ENodeVisibility::Visible);
-        this->SetAnchor(EAnchor::Fill);
-        // this->SetTint(Colors::Black);
-        this->SetHSpace(3_spt);
+        this->Anchor = EAnchor::Fill;
+        this->HSpace = 3_spt;
     }
 
 public:

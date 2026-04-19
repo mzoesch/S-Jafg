@@ -108,7 +108,7 @@ protected:
         this->CtorLogic();
 
         this->SetContent(std::move(Info.DisplayName));
-        this->SetLeftIcon(Info.Icon.Resolve());
+        this->LeftIcon = Info.Icon.GetResolved();
         return;
     }
 
@@ -116,11 +116,11 @@ private:
 
     inline void CtorLogic() noexcept
     {
-        this->SetOmniPadding({3_spt, 0});
-        this->SetNormalTextTint({0x90});
-        this->SetNormalLeftIconTint({0x90});
-        this->SetNormalRightIconTint({0x90});
         this->SetSelectable(true);
+        this->Style.SetEverywhere<&LBoxBrush::Padding>({3_spt, 0});
+        this->TextStyle.NormalBrush.Tint = {0x90};
+        this->LeftIconStyle.NormalBrush.Tint = {0x90};
+        this->RightIconStyle.NormalBrush.Tint = {0x90};
         this->LoadRightIcon();
     }
 

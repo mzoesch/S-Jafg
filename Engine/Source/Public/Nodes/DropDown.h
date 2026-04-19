@@ -21,7 +21,7 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WDropDown)
     {
-        this->SetAnchor(EAnchor::HFill);
+        this->Anchor = EAnchor::HFill;
     }
 
 public:

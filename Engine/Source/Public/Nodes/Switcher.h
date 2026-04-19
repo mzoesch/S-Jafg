@@ -8,9 +8,7 @@
 namespace Jafg
 {
 
-//#
 //# A widget switcher has widgets that can be switched between like tabs - at maximum one widget is visible at a time.
-//#
 DECLARE_JAFG_WIDGET()
 class WSwitcher : public WOverlay
 {

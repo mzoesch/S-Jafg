@@ -511,23 +511,23 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
 
     decltype(auto) Anchor(this auto&& Self, LAnchor const& Anchor) noexcept
     {
-        NODE_FACTORY_SELF().SetAnchor(Anchor);
+        NODE_FACTORY_SELF().Anchor = Anchor;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) Anchor(this auto&& Self, EAnchor::Type Anchor) noexcept
     {
-        NODE_FACTORY_SELF().SetAnchor(Anchor);
+        NODE_FACTORY_SELF().Anchor = Anchor;
         return NODE_FACTORY_RESULT();
     }
 
     decltype(auto) MinDesiredSize(this auto&& Self, LWidgetSize2 Size) noexcept
     {
-        NODE_FACTORY_SELF().SetMinDesiredSize(Size);
+        NODE_FACTORY_SELF().MinDesiredSize = Size;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) MaxDesiredSize(this auto&& Self, LWidgetSize2 Size) noexcept
     {
-        NODE_FACTORY_SELF().SetMaxDesiredSize(Size);
+        NODE_FACTORY_SELF().MaxDesiredSize = Size;
         return NODE_FACTORY_RESULT();
     }
 
@@ -837,15 +837,13 @@ public:
     FORCEINLINE void SetDesiredSize(LWidgetSize2 Size) const noexcept { this->SetDesiredSizeInSpt(InSpt(*this, Size)); }
     void SetDesiredSizeInSpt(LVec2F Size) const noexcept;
     //# Internal usage only. Do not use unless you are a really smart person.
-    FORCEINLINE void SetDesiredSizeUnsanitized(LVec2F Size) const { this->DesiredSize_v2 = std::move(Size); return; }
+    FORCEINLINE void SetDesiredSizeUnsanitized(LVec2F Size) const { this->DesiredSize_v2 = Size; }
     FORCEINLINE LVec2F const& GetDesiredSize_v2() const { return this->DesiredSize_v2; }
     FORCEINLINE LVec2F const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : maths::zero_vector<LVec2F>; }
     //# The min desired size. A widget will always be at least this size.
-    FORCEINLINE void SetMinDesiredSize(LWidgetSize2 Size) { this->MinDesiredSize = std::move(Size); return; }
-    FORCEINLINE LWidgetSize2 const& GetMinDesiredSize() const { return this->MinDesiredSize; }
+    LWidgetSize2 MinDesiredSize;
     //# The max desired size. A widget will have at maximum this size. Zero means unbound. This includes max size of anchored nodes.
-    FORCEINLINE void SetMaxDesiredSize(LWidgetSize2 Size) { this->MaxDesiredSize = std::move(Size); return; }
-    FORCEINLINE LWidgetSize2 const& GetMaxDesiredSize() const { return this->MaxDesiredSize; }
+    LWidgetSize2 MaxDesiredSize;
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSize(LViewport const& Context) const;
@@ -867,10 +865,8 @@ public:
     FORCEINLINE TOptional<LMargin> GetMarginChecked() const noexcept { TOptional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
     FORCEINLINE TOptional<LMargin> GetMarginAsserted() const noexcept { TOptional Out{this->GetMargin()}; jassert(Out.has_value()); return Out; }
 
-    FORCEINLINE constexpr LAnchor& GetAnchor() noexcept { return this->Anchor; }
-    FORCEINLINE constexpr LAnchor const& GetAnchor() const noexcept { return this->Anchor; }
-    FORCEINLINE constexpr void SetAnchor(LAnchor const& InAnchor) noexcept { this->Anchor = InAnchor; }
-    FORCEINLINE constexpr void SetAnchor(EAnchor::Type  InAnchor) noexcept { this->Anchor = InAnchor; }
+    //# The anchor to use.
+    LAnchor Anchor{ EAnchor::TopLeft };
 
     ENGINE_API LFrontend& GetFrontend() const noexcept;
 
@@ -894,14 +890,6 @@ private:
     //# The desired size of this widget in pt.
     mutable LVec2F DesiredSize_v2{ maths::zero_vector<LVec2F> };
 
-    //# The minimum content area.
-    LWidgetSize2 MinDesiredSize;
-
-    //# The maximal content area. Zero means unbound. This includes max size of anchored nodes.
-    LWidgetSize2 MaxDesiredSize;
-
-    //# The anchor to use.
-    LAnchor Anchor{ EAnchor::TopLeft };
     //# The anchored size of this widget in pt.
     mutable LVec2F AnchoredSize_v2{ maths::zero_vector<LVec2F> };
     //# The anchored size that was lost during #MaxDesiredSize clamp in pt.

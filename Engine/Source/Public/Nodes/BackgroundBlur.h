@@ -10,9 +10,7 @@ namespace Jafg
 
 struct LFactoryBackgroundBlur;
 
-//#
 //# Adds blur for perspective projection only. Warning: Expensive.
-//#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryBackgroundBlur)
 class WBackgroundBlur : public WNode
 {
@@ -24,21 +22,16 @@ protected:
 
 public:
 
-    FORCEINLINE constexpr void SetBlurStrength(const f32 InStrength) noexcept { this->Strength = InStrength; }
-    FORCEINLINE constexpr f32  GetBlurStrength(void) const noexcept { return this->Strength; }
-
-private:
-
-    f32 Strength{};
+    f32 BlurStrength{};
 };
 
 struct LFactoryBackgroundBlur : NODE_FACTORY_PARENT(WBackgroundBlur)
 {
     NODE_FACTORY_BODY(WBackgroundBlur)
 
-    decltype(auto) Strength(this auto&& Self, f32 InStrength) noexcept
+    decltype(auto) Strength(this auto&& Self, f32 Strength) noexcept
     {
-        NODE_FACTORY_SELF().SetBlurStrength(InStrength);
+        NODE_FACTORY_SELF().BlurStrength = Strength;
         return NODE_FACTORY_RESULT();
     }
 };

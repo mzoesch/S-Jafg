@@ -60,8 +60,8 @@ void Jafg::WFloatingWidget::Construct()
                 NewStaticNode(WTextButton)
                     .Anchor(EAnchor::CenterRight)
                     .Content("X")
-                    .OmniTint(Colors::Transparent)
-                    .OmniOutlineThickness(1)
+                    .InAllBrushes<&LBoxBrush::Tint>(Colors::Transparent)
+                    .InAllBrushes<&LBoxBrush::OutlineThickness>(1)
                     .TextBrush({ETextScale::Compact})
                     .OnPrimaryRelease([this](auto&, LKeyEvent const& KeyEvent)
                     {
@@ -82,7 +82,7 @@ void Jafg::WFloatingWidget::Construct()
     this->ContentEvent.Invoke(*this, Container ? *Container : *this);
     check(&this->GetWindow())
     this->ContentEvent.Reset();
-    this->GetWindow().SetAnchor(this->InitialWindowAnchor);
+    this->GetWindow().Anchor = this->InitialWindowAnchor;
     this->GetWindow().SetVisibility(this->InitialWindowVisibility);
     if (this->bCreateResizeUi)
     {

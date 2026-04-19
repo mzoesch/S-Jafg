@@ -6,62 +6,63 @@
 #include "Rhi/NodeRenderInfo.h"
 #include "Rhi/BindlessTextureArray.h"
 
-void Jafg::WRegion::Draw(LNodeRenderInfo const& Info) const
+void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) const noexcept
 {
-    this->DrawRegionBrush(Info);
-    Super::Draw(Info);
-}
-
-void Jafg::WRegion::DrawRegionBrush(LNodeRenderInfo const& Info) const
-{
-    auto AnchoredSize{this->GetAnchoredSize_v2()};
-    if (this->Brush.bSkipBrushDraw || (AnchoredSize.x <= 0.0f || AnchoredSize.y <= 0.0f))
+    if (this->bSkipBrushDraw || Rect.Extent.x <= 0.0f || Rect.Extent.y <= 0.0f)
     {
         return;
     }
 
     u32 TextureIndex{UBO::BindlessTextureArray::IdentityMulIdx};
-    if (this->Brush.Texture.get())
+    if (this->Texture.get())
     {
-        if (this->Brush.Texture->IsBindless() == false)
+        if (this->Texture->IsBindless() == false)
         {
-            this->GetFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->Brush.Texture);
-            check(this->Brush.Texture->IsBindless())
+            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&* this->Texture);
+            check(this->Texture->IsBindless())
         }
-
-        TextureIndex = this->Brush.Texture->GetBindlessIndex();
+        TextureIndex = this->Texture->GetBindlessIndex();
     }
 
     LVec4F TexCoordRect{0.0f, 0.0f, 1.0f, 1.0f};
-    if (this->Brush.Texture.get())
+    if (this->Texture.get())
     {
-        auto Extend{this->Brush.Texture->GetExtentAsVec2F()};
-        if (this->Brush.TexCoordBehavior == ETexCoordBehavior::FitV)
+        auto Extend{this->Texture->GetExtentAsVec2F()};
+        if (this->TexCoordBehavior == ETexCoordBehavior::FitV)
         {
-            TexCoordRect = MiscUV::FitV(TexCoordRect, Extend, AnchoredSize);
+            TexCoordRect = MiscUV::FitV(TexCoordRect, Extend, Rect.Extent);
         }
-        else if (this->Brush.TexCoordBehavior == ETexCoordBehavior::FitH)
+        else if (this->TexCoordBehavior == ETexCoordBehavior::FitH)
         {
-            TexCoordRect = MiscUV::FitH(TexCoordRect, Extend, AnchoredSize);
+            TexCoordRect = MiscUV::FitH(TexCoordRect, Extend, Rect.Extent);
         }
-
-        TexCoordRect = MiscUV::ApplyPadding(MiscUV::ApplyScale(TexCoordRect, this->Brush.TextureScale), this->Brush.TexturePadding, Extend);
+        TexCoordRect = MiscUV::ApplyPadding(MiscUV::ApplyScale(TexCoordRect, this->TextureScale), this->TexturePadding, Extend);
     }
 
-    Info.AddInstance(LVisualInstance{
-        .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation), AnchoredSize},
-        .Tint = this->Brush.Tint.Bits,
-        .BackgroundTint = this->Brush.BackgroundTint.Bits,
-        .Radii = this->Brush.bClampRadii
-            ? maths::min(this->Brush.Radii, LVec4F{AnchoredSize.x, AnchoredSize.y, AnchoredSize.x, AnchoredSize.y} / 2.0f)
-            : this->Brush.Radii,
-        .OutlineTint = this->Brush.OutlineTint.Bits,
+    Info.AddInstance({
+        .Rect = Rect,
+        .Tint = this->Tint.Bits,
+        .BackgroundTint = this->BackgroundTint.Bits,
+        .Radii = this->bClampRadii
+            ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+            : this->Radii,
+        .OutlineTint = this->OutlineTint.Bits,
         .TexCoordRect = TexCoordRect,
-        .OutlineThickness = this->Brush.OutlineThickness,
+        .OutlineThickness = this->OutlineThickness,
         .TextureIndex = TextureIndex,
-        .SamplerIndex = this->Brush.SamplerAddressMode,
+        .SamplerIndex = this->SamplerAddressMode,
         .MsdfPixelRange = 0.0f,
         });
 
+    return;
+}
+
+void Jafg::WRegion::Draw(LNodeRenderInfo const& Info) const
+{
+    this->Brush.Draw(Info, {
+        .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+        .Extent = this->GetAnchoredSize_v2(),
+        });
+    Super::Draw(Info);
     return;
 }

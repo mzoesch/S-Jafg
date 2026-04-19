@@ -144,15 +144,15 @@ void Jafg::WTabOverlay::SetSelectedTab(WTabOverlaySelector& Target)
 
 void Jafg::WTabOverlaySelector::LoadRightIcon()
 {
-    this->SetRightIcon(this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.SmallX"));
-    this->SetOmniRightIconInwardsPadding(12_spt);
-    this->SetIsDecoupledRightIcon(true);
-    this->SetDecoupledRightIconTint(*GetSingleton<JUserPreferences>().DangerColor);
-    this->SetDecoupledRightKeyDownHandler([](auto&,auto&){ return LReply::Handled(); });
-    this->SetDecoupledRightKeyUpHandler([this](LNodeKeyEventData const& Data, LKeyEvent const& Event)
+    this->RightIcon = this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.SmallX");
+    this->RightIconStyle.SetEverywhere<&LTextButtonIconBrush::InwardsPadding>(12_spt);
+    this->bDecoupledRightIcon = true;
+    this->RightIconStyle.Set<EIconStyleBits::Decoupled, &LTextButtonIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
+    this->DecoupledRightKeyDown = [](auto&, auto&){ return LReply::Handled(); };
+    this->DecoupledRightKeyUp = [this](LNodeKeyEventData const& Data, LKeyEvent const& Event)
     {
         auto* TabOverlay{this->GetParentUntilChecked<WTabOverlay>()};
         TabOverlay->CloseTab(this);
         return LReply::Handled();
-    });
+    };
 }
