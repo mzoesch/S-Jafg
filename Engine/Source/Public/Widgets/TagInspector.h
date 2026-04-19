@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Nodes/UserWidget.h"
-#include "Nodes/TabOverlayForward.h"
+#include "Nodes/GenericTabInfos.h"
 #include "TagInspector.generated.h"
 
 namespace Jafg
@@ -21,18 +21,11 @@ protected:
 
 public:
 
-    static LTabOverlayElement CreateTabDescriptor(LViewport& Viewport) noexcept
-    {
-        return {
-            .Selector = LTabOverlayElement::CreateInfo{
-                .DisplayName = "Tag Inspector",
-                .Icon = LString{"Icons/Jafg.File"},
-                },
-            .Panel = NewStaticNodeVp(Viewport, WTagInspector),
-            };
-    }
+    JAFG_DEFAULT_TAB_CANDIDATE("Tag Inspector", "Icons/Jafg.File")
 
     virtual void Construct() override;
 };
+static_assert(CTabSelectorCandidate<WTagInspector>);
+static_assert(CTabCandidate<WTagInspector>);
 
 } /* ~Namespace Jafg */

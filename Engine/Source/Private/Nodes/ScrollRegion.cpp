@@ -27,6 +27,8 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     const f64 ScrollOffsetXPercent{ ScrollOffsetX / static_cast<f64>(this->DesiredSizeOfChildren.x)};
     const f64 VisibleX{maths::clamp(this->GetAnchoredSize_v2().x / this->DesiredSizeOfChildren.x, 0.0f, 1.0f)};
 
+    this->LastVisible = {VisibleX, VisibleY};
+
     // Info.CommandBuffer.setScissor(0, vk::Rect2D{
     //     .offset = vk::Offset2D{static_cast<i32>(MostOuterTopLeftContentArea.x), static_cast<i32>(MostOuterTopLeftContentArea.y)},
     //     .extent = vk::Extent2D{static_cast<u32>(MaxContentAreaSize.x), static_cast<u32>(MaxContentAreaSize.y)},
@@ -229,11 +231,11 @@ Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(LNodeSweepData const& Data, LVe
     return WNode::SweepFocusTest(Data, Location);
 }
 
-void Jafg::WScrollRegion::UserInterfaceTick()
+bool Jafg::WScrollRegion::UserInterfaceTick()
 {
     if (this->GetViewport().GetSurface().GetMouseLocation().has_value() == false)
     {
-        return;
+        return {};
     }
 
     auto MouseLocation{this->GetViewport().GetSurface().GetMouseLocationValue()};
@@ -246,7 +248,7 @@ void Jafg::WScrollRegion::UserInterfaceTick()
             (
                 MouseLocation.y
                 - (this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + this->GetVBackgroundScrollPositionFromOuter()).y
-                - (maths::eq_zero_e(this->MbVOffset) ? (VForegroundScrollHeight * 0.5f) : 0.0f) + this->MbVOffset
+                - (maths::eq_zero_e(this->MbOffset.y) ? (VForegroundScrollHeight * 0.5f) : 0.0f) + this->MbOffset.y
             )
             /
             (this->GetVBackgroundScrollSize().y - VForegroundScrollHeight),
@@ -263,7 +265,7 @@ void Jafg::WScrollRegion::UserInterfaceTick()
             (
                 MouseLocation.x
                 - (this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + this->GetHBackgroundScrollPositionFromOuter()).x
-                - (maths::eq_zero_e(this->MbHOffset) ? (HForegroundScrollWidth * 0.5f) : 0.0f) + this->MbHOffset
+                - (maths::eq_zero_e(this->MbOffset.x) ? (HForegroundScrollWidth * 0.5f) : 0.0f) + this->MbOffset.x
             )
             /
             (this->GetHBackgroundScrollSize().x - HForegroundScrollWidth),
@@ -272,23 +274,23 @@ void Jafg::WScrollRegion::UserInterfaceTick()
         );
     }
 
-    return;
+    return {};
 }
 
 Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
     {
         this->HandleMouseWheelUp(Event.Value);
         return LReply::Handled();
     }
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
     {
         this->HandleMouseWheelDown(Event.Value);
         return LReply::Handled();
     }
 
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
     {
         if (this->MBDownOnScrollbar(Data.Viewport))
         {
@@ -301,7 +303,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyE
 
 Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
     {
        if (this->MBUpOnScrollbar(Data.Viewport))
        {
@@ -347,12 +349,12 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyEventData const& Data
         }
     }
 
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
     {
         this->HandleMouseWheelUp(Event.Value);
         return LReply::Handled();
     }
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
     {
         this->HandleMouseWheelDown(Event.Value);
         return LReply::Handled();
@@ -424,46 +426,33 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(LViewport const& InViewport)
     auto MouseLocation{InViewport.GetSurface().GetMouseLocationValue()};
     LVec2F TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter(InViewport)};
 
-    if (LViewport::IsInBounds(
+    if (this->LastVisible.y < 1.0f && LViewport::IsInBounds(
         TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
         this->GetVInteractiveAreaScrollSize(),
         MouseLocation
         ))
     {
-        if(
-            LVec2D TopLeftForeground{TopLeftMostOuter + this->GetVForegroundScrollPositionFromOuter()};
-            LViewport::IsInBounds(
-                TopLeftForeground,
-                this->GetVForegroundScrollSize(),
-                MouseLocation
-                )
-            )
+        if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetVForegroundScrollPositionFromOuter()};
+            LViewport::IsInBounds(TopLeftForeground, this->GetVForegroundScrollSize(), MouseLocation))
         {
-            this->MbVOffset = (MouseLocation.y - TopLeftForeground.y) * -1.0f;
+            this->MbOffset.y = (MouseLocation.y - TopLeftForeground.y) * -1.0f;
         }
-
         this->bUiTickV = true;
         this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.Emplace(this, &WScrollRegion::UserInterfaceTick);
         return true;
     }
 
-    if (LViewport::IsInBounds(
+    if (this->LastVisible.x < 1.0f && LViewport::IsInBounds(
         TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
         this->GetHInteractiveAreaScrollSize(),
         MouseLocation
         ))
     {
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetHForegroundScrollPositionFromOuter()};
-            LViewport::IsInBounds(
-                TopLeftForeground,
-                this->GetHForegroundScrollSize(),
-                MouseLocation
-                )
-            )
+            LViewport::IsInBounds(TopLeftForeground, this->GetHForegroundScrollSize(), MouseLocation))
         {
-            this->MbHOffset = (MouseLocation.x - TopLeftForeground.x) * -1.0f;
+            this->MbOffset.x = (MouseLocation.x - TopLeftForeground.x) * -1.0f;
         }
-
         this->bUiTickH = true;
         this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.Emplace(this, &WScrollRegion::UserInterfaceTick);
         return true;
@@ -478,8 +467,7 @@ bool Jafg::WScrollRegion::MBUpOnScrollbar(LViewport const& InViewport)
     {
         this->bUiTickV = false;
         this->bUiTickH = false;
-        this->MbVOffset = 0.0;
-        this->MbHOffset = 0.0;
+        this->MbOffset = maths::zero_vector<LVec2F>;
         InViewport.OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
         return true;
     }

@@ -268,13 +268,13 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& 
                     }
                     else
                     {
-                        if (algo::contains(Trigger.Keys, LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseXY)))
+                        if (algo::contains(Trigger.Keys, LPhysicalKey::FromLogical(ELogicalKey::MouseXY)))
                         {
-                            if (It->PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX))
+                            if (It->PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseX))
                             {
                                 Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
                             }
-                            else if (It->PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY))
+                            else if (It->PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseY))
                             {
                                 Magnitude = LInputActionValue::Axis3D{0.0f, It->Value, 0.0f};
                             }

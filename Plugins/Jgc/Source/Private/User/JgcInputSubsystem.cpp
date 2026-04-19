@@ -20,7 +20,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
     {
         Context->MapAction(&Registry,
             {"Pause", Jafg::EInputActionCategory::Boolean},
-            Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::Escape).value(), Jafg::EInputActionTriggerBits::Triggered,
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Escape).value(), Jafg::EInputActionTriggerBits::Triggered,
             {},
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
@@ -35,13 +35,13 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             TArray<Jafg::LInputTrigger>{}
                 .reflexive_emplace_back(Jafg::LInputTrigger{
                     "Forward",
-                    {Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::W).value()},
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::W).value()},
                     Jafg::EInputActionTriggerBits::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
                     })
                 .reflexive_emplace_back(Jafg::LInputTrigger{
                     "Left",
-                    {Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::A).value()},
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::A).value()},
                     Jafg::EInputActionTriggerBits::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXYModifier>())
@@ -49,21 +49,21 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     })
                 .reflexive_emplace_back(Jafg::LInputTrigger{
                     "Backwards",
-                    {Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::S).value()},
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::S).value()},
                     Jafg::EInputActionTriggerBits::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyNegateModifier>())
                     })
                 .reflexive_emplace_back(Jafg::LInputTrigger{
                     "Right",
-                    {Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::D).value()},
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::D).value()},
                     Jafg::EInputActionTriggerBits::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXYModifier>())
                     })
                 .reflexive_emplace_back(Jafg::LInputTrigger{
                     "Up",
-                    {Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::E).value()},
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::E).value()},
                     Jafg::EInputActionTriggerBits::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXZModifier>())
@@ -71,7 +71,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     })
                 .reflexive_emplace_back(Jafg::LInputTrigger{
                     "Down",
-                    {Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::Q).value()},
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::Q).value()},
                     Jafg::EInputActionTriggerBits::Ongoing,
                     Jafg::LInputActionMappedTriggerModifiers{}
                         .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXZModifier>())
@@ -105,7 +105,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 
         Context->MapAction(&Registry,
             {"Rotating", Jafg::EInputActionCategory::Axis2D},
-            Jafg::LPhysicalKey::FromLogical(Jafg::ENamedPhysicalKey::MouseXY),
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseXY),
             Jafg::EInputActionTriggerBits::Triggered,
             {},
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
@@ -143,7 +143,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
     {
         Context->MapAction(&Registry,
             {"Unpause", Jafg::EInputActionCategory::Boolean},
-            Frontend.GetPhysicalKey(Jafg::ENamedPhysicalKey::Escape).value(), Jafg::EInputActionTriggerBits::Triggered,
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Escape).value(), Jafg::EInputActionTriggerBits::Triggered,
             {},
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {

@@ -390,6 +390,35 @@ typedef Detail::TCxxDynamicInit<LViewport, Detail::LViewport2OuterProj> LNodeDyn
 template<typename TCxxClass>
 using TNodeStaticInit = Detail::TCxxStaticInitBase<LViewport, TCxxClass, Detail::LViewport2OuterProj>;
 
+//# Generic API to for allowing subclasses of nodes to be injected in the construction of a node.
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+struct TNodeInjection final
+{
+    typedef TNode TBaseInjectableNode;
+    TSubclassOf<TNode> Class;
+    std::move_only_function<void(typename TNode::LFactory& Factory)> Delegate;
+};
+#define JAFG_NODE_FACTORY_INJECTION(BaseNode, Injection, TargetInjection) \
+        template<typename TNode> requires std::is_base_of_v<BaseNode, TNode> \
+        decltype(auto) Injection(this auto&& Self, TSubclassOf<TNode> Class) noexcept \
+        { \
+            NODE_FACTORY_SELF().TargetInjection.Class = Class; \
+            return NODE_FACTORY_RESULT(); \
+        } \
+        template<typename TNode, typename TFunc> requires std::is_base_of_v<BaseNode, TNode> \
+        decltype(auto) Injection(this auto&& Self, TSubclassOf<TNode> Class, TFunc Delegate) noexcept \
+            requires std::is_invocable_r_v<void, TFunc, typename TNode::LFactory&> \
+        { \
+            Self.Injection(Class); \
+            NODE_FACTORY_SELF().TargetInjection.Delegate = [D=std::move(Delegate)] \
+            (typename decltype(DETAIL_JAFG_NODE_FACTORY_SELF().TargetInjection)::TBaseInjectableNode::LFactory& F) \
+            { \
+                check(F.GetRawNode().template IsA<TNode>()) \
+                std::invoke(D, static_cast<typename TNode::LFactory&>(F)); \
+            }; \
+            return NODE_FACTORY_RESULT(); \
+        }
+
 namespace Detail
 {
 
@@ -400,8 +429,6 @@ struct LOuter2ViewportProj
 
 struct LBeginStylingFnResult final
 {
-public:
-
     inline constexpr LBeginStylingFnResult(WParent& P) noexcept : Parent{P} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LBeginStylingFnResult)
     inline ~LBeginStylingFnResult();
@@ -417,8 +444,14 @@ public:
     }
 
     //# Set the root with a dynamic type specified at runtime.
-    template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
     inline typename TNode::LFactory& Root(LCxxClass const& Class);
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    inline typename TNode::LFactory& Root(TNodeInjection<TNode> const& Injection)
+    {
+        return this->Root<TNode>(Injection.Class.GetClassOrDefault());
+    }
+
     //# Set the root with the provided static type directly.
     template<typename TNode, typename... TArgs>
         requires std::is_base_of_v<WNode, TNode>
@@ -498,11 +531,24 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) Delegate(this auto&& Self, TFunction<void(LFactoryNode& Factory)>& Delegate) noexcept
+    template<typename TFunc>
+    decltype(auto) Delegate(this auto&& Self, TFunc&& Func) noexcept
+        requires std::is_invocable_r_v<void, TFunc, std::remove_cvref_t<decltype(Self)>&>
     {
-        if (Delegate.IsValid())
+        if constexpr (algo::bool_testable<TFunc>) if (!Func)
         {
-            Delegate(Self);
+            return NODE_FACTORY_RESULT();
+        }
+        Func(static_cast<std::remove_cvref_t<decltype(Self)>&>(Self));
+        return NODE_FACTORY_RESULT();
+    }
+    template<typename T>
+    decltype(auto) Inject(this auto&& Self, TNodeInjection<T>& Injection) noexcept
+    {
+        if (Injection.Delegate)
+        {
+            check(Injection.Class.GetClassOrDefault().template DerivesFrom<T>())
+            Self.Delegate(Injection.Delegate);
         }
         return NODE_FACTORY_RESULT();
     }
@@ -512,6 +558,10 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         NODE_FACTORY_SELF().AddData(Data);
         return NODE_FACTORY_RESULT();
     }
+
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorEnter, OnCursorEnterEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorMoved, OnCursorMovedEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorLeave, OnCursorLeaveEvent)
 
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDown, OnKeyDownEvent)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUp, OnKeyUpEvent)
@@ -617,9 +667,9 @@ public:
     virtual void Destruct()
     {
         check(Tasks::IsOnMasterThread())
+        checkCode(_check_Destruct())
         if (this->Parent)
         {
-            checkCode(_check_Destruct())
             this->Parent = nullptr;
         }
     }
@@ -744,9 +794,28 @@ public:
     FORCEINLINE WParent* GetParentChecked() { auto* Out{this->GetParent()}; check(Out); return Out; }
     FORCEINLINE WParent const* GetParent() const { return this->Parent; }
     FORCEINLINE WParent const* GetParentChecked() const { auto const* Out{this->GetParent()}; check(Out); return Out; }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetParentUntil() noexcept;
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetParentUntilChecked() noexcept
+    {
+        auto* Result{this->GetParentUntil<TNode>()};
+        check(Result)
+        return Result;
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode const* GetParentUntil() const noexcept;
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode const* GetParentUntilChecked() const noexcept
+    {
+        auto* Result{this->GetParentUntil<TNode>()};
+        check(Result)
+        return Result;
+    }
+
     //# @return The most outer parent of this widget or the widget itself if no outer parent.
-    WNode* GetMostOuterParent() noexcept;
-    WNode const* GetMostOuterParent() const noexcept;
+    WNode& GetMostOuterParent() noexcept;
+    WNode const& GetMostOuterParent() const noexcept;
 
     //#
     //# Searches for a node in this widget tree. Only searches nodes that are drawn.
@@ -823,7 +892,7 @@ private:
     LViewport& AttachedViewport;
 
     //# The desired size of this widget in pt.
-    mutable LVec2F DesiredSize_v2;
+    mutable LVec2F DesiredSize_v2{ maths::zero_vector<LVec2F> };
 
     //# The minimum content area.
     LWidgetSize2 MinDesiredSize;
@@ -834,9 +903,9 @@ private:
     //# The anchor to use.
     LAnchor Anchor{ EAnchor::TopLeft };
     //# The anchored size of this widget in pt.
-    mutable LVec2F AnchoredSize_v2;
+    mutable LVec2F AnchoredSize_v2{ maths::zero_vector<LVec2F> };
     //# The anchored size that was lost during #MaxDesiredSize clamp in pt.
-    mutable LVec2F LostAnchoredSize_v2;
+    mutable LVec2F LostAnchoredSize_v2{ maths::zero_vector<LVec2F> };
 };
 
 inline decltype(auto) LFactoryNode::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
@@ -886,6 +955,11 @@ struct LNewNodeFnResult final
     {
         return typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class.GetClassOrDefault()}).release()};
     }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    typename TNode::LFactory Class(TNodeInjection<TNode> const& Injection) const
+    {
+        return this->Class<TNode>(Injection.Class);
+    }
 };
 
 struct NewNodeFn final
@@ -907,9 +981,7 @@ inline constexpr Detail::BeginStylingFn BeginStyling{};
 inline constexpr Detail::NewNodeFn NewNode{};
 //# Just some boilerplate helpers. Completely optional.
 #define NewStaticNode(NodeClass) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>()
-#define NewStaticNodeVp(Vp, NodeClass) ::Jafg::NewNode(Vp).Class<NodeClass>()
-#define NewSubNode(Subclass) ::Jafg::NewNode(this->GetViewport()).Class(Subclass)
-#define NewSubNodeVp(Vp, Subclass) ::Jafg::NewNode(Vp).Class(Subclass)
+#define NewDynamicNode(Subclass) ::Jafg::NewNode(this->GetViewport()).Class(Subclass)
 
 FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
 {

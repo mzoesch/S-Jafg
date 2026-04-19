@@ -1,4 +1,5 @@
 // Copyright mzoesch. All rights reserved.
+
 #include "Jafg.slang"
 
 struct VisualShared

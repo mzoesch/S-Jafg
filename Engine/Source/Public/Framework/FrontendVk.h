@@ -63,7 +63,7 @@ public:
     void TearDown();
 
     //# TODO: Remove this... this has nothing to do with VK.
-    NODISCARD ENGINE_API TOptional<LPhysicalKey> GetPhysicalKey(ENamedPhysicalKey LogicalKey) const noexcept;
+    NODISCARD ENGINE_API TOptional<LPhysicalKey> GetPhysicalKey(ELogicalKey LogicalKey) const noexcept;
     NODISCARD ENGINE_API TOptional<LString> Glfw_GetPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept;
     LString Glfw_GetSanitizedPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept
     {

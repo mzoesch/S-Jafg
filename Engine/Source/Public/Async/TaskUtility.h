@@ -18,7 +18,7 @@ namespace Jafg
     #error "Missing implementation for this platform."
 #endif /* !PLATFORM_WASM */
 
-typedef TFunction<void(void)> LTaskDelegate;
+typedef std::move_only_function<void(void)> LTaskDelegate;
 
 namespace ENamedThreads
 {
@@ -126,7 +126,7 @@ FORCEINLINE bool IsOnReSTCliThread();
 //# Is undefined when the task is being executed. It may be this tick or the tenth tick from now - depending on the
 //# current system load.
 //#
-ENGINE_API void Make(const ENamedThreads::Type InThreadName, const ETaskTime::Type InPreferredTime, LTaskDelegate&& InDelegate);
+ENGINE_API void Make(ENamedThreads::Type InThreadName, ETaskTime::Type InPreferredTime, LTaskDelegate InDelegate);
 
 //# Launch a named thread. This thread is globally accessible by its ENamedThreads::Type.
 template <typename T, typename... Args> requires std::is_base_of_v<LRunnable, T>

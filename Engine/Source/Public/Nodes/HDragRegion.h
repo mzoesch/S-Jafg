@@ -76,7 +76,7 @@ private:
     TOptional<LDragChildOffset> CalculateDragChildOffset(LVec2F const& Translation);
     TOptional<LDragChildOffset> DragChildOffset;
 
-    void UiTickMove();
+    bool UiTickMove();
     LDelegateHandle UiTickMoveHandle{ nullptr };
     TOptional<LVec2F> InitialMouseLocation;
 

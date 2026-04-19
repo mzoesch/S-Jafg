@@ -535,6 +535,31 @@ struct find_pointer_fn
 //# Get a pointer to the found element or nullptr.
 inline constexpr detail::find_pointer_fn find_pointer{};
 
+namespace detail
+{
+struct find_pointer_checked_fn
+{
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Proj = algo::identity, typename _Tp JAFG_RANGE_VAL_T(_Iter, _Proj)>
+        requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<_Iter, _Proj>, const _Tp*>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(_Iter __first, _Sent __last, const _Tp& __value, _Proj __proj = {}) const // -> decltype(algo::to_address(__first))
+    {
+        auto* Result{find_pointer(__first, __last, __value, std::move(__proj))};
+        check(Result)
+        return Result;
+    }
+
+    template<input_range _Range, typename _Proj = algo::identity, typename _Tp JAFG_RANGE_VAL_T(std::ranges::iterator_t<_Range>, _Proj)>
+        requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<std::ranges::iterator_t<_Range>, _Proj>, const _Tp*>
+    NODISCARD FORCEINLINE constexpr auto
+    operator()(_Range&& __r, const _Tp& __value, _Proj __proj = {}) const -> decltype(algo::to_address(algo::begin(__r)))
+    {
+        return (*this)(algo::begin(__r), algo::end(__r), __value, std::move(__proj));
+    }
+};
+} /* ~Namespace detail */
+inline constexpr detail::find_pointer_checked_fn find_pointer_checked{};
+
 using std::ranges::find_if;
 namespace detail
 {
@@ -813,6 +838,8 @@ struct join_fn
 
 inline constexpr detail::join_fn join{};
 
+///////////////////////////////////////////////////////////////////////////////
+// Time stuff
 inline decltype(auto) now() noexcept
 {
     return std::chrono::high_resolution_clock::now();
@@ -822,6 +849,11 @@ inline f64 time_diff(std::chrono::high_resolution_clock::time_point A, std::chro
 {
     return std::chrono::duration_cast<std::chrono::duration<f64>>(B - A).count();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Misc
+template<typename T>
+concept bool_testable = requires(T&& t) { static_cast<bool>(t); };
 
 } /* ~Namespace algo */
 

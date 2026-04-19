@@ -165,7 +165,7 @@ void Jafg::LViewport::DispatchInputs()
     }
 
     /* Check for left-mouse-button down events to focus on another widget. */
-    if (CursorLocation.has_value() && this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton), ERawInputStateBits::Press))
+    if (CursorLocation.has_value() && this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press))
     {
         bool bHandled{};
         for (auto& Widget : this->HoveredWidgets)
@@ -393,6 +393,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     for (auto const* Widget : this->TopLevelWidgets)
     {
         check(Widget)
+        check(IsValidFast(&Widget->GetOuter(), Widget))
         if (Widget->TransformsWidgetLayout())
         {
             STAT_QUICK_CYCLE_START(Widget->GetNameAsString())

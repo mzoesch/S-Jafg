@@ -130,12 +130,11 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
     return;
 }
 
-void Jafg::LSubsystemCollection::OnForeignPluginLoaded(LLoadedPlugin const& Plugin)
+bool Jafg::LSubsystemCollection::OnForeignPluginLoaded(LLoadedPlugin const& Plugin)
 {
     LOG_VERBOSE(LogSubsystemCollection, "Foreign plugin loaded, initializing dependent subsystems for [{}].", Plugin.GetIdentifier())
     this->InitializeSubsystemsForDeferred();
-
-    return;
+    return {};
 }
 
 void Jafg::LSubsystemCollection::InitializeDependency(JSubsystem* Requester, TSubclassOf<JSubsystem> Class)

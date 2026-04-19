@@ -13,6 +13,21 @@ void Jafg::WSwitcher::AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild)
     return;
 }
 
+void Jafg::WSwitcher::RemoveChild(WNode* Child)
+{
+    algo::erase(&this->RecentVisibilities, Child, algo::pair_first{});
+
+    Super::RemoveChild(Child);
+
+    if (this->ActiveNodeIndex != NoActiveNodeIndex)
+    {
+        this->ActiveNodeIndex = NoActiveNodeIndex;
+        this->SetActiveNodeByIndex(std::max(this->ActiveNodeIndex - 1, 0ll));
+    }
+
+    return;
+}
+
 void Jafg::WSwitcher::SetActiveNode(WNode const& Node)
 {
     if (auto It{algo::find(this->GetChildren(), &Node, algo::unique_raw{})}; It != this->GetChildren().end())

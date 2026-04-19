@@ -384,7 +384,7 @@ protected:
             return LReply::Unhandled();
         }
 
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
         {
             if (this->bUpdateBrushOnStateChange && this->bSelected == false)
             {
@@ -409,7 +409,7 @@ protected:
             return Result;
         }
 
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
         {
             if (this->bUpdateBrushOnStateChange && this->bSelected == false)
             {
@@ -459,7 +459,7 @@ protected:
             return LReply::Unhandled();
         }
 
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
         {
             if (this->bUpdateBrushOnStateChange && this->bSelected == false)
             {
@@ -484,7 +484,7 @@ protected:
             return Result;
         }
 
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
         {
             if (this->bUpdateBrushOnStateChange && this->bSelected == false)
             {
@@ -541,26 +541,10 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TClass)
 
     typedef typename TClass::_ButtonBaseBrush Brush;
 
-    decltype(auto) OnPrimaryPress(this auto&& Self, TFunction<void(TClass& Self, LKeyEvent const& InKeyEvent)> InDelegate) noexcept
-    {
-        NODE_FACTORY_SELF().OnPrimaryPressDelegate = std::move(InDelegate);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) OnPrimaryRelease(this auto&& Self, TFunction<void(TClass& Self, LKeyEvent const& InKeyEvent)> InDelegate) noexcept
-    {
-        NODE_FACTORY_SELF().OnPrimaryReleaseDelegate.Bind(std::move(InDelegate));
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) OnSecondaryPress(this auto&& Self, TFunction<void(TClass& Self, LKeyEvent const& InKeyEvent)> InDelegate) noexcept
-    {
-        NODE_FACTORY_SELF().OnSecondaryPressDelegate = std::move(InDelegate);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) OnSecondaryRelease(this auto&& Self, TFunction<void(TClass& Self, LKeyEvent const& InKeyEvent)> InDelegate) noexcept
-    {
-        NODE_FACTORY_SELF().OnSecondaryReleaseDelegate = std::move(InDelegate);
-        return NODE_FACTORY_RESULT();
-    }
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnPrimaryPress, OnPrimaryPressDelegate)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnPrimaryRelease, OnPrimaryReleaseDelegate)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnSecondaryPress, OnSecondaryPressDelegate)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnSecondaryRelease, OnSecondaryReleaseDelegate)
 
     decltype(auto) Enabled(this auto&& Self, bool bInEnabled) noexcept
     {

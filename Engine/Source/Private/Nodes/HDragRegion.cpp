@@ -247,7 +247,7 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEv
 {
     if (this == &Data.Node)
     {
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
         {
             check(this->UiTickMoveHandle.IsValid() == false)
             this->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(this, &WHDragRegion::UiTickMove);
@@ -266,7 +266,7 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEven
 {
     if (this == &Data.Node)
     {
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
         {
             if (this->UiTickMoveHandle.IsValid())
             {
@@ -304,12 +304,12 @@ TOptional<Jafg::WHDragRegion::LDragChildOffset> Jafg::WHDragRegion::CalculateDra
     return {};
 }
 
-void Jafg::WHDragRegion::UiTickMove()
+bool Jafg::WHDragRegion::UiTickMove()
 {
     if (this->InitialMouseLocation.has_value() == false)
     {
         this->InitialMouseLocation = this->GetViewport().GetSurface().GetMouseLocation();
-        return;
+        return {};
     }
 
     if (this->DragChildOffset.has_value() == false)
@@ -318,20 +318,20 @@ void Jafg::WHDragRegion::UiTickMove()
         this->DragChildOffset = this->CalculateDragChildOffset(maths::zero_vector<LVec2F>);
         if (this->DragChildOffset.has_value() == false)
         {
-            return;
+            return {};
         }
     }
 
     if (this->GetViewport().GetSurface().HasMouseLocation() == false)
     {
-        return;
+        return {};
     }
 
     check(this->DragChildOffset->Idx < this->GetChildren().size())
     /* The last child always fills the gap. Therefore, we cannot change its size. */
     if (this->GetChildren().size() - 1 == this->DragChildOffset->Idx)
     {
-        return;
+        return {};
     }
 
     auto& DragChild{this->GetChildren()[this->DragChildOffset->Idx]};
@@ -409,5 +409,5 @@ void Jafg::WHDragRegion::UiTickMove()
         }
     }
 
-    return;
+    return {};
 }

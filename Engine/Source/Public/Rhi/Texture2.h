@@ -161,4 +161,23 @@ private:
 
 typedef TSharedRef<LTexture2> LTexture2Ref;
 
+//#
+//# - std::monostate: No texture.
+//# - LTexture2Ref: The texture will be used (has to be valid).
+//# - LString: Texture view identifier (has to be valid).
+//#
+struct LOptionalTexture2Ref
+{
+    LOptionalTexture2Ref() noexcept : Variant{std::monostate{}} {}
+    LOptionalTexture2Ref(std::monostate) noexcept : Variant{std::monostate{}} {}
+    LOptionalTexture2Ref(LTexture2Ref Reference) noexcept : Variant{Reference} {}
+    LOptionalTexture2Ref(char const* String) noexcept : Variant{String} {}
+    LOptionalTexture2Ref(LString String) noexcept : Variant{std::move(String)} {}
+
+    std::variant<std::monostate, LTexture2Ref, LString> Variant;
+
+    ENGINE_API LTexture2Ref GetResolved() const;
+    ENGINE_API LTexture2Ref Resolve();
+};
+
 } /* ~Namespace Jafg */

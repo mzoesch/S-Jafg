@@ -187,22 +187,22 @@ void Jafg::WNode::RemoveFromParent2()
     return;
 }
 
-Jafg::WNode* Jafg::WNode::GetMostOuterParent() noexcept
+Jafg::WNode& Jafg::WNode::GetMostOuterParent() noexcept
 {
     if (this->Parent)
     {
         return this->Parent->GetMostOuterParent();
     }
-    return this;
+    return *this;
 }
 
-Jafg::WNode const* Jafg::WNode::GetMostOuterParent() const noexcept
+Jafg::WNode const& Jafg::WNode::GetMostOuterParent() const noexcept
 {
     if (this->Parent)
     {
         return this->Parent->GetMostOuterParent();
     }
-    return this;
+    return *this;
 }
 
 bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
@@ -318,7 +318,7 @@ void Jafg::WNode::_check_Destruct()
 {
     if (this->Parent)
     {
-        jassert(algo::contains(this->Parent->GetChildren(), this, [](auto const& E){return &*E;}) == false)
+        jassert(algo::contains(this->Parent->GetChildren(), this, algo::unique_raw{}) == false)
     }
 }
 #endif /* JAFG_DO_CHECKS */

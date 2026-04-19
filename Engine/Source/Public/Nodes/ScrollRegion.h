@@ -133,7 +133,7 @@ public:
 
 private:
 
-    void UserInterfaceTick();
+    bool UserInterfaceTick();
 
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
     bool MBDownOnScrollbar(LViewport const& InViewport);
@@ -192,8 +192,8 @@ private:
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
     bool bUiTickV:1{};
     bool bUiTickH:1{};
-    f32 MbVOffset{};
-    f32 MbHOffset{};
+    LVec2F MbOffset{ maths::zero_vector<LVec2F> };
+    mutable LVec2D LastVisible{ maths::zero_vector<LVec2D> };
 };
 
 struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)

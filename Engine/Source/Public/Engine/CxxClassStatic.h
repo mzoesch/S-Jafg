@@ -102,8 +102,7 @@ private:
 
     TArray<LCxxClassField> Fields;
 
-    JCxxClass* Singleton;
-#undef PRIVATE_JAFG_CXX_VALIDATE
+    JCxxClass* Singleton{};
 };
 
 namespace Detail

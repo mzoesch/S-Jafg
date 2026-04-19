@@ -16,6 +16,10 @@ class TEvent<TOwner, TRet(TParams...)> : public TFunction<TRet(TParams...)>
 
     typedef TFunction<TRet(TParams...)> Super;
 
+public:
+
+     using Super::Super;
+
 protected:
 
     UNUSED
@@ -40,14 +44,14 @@ class TMulticastEvent;
 
 //# Like #TEvent but with the capabilities of #TMulticastDelegate.
 template<typename TOwner, typename... TParams>
-class TMulticastEvent<TOwner, void(TParams...)> : public TMulticastDelegate<void(TParams...)>
+class TMulticastEvent<TOwner, bool(TParams...)> : public TMulticastDelegate<bool(TParams...)>
 {
     friend TOwner;
 
     template<typename UOwner, typename USig>
     friend class TMulticastEvent;
 
-    typedef TMulticastDelegate<void(TParams...)> Super;
+    typedef TMulticastDelegate<bool(TParams...)> Super;
 
 protected:
 

@@ -176,7 +176,7 @@ void Jafg::WParent::OnSurfaceResize()
     return;
 }
 
-bool Jafg::WParent::FindNodeInVisiblePath(const WNode* Node) const
+bool Jafg::WParent::FindNodeInVisiblePath(WNode const* Node) const
 {
     if (Super::FindNodeInVisiblePath(Node))
     {
@@ -209,7 +209,7 @@ void Jafg::WParent::AddChildAt(u64 Index, TJxxUnique<WNode> Child)
     Child->_SetParentDangerous(this);
     WNode& InsertedChild{**this->Children.insert(this->Children.begin() + Index, std::move(Child))};
 
-    if (WUserWidget* UserWidget{DynamicCast<WUserWidget>(this->GetMostOuterParent())})
+    if (WUserWidget* UserWidget{DynamicCast<WUserWidget>(&this->GetMostOuterParent())})
     {
         if (UserWidget->IsTopLevel())
         {

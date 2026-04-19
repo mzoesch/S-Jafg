@@ -62,7 +62,7 @@ struct LTask final
     FORCEINLINE explicit LTask(const Jafg::ETaskTime::Type InTime, Jafg::LTaskDelegate&& InDelegate)
         : Time(InTime), Delegate(std::move(InDelegate))
     {
-        checkSlow( InDelegate.IsValid() == false )
+        check(!!this->Delegate)
     }
 
     Jafg::ETaskTime::Type Time;
@@ -384,10 +384,8 @@ bool Jafg::Tasks::IsOnThread(const ENamedThreads::Type InThreadName)
     return false;
 }
 
-void Jafg::Tasks::Make(const ENamedThreads::Type InThreadName, const ETaskTime::Type InPreferredTime, LTaskDelegate&& InDelegate)
+void Jafg::Tasks::Make(ENamedThreads::Type InThreadName, ETaskTime::Type InPreferredTime, LTaskDelegate InDelegate)
 {
-    check( InDelegate.IsValid() )
-
     std::shared_lock Lock(::EngineThreadsMutex);
     if (::bTearingDown)
     {
@@ -449,7 +447,7 @@ i32 Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::T
         }
         Lock.unlock();
 
-        Task.Delegate.Invoke();
+        Task.Delegate();
         ++RunTasks;
 
         if (Queue.IsEmpty())

@@ -21,6 +21,13 @@ typedef uint32_t LColor;
 
 float3 jafg_srgb_to_linear(float3 srgb, float gamma)
 {
+    float3 low  = srgb / 12.92;
+    float3 high = pow((srgb + 0.055) / 1.055, gamma);
+    return select((srgb <= 0.04045), low, high);
+}
+
+float3 jafg_srgb_to_linear_fast(float3 srgb, float gamma)
+{
     return pow(srgb, gamma);
 }
 
@@ -40,6 +47,15 @@ float4 jafg_color_to_linear(LColor color, float gamma)
     return float4(
         jafg_srgb_to_linear(srgb.rgb, gamma),
         srgb.a 
+        );
+}
+
+float4 jafg_color_to_linear_fast(LColor color, float gamma)
+{
+    float4 srgb = jafg_color_to_srgb(color);
+    return float4(
+        jafg_srgb_to_linear_fast(srgb.rgb, gamma),
+        srgb.a
         );
 }
 

@@ -55,16 +55,32 @@ namespace Jafg
 namespace Detail
 {
 
-template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
-struct TDeferredUserWidgetExec : public TDeferredObjectExec<TCxxClass>
+template<typename TNode> requires TIsCompleteType_v<TNode> && std::is_base_of_v<WUserWidget, TNode>
+struct TDeferredUserWidgetExec : public TDeferredObjectExec<TNode>
 {
     inline ~TDeferredUserWidgetExec()
     {
         if (this->bReleased == false)
         {
             this->bReleased = true;
+            checkCode
+            (
+                if (this->Factory.get())
+                {
+                    check(this->Factory->_IsReleased() == false && this->Factory->_IsDecommissioned() == false)
+                    this->Factory->_Release();
+                }
+            )
             this->Class.GetViewport()._AddWidget(&this->Class);
         }
+    }
+
+    TUnique<LNodeFactoryBase> Factory;
+    typename TNode::LFactory& Style()
+    {
+        check(this->Factory.get() == nullptr)
+        this->Factory = TUnique<typename TNode::LFactory>{new typename TNode::LFactory{this->Class}};
+        return *static_cast<typename TNode::LFactory*>(&*this->Factory);
     }
 };
 

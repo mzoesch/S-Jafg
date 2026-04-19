@@ -144,7 +144,7 @@ public:
 
 private:
 
-    void UserInterfaceTick();
+    bool UserInterfaceTick();
 
     void OnTextCommit(LString const& InText, ETextCommit InCommitType);
 

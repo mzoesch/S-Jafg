@@ -16,9 +16,9 @@ void Jafg::LSurfaceBase::BeginNewFrame()
         check(Input.PhysicalKey != LPhysicalKey{})
         check(Input.State != ERawInputStateBits::Identity)
 
-        if (   Input.PhysicalKey.IsLogical(ENamedPhysicalKey::MouseXY)
-            || Input.PhysicalKey.IsLogical(ENamedPhysicalKey::MouseWheelUp)
-            || Input.PhysicalKey.IsLogical(ENamedPhysicalKey::MouseWheelDown)
+        if (   Input.PhysicalKey.IsLogical(ELogicalKey::MouseXY)
+            || Input.PhysicalKey.IsLogical(ELogicalKey::MouseWheelUp)
+            || Input.PhysicalKey.IsLogical(ELogicalKey::MouseWheelDown)
             )
         {
             this->RawInputs.erase(this->RawInputs.begin() + Idx);
@@ -96,15 +96,15 @@ void Jafg::LSurfaceBase::UpdateKeyState(LRawInput const& InRawInput)
     check(InRawInput.PhysicalKey != LPhysicalKey{})
     // This is not allowed.
     // If an action requires XY then it will be built on the spot from X and Y respectively.
-    check(InRawInput.PhysicalKey != LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseXY))
+    check(InRawInput.PhysicalKey != LPhysicalKey::FromLogical(ELogicalKey::MouseXY))
     // Same as above.
     // check(InRawInput.PhysicalKey != LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelAxis))
     checkCode
     (
-        if (   InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp)
-            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown)
-            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX)
-            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY)
+        if (   InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp)
+            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown)
+            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseX)
+            || InRawInput.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseY)
             )
         {
             check(InRawInput.State == ERawInputStateBits::Press)

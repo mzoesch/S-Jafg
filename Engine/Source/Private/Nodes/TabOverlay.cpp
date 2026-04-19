@@ -4,6 +4,7 @@
 #include "User/UserPreferences.h"
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
+#include "Nodes/UserWidget.h"
 
 void Jafg::WTabOverlay::Construct()
 {
@@ -18,7 +19,7 @@ void Jafg::WTabOverlay::Construct()
     return;
 }
 
-void Jafg::WTabOverlay::RegisterTab(LTabOverlayElement&& Descriptor)
+Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Descriptor)
 {
     if (this->Wrapper == nullptr)
     {
@@ -26,8 +27,8 @@ void Jafg::WTabOverlay::RegisterTab(LTabOverlayElement&& Descriptor)
     }
     check(this->Wrapper && this->Selectors && this->Switcher)
 
-    this->Switcher->AddChild(TJxxUnique<WNode>{&Descriptor.Panel.GetRawNode()});
-    checkCode(Descriptor.Panel._Release())
+    this->Switcher->AddChild(NewNode(this->GetViewport()).Class(Descriptor.Panel.GetClassOrDefault()).Unique());
+    WUserWidget* Panel{this->Switcher->GetChildren().back()->AsChecked<WUserWidget>()};
 
     bool bActivated{};
     if (this->Switcher->GetChildren().size() == 1)
@@ -36,90 +37,122 @@ void Jafg::WTabOverlay::RegisterTab(LTabOverlayElement&& Descriptor)
         this->Switcher->SetActiveNodeByIndex(0);
     }
 
-    if (Descriptor.Selector.index() == 0)
+    WTabOverlaySelector* _Selector{};
+    BeginStyling(*this->Selectors).StaticRoot<WTabOverlaySelector>(std::move(Descriptor.Selector)).SaveTo(&_Selector)
+        .Delegate(this->DefaultSelectorDelegate);
+    check(_Selector)
+    auto& Selector{*_Selector};
+    this->Tabs.emplace_back(&Selector, Panel);
+    check(Selector.OnKeyDownEvent.IsValid() == false)
+    Selector.OnKeyDownEvent.Bind([this]
+    (WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
     {
-        BeginStyling(*this->Selectors)
-            .StaticRoot<WTabOverlaySelector>(std::move(std::get<LTabOverlayElement::CreateInfo>(Descriptor.Selector)))
-            .Delegate(this->DefaultSelectorDelegate);
-        auto& Selector{*StaticCast<WTabOverlaySelector>(&*this->Selectors->GetChildren().back())};
-        check(Selector.OnKeyDownEvent.IsValid() == false)
-        Selector.OnKeyDownEvent.Bind([this, Panel = &Descriptor.Panel.GetRawNode()]
-        (WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
+        if (Event.PhysicalKey != LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
         {
-            if (Event.PhysicalKey != LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
-            {
-                return LReply::Unhandled();
-            }
-            check(this->Switcher)
-            check(IsValidFast(&this->GetOuter(), Panel))
-            for (auto& Child : this->Selectors->GetChildren())
-            {
-                if (auto* Selector{Child->As<WTabOverlaySelector>()})
-                {
-                    Selector->SetSelected(false);
-                }
-            }
-            this->Switcher->SetActiveNode(*Panel);
-            auto& Selector{*StaticCast<WTabOverlaySelector>(&Self)};
-            Selector.SetSelected(true);
             return LReply::Unhandled();
-        });
-        if (bActivated)
-        {
-            Selector.SetSelected(true);
         }
-    }
-    else
+        check(this->Switcher)
+        this->SetSelectedTab(*StaticCast<WTabOverlaySelector>(&Self));
+        return LReply::Unhandled();
+    });
+    if (bActivated)
     {
-        this->Selectors->AddChild(TJxxUnique<WNode>{&std::get<Detail::LNodeFactoryBase>(Descriptor.Selector).GetRawNode()});
-        check(this->Selectors->GetChildren().back()->OnKeyDownEvent.IsValid() == false)
-        this->Selectors->GetChildren().back()->OnKeyDownEvent.Bind([this, Panel = &Descriptor.Panel.GetRawNode()]
-        (WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
-        {
-            if (Event.PhysicalKey != LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
-            {
-                return LReply::Unhandled();
-            }
-            check(this->Switcher)
-            check(IsValidFast(&this->GetOuter(), Panel))
-            this->Switcher->SetActiveNode(*Panel);
-            return LReply::Unhandled();
-        });
+        Selector.SetSelected(true);
     }
 
-    checkCode(Descriptor.Panel._Decommission())
-
-    for (LTabOverlayElement& Sibling : Descriptor._Siblings)
+    for (LTabCreateInfo& Sibling : Descriptor._Siblings)
     {
         this->RegisterTab(std::move(Sibling));
     }
 
+    return {&Selector, Panel};
+}
+
+void Jafg::WTabOverlay::CloseTab(WTabOverlaySelector* Selector)
+{
+    check(this->Switcher)
+
+    for (auto It{this->Tabs.begin()}; It != this->Tabs.end(); ++It)
+    {
+        if (It->first == Selector)
+        {
+            It->first->RemoveFromParent2();
+            It->second->RemoveFromParent2();
+            this->Tabs.erase(It);
+            break;
+        }
+    }
+
+    if (this->Switcher->GetActiveNodeIndex() != WSwitcher::NoActiveNodeIndex)
+    {
+        auto It{algo::find(this->Tabs, this->Switcher->GetActiveNodeChecked(), &Tab::second)};
+        check(It != this->Tabs.end())
+        this->SetSelectedTab(*It->first);
+    }
+
     return;
+}
+
+Jafg::WUserWidget* Jafg::WTabOverlay::FindWidgetSlow(LCxxClass const& Class) noexcept
+{
+    check(Class.DerivesFrom<WUserWidget>())
+    for (auto& Panel: this->Tabs | std::views::values)
+    {
+        if (Panel->GetVirtualTable().DerivesFrom(Class))
+        {
+            return Panel;
+        }
+    }
+    return nullptr;
 }
 
 void Jafg::WTabOverlay::InitializeBoilerplate()
 {
-    check(this->Wrapper == nullptr)
-    check(this->Selectors == nullptr)
-    check(this->Switcher == nullptr)
-
-    BeginStyling(*this).Root<WParent>(this->WrapperClass.GetClassOrDefault()).SaveTo(&this->Wrapper)
+    check(!this->Wrapper && !this->Selectors && !this->Switcher)
+    BeginStyling(*this).Root(this->WrapperInjection).SaveTo(&this->Wrapper)
         .Anchor(EAnchor::Fill)
-        .Delegate(this->WrapperDelegate)
+        .Inject(this->WrapperInjection)
     [
-        NewSubNode(this->SelectorsClass).SaveTo(&this->Selectors)
-            .Delegate(this->SelectorsDelegate)
+        NewDynamicNode(this->SelectorsInjection).SaveTo(&this->Selectors)
+            .Inject(this->SelectorsInjection)
         +
-        NewSubNode(this->SwitcherClass).SaveTo(&this->Switcher)
+        NewDynamicNode(this->SwitcherInjection).SaveTo(&this->Switcher)
             .Anchor(EAnchor::Fill)
-            .Delegate(this->SwitcherDelegate)
+            .Inject(this->SwitcherInjection)
     ];
+    return;
+}
+
+void Jafg::WTabOverlay::SetSelectedTab(WTabOverlaySelector& Target)
+{
+    for (auto& Child : this->Selectors->GetChildren())
+    {
+        check(Child.get())
+        if (auto* Selector{StaticCast<WTabOverlaySelector>(&*Child)}; Selector != &Target)
+        {
+            Selector->SetSelected(false);
+        }
+    }
+    Target.SetSelected(true);
+
+    auto It{algo::find(this->Tabs, &Target, &Tab::first)};
+    check(It != this->Tabs.end())
+    this->Switcher->SetActiveNode(*It->second);
 
     return;
 }
 
-
-void Jafg::WTabOverlaySelector::LoadIconFromTextureViewIdentifier(LString const& Identifier) noexcept
+void Jafg::WTabOverlaySelector::LoadRightIcon()
 {
-    this->SetIcon(this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier(Identifier));
+    this->SetRightIcon(this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.SmallX"));
+    this->SetOmniRightIconInwardsPadding(12_spt);
+    this->SetIsDecoupledRightIcon(true);
+    this->SetDecoupledRightIconTint(*GetSingleton<JUserPreferences>().DangerColor);
+    this->SetDecoupledRightKeyDownHandler([](auto&,auto&){ return LReply::Handled(); });
+    this->SetDecoupledRightKeyUpHandler([this](LNodeKeyEventData const& Data, LKeyEvent const& Event)
+    {
+        auto* TabOverlay{this->GetParentUntilChecked<WTabOverlay>()};
+        TabOverlay->CloseTab(this);
+        return LReply::Handled();
+    });
 }

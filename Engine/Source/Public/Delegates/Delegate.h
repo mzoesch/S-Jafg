@@ -44,16 +44,16 @@ private:
 template<typename TSig>
 class TMulticastDelegate;
 
-//# Like #TFunction, but can store multiple.
+//# Like #TFunction, but can store multiple. If a delegate returns true, it will be removed from the multicast.
 template<typename... TParams>
-class TMulticastDelegate<void(TParams...)>
+class TMulticastDelegate<bool(TParams...)>
 {
     template<typename TSgi>
     friend class TMulticastDelegate;
 
 public:
 
-    typedef TFunction<void(TParams...)> LDelegate;
+    typedef TFunction<bool(TParams...)> LDelegate;
 
     FORCEINLINE LDelegateHandle Add(LDelegate&& Delegate) noexcept
     {
@@ -61,40 +61,40 @@ public:
         return LDelegateHandle{ this->Cursor };
     }
 
-    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<void, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle Emplace(TFunctor&& Functor) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, std::forward<TFunctor>(Functor));
         return LDelegateHandle{ this->Cursor };
     }
 
-    template<typename TFunctor>requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<void, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle Emplace(TFunctor* Functor) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, Functor);
         return LDelegateHandle{ this->Cursor };
     }
 
-    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<void, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<bool, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE LDelegateHandle Emplace(TObj* Object, TMemberFunctor MemberFunctor) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate{ Object, MemberFunctor });
         return LDelegateHandle{ this->Cursor };
     }
 
-    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<void, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle EmplaceStrong(TFunctor&& Functor)
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate::CreateStrong(std::forward<TFunctor>(Functor)));
         return LDelegateHandle{ this->Cursor };
     }
-    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<void, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle EmplaceWeak(TFunctor* Functor)
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate::CreateWeak(Functor));
         return LDelegateHandle{ this->Cursor };
     }
-    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<void, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<bool, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE LDelegateHandle EmplaceMember(TObj* Object, TMemberFunctor MemberFunctor)
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate::CreateMember(Object, MemberFunctor));
@@ -104,15 +104,20 @@ public:
     //# @return True, if at least one delegate was called.
     FORCEINLINE bool Broadcast(TParams... Params)
     {
-#if JAFG_DO_CHECKS
-        u64 Size{ this->Delegates.size() };
-#endif /* JAFG_DO_CHECKS */
-        for (auto& Pair : this->Delegates)
+        bool bResult{};
+        for (auto It{this->Delegates.begin()}; It != this->Delegates.end();)
         {
-            Pair.second(Params...);
+            bResult = true;
+            if (It->second(Params...))
+            {
+                It = this->Delegates.erase(It);
+            }
+            else
+            {
+                ++It;
+            }
         }
-        check( Size == this->Delegates.size() )
-        return this->HasAny();
+        return bResult;
     }
 
     FORCEINLINE bool HasAny() const noexcept

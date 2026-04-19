@@ -4,7 +4,7 @@
 #include "Nodes/ScrollRegion.h"
 #include "Nodes/VRegion.h"
 #include "Nodes/TextBox.h"
-#include "Nodes/TabOverlayForward.h"
+#include "Nodes/GenericTabInfos.h"
 #include "User/UserPreferences.h"
 
 void Jafg::WTagInspector::Construct()
@@ -16,7 +16,6 @@ void Jafg::WTagInspector::Construct()
     WParent* Container;
     BeginStyling(*this).StaticRoot<WScrollRegion>()
         .Tint(*Prefs.ForegroundColor)
-        .VScrollBarBackgroundWith(4)
     [
         NewStaticNode(WVRegion).SaveTo(&Container)
             .Anchor(EAnchor::Fill)
@@ -33,6 +32,5 @@ void Jafg::WTagInspector::Construct()
             .Content(SprintF("{:0{}} -- {}", Idx, Width, Detail::GetNameRegistry().GetAllocator()[Idx]))
             .Unique());
     }
-
     return;
 }

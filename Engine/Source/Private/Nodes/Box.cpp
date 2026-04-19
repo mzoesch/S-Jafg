@@ -8,6 +8,8 @@
 
 void Jafg::WBox::Draw(LNodeRenderInfo const& Info) const
 {
+    Super::Draw(Info);
+
     if (auto AnchoredSize{this->GetAnchoredSize_v2()}; this->Brush.bSkipBrushDraw == false && AnchoredSize.x > 0.0f && AnchoredSize.y > 0.0f)
     {
         u32 TextureIndex{UBO::BindlessTextureArray::IdentityMulIdx};
@@ -53,8 +55,6 @@ void Jafg::WBox::Draw(LNodeRenderInfo const& Info) const
             .MsdfPixelRange = 0.0f,
             });
     }
-
-    Super::Draw(Info);
 
     return;
 }

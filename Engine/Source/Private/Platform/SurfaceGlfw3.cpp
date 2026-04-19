@@ -698,18 +698,18 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
     LVec2D Offset{XPos - this->MouseLocation->x, this->MouseLocation->y - YPos};
     this->MouseLocation = {XPos,YPos};
 
-    if (Offset.x != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX), &LRawInput::PhysicalKey) == false)
+    if (Offset.x != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseX), &LRawInput::PhysicalKey) == false)
     {
         this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseX),
+            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseX),
             .Value = static_cast<f32>(Offset.x),
             .State = ERawInputStateBits::Press,
             });
     }
-    if (Offset.y != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY), &LRawInput::PhysicalKey) == false)
+    if (Offset.y != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseY), &LRawInput::PhysicalKey) == false)
     {
         this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseY),
+            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseY),
             .Value = static_cast<f32>(Offset.y),
             .State = ERawInputStateBits::Press,
             });
@@ -720,18 +720,18 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
 
 void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOffset)
 {
-    if (YOffset > 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp), &LRawInput::PhysicalKey) == false)
+    if (YOffset > 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp), &LRawInput::PhysicalKey) == false)
     {
         this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelUp),
+            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp),
             .Value = static_cast<f32>(YOffset),
             .State = ERawInputStateBits::Press,
             });
     }
-    else if (YOffset < 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown), &LRawInput::PhysicalKey) == false)
+    else if (YOffset < 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown), &LRawInput::PhysicalKey) == false)
     {
         this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ENamedPhysicalKey::MouseWheelDown),
+            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown),
             .Value = static_cast<f32>(YOffset),
             .State = ERawInputStateBits::Press,
             });
@@ -804,47 +804,47 @@ void Jafg::LSurfaceGlfw3::MouseButtonCallback(i32 Button, i32 Action, i32 Mods)
 
     if (Button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::LeftMouseButton);
+        Button = static_cast<i32>(ELogicalKey::LeftMouseButton);
     }
     else if (Button == GLFW_MOUSE_BUTTON_RIGHT)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::RightMouseButton);
+        Button = static_cast<i32>(ELogicalKey::RightMouseButton);
     }
     else if (Button == GLFW_MOUSE_BUTTON_MIDDLE)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::MiddleMouseButton);
+        Button = static_cast<i32>(ELogicalKey::MiddleMouseButton);
     }
     else if (Button == GLFW_MOUSE_BUTTON_1)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton1);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton1);
     }
     else if (Button == GLFW_MOUSE_BUTTON_2)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton2);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton2);
     }
     else if (Button == GLFW_MOUSE_BUTTON_3)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton3);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton3);
     }
     else if (Button == GLFW_MOUSE_BUTTON_4)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton4);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton4);
     }
     else if (Button == GLFW_MOUSE_BUTTON_5)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton5);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton5);
     }
     else if (Button == GLFW_MOUSE_BUTTON_6)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton6);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton6);
     }
     else if (Button == GLFW_MOUSE_BUTTON_7)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton7);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton7);
     }
     else if (Button == GLFW_MOUSE_BUTTON_8)
     {
-        Button = static_cast<i32>(ENamedPhysicalKey::ThumbMouseButton8);
+        Button = static_cast<i32>(ELogicalKey::ThumbMouseButton8);
     }
     else
     {

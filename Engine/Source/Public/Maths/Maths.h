@@ -719,6 +719,15 @@ inline constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
           || a.Offset.y + a.Extent.y < b.Offset.y
           );
 }
+template<typename T,qual_t Q>
+inline constexpr bool aabb_point(TRect2<T,Q> const& a, TVec2<T,Q> const& p) noexcept
+{
+    return !(p.x < a.Offset.x
+          || p.x > a.Offset.x + a.Extent.x
+          || p.y < a.Offset.y
+          || p.y > a.Offset.y + a.Extent.y
+          );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Matrix

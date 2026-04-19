@@ -77,7 +77,7 @@ struct LSubsystemCollection final
     //#
     ENGINE_API void InitializeSubsystemsForDeferred();
 
-    void OnForeignPluginLoaded(LLoadedPlugin const& Plugin);
+    bool OnForeignPluginLoaded(LLoadedPlugin const& Plugin);
 
     //#
     //# Tears down all subsystems in this collection.

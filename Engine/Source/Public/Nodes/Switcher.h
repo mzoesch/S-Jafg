@@ -25,6 +25,8 @@ public:
     enum { NoActiveNodeIndex = INDEX_NONE };
 
     virtual void AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild) override;
+    virtual void RemoveChild(WNode* Child) override;
+    virtual void RemoveChildren() override { Super::RemoveChildren(); this->ActiveNodeIndex = NoActiveNodeIndex; }
 
     void SetActiveNode(WNode const& Node);
     void SetActiveNodeByIndex(i64 Index);

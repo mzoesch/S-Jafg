@@ -70,7 +70,7 @@ struct LTextBrush
 
     LColor Tint{ Colors::White };
 
-    bool bSkipBrushDraw{ false };
+    bool bSkipBrushDraw{};
 
     //# Vertical text tightening of the ascender and descender in percent.
     f32 Tightening{ 1.0f };
@@ -110,8 +110,7 @@ public:
     //# Called if the text box content changes.
     EVENT_DECL(OnChanged, void(LString const& NewContent))
     FORCEINLINE void EmptyContent() { algo::orphan(&this->Content); this->OnChanged.InvokeIfBound(this->Content); }
-    FORCEINLINE void SetContent(LString const& InContent) { this->Content = InContent; this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }
-    FORCEINLINE void SetContent(LString&& InContent) { this->Content = std::move(InContent); this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }
+    FORCEINLINE void SetContent(LString InContent) { this->Content = std::move(InContent); this->RenderData.Dirty(); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE constexpr LString const& GetContent() const noexcept { return this->Content; }
 
     constexpr void SetTextBrush(LTextBrush const& InBrush) noexcept { this->TextBrush = InBrush; this->RenderData.Dirty(); }
@@ -179,12 +178,7 @@ struct LFactoryTextBox : NODE_FACTORY_PARENT(WTextBox)
 {
     NODE_FACTORY_BODY(WTextBox)
 
-    constexpr decltype(auto) Content(this auto&& Self, LString const& InContent) noexcept
-    {
-        NODE_FACTORY_SELF().SetContent(InContent);
-        return NODE_FACTORY_RESULT();
-    }
-    constexpr decltype(auto) Content(this auto&& Self, LString&& InContent) noexcept
+    constexpr decltype(auto) Content(this auto&& Self, LString InContent) noexcept
     {
         NODE_FACTORY_SELF().SetContent(std::move(InContent));
         return NODE_FACTORY_RESULT();

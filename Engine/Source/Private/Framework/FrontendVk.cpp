@@ -62,135 +62,135 @@ struct LNamedPhysicalKeyToPhysicalKeyResult final
     i32 Logical{ INDEX_NONE };
 };
 
-LNamedPhysicalKeyToPhysicalKeyResult NamedPhysicalKeyToPhysicalKey(Jafg::ENamedPhysicalKey Key) noexcept
+LNamedPhysicalKeyToPhysicalKeyResult NamedPhysicalKeyToPhysicalKey(Jafg::ELogicalKey Key) noexcept
 {
     switch (Key)
     {
-    case Jafg::ENamedPhysicalKey::Unresolved:       return {};
-    case Jafg::ENamedPhysicalKey::LeftShift:        return {.Scancodable = GLFW_KEY_LEFT_SHIFT };
-    case Jafg::ENamedPhysicalKey::RightShift:       return {.Scancodable = GLFW_KEY_RIGHT_SHIFT };
-    case Jafg::ENamedPhysicalKey::LeftControl:      return {.Scancodable = GLFW_KEY_LEFT_CONTROL };
-    case Jafg::ENamedPhysicalKey::RightControl:     return {.Scancodable = GLFW_KEY_RIGHT_CONTROL };
-    case Jafg::ENamedPhysicalKey::LeftAlt:          return {.Scancodable = GLFW_KEY_LEFT_ALT };
-    case Jafg::ENamedPhysicalKey::RightAlt:         return {.Scancodable = GLFW_KEY_RIGHT_ALT };
-    case Jafg::ENamedPhysicalKey::LeftCommand:      return {.Scancodable = GLFW_KEY_LEFT_SUPER };
-    case Jafg::ENamedPhysicalKey::RightCommand:     return {.Scancodable = GLFW_KEY_RIGHT_SUPER };
-    case Jafg::ENamedPhysicalKey::PrintScreen:      return {.Scancodable = GLFW_KEY_PRINT_SCREEN };
-    case Jafg::ENamedPhysicalKey::ScrollLock:       return {.Scancodable = GLFW_KEY_SCROLL_LOCK };
-    case Jafg::ENamedPhysicalKey::Pause:            return {.Scancodable = GLFW_KEY_PAUSE };
-    case Jafg::ENamedPhysicalKey::Insert:           return {.Scancodable = GLFW_KEY_INSERT };
-    case Jafg::ENamedPhysicalKey::Home:             return {.Scancodable = GLFW_KEY_HOME };
-    case Jafg::ENamedPhysicalKey::PageUp:           return {.Scancodable = GLFW_KEY_PAGE_UP };
-    case Jafg::ENamedPhysicalKey::Delete:           return {.Scancodable = GLFW_KEY_DELETE };
-    case Jafg::ENamedPhysicalKey::End:              return {.Scancodable = GLFW_KEY_END };
-    case Jafg::ENamedPhysicalKey::PageDown:         return {.Scancodable = GLFW_KEY_PAGE_DOWN };
-    case Jafg::ENamedPhysicalKey::Escape:           return {.Scancodable = GLFW_KEY_ESCAPE };
-    case Jafg::ENamedPhysicalKey::Tilde:            return {.Scancodable = GLFW_KEY_GRAVE_ACCENT };
-    case Jafg::ENamedPhysicalKey::Hyphen:           return {.Scancodable = GLFW_KEY_MINUS };
-    case Jafg::ENamedPhysicalKey::Equals:           return {.Scancodable = GLFW_KEY_EQUAL };
-    case Jafg::ENamedPhysicalKey::BackSpace:        return {.Scancodable = GLFW_KEY_BACKSPACE };
-    case Jafg::ENamedPhysicalKey::Tab:              return {.Scancodable = GLFW_KEY_TAB };
-    case Jafg::ENamedPhysicalKey::LeftBracket:      return {.Scancodable = GLFW_KEY_LEFT_BRACKET };
-    case Jafg::ENamedPhysicalKey::RightBracket:     return {.Scancodable = GLFW_KEY_RIGHT_BRACKET };
-    case Jafg::ENamedPhysicalKey::Enter:            return {.Scancodable = GLFW_KEY_ENTER };
-    case Jafg::ENamedPhysicalKey::CapsLock:         return {.Scancodable = GLFW_KEY_CAPS_LOCK };
-    case Jafg::ENamedPhysicalKey::Semicolon:        return {.Scancodable = GLFW_KEY_SEMICOLON };
-    case Jafg::ENamedPhysicalKey::Apostrophe:       return {.Scancodable = GLFW_KEY_APOSTROPHE };
-    case Jafg::ENamedPhysicalKey::Hashtag:          return {.Scancodable = GLFW_KEY_WORLD_1 };
-    case Jafg::ENamedPhysicalKey::Backslash:        return {.Scancodable = GLFW_KEY_BACKSLASH };
-    case Jafg::ENamedPhysicalKey::Comma:            return {.Scancodable = GLFW_KEY_COMMA };
-    case Jafg::ENamedPhysicalKey::Period:           return {.Scancodable = GLFW_KEY_PERIOD };
-    case Jafg::ENamedPhysicalKey::Slash:            return {.Scancodable = GLFW_KEY_SLASH };
-    case Jafg::ENamedPhysicalKey::Space:            return {.Scancodable = GLFW_KEY_SPACE };
-    case Jafg::ENamedPhysicalKey::Menu:             return {.Scancodable = GLFW_KEY_MENU };
-    case Jafg::ENamedPhysicalKey::Left:             return {.Scancodable = GLFW_KEY_LEFT };
-    case Jafg::ENamedPhysicalKey::Up:               return {.Scancodable = GLFW_KEY_UP };
-    case Jafg::ENamedPhysicalKey::Right:            return {.Scancodable = GLFW_KEY_RIGHT };
-    case Jafg::ENamedPhysicalKey::Down:             return {.Scancodable = GLFW_KEY_DOWN };
-    case Jafg::ENamedPhysicalKey::A:                return {.Scancodable = GLFW_KEY_A };
-    case Jafg::ENamedPhysicalKey::B:                return {.Scancodable = GLFW_KEY_B };
-    case Jafg::ENamedPhysicalKey::C:                return {.Scancodable = GLFW_KEY_C };
-    case Jafg::ENamedPhysicalKey::D:                return {.Scancodable = GLFW_KEY_D };
-    case Jafg::ENamedPhysicalKey::E:                return {.Scancodable = GLFW_KEY_E };
-    case Jafg::ENamedPhysicalKey::F:                return {.Scancodable = GLFW_KEY_F };
-    case Jafg::ENamedPhysicalKey::G:                return {.Scancodable = GLFW_KEY_G };
-    case Jafg::ENamedPhysicalKey::H:                return {.Scancodable = GLFW_KEY_H };
-    case Jafg::ENamedPhysicalKey::I:                return {.Scancodable = GLFW_KEY_I };
-    case Jafg::ENamedPhysicalKey::J:                return {.Scancodable = GLFW_KEY_J };
-    case Jafg::ENamedPhysicalKey::K:                return {.Scancodable = GLFW_KEY_K };
-    case Jafg::ENamedPhysicalKey::L:                return {.Scancodable = GLFW_KEY_L };
-    case Jafg::ENamedPhysicalKey::M:                return {.Scancodable = GLFW_KEY_M };
-    case Jafg::ENamedPhysicalKey::N:                return {.Scancodable = GLFW_KEY_N };
-    case Jafg::ENamedPhysicalKey::O:                return {.Scancodable = GLFW_KEY_O };
-    case Jafg::ENamedPhysicalKey::P:                return {.Scancodable = GLFW_KEY_P };
-    case Jafg::ENamedPhysicalKey::Q:                return {.Scancodable = GLFW_KEY_Q };
-    case Jafg::ENamedPhysicalKey::R:                return {.Scancodable = GLFW_KEY_R };
-    case Jafg::ENamedPhysicalKey::S:                return {.Scancodable = GLFW_KEY_S };
-    case Jafg::ENamedPhysicalKey::T:                return {.Scancodable = GLFW_KEY_T };
-    case Jafg::ENamedPhysicalKey::U:                return {.Scancodable = GLFW_KEY_U };
-    case Jafg::ENamedPhysicalKey::V:                return {.Scancodable = GLFW_KEY_V };
-    case Jafg::ENamedPhysicalKey::W:                return {.Scancodable = GLFW_KEY_W };
-    case Jafg::ENamedPhysicalKey::X:                return {.Scancodable = GLFW_KEY_X };
-    case Jafg::ENamedPhysicalKey::Y:                return {.Scancodable = GLFW_KEY_Y };
-    case Jafg::ENamedPhysicalKey::Z:                return {.Scancodable = GLFW_KEY_Z };
-    case Jafg::ENamedPhysicalKey::Zero:             return {.Scancodable = GLFW_KEY_0 };
-    case Jafg::ENamedPhysicalKey::One:              return {.Scancodable = GLFW_KEY_1 };
-    case Jafg::ENamedPhysicalKey::Two:              return {.Scancodable = GLFW_KEY_2 };
-    case Jafg::ENamedPhysicalKey::Three:            return {.Scancodable = GLFW_KEY_3 };
-    case Jafg::ENamedPhysicalKey::Four:             return {.Scancodable = GLFW_KEY_4 };
-    case Jafg::ENamedPhysicalKey::Five:             return {.Scancodable = GLFW_KEY_5 };
-    case Jafg::ENamedPhysicalKey::Six:              return {.Scancodable = GLFW_KEY_6 };
-    case Jafg::ENamedPhysicalKey::Seven:            return {.Scancodable = GLFW_KEY_7 };
-    case Jafg::ENamedPhysicalKey::Eight:            return {.Scancodable = GLFW_KEY_8 };
-    case Jafg::ENamedPhysicalKey::Nine:             return {.Scancodable = GLFW_KEY_9 };
-    case Jafg::ENamedPhysicalKey::F1:               return {.Scancodable = GLFW_KEY_F1 };
-    case Jafg::ENamedPhysicalKey::F2:               return {.Scancodable = GLFW_KEY_F2 };
-    case Jafg::ENamedPhysicalKey::F3:               return {.Scancodable = GLFW_KEY_F3 };
-    case Jafg::ENamedPhysicalKey::F4:               return {.Scancodable = GLFW_KEY_F4 };
-    case Jafg::ENamedPhysicalKey::F5:               return {.Scancodable = GLFW_KEY_F5 };
-    case Jafg::ENamedPhysicalKey::F6:               return {.Scancodable = GLFW_KEY_F6 };
-    case Jafg::ENamedPhysicalKey::F7:               return {.Scancodable = GLFW_KEY_F7 };
-    case Jafg::ENamedPhysicalKey::F8:               return {.Scancodable = GLFW_KEY_F8 };
-    case Jafg::ENamedPhysicalKey::F9:               return {.Scancodable = GLFW_KEY_F9 };
-    case Jafg::ENamedPhysicalKey::F10:              return {.Scancodable = GLFW_KEY_F10 };
-    case Jafg::ENamedPhysicalKey::F11:              return {.Scancodable = GLFW_KEY_F11 };
-    case Jafg::ENamedPhysicalKey::F12:              return {.Scancodable = GLFW_KEY_F12 };
-    case Jafg::ENamedPhysicalKey::F13:              return {.Scancodable = GLFW_KEY_F13 };
-    case Jafg::ENamedPhysicalKey::F14:              return {.Scancodable = GLFW_KEY_F14 };
-    case Jafg::ENamedPhysicalKey::F15:              return {.Scancodable = GLFW_KEY_F15 };
-    case Jafg::ENamedPhysicalKey::F16:              return {.Scancodable = GLFW_KEY_F16 };
-    case Jafg::ENamedPhysicalKey::F17:              return {.Scancodable = GLFW_KEY_F17 };
-    case Jafg::ENamedPhysicalKey::F18:              return {.Scancodable = GLFW_KEY_F18 };
-    case Jafg::ENamedPhysicalKey::F19:              return {.Scancodable = GLFW_KEY_F19 };
-    case Jafg::ENamedPhysicalKey::F20:              return {.Scancodable = GLFW_KEY_F20 };
-    case Jafg::ENamedPhysicalKey::F21:              return {.Scancodable = GLFW_KEY_F21 };
-    case Jafg::ENamedPhysicalKey::F22:              return {.Scancodable = GLFW_KEY_F22 };
-    case Jafg::ENamedPhysicalKey::F23:              return {.Scancodable = GLFW_KEY_F23 };
-    case Jafg::ENamedPhysicalKey::F24:              return {.Scancodable = GLFW_KEY_F24 };
-    case Jafg::ENamedPhysicalKey::F25:              return {.Scancodable = GLFW_KEY_F25 };
-    case Jafg::ENamedPhysicalKey::NumPadZero:       return {.Scancodable = GLFW_KEY_KP_0 };
-    case Jafg::ENamedPhysicalKey::NumPadOne:        return {.Scancodable = GLFW_KEY_KP_1 };
-    case Jafg::ENamedPhysicalKey::NumPadTwo:        return {.Scancodable = GLFW_KEY_KP_2 };
-    case Jafg::ENamedPhysicalKey::NumPadThree:      return {.Scancodable = GLFW_KEY_KP_3 };
-    case Jafg::ENamedPhysicalKey::NumPadFour:       return {.Scancodable = GLFW_KEY_KP_4 };
-    case Jafg::ENamedPhysicalKey::NumPadFive:       return {.Scancodable = GLFW_KEY_KP_5 };
-    case Jafg::ENamedPhysicalKey::NumPadSix:        return {.Scancodable = GLFW_KEY_KP_6 };
-    case Jafg::ENamedPhysicalKey::NumPadSeven:      return {.Scancodable = GLFW_KEY_KP_7 };
-    case Jafg::ENamedPhysicalKey::NumPadEight:      return {.Scancodable = GLFW_KEY_KP_8 };
-    case Jafg::ENamedPhysicalKey::NumPadNine:       return {.Scancodable = GLFW_KEY_KP_9 };
-    case Jafg::ENamedPhysicalKey::NumPadLock:       return {.Scancodable = GLFW_KEY_NUM_LOCK };
-    case Jafg::ENamedPhysicalKey::NumPadDivide:     return {.Scancodable = GLFW_KEY_KP_DIVIDE };
-    case Jafg::ENamedPhysicalKey::NumPadMultiply:   return {.Scancodable = GLFW_KEY_KP_MULTIPLY };
-    case Jafg::ENamedPhysicalKey::NumPadSubtract:   return {.Scancodable = GLFW_KEY_KP_SUBTRACT };
-    case Jafg::ENamedPhysicalKey::NumPadAdd:        return {.Scancodable = GLFW_KEY_KP_ADD };
-    case Jafg::ENamedPhysicalKey::NumPadEnter:      return {.Scancodable = GLFW_KEY_KP_ENTER };
-    case Jafg::ENamedPhysicalKey::NumPadDecimal:    return {.Scancodable = GLFW_KEY_KP_DECIMAL };
+    case Jafg::ELogicalKey::Unresolved:       return {};
+    case Jafg::ELogicalKey::LeftShift:        return {.Scancodable = GLFW_KEY_LEFT_SHIFT };
+    case Jafg::ELogicalKey::RightShift:       return {.Scancodable = GLFW_KEY_RIGHT_SHIFT };
+    case Jafg::ELogicalKey::LeftControl:      return {.Scancodable = GLFW_KEY_LEFT_CONTROL };
+    case Jafg::ELogicalKey::RightControl:     return {.Scancodable = GLFW_KEY_RIGHT_CONTROL };
+    case Jafg::ELogicalKey::LeftAlt:          return {.Scancodable = GLFW_KEY_LEFT_ALT };
+    case Jafg::ELogicalKey::RightAlt:         return {.Scancodable = GLFW_KEY_RIGHT_ALT };
+    case Jafg::ELogicalKey::LeftCommand:      return {.Scancodable = GLFW_KEY_LEFT_SUPER };
+    case Jafg::ELogicalKey::RightCommand:     return {.Scancodable = GLFW_KEY_RIGHT_SUPER };
+    case Jafg::ELogicalKey::PrintScreen:      return {.Scancodable = GLFW_KEY_PRINT_SCREEN };
+    case Jafg::ELogicalKey::ScrollLock:       return {.Scancodable = GLFW_KEY_SCROLL_LOCK };
+    case Jafg::ELogicalKey::Pause:            return {.Scancodable = GLFW_KEY_PAUSE };
+    case Jafg::ELogicalKey::Insert:           return {.Scancodable = GLFW_KEY_INSERT };
+    case Jafg::ELogicalKey::Home:             return {.Scancodable = GLFW_KEY_HOME };
+    case Jafg::ELogicalKey::PageUp:           return {.Scancodable = GLFW_KEY_PAGE_UP };
+    case Jafg::ELogicalKey::Delete:           return {.Scancodable = GLFW_KEY_DELETE };
+    case Jafg::ELogicalKey::End:              return {.Scancodable = GLFW_KEY_END };
+    case Jafg::ELogicalKey::PageDown:         return {.Scancodable = GLFW_KEY_PAGE_DOWN };
+    case Jafg::ELogicalKey::Escape:           return {.Scancodable = GLFW_KEY_ESCAPE };
+    case Jafg::ELogicalKey::Tilde:            return {.Scancodable = GLFW_KEY_GRAVE_ACCENT };
+    case Jafg::ELogicalKey::Hyphen:           return {.Scancodable = GLFW_KEY_MINUS };
+    case Jafg::ELogicalKey::Equals:           return {.Scancodable = GLFW_KEY_EQUAL };
+    case Jafg::ELogicalKey::BackSpace:        return {.Scancodable = GLFW_KEY_BACKSPACE };
+    case Jafg::ELogicalKey::Tab:              return {.Scancodable = GLFW_KEY_TAB };
+    case Jafg::ELogicalKey::LeftBracket:      return {.Scancodable = GLFW_KEY_LEFT_BRACKET };
+    case Jafg::ELogicalKey::RightBracket:     return {.Scancodable = GLFW_KEY_RIGHT_BRACKET };
+    case Jafg::ELogicalKey::Enter:            return {.Scancodable = GLFW_KEY_ENTER };
+    case Jafg::ELogicalKey::CapsLock:         return {.Scancodable = GLFW_KEY_CAPS_LOCK };
+    case Jafg::ELogicalKey::Semicolon:        return {.Scancodable = GLFW_KEY_SEMICOLON };
+    case Jafg::ELogicalKey::Apostrophe:       return {.Scancodable = GLFW_KEY_APOSTROPHE };
+    case Jafg::ELogicalKey::Hashtag:          return {.Scancodable = GLFW_KEY_WORLD_1 };
+    case Jafg::ELogicalKey::Backslash:        return {.Scancodable = GLFW_KEY_BACKSLASH };
+    case Jafg::ELogicalKey::Comma:            return {.Scancodable = GLFW_KEY_COMMA };
+    case Jafg::ELogicalKey::Period:           return {.Scancodable = GLFW_KEY_PERIOD };
+    case Jafg::ELogicalKey::Slash:            return {.Scancodable = GLFW_KEY_SLASH };
+    case Jafg::ELogicalKey::Space:            return {.Scancodable = GLFW_KEY_SPACE };
+    case Jafg::ELogicalKey::Menu:             return {.Scancodable = GLFW_KEY_MENU };
+    case Jafg::ELogicalKey::Left:             return {.Scancodable = GLFW_KEY_LEFT };
+    case Jafg::ELogicalKey::Up:               return {.Scancodable = GLFW_KEY_UP };
+    case Jafg::ELogicalKey::Right:            return {.Scancodable = GLFW_KEY_RIGHT };
+    case Jafg::ELogicalKey::Down:             return {.Scancodable = GLFW_KEY_DOWN };
+    case Jafg::ELogicalKey::A:                return {.Scancodable = GLFW_KEY_A };
+    case Jafg::ELogicalKey::B:                return {.Scancodable = GLFW_KEY_B };
+    case Jafg::ELogicalKey::C:                return {.Scancodable = GLFW_KEY_C };
+    case Jafg::ELogicalKey::D:                return {.Scancodable = GLFW_KEY_D };
+    case Jafg::ELogicalKey::E:                return {.Scancodable = GLFW_KEY_E };
+    case Jafg::ELogicalKey::F:                return {.Scancodable = GLFW_KEY_F };
+    case Jafg::ELogicalKey::G:                return {.Scancodable = GLFW_KEY_G };
+    case Jafg::ELogicalKey::H:                return {.Scancodable = GLFW_KEY_H };
+    case Jafg::ELogicalKey::I:                return {.Scancodable = GLFW_KEY_I };
+    case Jafg::ELogicalKey::J:                return {.Scancodable = GLFW_KEY_J };
+    case Jafg::ELogicalKey::K:                return {.Scancodable = GLFW_KEY_K };
+    case Jafg::ELogicalKey::L:                return {.Scancodable = GLFW_KEY_L };
+    case Jafg::ELogicalKey::M:                return {.Scancodable = GLFW_KEY_M };
+    case Jafg::ELogicalKey::N:                return {.Scancodable = GLFW_KEY_N };
+    case Jafg::ELogicalKey::O:                return {.Scancodable = GLFW_KEY_O };
+    case Jafg::ELogicalKey::P:                return {.Scancodable = GLFW_KEY_P };
+    case Jafg::ELogicalKey::Q:                return {.Scancodable = GLFW_KEY_Q };
+    case Jafg::ELogicalKey::R:                return {.Scancodable = GLFW_KEY_R };
+    case Jafg::ELogicalKey::S:                return {.Scancodable = GLFW_KEY_S };
+    case Jafg::ELogicalKey::T:                return {.Scancodable = GLFW_KEY_T };
+    case Jafg::ELogicalKey::U:                return {.Scancodable = GLFW_KEY_U };
+    case Jafg::ELogicalKey::V:                return {.Scancodable = GLFW_KEY_V };
+    case Jafg::ELogicalKey::W:                return {.Scancodable = GLFW_KEY_W };
+    case Jafg::ELogicalKey::X:                return {.Scancodable = GLFW_KEY_X };
+    case Jafg::ELogicalKey::Y:                return {.Scancodable = GLFW_KEY_Y };
+    case Jafg::ELogicalKey::Z:                return {.Scancodable = GLFW_KEY_Z };
+    case Jafg::ELogicalKey::Zero:             return {.Scancodable = GLFW_KEY_0 };
+    case Jafg::ELogicalKey::One:              return {.Scancodable = GLFW_KEY_1 };
+    case Jafg::ELogicalKey::Two:              return {.Scancodable = GLFW_KEY_2 };
+    case Jafg::ELogicalKey::Three:            return {.Scancodable = GLFW_KEY_3 };
+    case Jafg::ELogicalKey::Four:             return {.Scancodable = GLFW_KEY_4 };
+    case Jafg::ELogicalKey::Five:             return {.Scancodable = GLFW_KEY_5 };
+    case Jafg::ELogicalKey::Six:              return {.Scancodable = GLFW_KEY_6 };
+    case Jafg::ELogicalKey::Seven:            return {.Scancodable = GLFW_KEY_7 };
+    case Jafg::ELogicalKey::Eight:            return {.Scancodable = GLFW_KEY_8 };
+    case Jafg::ELogicalKey::Nine:             return {.Scancodable = GLFW_KEY_9 };
+    case Jafg::ELogicalKey::F1:               return {.Scancodable = GLFW_KEY_F1 };
+    case Jafg::ELogicalKey::F2:               return {.Scancodable = GLFW_KEY_F2 };
+    case Jafg::ELogicalKey::F3:               return {.Scancodable = GLFW_KEY_F3 };
+    case Jafg::ELogicalKey::F4:               return {.Scancodable = GLFW_KEY_F4 };
+    case Jafg::ELogicalKey::F5:               return {.Scancodable = GLFW_KEY_F5 };
+    case Jafg::ELogicalKey::F6:               return {.Scancodable = GLFW_KEY_F6 };
+    case Jafg::ELogicalKey::F7:               return {.Scancodable = GLFW_KEY_F7 };
+    case Jafg::ELogicalKey::F8:               return {.Scancodable = GLFW_KEY_F8 };
+    case Jafg::ELogicalKey::F9:               return {.Scancodable = GLFW_KEY_F9 };
+    case Jafg::ELogicalKey::F10:              return {.Scancodable = GLFW_KEY_F10 };
+    case Jafg::ELogicalKey::F11:              return {.Scancodable = GLFW_KEY_F11 };
+    case Jafg::ELogicalKey::F12:              return {.Scancodable = GLFW_KEY_F12 };
+    case Jafg::ELogicalKey::F13:              return {.Scancodable = GLFW_KEY_F13 };
+    case Jafg::ELogicalKey::F14:              return {.Scancodable = GLFW_KEY_F14 };
+    case Jafg::ELogicalKey::F15:              return {.Scancodable = GLFW_KEY_F15 };
+    case Jafg::ELogicalKey::F16:              return {.Scancodable = GLFW_KEY_F16 };
+    case Jafg::ELogicalKey::F17:              return {.Scancodable = GLFW_KEY_F17 };
+    case Jafg::ELogicalKey::F18:              return {.Scancodable = GLFW_KEY_F18 };
+    case Jafg::ELogicalKey::F19:              return {.Scancodable = GLFW_KEY_F19 };
+    case Jafg::ELogicalKey::F20:              return {.Scancodable = GLFW_KEY_F20 };
+    case Jafg::ELogicalKey::F21:              return {.Scancodable = GLFW_KEY_F21 };
+    case Jafg::ELogicalKey::F22:              return {.Scancodable = GLFW_KEY_F22 };
+    case Jafg::ELogicalKey::F23:              return {.Scancodable = GLFW_KEY_F23 };
+    case Jafg::ELogicalKey::F24:              return {.Scancodable = GLFW_KEY_F24 };
+    case Jafg::ELogicalKey::F25:              return {.Scancodable = GLFW_KEY_F25 };
+    case Jafg::ELogicalKey::NumPadZero:       return {.Scancodable = GLFW_KEY_KP_0 };
+    case Jafg::ELogicalKey::NumPadOne:        return {.Scancodable = GLFW_KEY_KP_1 };
+    case Jafg::ELogicalKey::NumPadTwo:        return {.Scancodable = GLFW_KEY_KP_2 };
+    case Jafg::ELogicalKey::NumPadThree:      return {.Scancodable = GLFW_KEY_KP_3 };
+    case Jafg::ELogicalKey::NumPadFour:       return {.Scancodable = GLFW_KEY_KP_4 };
+    case Jafg::ELogicalKey::NumPadFive:       return {.Scancodable = GLFW_KEY_KP_5 };
+    case Jafg::ELogicalKey::NumPadSix:        return {.Scancodable = GLFW_KEY_KP_6 };
+    case Jafg::ELogicalKey::NumPadSeven:      return {.Scancodable = GLFW_KEY_KP_7 };
+    case Jafg::ELogicalKey::NumPadEight:      return {.Scancodable = GLFW_KEY_KP_8 };
+    case Jafg::ELogicalKey::NumPadNine:       return {.Scancodable = GLFW_KEY_KP_9 };
+    case Jafg::ELogicalKey::NumPadLock:       return {.Scancodable = GLFW_KEY_NUM_LOCK };
+    case Jafg::ELogicalKey::NumPadDivide:     return {.Scancodable = GLFW_KEY_KP_DIVIDE };
+    case Jafg::ELogicalKey::NumPadMultiply:   return {.Scancodable = GLFW_KEY_KP_MULTIPLY };
+    case Jafg::ELogicalKey::NumPadSubtract:   return {.Scancodable = GLFW_KEY_KP_SUBTRACT };
+    case Jafg::ELogicalKey::NumPadAdd:        return {.Scancodable = GLFW_KEY_KP_ADD };
+    case Jafg::ELogicalKey::NumPadEnter:      return {.Scancodable = GLFW_KEY_KP_ENTER };
+    case Jafg::ELogicalKey::NumPadDecimal:    return {.Scancodable = GLFW_KEY_KP_DECIMAL };
     default:
     {
-        check(Key >= Jafg::ENamedPhysicalKey::FirstLogicalKey)
-        check(Key >= Jafg::ENamedPhysicalKey::LastKey)
+        check(Key >= Jafg::ELogicalKey::FirstLogicalKey)
+        check(Key >= Jafg::ELogicalKey::LastKey)
         return {
-            .Logical = static_cast<std::underlying_type_t<Jafg::ENamedPhysicalKey>>(Key)
+            .Logical = static_cast<std::underlying_type_t<Jafg::ELogicalKey>>(Key)
             };
     }
     }
@@ -635,7 +635,7 @@ void Jafg::LFrontendVk::TearDown()
 }
 
 
-TOptional<Jafg::LPhysicalKey> Jafg::LFrontendVk::GetPhysicalKey(ENamedPhysicalKey LogicalKey) const noexcept
+TOptional<Jafg::LPhysicalKey> Jafg::LFrontendVk::GetPhysicalKey(ELogicalKey LogicalKey) const noexcept
 {
     auto Tl{::NamedPhysicalKeyToPhysicalKey(LogicalKey)};
 

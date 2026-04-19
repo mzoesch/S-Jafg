@@ -2,6 +2,7 @@
 
 #include "Rhi/Texture2.h"
 #include "Engine/Engine.h"
+#include "Framework/TextureSubsystem.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 // #define STBI_NO_JPEG
@@ -214,4 +215,36 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
         }};
 
     return;
+}
+
+Jafg::LTexture2Ref Jafg::LOptionalTexture2Ref::GetResolved() const
+{
+    if (std::holds_alternative<LTexture2Ref>(this->Variant))
+    {
+        return std::get<LTexture2Ref>(this->Variant);
+    }
+
+    if (std::holds_alternative<LString>(this->Variant))
+    {
+        if (GEngine)
+        {
+            return GEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
+                ->FromTextureViewIdentifier(std::get<LString>(this->Variant));
+        }
+        LOG_FATAL(LogRhi, "Engine is invalid.")
+    }
+
+    return {};
+}
+
+Jafg::LTexture2Ref Jafg::LOptionalTexture2Ref::Resolve()
+{
+    this->Variant = this->GetResolved();
+    check(std::holds_alternative<LTexture2Ref>(this->Variant))
+    if (!std::get<LTexture2Ref>(this->Variant).get())
+    {
+        this->Variant = std::monostate{};
+        return {};
+    }
+    return std::get<LTexture2Ref>(this->Variant);
 }

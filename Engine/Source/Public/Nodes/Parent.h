@@ -154,4 +154,34 @@ inline typename TNode::LFactory& Detail::LBeginStylingFnResult::StaticRoot(TArgs
     return *static_cast<typename TNode::LFactory*>(&*this->Factory);
 }
 
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode* WNode::GetParentUntil() noexcept
+{
+    WParent* Cursor{this->GetParent()};
+    while (Cursor)
+    {
+        if (auto* Casted{DynamicCast<TNode>(Cursor)})
+        {
+            return Casted;
+        }
+        Cursor = Cursor->GetParent();
+    }
+    return nullptr;
+}
+
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode const* WNode::GetParentUntil() const noexcept
+{
+    WParent const* Cursor{this->GetParent()};
+    while (Cursor)
+    {
+        if (auto* Casted{DynamicCast<TNode>(Cursor)})
+        {
+            return Casted;
+        }
+        Cursor = Cursor->GetParent();
+    }
+    return nullptr;
+}
+
 } /* ~Namespace Jafg */

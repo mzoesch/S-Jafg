@@ -95,9 +95,9 @@ void Jafg::WEditableTextBox::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WEditableTextBox::UserInterfaceTick()
+bool Jafg::WEditableTextBox::UserInterfaceTick()
 {
-    bool bHandled{ false };
+    bool bHandled{};
 
     if (this->GetViewport().GetSurface().HasBufferedPlatformInput())
     {
@@ -117,7 +117,7 @@ void Jafg::WEditableTextBox::UserInterfaceTick()
             this->GetMutableContent() = std::move(NewContent);
 
             const LString::size_type Length { BufferedInput.size() };
-            for (auto Idx{ 0uz }; Idx < Length; ++Idx)
+            for (auto Idx{0uz}; Idx < Length; ++Idx)
             {
                 this->SafelyIncreaseCaretCursor();
             }
@@ -135,7 +135,7 @@ void Jafg::WEditableTextBox::UserInterfaceTick()
         }
     }
 
-    return;
+    return {};
 }
 
 Jafg::LCursorReply Jafg::WEditableTextBox::OnCursorEnter()
@@ -183,7 +183,7 @@ void Jafg::WEditableTextBox::OnFocusLost()
 
 Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::BackSpace)) // || PlatformDelete?
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::BackSpace)) // || PlatformDelete?
     {
         if (this->GetContent().empty() == false && this->CaretCursor > 0)
         {
@@ -200,7 +200,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
         return LReply::Handled();
     }
 
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Left))
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Left))
     {
         if (algo::is_valid_index(this->GetContent(), this->CaretCursor - 1))
         {
@@ -216,7 +216,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
         return LReply::Handled();
     }
 
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Right))
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Right))
     {
         if (algo::is_valid_index(this->GetContent(), this->CaretCursor))
         {
@@ -232,8 +232,8 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
         return LReply::Handled();
     }
 
-    if (   Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Enter)
-        || Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::NumPadEnter))
+    if (   Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Enter)
+        || Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::NumPadEnter))
     {
         if (this->OnAllowContentCommit.IsValid())
         {
@@ -248,7 +248,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
         return LReply::Handled();
     }
 
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton))
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
     {
         if (Data.Surface.HasMouseLocation())
         {
@@ -258,7 +258,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
         return LReply::Handled();
     }
 
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ENamedPhysicalKey::Escape))
+    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Escape))
     {
         if (this->GetViewport().GetFocusedWidget() == this)
         {

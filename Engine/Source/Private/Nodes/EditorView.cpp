@@ -10,7 +10,7 @@ void Jafg::WEditorView::Tick()
     Super::Tick();
 
     if (this->GetViewport().GetSurface()
-        .HasConsumableKeyState(LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton), ERawInputStateBits::Release))
+        .HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton), ERawInputStateBits::Release))
     {
         this->OnSecondaryUp();
     }
@@ -20,7 +20,7 @@ void Jafg::WEditorView::Tick()
 
 Jafg::LReply Jafg::WEditorView::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryDown();
     }
@@ -30,7 +30,7 @@ Jafg::LReply Jafg::WEditorView::OnKeyDown(LNodeKeyEventData const& Data, LKeyEve
 
 Jafg::LReply Jafg::WEditorView::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryDown();
     }
@@ -40,7 +40,7 @@ Jafg::LReply Jafg::WEditorView::OnKeyDownNoFocus(LNodeKeyEventData const& Data, 
 
 Jafg::LReply Jafg::WEditorView::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryUp();
     }
@@ -50,7 +50,7 @@ Jafg::LReply Jafg::WEditorView::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent
 
 Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent)
 {
-    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
+    if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryUp();
     }

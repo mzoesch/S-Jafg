@@ -61,7 +61,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    TPreference<f32> InterfaceGamma{ 2.2f };
+    TPreference<f32> InterfaceGamma{ 2.4f };
 
     CLASS_FIELD(Config)
     TPreference<EApplicationScale> ApplicationScaleMode{ EApplicationScale::Double };
@@ -107,15 +107,19 @@ public:
     TPreference<f32> SmallFontSizeTriple     { 10.0f };
 
     CLASS_FIELD(Config)
-    TPreference<LColor> BackgroundColor         { 0x1C }; // 0x15
+    TPreference<LColor> BackgroundColor         { 0x15 };
     CLASS_FIELD(Config)
     TPreference<LColor> AccentColor             { 0x1C };
     CLASS_FIELD(Config)
-    TPreference<LColor> ForegroundColor         { 0x2C }; // 0x24
+    TPreference<LColor> ForegroundColor         { 0x24 };
     CLASS_FIELD(Config)
-    TPreference<LColor> ForegroundColorVariant  { 0x0F };
+    TPreference<LColor> ForegroundColorVariant  { 0x2F };
     CLASS_FIELD(Config)
-    TPreference<LColor> DisabledColor           { 0x0F };
+    TPreference<LColor> InputColor              { 0x0F };
+    CLASS_FIELD(Config)
+    TPreference<LColor> OverlayColor            { 0x38 };
+    CLASS_FIELD(Config)
+    TPreference<LColor> DisabledColor           { 0x1B };
     CLASS_FIELD(Config)
     TPreference<LColor> TextColor               { 0xFF };
     CLASS_FIELD(Config)
@@ -127,9 +131,11 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> PrimaryColorVariant2    { LColor{0x2C, 0x32, 0x3A} };
     CLASS_FIELD(Config)
-    TPreference<LColor> ProximityColorA         { 0x20 }; // 0x1A
+    TPreference<LColor> ProximityColorA         { 0x1A };
     CLASS_FIELD(Config)
     TPreference<LColor> ProximityColorB         { 0x15 };
+    CLASS_FIELD(Config)
+    TPreference<LColor> DangerColor             { LColor{0x94, 0x33, 0x33} };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

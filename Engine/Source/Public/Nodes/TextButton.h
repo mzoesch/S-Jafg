@@ -23,7 +23,7 @@ struct LTextButtonTextStyle
 struct LTextButtonIconBrush
 {
     u32 Scale{ 1 };
-    LWidgetSize1 RightPadding{ 6_spt };
+    LWidgetSize1 InwardsPadding{ 6_spt };
     LColor Tint{ Colors::White };
 };
 
@@ -36,7 +36,8 @@ struct LTextButtonIconStyle
     LTextButtonIconBrush DisabledBrush;
 };
 
-//# A button with text content. Use this for buttons that only display text to save performance.
+//# A button with text content and an optional icon on the left or right. Use this for buttons that only display text/icons to save performance.
+//# TODO: Instead of a button make a WIconTextBox and then => WIconTextButton
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTextButton)
 class ENGINE_API WTextButton : public WTextBox, public TButtonBase<WTextButton, LBoxBrush, decltype(&WTextBox::SetBrush)>
 {
@@ -58,118 +59,16 @@ protected:
 
 public:
 
-    virtual void Construct() override
-    {
-        Super::Construct();
-        if (this->bUpdateBrushOnStateChange)
-        {
-            if (this->bEnabled)
-            {
-                if (this->bSelected)
-                {
-                    this->SetTextBrush(this->TextStyle.SelectedBrush);
-                    this->SetIconBrush(this->IconStyle.SelectedBrush);
-                }
-                else
-                {
-                    this->SetTextBrush(this->TextStyle.NormalBrush);
-                    this->SetIconBrush(this->IconStyle.NormalBrush);
-                }
-            }
-            else
-            {
-                this->SetTextBrush(this->TextStyle.DisabledBrush);
-                this->SetIconBrush(this->IconStyle.DisabledBrush);
-            }
-        }
-        this->ButtonBase_Construct();
-        return;
-    }
+    virtual void Construct() override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
     virtual void UpdateDesiredSize() const override;
-
-    virtual LCursorReply OnCursorEnter() override
-    {
-        if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
-        {
-            this->SetTextBrush(this->TextStyle.HoverBrush);
-            this->SetIconBrush(this->IconStyle.HoverBrush);
-        }
-        return this->ButtonBase_OnCursorEnter();
-    }
-    virtual LCursorReply OnCursorLeave() override
-    {
-        if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
-        {
-            this->SetTextBrush(this->TextStyle.NormalBrush);
-            this->SetIconBrush(this->IconStyle.NormalBrush);
-        }
-        return this->ButtonBase_OnCursorLeave();
-    }
-
-    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override
-    {
-        if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
-        {
-            if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton)
-                || Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
-            {
-                this->SetTextBrush(this->TextStyle.PressBrush);
-                this->SetIconBrush(this->IconStyle.PressBrush);
-            }
-        }
-        return this->ButtonBase_OnKeyDown(Data, Event);
-    }
-    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override
-    {
-        if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
-        {
-            if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::LeftMouseButton)
-                || Event.PhysicalKey == LPhysicalKey::FromLogical(ENamedPhysicalKey::RightMouseButton))
-            {
-                this->SetTextBrush(this->TextStyle.HoverBrush);
-                this->SetIconBrush(this->IconStyle.HoverBrush);
-            }
-        }
-        return this->ButtonBase_OnKeyUp(Data, Event);
-    }
-
-    virtual void OnEnabledStateChanged() override
-    {
-        SuperButton::OnEnabledStateChanged();
-        if (this->bUpdateBrushOnStateChange)
-        {
-            if (this->bEnabled)
-            {
-                this->SetTextBrush(this->TextStyle.NormalBrush);
-                this->SetIconBrush(this->IconStyle.NormalBrush);
-            }
-            else
-            {
-                this->SetTextBrush(this->TextStyle.DisabledBrush);
-                this->SetIconBrush(this->IconStyle.DisabledBrush);
-            }
-        }
-        return;
-    }
-    virtual void OnSelectedStateChanged() override
-    {
-        SuperButton::OnSelectedStateChanged();
-        if (this->bUpdateBrushOnStateChange)
-        {
-            if (this->bSelected)
-            {
-                this->SetTextBrush(this->TextStyle.SelectedBrush);
-                this->SetIconBrush(this->IconStyle.SelectedBrush);
-            }
-            else
-            {
-                this->SetTextBrush(this->TextStyle.NormalBrush);
-                this->SetIconBrush(this->IconStyle.NormalBrush);
-            }
-        }
-        return;
-    }
+    virtual LCursorReply OnCursorEnter() override;
+    virtual LCursorReply OnCursorMoved(const LVec2F& InLocation) override;
+    virtual LCursorReply OnCursorLeave() override;
+    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual void OnEnabledStateChanged() override;
+    virtual void OnSelectedStateChanged() override;
 
     constexpr void SetNormalPadding(LPadding const& InPadding) noexcept { this->Style.NormalBrush.Padding = InPadding; }
     constexpr void SetHoverPadding(LPadding const& InPadding) noexcept { this->Style.HoverBrush.Padding = InPadding; }
@@ -185,65 +84,130 @@ public:
         this->Style.DisabledBrush.Padding = InPadding;
     }
 
-    constexpr bool IsIconValid() const noexcept { return this->Icon.get(); }
-    constexpr void SetIcon(LTexture2Ref InIcon) noexcept { this->Icon = std::move(InIcon); }
-    constexpr auto const& GetIcon() const noexcept { return this->Icon; }
+    constexpr bool IsLeftIconValid() const noexcept { return this->LeftIcon.get(); }
+    constexpr void SetLeftIcon(LTexture2Ref InIcon) noexcept { this->LeftIcon = std::move(InIcon); }
+    constexpr auto const& GetLeftIcon() const noexcept { return this->LeftIcon; }
+    constexpr bool IsRightIconValid() const noexcept { return this->RightIcon.get(); }
+    constexpr void SetRightIcon(LTexture2Ref InIcon) noexcept { this->RightIcon = std::move(InIcon); }
+    constexpr auto const& GetRightIcon() const noexcept { return this->RightIcon; }
 
-    constexpr void SetIconBrush(LTextButtonIconBrush const& InBrush) noexcept { this->IconBrush = InBrush; }
-    NODISCARD constexpr LTextButtonIconBrush const& GetIconBrush() const noexcept { return this->IconBrush; }
+    constexpr void SetLeftIconBrush(LTextButtonIconBrush const& InBrush) noexcept { this->LeftIconBrush = InBrush; }
+    NODISCARD constexpr LTextButtonIconBrush const& GetLeftIconBrush() const noexcept { return this->LeftIconBrush; }
+    constexpr void SetRightIconBrush(LTextButtonIconBrush const& InBrush) noexcept { this->RightIconBrush = InBrush; }
+    NODISCARD constexpr LTextButtonIconBrush const& GetRightIconBrush() const noexcept { return this->RightIconBrush; }
 
-    constexpr void SetIconScale(u32 InScale) noexcept { this->IconBrush.Scale = InScale; }
-    constexpr void SetIconRightPadding(LWidgetSize1 InRightPadding) noexcept { this->IconBrush.RightPadding = InRightPadding; }
-    constexpr void SetIconTint(LColor const& InTint) noexcept { this->IconBrush.Tint = InTint; }
-    NODISCARD constexpr u32 GetIconScale() const noexcept { return this->IconBrush.Scale; }
-    NODISCARD constexpr LWidgetSize1 GetIconRightPadding() const noexcept { return this->IconBrush.RightPadding; }
-    NODISCARD constexpr LColor GetIconTint() const noexcept { return this->IconBrush.Tint; }
+    constexpr void SetLeftIconScale(u32 InScale) noexcept { this->LeftIconBrush.Scale = InScale; }
+    constexpr void SetLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->LeftIconBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetLeftIconTint(LColor const& InTint) noexcept { this->LeftIconBrush.Tint = InTint; }
+    NODISCARD constexpr u32 GetLeftIconScale() const noexcept { return this->LeftIconBrush.Scale; }
+    NODISCARD constexpr LWidgetSize1 GetLeftIconInwardsPadding() const noexcept { return this->LeftIconBrush.InwardsPadding; }
+    NODISCARD constexpr LColor GetLeftIconTint() const noexcept { return this->LeftIconBrush.Tint; }
+    constexpr void SetRightIconScale(u32 InScale) noexcept { this->RightIconBrush.Scale = InScale; }
+    constexpr void SetRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->RightIconBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetRightIconTint(LColor const& InTint) noexcept { this->RightIconBrush.Tint = InTint; }
+    NODISCARD constexpr u32 GetRightIconScale() const noexcept { return this->RightIconBrush.Scale; }
+    NODISCARD constexpr LWidgetSize1 GetRightIconInwardsPadding() const noexcept { return this->RightIconBrush.InwardsPadding; }
+    NODISCARD constexpr LColor GetRightIconTint() const noexcept { return this->RightIconBrush.Tint; }
 
-    constexpr void SetNormalIconScale(u32 InScale) noexcept { this->IconStyle.NormalBrush.Scale = InScale; }
-    constexpr void SetHoverIconScale(u32 InScale) noexcept { this->IconStyle.HoverBrush.Scale = InScale; }
-    constexpr void SetPressIconScale(u32 InScale) noexcept { this->IconStyle.PressBrush.Scale = InScale; }
-    constexpr void SetSelectedIconScale(u32 InScale) noexcept { this->IconStyle.SelectedBrush.Scale = InScale; }
-    constexpr void SetDisabledIconScale(u32 InScale) noexcept { this->IconStyle.DisabledBrush.Scale = InScale; }
-    constexpr void SetOmniIconScale(u32 InScale) noexcept
+    constexpr void SetNormalLeftIconScale(u32 InScale) noexcept { this->LeftIconStyle.NormalBrush.Scale = InScale; }
+    constexpr void SetHoverLeftIconScale(u32 InScale) noexcept { this->LeftIconStyle.HoverBrush.Scale = InScale; }
+    constexpr void SetPressLeftIconScale(u32 InScale) noexcept { this->LeftIconStyle.PressBrush.Scale = InScale; }
+    constexpr void SetSelectedLeftIconScale(u32 InScale) noexcept { this->LeftIconStyle.SelectedBrush.Scale = InScale; }
+    constexpr void SetDisabledLeftIconScale(u32 InScale) noexcept { this->LeftIconStyle.DisabledBrush.Scale = InScale; }
+    constexpr void SetDecoupledLeftIconScale(u32 InScale) noexcept { this->DecoupledLeftIconBrush.Scale = InScale; }
+    constexpr void SetOmniLeftIconScale(u32 InScale) noexcept
     {
-        this->IconStyle.NormalBrush.Scale   = InScale;
-        this->IconStyle.HoverBrush.Scale    = InScale;
-        this->IconStyle.PressBrush.Scale    = InScale;
-        this->IconStyle.SelectedBrush.Scale = InScale;
-        this->IconStyle.DisabledBrush.Scale = InScale;
+        this->LeftIconStyle.NormalBrush.Scale   = InScale;
+        this->LeftIconStyle.HoverBrush.Scale    = InScale;
+        this->LeftIconStyle.PressBrush.Scale    = InScale;
+        this->LeftIconStyle.SelectedBrush.Scale = InScale;
+        this->LeftIconStyle.DisabledBrush.Scale = InScale;
+        this->DecoupledLeftIconBrush.Scale = InScale;
+    }
+    constexpr void SetNormalRightIconScale(u32 InScale) noexcept { this->RightIconStyle.NormalBrush.Scale = InScale; }
+    constexpr void SetHoverRightIconScale(u32 InScale) noexcept { this->RightIconStyle.HoverBrush.Scale = InScale; }
+    constexpr void SetPressRightIconScale(u32 InScale) noexcept { this->RightIconStyle.PressBrush.Scale = InScale; }
+    constexpr void SetSelectedRightIconScale(u32 InScale) noexcept { this->RightIconStyle.SelectedBrush.Scale = InScale; }
+    constexpr void SetDisabledRightIconScale(u32 InScale) noexcept { this->RightIconStyle.DisabledBrush.Scale = InScale; }
+    constexpr void SetDecoupledRightIconScale(u32 InScale) noexcept { this->DecoupledRightIconBrush.Scale = InScale; }
+    constexpr void SetOmniRightIconScale(u32 InScale) noexcept
+    {
+        this->RightIconStyle.NormalBrush.Scale   = InScale;
+        this->RightIconStyle.HoverBrush.Scale    = InScale;
+        this->RightIconStyle.PressBrush.Scale    = InScale;
+        this->RightIconStyle.SelectedBrush.Scale = InScale;
+        this->RightIconStyle.DisabledBrush.Scale = InScale;
+        this->DecoupledRightIconBrush.Scale = InScale;
     }
 
-    constexpr void SetNormalIconRightPadding(LWidgetSize1 InRightPadding) noexcept { this->IconStyle.NormalBrush.RightPadding = InRightPadding; }
-    constexpr void SetHoverIconRightPadding(LWidgetSize1 InRightPadding) noexcept { this->IconStyle.HoverBrush.RightPadding = InRightPadding; }
-    constexpr void SetPressIconRightPadding(LWidgetSize1 InRightPadding) noexcept { this->IconStyle.PressBrush.RightPadding = InRightPadding; }
-    constexpr void SetSelectedIconRightPadding(LWidgetSize1 InRightPadding) noexcept { this->IconStyle.SelectedBrush.RightPadding = InRightPadding; }
-    constexpr void SetDisabledIconRightPadding(LWidgetSize1 InRightPadding) noexcept { this->IconStyle.DisabledBrush.RightPadding = InRightPadding; }
-    constexpr void SetOmniIconRightPadding(LWidgetSize1 InRightPadding) noexcept
+    constexpr void SetNormalLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->LeftIconStyle.NormalBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetHoverLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->LeftIconStyle.HoverBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetPressLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->LeftIconStyle.PressBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetSelectedLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->LeftIconStyle.SelectedBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetDisabledLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->LeftIconStyle.DisabledBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetDecoupledLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->DecoupledLeftIconBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetOmniLeftIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept
     {
-        this->IconStyle.NormalBrush.RightPadding   = InRightPadding;
-        this->IconStyle.HoverBrush.RightPadding    = InRightPadding;
-        this->IconStyle.PressBrush.RightPadding    = InRightPadding;
-        this->IconStyle.SelectedBrush.RightPadding = InRightPadding;
-        this->IconStyle.DisabledBrush.RightPadding = InRightPadding;
+        this->LeftIconStyle.NormalBrush.InwardsPadding   = InInwardsPadding;
+        this->LeftIconStyle.HoverBrush.InwardsPadding    = InInwardsPadding;
+        this->LeftIconStyle.PressBrush.InwardsPadding    = InInwardsPadding;
+        this->LeftIconStyle.SelectedBrush.InwardsPadding = InInwardsPadding;
+        this->LeftIconStyle.DisabledBrush.InwardsPadding = InInwardsPadding;
+        this->DecoupledLeftIconBrush.InwardsPadding = InInwardsPadding;
+    }
+    constexpr void SetNormalRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->RightIconStyle.NormalBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetHoverRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->RightIconStyle.HoverBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetPressRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->RightIconStyle.PressBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetSelectedRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->RightIconStyle.SelectedBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetDisabledRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->RightIconStyle.DisabledBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetDecoupledRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept { this->DecoupledRightIconBrush.InwardsPadding = InInwardsPadding; }
+    constexpr void SetOmniRightIconInwardsPadding(LWidgetSize1 InInwardsPadding) noexcept
+    {
+        this->RightIconStyle.NormalBrush.InwardsPadding   = InInwardsPadding;
+        this->RightIconStyle.HoverBrush.InwardsPadding    = InInwardsPadding;
+        this->RightIconStyle.PressBrush.InwardsPadding    = InInwardsPadding;
+        this->RightIconStyle.SelectedBrush.InwardsPadding = InInwardsPadding;
+        this->RightIconStyle.DisabledBrush.InwardsPadding = InInwardsPadding;
+        this->DecoupledRightIconBrush.InwardsPadding = InInwardsPadding;
     }
 
-    constexpr void SetNormalIconTint(LColor const& InTint) noexcept { this->IconStyle.NormalBrush.Tint = InTint; }
-    constexpr void SetHoverIconTint(LColor const& InTint) noexcept { this->IconStyle.HoverBrush.Tint = InTint; }
-    constexpr void SetPressIconTint(LColor const& InTint) noexcept { this->IconStyle.PressBrush.Tint = InTint; }
-    constexpr void SetSelectedIconTint(LColor const& InTint) noexcept { this->IconStyle.SelectedBrush.Tint = InTint; }
-    constexpr void SetDisabledIconTint(LColor const& InTint) noexcept { this->IconStyle.DisabledBrush.Tint = InTint; }
-    constexpr void SetOmniIconTint(LColor const& InTint) noexcept
+    constexpr void SetNormalLeftIconTint(LColor const& InTint) noexcept { this->LeftIconStyle.NormalBrush.Tint = InTint; }
+    constexpr void SetHoverLeftIconTint(LColor const& InTint) noexcept { this->LeftIconStyle.HoverBrush.Tint = InTint; }
+    constexpr void SetPressLeftIconTint(LColor const& InTint) noexcept { this->LeftIconStyle.PressBrush.Tint = InTint; }
+    constexpr void SetSelectedLeftIconTint(LColor const& InTint) noexcept { this->LeftIconStyle.SelectedBrush.Tint = InTint; }
+    constexpr void SetDisabledLeftIconTint(LColor const& InTint) noexcept { this->LeftIconStyle.DisabledBrush.Tint = InTint; }
+    constexpr void SetDecoupledLeftIconTint(LColor const& InTint) noexcept { this->DecoupledLeftIconBrush.Tint = InTint; }
+    constexpr void SetOmniLeftIconTint(LColor const& InTint) noexcept
     {
-        this->IconStyle.NormalBrush.Tint   = InTint;
-        this->IconStyle.HoverBrush.Tint    = InTint;
-        this->IconStyle.PressBrush.Tint    = InTint;
-        this->IconStyle.SelectedBrush.Tint = InTint;
-        this->IconStyle.DisabledBrush.Tint = InTint;
+        this->LeftIconStyle.NormalBrush.Tint   = InTint;
+        this->LeftIconStyle.HoverBrush.Tint    = InTint;
+        this->LeftIconStyle.PressBrush.Tint    = InTint;
+        this->LeftIconStyle.SelectedBrush.Tint = InTint;
+        this->LeftIconStyle.DisabledBrush.Tint = InTint;
+        this->DecoupledLeftIconBrush.Tint = InTint;
+    }
+    constexpr void SetNormalRightIconTint(LColor const& InTint) noexcept { this->RightIconStyle.NormalBrush.Tint = InTint; }
+    constexpr void SetHoverRightIconTint(LColor const& InTint) noexcept { this->RightIconStyle.HoverBrush.Tint = InTint; }
+    constexpr void SetPressRightIconTint(LColor const& InTint) noexcept { this->RightIconStyle.PressBrush.Tint = InTint; }
+    constexpr void SetSelectedRightIconTint(LColor const& InTint) noexcept { this->RightIconStyle.SelectedBrush.Tint = InTint; }
+    constexpr void SetDisabledRightIconTint(LColor const& InTint) noexcept { this->RightIconStyle.DisabledBrush.Tint = InTint; }
+    constexpr void SetDecoupledRightIconTint(LColor const& InTint) noexcept { this->DecoupledRightIconBrush.Tint = InTint; }
+    constexpr void SetOmniRightIconTint(LColor const& InTint) noexcept
+    {
+        this->RightIconStyle.NormalBrush.Tint   = InTint;
+        this->RightIconStyle.HoverBrush.Tint    = InTint;
+        this->RightIconStyle.PressBrush.Tint    = InTint;
+        this->RightIconStyle.SelectedBrush.Tint = InTint;
+        this->RightIconStyle.DisabledBrush.Tint = InTint;
+        this->DecoupledRightIconBrush.Tint = InTint;
     }
 
-    constexpr void SetIconStyle(LTextButtonIconStyle const& InStyle) noexcept { this->IconStyle = InStyle; }
-    NODISCARD constexpr LTextButtonIconStyle& GetMutableIconStyle() noexcept { return this->IconStyle; }
-    NODISCARD constexpr LTextButtonIconStyle const& GetIconStyle() const noexcept { return this->IconStyle; }
+    constexpr void SetIconRightStyle(LTextButtonIconStyle const& InStyle) noexcept { this->LeftIconStyle = InStyle; }
+    NODISCARD constexpr LTextButtonIconStyle& GetMutableIconRightStyle() noexcept { return this->LeftIconStyle; }
+    NODISCARD constexpr LTextButtonIconStyle const& GetIconRightStyle() const noexcept { return this->LeftIconStyle; }
+    constexpr void SetRightIconStyle(LTextButtonIconStyle const& InStyle) noexcept { this->RightIconStyle = InStyle; }
+    NODISCARD constexpr LTextButtonIconStyle& GetMutableRightIconStyle() noexcept { return this->RightIconStyle; }
+    NODISCARD constexpr LTextButtonIconStyle const& GetRightIconStyle() const noexcept { return this->RightIconStyle; }
 
     constexpr void SetNormalTextScale(LTextScale InScale) noexcept { this->TextStyle.NormalBrush.TextScale = InScale; }
     constexpr void SetHoverTextScale(LTextScale InScale) noexcept { this->TextStyle.HoverBrush.TextScale = InScale; }
@@ -347,12 +311,44 @@ public:
     NODISCARD constexpr LTextButtonTextStyle& GetMutableTextStyle() noexcept { return this->TextStyle; }
     NODISCARD constexpr LTextButtonTextStyle const& GetTextStyle() const noexcept { return this->TextStyle; }
 
+    constexpr void SetIsDecoupledLeftIcon(bool bInDecoupled) noexcept { this->bDecoupledLeftIcon = bInDecoupled; }
+    constexpr bool IsLeftIconDecoupled() const noexcept { return this->bDecoupledLeftIcon; }
+    constexpr void SetIsDecoupledRightIcon(bool bInDecoupled) noexcept { this->bDecoupledRightIcon = bInDecoupled; }
+    constexpr bool IsRightIconDecoupled() const noexcept { return this->bDecoupledRightIcon; }
+
+    constexpr void SetDecoupledLeftIconBrush(LTextButtonIconBrush const& InBrush) noexcept { this->DecoupledLeftIconBrush = InBrush; }
+    NODISCARD constexpr LTextButtonIconBrush const& GetDecoupledLeftIconBrush() const noexcept { return this->DecoupledLeftIconBrush; }
+    constexpr void SetDecoupledRightIconBrush(LTextButtonIconBrush const& InBrush) noexcept { this->DecoupledRightIconBrush = InBrush; }
+    NODISCARD constexpr LTextButtonIconBrush const& GetDecoupledRightIconBrush() const noexcept { return this->DecoupledRightIconBrush; }
+    void SetDecoupledLeftKeyDownHandler(std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> Handler) noexcept { this->DecoupledLeftKeyDown = std::move(Handler); }
+    void SetDecoupledLeftKeyUpHandler(std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> Handler) noexcept { this->DecoupledLeftKeyUp = std::move(Handler); }
+    void SetDecoupledRightKeyDownHandler(std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> Handler) noexcept { this->DecoupledRightKeyDown = std::move(Handler); }
+    void SetDecoupledRightKeyUpHandler(std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> Handler) noexcept { this->DecoupledRightKeyUp = std::move(Handler); }
+
 private:
 
-    LTexture2Ref Icon;
-    LTextButtonIconBrush IconBrush;
-    LTextButtonIconStyle IconStyle;
+    LVec2F GetLeftIconTopLeft(LVec2F Translation) const noexcept;
+    LVec2F GetRightIconTopLeft(LVec2F Translation) const noexcept;
+
+    LTexture2Ref LeftIcon;
+    LTexture2Ref RightIcon;
+    LTextButtonIconBrush LeftIconBrush;
+    LTextButtonIconBrush RightIconBrush;
+    LTextButtonIconStyle LeftIconStyle;
+    LTextButtonIconStyle RightIconStyle;
     LTextButtonTextStyle TextStyle;
+    bool bDecoupledLeftIcon{};
+    bool bDecoupledRightIcon{};
+    std::size_t DecoupledLeftIconFrame{};
+    std::size_t DecoupledRightIconFrame{};
+    LDelegateHandle LeftHandle{ nullptr };
+    LDelegateHandle RightHandle{ nullptr };
+    LTextButtonIconBrush DecoupledLeftIconBrush;
+    LTextButtonIconBrush DecoupledRightIconBrush;
+    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
+    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
+    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
+    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
 };
 
 struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
@@ -390,100 +386,195 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) Icon(this auto&& Self, LTexture2Ref InIcon) noexcept
+    decltype(auto) LeftIcon(this auto&& Self, LTexture2Ref InIcon) noexcept
     {
-        NODE_FACTORY_SELF().SetIcon(std::move(InIcon));
+        NODE_FACTORY_SELF().SetLeftIcon(std::move(InIcon));
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) RightIcon(this auto&& Self, LTexture2Ref InIcon) noexcept
+    {
+        NODE_FACTORY_SELF().SetRightIcon(std::move(InIcon));
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalIconScale(this auto&& Self, u32 InScale) noexcept
+    decltype(auto) NormalLeftIconScale(this auto&& Self, u32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetNormalIconScale(InScale);
+        NODE_FACTORY_SELF().SetNormalLeftIconScale(InScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) HoverIconScale(this auto&& Self, u32 InScale) noexcept
+    decltype(auto) HoverLeftIconScale(this auto&& Self, u32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetHoverIconScale(InScale);
+        NODE_FACTORY_SELF().SetHoverLeftIconScale(InScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) PressIconScale(this auto&& Self, u32 InScale) noexcept
+    decltype(auto) PressLeftIconScale(this auto&& Self, u32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetPressIconScale(InScale);
+        NODE_FACTORY_SELF().SetPressLeftIconScale(InScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) SelectedIconScale(this auto&& Self, u32 InScale) noexcept
+    decltype(auto) SelectedLeftIconScale(this auto&& Self, u32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetSelectedIconScale(InScale);
+        NODE_FACTORY_SELF().SetSelectedLeftIconScale(InScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) DisabledIconScale(this auto&& Self, u32 InScale) noexcept
+    decltype(auto) DisabledLeftIconScale(this auto&& Self, u32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetDisabledIconScale(InScale);
+        NODE_FACTORY_SELF().SetDisabledLeftIconScale(InScale);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OmniIconScale(this auto&& Self, u32 InScale) noexcept
+    decltype(auto) OmniLeftIconScale(this auto&& Self, u32 InScale) noexcept
     {
-        NODE_FACTORY_SELF().SetOmniIconScale(InScale);
+        NODE_FACTORY_SELF().SetOmniLeftIconScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) NormalRightIconScale(this auto&& Self, u32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetNormalRightIconScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverRightIconScale(this auto&& Self, u32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetHoverRightIconScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressRightIconScale(this auto&& Self, u32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetPressRightIconScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) SelectedRightIconScale(this auto&& Self, u32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetSelectedRightIconScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledRightIconScale(this auto&& Self, u32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetDisabledRightIconScale(InScale);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniRightIconScale(this auto&& Self, u32 InScale) noexcept
+    {
+        NODE_FACTORY_SELF().SetOmniRightIconScale(InScale);
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalIconRightPadding(this auto&& Self, LWidgetSize1 InRightPadding) noexcept
+    decltype(auto) NormalLeftIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetNormalIconRightPadding(InRightPadding);
+        NODE_FACTORY_SELF().SetNormalLeftIconInwardsPadding(InInwardsPadding);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) HoverIconRightPadding(this auto&& Self, LWidgetSize1 InRightPadding) noexcept
+    decltype(auto) HoverLeftIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetHoverIconRightPadding(InRightPadding);
+        NODE_FACTORY_SELF().SetHoverLeftIconInwardsPadding(InInwardsPadding);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) PressIconRightPadding(this auto&& Self, LWidgetSize1 InRightPadding) noexcept
+    decltype(auto) PressLeftIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetPressIconRightPadding(InRightPadding);
+        NODE_FACTORY_SELF().SetPressLeftIconInwardsPadding(InInwardsPadding);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) SelectedIconRightPadding(this auto&& Self, LWidgetSize1 InRightPadding) noexcept
+    decltype(auto) SelectedLeftIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetSelectedIconRightPadding(InRightPadding);
+        NODE_FACTORY_SELF().SetSelectedLeftIconInwardsPadding(InInwardsPadding);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) DisabledIconRightPadding(this auto&& Self, LWidgetSize1 InRightPadding) noexcept
+    decltype(auto) DisabledLeftIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetDisabledIconRightPadding(InRightPadding);
+        NODE_FACTORY_SELF().SetDisabledLeftIconInwardsPadding(InInwardsPadding);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OmniIconRightPadding(this auto&& Self, LWidgetSize1 InRightPadding) noexcept
+    decltype(auto) OmniLeftIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
     {
-        NODE_FACTORY_SELF().SetOmniIconRightPadding(InRightPadding);
+        NODE_FACTORY_SELF().SetOmniLeftIconInwardsPadding(InInwardsPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) NormalRightIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetNormalRightIconInwardsPadding(InInwardsPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverRightIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetHoverRightIconInwardsPadding(InInwardsPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressRightIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetPressRightIconInwardsPadding(InInwardsPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) SelectedRightIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetSelectedRightIconInwardsPadding(InInwardsPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledRightIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetDisabledRightIconInwardsPadding(InInwardsPadding);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniRightIconInwardsPadding(this auto&& Self, LWidgetSize1 InInwardsPadding) noexcept
+    {
+        NODE_FACTORY_SELF().SetOmniRightIconInwardsPadding(InInwardsPadding);
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) NormalIconTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) NormalLeftIconTint(this auto&& Self, LColor const& InTint) noexcept
     {
-        NODE_FACTORY_SELF().SetNormalIconTint(InTint);
+        NODE_FACTORY_SELF().SetNormalLeftIconTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) HoverIconTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) HoverLeftIconTint(this auto&& Self, LColor const& InTint) noexcept
     {
-        NODE_FACTORY_SELF().SetHoverIconTint(InTint);
+        NODE_FACTORY_SELF().SetHoverLeftIconTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) PressIconTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) PressLeftIconTint(this auto&& Self, LColor const& InTint) noexcept
     {
-        NODE_FACTORY_SELF().SetPressIconTint(InTint);
+        NODE_FACTORY_SELF().SetPressLeftIconTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) SelectedIconTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) SelectedLeftIconTint(this auto&& Self, LColor const& InTint) noexcept
     {
-        NODE_FACTORY_SELF().SetSelectedIconTint(InTint);
+        NODE_FACTORY_SELF().SetSelectedLeftIconTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) DisabledIconTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) DisabledLeftIconTint(this auto&& Self, LColor const& InTint) noexcept
     {
-        NODE_FACTORY_SELF().SetDisabledIconTint(InTint);
+        NODE_FACTORY_SELF().SetDisabledLeftIconTint(InTint);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OmniIconTint(this auto&& Self, LColor const& InTint) noexcept
+    decltype(auto) OmniLeftIconTint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetOmniIconTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) NormalRightIconTint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetNormalRightIconTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) HoverRightIconTint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetHoverRightIconTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) PressRightIconTint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetPressRightIconTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) SelectedRightIconTint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetSelectedRightIconTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) DisabledRightIconTint(this auto&& Self, LColor const& InTint) noexcept
+    {
+        NODE_FACTORY_SELF().SetDisabledRightIconTint(InTint);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OmniRightIconTint(this auto&& Self, LColor const& InTint) noexcept
     {
         NODE_FACTORY_SELF().SetOmniIconTint(InTint);
         return NODE_FACTORY_RESULT();

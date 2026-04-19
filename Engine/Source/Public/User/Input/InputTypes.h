@@ -73,7 +73,7 @@ inline LString LexToString(EModFlags Flags) noexcept
 //# Named physical keys. Not all keys might exist on a user's setup.
 //# Retrieve their physical representation with #LFrontend::GetPhysicalKey.
 //#
-enum struct ENamedPhysicalKey
+enum struct ELogicalKey
 {
     #define DETAIL_JAFG_INPUT_TYPES_WRAPPER(Key) Key,
     #include "User/Input/InputTypesDetail.h"
@@ -81,11 +81,11 @@ enum struct ENamedPhysicalKey
     FirstLogicalKey = MouseX,
     LastKey = ThumbMouseButton8,
 };
-inline LStringView LexToString(ENamedPhysicalKey Key) noexcept
+inline LStringView LexToString(ELogicalKey Key) noexcept
 {
     switch (Key)
     {
-#define DETAIL_JAFG_INPUT_TYPES_WRAPPER(Key) case ENamedPhysicalKey::Key: return #Key;
+#define DETAIL_JAFG_INPUT_TYPES_WRAPPER(Key) case ELogicalKey::Key: return #Key;
 #include "User/Input/InputTypesDetail.h"
     default: break;
     }
@@ -101,14 +101,14 @@ struct LPhysicalKey final
     i32 Scancode{ INDEX_NONE };
     i32 Logical{ INDEX_NONE };
 
-    FORCEINLINE static constexpr LPhysicalKey FromLogical(ENamedPhysicalKey Key) noexcept
+    FORCEINLINE static constexpr LPhysicalKey FromLogical(ELogicalKey Key) noexcept
     {
-        check(Key >= ENamedPhysicalKey::FirstLogicalKey && Key <= ENamedPhysicalKey::LastKey)
+        check(Key >= ELogicalKey::FirstLogicalKey && Key <= ELogicalKey::LastKey)
         return LPhysicalKey{.Logical = static_cast<i32>(Key)};
     }
-    FORCEINLINE bool IsLogical(ENamedPhysicalKey Key) const noexcept
+    FORCEINLINE bool IsLogical(ELogicalKey Key) const noexcept
     {
-        check(Key >= ENamedPhysicalKey::FirstLogicalKey && Key <= ENamedPhysicalKey::LastKey)
+        check(Key >= ELogicalKey::FirstLogicalKey && Key <= ELogicalKey::LastKey)
         return this->Logical == static_cast<i32>(Key);
     }
     FORCEINLINE constexpr bool operator==(LPhysicalKey const& Other) const noexcept

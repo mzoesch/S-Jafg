@@ -187,7 +187,7 @@ public:
     //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
     //# The world pointer is guaranteed to be valid.
     //#
-    TMulticastDelegate<void(LWorld* InNewWorld)> OnWorldBeginLife;
+    TMulticastDelegate<bool(LWorld* InNewWorld)> OnWorldBeginLife;
 
     FORCEINLINE auto const& GetTracks() const noexcept { return this->Tracks; }
     FORCEINLINE auto const& GetRegisteredLevels() const noexcept { return this->RegisteredLevels; }
