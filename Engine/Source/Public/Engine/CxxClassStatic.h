@@ -58,9 +58,9 @@ public:
     NODISCARD FORCEINLINE auto const& GetBeginClassLifeFn() const noexcept { return this->BeginClassLife; }
     NODISCARD FORCEINLINE auto const& GetEndClassLifeFn() const noexcept { return this->EndClassLife; }
 
-    NODISCARD FORCEINLINE bool IsValid() const noexcept { return this->Parent != nullptr || this->GetFullyQualifiedName() == "Jafg::JObjectBase"; }
+    NODISCARD FORCEINLINE bool IsValid() const noexcept { return this->Parent != nullptr || this->GetFullyQualifiedName() == "::Jafg::JCxxClass"; }
 
-    NODISCARD FORCEINLINE bool IsRoot() const noexcept { return this->Parent == nullptr && this->GetFullyQualifiedName() == "Jafg::JObjectBase"; }
+    NODISCARD FORCEINLINE bool IsRoot() const noexcept { return this->Parent == nullptr && this->GetFullyQualifiedName() == "::Jafg::JCxxClass"; }
     NODISCARD FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
     NODISCARD FORCEINLINE auto GetParent()         noexcept -> LCxxClass*                { check( this->Parent ) return this->Parent; }
     NODISCARD FORCEINLINE auto GetParent()   const noexcept -> LCxxClass const*          { check( this->Parent ) return this->Parent; }

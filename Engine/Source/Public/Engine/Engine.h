@@ -28,8 +28,9 @@ class LCommandLineInterface;
 
 } /* ~Namespace Jafg */
 
-//# The engine singleton.
-ENGINE_API extern Jafg::LEngine* GEngine;
+//# The engine singleton. Prefer to use #GEngine instead of #GMutableEngine.
+ENGINE_API extern Jafg::LEngine const* GEngine;
+ENGINE_API extern Jafg::LEngine* GMutableEngine;
 
 namespace Jafg
 {

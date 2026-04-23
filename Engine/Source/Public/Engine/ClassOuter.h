@@ -43,7 +43,7 @@ public:
     FORCEINLINE TArray<TUnique<JCxxClass>> const& GetEmployees() const noexcept { return this->Employees; }
 
     //# @return How many employees were hired and killed in this outer.
-    LSize KillEmployeesFromForeignPlugin(
+    std::size_t KillEmployeesFromForeignPlugin(
           LLoadedPluginHandle PluginHandle
         , ECxxRecordTearDownReason::Type Reason = ECxxRecordTearDownReason::PluginUnload
         );

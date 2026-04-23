@@ -23,11 +23,11 @@ void LJgcPluginLifetime::OnFinishedLoading()
     LPluginLifetime::OnFinishedLoading();
     LOG_VERBOSE(LogJgcLifetime, "Loading Jgc plugin.")
 
-    check(GEngine)
+    check(GMutableEngine)
 
     LOG_VERBOSE(LogJgcLifetime, "Creating jgc levels.")
 #if WITH_LOCAL_LAYER
-    if (GEngine->RegisterLevel
+    if (GMutableEngine->RegisterLevel
     (
         Jafg::LLevel{
             .Identifier = "LevelFrontend",

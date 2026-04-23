@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Nodes/Node.h"
+#include "Nodes/UserWidget.h"
 #include "Rhi/Texture2.h"
 
 namespace Jafg
@@ -34,7 +35,7 @@ concept CTabSelectorCandidate = requires
 struct LTabCreateInfo final
 {
     LTabSelectorCreateInfo Selector;
-    TSubclassOf<WUserWidget> Panel;
+    std::variant<TSubclassOf<WUserWidget>, TJxxUnique<WUserWidget>> Panel;
 
     decltype(auto) operator+(LTabCreateInfo&& Sibling) && noexcept
     {

@@ -35,9 +35,6 @@ struct LPrimitivePlatformTypesGeneric
     typedef float                       f32;
     typedef double                      f64;
 
-    //# The size type for the platform pointer.
-    typedef u32                         LSize;
-
     //# An ASCII character. 8-bit fixed-width representation of 7-bit characters.
     typedef char                        LAsciiChar;
 
@@ -597,8 +594,6 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::f32;
     typename T::f64;
 
-    typename T::LSize;
-
     typename T::LAsciiChar;
     typename T::LJafgChar;
     typename T::LChar;
@@ -623,8 +618,6 @@ static_assert(sizeof(LPlatformTypes::i64)               == 8);
 
 static_assert(sizeof(LPlatformTypes::f32)               == 4);
 static_assert(sizeof(LPlatformTypes::f64)               == 8);
-
-static_assert(sizeof(LPlatformTypes::LSize)             == sizeof(void*));
 
 static_assert(sizeof(wchar_t)     == JAFG_PLATFORM_WCHAR_SIZE );
 static_assert(sizeof(char)                              == 1 );
@@ -659,14 +652,14 @@ concept IsOnProgramPanicValid = requires
 static_assert(IsOnProgramPanicValid<LOnPlatformBreak>);
 
 #if JAFG_PLATFORM_U64_SIZET_EQ
-    static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::LSize>);
+    static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::std::size_t>);
 #else /* JAFG_PLATFORM_U64_SIZET_EQ */
-    static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::LSize> == false);
+    static_assert(std::is_same_v<LPlatformTypes::u64, std::size_t> == false);
 #endif /* !JAFG_PLATFORM_U64_SIZET_EQ */
 #if JAFG_PLATFORM_U32_SIZET_EQ
-    static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::LSize>);
+    static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::std::size_t>);
 #else /* JAFG_PLATFORM_U32_SIZET_EQ */
-    static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::LSize> == false);
+    static_assert(std::is_same_v<LPlatformTypes::u32, std::size_t> == false);
 #endif /* !JAFG_PLATFORM_U32_SIZET_EQ */
 
 } /* ~Namespace Jafg */
@@ -688,8 +681,6 @@ typedef Jafg::LPlatformTypes::i64                                        i64;
 
 typedef Jafg::LPlatformTypes::f32                                        f32;
 typedef Jafg::LPlatformTypes::f64                                        f64;
-
-typedef Jafg::LPlatformTypes::LSize                                      LSize;
 
 typedef Jafg::LPlatformTypes::LAsciiChar                                 LAsciiChar;
 typedef Jafg::LPlatformTypes::LJafgChar                                  LJafgChar;

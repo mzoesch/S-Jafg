@@ -17,7 +17,7 @@ namespace Detail
 
 struct IsNumericFn
 {
-    template<algo::input_iterator TIter, algo::sentinel_for<TIter> TSent>
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent>
     NODISCARD FORCEINLINE constexpr bool
     operator()(TIter Iter, TSent Sent) const noexcept
     {
@@ -41,7 +41,7 @@ struct IsNumericFn
 
 struct IsIntegralFn
 {
-    template<algo::input_iterator Iter, algo::sentinel_for<Iter> Sent>
+    template<std::input_iterator Iter, std::sentinel_for<Iter> Sent>
     NODISCARD FORCEINLINE constexpr bool
     operator()(Iter First, Sent Last) const noexcept
     {

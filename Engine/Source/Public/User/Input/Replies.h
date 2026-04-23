@@ -14,7 +14,7 @@ class LReplyBase
 public:
 
     FORCEINLINE constexpr LReplyBase() noexcept : bHandled(false) { }
-    FORCEINLINE constexpr LReplyBase(const bool bInHandled) noexcept : bHandled(bInHandled) { }
+    FORCEINLINE constexpr LReplyBase(bool bInHandled) noexcept : bHandled(bInHandled) { }
     DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LReplyBase)
     FORCEINLINE constexpr virtual ~LReplyBase() noexcept = default;
 
@@ -23,6 +23,16 @@ public:
 protected:
 
     bool bHandled;
+};
+
+class LPrimitiveReply : public LReplyBase
+{
+public:
+
+    using LReplyBase::LReplyBase;
+
+    FORCEINLINE static constexpr LPrimitiveReply Handled() noexcept { return LPrimitiveReply{ true }; }
+    FORCEINLINE static constexpr LPrimitiveReply Unhandled() noexcept { return LPrimitiveReply{ false }; }
 };
 
 template <typename TReplyTy>

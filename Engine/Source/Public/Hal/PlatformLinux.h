@@ -26,7 +26,6 @@ struct LPrimitivePlatformTypesGeneric;
 //# The platform types specification for Linux.
 struct LPrimitivePlatformTypesLinux final : public LPrimitivePlatformTypesGeneric
 {
-    typedef size_t LSize;
 };
 
 //# Make it public.

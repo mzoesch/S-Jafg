@@ -44,7 +44,7 @@ void Jafg::WTextButton::Draw(LNodeRenderInfo const& Info) const
     {
         if (this->LeftIcon->IsBindless() == false)
         {
-            this->GetFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->LeftIcon);
+            this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->LeftIcon);
             check(this->LeftIcon->IsBindless())
         }
         Info.AddInstance(LVisualInstance{
@@ -65,7 +65,7 @@ void Jafg::WTextButton::Draw(LNodeRenderInfo const& Info) const
     {
         if (this->RightIcon->IsBindless() == false)
         {
-            this->GetFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->RightIcon);
+            this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->RightIcon);
             check(this->RightIcon->IsBindless())
         }
         Info.AddInstance(LVisualInstance{

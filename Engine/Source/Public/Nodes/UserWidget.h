@@ -37,6 +37,11 @@ public:
 
     virtual void Destruct() override;
 
+    NODISCARD inline TJxxUnique<WUserWidget> RemoveFromTree()
+    {
+        return TJxxUnique<WUserWidget>{StaticCast<WUserWidget>(this->GetParentChecked()->RemoveChildImpl(*this).release())};
+    }
+
     //# Whether this is a top level widget inside the viewport.
     FORCEINLINE constexpr bool IsTopLevel() const noexcept { return this->bIsTopLevel; }
 

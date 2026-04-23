@@ -2,94 +2,74 @@
 
 #include "Nodes/Switcher.h"
 
-void Jafg::WSwitcher::AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild)
+Jafg::WNode& Jafg::WSwitcher::OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed)
 {
-    check(algo::find_pointer(this->RecentVisibilities, &*InChild, algo::pair_first{}) == nullptr)
-    this->RecentVisibilities.emplace_back(&*InChild, InChild->GetVisibility());
-    InChild->SetVisibility(ENodeVisibility::Collapsed);
+    check(algo::find(this->RecentVisibilities, &*Child, algo::pair_first{}) == this->RecentVisibilities.end())
+    this->RecentVisibilities.emplace_back(&*Child, Child->GetVisibility());
+    Child->SetVisibility(ENodeVisibility::Collapsed);
 
-    Super::AddChildAt(InIndex, std::move(InChild));
+    return Super::OnAddChild(Index, std::move(Child), bConstructed);
+}
+
+void Jafg::WSwitcher::OnRemoveChildPrepare(WNode& Child)
+{
+    Super::OnRemoveChildPrepare(Child);
+
+    if (this->GetActiveNode() == &Child)
+    {
+        this->ResetActiveNode();
+    }
+
+    if (auto* Pair{algo::find_pointer(this->RecentVisibilities, &Child, algo::pair_first{})})
+    {
+        Child.SetVisibility(Pair->second);
+    }
+    algo::erase(&this->RecentVisibilities, &Child, algo::pair_first{});
 
     return;
 }
 
-void Jafg::WSwitcher::RemoveChild(WNode* Child)
+void Jafg::WSwitcher::SetActiveNode(WNode& Node)
 {
-    algo::erase(&this->RecentVisibilities, Child, algo::pair_first{});
+    check(algo::contains(this->GetChildren(), &Node, algo::unique_raw{}))
 
-    Super::RemoveChild(Child);
-
-    if (this->ActiveNodeIndex != NoActiveNodeIndex)
-    {
-        this->ActiveNodeIndex = NoActiveNodeIndex;
-        this->SetActiveNodeByIndex(std::max(this->ActiveNodeIndex - 1, 0ll));
-    }
-
-    return;
-}
-
-void Jafg::WSwitcher::SetActiveNode(WNode const& Node)
-{
-    if (auto It{algo::find(this->GetChildren(), &Node, algo::unique_raw{})}; It != this->GetChildren().end())
-    {
-        this->SetActiveNodeByIndex(algo::distance(this->GetChildren(), It));
-    }
-    else
-    {
-        LOG_FATAL(LogWidgets
-            , "The node [{}] is not a child of switcher [{}]."
-            , Node.GetNameAsString(), this->GetNameAsString()
-        )
-    }
-
-    return;
-}
-
-void Jafg::WSwitcher::SetActiveNodeByIndex(i64 Index)
-{
-    if (this->ActiveNodeIndex == Index)
+    if (this->GetActiveNode() == &Node)
     {
         return;
     }
 
-    if (WNode* CurrentNode{this->GetActiveNode()}; CurrentNode)
+    this->ResetActiveNode();
+    this->ActiveNode = &Node;
+
+    if (auto* Pair{algo::find_pointer(this->RecentVisibilities, &Node, algo::pair_first{})})
     {
-        if (auto* Pair{algo::find_pointer(this->RecentVisibilities, CurrentNode, algo::pair_first{})})
+        Node.SetVisibility(Pair->second);
+        algo::erase_once_checked(&this->RecentVisibilities, &Node, algo::pair_first{});
+    }
+    else
+    {
+        Node.SetVisibility(ENodeVisibility::Visible);
+    }
+
+    return;
+}
+
+void Jafg::WSwitcher::ResetActiveNode()
+{
+    if (this->ActiveNode)
+    {
+        if (auto* Pair{algo::find_pointer(this->RecentVisibilities, this->ActiveNode, algo::pair_first{})})
         {
-            Pair->second = CurrentNode->GetVisibility();
+            Pair->second = this->ActiveNode->GetVisibility();
         }
         else
         {
-            this->RecentVisibilities.emplace_back(CurrentNode, CurrentNode->GetVisibility());
+            this->RecentVisibilities.emplace_back(this->ActiveNode, this->ActiveNode->GetVisibility());
         }
-        CurrentNode->SetVisibility(ENodeVisibility::Collapsed);
+        this->ActiveNode->SetVisibility(ENodeVisibility::Collapsed);
     }
 
-    this->ActiveNodeIndex = Index;
-
-    if (Index == NoActiveNodeIndex)
-    {
-        return;
-    }
-
-    if (algo::is_valid_index(this->GetChildren(), Index) == false)
-    {
-        LOG_WARNING(LogWidgets, "The index [{}] is out of bounds.", Index)
-        this->ActiveNodeIndex = NoActiveNodeIndex;
-        return;
-    }
-
-    WNode* Node{this->GetActiveNode()};
-    check(Node)
-    if (auto* Pair{algo::find_pointer(this->RecentVisibilities, Node, algo::pair_first{})})
-    {
-        Node->SetVisibility(Pair->second);
-        algo::erase_once_checked(&this->RecentVisibilities, Node, algo::pair_first{});
-    }
-    else
-    {
-        Node->SetVisibility(ENodeVisibility::Visible);
-    }
+    this->ActiveNode = nullptr;
 
     return;
 }

@@ -82,7 +82,7 @@ void Jafg::LClassOuter::TearDown() noexcept
     return;
 }
 
-LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
+std::size_t Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
     LLoadedPluginHandle PluginHandle,
     ECxxRecordTearDownReason::Type Reason /* = ECxxRecordTearDownReason::PluginUnload */
     )
@@ -97,7 +97,7 @@ LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
 
     STAT_CYCLE_FUNCTION()
 
-    LSize KillCount{};
+    std::size_t KillCount{};
     bool bTouched{};
     do
     {
@@ -132,14 +132,14 @@ void Jafg::LClassOuter::RegisterToEngine()
 
     if (GEngine)
     {
-        GEngine->RegisterClassOuter(this);
+        GMutableEngine->RegisterClassOuter(this);
     }
     else
     {
         Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this]()
         {
-            check( GEngine )
-            GEngine->RegisterClassOuter(this);
+            check(GMutableEngine)
+            GMutableEngine->RegisterClassOuter(this);
             return;
         });
     }
@@ -149,10 +149,10 @@ void Jafg::LClassOuter::RegisterToEngine()
 
 void Jafg::LClassOuter::UnregisterFromEngine()
 {
-    check( Tasks::IsOnMasterThread() )
-    check( GEngine )
+    check(Tasks::IsOnMasterThread())
+    check(GMutableEngine)
 
-    GEngine->UnregisterClassOuter(this);
+    GMutableEngine->UnregisterClassOuter(this);
 
     return;
 }

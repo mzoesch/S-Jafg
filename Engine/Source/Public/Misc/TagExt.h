@@ -20,7 +20,7 @@ struct LMasterThreadTagRegistry : public Jafg::TTagRegistry<TTag, TAllocator>
         check( !Tasks::HasMasterThread() || Tasks::IsOnMasterThread() )
         return Super::RegisterOrGet(std::forward<decltype(InRepr)>(InRepr));
     }
-    template<LSize N>
+    template<std::size_t N>
     FORCEINLINE typename Super::TagType RegisterOrGet(const char(&InRepr)[N]) noexcept
     {
         return this->RegisterOrGet(LStringView{InRepr, N - 1});

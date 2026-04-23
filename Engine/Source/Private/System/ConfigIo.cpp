@@ -8,24 +8,24 @@
 namespace
 {
 
-void GoToNextLine(const LString& InContentF, LSize* Cursor);
+void GoToNextLine(const LString& InContentF, std::size_t* Cursor);
 //#
 //# Given the current cursor position, find the first non whitespace / tab character in this line
 //# or the next meaningful line (if this line is not meaningful). That is also not a comment
 //# character or only contains whitespace / tab characters.
 //#
-void GoToThisLineStart(const LString& InContentF, LSize* Cursor);
-auto FindSection(const LString& InContentF, const LStringView& InSection) -> TOptional<LSize>;
+void GoToThisLineStart(const LString& InContentF, std::size_t* Cursor);
+auto FindSection(const LString& InContentF, const LStringView& InSection) -> TOptional<std::size_t>;
 //#
 //# Find the specified key in the specified section (where the cursor is currently positioned). Searches
 //# until the key is found or the end of the section is reached.
 //#
-auto FindKey(const LString& InContentF, const LSize& InCursor, const LStringView& InKey) -> TOptional<LSize>;
-auto FindKeyValue(LString& InContentF, const LSize& InCursor, const LStringView& InKey) -> TOptional<LStringView>;
+auto FindKey(const LString& InContentF, const std::size_t& InCursor, const LStringView& InKey) -> TOptional<std::size_t>;
+auto FindKeyValue(LString& InContentF, const std::size_t& InCursor, const LStringView& InKey) -> TOptional<LStringView>;
 bool Serialize(LString* ContentF, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue);
 auto Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey) -> TOptional<LStringView>;
 
-void GoToNextLine(const LString& InContentF, LSize* Cursor)
+void GoToNextLine(const LString& InContentF, std::size_t* Cursor)
 {
     checkSlow( Cursor )
 
@@ -44,7 +44,7 @@ void GoToNextLine(const LString& InContentF, LSize* Cursor)
     return;
 }
 
-void GoToThisLineStart(const LString& InContentF, LSize* Cursor)
+void GoToThisLineStart(const LString& InContentF, std::size_t* Cursor)
 {
     checkSlow( Cursor )
 
@@ -74,7 +74,7 @@ void GoToThisLineStart(const LString& InContentF, LSize* Cursor)
     return;
 }
 
-void GoToNextLineStart(const LString& InContentF, LSize* Cursor)
+void GoToNextLineStart(const LString& InContentF, std::size_t* Cursor)
 {
     ::GoToNextLine(InContentF, Cursor);
     ::GoToThisLineStart(InContentF, Cursor);
@@ -82,11 +82,11 @@ void GoToNextLineStart(const LString& InContentF, LSize* Cursor)
     return;
 }
 
-TOptional<LSize> FindSection(const LString& InContentF, const LStringView& InSection)
+TOptional<std::size_t> FindSection(const LString& InContentF, const LStringView& InSection)
 {
     using namespace Jafg;
 
-    LSize Cursor { 0 };
+    std::size_t Cursor { 0 };
     while (algo::is_valid_index(InContentF, Cursor))
     {
         ::GoToThisLineStart(InContentF, &Cursor);
@@ -99,7 +99,7 @@ TOptional<LSize> FindSection(const LString& InContentF, const LStringView& InSec
         if (InContentF[Cursor] == '[')
         {
             ++Cursor;
-            LSize Start = Cursor;
+            std::size_t Start = Cursor;
 
             while (algo::is_valid_index(InContentF, Cursor) && InContentF[Cursor] != ']')
             {
@@ -142,7 +142,7 @@ TOptional<LSize> FindSection(const LString& InContentF, const LStringView& InSec
     return { };
 }
 
-TOptional<LSize> FindKey(const LString& InContentF, const LSize& InCursor, const LStringView& InKey)
+TOptional<std::size_t> FindKey(const LString& InContentF, const std::size_t& InCursor, const LStringView& InKey)
 {
     checkCode
     (
@@ -153,7 +153,7 @@ TOptional<LSize> FindKey(const LString& InContentF, const LSize& InCursor, const
     )
 
     using namespace Jafg;
-    LSize Cursor = InCursor;
+    std::size_t Cursor = InCursor;
 
     ::GoToNextLineStart(InContentF, &Cursor);
     while (true)
@@ -174,7 +174,7 @@ TOptional<LSize> FindKey(const LString& InContentF, const LSize& InCursor, const
             continue;
         }
 
-        const LSize OutCandidate = Cursor;
+        const std::size_t OutCandidate = Cursor;
 
         Cursor += InKey.GetRuneCount();
         if (InContentF.IsValidIndex(Cursor) == false)
@@ -198,15 +198,15 @@ TOptional<LSize> FindKey(const LString& InContentF, const LSize& InCursor, const
     }
 }
 
-Jafg::TOptional<LMutableStringView> FindKeyValue(LString& InContentF, const LSize& InCursor, const LStringView& InKey)
+Jafg::TOptional<LMutableStringView> FindKeyValue(LString& InContentF, const std::size_t& InCursor, const LStringView& InKey)
 {
-    Jafg::TOptional<LSize> Key = FindKey(InContentF, InCursor, InKey);
+    Jafg::TOptional<std::size_t> Key = FindKey(InContentF, InCursor, InKey);
     if (!Key)
     {
         return { };
     }
 
-    LSize Cursor = *Key;
+    std::size_t Cursor = *Key;
     Cursor += InKey.GetRuneCount();
     check( InContentF.IsValidIndex(Cursor) && InContentF[Cursor] == '=' )
     Cursor += /* = */1;
@@ -247,13 +247,13 @@ bool Serialize(LString* ContentF, const LStringView& InSection, const LStringVie
         return false;
     }
 
-    TOptional<LSize> SectionMaybe = ::FindSection(*ContentF, InSection);
+    TOptional<std::size_t> SectionMaybe = ::FindSection(*ContentF, InSection);
     if (!SectionMaybe)
     {
         ContentF->append(Jafg::SprintF("[{}]\n", InSection));
         SectionMaybe = ::FindSection(*ContentF, InSection);
     }
-    LSize Section = *SectionMaybe;
+    std::size_t Section = *SectionMaybe;
 
     ::GoToNextLine(*ContentF, &Section);
     ContentF->insert(Section, Jafg::SprintF("{}={}\n", InKey, InValue));
@@ -263,14 +263,14 @@ bool Serialize(LString* ContentF, const LStringView& InSection, const LStringVie
 
 TOptional<LStringView> Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey)
 {
-    TOptional<LSize> Section = ::FindSection(InContentF, InSection);
+    TOptional<std::size_t> Section = ::FindSection(InContentF, InSection);
     if (!Section)
     {
         return { };
     }
-    LSize Cursor = *Section;
+    std::size_t Cursor = *Section;
     ::GoToThisLineStart(InContentF, &Cursor);
-    TOptional<LSize> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
+    TOptional<std::size_t> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
     if (!KeyCursor)
     {
         return { };

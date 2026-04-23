@@ -39,7 +39,7 @@ public:
     TPreference<i32> Port{ 8080 };
 
     CLASS_FIELD(Config)
-    TPreference<LSize> KeepAliveMaxRequests{ 100 };
+    TPreference<std::size_t> KeepAliveMaxRequests{ 100 };
     CLASS_FIELD(Config)
     TPreference<f64> KeepAliveTimeoutInSeconds{ 5.0 };
     CLASS_FIELD(Config)
@@ -50,7 +50,7 @@ public:
     TPreference<f64> IdleIntervalInSeconds{ 0.0 };
 
     CLASS_FIELD(Config)
-    TPreference<LSize> PayLoadMaxLength{ std::numeric_limits<LSize>::max() };
+    TPreference<std::size_t> PayLoadMaxLength{ std::numeric_limits<std::size_t>::max() };
 
     CLASS_FIELD(Config)
     TPreference<bool> TcpNoDelay{ false };

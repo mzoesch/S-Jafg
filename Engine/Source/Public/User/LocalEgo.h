@@ -48,8 +48,10 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JLocalEgoSubsystem)
 
-    ENGINE_API LEngine& GetEngine();
-    ENGINE_API LCommandLineInterface& GetCommandLineInterface();
+    ENGINE_API LEngine const& GetEngine() const;
+    ENGINE_API LEngine& GetMutableEngine();
+    ENGINE_API LCommandLineInterface const& GetCommandLineInterface() const;
+    ENGINE_API LCommandLineInterface& GetMutableCommandLineInterface();
 
     FORCEINLINE bool GetVariable_UpdateFrustum() const { bool bOut = false; this->VariableHandle_UpdateFrustum.GetValue(&bOut); return bOut; }
     FORCEINLINE auto GetVariableHandle_UpdateFrustum() const -> const LCliVariableHandle& { return this->VariableHandle_UpdateFrustum; }

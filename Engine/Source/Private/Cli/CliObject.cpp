@@ -10,21 +10,21 @@ Jafg::LCliObject* Jafg::LCliObject::GetRegisteredObjectByUuid() const
         return nullptr;
     }
 
-    check( GEngine )
-    return GEngine->GetCommandLineInterface().GetObjectAsserted(*this);
+    check(GMutableEngine)
+    return GMutableEngine->GetCommandLineInterface().GetObjectAsserted(*this);
 }
 
 void Jafg::LCliObject::ExpandToUuid()
 {
-    check( this->Uuid == LCliObject::NoUuid )
-    check( GEngine )
+    check(this->Uuid == LCliObject::NoUuid)
+    check(GEngine)
 
-    const LCliObject* Obj { GEngine->GetCommandLineInterface().GetObjectAsserted(this->Identifier) };
+    const LCliObject* Obj{GEngine->GetCommandLineInterface().GetObjectAsserted(this->Identifier)};
 
     this->Uuid = Obj->Uuid;
     algo::orphan(&this->Identifier);
 
-    check( this->Uuid != LCliObject::NoUuid )
+    check(this->Uuid != LCliObject::NoUuid)
 
     return;
 }

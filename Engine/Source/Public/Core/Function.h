@@ -358,3 +358,9 @@ FORCEINLINE void TFunction<TRet(TParams...)>::CopyImpl(const TFunction& Other) n
 
     return;
 }
+
+template<typename... Sig>
+using TCopyableFunction = std::function<Sig...>;
+
+template<typename... Sig>
+using TFunction2 = std::move_only_function<Sig...>;

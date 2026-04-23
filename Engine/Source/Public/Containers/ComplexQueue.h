@@ -11,7 +11,7 @@ namespace Jafg
  * @remark This queue is not lock-free because non-lock-free queues will never be able to satisfy all data-structure
  *         requirements for J-Objects.
  */
-template <typename T, typename TSizeType = LSize>
+template <typename T, typename TSizeType = std::size_t>
 class TMpmcQueue final
 {
 public:

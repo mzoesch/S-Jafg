@@ -29,7 +29,7 @@ void Jafg::LUserInput::DispatchInputDelegates(APersonaController& ActingControll
     this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Completed);
 }
 
-bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, LSize Where /* = INDEX_NONE */) noexcept
+bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, std::size_t Where /* = INDEX_NONE */) noexcept
 {
     check( Tag.IsSet() )
 
@@ -52,7 +52,7 @@ bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, LSize Where /* = INDEX
     return true;
 }
 
-bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& Contexts, LSize Where) noexcept
+bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& Contexts, std::size_t Where) noexcept
 {
     bool bOut{ false };
 
@@ -70,7 +70,7 @@ bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& 
     return bOut;
 }
 
-bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputTag> const& Tags, LSize Where) noexcept
+bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputTag> const& Tags, std::size_t Where) noexcept
 {
     bool bOut{ false };
 
@@ -88,7 +88,7 @@ bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputTag> const& Tags, LSize
     return bOut;
 }
 
-bool Jafg::LUserInput::ActivateContexts(TArray<LStringView> const& Names, LSize Where) noexcept
+bool Jafg::LUserInput::ActivateContexts(TArray<LStringView> const& Names, std::size_t Where) noexcept
 {
     bool bOut{ false };
 

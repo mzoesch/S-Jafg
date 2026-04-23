@@ -202,7 +202,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
 
     if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Left))
     {
-        if (algo::is_valid_index(this->GetContent(), this->CaretCursor - 1))
+        if (algo::valid_index(this->GetContent(), this->CaretCursor - 1))
         {
             const LString::size_type Size { Jafg::Utf8::GetCharacterLength(this->GetContent()[this->CaretCursor]) };
             for (LString::size_type I { 0 }; I < Size; ++I)
@@ -218,7 +218,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LK
 
     if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Right))
     {
-        if (algo::is_valid_index(this->GetContent(), this->CaretCursor))
+        if (algo::valid_index(this->GetContent(), this->CaretCursor))
         {
             const LString::size_type Size { Jafg::Utf8::GetCharacterLength(this->GetContent()[this->CaretCursor]) };
             for (LString::size_type I { 0 }; I < Size; ++I)

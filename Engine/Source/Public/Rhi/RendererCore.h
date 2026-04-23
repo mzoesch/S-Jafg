@@ -45,7 +45,7 @@ namespace Jafg
 typedef VmaAllocation LDeviceAllocation;
 typedef VmaAllocationInfo LDeviceAllocationInfo;
 
-inline constexpr LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
+inline constexpr std::size_t Vk_GetChannelsPerPixel(vk::Format Format) noexcept
 {
     switch (Format)
     {
@@ -64,7 +64,7 @@ inline constexpr LSize Vk_GetChannelsPerPixel(vk::Format Format) noexcept
     }
 }
 
-inline constexpr LSize Vk_GetBytesPerPixel(vk::Format Format) noexcept
+inline constexpr std::size_t Vk_GetBytesPerPixel(vk::Format Format) noexcept
 {
     switch (Format)
     {

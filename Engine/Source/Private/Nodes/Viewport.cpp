@@ -50,7 +50,7 @@ void Jafg::LViewport::Vk_OnLateInit()
     Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [this]
     {
         check(GEngine)
-        auto& MaterialSubsystem{*this->GetSurface().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
+        auto& MaterialSubsystem{*this->GetSurface().GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
         if (auto It{MaterialSubsystem.GetSharedMaterialInstances().find("Jafg.VisualBatch")}; It != MaterialSubsystem.GetSharedMaterialInstances().end())
         {
             this->VisualBatchMaterial = It->second;
@@ -194,7 +194,7 @@ void Jafg::LViewport::DispatchInputs()
         bool bIsDrawn{};
         for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
         {
-            if ((*It)->FindNodeInVisiblePath(this->FocusedWidget.Get()))
+            if ((*It)->IsNodeInVisiblePath(this->FocusedWidget.Get()))
             {
                 bIsDrawn = true;
                 break;
@@ -223,6 +223,7 @@ void Jafg::LViewport::DispatchInputs()
                     .Surface = this->Surface,
                     .Viewport = *this,
                     .Node = *this->FocusedWidget,
+                    .CursorLocation = CursorLocation,
                     }, Input)};
                 Reply.IsHandled())
             {
@@ -247,6 +248,7 @@ void Jafg::LViewport::DispatchInputs()
                         .Surface = this->Surface,
                         .Viewport = *this,
                         .Node = **It,
+                        .CursorLocation = CursorLocation,
                         }, Input)};
                     Reply.IsHandled())
                 {
@@ -273,6 +275,7 @@ void Jafg::LViewport::DispatchInputs()
                     .Surface = this->Surface,
                     .Viewport = *this,
                     .Node = *this->FocusedWidget,
+                    .CursorLocation = CursorLocation,
                     }, Input)};
                 Reply.IsHandled())
             {
@@ -297,6 +300,7 @@ void Jafg::LViewport::DispatchInputs()
                         .Surface = this->Surface,
                         .Viewport = *this,
                         .Node = **It,
+                        .CursorLocation = CursorLocation,
                         }, Input)};
                     Reply.IsHandled())
                 {
@@ -578,7 +582,7 @@ bool Jafg::LViewport::FocusWidgetNode(WNode* InNode)
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
-        if (Widget->FindNodeInVisiblePath(InNode))
+        if (Widget->IsNodeInVisiblePath(InNode))
         {
             this->ChangeFocusUnsafe(InNode);
             return true;

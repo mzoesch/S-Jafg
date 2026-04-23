@@ -7,7 +7,7 @@
 namespace Jafg::Utf8
 {
 
-template<typename T, typename U = LSize>
+template<typename T, typename U = std::size_t>
 NODISCARD
 inline constexpr U GetCharacterLength(const T Char) noexcept
 {

@@ -381,6 +381,8 @@ struct LNodeKeyEventData final
     LViewport& Viewport;
     WNode& Node;
 
+    TOptional<LVec2F> const& CursorLocation;
+
     const LVec2F Translation;
 };
 
@@ -566,6 +568,17 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDown, OnKeyDownEvent)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUp, OnKeyUpEvent)
 
+    decltype(auto) OnKeyDownNoFocus(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::OnKeyDownNoFocusEvent) Event) noexcept
+    {
+        NODE_FACTORY_SELF().OnKeyDownNoFocusEvent = std::move(Event);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) OnKeyUpNoFocus(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::OnKeyUpNoFocusEvent) Event) noexcept
+    {
+        NODE_FACTORY_SELF().OnKeyUpNoFocusEvent = std::move(Event);
+        return NODE_FACTORY_RESULT();
+    }
+
     template<typename T> requires std::is_base_of_v<WNode, T>
     decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept
     {
@@ -723,7 +736,6 @@ public:
     //#
     virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event);
     virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event);
-
     TFunction<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyDownEvent;
     TFunction<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyUpEvent;
 
@@ -737,8 +749,10 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) { return LReply::Unhandled(); }
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) { return LReply::Unhandled(); }
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
+    TFunction2<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyDownNoFocusEvent;
+    TFunction2<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyUpNoFocusEvent;
 
     //#
     //# @return Whether this is the focused widget.
@@ -821,7 +835,59 @@ public:
     //# Searches for a node in this widget tree. Only searches nodes that are drawn.
     //# @return True if the target node exists in this widget tree and is visible.
     //#
-    virtual bool FindNodeInVisiblePath(WNode const* Node) const;
+    NODISCARD virtual bool IsNodeInVisiblePath(WNode const* Node) const;
+    NODISCARD virtual inline WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept
+    {
+        if (this->ShouldNowDraw() && this->IsA(Class))
+        {
+            return this;
+        }
+        return nullptr;
+    }
+    NODISCARD virtual inline WNode* FindNodeInVisiblePath(TSubclassOf<WNode> Class) noexcept
+    {
+        if (this->ShouldNowDraw() && this->IsA(Class))
+        {
+            return this;
+        }
+        return nullptr;
+    }
+    NODISCARD FORCEINLINE WNode const* FindNodeInVisiblePathChecked(TSubclassOf<WNode> Class) const
+    {
+        auto const* Result{this->FindNodeInVisiblePath(Class)};
+        check(Result)
+        return Result;
+    }
+    NODISCARD FORCEINLINE WNode* FindNodeInVisiblePathChecked(TSubclassOf<WNode> Class)
+    {
+        auto* Result{this->FindNodeInVisiblePath(Class)};
+        check(Result)
+        return Result;
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    NODISCARD FORCEINLINE TNode const* FindNodeInVisiblePath() const noexcept
+    {
+        return StaticCast<TNode>(this->FindNodeInVisiblePath(TNode::StaticClass()));
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    NODISCARD FORCEINLINE TNode* FindNodeInVisiblePath() noexcept
+    {
+        return StaticCast<TNode>(this->FindNodeInVisiblePath(TNode::StaticClass()));
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    NODISCARD FORCEINLINE TNode const* FindNodeInVisiblePathChecked() const noexcept
+    {
+        auto const* Result{this->FindNodeInVisiblePath<TNode>()};
+        check(Result)
+        return Result;
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    NODISCARD FORCEINLINE TNode* FindNodeInVisiblePathChecked() noexcept
+    {
+        auto* Result{this->FindNodeInVisiblePath<TNode>()};
+        check(Result)
+        return Result;
+    }
 
     //# @return The size of the current viewport in pixels.
     LVec2u32 GetViewportSize() const;
@@ -868,7 +934,8 @@ public:
     //# The anchor to use.
     LAnchor Anchor{ EAnchor::TopLeft };
 
-    ENGINE_API LFrontend& GetFrontend() const noexcept;
+    ENGINE_API LFrontend const& GetFrontend() const noexcept;
+    ENGINE_API LFrontend& GetMutableFrontend() const noexcept;
 
     //# Internal function of Jafg. Do not call yourself.
     void _SetParentDangerous(WParent* InParent) noexcept { this->Parent = InParent; }

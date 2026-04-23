@@ -218,22 +218,29 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
 
         if w.content == "namespace"
         {
-            let mut alias_namespace: bool = false;
-            for w in words.iter().skip(idx + 1)
+            // check for using namespace
+            if idx > 0 && words[idx - 1].content == "using"
             {
-                if w.content == "="
-                {
-                    alias_namespace = true;
-                    break
-                }
-                if w.content == "{"
-                {
-                    break
-                }
             }
-            if alias_namespace == false
+            else
             {
-                tokens.push(Token { ty: TokenType::NamespacePush, line: w.line, content: String::from(&n.unwrap().content), info: vec![] });
+                let mut alias_namespace: bool = false;
+                for w in words.iter().skip(idx + 1)
+                {
+                    if w.content == "="
+                    {
+                        alias_namespace = true;
+                        break
+                    }
+                    if w.content == "{"
+                    {
+                        break
+                    }
+                }
+                if alias_namespace == false
+                {
+                    tokens.push(Token { ty: TokenType::NamespacePush, line: w.line, content: String::from(&n.unwrap().content), info: vec![] });
+                }
             }
         }
         else if w.content == "}"

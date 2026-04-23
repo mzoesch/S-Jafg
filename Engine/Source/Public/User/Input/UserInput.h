@@ -35,12 +35,12 @@ public:
     //# @param Where Position where to insert the context. INDEX_NONE to add at the end.
     //# @return True if the context was activated.
     //#
-    ENGINE_API  bool ActivateContext(LUserInputTag Tag, LSize Where = INDEX_NONE) noexcept;
-    FORCEINLINE bool ActivateContext(LUserInputContext const& Context, LSize Where = INDEX_NONE) noexcept { return this->ActivateContext(Context.GetTag(), Where); }
-    FORCEINLINE bool ActivateContext(LStringView Name, LSize Where = INDEX_NONE) noexcept { return this->ActivateContext(LUserInputTag::ToTag(Name), Where); }
-    ENGINE_API  bool ActivateContexts(TArray<LUserInputContext const*> const& Contexts, LSize Where = INDEX_NONE) noexcept;
-    ENGINE_API  bool ActivateContexts(TArray<LUserInputTag> const& Tags, LSize Where = INDEX_NONE) noexcept;
-    ENGINE_API  bool ActivateContexts(TArray<LStringView> const& Names, LSize Where = INDEX_NONE) noexcept;
+    ENGINE_API  bool ActivateContext(LUserInputTag Tag, std::size_t Where = INDEX_NONE) noexcept;
+    FORCEINLINE bool ActivateContext(LUserInputContext const& Context, std::size_t Where = INDEX_NONE) noexcept { return this->ActivateContext(Context.GetTag(), Where); }
+    FORCEINLINE bool ActivateContext(LStringView Name, std::size_t Where = INDEX_NONE) noexcept { return this->ActivateContext(LUserInputTag::ToTag(Name), Where); }
+    ENGINE_API  bool ActivateContexts(TArray<LUserInputContext const*> const& Contexts, std::size_t Where = INDEX_NONE) noexcept;
+    ENGINE_API  bool ActivateContexts(TArray<LUserInputTag> const& Tags, std::size_t Where = INDEX_NONE) noexcept;
+    ENGINE_API  bool ActivateContexts(TArray<LStringView> const& Names, std::size_t Where = INDEX_NONE) noexcept;
 
     //#
     //# Deactivate a context. Nullptr is ok to pass.

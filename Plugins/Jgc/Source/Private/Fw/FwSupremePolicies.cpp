@@ -14,7 +14,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
 {
     Super::OnWorldPreInit();
 
-    auto& Frontend{this->GetLocalEgo().GetFrontend()};
+    auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
     auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.MetallicGold")};
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})

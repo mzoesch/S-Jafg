@@ -12,6 +12,16 @@ namespace Jafg
 
 struct LFactoryDropDown;
 
+struct LDropDownMenuCreateInfo final
+{
+    //#
+    //# If not handled or unbound.
+    //# The window will destroy itself.
+    //#
+    TCopyableFunction<LPrimitiveReply(WDismissibleFloatingWidget& Self)> OnOptionCloseResult;
+};
+ENGINE_API WDismissibleFloatingWidget& CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubMenu const& Submenu);
+
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryDropDown)
 class ENGINE_API WDropDown final : public WUserWidget
 {
@@ -36,11 +46,10 @@ public:
 
 private:
 
+    void Select(WTextBox* Target = nullptr);
     void OnDismiss(WFloatingWidget& FloatingWidget);
 
     LCursorReply OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu);
-    LCursorReply OnMouseLeaveInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu);
-    LCursorReply OnMouseLeaveFloatingWidget(WNode& Node);
 
     LDropDownRoot DropDownRoot;
     WParent* RootSubmenuContainer{};

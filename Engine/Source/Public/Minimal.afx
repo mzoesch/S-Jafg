@@ -24,7 +24,6 @@
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
 #include "Core/CoreConcepts.h"
-#include "Core/CoreFunctors.h"
 
 //#
 //# Standard, Platform-APIs and Third-Party.

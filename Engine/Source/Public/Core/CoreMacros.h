@@ -265,9 +265,6 @@
     FORCEINLINE constexpr Enum  operator~ (Enum  E)                                           \
         { return (Enum)~(__underlying_type(Enum))E; }
 
-//# This or that ::Jafg::Xor(bA, bB);
-#define JAFG_XOR(A, B) ( !(!!(A)) != !(!!(B)) )
-
 //# Allows one to use "anonymous" structs in templated paths.
 #define JAFG_ANONYMOUS_STRUCT(...) \
     decltype([]         \

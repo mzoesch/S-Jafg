@@ -214,7 +214,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 
 Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
-    this->GetFrontend()._Vk_WaitIdle();
+    this->GetMutableFrontend()._Vk_WaitIdle();
 
     if (this->Cursor)
     {
@@ -273,7 +273,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
 
     check(this->Vk_CommandBuffers.size() == this->Vk_GetNumberOfFramesInFlightInternal())
 
-    auto& Frontend{this->GetFrontend()};
+    auto& Frontend{this->GetMutableFrontend()};
 
     check(this->Vk_GetNumberOfFramesInFlightInternal() == Frontend.Vk_GetNumberOfFramesInFlight())
     this->Vk_CurrentFrameInFlightIndex = static_cast<u32>((this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlightInternal());
@@ -880,7 +880,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
 
-    auto& Frontend{ this->GetFrontend() };
+    auto& Frontend{this->GetMutableFrontend()};
 
     {
         LVec2i32 _FramebufferSize;

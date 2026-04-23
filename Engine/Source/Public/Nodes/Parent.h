@@ -19,6 +19,8 @@ class ENGINE_API WParent : public WNode
 {
     GENERATED_CLASS_BODY()
 
+    friend class WUserWidget;
+
 protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WParent) noexcept
@@ -49,32 +51,37 @@ public:
 
     virtual bool IsFocusWidgetTransitive(LViewport const* Viewport) const override;
     virtual void OnSurfaceResize() override;
-    virtual bool FindNodeInVisiblePath(WNode const* Node) const override;
+    virtual bool IsNodeInVisiblePath(WNode const* Node) const override;
+    virtual WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept override;
+    virtual WNode* FindNodeInVisiblePath(TSubclassOf<WNode> Class) noexcept override;
 
     FORCEINLINE
     virtual TArray<TJxxUnique<WNode>> const& GetChildren() const noexcept { return this->Children; }
     virtual void RemoveChildren() { algo::orphan(&this->Children); }
 
-    virtual void RemoveChild(WNode* Child)
-    {
-        check(Child)
-        auto It{algo::find(this->Children, Child, [](auto const& E){return &*E;})};
-        if (It == this->Children.end())
-        {
-            LOG_FATAL(LogWidgetFramework, "The child [{}] is not a child of [{}]."
-                , Child->GetNameAsString(), this->GetNameAsString()
-                )
-        }
-        this->Children.erase(It);
-    }
+    //# Called before a child is removed. This methods must not remove the child itself.
+    virtual void OnRemoveChildPrepare(WNode& Child) {}
+    //# Called after a child is removed.
+    virtual void OnRemoveChildPost(WNode& Child) {}
 
-    void AddChild(TJxxUnique<WNode> Child) { this->AddChildAt(this->GetChildren().size(), std::move(Child)); }
-    virtual void AddChildAt(u64 Index, TJxxUnique<WNode> Child);
+    //#
+    //# All nodes except #WUserWidget cannot be removed from their parent without being destroyed.
+    //# If you want to change a #WUserWidget's parent, you have to use #WUserWidget::RemoveFromTree and then
+    //# add it to your desired parent with #AddConstructedChild or #AddConstructedChildAt.
+    //#
+    void RemoveChild(WNode& Child) { this->RemoveChildImpl(Child); }
+    WNode& AddChild(TJxxUnique<WNode> Child) { return this->AddChildAt(this->GetChildren().size(), std::move(Child)); }
+    WNode& AddChildAt(std::size_t Index, TJxxUnique<WNode> Child);
+    WNode& AddConstructedChild(TJxxUnique<WNode> Child) { return this->AddConstructedChildAt(this->GetChildren().size(), std::move(Child)); }
+    WNode& AddConstructedChildAt(std::size_t Index, TJxxUnique<WNode> Child);
+    virtual WNode& OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed);
 
     //# The padding area between the slot and the content it contains.
     LPadding Padding;
 
 private:
+
+    TJxxUnique<WNode> RemoveChildImpl(WNode& Child);
 
     TArray<TJxxUnique<WNode>> Children;
 };

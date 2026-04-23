@@ -110,7 +110,7 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     }
 
     this->Meta.Extent = LTexture2Extent{static_cast<LTexture2Extent::value_type>(StbiExtent.x), static_cast<LTexture2Extent::value_type>(StbiExtent.y)};
-    this->MipMap0.Serialize(Data, static_cast<LSize>(StbiExtent.x * StbiExtent.y) * this->GetBytesPerPixel());
+    this->MipMap0.Serialize(Data, static_cast<std::size_t>(StbiExtent.x * StbiExtent.y) * this->GetBytesPerPixel());
 
     ::stbi_image_free(Data);
 
@@ -226,12 +226,12 @@ Jafg::LTexture2Ref Jafg::LOptionalTexture2Ref::GetResolved() const
 
     if (std::holds_alternative<LString>(this->Variant))
     {
-        if (GEngine)
+        if (GMutableEngine)
         {
-            return GEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
+            return GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
                 ->FromTextureViewIdentifier(std::get<LString>(this->Variant));
         }
-        LOG_FATAL(LogRhi, "Engine is invalid.")
+        LOG_FATAL(LogRhi, "GMutableEngine is invalid.")
     }
 
     return {};

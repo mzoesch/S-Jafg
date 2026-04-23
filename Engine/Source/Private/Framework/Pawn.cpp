@@ -87,7 +87,7 @@ Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept
 {
     if (this->OwningController)
     {
-        return &this->OwningController->GetLocalEgo();
+        return &this->OwningController->GetMutableLocalEgo();
     }
 
     return nullptr;

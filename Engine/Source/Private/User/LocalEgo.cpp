@@ -13,10 +13,10 @@ void Jafg::LLocalEgo::Initialize()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( Tasks::IsOnMasterThread() )
-    check( this->bDecommissioned == false )
+    check(Tasks::IsOnMasterThread())
+    check(this->bDecommissioned == false)
 
-    LCommandLineInterface& Cli{ GEngine->GetCommandLineInterface() };
+    LCommandLineInterface& Cli{GMutableEngine->GetCommandLineInterface() };
     this->VariableHandle_UpdateFrustum = Cli.RegisterVariable({"UpdateFrustum", LCliType::Type("Bool"), "true"});
     this->VariableHandle_VisualizeFrustum = Cli.RegisterVariable({"VisualizeFrustum", LCliType::Type("Bool"), "false"});
     this->VariableHandle_FrustumNearPlane = Cli.RegisterVariable({"NearFrustumPlane", LCliType::Type("Float"), "0.1f",
@@ -88,7 +88,7 @@ void Jafg::LLocalEgo::Initialize()
 
 void Jafg::LLocalEgo::TearDown()
 {
-    check(GEngine)
+    check(GMutableEngine)
     check(this->bDecommissioned == false)
     checkCode(this->bDecommissioned = true)
 
@@ -98,22 +98,34 @@ void Jafg::LLocalEgo::TearDown()
     this->Frontend.TearDown();
     this->Outer.TearDown();
 
-    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_UpdateFrustum);
-    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
-    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
-    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
+    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_UpdateFrustum);
+    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
+    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
+    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
 
     return;
 }
 
-Jafg::LEngine& Jafg::LLocalEgo::GetEngine()
+Jafg::LEngine const& Jafg::LLocalEgo::GetEngine() const
 {
-    check( GEngine )
+    check(GEngine)
     return *GEngine;
 }
 
-Jafg::LCommandLineInterface& Jafg::LLocalEgo::GetCommandLineInterface()
+Jafg::LEngine& Jafg::LLocalEgo::GetMutableEngine()
 {
-    check( GEngine )
+    check(GMutableEngine)
+    return *GMutableEngine;
+}
+
+Jafg::LCommandLineInterface const& Jafg::LLocalEgo::GetCommandLineInterface() const
+{
+    check(GEngine)
     return GEngine->GetCommandLineInterface();
+}
+
+Jafg::LCommandLineInterface& Jafg::LLocalEgo::GetMutableCommandLineInterface()
+{
+    check(GMutableEngine)
+    return GMutableEngine->GetCommandLineInterface();
 }

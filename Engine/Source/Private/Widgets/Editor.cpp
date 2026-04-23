@@ -4,7 +4,6 @@
 #include "Nodes/HDragRegion.h"
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
-#include "Nodes/HRegion.h"
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
@@ -17,14 +16,7 @@ void Jafg::WEditor::Construct()
     Super::Construct();
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    auto NewEditorOverlay{[this]{
-        return NewStaticNode(WTabOverlay)
-            .Delegate([this](auto& F){ this->Overlays.emplace_back(*StaticCast<WTabOverlay>(&F.GetRawNode())); })
-            .Visibility(ENodeVisibility::Visible)
-            .MinDesiredSize({25_pt, 0.0f})
-            .WrapperInjection(WVRegion::StaticSubclass(), [](LFactoryVRegion& Factory){ Factory.SkipBrushDraw(true); })
-            .SelectorsInjection(WHRegion::StaticSubclass());
-        }};
+
 
     BeginStyling(*this).StaticRoot<WVRegion>()
         .Anchor(EAnchor::Fill)
@@ -43,11 +35,11 @@ void Jafg::WEditor::Construct()
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = WTagInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this](LDropDownNodeOption const&) { this->AddWindow<WTagInspector>(); },
+                            .OnAction = [this]{ this->AddWindow<WTagInspector>(true); return LPrimitiveReply::Unhandled(); },
                             },
                         LDropDownNodeOption{
                             .Selector = WColorInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this](LDropDownNodeOption const&) { this->AddWindow<WColorInspector>(); },
+                            .OnAction = [this]{ this->AddWindow<WColorInspector>(true); return LPrimitiveReply::Unhandled(); },
                             },
                         },
                     },
@@ -59,34 +51,16 @@ void Jafg::WEditor::Construct()
                     },
                 },})
         +
-        NewStaticNode(WHDragRegion)
+        NewStaticNode(WTabOverlayHParent)
             // .SetInitialState(LInitialHDragRegionState{100_pt,{},100_pt})
+            .Possibilities(*this)
             .Padding({EWidgetSize::StaticPoints, 3.0f, 0.0f, 3.0f, 3.0f})
             .Tint(*Prefs.BackgroundColor)
-        [
-            NewEditorOverlay()
-            [
-                  WTagInspector::TabCreateInfo() + WColorInspector::TabCreateInfo()
-                // + WColorInspector::CreateTabDescriptor(this->GetViewport())
-                // + LTabOverlayElement{
-                //     .Selector = LTabOverlayElement::CreateInfo{
-                //         .DisplayName = "Tab 2",
-                //         .Icon = this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.Preferences"),
-                //         },
-                //     .Panel = NewStaticNode(WVRegion)
-                //         .Anchor(EAnchor::Fill)
-                //         .Tint(*Prefs.ForegroundColor)
-                //     [
-                //           NewStaticNode(WTextBox).SkipBrushDraw(true).Content("Just Some Text").TextScale(ETextScale::Header)
-                //         + NewStaticNode(WTextBox).SkipBrushDraw(true).Content("Just Some Text").TextScale(ETextScale::SubHeader)
-                //         + NewStaticNode(WTextBox).SkipBrushDraw(true).Content("Just Some Text").TextScale(ETextScale::Body)
-                //         + NewStaticNode(WTextBox).SkipBrushDraw(true).Content("Just Some Text").TextScale(ETextScale::Compact)
-                //         + NewStaticNode(WTextBox).SkipBrushDraw(true).Content("Just Some Text").TextScale(ETextScale::Small)
-                //             // .SamplerAddressMode(UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx)
-                //     ]
-                //     }
-            ]
-        ]
+        // [
+        //     // Make a delegate to autoamtically find and create new TabOverlays in case none exist.
+        //       NewEditorOverlay()[WTagInspector::TabCreateInfo()]
+        //     + NewEditorOverlay()[WColorInspector::TabCreateInfo()]
+        // ]
     ];
 
     // if ( Surface->GetOwnedController())
@@ -121,41 +95,5 @@ void Jafg::WEditor::Construct()
     //     }});
     // }
 
-    check(!this->Overlays.empty())
-
     return;
-}
-
-void Jafg::WEditor::Draw(LNodeRenderInfo const& Info) const
-{
-    Super::Draw(Info);
-}
-
-Jafg::WUserWidget& Jafg::WEditor::AddWindow(LTabCreateInfo Info)
-{
-    if (this->Selected)
-    {
-        if (auto* Widget{this->Selected->FindWidgetSlow(Info.Panel.GetClassOrDefault())})
-        {
-            return *Widget;
-        }
-    }
-    for (auto& Overlay: this->Overlays)
-    {
-        if (auto* Widget{Overlay->FindWidgetSlow(Info.Panel.GetClassOrDefault())})
-        {
-            return *Widget;
-        }
-    }
-
-    WTabOverlay* Overlay{this->Selected};
-    if (!Overlay)
-    {
-        check(!this->Overlays.empty())
-        Overlay = &this->Overlays.front();
-    }
-
-    auto* Result{Overlay->RegisterTab(std::move(Info)).second};
-    check(Result)
-    return *Result;
 }

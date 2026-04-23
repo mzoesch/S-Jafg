@@ -63,16 +63,17 @@ void Jafg::WFloatingWidget::Construct()
                     .InAllBrushes<&LBoxBrush::Tint>(Colors::Transparent)
                     .InAllBrushes<&LBoxBrush::OutlineThickness>(1)
                     .TextBrush({ETextScale::Compact})
-                    .OnPrimaryRelease([this](auto&, LKeyEvent const& KeyEvent)
+                    .OnKeyUp([this](auto&, auto const&, auto const&)
                     {
                         if (this->OnWindowClosedEvent.IsValid())
                         {
                             if (this->OnWindowClosedEvent.Invoke(*this))
                             {
-                                return;
+                                return LReply::Handled();
                             }
                         }
                         this->RemoveFromParent2();
+                        return LReply::Handled();
                     })
             ]
         ];
@@ -93,17 +94,19 @@ void Jafg::WFloatingWidget::Construct()
                 .Content("#")
                 .TextScale(ETextScale::Compact)
                 .Padding({2_spt})
-                .OnPrimaryPress([this](WTextButton&, LKeyEvent const&)
+                .OnKeyDown([this](auto&&...)
                 {
                     this->UiTickResizeHandle = this->GetViewport().OnLateTick.Emplace(this, &WFloatingWidget::UiTickResize);
+                    return LReply::Handled();
                 })
-                .OnPrimaryRelease([this](WTextButton&, LKeyEvent const&)
+                .OnKeyUp([this](auto&&...)
                 {
                     if (this->UiTickResizeHandle.IsValid())
                     {
                         this->GetViewport().OnLateTick.Remove(&this->UiTickResizeHandle);
                     }
                     this->ResizeDragOffset.reset();
+                    return LReply::Handled();
                 });
         }
         else

@@ -314,7 +314,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     {
         const LCommandArgs* Target { nullptr };
 
-        if (algo::is_valid_index(Args.SubArgs, Cursor))
+        if (algo::valid_index(Args.SubArgs, Cursor))
         {
             Target = &Args[Cursor];
         }
@@ -374,9 +374,9 @@ bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TA
 
 TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const TArray<LString>& Values)
 {
-    const LCommandArgs* Target { nullptr };
+    LCommandArgs const* Target{};
 
-    if (algo::is_valid_index(Args.SubArgs, Cursor))
+    if (algo::valid_index(Args.SubArgs, Cursor))
     {
         Target = &Args[Cursor];
     }
@@ -429,7 +429,7 @@ TArray<LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, co
 {
     if (MaxSuggestions > 0)
     {
-        if (algo::is_valid_index(Args.SubArgs, Cursor))
+        if (algo::valid_index(Args.SubArgs, Cursor))
         {
             if (Value.starts_with(Args[Cursor].Name))
             {

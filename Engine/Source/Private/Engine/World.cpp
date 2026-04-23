@@ -65,7 +65,7 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     /* Remove level name from url. */
     if (const auto Idx{Url.find('?')}; Idx != Url.npos)
     {
-        if (algo::is_valid_index(Url, Idx + 1))
+        if (algo::valid_index(Url, Idx + 1))
         {
             algo::inline_right_chop(&Url, Idx + 1);
         }
@@ -115,7 +115,7 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetElapsedTime());
     check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
 
-    if (auto& Track{GEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
+    if (auto& Track{GMutableEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
     {
         Track.Callbacks.OnWorldPreInit(*this);
         Track.Callbacks.OnWorldPreInit.Reset();
@@ -141,7 +141,7 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     this->GetEngine().OnWorldBeginLife.Broadcast(this);
     this->WorldState = EWorldState::Running;
 
-    if (auto& Track{GEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPostInit.IsValid())
+    if (auto& Track{GMutableEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPostInit.IsValid())
     {
         Track.Callbacks.OnWorldPostInit(*this);
         Track.Callbacks.OnWorldPostInit.Reset();
@@ -151,22 +151,40 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     return;
 }
 
-Jafg::LEngine& Jafg::LWorld::GetEngine() const noexcept
+Jafg::LEngine const& Jafg::LWorld::GetEngine() const noexcept
 {
     check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
     return *GEngine;
 }
 
-Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() const noexcept
+Jafg::LEngine& Jafg::LWorld::GetEngine() noexcept
+{
+    check(GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
+    return *GMutableEngine;
+}
+
+Jafg::LCommandLineInterface const& Jafg::LWorld::GetCommandLineInterface() const noexcept
 {
     check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
     return GEngine->GetCommandLineInterface();
 }
 
-Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexcept
+Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() noexcept
+{
+    check(GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
+    return GMutableEngine->GetCommandLineInterface();
+}
+
+Jafg::LLocalEgo const& Jafg::LWorld::GetLocalEgo() const noexcept
 {
     check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
     return GEngine->GetLocalEgo();
+}
+
+Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() noexcept
+{
+    check(GMutableEngine && "Absence of GEnGMutableEnginegine when a world exists is undefined behavior.")
+    return GMutableEngine->GetLocalEgo();
 }
 
 void Jafg::LWorld::Tick(f32 Dt)
@@ -505,7 +523,7 @@ void Jafg::LWorld::OnTearDown()
 
     LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
 #if !IN_SHIPPING
-    LSize ActorCount{};
+    std::size_t ActorCount{};
 #endif /* !IN_SHIPPING */
     for (auto Idx{0uz}; Idx < this->GetEmployees().size();)
     {

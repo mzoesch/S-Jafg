@@ -127,6 +127,32 @@ Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const
     return LReply::Unhandled();
 }
 
+Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+{
+    if (this->OnKeyDownNoFocusEvent)
+    {
+        if (auto Reply{this->OnKeyDownNoFocusEvent(*this, Data, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+    }
+
+    return LReply::Unhandled();
+}
+
+Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+{
+    if (this->OnKeyUpNoFocusEvent)
+    {
+        if (auto Reply{this->OnKeyUpNoFocusEvent(*this, Data, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+    }
+
+    return LReply::Unhandled();
+}
+
 bool Jafg::WNode::IsFocusWidget() const
 {
     return this->IsFocusWidget(&this->GetViewport());
@@ -177,7 +203,7 @@ void Jafg::WNode::RemoveFromParent2()
 
     if (this->Parent)
     {
-        this->Parent->RemoveChild(this);
+        this->Parent->RemoveChild(*this);
     }
     else
     {
@@ -205,7 +231,7 @@ Jafg::WNode const& Jafg::WNode::GetMostOuterParent() const noexcept
     return *this;
 }
 
-bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
+bool Jafg::WNode::IsNodeInVisiblePath(const WNode* InNode) const
 {
     return this == InNode && this->ShouldNowDraw();
 }
@@ -307,10 +333,16 @@ TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept
     return {};
 }
 
-Jafg::LFrontend& Jafg::WNode::GetFrontend() const noexcept
+Jafg::LFrontend const& Jafg::WNode::GetFrontend() const noexcept
 {
     check(GEngine && "Absence of GEngine if undefined behavior.")
     return GEngine->GetLocalEgo().GetFrontend();
+}
+
+Jafg::LFrontend& Jafg::WNode::GetMutableFrontend() const noexcept
+{
+    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    return GMutableEngine->GetLocalEgo().GetFrontend();
 }
 
 #if JAFG_DO_CHECKS

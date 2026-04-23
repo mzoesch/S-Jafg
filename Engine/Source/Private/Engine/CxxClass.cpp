@@ -59,28 +59,45 @@ void Jafg::JCxxClass::KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason /
     return;
 }
 
-Jafg::LEngine& Jafg::JCxxClass::GetEngine() const noexcept
+Jafg::LEngine const& Jafg::JCxxClass::GetEngine() const noexcept
 {
     check(GEngine && "Absence of GEngine if undefined behavior.")
     return *GEngine;
 }
 
-Jafg::LLocalEgo& Jafg::JCxxClass::GetLocalEgo() const noexcept
+Jafg::LEngine& Jafg::JCxxClass::GetMutableEngine() noexcept
+{
+    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    return *GMutableEngine;
+}
+
+Jafg::LLocalEgo const& Jafg::JCxxClass::GetLocalEgo() const noexcept
 {
     check(GEngine && "Absence of GEngine if undefined behavior.")
     return GEngine->GetLocalEgo();
 }
+Jafg::LLocalEgo& Jafg::JCxxClass::GetMutableLocalEgo() noexcept
+{
+    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    return GMutableEngine->GetLocalEgo();
+}
 
-Jafg::LCommandLineInterface& Jafg::JCxxClass::GetCommandLineInterface() const noexcept
+Jafg::LCommandLineInterface const& Jafg::JCxxClass::GetCommandLineInterface() const noexcept
 {
     check(GEngine && "Absence of GEngine if undefined behavior.")
     return GEngine->GetCommandLineInterface();
 }
 
+Jafg::LCommandLineInterface& Jafg::JCxxClass::GetMutableCommandLineInterface() noexcept
+{
+    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    return GMutableEngine->GetCommandLineInterface();
+}
+
 void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
 {
     // TODO: Add arg to ignore pulling
-    check(GEngine && "Absence of GEngine if undefined behavior.")
+    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
 
     LPath Path{InPath};
     if (Path == LPath{})
@@ -92,8 +109,8 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
     LOG_VERBOSE(LogObjectInternal, "Pulling config for [{}]", this->GetNameAsString())
     check(Class.IsConfig())
 
-    GEngine->Config.PullConfigFile(Path);
-    if (auto* Section{GEngine->Config.GetConfigSection(Path, this->GetNameAsString())})
+    GMutableEngine->Config.PullConfigFile(Path);
+    if (auto* Section{GMutableEngine->Config.GetConfigSection(Path, this->GetNameAsString())})
     {
         for (auto& [Key, Value] : *Section)
         {
@@ -109,7 +126,7 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
 
 void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
 {
-    check(GEngine && "Absence of GEngine if undefined behavior.")
+    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
 
     LPath Path{InPath};
     if (Path == LPath{})
@@ -129,7 +146,7 @@ void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
     }
     if (Entries.empty() == false)
     {
-        GEngine->Config.AddConfigSection(Path, this->GetNameAsString(), Entries);
+        GMutableEngine->Config.AddConfigSection(Path, this->GetNameAsString(), Entries);
     }
 
     return;

@@ -186,9 +186,12 @@ public:
     void InitializeWorld(TOptional<LLevel> const& Level = {}, LString&& Url = {});
 
     //# There are no checked alternatives, as the engine must be valid at all times if a world exists.
-    ENGINE_API LEngine& GetEngine() const noexcept;
-    ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexcept;
-    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
+    ENGINE_API LEngine const& GetEngine() const noexcept;
+    ENGINE_API LEngine& GetEngine() noexcept;
+    ENGINE_API LCommandLineInterface const& GetCommandLineInterface() const noexcept;
+    ENGINE_API LCommandLineInterface& GetCommandLineInterface() noexcept;
+    ENGINE_API LLocalEgo const& GetLocalEgo() const noexcept;
+    ENGINE_API LLocalEgo& GetLocalEgo() noexcept;
 
     //#
     //# The real URL that was used to launch this world. This might not be valid.

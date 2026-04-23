@@ -138,7 +138,7 @@ public:
     ENGINE_API void SetAllowNewPendingPackages(const bool bAllow) noexcept;
 
     //# Removes all packages loaded by the provided plugin handle.
-    ENGINE_API LSize RemovePackagesOf(const LLoadedPluginHandle Handle);
+    ENGINE_API std::size_t RemovePackagesOf(const LLoadedPluginHandle Handle);
 
     //# Prematurly free all packages and do not wait for undefined static storage for said task.
     ENGINE_API void TearDown();

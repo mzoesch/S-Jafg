@@ -398,7 +398,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         check(PrimaryMonitor)
     }
     LOG_VERBOSE(LogSurface, "Found [{}] physical monitors connected.", MonitorCount)
-    for (auto MonitorIndex{0uz}; MonitorIndex < static_cast<LSize>(MonitorCount); ++MonitorIndex)
+    for (auto MonitorIndex{0uz}; MonitorIndex < static_cast<std::size_t>(MonitorCount); ++MonitorIndex)
     {
         GLFWmonitor* Monitor{Monitors[MonitorIndex]};
         check(Monitor)

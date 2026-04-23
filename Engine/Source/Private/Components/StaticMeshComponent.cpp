@@ -13,7 +13,7 @@
 void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
 {
     Super::OnAttach(InOwner);
-    this->ShaderSubsystem = this->GetLocalEgo().GetFrontend().GetSubsystemChecked<JShaderSubsystem>();
+    this->ShaderSubsystem = this->GetMutableLocalEgo().GetFrontend().GetSubsystemChecked<JShaderSubsystem>();
     return;
 }
 

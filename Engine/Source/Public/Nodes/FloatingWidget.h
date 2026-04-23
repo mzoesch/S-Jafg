@@ -38,10 +38,10 @@ public:
     EVENT_DECL(ContentEvent, void(WFloatingWidget& FloatingWidget, WParent& Container))
     virtual void Construct() override;
 
-    virtual void AddChildAt(u64 Index, TJxxUnique<WNode> Child) override
+    virtual WNode& OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed) override
     {
         check(this->GetChildren().empty() && "WFloatingWidget can only have one child.")
-        Super::AddChildAt(Index, std::move(Child));
+        return Super::OnAddChild(Index, std::move(Child), bConstructed);
     }
 
     inline WNode& GetWindow() noexcept { check(this->GetChildren().size() == 1) return *this->GetChildren()[0]; }

@@ -55,8 +55,8 @@ public:
 
     FORCEINLINE constexpr bool IsAllocated() const noexcept { return this->Bulk != nullptr; }
 
-    FORCEINLINE constexpr LSize GetNumber() const noexcept { return this->Number; }
-    FORCEINLINE constexpr LSize GetByteSize() const noexcept { return this->Number * sizeof(LDomain); }
+    FORCEINLINE constexpr std::size_t GetNumber() const noexcept { return this->Number; }
+    FORCEINLINE constexpr std::size_t GetByteSize() const noexcept { return this->Number * sizeof(LDomain); }
 
     FORCEINLINE constexpr LDomain* data() noexcept { return this->Bulk; }
     FORCEINLINE constexpr LDomain const* data() const noexcept { return this->Bulk; }
@@ -68,20 +68,20 @@ public:
     FORCEINLINE constexpr auto end() noexcept { return this->Bulk + this->Number; }
     FORCEINLINE constexpr auto end() const noexcept { return this->Bulk + this->Number; }
 
-    FORCEINLINE constexpr LDomain& operator[](LSize Idx) noexcept
+    FORCEINLINE constexpr LDomain& operator[](std::size_t Idx) noexcept
     {
         check(this->Bulk)
         check(Idx < this->Number)
         return this->Bulk[Idx];
     }
-    FORCEINLINE constexpr LDomain const& operator[](LSize Idx) const noexcept
+    FORCEINLINE constexpr LDomain const& operator[](std::size_t Idx) const noexcept
     {
         check(this->Bulk)
         check(Idx < this->Number)
         return this->Bulk[Idx];
     }
 
-    FORCEINLINE constexpr void Allocate(const LSize DomainNumber)
+    FORCEINLINE constexpr void Allocate(const std::size_t DomainNumber)
     {
         check( this->IsAllocated() == false )
         check( DomainNumber > 0 )
@@ -92,14 +92,14 @@ public:
         return;
     }
 
-    FORCEINLINE void AllocateZeroed(const LSize DomainNumber)
+    FORCEINLINE void AllocateZeroed(const std::size_t DomainNumber)
     {
         this->Allocate(DomainNumber);
         std::memset(this->Bulk, 0, this->GetByteSize());
         return;
     }
 
-    FORCEINLINE void Serialize(LDomain const* InBulk, const LSize DomainNumber, const LSize InOffset = 0)
+    FORCEINLINE void Serialize(LDomain const* InBulk, const std::size_t DomainNumber, const std::size_t InOffset = 0)
     {
         check( this->IsAllocated() == false )
         check( InBulk && DomainNumber > 0 )
@@ -126,7 +126,7 @@ public:
 
 private:
 
-    LSize Number{};
+    std::size_t Number{};
     LDomain* Bulk{};
 };
 

@@ -193,7 +193,7 @@ void Jafg::Detail::LCxxRecordRegistry::SetAllowNewPendingPackages(const bool bAl
     return;
 }
 
-LSize Jafg::Detail::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHandle Handle)
+std::size_t Jafg::Detail::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHandle Handle)
 {
     check(Tasks::IsOnMasterThread())
     check(this->bAllowNewPendingPackages == false)
@@ -218,7 +218,7 @@ LSize Jafg::Detail::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHand
     }
 
 #if JAFG_DO_CHECKS
-    LSize It1{};
+    std::size_t It1{};
 #endif /* JAFG_DO_CHECKS */
     for (auto It{this->RegisteredPackages.begin()}; this->RegisteredPackages.end() != It; ++It)
     {
@@ -237,7 +237,7 @@ LSize Jafg::Detail::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHand
         continue;
     }
 
-    LSize Out{};
+    std::size_t Out{};
     for (auto It{this->RegisteredPackages.begin()}; this->RegisteredPackages.end() != It;)
     {
         check((*It)->Origin.IsValid())

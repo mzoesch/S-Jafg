@@ -264,13 +264,16 @@ public:
     FORCEINLINE TObj const* AsAsserted() const noexcept;
 
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
-    FORCEINLINE TObj* AsStatic() noexcept;
+    FORCEINLINE TObj& AsStatic() noexcept;
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
-    FORCEINLINE TObj const* AsStatic() const noexcept;
+    FORCEINLINE TObj const& AsStatic() const noexcept;
 
-    ENGINE_API LEngine& GetEngine() const noexcept;
-    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
-    ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexcept;
+    ENGINE_API LEngine const& GetEngine() const noexcept;
+    ENGINE_API LEngine& GetMutableEngine() noexcept;
+    ENGINE_API LLocalEgo const& GetLocalEgo() const noexcept;
+    ENGINE_API LLocalEgo& GetMutableLocalEgo() noexcept;
+    ENGINE_API LCommandLineInterface const& GetCommandLineInterface() const noexcept;
+    ENGINE_API LCommandLineInterface& GetMutableCommandLineInterface() noexcept;
 
     //# If you want a custom path, the override this and call super with your path.
     ENGINE_API virtual void PullConfig(LPath const& InPath = {}) noexcept;
@@ -645,15 +648,17 @@ FORCEINLINE TObj const* JCxxClass::AsAsserted() const noexcept
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
-FORCEINLINE TObj* JCxxClass::AsStatic() noexcept
+FORCEINLINE TObj& JCxxClass::AsStatic() noexcept
 {
-    return StaticCast<TObj>(this);
+    check(this)
+    return *StaticCast<TObj>(this);
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
-FORCEINLINE TObj const* JCxxClass::AsStatic() const noexcept
+FORCEINLINE TObj const& JCxxClass::AsStatic() const noexcept
 {
-    return StaticCast<TObj>(this);
+    check(this)
+    return *StaticCast<TObj>(this);
 }
 
 } /* ~Namespace Jafg */

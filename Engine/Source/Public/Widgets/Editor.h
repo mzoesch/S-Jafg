@@ -4,6 +4,7 @@
 
 #include "Nodes/UserWidget.h"
 #include "Nodes/GenericTabInfos.h"
+#include "Nodes/TabOverlay.h"
 #include "Editor.generated.h"
 
 namespace Jafg
@@ -12,30 +13,25 @@ namespace Jafg
 class WTabOverlay;
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WEditor final : public WUserWidget
+class ENGINE_API WEditor final : public WUserWidget, public LTabOverlayPossibilities
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS(WEditor)
+    inline  explicit WEditor(LNodeDynamicInit const& Init) noexcept
+        : Super{Init}, LTabOverlayPossibilities{*static_cast<WUserWidget*>(this)}
+    {
+    }
+    template<typename TCxxClass>
+    inline explicit WEditor(TNodeStaticInit<TCxxClass> const& Init) noexcept
+        : Super{Init}, LTabOverlayPossibilities{*static_cast<WUserWidget*>(this)}
+    {
+    }
 
 public:
 
     virtual void Construct() override;
-    virtual void Draw(LNodeRenderInfo const& Info) const override;
-
-    WUserWidget& AddWindow(LTabCreateInfo Info);
-    template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget> && CTabCandidate<TWidget>
-    inline TWidget& AddWindow()
-    {
-        return *StaticCast<TWidget>(&this->AddWindow(TWidget::TabCreateInfo()));
-    }
-
-private:
-
-    WTabOverlay* Selected{};
-    TArray<TReference<WTabOverlay>> Overlays;
 };
 
 } /* ~Namespace Jafg */

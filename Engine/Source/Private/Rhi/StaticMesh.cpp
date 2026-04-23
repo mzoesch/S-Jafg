@@ -294,12 +294,12 @@ void Jafg::LStaticMesh::LoadToDevice()
     }
     check(this->IndexCount == 0 && this->VertexBuffer.GetAllocation() == nullptr && this->IndexBuffer.GetAllocation() == nullptr)
 
-    this->VertexBuffer = GEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
+    this->VertexBuffer = GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
         .BufferCopy = vk::BufferCopy{0, 0, sizeof(this->Vertices[0]) * this->Vertices.size()},
         .Data = this->Vertices.data(),
         }));
 
-    this->IndexBuffer = GEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Index({
+    this->IndexBuffer = GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Index({
         .BufferCopy = vk::BufferCopy{0, 0, sizeof(this->Indices[0]) * this->Indices.size()},
         .Data = this->Indices.data(),
         }));

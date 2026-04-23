@@ -52,7 +52,18 @@ public:
 
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSize(LViewport const& Viewport) const override;
-    virtual void AddChildAt(u64 Index, TJxxUnique<WNode> Child) override;
+    virtual void OnRemoveChildPost(WNode& Child) override
+    {
+        Super::OnRemoveChildPost(Child);
+        if (this->GetChildren().empty() == false)
+        {
+            this->GetChildren().back()->Anchor = EAnchor::Fill;
+            check(this->DragChildSlots.contains(this->GetChildren().back().get()))
+            checkCode(this->DragChildSlots.at(this->GetChildren().back().get()).Anchor = EAnchor::Fill)
+        }
+        return;
+    }
+    virtual WNode& OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed) override;
 
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;

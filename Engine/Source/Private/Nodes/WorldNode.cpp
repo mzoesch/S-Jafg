@@ -58,7 +58,7 @@ void Jafg::WWorldNode::PossessPersonaController(TJxxUnique<APersonaController> N
         // }
     }
 
-    this->GetLocalEgo().ForEachMutableSubsystem([New = New.get()](JLocalEgoSubsystem* Subsystem)
+    this->GetMutableLocalEgo().ForEachMutableSubsystem([New = New.get()](JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPersonaController(New);
     });

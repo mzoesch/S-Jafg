@@ -51,7 +51,7 @@ struct LDynamicBitset final
     bool IsAllocated(u64 Index) const noexcept
     {
         u64 word = Index / 64;
-        LSize bit  = Index % 64;
+        std::size_t bit  = Index % 64;
         return (Words[word] >> bit) & 1;
     }
 

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Minimal.afx"
+#include "Nodes/Node.h"
 
 #define JAFG_NODE_BUTTON_BOILERPLATE() \
     virtual LCursorReply OnCursorEnter() override{ return this->ButtonBase_OnCursorEnter(); } \
@@ -134,16 +134,6 @@ public:
 
     constexpr TButtonBase(TNode& InOwner) noexcept : Owner(InOwner) {}
     virtual ~TButtonBase() = default;
-
-    EVENT_DECL(OnPrimaryPressDelegate, void(TNode& Self, LKeyEvent const& Event))
-    EVENT_DECL(OnPrimaryReleaseDelegate, void(TNode& Self, LKeyEvent const& Event))
-    EVENT_DECL(OnSecondaryPressDelegate, void(TNode& Self, LKeyEvent const& Event))
-    EVENT_DECL(OnSecondaryReleaseDelegate, void(TNode& Self, LKeyEvent const& Event))
-    //# These methods will only be called if the delegates are not bound.
-    virtual void OnPrimaryPress() {}
-    virtual void OnPrimaryRelease() {}
-    virtual void OnSecondaryPress() {}
-    virtual void OnSecondaryRelease() {}
 
     NODISCARD constexpr bool IsEnabled() const noexcept { return this->bEnabled; }
     constexpr void SetEnabled(bool bInEnabled) noexcept
@@ -285,54 +275,43 @@ protected:
             return LReply::Unhandled();
         }
 
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+        if (Data.CursorLocation.has_value())
         {
-            if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+            if (this->Owner.IsInBounds({.Translation=Data.Translation}, *Data.CursorLocation))
             {
-                this->Owner.*BrushProj = this->Style.PressBrush;
-            }
-            LReply Result{LReply::Handled()};
-            if (this->Owner.OnKeyDownEvent.IsValid())
-            {
-                if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                 {
-                    Result = Reply;
+                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+                    {
+                        this->Owner.*BrushProj = this->Style.PressBrush;
+                    }
+                    LReply Result{LReply::Handled()};
+                    if (this->Owner.OnKeyDownEvent.IsValid())
+                    {
+                        if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        {
+                            Result = Reply;
+                        }
+                    }
+                    return Result;
+                }
+                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+                {
+                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+                    {
+                        this->Owner.*BrushProj = this->Style.PressBrush;
+                    }
+                    LReply Result{LReply::Handled()};
+                    if (this->Owner.OnKeyDownEvent.IsValid())
+                    {
+                        if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        {
+                            Result = Reply;
+                        }
+                    }
+                    return Result;
                 }
             }
-            if (this->OnPrimaryPressDelegate.IsValid())
-            {
-                this->OnPrimaryPressDelegate.Invoke(this->Owner, Event);
-            }
-            else
-            {
-                this->OnPrimaryPress();
-            }
-            return Result;
-        }
-
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
-        {
-            if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-            {
-                this->Owner.*BrushProj = this->Style.PressBrush;
-            }
-            LReply Result{LReply::Handled()};
-            if (this->Owner.OnKeyDownEvent.IsValid())
-            {
-                if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
-                {
-                    Result = Reply;
-                }
-            }
-            if (this->OnSecondaryPressDelegate.IsValid())
-            {
-                this->OnSecondaryPressDelegate.Invoke(this->Owner, Event);
-            }
-            else
-            {
-                this->OnSecondaryPress();
-            }
-            return Result;
         }
 
         if (this->Owner.OnKeyDownEvent.IsValid())
@@ -360,54 +339,43 @@ protected:
             return LReply::Unhandled();
         }
 
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+        if (Data.CursorLocation.has_value())
         {
-            if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+            if (this->Owner.IsInBounds({.Translation=Data.Translation}, *Data.CursorLocation))
             {
-                this->Owner.*BrushProj = this->Style.HoverBrush;
-            }
-            LReply Result{LReply::Handled()};
-            if (this->Owner.OnKeyUpEvent.IsValid())
-            {
-                if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                 {
-                    Result = Reply;
+                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+                    {
+                        this->Owner.*BrushProj = this->Style.HoverBrush;
+                    }
+                    LReply Result{LReply::Handled()};
+                    if (this->Owner.OnKeyUpEvent.IsValid())
+                    {
+                        if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        {
+                            Result = Reply;
+                        }
+                    }
+                    return Result;
+                }
+                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+                {
+                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+                    {
+                        this->Owner.*BrushProj = this->Style.HoverBrush;
+                    }
+                    LReply Result{LReply::Handled()};
+                    if (this->Owner.OnKeyUpEvent.IsValid())
+                    {
+                        if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        {
+                            Result = Reply;
+                        }
+                    }
+                    return Result;
                 }
             }
-            if (this->OnPrimaryReleaseDelegate.IsValid())
-            {
-                this->OnPrimaryReleaseDelegate.Invoke(this->Owner, Event);
-            }
-            else
-            {
-                this->OnPrimaryRelease();
-            }
-            return Result;
-        }
-
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
-        {
-            if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-            {
-                this->Owner.*BrushProj = this->Style.HoverBrush;
-            }
-            LReply Result{LReply::Handled()};
-            if (this->Owner.OnKeyUpEvent.IsValid())
-            {
-                if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
-                {
-                    Result = Reply;
-                }
-            }
-            if (this->OnSecondaryReleaseDelegate.IsValid())
-            {
-                this->OnSecondaryReleaseDelegate.Invoke(this->Owner, Event);
-            }
-            else
-            {
-                this->OnSecondaryRelease();
-            }
-            return Result;
         }
 
         if (this->Owner.OnKeyUpEvent.IsValid())
@@ -439,11 +407,6 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
     NODE_FACTORY_BODY(TNode)
 
     typedef typename TNode::_ButtonBaseBrush Brush;
-
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnPrimaryPress, OnPrimaryPressDelegate)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnPrimaryRelease, OnPrimaryReleaseDelegate)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnSecondaryPress, OnSecondaryPressDelegate)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnSecondaryRelease, OnSecondaryReleaseDelegate)
 
     decltype(auto) Enabled(this auto&& Self, bool bEnabled) noexcept
     {

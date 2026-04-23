@@ -44,7 +44,7 @@ void FlushLogs()
     Jafg::FlushOutStreams();
     if (GEngine)
     {
-        GEngine->LastStdOutFlush = LEngine::Clock::now();
+        GMutableEngine->LastStdOutFlush = LEngine::Clock::now();
     }
     return;
 }
@@ -74,8 +74,8 @@ void EngineTick()
     }
 
     Application::Detail::BeginExitIfRequested();
-    GEngine->DefaultTimeAdvance();
-    GEngine->Tick();
+    GMutableEngine->DefaultTimeAdvance();
+    GMutableEngine->Tick();
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;
@@ -93,7 +93,7 @@ void EngineExit()
 
     if (GEngine)
     {
-        GEngine->TearDown();
+        GMutableEngine->TearDown();
     }
 
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
@@ -102,8 +102,9 @@ void EngineExit()
 
     if (GEngine)
     {
-        delete GEngine;
+        delete GMutableEngine;
         GEngine = nullptr;
+        GMutableEngine = nullptr;
     }
 
     (void)Detail::GetNameRegistry().Destroy();
@@ -199,13 +200,7 @@ EPlatformExit::Type GuardedMain()
 
 #if !WITH_TESTS
 #if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
-    struct GuardedMainScope
-    {
-        ~GuardedMainScope()
-        {
-            EngineExit();
-        }
-    } GuardedMainScope;
+    algo::raii_leave _{&EngineExit};
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
 
     LOG_INFO(LogGuardedMain, "Finished static storage initialization after {} seconds.", Application::GetElapsedTime())
@@ -250,7 +245,8 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineInit, "EngineInit")
     check(GEngine == nullptr)
-    GEngine = new LEngine{};
+    GMutableEngine = new LEngine{};
+    GEngine = GMutableEngine;
     check(GEngine)
     if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
@@ -264,7 +260,7 @@ EPlatformExit::Type GuardedMain()
     if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmObjects)
 
-    GEngine->Initialize();
+    GMutableEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
     if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmEngineInit)
@@ -272,10 +268,10 @@ EPlatformExit::Type GuardedMain()
 #if JAFG_WITH_FOREIGN_SUPPORT
     STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
     JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
-    GEngine->RefetchPlugins(Prefs.AdditionalPluginsSearchPaths);
+    GMutableEngine->RefetchPlugins(Prefs.AdditionalPluginsSearchPaths);
     for (LString const& Plugin : Prefs.EnabledEnginePlugins)
     {
-        GEngine->LoadPluginNoFailure(Plugin);
+        GMutableEngine->LoadPluginNoFailure(Plugin);
     }
     if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(GmEnabledEnginePluginsLoad)
@@ -290,13 +286,13 @@ EPlatformExit::Type GuardedMain()
 
 #if JAFG_WITH_REST_CLS
     STAT_CYCLE_START(GmReSTCliLoad, "ReSTCliLoad")
-    GEngine->SetReSTCliCorePaths();
+    GMutableEngine->SetReSTCliCorePaths();
     if (auto const& ReSTCliPrefs{GetSingleton<JReSTCliPreferences>()}; ReSTCliPrefs.bAlwaysDisable == false)
     {
         if ((ReSTCliPrefs.bAutoStart && !Application::GetCommandLineArgument("ReSTCli.DisableAutoStart"))
             || !!Application::GetCommandLineArgument("ReSTCli.InstantStart"))
         {
-            GEngine->StartReSTCliServer();
+            GMutableEngine->StartReSTCliServer();
         }
     }
     if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
@@ -307,9 +303,9 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     LaunchProgress::FinishAndGiveUpMemory();
 
-    GEngine->PreviousFrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    GMutableEngine->PreviousFrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
     Hal::YieldThread();
-    GEngine->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    GMutableEngine->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")

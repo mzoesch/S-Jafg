@@ -54,7 +54,6 @@ struct LPrimitivePlatformTypesGeneric;
 struct LPrimitivePlatformTypesWindows final : public LPrimitivePlatformTypesGeneric
 {
     #define JAFG_PLATFORM_U64_SIZET_EQ 1
-    typedef size_t LSize;
     typedef wchar_t LChar;
 };
 

@@ -11,7 +11,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    LCommandLineInterface& CommandLineInterface{this->GetCommandLineInterface()};
+    LCommandLineInterface& CommandLineInterface{this->GetMutableCommandLineInterface()};
 
     // Command: Quit
     this->CommandHandle_Quit = CommandLineInterface.RegisterCommandChecked({"Quit", "Quit to desktop.",
@@ -40,7 +40,7 @@ void Jafg::JCoreCommandSubsystem::TearDown()
 {
     Super::TearDown();
 
-    LCommandLineInterface& CommandLineInterface{this->GetCommandLineInterface()};
+    LCommandLineInterface& CommandLineInterface{this->GetMutableCommandLineInterface()};
 
 #define UNREGISTER_COMMAND(CommandHandle)                                                  \
     if (CommandLineInterface.UnregisterCommand(&(CommandHandle)) == false)                 \

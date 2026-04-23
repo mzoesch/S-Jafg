@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-template<std::unsigned_integral T, LSize Alignment = alignof(T)>
+template<std::unsigned_integral T, std::size_t Alignment = alignof(T)>
 struct TTag
 {
     template <typename TTag, typename TAllocator>
@@ -110,7 +110,7 @@ struct TTagRegistry
         return TagType{static_cast<typename TagType::SizeType>(this->GetTagCount())};
     }
 
-    template <LSize N>
+    template <std::size_t N>
     FORCEINLINE TagType RegisterOrGet(const char(&InRepr)[N]) noexcept
     {
         return this->RegisterOrGet(LStringView{InRepr, N - 1});

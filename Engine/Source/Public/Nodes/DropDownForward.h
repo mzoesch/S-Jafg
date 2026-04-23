@@ -23,7 +23,7 @@ struct LDropDownNodeOption final
 {
     LTabSelectorCreateInfo Selector;
     // TODO: Add shortcut hint
-    TFunction<void(LDropDownNodeOption const& Option)> OnAction;
+    TCopyableFunction<LPrimitiveReply()> OnAction;
 };
 
 struct LDropDownNodeSeparator final

@@ -8,18 +8,18 @@
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const noexcept
 {
-    if (GEngine)
+    if (GMutableEngine)
     {
-        return &GEngine->GetCommandLineInterface();
+        return &GMutableEngine->GetCommandLineInterface();
     }
     return nullptr;
 }
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectRaiiHandle::GetCommandLineInterface() const noexcept
 {
-    if (GEngine)
+    if (GMutableEngine)
     {
-        return &GEngine->GetCommandLineInterface();
+        return &GMutableEngine->GetCommandLineInterface();
     }
     return nullptr;
 }

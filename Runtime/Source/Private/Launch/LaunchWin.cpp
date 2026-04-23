@@ -79,7 +79,7 @@ i32 main(i32 ArgC, char* ArgV[])
     i32 ErrorLevel{};
 
     TArray<LString> Arguments;
-    for (auto Idx{0uz}; Idx < static_cast<LSize>(ArgC); ++Idx)
+    for (auto Idx{0uz}; Idx < static_cast<std::size_t>(ArgC); ++Idx)
     {
         Arguments.emplace_back(ArgV[Idx]);
     }

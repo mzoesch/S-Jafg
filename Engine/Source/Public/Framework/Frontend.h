@@ -92,14 +92,16 @@ public:
     void Tick();
     void TearDown();
 
-    ENGINE_API LEngine&   GetEngine() const noexcept;
-    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
+    ENGINE_API LEngine const& GetEngine() const noexcept;
+    ENGINE_API LEngine& GetMutableEngine() noexcept;
+    ENGINE_API LLocalEgo const& GetLocalEgo() const noexcept;
+    ENGINE_API LLocalEgo& GetMutableLocalEgo() noexcept;
 
     FORCEINLINE TArray<LPhysicalViewport> const& GetPhysicalViewports() const noexcept { return this->UsablePhysicalViewports; }
 
     ENGINE_API void AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior = ENewSurfaceBehavior::NoAction) noexcept;
 
-    FORCEINLINE LSize GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
+    FORCEINLINE std::size_t GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
     FORCEINLINE TArray<TUnique<LSurface>>& GetSurfaces() noexcept { return this->Surfaces; }
     FORCEINLINE TArray<TUnique<LSurface>> const& GetSurfaces() const noexcept { return this->Surfaces; }
 

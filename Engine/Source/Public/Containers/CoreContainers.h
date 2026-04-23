@@ -70,7 +70,7 @@ public:
 
     inline void clear() noexcept
     {
-        for (LSize Idx{ 0 }; Idx < this->Size; ++Idx)
+        for (auto Idx{ 0uz }; Idx < this->Size; ++Idx)
         {
             this->Data[Idx] = _Tp{};
             continue;
@@ -111,25 +111,25 @@ public:
         return this->Data.data() + this->Size;
     }
 
-    [[nodiscard]] inline _Tp& operator[](LSize Index) noexcept
+    [[nodiscard]] inline _Tp& operator[](std::size_t Index) noexcept
     {
         JAFG_FWD_CHECK([_Size = this->Size, Index]{ return Index < _Size; })
         return this->Data[Index];
     }
 
-    [[nodiscard]] inline _Tp const& operator[](LSize Index) const noexcept
+    [[nodiscard]] inline _Tp const& operator[](std::size_t Index) const noexcept
     {
         JAFG_FWD_CHECK([_Size = this->Size, Index]{ return Index < _Size; })
         return this->Data[Index];
     }
 
-    [[nodiscard]] inline LSize size() const noexcept
+    [[nodiscard]] inline std::size_t size() const noexcept
     {
         return this->Size;
     }
 
     std::array<_Tp, _Nm> Data;
-    LSize Size{ 0 };
+    std::size_t Size{};
 };
 
 } /* ~Namespace Jafg */

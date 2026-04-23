@@ -14,7 +14,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
     Collection.InitializeDependency<Jafg::JCoreInputSubsystem>(this);
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    Jafg::LUserInputRegistry& Registry{this->GetLocalEgo().GetUserInputRegistry()};
+    Jafg::LUserInputRegistry& Registry{this->GetMutableLocalEgo().GetUserInputRegistry()};
 
     if (Jafg::LUserInputContext* Context{Registry.RegisterContext(Jafg::LUserInputContext{"DebugCamera"})})
     {

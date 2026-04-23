@@ -25,12 +25,12 @@ void Jafg::WHDragRegion::UpdateDesiredSize() const
 {
     checkCode
     (
-        for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
-        {
-            check(this->GetChildren()[Idx]->Anchor == EAnchor::VFill)
-        }
         if (this->GetChildren().empty() == false)
         {
+            for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
+            {
+                check(this->GetChildren()[Idx]->Anchor == EAnchor::VFill)
+            }
             check(this->GetChildren().back()->Anchor == EAnchor::Fill)
         }
     )
@@ -172,10 +172,8 @@ void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
     return;
 }
 
-void Jafg::WHDragRegion::AddChildAt(u64 Index, TJxxUnique<WNode> Child)
+Jafg::WNode& Jafg::WHDragRegion::OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed)
 {
-    check(this->bInitialStateExecuted == false && "It is currently only allowed to add children during construction of this node.")
-
     check(Child.get())
     check(Child->Anchor == EAnchor::TopLeft && "Expected default anchor as this parent does not allow messing with the anchors.")
 
@@ -186,11 +184,11 @@ void Jafg::WHDragRegion::AddChildAt(u64 Index, TJxxUnique<WNode> Child)
     this->DragChildSlots[Child.get()] = LChildSlot{Child->Anchor
         , (Child->MinDesiredSize.X > 0.0f) ? LWidgetSize1{Child->MinDesiredSize.Type, Child->MinDesiredSize.X} : TOptional<LWidgetSize1>{}
         , (Child->MaxDesiredSize.X > 0.0f) ? LWidgetSize1{Child->MaxDesiredSize.Type, Child->MaxDesiredSize.X} : TOptional<LWidgetSize1>{}
-        };
+    };
     Child->MinDesiredSize = {};
     Child->MaxDesiredSize = {};
 
-    Super::AddChildAt(Index, std::move(Child));
+    auto& Result{Super::OnAddChild(Index, std::move(Child), bConstructed)};
 
     for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
     {
@@ -212,7 +210,7 @@ void Jafg::WHDragRegion::AddChildAt(u64 Index, TJxxUnique<WNode> Child)
     Back->Anchor = EAnchor::Fill;
     checkCode(this->DragChildSlots.at(Back.get()).Anchor = Back->Anchor)
 
-    return;
+    return Result;
 }
 
 Jafg::LCursorReply Jafg::WHDragRegion::OnCursorEnter()
@@ -245,7 +243,7 @@ Jafg::LCursorReply Jafg::WHDragRegion::OnCursorLeave()
 
 Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
 {
-    if (this == &Data.Node)
+    if (this == &Data.Node && !this->GetChildren().empty())
     {
         if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
         {
@@ -285,6 +283,7 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEven
 
 TOptional<Jafg::WHDragRegion::LDragChildOffset> Jafg::WHDragRegion::CalculateDragChildOffset(LVec2F const& Translation)
 {
+    check(!this->GetChildren().empty())
     for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
     {
         auto& Child{this->GetChildren()[Idx]};

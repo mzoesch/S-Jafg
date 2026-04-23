@@ -20,46 +20,39 @@ protected:
 
 public:
 
-    enum { NoActiveNodeIndex = INDEX_NONE };
+    virtual WNode& OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed) override;
+    virtual void OnRemoveChildPrepare(WNode& Child) override;
+    virtual void RemoveChildren() override { this->ResetActiveNode(); Super::RemoveChildren(); }
 
-    virtual void AddChildAt(u64 InIndex, TJxxUnique<WNode> InChild) override;
-    virtual void RemoveChild(WNode* Child) override;
-    virtual void RemoveChildren() override { Super::RemoveChildren(); this->ActiveNodeIndex = NoActiveNodeIndex; }
-
-    void SetActiveNode(WNode const& Node);
-    void SetActiveNodeByIndex(i64 Index);
-
-    FORCEINLINE constexpr bool IsActiveNodeValid() const noexcept
+    void SetActiveNode(WNode& Node);
+    void SetActiveNodeByIndex(u64 Index)
     {
-        checkCode(if (algo::is_valid_index(this->GetChildren(), this->ActiveNodeIndex)) { check(this->GetChildren()[this->ActiveNodeIndex].get()) })
-        return algo::is_valid_index(this->GetChildren(), this->ActiveNodeIndex);
+        check(algo::valid_index(this->GetChildren(), Index))
+        this->SetActiveNode(*this->GetChildren()[Index]);
     }
-    FORCEINLINE constexpr i64 GetActiveNodeIndex() const noexcept { return this->ActiveNodeIndex; }
-    FORCEINLINE WNode* GetActiveNode() noexcept
+    void ResetActiveNode();
+
+    FORCEINLINE constexpr bool IsActiveNodeValid() const noexcept { return !!this->ActiveNode; }
+
+    FORCEINLINE TOptional<std::size_t> GetActiveNodeIndex() const noexcept
     {
-        if (this->IsActiveNodeValid())
+        if (this->ActiveNode)
         {
-            return &*this->GetChildren()[this->ActiveNodeIndex];
+            return algo::distance_to(this->GetChildren(), this->ActiveNode, algo::unique_raw{});
         }
-        return nullptr;
+        return {};
     }
-    FORCEINLINE WNode const* GetActiveNode() const noexcept
-    {
-        if (this->IsActiveNodeValid())
-        {
-            return &*this->GetChildren()[this->ActiveNodeIndex];
-        }
-        return nullptr;
-    }
-    FORCEINLINE WNode* GetActiveNodeChecked() noexcept { auto* Widget{this->GetActiveNode()}; check(Widget) return Widget; }
-    FORCEINLINE WNode const* GetActiveNodeChecked() const noexcept { auto const* Widget{this->GetActiveNode()}; check(Widget) return Widget; }
-    FORCEINLINE WNode* GetActiveNodeAsserted() noexcept { auto* Widget{this->GetActiveNode()}; jassert(Widget) return Widget; }
-    FORCEINLINE WNode const* GetActiveNodeAsserted() const noexcept { auto const* Widget{this->GetActiveNode()}; jassert(Widget) return Widget; }
+    FORCEINLINE WNode* GetActiveNode() noexcept { return this->ActiveNode; }
+    FORCEINLINE WNode const* GetActiveNode() const noexcept { return this->ActiveNode; }
+    FORCEINLINE WNode* GetActiveNodeChecked() noexcept { check(this->ActiveNode) return this->ActiveNode; }
+    FORCEINLINE WNode const* GetActiveNodeChecked() const noexcept { check(this->ActiveNode) return this->ActiveNode; }
+    FORCEINLINE WNode* GetActiveNodeAsserted() noexcept {jassert(this->ActiveNode) return this->ActiveNode; }
+    FORCEINLINE WNode const* GetActiveNodeAsserted() const noexcept { jassert(this->ActiveNode) return this->ActiveNode; }
 
 private:
 
-    i64 ActiveNodeIndex{ NoActiveNodeIndex };
-    TArray<std::pair<void const*, ENodeVisibility>> RecentVisibilities;
+    WNode* ActiveNode{};
+    TArray<std::pair<WNode*, ENodeVisibility>> RecentVisibilities;
 };
 
 } /* ~Namespace Jafg */

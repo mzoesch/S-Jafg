@@ -12,9 +12,9 @@ template<typename T>
 concept CDeviceVertexInput = std::is_standard_layout_v<T> && requires
 {
     { T::BindingDescriptions().data() } -> std::same_as<vk::VertexInputBindingDescription const*>;
-    { T::BindingDescriptions().size() } -> std::same_as<LSize>;
+    { T::BindingDescriptions().size() } -> std::same_as<std::size_t>;
     { T::AttributeDescriptions().data() } -> std::same_as<vk::VertexInputAttributeDescription const*>;
-    { T::AttributeDescriptions().size() } -> std::same_as<LSize>;
+    { T::AttributeDescriptions().size() } -> std::same_as<std::size_t>;
 };
 
 typedef vk::PipelineVertexInputStateCreateInfo(*LDeviceVertexInputStateCreateProviderSig)();

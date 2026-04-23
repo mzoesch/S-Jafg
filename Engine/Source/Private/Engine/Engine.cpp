@@ -29,7 +29,8 @@
     #endif /* !IN_SHIPPING */
 #endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
 
-ENGINE_API Jafg::LEngine* GEngine{};
+ENGINE_API Jafg::LEngine const* GEngine{};
+ENGINE_API Jafg::LEngine* GMutableEngine{};
 
 bool Jafg::LWorldStorage::IsValid() const noexcept
 {
@@ -91,7 +92,7 @@ void Jafg::LEngine::Initialize()
         {
             const LCommandArgs* Target { nullptr };
 
-            if (algo::is_valid_index(Args.SubArgs, Cursor))
+            if (algo::valid_index(Args.SubArgs, Cursor))
             {
                 Target = &Args[Cursor];
             }
@@ -149,7 +150,7 @@ void Jafg::LEngine::Initialize()
             nullptr,
             [](LCommandArgs const& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
             {
-                if (algo::is_valid_index(Args.SubArgs, Cursor - 1) == false)
+                if (algo::valid_index(Args.SubArgs, Cursor - 1) == false)
                 {
                     LOG_WARNING(LogCli, "Encountered invalid command args [{}].", Args.GetCatRepresentation())
                     return {};
@@ -172,7 +173,7 @@ void Jafg::LEngine::Initialize()
         .Exec([](LCommandExecutionInfo const&, LCommandArgs const& InArgs, LCommandExecutionResponse& OutResponse)
         {
             check(InArgs.GetArgCount() == 2)
-            if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
+            if (LCliVariable* Var = GMutableEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
             {
                 i32 Cursor = 1;
                 if (Var->GetType()->CanParse(InArgs, &Cursor) == false)
@@ -246,10 +247,10 @@ void Jafg::LEngine::Initialize()
         .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
             check(Args.GetArgCount() == 2)
-            check(GEngine)
+            check(GMutableEngine)
             LWorld* World{ Args[0].GetAs<LWorld>() };
             LString Url{ Args[1].GetAs<LString>() };
-            GEngine->Browse(World, Url);
+            GMutableEngine->Browse(World, Url);
             OutResponse.Rc = ECommandReturnCode::Success;
             OutResponse.StdOut = Jafg::SprintF("Browsing to URL [{}] in world [{}]", Url, World->GetHumanReadableName());
         })});
@@ -450,8 +451,8 @@ void Jafg::LEngine::DefaultTimeAdvance()
     STAT_CYCLE_FUNCTION()
     JUserPreferences const& UserPreferences{GetSingleton<JUserPreferences>()};
 
-    GEngine->LostDeltaTime = 0.0;
-    GEngine->IdleDeltaTime = 0.0;
+    this->LostDeltaTime = 0.0;
+    this->IdleDeltaTime = 0.0;
 
     if (UserPreferences.bVSyncEnabled == false && UserPreferences.MaxFps != JUserPreferences::UnlimitedFps)
     {
@@ -461,53 +462,53 @@ void Jafg::LEngine::DefaultTimeAdvance()
             LEngine::Timepoint SleepStart{LEngine::Clock::now()};
             f64 SleepTime{(1.0 / *UserPreferences.MaxFps) - ElapsedTime};
             Hal::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
-            GEngine->IdleDeltaTime = algo::time_diff(SleepStart, LEngine::Clock::now());
-            if (GEngine->IdleDeltaTime > GEngine->CurrentStat.HighestIdle)
+            this->IdleDeltaTime = algo::time_diff(SleepStart, LEngine::Clock::now());
+            if (this->IdleDeltaTime > this->CurrentStat.HighestIdle)
             {
-                GEngine->CurrentStat.HighestIdle = GEngine->IdleDeltaTime;
+                this->CurrentStat.HighestIdle = this->IdleDeltaTime;
             }
         }
     }
 
-    GEngine->PreviousFrameTime = GEngine->FrameTime;
-    GEngine->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    this->PreviousFrameTime = this->FrameTime;
+    this->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
 
-    GEngine->DeltaTime = GEngine->FrameTime - GEngine->PreviousFrameTime;
-    if (GEngine->DeltaTime < GEngine->CurrentStat.Low)
+    this->DeltaTime = this->FrameTime - this->PreviousFrameTime;
+    if (this->DeltaTime < this->CurrentStat.Low)
     {
-        GEngine->CurrentStat.Low = GEngine->DeltaTime;
+        this->CurrentStat.Low = this->DeltaTime;
     }
-    if (GEngine->DeltaTime > GEngine->CurrentStat.High)
+    if (this->DeltaTime > this->CurrentStat.High)
     {
-        GEngine->CurrentStat.High = GEngine->DeltaTime;
+        this->CurrentStat.High = this->DeltaTime;
     }
 
-    GEngine->RealDeltaTime = GEngine->DeltaTime;
+    this->RealDeltaTime = this->DeltaTime;
 
-    ++GEngine->FrameCount;
-    ++GEngine->StatisticsFrameCount;
+    ++this->FrameCount;
+    ++this->StatisticsFrameCount;
 
-    if (GEngine->DeltaTime > LEngine::MaxDeltaTime)
+    if (this->DeltaTime > LEngine::MaxDeltaTime)
     {
         if constexpr (IS_COMPILED_LOG(LogGuardedMain, Warning))
         {
-            if (GEngine->DeltaTime > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
+            if (this->DeltaTime > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
             {
-                LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", GEngine->DeltaTime)
+                LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", this->DeltaTime)
             }
         }
-        GEngine->LostDeltaTime = GEngine->DeltaTime - LEngine::MaxDeltaTime;
-        if (GEngine->CurrentStat.HighestLoss < GEngine->LostDeltaTime)
+        this->LostDeltaTime = this->DeltaTime - LEngine::MaxDeltaTime;
+        if (this->CurrentStat.HighestLoss < this->LostDeltaTime)
         {
-            GEngine->CurrentStat.HighestLoss = GEngine->LostDeltaTime;
+            this->CurrentStat.HighestLoss = this->LostDeltaTime;
         }
-        GEngine->DeltaTime = LEngine::MaxDeltaTime;
+        this->DeltaTime = LEngine::MaxDeltaTime;
     }
 
-    if (std::chrono::duration<f64>(LEngine::Clock::now() - GEngine->LastStatisticsTime).count() > GEngine->StatisticsPeriod)
+    if (std::chrono::duration<f64>(LEngine::Clock::now() - this->LastStatisticsTime).count() > this->StatisticsPeriod)
     {
-        GEngine->PreviousStat = GEngine->CurrentStat;
-        algo::swap_default(&GEngine->CurrentStat);
+        this->PreviousStat = this->CurrentStat;
+        algo::swap_default(&this->CurrentStat);
     }
 
     return;

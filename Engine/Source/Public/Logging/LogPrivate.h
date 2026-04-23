@@ -9,7 +9,7 @@ inline LString GetPrettyFunctionName(LStringView FunctionName) noexcept
 {
     LString Result; Result.reserve(FunctionName.size());
 
-    LSize Stack{};
+    std::size_t Stack{};
     for (auto It{FunctionName.begin()}; It != FunctionName.end(); ++It)
     {
         if (*It == '<')

@@ -11,7 +11,7 @@
 void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
-    LUserInputRegistry& Registry{this->GetLocalEgo().GetUserInputRegistry()};
+    LUserInputRegistry& Registry{this->GetMutableLocalEgo().GetUserInputRegistry()};
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
     if (LUserInputContext* Context{Registry.RegisterContext({LUserInputTag::ToTag("RhiDebug"), "Rhi Debug"})})
@@ -50,9 +50,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.Normal].")
-                check(GEngine)
+                check(GMutableEngine)
                 GetMutableSingleton<JUserPreferences>().MeshMaterialPreference =
-                    GEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.Normal");
+                    GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.Normal");
                 return {};
             });
 
@@ -62,9 +62,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.UV].")
-                check(GEngine)
+                check(GMutableEngine)
                 GetMutableSingleton<JUserPreferences>().MeshMaterialPreference =
-                    GEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.UV");
+                    GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.UV");
                 return {};
             });
 
@@ -74,9 +74,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.Tangent].")
-                check(GEngine)
+                check(GMutableEngine)
                 GetMutableSingleton<JUserPreferences>().MeshMaterialPreference =
-                    GEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.Tangent");
+                    GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.Tangent");
                 return {};
             });
 
@@ -86,9 +86,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
             {
                 LOG_VERBOSE(LogUserInput, "Setting mesh material preference to [Jafg.Mesh.Handedness].")
-                check(GEngine)
+                check(GMutableEngine)
                 GetMutableSingleton<JUserPreferences>().MeshMaterialPreference =
-                    GEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.Handedness");
+                    GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Mesh.Handedness");
                 return {};
             });
     }

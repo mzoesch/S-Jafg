@@ -124,9 +124,12 @@ public:
         return Result.str();
     }
 
-    ENGINE_API LEngine& GetEngine() const noexcept;
-    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
-    ENGINE_API LFrontend& GetFrontend() const noexcept;
+    ENGINE_API LEngine const& GetEngine() const noexcept;
+    ENGINE_API LEngine& GetMutableEngine() noexcept;
+    ENGINE_API LLocalEgo const& GetLocalEgo() const noexcept;
+    ENGINE_API LLocalEgo& GetMutableLocalEgo() noexcept;
+    ENGINE_API LFrontend const& GetFrontend() const noexcept;
+    ENGINE_API LFrontend& GetMutableFrontend() noexcept;
 
 protected:
 
