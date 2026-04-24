@@ -78,10 +78,12 @@ public:
     virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
     virtual LReply SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location) override;
 
-    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& InKeyEvent) override;
+    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LReply OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent) override;
 
     virtual void UpdateDesiredSize() const override;
 
@@ -98,9 +100,9 @@ private:
     bool UserInterfaceTick();
 
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
-    bool MBDownOnScrollbar(LViewport const& InViewport);
+    bool MBDownOnScrollbar(TOptional<LVec2F> const& CursorLocation);
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
-    bool MBUpOnScrollbar(LViewport const& InViewport);
+    bool MBUpOnScrollbar();
 
     inline constexpr bool ShouldDrawVScrollbar(f32 InVisibleY) const noexcept
     {

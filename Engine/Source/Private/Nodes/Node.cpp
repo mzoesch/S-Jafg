@@ -48,7 +48,7 @@ bool Jafg::WNode::IsInBounds(LNodeSweepData const& Data, LVec2F const& Location)
         return false;
     }
 
-    LVec2D TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + Data.Translation};
+    LVec2D TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter() + Data.Translation};
     return
             TopLeftMostOuter.x <= Location.x
          && Location.x         <= TopLeftMostOuter.x + this->GetAnchoredSize_v2().x
@@ -91,11 +91,11 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(LNodeSweepData const& Data, LVec2F cons
     return {this};
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->OnKeyDownEvent.IsValid())
     {
-        if (auto Reply{this->OnKeyDownEvent.Invoke(*this, Data, Event)}; Reply.IsHandled())
+        if (auto Reply{this->OnKeyDownEvent.Invoke(*this, Info, Event)}; Reply.IsHandled())
         {
             return Reply;
         }
@@ -103,17 +103,17 @@ Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent con
 
     if (this->Parent)
     {
-        return this->Parent->OnKeyDown(Data, Event);
+        return this->Parent->OnKeyDown(Info, Event);
     }
 
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->OnKeyUpEvent.IsValid())
     {
-        if (auto Reply{this->OnKeyUpEvent.Invoke(*this, Data, Event)}; Reply.IsHandled())
+        if (auto Reply{this->OnKeyUpEvent.Invoke(*this, Info, Event)}; Reply.IsHandled())
         {
             return Reply;
         }
@@ -121,13 +121,13 @@ Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const
 
     if (this->Parent)
     {
-        return this->Parent->OnKeyUp(Data, Event);
+        return this->Parent->OnKeyUp(Info, Event);
     }
 
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (this->OnKeyDownNoFocusEvent)
     {
@@ -136,11 +136,10 @@ Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEv
             return Reply;
         }
     }
-
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (this->OnKeyUpNoFocusEvent)
     {
@@ -149,38 +148,7 @@ Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEven
             return Reply;
         }
     }
-
     return LReply::Unhandled();
-}
-
-bool Jafg::WNode::IsFocusWidget() const
-{
-    return this->IsFocusWidget(&this->GetViewport());
-}
-
-bool Jafg::WNode::IsFocusWidget(const LViewport* InViewport) const
-{
-    if (InViewport)
-    {
-        return InViewport->GetFocusedWidget() == this;
-    }
-
-    return false;
-}
-
-bool Jafg::WNode::IsFocusWidgetTransitive() const
-{
-    return this->IsFocusWidgetTransitive(&this->GetViewport());
-}
-
-bool Jafg::WNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
-{
-    if (InViewport)
-    {
-        return InViewport->GetFocusedWidget() == this;
-    }
-
-    return false;
 }
 
 void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
@@ -265,20 +233,20 @@ void Jafg::WNode::SetDesiredSizeInSpt(LVec2F Size) const noexcept
     return;
 }
 
-void Jafg::WNode::UpdateAnchoredSize(LViewport const& Context) const
+void Jafg::WNode::UpdateAnchoredSize() const
 {
     check(this->TransformsWidgetLayout())
     check(this->Anchor.IsNormalized())
 
     if (this->Parent)
     {
-        this->SetAnchoredSize(this->Parent->GetAnchoredSizeForChild(Context, this));
+        this->SetAnchoredSize(this->Parent->GetAnchoredSizeForChild(this));
         return;
     }
 
     LVec2F Out;
-    Out.x = maths::max(this->Anchor.MaxX * static_cast<f32>(Context.GetDimensions().x), this->DesiredSize_v2.x);
-    Out.y = maths::max(this->Anchor.MaxY * static_cast<f32>(Context.GetDimensions().y), this->DesiredSize_v2.y);
+    Out.x = maths::max(this->Anchor.MaxX * static_cast<f32>(this->AttachedViewport.GetDimensions().x), this->DesiredSize_v2.x);
+    Out.y = maths::max(this->Anchor.MaxY * static_cast<f32>(this->AttachedViewport.GetDimensions().y), this->DesiredSize_v2.y);
     this->SetAnchoredSize(Out);
 
     return;
@@ -303,25 +271,25 @@ void Jafg::WNode::SetAnchoredSize(LVec2F const& InSize) const noexcept
     return;
 }
 
-LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter(LViewport const& Viewport) const
+LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter() const
 {
     check(this->TransformsWidgetLayout())
     check(this->Anchor.IsNormalized())
 
     if (this->Parent)
     {
-        return this->Parent->GetAnchoredTopLeftFromMostOuterForChild(Viewport, this);
+        return this->Parent->GetAnchoredTopLeftFromMostOuterForChild(this);
     }
 
     return {
-        this->Anchor.MinX * static_cast<f32>(Viewport.GetDimensions().x),
-        this->Anchor.MinY * static_cast<f32>(Viewport.GetDimensions().y)
+        this->Anchor.MinX * static_cast<f32>(this->AttachedViewport.GetDimensions().x),
+        this->Anchor.MinY * static_cast<f32>(this->AttachedViewport.GetDimensions().y)
         };
 }
 
 LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const
 {
-    return this->GetAnchoredTopLeftFromMostOuter(this->GetViewport()) + Translation;
+    return this->GetAnchoredTopLeftFromMostOuter() + Translation;
 }
 
 TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept

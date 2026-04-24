@@ -215,7 +215,7 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorLeave()
     return this->ButtonBase_OnCursorLeave();
 }
 
-Jafg::LReply Jafg::WTextButton::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WTextButton::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (this->bEnabled)
     {
@@ -263,7 +263,7 @@ Jafg::LReply Jafg::WTextButton::OnKeyDown(LNodeKeyEventData const& Data, LKeyEve
     return this->ButtonBase_OnKeyDown(Data, Event);
 }
 
-Jafg::LReply Jafg::WTextButton::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WTextButton::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (this->bEnabled)
     {

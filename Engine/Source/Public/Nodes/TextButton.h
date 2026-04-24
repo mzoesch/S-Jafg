@@ -108,8 +108,8 @@ public:
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorMoved(const LVec2F& InLocation) override;
     virtual LCursorReply OnCursorLeave() override;
-    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
     virtual void OnEnabledStateChanged() override;
     virtual void OnSelectedStateChanged() override;
 
@@ -125,10 +125,10 @@ public:
 
     bool bDecoupledLeftIcon{};
     bool bDecoupledRightIcon{};
-    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
-    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
-    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
-    std::move_only_function<LReply(LNodeKeyEventData const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
+    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
+    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
+    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
+    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
 
 private:
 

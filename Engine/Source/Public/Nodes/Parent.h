@@ -46,10 +46,19 @@ public:
     virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
     virtual LReply       SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location) override;
 
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LReply OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    LReply OnParentKeyDownEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+    LReply OnParentKeyUpEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
 
-    virtual bool IsFocusWidgetTransitive(LViewport const* Viewport) const override;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+
+    NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const override
+    {
+        if (Super::IsFocusWidgetTransitive()) { return true; }
+        return algo::any_of(this->Children, [](auto& Child){ return Child->IsFocusWidgetTransitive(); });
+    }
     virtual void OnSurfaceResize() override;
     virtual bool IsNodeInVisiblePath(WNode const* Node) const override;
     virtual WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept override;

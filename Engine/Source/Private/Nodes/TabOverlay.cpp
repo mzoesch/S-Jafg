@@ -10,7 +10,6 @@
 
 namespace
 {
-
 auto NewOverlay{[](Jafg::LTabOverlayPossibilities& Self) {
     return Jafg::NewNode(Self.Owner.GetViewport()).Class<Jafg::WTabOverlay>()
         .Possibilities(Self)
@@ -111,7 +110,7 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
 
     BeginStyling(*this->Selectors).StaticRoot<WTabOverlaySelector>(std::move(Info.Selector)).SaveTo(&this->Tabs.back().first)
         .Selected(bActivated)
-        .OnKeyDown([this](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)
+        .OnKeyDown([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
             {
@@ -126,7 +125,7 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
             }
             return LReply::Unhandled();
         })
-        .OnKeyUp([this](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)
+        .OnKeyUp([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton))
             {
@@ -135,7 +134,7 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
             }
             return LReply::Unhandled();
         })
-        .OnKeyDownNoFocus([this](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)
+        .OnKeyDownNoFocus([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
             {
@@ -144,7 +143,7 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
             }
             return LReply::Unhandled();
         })
-        .OnKeyUpNoFocus([this](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)
+        .OnKeyUpNoFocus([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton))
             {
@@ -346,7 +345,7 @@ void Jafg::WTabOverlaySelector::LoadRightIcon()
     this->bDecoupledRightIcon = true;
     this->RightIconStyle.Set<EIconStyleBits::Decoupled, &LTextButtonIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
     this->DecoupledRightKeyDown = [](auto&, auto&){ return LReply::Handled(); };
-    this->DecoupledRightKeyUp = [this](LNodeKeyEventData const& Data, LKeyEvent const& Event)
+    this->DecoupledRightKeyUp = [this](LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {
         auto* TabOverlay{this->GetParentUntilChecked<WTabOverlay>()};
         TabOverlay->CloseTab(this);

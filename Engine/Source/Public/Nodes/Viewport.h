@@ -2,11 +2,12 @@
 
 #pragma once
 
-#include "Nodes/Node.h"
 #include "User/Input/Replies.h"
 #include "User/UserPreferencesForward.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Rhi/Material.h"
+#include "Engine/CxxClass.h"
+#include "Platform/SurfaceForward.h"
 
 namespace Jafg
 {
@@ -84,9 +85,9 @@ public:
     template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClassChecked() const noexcept { return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass())); }
 
     template<typename TNode>
-    FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget.GetPointer()); }
-    FORCEINLINE auto GetFocusedWidget() const -> const WNode* { return this->FocusedWidget.GetPointer(); }
-    FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
+    FORCEINLINE TNode const* GetFocusedWidget() const { return DynamicCast<TNode>(this->FocusedWidget.GetPointer()); }
+    FORCEINLINE constexpr WNode const* GetFocusedWidget() const { return this->FocusedWidget.GetPointer(); }
+    FORCEINLINE constexpr bool IsFocusedWidgetValid() const { return this->FocusedWidget != nullptr; }
     bool FocusWidgetNode(WNode* InNode);
     FORCEINLINE auto GetHoveredWidgets() const -> const TArray<TClassStorage<WNode>>& { return this->HoveredWidgets; }
 
@@ -171,22 +172,4 @@ FORCEINLINE CONSTEXPR_CHECK_SLOW void LViewport::ConvertTLToBLOrigin(LVec2F* Vec
     Vector->y = this->GetDimensions().y - Vector->y;
 }
 
-namespace Detail
-{
-
-inline constexpr LNodeDynamicInit LOuter2ViewportProj::operator()(LCxxDynamicInit const& Init) const noexcept
-{
-    check(Init.Outer.GetUserData())
-    return {.Outer=*static_cast<LViewport*>(Init.Outer.GetUserData()),.Class=Init.Class};
-}
-
-} /* ~Namespace Detail */
-
-inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
-    : Super{LCxxDynamicInit{.Outer=std::invoke(LNodeDynamicInit::Proj{}, Init.Outer),.Class=Init.Class}}
-    , AttachedViewport{Init.Outer}
-{
-}
-
 } /* ~Namespace Jafg */
-

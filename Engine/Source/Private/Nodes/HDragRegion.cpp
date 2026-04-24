@@ -61,9 +61,9 @@ void Jafg::WHDragRegion::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WHDragRegion::UpdateAnchoredSize(LViewport const& Viewport) const
+void Jafg::WHDragRegion::UpdateAnchoredSize() const
 {
-    Super::UpdateAnchoredSize(Viewport);
+    Super::UpdateAnchoredSize();
 
     if (this->bInitialStateExecuted == false)
     {
@@ -241,7 +241,7 @@ Jafg::LCursorReply Jafg::WHDragRegion::OnCursorLeave()
     return {EMouseCursor::Default};
 }
 
-Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (this == &Data.Node && !this->GetChildren().empty())
     {
@@ -260,7 +260,7 @@ Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventData const& Data, LKeyEv
     return Super::OnKeyDown(Data, Event);
 }
 
-Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (this == &Data.Node)
     {

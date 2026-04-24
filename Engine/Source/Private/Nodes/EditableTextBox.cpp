@@ -45,7 +45,7 @@ void Jafg::WEditableTextBox::Draw(LNodeRenderInfo const& Info) const
 
     if (this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed && this->IsFocusWidget())
     {
-        const LVec2F AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Info.Surface.GetViewport()) };
+        const LVec2F AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter() };
 
         const LVec2F CaretSize{LVec2F{2.0, this->GetDesiredSize_v2().y} * this->CaretBrush.Size };
 
@@ -181,7 +181,7 @@ void Jafg::WEditableTextBox::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::BackSpace)) // || PlatformDelete?
     {
@@ -315,7 +315,7 @@ void Jafg::WEditableTextBox::MoveCaretToMouseCursor(LViewport const& Viewport)
      */
     const f32 BaseTopLeft
     {
-        this->GetAnchoredTopLeftFromMostOuter(Viewport).x // + this->CaretBrush.HOffset
+        this->GetAnchoredTopLeftFromMostOuter().x // + this->CaretBrush.HOffset
     };
 
     const f32 RelativeTopLeft { Viewport.GetSurface().GetMouseLocationValue().x - BaseTopLeft };

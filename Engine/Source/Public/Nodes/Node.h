@@ -374,7 +374,7 @@ struct LNodeSweepData final
     const LVec2F Translation;
 };
 
-struct LNodeKeyEventData final
+struct LNodeKeyEventInfo final
 {
     LFrontend const& Frontend;
     LSurface& Surface;
@@ -681,10 +681,7 @@ public:
     {
         check(Tasks::IsOnMasterThread())
         checkCode(_check_Destruct())
-        if (this->Parent)
-        {
-            this->Parent = nullptr;
-        }
+        this->Parent = nullptr;
     }
 
     //#
@@ -734,10 +731,13 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event);
-    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event);
-    TFunction<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyDownEvent;
-    TFunction<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyUpEvent;
+    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+    TFunction<LReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyDownEvent;
+    TFunction<LReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyUpEvent;
+
+    virtual LReply OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) { return LReply::Unhandled(); }
+    virtual LReply OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) { return LReply::Unhandled(); }
 
     //#
     //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle
@@ -749,33 +749,15 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event);
-    TFunction2<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyDownNoFocusEvent;
-    TFunction2<LReply(WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event)> OnKeyUpNoFocusEvent;
+    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event);
+    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event);
+    TFunction2<LReply(WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> OnKeyDownNoFocusEvent;
+    TFunction2<LReply(WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> OnKeyUpNoFocusEvent;
 
-    //#
     //# @return Whether this is the focused widget.
-    //# @remark This method is fairly slow. Consider young the #IsFocusWidget with a viewport parameter if cached.
-    //#
-    bool IsFocusWidget() const;
-    //#
-    //# @param InViewport The viewport to check for or null.
-    //# @return Whether this is the focused widget.
-    //#
-    bool IsFocusWidget(LViewport const* InViewport) const;
-
-    //#
+    NODISCARD FORCEINLINE constexpr bool IsFocusWidget() const noexcept;
     //# @return Whether this is the focused widget or any of its children.
-    //# @remark This method is fairly slow. Consider young the #IsFocusWidgetTransitive with a viewport
-    //#         parameter if cached.
-    //#
-    bool IsFocusWidgetTransitive() const; /* Warning: Slow. */
-    //#
-    //# @param InViewport The viewport to check for or null.
-    //# @return Whether this is the focused widget or any of its children.
-    //#
-    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const;
+    NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const noexcept; /* Warning: Slow. */
 
     FORCEINLINE bool ShouldNowTick() const { return this->bAllowTick && NodeVisibility::IsTicked(this->Visibility); }
     FORCEINLINE bool GetRawShouldTick() const { return this->bAllowTick; }
@@ -912,9 +894,9 @@ public:
     LWidgetSize2 MaxDesiredSize;
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
-    virtual void UpdateAnchoredSize(LViewport const& Context) const;
+    virtual void UpdateAnchoredSize() const;
     //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
-    virtual LVec2F GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const PURE_VIRTUAL()
+    virtual LVec2F GetAnchoredSizeForChild(WNode const* DirectChild) const PURE_VIRTUAL()
     void SetAnchoredSize(LVec2F const& Size) const noexcept;
     FORCEINLINE LVec2F const& GetAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
     FORCEINLINE LVec2F CopyAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
@@ -922,10 +904,10 @@ public:
     FORCEINLINE LVec2F const& GetLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     FORCEINLINE LVec2F CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
-    virtual LVec2F GetAnchoredTopLeftFromMostOuter(LViewport const& Viewport) const;
+    virtual LVec2F GetAnchoredTopLeftFromMostOuter() const;
     LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const;
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
-    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Viewport, WNode const* InDirectChild) const PURE_VIRTUAL(return { })
+    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const PURE_VIRTUAL()
 
     TOptional<LMargin> GetMargin() const noexcept;
     FORCEINLINE TOptional<LMargin> GetMarginChecked() const noexcept { TOptional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
@@ -1070,18 +1052,38 @@ FORCEINLINE LVec2F InSptFromRelative(WNode const& Node, LVec2F Relative) noexcep
     return InSptFromRelative(Node.GetViewport(), Relative);
 }
 
-#if !JAFG_DO_CHECKS
-FORCEINLINE LReply WNode::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
-{
-    return LReply::Unhandled();
-}
-
-FORCEINLINE LReply WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
-{
-    return LReply::Unhandled();
-}
-#endif /* !JAFG_DO_CHECKS */
-
 } /* ~Namespace Jafg */
 
 #include "Nodes/Viewport.h"
+
+namespace Jafg
+{
+
+namespace Detail
+{
+
+inline constexpr LNodeDynamicInit LOuter2ViewportProj::operator()(LCxxDynamicInit const& Init) const noexcept
+{
+    check(Init.Outer.GetUserData())
+    return {.Outer=*static_cast<LViewport*>(Init.Outer.GetUserData()),.Class=Init.Class};
+}
+
+} /* ~Namespace Detail */
+
+inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
+    : Super{LCxxDynamicInit{.Outer=std::invoke(LNodeDynamicInit::Proj{}, Init.Outer),.Class=Init.Class}}
+    , AttachedViewport{Init.Outer}
+{
+}
+
+NODISCARD FORCEINLINE constexpr bool WNode::IsFocusWidget() const noexcept
+{
+    return this->AttachedViewport.GetFocusedWidget() == this;
+}
+
+NODISCARD FORCEINLINE bool WNode::IsFocusWidgetTransitive() const noexcept
+{
+    return this->IsFocusWidget();
+}
+
+} /* ~Namespace Jafg */

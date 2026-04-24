@@ -21,14 +21,14 @@ void Jafg::WVRegion::UpdateDesiredSize() const
     return;
 }
 
-LVec2F Jafg::WVRegion::GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const
+LVec2F Jafg::WVRegion::GetAnchoredSizeForChild(WNode const* DirectChild) const
 {
-    check( InDirectChild )
-    checkSlow( InDirectChild->TransformsWidgetLayout() )
+    check( DirectChild )
+    checkSlow( DirectChild->TransformsWidgetLayout() )
 
-    if (InDirectChild->Anchor.IsStretchedVertical() == false)
+    if (DirectChild->Anchor.IsStretchedVertical() == false)
     {
-        return Super::GetAnchoredSizeForChild(Viewport, InDirectChild);
+        return Super::GetAnchoredSizeForChild(DirectChild);
     }
 
     f32 TotalDesiredSize { 0.0 };
@@ -45,7 +45,7 @@ LVec2F Jafg::WVRegion::GetAnchoredSizeForChild(LViewport const& Viewport, WNode 
 
     const f32 FreeSpace
     {
-        (this->GetAnchoredSize_v2().y - this->Padding.GetDesiredSizeYInSpt(Viewport))
+        (this->GetAnchoredSize_v2().y - this->Padding.GetDesiredSizeYInSpt(this->GetViewport()))
         - TotalDesiredSize
         - InSpt(this->GetViewport(), this->VSpace) * (this->GetChildren().size() - 1)
     };
@@ -54,23 +54,23 @@ LVec2F Jafg::WVRegion::GetAnchoredSizeForChild(LViewport const& Viewport, WNode 
 
     return {
         maths::max(
-            InDirectChild->GetDesiredSize_v2().x,
-            InDirectChild->Anchor.MaxX * (this->GetAnchoredSize_v2().x - this->Padding.GetDesiredSizeXInSpt(Viewport))
+            DirectChild->GetDesiredSize_v2().x,
+            DirectChild->Anchor.MaxX * (this->GetAnchoredSize_v2().x - this->Padding.GetDesiredSizeXInSpt(this->GetViewport()))
             )
-        , InDirectChild->GetDesiredSize_v2().y
-        + InDirectChild->Anchor.MaxY * InverseFreeUsage * FreeSpace
+        , DirectChild->GetDesiredSize_v2().y
+        + DirectChild->Anchor.MaxY * InverseFreeUsage * FreeSpace
     };
 }
 
-LVec2F Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& Context, WNode const* InDirectChild) const
+LVec2F Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const
 {
-    check( InDirectChild )
+    check(DirectChild)
 
     f32 Offset{0.0};
     for (auto& Child : this->GetChildren())
     {
         check(Child.get())
-        if (&*Child == InDirectChild)
+        if (&*Child == DirectChild)
         {
             break;
         }
@@ -83,20 +83,20 @@ LVec2F Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(LViewport const& 
 
     LVec2F Out
     {
-        this->Padding.GetLeftOffsetInSpt(Context)
-        + InDirectChild->Anchor.MinX *
+        this->Padding.GetLeftOffsetInSpt(this->GetViewport())
+        + DirectChild->Anchor.MinX *
         (
             this->GetAnchoredSize_v2().x
-            - this->Padding.GetDesiredSizeXInSpt(Context)
-            - InDirectChild->GetAnchoredSize_v2().x
+            - this->Padding.GetDesiredSizeXInSpt(this->GetViewport())
+            - DirectChild->GetAnchoredSize_v2().x
         )
-        + InDirectChild->GetLostAnchoredSize_v2().x * 0.5,
-        this->Padding.GetTopOffsetInSpt(Context)
+        + DirectChild->GetLostAnchoredSize_v2().x * 0.5,
+        this->Padding.GetTopOffsetInSpt(this->GetViewport())
         + Offset
-        + InDirectChild->GetLostAnchoredSize_v2().y * 0.5
+        + DirectChild->GetLostAnchoredSize_v2().y * 0.5
     };
 
-    Out += this->GetAnchoredTopLeftFromMostOuter(Context);
+    Out += this->GetAnchoredTopLeftFromMostOuter();
 
     return Out;
 }

@@ -7,8 +7,8 @@
 #define JAFG_NODE_BUTTON_BOILERPLATE() \
     virtual LCursorReply OnCursorEnter() override{ return this->ButtonBase_OnCursorEnter(); } \
     virtual LCursorReply OnCursorLeave() override{ return this->ButtonBase_OnCursorLeave(); } \
-    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyDown(Data, Event); } \
-    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyUp(Data, Event); }
+    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyDown(Data, Event); } \
+    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyUp(Data, Event); }
 
 namespace Jafg
 {
@@ -264,7 +264,7 @@ protected:
         return LCursorReply::Handled();
     }
 
-    LReply ButtonBase_OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+    LReply ButtonBase_OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {
         if (this->bEnabled == false)
         {
@@ -328,7 +328,7 @@ protected:
         return LReply::Unhandled();
     }
 
-    LReply ButtonBase_OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+    LReply ButtonBase_OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {
         if (this->bEnabled == false)
         {

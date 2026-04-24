@@ -24,7 +24,7 @@ void Jafg::WFloatingWidget::Construct()
                 .MinDesiredSize({0_spt, 16})
                 .Anchor(EAnchor::HFill)
                 .Tint(Colors::DarkerGray)
-                .OnKeyDown([](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
+                .OnKeyDown([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LReply
                 {
                     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                     {
@@ -36,7 +36,7 @@ void Jafg::WFloatingWidget::Construct()
                     }
                     return {};
                 })
-                .OnKeyUp([](WNode& Self, LNodeKeyEventData const& Data, LKeyEvent const& Event) -> LReply
+                .OnKeyUp([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LReply
                 {
                     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                     {

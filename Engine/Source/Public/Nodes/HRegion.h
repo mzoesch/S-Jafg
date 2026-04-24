@@ -23,8 +23,8 @@ protected:
 public:
 
     virtual void UpdateDesiredSize() const override;
-    virtual LVec2F GetAnchoredSizeForChild(LViewport const& Viewport, WNode const* InDirectChild) const override;
-    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const override;
+    virtual LVec2F GetAnchoredSizeForChild(WNode const* DirectChild) const override;
+    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const override;
 
     //# Horizontal space between children.
     LWidgetSize1 HSpace{};

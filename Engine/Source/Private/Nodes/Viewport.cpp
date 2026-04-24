@@ -230,6 +230,20 @@ void Jafg::LViewport::DispatchInputs()
                 this->HandleReply(this->Surface, Reply);
                 continue;
             }
+            if (auto* Parent{this->FocusedWidget->As<WParent>()})
+            {
+                if (LReply Reply{Parent->OnParentKeyDownEntry({
+                    .Frontend = this->Surface.GetFrontend(),
+                    .Surface = this->Surface,
+                    .Viewport = *this,
+                    .Node = *this->FocusedWidget,
+                    .CursorLocation = CursorLocation,
+                    }, Input)}; Reply.IsHandled())
+                {
+                    this->HandleReply(this->Surface, Reply);
+                    continue;
+                }
+            }
         }
         if (CursorLocation.has_value())
         {
@@ -281,6 +295,20 @@ void Jafg::LViewport::DispatchInputs()
             {
                 this->HandleReply(this->Surface, Reply);
                 continue;
+            }
+            if (auto* Parent{this->FocusedWidget->As<WParent>()})
+            {
+                if (LReply Reply{Parent->OnParentKeyUpEntry({
+                    .Frontend = this->Surface.GetFrontend(),
+                    .Surface = this->Surface,
+                    .Viewport = *this,
+                    .Node = *this->FocusedWidget,
+                    .CursorLocation = CursorLocation,
+                    }, Input)}; Reply.IsHandled())
+                {
+                    this->HandleReply(this->Surface, Reply);
+                    continue;
+                }
             }
         }
         if (CursorLocation.has_value())
@@ -402,7 +430,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         {
             STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
             Widget->UpdateDesiredSize();
-            Widget->UpdateAnchoredSize(*this);
+            Widget->UpdateAnchoredSize();
             if (Widget->ShouldNowDraw())
             {
                 Widget->Draw(NodeInfo);

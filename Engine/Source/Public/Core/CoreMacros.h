@@ -275,3 +275,16 @@
         } _ret;         \
         return _ret;    \
     }())
+
+#ifndef DO_PURE_VIRTUAL_COMPILER_CHECKS
+    #define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
+#endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
+
+#ifndef PURE_VIRTUAL
+    #if DO_PURE_VIRTUAL_COMPILER_CHECKS
+        #define PURE_VIRTUAL(...)           = 0;
+    #else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
+        //# Define a RetTy for non-void members if needed.
+        #define PURE_VIRTUAL(...)           { panic("Pure virtual function was encountered.") __VA_ARGS__; }
+    #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
+#endif /* !PURE_VIRTUAL */

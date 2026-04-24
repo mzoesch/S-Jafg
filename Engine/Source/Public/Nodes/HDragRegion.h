@@ -51,7 +51,7 @@ public:
     virtual void OnSurfaceResize() override;
 
     virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize(LViewport const& Viewport) const override;
+    virtual void UpdateAnchoredSize() const override;
     virtual void OnRemoveChildPost(WNode& Child) override
     {
         Super::OnRemoveChildPost(Child);
@@ -68,8 +68,8 @@ public:
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;
 
-    virtual LReply OnKeyDown(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventData const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
 
 private:
 

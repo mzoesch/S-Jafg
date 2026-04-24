@@ -60,7 +60,7 @@ namespace Jafg
 namespace Detail
 {
 
-template<typename TNode> requires TIsCompleteType_v<TNode> && std::is_base_of_v<WUserWidget, TNode>
+template<typename TNode> requires algo::is_base_of_weak_v<WUserWidget, TNode>
 struct TDeferredUserWidgetExec : public TDeferredObjectExec<TNode>
 {
     inline ~TDeferredUserWidgetExec()

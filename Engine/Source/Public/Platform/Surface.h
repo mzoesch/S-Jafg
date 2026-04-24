@@ -10,16 +10,18 @@
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
-#include "Core/Application.h"
 #include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 #include "User/Input/InputMode.h"
 #include "Platform/MouseCursor.h"
-#include "Nodes/Viewport.h"
 #include "Framework/FrontendForward.h"
+#include "Nodes/Viewport.h"
 
 namespace Jafg
 {
+
+class LEngine;
+class LLocalEgo;
 
 struct LSurfaceCreateInfo
 {

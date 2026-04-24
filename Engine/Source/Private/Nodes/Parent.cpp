@@ -93,18 +93,102 @@ Jafg::LReply Jafg::WParent::SweepFocusTest(LNodeSweepData const& Data, const LVe
     return Super::SweepFocusTest(Data, Location);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WParent::OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    check(Info.CursorLocation.has_value())
+    for (auto& Child : this->Children)
+    {
+        check(Child.get())
+        check(&*Child != Info.Viewport.GetFocusedWidget())
+        if (Child->ShouldCheckForInputs() && Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
+        {
+            if (LReply Reply{Child->OnParentKeyDown(Info, Event)}; Reply.IsHandled())
+            {
+                return Reply;
+            }
+        }
+        continue;
+    }
+    return Super::OnParentKeyDown(Info, Event);
+}
+
+Jafg::LReply Jafg::WParent::OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    check(Info.CursorLocation.has_value())
+    for (auto& Child : this->Children)
+    {
+        check(Child.get())
+        check(&*Child != Info.Viewport.GetFocusedWidget())
+        if (Child->ShouldCheckForInputs() && Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
+        {
+            if (LReply Reply{Child->OnParentKeyUp(Info, Event)}; Reply.IsHandled())
+            {
+                return Reply;
+            }
+        }
+        continue;
+    }
+    return Super::OnParentKeyUp(Info, Event);
+}
+
+Jafg::LReply Jafg::WParent::OnParentKeyDownEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    if (Info.CursorLocation.has_value() && this->CanChildrenBeHitTestable())
+    {
+        for (auto& Child : this->Children)
+        {
+            check(Child.get())
+            if (Child->ShouldCheckForInputs())
+            {
+                if (Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
+                {
+                    if (LReply Reply{Child->OnParentKeyDown(Info, Event)}; Reply.IsHandled())
+                    {
+                        return Reply;
+                    }
+                }
+            }
+            continue;
+        }
+    }
+    return LReply::Unhandled();
+}
+
+Jafg::LReply Jafg::WParent::OnParentKeyUpEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    if (Info.CursorLocation.has_value() && this->CanChildrenBeHitTestable())
+    {
+        for (auto& Child : this->Children)
+        {
+            check(Child.get())
+            if (Child->ShouldCheckForInputs())
+            {
+                if (Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
+                {
+                    if (LReply Reply{Child->OnParentKeyUp(Info, Event)}; Reply.IsHandled())
+                    {
+                        return Reply;
+                    }
+                }
+            }
+            continue;
+        }
+    }
+    return LReply::Unhandled();
+}
+
+Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {
         check(Child.get())
-        if (Child->ShouldCheckForInputs() == false || &*Child == Data.Viewport.GetFocusedWidget())
+        if (Child->ShouldCheckForInputs() == false || &*Child == Info.Viewport.GetFocusedWidget())
         {
             continue;
         }
-        if (Child->IsInBounds({maths::zero_vector<LVec2F>}, Data.Surface.GetMouseLocationValue()))
+        if (Child->IsInBounds({maths::zero_vector<LVec2F>}, Info.Surface.GetMouseLocationValue()))
         {
-            if (LReply Reply{Child->OnKeyDownNoFocus(Data, Event)}; Reply.IsHandled())
+            if (LReply Reply{Child->OnKeyDownNoFocus(Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -113,21 +197,21 @@ Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyEventData const& Data, LKey
         continue;
     }
 
-    return Super::OnKeyDownNoFocus(Data, Event);
+    return Super::OnKeyDownNoFocus(Info, Event);
 }
 
-Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEvent const& Event)
+Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {
         check(Child.get())
-        if (Child->ShouldCheckForInputs() == false || &*Child == Data.Viewport.GetFocusedWidget())
+        if (Child->ShouldCheckForInputs() == false || &*Child == Info.Viewport.GetFocusedWidget())
         {
             continue;
         }
-        if (Child->IsInBounds({maths::zero_vector<LVec2F>}, Data.Surface.GetMouseLocationValue()))
+        if (Child->IsInBounds({maths::zero_vector<LVec2F>}, Info.Surface.GetMouseLocationValue()))
         {
-            if (LReply Reply{Child->OnKeyUpNoFocus(Data, Event)}; Reply.IsHandled())
+            if (LReply Reply{Child->OnKeyUpNoFocus(Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -136,30 +220,7 @@ Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyEventData const& Data, LKeyEv
         continue;
     }
 
-    return Super::OnKeyUpNoFocus(Data, Event);
-}
-
-bool Jafg::WParent::IsFocusWidgetTransitive(LViewport const* Viewport) const
-{
-    if (Viewport == nullptr)
-    {
-        return false;
-    }
-
-    if (Super::IsFocusWidgetTransitive(Viewport))
-    {
-        return true;
-    }
-
-    for (auto& Child : this->Children)
-    {
-        if (Child->IsFocusWidgetTransitive(Viewport))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return Super::OnKeyUpNoFocus(Info, Event);
 }
 
 void Jafg::WParent::OnSurfaceResize()

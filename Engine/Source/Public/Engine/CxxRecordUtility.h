@@ -8,16 +8,6 @@
 // Compiler options
 
 //#
-//# Whether the C++ compiler should check for pure virtual functions, and if they have been overridden by any derived
-//# class. Usually disabled as the program may not run with this option enabled.
-//# Abstract classes must still be instantiable to satisfy the object registry that runs at every module startup.
-//# Usually, this program panics if it encounters a non-implemented pure virtual method.
-//#
-#ifndef DO_PURE_VIRTUAL_COMPILER_CHECKS
-    #define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
-#endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
-
-//#
 //# Whether to double-check lifetimes of JObjectBase objects. Meaning check if an object has rightfully begun its life,
 //# was marked as garbage, ended its life, then was destroyed and freed in the end.
 //# These checks add a meaningful non-neglectable overhead to object creation and destruction and should therefore
@@ -30,18 +20,9 @@
 // ~Compiler options
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef PURE_VIRTUAL
-    #if DO_PURE_VIRTUAL_COMPILER_CHECKS
-        #define PURE_VIRTUAL(...)           = 0;
-    #else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
-        //# Define a RetTy for non-void members if needed.
-        #define PURE_VIRTUAL(...)           { panic( "Pure virtual function was encountered." ) __VA_ARGS__; }
-    #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
-#endif /* !PURE_VIRTUAL */
-
 #ifndef NON_CALLABLE_MEMBER
     //# A member that was derived but is not callable.
-    #define NON_CALLABLE_MEMBER(...)        { panic( "Non-callable member function was encountered." ) __VA_ARGS__; }
+    #define NON_CALLABLE_MEMBER(...)        { panic("Non-callable member function was encountered.") __VA_ARGS__; }
 #endif /* !NON_CALLABLE_MEMBER */
 
 #include "CxxRecordUtility.h"

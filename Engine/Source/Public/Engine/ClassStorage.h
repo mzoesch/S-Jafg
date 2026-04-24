@@ -15,7 +15,7 @@ namespace Jafg
 template<typename TObj>
 struct TClassStorage final
 {
-    static_assert(std::is_base_of_v<JCxxClass, TObj>);
+    static_assert(algo::is_base_of_weak_v<JCxxClass, TObj>);
 
     FORCEINLINE constexpr TClassStorage() noexcept : Outer(nullptr), Pointer(nullptr) { checkCode( this->CheckValidState() ) }
     FORCEINLINE constexpr TClassStorage(LNullptrTy) noexcept : Outer(nullptr), Pointer(nullptr) { checkCode( this->CheckValidState() ) }
@@ -163,8 +163,8 @@ struct TClassStorage final
     //#
     FORCEINLINE bool IsValidDeep() const noexcept { return IsValidSlow(this->Outer, this->Pointer); }
 
-    FORCEINLINE TObj* GetPointer() noexcept { return this->Pointer; }
-    FORCEINLINE TObj const* GetPointer() const noexcept { return this->Pointer; }
+    FORCEINLINE constexpr TObj* GetPointer() noexcept { return this->Pointer; }
+    FORCEINLINE constexpr TObj const* GetPointer() const noexcept { return this->Pointer; }
 
     FORCEINLINE TObj* Get() noexcept { check( this->IsValid() ) return this->Pointer; }
     FORCEINLINE TObj const* Get() const noexcept { check( this->IsValid() ) return this->Pointer; }

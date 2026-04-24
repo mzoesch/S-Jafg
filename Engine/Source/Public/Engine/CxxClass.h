@@ -101,7 +101,7 @@ struct LCxxClassField final
 //# by the jafg build tool to allow for dynamic casting, network replication, etc.
 //# This class defines the bare minimum for an object to be a jafg object.
 //#
-static_assert(Jafg::TIsCompleteType_v<NextIsBaseCxxClass> == false);
+static_assert(algo::is_complete_type_v<NextIsBaseCxxClass> == false);
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsBaseCxxClass")
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class ENGINE_API JCxxClass
@@ -392,13 +392,13 @@ namespace Jafg
 {
 
 //# Cast the result of a new object to a specific compile-time class.
-template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+template<typename TCxxClass> requires algo::is_base_of_weak_v<JCxxClass, TCxxClass>
 struct CastTo final{};
 
 namespace Detail
 {
 
-template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+template<typename TCxxClass> requires algo::is_base_of_weak_v<JCxxClass, TCxxClass>
 struct TNewStaticCxxType final{};
 
 struct NewStaticCxxFn
@@ -415,7 +415,7 @@ struct NewStaticCxxFn
 };
 inline constexpr NewStaticCxxFn NewStaticCxx{};
 
-template<typename TCxxClass> requires TIsCompleteType_v<TCxxClass> && std::is_base_of_v<JCxxClass, TCxxClass>
+template<typename TCxxClass> requires algo::is_base_of_weak_v<JCxxClass, TCxxClass>
 struct TDeferredObjectExec
 {
     inline constexpr TDeferredObjectExec() noexcept = delete;
@@ -424,7 +424,7 @@ struct TDeferredObjectExec
     {
         O.bReleased = true;
     }
-    template<typename UCxxClass> requires TIsCompleteType_v<UCxxClass> && std::is_base_of_v<JCxxClass, UCxxClass>
+    template<typename UCxxClass> requires algo::is_complete_type_v<UCxxClass> && std::is_base_of_v<JCxxClass, UCxxClass>
         && (std::is_base_of_v<TCxxClass, UCxxClass> || std::is_base_of_v<UCxxClass, TCxxClass>)
     inline constexpr TDeferredObjectExec(TDeferredObjectExec<UCxxClass>&& O) noexcept :
         Class{static_cast<TCxxClass&>(O.Class)}, bReleased{O.bReleased}

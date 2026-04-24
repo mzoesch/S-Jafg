@@ -648,8 +648,17 @@ inline f64 time_diff(std::chrono::high_resolution_clock::time_point A, std::chro
 
 ///////////////////////////////////////////////////////////////////////////////
 // Misc
-template<typename T>
-concept bool_testable = requires(T&& t) { static_cast<bool>(t); };
+template<typename T> concept bool_testable = requires(T&& t) { static_cast<bool>(t); };
+
+template<typename T> struct is_complete_type : std::false_type {};
+template<typename T> requires requires{sizeof(T);} struct is_complete_type<T> : std::true_type {};
+template<typename T> inline constexpr bool is_complete_type_v{is_complete_type<T>::value};
+
+template<typename TBase, typename TDerived, bool = is_complete_type_v<TBase> && is_complete_type_v<TDerived>>
+struct is_base_of_weak : std::true_type{};
+template<typename TBase, typename TDerived>
+struct is_base_of_weak<TBase,TDerived,true> : std::bool_constant<std::is_base_of_v<TBase,TDerived>>{};
+template<typename TBase, typename TDerived> inline constexpr bool is_base_of_weak_v{is_base_of_weak<TBase,TDerived>::value};
 
 struct raii_leave final
 {
