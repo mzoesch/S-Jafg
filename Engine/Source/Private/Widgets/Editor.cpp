@@ -22,7 +22,7 @@ void Jafg::WEditor::Construct()
         .Anchor(EAnchor::Fill)
     [
         NewStaticNode(WDropDown)
-            .MinDesiredSize({EWidgetSize::StaticPoints, 0, 10.0f})
+            .MinDesiredSize({ENodeSize::StaticPoints, 0, 10.0f})
             .DropDownRoot({.Nodes={
                 LDropDownNodeSubMenu{
                     .DisplayName = "File",
@@ -35,11 +35,11 @@ void Jafg::WEditor::Construct()
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = WTagInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this]{ this->AddWindow<WTagInspector>(true); return LPrimitiveReply::Unhandled(); },
+                            .OnAction = [this]{ this->AddWindow<WTagInspector>(true); return algo::reply::unhandled(); },
                             },
                         LDropDownNodeOption{
                             .Selector = WColorInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this]{ this->AddWindow<WColorInspector>(true); return LPrimitiveReply::Unhandled(); },
+                            .OnAction = [this]{ this->AddWindow<WColorInspector>(true); return algo::reply::unhandled(); },
                             },
                         },
                     },
@@ -54,7 +54,7 @@ void Jafg::WEditor::Construct()
         NewStaticNode(WTabOverlayHParent)
             // .SetInitialState(LInitialHDragRegionState{100_pt,{},100_pt})
             .Possibilities(*this)
-            .Padding({EWidgetSize::StaticPoints, 3.0f, 0.0f, 3.0f, 3.0f})
+            .Padding({ENodeSize::StaticPoints, 3.0f, 0.0f, 3.0f, 3.0f})
             .Tint(*Prefs.BackgroundColor)
         // [
         //     // Make a delegate to autoamtically find and create new TabOverlays in case none exist.

@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/World.h"
-#include "Engine/Carnifex.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
 #include "Core/Application.h"
@@ -48,7 +47,7 @@ void Jafg::LWorldParameters::Reset() noexcept
     return;
 }
 
-void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LString&& Url /* = {} */)
+void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */, LString&& Url /* = {} */)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -538,7 +537,7 @@ void Jafg::LWorld::OnTearDown()
 
         if (Obj->IsA<AActor>())
         {
-            Obj->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
+            Obj->MarkAsGarbage_v2(EJxxRecordTearDownReason::OuterTearDown);
 #if !IN_SHIPPING
             ++ActorCount;
 #endif /* !IN_SHIPPING */

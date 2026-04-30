@@ -28,7 +28,7 @@ struct LNodeRenderInfo : public LRenderInfo
     //# This value is reset every frame.
     //#
     const LVec2F Translation;
-    const TOptional<LRect2D> Cull;
+    const std::optional<LRect2D> Cull;
 
     TArray<std::pair<vk::Rect2D, u64>>& Batches;
     TArray<LVisualInstance>& VisualInstances;

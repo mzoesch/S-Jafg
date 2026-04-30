@@ -4,7 +4,6 @@
 #include "Engine/Engine.h"
 #include "Framework/Eye.h"
 #include "Platform/Surface.h"
-#include "User/Input/Replies.h"
 #include "Nodes/UserWidget.h"
 #include "Stats/Stats.h"
 #include "Framework/TextureSubsystem.h"
@@ -64,315 +63,194 @@ void Jafg::LViewport::Vk_OnLateInit()
 
     return;
 }
-
-void Jafg::LViewport::ClearInvalidWidgets()
-{
-    if (this->FocusedWidget.IsValidDeep() == false)
-    {
-        if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
-        {
-            if (this->FocusedWidget.IsNotNull())
-            {
-                LOG_VERBOSE(LogWidgetFramework, "Current focused widget is invalid.")
-            }
-        }
-
-        this->FocusedWidget.Reset();
-    }
-
-    auto ClearOnContainer{[](TArray<TClassStorage<WNode>>* InContainer) -> void
-    {
-        auto const Removed{ algo::erase_if(InContainer, [](auto const& E)
-        {
-            return E.IsValidDeep() == false;
-        }) };
-        if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
-        {
-            if (Removed > 0)
-            {
-                LOG_VERBOSE(LogWidgetFramework, "Found [{}] hovered widgets from last frame that are now invalid.", Removed)
-            }
-        }
-
-        return;
-    }};
-
-    ClearOnContainer(&this->LastFrameHoveredWidgets);
-    ClearOnContainer(&this->HoveredWidgets);
-
-    return;
-}
-
 void Jafg::LViewport::DispatchInputs()
 {
+    STAT_CYCLE_FUNCTION()
+
     auto& CursorLocation{this->Surface.GetMouseLocation()};
 
-    this->LastFrameHoveredWidgets = this->HoveredWidgets;
     if (CursorLocation.has_value())
     {
-        this->HoveredWidgets.clear();
-    }
-
-    LCursorReply SweepReply;
-
-    /* Sweep cursor input over widgets. */
-    if (CursorLocation.has_value())
-    {
-        for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
+        if (this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press))
         {
-            if ((*It)->ShouldCheckForInputs() == false)
-            {
-                continue;
-            }
-            if (LCursorReply Reply{(*It)->SweepMouse({maths::zero_vector<LVec2F>}, CursorLocation.value())}; Reply.IsHandled())
-            {
-                SweepReply = std::move(Reply);
-                break;
-            }
-            continue;
-        }
-    }
-
-    /* Check for cursor leave events. */
-    if (CursorLocation.has_value())
-    {
-        LCursorReply MostRecentReply{LCursorReply::Unhandled()};
-        for (auto& Node : this->LastFrameHoveredWidgets)
-        {
-            if (algo::contains(this->HoveredWidgets, Node) == false)
-            {
-                if (LCursorReply Reply{Node->OnCursorLeave()}; MostRecentReply.IsHandled() == false && Reply.IsHandled())
-                {
-                    MostRecentReply = Reply;
-                }
-            }
-            continue;
-        }
-        if (MostRecentReply.IsHandled())
-        {
-            this->HandleReply(this->Surface, MostRecentReply);
-        }
-    }
-
-    /*
-     * Handle the sweep reply after the cursor leave events, so that in the case of mutual changes to (e.g., the
-     * cursor) are still reflected in the importance. Obviously, the sweep reply is more important than some random
-     * fuck widget that was hovered last frame.
-     */
-    if (SweepReply.IsHandled())
-    {
-        this->HandleReply(this->Surface, SweepReply);
-    }
-
-    /* Check for left-mouse-button down events to focus on another widget. */
-    if (CursorLocation.has_value() && this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press))
-    {
-        bool bHandled{};
-        for (auto& Widget : this->HoveredWidgets)
-        {
-            if (Widget->ShouldCheckForInputs() == false)
-            {
-                continue;
-            }
-            if (LReply Reply{Widget->SweepFocusTest({maths::zero_vector<LVec2F>}, CursorLocation.value())}; Reply.IsHandled())
-            {
-                this->HandleReply(this->Surface, Reply);
-                bHandled = true;
-                break;
-            }
-            continue;
-        }
-        if (bHandled == false)
-        {
-            this->HandleReply(this->Surface, LReply::HandledWithFocusLost());
-        }
-    }
-
-    /* Check if the focused widget is valid to be focused. */
-    if (this->FocusedWidget.IsValid())
-    {
-        bool bIsDrawn{};
-        for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
-        {
-            if ((*It)->IsNodeInVisiblePath(this->FocusedWidget.Get()))
-            {
-                bIsDrawn = true;
-                break;
-            }
-            continue;
-        }
-        if (bIsDrawn == false)
-        {
-            LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
-            this->FocusedWidget->OnFocusLost();
-            this->FocusedWidget = nullptr;
-        }
-    }
-
-    /* Check for key down events. */
-    for (LRawInput const& Input : this->Surface.GetRawInputs())
-    {
-        if ((Input.State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
-        {
-            continue;
-        }
-        if (this->FocusedWidget.IsNotNull())
-        {
-            if (LReply Reply{this->FocusedWidget->OnKeyDown({
-                    .Frontend = this->Surface.GetFrontend(),
-                    .Surface = this->Surface,
-                    .Viewport = *this,
-                    .Node = *this->FocusedWidget,
-                    .CursorLocation = CursorLocation,
-                    }, Input)};
-                Reply.IsHandled())
-            {
-                this->HandleReply(this->Surface, Reply);
-                continue;
-            }
-            if (auto* Parent{this->FocusedWidget->As<WParent>()})
-            {
-                if (LReply Reply{Parent->OnParentKeyDownEntry({
-                    .Frontend = this->Surface.GetFrontend(),
-                    .Surface = this->Surface,
-                    .Viewport = *this,
-                    .Node = *this->FocusedWidget,
-                    .CursorLocation = CursorLocation,
-                    }, Input)}; Reply.IsHandled())
-                {
-                    this->HandleReply(this->Surface, Reply);
-                    continue;
-                }
-            }
-        }
-        if (CursorLocation.has_value())
-        {
+            bool bHandled{};
             for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
             {
-                if ((*It) == this->FocusedWidget || (*It)->ShouldCheckForInputs() == false)
+                if (auto Reply{(*It)->SweepFocus({.Translation=maths::zero_vector<LVec2F>}, *CursorLocation)}; Reply.IsHandled())
                 {
-                    continue;
-                }
-                if ((*It)->IsInBounds({maths::zero_vector<LVec2F>}, CursorLocation.value()) == false)
-                {
-                    continue;
-                }
-                if (LReply Reply{(*It)->OnKeyDownNoFocus({
-                        .Frontend = this->Surface.GetFrontend(),
-                        .Surface = this->Surface,
-                        .Viewport = *this,
-                        .Node = **It,
-                        .CursorLocation = CursorLocation,
-                        }, Input)};
-                    Reply.IsHandled())
-                {
-                    this->HandleReply(Surface, Reply);
+                    if (Reply.DoesConsume())
+                    {
+                        this->Surface.ConsumeKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
+                    }
+                    this->HandleReply(std::move(Reply));
+                    bHandled = true;
                     break;
+                }
+            }
+            if (!bHandled)
+            {
+                this->Surface.ConsumeKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
+                this->HandleReply({TClassStorage<WNode>{}});
+            }
+        }
+    }
+
+    if (this->FocusedWidget)
+    {
+        check(this->FocusedWidget.IsValidSlow())
+        if (!algo::any_of(this->TopLevelWidgets.rbegin(), this->TopLevelWidgets.rend(), [this](WUserWidget const* Widget)
+        {
+            return Widget->IsNodeInVisiblePath(this->FocusedWidget.get());
+        }))
+        {
+            this->HandleReply({TClassStorage<WNode>{}});
+        }
+        else
+        {
+            this->FocusedWidget->OnFocusTick();
+        }
+    }
+
+    for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
+    {
+        checkCode((*It)->_check_StateInvariant())
+        if (auto Reply{(*It)->Sweep({.Translation=maths::zero_vector<LVec2F>}, CursorLocation)}; Reply.IsHandled())
+        {
+            check(CursorLocation.has_value())
+            this->HandleReply(std::move(Reply));
+            break;
+        }
+    }
+
+    for (auto It{this->Surface.GetMutableUnconsumedInputsDangerous().begin()}; It != this->Surface.GetMutableUnconsumedInputsDangerous().end();)
+    {
+        if (!(It->State & ERawInputStateBits::Release))
+        {
+            ++It;
+            continue;
+        }
+
+        if (this->FocusedWidget)
+        {
+            if (auto Reply{this->FocusedWidget->OnKeyUpFocused({
+                .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
+                .FocusedNode = *this->FocusedWidget, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                }, *It)};
+                Reply.IsHandled())
+            {
+                if (Reply.DoesConsume())
+                {
+                    It = this->Surface.ConsumeKey(It);
+                    this->HandleReply(std::move(Reply));
+                    continue;
+                }
+                this->HandleReply(std::move(Reply));
+            }
+        }
+
+        if (CursorLocation.has_value())
+        {
+            bool bConsumed{};
+            for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
+            {
+                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({.Translation=maths::zero_vector<LVec2F>}, *CursorLocation))
+                {
+                    if (auto Reply{(*It2)->OnKeyUpUnfocused({
+                        .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
+                        .FocusedNode = **It2, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                        }, *It)};
+                        Reply.IsHandled())
+                    {
+                        bConsumed = Reply.DoesConsume();
+
+                        if (bConsumed)
+                        {
+                            It = this->Surface.ConsumeKey(It);
+                        }
+                        this->HandleReply(std::move(Reply));
+                        if (bConsumed)
+                        {
+                            break;
+                        }
+                    }
                 }
                 continue;
             }
+
+            if (bConsumed)
+            {
+                continue;
+            }
         }
+
+        ++It;
+
         continue;
     }
 
-    /* Check for key up events. */
-    for (LRawInput const& Input : this->Surface.GetRawInputs())
+    for (auto It{this->Surface.GetMutableUnconsumedInputsDangerous().begin()}; It != this->Surface.GetMutableUnconsumedInputsDangerous().end();)
     {
-        if ((Input.State & ERawInputStateBits::Release) == ERawInputStateBits::Identity)
+        if (!(It->State & ERawInputStateBits::Press))
         {
+            ++It;
             continue;
         }
-        if (this->FocusedWidget.IsNotNull())
+
+        if (this->FocusedWidget)
         {
-            if (LReply Reply{this->FocusedWidget->OnKeyUp({
-                    .Frontend = this->Surface.GetFrontend(),
-                    .Surface = this->Surface,
-                    .Viewport = *this,
-                    .Node = *this->FocusedWidget,
-                    .CursorLocation = CursorLocation,
-                    }, Input)};
+            if (auto Reply{this->FocusedWidget->OnKeyDownFocused({
+                .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
+                .FocusedNode = *this->FocusedWidget, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                }, *It)};
                 Reply.IsHandled())
             {
-                this->HandleReply(this->Surface, Reply);
-                continue;
-            }
-            if (auto* Parent{this->FocusedWidget->As<WParent>()})
-            {
-                if (LReply Reply{Parent->OnParentKeyUpEntry({
-                    .Frontend = this->Surface.GetFrontend(),
-                    .Surface = this->Surface,
-                    .Viewport = *this,
-                    .Node = *this->FocusedWidget,
-                    .CursorLocation = CursorLocation,
-                    }, Input)}; Reply.IsHandled())
+                if (Reply.DoesConsume())
                 {
-                    this->HandleReply(this->Surface, Reply);
+                    It = this->Surface.ConsumeKey(It);
+                    this->HandleReply(std::move(Reply));
                     continue;
                 }
+                this->HandleReply(std::move(Reply));
             }
         }
+
         if (CursorLocation.has_value())
         {
-            for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
+            bool bConsumed{};
+            for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
             {
-                if ((*It) == this->FocusedWidget || (*It)->ShouldCheckForInputs() == false)
+                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({.Translation=maths::zero_vector<LVec2F>}, *CursorLocation))
                 {
+                    if (auto Reply{(*It2)->OnKeyDownUnfocused({
+                        .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
+                        .FocusedNode = **It2, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                        }, *It)};
+                        Reply.IsHandled())
+                    {
+                        bConsumed = Reply.DoesConsume();
+                        if (bConsumed)
+                        {
+                            It = this->Surface.ConsumeKey(It);
+                        }
+                        this->HandleReply(std::move(Reply));
+                        if (bConsumed)
+                        {
+                            break;
+                        }
+                    }
                     continue;
                 }
-                if ((*It)->IsInBounds({maths::zero_vector<LVec2F>}, CursorLocation.value()) == false)
-                {
-                    continue;
-                }
-                if (LReply Reply{(*It)->OnKeyUpNoFocus({
-                        .Frontend = this->Surface.GetFrontend(),
-                        .Surface = this->Surface,
-                        .Viewport = *this,
-                        .Node = **It,
-                        .CursorLocation = CursorLocation,
-                        }, Input)};
-                    Reply.IsHandled())
-                {
-                    this->HandleReply(this->Surface, Reply);
-                    break;
-                }
+            }
+
+            if (bConsumed)
+            {
                 continue;
             }
         }
+
+        ++It;
+
         continue;
-    }
-
-    return;
-}
-
-void Jafg::LViewport::OnMouseLeftViewport(bool bInvalidateAllInputs)
-{
-    if (this->HoveredWidgets.empty() == false || this->LastFrameHoveredWidgets.empty() == false)
-    {
-        LCursorReply MostRecentReply;
-        for (auto& Node : this->HoveredWidgets)
-        {
-            if (LCursorReply Reply{Node->OnCursorLeave()}; Reply.IsHandled())
-            {
-                MostRecentReply = std::move(Reply);
-            }
-        }
-        if (MostRecentReply.IsHandled())
-        {
-            if (MostRecentReply.GetCursorType() != EMouseCursor::None)
-            {
-                this->Surface._SetMouseCursor(MostRecentReply.GetCursorType());
-            }
-        }
-
-        algo::orphan(&this->HoveredWidgets);
-        algo::orphan(&this->LastFrameHoveredWidgets);
-    }
-
-    if (bInvalidateAllInputs && this->FocusedWidget.IsNotNull())
-    {
-        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
-        this->FocusedWidget->OnFocusLost();
-        this->FocusedWidget = nullptr;
     }
 
     return;
@@ -388,7 +266,6 @@ void Jafg::LViewport::Tick()
         {
             Widget->Tick();
         }
-        continue;
     }
 
     this->OnLateTick.Broadcast();
@@ -403,7 +280,6 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     check(GEngine)
     auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
 
-    this->ClearInvalidWidgets();
     this->RecalculateScaleFactor();
 
     TArray<std::pair<vk::Rect2D, u64>> _Dummy1;
@@ -571,78 +447,18 @@ LVec2u32 Jafg::LViewport::GetDimensions() const noexcept
     return this->Surface.GetDimensions();
 }
 
-// void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
-// {
-//     check( GEngine )
-//     check( InDimensions.X > 0 && InDimensions.Y > 0 )
-//
-//     this->Dimensions = InDimensions;
-//
-//     if (this->IntermediateBuffer.IsValid())
-//     {
-//         this->IntermediateBuffer = { };
-//     }
-//
-//     this->IntermediateBuffer.Build(this->GetDimensions());
-//
-//     return;
-// }
-
-Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const noexcept
+void Jafg::LViewport::ChangeFocusImpl(TClassStorage<WNode> Node)
 {
-    for (auto* Widget : this->TopLevelWidgets)
+    if (   this->FocusedWidget
+        && GEngine->IsClassOuterKnown(this->FocusedWidget.get_outer())
+        && this->FocusedWidget.get_outer()->IsHiredHere(this->FocusedWidget.get_unsafe())
+        )
     {
-        if (Widget->IsA(Class))
-        {
-            return Widget;
-        }
-        continue;
+        LOG_TRACE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget.get_unsafe()->GetNameAsString())
+        this->FocusedWidget.get_unsafe()->OnFocusLost();
     }
-    return nullptr;
-}
-
-bool Jafg::LViewport::FocusWidgetNode(WNode* InNode)
-{
-    if (InNode == nullptr)
-    {
-        return false;
-    }
-
-    for (const WUserWidget* Widget : this->TopLevelWidgets)
-    {
-        if (Widget->IsNodeInVisiblePath(InNode))
-        {
-            this->ChangeFocusUnsafe(InNode);
-            return true;
-        }
-
-        continue;
-    }
-
-    /*
-     * The node cannot be focused because it is not visible.
-     */
-    return false;
-}
-
-bool Jafg::LViewport::AddHoveredWidgetForFrame(WNode* Node)
-{
-    check(algo::contains(this->HoveredWidgets, Node) == false)
-    this->HoveredWidgets.emplace_back(Node);
-    return algo::contains(this->LastFrameHoveredWidgets, Node) == false;
-}
-
-void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
-{
-    if (this->FocusedWidget.IsNotNull())
-    {
-        LOG_TRACE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
-        this->FocusedWidget->OnFocusLost();
-    }
-
-    this->FocusedWidget = InNode;
-
-    if (this->FocusedWidget.IsNotNull())
+    this->FocusedWidget = Node;
+    if (this->FocusedWidget)
     {
         LOG_TRACE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusReceived();
@@ -651,51 +467,17 @@ void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
     return;
 }
 
-void Jafg::LViewport::RecalculateScaleFactor()
-{
-    this->ScaleFactor = this->PlatformDpi / this->BaseDpi;
-}
-
-void Jafg::LViewport::HandleReply(LSurface& Context, const LCursorReply& Reply)
+void Jafg::LViewport::HandleReply(LNodeReply&& Reply)
 {
     check(Reply.IsHandled())
 
-    if (Reply.GetCursorType() != EMouseCursor::None)
+    if (Reply.GetCursor() != ECursor::None)
     {
-        Context._SetMouseCursor(Reply.GetCursorType());
+        this->Surface._SetMouseCursor(Reply.GetCursor());
     }
-
-    if (Reply.ShouldLooseFocus())
+    if (Reply.IsFocusValid())
     {
-        this->ChangeFocusUnsafe(nullptr);
-    }
-
-    if (Reply.IsFocusedWidgetValid())
-    {
-        if (this->FocusedWidget != Reply.GetFocusedWidget())
-        {
-            this->ChangeFocusUnsafe(Reply.GetFocusedWidget());
-        }
-    }
-
-    return;
-}
-
-void Jafg::LViewport::HandleReply(LSurface& Context, const LReply& Reply)
-{
-    check( Reply.IsHandled() )
-
-    if (Reply.ShouldLooseFocus())
-    {
-        this->ChangeFocusUnsafe(nullptr);
-    }
-
-    if (Reply.IsFocusedWidgetValid())
-    {
-        if (this->FocusedWidget != Reply.GetFocusedWidget())
-        {
-            this->ChangeFocusUnsafe(Reply.GetFocusedWidget());
-        }
+        this->ChangeFocusImpl(Reply.GetFocus());
     }
 
     return;

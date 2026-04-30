@@ -27,7 +27,27 @@ protected:
 public:
 
     EVENT_DECL(OnDismissEvent, void(WDismissibleFloatingWidget& Self))
-    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
+    virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
+
+    virtual LNodeReply OnCursorEnter() override
+    {
+        check(!this->_check_MutableMouseEntered())
+        checkCode(this->_check_MutableMouseEntered() = true)
+        if (this->OnCursorEnterEvent)
+        {
+            return this->OnCursorEnterEvent(*this);
+        }
+        return LNodeReply::Unhandled();
+    }
+    virtual LNodeReply OnCursorMoved(LVec2F const& Location) override
+    {
+        check(this->_check_MutableMouseEntered())
+        if (this->OnCursorMovedEvent)
+        {
+            return this->OnCursorMovedEvent(*this);
+        }
+        return LNodeReply::Unhandled();
+    }
 };
 
 struct LFactoryDismissibleFloatingWidget : NODE_FACTORY_PARENT(WDismissibleFloatingWidget)

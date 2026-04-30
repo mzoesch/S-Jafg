@@ -28,7 +28,7 @@ public:
 
     virtual void OnWorldPreInit() override;
     virtual void OnPersonaControllerCreated(Jafg::APersonaController& Pc) override;
-    virtual Jafg::TJxxUnique<Jafg::APawn> GetPawnForPersonaController(Jafg::APersonaController const& Pc) override;
+    virtual TJxxUnique<Jafg::APawn> GetPawnForPersonaController(Jafg::APersonaController const& Pc) override;
 };
 
 } /* ~Namespace Jgc */

@@ -14,7 +14,7 @@ struct LFactoryParent;
 //# The base class for all nodes that can possess children.
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryParent, ECxxClassFlags::Abstract)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryParent, EJxxClassBits::Abstract)
 class ENGINE_API WParent : public WNode
 {
     GENERATED_CLASS_BODY()
@@ -43,23 +43,32 @@ public:
     virtual void Destruct() override { Super::Destruct(); this->RemoveChildren(); }
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
-    virtual LReply       SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location) override;
+    virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
+    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override
+    {
+        return this->SweepWithChildInfo(Info, Info, Location);
+    }
+    virtual void _RemoveHoverState() noexcept override;
 
-    virtual LReply OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LReply OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    LReply OnParentKeyDownEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
-    LReply OnParentKeyUpEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
-
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const override
     {
         if (Super::IsFocusWidgetTransitive()) { return true; }
         return algo::any_of(this->Children, [](auto& Child){ return Child->IsFocusWidgetTransitive(); });
     }
-    virtual void OnSurfaceResize() override;
+    virtual void OnSurfaceResize() override
+    {
+        Super::OnSurfaceResize();
+        for (auto& Child : this->Children)
+        {
+            check(Child.get())
+            Child->OnSurfaceResize();
+            continue;
+        }
+        return;
+    }
     virtual bool IsNodeInVisiblePath(WNode const* Node) const override;
     virtual WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept override;
     virtual WNode* FindNodeInVisiblePath(TSubclassOf<WNode> Class) noexcept override;
@@ -87,6 +96,10 @@ public:
 
     //# The padding area between the slot and the content it contains.
     LPadding Padding;
+
+protected:
+
+    LNodeReply SweepWithChildInfo(LNodeSweepInfo const& Info, LNodeSweepInfo const& ChildInfo, std::optional<LVec2F> const& Location);
 
 private:
 
@@ -142,7 +155,7 @@ inline Detail::LBeginStylingFnResult::~LBeginStylingFnResult()
 }
 
 template<typename TNode /* = WNode */> requires std::is_base_of_v<WNode, TNode>
-inline typename TNode::LFactory& Detail::LBeginStylingFnResult::Root(LCxxClass const& Class)
+inline typename TNode::LFactory& Detail::LBeginStylingFnResult::Root(LJxxClass const& Class)
 {
     check(this->Factory.get() == nullptr)
     this->Factory = TUnique<typename TNode::LFactory>{

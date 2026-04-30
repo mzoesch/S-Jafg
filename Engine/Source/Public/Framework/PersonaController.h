@@ -26,7 +26,7 @@ public:
 
     friend WWorldNode;
 
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     FORCEINLINE constexpr bool IsLocallyPossessed() const noexcept { return this->IsOwningNodeValid(); }
 

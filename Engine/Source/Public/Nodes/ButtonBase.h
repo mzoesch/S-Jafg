@@ -5,10 +5,37 @@
 #include "Nodes/Node.h"
 
 #define JAFG_NODE_BUTTON_BOILERPLATE() \
-    virtual LCursorReply OnCursorEnter() override{ return this->ButtonBase_OnCursorEnter(); } \
-    virtual LCursorReply OnCursorLeave() override{ return this->ButtonBase_OnCursorLeave(); } \
-    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyDown(Data, Event); } \
-    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyUp(Data, Event); }
+    virtual LNodeReply OnCursorEnter() override \
+    { \
+        if (!this->bEnabled)\
+        {\
+            check(!this->Owner._check_MutableMouseEntered()) \
+            checkCode(this->Owner._check_MutableMouseEntered() = true)\
+            return {};\
+        }\
+        if (this->bUpdateBrushOnStateChange && !this->bSelected) \
+        { \
+            this->_ButtonBase_SetBrush(this->Style.HoverBrush); \
+        } \
+        return Super::OnCursorEnter(); \
+    } \
+    virtual void OnCursorLeave() override \
+    { \
+        if (!this->bEnabled)\
+        {\
+            check(this->Owner._check_MutableMouseEntered()) \
+            checkCode(this->Owner._check_MutableMouseEntered() = false)\
+            return;\
+        }\
+        if (this->bUpdateBrushOnStateChange && !this->bSelected) \
+        { \
+            this->_ButtonBase_SetBrush(this->Style.NormalBrush); \
+        } \
+        Super::OnCursorLeave(); \
+        return; \
+    } \
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyDownFocused(Info, Event); } \
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyUpFocused(Info, Event); }
 
 namespace Jafg
 {
@@ -198,6 +225,11 @@ public:
     NODISCARD constexpr bool IsUpdateBrushOnStateChange() const noexcept { return this->bUpdateBrushOnStateChange; }
     constexpr void SetUpdateBrushOnStateChange(bool bInUpdate) noexcept { this->bUpdateBrushOnStateChange = bInUpdate; }
 
+    FORCEINLINE void _ButtonBase_SetBrush(TBrush const& Brush) noexcept
+    {
+        this->Owner.*BrushProj = Brush;
+    }
+
 protected:
 
     virtual void ButtonBase_Construct()
@@ -224,60 +256,53 @@ protected:
         return;
     }
 
-    LCursorReply ButtonBase_OnCursorEnter()
+    // LNodeReply ButtonBase_OnCursorEnter()
+    // {
+    //     if (this->bEnabled == false)
+    //     {
+    //         return {};
+    //     }
+    //     if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+    //     {
+    //         this->Owner.*BrushProj = this->Style.HoverBrush;
+    //     }
+    //     if (this->Owner.OnCursorEnterEvent)
+    //     {
+    //         if (auto Reply{this->Owner.OnCursorEnterEvent(this->Owner)}; Reply.IsHandled())
+    //         {
+    //             return Reply;
+    //         }
+    //     }
+    //     return LNodeReply::Handled();
+    // }
+
+    // void ButtonBase_OnCursorLeave()
+    // {
+    //     if (this->bEnabled == false)
+    //     {
+    //         return;
+    //     }
+    //     if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+    //     {
+    //         this->Owner.*BrushProj = this->Style.NormalBrush;
+    //     }
+    //     if (this->Owner.OnCursorLeaveEvent)
+    //     {
+    //         this->Owner.OnCursorLeaveEvent(this->Owner);
+    //     }
+    //     return;
+    // }
+
+    LNodeReply ButtonBase_OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
     {
         if (this->bEnabled == false)
         {
             return {};
         }
-        if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-        {
-            this->Owner.*BrushProj = this->Style.HoverBrush;
-        }
-        if (this->Owner.OnCursorEnterEvent.IsValid())
-        {
-            if (auto Reply{this->Owner.OnCursorEnterEvent.Invoke(this->Owner)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-        return LCursorReply::Handled();
-    }
 
-    LCursorReply ButtonBase_OnCursorLeave()
-    {
-        if (this->bEnabled == false)
+        if (Info.CursorLocation.has_value())
         {
-            return {};
-        }
-        if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-        {
-            this->Owner.*BrushProj = this->Style.NormalBrush;
-        }
-        if (this->Owner.OnCursorLeaveEvent.IsValid())
-        {
-            if (auto Reply{this->Owner.OnCursorLeaveEvent.Invoke(this->Owner)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-        return LCursorReply::Handled();
-    }
-
-    LReply ButtonBase_OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
-    {
-        if (this->bEnabled == false)
-        {
-            if (this->Owner.IsParentValid())
-            {
-                return this->Owner.GetParentChecked()->OnKeyDown(Data, Event);
-            }
-            return LReply::Unhandled();
-        }
-
-        if (Data.CursorLocation.has_value())
-        {
-            if (this->Owner.IsInBounds({.Translation=Data.Translation}, *Data.CursorLocation))
+            if (this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
             {
                 if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                 {
@@ -285,10 +310,10 @@ protected:
                     {
                         this->Owner.*BrushProj = this->Style.PressBrush;
                     }
-                    LReply Result{LReply::Handled()};
-                    if (this->Owner.OnKeyDownEvent.IsValid())
+                    auto Result{LNodeReply::Handled()};
+                    if (this->Owner.OnKeyDownFocusedEvent)
                     {
-                        if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        if (auto Reply{this->Owner.OnKeyDownFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
                         {
                             Result = Reply;
                         }
@@ -301,10 +326,10 @@ protected:
                     {
                         this->Owner.*BrushProj = this->Style.PressBrush;
                     }
-                    LReply Result{LReply::Handled()};
-                    if (this->Owner.OnKeyDownEvent.IsValid())
+                    auto Result{LNodeReply::Handled()};
+                    if (this->Owner.OnKeyDownFocusedEvent)
                     {
-                        if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        if (auto Reply{this->Owner.OnKeyDownFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
                         {
                             Result = Reply;
                         }
@@ -314,34 +339,26 @@ protected:
             }
         }
 
-        if (this->Owner.OnKeyDownEvent.IsValid())
+        if (this->Owner.OnKeyDownFocusedEvent)
         {
-            if (auto Reply{this->Owner.OnKeyDownEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+            if (auto Reply{this->Owner.OnKeyDownFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
         }
-        if (this->Owner.IsParentValid())
-        {
-            return this->Owner.GetParentChecked()->OnKeyDown(Data, Event);
-        }
-        return LReply::Unhandled();
+        return {};
     }
 
-    LReply ButtonBase_OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+    LNodeReply ButtonBase_OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
     {
         if (this->bEnabled == false)
         {
-            if (this->Owner.IsParentValid())
-            {
-                return this->Owner.GetParentChecked()->OnKeyUp(Data, Event);
-            }
-            return LReply::Unhandled();
+            return {};
         }
 
-        if (Data.CursorLocation.has_value())
+        if (Info.CursorLocation.has_value())
         {
-            if (this->Owner.IsInBounds({.Translation=Data.Translation}, *Data.CursorLocation))
+            if (this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
             {
                 if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                 {
@@ -349,10 +366,10 @@ protected:
                     {
                         this->Owner.*BrushProj = this->Style.HoverBrush;
                     }
-                    LReply Result{LReply::Handled()};
-                    if (this->Owner.OnKeyUpEvent.IsValid())
+                    auto Result{LNodeReply::Handled()};
+                    if (this->Owner.OnKeyUpFocusedEvent)
                     {
-                        if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        if (auto Reply{this->Owner.OnKeyUpFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
                         {
                             Result = Reply;
                         }
@@ -365,10 +382,10 @@ protected:
                     {
                         this->Owner.*BrushProj = this->Style.HoverBrush;
                     }
-                    LReply Result{LReply::Handled()};
-                    if (this->Owner.OnKeyUpEvent.IsValid())
+                    auto Result{LNodeReply::Handled()};
+                    if (this->Owner.OnKeyUpFocusedEvent)
                     {
-                        if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+                        if (auto Reply{this->Owner.OnKeyUpFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
                         {
                             Result = Reply;
                         }
@@ -378,18 +395,14 @@ protected:
             }
         }
 
-        if (this->Owner.OnKeyUpEvent.IsValid())
+        if (this->Owner.OnKeyUpFocusedEvent)
         {
-            if (auto Reply{this->Owner.OnKeyUpEvent.Invoke(this->Owner, Data, Event)}; Reply.IsHandled())
+            if (auto Reply{this->Owner.OnKeyUpFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
         }
-        if (this->Owner.IsParentValid())
-        {
-            return this->Owner.GetParentChecked()->OnKeyUp(Data, Event);
-        }
-        return LReply::Unhandled();
+        return {};
     }
 
     TNode& Owner;

@@ -41,25 +41,27 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                             .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                             .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
                             .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
-                            .OnKeyUp([Result, OnClose = CreateInfo.OnOptionCloseResult, Action = Node.OnAction](auto&&...)
+                            .OnKeyUpFocused([Result, OnClose = CreateInfo.OnOptionCloseResult, Action = Node.OnAction](auto&&...)
                             {
                                 check(Result)
                                 check(!!Action)
-                                if (!Action().IsHandled())
+                                if (!Action().is_handled())
                                 {
                                     if (OnClose)
                                     {
-                                        if (!OnClose(*Result).IsHandled())
+                                        if (!OnClose(*Result).is_handled())
                                         {
+                                            check(Result->IsTopLevel())
                                             Result->MarkAsGarbage_v2();
                                         }
                                     }
                                     else
                                     {
+                                        check(Result->IsTopLevel())
                                         Result->MarkAsGarbage_v2();
                                     }
                                 }
-                                return LReply::Handled();
+                                return LNodeReply::Handled();
                             })
                             .Content(Node.Selector.DisplayName)
                             .LeftIcon(Node.Selector.Icon.GetResolved())
@@ -147,14 +149,14 @@ void Jafg::WDropDown::OnDismiss(WFloatingWidget& FloatingWidget)
     return;
 }
 
-Jafg::LCursorReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu)
+Jafg::LNodeReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu)
 {
     if (this->OpenSubmenus.contains(&Submenu))
     {
         check(this->OpenSubmenus[&Submenu])
         check(Node.As<WTextBox>())
         check(Node.As<WTextBox>()->Brush.bSkipBrushDraw == false)
-        return LCursorReply::Handled();
+        return LNodeReply::Handled();
     }
 
     this->Select(&Node.AsStatic<WTextBox>());
@@ -173,7 +175,7 @@ Jafg::LCursorReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNod
         {
             this->OpenSubmenus.clear();
             this->Select(nullptr);
-            return LPrimitiveReply::Handled();
+            return algo::reply::handled();
         }},
         Submenu
         )};
@@ -183,5 +185,5 @@ Jafg::LCursorReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNod
 
     this->OpenSubmenus.emplace(&Submenu, TJxxUnique<WFloatingWidget>{&FloatingWidget});
 
-    return LCursorReply::Handled();
+    return LNodeReply::Handled();
 }

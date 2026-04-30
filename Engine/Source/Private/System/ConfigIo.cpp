@@ -15,15 +15,15 @@ void GoToNextLine(const LString& InContentF, std::size_t* Cursor);
 //# character or only contains whitespace / tab characters.
 //#
 void GoToThisLineStart(const LString& InContentF, std::size_t* Cursor);
-auto FindSection(const LString& InContentF, const LStringView& InSection) -> TOptional<std::size_t>;
+auto FindSection(const LString& InContentF, const LStringView& InSection) -> std::optional<std::size_t>;
 //#
 //# Find the specified key in the specified section (where the cursor is currently positioned). Searches
 //# until the key is found or the end of the section is reached.
 //#
-auto FindKey(const LString& InContentF, const std::size_t& InCursor, const LStringView& InKey) -> TOptional<std::size_t>;
-auto FindKeyValue(LString& InContentF, const std::size_t& InCursor, const LStringView& InKey) -> TOptional<LStringView>;
+auto FindKey(const LString& InContentF, const std::size_t& InCursor, const LStringView& InKey) -> std::optional<std::size_t>;
+auto FindKeyValue(LString& InContentF, const std::size_t& InCursor, const LStringView& InKey) -> std::optional<LStringView>;
 bool Serialize(LString* ContentF, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue);
-auto Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey) -> TOptional<LStringView>;
+auto Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey) -> std::optional<LStringView>;
 
 void GoToNextLine(const LString& InContentF, std::size_t* Cursor)
 {
@@ -82,7 +82,7 @@ void GoToNextLineStart(const LString& InContentF, std::size_t* Cursor)
     return;
 }
 
-TOptional<std::size_t> FindSection(const LString& InContentF, const LStringView& InSection)
+std::optional<std::size_t> FindSection(const LString& InContentF, const LStringView& InSection)
 {
     using namespace Jafg;
 
@@ -142,7 +142,7 @@ TOptional<std::size_t> FindSection(const LString& InContentF, const LStringView&
     return { };
 }
 
-TOptional<std::size_t> FindKey(const LString& InContentF, const std::size_t& InCursor, const LStringView& InKey)
+std::optional<std::size_t> FindKey(const LString& InContentF, const std::size_t& InCursor, const LStringView& InKey)
 {
     checkCode
     (
@@ -198,9 +198,9 @@ TOptional<std::size_t> FindKey(const LString& InContentF, const std::size_t& InC
     }
 }
 
-Jafg::TOptional<LMutableStringView> FindKeyValue(LString& InContentF, const std::size_t& InCursor, const LStringView& InKey)
+Jafg::std::optional<LMutableStringView> FindKeyValue(LString& InContentF, const std::size_t& InCursor, const LStringView& InKey)
 {
-    Jafg::TOptional<std::size_t> Key = FindKey(InContentF, InCursor, InKey);
+    Jafg::std::optional<std::size_t> Key = FindKey(InContentF, InCursor, InKey);
     if (!Key)
     {
         return { };
@@ -235,7 +235,7 @@ bool Serialize(LString* ContentF, const LStringView& InSection, const LStringVie
 
     checkSlow( ContentF )
 
-    if (TOptional<LStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue.IsValid())
+    if (std::optional<LStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue.IsValid())
     {
         LStringView& Value = *DeserializedValue;
         if (Value.Equals(InValue.begin(), InValue.end()) == false)
@@ -247,7 +247,7 @@ bool Serialize(LString* ContentF, const LStringView& InSection, const LStringVie
         return false;
     }
 
-    TOptional<std::size_t> SectionMaybe = ::FindSection(*ContentF, InSection);
+    std::optional<std::size_t> SectionMaybe = ::FindSection(*ContentF, InSection);
     if (!SectionMaybe)
     {
         ContentF->append(Jafg::SprintF("[{}]\n", InSection));
@@ -261,16 +261,16 @@ bool Serialize(LString* ContentF, const LStringView& InSection, const LStringVie
     return true;
 }
 
-TOptional<LStringView> Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey)
+std::optional<LStringView> Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey)
 {
-    TOptional<std::size_t> Section = ::FindSection(InContentF, InSection);
+    std::optional<std::size_t> Section = ::FindSection(InContentF, InSection);
     if (!Section)
     {
         return { };
     }
     std::size_t Cursor = *Section;
     ::GoToThisLineStart(InContentF, &Cursor);
-    TOptional<std::size_t> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
+    std::optional<std::size_t> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
     if (!KeyCursor)
     {
         return { };
@@ -361,13 +361,13 @@ bool Jafg::ConfigIo::SerializeBulk(const LPath& InPath, const TArray<Entry>& InE
     return bUpdated;
 }
 
-TOptional<LString> Jafg::ConfigIo::Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
+std::optional<LString> Jafg::ConfigIo::Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
 {
     checkSlow( Tasks::IsOnMasterThread() )
     check( Finder::DoesFileExist(InPath) )
 
     LString ContentF = Finder::ReadFile(InPath);
-    TOptional<LStringView> Out = ::Deserialize(ContentF, InSection, InKey);
+    std::optional<LStringView> Out = ::Deserialize(ContentF, InSection, InKey);
 
     if (Out.has_value())
     {

@@ -93,32 +93,39 @@ void Jafg::WTextButton::UpdateDesiredSize() const
     if (this->LeftIcon.get() && this->LeftIconBrush.Scale > 0.0f)
     {
         f32 Width{static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale)};
-        LVec2F Size{Width + InSpt(this->GetViewport(), this->LeftIconBrush.InwardsPadding), 0.0f};
+        LVec2F Size{Width + this->LeftIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
         this->SetTextDrawOffset(Size);
     }
     if (this->RightIcon.get() && this->RightIconBrush.Scale > 0.0f)
     {
         f32 Width{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)};
-        LVec2F Size{Width + InSpt(this->GetViewport(), this->RightIconBrush.InwardsPadding), 0.0f};
+        LVec2F Size{Width + this->RightIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
     }
 
     return;
 }
 
-Jafg::LCursorReply Jafg::WTextButton::OnCursorEnter()
+Jafg::LNodeReply Jafg::WTextButton::OnCursorEnter()
 {
-    if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
+    if (!this->bEnabled)
     {
+        check(!this->Owner._check_MutableMouseEntered())
+        checkCode(this->Owner._check_MutableMouseEntered() = true)
+        return {};
+    }
+    if (this->bUpdateBrushOnStateChange && !this->bSelected)
+    {
+        this->_ButtonBase_SetBrush(this->Style.HoverBrush);
         this->TextBrush = this->TextStyle.HoverBrush;
         this->LeftIconBrush = this->LeftIconStyle.HoverBrush;
         this->RightIconBrush = this->RightIconStyle.HoverBrush;
     }
-    return this->ButtonBase_OnCursorEnter();
+    return Super::OnCursorEnter();
 }
 
-Jafg::LCursorReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
+Jafg::LNodeReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
 {
     if (this->bUpdateBrushOnStateChange && this->bEnabled && this->TransformsWidgetLayout())
     {
@@ -204,45 +211,53 @@ Jafg::LCursorReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
     return Super::OnCursorMoved(InLocation);
 }
 
-Jafg::LCursorReply Jafg::WTextButton::OnCursorLeave()
+void Jafg::WTextButton::OnCursorLeave()
 {
-    if (this->bEnabled && this->bSelected == false && this->bUpdateBrushOnStateChange)
+    if (!this->bEnabled)
     {
+        check(this->Owner._check_MutableMouseEntered())
+        checkCode(this->Owner._check_MutableMouseEntered() = false)
+        return;
+    }
+    if (this->bUpdateBrushOnStateChange && !this->bSelected)
+    {
+        this->_ButtonBase_SetBrush(this->Style.NormalBrush);
         this->TextBrush = this->TextStyle.NormalBrush;
         this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
         this->RightIconBrush = this->RightIconStyle.NormalBrush;
     }
-    return this->ButtonBase_OnCursorLeave();
+    Super::OnCursorLeave();
+    return;
 }
 
-Jafg::LReply Jafg::WTextButton::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WTextButton::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->bEnabled)
     {
         if (auto& Surface{this->GetViewport().GetSurface()}; Surface.HasMouseLocation())
         {
             if (this->DecoupledLeftKeyDown && maths::aabb_point({
-                .Offset = this->GetLeftIconTopLeft(Data.Translation),
+                .Offset = this->GetLeftIconTopLeft(Info.Translation),
                 .Extent = {
                     static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale),
                     static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
-                if (auto Reply{this->DecoupledLeftKeyDown(Data, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledLeftKeyDown(Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
             }
             else if (this->DecoupledRightKeyDown && maths::aabb_point({
-                .Offset = this->GetRightIconTopLeft(Data.Translation),
+                .Offset = this->GetRightIconTopLeft(Info.Translation),
                 .Extent = {
                     static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale),
                     static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
-                if (auto Reply{this->DecoupledRightKeyDown(Data, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledRightKeyDown(Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
@@ -260,37 +275,37 @@ Jafg::LReply Jafg::WTextButton::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEve
             }
         }
     }
-    return this->ButtonBase_OnKeyDown(Data, Event);
+    return this->ButtonBase_OnKeyDownFocused(Info, Event);
 }
 
-Jafg::LReply Jafg::WTextButton::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WTextButton::OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->bEnabled)
     {
         if (auto& Surface{this->GetViewport().GetSurface()}; Surface.HasMouseLocation())
         {
             if (this->DecoupledLeftKeyUp && maths::aabb_point({
-                .Offset = this->GetLeftIconTopLeft(Data.Translation),
+                .Offset = this->GetLeftIconTopLeft(Info.Translation),
                 .Extent = {
                     static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale),
                     static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
-                if (auto Reply{this->DecoupledLeftKeyUp(Data, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledLeftKeyUp(Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
             }
             else if (this->DecoupledRightKeyUp && maths::aabb_point({
-                .Offset = this->GetRightIconTopLeft(Data.Translation),
+                .Offset = this->GetRightIconTopLeft(Info.Translation),
                 .Extent = {
                     static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale),
                     static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
-                if (auto Reply{this->DecoupledRightKeyUp(Data, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledRightKeyUp(Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
@@ -308,7 +323,7 @@ Jafg::LReply Jafg::WTextButton::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent
             }
         }
     }
-    return this->ButtonBase_OnKeyUp(Data, Event);
+    return this->ButtonBase_OnKeyUpFocused(Info, Event);
 }
 
 void Jafg::WTextButton::OnEnabledStateChanged()
@@ -356,19 +371,19 @@ void Jafg::WTextButton::OnSelectedStateChanged()
 LVec2F Jafg::WTextButton::GetLeftIconTopLeft(LVec2F Translation) const noexcept
 {
     check(this->LeftIcon.get())
-    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()).y)};
+    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport()).y)};
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
-        + this->Brush.Padding.GetTopLeftOffsetInSpt(this->GetViewport())
+        + this->Brush.Padding.GetTopLeftOffset().InStaticPoints(this->GetViewport())
         + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)) * 0.5f};
 }
 
 LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
 {
     check(this->RightIcon.get())
-    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()).y)};
+    f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport()).y)};
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
         + LVec2F{this->GetAnchoredSize_v2().x, 0.0f}
-        - LVec2F{this->Brush.Padding.GetRightOffsetInSpt(this->GetViewport()), this->Brush.Padding.GetTopOffsetInSpt(this->GetViewport())}
+        - LVec2F{this->Brush.Padding.GetRightOffset().InStaticPoints(this->GetViewport()), this->Brush.Padding.GetTopOffset().InStaticPoints(this->GetViewport())}
         - LVec2F{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale), 0.0f}
         + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)) * 0.5f};
 }

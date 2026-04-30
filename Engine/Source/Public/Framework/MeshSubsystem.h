@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/CxxClass.h"
+#include "Engine/Jxx.h"
 #include "Rhi/StaticMesh.h"
 #include "MeshSubsystem.generated.h"
 
@@ -10,7 +10,7 @@ namespace Jafg
 {
 
 //# A mesh that was loaded by the program and may be used across many different objects.
-DECLARE_JAFG_CLASS(ECxxClassFlags::Singleton)
+DECLARE_JAFG_CLASS(EJxxClassBits::Singleton)
 class JMeshSubsystem final : public JCxxClass
 {
     GENERATED_CLASS_BODY()

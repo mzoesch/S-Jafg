@@ -86,7 +86,7 @@ public:
 
     FORCEINLINE auto const& GetTabs() const noexcept { return this->Tabs; }
 
-    WUserWidget* FindWidgetSlow(LCxxClass const& Class) noexcept;
+    WUserWidget* FindWidgetSlow(LJxxClass const& Class) noexcept;
     template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
     TWidget* FindWidgetSlow() noexcept
     {
@@ -119,8 +119,8 @@ public:
 private:
 
     void InitializeBoilerplate();
-    TOptional<TJxxUnique<WUserWidget>> CloseTabImpl(WTabOverlaySelector* Selector, bool bRelease);
-    void CreateTabMenu(TOptional<LVec2F> Hint, WTabOverlaySelector& Selector);
+    std::optional<TJxxUnique<WUserWidget>> CloseTabImpl(WTabOverlaySelector* Selector, bool bRelease);
+    void CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySelector& Selector);
 
     TArray<Tab> Tabs;
     LTabOverlayPossibilities* Possibilities{};
@@ -130,7 +130,7 @@ private:
     //# The container for selectors.
     WParent* Selectors{};
     //# The actual selectors.
-    std::move_only_function<void(LFactoryTextButton& Factory)> DefaultSelectorDelegate;
+    TFunction2<void(LFactoryTextButton& Factory)> DefaultSelectorDelegate;
     //# The switcher dictates where the content panels are stored.
     WSwitcher* Switcher{};
 };
@@ -182,6 +182,20 @@ protected:
         this->SetContent(std::move(Info.DisplayName));
         this->LeftIcon = Info.Icon.GetResolved();
         return;
+    }
+
+    virtual void Draw(LNodeRenderInfo const& Info) const override
+    {
+        if (this->GetContent() == "Tag Inspector")
+        {
+            JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
+        }
+        Super::Draw(Info);
+        return;
+    }
+    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override
+    {
+        return Super::Sweep(Info, Location);
     }
 
 private:

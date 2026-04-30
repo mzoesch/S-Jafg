@@ -5,45 +5,47 @@
 #include "Stats/Stats.h"
 #include "Runtime/Parameter.h"
 
-namespace
+namespace Jafg::Application
 {
 
-Jafg::LProgramParameter _CoreHelp1{{
+ENGINE_API LProgramParameter CoreHelp{{
     .Identifier = "Help",
     .Description = "Shows this help window for core systems only.",
+    .Variations = {"h", "help"},
     }};
-Jafg::LProgramParameter _Version{{
+ENGINE_API LProgramParameter Version{{
     .Identifier = "Version",
     .Description = "Shows the version of the engine.",
+    .Variations = {"v", "version"},
     }};
 
-Jafg::LProgramParameter _Help{{
+ENGINE_API LProgramParameter Help{{
     .Identifier = "Jafg.VerboseHelp",
     .Description = "Shows help window for all default loaded plugins.",
     }};
 
-Jafg::LProgramParameter _WaitForDebugger{{
+ENGINE_API LProgramParameter WaitForDebugger{{
     .Identifier = "Jafg.WaitForDebugger",
     .Description = "Whether to wait for a debugger to attach to this process before continuing execution.",
     }};
-Jafg::LProgramParameter _IgnoreInstantDebuggerBreak{{
+ENGINE_API LProgramParameter IgnoreInstantDebuggerBreak{{
     .Identifier = "Jafg.IgnoreInstantDebuggerBreak",
     .Description = "If \"-Jafg.WaitForDebugger\" is specified, this will ignore the instant break after the debugger attached and continue execution normally.",
     }};
-Jafg::LProgramParameter _AlwaysReportCrash{{
+ENGINE_API LProgramParameter AlwaysReportCrash{{
     .Identifier = "Jafg.AlwaysReportCrash",
     .Description = "Whether to always show crash dialog windows (if a front-end is available) and report them.",
     }};
-Jafg::LProgramParameter _AllowProfiling{{
+ENGINE_API LProgramParameter AllowProfiling{{
     .Identifier = "Jafg.AllowProfiling",
     .Description = "Whether to allow profiling and stats gathering.",
     }};
-Jafg::LProgramParameter _PauseBeforeExit{{
+ENGINE_API LProgramParameter PauseBeforeExit{{
     .Identifier = "Jafg.PauseBeforeExit",
     .Description = "Whether to pause before exiting the application.",
     }};
 
-} /* ~Namespace <Anonymous> */
+} /* ~Namespace Jafg::Application */
 
 namespace Jafg::Application::Detail
 {

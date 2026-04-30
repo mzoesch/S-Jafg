@@ -46,11 +46,6 @@ struct LPrimitivePlatformTypesGeneric
 
     //# A wide character. ?-bit fixed-width representation of the platform's natural wide character set.
     typedef wchar_t                     LWideChar;
-
-    typedef std::wstring                LWideString;
-    typedef std::string                 LStringLegacy;
-
-    typedef decltype(nullptr)           LNullptrTy;
 };
 
 } /* ~Namespace Jafg */
@@ -598,11 +593,6 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::LJafgChar;
     typename T::LChar;
     typename T::LWideChar;
-
-    typename T::LWideString;
-    typename T::LStringLegacy;
-
-    typename T::LNullptrTy;
 };
 
 static_assert(IsPrimitivePlatformTypesValid<LPlatformTypes>, "JAFG::LPlatformTypes is not valid.");
@@ -686,11 +676,6 @@ typedef Jafg::LPlatformTypes::LAsciiChar                                 LAsciiC
 typedef Jafg::LPlatformTypes::LJafgChar                                  LJafgChar;
 typedef Jafg::LPlatformTypes::LChar                                      LChar;
 typedef Jafg::LPlatformTypes::LWideChar                                  LWideChar;
-typedef Jafg::LPlatformTypes::LStringLegacy                              LStringLegacy;
-
-typedef Jafg::LPlatformTypes::LWideString                                LWideString;
-
-typedef Jafg::LPlatformTypes::LNullptrTy                                 LNullptrTy;
 
 
 /*-----------------------------------------------------------------------------

@@ -12,7 +12,7 @@ namespace Jafg
 //# A subsystem that shares its lifetime with the engine.
 //# @see Engine/Engine.h
 //#
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class JEngineSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()

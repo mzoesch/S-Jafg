@@ -160,19 +160,19 @@
 #define JAFG_PRETTY_FUNCTION_NAME                                        (::Jafg::GetPrettyFunctionName(JAFG_FUNCTION_NAME))
 
 //# Current class name.
-#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS                             (LStringLegacy(__FUNCTION__)
+#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS                             (std::string(__FUNCTION__)
 
 //# Current function name.
-#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC                              (LStringLegacy(JAFG_REAL_FUNC_SIG))
+#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC                              (std::string(JAFG_REAL_FUNC_SIG))
 
 //# Current function signature.
-#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC_SIG                          (LStringLegacy(JAFG_FUNCTION_SIG))
+#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC_SIG                          (std::string(JAFG_FUNCTION_SIG))
 
 //# Current line number.
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_LINE                              (std::to_string(__LINE__))
 
 //# Current class and function name.
-#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC                        (LStringLegacy(__FUNCTION__))
+#define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC                        (std::string(__FUNCTION__))
 
 //# Current class name, function name and line number.
 #define LOG_PRIVATE_TRACE_STR_CUR_CLASS_FUNC_LINE \

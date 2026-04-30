@@ -14,6 +14,15 @@ namespace Jafg
 namespace Application
 {
 
+ENGINE_API extern LProgramParameter CoreHelp;
+ENGINE_API extern LProgramParameter Version;
+ENGINE_API extern LProgramParameter Help;
+ENGINE_API extern LProgramParameter WaitForDebugger;
+ENGINE_API extern LProgramParameter IgnoreInstantDebuggerBreak;
+ENGINE_API extern LProgramParameter AlwaysReportCrash;
+ENGINE_API extern LProgramParameter AllowProfiling;
+ENGINE_API extern LProgramParameter PauseBeforeExit;
+
 namespace Detail
 {
 
@@ -108,7 +117,19 @@ inline LProgramArgument const* GetCommandLineArgument(LStringView Parameter) noe
 }
 inline LProgramArgument const* GetCommandLineArgument(LProgramParameter const& Parameter) noexcept
 {
-    if (auto const* Argument{algo::find_pointer(Detail::ProcessedCommandLine, Parameter.Identifier, &LProgramArgument::Identifier)})
+    LProgramArgument const* Argument{algo::find_pointer(Detail::ProcessedCommandLine, Parameter.Identifier, &LProgramArgument::Identifier)};
+    if (!Argument)
+    {
+        for (LString const& Variation : Parameter.Variations)
+        {
+            Argument = algo::find_pointer(Detail::ProcessedCommandLine, Variation, &LProgramArgument::Identifier);
+            if (Argument)
+            {
+                break;
+            }
+        }
+    }
+    if (Argument)
     {
         if ((Parameter.Flags & EProgramParameterBits::StoreTrue) && Argument->IsStoreTrue())
         {

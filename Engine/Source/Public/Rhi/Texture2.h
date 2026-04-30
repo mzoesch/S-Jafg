@@ -45,9 +45,9 @@ struct LTexture2 final
     struct DeviceInfo
     {
         //# The desired number of mip levels. If not available, the optimal number will be used.
-        TOptional<u32> DesiredMipLevels;
+        std::optional<u32> DesiredMipLevels;
         //# The allowed sample numbers. The highest available will be used unless greater than the max sample count of the device.
-        TOptional<vk::SampleCountFlags> Samples;
+        std::optional<vk::SampleCountFlags> Samples;
     };
 
     enum struct EResult

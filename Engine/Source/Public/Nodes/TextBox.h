@@ -35,37 +35,37 @@ struct LTextScale final
 {
     FORCEINLINE constexpr LTextScale() noexcept = delete;
     FORCEINLINE constexpr LTextScale(ETextScale InScale) noexcept : Scale{InScale} {}
-    FORCEINLINE constexpr LTextScale(LWidgetSize1 InScale) noexcept : Scale{InScale} {}
+    FORCEINLINE constexpr LTextScale(LNodeSize1 InScale) noexcept : Scale{InScale} {}
     FORCEINLINE constexpr LTextScale(LTextScale const& Other) noexcept { this->Scale = Other.Scale; }
     FORCEINLINE constexpr LTextScale& operator=(ETextScale InScale) noexcept { this->Scale = InScale; return *this; }
-    FORCEINLINE constexpr LTextScale& operator=(LWidgetSize1 InScale) noexcept { this->Scale = InScale; return *this; }
+    FORCEINLINE constexpr LTextScale& operator=(LNodeSize1 InScale) noexcept { this->Scale = InScale; return *this; }
     FORCEINLINE constexpr LTextScale& operator=(LTextScale const& Other) noexcept { this->Scale = Other.Scale; return *this; }
 
     FORCEINLINE constexpr auto const& GetScale() const noexcept { return this->Scale; }
 
-    inline f32 InSpt(LViewport const& Viewport) const noexcept
+    inline f32 InStaticPoints(LViewport const& Viewport) const noexcept
     {
-        if (std::holds_alternative<LWidgetSize1>(this->Scale))
+        if (std::holds_alternative<LNodeSize1>(this->Scale))
         {
-            return Jafg::InSpt(Viewport, std::get<LWidgetSize1>(this->Scale));
+            return std::get<LNodeSize1>(this->Scale).InStaticPoints(Viewport);
         }
-        return LTextScale::InSptImpl(Viewport, std::get<ETextScale>(this->Scale));
+        return LTextScale::InStaticPointsImpl(Viewport, std::get<ETextScale>(this->Scale));
     }
 
     FORCEINLINE constexpr bool operator==(LTextScale const& Other) const noexcept
     {
         if (this->Scale.index() != Other.Scale.index()) { return false; }
-        if (std::holds_alternative<LWidgetSize1>(this->Scale))
+        if (std::holds_alternative<LNodeSize1>(this->Scale))
         {
-            return std::get<LWidgetSize1>(this->Scale) == std::get<LWidgetSize1>(Other.Scale);
+            return std::get<LNodeSize1>(this->Scale) == std::get<LNodeSize1>(Other.Scale);
         }
         return std::get<ETextScale>(this->Scale) == std::get<ETextScale>(Other.Scale);
     }
 
 private:
 
-    ENGINE_API static f32 InSptImpl(LViewport const& Viewport, ETextScale TextScale) noexcept;
-    std::variant<ETextScale, LWidgetSize1> Scale;
+    ENGINE_API static f32 InStaticPointsImpl(LViewport const& Viewport, ETextScale TextScale) noexcept;
+    std::variant<ETextScale, LNodeSize1> Scale;
 };
 
 struct LTextBrush
@@ -140,7 +140,7 @@ private:
     void UpdateRenderData(JFontSubsystem const& FontSubsystem, f32 TargetFontSize) const;
 
     LString Content;
-    mutable TOptional<LTextScale> LastTextScale;
+    mutable std::optional<LTextScale> LastTextScale;
     mutable LVec2F DrawOffset{};
     mutable LVec2F TextDesiredSize{};
 

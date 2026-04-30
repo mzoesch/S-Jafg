@@ -14,7 +14,7 @@ struct LFactoryTextButton;
 struct LTextButtonIconBrush
 {
     u32 Scale{ 1 };
-    LWidgetSize1 InwardsPadding{ 6_spt };
+    LNodeSize1 InwardsPadding{ 6_spt };
     LColor Tint{ Colors::White };
 };
 
@@ -105,11 +105,11 @@ public:
     virtual void Construct() override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
     virtual void UpdateDesiredSize() const override;
-    virtual LCursorReply OnCursorEnter() override;
-    virtual LCursorReply OnCursorMoved(const LVec2F& InLocation) override;
-    virtual LCursorReply OnCursorLeave() override;
-    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnCursorEnter() override;
+    virtual LNodeReply OnCursorMoved(const LVec2F& InLocation) override;
+    virtual void OnCursorLeave() override;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
     virtual void OnEnabledStateChanged() override;
     virtual void OnSelectedStateChanged() override;
 
@@ -125,10 +125,10 @@ public:
 
     bool bDecoupledLeftIcon{};
     bool bDecoupledRightIcon{};
-    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
-    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
-    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
-    std::move_only_function<LReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
+    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
+    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
+    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
+    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
 
 private:
 
@@ -160,7 +160,7 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
         NODE_FACTORY_SELF().LeftIconBrush.Scale = Scale;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) LeftIconInwardsPadding(this auto&& Self, LWidgetSize1 Padding) noexcept
+    decltype(auto) LeftIconInwardsPadding(this auto&& Self, LNodeSize1 Padding) noexcept
     {
         NODE_FACTORY_SELF().LeftIconBrush.InwardsPadding = Padding;
         return NODE_FACTORY_RESULT();
@@ -187,7 +187,7 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
         NODE_FACTORY_SELF().RightIconBrush.Scale = Scale;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) RightIconInwardsPadding(this auto&& Self, LWidgetSize1 Padding) noexcept
+    decltype(auto) RightIconInwardsPadding(this auto&& Self, LNodeSize1 Padding) noexcept
     {
         NODE_FACTORY_SELF().RightIconBrush.InwardsPadding = Padding;
         return NODE_FACTORY_RESULT();

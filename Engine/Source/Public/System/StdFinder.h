@@ -121,7 +121,7 @@ inline void Finder::CreateDirectories(const LPath& Directory)
 inline LString Finder::ReadFile(const LPath& File)
 {
     LString Error;
-    TOptional Out { TryReadFile(File, &Error) };
+    std::optional Out { TryReadFile(File, &Error) };
 
     if (!Out)
     {
@@ -135,7 +135,7 @@ inline LString Finder::ReadFile(const LPath& File)
 inline TArray<u8> Finder::ReadFileAsBinary(const LPath& File)
 {
     LString Error;
-    TOptional Out { TryReadFileAsBinary(File, &Error) };
+    std::optional Out { TryReadFileAsBinary(File, &Error) };
 
     if (!Out)
     {
@@ -146,7 +146,7 @@ inline TArray<u8> Finder::ReadFileAsBinary(const LPath& File)
     return Val;
 }
 
-inline TOptional<LString> Finder::TryReadFile(const LPath& File, LString* OutHumanReadableError)
+inline std::optional<LString> Finder::TryReadFile(const LPath& File, LString* OutHumanReadableError)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", File)
 
@@ -166,7 +166,7 @@ inline TOptional<LString> Finder::TryReadFile(const LPath& File, LString* OutHum
     return Buffer.str();
 }
 
-inline TOptional<TArray<u8>> Finder::TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError)
+inline std::optional<TArray<u8>> Finder::TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", File)
 

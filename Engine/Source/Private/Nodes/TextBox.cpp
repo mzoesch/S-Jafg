@@ -9,7 +9,7 @@
 namespace
 {
 
-f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) noexcept
+f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) noexcept
 {
     auto const& Prefs{Jafg::GetSingleton<Jafg::JUserPreferences>()};
 
@@ -59,14 +59,14 @@ f32 TextBoxInSptImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) 
 
 } /* ~Namespace <Anonymous> */
 
-f32 Jafg::LTextScale::InSptImpl(LViewport const& Viewport, ETextScale TextScale) noexcept
+f32 Jafg::LTextScale::InStaticPointsImpl(LViewport const& Viewport, ETextScale TextScale) noexcept
 {
     EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
     if (EApplicationScale UserMaxScale{*GetSingleton<JUserPreferences>().ApplicationScaleMode}; UserMaxScale != EApplicationScale::Auto)
     {
         Scale = EApplicationScale{maths::min(std::to_underlying(Scale), std::to_underlying(UserMaxScale))};
     }
-    return ::TextBoxInSptImpl(TextScale, Scale);
+    return ::TextBoxInStaticPointsImpl(TextScale, Scale);
 }
 
 void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
@@ -91,15 +91,15 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
 
         if (this->RenderData.bDirty)
         {
-            this->UpdateRenderData(Info.FontSubsystem, this->TextBrush.TextScale.InSpt(Info.Viewport));
+            this->UpdateRenderData(Info.FontSubsystem, this->TextBrush.TextScale.InStaticPoints(Info.Viewport));
         }
 
         LVec2F TopLeft{
               this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)
-            + this->Brush.Padding.GetTopLeftOffsetInSpt(this->GetViewport())
+            + this->Brush.Padding.GetTopLeftOffset().InStaticPoints(this->GetViewport())
             + this->DrawOffset
             };
-        LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()) - this->RenderData.DesiredSize};
+        LVec2F PlayRoom{this->GetAnchoredSize_v2() - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport()) - this->RenderData.DesiredSize};
         TopLeft += maths::min(LVec2F{
             this->IsTextLeftAligned() ? 0.0f : (this->IsTextHCenterAligned() ? PlayRoom.x * 0.5f : PlayRoom.x),
             this->IsTextTopAligned()  ? 0.0f : (this->IsTextVCenterAligned() ? PlayRoom.y * 0.5f : PlayRoom.y)
@@ -130,9 +130,9 @@ void Jafg::WTextBox::UpdateDesiredSize() const
 {
     if (this->RenderData.bDirty)
     {
-        this->UpdateRenderData(*this->GetFrontend().GetSubsystemChecked<JFontSubsystem>(), this->TextBrush.TextScale.InSpt(this->GetViewport()));
+        this->UpdateRenderData(*this->GetFrontend().GetSubsystemChecked<JFontSubsystem>(), this->TextBrush.TextScale.InStaticPoints(this->GetViewport()));
     }
-    this->SetDesiredSizeInSpt(this->Brush.Padding.GetDesiredSizeInSpt(this->GetViewport()) + this->RenderData.DesiredSize);
+    this->SetDesiredSizeInSpt(this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport()) + this->RenderData.DesiredSize);
     return;
 }
 

@@ -47,17 +47,17 @@ public:
     inline WNode& GetWindow() noexcept { check(this->GetChildren().size() == 1) return *this->GetChildren()[0]; }
     inline WNode const& GetWindow() const noexcept { check(this->GetChildren().size() == 1) return *this->GetChildren()[0]; }
 
-    FORCEINLINE void SetWindowSize(LWidgetSize2 Size) noexcept
+    FORCEINLINE void SetWindowSize(LNodeSize2 Size) noexcept
     {
-        auto SptSize{InSpt(this->GetViewport(), Size)};
-        this->GetWindow().MinDesiredSize = {EWidgetSize::StaticPoints
-            , maths::max(SptSize.x, WFloatingWidget::MinWindowSizeInSpt.x)
-            , maths::max(SptSize.y, WFloatingWidget::MinWindowSizeInSpt.y)
+        auto StaticPintSize{Size.InStaticPoints(this->GetViewport())};
+        this->GetWindow().MinDesiredSize = {ENodeSize::StaticPoints
+            , maths::max(StaticPintSize.x, WFloatingWidget::MinWindowSizeInSpt.x)
+            , maths::max(StaticPintSize.y, WFloatingWidget::MinWindowSizeInSpt.y)
             };
     }
     FORCEINLINE void SetWindowPosition(LVec2F Offset) noexcept
     {
-        this->GetWindow().GetParent()->Padding = {EWidgetSize::StaticPoints, Offset, 0, 0};
+        this->GetWindow().GetParent()->Padding = {ENodeSize::StaticPoints, Offset.x, Offset.y, 0, 0};
     }
 
     FORCEINLINE constexpr bool IsDecorated() const noexcept { return this->bDecorate; }
@@ -83,7 +83,7 @@ public:
     FORCEINLINE constexpr WTextBox const& GetWindowTitle() const noexcept { check(this->WindowTitle) return *this->WindowTitle; }
     FORCEINLINE constexpr WTextBox& GetMutableWindowTitle() noexcept { check(this->WindowTitle) return *this->WindowTitle; }
 
-    FORCEINLINE constexpr void SetInitialWindowSize(LWidgetSize2 Size) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowSize = Size; }
+    FORCEINLINE constexpr void SetInitialWindowSize(LNodeSize2 Size) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowSize = Size; }
     FORCEINLINE constexpr void SetInitialWindowPosition(LVec2F Position) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowPosition = Position; }
     FORCEINLINE constexpr void SetInitialWindowAnchor(EAnchor::Type Anchor) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowAnchor = Anchor; }
     FORCEINLINE constexpr void SetInitialWindowVisibility(ENodeVisibility Visibility) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowVisibility = Visibility; }
@@ -92,20 +92,20 @@ protected:
 
     bool UiTickMove();
     LDelegateHandle UiTickMoveHandle{ nullptr };
-    TOptional<LVec2F> MoveDragOffset;
+    std::optional<LVec2F> MoveDragOffset;
 
     bool bDecorate{ true };
     bool bCreateResizeUi{ true };
     LDelegateHandle UiTickResizeHandle{ nullptr };
     bool UiTickResize();
-    TOptional<LVec2F> ResizeDragOffset;
+    std::optional<LVec2F> ResizeDragOffset;
 
 private:
 
     LString InitialTitle;
     WTextBox* WindowTitle{};
 
-    LWidgetSize2 InitialWindowSize{ 640_spt, 360 };
+    LNodeSize2 InitialWindowSize{ 640_spt, 360 };
     static constexpr LVec2F MinWindowSizeInSpt{ 1, 1 };
     LVec2F InitialWindowPosition{ maths::zero_vector<LVec2F> };
     EAnchor::Type InitialWindowAnchor{ EAnchor::TopLeft };
@@ -134,7 +134,7 @@ struct LFactoryFloatingWidget : NODE_FACTORY_PARENT(WFloatingWidget)
         NODE_FACTORY_SELF().SetInitialTitle(std::move(S));
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) InitialWindowSize(this auto&& Self, LWidgetSize2 Size) noexcept
+    constexpr decltype(auto) InitialWindowSize(this auto&& Self, LNodeSize2 Size) noexcept
     {
         NODE_FACTORY_SELF().SetInitialWindowSize(Size);
         return NODE_FACTORY_RESULT();

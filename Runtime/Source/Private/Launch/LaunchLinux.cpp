@@ -99,7 +99,7 @@ i32 main(i32 c, char const* v[])
 
     //
     // We use '-fno-exceptions' therefore we cannot use C++ exceptions and have to deal
-    // with process signals manually by taking directly to the POSIX API. Omg I want to ***.
+    // with process signals manually by taking directly to the POSIX API.
     //
     // @see https://man7.org/linux/man-pages/man2/sigaction.2.html
     //

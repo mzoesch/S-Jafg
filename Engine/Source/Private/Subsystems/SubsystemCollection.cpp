@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Subsystems/SubsystemCollection.h"
-#include "Engine/Carnifex.h"
 #include "Subsystems/Subsystem.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
@@ -93,7 +92,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
             continue;
         }
 
-        if (algo::contains(this->SubsystemInstances, Candidate, &JSubsystem::GetVirtualTableAsPointer) == false)
+        if (!algo::contains(this->SubsystemInstances, Candidate, [](auto& E){ return &E->GetVirtualTable(); }))
         {
             LOG_VERBOSE(LogSubsystemCollection, "Found potential subsystem [{}].", Candidate->GetFullyQualifiedName() )
             this->SubsystemInstances.emplace_back(NewObject(CastTo<JSubsystem>{}, {*this->Outer, *Candidate}));

@@ -44,7 +44,7 @@ struct LConfig final
     {
         this->Map[Path][Section][Key] = std::move(Value);
     }
-    inline TOptional<LString> GetConfigValue(LPath const& Path, LString const& Section, LString const& Key) const
+    inline std::optional<LString> GetConfigValue(LPath const& Path, LString const& Section, LString const& Key) const
     {
         if (auto It1{this->Map.find(Path)}; It1 != this->Map.end())
         {

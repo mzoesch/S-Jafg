@@ -24,30 +24,30 @@ void Jafg::WFloatingWidget::Construct()
                 .MinDesiredSize({0_spt, 16})
                 .Anchor(EAnchor::HFill)
                 .Tint(Colors::DarkerGray)
-                .OnKeyDown([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LReply
+                .OnKeyDownFocused([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LNodeReply
                 {
                     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                     {
-                        Data.Surface._SetMouseCursor(EMouseCursor::Hand);
+                        Data.Surface._SetMouseCursor(ECursor::Hand);
                         WFloatingWidget* Window{StaticCast<WFloatingWidget>(Self.GetParent()->GetParent())};
                         check(Window->UiTickMoveHandle.IsValid() == false)
                         Window->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(Window, &WFloatingWidget::UiTickMove);
-                        return LReply::Handled();
+                        return LNodeReply::Handled();
                     }
                     return {};
                 })
-                .OnKeyUp([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LReply
+                .OnKeyUpFocused([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LNodeReply
                 {
                     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                     {
-                        Data.Surface._SetMouseCursor(EMouseCursor::Default);
+                        Data.Surface._SetMouseCursor(ECursor::Default);
                         auto* Window{StaticCast<WFloatingWidget>(Self.GetParent()->GetParent())};
                         if (Window->UiTickMoveHandle.IsValid())
                         {
                             Data.Viewport.OnLateTick.Remove(&Window->UiTickMoveHandle);
                         }
                         Window->MoveDragOffset.reset();
-                        return LReply::Handled();
+                        return LNodeReply::Handled();
                     }
                     return {};
                 })
@@ -63,17 +63,17 @@ void Jafg::WFloatingWidget::Construct()
                     .InAllBrushes<&LBoxBrush::Tint>(Colors::Transparent)
                     .InAllBrushes<&LBoxBrush::OutlineThickness>(1)
                     .TextBrush({ETextScale::Compact})
-                    .OnKeyUp([this](auto&, auto const&, auto const&)
+                    .OnKeyUpFocused([this](auto&, auto const&, auto const&)
                     {
                         if (this->OnWindowClosedEvent.IsValid())
                         {
                             if (this->OnWindowClosedEvent.Invoke(*this))
                             {
-                                return LReply::Handled();
+                                return LNodeReply::Handled();
                             }
                         }
                         this->RemoveFromParent2();
-                        return LReply::Handled();
+                        return LNodeReply::Handled();
                     })
             ]
         ];
@@ -94,19 +94,19 @@ void Jafg::WFloatingWidget::Construct()
                 .Content("#")
                 .TextScale(ETextScale::Compact)
                 .Padding({2_spt})
-                .OnKeyDown([this](auto&&...)
+                .OnKeyDownFocused([this](auto&&...)
                 {
                     this->UiTickResizeHandle = this->GetViewport().OnLateTick.Emplace(this, &WFloatingWidget::UiTickResize);
-                    return LReply::Handled();
+                    return LNodeReply::Handled();
                 })
-                .OnKeyUp([this](auto&&...)
+                .OnKeyUpFocused([this](auto&&...)
                 {
                     if (this->UiTickResizeHandle.IsValid())
                     {
                         this->GetViewport().OnLateTick.Remove(&this->UiTickResizeHandle);
                     }
                     this->ResizeDragOffset.reset();
-                    return LReply::Handled();
+                    return LNodeReply::Handled();
                 });
         }
         else
@@ -203,7 +203,7 @@ bool Jafg::WFloatingWidget::UiTickResize()
 
     check(NewSize.x >= 0.0 && NewSize.y >= 0.0)
 
-    this->SetWindowSize({EWidgetSize::StaticPoints, NewSize});
+    this->SetWindowSize({ENodeSize::StaticPoints, NewSize});
 
     return {};
 }

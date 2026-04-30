@@ -106,7 +106,7 @@ struct LEngineThread final
     Jafg::ENamedThreads::Type ThreadName;
     LString                   HumanReadableName;
     Jafg::TMpmcQueue<LTask>   TaskQueue;
-    TOptional<std::thread>    Thread;
+    std::optional<std::thread>    Thread;
     TUnique<Jafg::LRunnable>  Runnable;
     bool                      bKillRunnableWhenFinished{ false };
 };

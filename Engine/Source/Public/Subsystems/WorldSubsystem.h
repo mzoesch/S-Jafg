@@ -9,7 +9,7 @@ namespace Jafg
 {
 
 //# A subsystem that are spawned in a LWorld.
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API JWorldSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()

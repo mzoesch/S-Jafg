@@ -4,151 +4,86 @@
 #include "Engine/Engine.h"
 #include "Nodes/Viewport.h"
 #include "Nodes/Parent.h"
-#include "Nodes/Region.h"
-#include "User/UserPreferences.h"
 
-f32 Jafg::InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept
+namespace
 {
-    if (Size.Type == EWidgetSize::StaticPoints)
-    {
-        return Size.Size;
-    }
 
-    return InSptFromRelative(Viewport, Size.Size);
-}
-
-LVec2F Jafg::InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept
+#if JAFG_DO_CHECKS
+void AssertInvariantImpl(Jafg::WNode const& Node)
 {
-    if (Size.Type == EWidgetSize::StaticPoints)
+    check(!(Node.GetNodeState() & Jafg::ENodeStateBits::Hovered))
+
+    if (Jafg::WParent const* Parent{Node.As<Jafg::WParent>()})
     {
-        return Size.Size;
-    }
-
-    return InSptFromRelative(Viewport, Size.Size);
-}
-
-f32 Jafg::InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept
-{
-    const EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
-    check(Scale != EApplicationScale::Auto)
-    return Relative * LexToDouble(Scale);
-}
-
-LVec2F Jafg::InSptFromRelative(LViewport const& Viewport, LVec2F Relative) noexcept
-{
-    const EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
-    check(Scale != EApplicationScale::Auto)
-    return Relative * LexToFloat(Scale);
-}
-
-bool Jafg::WNode::IsInBounds(LNodeSweepData const& Data, LVec2F const& Location) const
-{
-    if (this->TransformsWidgetLayout() == false)
-    {
-        return false;
-    }
-
-    LVec2D TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter() + Data.Translation};
-    return
-            TopLeftMostOuter.x <= Location.x
-         && Location.x         <= TopLeftMostOuter.x + this->GetAnchoredSize_v2().x
-         && TopLeftMostOuter.y <= Location.y
-         && Location.y         <= TopLeftMostOuter.y + this->GetAnchoredSize_v2().y
-         ;
-}
-
-Jafg::LCursorReply Jafg::WNode::SweepMouse(LNodeSweepData const& Data, LVec2F const& Location)
-{
-    if (this->IsHitTestable() == false)
-    {
-        return LCursorReply::Unhandled();
-    }
-
-    if (this->IsInBounds(Data, Location) == false)
-    {
-        return LCursorReply::Unhandled();
-    }
-
-    if (this->GetViewport().AddHoveredWidgetForFrame(this))
-    {
-        return this->OnCursorEnter();
-        // if (LCursorReply Reply{this->OnCursorEnter()}; Reply.IsHandled())
-        // {
-        //     return Reply;
-        // }
-        // return LCursorReply::Handled();
-    }
-
-    return this->OnCursorMoved(Location);
-}
-
-Jafg::LReply Jafg::WNode::SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location)
-{
-    if (this->IsHitTestable() == false || this->IsInBounds(Data, Location) == false)
-    {
-        return LReply::Unhandled();
-    }
-    return {this};
-}
-
-Jafg::LReply Jafg::WNode::OnKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (this->OnKeyDownEvent.IsValid())
-    {
-        if (auto Reply{this->OnKeyDownEvent.Invoke(*this, Info, Event)}; Reply.IsHandled())
+        for (auto& Child : Parent->GetChildren())
         {
-            return Reply;
+            check(Child.get())
+            AssertInvariantImpl(*Child);
         }
     }
 
-    if (this->Parent)
-    {
-        return this->Parent->OnKeyDown(Info, Event);
-    }
-
-    return LReply::Unhandled();
+    return;
 }
-
-Jafg::LReply Jafg::WNode::OnKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+void AssertInvariant(Jafg::WNode const& Node)
 {
-    if (this->OnKeyUpEvent.IsValid())
+    if (!(Node.GetNodeState() & Jafg::ENodeStateBits::Hovered))
     {
-        if (auto Reply{this->OnKeyUpEvent.Invoke(*this, Info, Event)}; Reply.IsHandled())
+        AssertInvariantImpl(Node);
+    }
+    else
+    {
+        Jafg::WParent const* Parent{Node.GetParent()};
+        while (Parent)
         {
-            return Reply;
+            check(Parent->GetNodeState() & Jafg::ENodeStateBits::Hovered)
+            Parent = Parent->GetParent();
         }
     }
 
-    if (this->Parent)
-    {
-        return this->Parent->OnKeyUp(Info, Event);
-    }
-
-    return LReply::Unhandled();
+    return;
 }
+#endif /* JAFG_DO_CHECKS */
 
-Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+} /* ~Namespace <Anonymous> */
+
+Jafg::LNodeReply Jafg::WNode::Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location)
 {
-    if (this->OnKeyDownNoFocusEvent)
+    if (Location.has_value())
     {
-        if (auto Reply{this->OnKeyDownNoFocusEvent(*this, Data, Event)}; Reply.IsHandled())
+        if (this->IsHitTestable())
         {
-            return Reply;
+            if (this->AabbTest(Info, *Location))
+            {
+                if (this->NodeState & ENodeStateBits::HoveredDispatched)
+                {
+                    return this->OnCursorMoved(*Location);
+                }
+                if (this->NodeState & ENodeStateBits::Hovered)
+                {
+                    return {};
+                }
+                checkCode(::AssertInvariant(*this))
+                this->NodeState |= ENodeStateBits::Hovered | ENodeStateBits::HoveredDispatched;
+                WParent* Parent{this->Parent};
+                while (Parent)
+                {
+                    if (Parent->GetNodeState() & ENodeStateBits::Hovered)
+                    {
+                        break;
+                    }
+                    Parent->NodeState |= ENodeStateBits::Hovered;
+                    Parent = Parent->GetParent();
+                    continue;
+                }
+                checkCode(::AssertInvariant(*this))
+                return this->OnCursorEnter();
+            }
         }
     }
-    return LReply::Unhandled();
-}
 
-Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
-{
-    if (this->OnKeyUpNoFocusEvent)
-    {
-        if (auto Reply{this->OnKeyUpNoFocusEvent(*this, Data, Event)}; Reply.IsHandled())
-        {
-            return Reply;
-        }
-    }
-    return LReply::Unhandled();
+    this->_RemoveHoverState();
+    checkCode(::AssertInvariant(*this))
+    return {};
 }
 
 void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
@@ -199,22 +134,12 @@ Jafg::WNode const& Jafg::WNode::GetMostOuterParent() const noexcept
     return *this;
 }
 
-bool Jafg::WNode::IsNodeInVisiblePath(const WNode* InNode) const
-{
-    return this == InNode && this->ShouldNowDraw();
-}
-
-LVec2u32 Jafg::WNode::GetViewportSize() const
-{
-    return this->GetViewport().GetDimensions();
-}
-
 void Jafg::WNode::SetDesiredSizeInSpt(LVec2F Size) const noexcept
 {
     this->DesiredSize_v2 = Size;
 
-    LVec2F SptMinSize{InSpt(this->GetViewport(), this->MinDesiredSize)};
-    LVec2F SptMaxSize{InSpt(this->GetViewport(), this->MaxDesiredSize)};
+    LVec2F SptMinSize{this->MinDesiredSize.InStaticPoints(this->GetViewport())};
+    LVec2F SptMaxSize{this->MaxDesiredSize.InStaticPoints(this->GetViewport())};
 
     this->DesiredSize_v2.x = maths::max(this->DesiredSize_v2.x, SptMinSize.x);
     this->DesiredSize_v2.y = maths::max(this->DesiredSize_v2.y, SptMinSize.y);
@@ -257,15 +182,15 @@ void Jafg::WNode::SetAnchoredSize(LVec2F const& InSize) const noexcept
     this->AnchoredSize_v2 = InSize;
     this->LostAnchoredSize_v2 = maths::zero_vector<LVec2F>;
 
-    if (this->MaxDesiredSize.X > 0.0)
+    if (this->MaxDesiredSize.Size.x > 0.0)
     {
-        this->LostAnchoredSize_v2.x = maths::max(this->AnchoredSize_v2.x - InSpt(this->GetViewport(), this->MaxDesiredSize).x, 0.0f);
-        this->AnchoredSize_v2.x = maths::min(this->AnchoredSize_v2.x, InSpt(this->GetViewport(), this->MaxDesiredSize).x);
+        this->LostAnchoredSize_v2.x = maths::max(this->AnchoredSize_v2.x - this->MaxDesiredSize.InStaticPoints(this->GetViewport()).x, 0.0f);
+        this->AnchoredSize_v2.x = maths::min(this->AnchoredSize_v2.x, this->MaxDesiredSize.InStaticPoints(this->GetViewport()).x);
     }
-    if (this->MaxDesiredSize.Y > 0.0)
+    if (this->MaxDesiredSize.Size.y > 0.0)
     {
-        this->LostAnchoredSize_v2.y = maths::max(this->AnchoredSize_v2.y - InSpt(this->GetViewport(), this->MaxDesiredSize).y, 0.0f);
-        this->AnchoredSize_v2.y = maths::min(this->AnchoredSize_v2.y, InSpt(this->GetViewport(), this->MaxDesiredSize).y);
+        this->LostAnchoredSize_v2.y = maths::max(this->AnchoredSize_v2.y - this->MaxDesiredSize.InStaticPoints(this->GetViewport()).y, 0.0f);
+        this->AnchoredSize_v2.y = maths::min(this->AnchoredSize_v2.y, this->MaxDesiredSize.InStaticPoints(this->GetViewport()).y);
     }
 
     return;
@@ -292,7 +217,7 @@ LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& T
     return this->GetAnchoredTopLeftFromMostOuter() + Translation;
 }
 
-TOptional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept
+std::optional<Jafg::LMargin> Jafg::WNode::GetMargin() const noexcept
 {
     if (this->Parent)
     {
@@ -314,6 +239,11 @@ Jafg::LFrontend& Jafg::WNode::GetMutableFrontend() const noexcept
 }
 
 #if JAFG_DO_CHECKS
+void Jafg::WNode::_check_StateInvariant()
+{
+    AssertInvariant(*this);
+}
+
 void Jafg::WNode::_check_Destruct()
 {
     if (this->Parent)

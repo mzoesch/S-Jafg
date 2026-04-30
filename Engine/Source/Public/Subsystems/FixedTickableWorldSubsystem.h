@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class JFixedTickableWorldSubsystem : public JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
@@ -20,7 +20,17 @@ protected:
 private:
 
     // JTickableWorldSubsystem implementation
-    virtual void Tick(const f32 DeltaTime) override final;
+    virtual void Tick(f32 Dt) override final
+    {
+        Super::Tick(Dt);
+        this->LastTickTime += Dt;
+        if (this->LastTickTime > this->TickInterval)
+        {
+            this->FixedTick(Dt, this->LastTickTime);
+            this->LastTickTime = 0.0f;
+        }
+        return;
+    }
     // JTickableWorldSubsystem implementation
 
 public:

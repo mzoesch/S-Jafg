@@ -296,10 +296,10 @@ struct erase_if_fn final
     FORCEINLINE constexpr typename TContainer::size_type
     operator()(TContainer* Container, TPred&& Pred, TProj Proj = {}) const
     {
-        auto [It, End]{std::ranges::remove_if(*Container, std::forward<TPred>(Pred), std::move(Proj))};
-        const auto OldSize{Container->size()};
+        auto [It, End]{remove_if(*Container, std::forward<TPred>(Pred), std::move(Proj))};
+        const auto OldSize{size(Container)};
         Container->erase(It, End);
-        return OldSize - Container->size();
+        return OldSize - size(Container);
     }
 };
 
@@ -310,7 +310,7 @@ struct erase_once_fn final
     FORCEINLINE constexpr bool
     operator()(TContainer* Container, T const& What, TProj Proj = {}) const
     {
-        if (auto It{std::ranges::find(algo::begin(*Container), algo::end(*Container), What, std::move(Proj))}; It != algo::end(*Container))
+        if (auto It{find(begin(*Container), end(*Container), What, std::move(Proj))}; It != end(*Container))
         {
             Container->erase(It);
             return true;
@@ -636,12 +636,13 @@ NODISCARD FORCEINLINE constexpr auto wfind_pointer(RANGE Container, const auto& 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Time stuff
+typedef std::chrono::high_resolution_clock clock;
 inline decltype(auto) now() noexcept
 {
-    return std::chrono::high_resolution_clock::now();
+    return clock::now();
 }
 
-inline f64 time_diff(std::chrono::high_resolution_clock::time_point A, std::chrono::high_resolution_clock::time_point B) noexcept
+inline f64 time_diff(clock::time_point A, clock::time_point B) noexcept
 {
     return std::chrono::duration_cast<std::chrono::duration<f64>>(B - A).count();
 }
@@ -650,11 +651,15 @@ inline f64 time_diff(std::chrono::high_resolution_clock::time_point A, std::chro
 // Misc
 template<typename T> concept bool_testable = requires(T&& t) { static_cast<bool>(t); };
 
-template<typename T> struct is_complete_type : std::false_type {};
-template<typename T> requires requires{sizeof(T);} struct is_complete_type<T> : std::true_type {};
+namespace detail
+{
+//# This is UB, use only when it does not really matter.
+template<typename T, typename = void> struct is_complete_type : std::false_type {};
+template<typename T> struct is_complete_type<T, std::void_t<decltype(sizeof(T))>> : std::true_type {};
 template<typename T> inline constexpr bool is_complete_type_v{is_complete_type<T>::value};
+} /* ~Namespace detail */
 
-template<typename TBase, typename TDerived, bool = is_complete_type_v<TBase> && is_complete_type_v<TDerived>>
+template<typename TBase, typename TDerived, bool = detail::is_complete_type_v<TBase> && detail::is_complete_type_v<TDerived>>
 struct is_base_of_weak : std::true_type{};
 template<typename TBase, typename TDerived>
 struct is_base_of_weak<TBase,TDerived,true> : std::bool_constant<std::is_base_of_v<TBase,TDerived>>{};
@@ -670,6 +675,26 @@ struct raii_leave final
             Delegate();
         }
     }
+};
+
+struct reply_base
+{
+    FORCEINLINE constexpr reply_base() noexcept : bHandled{} {}
+    FORCEINLINE constexpr reply_base(bool bInHandled) noexcept : bHandled{bInHandled} {}
+    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(reply_base)
+    FORCEINLINE constexpr ~reply_base() noexcept {}
+
+    FORCEINLINE constexpr bool is_handled() const noexcept { return this->bHandled; }
+
+private:
+
+    bool bHandled;
+};
+
+struct reply final : public reply_base
+{
+    FORCEINLINE static constexpr reply handled() noexcept { return reply{true}; }
+    FORCEINLINE static constexpr reply unhandled() noexcept { return {}; }
 };
 
 } /* ~Namespace algo */

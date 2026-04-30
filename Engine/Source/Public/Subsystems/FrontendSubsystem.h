@@ -14,7 +14,7 @@ namespace Jafg
 //# Important delegates will be broadcasted to all children of this subsystem.
 //# Widget construction and destruction should be done here.
 //#
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class JFrontendSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY(ENGINE_API)

@@ -63,8 +63,8 @@ public:
     void TearDown();
 
     //# TODO: Remove this... this has nothing to do with VK.
-    NODISCARD ENGINE_API TOptional<LPhysicalKey> GetPhysicalKey(ELogicalKey LogicalKey) const noexcept;
-    NODISCARD ENGINE_API TOptional<LString> Glfw_GetPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept;
+    NODISCARD ENGINE_API std::optional<LPhysicalKey> GetPhysicalKey(ELogicalKey LogicalKey) const noexcept;
+    NODISCARD ENGINE_API std::optional<LString> Glfw_GetPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept;
     LString Glfw_GetSanitizedPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept
     {
         if (auto Result{this->Glfw_GetPhysicalKeyLocalizedRepr(Key, Hint)}; Result.has_value())
@@ -203,7 +203,7 @@ private:
     void Vk_CreateVma();
     void Vk_UpdateSamplers();
 
-    TOptional<vk::Format> Vk_FindSupportedFormat(
+    std::optional<vk::Format> Vk_FindSupportedFormat(
           TArray<vk::Format> const& Candidates
         , vk::ImageTiling Tiling
         , vk::FormatFeatureFlags Features

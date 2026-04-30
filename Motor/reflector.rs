@@ -451,7 +451,7 @@ fn add_pragma(_args: &Cli, file: &str, tokens: &Vec<Token>, i: usize, t: &Token)
     assert_eq!(t.ty.is_pragma(), true);
     assert_eq!(tokens[i].ty.is_pragma(), true);
 
-    if t.content == "\"NextIsBaseCxxClass\""
+    if t.content == "\"NextIsBaseJxxClass\""
     {
         return None;
     }
@@ -489,11 +489,11 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
         else if config && !default_only
         {
             out.push_str(&format!(r##"                                                        \
-{{                                           \
+.reflexive_emplace_back(::Jafg::LJxxClassField{{                                           \
     /* Field Name   */ "{member}",                                                            \
     /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
-    /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
-}},                                                                                            \
+    /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}) \
+}})                                                                                            \
 "##));
         }
         else if !config && default_only

@@ -46,20 +46,18 @@ namespace Jafg
 template<ELogVerbosity::Type Verbosity, ELogVerbosity::Type CategoryVerbosity>
 struct LPrivateLogTimeTaken final
 {
-    typedef std::chrono::high_resolution_clock LHrc;
-
     LPrivateLogTimeTaken(
         LLogCategory<CategoryVerbosity>& InCategory,
-        LStringLegacy                    InFunction,
-        const LStringLegacy&&            InBaseMessage
+        LString InFunction,
+        LString InBaseMessage
     )
-        : Category(&InCategory), StartTime(LHrc::now()), Function(std::move(InFunction)), BaseMessage(InBaseMessage)
+        : Category(&InCategory), StartTime(std::chrono::high_resolution_clock::now()), Function(std::move(InFunction)), BaseMessage(InBaseMessage)
     {
     }
 
     ~LPrivateLogTimeTaken()
     {
-        const f64 TimeTaken{ std::chrono::duration<f64>(LHrc::now() - this->StartTime).count() };
+        const f64 TimeTaken{ std::chrono::duration<f64>(std::chrono::high_resolution_clock::now() - this->StartTime).count() };
 
         ::Jafg::LogMessage<Verbosity, CategoryVerbosity>(
            "{}[{}] - {}: {} took {} seconds. " JAFG_LOG_COLOR_END,
@@ -74,9 +72,9 @@ struct LPrivateLogTimeTaken final
 private:
 
     LLogCategory<CategoryVerbosity>* Category;
-    LHrc::time_point StartTime;
-    LStringLegacy    Function;
-    LStringLegacy    BaseMessage;
+    std::chrono::high_resolution_clock::time_point StartTime;
+    LString Function;
+    LString BaseMessage;
 };
 
 } /* ~Namespace Jafg */

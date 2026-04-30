@@ -5,7 +5,7 @@
 #include "Engine/EngineCompileTimeConstants.h"
 #include "Engine/Level.h"
 #include "Cli/CommandLineInterface.h"
-#include "Engine/CxxClass.h"
+#include "Engine/Jxx.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
 #include "Foreign/PluginForward.h"

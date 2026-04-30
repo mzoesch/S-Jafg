@@ -9,7 +9,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class JTickableWorldSubsystem : public JWorldSubsystem, public LTickableObject
 {
     GENERATED_CLASS_BODY()

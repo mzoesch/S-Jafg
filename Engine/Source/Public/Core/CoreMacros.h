@@ -190,17 +190,17 @@
     Type(Type const& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
     Type& operator=(Type const& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #define DEFAULT_CONSTEXPR_COPY(Type)                                                        \
-    constexpr Type(const Type& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
-    constexpr Type& operator=(const Type& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
+    constexpr Type(Type const& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+    constexpr Type& operator=(Type const& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
 
 //# Defaults the copy operations of a specific type T.
 #if JAFG_WITH_MSVC || JAFG_WITH_CLANG
     #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                              \
-        TSpacedType(const TSpacedType& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
-        TSpacedType& operator=(const TSpacedType& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
+        TSpacedType(TSpacedType const& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        TSpacedType& operator=(TSpacedType const& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
     #define DEFAULT_CONSTEXPR_COPY_NAMESPACED(TSpacedType, Type)                                              \
-        constexpr TSpacedType(const TSpacedType& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
-        constexpr TSpacedType& operator=(const TSpacedType& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
+        constexpr TSpacedType(TSpacedType const& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        constexpr TSpacedType& operator=(TSpacedType const& JAFG_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #elif JAFG_WITH_GCC
     #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                       \
         Type(TSpacedType const& JAFG_JOIN_INNER_TWO(_, Type))            noexcept = default; \

@@ -64,7 +64,7 @@ public:
     //# The active contexts will be removed.
     //# @return Has value if a previous applied context snapshot was applied.
     //#
-    ENGINE_API TOptional<EInputMode> PopContexts() noexcept;
+    ENGINE_API std::optional<EInputMode> PopContexts() noexcept;
 
     FORCEINLINE auto const& GetActiveContexts() const noexcept { return this->ActiveContexts; }
     FORCEINLINE auto& GetMutableActiveContexts() noexcept { return this->ActiveContexts; }

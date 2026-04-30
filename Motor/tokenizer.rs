@@ -324,9 +324,9 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             }
             let classname_idx: usize = inner_idx;
 
-            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseCxxClass\""
+            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseJxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseCxxClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseJxxClass".to_string()] });
             }
             else
             {
@@ -406,9 +406,9 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             }
             let classname_idx: usize = inner_idx;
 
-            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseCxxClass\""
+            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseJxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseCxxClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseJxxClass".to_string()] });
             }
             else
             {
@@ -474,9 +474,9 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             }
             let classname_idx: usize = inner_idx;
 
-            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseCxxClass\""
+            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseJxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseCxxClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseJxxClass".to_string()] });
             }
             else
             {

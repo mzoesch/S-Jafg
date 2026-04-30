@@ -36,7 +36,7 @@ struct LOuter2WorldProj
 //# If you want a simpler base class, use JObjectBase. There is nothing that prevents JObjectBase
 //# classes to be spawned in worlds too.
 //#
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API AWorldObject : public JCxxClass
 {
     GENERATED_CLASS_BODY()

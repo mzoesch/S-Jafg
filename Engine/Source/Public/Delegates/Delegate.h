@@ -6,7 +6,7 @@
 struct LDelegateHandle final
 {
     constexpr LDelegateHandle() noexcept = delete;
-    FORCEINLINE constexpr LDelegateHandle(LNullptrTy) noexcept : Handle(0) { return; }
+    FORCEINLINE constexpr LDelegateHandle(std::nullptr_t) noexcept : Handle(0) { return; }
     FORCEINLINE constexpr LDelegateHandle(const LDelegateHandle& InOther) noexcept = default;
     FORCEINLINE constexpr LDelegateHandle(LDelegateHandle&& InOther) noexcept
     {
@@ -15,7 +15,7 @@ struct LDelegateHandle final
 
         return;
     }
-    FORCEINLINE constexpr LDelegateHandle& operator=(LNullptrTy) noexcept { this->Handle = 0; return *this; }
+    FORCEINLINE constexpr LDelegateHandle& operator=(std::nullptr_t) noexcept { this->Handle = 0; return *this; }
     FORCEINLINE constexpr LDelegateHandle& operator=(const LDelegateHandle& InOther) noexcept = default;
     FORCEINLINE constexpr LDelegateHandle& operator=(LDelegateHandle&& InOther) noexcept
     {

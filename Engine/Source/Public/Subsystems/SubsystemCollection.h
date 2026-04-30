@@ -28,12 +28,12 @@ struct LSubsystemCollection;
         requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                                                \
     FORCEINLINE void ForEachMutableSubtypeSubsystem(TPredicate&& Predicate)                                                                             \
         { this->Member.ForEachMutableSubtypeSubsystem<TSubsystem, bAllowMissCast>(std::forward<TPredicate>(Predicate)); }                               \
-    FORCEINLINE MySubsystem      * GetSubsystem(LCxxClass const* Class) { return this->Member.GetSubsystem<MySubsystem>(Class); }                       \
-    FORCEINLINE MySubsystem const* GetSubsystem(LCxxClass const* Class) const { return this->Member.GetSubsystem<MySubsystem>(Class); }                 \
-    FORCEINLINE MySubsystem      * GetSubsystemChecked(LCxxClass const* Class) { return this->Member.GetSubsystemChecked<MySubsystem>(Class); }         \
-    FORCEINLINE MySubsystem const* GetSubsystemChecked(LCxxClass const* Class) const { return this->Member.GetSubsystemChecked<MySubsystem>(Class); }   \
-    FORCEINLINE MySubsystem      * GetSubsystemAsserted(LCxxClass const* Class) { return this->Member.GetSubsystemAsserted<MySubsystem>(Class); }       \
-    FORCEINLINE MySubsystem const* GetSubsystemAsserted(LCxxClass const* Class) const { return this->Member.GetSubsystemAsserted<MySubsystem>(Class); } \
+    FORCEINLINE MySubsystem      * GetSubsystem(LJxxClass const* Class) { return this->Member.GetSubsystem<MySubsystem>(Class); }                       \
+    FORCEINLINE MySubsystem const* GetSubsystem(LJxxClass const* Class) const { return this->Member.GetSubsystem<MySubsystem>(Class); }                 \
+    FORCEINLINE MySubsystem      * GetSubsystemChecked(LJxxClass const* Class) { return this->Member.GetSubsystemChecked<MySubsystem>(Class); }         \
+    FORCEINLINE MySubsystem const* GetSubsystemChecked(LJxxClass const* Class) const { return this->Member.GetSubsystemChecked<MySubsystem>(Class); }   \
+    FORCEINLINE MySubsystem      * GetSubsystemAsserted(LJxxClass const* Class) { return this->Member.GetSubsystemAsserted<MySubsystem>(Class); }       \
+    FORCEINLINE MySubsystem const* GetSubsystemAsserted(LJxxClass const* Class) const { return this->Member.GetSubsystemAsserted<MySubsystem>(Class); } \
     template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
     FORCEINLINE TSubsystem      * GetSubsystem() { return this->Member.GetSubsystem<TSubsystem>(); }                                                    \
     template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \

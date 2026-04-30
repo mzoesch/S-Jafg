@@ -2,14 +2,12 @@
 
 #pragma once
 
-#include "Engine/CxxClass.h"
-#include "Nodes/Whitespace.h"
-#include "User/Input/Replies.h"
+#include "Engine/Jxx.h"
 #include "User/Input/Events.h"
 #include "Platform/SurfaceForward.h"
-#include "Nodes/InterfaceTypes.h"
 #include "User/UserPreferencesForward.h"
 #include "Framework/FrontendForward.h"
+#include "Platform/Cursor.h"
 #include "Node.generated.h"
 
 namespace Jafg
@@ -23,6 +21,142 @@ class LViewport;
 struct LWidgetConstructor;
 struct LMappedDeviceBuffer;
 struct LNodeRenderInfo;
+
+namespace Detail
+{
+
+template<typename T>
+FORCEINLINE constexpr decltype(T::Size) GetNodeSizeInStaticPoints(T const& Size, LViewport const& Viewport) noexcept;
+
+} /* ~Namespace Detail */
+
+enum struct ENodeSize
+{
+    //# Static points may vary for each monitor and/or platform. But they behave consistently during an application launch.
+    StaticPoints,
+    //# Points behave differently depending on user preferences and the size of the viewport they are painted in.
+    Points,
+};
+
+//# One-dimensional widget size.
+struct LNodeSize1 final
+{
+    ENodeSize Type{ ENodeSize::Points };
+    f32 Size;
+
+    FORCEINLINE constexpr LNodeSize1() noexcept : Size{} {}
+    FORCEINLINE constexpr LNodeSize1(ENodeSize Type, f32 Size) noexcept : Type{Type}, Size{Size} {}
+    FORCEINLINE constexpr LNodeSize1(LNodeSize1 const& WidgetSize1) noexcept
+    {
+        this->Type = WidgetSize1.Type;
+        this->Size = WidgetSize1.Size;
+        return;
+    }
+    FORCEINLINE constexpr LNodeSize1& operator=(LNodeSize1 const& WidgetSize1) noexcept
+    {
+        this->Type = WidgetSize1.Type;
+        this->Size = WidgetSize1.Size;
+        return *this;
+    }
+
+    FORCEINLINE constexpr bool operator==(LNodeSize1 const& Other) const noexcept
+    {
+        return this->Type == Other.Type && this->Size == Other.Size;
+    }
+    FORCEINLINE constexpr LNodeSize1 operator*(f32 Scalar) const noexcept
+    {
+        return LNodeSize1{this->Type, this->Size * Scalar};
+    }
+
+    FORCEINLINE constexpr f32 InStaticPoints(LViewport const& Viewport) const noexcept
+    {
+        return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
+    }
+};
+
+//# Two-dimensional widget size.
+struct LNodeSize2 final
+{
+    ENodeSize Type{ ENodeSize::Points };
+    LVec2F Size;
+
+    FORCEINLINE constexpr LNodeSize2() noexcept : Size{maths::zero_vector<LVec2F>} {}
+    FORCEINLINE constexpr LNodeSize2(LNodeSize2 const& WidgetSize2) noexcept
+    {
+        this->Type = WidgetSize2.Type;
+        this->Size = WidgetSize2.Size;
+        return;
+    }
+    FORCEINLINE constexpr LNodeSize2& operator=(LNodeSize2 const& WidgetSize2) noexcept
+    {
+        this->Type = WidgetSize2.Type;
+        this->Size = WidgetSize2.Size;
+        return *this;
+    }
+    FORCEINLINE constexpr LNodeSize2(ENodeSize Type, f32 X, f32 Y) noexcept : Type{Type}, Size{X, Y} {}
+    FORCEINLINE constexpr LNodeSize2(ENodeSize Type, LVec2F Size) noexcept : Type{Type}, Size{Size} {}
+    FORCEINLINE constexpr LNodeSize2(LNodeSize1 X, f32 Y) noexcept : Type{X.Type}, Size{X.Size, Y} {}
+    FORCEINLINE constexpr LNodeSize2(f32 X, LNodeSize1 Y) noexcept : Type{Y.Type}, Size{X, Y.Size} {}
+
+    FORCEINLINE constexpr bool operator==(LNodeSize2 const& Other) const noexcept
+    {
+        return this->Type == Other.Type && this->Size == Other.Size;
+    }
+    FORCEINLINE constexpr LNodeSize2 operator*(f32 Scalar) const noexcept
+    {
+        return {this->Type, this->Size * Scalar};
+    }
+
+    FORCEINLINE constexpr LVec2F InStaticPoints(LViewport const& Viewport) const noexcept
+    {
+        return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
+    }
+};
+
+struct LWhitespace final
+{
+    ENodeSize Type{ ENodeSize::Points };
+    LVec4F Size;
+
+
+    FORCEINLINE constexpr LWhitespace() noexcept : Size{maths::zero_vector<LVec4F>} {}
+
+    FORCEINLINE constexpr LWhitespace(ENodeSize Type, f32 Scalar) noexcept : Type{Type}, Size{Scalar, Scalar, Scalar, Scalar} {}
+    FORCEINLINE constexpr LWhitespace(ENodeSize Type, f32 Horizontal, f32 Vertical) noexcept : Type{Type}, Size{Horizontal, Vertical, Horizontal, Vertical} {}
+    FORCEINLINE constexpr LWhitespace(ENodeSize Type, f32 Left, f32 Top, f32 Right, f32 South) noexcept : Type{Type}, Size{Left, Top, Right, South} {}
+    FORCEINLINE constexpr LWhitespace(ENodeSize Type, LVec4F Size) noexcept : Type{Type}, Size{Size} {}
+
+    FORCEINLINE constexpr LWhitespace(LNodeSize1 Scalar) noexcept : Type{Scalar.Type}, Size{Scalar.Size} {}
+    FORCEINLINE constexpr LWhitespace(LNodeSize1 Horizontal, f32 Vertical) noexcept : Type{Horizontal.Type}, Size{Horizontal.Size, Vertical, Horizontal.Size, Vertical} {}
+    FORCEINLINE constexpr LWhitespace(LNodeSize1 Left, f32 Top, f32 Right, f32 South) noexcept : Type{Left.Type}, Size{Left.Size, Top, Right, South} {}
+
+    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LWhitespace)
+
+    FORCEINLINE constexpr ~LWhitespace() noexcept = default;
+
+    FORCEINLINE constexpr LWhitespace operator*(f32 Scalar) const noexcept { return {this->Type, this->Size * Scalar}; }
+    FORCEINLINE constexpr LWhitespace operator/(f32 Scalar) const noexcept { return {this->Type, this->Size / Scalar}; }
+    FORCEINLINE constexpr bool operator==(LWhitespace const& Rhs) const noexcept { return Type == Rhs.Type && maths::eq_e(this->Size, Rhs.Size); }
+
+    //# All return values are always: first horizontal, then vertical.
+    FORCEINLINE constexpr LNodeSize1 GetLeftOffset() const noexcept { return {this->Type, this->Size.x}; }
+    FORCEINLINE constexpr LNodeSize1 GetTopOffset() const noexcept { return {this->Type, this->Size.y}; }
+    FORCEINLINE constexpr LNodeSize2 GetTopLeftOffset() const noexcept { return {this->Type, this->Size.x, this->Size.y}; }
+    FORCEINLINE constexpr LNodeSize1 GetRightOffset() const noexcept { return {this->Type, this->Size.z}; }
+    FORCEINLINE constexpr LNodeSize1 GetBottomOffset() const noexcept { return {this->Type, this->Size.w}; }
+    FORCEINLINE constexpr LNodeSize2 GetBottomRightOffset() const noexcept { return {this->Type, this->Size.z, this->Size.w}; }
+    FORCEINLINE constexpr LNodeSize1 GetDesiredSizeX() const noexcept { return {this->Type, this->Size.x + this->Size.z}; }
+    FORCEINLINE constexpr LNodeSize1 GetDesiredSizeY() const noexcept { return {this->Type, this->Size.y + this->Size.w}; }
+    FORCEINLINE constexpr LNodeSize2 GetDesiredSize() const noexcept { return {this->Type, this->Size.x + this->Size.z, this->Size.y + this->Size.w}; }
+
+    FORCEINLINE constexpr LVec4F InStaticPoints(LViewport const& Viewport) const noexcept
+    {
+        return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
+    }
+};
+
+typedef LWhitespace LPadding;
+typedef LWhitespace LMargin;
 
 //#
 //# How to anchor a child to its parent if the parent can have children.
@@ -294,6 +428,46 @@ inline LString LexToString(ENodeVisibility Visibility)
     }
 }
 
+struct LNodeReply final
+{
+    FORCEINLINE constexpr LNodeReply() noexcept
+        : bHandled{}, bConsumesEvent{true}, Cursor{ECursor::None} {}
+    FORCEINLINE constexpr LNodeReply(bool bInHandled, bool bInConsumesEvent = true) noexcept
+        : bHandled{bInHandled}, bConsumesEvent{bInConsumesEvent}, Cursor{ECursor::None} {}
+    FORCEINLINE constexpr LNodeReply(std::optional<TClassStorage<WNode>> InFocus, bool bInConsumesEvent = true) noexcept
+        : bHandled{true}, bConsumesEvent{bInConsumesEvent}, Cursor{ECursor::None}, Focus{std::move(InFocus)} {}
+    FORCEINLINE constexpr LNodeReply(ECursor InCursor, std::optional<TClassStorage<WNode>> InFocus = {}, bool bInConsumesEvent = true) noexcept
+        : bHandled{true}, bConsumesEvent{bInConsumesEvent}, Cursor{InCursor}, Focus{std::move(InFocus)} {}
+    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LNodeReply)
+    FORCEINLINE constexpr ~LNodeReply() noexcept = default;
+
+    FORCEINLINE static constexpr LNodeReply Handled(bool bConsumesEvent = true) noexcept { return LNodeReply{true, bConsumesEvent}; }
+    FORCEINLINE static constexpr LNodeReply Unhandled() noexcept { return {}; }
+
+    FORCEINLINE constexpr bool IsHandled() const noexcept { return this->bHandled; }
+    FORCEINLINE constexpr bool DoesConsume() const noexcept { return this->bConsumesEvent; }
+    FORCEINLINE constexpr ECursor GetCursor() const noexcept { return this->Cursor; }
+    FORCEINLINE constexpr bool IsFocusValid() const noexcept { return this->Focus.has_value(); }
+    FORCEINLINE constexpr TClassStorage<WNode> GetFocus() noexcept { check(this->IsFocusValid()) return *this->Focus; }
+    FORCEINLINE constexpr TClassStorage<WNode> const& GetFocus() const noexcept { check(this->IsFocusValid()) return *this->Focus; }
+
+private:
+
+    bool bHandled;
+    bool bConsumesEvent;
+    ECursor Cursor;
+    std::optional<TClassStorage<WNode>> Focus;
+};
+
+enum struct ENodeStateBits
+{
+    Identity = 0x0 << 0,
+    Hovered = 0x1 << 0,
+    HoveredDispatched = 0x1 << 1,
+    Focused = 0x1 << 2,
+};
+ENUM_STRUCT_FLAGS(ENodeStateBits, ENodeStateFlags)
+
 namespace Detail
 {
 
@@ -363,14 +537,9 @@ private:
 #define NODE_FACTORY_SELF() check(Self._IsDecommissioned() == false) DETAIL_JAFG_NODE_FACTORY_SELF()
 #define NODE_FACTORY_RESULT() std::forward<decltype(Self)>(Self)
 
-struct LNodeSweepData final
+struct LNodeSweepInfo final
 {
-    //#
-    //# The translation that is recommended for children of a #WParentBase to use while sweeping.
-    //# This translation should be removed if a parent widget finished its sweep logic.
-    //# This value is reset every frame.
-    //# @remark Use the #LViewportSweepTranslation for easy RAII style translation logic.
-    //#
+    //# The translation that is recommended for children of a #WParent to use while sweeping.
     const LVec2F Translation;
 };
 
@@ -379,9 +548,9 @@ struct LNodeKeyEventInfo final
     LFrontend const& Frontend;
     LSurface& Surface;
     LViewport& Viewport;
-    WNode& Node;
+    WNode& FocusedNode;
 
-    TOptional<LVec2F> const& CursorLocation;
+    std::optional<LVec2F> const& CursorLocation;
 
     const LVec2F Translation;
 };
@@ -447,7 +616,7 @@ struct LBeginStylingFnResult final
 
     //# Set the root with a dynamic type specified at runtime.
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    inline typename TNode::LFactory& Root(LCxxClass const& Class);
+    inline typename TNode::LFactory& Root(LJxxClass const& Class);
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
     inline typename TNode::LFactory& Root(TNodeInjection<TNode> const& Injection)
     {
@@ -463,41 +632,10 @@ struct LBeginStylingFnResult final
 
 } /* ~Namespace Detail */
 
-#define JAFG_NODE_FACTORY_DELEGATE_BINDINGS(Prefix, Event) \
-    decltype(auto) Prefix(this auto&& Self, LNullptrTy) noexcept \
+#define JAFG_NODE_FACTORY_DELEGATE_BINDINGS(f, callable) \
+        decltype(auto) f(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::callable) Event) noexcept \
     { \
-        NODE_FACTORY_SELF().Event.Bind(nullptr); \
-        return NODE_FACTORY_RESULT(); \
-    } \
-    decltype(auto) Prefix(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event) const& InEvent) noexcept \
-    { \
-        NODE_FACTORY_SELF().Event.Bind(InEvent); \
-        return NODE_FACTORY_RESULT(); \
-    } \
-    decltype(auto) Prefix(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)&& InEvent) noexcept \
-    { \
-        NODE_FACTORY_SELF().Event.Bind(std::move(InEvent)); \
-        return NODE_FACTORY_RESULT(); \
-    } \
-    template<typename TFunctor> \
-    decltype(auto) Prefix(this auto&& Self, TFunctor&& Functor) \
-        requires(decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)::template IsInvocableWith_v<TFunctor>) \
-    { \
-        NODE_FACTORY_SELF().Event.Bind(std::forward<TFunctor>(Functor)); \
-        return NODE_FACTORY_RESULT(); \
-    } \
-    template<typename TFunctor> \
-    decltype(auto) Prefix(this auto&& Self, TFunctor* Functor) \
-        requires(decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)::template IsInvocableWith_v<TFunctor>) \
-    { \
-        NODE_FACTORY_SELF().Event.Bind(Functor); \
-        return NODE_FACTORY_RESULT(); \
-    } \
-    template<typename TObj, typename TMemberFunctor> \
-    decltype(auto) Prefix(this auto&& Self, TObj* Object, TMemberFunctor MemberFunctor) \
-        requires(decltype(std::remove_cvref_t<decltype(Self)>::TSelf::Event)::template IsInvocableWithMember_v<TObj, TMemberFunctor>) \
-    { \
-        NODE_FACTORY_SELF().Event.Bind(Object, MemberFunctor); \
+        NODE_FACTORY_SELF().callable = std::move(Event); \
         return NODE_FACTORY_RESULT(); \
     }
 
@@ -522,12 +660,12 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         return NODE_FACTORY_RESULT();
     }
 
-    decltype(auto) MinDesiredSize(this auto&& Self, LWidgetSize2 Size) noexcept
+    decltype(auto) MinDesiredSize(this auto&& Self, LNodeSize2 Size) noexcept
     {
         NODE_FACTORY_SELF().MinDesiredSize = Size;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) MaxDesiredSize(this auto&& Self, LWidgetSize2 Size) noexcept
+    decltype(auto) MaxDesiredSize(this auto&& Self, LNodeSize2 Size) noexcept
     {
         NODE_FACTORY_SELF().MaxDesiredSize = Size;
         return NODE_FACTORY_RESULT();
@@ -565,19 +703,10 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorMoved, OnCursorMovedEvent)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorLeave, OnCursorLeaveEvent)
 
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDown, OnKeyDownEvent)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUp, OnKeyUpEvent)
-
-    decltype(auto) OnKeyDownNoFocus(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::OnKeyDownNoFocusEvent) Event) noexcept
-    {
-        NODE_FACTORY_SELF().OnKeyDownNoFocusEvent = std::move(Event);
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) OnKeyUpNoFocus(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::OnKeyUpNoFocusEvent) Event) noexcept
-    {
-        NODE_FACTORY_SELF().OnKeyUpNoFocusEvent = std::move(Event);
-        return NODE_FACTORY_RESULT();
-    }
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDownFocused, OnKeyDownFocusedEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUpFocused, OnKeyUpFocusedEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDownUnfocused, OnKeyDownUnfocusedEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUpUnfocused, OnKeyUpUnfocusedEvent)
 
     template<typename T> requires std::is_base_of_v<WNode, T>
     decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept
@@ -605,7 +734,7 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
 };
 
 //# Pass arbitrary data typesafe down the hierarchy. Using this often is a good indicator for bad design.
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API JNodeData : public JCxxClass
 {
     GENERATED_CLASS_BODY()
@@ -613,21 +742,11 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTORS(JNodeData)
 };
 
-ENGINE_API  f32 InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept;
-FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept;
-ENGINE_API  LVec2F InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept;
-FORCEINLINE LVec2F InSpt(WNode const& Node, LWidgetSize2 Size) noexcept;
-
-ENGINE_API  f32 InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept;
-FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
-ENGINE_API  LVec2F InSptFromRelative(LViewport const& Viewport, LVec2F Relative) noexcept;
-FORCEINLINE LVec2F InSptFromRelative(WNode const& Node, LVec2F Relative) noexcept;
-
 //#
 //# The base class for everything that can be interpreted as a visual element.
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryNode, ECxxClassFlags::Abstract)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryNode, EJxxClassBits::Abstract)
 class ENGINE_API WNode : public JCxxClass
 {
     GENERATED_CLASS_BODY()
@@ -647,13 +766,17 @@ public:
 #if JAFG_DO_CHECKS
     virtual ~WNode() override
     {
-        check(this->Parent == nullptr)
+        check(!this->Parent)
     }
 #endif /* JAFG_DO_CHECKS */
 
     // JCxxClass implementation
-    virtual void BeginLife() override final { Super::BeginLife();  this->Construct(); }
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override final
+    virtual void BeginLife() override final
+    {
+        Super::BeginLife();
+        this->Construct();
+    }
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override final
     {
         this->Destruct();
         Super::OnGarbage(Reason);
@@ -661,103 +784,182 @@ public:
     // ~JCxxClass implementation
 
     //#
-    //# Called when this widget is constructed. This does not mean being drawn to a canvas. A widget might be
-    //# constructed but never drawn on a canvas in their entire lifespan. This method replaces the #BeginLife super
-    //# method.
+    //# Called when this widget is constructed. This method replaces the #BeginLife super method.
     //#
-    virtual void Construct() {}
+    inline virtual void Construct() {}
 
     //#
     //# Called when this widget is being ticked.
-    //# See #EWidgetVisibility for more information about when to tick a widget.
+    //# @see #EWidgetVisibility for more information about when to tick a widget.
     //#
-    virtual void Tick() {}
+    inline virtual void Tick() {}
 
     //#
-    //# Called when this widget is being destructed. This does not mean being removed from its parent. This method
-    //# replaces the #EndLife super method.
+    //# Called when this widget is being destructed. This method replaces the #EndLife super method.
     //#
-    virtual void Destruct()
-    {
-        check(Tasks::IsOnMasterThread())
-        checkCode(_check_Destruct())
-        this->Parent = nullptr;
-    }
+    inline virtual void Destruct();
 
     //#
     //# The paint function for a widget. Only called if the widget is visible and paintable.
-    //# Do not update any values of any widgets when inside this method.
-    //# Automatically called by the owning viewport. Do not call manually.
+    //# Do not update any values of any widgets when inside this method. This methods might get called from any thread
+    //# and might be called multiple times per tick.
+    //# Automatically called by the owning viewport if applicable. Do not call manually.
     //#
     virtual void Draw(LNodeRenderInfo const& Info) const { check(this->ShouldNowDraw()) }
 
-    //#
     //# Use this method to pass arbitrary typesafe data to the widget.
-    //# @return True, if the data was used successfully handled.
-    //#
-    virtual bool AddData(JNodeData& Data) { return false; }
+    virtual algo::reply AddData(JNodeData& Data) { return {}; }
 
-    bool IsInBounds(LNodeSweepData const& Data, LVec2F const& Location) const;
-    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location);
+    FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Data, LVec2F const& Location) const noexcept
+    {
+        return this->TransformsWidgetLayout() && maths::aabb_point({
+            .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Data.Translation),
+            .Extent = this->GetAnchoredSize_v2()
+            }, Location);
+    }
 
-    TFunction<LCursorReply(WNode& Node)> OnCursorEnterEvent;
-    TFunction<LCursorReply(WNode& Node)> OnCursorMovedEvent;
-    TFunction<LCursorReply(WNode& Node)> OnCursorLeaveEvent;
-    virtual LCursorReply OnCursorEnter() { if (this->OnCursorEnterEvent.IsValid()) { return this->OnCursorEnterEvent.Invoke(*this); } return LCursorReply::Handled(); }
-    virtual LCursorReply OnCursorMoved(const LVec2F& InLocation) { if (this->OnCursorMovedEvent.IsValid()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
-    virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsValid()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    //# Sweep this node and all its children from bottom to top for focus.
+    FORCEINLINE virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location);
+    //# A non bubbled event that is called when a node receives a focus.
+    virtual void OnFocusReceived()
+    {
+        check(!this->_check_bFocused)
+        checkCode(this->_check_bFocused = true)
+        check((this->NodeState & ENodeStateBits::Focused) == ENodeStateBits::Identity)
+        checkCode(this->_check_StateInvariant())
+        this->NodeState |= ENodeStateBits::Focused;
+        checkCode(this->_check_StateInvariant())
+    }
+    //# Called each tick for a focused node regardless if the parent node allways ticking.
+    virtual void OnFocusTick()
+    {
+        check(this->_check_bFocused)
+        check((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+    }
+    //# Always called if the node loses focus. This is guaranteed.
+    virtual void OnFocusLost()
+    {
+        check(this->_check_bFocused)
+        checkCode(this->_check_bFocused = false)
+        check((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+        checkCode(this->_check_StateInvariant())
+        this->NodeState &= ~ENodeStateFlags{ENodeStateBits::Focused};
+        checkCode(this->_check_StateInvariant())
+    }
 
-    virtual LReply SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location);
+    //# Sweep an optional cursor location over this node.
+    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location);
+    //# Public internal method for jafg. Do not use.
+    FORCEINLINE virtual void _RemoveHoverState() noexcept
+    {
+        this->_RemoveHoverDispatchedState();
+        if (this->NodeState & ENodeStateBits::Hovered) { this->NodeState &= ~ENodeStateFlags{ENodeStateBits::Hovered}; }
+        return;
+    }
+    //# Public internal method for jafg. Do not use.
+    FORCEINLINE void _RemoveHoverDispatchedState() noexcept
+    {
+        if (this->NodeState & ENodeStateBits::HoveredDispatched)
+        {
+            check(this->NodeState & ENodeStateBits::Hovered)
+            this->NodeState &= ~ENodeStateFlags{ENodeStateBits::HoveredDispatched};
+            this->OnCursorLeave();
+        }
+        return;
+    }
 
     //#
-    //# Called if this widget is being focused / unfocused. Extra care is given by the owing viewport for special
-    //# events, only receivable by a focused widget. This includes e.g., platform buffered input.
-    //# You may decide to bubble this event up or down.
-    //# Note that the #WParent node will not bubble this event in any direction as it is usually meant for the
-    //# most inner node only.
+    //# Called if the cursor has entered/moved/left this node.
+    //# The following is guaranteed:
+    //#  - #OnCursorEnter is always called before #OnCursorMoved or #OnCursorLeave.
+    //#  - #OnCursorMoved is only called between the #OnCursorEnter and #OnCursorLeave.
+    //#  - #OnCursorLeave is always called if #OnCursorEnter was called previously.
     //#
-    virtual void OnFocusReceived() {}
-    virtual void OnFocusLost() {}
+    TFunction2<LNodeReply(WNode& Node)> OnCursorEnterEvent;
+    TFunction2<LNodeReply(WNode& Node)> OnCursorMovedEvent;
+    TFunction2<void(WNode& Node)> OnCursorLeaveEvent;
+    virtual LNodeReply OnCursorEnter()
+    {
+        check(!this->_check_bMouseEntered)
+        checkCode(this->_check_bMouseEntered = true)
+        if (this->OnCursorEnterEvent) if (auto Reply{this->OnCursorEnterEvent(*this)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        return LNodeReply::Handled();
+    }
+    virtual LNodeReply OnCursorMoved(LVec2F const& Location)
+    {
+        check(this->_check_bMouseEntered)
+        if (this->OnCursorMovedEvent) if (auto Reply{this->OnCursorMovedEvent(*this)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        return LNodeReply::Handled();
+    }
+    virtual void OnCursorLeave()
+    {
+        check(this->_check_bMouseEntered)
+        checkCode(this->_check_bMouseEntered = false)
+        if (this->OnCursorLeaveEvent)
+        {
+            this->OnCursorLeaveEvent(*this);
+        }
+        return;
+    }
 
     //#
-    //# These events are for the focused widget only. You may want to bubble these events down to children if you want.
-    //# If these events are unhandled by the currently focused derived class, they will be bubbled up to the most
-    //# outer parent.
+    //# Only called if focused. Should not be bubbled.
+    //# @note If not handled, then #OnKey(Down|Up)Unfocused might still get called even if this node was focused.
     //#
-    //# Therefore, you should first handle the reply if possible, and if not, you should call the super method.
-    //#
-    //# If a key event is unhandled here, other widgets will be able to receive it through the #OnKeyDownNoFocus and
-    //# #OnKeyUpNoFocus methods.
-    //#
-    //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
-    //#
-    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
-    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
-    TFunction<LReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyDownEvent;
-    TFunction<LReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyUpEvent;
+    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyDownFocusedEvent;
+    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyUpFocusedEvent;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    {
+        if (this->OnKeyDownFocusedEvent) if (auto Reply{this->OnKeyDownFocusedEvent(*this, Info, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        return LNodeReply::Unhandled();
+    }
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    {
+        if (this->OnKeyUpFocusedEvent) if (auto Reply{this->OnKeyUpFocusedEvent(*this, Info, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        return LNodeReply::Unhandled();
+    }
 
-    virtual LReply OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) { return LReply::Unhandled(); }
-    virtual LReply OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) { return LReply::Unhandled(); }
-
     //#
-    //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle
-    //# the event call, the reply should be returned; if not, the direct parent is eligible to handle it.
+    //# Called from top to bottom, but should be handled in reversed order (bottom to top) for all input receivable
+    //# nodes, if their #Visibility allows it, for all consumable user inputs.
     //#
-    //# Therefore, you should only handle the reply in the derived class if it was not handled in the
-    //# super method call expression.
-    //# Be aware: This is the exact opposite behavior to the #OnKeyDown and #OnKeyUp methods.
-    //#
-    //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
-    //#
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event);
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event);
-    TFunction2<LReply(WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> OnKeyDownNoFocusEvent;
-    TFunction2<LReply(WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> OnKeyUpNoFocusEvent;
+    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyDownUnfocusedEvent;
+    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyUpUnfocusedEvent;
+    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    {
+        if (this->OnKeyDownUnfocusedEvent) if (auto Reply{this->OnKeyDownUnfocusedEvent(*this, Info, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        return LNodeReply::Unhandled();
+    }
+    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    {
+        if (this->OnKeyUpUnfocusedEvent) if (auto Reply{this->OnKeyUpUnfocusedEvent(*this, Info, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        return LNodeReply::Unhandled();
+    }
 
     //# @return Whether this is the focused widget.
     NODISCARD FORCEINLINE constexpr bool IsFocusWidget() const noexcept;
     //# @return Whether this is the focused widget or any of its children.
     NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const noexcept; /* Warning: Slow. */
+
+    FORCEINLINE constexpr ENodeStateFlags GetNodeState() const noexcept { return this->NodeState; }
 
     FORCEINLINE bool ShouldNowTick() const { return this->bAllowTick && NodeVisibility::IsTicked(this->Visibility); }
     FORCEINLINE bool GetRawShouldTick() const { return this->bAllowTick; }
@@ -817,7 +1019,7 @@ public:
     //# Searches for a node in this widget tree. Only searches nodes that are drawn.
     //# @return True if the target node exists in this widget tree and is visible.
     //#
-    NODISCARD virtual bool IsNodeInVisiblePath(WNode const* Node) const;
+    NODISCARD virtual bool IsNodeInVisiblePath(WNode const* Node) const { return this == Node && this->ShouldNowDraw(); }
     NODISCARD virtual inline WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept
     {
         if (this->ShouldNowDraw() && this->IsA(Class))
@@ -871,8 +1073,6 @@ public:
         return Result;
     }
 
-    //# @return The size of the current viewport in pixels.
-    LVec2u32 GetViewportSize() const;
     FORCEINLINE constexpr LViewport& GetViewport() noexcept { return this->AttachedViewport; }
     FORCEINLINE constexpr LViewport const& GetViewport() const noexcept { return this->AttachedViewport; }
 
@@ -882,16 +1082,16 @@ public:
     //# Update the #DesiredSize of a widget inside the overridden #UpdateDesiredSize method with this one.
     //# Do not call this method from outside the #UpdateDesiredSize method.
     //#
-    FORCEINLINE void SetDesiredSize(LWidgetSize2 Size) const noexcept { this->SetDesiredSizeInSpt(InSpt(*this, Size)); }
+    FORCEINLINE void SetDesiredSize(LNodeSize2 Size) const noexcept { this->SetDesiredSizeInSpt(Size.InStaticPoints(this->AttachedViewport)); }
     void SetDesiredSizeInSpt(LVec2F Size) const noexcept;
     //# Internal usage only. Do not use unless you are a really smart person.
     FORCEINLINE void SetDesiredSizeUnsanitized(LVec2F Size) const { this->DesiredSize_v2 = Size; }
     FORCEINLINE LVec2F const& GetDesiredSize_v2() const { return this->DesiredSize_v2; }
     FORCEINLINE LVec2F const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : maths::zero_vector<LVec2F>; }
     //# The min desired size. A widget will always be at least this size.
-    LWidgetSize2 MinDesiredSize;
+    LNodeSize2 MinDesiredSize;
     //# The max desired size. A widget will have at maximum this size. Zero means unbound. This includes max size of anchored nodes.
-    LWidgetSize2 MaxDesiredSize;
+    LNodeSize2 MaxDesiredSize;
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSize() const;
@@ -909,9 +1109,9 @@ public:
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const PURE_VIRTUAL()
 
-    TOptional<LMargin> GetMargin() const noexcept;
-    FORCEINLINE TOptional<LMargin> GetMarginChecked() const noexcept { TOptional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
-    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const noexcept { TOptional Out{this->GetMargin()}; jassert(Out.has_value()); return Out; }
+    std::optional<LMargin> GetMargin() const noexcept;
+    FORCEINLINE std::optional<LMargin> GetMarginChecked() const noexcept { std::optional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
+    FORCEINLINE std::optional<LMargin> GetMarginAsserted() const noexcept { std::optional Out{this->GetMargin()}; jassert(Out.has_value()); return Out; }
 
     //# The anchor to use.
     LAnchor Anchor{ EAnchor::TopLeft };
@@ -922,13 +1122,20 @@ public:
     //# Internal function of Jafg. Do not call yourself.
     void _SetParentDangerous(WParent* InParent) noexcept { this->Parent = InParent; }
 
+#if JAFG_DO_CHECKS
+    void _check_StateInvariant();
+    void _check_Destruct();
+    FORCEINLINE bool& _check_MutableMouseEntered() noexcept { return this->_check_bMouseEntered; }
+#endif /* JAFG_DO_CHECKS */
+
 private:
 
 #if JAFG_DO_CHECKS
-    void _check_Destruct();
+    bool _check_bFocused{};
+    bool _check_bMouseEntered{};
 #endif /* JAFG_DO_CHECKS */
-
     bool bAllowTick{ true };
+    ENodeStateFlags NodeState{ ENodeStateBits::Identity };
     ENodeVisibility Visibility{ ENodeVisibility::TransitiveHitTestInvisible };
 
     //# Parent of this widget.
@@ -983,7 +1190,7 @@ struct LNewNodeFnResult final
         return this->Class<TNode>(TNode::StaticClass());
     }
     template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
-    typename TNode::LFactory Class(LCxxClass const& Class) const
+    typename TNode::LFactory Class(LJxxClass const& Class) const
     {
         return typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class}).release()};
     }
@@ -1020,38 +1227,6 @@ inline constexpr Detail::NewNodeFn NewNode{};
 #define NewStaticNode(NodeClass) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>()
 #define NewDynamicNode(Subclass) ::Jafg::NewNode(this->GetViewport()).Class(Subclass)
 
-FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
-{
-    if (Size.Type == EWidgetSize::StaticPoints)
-    {
-        return Size.Size;
-    }
-
-    check( Size.Type == EWidgetSize::Points )
-    return InSptFromRelative(Node.GetViewport(), Size.Size);
-}
-
-FORCEINLINE LVec2F InSpt(WNode const& Node, LWidgetSize2 Size) noexcept
-{
-    if (Size.Type == EWidgetSize::StaticPoints)
-    {
-        return Size.Size;
-    }
-
-    check( Size.Type == EWidgetSize::Points )
-    return InSptFromRelative(Node.GetViewport(), Size.Size);
-}
-
-FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept
-{
-    return InSptFromRelative(Node.GetViewport(), Relative);
-}
-
-FORCEINLINE LVec2F InSptFromRelative(WNode const& Node, LVec2F Relative) noexcept
-{
-    return InSptFromRelative(Node.GetViewport(), Relative);
-}
-
 } /* ~Namespace Jafg */
 
 #include "Nodes/Viewport.h"
@@ -1061,6 +1236,18 @@ namespace Jafg
 
 namespace Detail
 {
+
+template<typename T>
+FORCEINLINE constexpr decltype(T::Size) GetNodeSizeInStaticPoints(T const& Size, LViewport const& Viewport) noexcept
+{
+    if (Size.Type == ENodeSize::StaticPoints)
+    {
+        return Size.Size;
+    }
+    EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
+    check(Scale != EApplicationScale::Auto)
+    return Size.Size * LexToFloat(Scale);
+}
 
 inline constexpr LNodeDynamicInit LOuter2ViewportProj::operator()(LCxxDynamicInit const& Init) const noexcept
 {
@@ -1076,6 +1263,29 @@ inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
 {
 }
 
+FORCEINLINE void WNode::Destruct()
+{
+    check(Tasks::IsOnMasterThread())
+    checkCode(_check_Destruct())
+
+    if ((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+    {
+        this->AttachedViewport.ChangeFocusImpl({});
+        check((this->NodeState & ENodeStateBits::Focused) == ENodeStateBits::Identity)
+    }
+
+    this->Parent = nullptr;
+
+    return;
+}
+
+FORCEINLINE LNodeReply WNode::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
+{
+    if (!this->IsHitTestable()) { return {}; }
+    if (!this->AabbTest(Info, Location)) { return {}; }
+    if (this->GetViewport().GetFocusedWidget() == this) { return LNodeReply::Handled(false); } return LNodeReply{TClassStorage{this}, false};
+}
+
 NODISCARD FORCEINLINE constexpr bool WNode::IsFocusWidget() const noexcept
 {
     return this->AttachedViewport.GetFocusedWidget() == this;
@@ -1087,3 +1297,43 @@ NODISCARD FORCEINLINE bool WNode::IsFocusWidgetTransitive() const noexcept
 }
 
 } /* ~Namespace Jafg */
+
+FORCEINLINE constexpr Jafg::LNodeSize1 operator ""_spt(unsigned long long Value) noexcept
+{
+    return {Jafg::ENodeSize::StaticPoints, static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize1 operator ""_spt(long double Value) noexcept
+{
+    return {Jafg::ENodeSize::StaticPoints, static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize1 operator ""_pt(unsigned long long Value) noexcept
+{
+    return {Jafg::ENodeSize::Points, static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize1 operator ""_pt(long double Value) noexcept
+{
+    return {Jafg::ENodeSize::Points, static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize2 operator ""_spt2(unsigned long long Value) noexcept
+{
+    return {Jafg::ENodeSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize2 operator ""_spt2(long double Value) noexcept
+{
+    return {Jafg::ENodeSize::StaticPoints, static_cast<f32>(Value), static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize2 operator ""_pt2(unsigned long long Value) noexcept
+{
+    return {Jafg::ENodeSize::Points, static_cast<f32>(Value), static_cast<f32>(Value)};
+}
+
+FORCEINLINE constexpr Jafg::LNodeSize2 operator ""_pt2(long double Value) noexcept
+{
+    return {Jafg::ENodeSize::Points, static_cast<f32>(Value), static_cast<f32>(Value)};
+}

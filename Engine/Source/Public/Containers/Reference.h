@@ -41,7 +41,7 @@ public:
     {
         if constexpr (std::is_object_v<T>)
         {
-            static_assert(algo::is_complete_type_v<T>);
+            static_assert(algo::detail::is_complete_type_v<T>);
         }
 
         return std::invoke(this->get(), std::forward<TArgs>(Args)...);

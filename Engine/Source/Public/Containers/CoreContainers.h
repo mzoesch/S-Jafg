@@ -157,9 +157,6 @@ using Lu32StringView = std::u32string_view;
 
 using LPath = std::filesystem::path;
 
-template<typename T>
-using TOptional = std::optional<T>;
-
 template<>
 struct std::formatter<LPath> : std::formatter<std::string>
 {

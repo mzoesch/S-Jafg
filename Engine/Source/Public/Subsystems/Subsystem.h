@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/CxxClass.h"
+#include "Engine/Jxx.h"
 #include "Subsystem.generated.h"
 
 namespace Jafg
@@ -15,7 +15,7 @@ struct LSubsystemCollection;
 //#
 //# To create your own subsystem lifetime:
 //#
-DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API JSubsystem : public JCxxClass
 {
     friend LSubsystemCollection;
@@ -26,7 +26,7 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JSubsystem)
 
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override final
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override final
     {
         Super::OnGarbage(Reason);
         check(this->bRequestingDependency == false)

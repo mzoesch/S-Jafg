@@ -73,17 +73,7 @@ void Jafg::LSurfaceBase::BeginNewFrame()
 
 void Jafg::LSurfaceBase::Tick()
 {
-    this->GetViewport().ClearInvalidWidgets();
-
-    if (this->HasMouseLocation())
-    {
-        this->GetViewport().DispatchInputs();
-    }
-    else
-    {
-        this->GetViewport().OnMouseLeftViewport(false);
-    }
-
+    this->GetViewport().DispatchInputs();
     this->SurfaceViewport.Tick();
 
     return;

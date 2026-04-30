@@ -53,8 +53,8 @@ private:
 public:
 
     FORCEINLINE constexpr TFunction() noexcept = default;
-    FORCEINLINE constexpr TFunction(LNullptrTy) noexcept : Impl(nullptr) { }
-    FORCEINLINE constexpr TFunction& operator=(LNullptrTy) noexcept { this->Impl.operator=(nullptr); return *this; }
+    FORCEINLINE constexpr TFunction(std::nullptr_t) noexcept : Impl(nullptr) { }
+    FORCEINLINE constexpr TFunction& operator=(std::nullptr_t) noexcept { this->Impl.operator=(nullptr); return *this; }
     FORCEINLINE constexpr TFunction(TFunction&& Other) noexcept;
     FORCEINLINE constexpr TFunction& operator=(TFunction&& Other) noexcept;
     FORCEINLINE TFunction(const TFunction& Other) { this->CopyImpl(Other); }
@@ -81,7 +81,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////
     // Implicit bind functions for different callable types.
-    FORCEINLINE void Bind(LNullptrTy) noexcept { this->Reset(); }
+    FORCEINLINE void Bind(std::nullptr_t) noexcept { this->Reset(); }
     FORCEINLINE void Bind(TFunction const& Other) noexcept { this->CopyImpl(Other); }
     FORCEINLINE void Bind(TFunction&& Other) noexcept { *this = std::move(Other); }
     template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
@@ -180,7 +180,7 @@ public:
         return this->Impl->Invoke(std::forward<TParams>(Params)...);
     }
 
-    FORCEINLINE constexpr bool operator==(LNullptrTy) const noexcept { return this->IsValid() == false; }
+    FORCEINLINE constexpr bool operator==(std::nullptr_t) const noexcept { return this->IsValid() == false; }
 
     FORCEINLINE constexpr void Reset() noexcept { this->Impl.reset(); this->CopyImplDelegate = nullptr; }
     FORCEINLINE constexpr bool IsValid() const noexcept { return this->Impl.get() != nullptr; }

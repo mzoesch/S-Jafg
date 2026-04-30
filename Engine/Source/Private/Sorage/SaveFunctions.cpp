@@ -183,7 +183,7 @@ bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Met
     return true;
 }
 
-TOptional<LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LString* OutError /* = nullptr */)
+std::optional<LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LString* OutError /* = nullptr */)
 {
     LSql3Con Con(InPath, OutError);
     if (Con.IsValid() == false)

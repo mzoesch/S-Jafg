@@ -16,7 +16,7 @@ struct LFactoryHDragRegion;
 //# be set according to the state. If a state for a child is missing, then the remaining space will be split evenly
 //# among all children that do not have an initial state.
 //#
-typedef TArray<TOptional<LWidgetSize1>> LInitialHDragRegionState;
+typedef TArray<std::optional<LNodeSize1>> LInitialHDragRegionState;
 
 //#
 //# An HRegion that allows to change their children size with the mouse by dragging.
@@ -65,11 +65,12 @@ public:
     }
     virtual WNode& OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed) override;
 
-    virtual LCursorReply OnCursorEnter() override;
-    virtual LCursorReply OnCursorLeave() override;
+    virtual LNodeReply OnCursorEnter() override;
+    virtual LNodeReply OnCursorMoved(LVec2F const& Location) override;
+    virtual void OnCursorLeave() override;
 
-    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
 
 private:
 
@@ -83,20 +84,20 @@ private:
         u32 Idx{};
         f32 Offset{};
     };
-    TOptional<LDragChildOffset> CalculateDragChildOffset(LVec2F const& Translation);
-    TOptional<LDragChildOffset> DragChildOffset;
+    std::optional<LDragChildOffset> CalculateDragChildOffset(LVec2F const& Translation);
+    std::optional<LDragChildOffset> DragChildOffset;
 
     bool UiTickMove();
     LDelegateHandle UiTickMoveHandle{ nullptr };
-    TOptional<LVec2F> InitialMouseLocation;
+    std::optional<LVec2F> InitialMouseLocation;
 
     struct LChildSlot
     {
 #if JAFG_DO_CHECKS
         LAnchor Anchor;
 #endif /* JAFG_DO_CHECKS */
-        TOptional<LWidgetSize1> MinDesiredSize;
-        TOptional<LWidgetSize1> MaxDesiredSize;
+        std::optional<LNodeSize1> MinDesiredSize;
+        std::optional<LNodeSize1> MaxDesiredSize;
     };
     std::unordered_map<WNode*, LChildSlot> DragChildSlots;
 };

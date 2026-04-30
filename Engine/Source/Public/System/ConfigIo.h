@@ -34,7 +34,7 @@ struct Entry
 //# @param InKey     The unique key of said section.
 //# @return The deserialized value if it was found, nothing otherwise.
 //#
-/* ENGINE_API */ inline TOptional<LString> Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
+/* ENGINE_API */ inline std::optional<LString> Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
 {
     return {};
 }

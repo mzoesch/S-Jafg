@@ -18,7 +18,7 @@ struct LDropDownMenuCreateInfo final
     //# If not handled or unbound.
     //# The window will destroy itself.
     //#
-    TCopyableFunction<LPrimitiveReply(WDismissibleFloatingWidget& Self)> OnOptionCloseResult;
+    TCopyableFunction<algo::reply(WDismissibleFloatingWidget& Self)> OnOptionCloseResult;
 };
 ENGINE_API WDismissibleFloatingWidget& CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubMenu const& Submenu);
 
@@ -49,7 +49,7 @@ private:
     void Select(WTextBox* Target = nullptr);
     void OnDismiss(WFloatingWidget& FloatingWidget);
 
-    LCursorReply OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu);
+    LNodeReply OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu);
 
     LDropDownRoot DropDownRoot;
     WParent* RootSubmenuContainer{};

@@ -38,6 +38,7 @@ struct LProgramParameterCreateInfo
     LString Identifier;
     LString Description;
     EProgramParameterFlags Flags{ EProgramParameterBits::StoreTrue };
+    TArray<LString> Variations;
 };
 
 struct LProgramParameter
@@ -46,6 +47,7 @@ struct LProgramParameter
          : Identifier{std::move(CreateInfo.Identifier)}
          , Description{std::move(CreateInfo.Description)}
          , Flags{CreateInfo.Flags}
+         , Variations{std::move(CreateInfo.Variations)}
     {
         if (auto It{algo::find(Application::Detail::RegisteredProgramParameters, this)}; It != Application::Detail::RegisteredProgramParameters.end())
         {
@@ -67,6 +69,7 @@ struct LProgramParameter
     LString Identifier;
     LString Description;
     EProgramParameterFlags Flags;
+    TArray<LString> Variations;
 };
 
 } /* ~Namespace Jafg */

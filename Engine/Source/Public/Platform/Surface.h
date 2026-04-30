@@ -13,7 +13,6 @@
 #include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 #include "User/Input/InputMode.h"
-#include "Platform/MouseCursor.h"
 #include "Framework/FrontendForward.h"
 #include "Nodes/Viewport.h"
 
@@ -116,6 +115,15 @@ public:
         }
         return false;
     }
+    FORCEINLINE void ConsumeKey(LPhysicalKey Key) noexcept
+    {
+        check(Key != LPhysicalKey{})
+        algo::erase_exactly_once_checked(&this->UnconsumedInputs, Key, &LRawInput::PhysicalKey);
+    }
+    FORCEINLINE decltype(auto) ConsumeKey(algo::iterator_t<TArray<LRawInput>> It) noexcept
+    {
+        return this->UnconsumedInputs.erase(It);
+    }
 
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.empty() == false; }
     FORCEINLINE const TArray<LString>& GetBufferedPlatformInput() const { return this->PlatformInput; }
@@ -142,7 +150,7 @@ protected:
     //# Mouse inside surface.
     bool bMouseInsideSurface{};
     //# The mouse location if available. In some platform configurations, this value might always be missing.
-    TOptional<LVec2F> MouseLocation;
+    std::optional<LVec2F> MouseLocation;
 
 private:
 

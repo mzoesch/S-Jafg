@@ -26,7 +26,7 @@ public:
 
     virtual void BeginLife() override;
     virtual void Tick(f32 Dt) override { check(this->bLives && this->_IsGarbage() == false) }
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     template<typename TActorComponent> requires std::is_base_of_v<AActorComponent, TActorComponent>
     FORCEINLINE TActorComponent* EmplaceComponent(TFunction<void(TActorComponent& Comp)> const& Callback = {})
@@ -34,7 +34,7 @@ public:
         return this->EmplaceComponent<TActorComponent>(TActorComponent::StaticClass(), Callback);
     }
     template<typename TActorComponent = AActorComponent> requires std::is_base_of_v<AActorComponent, TActorComponent>
-    FORCEINLINE TActorComponent* EmplaceComponent(LCxxClass const& Class, TFunction<void(TActorComponent& Comp)> const& Callback = {})
+    FORCEINLINE TActorComponent* EmplaceComponent(LJxxClass const& Class, TFunction<void(TActorComponent& Comp)> const& Callback = {})
     {
         auto* Result{StaticCastChecked<TActorComponent>(&*this->Components.emplace_back(NewObject(CastTo<AActorComponent>{}, {this->GetOuter(), Class})))};
         if (Callback.IsValid())

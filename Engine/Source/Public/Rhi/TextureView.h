@@ -13,8 +13,8 @@ struct LTextureView final
     LString Name;
     LPath Texture;
     vk::Format Format{ vk::Format::eUndefined };
-    TOptional<u32> MipLevels;
-    TOptional<vk::SampleCountFlagBits> MaxSampleCount;
+    std::optional<u32> MipLevels;
+    std::optional<vk::SampleCountFlagBits> MaxSampleCount;
 };
 
 } /* ~Namespace Jafg */

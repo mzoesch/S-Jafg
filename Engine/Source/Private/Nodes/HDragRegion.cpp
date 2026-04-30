@@ -41,12 +41,12 @@ void Jafg::WHDragRegion::UpdateDesiredSize() const
         check(this->DragChildSlots.contains(Child.get()))
         auto& Slot{this->DragChildSlots.at(Child.get()) };
         check(Slot.Anchor == Child->Anchor)
-        if (Slot.MinDesiredSize.has_value() && InSpt(this->GetViewport(), *Slot.MinDesiredSize) > InSpt(this->GetViewport(), Child->MinDesiredSize).x)
+        if (Slot.MinDesiredSize.has_value() && Slot.MinDesiredSize->InStaticPoints(this->GetViewport()) > Child->MinDesiredSize.InStaticPoints(this->GetViewport()).x)
         {
             Child->MinDesiredSize = {*Slot.MinDesiredSize, 0.0f};
         }
         /* Querying here for min desired size is correct as the UITick only updates the min desired size. */
-        if (Slot.MaxDesiredSize.has_value() && InSpt(this->GetViewport(), *Slot.MaxDesiredSize) < InSpt(this->GetViewport(), Child->MinDesiredSize).x)
+        if (Slot.MaxDesiredSize.has_value() && Slot.MaxDesiredSize->InStaticPoints(this->GetViewport()) < Child->MinDesiredSize.InStaticPoints(this->GetViewport()).x)
         {
             Child->MaxDesiredSize = {*Slot.MaxDesiredSize, 0.0f};
         }
@@ -88,8 +88,8 @@ void Jafg::WHDragRegion::UpdateAnchoredSize() const
 
             f32 InitialDistribution{
                   this->GetAnchoredSize_v2().x
-                - InSpt(this->GetViewport(), this->HSpace) * (this->GetChildren().size() - 1)
-                - this->Padding.GetDesiredSizeXInSpt(this->GetViewport())
+                - this->HSpace.InStaticPoints(this->GetViewport()) * (this->GetChildren().size() - 1)
+                - this->Padding.GetDesiredSizeX().InStaticPoints(this->GetViewport())
                 };
             f32 Distribution{InitialDistribution};
             u32 Clients{};
@@ -104,32 +104,32 @@ void Jafg::WHDragRegion::UpdateAnchoredSize() const
                 auto& Slot{this->DragChildSlots.at(Child.get())};
                 if (State.has_value())
                 {
-                    auto StateSpt{InSpt(this->GetViewport(), *State)};
+                    auto StateSpt{State->InStaticPoints(this->GetViewport())};
                     if (Slot.MinDesiredSize.has_value())
                     {
-                        if (auto Min{InSpt(this->GetViewport(), *Slot.MinDesiredSize)}; StateSpt < Min)
+                        if (auto Min{Slot.MinDesiredSize->InStaticPoints(this->GetViewport())}; StateSpt < Min)
                         {
                             StateSpt = Min;
                         }
                     }
                     if (Slot.MaxDesiredSize.has_value())
                     {
-                        if (auto Max{InSpt(this->GetViewport(), *Slot.MaxDesiredSize)}; StateSpt > Max)
+                        if (auto Max{Slot.MaxDesiredSize->InStaticPoints(this->GetViewport())}; StateSpt > Max)
                         {
                             StateSpt = Max;
                         }
                     }
-                    Child->MinDesiredSize = {EWidgetSize::StaticPoints, StateSpt, 0.0f};
+                    Child->MinDesiredSize = {ENodeSize::StaticPoints, StateSpt, 0.0f};
                     Distribution -= StateSpt;
                     Skips[Idx] = true;
                 }
                 else
                 {
                     if (   Slot.MaxDesiredSize.has_value()
-                        && InSpt(this->GetViewport(), *Slot.MaxDesiredSize) < (InitialDistribution / static_cast<f32>(this->GetChildren().size())))
+                        && Slot.MaxDesiredSize->InStaticPoints(this->GetViewport()) < (InitialDistribution / static_cast<f32>(this->GetChildren().size())))
                     {
                         Child->MinDesiredSize = {Slot.MaxDesiredSize->Type, Slot.MaxDesiredSize->Size, 0.0f};
-                        Distribution -= InSpt(this->GetViewport(), *Slot.MaxDesiredSize);
+                        Distribution -= Slot.MaxDesiredSize->InStaticPoints(this->GetViewport());
                         Skips[Idx] = true;
                     }
                     else
@@ -150,7 +150,7 @@ void Jafg::WHDragRegion::UpdateAnchoredSize() const
                 {
                     if (Slot.MinDesiredSize.has_value())
                     {
-                        if (auto Min{InSpt(this->GetViewport(), *Slot.MinDesiredSize)}; (Distribution / static_cast<f32>(Clients)) < Min)
+                        if (auto Min{Slot.MinDesiredSize->InStaticPoints(this->GetViewport())}; (Distribution / static_cast<f32>(Clients)) < Min)
                         {
                             Child->MinDesiredSize = {Slot.MinDesiredSize->Type
                                 , Slot.MinDesiredSize->Size
@@ -159,7 +159,7 @@ void Jafg::WHDragRegion::UpdateAnchoredSize() const
                             continue;
                         }
                     }
-                    Child->MinDesiredSize = {EWidgetSize::StaticPoints
+                    Child->MinDesiredSize = {ENodeSize::StaticPoints
                         , maths::max(Distribution / static_cast<f32>(Clients), 0.0f)
                         , 0.0f
                         };
@@ -177,13 +177,13 @@ Jafg::WNode& Jafg::WHDragRegion::OnAddChild(std::size_t Index, TJxxUnique<WNode>
     check(Child.get())
     check(Child->Anchor == EAnchor::TopLeft && "Expected default anchor as this parent does not allow messing with the anchors.")
 
-    check(Child->MinDesiredSize.Y == 0.0f)
-    check(Child->MaxDesiredSize.Y == 0.0f)
+    check(Child->MinDesiredSize.Size.y == 0.0f)
+    check(Child->MaxDesiredSize.Size.y == 0.0f)
 
     Child->Anchor = EAnchor::VFill;
     this->DragChildSlots[Child.get()] = LChildSlot{Child->Anchor
-        , (Child->MinDesiredSize.X > 0.0f) ? LWidgetSize1{Child->MinDesiredSize.Type, Child->MinDesiredSize.X} : TOptional<LWidgetSize1>{}
-        , (Child->MaxDesiredSize.X > 0.0f) ? LWidgetSize1{Child->MaxDesiredSize.Type, Child->MaxDesiredSize.X} : TOptional<LWidgetSize1>{}
+        , (Child->MinDesiredSize.Size.x > 0.0f) ? LNodeSize1{Child->MinDesiredSize.Type, Child->MinDesiredSize.Size.x} : std::optional<LNodeSize1>{}
+        , (Child->MaxDesiredSize.Size.x > 0.0f) ? LNodeSize1{Child->MaxDesiredSize.Type, Child->MaxDesiredSize.Size.x} : std::optional<LNodeSize1>{}
     };
     Child->MinDesiredSize = {};
     Child->MaxDesiredSize = {};
@@ -213,75 +213,79 @@ Jafg::WNode& Jafg::WHDragRegion::OnAddChild(std::size_t Index, TJxxUnique<WNode>
     return Result;
 }
 
-Jafg::LCursorReply Jafg::WHDragRegion::OnCursorEnter()
+Jafg::LNodeReply Jafg::WHDragRegion::OnCursorEnter()
 {
     this->bEntered = true;
-    if (this->UiTickMoveHandle.IsValid())
+    if (!this->UiTickMoveHandle.IsValid() && this->GetChildren().size() > 1)
     {
-        return LCursorReply::Handled();
+        this->GetViewport().GetSurface()._SetMouseCursor(ECursor::ResizeEW);
     }
-    if (this->OnCursorEnterEvent.IsValid())
-    {
-        return this->OnCursorEnterEvent.Invoke(*this);
-    }
-    return {EMouseCursor::ResizeEW};
+    return Super::OnCursorEnter();
 }
 
-Jafg::LCursorReply Jafg::WHDragRegion::OnCursorLeave()
+Jafg::LNodeReply Jafg::WHDragRegion::OnCursorMoved(LVec2F const& Location)
 {
+    return Super::OnCursorMoved(Location);
+}
+
+void Jafg::WHDragRegion::OnCursorLeave()
+{
+    Super::OnCursorLeave();
     this->bEntered = false;
-    if (this->UiTickMoveHandle.IsValid())
+    if (!this->UiTickMoveHandle.IsValid())
     {
-        return LCursorReply::Handled();
+        this->GetViewport().GetSurface()._SetMouseCursor(ECursor::Default);
     }
-    if (this->OnCursorEnterEvent.IsValid())
-    {
-        return this->OnCursorEnterEvent.Invoke(*this);
-    }
-    return {EMouseCursor::Default};
+    return;
 }
 
-Jafg::LReply Jafg::WHDragRegion::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WHDragRegion::OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
-    if (this == &Data.Node && !this->GetChildren().empty())
+    if (auto Reply{Super::OnKeyDownFocused(Data, Event)}; Reply.IsHandled())
     {
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
-        {
-            check(this->UiTickMoveHandle.IsValid() == false)
-            this->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(this, &WHDragRegion::UiTickMove);
-            this->InitialMouseLocation = Data.Surface.GetMouseLocation();
-            if (this->InitialMouseLocation.has_value())
-            {
-                this->DragChildOffset = this->CalculateDragChildOffset(Data.Translation);
-            }
-            return LReply::Handled();
-        }
+        return Reply;
     }
-    return Super::OnKeyDown(Data, Event);
+
+    if (!this->GetChildren().empty() && Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+    {
+        check(this->UiTickMoveHandle.IsValid() == false)
+        this->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(this, &WHDragRegion::UiTickMove);
+        this->InitialMouseLocation = Data.Surface.GetMouseLocation();
+        if (this->InitialMouseLocation.has_value())
+        {
+            this->DragChildOffset = this->CalculateDragChildOffset(Data.Translation);
+        }
+        return LNodeReply::Handled();
+    }
+
+    return LNodeReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WHDragRegion::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WHDragRegion::OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
-    if (this == &Data.Node)
+    if (auto Reply{Super::OnKeyUpFocused(Data, Event)}; Reply.IsHandled())
     {
-        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
-        {
-            if (this->UiTickMoveHandle.IsValid())
-            {
-                Data.Viewport.OnLateTick.Remove(&this->UiTickMoveHandle);
-            }
-            this->InitialMouseLocation.reset();
-            if (this->bEntered == false)
-            {
-                Data.Surface._SetMouseCursor(EMouseCursor::Default);
-            }
-            return LReply::Handled();
-        }
+        return Reply;
     }
-    return Super::OnKeyUp(Data, Event);
+
+    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+    {
+        this->InitialMouseLocation.reset();
+        if (this->UiTickMoveHandle.IsValid())
+        {
+            Data.Viewport.OnLateTick.Remove(&this->UiTickMoveHandle);
+            if (!this->bEntered)
+            {
+                Data.Surface._SetMouseCursor(ECursor::Default);
+            }
+        }
+        return LNodeReply::Handled();
+    }
+
+    return LNodeReply::Unhandled();
 }
 
-TOptional<Jafg::WHDragRegion::LDragChildOffset> Jafg::WHDragRegion::CalculateDragChildOffset(LVec2F const& Translation)
+std::optional<Jafg::WHDragRegion::LDragChildOffset> Jafg::WHDragRegion::CalculateDragChildOffset(LVec2F const& Translation)
 {
     check(!this->GetChildren().empty())
     for (auto Idx{0uz}; Idx < this->GetChildren().size() - 1; ++Idx)
@@ -337,8 +341,8 @@ bool Jafg::WHDragRegion::UiTickMove()
     check(DragChild->Anchor == EAnchor::VFill)
     check(this->DragChildSlots.contains(DragChild.get()))
     auto& Slot{this->DragChildSlots.at(DragChild.get())};
-    LVec2F AnchoredSize{this->GetAnchoredSize_v2() - this->Padding.GetDesiredSizeInSpt(this->GetViewport())};
-    f32 HSpaceSpt{InSpt(this->GetViewport(), this->HSpace)};
+    LVec2F AnchoredSize{this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(this->GetViewport())};
+    f32 HSpaceSpt{this->HSpace.InStaticPoints(this->GetViewport())};
 
     f32 Offset{};
     for (auto Idx{0uz}; Idx < this->DragChildOffset->Idx; ++Idx)
@@ -366,7 +370,7 @@ bool Jafg::WHDragRegion::UiTickMove()
     f32 DesiredSize{this->GetViewport().GetSurface().GetMouseLocationValue().x - Offset - (HSpaceSpt * 0.5f)};
     if (Slot.MaxDesiredSize.has_value())
     {
-        f32 MaxAllowedDesiredSize{InSpt(this->GetViewport(), *Slot.MaxDesiredSize)};
+        f32 MaxAllowedDesiredSize{Slot.MaxDesiredSize->InStaticPoints(this->GetViewport())};
         if (DesiredSize > MaxAllowedDesiredSize)
         {
             DesiredSize = MaxAllowedDesiredSize;
@@ -374,7 +378,7 @@ bool Jafg::WHDragRegion::UiTickMove()
     }
     f32 NewSize{maths::min(MaxSize, DesiredSize)};
     f32 Delta{DesiredSize - NewSize};
-    DragChild->MinDesiredSize = {EWidgetSize::StaticPoints, NewSize, 0.0f};
+    DragChild->MinDesiredSize = {ENodeSize::StaticPoints, NewSize, 0.0f};
 
     if (Delta > 0.0f && maths::eq_zero_e(Delta) == false)
     {
@@ -388,8 +392,8 @@ bool Jafg::WHDragRegion::UiTickMove()
             auto& Child{this->GetChildren()[Idx]};
             check(this->DragChildSlots.contains(Child.get()))
             auto& Slot{this->DragChildSlots.at(Child.get())};
-            f32 ChildMinDesiredSize{InSpt(this->GetViewport(), Child->MinDesiredSize).x};
-            f32 TrueMinDesiredSize{Slot.MinDesiredSize.has_value() ? InSpt(this->GetViewport(), *Slot.MinDesiredSize) : 0.0f};
+            f32 ChildMinDesiredSize{Child->MinDesiredSize.InStaticPoints(this->GetViewport()).x};
+            f32 TrueMinDesiredSize{Slot.MinDesiredSize.has_value() ? Slot.MinDesiredSize->InStaticPoints(this->GetViewport()) : 0.0f};
 
             f32 RemovableSpace{ChildMinDesiredSize - TrueMinDesiredSize};
             if (RemovableSpace < 0.0f || maths::eq_zero_e(RemovableSpace))
@@ -398,12 +402,12 @@ bool Jafg::WHDragRegion::UiTickMove()
             }
             if (RemovableSpace > Delta)
             {
-                Child->MinDesiredSize = {EWidgetSize::StaticPoints, TrueMinDesiredSize + RemovableSpace - Delta, 0.0f};
+                Child->MinDesiredSize = {ENodeSize::StaticPoints, TrueMinDesiredSize + RemovableSpace - Delta, 0.0f};
                 Delta = 0.0f;
                 continue;
             }
             Delta -= RemovableSpace;
-            Child->MinDesiredSize = {EWidgetSize::StaticPoints, TrueMinDesiredSize, 0.0f};
+            Child->MinDesiredSize = {ENodeSize::StaticPoints, TrueMinDesiredSize, 0.0f};
             continue;
         }
     }

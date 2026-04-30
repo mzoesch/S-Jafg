@@ -3,7 +3,7 @@
 #pragma once
 
 
-#include "Engine/CxxClass.h"
+#include "Engine/Jxx.h"
 #include "User/UserPreferencesForward.h"
 #include "Rhi/Material.h"
 #include "UserPreferences.generated.h"
@@ -11,7 +11,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(ECxxClassFlags::Config, ECxxClassFlags::Singleton)
+DECLARE_JAFG_CLASS(EJxxClassBits::Config, EJxxClassBits::Singleton)
 class JUserPreferences final : public JCxxClass
 {
     GENERATED_CLASS_BODY(ENGINE_API)
@@ -54,7 +54,7 @@ public:
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
 
     //# If set, this material should be preferred by mesh renders to use.
-    TOptional<LMaterialInstanceRef> MeshMaterialPreference;
+    std::optional<LMaterialInstanceRef> MeshMaterialPreference;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface

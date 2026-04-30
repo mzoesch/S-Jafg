@@ -56,185 +56,63 @@ void Jafg::WParent::Draw(LNodeRenderInfo const& Info) const
     return;
 }
 
-Jafg::LCursorReply Jafg::WParent::SweepMouse(LNodeSweepData const& Data, LVec2F const& Location)
-{
-    if (this->CanChildrenBeHitTestable())
-    {
-        for (auto It{this->Children.rbegin()}; It != this->Children.rend(); ++It)
-        {
-            check(It->get())
-            if ((*It)->ShouldCheckForInputs())
-            {
-                if (LCursorReply Reply{(*It)->SweepMouse(Data, Location)}; Reply.IsHandled())
-                {
-                    return Reply;
-                }
-            }
-            continue;
-        }
-    }
-    return Super::SweepMouse(Data, Location);
-}
-
-Jafg::LReply Jafg::WParent::SweepFocusTest(LNodeSweepData const& Data, const LVec2F& Location)
+Jafg::LNodeReply Jafg::WParent::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {
     if (this->CanChildrenBeHitTestable())
     {
         for (auto& Child : this->Children)
         {
-            check(Child.get())
-            if (LReply Reply{Child->SweepFocusTest(Data, Location)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-            continue;
-        }
-    }
-    return Super::SweepFocusTest(Data, Location);
-}
-
-Jafg::LReply Jafg::WParent::OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    check(Info.CursorLocation.has_value())
-    for (auto& Child : this->Children)
-    {
-        check(Child.get())
-        check(&*Child != Info.Viewport.GetFocusedWidget())
-        if (Child->ShouldCheckForInputs() && Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
-        {
-            if (LReply Reply{Child->OnParentKeyDown(Info, Event)}; Reply.IsHandled())
+            if (auto Reply{Child->SweepFocus(Info, Location)}; Reply.IsHandled())
             {
                 return Reply;
             }
         }
-        continue;
     }
-    return Super::OnParentKeyDown(Info, Event);
+    return Super::SweepFocus(Info, Location);
 }
 
-Jafg::LReply Jafg::WParent::OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    check(Info.CursorLocation.has_value())
-    for (auto& Child : this->Children)
-    {
-        check(Child.get())
-        check(&*Child != Info.Viewport.GetFocusedWidget())
-        if (Child->ShouldCheckForInputs() && Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
-        {
-            if (LReply Reply{Child->OnParentKeyUp(Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-        continue;
-    }
-    return Super::OnParentKeyUp(Info, Event);
-}
-
-Jafg::LReply Jafg::WParent::OnParentKeyDownEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (Info.CursorLocation.has_value() && this->CanChildrenBeHitTestable())
-    {
-        for (auto& Child : this->Children)
-        {
-            check(Child.get())
-            if (Child->ShouldCheckForInputs())
-            {
-                if (Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
-                {
-                    if (LReply Reply{Child->OnParentKeyDown(Info, Event)}; Reply.IsHandled())
-                    {
-                        return Reply;
-                    }
-                }
-            }
-            continue;
-        }
-    }
-    return LReply::Unhandled();
-}
-
-Jafg::LReply Jafg::WParent::OnParentKeyUpEntry(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (Info.CursorLocation.has_value() && this->CanChildrenBeHitTestable())
-    {
-        for (auto& Child : this->Children)
-        {
-            check(Child.get())
-            if (Child->ShouldCheckForInputs())
-            {
-                if (Child->IsInBounds({.Translation=Info.Translation}, *Info.CursorLocation))
-                {
-                    if (LReply Reply{Child->OnParentKeyUp(Info, Event)}; Reply.IsHandled())
-                    {
-                        return Reply;
-                    }
-                }
-            }
-            continue;
-        }
-    }
-    return LReply::Unhandled();
-}
-
-Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+void Jafg::WParent::_RemoveHoverState() noexcept
 {
     for (auto& Child : this->Children)
     {
-        check(Child.get())
-        if (Child->ShouldCheckForInputs() == false || &*Child == Info.Viewport.GetFocusedWidget())
-        {
-            continue;
-        }
-        if (Child->IsInBounds({maths::zero_vector<LVec2F>}, Info.Surface.GetMouseLocationValue()))
-        {
-            if (LReply Reply{Child->OnKeyDownNoFocus(Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-
-        continue;
+        Child->_RemoveHoverState();
+        checkCode(Child->_check_StateInvariant())
     }
 
-    return Super::OnKeyDownNoFocus(Info, Event);
-}
-
-Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    for (auto& Child : this->Children)
-    {
-        check(Child.get())
-        if (Child->ShouldCheckForInputs() == false || &*Child == Info.Viewport.GetFocusedWidget())
-        {
-            continue;
-        }
-        if (Child->IsInBounds({maths::zero_vector<LVec2F>}, Info.Surface.GetMouseLocationValue()))
-        {
-            if (LReply Reply{Child->OnKeyUpNoFocus(Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-
-        continue;
-    }
-
-    return Super::OnKeyUpNoFocus(Info, Event);
-}
-
-void Jafg::WParent::OnSurfaceResize()
-{
-    Super::OnSurfaceResize();
-
-    for (auto& Child : this->Children)
-    {
-        check(Child.get())
-        Child->OnSurfaceResize();
-        continue;
-    }
-
+    Super::_RemoveHoverState();
     return;
+}
+
+Jafg::LNodeReply Jafg::WParent::OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    for (auto& Child : this->Children)
+    {
+        check(Child.get())
+        if (Child->ShouldCheckForInputs() && Child->AabbTest({.Translation=Info.Translation}, Info.Surface.GetMouseLocationValue()))
+        {
+            if (auto Reply{Child->OnKeyDownUnfocused(Info, Event)}; Reply.IsHandled())
+            {
+                return Reply;
+            }
+        }
+    }
+    return Super::OnKeyDownUnfocused(Info, Event);
+}
+
+Jafg::LNodeReply Jafg::WParent::OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    for (auto& Child : this->Children)
+    {
+        check(Child.get())
+        if (Child->ShouldCheckForInputs() && Child->AabbTest({.Translation=Info.Translation}, Info.Surface.GetMouseLocationValue()))
+        {
+            if (auto Reply{Child->OnKeyUpUnfocused(Info, Event)}; Reply.IsHandled())
+            {
+                return Reply;
+            }
+        }
+    }
+    return Super::OnKeyUpUnfocused(Info, Event);
 }
 
 bool Jafg::WParent::IsNodeInVisiblePath(WNode const* Node) const
@@ -351,7 +229,57 @@ Jafg::WNode& Jafg::WParent::OnAddChild(std::size_t Index, TJxxUnique<WNode> Chil
     return **this->Children.insert(this->Children.begin() + Index, std::move(Child));
 }
 
-Jafg::TJxxUnique<Jafg::WNode> Jafg::WParent::RemoveChildImpl(WNode& Child)
+Jafg::LNodeReply Jafg::WParent::SweepWithChildInfo(LNodeSweepInfo const& Info, LNodeSweepInfo const& ChildInfo, std::optional<LVec2F> const& Location)
+{
+    if (!(Location.has_value() || (this->GetNodeState() & ENodeStateBits::Hovered)))
+    {
+        return {};
+    }
+
+    LNodeReply Result;
+    auto It{this->Children.rbegin()};
+    for (;It != this->Children.rend(); ++It)
+    {
+        check(It->get())
+        if ((*It)->ShouldCheckForInputs())
+        {
+            if (auto Reply{(*It)->Sweep(ChildInfo, Location)}; Reply.IsHandled())
+            {
+                Result = Reply;
+                ++It;
+                break;
+            }
+        }
+        else if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
+        {
+            auto Reply{(*It)->Sweep(ChildInfo, {})};
+            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
+            check(!Reply.IsHandled())
+        }
+        continue;
+    }
+    for (;It != this->Children.rend(); ++It)
+    {
+        if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
+        {
+            check(It->get())
+            auto Reply{(*It)->Sweep(ChildInfo, {})};
+            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
+            check(!Reply.IsHandled())
+        }
+    }
+
+    if (Result.IsHandled())
+    {
+        check(Location.has_value())
+        this->_RemoveHoverDispatchedState();
+        return Result;
+    }
+
+    return Super::Sweep(Info, Location);
+}
+
+TJxxUnique<Jafg::WNode> Jafg::WParent::RemoveChildImpl(WNode& Child)
 {
     check(algo::find(this->Children, &Child, [](auto const& E){return &*E;}) != this->Children.end())
     this->OnRemoveChildPrepare(Child);

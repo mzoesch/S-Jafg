@@ -16,8 +16,8 @@ struct LGenericArgument
         : Identifier{std::move(InIdentifier)}, Value{std::move(InValue)} { return; }
 
     LString Identifier;
-    TOptional<LString> Value;
-    TOptional<TArray<LString>> Values;
+    std::optional<LString> Value;
+    std::optional<TArray<LString>> Values;
 
     FORCEINLINE constexpr bool HasValue() const noexcept { return this->Value.has_value(); }
     FORCEINLINE constexpr bool HasValues() const noexcept { return this->Values.has_value(); }

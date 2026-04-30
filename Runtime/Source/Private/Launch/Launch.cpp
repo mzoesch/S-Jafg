@@ -7,7 +7,7 @@
 #include "Cli/ReSTCliPreferences.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
-#include "Engine/Carnifex.h"
+#include "Engine/Jxx.h"
 
 #if WITH_TESTS
     #include "TestCore/TestRunner.h"
@@ -107,7 +107,7 @@ void EngineExit()
         GMutableEngine = nullptr;
     }
 
-    (void)Detail::GetNameRegistry().Destroy();
+    (void)Detail::GetJxxTagRegistry().Destroy();
 
     if (Application::HasCustomExitReason())
     {
@@ -185,13 +185,13 @@ EPlatformExit::Type GuardedMain()
         });
     }
 
-    if (Application::GetCommandLineArgument("h") || Application::GetCommandLineArgument("help") || Application::GetCommandLineArgument("Help"))
+    if (Application::GetCommandLineArgument(Application::CoreHelp))
     {
         Application::PrettyPrintApiUsage();
         Application::RequestEngineExit("Help shown");
         return ::GetMostSignificantExitReason();
     }
-    if (Application::GetCommandLineArgument("v") || Application::GetCommandLineArgument("version") || Application::GetCommandLineArgument("Version"))
+    if (Application::GetCommandLineArgument(Application::Version))
     {
         Application::PrettyPrintVersion();
         Application::RequestEngineExit("Version shown");
@@ -205,10 +205,10 @@ EPlatformExit::Type GuardedMain()
 
     LOG_INFO(LogGuardedMain, "Finished static storage initialization after {} seconds.", Application::GetElapsedTime())
 
-    Application::Detail::PauseBeforeExit = !!Application::GetCommandLineArgument("Jafg.PauseBeforeExit");
-    Application::Detail::AlwaysReportCrash = !!Application::GetCommandLineArgument("Jafg.AlwaysReportCrash");
+    Application::Detail::PauseBeforeExit = !!Application::GetCommandLineArgument(Application::PauseBeforeExit);
+    Application::Detail::AlwaysReportCrash = !!Application::GetCommandLineArgument(Application::AlwaysReportCrash);
 #if WITH_STATS
-    Application::Detail::AllowProfiling = Application::CanEverProfile() && !!Application::GetCommandLineArgument("Jafg.AllowProfiling");
+    Application::Detail::AllowProfiling = Application::CanEverProfile() && !!Application::GetCommandLineArgument(Application::AllowProfiling);
 #endif /* WITH_STATS */
 #endif /* !WITH_TESTS */
 
@@ -277,7 +277,7 @@ EPlatformExit::Type GuardedMain()
     STAT_CYCLE_END(GmEnabledEnginePluginsLoad)
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
-    if (Application::GetCommandLineArgument("Jafg.VerboseHelp"))
+    if (Application::GetCommandLineArgument(Application::Help))
     {
         Application::PrettyPrintApiUsage();
         Application::RequestEngineExit("Verbose help shown");
@@ -289,8 +289,8 @@ EPlatformExit::Type GuardedMain()
     GMutableEngine->SetReSTCliCorePaths();
     if (auto const& ReSTCliPrefs{GetSingleton<JReSTCliPreferences>()}; ReSTCliPrefs.bAlwaysDisable == false)
     {
-        if ((ReSTCliPrefs.bAutoStart && !Application::GetCommandLineArgument("ReSTCli.DisableAutoStart"))
-            || !!Application::GetCommandLineArgument("ReSTCli.InstantStart"))
+        if ((ReSTCliPrefs.bAutoStart && !Application::GetCommandLineArgument(Params::ReST_DisableAutoStart))
+            || !!Application::GetCommandLineArgument(Params::ReST_InstantStart))
         {
             GMutableEngine->StartReSTCliServer();
         }

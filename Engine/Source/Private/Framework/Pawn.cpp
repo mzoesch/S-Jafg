@@ -54,7 +54,7 @@ void Jafg::APawn::Tick(const f32 Dt)
     return;
 }
 
-void Jafg::APawn::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+void Jafg::APawn::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
     if (this->IsOwningControllerValid())

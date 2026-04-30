@@ -109,7 +109,7 @@ void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControlle
     return;
 }
 
-Jafg::TJxxUnique<Jafg::APawn> Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jafg::APersonaController const& Pc)
+TJxxUnique<Jafg::APawn> Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jafg::APersonaController const& Pc)
 {
     auto Pawn{Super::GetPawnForPersonaController(Pc)};
     if (Pawn.get() == nullptr)

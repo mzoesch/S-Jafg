@@ -110,47 +110,47 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
 
     BeginStyling(*this->Selectors).StaticRoot<WTabOverlaySelector>(std::move(Info.Selector)).SaveTo(&this->Tabs.back().first)
         .Selected(bActivated)
-        .OnKeyDown([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+        .OnKeyDownFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
             {
                 check(this->Switcher)
                 this->SetSelectedTab(*StaticCast<WTabOverlaySelector>(&Self));
-                return LReply::Handled();
+                return LNodeReply::Handled();
             }
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
             {
-                this->CreateTabMenu(Data.CursorLocation, *StaticCast<WTabOverlaySelector>(&Self));
-                return LReply::Handled();
+                this->CreateTabMenu(Info.CursorLocation, *StaticCast<WTabOverlaySelector>(&Self));
+                return LNodeReply::Handled();
             }
-            return LReply::Unhandled();
+            return LNodeReply::Unhandled();
         })
-        .OnKeyUp([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+        .OnKeyUpFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton))
             {
                 this->CloseTab(StaticCast<WTabOverlaySelector>(&Self));
-                return LReply::Handled();
+                return LNodeReply::Handled();
             }
-            return LReply::Unhandled();
+            return LNodeReply::Unhandled();
         })
-        .OnKeyDownNoFocus([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+        .OnKeyDownUnfocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
             {
-                this->CreateTabMenu(Data.CursorLocation, *StaticCast<WTabOverlaySelector>(&Self));
-                return LReply::Handled();
+                this->CreateTabMenu(Info.CursorLocation, *StaticCast<WTabOverlaySelector>(&Self));
+                return LNodeReply::Handled();
             }
-            return LReply::Unhandled();
+            return LNodeReply::Unhandled();
         })
-        .OnKeyUpNoFocus([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+        .OnKeyUpUnfocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton))
             {
                 this->CloseTab(StaticCast<WTabOverlaySelector>(&Self));
-                return LReply::Handled();
+                return LNodeReply::Handled();
             }
-            return LReply::Unhandled();
+            return LNodeReply::Unhandled();
         })
         .Delegate(this->DefaultSelectorDelegate);
 
@@ -161,10 +161,12 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
         this->RegisterTab(std::move(Sibling));
     }
 
+    check(algo::contains(this->Tabs, Result.first, algo::pair_first{}))
+    check(algo::find(this->Tabs, Result.first, algo::pair_first{})->second == Result.second)
     return Result;
 }
 
-Jafg::WUserWidget* Jafg::WTabOverlay::FindWidgetSlow(LCxxClass const& Class) noexcept
+Jafg::WUserWidget* Jafg::WTabOverlay::FindWidgetSlow(LJxxClass const& Class) noexcept
 {
     check(Class.DerivesFrom<WUserWidget>())
     for (auto& Panel: this->Tabs | std::views::values)
@@ -209,11 +211,11 @@ void Jafg::WTabOverlay::InitializeBoilerplate()
     return;
 }
 
-TOptional<Jafg::TJxxUnique<Jafg::WUserWidget>> Jafg::WTabOverlay::CloseTabImpl(WTabOverlaySelector* Selector, bool bRelease)
+std::optional<TJxxUnique<Jafg::WUserWidget>> Jafg::WTabOverlay::CloseTabImpl(WTabOverlaySelector* Selector, bool bRelease)
 {
     check(this->Switcher)
 
-    TOptional<TJxxUnique<WUserWidget>> Result;
+    std::optional<TJxxUnique<WUserWidget>> Result;
 
     auto It{this->Tabs.begin()};
 #if JAFG_DO_CHECKS
@@ -258,7 +260,7 @@ TOptional<Jafg::TJxxUnique<Jafg::WUserWidget>> Jafg::WTabOverlay::CloseTabImpl(W
     return Result;
 }
 
-void Jafg::WTabOverlay::CreateTabMenu(TOptional<LVec2F> Hint, WTabOverlaySelector& Selector)
+void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySelector& Selector)
 {
     LVec2F Location{Hint.has_value() ? *Hint : maths::zero_vector<LVec2F>};
 
@@ -268,7 +270,7 @@ void Jafg::WTabOverlay::CreateTabMenu(TOptional<LVec2F> Hint, WTabOverlaySelecto
         {
             .OnOptionCloseResult = [](WDismissibleFloatingWidget& Self)
             {
-                return LPrimitiveReply::Unhandled();
+                return algo::reply::unhandled();
             }
         }, {.Children = {
             LDropDownNodeOption{
@@ -278,7 +280,7 @@ void Jafg::WTabOverlay::CreateTabMenu(TOptional<LVec2F> Hint, WTabOverlaySelecto
                 .OnAction = [&Selector]
                 {
                     Selector.GetParentUntilChecked<WTabOverlay>()->CloseTab(&Selector);
-                    return LPrimitiveReply::Unhandled();
+                    return algo::reply::unhandled();
                 },},
             LDropDownNodeOption{
                 .Selector = {
@@ -288,7 +290,7 @@ void Jafg::WTabOverlay::CreateTabMenu(TOptional<LVec2F> Hint, WTabOverlaySelecto
                 .OnAction = [/*this,*/ &Selector]
                 {
                     Selector.GetParentUntilChecked<WTabOverlayHParent>()->Move(Selector, WTabOverlayHParent::EDirection::Right);
-                    return LPrimitiveReply::Unhandled();
+                    return algo::reply::unhandled();
                 },},
             LDropDownNodeOption{
                 .Selector = {
@@ -344,12 +346,12 @@ void Jafg::WTabOverlaySelector::LoadRightIcon()
     this->RightIconStyle.SetEverywhere<&LTextButtonIconBrush::InwardsPadding>(12_spt);
     this->bDecoupledRightIcon = true;
     this->RightIconStyle.Set<EIconStyleBits::Decoupled, &LTextButtonIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
-    this->DecoupledRightKeyDown = [](auto&, auto&){ return LReply::Handled(); };
+    this->DecoupledRightKeyDown = [](auto&, auto&){ return LNodeReply::Handled(); };
     this->DecoupledRightKeyUp = [this](LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {
         auto* TabOverlay{this->GetParentUntilChecked<WTabOverlay>()};
         TabOverlay->CloseTab(this);
-        return LReply::Handled();
+        return LNodeReply::Handled();
     };
 
     return;

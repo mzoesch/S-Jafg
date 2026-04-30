@@ -8,6 +8,7 @@
     #error "Tried to include glfw3 specific code on a platform that does not support glfw3."
 #endif /* !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
 
+#include "Platform/Cursor.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
 
@@ -51,12 +52,12 @@ public:
     void OnRender();
 
     ENGINE_API void SetInputMode(EInputMode InMode) noexcept;
-    ENGINE_API void _SetMouseCursor(EMouseCursor::Type InCursor);
+    ENGINE_API void _SetMouseCursor(ECursor Cursor);
 
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
 
-    FORCEINLINE LVec2u32 GetDimensions() const noexcept { return {this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height}; }
+    FORCEINLINE constexpr LVec2u32 GetDimensions() const noexcept { return {this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height}; }
 
     NODISCARD FORCEINLINE bool CanEverVSync() const noexcept { return true; }
     ENGINE_API void SetVSync(bool bEnabled);
@@ -128,11 +129,11 @@ private:
     void Vk_CreateCommandPool();
 
     void Vk_CreateSwapchain();
-    static TOptional<vk::SurfaceFormatKHR> Vk_GetSwapchainSurfaceFormatKHR(
+    static std::optional<vk::SurfaceFormatKHR> Vk_GetSwapchainSurfaceFormatKHR(
           std::vector<vk::SurfaceFormatKHR> const& AvailableFormats
         , vk::SurfaceFormatKHR DesiredSurfaceFormat
         );
-    static TOptional<vk::PresentModeKHR> Vk_GetSwapchainPresentModeKHR(
+    static std::optional<vk::PresentModeKHR> Vk_GetSwapchainPresentModeKHR(
           std::vector<vk::PresentModeKHR> const& AvailablePresentModes
         , vk::PresentModeKHR DesiredPresentMode
         );
@@ -183,7 +184,7 @@ private:
     TFrameArray<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<vk::raii::Fence> Vk_FlightFences JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     u32 Vk_LastFrameInFlightIndex{};
-    TOptional<u32> Vk_CurrentFrameInFlightIndex{};
+    std::optional<u32> Vk_CurrentFrameInFlightIndex{};
 
     TFrameArray<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<vk::raii::DescriptorPool> Vk_DescriptorPools JAFG_VK_FRAME_ARRAY_INIT(nullptr);

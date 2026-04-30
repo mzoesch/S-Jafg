@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/LocalEgo.h"
-#include "Engine/Carnifex.h"
 #include "Engine/Engine.h"
 #include "Framework/Frontend.h"
 #include "Framework/Pawn.h"

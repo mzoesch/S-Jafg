@@ -188,7 +188,7 @@ LNamedPhysicalKeyToPhysicalKeyResult NamedPhysicalKeyToPhysicalKey(Jafg::ELogica
     default:
     {
         check(Key >= Jafg::ELogicalKey::FirstLogicalKey)
-        check(Key >= Jafg::ELogicalKey::LastKey)
+        check(Key <= Jafg::ELogicalKey::LastKey)
         return {
             .Logical = static_cast<std::underlying_type_t<Jafg::ELogicalKey>>(Key)
             };
@@ -635,7 +635,7 @@ void Jafg::LFrontendVk::TearDown()
 }
 
 
-TOptional<Jafg::LPhysicalKey> Jafg::LFrontendVk::GetPhysicalKey(ELogicalKey LogicalKey) const noexcept
+std::optional<Jafg::LPhysicalKey> Jafg::LFrontendVk::GetPhysicalKey(ELogicalKey LogicalKey) const noexcept
 {
     auto Tl{::NamedPhysicalKeyToPhysicalKey(LogicalKey)};
 
@@ -659,7 +659,7 @@ TOptional<Jafg::LPhysicalKey> Jafg::LFrontendVk::GetPhysicalKey(ELogicalKey Logi
     return LPhysicalKey{};
 }
 
-TOptional<LString> Jafg::LFrontendVk::Glfw_GetPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept
+std::optional<LString> Jafg::LFrontendVk::Glfw_GetPhysicalKeyLocalizedRepr(LPhysicalKey Key, i32 Hint) const noexcept
 {
     switch (Hint)
     {
@@ -1860,7 +1860,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     return;
 }
 
-TOptional<vk::Format> Jafg::LFrontendVk::Vk_FindSupportedFormat(TArray<vk::Format> const& Candidates, vk::ImageTiling Tiling, vk::FormatFeatureFlags Features) const
+std::optional<vk::Format> Jafg::LFrontendVk::Vk_FindSupportedFormat(TArray<vk::Format> const& Candidates, vk::ImageTiling Tiling, vk::FormatFeatureFlags Features) const
 {
     for (const auto Format : Candidates)
     {

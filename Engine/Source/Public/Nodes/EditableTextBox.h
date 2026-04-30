@@ -71,11 +71,11 @@ public:
     virtual void Draw(LNodeRenderInfo const& Info) const override;
     virtual void UpdateDesiredSize() const override;
 
-    virtual LCursorReply OnCursorEnter() override;
-    virtual LCursorReply OnCursorLeave() override;
-    virtual void         OnFocusReceived() override;
-    virtual void         OnFocusLost() override;
-    virtual LReply       OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnCursorEnter() override;
+    virtual void OnCursorLeave() override;
+    virtual void OnFocusReceived() override;
+    virtual void OnFocusLost() override;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     //#
     //# Delegate, which is invoked when the user tries to commit the content of the editable text box.

@@ -531,14 +531,12 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     return;
 }
 
-void Jafg::LSurfaceGlfw3::_SetMouseCursor(EMouseCursor::Type InCursor)
+void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)
 {
     check(Tasks::IsOnMasterThread())
     check(this->Handle)
 
-    LOG_TRACE(LogPlatform, "Setting mouse cursor from to [{}].",
-        LexToString(InCursor)
-        )
+    LOG_TRACE(LogPlatform, "Setting mouse cursor to [{}].", LexToString(Cursor))
 
     if (this->Cursor)
     {
@@ -546,53 +544,53 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(EMouseCursor::Type InCursor)
         this->Cursor = nullptr;
     }
 
-    if (InCursor == EMouseCursor::Default)
+    if (Cursor == ECursor::Default)
     {
         check(this->Cursor == nullptr)
     }
-    else if (InCursor == EMouseCursor::Arrow)
+    else if (Cursor == ECursor::Arrow)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
     }
-    else if (InCursor == EMouseCursor::Beam)
+    else if (Cursor == ECursor::Beam)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
     }
-    else if (InCursor == EMouseCursor::Crosshair)
+    else if (Cursor == ECursor::Crosshair)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
     }
-    else if (InCursor == EMouseCursor::Hand)
+    else if (Cursor == ECursor::Hand)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     }
-    else if (InCursor == EMouseCursor::ResizeNS)
+    else if (Cursor == ECursor::ResizeNS)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NS_CURSOR);
     }
-    else if (InCursor == EMouseCursor::ResizeEW)
+    else if (Cursor == ECursor::ResizeEW)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR);
     }
-    else if (InCursor == EMouseCursor::ResizeNESW)
+    else if (Cursor == ECursor::ResizeNESW)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
     }
-    else if (InCursor == EMouseCursor::ResizeNWSE)
+    else if (Cursor == ECursor::ResizeNWSE)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
     }
-    else if (InCursor == EMouseCursor::ResizeOmni)
+    else if (Cursor == ECursor::ResizeOmni)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
     }
-    else if (InCursor == EMouseCursor::NotAllowed)
+    else if (Cursor == ECursor::NotAllowed)
     {
         this->Cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
     }
     else
     {
-        LOG_WARNING(LogSystem, "Unknown cursor type {}[{}].", static_cast<i32>(InCursor), LexToString(InCursor))
+        LOG_WARNING(LogSystem, "Unknown cursor type {}[{}].", static_cast<i32>(Cursor), LexToString(Cursor))
     }
 
     if (this->Cursor)
@@ -1095,7 +1093,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     return;
 }
 
-TOptional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats, vk::SurfaceFormatKHR DesiredSurfaceFormat)
+std::optional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats, vk::SurfaceFormatKHR DesiredSurfaceFormat)
 {
     for (auto const& AvailableFormat : AvailableFormats)
     {
@@ -1111,7 +1109,7 @@ TOptional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceForma
     return {};
 }
 
-TOptional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes, vk::PresentModeKHR DesiredPresentMode)
+std::optional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes, vk::PresentModeKHR DesiredPresentMode)
 {
     // VK_PRESENT_MODE_IMMEDIATE_KHR: Images submitted by your application are transferred to the
     //                                screen right away, which may result in tearing.

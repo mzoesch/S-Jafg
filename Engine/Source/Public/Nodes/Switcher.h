@@ -34,7 +34,7 @@ public:
 
     FORCEINLINE constexpr bool IsActiveNodeValid() const noexcept { return !!this->ActiveNode; }
 
-    FORCEINLINE TOptional<std::size_t> GetActiveNodeIndex() const noexcept
+    FORCEINLINE std::optional<std::size_t> GetActiveNodeIndex() const noexcept
     {
         if (this->ActiveNode)
         {

@@ -18,44 +18,44 @@ void Jafg::WEditorView::Tick()
     return;
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LNodeReply Jafg::WEditorView::OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
 {
     if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryDown();
     }
 
-    return Super::OnKeyDown(Data, InKeyEvent);
+    return Super::OnKeyDownFocused(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LNodeReply Jafg::WEditorView::OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
 {
     if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryDown();
     }
 
-    return Super::OnKeyDownNoFocus(Data, InKeyEvent);
+    return Super::OnKeyDownUnfocused(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LNodeReply Jafg::WEditorView::OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
 {
     if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryUp();
     }
 
-    return Super::OnKeyUp(Data, InKeyEvent);
+    return Super::OnKeyUpFocused(Data, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LNodeReply Jafg::WEditorView::OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
 {
     if (InKeyEvent.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
     {
         this->OnSecondaryUp();
     }
 
-    return Super::OnKeyUpNoFocus(Data, InKeyEvent);
+    return Super::OnKeyUpUnfocused(Data, InKeyEvent);
 }
 
 void Jafg::WEditorView::OnSecondaryDown()

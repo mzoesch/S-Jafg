@@ -35,7 +35,7 @@ struct LHitResult final
     //#
     //# Optional hit surface normal.
     //#
-    TOptional<LWorldVec3> SurfaceNormal;
+    std::optional<LWorldVec3> SurfaceNormal;
 };
 
 enum struct ECollisionChannelBits

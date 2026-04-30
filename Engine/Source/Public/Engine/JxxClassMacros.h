@@ -43,7 +43,7 @@
         _,                                                                                         \
         ConstructionHelper                                                                         \
         )();                                                                                       \
-        inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };  \
+        inline static ::Jafg::EJxxClassFlags Flags{::Jafg::CombineJxxClassFlags(__VA_ARGS__)};  \
     };
 
 
@@ -100,7 +100,7 @@
         _,                                                                                                       \
         ConstructionHelper                                                                                       \
         )();                                                                                                     \
-        inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };                \
+        inline static ::Jafg::EJxxClassFlags Flags{::Jafg::CombineJxxClassFlags(__VA_ARGS__)};                \
         typedef FactoryType LFactory;                                                             \
     };
 
@@ -186,7 +186,7 @@
             );                                                                                        \
                                                                                                   \
     } /* ~Namespace <Anonymous> */                                                                \
-    ::Jafg::LCxxClass& JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)            \
+    ::Jafg::LJxxClass& JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)            \
         ::MutableStaticClass() noexcept \
     {\
         typedef JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName) _JAFG_OHGCRCHD_TObj; \
@@ -204,7 +204,7 @@
         { \
         JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)::EndClassLife(Info);\
         }}; \
-        static ::Jafg::LCxxClass Instance{ \
+        static ::Jafg::LJxxClass Instance{ \
               #MyClassSpaces "::" #MyClassName \
             , MallocCxxFn, BeginClassLifeFn, EndClassLifeFn \
 , #SuperClassName, JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                          \
@@ -220,7 +220,7 @@ LineOfDeclaration,                                                    \
 _,                                                                    \
 ConstructionHelper                                                    \
 )                                                                         \
-)::Flags, {__VA_ARGS__} \
+)::Flags, TArray<::Jafg::LJxxClassField>{}__VA_ARGS__ \
             }; \
         return Instance; \
     }
@@ -230,26 +230,26 @@ ConstructionHelper                                                    \
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(ObjectType, Name) \
-    ::Jafg::LSetCxxClassField::CreateStrong([](::Jafg::JCxxClass* Object, ::LStringView Value) -> void \
+    [](::Jafg::JCxxClass* Object, ::LStringView Value) -> void \
     {\
          ObjectType * CastedObject{StaticCastChecked< ObjectType >(Object)}; \
          ObjectType ::\
             JAFG_JOIN_OUTER_TWO(_SetField_, Name)\
             (CastedObject, Value); \
-    })
+    }
 
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(ObjectType, Name) \
-    ::Jafg::LGetCxxClassField::CreateStrong([](::Jafg::JCxxClass const& Object) -> ::LString \
+    [](::Jafg::JCxxClass const& Object) -> ::LString \
     {\
          ObjectType const& CastedObject{*StaticCastChecked< ObjectType >(&Object)}; \
          return ObjectType ::\
             JAFG_JOIN_OUTER_TWO(_GetField_, Name)\
             (CastedObject); \
-    })
+    }
 
 
 #ifndef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION
@@ -290,7 +290,7 @@ private:                                                                        
       );                                                                                     \
                                                                                              \
 public:                                                                                      \
-    inline static ::Jafg::LCxxClass const& StaticClass() noexcept                                     \
+    inline static ::Jafg::LJxxClass const& StaticClass() noexcept                                     \
     {                                                                                        \
         return MyClassName::MutableStaticClass();                                                 \
     }                                                                                        \
@@ -301,7 +301,7 @@ public:                                                                         
     ConstructionHelperLine,                                                              \
     __VA_ARGS__ \
         )  \
-    __VA_ARGS__/*OptionalAPI*/ static ::Jafg::LCxxClass& MutableStaticClass() noexcept;      \
+    __VA_ARGS__/*OptionalAPI*/ static ::Jafg::LJxxClass& MutableStaticClass() noexcept;      \
     MyClassName() = delete;                                                                  \
     PROHIBIT_REALLOC_OF_ANY_FORM(MyClassName)                                                               \
                                                                                              \

@@ -27,14 +27,14 @@ public:
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const override;
 
     //# Vertical space between children.
-    LWidgetSize1 VSpace;
+    LNodeSize1 VSpace;
 };
 
 struct LFactoryVRegion : NODE_FACTORY_PARENT(WVRegion)
 {
     NODE_FACTORY_BODY(WVRegion)
 
-    decltype(auto) VSpace(this auto&& Self, LWidgetSize1 VSpace) noexcept
+    decltype(auto) VSpace(this auto&& Self, LNodeSize1 VSpace) noexcept
     {
         NODE_FACTORY_SELF().VSpace = VSpace;
         return NODE_FACTORY_RESULT();

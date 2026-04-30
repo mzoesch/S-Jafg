@@ -115,7 +115,7 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
 
-    NODISCARD TOptional<LPhysicalKey> GetPhysicalKey(ELogicalKey LogicalKey) const noexcept PURE_VIRTUAL()
+    NODISCARD std::optional<LPhysicalKey> GetPhysicalKey(ELogicalKey LogicalKey) const noexcept PURE_VIRTUAL()
 
 protected:
 

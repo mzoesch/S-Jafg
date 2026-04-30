@@ -53,7 +53,7 @@ void Jafg::WEditableTextBox::Draw(LNodeRenderInfo const& Info) const
         {
               AnchoredTopLeftFromMostOuter
             + LVec2F{0.0, (this->GetDesiredSize_v2().y - CaretSize.y) * 0.5}
-            + LVec2F{this->Brush.Padding.Left, 0.0}
+            + LVec2F{this->Brush.Padding.GetLeftOffset().InStaticPoints(this->GetViewport()), 0.0}
         }
         ;
 
@@ -138,14 +138,15 @@ bool Jafg::WEditableTextBox::UserInterfaceTick()
     return {};
 }
 
-Jafg::LCursorReply Jafg::WEditableTextBox::OnCursorEnter()
+Jafg::LNodeReply Jafg::WEditableTextBox::OnCursorEnter()
 {
-    return { EMouseCursor::Beam };
+    // TODO: Wrong call super method first. and check event...
+    return {ECursor::Beam};
 }
 
-Jafg::LCursorReply Jafg::WEditableTextBox::OnCursorLeave()
+void Jafg::WEditableTextBox::OnCursorLeave()
 {
-    return { EMouseCursor::Default };
+    this->GetViewport().GetSurface()._SetMouseCursor(ECursor::Default);
 }
 
 void Jafg::WEditableTextBox::OnFocusReceived()
@@ -181,9 +182,9 @@ void Jafg::WEditableTextBox::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WEditableTextBox::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::BackSpace)) // || PlatformDelete?
+    if (Event.PhysicalKey == Info.Frontend.GetPhysicalKey(ELogicalKey::BackSpace)) // || PlatformDelete?
     {
         if (this->GetContent().empty() == false && this->CaretCursor > 0)
         {
@@ -197,10 +198,10 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventInfo const& Data, LK
             ensureDiscard(this->InvokeOnChanged());
         }
 
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
 
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Left))
+    if (Event.PhysicalKey == Info.Frontend.GetPhysicalKey(ELogicalKey::Left))
     {
         if (algo::valid_index(this->GetContent(), this->CaretCursor - 1))
         {
@@ -213,10 +214,10 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventInfo const& Data, LK
 
         this->CaretBlinker = 0.0f;
 
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
 
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Right))
+    if (Event.PhysicalKey == Info.Frontend.GetPhysicalKey(ELogicalKey::Right))
     {
         if (algo::valid_index(this->GetContent(), this->CaretCursor))
         {
@@ -229,45 +230,45 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LNodeKeyEventInfo const& Data, LK
 
         this->CaretBlinker = 0.0f;
 
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
 
-    if (   Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Enter)
-        || Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::NumPadEnter))
+    if (   Event.PhysicalKey == Info.Frontend.GetPhysicalKey(ELogicalKey::Enter)
+        || Event.PhysicalKey == Info.Frontend.GetPhysicalKey(ELogicalKey::NumPadEnter))
     {
         if (this->OnAllowContentCommit.IsValid())
         {
             if (this->OnAllowContentCommit.Invoke() == false)
             {
-                return LReply::Unhandled();
+                return LNodeReply::Unhandled();
             }
         }
 
         this->OnTextCommit(this->GetContent(), ETextCommit::OnEnter);
 
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
 
     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
     {
-        if (Data.Surface.HasMouseLocation())
+        if (Info.Surface.HasMouseLocation())
         {
-            this->MoveCaretToMouseCursor(Data.Viewport);
+            this->MoveCaretToMouseCursor(Info.Viewport);
         }
 
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
 
-    if (Event.PhysicalKey == Data.Frontend.GetPhysicalKey(ELogicalKey::Escape))
+    if (Event.PhysicalKey == Info.Frontend.GetPhysicalKey(ELogicalKey::Escape))
     {
         if (this->GetViewport().GetFocusedWidget() == this)
         {
             this->OnTextCommit(this->GetContent(), ETextCommit::OnCleared);
-            return LReply::Handled();
+            return LNodeReply::Handled();
         }
     }
 
-    return Super::OnKeyDown(Data, Event);
+    return Super::OnKeyDownFocused(Info, Event);
 }
 
 void Jafg::WEditableTextBox::OnTextCommit(const LString& InText, const ETextCommit InCommitType)

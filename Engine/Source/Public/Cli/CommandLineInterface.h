@@ -54,10 +54,10 @@ public:
     FORCEINLINE LCliVariableRaiiHandle RegisterVariableRaiiChecked(LCliVariable&& InVariable) { return LCliVariableRaiiHandle{this->RegisterVariableChecked(std::move(InVariable))}; }
     ENGINE_API  bool UnregisterVariable(LCliVariableHandle* InHandle);
 
-    FORCEINLINE TOptional<LCliObjectHandle>   GetHandle(const LCliObject& InObject) const;
-    FORCEINLINE TOptional<LCliTypeHandle>     GetHandle(const LCliType& InObject) const;
-    FORCEINLINE TOptional<LCliCommandHandle>  GetHandle(const LCliCommand& InObject) const;
-    FORCEINLINE TOptional<LCliVariableHandle> GetHandle(const LCliVariable& InObject) const;
+    FORCEINLINE std::optional<LCliObjectHandle>   GetHandle(const LCliObject& InObject) const;
+    FORCEINLINE std::optional<LCliTypeHandle>     GetHandle(const LCliType& InObject) const;
+    FORCEINLINE std::optional<LCliCommandHandle>  GetHandle(const LCliCommand& InObject) const;
+    FORCEINLINE std::optional<LCliVariableHandle> GetHandle(const LCliVariable& InObject) const;
 
     FORCEINLINE const TArray<LCliType>&     GetTypes() const { return this->Types; }
     FORCEINLINE const TArray<LCliCommand>&  GetCommands() const { return this->Commands; }
@@ -209,32 +209,32 @@ FORCEINLINE constexpr void LCliObjectRaiiHandle::Reset() noexcept
     return;
 }
 
-FORCEINLINE TOptional<LCliObjectHandle> LCommandLineInterface::GetHandle(const LCliObject& InObject) const
+FORCEINLINE std::optional<LCliObjectHandle> LCommandLineInterface::GetHandle(const LCliObject& InObject) const
 {
     return (InObject.Uuid == LCliObject::NoUuid)
-        ? TOptional<LCliObjectHandle>{ }
-        : TOptional<LCliObjectHandle>{ LCliObjectHandle{InObject.Uuid} };
+        ? std::optional<LCliObjectHandle>{ }
+        : std::optional<LCliObjectHandle>{ LCliObjectHandle{InObject.Uuid} };
 }
 
-FORCEINLINE TOptional<LCliTypeHandle> LCommandLineInterface::GetHandle(const LCliType& InObject) const
+FORCEINLINE std::optional<LCliTypeHandle> LCommandLineInterface::GetHandle(const LCliType& InObject) const
 {
     return (InObject.Uuid == LCliObject::NoUuid)
-        ? TOptional<LCliTypeHandle>{ }
-        : TOptional<LCliTypeHandle>{ LCliTypeHandle{InObject.Uuid} };
+        ? std::optional<LCliTypeHandle>{ }
+        : std::optional<LCliTypeHandle>{ LCliTypeHandle{InObject.Uuid} };
 }
 
-FORCEINLINE TOptional<LCliCommandHandle> LCommandLineInterface::GetHandle(const LCliCommand& InObject) const
+FORCEINLINE std::optional<LCliCommandHandle> LCommandLineInterface::GetHandle(const LCliCommand& InObject) const
 {
     return (InObject.Uuid == LCliObject::NoUuid)
-        ? TOptional<LCliCommandHandle>{ }
-        : TOptional<LCliCommandHandle>{ LCliCommandHandle{InObject.Uuid} };
+        ? std::optional<LCliCommandHandle>{ }
+        : std::optional<LCliCommandHandle>{ LCliCommandHandle{InObject.Uuid} };
 }
 
-FORCEINLINE TOptional<LCliVariableHandle> LCommandLineInterface::GetHandle(const LCliVariable& InObject) const
+FORCEINLINE std::optional<LCliVariableHandle> LCommandLineInterface::GetHandle(const LCliVariable& InObject) const
 {
     return (InObject.Uuid == LCliObject::NoUuid)
-        ? TOptional<LCliVariableHandle>{ }
-        : TOptional<LCliVariableHandle>{ LCliVariableHandle{InObject.Uuid} };
+        ? std::optional<LCliVariableHandle>{ }
+        : std::optional<LCliVariableHandle>{ LCliVariableHandle{InObject.Uuid} };
 }
 
 template <typename T>

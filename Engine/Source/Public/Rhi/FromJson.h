@@ -26,12 +26,12 @@ typedef void(*Vk_FromJsonFailHandler)(LStringView DisplayName, LStringView Key, 
 //# If the syntax is wrong, then the #Handler will be invoked.
 //#
 template<typename T>
-inline TOptional<T> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler = Detail::Vk_DefaultFromJsonFailHandler) = delete;
+inline std::optional<T> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler = Detail::Vk_DefaultFromJsonFailHandler) = delete;
 
 template<typename T>
 inline T Vk_FromJsonValue(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler = Detail::Vk_DefaultFromJsonFailHandler)
 {
-    if (TOptional<T> Result{Vk_FromJson<T>(DisplayName, Key, Json, Handler)}; Result.has_value())
+    if (std::optional<T> Result{Vk_FromJson<T>(DisplayName, Key, Json, Handler)}; Result.has_value())
     {
         return *Result;
     }
@@ -39,7 +39,7 @@ inline T Vk_FromJsonValue(LStringView DisplayName, LStringView Key, json Json, V
 }
 
 template<>
-inline TOptional<vk::StencilOpState> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler)
+inline std::optional<vk::StencilOpState> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler)
 {
     LString MissingKey;
     Json::EError Error;
@@ -82,7 +82,7 @@ inline TOptional<vk::StencilOpState> Vk_FromJson(LStringView DisplayName, LStrin
 }
 
 template<>
-inline TOptional<vk::PipelineInputAssemblyStateCreateInfo> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler)
+inline std::optional<vk::PipelineInputAssemblyStateCreateInfo> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler)
 {
     LString MissingKey;
     Json::EError Error;
@@ -115,7 +115,7 @@ inline TOptional<vk::PipelineInputAssemblyStateCreateInfo> Vk_FromJson(LStringVi
 }
 
 template<>
-inline TOptional<vk::PipelineDepthStencilStateCreateInfo> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler)
+inline std::optional<vk::PipelineDepthStencilStateCreateInfo> Vk_FromJson(LStringView DisplayName, LStringView Key, json Json, Vk_FromJsonFailHandler Handler)
 {
     LString MissingKey;
     Json::EError Error;

@@ -23,28 +23,28 @@ public:
 
     virtual void UpdateDesiredSize() const override { this->SetDesiredSize(this->Size); }
 
-    LWidgetSize2 Size;
+    LNodeSize2 Size;
 };
 
 struct LFactorySpacer : NODE_FACTORY_PARENT(WSpacer)
 {
     NODE_FACTORY_BODY(WSpacer)
 
-    decltype(auto) Size(this auto&& Self, LWidgetSize2 const& Size) noexcept
+    decltype(auto) Size(this auto&& Self, LNodeSize2 const& Size) noexcept
     {
         NODE_FACTORY_SELF().Size = Size;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Height(this auto&& Self, LWidgetSize1 Height) noexcept
+    decltype(auto) Height(this auto&& Self, LNodeSize1 Height) noexcept
     {
         check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.X == 0.0f)
-        NODE_FACTORY_SELF().Size = LWidgetSize2{0.0f, Height};
+        NODE_FACTORY_SELF().Size = LNodeSize2{0.0f, Height};
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Width(this auto&& Self, LWidgetSize1 Width) noexcept
+    decltype(auto) Width(this auto&& Self, LNodeSize1 Width) noexcept
     {
         check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.Y == 0.0f)
-        NODE_FACTORY_SELF().Size = LWidgetSize2{Width, 0.0f};
+        NODE_FACTORY_SELF().Size = LNodeSize2{Width, 0.0f};
         return NODE_FACTORY_RESULT();
     }
 };

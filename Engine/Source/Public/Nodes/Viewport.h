@@ -2,12 +2,11 @@
 
 #pragma once
 
-#include "User/Input/Replies.h"
 #include "User/UserPreferencesForward.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Rhi/Material.h"
-#include "Engine/CxxClass.h"
 #include "Platform/SurfaceForward.h"
+#include "Engine/Jxx.h"
 
 namespace Jafg
 {
@@ -16,6 +15,7 @@ class WNode;
 class WUserWidget;
 class LWorld;
 struct LRenderInfo;
+struct LNodeReply;
 
 //#
 //# Represents a viewport that can contain widgets.
@@ -33,9 +33,7 @@ public:
 
     void Vk_OnLateInit();
 
-    void ClearInvalidWidgets();
     void DispatchInputs();
-    void OnMouseLeftViewport(bool bInvalidateAllInputs);
     void Tick();
     void Draw(LRenderInfo const& Info);
     void TearDown();
@@ -62,7 +60,7 @@ public:
     ENGINE_API void _RemoveWidget(WUserWidget* Widget);
 
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
-    FORCEINLINE EApplicationScale GetMaxAllowApplicationScale() const noexcept;
+    FORCEINLINE constexpr EApplicationScale GetMaxAllowApplicationScale() const noexcept;
     FORCEINLINE f32  GetScaleFactor() const { return this->ScaleFactor; }
     FORCEINLINE void SetPlatformDpi(const f32 InDpi) { this->PlatformDpi = InDpi; }
     FORCEINLINE f32  GetPlatformDpi() const { return this->PlatformDpi; }
@@ -79,36 +77,65 @@ public:
     FORCEINLINE f64     GetHeightD() const noexcept { return static_cast<f64>(this->GetDimensions().y); }
 
     FORCEINLINE constexpr auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
-    ENGINE_API  WNode* GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const noexcept;
-    FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const noexcept{ auto* Widget{this->GetTopLevelWidgetByClass(Class)}; check(Widget); return Widget; }
-    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClass() const noexcept { return StaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass())); }
-    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClassChecked() const noexcept { return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass())); }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetTopLevelWidgetByClass() noexcept
+    {
+        for (auto* Widget : this->TopLevelWidgets)
+        {
+            if (auto* Result{DynamicCast<TNode>(Widget)})
+            {
+                return Result;
+            }
+        }
+        return nullptr;
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode* GetTopLevelWidgetByClassChecked() noexcept
+    {
+        auto* Result{this->GetTopLevelWidgetByClass<TNode>()};
+        check(Result)
+        return Result;
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode const* GetTopLevelWidgetByClass() const noexcept
+    {
+        for (auto* Widget : this->TopLevelWidgets)
+        {
+            if (auto* Result{DynamicCast<TNode>(Widget)})
+            {
+                return Result;
+            }
+        }
+        return nullptr;
+    }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode const* GetTopLevelWidgetByClassChecked() const noexcept
+    {
+        auto* Result{this->GetTopLevelWidgetByClass<TNode>()};
+        check(Result)
+        return Result;
+    }
 
-    template<typename TNode>
-    FORCEINLINE TNode const* GetFocusedWidget() const { return DynamicCast<TNode>(this->FocusedWidget.GetPointer()); }
-    FORCEINLINE constexpr WNode const* GetFocusedWidget() const { return this->FocusedWidget.GetPointer(); }
-    FORCEINLINE constexpr bool IsFocusedWidgetValid() const { return this->FocusedWidget != nullptr; }
-    bool FocusWidgetNode(WNode* InNode);
-    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<TClassStorage<WNode>>& { return this->HoveredWidgets; }
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode const* GetFocusedWidget() const { return DynamicCast<TNode>(this->FocusedWidget.get()); }
+    FORCEINLINE constexpr WNode const* GetFocusedWidget() const { return this->FocusedWidget.get(); }
+    FORCEINLINE constexpr bool IsFocusedWidgetValid() const noexcept { return !!this->FocusedWidget; }
 
-    //# @return True if in the last frame, this node was not added.
-    bool AddHoveredWidgetForFrame(WNode* Node);
-
-    FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
-    FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
+    FORCEINLINE constexpr LSurface& GetSurface() noexcept { return this->Surface; }
+    FORCEINLINE constexpr LSurface const& GetSurface() const noexcept { return this->Surface; }
 
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
-    FORCEINLINE CONSTEXPR_CHECK_SLOW void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept;
-    //# @return True if the point is inside the bounds of the viewport.
-    FORCEINLINE static constexpr bool IsInBounds(const LVec2F& InTopLeft, const LVec2F& InSize, const LVec2F& InPoint) noexcept;
+    FORCEINLINE constexpr void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept
+    {
+        check(Vector) Vector->y = this->GetDimensions().y - Vector->y;
+    }
 
 private:
 
-    void ChangeFocusUnsafe(WNode* InNode);
+    void ChangeFocusImpl(TClassStorage<WNode> InNode);
 
-    void RecalculateScaleFactor();
-    void HandleReply(LSurface& Context, const LCursorReply& Reply);
-    void HandleReply(LSurface& Context, const LReply& Reply);
+    FORCEINLINE constexpr void RecalculateScaleFactor() noexcept { this->ScaleFactor = this->PlatformDpi / this->BaseDpi; }
+    void HandleReply(LNodeReply&& Reply);
 
     //# The factor with which the entire orthographic projection is scaled.
     f32 ScaleFactor{ 1.0f };
@@ -123,10 +150,7 @@ private:
 
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;
-
     TClassStorage<WNode> FocusedWidget;
-    TArray<TClassStorage<WNode>> HoveredWidgets;
-    TArray<TClassStorage<WNode>> LastFrameHoveredWidgets;
 
     LSurface& Surface;
 
@@ -139,37 +163,18 @@ private:
     LMaterialInstanceRef VisualBatchMaterial;
 };
 
-FORCEINLINE EApplicationScale LViewport::GetMaxAllowApplicationScale() const noexcept
+FORCEINLINE constexpr EApplicationScale LViewport::GetMaxAllowApplicationScale() const noexcept
 {
-    auto Dimensions{ this->GetDimensions() };
-
+    auto Dimensions{this->GetDimensions()};
     if (Dimensions.x < 640 || Dimensions.y < 475)
     {
         return EApplicationScale::Single;
     }
-
     if (Dimensions.x < 960 || Dimensions.y < 720)
     {
         return EApplicationScale::Double;
     }
-
     return EApplicationScale::Triple;
-}
-
-FORCEINLINE constexpr bool LViewport::IsInBounds(const LVec2F& InTopLeft, const LVec2F& InSize, const LVec2F& InPoint) noexcept
-{
-    return
-            InTopLeft.x <= InPoint.x
-         && InPoint.x   <= InTopLeft.x + InSize.x
-         && InTopLeft.y <= InPoint.y
-         && InPoint.y   <= InTopLeft.y + InSize.y
-         ;
-}
-
-FORCEINLINE CONSTEXPR_CHECK_SLOW void LViewport::ConvertTLToBLOrigin(LVec2F* Vector) const noexcept
-{
-    check(Vector)
-    Vector->y = this->GetDimensions().y - Vector->y;
 }
 
 } /* ~Namespace Jafg */

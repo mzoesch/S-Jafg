@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Core/Name.h"
 #include "User/Input/InputActionCategory.h"
+#include "Misc/Tag.h"
 
 namespace Jafg
 {

@@ -19,7 +19,7 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WInput_Vector3) noexcept
     {
-        this->Padding = 5.0f;
+        this->Padding = 5_pt;
         this->Style.ChainEverywhere<
             &LRegionBrush::OutlineThickness,
             &LRegionBrush::Tint

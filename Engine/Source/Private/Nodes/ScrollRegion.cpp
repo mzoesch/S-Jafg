@@ -17,8 +17,8 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
     const LVec2F AnchoredTopLeftFromMostOuter{this->GetAnchoredTopLeftFromMostOuter()};
-    const LVec2F MostOuterTopLeftContentArea {AnchoredTopLeftFromMostOuter + this->Padding.GetTopLeftOffsetInSpt(Info.Viewport)};
-    const LVec2F MaxContentAreaSize {this->GetAnchoredSize_v2() - this->Padding.GetDesiredSizeInSpt(Info.Viewport)};
+    const LVec2F MostOuterTopLeftContentArea {AnchoredTopLeftFromMostOuter + this->Padding.GetTopLeftOffset().InStaticPoints(Info.Viewport)};
+    const LVec2F MaxContentAreaSize {this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(Info.Viewport)};
 
     const f64 MaxScrollY{maths::max(static_cast<f64>(this->DesiredSizeOfChildren.y) - static_cast<f64>(this->GetAnchoredSize_v2().y), 0.0)};
     const f64 ScrollOffsetY{ this->ScrollPosition.y * MaxScrollY};
@@ -170,14 +170,14 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     return;
 }
 
-Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LNodeSweepData const& Data, LVec2F const& Location)
+Jafg::LNodeReply Jafg::WScrollRegion::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
-        return WNode::SweepMouse(Data, Location);
+        return WNode::SweepFocus(Info, Location);
     }
 
-    if (this->IsInBounds(Data, Location))
+    if (this->AabbTest(Info, Location))
     {
         check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
         const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
@@ -189,9 +189,9 @@ Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LNodeSweepData const& Data, L
         {
             if (Child->ShouldCheckForInputs())
             {
-                if (LCursorReply Reply = Child->SweepMouse(
-                      {.Translation={Data.Translation.x + (-ScrollOffsetX), Data.Translation.y + (-ScrollOffsetY)}}
-                    , Location); Reply.IsHandled())
+                if (auto Reply{Child->SweepFocus(
+                      {.Translation={Info.Translation.x + (-ScrollOffsetX), Info.Translation.y + (-ScrollOffsetY)}}
+                    , Location)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
@@ -199,39 +199,37 @@ Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LNodeSweepData const& Data, L
             continue;
         }
     }
-    return WNode::SweepMouse(Data, Location);
+    return WNode::SweepFocus(Info, Location);
 }
 
-Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location)
+Jafg::LNodeReply Jafg::WScrollRegion::Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location)
 {
-    if (this->CanChildrenBeHitTestable() == false)
+    // TODO: Fix this!!!
+    if (Location.has_value() && this->CanChildrenBeHitTestable())
     {
-        return WNode::SweepFocusTest(Data, Location);
-    }
-
-    if (this->IsInBounds(Data, Location))
-    {
-        check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-        const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
-        const f32 ScrollOffsetY = this->ScrollPosition.y * maxScrollY;
-        const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
-        const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
-
-        for (auto& Child : this->GetChildren())
+        if (this->AabbTest(Info, *Location))
         {
-            if (Child->ShouldCheckForInputs())
+            check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
+            const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
+            const f32 ScrollOffsetY = this->ScrollPosition.y * maxScrollY;
+            const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
+            const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
+            for (auto& Child : this->GetChildren())
             {
-                if (const LReply Reply = Child->SweepFocusTest(
-                      {.Translation={Data.Translation.x + (-ScrollOffsetX), Data.Translation.y + (-ScrollOffsetY)}}
-                    , Location); Reply.IsHandled())
+                if (Child->ShouldCheckForInputs())
                 {
-                    return Reply;
+                    if (auto Reply{Child->Sweep(
+                          {.Translation={Info.Translation.x + (-ScrollOffsetX), Info.Translation.y + (-ScrollOffsetY)}}
+                        , Location)}; Reply.IsHandled())
+                    {
+                        return Reply;
+                    }
                 }
+                continue;
             }
-            continue;
         }
     }
-    return WNode::SweepFocusTest(Data, Location);
+    return Super::Sweep(Info, Location);
 }
 
 bool Jafg::WScrollRegion::UserInterfaceTick()
@@ -280,135 +278,48 @@ bool Jafg::WScrollRegion::UserInterfaceTick()
     return {};
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
-    if (Data.CursorLocation.has_value())
+    if (Info.CursorLocation.has_value())
     {
-        if (this->IsInBounds({.Translation=Data.Translation}, *Data.CursorLocation))
+        if (this->AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
         {
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
             {
                 this->HandleMouseWheelUp(Event.Value);
-                return LReply::Handled();
+                return LNodeReply::Handled();
             }
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
             {
                 this->HandleMouseWheelDown(Event.Value);
-                return LReply::Handled();
+                return LNodeReply::Handled();
             }
 
             if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
             {
-                if (this->MBDownOnScrollbar(Data.CursorLocation))
+                if (this->MBDownOnScrollbar(Info.CursorLocation))
                 {
-                    return LReply::Handled();
+                    return LNodeReply::Handled();
                 }
             }
         }
     }
-    return Super::OnKeyDown(Data, Event);
+    return Super::OnKeyDownFocused(Info, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
     {
        if (this->MBUpOnScrollbar())
        {
-           return LReply::Handled();
+           return LNodeReply::Handled();
        }
     }
-    return Super::OnKeyUp(Data, Event);
+    return Super::OnKeyUpFocused(Info, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-
-    {
-        const f32 maxScrollY{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)};
-        const f32 ScrollOffsetY{this->ScrollPosition.y * maxScrollY};
-
-        const f32 maxScrollX{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f)};
-        const f32 ScrollOffsetX{this->ScrollPosition.x * maxScrollX};
-
-        for (auto& Child : this->GetChildren())
-        {
-            check(Child.get())
-            if (&*Child == Info.Viewport.GetFocusedWidget())
-            {
-                continue;
-            }
-            if (Child->ShouldCheckForInputs() == false)
-            {
-                continue;
-            }
-            if (Child->IsInBounds({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Info.Surface.GetMouseLocationValue()) == false)
-            {
-                continue;
-            }
-
-            if (LReply Reply{Child->OnParentKeyDown(Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-            continue;
-        }
-    }
-
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
-    {
-        this->HandleMouseWheelUp(Event.Value);
-        return LReply::Handled();
-    }
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
-    {
-        this->HandleMouseWheelDown(Event.Value);
-        return LReply::Handled();
-    }
-
-    /* Not super. */
-    return WNode::OnParentKeyDown(Info, Event);
-}
-
-Jafg::LReply Jafg::WScrollRegion::OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-
-    {
-        const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
-        const f32 ScrollOffsetY = this->ScrollPosition.y * maxScrollY;
-
-        const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
-        const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
-
-        for (auto& Child : this->GetChildren())
-        {
-            check(Child.get())
-
-            if (&*Child == Info.Viewport.GetFocusedWidget())
-            {
-                continue;
-            }
-            if (Child->ShouldCheckForInputs() == false)
-            {
-                continue;
-            }
-            if (Child->IsInBounds({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Info.Surface.GetMouseLocationValue()) == false)
-            {
-                continue;
-            }
-            if (LReply Reply{Child->OnKeyUpNoFocus(Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-            continue;
-        }
-    }
-
-    return WNode::OnParentKeyUp(Info, Event);}
-
-Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
 {
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
@@ -430,12 +341,12 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyEventInfo const& Data
             {
                 continue;
             }
-            if (Child->IsInBounds({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()) == false)
+            if (Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()) == false)
             {
                 continue;
             }
 
-            if (LReply Reply{Child->OnKeyDownNoFocus(Data, Event)}; Reply.IsHandled())
+            if (auto Reply{Child->OnKeyDownUnfocused(Data, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -446,19 +357,19 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(LNodeKeyEventInfo const& Data
     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
     {
         this->HandleMouseWheelUp(Event.Value);
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
     if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
     {
         this->HandleMouseWheelDown(Event.Value);
-        return LReply::Handled();
+        return LNodeReply::Handled();
     }
 
     /* Not super. */
-    return WNode::OnKeyDownNoFocus(Data, Event);
+    return WNode::OnKeyDownUnfocused(Data, Event);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
 {
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
@@ -481,11 +392,11 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, 
             {
                 continue;
             }
-            if (Child->IsInBounds({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()) == false)
+            if (Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()) == false)
             {
                 continue;
             }
-            if (LReply Reply{Child->OnKeyUpNoFocus(Data, InKeyEvent)}; Reply.IsHandled())
+            if (auto Reply{Child->OnKeyUpUnfocused(Data, InKeyEvent)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -493,7 +404,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, 
         }
     }
 
-    return WNode::OnKeyUpNoFocus(Data, InKeyEvent);
+    return WNode::OnKeyUpUnfocused(Data, InKeyEvent);
 }
 
 void Jafg::WScrollRegion::UpdateDesiredSize() const
@@ -501,14 +412,14 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     Super::UpdateDesiredSize();
     this->DesiredSizeOfChildren = this->GetDesiredSize_v2();
     this->SetDesiredSizeInSpt(
-          InSpt(this->GetViewport(), this->ScrollRegionSize)
-        + this->Padding.GetDesiredSizeInSpt(*this)
+          this->ScrollRegionSize.InStaticPoints(this->GetViewport())
+        + this->Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
         + (this->bUseChildrenDesiredSize ? this->DesiredSizeOfChildren : maths::zero_vector<LVec2F>)
         );
     return;
 }
 
-bool Jafg::WScrollRegion::MBDownOnScrollbar(TOptional<LVec2F> const& CursorLocation)
+bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorLocation)
 {
     check(this->UserInterfaceTickDelegateHandle.IsValid() == false)
 
@@ -520,14 +431,12 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(TOptional<LVec2F> const& CursorLocat
     auto MouseLocation{*CursorLocation};
     LVec2F TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter()};
 
-    if (this->LastVisible.y < 1.0f && LViewport::IsInBounds(
-        TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
-        this->GetVInteractiveAreaScrollSize(),
-        MouseLocation
-        ))
+    if (this->LastVisible.y < 1.0f && maths::aabb_point({
+        .Offset = TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
+        .Extent = this->GetVInteractiveAreaScrollSize()}, MouseLocation))
     {
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetVForegroundScrollPositionFromOuter()};
-            LViewport::IsInBounds(TopLeftForeground, this->GetVForegroundScrollSize(), MouseLocation))
+            maths::aabb_point({TopLeftForeground, this->GetVForegroundScrollSize()}, MouseLocation))
         {
             this->MbOffset.y = (MouseLocation.y - TopLeftForeground.y) * -1.0f;
         }
@@ -536,14 +445,13 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(TOptional<LVec2F> const& CursorLocat
         return true;
     }
 
-    if (this->LastVisible.x < 1.0f && LViewport::IsInBounds(
-        TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
-        this->GetHInteractiveAreaScrollSize(),
-        MouseLocation
-        ))
+    if (this->LastVisible.x < 1.0f && maths::aabb_point({
+        .Offset = TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
+        .Extent = this->GetHInteractiveAreaScrollSize(),
+        }, MouseLocation))
     {
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetHForegroundScrollPositionFromOuter()};
-            LViewport::IsInBounds(TopLeftForeground, this->GetHForegroundScrollSize(), MouseLocation))
+            maths::aabb_point({.Offset = TopLeftForeground, .Extent = this->GetHForegroundScrollSize()}, MouseLocation))
         {
             this->MbOffset.x = (MouseLocation.x - TopLeftForeground.x) * -1.0f;
         }

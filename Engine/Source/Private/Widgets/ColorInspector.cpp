@@ -23,22 +23,22 @@ void Jafg::WColorInspector::Construct()
     ];
 
     auto& Fields{JUserPreferences::StaticClass().GetFields()};
-    TArray<LCxxClassField const*> Targets; Targets.reserve(Fields.size());
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "BackgroundColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "AccentColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "ForegroundColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "ForegroundColorVariant", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "InputColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "OverlayColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "DisabledColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "TextColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColor", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColorVariant", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColor2", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColorVariant2", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "ProximityColorA", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "ProximityColorB", &LCxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "DangerColor", &LCxxClassField::Identifier));
+    TArray<LJxxClassField const*> Targets; Targets.reserve(Fields.size());
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "BackgroundColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "AccentColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "ForegroundColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "ForegroundColorVariant", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "InputColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "OverlayColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "DisabledColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "TextColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColor", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColorVariant", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColor2", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColorVariant2", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "ProximityColorA", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "ProximityColorB", &LJxxClassField::Identifier));
+    Targets.emplace_back(algo::find_pointer_checked(Fields, "DangerColor", &LJxxClassField::Identifier));
 
     for (auto* Target : Targets)
     {

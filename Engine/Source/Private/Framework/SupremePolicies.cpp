@@ -5,7 +5,7 @@
 #include "Framework/Actor.h"
 #include "Framework/Pawn.h"
 
-Jafg::TJxxUnique<Jafg::APersonaController> Jafg::ASupremePolicies::OnIncomingConnectionRequest(
+TJxxUnique<Jafg::APersonaController> Jafg::ASupremePolicies::OnIncomingConnectionRequest(
       EIncomingConnectionRequest IncomingConnection
     , LString* OutRejectionReason /* = nullptr */
     )
@@ -31,7 +31,7 @@ void Jafg::ASupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)
     return;
 }
 
-Jafg::TJxxUnique<Jafg::APawn> Jafg::ASupremePolicies::GetPawnForPersonaController(APersonaController const& Pc)
+TJxxUnique<Jafg::APawn> Jafg::ASupremePolicies::GetPawnForPersonaController(APersonaController const& Pc)
 {
     return TJxxUnique<APawn>{SpawnObject(CastTo<APawn>{}, {this->GetWorld(), this->DefaultPawnClass.GetClassOrDefault()})};
 }

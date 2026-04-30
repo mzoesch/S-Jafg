@@ -16,7 +16,7 @@ void Jgc::WPauseScreen::Construct()
 
     auto& TextureSubsystem{*Frontend.GetSubsystemChecked<Jafg::JTextureSubsystem>()};
 
-    this->Padding = 5;
+    this->Padding = 5_pt;
 
     // auto Tex = TextureSubsystem.FromTextureViewIdentifier("Jafg.Test");
 

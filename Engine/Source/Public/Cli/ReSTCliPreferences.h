@@ -2,13 +2,14 @@
 
 #pragma once
 
-#include "Engine/CxxClass.h"
+#include "Engine/Jxx.h"
+#include "User/Preferences/PreferenceTypes.h"
 #include "ReSTCliPreferences.generated.h"
 
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(ECxxClassFlags::Config, ECxxClassFlags::Singleton)
+DECLARE_JAFG_CLASS(EJxxClassBits::Config, EJxxClassBits::Singleton)
 class JReSTCliPreferences final : public JCxxClass
 {
     GENERATED_CLASS_BODY(ENGINE_API)

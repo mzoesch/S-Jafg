@@ -26,7 +26,7 @@ void Jafg::AActor::BeginLife()
     return;
 }
 
-void Jafg::AActor::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
 

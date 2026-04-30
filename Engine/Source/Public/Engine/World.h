@@ -2,8 +2,8 @@
 
 #pragma once
 
+#include "Engine/Jxx.h"
 #include "Core/Arguments.h"
-#include "Engine/ClassOuter.h"
 #include "Physics/TraceUtility.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
@@ -183,7 +183,7 @@ public:
     virtual bool IsWorld() const noexcept override { return true; }
     // ~LClassOuter implementation
 
-    void InitializeWorld(TOptional<LLevel> const& Level = {}, LString&& Url = {});
+    void InitializeWorld(std::optional<LLevel> const& Level = {}, LString&& Url = {});
 
     //# There are no checked alternatives, as the engine must be valid at all times if a world exists.
     ENGINE_API LEngine const& GetEngine() const noexcept;
@@ -291,7 +291,7 @@ private:
     LWorldParameters Parameters;
     void UpdateUrlParams() noexcept;
 
-    TOptional<LLevel> UnderlyingLevel;
+    std::optional<LLevel> UnderlyingLevel;
 
     //# Main thread only.
     FORCEINLINE void AcquireTickableObjectsLock() noexcept { this->TickableObjectsPutMutex = true; }
@@ -322,6 +322,49 @@ private:
     TFrameArray<LMappedDeviceBuffer> Vk_WorldBuffers;
 };
 
+//#
+//# Wrapper around a world raw pointer to store it for a longer period of time. This is essentially a weak pointer.
+//# You may check if the world pointer is still valid with #IsValid.
+//# It is *not* meant for quick storing (e.g., inside a function) and is also not meant to be passed as an argument
+//# to a function.
+//#
+struct LWorldStorage final
+{
+    FORCEINLINE explicit constexpr LWorldStorage() noexcept : World(nullptr) { }
+    FORCEINLINE explicit constexpr LWorldStorage(std::nullptr_t) noexcept : World(nullptr) { }
+    FORCEINLINE explicit constexpr LWorldStorage(LWorld* InWorld) noexcept : World(InWorld) { }
+    DEFAULT_REALLOC_OF_ANY_FORM(LWorldStorage)
+    FORCEINLINE constexpr ~LWorldStorage() noexcept { }
+
+    FORCEINLINE constexpr bool operator==(std::nullptr_t) const noexcept { return this->World == nullptr; }
+    FORCEINLINE constexpr bool operator==(LWorldStorage const& Other) const noexcept { return this->World == Other.World; }
+    FORCEINLINE constexpr bool operator==(LWorld const* Other) const noexcept { return this->World == Other; }
+
+    FORCEINLINE constexpr void Reset() noexcept { this->World = nullptr; }
+    FORCEINLINE constexpr bool IsNull() const noexcept { return this->World == nullptr; }
+    FORCEINLINE constexpr bool IsNotNull() const noexcept { return this->IsNull() == false; }
+
+    ENGINE_API  bool IsValid() const noexcept;
+
+    FORCEINLINE constexpr LWorld* Get() noexcept { return this->World; }
+    FORCEINLINE constexpr LWorld const* Get() const noexcept { return this->World; }
+
+    FORCEINLINE constexpr LWorld* operator->() noexcept { return this->Get(); }
+    FORCEINLINE constexpr LWorld const* operator->() const noexcept { return this->Get(); }
+
+    FORCEINLINE constexpr LWorld& operator*() noexcept { return *this->Get(); }
+    FORCEINLINE constexpr LWorld const& operator*() const noexcept { return *this->Get(); }
+
+    FORCEINLINE constexpr operator bool() const noexcept { return this->IsNotNull(); }
+
+    FORCEINLINE operator LWorld*() noexcept { return this->Get(); }
+    FORCEINLINE operator LWorld const*() const noexcept { return this->Get(); }
+
+private:
+
+    LWorld* World;
+};
+
 template<>
 FORCEINLINE LCommandArgsTypeRet_t<LWorld> LCommandArgs::GetAs<LWorld>() const
 {
@@ -347,5 +390,3 @@ inline LWorld const& LClassOuter::AsWorld() const noexcept
 }
 
 } /* ~Namespace Jafg */
-
-#include "Engine/WorldStorage.h"

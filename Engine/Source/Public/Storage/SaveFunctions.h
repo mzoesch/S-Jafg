@@ -18,6 +18,6 @@ struct LMinimalMetaData
 //#
 ENGINE_API bool CreateNewSave(const LPath& InPath, const LMinimalMetaData& Meta, LString* OutError = nullptr);
 
-ENGINE_API TOptional<LString> GetDisplayName(const LPath& InPath, LString* OutError = nullptr);
+ENGINE_API std::optional<LString> GetDisplayName(const LPath& InPath, LString* OutError = nullptr);
 
 } /* ~Namespace Jafg::Saves */

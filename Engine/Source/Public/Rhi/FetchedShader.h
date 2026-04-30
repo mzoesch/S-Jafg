@@ -53,12 +53,12 @@ struct LFetchedShader final
         Type Type;
 
         //# Required for shared.
-        TOptional<LString> Identifier;
+        std::optional<LString> Identifier;
 
         //# Required for unique.
-        TOptional<UpdateFrequency> UpdateFrequency;
-        TOptional<vk::ShaderStageFlags> Stage;
-        TOptional<TArray<Set>> Sets;
+        std::optional<UpdateFrequency> UpdateFrequency;
+        std::optional<vk::ShaderStageFlags> Stage;
+        std::optional<TArray<Set>> Sets;
     };
 
     LPath Path;
@@ -69,15 +69,15 @@ struct LFetchedShader final
     TArray<LShaderEntrypoint> Entrypoints;
     TArray<CompileTimeDefinition> CompileTimeDefinitions;
 
-    TOptional<LPath> Src;
-    TOptional<LPath> SrcPrefix;
-    TOptional<LPath> Dst;
-    TOptional<LPath> DstPrefix;
+    std::optional<LPath> Src;
+    std::optional<LPath> SrcPrefix;
+    std::optional<LPath> Dst;
+    std::optional<LPath> DstPrefix;
 
-    TOptional<vk::PipelineInputAssemblyStateCreateInfo> PipelineInputAssemblyState;
-    TOptional<vk::PipelineDepthStencilStateCreateInfo> PipelineDepthStencilState;
+    std::optional<vk::PipelineInputAssemblyStateCreateInfo> PipelineInputAssemblyState;
+    std::optional<vk::PipelineDepthStencilStateCreateInfo> PipelineDepthStencilState;
 
-    TOptional<LString> VertexInput;
+    std::optional<LString> VertexInput;
     // Flatten this. with min vulkan guaranteed value.
     TArray<LString> PushConstants;
     TArray<Layout> Layouts;

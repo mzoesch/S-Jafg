@@ -4,7 +4,7 @@
 #include "Nodes/WorldNode.h"
 #include "Engine/Engine.h"
 
-void Jafg::APersonaController::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+void Jafg::APersonaController::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
 

@@ -27,10 +27,11 @@ public:
 
     virtual void Tick() override;
 
-    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+
+    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
 
 private:
 

@@ -75,20 +75,18 @@ public:
 
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
-    virtual LCursorReply SweepMouse(LNodeSweepData const& Data, LVec2F const& Location) override;
-    virtual LReply SweepFocusTest(LNodeSweepData const& Data, LVec2F const& Location) override;
+    virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
+    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override;
 
-    virtual LReply OnKeyDown(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUp(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnParentKeyDown(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LReply OnParentKeyUp(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LReply OnKeyDownNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LReply OnKeyUpNoFocus(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent) override;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent) override;
 
     virtual void UpdateDesiredSize() const override;
 
     //# The size to use for the whole scroll region if it was not anchored.
-    LWidgetSize2 ScrollRegionSize;
+    LNodeSize2 ScrollRegionSize;
 
     LScrollRegionBehavior Behavior;
     LScrollRegionBarBrush BarBrush;
@@ -100,7 +98,7 @@ private:
     bool UserInterfaceTick();
 
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
-    bool MBDownOnScrollbar(TOptional<LVec2F> const& CursorLocation);
+    bool MBDownOnScrollbar(std::optional<LVec2F> const& CursorLocation);
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
     bool MBUpOnScrollbar();
 
@@ -156,7 +154,7 @@ struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)
 {
     NODE_FACTORY_BODY(WScrollRegion)
 
-    decltype(auto) ScrollRegionSize(this auto&& Self, LWidgetSize2 const& Size) noexcept
+    decltype(auto) ScrollRegionSize(this auto&& Self, LNodeSize2 const& Size) noexcept
     {
         NODE_FACTORY_SELF().ScrollRegionSize = Size;
         return NODE_FACTORY_RESULT();

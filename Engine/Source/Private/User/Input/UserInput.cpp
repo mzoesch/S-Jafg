@@ -194,7 +194,7 @@ void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */) noexcept
     return;
 }
 
-TOptional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
+std::optional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
 {
     if (this->ContextStack.empty())
     {

@@ -42,7 +42,7 @@ struct TPreference<T, std::enable_if_t<TUseDefaultPreferenceImpl_v<T>>>
     FORCEINLINE constexpr TPreference(T const& InValue)
         noexcept(std::is_nothrow_constructible_v<T>)
         : DefaultValue(InValue), Value(InValue) { }
-    FORCEINLINE constexpr TPreference(T const& InValue, TOptional<T> const& InMinValue, TOptional<T> const& InMaxValue)
+    FORCEINLINE constexpr TPreference(T const& InValue, std::optional<T> const& InMinValue, std::optional<T> const& InMaxValue)
         noexcept(std::is_nothrow_constructible_v<T>)
         requires std::is_copy_assignable_v<T>
         : MinValue{InMinValue}, MaxValue{InMaxValue}
@@ -174,8 +174,8 @@ struct TPreference<T, std::enable_if_t<TUseDefaultPreferenceImpl_v<T>>>
 
     T DefaultValue;
     T Value;
-    TOptional<T> MinValue;
-    TOptional<T> MaxValue;
+    std::optional<T> MinValue;
+    std::optional<T> MaxValue;
 };
 
 //# Stores default value and value.

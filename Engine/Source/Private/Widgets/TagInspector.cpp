@@ -22,14 +22,14 @@ void Jafg::WTagInspector::Construct()
             .SkipBrushDraw(true)
     ];
 
-    u32 Width{Detail::GetNameRegistry().GetAllocator().empty()
+    u32 Width{Detail::GetJxxTagRegistry().GetAllocator().empty()
         ? 1
-        : static_cast<u32>(maths::log10(Detail::GetNameRegistry().GetAllocator().size() - 1)) + 1
+        : static_cast<u32>(maths::log10(Detail::GetJxxTagRegistry().GetAllocator().size() - 1)) + 1
         };
-    for (auto Idx{0uz}; Idx < Detail::GetNameRegistry().GetAllocator().size() || Idx < 10; ++Idx)
+    for (auto Idx{0uz}; Idx < Detail::GetJxxTagRegistry().GetAllocator().size() || Idx < 10; ++Idx)
     {
         Container->AddChild(NewStaticNode(WTextBox).SkipBrushDraw(true)
-            .Content(SprintF("{:0{}} -- {}", Idx, Width, Detail::GetNameRegistry().GetAllocator()[Idx]))
+            .Content(SprintF("{:0{}} -- {}", Idx, Width, Detail::GetJxxTagRegistry().GetAllocator()[Idx]))
             .Unique());
     }
     return;

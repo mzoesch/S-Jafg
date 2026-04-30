@@ -3,7 +3,7 @@
 #pragma once
 
 #include "User/Input/InputMode.h"
-#include "Engine/CxxClass.h"
+#include "Engine/Jxx.h"
 
 namespace Jafg
 {

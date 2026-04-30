@@ -75,8 +75,8 @@ inline LString    ReadFile(const LPath& File);
 inline TArray<u8> ReadFileAsBinary(const LPath& File);
 
 //# Same as #ReadFile but will not panic, instead write the error message to the provided string if available.
-inline TOptional<LString>    TryReadFile(const LPath& File, LString* OutHumanReadableError = nullptr);
-inline TOptional<TArray<u8>> TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError = nullptr);
+inline std::optional<LString>    TryReadFile(const LPath& File, LString* OutHumanReadableError = nullptr);
+inline std::optional<TArray<u8>> TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError = nullptr);
 
 inline void OverrideFile(LPath const& File, LStringView Content, bool bUseNativeLineEndings = false);
 

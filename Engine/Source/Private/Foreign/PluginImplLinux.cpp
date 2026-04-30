@@ -6,7 +6,7 @@
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"
-#include "Engine/ClassOuter.h"
+#include "Async/TaskUtility.h"
 #include <dlfcn.h>
 
 namespace Jafg
@@ -14,10 +14,10 @@ namespace Jafg
 
 EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
-    check( this->IsValid() )
-    check( this->IsLoaded() == false )
+    check(this->IsValid())
+    check(this->IsLoaded() == false)
 
     this->NativeHandle = ::dlopen(this->BinPath.c_str()
         //

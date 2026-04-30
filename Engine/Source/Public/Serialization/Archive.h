@@ -23,7 +23,7 @@ struct TDeserializer final
 struct LDeserializationResult
 {
     std::errc Errc;
-    TOptional<LString> Error;
+    std::optional<LString> Error;
 };
 
 //# Whether T is serializable.
@@ -324,7 +324,7 @@ struct TDeserializer<T, TArchive>
         auto R{std::from_chars(algo::data(Ar.Stream), algo::data(Ar.Stream) + algo::size(Ar.Stream), Field)};
         return {
             .Errc = R.ec,
-            .Error = R.ptr ? LString{R.ptr} : TOptional<LString>{},
+            .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
             };
     }
 };
