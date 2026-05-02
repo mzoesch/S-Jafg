@@ -76,7 +76,7 @@ void Jafg::LViewport::DispatchInputs()
             bool bHandled{};
             for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
             {
-                if (auto Reply{(*It)->SweepFocus({.Translation=maths::zero_vector<LVec2F>}, *CursorLocation)}; Reply.IsHandled())
+                if (auto Reply{(*It)->SweepFocus({}, *CursorLocation)}; Reply.IsHandled())
                 {
                     if (Reply.DoesConsume())
                     {
@@ -114,7 +114,7 @@ void Jafg::LViewport::DispatchInputs()
     for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
     {
         checkCode((*It)->_check_StateInvariant())
-        if (auto Reply{(*It)->Sweep({.Translation=maths::zero_vector<LVec2F>}, CursorLocation)}; Reply.IsHandled())
+        if (auto Reply{(*It)->Sweep({}, CursorLocation)}; Reply.IsHandled())
         {
             check(CursorLocation.has_value())
             this->HandleReply(std::move(Reply));
@@ -153,7 +153,7 @@ void Jafg::LViewport::DispatchInputs()
             bool bConsumed{};
             for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
             {
-                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({.Translation=maths::zero_vector<LVec2F>}, *CursorLocation))
+                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({}, *CursorLocation))
                 {
                     if (auto Reply{(*It2)->OnKeyUpUnfocused({
                         .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
@@ -219,7 +219,7 @@ void Jafg::LViewport::DispatchInputs()
             bool bConsumed{};
             for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
             {
-                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({.Translation=maths::zero_vector<LVec2F>}, *CursorLocation))
+                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({}, *CursorLocation))
                 {
                     if (auto Reply{(*It2)->OnKeyDownUnfocused({
                         .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,

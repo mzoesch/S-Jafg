@@ -184,20 +184,6 @@ protected:
         return;
     }
 
-    virtual void Draw(LNodeRenderInfo const& Info) const override
-    {
-        if (this->GetContent() == "Tag Inspector")
-        {
-            JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
-        }
-        Super::Draw(Info);
-        return;
-    }
-    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override
-    {
-        return Super::Sweep(Info, Location);
-    }
-
 private:
 
     inline void CtorLogic() noexcept

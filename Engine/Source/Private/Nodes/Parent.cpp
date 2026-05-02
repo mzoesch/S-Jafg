@@ -60,15 +60,68 @@ Jafg::LNodeReply Jafg::WParent::SweepFocus(LNodeSweepInfo const& Info, LVec2F co
 {
     if (this->CanChildrenBeHitTestable())
     {
+        LNodeSweepInfo ChildInfo{.Translation=Info.Translation + Info.ChildTranslationHint,};
         for (auto& Child : this->Children)
         {
-            if (auto Reply{Child->SweepFocus(Info, Location)}; Reply.IsHandled())
+            if (auto Reply{Child->SweepFocus(ChildInfo, Location)}; Reply.IsHandled())
             {
                 return Reply;
             }
         }
     }
     return Super::SweepFocus(Info, Location);
+}
+
+Jafg::LNodeReply Jafg::WParent::Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location)
+{
+    if (!(Location.has_value() || (this->GetNodeState() & ENodeStateBits::Hovered)))
+    {
+        return {};
+    }
+
+    LNodeSweepInfo ChildInfo{.Translation=Info.Translation + Info.ChildTranslationHint,};
+
+    LNodeReply Result;
+    auto It{this->Children.rbegin()};
+    for (;It != this->Children.rend(); ++It)
+    {
+        check(It->get())
+        if ((*It)->ShouldCheckForInputs())
+        {
+            if (auto Reply{(*It)->Sweep(ChildInfo, Location)}; Reply.IsHandled())
+            {
+                Result = Reply;
+                ++It;
+                break;
+            }
+        }
+        else if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
+        {
+            auto Reply{(*It)->Sweep(ChildInfo, {})};
+            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
+            check(!Reply.IsHandled())
+        }
+        continue;
+    }
+    for (;It != this->Children.rend(); ++It)
+    {
+        if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
+        {
+            check(It->get())
+            auto Reply{(*It)->Sweep(ChildInfo, {})};
+            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
+            check(!Reply.IsHandled())
+        }
+    }
+
+    if (Result.IsHandled())
+    {
+        check(Location.has_value())
+        this->_RemoveHoverDispatchedState();
+        return Result;
+    }
+
+    return Super::Sweep(Info, Location);
 }
 
 void Jafg::WParent::_RemoveHoverState() noexcept
@@ -227,56 +280,6 @@ Jafg::WNode& Jafg::WParent::OnAddChild(std::size_t Index, TJxxUnique<WNode> Chil
 {
     Child->_SetParentDangerous(this);
     return **this->Children.insert(this->Children.begin() + Index, std::move(Child));
-}
-
-Jafg::LNodeReply Jafg::WParent::SweepWithChildInfo(LNodeSweepInfo const& Info, LNodeSweepInfo const& ChildInfo, std::optional<LVec2F> const& Location)
-{
-    if (!(Location.has_value() || (this->GetNodeState() & ENodeStateBits::Hovered)))
-    {
-        return {};
-    }
-
-    LNodeReply Result;
-    auto It{this->Children.rbegin()};
-    for (;It != this->Children.rend(); ++It)
-    {
-        check(It->get())
-        if ((*It)->ShouldCheckForInputs())
-        {
-            if (auto Reply{(*It)->Sweep(ChildInfo, Location)}; Reply.IsHandled())
-            {
-                Result = Reply;
-                ++It;
-                break;
-            }
-        }
-        else if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
-        {
-            auto Reply{(*It)->Sweep(ChildInfo, {})};
-            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
-            check(!Reply.IsHandled())
-        }
-        continue;
-    }
-    for (;It != this->Children.rend(); ++It)
-    {
-        if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
-        {
-            check(It->get())
-            auto Reply{(*It)->Sweep(ChildInfo, {})};
-            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
-            check(!Reply.IsHandled())
-        }
-    }
-
-    if (Result.IsHandled())
-    {
-        check(Location.has_value())
-        this->_RemoveHoverDispatchedState();
-        return Result;
-    }
-
-    return Super::Sweep(Info, Location);
 }
 
 TJxxUnique<Jafg::WNode> Jafg::WParent::RemoveChildImpl(WNode& Child)

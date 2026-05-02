@@ -44,10 +44,7 @@ public:
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
-    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override
-    {
-        return this->SweepWithChildInfo(Info, Info, Location);
-    }
+    virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override;
     virtual void _RemoveHoverState() noexcept override;
 
     virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
@@ -96,10 +93,6 @@ public:
 
     //# The padding area between the slot and the content it contains.
     LPadding Padding;
-
-protected:
-
-    LNodeReply SweepWithChildInfo(LNodeSweepInfo const& Info, LNodeSweepInfo const& ChildInfo, std::optional<LVec2F> const& Location);
 
 private:
 

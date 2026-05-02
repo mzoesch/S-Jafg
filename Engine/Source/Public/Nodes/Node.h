@@ -540,7 +540,9 @@ private:
 struct LNodeSweepInfo final
 {
     //# The translation that is recommended for children of a #WParent to use while sweeping.
-    const LVec2F Translation;
+    const LVec2F Translation{ maths::zero_vector<LVec2F> };
+    //# Hint for an additional translation for all children.
+    const LVec2F ChildTranslationHint{ maths::zero_vector<LVec2F> };
 };
 
 struct LNodeKeyEventInfo final

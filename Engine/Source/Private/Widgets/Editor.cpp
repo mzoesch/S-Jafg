@@ -1,22 +1,21 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Editor.h"
-#include "Nodes/HDragRegion.h"
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
-#include "Widgets/TagInspector.h"
 #include "Nodes/DropDown.h"
+#include "Core/Application.h"
+#include "Widgets/TagInspector.h"
 #include "Widgets/ColorInspector.h"
+#include "Widgets/ClassInspector.h"
 
 void Jafg::WEditor::Construct()
 {
     Super::Construct();
     auto& Prefs{GetSingleton<JUserPreferences>()};
-
-
 
     BeginStyling(*this).StaticRoot<WVRegion>()
         .Anchor(EAnchor::Fill)
@@ -26,6 +25,14 @@ void Jafg::WEditor::Construct()
             .DropDownRoot({.Nodes={
                 LDropDownNodeSubMenu{
                     .DisplayName = "File",
+                    .Children = {
+                        LDropDownNodeOption{
+                            .Selector = {
+                                .DisplayName = "Exit",
+                                },
+                            .OnAction = []{ Application::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
+                            },
+                        },
                     },
                 LDropDownNodeSubMenu{
                     .DisplayName = "Edit",
@@ -40,6 +47,10 @@ void Jafg::WEditor::Construct()
                         LDropDownNodeOption{
                             .Selector = WColorInspector::TabSelectorCreateInfo(),
                             .OnAction = [this]{ this->AddWindow<WColorInspector>(true); return algo::reply::unhandled(); },
+                            },
+                        LDropDownNodeOption{
+                            .Selector = WClassInspector::TabSelectorCreateInfo(),
+                            .OnAction = [this]{ this->AddWindow<WClassInspector>(true); return algo::reply::unhandled(); },
                             },
                         },
                     },

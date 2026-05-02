@@ -26,9 +26,11 @@ void Jafg::WTagInspector::Construct()
         ? 1
         : static_cast<u32>(maths::log10(Detail::GetJxxTagRegistry().GetAllocator().size() - 1)) + 1
         };
-    for (auto Idx{0uz}; Idx < Detail::GetJxxTagRegistry().GetAllocator().size() || Idx < 10; ++Idx)
+    for (auto Idx{0uz}; Idx < Detail::GetJxxTagRegistry().GetAllocator().size(); ++Idx)
     {
-        Container->AddChild(NewStaticNode(WTextBox).SkipBrushDraw(true)
+        Container->AddChild(NewStaticNode(WTextBox)
+            .Anchor(EAnchor::HFill)
+            .Tint((!!(Idx % 2)) ? *Prefs.ProximityColorA : *Prefs.ProximityColorB)
             .Content(SprintF("{:0{}} -- {}", Idx, Width, Detail::GetJxxTagRegistry().GetAllocator()[Idx]))
             .Unique());
     }

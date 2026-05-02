@@ -174,15 +174,54 @@ struct valid_index_fn final
 
 struct contains_if_fn final
 {
-    template<std::forward_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = algo::identity,
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = algo::identity,
          std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
     NODISCARD FORCEINLINE constexpr bool
     operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const
     {
         return std::ranges::find_if(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj)) != Sent;
     }
+    template<input_range TRange, typename TProj = algo::identity,
+         std::indirect_unary_predicate<std::projected<iterator_t<TRange>, TProj>> TPred>
+    NODISCARD FORCEINLINE constexpr bool
+    operator()(TRange&& Range, TPred&& Pred, TProj Proj = {}) const
+    {
+        return (*this)(algo::begin(Range), algo::end(Range), std::forward<TPred>(Pred), std::move(Proj));
+    }
+};
 
-    template<forward_range TRange, typename TProj = algo::identity,
+struct contains_if_checked_fn final
+{
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = algo::identity,
+         std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
+    NODISCARD FORCEINLINE constexpr bool
+    operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const
+    {
+        bool Result{contains_if_fn{}(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj))};
+        check(Result)
+        return Result;
+    }
+    template<input_range TRange, typename TProj = algo::identity,
+         std::indirect_unary_predicate<std::projected<iterator_t<TRange>, TProj>> TPred>
+    NODISCARD FORCEINLINE constexpr bool
+    operator()(TRange&& Range, TPred&& Pred, TProj Proj = {}) const
+    {
+        return (*this)(algo::begin(Range), algo::end(Range), std::forward<TPred>(Pred), std::move(Proj));
+    }
+};
+
+struct contains_if_asserted_fn final
+{
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = algo::identity,
+         std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
+    NODISCARD FORCEINLINE constexpr bool
+    operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const
+    {
+        bool Result{contains_if_fn{}(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj))};
+        jassert(Result)
+        return Result;
+    }
+    template<input_range TRange, typename TProj = algo::identity,
          std::indirect_unary_predicate<std::projected<iterator_t<TRange>, TProj>> TPred>
     NODISCARD FORCEINLINE constexpr bool
     operator()(TRange&& Range, TPred&& Pred, TProj Proj = {}) const
@@ -211,6 +250,45 @@ struct find_checked_fn final
     }
 };
 
+struct find_if_checked_fn final
+{
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = identity
+        , std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
+    FORCEINLINE constexpr TIter
+    operator()(TIter Begin, TSent Sent, TPred Pred, TProj Proj = {}) const
+    {
+        auto Result{find_if(Begin, Sent, std::move(Pred), std::move(Proj))};
+        check(Result != Sent)
+        return Result;
+    }
+    template<input_range TRange, typename TProj = identity
+        , std::indirect_unary_predicate<std::projected<iterator_t<TRange>, TProj>> TPred>
+    FORCEINLINE constexpr borrowed_iterator_t<TRange>
+    operator()(TRange&& Range, TPred Pred, TProj Proj = {}) const
+    {
+        return (*this)(begin(Range), end(Range), std::move(Pred), std::move(Proj));
+    }
+};
+
+struct find_if_asserted_fn final
+{
+    template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = identity
+        , std::indirect_unary_predicate<std::projected<TIter, TProj>> TPred>
+    FORCEINLINE constexpr TIter
+    operator()(TIter Begin, TSent Sent, TPred Pred, TProj Proj = {}) const
+    {
+        auto Result{find_if(Begin, Sent, std::move(Pred), std::move(Proj))};
+        jassert(Result != Sent)
+        return Result;
+    }
+    template<input_range TRange, typename TProj = identity
+        , std::indirect_unary_predicate<std::projected<iterator_t<TRange>, TProj>> TPred>
+    FORCEINLINE constexpr borrowed_iterator_t<TRange>
+    operator()(TRange&& Range, TPred Pred, TProj Proj = {}) const
+    {
+        return (*this)(begin(Range), end(Range), std::move(Pred), std::move(Proj));
+    }
+};
 struct find_pointer_fn final
 {
     template<std::input_iterator _Iter, std::sentinel_for<_Iter> _Sent, typename _Proj = algo::identity, typename _Tp JAFG_RANGE_VAL_T(_Iter, _Proj)>
@@ -482,8 +560,11 @@ inline constexpr detail::distance_to_fn distance_to{};
 inline constexpr detail::valid_index_fn valid_index{};
 
 inline constexpr detail::contains_if_fn contains_if{};
-
+inline constexpr detail::contains_if_checked_fn contains_checked_if{};
+inline constexpr detail::contains_if_asserted_fn contains_asserted_if{};
 inline constexpr detail::find_checked_fn find_checked{};
+inline constexpr detail::find_if_checked_fn find_if_checked{};
+inline constexpr detail::find_if_asserted_fn find_if_asserted{};
 //# Get a pointer to the found element or nullptr.
 inline constexpr detail::find_pointer_fn find_pointer{};
 inline constexpr detail::find_pointer_checked_fn find_pointer_checked{};

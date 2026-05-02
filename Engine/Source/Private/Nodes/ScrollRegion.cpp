@@ -172,62 +172,34 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
 
 Jafg::LNodeReply Jafg::WScrollRegion::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {
-    if (this->CanChildrenBeHitTestable() == false)
-    {
-        return WNode::SweepFocus(Info, Location);
-    }
-
-    if (this->AabbTest(Info, Location))
+    if (this->CanChildrenBeHitTestable() && this->AabbTest(Info, Location))
     {
         check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-        const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
-        const f32 ScrollOffsetY = this->ScrollPosition.y * maxScrollY;
-        const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
-        const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
-
-        for (auto& Child : this->GetChildren())
-        {
-            if (Child->ShouldCheckForInputs())
-            {
-                if (auto Reply{Child->SweepFocus(
-                      {.Translation={Info.Translation.x + (-ScrollOffsetX), Info.Translation.y + (-ScrollOffsetY)}}
-                    , Location)}; Reply.IsHandled())
-                {
-                    return Reply;
-                }
-            }
-            continue;
-        }
+        const f32 maxScrollY{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)};
+        const f32 ScrollOffsetY{this->ScrollPosition.y * maxScrollY};
+        const f32 maxScrollX{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f)};
+        const f32 ScrollOffsetX{this->ScrollPosition.x * maxScrollX};
+        return Super::SweepFocus({
+            .Translation=Info.Translation,
+            .ChildTranslationHint=LVec2F{-ScrollOffsetX, -ScrollOffsetY} + Info.ChildTranslationHint,
+            }, Location);
     }
-    return WNode::SweepFocus(Info, Location);
+    return Super::SweepFocus(Info, Location);
 }
 
 Jafg::LNodeReply Jafg::WScrollRegion::Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location)
 {
-    // TODO: Fix this!!!
-    if (Location.has_value() && this->CanChildrenBeHitTestable())
+    if (Location.has_value() && this->CanChildrenBeHitTestable() && this->AabbTest(Info, *Location))
     {
-        if (this->AabbTest(Info, *Location))
-        {
-            check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-            const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
-            const f32 ScrollOffsetY = this->ScrollPosition.y * maxScrollY;
-            const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
-            const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
-            for (auto& Child : this->GetChildren())
-            {
-                if (Child->ShouldCheckForInputs())
-                {
-                    if (auto Reply{Child->Sweep(
-                          {.Translation={Info.Translation.x + (-ScrollOffsetX), Info.Translation.y + (-ScrollOffsetY)}}
-                        , Location)}; Reply.IsHandled())
-                    {
-                        return Reply;
-                    }
-                }
-                continue;
-            }
-        }
+        check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
+        const f32 maxScrollY{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)};
+        const f32 ScrollOffsetY{this->ScrollPosition.y * maxScrollY};
+        const f32 maxScrollX{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f)};
+        const f32 ScrollOffsetX{this->ScrollPosition.x * maxScrollX};
+        return Super::Sweep({
+            .Translation=Info.Translation,
+            .ChildTranslationHint=LVec2F{-ScrollOffsetX, -ScrollOffsetY} + Info.ChildTranslationHint,
+            }, Location);
     }
     return Super::Sweep(Info, Location);
 }

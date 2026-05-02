@@ -47,7 +47,7 @@
 
 //#
 //# We cannot concat :: in GCC, because it is too strict for that kind of operation and actually thinks that :: is a
-//# fucking operator. In the goodlike MSVC world, we can do that without any problems. Why tf.
+//# fucking operator. In the godlike MSVC world, we can do that without any problems. Why tf.
 //#
 #define JAFG_JOIN_SCOPE_RESOLUTION_INNER_TWO(   A, B                      ) A::B
 #define JAFG_JOIN_SCOPE_RESOLUTION_INNER_THREE( A, B, C                   ) A::B::C
