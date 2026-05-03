@@ -92,14 +92,20 @@ void Jafg::WTextButton::UpdateDesiredSize() const
 
     if (this->LeftIcon.get() && this->LeftIconBrush.Scale > 0.0f)
     {
-        f32 Width{static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale)};
+        f32 Width{maths::max(
+              static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale)
+            , this->LeftIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
+            )};
         LVec2F Size{Width + this->LeftIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
         this->SetTextDrawOffset(Size);
     }
     if (this->RightIcon.get() && this->RightIconBrush.Scale > 0.0f)
     {
-        f32 Width{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)};
+        f32 Width{maths::max(
+              static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)
+            , this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
+            )};
         LVec2F Size{Width + this->RightIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
     }
@@ -372,18 +378,51 @@ LVec2F Jafg::WTextButton::GetLeftIconTopLeft(LVec2F Translation) const noexcept
 {
     check(this->LeftIcon.get())
     f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport()).y)};
+
+    f32 Offset{};
+    if (this->LeftIconBrush.Scale > 0)
+    {
+        f32 IconSize{static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale)};
+        f32 Playroom{maths::max(this->LeftIconBrush.MinIconSize.InStaticPoints(this->GetViewport()) - IconSize, 0.0f)};
+        switch (this->LeftIconBrush.Alignment)
+        {
+        case LTextButtonIconBrush::Align::Left: { break; }
+        case LTextButtonIconBrush::Align::Center: { Offset = maths::floor(Playroom * 0.5f); break; }
+        case LTextButtonIconBrush::Align::Right: { Offset = maths::floor(Playroom); break; }
+        }
+    }
+
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
         + this->Brush.Padding.GetTopLeftOffset().InStaticPoints(this->GetViewport())
-        + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)) * 0.5f};
+        + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)) * 0.5f};
 }
 
 LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
 {
     check(this->RightIcon.get())
     f32 TotalHeight{(this->GetAnchoredSize_v2().y - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport()).y)};
+
+    f32 Offset{};
+    if (this->RightIconBrush.Scale > 0)
+    {
+        f32 IconSize{static_cast<f32>(this->LeftIcon->GetExtent().Width * this->RightIconBrush.Scale)};
+        f32 Playroom{maths::max(this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport()) - IconSize, 0.0f)};
+        switch (this->RightIconBrush.Alignment)
+        {
+        case LTextButtonIconBrush::Align::Left: { break; }
+        case LTextButtonIconBrush::Align::Center: { Offset = maths::floor(Playroom * 0.5f); break; }
+        case LTextButtonIconBrush::Align::Right: { Offset = maths::floor(Playroom); break; }
+        }
+    }
+
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
         + LVec2F{this->GetAnchoredSize_v2().x, 0.0f}
         - LVec2F{this->Brush.Padding.GetRightOffset().InStaticPoints(this->GetViewport()), this->Brush.Padding.GetTopOffset().InStaticPoints(this->GetViewport())}
-        - LVec2F{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale), 0.0f}
-        + LVec2F{0.0f, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)) * 0.5f};
+        - LVec2F{maths::max(
+              static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)
+            , this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
+            ), 0.0f}
+        - LVec2F{this->LeftIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f}
+        + LVec2F{this->RightIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f}
+        + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)) * 0.5f};
 }

@@ -13,8 +13,12 @@ struct LFactoryTextButton;
 
 struct LTextButtonIconBrush
 {
+    enum struct Align{ Left, Center, Right, };
+
     u32 Scale{ 1 };
-    LNodeSize1 InwardsPadding{ 6_spt };
+    LNodeSize1 InwardsPadding{ 4_spt };
+    LNodeSize1 MinIconSize{ 20_spt };
+    Align Alignment{ Align::Center };
     LColor Tint{ Colors::White };
 };
 
@@ -165,6 +169,16 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
         NODE_FACTORY_SELF().LeftIconBrush.InwardsPadding = Padding;
         return NODE_FACTORY_RESULT();
     }
+    decltype(auto) LeftIconMinSize(this auto&& Self, LNodeSize1 MinSize) noexcept
+    {
+        NODE_FACTORY_SELF().LeftIconBrush.MinIconSize = MinSize;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) LeftIconAlignment(this auto&& Self, LTextButtonIconBrush::Align Alignment) noexcept
+    {
+        NODE_FACTORY_SELF().LeftIconBrush.Alignment = Alignment;
+        return NODE_FACTORY_RESULT();
+    }
     decltype(auto) LeftIconTint(this auto&& Self, LColor Tint) noexcept
     {
         NODE_FACTORY_SELF().LeftIconBrush.Tint = Tint;
@@ -190,6 +204,16 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
     decltype(auto) RightIconInwardsPadding(this auto&& Self, LNodeSize1 Padding) noexcept
     {
         NODE_FACTORY_SELF().RightIconBrush.InwardsPadding = Padding;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) RightIconMinSize(this auto&& Self, LNodeSize1 MinSize) noexcept
+    {
+        NODE_FACTORY_SELF().RightIconBrush.MinIconSize = MinSize;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) RightIconAlignment(this auto&& Self, LTextButtonIconBrush::Align Alignment) noexcept
+    {
+        NODE_FACTORY_SELF().RightIconBrush.Alignment = Alignment;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) RightIconTint(this auto&& Self, LColor Tint) noexcept
