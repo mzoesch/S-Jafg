@@ -67,6 +67,55 @@ void Jafg::LViewport::DispatchInputs()
 {
     STAT_CYCLE_FUNCTION()
 
+    if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
+    if (auto Key{this->Surface.GetFrontend().GetPhysicalKey(ELogicalKey::P)})
+    {
+        if (this->Surface.HasConsumableKeyState(*Key, ERawInputStateBits::Press))
+        {
+            this->Surface.ConsumeKey(*Key);
+            std::stringstream ss;
+            for (auto* Widget : this->TopLevelWidgets)
+            {
+                auto AppendTree{[](this auto&& Self, std::stringstream& ss, WNode& Node, std::size_t Indent)
+                {
+                    if (!Node.ShouldNowDraw())
+                    {
+                        return;
+                    }
+
+                    // TODO: Again, translation is wrong...
+                    auto Offset{Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+                    auto Size{Node.GetAnchoredSize_v2()};
+                    auto Desired{Node.GetDesiredSize_v2()};
+                    auto Min{Node.MinDesiredSize.InStaticPoints(Node.GetViewport())};
+
+                    ss << std::string(Indent * 2, ' ') << Node.GetNameAsString()
+                        << " ("
+                            << LexToString(Node.GetVisibility()) << " "
+                            << "aabb{" << static_cast<i64>(Offset.x) << "," << static_cast<i64>(Offset.y)
+                                << ", " << static_cast<i64>(Size.x) << "," << static_cast<i64>(Size.y) << "}"
+                            << " desired{" << static_cast<i64>(Desired.x) << "," << static_cast<i64>(Desired.y) << "}"
+                            << " min{" << static_cast<i64>(Min.x) << "," << static_cast<i64>(Min.y) << "}"
+                        << ")\n"
+                        ;
+
+                    if (auto* Parent{Node.As<WParent>()})
+                    {
+                        for (auto& Child : Parent->GetChildren())
+                        {
+                            Self(ss, *Child, Indent + 1);
+                        }
+                    }
+
+                    return;
+                }};
+                check(Widget)
+                AppendTree(ss, *Widget, 0);
+            }
+            LOG_VERBOSE(LogWidgetFramework, "Total number of top level widgets: {}. Tree:\n{}", this->TopLevelWidgets.size(), ss.str())
+        }
+    }
+
     auto& CursorLocation{this->Surface.GetMouseLocation()};
 
     if (CursorLocation.has_value())
@@ -100,7 +149,7 @@ void Jafg::LViewport::DispatchInputs()
         check(this->FocusedWidget.IsValidSlow())
         if (!algo::any_of(this->TopLevelWidgets.rbegin(), this->TopLevelWidgets.rend(), [this](WUserWidget const* Widget)
         {
-            return Widget->IsNodeInVisiblePath(this->FocusedWidget.get());
+            return Widget->IsNodeInVisiblePath(*this->FocusedWidget.get());
         }))
         {
             this->HandleReply({TClassStorage<WNode>{}});

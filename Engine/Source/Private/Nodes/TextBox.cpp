@@ -54,7 +54,7 @@ f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScal
     default: break;
     }
 
-    unreachable()
+    std::unreachable();
 }
 
 } /* ~Namespace <Anonymous> */
@@ -108,12 +108,12 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
         for (auto const& GlyphInfo : this->RenderData.Result.GlyphInfos)
         {
             // TODO: Clamp to pixels? Currently sometimes a little bit blurry.
-            Info.AddInstance(LVisualInstance{
+            Info.AddInstance({
                 .Rect = { {TopLeft.x + GlyphInfo.Rect.x, TopLeft.y + GlyphInfo.Rect.y}, {GlyphInfo.Rect.z, GlyphInfo.Rect.w} },
-                .Tint = this->TextBrush.Tint.Bits,
-                .BackgroundTint = Colors::Transparent.Bits,
+                .Tint = this->TextBrush.Tint,
+                .BackgroundTint = Colors::Transparent,
                 .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = this->TextBrush.OutlineTint.Bits,
+                .OutlineTint = this->TextBrush.OutlineTint,
                 .TexCoordRect = GlyphInfo.TexCoordRect,
                 .OutlineThickness = this->TextBrush.OutlineThickness,
                 .TextureIndex = GlyphInfo.BindlessTextureIndex,

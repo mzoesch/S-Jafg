@@ -26,14 +26,14 @@ struct alignas(16) LVisualInstance final
 {
     LRect2F Rect;
 
-    u32 Tint;
-    u32 BackgroundTint;
+    LColor Tint;
+    LColor BackgroundTint;
     u32 _pad1;
     u32 _pad2;
 
     LVec4F Radii;
 
-    u32 OutlineTint;
+    LColor OutlineTint;
     u32 _pad3;
     u32 _pad4;
     u32 _pad5;

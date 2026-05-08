@@ -16,6 +16,7 @@ struct LTextButtonIconBrush
     enum struct Align{ Left, Center, Right, };
 
     u32 Scale{ 1 };
+    bool bAlwaysPad{};
     LNodeSize1 InwardsPadding{ 4_spt };
     LNodeSize1 MinIconSize{ 20_spt };
     Align Alignment{ Align::Center };

@@ -41,12 +41,12 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
 
     Info.AddInstance({
         .Rect = Rect,
-        .Tint = this->Tint.Bits,
-        .BackgroundTint = this->BackgroundTint.Bits,
+        .Tint = this->Tint,
+        .BackgroundTint = this->BackgroundTint,
         .Radii = this->bClampRadii
             ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
             : this->Radii,
-        .OutlineTint = this->OutlineTint.Bits,
+        .OutlineTint = this->OutlineTint,
         .TexCoordRect = TexCoordRect,
         .OutlineThickness = this->OutlineThickness,
         .TextureIndex = TextureIndex,

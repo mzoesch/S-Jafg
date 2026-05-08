@@ -102,7 +102,7 @@ void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
 
 void Jafg::WNode::RemoveFromParent2()
 {
-    check(this->_IsGarbage() == false)
+    check(!this->_IsGarbage())
 
     if (this->Parent)
     {
@@ -165,7 +165,7 @@ void Jafg::WNode::UpdateAnchoredSize() const
 
     if (this->Parent)
     {
-        this->SetAnchoredSize(this->Parent->GetAnchoredSizeForChild(this));
+        this->SetAnchoredSize(this->Parent->GetAnchoredSizeForChild(*this));
         return;
     }
 
@@ -203,7 +203,7 @@ LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter() const
 
     if (this->Parent)
     {
-        return this->Parent->GetAnchoredTopLeftFromMostOuterForChild(this);
+        return this->Parent->GetAnchoredTopLeftFromMostOuterForChild(*this);
     }
 
     return {
@@ -248,7 +248,13 @@ void Jafg::WNode::_check_Destruct()
 {
     if (this->Parent)
     {
-        jassert(algo::contains(this->Parent->GetChildren(), this, algo::unique_raw{}) == false)
+        jassert(!algo::contains(this->Parent->GetChildren(), this, algo::unique_raw{}))
     }
 }
+
 #endif /* JAFG_DO_CHECKS */
+
+TJxxUnique<Jafg::WNode> Jafg::WNode::RemoveFromTreeImpl() noexcept
+{
+    return this->GetParentChecked()->RemoveChildImpl(*this);
+}

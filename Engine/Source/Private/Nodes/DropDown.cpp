@@ -41,6 +41,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                             .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                             .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
                             .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
+                            .InAllLeftIconBrushes<&LTextButtonIconBrush::bAlwaysPad>(true)
                             .OnKeyUpFocused([Result, OnClose = CreateInfo.OnOptionCloseResult, Action = Node.OnAction](auto&&...)
                             {
                                 check(Result)

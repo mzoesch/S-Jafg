@@ -98,11 +98,6 @@
     #define unimplemented()                     checkNoEntry()
 
     //#
-    //# Do not use std::unreachable but this here as it works directly with the Jafg assertion system.
-    //#
-    #define unreachable()                       checkNoEntry()
-
-    //#
     //# Macro for constexpr functions that cannot be const-evaluated if checks are enabled.
     //#
     #define CONSTEXPR_CHECK
@@ -180,8 +175,6 @@
     #else /* JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
         #define unimplemented()                     static_assert( false, JAFG_FORCED_CODE_PATH_IMPL_TEXT );
     #endif /* !JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
-
-    #define unreachable()                           JAFG_PLATFORM_UNREACHABLE()
 
     #define CONSTEXPR_CHECK                         constexpr
 

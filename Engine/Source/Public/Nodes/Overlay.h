@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Nodes/Parent.h"
+#include "Nodes/Controlflow.h"
 #include "Overlay.generated.h"
 
 namespace Jafg
@@ -24,10 +25,20 @@ protected:
 
 public:
 
-    virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize() const override;
-    virtual LVec2F GetAnchoredSizeForChild(WNode const* DirectChild) const override;
-    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const override;
+    virtual void UpdateDesiredSize() const override
+    {
+        Super::UpdateDesiredSize();
+        this->SetDesiredSizeInSpt(StackedControlFlow.UpdateDesiredSize(*this));
+        return;
+    }
+    virtual LVec2F GetAnchoredSizeForChild(WNode const& DirectChild) const override
+    {
+        return StackedControlFlow.GetAnchoredSizeForChild(*this, DirectChild);
+    }
+    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const& DirectChild) const override
+    {
+        return StackedControlFlow.GetAnchoredTopLeftFromMostOuterForChild(*this, DirectChild);
+    }
 };
 
 } /* ~Namespace Jafg */

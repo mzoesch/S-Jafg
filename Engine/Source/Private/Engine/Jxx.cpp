@@ -186,7 +186,7 @@ void Jafg::Detail::LJxxRecordRegistry::LoadPendingPackages(const LLoadedPluginHa
         }
         else
         {
-            unreachable()
+            std::unreachable();
         }
 
         for (auto const& OtherPackage : this->RegisteredPackages)
@@ -479,7 +479,7 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, EJxxRecordT
     }
     else
     {
-        unreachable()
+        std::unreachable();
     }
 
     return;

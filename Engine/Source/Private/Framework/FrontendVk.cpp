@@ -772,7 +772,7 @@ void Jafg::LFrontendVk::Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture)
         }};
     this->Vk_Device.updateDescriptorSets(Writes, {});
 
-    check(Idx <= std::numeric_limits<u64>::max())
+    check(Idx <= std::numeric_limits<i64>::max())
     Texture->_SetBindlessIndex(static_cast<i64>(Idx));
 
     return;

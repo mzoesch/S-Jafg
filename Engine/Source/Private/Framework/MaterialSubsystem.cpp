@@ -242,7 +242,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
         }
         else
         {
-            unreachable()
+            std::unreachable();
         }
     }
 
@@ -289,7 +289,7 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         }
         else
         {
-            unreachable()
+            std::unreachable();
         }
 
         ++UniqueIdx;
@@ -327,7 +327,7 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
             }
             else
             {
-                unreachable()
+                std::unreachable();
             }
 
             continue;

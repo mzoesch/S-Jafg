@@ -132,7 +132,7 @@ public:
 
 private:
 
-    void ChangeFocusImpl(TClassStorage<WNode> InNode);
+    ENGINE_API void ChangeFocusImpl(TClassStorage<WNode> InNode);
 
     FORCEINLINE constexpr void RecalculateScaleFactor() noexcept { this->ScaleFactor = this->PlatformDpi / this->BaseDpi; }
     void HandleReply(LNodeReply&& Reply);

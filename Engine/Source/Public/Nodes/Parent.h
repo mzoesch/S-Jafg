@@ -19,7 +19,7 @@ class ENGINE_API WParent : public WNode
 {
     GENERATED_CLASS_BODY()
 
-    friend class WUserWidget;
+    friend class WNode;
 
 protected:
 
@@ -66,9 +66,16 @@ public:
         }
         return;
     }
-    virtual bool IsNodeInVisiblePath(WNode const* Node) const override;
-    virtual WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept override;
-    virtual WNode* FindNodeInVisiblePath(TSubclassOf<WNode> Class) noexcept override;
+    virtual bool IsNodeInVisiblePath(WNode const& Node) const override;
+    virtual WNode const* FindNodeInVisiblePathImpl(TSubclassOf<WNode> Class) const noexcept override;
+    virtual WNode* FindNodeInVisiblePathImpl(TSubclassOf<WNode> Class) noexcept override;
+
+    virtual void UpdateDesiredSize() const override;
+    virtual void UpdateAnchoredSize() const override;
+    //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
+    virtual LVec2F GetAnchoredSizeForChild(WNode const& DirectChild) const PURE_VIRTUAL()
+    //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
+    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const& DirectChild) const PURE_VIRTUAL()
 
     FORCEINLINE
     virtual TArray<TJxxUnique<WNode>> const& GetChildren() const noexcept { return this->Children; }
@@ -77,7 +84,7 @@ public:
     //# Called before a child is removed. This methods must not remove the child itself.
     virtual void OnRemoveChildPrepare(WNode& Child) {}
     //# Called after a child is removed.
-    virtual void OnRemoveChildPost(WNode& Child) {}
+    virtual void OnRemoveChildPost(WNode& Child) { check(Child.IsParentValid()) Child._SetParentDangerous(nullptr); }
 
     //#
     //# All nodes except #WUserWidget cannot be removed from their parent without being destroyed.
@@ -90,6 +97,8 @@ public:
     WNode& AddConstructedChild(TJxxUnique<WNode> Child) { return this->AddConstructedChildAt(this->GetChildren().size(), std::move(Child)); }
     WNode& AddConstructedChildAt(std::size_t Index, TJxxUnique<WNode> Child);
     virtual WNode& OnAddChild(std::size_t Index, TJxxUnique<WNode> Child, bool bConstructed);
+
+    std::size_t ReorderChild(WNode& Who, std::size_t Desired);
 
     //# The padding area between the slot and the content it contains.
     LPadding Padding;

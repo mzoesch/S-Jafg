@@ -568,7 +568,7 @@ void Jafg::JShaderSubsystem::RefetchShaders()
                 }
                 else
                 {
-                    unreachable()
+                    std::unreachable();
                 }
             }))
     }

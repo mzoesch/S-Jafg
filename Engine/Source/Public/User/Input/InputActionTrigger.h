@@ -37,7 +37,7 @@ inline LStringView LexToString(EInputActionTriggerBits Bit) noexcept
     case EInputActionTriggerBits::Ongoing: return "Ongoing";
     case EInputActionTriggerBits::Completed: return "Completed";
     }
-    unreachable()
+    std::unreachable();
 }
 inline LString LexToString(EInputActionTriggerFlags Flags) noexcept
 {

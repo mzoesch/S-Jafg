@@ -2,24 +2,24 @@
 
 #pragma once
 
-#include "Nodes/Region.h"
+#include "Nodes/Parent.h"
 #include "Nodes/Controlflow.h"
-#include "HRegion.generated.h"
+#include "HParent.generated.h"
 
 namespace Jafg
 {
 
-struct LFactoryHRegion;
+struct LFactoryHParent;
 
-//# Horizontal region node. Children are stacked next to each other. From left to right.
-DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryHRegion)
-class ENGINE_API WHRegion : public WRegion
+//# Horizontal parent node. Children are stacked next to each other. From left to right.
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryHParent)
+class ENGINE_API WHParent : public WParent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS(WHRegion)
+    DEFAULT_NODE_CONSTRUCTORS(WHParent)
 
 public:
 
@@ -42,9 +42,9 @@ public:
     LNodeSize1 HSpace{};
 };
 
-struct LFactoryHRegion : NODE_FACTORY_PARENT(WHRegion)
+struct LFactoryHParent : NODE_FACTORY_PARENT(WHParent)
 {
-    NODE_FACTORY_BODY(WHRegion)
+    NODE_FACTORY_BODY(WHParent)
 
     FORCEINLINE decltype(auto) HSpace(this auto&& Self, LNodeSize1 HSpace) noexcept
     {

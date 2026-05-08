@@ -2,7 +2,7 @@
 
 #include "Widgets/ClassInspector.h"
 #include "Nodes/ScrollRegion.h"
-#include "Nodes/VRegion.h"
+#include "Nodes/VParent.h"
 #include "Nodes/TextBox.h"
 #include "Nodes/GenericTabInfos.h"
 #include "User/UserPreferences.h"
@@ -16,11 +16,7 @@ void Jafg::WClassInspector::Construct()
     WParent* Container;
     BeginStyling(*this).StaticRoot<WScrollRegion>()
         .Tint(*Prefs.ForegroundColor)
-    [
-        NewStaticNode(WVRegion).SaveTo(&Container)
-            .Anchor(EAnchor::Fill)
-            .SkipBrushDraw(true)
-    ];
+        [NewStaticNode(WVParent).SaveTo(&Container).Anchor(EAnchor::Fill)];
 
     Detail::LRegistryClassPackage const& Package{(*algo::find_if_checked(Detail::GetGlobalCxxRecordRegistry().GetRegisteredPackages(),
         [](auto const& Package) { return Package->IsClass() && Package->AsClass().StaticClass.IsRoot(); }))->AsClass()};

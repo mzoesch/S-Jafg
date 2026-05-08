@@ -226,7 +226,7 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
                 }
                 else
                 {
-                    unreachable()
+                    std::unreachable();
                 }
             }
         }

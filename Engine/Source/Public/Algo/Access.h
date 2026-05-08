@@ -120,13 +120,13 @@ struct distance_to_fn final
 {
     template<std::input_iterator TIter, std::sentinel_for<TIter> TSent, typename TProj = identity, typename T>
         requires std::indirect_binary_predicate<equal_to, std::projected<TIter, TProj>, T const*>
-    NODISCARD FORCEINLINE constexpr bool
+    NODISCARD FORCEINLINE constexpr std::iter_difference_t<TIter>
     operator()(TIter Begin, TSent Sent, T const& Value, TProj Proj = {}) const
     {
         std::iter_difference_t<TIter> N{};
         while (Begin != Sent)
         {
-            if (std::invoke(Proj, *Begin) == Value)
+            if (std::invoke(Proj, *Begin++) == Value)
             {
                 break;
             }
@@ -135,8 +135,8 @@ struct distance_to_fn final
         return N;
     }
     template<input_range TRange, typename TProj = identity, typename T>
-        requires std::indirect_binary_predicate<std::ranges::equal_to, std::projected<std::ranges::iterator_t<TRange>, TProj>, T const*>
-    NODISCARD FORCEINLINE constexpr std::ranges::range_difference_t<TRange>
+        requires std::indirect_binary_predicate<equal_to, std::projected<iterator_t<TRange>, TProj>, T const*>
+    NODISCARD FORCEINLINE constexpr range_difference_t<TRange>
     operator()(TRange&& Range, T const& Value, TProj Proj = {}) const
     {
         return (*this)(begin(Range), end(Range), Value, std::move(Proj));

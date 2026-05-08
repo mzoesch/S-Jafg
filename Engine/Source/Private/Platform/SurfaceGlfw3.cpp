@@ -765,7 +765,7 @@ void Jafg::LSurfaceGlfw3::KeyCallback(i32 Key, i32 Scancode, i32 Action, i32 Mod
     if (Action == GLFW_PRESS) { State = ERawInputStateBits::Press; }
     else if (Action == GLFW_REPEAT) { State = ERawInputStateBits::Repeat; }
     else if (Action == GLFW_RELEASE) { State = ERawInputStateBits::Release; }
-    else { unreachable() }
+    else { std::unreachable(); }
 
     EModFlags ModFlags;
     if (Mods & GLFW_MOD_SHIFT)     { ModFlags |= EModBits::Shift; }
@@ -790,7 +790,7 @@ void Jafg::LSurfaceGlfw3::MouseButtonCallback(i32 Button, i32 Action, i32 Mods)
     if (Action == GLFW_PRESS) { State = ERawInputStateBits::Press; }
     else if (Action == GLFW_REPEAT) { State = ERawInputStateBits::Repeat; }
     else if (Action == GLFW_RELEASE) { State = ERawInputStateBits::Release; }
-    else { unreachable() }
+    else { std::unreachable(); }
 
     EModFlags ModFlags;
     if (Mods & GLFW_MOD_SHIFT)     { ModFlags |= EModBits::Shift; }
@@ -1140,7 +1140,9 @@ std::optional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentMod
         continue;
     }
 
-    LOG_WARNING(LogVulkan, "Preferred swap present mode not found. Using FIFO present mode.")
+    LOG_WARNING(LogVulkan, "Preferred swap present mode [{}] not found. Using FIFO present mode."
+        , vk::to_string(DesiredPresentMode)
+        )
     return vk::PresentModeKHR::eFifo;
 }
 

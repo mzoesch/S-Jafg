@@ -2,7 +2,7 @@
 
 #include "Widgets/Editor.h"
 #include "Nodes/TabOverlay.h"
-#include "Nodes/VRegion.h"
+#include "Nodes/VParent.h"
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
@@ -12,12 +12,20 @@
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
 
+Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
+{
+    check(this->GetChildren().size() == 1)
+    check(this->GetChildren().front()->AsStatic<WVParent>().GetChildren().size() == 1)
+    check(this->GetChildren().front()->AsStatic<WVParent>().GetChildren().front()->IsA<WDropDown>())
+    return this->GetChildren().front()->AsStatic<WParent>();
+}
+
 void Jafg::WEditor::Construct()
 {
     Super::Construct();
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    BeginStyling(*this).StaticRoot<WVRegion>()
+    BeginStyling(*this).StaticRoot<WVParent>()
         .Anchor(EAnchor::Fill)
     [
         NewStaticNode(WDropDown)
@@ -61,18 +69,12 @@ void Jafg::WEditor::Construct()
                     .DisplayName = "Help",
                     },
                 },})
-        +
-        NewStaticNode(WTabOverlayHParent)
-            // .SetInitialState(LInitialHDragRegionState{100_pt,{},100_pt})
-            .Possibilities(*this)
-            .Padding({ENodeSize::StaticPoints, 3.0f, 0.0f, 3.0f, 3.0f})
-            .Tint(*Prefs.BackgroundColor)
-        // [
-        //     // Make a delegate to autoamtically find and create new TabOverlays in case none exist.
-        //       NewEditorOverlay()[WTagInspector::TabCreateInfo()]
-        //     + NewEditorOverlay()[WColorInspector::TabCreateInfo()]
-        // ]
     ];
+
+    auto& Overlay{this->FindNewOverlay()};
+    Overlay.RegisterTab(WTagInspector::TabCreateInfo());
+    Overlay.RegisterTab(WColorInspector::TabCreateInfo());
+    Overlay.RegisterTab(WClassInspector::TabCreateInfo());
 
     // if ( Surface->GetOwnedController())
     // {

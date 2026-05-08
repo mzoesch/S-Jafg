@@ -52,7 +52,7 @@ inline LStringView LexToString(EModBits Bit) noexcept
     case EModBits::CapsLock: return "CapsLock";
     case EModBits::NumLock: return "NumLock";
     }
-    unreachable()
+    std::unreachable();
 }
 inline LString LexToString(EModFlags Flags) noexcept
 {
@@ -89,7 +89,7 @@ inline LStringView LexToString(ELogicalKey Key) noexcept
 #include "User/Input/InputTypesDetail.h"
     default: break;
     }
-    unreachable()
+    std::unreachable();
 }
 
 //#

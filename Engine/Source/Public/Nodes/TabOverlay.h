@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "HDragRegion.h"
 #include "Nodes/Overlay.h"
+#include "Nodes/DragRegion.h"
 #include "Nodes/Switcher.h"
 #include "Nodes/TextButton.h"
 #include "Nodes/GenericTabInfos.h"
@@ -15,10 +15,10 @@ namespace Jafg
 class WUserWidget;
 class WTabOverlay;
 class WTabOverlaySelector;
-class WTabOverlayHParent;
+class WTabOverlayParent;
 struct LTabCreateInfo;
 struct LFactoryTabOverlay;
-struct LFactoryTabOverlayHParent;
+struct LFactoryTabOverlayParent;
 
 struct LTabOverlayPossibilities
 {
@@ -27,12 +27,14 @@ struct LTabOverlayPossibilities
     constexpr explicit LTabOverlayPossibilities(WUserWidget& Owner) : Owner{Owner} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LTabOverlayPossibilities)
 
-    WUserWidget& Owner;
+    virtual WParent& GetOverlayRoot() noexcept = 0;
 
-    WTabOverlay* Selected{};
-    TArray<TReference<WTabOverlay>> Overlays;
+    FORCEINLINE void RegisterOverlay(WTabOverlay& TabOverlay) noexcept;
+    FORCEINLINE void UnregisterOverlay(WTabOverlay& TabOverlay) noexcept;
+    ENGINE_API LFactoryTabOverlay GetNewOverlay();
+    ENGINE_API WTabOverlay& FindNewOverlay();
 
-    void FindNewOverlay();
+    ENGINE_API LFactoryTabOverlayParent GetNewOverlayParent();
 
     ENGINE_API WUserWidget& AddWindow(LTabCreateInfo Info, bool bFocus);
     template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget> && CTabCandidate<TWidget>
@@ -40,6 +42,10 @@ struct LTabOverlayPossibilities
     {
         return *StaticCast<TWidget>(&this->AddWindow(TWidget::TabCreateInfo(), bFocus));
     }
+
+    WUserWidget& Owner;
+    WTabOverlay* Selected{};
+    TArray<TReference<WTabOverlay>> Overlays;
 };
 
 //#
@@ -51,7 +57,7 @@ class ENGINE_API WTabOverlay : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
-    friend WTabOverlayHParent;
+    friend WTabOverlayParent;
     friend LFactoryTabOverlay;
 
 protected:
@@ -62,19 +68,14 @@ public:
 
     typedef std::pair<WTabOverlaySelector*, WUserWidget*> Tab;
 
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
+
     virtual void Construct() override;
     virtual void Destruct() override
     {
         if (this->Possibilities)
         {
-            if (auto It{algo::find(this->Possibilities->Overlays, StaticCast<WTabOverlay>(this), algo::universal_ptr_noop{})}; It != this->Possibilities->Overlays.end())
-            {
-                this->Possibilities->Overlays.erase(It);
-            }
-            else
-            {
-                LOG_WARNING(LogWidgets, "The tab overlay [{}] was not registered in its associated possibilities.", this->GetNameAsString())
-            }
+            this->Possibilities->UnregisterOverlay(*this);
         }
         Super::Destruct();
         return;
@@ -114,8 +115,6 @@ public:
 
     void SetSelectedTab(WTabOverlaySelector& Target);
 
-    bool bKillIfNoChildren{};
-
 private:
 
     void InitializeBoilerplate();
@@ -133,6 +132,41 @@ private:
     TFunction2<void(LFactoryTextButton& Factory)> DefaultSelectorDelegate;
     //# The switcher dictates where the content panels are stored.
     WSwitcher* Switcher{};
+
+    struct StepResult
+    {
+        inline static constexpr f32 Percentage{0.25f};
+        inline static constexpr f32 MaxDistance{300.0f};
+
+        enum EDirection{L,U,R,D,C,};
+        WTabOverlay* Overlay;
+        EDirection Direction;
+
+        template<EDirection Direction> requires (Direction != C)
+        NODISCARD FORCEINLINE static f32 GetMaxDistanceFromEdge(f32 Axis) noexcept
+        {
+            if constexpr (Direction == L || Direction == U)
+            {
+                return maths::min(Axis * Percentage, MaxDistance);
+            }
+            else if constexpr (Direction == R || Direction == D)
+            {
+                return maths::max(Axis * (1.0f - Percentage), Axis - MaxDistance);
+            }
+            else
+            {
+                std::unreachable();
+            }
+        }
+    };
+    bool MouseTabMoveTick(WTabOverlaySelector& Selector);
+    StepResult StepThrough(WParent& Node, LVec2F Location) const noexcept;
+    LDelegateHandle UiTickHandle{ nullptr };
+    std::optional<StepResult> LastStepResult;
+    std::optional<StepResult::EDirection> DrawOption;
+    EModFlags LastMouseFlags{ EModBits::Identity };
+    WBox* TempBox{};
+    std::optional<LVec2F> CachedMoveTabSize;
 };
 
 struct LFactoryTabOverlay : NODE_FACTORY_PARENT(WTabOverlay)
@@ -143,15 +177,7 @@ struct LFactoryTabOverlay : NODE_FACTORY_PARENT(WTabOverlay)
 
     decltype(auto) Possibilities(this auto&& Self, LTabOverlayPossibilities& Possibilities) noexcept
     {
-        check(!algo::contains(Possibilities.Overlays, StaticCast<WTabOverlay>(&Self.GetRawNode()), algo::universal_ptr_noop{}))
-        Possibilities.Overlays.emplace_back(*StaticCast<WTabOverlay>(&Self.GetRawNode()));
         NODE_FACTORY_SELF().Possibilities = &Possibilities;
-        return NODE_FACTORY_RESULT();
-    }
-
-    decltype(auto) KillIfNoChildren(this auto&& Self, bool bValue) noexcept
-    {
-        NODE_FACTORY_SELF().bKillIfNoChildren = bValue;
         return NODE_FACTORY_RESULT();
     }
 
@@ -193,30 +219,37 @@ private:
         this->TextStyle.NormalBrush.Tint = {0x90};
         this->LeftIconStyle.NormalBrush.Tint = {0x90};
         this->RightIconStyle.NormalBrush.Tint = {0x90};
+        this->LeftIconStyle.SetEverywhere<&LTextButtonIconBrush::bAlwaysPad>(true);
         this->LoadRightIcon();
     }
 
     void LoadRightIcon();
 };
 
-//# An optional parent to #WTabOverlays on the horizontal axis.
-DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTabOverlayHParent)
-class ENGINE_API WTabOverlayHParent final : public WHDragRegion
+//# An optional parent to #WTabOverlays.
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTabOverlayParent)
+class ENGINE_API WTabOverlayParent final : public WDragRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS(WTabOverlayHParent)
+    DEFAULT_NODE_CONSTRUCTORS(WTabOverlayParent)
 
 public:
 
-    enum struct EDirection
+#if JAFG_DO_CHECKS
+    virtual void Construct() override
     {
-        Left, Right,
-    };
+        Super::Construct();
+        check(this->Possibilities)
+    }
+#endif /* JAFG_DO_CHECKS */
 
-    void Move(WTabOverlaySelector& Selector, EDirection Direction);
+    virtual void OnRemoveChildPost(WNode& Child) override;
+
+    enum struct EDirection{ Left, Up, Right, Down, };
+    void MoveHere(WTabOverlaySelector& WhoSelector, WTabOverlay& Where, std::optional<EDirection> Direction, bool bDuplicate);
 
     FORCEINLINE void SetPossibilities(LTabOverlayPossibilities& Possibilities) noexcept
     {
@@ -231,14 +264,28 @@ public:
         return this->Possibilities;
     }
 
+    bool bPreventAutoKillOnChildLoss{};
+
 private:
 
     LTabOverlayPossibilities* Possibilities{};
 };
 
-struct LFactoryTabOverlayHParent : NODE_FACTORY_PARENT(WTabOverlayHParent)
+FORCEINLINE LString LexToString(WTabOverlayParent::EDirection Direction) noexcept
 {
-    NODE_FACTORY_BODY(WTabOverlayHParent)
+    switch (Direction)
+    {
+    case WTabOverlayParent::EDirection::Left: { return "Left"; }
+    case WTabOverlayParent::EDirection::Up: { return "Up"; }
+    case WTabOverlayParent::EDirection::Right: { return "Right"; }
+    case WTabOverlayParent::EDirection::Down: { return "Down"; }
+    default: std::unreachable();
+    }
+}
+
+struct LFactoryTabOverlayParent : NODE_FACTORY_PARENT(WTabOverlayParent)
+{
+    NODE_FACTORY_BODY(WTabOverlayParent)
 
     decltype(auto) Possibilities(this auto&& Self, LTabOverlayPossibilities& Possibilities) noexcept
     {
@@ -246,5 +293,20 @@ struct LFactoryTabOverlayHParent : NODE_FACTORY_PARENT(WTabOverlayHParent)
         return NODE_FACTORY_RESULT();
     }
 };
+
+FORCEINLINE void LTabOverlayPossibilities::RegisterOverlay(WTabOverlay& TabOverlay) noexcept
+{
+    check(!algo::contains(this->Overlays, &TabOverlay, algo::universal_ptr_noop{}))
+    this->Overlays.emplace_back(TabOverlay);
+    return;
+}
+
+FORCEINLINE void LTabOverlayPossibilities::UnregisterOverlay(WTabOverlay& TabOverlay) noexcept
+{
+    auto It{algo::find(this->Overlays, &TabOverlay, algo::universal_ptr_noop{})};
+    check(It != this->Overlays.end())
+    this->Overlays.erase(It);
+    return;
+}
 
 } /* ~Namespace Jafg */

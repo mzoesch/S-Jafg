@@ -5,6 +5,7 @@
 #include "Nodes/Viewport.h"
 #include "Nodes/Region.h"
 #include "Nodes/TextButton.h"
+#include "Nodes/VParent.h"
 
 void Jafg::WFloatingWidget::Construct()
 {
@@ -14,8 +15,7 @@ void Jafg::WFloatingWidget::Construct()
     WParent* Container{};
     if (this->bDecorate)
     {
-        BeginStyling(*this).StaticRoot<WVRegion>().SaveTo(&Container)
-            .SkipBrushDraw(true)
+        BeginStyling(*this).StaticRoot<WVParent>().SaveTo(&Container)
             .Anchor(EAnchor::TopLeft)
             .Visibility(ENodeVisibility::IntransitiveHitTestInvisible)
         [

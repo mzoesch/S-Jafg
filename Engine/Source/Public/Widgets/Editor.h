@@ -31,6 +31,10 @@ protected:
 
 public:
 
+    // LTabOverlayPossibilities implementation
+    virtual WParent& GetOverlayRoot() noexcept override;
+    // ~LTabOverlayPossibilities implementation
+
     virtual void Construct() override;
 };
 

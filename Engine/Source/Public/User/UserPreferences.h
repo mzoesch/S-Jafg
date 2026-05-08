@@ -137,6 +137,9 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> DangerColor             { LColor{0x94, 0x33, 0x33} };
 
+    CLASS_FIELD(Config)
+    TPreference<std::size_t> PreferredDragPadding{ 3 };
+
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins
     ///////////////////////////////////////////////////////////////////////////////

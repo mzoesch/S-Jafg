@@ -1,6 +1,10 @@
 *
 !/.gitignore
-
+!/Jafg.ArrowDown.png
+!/Jafg.ArrowLeft.png
+!/Jafg.ArrowRight.png
+!/Jafg.ArrowUp.png
+!/Jafg.Colors.png
 !/Jafg.File.png
 !/Jafg.Preferences.png
 !/Jafg.SmallX.png

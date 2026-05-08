@@ -64,7 +64,7 @@ inline LStringView LexToString(EError Error) noexcept
     {
     case EError::MissingKey:  { return "MissingKey"; }
     case EError::InvalidType: { return "InvalidType"; }
-    default: { unreachable() }
+    default: { std::unreachable(); }
     }
 }
 
@@ -173,7 +173,7 @@ inline bool DoesObjectContainTypeCheckedKeys(json const& Object, TArray<LKeyType
         }
         default:
         {
-            unreachable()
+            std::unreachable();
         }
         }
 
@@ -195,7 +195,7 @@ inline void DefaultFail(auto const& Category, auto const& Key, EError Error)
         LOG_FATAL(LogSerialization, "[{}]: Key [{}] is missing. Failed to load.", Category, Key)
     }
 
-    unreachable()
+    std::unreachable();
 }
 
 } /* ~Namespace Json */

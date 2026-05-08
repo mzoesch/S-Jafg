@@ -602,7 +602,7 @@ inline constexpr bool eq(TVec<L,T,Q> const& a, TVec<L,T,Q> const& b) noexcept
     if constexpr (L == 2) { return maths::eq(a.x, b.x) && maths::eq(a.y, b.y); }
     if constexpr (L == 3) { return maths::eq(a.x, b.x) && maths::eq(a.y, b.y) && maths::eq(a.z, b.z); }
     if constexpr (L == 4) { return maths::eq(a.x, b.x) && maths::eq(a.y, b.y) && maths::eq(a.z, b.z) && maths::eq(a.w, b.w); }
-    unreachable()
+    std::unreachable();
 }
 
 //# If a is equal to zero.
@@ -617,7 +617,7 @@ inline constexpr bool eq_zero(TVec<L,T,Q> const& a) noexcept
     if constexpr (L == 2) { return a.x == 0 && a.y == 0; }
     if constexpr (L == 3) { return a.x == 0 && a.y == 0 && a.z == 0; }
     if constexpr (L == 4) { return a.x == 0 && a.y == 0 && a.z == 0 && a.w == 0; }
-    unreachable()
+    std::unreachable();
 }
 
 //# If a and b are equal under consideration of the tolerance value epsilon.
@@ -639,7 +639,7 @@ inline constexpr bool eq_e(TVec<L,T,Q> const& a, TVec<L,T,Q> const& b, T e = sta
     if constexpr (L == 2) { return maths::eq_e(a.x, b.x, e) && maths::eq_e(a.y, b.y, e); }
     if constexpr (L == 3) { return maths::eq_e(a.x, b.x, e) && maths::eq_e(a.y, b.y, e) && maths::eq_e(a.z, b.z, e); }
     if constexpr (L == 4) { return maths::eq_e(a.x, b.x, e) && maths::eq_e(a.y, b.y, e) && maths::eq_e(a.z, b.z, e) && maths::eq_e(a.w, b.w, e); }
-    unreachable()
+    std::unreachable();
 }
 
 //# If a is equal to zero under consideration of the tolerance value epsilon.
@@ -662,7 +662,7 @@ inline constexpr bool eq_zero_e(TVec<L,T,Q> const& a, T e = static_cast<T>(small
     if constexpr (L == 2) { return maths::abs(a.x) < e && maths::abs(a.y) < e; }
     if constexpr (L == 3) { return maths::abs(a.x) < e && maths::abs(a.y) < e && maths::abs(a.z) < e; }
     if constexpr (L == 4) { return maths::abs(a.x) < e && maths::abs(a.y) < e && maths::abs(a.z) < e && maths::abs(a.w) < e; }
-    unreachable()
+    std::unreachable();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

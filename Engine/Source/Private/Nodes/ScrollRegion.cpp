@@ -103,12 +103,12 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     {
         if (this->BarBrush.VScrollBarBackgroundWidth > 0.0f)
         {
-            Info.AddInstance(LVisualInstance{
+            Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetVBackgroundScrollPositionFromOuter(), this->GetVBackgroundScrollSize()},
-                .Tint = this->BarBrush.VBackgroundTint.Bits,
-                .BackgroundTint = Colors::Black.Bits,
+                .Tint = this->BarBrush.VBackgroundTint,
+                .BackgroundTint = Colors::Black,
                 .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black.Bits,
+                .OutlineTint = Colors::Black,
                 .TexCoordRect = maths::zero_vector<LVec4F>,
                 .OutlineThickness = 0.0f,
                 .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
@@ -118,12 +118,12 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
         }
         if (this->BarBrush.VScrollBarWidth > 0.0f)
         {
-            Info.AddInstance(LVisualInstance{
+            Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetVForegroundScrollPositionFromOuter(ScrollOffsetYPercent), this->GetVForegroundScrollSize()},
-                .Tint = this->BarBrush.VTint.Bits,
-                .BackgroundTint = Colors::Black.Bits,
+                .Tint = this->BarBrush.VTint,
+                .BackgroundTint = Colors::Black,
                 .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black.Bits,
+                .OutlineTint = Colors::Black,
                 .TexCoordRect = maths::zero_vector<LVec4F>,
                 .OutlineThickness = 0.0f,
                 .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
@@ -137,12 +137,12 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     {
         if (this->BarBrush.HScrollBarBackgroundHeight > 0.0f)
         {
-            Info.AddInstance(LVisualInstance{
+            Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetHBackgroundScrollPositionFromOuter(), this->GetHBackgroundScrollSize()},
-                .Tint = this->BarBrush.HBackgroundTint.Bits,
-                .BackgroundTint = Colors::Black.Bits,
+                .Tint = this->BarBrush.HBackgroundTint,
+                .BackgroundTint = Colors::Black,
                 .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black.Bits,
+                .OutlineTint = Colors::Black,
                 .TexCoordRect = maths::zero_vector<LVec4F>,
                 .OutlineThickness = 0.0f,
                 .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
@@ -152,12 +152,12 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
         }
         if (this->BarBrush.HScrollBarHeight > 0.0f)
         {
-            Info.AddInstance(LVisualInstance{
+            Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetHForegroundScrollPositionFromOuter(ScrollOffsetXPercent), this->GetHForegroundScrollSize()},
-                .Tint = this->BarBrush.HTint.Bits,
-                .BackgroundTint = Colors::Black.Bits,
+                .Tint = this->BarBrush.HTint,
+                .BackgroundTint = Colors::Black,
                 .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black.Bits,
+                .OutlineTint = Colors::Black,
                 .TexCoordRect = maths::zero_vector<LVec4F>,
                 .OutlineThickness = 0.0f,
                 .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,

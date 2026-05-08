@@ -31,7 +31,7 @@ inline LStringView LexToString(ERawInputStateBits Bits) noexcept
     case ERawInputStateBits::Repeat:   return "Repeat";
     case ERawInputStateBits::Release:  return "Release";
     }
-    unreachable()
+    std::unreachable();
 }
 inline LString LexToString(ERawInputStateFlags Flags) noexcept
 {

@@ -799,7 +799,13 @@ public:
     //#
     //# Called when this widget is being destructed. This method replaces the #EndLife super method.
     //#
-    inline virtual void Destruct();
+    inline virtual void Destruct()
+    {
+        check(Tasks::IsOnMasterThread())
+        checkCode(_check_Destruct())
+        this->_ResetFocusState();
+        this->Parent = nullptr;
+    }
 
     //#
     //# The paint function for a widget. Only called if the widget is visible and paintable.
@@ -822,6 +828,9 @@ public:
 
     //# Sweep this node and all its children from bottom to top for focus.
     FORCEINLINE virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location);
+    //# Public internal method for jafg. Do not use.
+    FORCEINLINE void _ResetFocusState() noexcept;
+
     //# A non bubbled event that is called when a node receives a focus.
     virtual void OnFocusReceived()
     {
@@ -988,6 +997,16 @@ public:
 
     //# Mark this node and alls its children as garbage and remove them, from their parent.
     virtual void RemoveFromParent2();
+    //# Removes this node from the node tree, so that it can be reparented.
+    NODISCARD FORCEINLINE auto RemoveFromTree(this auto&& Self) noexcept
+    {
+        auto Up{Self.RemoveFromTreeImpl()};
+        auto Result{TJxxUnique<std::remove_cvref_t<decltype(Self)>>{
+            StaticCast<std::remove_cvref_t<decltype(Self)>>(Up.get())
+            }};
+        Up.release();
+        return Result;
+    }
 
     FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
     FORCEINLINE WParent* GetParent() { return this->Parent; }
@@ -1021,23 +1040,9 @@ public:
     //# Searches for a node in this widget tree. Only searches nodes that are drawn.
     //# @return True if the target node exists in this widget tree and is visible.
     //#
-    NODISCARD virtual bool IsNodeInVisiblePath(WNode const* Node) const { return this == Node && this->ShouldNowDraw(); }
-    NODISCARD virtual inline WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept
-    {
-        if (this->ShouldNowDraw() && this->IsA(Class))
-        {
-            return this;
-        }
-        return nullptr;
-    }
-    NODISCARD virtual inline WNode* FindNodeInVisiblePath(TSubclassOf<WNode> Class) noexcept
-    {
-        if (this->ShouldNowDraw() && this->IsA(Class))
-        {
-            return this;
-        }
-        return nullptr;
-    }
+    NODISCARD virtual bool IsNodeInVisiblePath(WNode const& Node) const { return this == &Node && this->ShouldNowDraw(); }
+    NODISCARD inline WNode const* FindNodeInVisiblePath(TSubclassOf<WNode> Class) const noexcept { return this->FindNodeInVisiblePathImpl(Class); }
+    NODISCARD inline WNode* FindNodeInVisiblePath(TSubclassOf<WNode> Class) noexcept { return this->FindNodeInVisiblePathImpl(Class); }
     NODISCARD FORCEINLINE WNode const* FindNodeInVisiblePathChecked(TSubclassOf<WNode> Class) const
     {
         auto const* Result{this->FindNodeInVisiblePath(Class)};
@@ -1074,6 +1079,22 @@ public:
         check(Result)
         return Result;
     }
+    NODISCARD virtual inline WNode const* FindNodeInVisiblePathImpl(TSubclassOf<WNode> Class) const noexcept
+    {
+        if (this->ShouldNowDraw() && this->IsA(Class))
+        {
+            return this;
+        }
+        return nullptr;
+    }
+    NODISCARD virtual inline WNode* FindNodeInVisiblePathImpl(TSubclassOf<WNode> Class) noexcept
+    {
+        if (this->ShouldNowDraw() && this->IsA(Class))
+        {
+            return this;
+        }
+        return nullptr;
+    }
 
     FORCEINLINE constexpr LViewport& GetViewport() noexcept { return this->AttachedViewport; }
     FORCEINLINE constexpr LViewport const& GetViewport() const noexcept { return this->AttachedViewport; }
@@ -1097,8 +1118,6 @@ public:
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSize() const;
-    //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
-    virtual LVec2F GetAnchoredSizeForChild(WNode const* DirectChild) const PURE_VIRTUAL()
     void SetAnchoredSize(LVec2F const& Size) const noexcept;
     FORCEINLINE LVec2F const& GetAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
     FORCEINLINE LVec2F CopyAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
@@ -1108,8 +1127,6 @@ public:
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
     virtual LVec2F GetAnchoredTopLeftFromMostOuter() const;
     LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const;
-    //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
-    virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const* DirectChild) const PURE_VIRTUAL()
 
     std::optional<LMargin> GetMargin() const noexcept;
     FORCEINLINE std::optional<LMargin> GetMarginChecked() const noexcept { std::optional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
@@ -1131,6 +1148,8 @@ public:
 #endif /* JAFG_DO_CHECKS */
 
 private:
+
+    NODISCARD TJxxUnique<WNode> RemoveFromTreeImpl() noexcept;
 
 #if JAFG_DO_CHECKS
     bool _check_bFocused{};
@@ -1265,27 +1284,21 @@ inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
 {
 }
 
-FORCEINLINE void WNode::Destruct()
-{
-    check(Tasks::IsOnMasterThread())
-    checkCode(_check_Destruct())
-
-    if ((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
-    {
-        this->AttachedViewport.ChangeFocusImpl({});
-        check((this->NodeState & ENodeStateBits::Focused) == ENodeStateBits::Identity)
-    }
-
-    this->Parent = nullptr;
-
-    return;
-}
-
 FORCEINLINE LNodeReply WNode::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {
     if (!this->IsHitTestable()) { return {}; }
     if (!this->AabbTest(Info, Location)) { return {}; }
     if (this->GetViewport().GetFocusedWidget() == this) { return LNodeReply::Handled(false); } return LNodeReply{TClassStorage{this}, false};
+}
+
+FORCEINLINE void WNode::_ResetFocusState() noexcept
+{
+    if ((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+    {
+        this->AttachedViewport.ChangeFocusImpl({});
+        check((this->NodeState & ENodeStateBits::Focused) == ENodeStateBits::Identity)
+    }
+    return;
 }
 
 NODISCARD FORCEINLINE constexpr bool WNode::IsFocusWidget() const noexcept

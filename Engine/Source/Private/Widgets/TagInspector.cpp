@@ -2,7 +2,7 @@
 
 #include "Widgets/TagInspector.h"
 #include "Nodes/ScrollRegion.h"
-#include "Nodes/VRegion.h"
+#include "Nodes/VParent.h"
 #include "Nodes/TextBox.h"
 #include "Nodes/GenericTabInfos.h"
 #include "User/UserPreferences.h"
@@ -16,11 +16,7 @@ void Jafg::WTagInspector::Construct()
     WParent* Container;
     BeginStyling(*this).StaticRoot<WScrollRegion>()
         .Tint(*Prefs.ForegroundColor)
-    [
-        NewStaticNode(WVRegion).SaveTo(&Container)
-            .Anchor(EAnchor::Fill)
-            .SkipBrushDraw(true)
-    ];
+        [NewStaticNode(WVParent).SaveTo(&Container).Anchor(EAnchor::Fill)];
 
     u32 Width{Detail::GetJxxTagRegistry().GetAllocator().empty()
         ? 1

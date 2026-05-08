@@ -47,13 +47,13 @@ void Jafg::WTextButton::Draw(LNodeRenderInfo const& Info) const
             this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->LeftIcon);
             check(this->LeftIcon->IsBindless())
         }
-        Info.AddInstance(LVisualInstance{
+        Info.AddInstance({
             .Rect = {maths::round(this->GetLeftIconTopLeft(Info.Translation)),
                      this->LeftIcon->GetExtentAsVec2F() * static_cast<f32>(this->LeftIconBrush.Scale)},
-            .Tint = this->LeftIconBrush.Tint.Bits,
-            .BackgroundTint = Colors::Black.Bits,
+            .Tint = this->LeftIconBrush.Tint,
+            .BackgroundTint = Colors::Black,
             .Radii = maths::zero_vector<LVec4F>,
-            .OutlineTint = Colors::Transparent.Bits,
+            .OutlineTint = Colors::Transparent,
             .TexCoordRect = {0.0f, 0.0f, 1.0f, 1.0f},
             .OutlineThickness = 0.0f,
             .TextureIndex = this->LeftIcon->GetBindlessIndex(),
@@ -68,13 +68,13 @@ void Jafg::WTextButton::Draw(LNodeRenderInfo const& Info) const
             this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->RightIcon);
             check(this->RightIcon->IsBindless())
         }
-        Info.AddInstance(LVisualInstance{
+        Info.AddInstance({
             .Rect = {maths::round(this->GetRightIconTopLeft(Info.Translation)),
                      this->RightIcon->GetExtentAsVec2F() * static_cast<f32>(this->RightIconBrush.Scale)},
-            .Tint = this->RightIconBrush.Tint.Bits,
-            .BackgroundTint = Colors::Black.Bits,
+            .Tint = this->RightIconBrush.Tint,
+            .BackgroundTint = Colors::Black,
             .Radii = maths::zero_vector<LVec4F>,
-            .OutlineTint = Colors::Transparent.Bits,
+            .OutlineTint = Colors::Transparent,
             .TexCoordRect = {0.0f, 0.0f, 1.0f, 1.0f},
             .OutlineThickness = 0.0f,
             .TextureIndex = this->RightIcon->GetBindlessIndex(),
@@ -90,23 +90,31 @@ void Jafg::WTextButton::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
 
-    if (this->LeftIcon.get() && this->LeftIconBrush.Scale > 0.0f)
+    auto GetSize{[this](LTexture2Ref const& Ref, LTextButtonIconBrush const& Brush)
     {
-        f32 Width{maths::max(
-              static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale)
-            , this->LeftIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
-            )};
-        LVec2F Size{Width + this->LeftIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
+        if (Ref.get() && Brush.Scale > 0.0f)
+        {
+            f32 Width{maths::max(
+                static_cast<f32>(Ref->GetExtent().Width * Brush.Scale)
+                , Brush.MinIconSize.InStaticPoints(this->GetViewport())
+                )};
+            return LVec2F{Width + Brush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
+        }
+        if (Brush.bAlwaysPad)
+        {
+            return LVec2F{Brush.MinIconSize.InStaticPoints(this->GetViewport()) + Brush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
+        }
+        return maths::zero_vector<LVec2F>;
+    }};
+
+    {
+        LVec2F Size{GetSize(this->LeftIcon, this->LeftIconBrush)};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
         this->SetTextDrawOffset(Size);
     }
-    if (this->RightIcon.get() && this->RightIconBrush.Scale > 0.0f)
+
     {
-        f32 Width{maths::max(
-              static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)
-            , this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
-            )};
-        LVec2F Size{Width + this->RightIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
+        LVec2F Size{GetSize(this->RightIcon, this->RightIconBrush)};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
     }
 
@@ -405,7 +413,7 @@ LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
     f32 Offset{};
     if (this->RightIconBrush.Scale > 0)
     {
-        f32 IconSize{static_cast<f32>(this->LeftIcon->GetExtent().Width * this->RightIconBrush.Scale)};
+        f32 IconSize{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)};
         f32 Playroom{maths::max(this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport()) - IconSize, 0.0f)};
         switch (this->RightIconBrush.Alignment)
         {
@@ -422,7 +430,5 @@ LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
               static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)
             , this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
             ), 0.0f}
-        - LVec2F{this->LeftIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f}
-        + LVec2F{this->RightIconBrush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f}
         + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)) * 0.5f};
 }

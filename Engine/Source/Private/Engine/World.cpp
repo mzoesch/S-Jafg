@@ -268,7 +268,7 @@ void Jafg::LWorld::Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const
     }
     else
     {
-        unreachable()
+        std::unreachable();
     }
 
     auto& WorldData{ActorInfo.WorldData};

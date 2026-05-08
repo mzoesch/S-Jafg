@@ -2,24 +2,24 @@
 
 #pragma once
 
-#include "Nodes/Region.h"
+#include "Nodes/Parent.h"
 #include "Nodes/Controlflow.h"
-#include "VRegion.generated.h"
+#include "VParent.generated.h"
 
 namespace Jafg
 {
 
-struct LFactoryVRegion;
+struct LFactoryVParent;
 
-//# Vertical region node. Children are stacked underneath each other. From top to bottom.
-DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryVRegion)
-class ENGINE_API WVRegion : public WRegion
+//# Vertical parent node. Children are stacked underneath to each other. From top to bottom.
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryVParent)
+class ENGINE_API WVParent : public WParent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS(WVRegion)
+    DEFAULT_NODE_CONSTRUCTORS(WVParent)
 
 public:
 
@@ -39,14 +39,14 @@ public:
     }
 
     //# Vertical space between children.
-    LNodeSize1 VSpace;
+    LNodeSize1 VSpace{};
 };
 
-struct LFactoryVRegion : NODE_FACTORY_PARENT(WVRegion)
+struct LFactoryVParent : NODE_FACTORY_PARENT(WVParent)
 {
-    NODE_FACTORY_BODY(WVRegion)
+    NODE_FACTORY_BODY(WVParent)
 
-    decltype(auto) VSpace(this auto&& Self, LNodeSize1 VSpace) noexcept
+    FORCEINLINE decltype(auto) VSpace(this auto&& Self, LNodeSize1 VSpace) noexcept
     {
         NODE_FACTORY_SELF().VSpace = VSpace;
         return NODE_FACTORY_RESULT();
