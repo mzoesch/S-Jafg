@@ -95,7 +95,7 @@ void Jafg::WTextButton::UpdateDesiredSize() const
         if (Ref.get() && Brush.Scale > 0.0f)
         {
             f32 Width{maths::max(
-                static_cast<f32>(Ref->GetExtent().Width * Brush.Scale)
+                static_cast<f32>(Ref->GetExtent().width * Brush.Scale)
                 , Brush.MinIconSize.InStaticPoints(this->GetViewport())
                 )};
             return LVec2F{Width + Brush.InwardsPadding.InStaticPoints(this->GetViewport()), 0.0f};
@@ -147,8 +147,8 @@ Jafg::LNodeReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
             // TODO: Fix translation.
             .Offset = this->GetLeftIconTopLeft(maths::zero_vector<LVec2F>),
             .Extent = {
-                static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale),
-                static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)
+                static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale),
+                static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)
                 },
             }, InLocation))
         {
@@ -186,8 +186,8 @@ Jafg::LNodeReply Jafg::WTextButton::OnCursorMoved(LVec2F const& InLocation)
             // TODO: Fix translation.
             .Offset = this->GetRightIconTopLeft(maths::zero_vector<LVec2F>),
             .Extent = {
-                static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale),
-                static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)
+                static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale),
+                static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)
                 },
             }, InLocation))
         {
@@ -253,8 +253,8 @@ Jafg::LNodeReply Jafg::WTextButton::OnKeyDownFocused(LNodeKeyEventInfo const& In
             if (this->DecoupledLeftKeyDown && maths::aabb_point({
                 .Offset = this->GetLeftIconTopLeft(Info.Translation),
                 .Extent = {
-                    static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale),
-                    static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)
+                    static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale),
+                    static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
@@ -266,8 +266,8 @@ Jafg::LNodeReply Jafg::WTextButton::OnKeyDownFocused(LNodeKeyEventInfo const& In
             else if (this->DecoupledRightKeyDown && maths::aabb_point({
                 .Offset = this->GetRightIconTopLeft(Info.Translation),
                 .Extent = {
-                    static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale),
-                    static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)
+                    static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale),
+                    static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
@@ -301,8 +301,8 @@ Jafg::LNodeReply Jafg::WTextButton::OnKeyUpFocused(LNodeKeyEventInfo const& Info
             if (this->DecoupledLeftKeyUp && maths::aabb_point({
                 .Offset = this->GetLeftIconTopLeft(Info.Translation),
                 .Extent = {
-                    static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale),
-                    static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)
+                    static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale),
+                    static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
@@ -314,8 +314,8 @@ Jafg::LNodeReply Jafg::WTextButton::OnKeyUpFocused(LNodeKeyEventInfo const& Info
             else if (this->DecoupledRightKeyUp && maths::aabb_point({
                 .Offset = this->GetRightIconTopLeft(Info.Translation),
                 .Extent = {
-                    static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale),
-                    static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)
+                    static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale),
+                    static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)
                     },
                 }, Surface.GetMouseLocationValue()))
             {
@@ -390,7 +390,7 @@ LVec2F Jafg::WTextButton::GetLeftIconTopLeft(LVec2F Translation) const noexcept
     f32 Offset{};
     if (this->LeftIconBrush.Scale > 0)
     {
-        f32 IconSize{static_cast<f32>(this->LeftIcon->GetExtent().Width * this->LeftIconBrush.Scale)};
+        f32 IconSize{static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale)};
         f32 Playroom{maths::max(this->LeftIconBrush.MinIconSize.InStaticPoints(this->GetViewport()) - IconSize, 0.0f)};
         switch (this->LeftIconBrush.Alignment)
         {
@@ -402,7 +402,7 @@ LVec2F Jafg::WTextButton::GetLeftIconTopLeft(LVec2F Translation) const noexcept
 
     return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
         + this->Brush.Padding.GetTopLeftOffset().InStaticPoints(this->GetViewport())
-        + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->LeftIcon->GetExtent().Height * this->LeftIconBrush.Scale)) * 0.5f};
+        + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)) * 0.5f};
 }
 
 LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
@@ -413,7 +413,7 @@ LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
     f32 Offset{};
     if (this->RightIconBrush.Scale > 0)
     {
-        f32 IconSize{static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)};
+        f32 IconSize{static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale)};
         f32 Playroom{maths::max(this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport()) - IconSize, 0.0f)};
         switch (this->RightIconBrush.Alignment)
         {
@@ -427,8 +427,8 @@ LVec2F Jafg::WTextButton::GetRightIconTopLeft(LVec2F Translation) const noexcept
         + LVec2F{this->GetAnchoredSize_v2().x, 0.0f}
         - LVec2F{this->Brush.Padding.GetRightOffset().InStaticPoints(this->GetViewport()), this->Brush.Padding.GetTopOffset().InStaticPoints(this->GetViewport())}
         - LVec2F{maths::max(
-              static_cast<f32>(this->RightIcon->GetExtent().Width * this->RightIconBrush.Scale)
+              static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale)
             , this->RightIconBrush.MinIconSize.InStaticPoints(this->GetViewport())
             ), 0.0f}
-        + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().Height * this->RightIconBrush.Scale)) * 0.5f};
+        + LVec2F{Offset, (TotalHeight - static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)) * 0.5f};
 }

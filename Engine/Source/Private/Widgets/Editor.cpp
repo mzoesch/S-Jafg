@@ -11,6 +11,7 @@
 #include "Widgets/TagInspector.h"
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
+#include "Widgets/WorldViewer.h"
 
 Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
 {
@@ -49,6 +50,10 @@ void Jafg::WEditor::Construct()
                     .DisplayName = "View",
                     .Children = {
                         LDropDownNodeOption{
+                            .Selector = WWorldViewer::TabSelectorCreateInfo(),
+                            .OnAction = [this]{ this->AddWindow<WWorldViewer>(true); return algo::reply::unhandled(); },
+                            },
+                        LDropDownNodeOption{
                             .Selector = WTagInspector::TabSelectorCreateInfo(),
                             .OnAction = [this]{ this->AddWindow<WTagInspector>(true); return algo::reply::unhandled(); },
                             },
@@ -71,10 +76,19 @@ void Jafg::WEditor::Construct()
                 },})
     ];
 
-    auto& Overlay{this->FindNewOverlay()};
-    Overlay.RegisterTab(WTagInspector::TabCreateInfo());
-    Overlay.RegisterTab(WColorInspector::TabCreateInfo());
-    Overlay.RegisterTab(WClassInspector::TabCreateInfo());
+    {
+        auto& Overlay{this->FindNewOverlay()};
+        Overlay.RegisterTab(WClassInspector::TabCreateInfo());
+    }
+    {
+        auto& Overlay{this->FindNewOverlay()};
+        Overlay.RegisterTab(WWorldViewer::TabCreateInfo());
+    }
+    {
+        auto& Overlay{this->FindNewOverlay()};
+        Overlay.RegisterTab(WTagInspector::TabCreateInfo());
+        Overlay.RegisterTab(WColorInspector::TabCreateInfo());
+    }
 
     // if ( Surface->GetOwnedController())
     // {

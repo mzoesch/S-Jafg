@@ -28,7 +28,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, LTexture2Extent Extent, HostInfo Info)
+Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info)
 {
     check(HumanReadableName.empty() == false)
 
@@ -109,7 +109,7 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
             )
     }
 
-    this->Meta.Extent = LTexture2Extent{static_cast<LTexture2Extent::value_type>(StbiExtent.x), static_cast<LTexture2Extent::value_type>(StbiExtent.y)};
+    this->Meta.Extent = rhi::extent2{static_cast<rhi::extent2::domain_type>(StbiExtent.x), static_cast<rhi::extent2::domain_type>(StbiExtent.y)};
     this->MipMap0.Serialize(Data, static_cast<std::size_t>(StbiExtent.x * StbiExtent.y) * this->GetBytesPerPixel());
 
     ::stbi_image_free(Data);
@@ -158,7 +158,7 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
     this->Meta.Samples = Frontend.Vk_GetMaxMsaaSampleCount();
     if (Info.Samples.has_value())
     {
-        if (auto PreferredSampleCount{Vk_GetMaxMsaaSamples(Info.Samples.value())}; PreferredSampleCount > Frontend.Vk_GetMaxMsaaSampleCount())
+        if (auto PreferredSampleCount{rhi::vk_get_max_msaa_sample(Info.Samples.value())}; PreferredSampleCount > Frontend.Vk_GetMaxMsaaSampleCount())
         {
             LOG_WARNING(LogRhi, "Requested MSAA samples [{}] for texture2 [{}] exceeds device capabilities. Clamping to maximum supported samples [{}].",
                         vk::to_string(*Info.Samples), this->Path, vk::to_string(Frontend.Vk_GetMaxMsaaSampleCount()))

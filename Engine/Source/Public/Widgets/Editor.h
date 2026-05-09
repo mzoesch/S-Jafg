@@ -22,11 +22,13 @@ protected:
     inline  explicit WEditor(LNodeDynamicInit const& Init) noexcept
         : Super{Init}, LTabOverlayPossibilities{*static_cast<WUserWidget*>(this)}
     {
+        this->SetShouldTick(true);
     }
     template<typename TCxxClass>
     inline explicit WEditor(TNodeStaticInit<TCxxClass> const& Init) noexcept
         : Super{Init}, LTabOverlayPossibilities{*static_cast<WUserWidget*>(this)}
     {
+        this->SetShouldTick(true);
     }
 
 public:

@@ -2,35 +2,13 @@
 
 #pragma once
 
+#include "Rhi/RendererCore.h"
 #include "Serialization/BulkData.h"
 #include "Rhi/ResourceReference.h"
 #include "Rhi/DeviceBuffers.h"
 
 namespace Jafg
 {
-
-//# A two-dimensional extent structure compatible with the current underlying device API used.
-template<typename T>
-struct TExtent2
-{
-    typedef T value_type;
-    typedef VkExtent2D type;
-
-    NODISCARD FORCEINLINE operator type&() noexcept { return *reinterpret_cast<type*>( this ); }
-    NODISCARD FORCEINLINE operator type const&() const noexcept { return *reinterpret_cast<type const*>(this); }
-
-    NODISCARD FORCEINLINE operator type*() noexcept { return reinterpret_cast<type*>(this); }
-    NODISCARD FORCEINLINE operator type const*() const noexcept { return reinterpret_cast<type const*>(this); }
-
-    NODISCARD FORCEINLINE auto operator<=>(TExtent2 const&) const = default;
-
-    T Width{};
-    T Height{};
-};
-typedef TExtent2<u32> LTexture2Extent;
-static_assert(sizeof(LTexture2Extent) == sizeof(VkExtent2D));
-static_assert(std::is_standard_layout_v<LTexture2Extent>);
-static_assert(std::is_same_v<LTexture2Extent::type, VkExtent2D>);
 
 typedef EResourceStateBits ETexture2StateBits;
 typedef EResourceState ETexture2State;
@@ -90,7 +68,7 @@ struct LTexture2 final
 
         return;
     }
-    static TSharedRef<LTexture2> FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, LTexture2Extent Extent, HostInfo Info);
+    static TSharedRef<LTexture2> FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
     PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
     ~LTexture2() = default;
 
@@ -117,9 +95,9 @@ struct LTexture2 final
 
     FORCEINLINE constexpr auto const& GetMetadata() const noexcept { return this->Meta; }
     FORCEINLINE constexpr auto const& GetExtent() const noexcept { return this->Meta.Extent; }
-    FORCEINLINE constexpr LVec2F GetExtentAsVec2F() const noexcept { return LVec2F{this->Meta.Extent.Width, this->Meta.Extent.Height}; }
-    FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Meta.Extent.Width; }
-    FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Meta.Extent.Height; }
+    FORCEINLINE constexpr LVec2F GetExtentAsVec2F() const noexcept { return LVec2F{this->Meta.Extent.width, this->Meta.Extent.height}; }
+    FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Meta.Extent.width; }
+    FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Meta.Extent.height; }
     FORCEINLINE constexpr auto GetFormat() const noexcept { return this->Meta.Format; }
     FORCEINLINE constexpr auto GetChannelsPerPixel() const noexcept { return Vk_GetChannelsPerPixel(this->GetFormat()); }
     FORCEINLINE constexpr auto GetBytesPerPixel() const noexcept { return Vk_GetBytesPerPixel(this->GetFormat()); }
@@ -145,7 +123,7 @@ private:
 
     struct Metadata
     {
-        LTexture2Extent Extent;
+        rhi::extent2 Extent;
         vk::Format Format{ vk::Format::eUndefined };
         u32 MipLevels{ std::numeric_limits<u32>::max() };
         vk::SampleCountFlagBits Samples{ vk::SampleCountFlagBits::e1 };

@@ -67,7 +67,7 @@ void Jafg::LOnPlatformBreakLinux::OnProgramPanicImpl
     void* AddrList[JAFG_PLATFORM_MAX_FRAMES];
     const i32 AddrLen { ::backtrace(AddrList, JAFG_PLATFORM_MAX_FRAMES) };
 
-    const LPath DumpF { Finder::GetMostRecentMemDumpFile() };
+    const LPath DumpF { absolute(Finder::GetMostRecentMemDumpFile()) };
 
     //
     // Just try to dump it. It will obviously not work if the process is being debugged.

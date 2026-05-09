@@ -519,3 +519,12 @@ FORCEINLINE bool FromStringRelaxed(T* Field, LStringView Value) noexcept
 }
 
 } /* ~Namespace Serde */
+
+template<typename T> requires requires (T t) { {t.ToString()} -> std::convertible_to<LString>; }
+struct std::formatter<T> : std::formatter<std::string>
+{
+    FORCEINLINE std::format_context::iterator format(T const& Value, std::format_context& Context) const
+    {
+        return std::formatter<std::string>::format(Value.ToString(), Context);
+    }
+};

@@ -94,7 +94,8 @@ public:
     FORCEINLINE auto const& Vk_GetPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
     FORCEINLINE auto const& Vk_GetPhysicalDeviceMemoryProperties() const noexcept { return this->Vk_PhysicalDeviceMemoryProperties; }
 
-    FORCEINLINE auto Vk_GetMaxMsaaSampleCount() const noexcept { return this->Vk_MaxMsaaSampleCount; }
+    FORCEINLINE vk::SampleCountFlagBits Vk_GetMaxMsaaSampleCount() const noexcept { return this->Vk_MaxMsaaSampleCount; }
+    FORCEINLINE vk::SampleCountFlags Vk_GetMsaaSampleLimits() const noexcept { return this->Vk_MsaaSampleLimits; }
 
     FORCEINLINE auto const& Vk_GetRequiredDeviceExtensions() const noexcept { return this->Vk_RequiredDeviceExtensions; }
     FORCEINLINE auto&       Vk_GetMutableRequiredDeviceExtensions() noexcept { return this->Vk_RequiredDeviceExtensions; }
@@ -148,6 +149,7 @@ public:
     }
 
     ENGINE_API void Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture);
+    ENGINE_API std::optional<std::size_t> _VK_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView);
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
@@ -240,6 +242,7 @@ private:
     vk::PhysicalDeviceMemoryProperties Vk_PhysicalDeviceMemoryProperties;
 
     vk::SampleCountFlagBits Vk_MaxMsaaSampleCount{ vk::SampleCountFlagBits::e1 };
+    vk::SampleCountFlags Vk_MsaaSampleLimits{};
 
     TArray<char const*> Vk_RequiredDeviceExtensions{
         vk::KHRSwapchainExtensionName,

@@ -72,7 +72,6 @@ ENGINE_API TArray<LProgramArgument> ProcessedCommandLine;
 
 ENGINE_API std::chrono::high_resolution_clock::time_point StaticContainerInitializationTime{ std::chrono::high_resolution_clock::now() };
 
-
 } /* ~Namespace Jafg::Application::Detail */
 
 namespace Jafg::Application::Detail

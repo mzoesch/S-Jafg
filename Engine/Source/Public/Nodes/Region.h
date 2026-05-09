@@ -12,59 +12,9 @@ namespace Jafg
 
 struct LFactoryRegion;
 
-//# High-level texture coordinates behavior.
-enum struct ETexCoordBehavior
-{
-    //# Scale UVs normalized.
-    Scale,
-    //# Scale UVs so that the vertical component of the texture is always [0,1] while preserving aspect.
-    FitV,
-    //# Scale UVs so that the horizontal component of the texture is always [0,1] while preserving aspect.
-    FitH,
-};
-
 namespace MiscUV
 {
 
-inline constexpr LVec4F FitV(LVec4F UVs, LVec2F TextureExtend, LVec2F TargetSize) noexcept
-{
-    f32 CenterU{(UVs.x + UVs.z) * 0.5f};
-    f32 ScaledU{(UVs.w - UVs.y) * ((TargetSize.x  / TargetSize.y) / (TextureExtend.x / TextureExtend.y))};
-    return {
-        CenterU - ScaledU * 0.5f, UVs.y,
-        CenterU + ScaledU * 0.5f, UVs.w
-        };
-}
-
-inline constexpr LVec4F FitH(LVec4F UVs, LVec2F TextureExtend, LVec2F TargetSize) noexcept
-{
-    f32 CenterV{(UVs.y + UVs.w) * 0.5f};
-    f32 ScaledV{(UVs.z - UVs.x) * ((TextureExtend.x / TextureExtend.y) / (TargetSize.x  / TargetSize.y))};
-    return {
-        UVs.x, CenterV - ScaledV * 0.5f,
-        UVs.z, CenterV + ScaledV * 0.5f
-        };
-}
-
-inline constexpr LVec4F ApplyScale(LVec4F const& UVs, f32 Scale) noexcept
-{
-    check(Scale != 0.0f)
-    LVec2F Center{(maths::xy(UVs) + maths::zw(UVs)) * 0.5f};
-    LVec2F HalfSize{(maths::zw(UVs) - maths::xy(UVs)) * 0.5f / Scale};
-    return {
-        Center - HalfSize,
-        Center + HalfSize,
-        };
-}
-
-inline constexpr LVec4F ApplyPadding(LVec4F UVs, f32 Padding, LVec2F const& Extend) noexcept
-{
-    LVec2F PaddingUV{Padding / Extend.x, Padding / Extend.y};
-    return {
-        maths::xy(UVs) + PaddingUV,
-        maths::zw(UVs) - PaddingUV,
-        };
-}
 
 } /* ~Namespace MiscUV */
 
@@ -80,7 +30,7 @@ struct LRegionBrush
     f32 TextureScale{ 1.0 };
 
     //# How the texture's UV should behave.
-    ETexCoordBehavior TexCoordBehavior{ ETexCoordBehavior::Scale };
+    rhi::tex_coord_behavior TexCoordBehavior{ rhi::tex_coord_behavior::Scale };
 
     //# Texture UV out-of-bounds behavior.
     UBO::BindlessTextureArray::Sampler SamplerAddressMode{ UBO::BindlessTextureArray::Sampler::LinearClampToEdgeSamplerIdx };
@@ -149,7 +99,7 @@ struct LFactoryRegion : NODE_FACTORY_PARENT(WRegion)
         NODE_FACTORY_SELF().Brush.TextureScale = Scale;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior Behavior) noexcept
+    decltype(auto) TexCoordBehavior(this auto&& Self, const rhi::tex_coord_behavior Behavior) noexcept
     {
         NODE_FACTORY_SELF().Brush.TexCoordBehavior = Behavior;
         return NODE_FACTORY_RESULT();

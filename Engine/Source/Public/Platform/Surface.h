@@ -40,7 +40,8 @@ class LSurfaceBase
 {
 public:
 
-    inline explicit LSurfaceBase(LSurfaceCreateInfo const& Info) noexcept : SurfaceViewport{*this->AsSurface()}
+    inline explicit LSurfaceBase(LSurfaceCreateInfo const& Info) noexcept
+        : SurfaceViewport{*this->AsSurface(), this->SurfaceExtent}
     {
         LOG_VERBOSE(LogSurface, "Creating surface [{}].", Info.HumanReadableName)
         this->HumanReadableName = Info.HumanReadableName;
@@ -75,9 +76,7 @@ public:
     FORCEINLINE LViewport const& GetViewport() const noexcept { return this->SurfaceViewport; }
 
     //# In physical pixels.
-    NODISCARD u32 GetWidth() const noexcept { return this->GetDimensions().x; }
-    NODISCARD u32 GetHeight() const noexcept { return this->GetDimensions().y; }
-    NODISCARD LVec2u32 GetDimensions() const noexcept PURE_VIRTUAL()
+    NODISCARD FORCEINLINE constexpr rhi::extent2 GetSurfaceExtent() const noexcept { return this->SurfaceExtent; }
 
     NODISCARD bool CanEverVSync() const noexcept PURE_VIRTUAL()
               void SetVSync(const bool bEnabled) PURE_VIRTUAL()
@@ -151,6 +150,8 @@ protected:
     bool bMouseInsideSurface{};
     //# The mouse location if available. In some platform configurations, this value might always be missing.
     std::optional<LVec2F> MouseLocation;
+
+    rhi::extent2 SurfaceExtent;
 
 private:
 

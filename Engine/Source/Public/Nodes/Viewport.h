@@ -27,7 +27,8 @@ class LViewport final
 
 public:
 
-    explicit LViewport(LSurface& Owner) noexcept : Surface(Owner) { this->Outer.SetUserData(this); }
+    explicit LViewport(LSurface& Owner, rhi::extent2 const& Extent) noexcept
+        : Surface{Owner}, Extent{Extent} { this->Outer.SetUserData(this); }
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() { this->TearDown(); }
 
@@ -37,6 +38,23 @@ public:
     void Tick();
     void Draw(LRenderInfo const& Info);
     void TearDown();
+
+    FORCEINLINE constexpr LSurface& GetSurface() noexcept { return this->Surface; }
+
+    FORCEINLINE constexpr LSurface const& GetSurface() const noexcept { return this->Surface; }
+    FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
+    //# The scale factor is based on the physical platform dpi in relation to the base dpi.
+    FORCEINLINE constexpr EApplicationScale GetMaxAllowApplicationScale() const noexcept
+    {
+        if (this->Extent.width < 640 || this->Extent.height < 475) { return EApplicationScale::Single; }
+        if (this->Extent.width < 960 || this->Extent.height < 720) { return EApplicationScale::Double; }
+        return EApplicationScale::Triple;
+    }
+
+    FORCEINLINE constexpr f32  GetScaleFactor() const noexcept { return this->ScaleFactor; }
+    FORCEINLINE constexpr void SetPlatformDpi(f32 Dpi) noexcept { this->PlatformDpi = Dpi; }
+    FORCEINLINE constexpr f32  GetPlatformDpi() const noexcept { return this->PlatformDpi; }
+    FORCEINLINE constexpr f32  GetBaseDpi() const noexcept { return this->BaseDpi; }
 
     //# Outer for this viewport only.
     FORCEINLINE LClassOuter& GetOuter() noexcept { return this->Outer; }
@@ -58,23 +76,6 @@ public:
     //# Internal methods used by Jafg. Do not call yourself.
     ENGINE_API void _AddWidget(WUserWidget* Widget);
     ENGINE_API void _RemoveWidget(WUserWidget* Widget);
-
-    //# The scale factor is based on the physical platform dpi in relation to the base dpi.
-    FORCEINLINE constexpr EApplicationScale GetMaxAllowApplicationScale() const noexcept;
-    FORCEINLINE f32  GetScaleFactor() const { return this->ScaleFactor; }
-    FORCEINLINE void SetPlatformDpi(const f32 InDpi) { this->PlatformDpi = InDpi; }
-    FORCEINLINE f32  GetPlatformDpi() const { return this->PlatformDpi; }
-    FORCEINLINE f32  GetBaseDpi() const { return this->BaseDpi; }
-
-    ENGINE_API LVec2u32 GetDimensions() const noexcept;
-    FORCEINLINE i32     GetWidth() const noexcept { return this->GetDimensions().x; }
-    FORCEINLINE i32     GetHeight() const noexcept { return this->GetDimensions().y; }
-    FORCEINLINE LVec2F  GetDimensionsF() const { return {static_cast<f32>(this->GetDimensions().x), static_cast<f32>(this->GetDimensions().y)}; }
-    FORCEINLINE f32     GetWidthF() const noexcept { return static_cast<f32>(this->GetDimensions().x); }
-    FORCEINLINE f32     GetHeightF() const noexcept { return static_cast<f32>(this->GetDimensions().y); }
-    FORCEINLINE LVec2F  GetDimensionsD() const noexcept { return {static_cast<f64>(this->GetDimensions().x), static_cast<f64>(this->GetDimensions().y)}; }
-    FORCEINLINE f64     GetWidthD() const noexcept { return static_cast<f64>(this->GetDimensions().x); }
-    FORCEINLINE f64     GetHeightD() const noexcept { return static_cast<f64>(this->GetDimensions().y); }
 
     FORCEINLINE constexpr auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
@@ -121,13 +122,12 @@ public:
     FORCEINLINE constexpr WNode const* GetFocusedWidget() const { return this->FocusedWidget.get(); }
     FORCEINLINE constexpr bool IsFocusedWidgetValid() const noexcept { return !!this->FocusedWidget; }
 
-    FORCEINLINE constexpr LSurface& GetSurface() noexcept { return this->Surface; }
-    FORCEINLINE constexpr LSurface const& GetSurface() const noexcept { return this->Surface; }
+
 
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
     FORCEINLINE constexpr void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept
     {
-        check(Vector) Vector->y = this->GetDimensions().y - Vector->y;
+        check(Vector) Vector->y = static_cast<f32>(this->Extent.height) - Vector->y;
     }
 
 private:
@@ -136,6 +136,9 @@ private:
 
     FORCEINLINE constexpr void RecalculateScaleFactor() noexcept { this->ScaleFactor = this->PlatformDpi / this->BaseDpi; }
     void HandleReply(LNodeReply&& Reply);
+
+    LSurface& Surface;
+    rhi::extent2 const& Extent;
 
     //# The factor with which the entire orthographic projection is scaled.
     f32 ScaleFactor{ 1.0f };
@@ -152,29 +155,12 @@ private:
     TArray<WUserWidget*> TopLevelWidgets;
     TClassStorage<WNode> FocusedWidget;
 
-    LSurface& Surface;
-
     LClassOuter Outer{ "SurfaceViewport" };
 
     TFrameArray<LMappedDeviceBuffer> VisualBatches;
     TFrameArray<vk::raii::DescriptorSet> Vk_VisualSharedDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<LMappedDeviceBuffer> Vk_VisualSharedBuffers;
-
-    LMaterialInstanceRef VisualBatchMaterial;
+    LMaterialInstanceRef VisualBatchMaterialInstance;
 };
-
-FORCEINLINE constexpr EApplicationScale LViewport::GetMaxAllowApplicationScale() const noexcept
-{
-    auto Dimensions{this->GetDimensions()};
-    if (Dimensions.x < 640 || Dimensions.y < 475)
-    {
-        return EApplicationScale::Single;
-    }
-    if (Dimensions.x < 960 || Dimensions.y < 720)
-    {
-        return EApplicationScale::Double;
-    }
-    return EApplicationScale::Triple;
-}
 
 } /* ~Namespace Jafg */

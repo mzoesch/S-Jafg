@@ -190,7 +190,8 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
     auto Bitmap{static_cast<msdfgen::BitmapConstRef<msdf_atlas::byte, 3>>(Generator.atlasStorage())};
     LByteBulkData Bulk; Bulk.Serialize(Bitmap.pixels, Bitmap.width * Bitmap.height * 3);
     Result.Atlas = LTexture2::FromMemory(
-        "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm, LTexture2Extent{static_cast<u32>(Bitmap.width), static_cast<u32>(Bitmap.height)},
+        "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm,
+        {static_cast<rhi::extent2::domain_type>(Bitmap.width), static_cast<rhi::extent2::domain_type>(Bitmap.height)},
         LTexture2::HostInfo{.Format = vk::Format::eR8G8B8A8Srgb,}
         );
     Result.Atlas->LoadToDevice(LTexture2::DeviceInfo{.DesiredMipLevels = 1,.Samples = vk::SampleCountFlagBits::e1,});
@@ -213,7 +214,7 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
     //# TODO: Make this a program arg.
     // stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, AtlasColorChannels, Bitmap.pixels, Bitmap.width * AtlasColorChannels);
 
-    check(Result.Atlas->GetExtent().Width == static_cast<u32>(AtlasDimensions.x) && Result.Atlas->GetExtent().Height == static_cast<u32>(AtlasDimensions.y))
+    check(Result.Atlas->GetExtent().width == static_cast<u32>(AtlasDimensions.x) && Result.Atlas->GetExtent().height == static_cast<u32>(AtlasDimensions.y))
     check(Result.Atlas->IsOnHost() == false && Result.Atlas->IsOnDevice())
     this->My_Fonts.push_back(std::move(Result));
     check(Result.Atlas.get() == nullptr)

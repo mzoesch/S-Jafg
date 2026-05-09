@@ -424,12 +424,6 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
 {
     check(this->Selectors)
 
-    if (!this->TempBox)
-    {
-        check(Selector.IsDerivedHitTestInvisible())
-        this->CachedMoveTabSize = Selector.GetAnchoredSize_v2();
-    }
-
     auto ResetDrawOption{[this]
     {
         if (!!this->LastStepResult)
@@ -455,6 +449,24 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
             check(Selector.IsDerivedHitTestInvisible())
         }
     }};
+
+    if (Selector._IsGarbage())
+    {
+        ResetDrawOption();
+        if (this->TempBox)
+        {
+            this->TempBox->RemoveFromTree().release()->KillYourSelfNow_v2();
+            this->TempBox = nullptr;
+            this->CachedMoveTabSize = {};
+        }
+        return true;
+    }
+
+    if (!this->TempBox)
+    {
+        check(Selector.IsDerivedHitTestInvisible())
+        this->CachedMoveTabSize = Selector.GetAnchoredSize_v2();
+    }
 
     auto GetIndex{[](WHParent& Parent, LVec2F Location) -> std::size_t
     {

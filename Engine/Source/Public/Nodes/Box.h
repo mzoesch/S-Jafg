@@ -62,7 +62,7 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().Brush.TextureScale = Scale;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) TexCoordBehavior(this auto&& Self, const ETexCoordBehavior Behavior) noexcept
+    decltype(auto) TexCoordBehavior(this auto&& Self, const rhi::tex_coord_behavior Behavior) noexcept
     {
         NODE_FACTORY_SELF().Brush.TexCoordBehavior = Behavior;
         return NODE_FACTORY_RESULT();

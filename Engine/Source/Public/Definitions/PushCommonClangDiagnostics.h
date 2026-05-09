@@ -34,6 +34,7 @@
 #pragma clang diagnostic error "-Wpessimizing-move"
 #pragma clang diagnostic error "-Wpragmas"
 #pragma clang diagnostic error "-Wpragma-once-outside-header"
+#pragma clang diagnostic error "-Wreorder-ctor"
 #pragma clang diagnostic error "-Wreorder-init-list"
 #pragma clang diagnostic error "-Wreturn-stack-address"
 #pragma clang diagnostic error "-Wreturn-type"

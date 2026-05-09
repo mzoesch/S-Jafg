@@ -18,25 +18,10 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
     {
         if (this->Texture->IsBindless() == false)
         {
-            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&* this->Texture);
+            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*this->Texture);
             check(this->Texture->IsBindless())
         }
         TextureIndex = this->Texture->GetBindlessIndex();
-    }
-
-    LVec4F TexCoordRect{0.0f, 0.0f, 1.0f, 1.0f};
-    if (this->Texture.get())
-    {
-        auto Extend{this->Texture->GetExtentAsVec2F()};
-        if (this->TexCoordBehavior == ETexCoordBehavior::FitV)
-        {
-            TexCoordRect = MiscUV::FitV(TexCoordRect, Extend, Rect.Extent);
-        }
-        else if (this->TexCoordBehavior == ETexCoordBehavior::FitH)
-        {
-            TexCoordRect = MiscUV::FitH(TexCoordRect, Extend, Rect.Extent);
-        }
-        TexCoordRect = MiscUV::ApplyPadding(MiscUV::ApplyScale(TexCoordRect, this->TextureScale), this->TexturePadding, Extend);
     }
 
     Info.AddInstance({
@@ -47,7 +32,11 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
             ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
             : this->Radii,
         .OutlineTint = this->OutlineTint,
-        .TexCoordRect = TexCoordRect,
+        .TexCoordRect = {this->Texture.get()
+            ? rhi::uv::pipe({0.0f, 0.0f, 1.0f, 1.0f}, this->Texture->GetExtentAsVec2F(), Rect.Extent
+                , this->TexCoordBehavior, this->TexturePadding, this->TextureScale)
+            : LVec4F{0.0f, 0.0f, 1.0f, 1.0f}
+            },
         .OutlineThickness = this->OutlineThickness,
         .TextureIndex = TextureIndex,
         .SamplerIndex = this->SamplerAddressMode,

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Platform/Surface.h"
+#include "Rhi/RenderInfo.h"
 
 #if !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
     #error "Tried to include glfw3 specific code on a platform that does not support glfw3."
@@ -17,6 +18,8 @@ struct GLFWcursor;
 
 namespace Jafg
 {
+
+struct LNodeRenderInfo;
 
 namespace Private
 {
@@ -49,6 +52,7 @@ public:
     void LateSetupVk();
 
     void PollPlatformEvents();
+    mutable MULTI_EVENT_DECL_VERBOSE(LSurfaceGlfw3, OnPreRender, LRenderInfo const& Info)
     void OnRender();
 
     ENGINE_API void SetInputMode(EInputMode InMode) noexcept;
@@ -56,8 +60,6 @@ public:
 
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
-
-    FORCEINLINE constexpr LVec2u32 GetDimensions() const noexcept { return {this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height}; }
 
     NODISCARD FORCEINLINE bool CanEverVSync() const noexcept { return true; }
     ENGINE_API void SetVSync(bool bEnabled);
@@ -87,7 +89,7 @@ public:
     FORCEINLINE auto _GetWindowFrameSizeBottomRight() const noexcept { return this->WindowFrameSizeBottomRight; }
     FORCEINLINE auto _GetWindowSize() const noexcept { return this->WindowSize; }
     FORCEINLINE auto _GetFramebufferSize() const noexcept { return this->FramebufferSize; }
-    FORCEINLINE auto Vk_GetSwapchainExtent() const noexcept { return this->Vk_SwapchainExtent; }
+    FORCEINLINE auto Vk_GetSwapchainExtent() const noexcept { return this->GetSurfaceExtent(); }
     FORCEINLINE auto const& Vk_GetSwapchain() const noexcept { return this->Vk_VkMySwapchain; }
 
     FORCEINLINE auto const& Vk_GetSwapchainImages() const noexcept { return this->Vk_SwapchainImages; }
@@ -170,7 +172,6 @@ private:
     LVec2i32 WindowFrameSizeBottomRight{ maths::zero_vector<LVec2i32> };
     LVec2i32 WindowSize{ maths::zero_vector<LVec2i32> };
     LVec2i32 FramebufferSize{ maths::zero_vector<LVec2i32> };
-    vk::Extent2D Vk_SwapchainExtent;
     vk::raii::SwapchainKHR Vk_VkMySwapchain{ nullptr };
 
     TStackArray<vk::Image, Jafg::Vk_DesiredMaxFramesInFlight> Vk_SwapchainImages;

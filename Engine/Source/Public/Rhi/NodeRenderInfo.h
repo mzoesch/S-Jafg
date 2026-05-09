@@ -15,7 +15,7 @@ class JFontSubsystem;
 struct LNodeRenderInfo : public LRenderInfo
 {
     inline static constexpr u64 MaxBatchCount{16};
-    inline static constexpr u64 MaxInstanceCount{ 8'192 };
+    inline static constexpr u64 MaxInstanceCount{ 16'384 };
 
     LViewport const& Viewport;
     JTextureSubsystem const& TextureSubsystem;

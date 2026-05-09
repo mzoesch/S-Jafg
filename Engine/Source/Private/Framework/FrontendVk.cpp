@@ -748,18 +748,31 @@ void Jafg::LFrontendVk::Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture)
 {
     check(Texture)
     check(Texture->IsOnDevice())
-    check(Texture->IsBindless() == false)
+    check(!Texture->IsBindless())
+
+    Texture->_SetBindlessIndex(this->_VK_AddTransientImageToGlobalBindlessArray(Texture->GetImageView()).value_or(INDEX_NONE));
+    if (!Texture->IsBindless())
+    {
+        LOG_FATAL(LogVulkan, "[{}]: Failed to make texture bindless. Out of binding points.", Texture->GetPath())
+    }
+    LOG_VERBOSE(LogVulkan, "[{}]: Binding resource to global bindless texture array slot [{}].", Texture->GetPath(), Texture->GetBindlessIndex())
+
+    return;
+}
+
+std::optional<std::size_t> Jafg::LFrontendVk::_VK_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView)
+{
+    check(!!ImageView)
 
     u64 Idx{this->Vk_FreeBindlessTextures.Allocate()};
     if (Idx == std::numeric_limits<u64>::max())
     {
-        LOG_FATAL(LogVulkan, "[{}]: Failed to make texture bindless. Out of binding points.", Texture->GetPath())
+        return {};
     }
     check(Idx < this->Vk_BindlessTextureCapacity)
-    LOG_VERBOSE(LogVulkan, "[{}]: Binding resource to global bindless texture array slot [{}].", Texture->GetPath(), Idx)
 
     vk::DescriptorImageInfo ImageInfo{
-        .imageView = Texture->GetImageView(),
+        .imageView = ImageView,
         .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
         };
     std::array Writes{vk::WriteDescriptorSet{
@@ -772,10 +785,7 @@ void Jafg::LFrontendVk::Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture)
         }};
     this->Vk_Device.updateDescriptorSets(Writes, {});
 
-    check(Idx <= std::numeric_limits<i64>::max())
-    Texture->_SetBindlessIndex(static_cast<i64>(Idx));
-
-    return;
+    return Idx;
 }
 
 vk::raii::CommandBuffer Jafg::LFrontendVk::Vk_BeginSingleTimeCommands(vk::CommandPool Pool) const
@@ -1519,12 +1529,12 @@ void Jafg::LFrontendVk::Vk_SetMaxMsaaSamples()
     check( *this->Vk_PhysicalDevice )
 
     const vk::PhysicalDeviceProperties PhysicalDeviceProperties{ this->Vk_PhysicalDevice.getProperties() };
-    const vk::SampleCountFlags Counts
-    {
-        PhysicalDeviceProperties.limits.framebufferColorSampleCounts & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts
-    };
+    this->Vk_MsaaSampleLimits = {
+          PhysicalDeviceProperties.limits.framebufferColorSampleCounts
+        & PhysicalDeviceProperties.limits.framebufferDepthSampleCounts
+        };
 
-    this->Vk_MaxMsaaSampleCount = Jafg::Vk_GetMaxMsaaSamples(Counts);
+    this->Vk_MaxMsaaSampleCount = rhi::vk_get_max_msaa_sample(this->Vk_MsaaSampleLimits);
 
     LOG_VERBOSE(LogVulkan, "Max usable sample count: [{}].", vk::to_string(this->Vk_MaxMsaaSampleCount))
 

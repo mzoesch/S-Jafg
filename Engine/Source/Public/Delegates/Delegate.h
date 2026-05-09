@@ -133,9 +133,9 @@ public:
     //# @return True, if delegate was found and removed.
     FORCEINLINE bool Remove(LDelegateHandle* Handle) noexcept
     {
-        check( Handle )
+        check(Handle)
 
-        if (auto It{ algo::find(this->Delegates, Handle->UnderlyingValue(), [](auto const& Pair) { return Pair.first; }) };
+        if (auto It{algo::find(this->Delegates, Handle->UnderlyingValue(), [](auto const& Pair) { return Pair.first; })};
             It != this->Delegates.end())
         {
             this->Delegates.erase(It);

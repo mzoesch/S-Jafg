@@ -197,8 +197,8 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 #endif /* !PLATFORM_WINDOWS */
     // TODO: Update this when the window is moved to another monitor with different DPI.
     this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
-    auto WindowDimensions{this->GetDimensions()};
-    LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.x, WindowDimensions.y, PlatformDpi)
+    LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: {}, DPI: [{}]"
+        , this->GetSurfaceExtent(), PlatformDpi)
 
     auto& Instance{this->GetFrontend().Vk_GetInstance()};
     VkSurfaceKHR CSurface;
@@ -429,25 +429,23 @@ void Jafg::LSurfaceGlfw3::OnRender()
         };
 
     vk::RenderingInfo RenderingInfo{
-        .renderArea = { .offset = { 0, 0 }, .extent = this->Vk_SwapchainExtent },
+        .renderArea = { .offset = { 0, 0 }, .extent = this->SurfaceExtent },
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &ColorAttachmentInfo,
         .pDepthAttachment = &DepthAttachmentInfo
         };
 
-    Info.CommandBuffer.beginRendering(RenderingInfo);
+    this->OnPreRender.Broadcast(Info);
 
+    Info.CommandBuffer.beginRendering(RenderingInfo);
     Info.CommandBuffer.setViewport(0, vk::Viewport{
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<f32>(this->Vk_SwapchainExtent.width), .height = static_cast<f32>(this->Vk_SwapchainExtent.height),
+        .x = 0.0f, .y = 0.0f,
+        .width = static_cast<f32>(this->SurfaceExtent.width), .height = static_cast<f32>(this->SurfaceExtent.height),
         .minDepth = 0.0f, .maxDepth = 1.0f
         });
-    Info.CommandBuffer.setScissor(0, {vk::Rect2D{{0, 0}, this->Vk_SwapchainExtent}});
-
+    Info.CommandBuffer.setScissor(0, {vk::Rect2D{{0, 0}, this->SurfaceExtent}});
     this->GetViewport().Draw(Info);
-
     Info.CommandBuffer.endRendering();
 
     Vk_TransitionImageLayout({
@@ -990,7 +988,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         glfwGetFramebufferSize(this->Handle, &this->FramebufferSize.x, &this->FramebufferSize.y);
         if (this->Vk_SurfaceCapabilities.currentExtent.width == std::numeric_limits<decltype(this->Vk_SurfaceCapabilities.currentExtent.width)>::max())
         {
-            this->Vk_SwapchainExtent = {
+            this->SurfaceExtent = {
                 maths::clamp<decltype(vk::Extent2D::width)>(
                       this->FramebufferSize.x
                     , this->Vk_SurfaceCapabilities.minImageExtent.width, this->Vk_SurfaceCapabilities.maxImageExtent.width),
@@ -1001,11 +999,11 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         }
         else
         {
-            this->Vk_SwapchainExtent = this->Vk_SurfaceCapabilities.currentExtent;
-            check( this->Vk_SwapchainExtent.width >= this->Vk_SurfaceCapabilities.minImageExtent.width
-                && this->Vk_SwapchainExtent.width <= this->Vk_SurfaceCapabilities.maxImageExtent.width )
-            check( this->Vk_SwapchainExtent.height >= this->Vk_SurfaceCapabilities.minImageExtent.height
-                && this->Vk_SwapchainExtent.height <= this->Vk_SurfaceCapabilities.maxImageExtent.height )
+            this->SurfaceExtent = rhi::extent2::from_native(this->Vk_SurfaceCapabilities.currentExtent);
+            check( this->SurfaceExtent.width >= this->Vk_SurfaceCapabilities.minImageExtent.width
+                && this->SurfaceExtent.width <= this->Vk_SurfaceCapabilities.maxImageExtent.width )
+            check( this->SurfaceExtent.height >= this->Vk_SurfaceCapabilities.minImageExtent.height
+                && this->SurfaceExtent.height <= this->Vk_SurfaceCapabilities.maxImageExtent.height )
         }
     }
 
@@ -1013,14 +1011,14 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         vk::to_string(Frontend.Vk_GetSurfaceFormat().format), vk::to_string(Frontend.Vk_GetSurfaceFormat().colorSpace)
         )
     LOG_VERBOSE(LogVulkan, "Using present mode [{}].", vk::to_string(this->Vk_PresentMode))
-    LOG_VERBOSE(LogVulkan, "Using swapchain extent [{}x{}].", this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height)
-    if (   (static_cast<u32>(this->FramebufferSize.x) != this->Vk_SwapchainExtent.width)
-        || (static_cast<u32>(this->FramebufferSize.y) != this->Vk_SwapchainExtent.height))
+    LOG_VERBOSE(LogVulkan, "Using swapchain extent [{}x{}].", this->SurfaceExtent.width, this->SurfaceExtent.height)
+    if (   (static_cast<u32>(this->FramebufferSize.x) != this->SurfaceExtent.width)
+        || (static_cast<u32>(this->FramebufferSize.y) != this->SurfaceExtent.height))
     {
         LOG_WARNING(LogVulkan,
             "Framebuffer size [{}x{}] does not match clamped swapchain extent [{}x{}].",
             this->FramebufferSize.x, this->FramebufferSize.y,
-            this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height
+            this->SurfaceExtent.width, this->SurfaceExtent.height
             )
     }
 
@@ -1040,7 +1038,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         .minImageCount = Frontend.Vk_GetNumberOfFramesInFlight(),
         .imageFormat = Frontend.Vk_GetSurfaceFormat().format,
         .imageColorSpace = Frontend.Vk_GetSurfaceFormat().colorSpace,
-        .imageExtent =  this->Vk_SwapchainExtent,
+        .imageExtent = this->SurfaceExtent,
         .imageArrayLayers = 1,
         .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
         .imageSharingMode = vk::SharingMode::eExclusive,
@@ -1181,12 +1179,11 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
 
     auto& Frontend{ this->GetFrontend() };
 
-    check(this->Vk_SwapchainExtent.width > 0 && this->Vk_SwapchainExtent.height > 0)
-
+    check(this->SurfaceExtent.width > 0 && this->SurfaceExtent.height > 0)
     vk::ImageCreateInfo ImageCreateInfo{
         .imageType = vk::ImageType::e2D,
         .format = Frontend.Vk_GetSurfaceFormat().format,
-        .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
+        .extent = vk::Extent3D{ this->SurfaceExtent.width, this->SurfaceExtent.height, 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = Frontend.Vk_GetMaxMsaaSampleCount(),
@@ -1226,7 +1223,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
     this->Vk_DepthImage = Frontend.Vk_CreateDeviceLocalImage({
         .imageType = vk::ImageType::e2D,
         .format = Frontend.Vk_GetPreferredDepthFormat(),
-        .extent = vk::Extent3D{ this->Vk_SwapchainExtent.width, this->Vk_SwapchainExtent.height, 1 },
+        .extent = vk::Extent3D{ this->SurfaceExtent.width, this->SurfaceExtent.height, 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = Frontend.Vk_GetMaxMsaaSampleCount(),
@@ -1326,6 +1323,5 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
 
     return;
 }
-
 
 #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */

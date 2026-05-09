@@ -88,6 +88,7 @@ Jafg::LNodeReply Jafg::WNode::Sweep(LNodeSweepInfo const& Info, std::optional<LV
 
 void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
 {
+    check(!this->_IsGarbage())
     if (this->Visibility == InVisibility)
     {
         return;
@@ -170,8 +171,8 @@ void Jafg::WNode::UpdateAnchoredSize() const
     }
 
     LVec2F Out;
-    Out.x = maths::max(this->Anchor.MaxX * static_cast<f32>(this->AttachedViewport.GetDimensions().x), this->DesiredSize_v2.x);
-    Out.y = maths::max(this->Anchor.MaxY * static_cast<f32>(this->AttachedViewport.GetDimensions().y), this->DesiredSize_v2.y);
+    Out.x = maths::max(this->Anchor.MaxX * static_cast<f32>(this->AttachedViewport.GetExtent().width), this->DesiredSize_v2.x);
+    Out.y = maths::max(this->Anchor.MaxY * static_cast<f32>(this->AttachedViewport.GetExtent().height), this->DesiredSize_v2.y);
     this->SetAnchoredSize(Out);
 
     return;
@@ -207,8 +208,8 @@ LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter() const
     }
 
     return {
-        this->Anchor.MinX * static_cast<f32>(this->AttachedViewport.GetDimensions().x),
-        this->Anchor.MinY * static_cast<f32>(this->AttachedViewport.GetDimensions().y)
+        this->Anchor.MinX * static_cast<f32>(this->AttachedViewport.GetExtent().width),
+        this->Anchor.MinY * static_cast<f32>(this->AttachedViewport.GetExtent().height)
         };
 }
 
