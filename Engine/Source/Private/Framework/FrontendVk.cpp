@@ -14,7 +14,6 @@
 
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"
-#include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
@@ -321,7 +320,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     check(Tasks::IsOnMasterThread())
 
-    if (auto* Arg{Application::GetCommandLineArgument(::Glfw_PlatformHint)})
+    if (auto* Arg{App::GetCommandLineArgument(::Glfw_PlatformHint)})
     {
         auto Value{Arg->GetValue()};
         if (Value == "auto")
@@ -1247,9 +1246,9 @@ void Jafg::LFrontendVk::Vk_CreateInstance()
 
     constexpr vk::ApplicationInfo ApplicationInfo{
         .pApplicationName = "S-Jafg @mzoesch",
-        .applicationVersion = VK_MAKE_VERSION( PRIVATE_ENGINE_VERSION_MAJOR, PRIVATE_ENGINE_VERSION_MINOR, PRIVATE_ENGINE_VERSION_PATCH ),
+        .applicationVersion = VK_MAKE_VERSION(DETAIL_ENGINE_VERSION_MAJOR, DETAIL_ENGINE_VERSION_MINOR, DETAIL_ENGINE_VERSION_PATCH),
         .pEngineName = "Jafg Engine",
-        .engineVersion = VK_MAKE_VERSION( PRIVATE_ENGINE_VERSION_MAJOR, PRIVATE_ENGINE_VERSION_MINOR, PRIVATE_ENGINE_VERSION_PATCH ),
+        .engineVersion = VK_MAKE_VERSION(DETAIL_ENGINE_VERSION_MAJOR, DETAIL_ENGINE_VERSION_MINOR, DETAIL_ENGINE_VERSION_PATCH),
         .apiVersion = ::Vk_ApiVersion
         };
 

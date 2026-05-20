@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Core/Application.h"
+#include "Core/App.h"
 
 namespace Jafg::Params
 {
@@ -223,12 +223,12 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
     auto& Prefs{GetSingleton<JReSTCliPreferences>()};
 
     LString Host{*Prefs.Host};
-    if (auto* Arg{Application::GetCommandLineArgument(Params::ReST_Host)})
+    if (auto* Arg{App::GetCommandLineArgument(Params::ReST_Host)})
     {
         Host = Arg->GetValue();
     }
     i32 Port{*Prefs.Port};
-    if (auto* Arg{Application::GetCommandLineArgument(Params::ReST_Port)})
+    if (auto* Arg{App::GetCommandLineArgument(Params::ReST_Port)})
     {
         Serde::FromString(&Port, Arg->GetValue());
     }

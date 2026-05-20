@@ -34,9 +34,9 @@
             #error "Mvsc command line build flag was not set. Missing \"/Zc:__cplusplus\" to handle cpp verion ctrl correctly."
         #endif /* JAFG_WITH_MSVC */
     #endif /* __cplusplus == 199711L */
-    #if __cplusplus < PRIVATE_JAFG_CPLUSPLUS
+    #if __cplusplus < DETAIL_JAFG_CPLUSPLUS
         #error "Program requires at least Config/.__cplusplus."
-    #endif /* __cplusplus < PRIVATE_JAFG_CPLUSPLUS */
+    #endif /* __cplusplus < DETAIL_JAFG_CPLUSPLUS */
 #endif /* __cplusplus */
 
 #if JAFG_WITH_MSVC 

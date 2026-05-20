@@ -10,7 +10,7 @@ void Jafg::APersonaController::OnGarbage(EJxxRecordTearDownReason Reason)
 
     if (this->IsOwningNodeValid())
     {
-        if (Application::IsTearingDown() == false)
+        if (!App::IsTearingDown())
         {
             LOG_WARNING(LogEgo,
                 "Persona controller [{}] is ending life while still possessed by a world node. World node will no longer posses a controller.",
@@ -36,7 +36,7 @@ void Jafg::APersonaController::PossessPawn(TJxxUnique<APawn> New, const bool bRe
     if (this->Pawn)
     {
         this->Pawn->_SetOwningController(nullptr);
-        if (bReleaseOld == false)
+        if (!bReleaseOld)
         {
             this->Pawn->MarkAsGarbage_v2();
         }

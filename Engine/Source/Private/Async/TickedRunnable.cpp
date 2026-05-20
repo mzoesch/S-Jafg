@@ -1,17 +1,17 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Async/TickedRunnable.h"
-#include "Core/Application.h"
+#include "Core/App.h"
 #include "Stats/Stats.h"
 
 Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 {
     STAT_CYCLE_FUNCTION()
 
-    f64 LastTickTime{Application::GetElapsedTime()};
+    f64 LastTickTime{App::GetElapsedTime()};
     while (this->bShouldTick)
     {
-        const f64 Now{Application::GetElapsedTime()};
+        const f64 Now{App::GetElapsedTime()};
         const f64 DeltaTime{Now - LastTickTime};
 
         if (DeltaTime > this->TickInterval)

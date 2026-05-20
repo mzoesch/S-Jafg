@@ -5,7 +5,6 @@
 #include "Framework/MeshSubsystem.h"
 #include "Async/TaskUtility.h"
 #include "Async/TickedRunnable.h"
-#include "Build/EngineBuildInfo.h"
 #include "Cli/CliExtended.h"
 #include "Cli/CliPrimitives.h"
 #include "Engine/World.h"
@@ -13,7 +12,6 @@
 #include "Subsystems/EngineSubsystem.h"
 #include "Cli/CommandLineInterface.h"
 #include "Stats/Stats.h"
-#include "Platform/PlatformMisc.h"
 #include "Engine/EngineRunnable.h"
 #include "Cli/ReSTCliPreferences.h"
 #include "Serialization/Json.h"
@@ -47,7 +45,7 @@ Jafg::LEngine::LEngine()
         Rc != ETaskExit::Success
         )
     {
-        LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", static_cast<i32>(Rc));
+        LOG_FATAL(LogLaunch, "Failed to create worker thread: [{}].", static_cast<i32>(Rc));
     }
 }
 
@@ -454,7 +452,7 @@ void Jafg::LEngine::DefaultTimeAdvance()
 
     if (UserPreferences.bVSyncEnabled == false && UserPreferences.MaxFps != JUserPreferences::UnlimitedFps)
     {
-        if (f64 ElapsedTime{algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now()) - GEngine->FrameTime};
+        if (f64 ElapsedTime{algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now()) - GEngine->FrameTime};
             ElapsedTime < 1.0 / *UserPreferences.MaxFps)
         {
             LEngine::Timepoint SleepStart{LEngine::Clock::now()};
@@ -469,7 +467,7 @@ void Jafg::LEngine::DefaultTimeAdvance()
     }
 
     this->PreviousFrameTime = this->FrameTime;
-    this->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    this->FrameTime = algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now());
 
     this->DeltaTime = this->FrameTime - this->PreviousFrameTime;
     if (this->DeltaTime < this->CurrentStat.Low)
@@ -488,11 +486,11 @@ void Jafg::LEngine::DefaultTimeAdvance()
 
     if (this->DeltaTime > LEngine::MaxDeltaTime)
     {
-        if constexpr (IS_COMPILED_LOG(LogGuardedMain, Warning))
+        if constexpr (IS_COMPILED_LOG(LogLaunch, Warning))
         {
             if (this->DeltaTime > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
             {
-                LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", this->DeltaTime)
+                LOG_WARNING(LogLaunch, "Very long frame detected: {} seconds.", this->DeltaTime)
             }
         }
         this->LostDeltaTime = this->DeltaTime - LEngine::MaxDeltaTime;
@@ -705,9 +703,9 @@ Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(LString const& Url)
 #if JAFG_WITH_FOREIGN_SUPPORT
 void Jafg::LEngine::RefetchPlugins(TArray<LString> const& AdditionalPaths)
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
 
-    this->FetchPlugins(PlatformMisc::GetRootBinaryDirectory());
+    this->FetchPlugins(Finder::GetRootBinaryDirectory());
 
     for (const LString& AdditionalPath : AdditionalPaths)
     {
@@ -1057,20 +1055,20 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         check(GEngine)
 
         json Info;
-        Info["BuildTime"] = BuildInfo::GetBuildTime();
-        Info["BuildDate"] = BuildInfo::GetBuildDate();
-        Info["VcsBranch"] = BuildInfo::GetVcsBranch();
-        Info["VcsRevision"] = BuildInfo::GetVcsRevision();
+        Info["BuildTime"] = App::BuildTime();
+        Info["BuildDate"] = App::BuildDate();
+        Info["VcsBranch"] = App::BuildVcsBranch();
+        Info["VcsRevision"] = App::BuildVcsRevision();
 
-        Info["EngineVersion"] = BuildInfo::GetEngineVersionStr();
+        Info["EngineVersion"] = App::EngineVersion().ToString();
 
-        Info["CompilerVersion"] = BuildInfo::GetCompilerVersion();
-        Info["CxxStandard"] = BuildInfo::GetCxxStandard();
+        Info["CompilerVersion"] = App::CompilerVersion();
+        Info["CxxStandard"] = App::CxxStandard();
 
-        Info["TargetPlatform"] = PlatformMisc::GetTargetPlatform();
-        Info["TargetArchitecture"] = PlatformMisc::GetTargetArchitecture();
-        Info["TargetType"] = PlatformMisc::GetTargetType();
-        Info["TargetConfig"] = PlatformMisc::GetTargetConfiguration();
+        Info["TargetPlatform"] = App::GetTargetPlatform();
+        Info["TargetArchitecture"] = App::GetTargetArchitecture();
+        Info["TargetType"] = App::GetTargetType();
+        Info["TargetConfig"] = App::GetTargetConfiguration();
         Info["bEverRender"] = GEngine->CanEverRender();
 
         Info["Uptime"] = GEngine->FrameTime;
@@ -1082,9 +1080,9 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         Info["HighestDeltaTime"] = GEngine->PreviousStat.High;
         Info["HighestLostDeltaTime"] = GEngine->PreviousStat.HighestLoss;
         Info["HighestIdleTime"] = GEngine->PreviousStat.HighestIdle;
-        Info["bTracerPid"] = Application::IsTracerPidValid();
-        Info["bEverProfile"] = Application::CanEverProfile();
-        Info["bProfiling"] = Application::IsAllowProfiling();
+        Info["bTracerPid"] = App::IsTracerPidValid();
+        Info["bEverProfile"] = App::CanEverProfile();
+        Info["bProfiling"] = App::IsAllowProfiling();
 
         OutResponse->SetContent(Info.dump(), "application/json");
 

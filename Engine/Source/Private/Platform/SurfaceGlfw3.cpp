@@ -254,7 +254,7 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
 
     if (glfwWindowShouldClose(this->Handle))
     {
-        Application::RequestEngineExit("Window closed by user.");
+        App::RequestEngineExit("Window closed by user.");
     }
 
     glfwPollEvents();

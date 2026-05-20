@@ -198,7 +198,7 @@ function(_jafg_add_module_impl
     endif()
 
     target_compile_definitions(${module_name} PRIVATE
-        PRIVATE_JAFG_CPLUSPLUS=${_private_jafg_min_cplusplus}
+        DETAIL_JAFG_CPLUSPLUS=${_private_jafg_min_cplusplus}
         )
 
     if(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_CLIENT)

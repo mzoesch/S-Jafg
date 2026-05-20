@@ -36,7 +36,7 @@ void Jafg::LaunchProgress::BeginProgress(
     Private::GProgressDescription = Description;
     Private::GProgressStep        = ProgressStep;
 
-    LOG_VERBOSE(LogGuardedMain, "Launch progressed to {} - {} with {:.2f}%.", Private::GProgressName, Private::GProgressDescription, Progress * 100.0f)
+    LOG_VERBOSE(LogLaunch, "Launch progressed to {} - {} with {:.2f}%.", Private::GProgressName, Private::GProgressDescription, Progress * 100.0f)
 
     return;
 }
@@ -54,7 +54,7 @@ void Jafg::LaunchProgress::BeginProgress(const LString& Description, const f32 P
 
     Private::GProgressDescription = Description;
 
-    LOG_VERBOSE(LogGuardedMain, "Launch progressed to {} - {} with {:.2f}%.", Private::GProgressName, Private::GProgressDescription, Progress * 100.0f)
+    LOG_VERBOSE(LogLaunch, "Launch progressed to {} - {} with {:.2f}%.", Private::GProgressName, Private::GProgressDescription, Progress * 100.0f)
 
     return;
 }

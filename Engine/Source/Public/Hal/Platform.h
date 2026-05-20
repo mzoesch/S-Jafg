@@ -74,9 +74,9 @@ struct LPrimitivePlatformTypesGeneric
     Let platform override platform based macros and types.
 -----------------------------------------------------------------------------*/
 
-#ifndef PRIVATE_JAFG_CPLUSPLUS
-    #error "PRIVATE_JAFG_CPLUSPLUS is not defined."
-#endif /* PRIVATE_JAFG_CPLUSPLUS */
+#ifndef DETAIL_JAFG_CPLUSPLUS
+    #error "DETAIL_JAFG_CPLUSPLUS is not defined."
+#endif /* DETAIL_JAFG_CPLUSPLUS */
 
 #if PLATFORM_LINUX
     #include "Hal/PlatformLinux.h"

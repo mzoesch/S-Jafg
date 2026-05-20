@@ -13,9 +13,9 @@
 #ifndef __cplusplus
     #error "No cpp standard specified."
 #else /* !__cplusplus */
-    #if __cplusplus < PRIVATE_JAFG_CPLUSPLUS
+    #if __cplusplus < DETAIL_JAFG_CPLUSPLUS
         #error "Program requires at least Config/.__cplusplus."
-    #endif /* __cplusplus < PRIVATE_JAFG_CPLUSPLUS */
+    #endif /* __cplusplus < DETAIL_JAFG_CPLUSPLUS */
 #endif /* __cplusplus */
 
 namespace Jafg

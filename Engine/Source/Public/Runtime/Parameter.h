@@ -8,10 +8,10 @@ namespace Jafg
 {
 
 struct LProgramParameter;
-namespace Application::Detail
+namespace App::Detail
 {
 ENGINE_API extern TArray<LProgramParameter*> RegisteredProgramParameters;
-} /* ~Namespace Application::Detail */
+} /* ~Namespace App::Detail */
 
 //# The allowed types for a given parameter
 enum struct EProgramParameterBits
@@ -49,20 +49,20 @@ struct LProgramParameter
          , Flags{CreateInfo.Flags}
          , Variations{std::move(CreateInfo.Variations)}
     {
-        if (auto It{algo::find(Application::Detail::RegisteredProgramParameters, this)}; It != Application::Detail::RegisteredProgramParameters.end())
+        if (auto It{algo::find(App::Detail::RegisteredProgramParameters, this)}; It != App::Detail::RegisteredProgramParameters.end())
         {
             /* Can happen if shared objects do not tear down correctly. */
             LOG_WARNING(LogProgramArguments, "Program argument [{}] already registered.", this->Identifier)
-            Application::Detail::RegisteredProgramParameters.erase(It);
+            App::Detail::RegisteredProgramParameters.erase(It);
         }
-        if (auto It{algo::find_if(Application::Detail::RegisteredProgramParameters, [&Identifier = this->Identifier](LProgramParameter* Param)
+        if (auto It{algo::find_if(App::Detail::RegisteredProgramParameters, [&Identifier = this->Identifier](LProgramParameter* Param)
         {
             return Param->Identifier == Identifier;
-        })}; It != Application::Detail::RegisteredProgramParameters.end())
+        })}; It != App::Detail::RegisteredProgramParameters.end())
         {
             LOG_FATAL(LogProgramArguments, "Program argument [{}] already registered by another parameter.", this->Identifier)
         }
-        Application::Detail::RegisteredProgramParameters.emplace_back(this);
+        App::Detail::RegisteredProgramParameters.emplace_back(this);
     }
     ENGINE_API ~LProgramParameter();
 

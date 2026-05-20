@@ -52,7 +52,7 @@ endif()
 
 project(
     Jafg
-    VERSION         "${_private_jafg_version}"
+    VERSION         "${_detail_jafg_version}"
     LANGUAGES       C CXX
     DESCRIPTION     ""
     HOMEPAGE_URL    "https://github.com/mzoesch/S-Jafg"

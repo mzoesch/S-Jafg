@@ -3,7 +3,7 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
-#include "Core/Application.h"
+#include "Core/App.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
 #include "Physics/PhysicCompontent.h"
@@ -51,7 +51,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
 {
     STAT_CYCLE_FUNCTION()
 
-    this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetElapsedTime());
+    this->RealTimeWhenWorldWasLaunched = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldWasLaunched > 0.0f)
 
     check(this->WorldState == EWorldState::PreInitializing)
@@ -111,7 +111,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     }
     check(this->SupremePolicies)
 
-    this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetElapsedTime());
+    this->RealTimeWhenWorldStarted = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
 
     if (auto& Track{GMutableEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
@@ -448,7 +448,7 @@ void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
 
 f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const noexcept
 {
-    return static_cast<f32>(Application::GetElapsedTime()) - this->RealTimeWhenWorldWasLaunched;
+    return static_cast<f32>(App::GetElapsedTime()) - this->RealTimeWhenWorldWasLaunched;
 }
 
 bool Jafg::LWorld::LineTraceByChannel(

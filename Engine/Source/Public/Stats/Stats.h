@@ -64,13 +64,13 @@
 #define STAT_DISCARD(Symbol) \
     Symbol.Discard();
 
-#define STAT_BOOKMARK(Name)                                                           \
-    if (PRIVATE_JAFG_STAT_TRACER) {                                                   \
-        PRIVATE_JAFG_STAT_TRACER->AddBookmark({                                       \
-            Name,                                                                     \
-            static_cast<i64>(::Jafg::Application::GetElapsedTime() * maths::s2mus_d), \
-            ::Jafg::Tasks::GetCurrentThreadId()                                       \
-        });                                                                           \
+#define STAT_BOOKMARK(Name)                                                   \
+    if (PRIVATE_JAFG_STAT_TRACER) {                                           \
+        PRIVATE_JAFG_STAT_TRACER->AddBookmark({                               \
+            Name,                                                             \
+            static_cast<i64>(::Jafg::App::GetElapsedTime() * maths::s2mus_d), \
+            ::Jafg::Tasks::GetCurrentThreadId()                               \
+        });                                                                   \
     }
 
 #else /* WITH_STATS */

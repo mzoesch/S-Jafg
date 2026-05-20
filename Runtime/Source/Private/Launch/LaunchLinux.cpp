@@ -2,12 +2,11 @@
 
 #if PLATFORM_LINUX
 
-#include "Core/Application.h"
-#include "Platform/PlatformMisc.h"
+#include "Core/App.h"
 #include "Engine/Engine.h"
 #include <csignal>
 
-extern EPlatformExit::Type GuardedMain();
+extern EPlatformExit::Type AgnosticLaunch();
 
 using namespace Jafg;
 
@@ -19,13 +18,13 @@ void SignumPosixAction_JafgHandler_Fatal(i32 Signal, siginfo_t* Info, void* InCo
 {
     (void)InContext;
 
-    if (Application::Detail::bAlreadyCrashed)
+    if (App::Detail::bAlreadyCrashed)
     {
         LOG_ERROR(LogJafgInternal, "Already crashed - ignoring signal [{}].", Signal)
         LOnPlatformBreak::ExitQuietly();
     }
 
-    Application::Detail::bAlreadyCrashed = true;
+    App::Detail::bAlreadyCrashed = true;
 
     u64 Cursor{};
     char Emitted[37 + 7 + 30 /* 30 padding */];
@@ -68,7 +67,7 @@ NORETURN
 void SignumPosixAction_JafgHandler_NotSoFatal(i32 Signal, siginfo_t* Info, void* Context)
 {
     /* Just do anything normally, but do not show the annoying crash report dialog window. */
-    Application::Detail::bSuppressCrashDialog = true;
+    App::Detail::bSuppressCrashDialog = true;
     SignumPosixAction_JafgHandler_Fatal(Signal, Info, Context);
 }
 
@@ -79,7 +78,7 @@ void SignumPosixAction_JafgHandler_Exit(i32 InSignal, siginfo_t*, void*)
     {
         Signal = Name;
     }
-    Application::RequestEngineExit(SprintF("Received signal [{}]: {}", InSignal, Signal));
+    App::RequestEngineExit(SprintF("Received signal [{}]: {}", InSignal, Signal));
 }
 
 } /* ~Namespace <Anonymous> */
@@ -90,11 +89,11 @@ i32 main(i32 c, char const* v[])
 
     check(c > 0)
     TArray<LString> Arguments; algo::for_each(v + 1, v + c, [&Arguments](auto* Arg){ Arguments.emplace_back(Arg); });
-    Application::Detail::RawCommandLine = std::move(Arguments);
+    App::Detail::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(Application::GetRawCommandLine(), "-Jafg.WaitForDebugger"))
+    if (algo::contains(App::GetRawCommandLine(), "-Jafg.WaitForDebugger"))
     {
-        Application::Detail::WaitForDebuggerGracefully(true);
+        App::Detail::WaitForDebuggerGracefully(true);
     }
 
     //
@@ -148,9 +147,9 @@ i32 main(i32 c, char const* v[])
     ::sigaction(SIGBUS,  &Action_Fatal, nullptr); /* Bus error (bad memory access). */
     ::sigaction(SIGSYS,  &Action_Fatal, nullptr); /* Bad system call (SVr4). */
 
-    ErrorLevel = GuardedMain();
+    ErrorLevel = AgnosticLaunch();
 
-    if (Application::IsPauseBeforeExit())
+    if (App::IsPauseBeforeExit())
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue ...")

@@ -15,7 +15,7 @@ bool bRunExit = false;
 
 } /* ~Namespace <Anonymous> */
 
-extern auto GuardedMain() -> EPlatformExit::Type;
+extern auto AgnosticLaunch() -> EPlatformExit::Type;
 extern void EngineTick();
 extern void EngineExit();
 
@@ -25,7 +25,7 @@ void WasmGuardedLoop()
 
     if (::Jafg::IsTearingDown())
     {
-        LOG_INFO(LogGuardedMain, "Canceling main loop ...")
+        LOG_INFO(LogLaunch, "Canceling main loop ...")
         ::emscripten_cancel_main_loop();
 
         if (bRunExit == false)
@@ -67,7 +67,7 @@ i32 main(i32 Argc, char* Argv[])
     Application::Private::bAlwaysReportCrash = false; // We do not want to report crashes in the browser.
                                                       // This is the responsibility of JavaScript.
 
-    const EPlatformExit::Type ErrorLevel = GuardedMain();
+    const EPlatformExit::Type ErrorLevel = AgnosticLaunch();
 
     if (bRunExit == false) // If the engine ticked at least for one tick, this control path is unreachable.
     {                      // Emscripten will not make a clean exit - call destructors, etc.

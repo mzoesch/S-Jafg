@@ -7,7 +7,7 @@
 #include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
 #include "Nodes/DropDown.h"
-#include "Core/Application.h"
+#include "Core/App.h"
 #include "Widgets/TagInspector.h"
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
@@ -42,7 +42,7 @@ void Jafg::WEditor::Construct()
                                 .DisplayName = "Exit",
                                 .Icon = "Icons/Jafg.Leave"
                                 },
-                            .OnAction = [](auto&&...){ Application::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
+                            .OnAction = [](auto&&...){ App::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
                             },
                         },
                     },

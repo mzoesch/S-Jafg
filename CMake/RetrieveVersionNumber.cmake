@@ -16,5 +16,5 @@ function(retrieve_version_number p_version)
     message(STATUS "Retrieved version number from config file to variable [${p_version}].")
 endfunction()
 
-retrieve_version_number(_private_jafg_version)
-message(STATUS "Jafg version: [${_private_jafg_version}].")
+retrieve_version_number(_detail_jafg_version)
+message(STATUS "Jafg version: [${_detail_jafg_version}].")

@@ -1,18 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/ShaderSubsystem.h"
-#include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 #include "Serialization/Json.h"
 #include "Rhi/PushConstants.h"
 #include "Rhi/FromString.h"
 #include "Rhi/FromJson.h"
+#include "Core/App.h"
 
 namespace
 {
 
 LPath Slangc{LPath{Jafg::SprintF("Vendor/Slang-{}/bin/slangc{}",
-    Jafg::PlatformMisc::GetTargetPlatformCompound(),
+    Jafg::App::GetTargetPlatformCompound(),
 #if PLATFORM_WINDOWS
     ".exe"
 #else /* PLATFORM_WINDOWS */

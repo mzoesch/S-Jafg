@@ -8,7 +8,7 @@
     #error "This file should only be included if the application compiles with stats."
 #endif /* WITH_STATS */
 
-#include "Core/Application.h"
+#include "Core/App.h"
 #include "Async/TaskUtility.h"
 
 namespace Jafg::Stats::Private
@@ -55,8 +55,8 @@ FORCEINLINE void LStat::Stop()
 
     GTracer->AddEvent({
         this->Name,
-        static_cast<i64>(algo::time_diff(Application::GetStaticStorageInitializationTime(), this->BeginTime) * maths::s2mus_d),
-        static_cast<i64>(Application::GetElapsedTime() * maths::s2mus_d),
+        static_cast<i64>(algo::time_diff(App::GetStaticStorageInitializationTime(), this->BeginTime) * maths::s2mus_d),
+        static_cast<i64>(App::GetElapsedTime() * maths::s2mus_d),
         Tasks::GetCurrentThreadId()
         });
     this->bStopped = true;

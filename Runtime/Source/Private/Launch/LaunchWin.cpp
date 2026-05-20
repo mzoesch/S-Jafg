@@ -16,7 +16,7 @@
 
 using namespace Jafg;
 
-extern EPlatformExit::Type GuardedMain();
+extern EPlatformExit::Type AgnosticLaunch();
 
 DECLARE_INLINE_LOG_CATEGORY(LogCRT, Trace)
 
@@ -55,7 +55,7 @@ EPlatformExit::Type SehUnwinder()
     EPlatformExit::Type ErrorLevel{};
     __try
     {
-        ErrorLevel = GuardedMain();
+        ErrorLevel = AgnosticLaunch();
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -118,7 +118,7 @@ i32 main(i32 ArgC, char* ArgV[])
 #endif /* !IN_SHIPPING */
     ErrorLevel = SehUnwinder();
 #else /* JAFG_WITH_MSVC */
-    ErrorLevel = GuardedMain();
+    ErrorLevel = AgnosticLaunch();
 #endif /* !JAFG_WITH_MSVC */
 
     if (Application::IsPauseBeforeExit())

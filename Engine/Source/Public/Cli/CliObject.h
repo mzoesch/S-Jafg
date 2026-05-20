@@ -50,11 +50,11 @@ public:
     FORCEINLINE auto GetIdentifier() const -> LString const& { return this->Identifier; }
     FORCEINLINE void SetIdentifier(const LString& InIdentifier) { this->Identifier = InIdentifier; }
     FORCEINLINE auto GetHelp() const -> LString { return this->Help; }
-    FORCEINLINE void SetHelp(const LString& InHelp) { this->Help = InHelp; }
+    FORCEINLINE void SetHelp(LString const& InHelp) { this->Help = InHelp; }
 
     FORCEINLINE bool IsUuidValid() const { return this->Uuid != NoUuid; }
 
-    FORCEINLINE std::strong_ordering operator<=>(const LCliObject& InOther) const
+    FORCEINLINE std::strong_ordering operator<=>(LCliObject const& InOther) const
     {
         return this->Identifier <=> InOther.Identifier;
     }

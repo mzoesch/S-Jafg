@@ -15,6 +15,12 @@
 namespace Finder
 {
 
+namespace Detail
+{
+ENGINE_API LPath GetEngineRootDir();
+ENGINE_API LPath GetSelfProcDir();
+} /* ~Namespace Detail */
+
 inline LPath GetCwd();
 
 //#
@@ -41,42 +47,42 @@ inline LPath GetModelsDir() noexcept { return GetContentDir() / "Models"; }
 inline LPath GetShadersDir() noexcept { return GetContentDir() / "Shaders"; }
 inline LPath GetTexturesDir() noexcept { return GetContentDir() / "Textures"; }
 
-inline bool DoesExist(const LPath& Path);
-inline bool DoesExistChecked(const LPath& Path) { const bool bOut { DoesExist(Path) }; check( bOut ) return bOut; }
-inline bool DoesExistAsserted(const LPath& Path) { const bool bOut { DoesExist(Path) }; jassert( bOut ) return bOut; }
+inline bool DoesExist(LPath const& Path);
+inline bool DoesExistChecked(LPath const& Path) { bool bOut{DoesExist(Path)}; check(bOut) return bOut; }
+inline bool DoesExistAsserted(LPath const& Path) { bool bOut{DoesExist(Path)}; jassert(bOut) return bOut; }
 
-inline bool DoesFileExist(const LPath& File);
-inline bool DoesFileExistChecked(const LPath& File) { const bool bOut { DoesFileExist(File) }; check( bOut ) return bOut; }
-inline bool DoesFileExistAsserted(const LPath& File) { const bool bOut { DoesFileExist(File) }; jassert( bOut ) return bOut; }
+inline bool DoesFileExist(LPath const& File);
+inline bool DoesFileExistChecked(LPath const& File) { bool bOut{DoesFileExist(File)}; check(bOut) return bOut; }
+inline bool DoesFileExistAsserted(LPath const& File) { bool bOut{DoesFileExist(File)}; jassert(bOut) return bOut; }
 
-inline bool DoesDirectoryExist(const LPath& Directory);
-inline bool DoesDirectoryExistChecked(const LPath& Directory) { const bool bOut { DoesDirectoryExist(Directory) }; check( bOut ) return bOut; }
-inline bool DoesDirectoryExistAsserted(const LPath& Directory) { const bool bOut { DoesDirectoryExist(Directory) }; jassert( bOut ) return bOut; }
+inline bool DoesDirectoryExist(LPath const& Directory);
+inline bool DoesDirectoryExistChecked(LPath const& Directory) { bool bOut{DoesDirectoryExist(Directory)}; check(bOut) return bOut; }
+inline bool DoesDirectoryExistAsserted(LPath const& Directory) { bool bOut{DoesDirectoryExist(Directory)}; jassert(bOut) return bOut; }
 
 //#
 //# Ensure a file. If it does not exist, it will be created along with their parent directories if necessary.
 //# This is a safe function that will panic if the path is outside the engine root directory.
 //#
-inline void EnsureFile(const LPath& File);
+inline void EnsureFile(LPath const& File);
 //# Check a file. If it does not exist, the program will panic. This function may read any file.
-inline void CheckFile(const LPath& File);
+inline void CheckFile(LPath const& File);
 
-inline bool AreFilesIdentical(const LPath& A, const LPath& B);
+inline bool AreFilesIdentical(LPath const& A, LPath const& B);
 
-inline void CreateFile(const LPath& File, const bool bMakeParents = false);
-inline void CreateDirectories(const LPath& Directory);
+inline void CreateFile(LPath const& File, bool bMakeParents = false);
+inline void CreateDirectories(LPath const& Directory);
 
 //#
 //# Reads a file from the platform.
 //# This function will panic if something goes wrong.
 //# @note This function will panic if the file does not exist or access to the filesystem is denied.
 //#
-inline LString    ReadFile(const LPath& File);
-inline TArray<u8> ReadFileAsBinary(const LPath& File);
+inline LString    ReadFile(LPath const& File);
+inline TArray<u8> ReadFileAsBinary(LPath const& File);
 
 //# Same as #ReadFile but will not panic, instead write the error message to the provided string if available.
-inline std::optional<LString>    TryReadFile(const LPath& File, LString* OutHumanReadableError = nullptr);
-inline std::optional<TArray<u8>> TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError = nullptr);
+inline std::optional<LString>    TryReadFile(LPath const& File, LString* OutHumanReadableError = nullptr);
+inline std::optional<TArray<u8>> TryReadFileAsBinary(LPath const& File, LString* OutHumanReadableError = nullptr);
 
 inline void OverrideFile(LPath const& File, LStringView Content, bool bUseNativeLineEndings = false);
 

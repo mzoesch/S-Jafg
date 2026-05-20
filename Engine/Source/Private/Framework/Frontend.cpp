@@ -8,7 +8,6 @@
 #include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
 #include "User/Input/UserInput.h"
-#include "Platform/PlatformMisc.h"
 #include "Stats/Stats.h"
 
 void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)

@@ -16,22 +16,22 @@ inline LPath Finder::GetCwd()
     return LPath{ std::filesystem::current_path() };
 }
 
-inline bool Finder::DoesExist(const LPath& Path)
+inline bool Finder::DoesExist(LPath const& Path)
 {
     return std::filesystem::exists(Path);
 }
 
-inline bool Finder::DoesFileExist(const LPath& File)
+inline bool Finder::DoesFileExist(LPath const& File)
 {
     return std::filesystem::is_regular_file(File);
 }
 
-inline bool Finder::DoesDirectoryExist(const LPath& Directory)
+inline bool Finder::DoesDirectoryExist(LPath const& Directory)
 {
     return std::filesystem::is_directory(Directory);
 }
 
-inline void Finder::EnsureFile(const LPath& File)
+inline void Finder::EnsureFile(LPath const& File)
 {
     if (DoesExist(File) == false)
     {
@@ -41,7 +41,7 @@ inline void Finder::EnsureFile(const LPath& File)
     return;
 }
 
-inline void Finder::CheckFile(const LPath& File)
+inline void Finder::CheckFile(LPath const& File)
 {
     if (DoesFileExist(File) == false)
     {
@@ -51,7 +51,7 @@ inline void Finder::CheckFile(const LPath& File)
     return;
 }
 
-inline bool Finder::AreFilesIdentical(const LPath& A, const LPath& B)
+inline bool Finder::AreFilesIdentical(LPath const& A, LPath const& B)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", A)
     std::ifstream F1(A, std::ios::binary);
@@ -89,7 +89,7 @@ inline bool Finder::AreFilesIdentical(const LPath& A, const LPath& B)
     return F1.eof() && F2.eof();
 }
 
-inline void Finder::CreateFile(const LPath& File, const bool bMakeParents)
+inline void Finder::CreateFile(LPath const& File, const bool bMakeParents)
 {
     if (bMakeParents)
     {
@@ -108,7 +108,7 @@ inline void Finder::CreateFile(const LPath& File, const bool bMakeParents)
     return;
 }
 
-inline void Finder::CreateDirectories(const LPath& Directory)
+inline void Finder::CreateDirectories(LPath const& Directory)
 {
     if (std::filesystem::create_directories(Directory))
     {
@@ -118,7 +118,7 @@ inline void Finder::CreateDirectories(const LPath& Directory)
     return;
 }
 
-inline LString Finder::ReadFile(const LPath& File)
+inline LString Finder::ReadFile(LPath const& File)
 {
     LString Error;
     std::optional Out { TryReadFile(File, &Error) };
@@ -132,7 +132,7 @@ inline LString Finder::ReadFile(const LPath& File)
     return Val;
 }
 
-inline TArray<u8> Finder::ReadFileAsBinary(const LPath& File)
+inline TArray<u8> Finder::ReadFileAsBinary(LPath const& File)
 {
     LString Error;
     std::optional Out { TryReadFileAsBinary(File, &Error) };
@@ -146,7 +146,7 @@ inline TArray<u8> Finder::ReadFileAsBinary(const LPath& File)
     return Val;
 }
 
-inline std::optional<LString> Finder::TryReadFile(const LPath& File, LString* OutHumanReadableError)
+inline std::optional<LString> Finder::TryReadFile(LPath const& File, LString* OutHumanReadableError)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", File)
 
@@ -166,7 +166,7 @@ inline std::optional<LString> Finder::TryReadFile(const LPath& File, LString* Ou
     return Buffer.str();
 }
 
-inline std::optional<TArray<u8>> Finder::TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError)
+inline std::optional<TArray<u8>> Finder::TryReadFileAsBinary(LPath const& File, LString* OutHumanReadableError)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", File)
 
@@ -287,7 +287,7 @@ inline void Finder::MakeFileBackup(LPath const& File, bool bMakeIfSame /* = fals
 
 inline TArray<LPath> Finder::FindFiles
 (
-    const LPath& Directory,
+    LPath const& Directory,
     const bool bKeepExtension /* = true */,
     const LStringView& Extension /* = "*" */,
     std::regex_constants::syntax_option_type Options /* = std::regex_constants::ECMAScript */
@@ -332,7 +332,7 @@ inline TArray<LPath> Finder::FindFiles
 
 inline TArray<LPath> Finder::FindFilesRecursively
 (
-    const LPath& Directory,
+    LPath const& Directory,
     const bool bKeepExtension /* = true */,
     LStringView Regex /* = "*" */,
     std::regex_constants::syntax_option_type Options /* = std::regex_constants::ECMAScript */

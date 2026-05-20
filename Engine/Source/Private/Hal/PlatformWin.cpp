@@ -133,7 +133,7 @@ void Jafg::LOnPlatformBreakWindows::OnProgramPanicImpl
     ///////////////////////////////////////////////////////////////////////////////
     // Dialog
 #if WITH_LOCAL_LAYER
-    if (Application::Private::bGSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
+    if (App::Private::bGSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
     {
         const LWString Caption{LITERAL_WIDE("Jafg panicked; We are fucked.")};
         const auto Message{algo::utf8_to_utf16(InMessage, std::strlen(InMessage))};

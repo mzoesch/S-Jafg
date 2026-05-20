@@ -3,7 +3,7 @@
 #include "Async/TaskUtility.h"
 #include "Async/Runnable.h"
 #include "Containers/ComplexQueue.h"
-#include "Core/Application.h"
+#include "Core/App.h"
 #include "Stats/Stats.h"
 #if JAFG_WITH_GCC || PLATFORM_LINUX
     #include <thread>
@@ -582,7 +582,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             }
 
             LOG_ERROR(LogTaskSystem, "{}", ErrorLevelStr)
-            Application::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
+            App::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
 
             return ErrorLevel;
         }
@@ -688,7 +688,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         );
 
                     LOG_ERROR(LogTaskSystem, "{}", ErrorLevelStr)
-                    Application::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
+                    App::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
                 }
                 else if (LambdaErrorLevel >= ETaskExit::TransientFailure)
                 {

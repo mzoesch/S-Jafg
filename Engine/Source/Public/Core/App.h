@@ -6,13 +6,60 @@
 #include "Runtime/Parameter.h"
 #include "Runtime/Argument.h"
 #include "Stats/StatsForward.h"
-#include "Build/EngineBuildInfo.h"
 
 namespace Jafg
 {
 
-namespace Application
+namespace App
 {
+
+struct LEngineVersion
+{
+    u64 Major{};
+    u64 Minor{};
+    u64 Patch{};
+    u64 Revision{};
+
+    NODISCARD FORCEINLINE constexpr std::strong_ordering operator<=>(LEngineVersion const& Other) const = default;
+    FORCEINLINE LString ToString() const
+    {
+        return Jafg::SprintF("{}.{}.{}.{}", this->Major, this->Minor, this->Patch, this->Revision);
+    }
+};
+
+//# Engine build time.
+NODISCARD NOINLINE ENGINE_API LString const& BuildTime() noexcept;
+//# Engine build date.
+NODISCARD NOINLINE ENGINE_API LString const& BuildDate() noexcept;
+//# Engine branch.
+NODISCARD NOINLINE ENGINE_API LString const& BuildVcsBranch() noexcept;
+//# Latest engine revision.
+NODISCARD NOINLINE ENGINE_API LString const& BuildVcsRevision() noexcept;
+
+//# Engine version.
+NODISCARD ENGINE_API LEngineVersion EngineVersion() noexcept;
+//# Vcs hash from the version -- not from the current engine build.
+NODISCARD ENGINE_API LString const& EngineVersionHash() noexcept;
+
+//# Compiler version used for the engine build.
+NODISCARD NOINLINE ENGINE_API LString const& CompilerVersion() noexcept;
+//# Cxx standard for the engine.
+NODISCARD NOINLINE ENGINE_API LString const& CxxStandard() noexcept;
+
+//# E.g.: "Windows", "Linux", ...
+ENGINE_API LStringView GetTargetPlatform() noexcept;
+//# E.g.: "x86_64", "x86", ...
+ENGINE_API LStringView GetTargetArchitecture() noexcept;
+//# E.g.: "Client", "Daemon", ...
+ENGINE_API LStringView GetTargetType() noexcept;
+//# E.g.: "Debug", "Shipping", ...
+ENGINE_API LStringView GetTargetConfiguration() noexcept;
+//# E.g.: "Client-Shipping", ...
+ENGINE_API LStringView GetTargetCompound() noexcept;
+//# E.g.: "Windows-x86_64", "Linux-x86_64", ...
+ENGINE_API LStringView GetTargetPlatformCompound() noexcept;
+//# E.g.: "Linux-x86_64/Client-Shipping", ...
+ENGINE_API LStringView GetTargetPath() noexcept;
 
 ENGINE_API extern LProgramParameter CoreHelp;
 ENGINE_API extern LProgramParameter Version;
@@ -153,9 +200,8 @@ inline LProgramArgument const* GetCommandLineArgument(LProgramParameter const& P
 inline void PrettyPrintVersion() noexcept
 {
     LOG_INFO(LogCli, "Engine version [{}] @mzoesch at [{} - {}] on {} in {}.",
-        Jafg::BuildInfo::GetEngineVersionStr(),
-        Jafg::BuildInfo::GetBuildTime(), Jafg::BuildInfo::GetBuildDate(),
-        Jafg::BuildInfo::GetVcsBranch(), Jafg::BuildInfo::GetVcsRevision()
+        EngineVersion().ToString(),
+        BuildTime(), BuildDate(), BuildVcsBranch(), BuildVcsRevision()
         )
 }
 inline void PrettyPrintApiUsage() noexcept
@@ -184,7 +230,7 @@ inline f64 GetElapsedTime() noexcept
     return algo::time_diff(GetStaticStorageInitializationTime(), std::chrono::high_resolution_clock::now());
 }
 
-} /* ~Namespace Application */
+} /* ~Namespace App */
 
 namespace Hal
 {
@@ -198,3 +244,10 @@ ENGINE_API void Sleep(f64 InSeconds);
 } /* ~Namespace PlatformHal */
 
 } /* ~Namespace Jafg */
+
+namespace Finder
+{
+
+inline LPath GetRootBinaryDirectory() noexcept { auto Out{LPath{"Binaries"}/Jafg::App::GetTargetPath()}; Out.make_preferred(); return Out; }
+
+} /* ~Namespace Finder */

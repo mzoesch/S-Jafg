@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Minimal.afx"
-#include "Core/Application.h"
+#include "Core/App.h"
 
 namespace Jafg
 {

@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Platform/Surface.h"
-#include "Platform/PlatformMisc.h"
 #include "Nodes/Viewport.h"
 #include "Engine/Engine.h"
 

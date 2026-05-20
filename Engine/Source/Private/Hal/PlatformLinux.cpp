@@ -3,7 +3,7 @@
 #if PLATFORM_LINUX
 
 #include "Minimal.afx"
-#include "Core/Application.h"
+#include "Core/App.h"
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -106,7 +106,7 @@ void Jafg::LOnPlatformBreakLinux::OnProgramPanicImpl
     LOG_ERROR(LogJafgInternal, "Stacktrace:\n{}", TraceStream.str());
 
 #if WITH_LOCAL_LAYER
-    if (Application::Detail::bSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
+    if (!App::Detail::bSuppressCrashDialog && !Hal::IsTracerPidValidVerySlow())
     {
         std::string ZenityMessage;
         ZenityMessage.reserve(strlen(InMessage));
@@ -202,9 +202,9 @@ void Jafg::LOnPlatformBreakLinux::OnProgramPanic
 namespace Jafg::Hal
 {
 
-void SleepNoStats(const f64 InSeconds)
+void SleepNoStats(f64 InSeconds)
 {
-    if (const i32 Micro{ static_cast<i32>(InSeconds * maths::s2mus_d) }; Micro > 0)
+    if (i32 Micro{static_cast<i32>(InSeconds * maths::s2mus_d)}; Micro > 0)
     {
         usleep(Micro);
     }

@@ -142,9 +142,12 @@ Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType
     InType.Uuid = ++this->UuidCursor;
     this->Types.emplace_back(std::move(InType));
 
+    LCliType One, Two;
+    One < Two;
+
     Algo::SortQuick(&this->Types);
 
-    return LCliCommandHandle{ this->UuidCursor };
+    return LCliCommandHandle{this->UuidCursor};
 }
 
 bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
@@ -192,7 +195,7 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
 
     Algo::SortQuick(&this->Commands);
 
-    return LCliCommandHandle{ this->UuidCursor };
+    return LCliCommandHandle{this->UuidCursor};
 }
 
 bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)

@@ -1,9 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Core/Application.h"
+#include "Core/App.h"
 #include "Core/LaunchProgress.h"
 #include "User/UserPreferences.h"
-#include "Platform/PlatformMisc.h"
 #include "Cli/ReSTCliPreferences.h"
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
@@ -54,8 +53,8 @@ FORCEINLINE
 #endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    return Application::HasCustomExitStatus()
-        ? static_cast<EPlatformExit::Type>(Application::GetCustomExitStatus())
+    return App::HasCustomExitStatus()
+        ? static_cast<EPlatformExit::Type>(App::GetCustomExitStatus())
         : EPlatformExit::Success;
 }
 
@@ -73,7 +72,7 @@ void EngineTick()
         ::FlushLogs();
     }
 
-    Application::Detail::BeginExitIfRequested();
+    App::Detail::BeginExitIfRequested();
     GMutableEngine->DefaultTimeAdvance();
     GMutableEngine->Tick();
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
@@ -89,7 +88,7 @@ void EngineExit()
     STAT_BOOKMARK("TearingDown")
     STAT_CYCLE_FUNCTION_START(ExitCycle)
 
-    LOG_INFO(LogGuardedMain, "Engine is exiting ...")
+    LOG_INFO(LogLaunch, "Engine is exiting ...")
 
     if (GEngine)
     {
@@ -109,26 +108,26 @@ void EngineExit()
 
     (void)Detail::GetJxxTagRegistry().Destroy();
 
-    if (Application::HasCustomExitReason())
+    if (App::HasCustomExitReason())
     {
         if ((::GetMostSignificantExitReason() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
         {
-            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit reason: {}", Application::GetCustomExitReason())
+            LOG_ERROR(LogLaunch, "Engine exit with custom exit reason: {}", App::GetCustomExitReason())
         }
         else
         {
-            LOG_INFO(LogGuardedMain, "Engine exit with custom exit reason: {}", Application::GetCustomExitReason())
+            LOG_INFO(LogLaunch, "Engine exit with custom exit reason: {}", App::GetCustomExitReason())
         }
     }
-    if (Application::HasCustomExitStatus())
+    if (App::HasCustomExitStatus())
     {
-        if ((Application::GetCustomExitStatus() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
+        if ((App::GetCustomExitStatus() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
         {
-            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit status: {}", Application::GetCustomExitStatus())
+            LOG_ERROR(LogLaunch, "Engine exit with custom exit status: {}", App::GetCustomExitStatus())
         }
         else
         {
-            LOG_INFO(LogGuardedMain, "Engine exit with custom exit status: {}", Application::GetCustomExitStatus())
+            LOG_INFO(LogLaunch, "Engine exit with custom exit status: {}", App::GetCustomExitStatus())
         }
     }
 
@@ -145,32 +144,32 @@ void EngineExit()
     return;
 }
 
-//# A function "guarded" by platform-specific code implementing error handlers and user interface crash reporters.
-EPlatformExit::Type GuardedMain()
+//# The launch function that is agnostic to all platforms. Each launch will eventually find its way here.
+EPlatformExit::Type AgnosticLaunch()
 {
     {
-        check(Application::Detail::ProcessedCommandLine.empty())
+        check(App::Detail::ProcessedCommandLine.empty())
         LProgramArgument* CurrentList{};
-        algo::for_each(Application::Detail::RawCommandLine, [&CurrentList](LString const& Parameter)
+        algo::for_each(App::Detail::RawCommandLine, [&CurrentList](LString const& Parameter)
         {
             if (Parameter.starts_with('-'))
             {
                 CurrentList = nullptr;
                 if (auto Idx{Parameter.find('=')}; Idx != LString::npos)
                 {
-                    Application::Detail::ProcessedCommandLine.emplace_back(algo::sub(Parameter, 1, Idx), algo::right_chop(Parameter, Idx + 1));
+                    App::Detail::ProcessedCommandLine.emplace_back(algo::sub(Parameter, 1, Idx), algo::right_chop(Parameter, Idx + 1));
                 }
                 else
                 {
-                    Application::Detail::ProcessedCommandLine.emplace_back(algo::right_chop(Parameter, 1));
-                    CurrentList = &Application::Detail::ProcessedCommandLine.back();
+                    App::Detail::ProcessedCommandLine.emplace_back(algo::right_chop(Parameter, 1));
+                    CurrentList = &App::Detail::ProcessedCommandLine.back();
                 }
             }
             else
             {
                 if (CurrentList)
                 {
-                    check(CurrentList->IsValue() == false)
+                    check(!CurrentList->IsValue())
                     if (CurrentList->IsStoreTrue())
                     {
                         CurrentList->Variant = TArray<LString>{};
@@ -179,22 +178,22 @@ EPlatformExit::Type GuardedMain()
                 }
                 else
                 {
-                    LOG_WARNING(LogGuardedMain, "Command line argument [{}] is not associated with any parameter.", Parameter)
+                    LOG_WARNING(LogLaunch, "Command line argument [{}] is not associated with any parameter.", Parameter)
                 }
             }
         });
     }
 
-    if (Application::GetCommandLineArgument(Application::CoreHelp))
+    if (App::GetCommandLineArgument(App::CoreHelp))
     {
-        Application::PrettyPrintApiUsage();
-        Application::RequestEngineExit("Help shown");
+        App::PrettyPrintApiUsage();
+        App::RequestEngineExit("Help shown");
         return ::GetMostSignificantExitReason();
     }
-    if (Application::GetCommandLineArgument(Application::Version))
+    if (App::GetCommandLineArgument(App::Version))
     {
-        Application::PrettyPrintVersion();
-        Application::RequestEngineExit("Version shown");
+        App::PrettyPrintVersion();
+        App::RequestEngineExit("Version shown");
         return ::GetMostSignificantExitReason();
     }
 
@@ -203,31 +202,30 @@ EPlatformExit::Type GuardedMain()
     algo::raii_leave _{&EngineExit};
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
 
-    LOG_INFO(LogGuardedMain, "Finished static storage initialization after {} seconds.", Application::GetElapsedTime())
+    LOG_INFO(LogLaunch, "Finished static storage initialization after {} seconds.", App::GetElapsedTime())
 
-    Application::Detail::PauseBeforeExit = !!Application::GetCommandLineArgument(Application::PauseBeforeExit);
-    Application::Detail::AlwaysReportCrash = !!Application::GetCommandLineArgument(Application::AlwaysReportCrash);
+    App::Detail::PauseBeforeExit = !!App::GetCommandLineArgument(App::PauseBeforeExit);
+    App::Detail::AlwaysReportCrash = !!App::GetCommandLineArgument(App::AlwaysReportCrash);
 #if WITH_STATS
-    Application::Detail::AllowProfiling = Application::CanEverProfile() && !!Application::GetCommandLineArgument(Application::AllowProfiling);
+    App::Detail::AllowProfiling = App::CanEverProfile() && !!App::GetCommandLineArgument(App::AllowProfiling);
 #endif /* WITH_STATS */
 #endif /* !WITH_TESTS */
 
     Tasks::RegisterThread(ENamedThreads::Master);
 
-    std::filesystem::current_path(PlatformMisc::GetEngineRootDir());
+    std::filesystem::current_path(Finder::Detail::GetEngineRootDir());
     Finder::CreateDirectories(Finder::GetTempDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
-
-    LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", PlatformMisc::GetEngineRootDir())
-    LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", PlatformMisc::GetSelfProcDir())
+    LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", Finder::Detail::GetEngineRootDir())
+    LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", Finder::Detail::GetSelfProcDir())
 
 #if WITH_TESTS
     return Tester::LTestFramework{}.RunRegisteredTests();
 #else /* WITH_TESTS  */
 
 #if WITH_STATS
-    if (Application::IsAllowProfiling())
+    if (App::IsAllowProfiling())
     {
         LOG_VERBOSE(LogStats, "Profiling and stats gathering is enabled.")
         if (Stats::Private::GTracer == nullptr)
@@ -243,69 +241,69 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
 
-    STAT_CYCLE_START(GmEngineInit, "EngineInit")
+    STAT_CYCLE_START(AlEngineInit, "EngineInit")
     check(GEngine == nullptr)
     GMutableEngine = new LEngine{};
     GEngine = GMutableEngine;
     check(GEngine)
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
 
-    STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
+    STAT_CYCLE_START(AlObjects, "JafgObjectInitialization")
     Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
     Detail::GetGlobalCxxRecordRegistry().LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::RunAllTasks);
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-    STAT_CYCLE_END(GmObjects)
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    STAT_CYCLE_END(AlObjects)
 
     GMutableEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-    STAT_CYCLE_END(GmEngineInit)
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    STAT_CYCLE_END(AlEngineInit)
 
 #if JAFG_WITH_FOREIGN_SUPPORT
-    STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
+    STAT_CYCLE_START(AlEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
     JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
     GMutableEngine->RefetchPlugins(Prefs.AdditionalPluginsSearchPaths);
     for (LString const& Plugin : Prefs.EnabledEnginePlugins)
     {
         GMutableEngine->LoadPluginNoFailure(Plugin);
     }
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-    STAT_CYCLE_END(GmEnabledEnginePluginsLoad)
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    STAT_CYCLE_END(AlEnabledEnginePluginsLoad)
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
-    if (Application::GetCommandLineArgument(Application::Help))
+    if (App::GetCommandLineArgument(App::Help))
     {
-        Application::PrettyPrintApiUsage();
-        Application::RequestEngineExit("Verbose help shown");
+        App::PrettyPrintApiUsage();
+        App::RequestEngineExit("Verbose help shown");
         return ::GetMostSignificantExitReason();
     }
 
 #if JAFG_WITH_REST_CLS
-    STAT_CYCLE_START(GmReSTCliLoad, "ReSTCliLoad")
+    STAT_CYCLE_START(AlReSTCliLoad, "ReSTCliLoad")
     GMutableEngine->SetReSTCliCorePaths();
     if (auto const& ReSTCliPrefs{GetSingleton<JReSTCliPreferences>()}; ReSTCliPrefs.bAlwaysDisable == false)
     {
-        if ((ReSTCliPrefs.bAutoStart && !Application::GetCommandLineArgument(Params::ReST_DisableAutoStart))
-            || !!Application::GetCommandLineArgument(Params::ReST_InstantStart))
+        if ((ReSTCliPrefs.bAutoStart && !App::GetCommandLineArgument(Params::ReST_DisableAutoStart))
+            || !!App::GetCommandLineArgument(Params::ReST_InstantStart))
         {
             GMutableEngine->StartReSTCliServer();
         }
     }
-    if (Application::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-    STAT_CYCLE_END(GmReSTCliLoad)
+    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+    STAT_CYCLE_END(AlReSTCliLoad)
 #endif /* JAFG_WITH_REST_CLS */
 
     FlushOutStreams();
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     LaunchProgress::FinishAndGiveUpMemory();
 
-    GMutableEngine->PreviousFrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    GMutableEngine->PreviousFrameTime = algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now());
     Hal::YieldThread();
-    GMutableEngine->FrameTime = algo::time_diff(Application::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    GMutableEngine->FrameTime = algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now());
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")
@@ -313,7 +311,7 @@ EPlatformExit::Type GuardedMain()
 #if JAFG_PLATFORM_USES_NON_GENERIC_LOOP
     JAFG_PLATFORM_GUARDED_LOOP;
 #else /* JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
-    while (Application::IsTearingDown() == false)
+    while (!App::IsTearingDown())
     {
         ::EngineTick();
     }
