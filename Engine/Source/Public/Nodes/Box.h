@@ -42,7 +42,7 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
 {
     NODE_FACTORY_BODY(WBox)
 
-    decltype(auto) Brush(this auto&& Self, LRegionBrush const& Brush) noexcept
+    decltype(auto) Brush(this auto&& Self, LBoxBrush const& Brush) noexcept
     {
         NODE_FACTORY_SELF().Brush = Brush;
         return NODE_FACTORY_RESULT();
@@ -52,49 +52,14 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().Brush.Tint = Tint;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Texture(this auto&& Self, LTexture2Ref Texture) noexcept
+    decltype(auto) BorderTint(this auto&& Self, LColor const& Tint) noexcept
     {
-        NODE_FACTORY_SELF().Brush.Texture = std::move(Texture);
+        NODE_FACTORY_SELF().Brush.BorderTint = Tint;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) TextureScale(this auto&& Self, f32 Scale) noexcept
+    decltype(auto) OutlineTint(this auto&& Self, LColor const& Tint) noexcept
     {
-        NODE_FACTORY_SELF().Brush.TextureScale = Scale;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) TexCoordBehavior(this auto&& Self, const rhi::tex_coord_behavior Behavior) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.TexCoordBehavior = Behavior;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) SamplerAddressMode(this auto&& Self, UBO::BindlessTextureArray::Sampler AddressMode) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.SamplerAddressMode = AddressMode;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) TexturePadding(this auto&& Self, f32 Padding) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.TexturePadding = Padding;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) BackgroundTint(this auto&& Self, LColor const& BackgroundTint) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.BackgroundTint = BackgroundTint;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) Radii(this auto&& Self, LVec4F const& Radii) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.Radii = Radii;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) ClampRadii(this auto&& Self, bool bClamp) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.bClampRadii = bClamp;
-        return NODE_FACTORY_RESULT();
-    }
-    decltype(auto) SkipBrushDraw(this auto&& Self, bool bSkip) noexcept
-    {
-        NODE_FACTORY_SELF().Brush.bSkipBrushDraw = bSkip;
+        NODE_FACTORY_SELF().Brush.OutlineTint = Tint;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) OutlineThickness(this auto&& Self, f32 Thickness) noexcept
@@ -102,9 +67,70 @@ struct LFactoryBox : NODE_FACTORY_PARENT(WBox)
         NODE_FACTORY_SELF().Brush.OutlineThickness = Thickness;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) OutlineTint(this auto&& Self, LColor const& Tint) noexcept
+    decltype(auto) Texture(this auto&& Self, LRegionBrush::LTexture Texture) noexcept
     {
-        NODE_FACTORY_SELF().Brush.OutlineTint = Tint;
+        NODE_FACTORY_SELF().Brush.Background = std::move(Texture);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Texture(this auto&& Self, LOptionalTexture2Ref Texture) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.Background = LRegionBrush::LTexture{Texture.GetResolved()};
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) TextureScale(this auto&& Self, f32 Scale) noexcept
+    {
+        check(!Self._IsDecommissioned())
+        auto& Me{DETAIL_JAFG_NODE_FACTORY_SELF()};
+        check(std::holds_alternative<LRegionBrush::LTexture>(Me.Brush.Background))
+        std::get<LRegionBrush::LTexture>(Me.Brush.Background).TextureScale = Scale;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Icon(this auto&& Self, LRegionBrush::LTexture Icon) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.Background = std::move(Icon);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Icon(this auto&& Self, LOptionalTexture2Ref Icon) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.Background = LRegionBrush::LIcon{Icon.GetResolved()};
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) IconScale(this auto&& Self, u32 Scale) noexcept
+    {
+        check(!Self._IsDecommissioned())
+        auto& Me{DETAIL_JAFG_NODE_FACTORY_SELF()};
+        check(std::holds_alternative<LRegionBrush::LIcon>(Me.Brush.Background))
+        std::get<LRegionBrush::LIcon>(Me.Brush.Background).Scale = Scale;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) TexturePadding(this auto&& Self, f32 Padding) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.TexturePadding = Padding;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) TexCoordBehavior(this auto&& Self, const rhi::tex_coord_behavior Behavior) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.TexCoordBehavior = Behavior;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) SkipBrushDraw(this auto&& Self, bool bInSkip) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.bSkipBrushDraw = bInSkip;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) SamplerAddressMode(this auto&& Self, UBO::Bindless::Sampler AddressMode) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.SamplerAddressMode = AddressMode;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) ClampRadii(this auto&& Self, bool bClamp) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.bClampRadii = bClamp;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Radii(this auto&& Self, LVec4F const& Radii) noexcept
+    {
+        NODE_FACTORY_SELF().Brush.Radii = Radii;
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) Padding(this auto&& Self, LPadding const& Padding)

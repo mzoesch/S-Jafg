@@ -22,13 +22,13 @@ protected:
 
     explicit WHButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(TButtonBase::DefaultVisibility);
     }
 
     template<typename TCxxClass>
     explicit WHButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(TButtonBase::DefaultVisibility);
     }
 
 public:

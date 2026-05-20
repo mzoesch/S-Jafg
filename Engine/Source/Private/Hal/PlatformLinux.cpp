@@ -53,7 +53,7 @@ void Jafg::LOnPlatformBreakLinux::OnProgramPanicImpl
 
             if (const pid_t ThreadTid { atoi(Entry->d_name) }; ThreadTid > 0 && ThreadTid != Tid)
             {
-                ::syscall(SYS_tgkill, Pid, ThreadTid, signal);
+                tgkill(Pid, ThreadTid, SIGSTOP);
             }
 
             continue;

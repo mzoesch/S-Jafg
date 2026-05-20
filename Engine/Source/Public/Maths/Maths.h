@@ -778,7 +778,7 @@ inline constexpr TQua<T,defaultp> rotator(T pitch, T yaw, T roll) noexcept
     auto R{glm::angleAxis(roll,  maths::forward_vector<LWorldVec3>)};
     return Y * P * R;
 }
-template<typename T> requires (!std::is_floating_point_v<T>)
+template<typename T> requires(!std::is_floating_point_v<T>)
 inline constexpr TQua<LWorldReal,defaultp> rotator(T pitch, T yaw, T roll) noexcept
 {
     return maths::rotator<LWorldReal>(static_cast<LWorldReal>(pitch), static_cast<LWorldReal>(yaw), static_cast<LWorldReal>(roll));
@@ -793,7 +793,7 @@ inline constexpr TQua<T,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
 {
     return maths::rotator(maths::radians(pitch), maths::radians(yaw), maths::radians(roll));
 }
-template<typename T> requires (!std::is_floating_point_v<T>)
+template<typename T> requires(!std::is_floating_point_v<T>)
 inline constexpr TQua<LWorldReal,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
 {
     return maths::rotator_deg<LWorldReal>(static_cast<LWorldReal>(pitch), static_cast<LWorldReal>(yaw), static_cast<LWorldReal>(roll));

@@ -147,6 +147,7 @@ struct LColor final
     };
 
     FORCEINLINE constexpr LColor() noexcept = delete;
+    FORCEINLINE constexpr LColor(ESkipInit) noexcept {}
     FORCEINLINE constexpr LColor(u8 InR, u8 InG, u8 InB, u8 InA = 0xFF) noexcept
 #if JAFG_PLATFORM_USES_LITTLE_ENDIAN
         : R(InR), G(InG), B(InB), A(InA)

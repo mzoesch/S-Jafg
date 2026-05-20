@@ -14,18 +14,21 @@ struct VisualShared
 
 struct InstanceData
 {
-    /* (Position, Size) in px. */
+    /* (Position, Extent) in px. */
     float4 Rect;
-    uint Tint;
-    uint BackgroundTint;
-    float4 Radii;
-    uint OutlineTint;
     /* (Min, Max) */
     float4 TexCoordRect;
-    float  OutlineThickness;
+    float4 Radii;
+
+    LColor Tint;
+    LColor BorderTint;
+    LColor OutlineTint;
+    float OutlineThickness;
+    
     uint TextureIndex;
     uint SamplerIndex;
     float MsdfPixelRange;
+    uint _pad1;
 };
 [[vk::binding(0, 2)]] StructuredBuffer<InstanceData> InstanceBuffer;
 
@@ -77,13 +80,13 @@ float4 fragMain(FRInput Input) : SV_TARGET
         // This is prob. better, but produces sometimes wrong results...
         // Result = lerp(
         //     jafg_color_to_linear(Instance.Tint) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
-        //     jafg_color_to_linear(Instance.BackgroundTint),
+        //     jafg_color_to_linear(Instance.BorderTint),
         //     saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
         //     );
         
         if (Input.TexUV.x < 0.0 || Input.TexUV.x > 1.0 || Input.TexUV.y < 0.0 || Input.TexUV.y > 1.0)
         {
-            Result = jafg_color_to_linear(Instance.BackgroundTint, Shared.Gamma);
+            Result = jafg_color_to_linear(Instance.BorderTint, Shared.Gamma);
         }
         else
         {

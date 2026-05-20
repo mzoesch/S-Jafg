@@ -16,6 +16,8 @@ class ENGINE_API WWorldViewer : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
+    inline static constexpr rhi::extent2 DefaultExtent{640,480};
+
 protected:
 
     explicit WWorldViewer(LNodeDynamicInit const& Init) noexcept
@@ -23,6 +25,7 @@ protected:
     {
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetShouldTick(true);
+        this->_ctor_SetBackgroundTint();
     }
     template<typename TCxxClass>
     explicit WWorldViewer(TNodeStaticInit<TCxxClass> const& Init) noexcept
@@ -30,9 +33,12 @@ protected:
     {
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetShouldTick(true);
+        this->_ctor_SetBackgroundTint();
     }
 
 public:
+
+    inline static constexpr rhi::extent2 MinViewportExtent{128,128};
 
     virtual ~WWorldViewer() override;
 
@@ -47,16 +53,27 @@ public:
     NODISCARD FORCEINLINE constexpr LViewport& GetWorldRenderTargetViewport() noexcept { return this->RenderTargetViewport; }
     NODISCARD FORCEINLINE constexpr LViewport const& GetWorldRenderTargetViewport() const noexcept { return this->RenderTargetViewport; }
 
-    LColor BackgroundTint{ Colors::Black };
-    rhi::tex_coord_behavior TexCoordBehavior{ rhi::tex_coord_behavior::FitAspect };
+    LColor BorderTint{ Colors::Black };
 
-    rhi::extent2 DesiredViewportExtent{ 300, 300 };
+    //#
+    //# The desired extent.
+    //# If not set, then the extent of the render target will be determined by the size of this node.
+    //#
+    std::optional<rhi::extent2> DesiredViewportExtent;
+    FORCEINLINE bool IsManual() const noexcept { return this->DesiredViewportExtent.has_value(); }
 
 private:
 
     void InitializeRenderTarget();
     bool OnPreDraw(LRenderInfo const& Info);
-    void PreDraw(LRenderInfo const& Info);
+    void PreDraw(LRenderInfo const& Info) { this->RenderTargetViewport.Draw(Info); }
+
+    void CreateMenuDropDown(LVec2F Where);
+
+    void _ctor_SetBackgroundTint();
+
+    algo::clock::time_point LastUnstableDiff;
+    std::optional<rhi::extent2> LastUnstableExtent;
 
     LRenderTarget RenderTarget;
     LViewport RenderTargetViewport;

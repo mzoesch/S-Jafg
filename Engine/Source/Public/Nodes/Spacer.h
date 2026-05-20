@@ -37,13 +37,13 @@ struct LFactorySpacer : NODE_FACTORY_PARENT(WSpacer)
     }
     decltype(auto) Height(this auto&& Self, LNodeSize1 Height) noexcept
     {
-        check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.X == 0.0f)
+        check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.Size.y == 0.0f)
         NODE_FACTORY_SELF().Size = LNodeSize2{0.0f, Height};
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) Width(this auto&& Self, LNodeSize1 Width) noexcept
     {
-        check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.Y == 0.0f)
+        check(DETAIL_JAFG_NODE_FACTORY_SELF().Size.Size.x == 0.0f)
         NODE_FACTORY_SELF().Size = LNodeSize2{Width, 0.0f};
         return NODE_FACTORY_RESULT();
     }

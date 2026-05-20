@@ -22,13 +22,13 @@ protected:
 
     explicit WButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(TButtonBase::DefaultVisibility);
     }
 
     template<typename TCxxClass>
     explicit WButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(TButtonBase::DefaultVisibility);
     }
 
 public:
@@ -37,6 +37,11 @@ public:
     {
         Super::Construct();
         this->ButtonBase_Construct();
+    }
+
+    virtual void Draw(LNodeRenderInfo const& Info) const override
+    {
+        Super::Draw(Info);
     }
 
     JAFG_NODE_BUTTON_BOILERPLATE()

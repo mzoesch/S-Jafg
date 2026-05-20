@@ -628,7 +628,7 @@ void Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LString const& Url, Detai
         return;
     }
 
-    if (const auto Idx{ Url.find('?') }; Idx != LString::npos)
+    if (auto Idx{Url.find('?')}; Idx != LString::npos)
     {
         if (const LString LevelUrl{ Url.substr(0, Idx) }; this->IsLevelRegistered(LevelUrl) == false)
         {

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <bit>
+#include <cstdint>
 
 /*-----------------------------------------------------------------------------
     Common types for almost all compilers and platforms.
@@ -14,38 +15,22 @@ namespace Jafg
 
 struct LPrimitivePlatformTypesGeneric
 {
-    //# 8-bit unsigned integer
-    typedef unsigned char               u8;
-    //# 16-bit unsigned integer
-    typedef unsigned short int          u16;
-    //# 32-bit unsigned integer
-    typedef unsigned int                u32;
-    //# 64-bit unsigned integer
-    typedef unsigned long long          u64;
-
-    //# 8-bit signed integer
-    typedef signed char                 i8;
-    //# 16-bit signed integer
-    typedef signed short int            i16;
-    //# 32-bit signed integer
-    typedef signed int                  i32;
-    //# 64-bit signed integer
-    typedef signed long long            i64;
+    typedef std::uint8_t                u8;
+    typedef std::uint16_t               u16;
+    typedef std::uint32_t               u32;
+    typedef std::uint64_t               u64;
+    typedef std::int8_t                 i8;
+    typedef std::int16_t                i16;
+    typedef std::int32_t                i32;
+    typedef std::int64_t                i64;
 
     typedef float                       f32;
     typedef double                      f64;
 
-    //# An ASCII character. 8-bit fixed-width representation of 7-bit characters.
-    typedef char                        LAsciiChar;
-
-    //# Char used by jafg.
+    //# Char used by jafg. 8-bit fixed-width representation of 7-bit characters.
     typedef char                        LJafgChar;
-
     //# Native char.
     typedef char                        LChar;
-
-    //# A wide character. ?-bit fixed-width representation of the platform's natural wide character set.
-    typedef wchar_t                     LWideChar;
 };
 
 } /* ~Namespace Jafg */
@@ -580,7 +565,6 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::u16;
     typename T::u32;
     typename T::u64;
-
     typename T::i8;
     typename T::i16;
     typename T::i32;
@@ -589,10 +573,8 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::f32;
     typename T::f64;
 
-    typename T::LAsciiChar;
     typename T::LJafgChar;
     typename T::LChar;
-    typename T::LWideChar;
 };
 
 static_assert(IsPrimitivePlatformTypesValid<LPlatformTypes>, "JAFG::LPlatformTypes is not valid.");
@@ -609,7 +591,7 @@ static_assert(sizeof(LPlatformTypes::i64)               == 8);
 static_assert(sizeof(LPlatformTypes::f32)               == 4);
 static_assert(sizeof(LPlatformTypes::f64)               == 8);
 
-static_assert(sizeof(wchar_t)     == JAFG_PLATFORM_WCHAR_SIZE );
+static_assert(sizeof(wchar_t)    == JAFG_PLATFORM_WCHAR_SIZE );
 static_assert(sizeof(char)                              == 1 );
 static_assert(sizeof(char8_t)                           == 1 );
 static_assert(sizeof(char16_t)                          == 2 );
@@ -642,14 +624,14 @@ concept IsOnProgramPanicValid = requires
 static_assert(IsOnProgramPanicValid<LOnPlatformBreak>);
 
 #if JAFG_PLATFORM_U64_SIZET_EQ
-    static_assert(std::is_same_v<LPlatformTypes::u64, LPlatformTypes::std::size_t>);
+    static_assert(std::is_same_v<LPlatformTypes::u64, std::size_t>);
 #else /* JAFG_PLATFORM_U64_SIZET_EQ */
-    static_assert(std::is_same_v<LPlatformTypes::u64, std::size_t> == false);
+    static_assert(!std::is_same_v<LPlatformTypes::u64, std::size_t>);
 #endif /* !JAFG_PLATFORM_U64_SIZET_EQ */
 #if JAFG_PLATFORM_U32_SIZET_EQ
-    static_assert(std::is_same_v<LPlatformTypes::u32, LPlatformTypes::std::size_t>);
+    static_assert(std::is_same_v<LPlatformTypes::u32, std::size_t>);
 #else /* JAFG_PLATFORM_U32_SIZET_EQ */
-    static_assert(std::is_same_v<LPlatformTypes::u32, std::size_t> == false);
+    static_assert(!std::is_same_v<LPlatformTypes::u32, std::size_t>);
 #endif /* !JAFG_PLATFORM_U32_SIZET_EQ */
 
 } /* ~Namespace Jafg */
@@ -663,7 +645,6 @@ typedef Jafg::LPlatformTypes::u8                                         u8;
 typedef Jafg::LPlatformTypes::u16                                        u16;
 typedef Jafg::LPlatformTypes::u32                                        u32;
 typedef Jafg::LPlatformTypes::u64                                        u64;
-
 typedef Jafg::LPlatformTypes::i8                                         i8;
 typedef Jafg::LPlatformTypes::i16                                        i16;
 typedef Jafg::LPlatformTypes::i32                                        i32;
@@ -672,10 +653,8 @@ typedef Jafg::LPlatformTypes::i64                                        i64;
 typedef Jafg::LPlatformTypes::f32                                        f32;
 typedef Jafg::LPlatformTypes::f64                                        f64;
 
-typedef Jafg::LPlatformTypes::LAsciiChar                                 LAsciiChar;
 typedef Jafg::LPlatformTypes::LJafgChar                                  LJafgChar;
 typedef Jafg::LPlatformTypes::LChar                                      LChar;
-typedef Jafg::LPlatformTypes::LWideChar                                  LWideChar;
 
 
 /*-----------------------------------------------------------------------------

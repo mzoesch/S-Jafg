@@ -85,6 +85,10 @@ public:
     Tab  RegisterTab(LTabCreateInfo&& Info);
     void CloseTab(WTabOverlaySelector* Selector) { ensure(!this->CloseTabImpl(Selector, false).has_value()); }
 
+    //# Whether the selector parent is now hidden.
+    bool HideTabSelector();
+    void ShowTabSelector() { check(this->Selectors) this->Selectors->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible); }
+
     FORCEINLINE auto const& GetTabs() const noexcept { return this->Tabs; }
 
     WUserWidget* FindWidgetSlow(LJxxClass const& Class) noexcept;
@@ -142,7 +146,7 @@ private:
         WTabOverlay* Overlay;
         EDirection Direction;
 
-        template<EDirection Direction> requires (Direction != C)
+        template<EDirection Direction> requires(Direction != C)
         NODISCARD FORCEINLINE static f32 GetMaxDistanceFromEdge(f32 Axis) noexcept
         {
             if constexpr (Direction == L || Direction == U)
@@ -189,7 +193,7 @@ struct LFactoryTabOverlay : NODE_FACTORY_PARENT(WTabOverlay)
 };
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WTabOverlaySelector final : public WTextButton
+class ENGINE_API WTabOverlaySelector final : public WTextButtonIconizedDouble
 {
     GENERATED_CLASS_BODY()
 
@@ -219,7 +223,7 @@ private:
         this->TextStyle.NormalBrush.Tint = {0x90};
         this->LeftIconStyle.NormalBrush.Tint = {0x90};
         this->RightIconStyle.NormalBrush.Tint = {0x90};
-        this->LeftIconStyle.SetEverywhere<&LTextButtonIconBrush::bAlwaysPad>(true);
+        this->LeftIconStyle.SetEverywhere<&LIconBrush::bAlwaysPad>(true);
         this->LoadRightIcon();
     }
 

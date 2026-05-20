@@ -3,9 +3,10 @@
 #pragma once
 
 #include "Subsystems/FrontendSubsystem.h"
-#include "Framework/FontSubsystemForward.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/Texture2.h"
+#include "Nodes/Node.h"
+#include "Rhi/Glyph.h"
 #include "FontSubsystem.generated.h"
 
 typedef struct FT_LibraryRec_* FT_Library;
@@ -96,7 +97,7 @@ public:
     NODISCARD bool IsFontValid(u32 FontIndex) const noexcept { return FontIndex < this->My_Fonts.size(); }
     NODISCARD MyFont const& GetFont(u32 FontIndex) const noexcept { return this->My_Fonts[FontIndex]; }
 
-    LGetGlyphInfosResult GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept;
+    LGlyphCollection GetGlyphInfos(LStringView Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept;
 
 private:
 

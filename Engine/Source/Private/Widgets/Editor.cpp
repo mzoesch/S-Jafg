@@ -13,6 +13,8 @@
 #include "Widgets/ClassInspector.h"
 #include "Widgets/WorldViewer.h"
 
+#include "Nodes/Text.h"
+
 Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
 {
     check(this->GetChildren().size() == 1)
@@ -38,8 +40,9 @@ void Jafg::WEditor::Construct()
                         LDropDownNodeOption{
                             .Selector = {
                                 .DisplayName = "Exit",
+                                .Icon = "Icons/Jafg.Leave"
                                 },
-                            .OnAction = []{ Application::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
+                            .OnAction = [](auto&&...){ Application::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
                             },
                         },
                     },
@@ -51,19 +54,19 @@ void Jafg::WEditor::Construct()
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = WWorldViewer::TabSelectorCreateInfo(),
-                            .OnAction = [this]{ this->AddWindow<WWorldViewer>(true); return algo::reply::unhandled(); },
+                            .OnAction = [this](auto&&...){ this->AddWindow<WWorldViewer>(true); return algo::reply::unhandled(); },
                             },
                         LDropDownNodeOption{
                             .Selector = WTagInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this]{ this->AddWindow<WTagInspector>(true); return algo::reply::unhandled(); },
+                            .OnAction = [this](auto&&...){ this->AddWindow<WTagInspector>(true); return algo::reply::unhandled(); },
                             },
                         LDropDownNodeOption{
                             .Selector = WColorInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this]{ this->AddWindow<WColorInspector>(true); return algo::reply::unhandled(); },
+                            .OnAction = [this](auto&&...){ this->AddWindow<WColorInspector>(true); return algo::reply::unhandled(); },
                             },
                         LDropDownNodeOption{
                             .Selector = WClassInspector::TabSelectorCreateInfo(),
-                            .OnAction = [this]{ this->AddWindow<WClassInspector>(true); return algo::reply::unhandled(); },
+                            .OnAction = [this](auto&&...){ this->AddWindow<WClassInspector>(true); return algo::reply::unhandled(); },
                             },
                         },
                     },

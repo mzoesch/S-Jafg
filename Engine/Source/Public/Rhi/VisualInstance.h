@@ -3,47 +3,31 @@
 #pragma once
 
 #include "Rhi/UniformBufferObjects.h"
+#include "Rhi/Bindless.h"
 
 namespace Jafg
 {
 
-//# Device instance of a rendered visual node.
-// struct alignas(16) LVisualInstance2 final
-// {
-//     LVec4F Rect;
-//     LVec4F Tint;
-//     LVec4F BackgroundTint;
-//     LVec4F Radii;
-//     LVec4F OutlineTint;
-//     LVec4F TexCoordRect;
-//     f32 OutlineThickness;
-//     u32 TextureIndex;
-//     u32 SamplerIndex;
-//     f32 MsdfPixelRange;
-// };
-
+//# Device instance of a painted node.
 struct alignas(16) LVisualInstance final
 {
+    //# Required
     LRect2F Rect;
+    LVec4F TexCoordRect{ 0.0f, 0.0f, 1.0f, 1.0f };
+    LVec4F Radii{ maths::zero_vector<LVec4F> };
 
+    //# Required
     LColor Tint;
-    LColor BackgroundTint;
+    //# Only required if sampling to border is enabled.
+    LColor BorderTint{ SkipInit };
+    //# Only required if #OutlineThickness > 0.
+    LColor OutlineTint{ SkipInit };
+    f32 OutlineThickness{};
+
+    u32 TextureIndex{ UBO::Bindless::IdentityMulIdx };
+    u32 SamplerIndex{ UBO::Bindless::LinearClampToEdgeSamplerIdx };
+    f32 MsdfPixelRange{};
     u32 _pad1;
-    u32 _pad2;
-
-    LVec4F Radii;
-
-    LColor OutlineTint;
-    u32 _pad3;
-    u32 _pad4;
-    u32 _pad5;
-
-    LVec4F TexCoordRect;
-
-    f32 OutlineThickness;
-    u32 TextureIndex;
-    u32 SamplerIndex;
-    f32 MsdfPixelRange;
 };
 static_assert(sizeof(LVisualInstance) % 16 == 0);
 

@@ -59,13 +59,13 @@ public:
     }
 
     NODISCARD friend constexpr bool operator==(TReference Lhs, TReference<T const> Rhs)
-        requires (!std::is_const_v<T>) && requires {{Lhs.get() == Rhs.get()} -> std::convertible_to<bool>; }
+        requires(!std::is_const_v<T>) && requires {{Lhs.get() == Rhs.get()} -> std::convertible_to<bool>; }
     {
         return Lhs.get() == Rhs.get();
     }
 
     NODISCARD friend constexpr auto operator<=>(TReference Lhs, TReference Rhs)
-        requires requires (T const t){{ t < t } -> std::convertible_to<bool>;}
+        requires requires(T const t){{ t < t } -> std::convertible_to<bool>;}
     {
         return Lhs.get() <= Rhs.get();
     }
@@ -77,7 +77,7 @@ public:
     }
 
     NODISCARD friend constexpr auto operator<=>(TReference Lhs, TReference<T const> Rhs)
-        requires (!std::is_const_v<T>) && requires (T const t){{ t < t } -> std::convertible_to<bool>;}
+        requires(!std::is_const_v<T>) && requires(T const t){{ t < t } -> std::convertible_to<bool>;}
     {
         return Lhs.get() <= Rhs.get();
     }

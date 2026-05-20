@@ -124,13 +124,19 @@ public:
         return this->UnconsumedInputs.erase(It);
     }
 
-    FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.empty() == false; }
-    FORCEINLINE const TArray<LString>& GetBufferedPlatformInput() const { return this->PlatformInput; }
-    FORCEINLINE LString GetBufferedPlatformInputAsStr() const noexcept
+    FORCEINLINE bool HasBufferedPlatformInput() const { return !this->PlatformInput.empty(); }
+    FORCEINLINE TArray<LString> const& GetRawBufferedPlatformInput() const { return this->PlatformInput; }
+    FORCEINLINE LString GetBufferedPlatformInput() const noexcept
     {
         std::stringstream Result;
         for (auto& Input : this->PlatformInput) { Result << Input; }
         return Result.str();
+    }
+    FORCEINLINE LString ConsumeBufferedPlatformInput() noexcept
+    {
+        LString Result{this->GetBufferedPlatformInput()};
+        this->PlatformInput.clear();
+        return Result;
     }
 
     ENGINE_API LEngine const& GetEngine() const noexcept;

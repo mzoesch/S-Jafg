@@ -5,6 +5,8 @@
 #include "Framework/TextureSubsystem.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/VisualInstance.h"
+#include "User/UserPreferences.h"
+#include "Nodes/Font.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -23,6 +25,54 @@
 
 namespace
 {
+
+f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScale Scale) noexcept
+{
+    auto const& Prefs{Jafg::GetSingleton<Jafg::JUserPreferences>()};
+
+    switch (Scale)
+    {
+    case Jafg::EApplicationScale::Single:
+    {
+        switch (TextScale)
+        {
+        case Jafg::ETextScale::Header:    { return *Prefs.HeaderFontSizeSingle; }
+        case Jafg::ETextScale::SubHeader: { return *Prefs.SubHeaderFontSizeSingle; }
+        case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeSingle; }
+        case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeSingle; }
+        case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeSingle; }
+        default: break;
+        }
+    }
+    case Jafg::EApplicationScale::Double:
+    {
+        switch (TextScale)
+        {
+        case Jafg::ETextScale::Header:    { return *Prefs.HeaderFontSizeDouble; }
+        case Jafg::ETextScale::SubHeader: { return *Prefs.SubHeaderFontSizeDouble; }
+        case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeDouble; }
+        case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeDouble; }
+        case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeDouble; }
+        default: break;
+        }
+    }
+    case Jafg::EApplicationScale::Triple:
+    {
+        switch (TextScale)
+        {
+        case Jafg::ETextScale::Header:    { return *Prefs.HeaderFontSizeTriple; }
+        case Jafg::ETextScale::SubHeader: { return *Prefs.SubHeaderFontSizeTriple; }
+        case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeTriple; }
+        case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeTriple; }
+        case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeTriple; }
+        default: break;
+        }
+    }
+    default: break;
+    }
+
+    std::unreachable();
+}
 
 inline constexpr u32 AtlasColorChannels{ 3 };
 /* Positions are in 26.6 fixed-point (1/64px) scale to pixels. */
@@ -80,6 +130,30 @@ Lu32String utf8_to_utf32(LString const& Utf8)
 }
 
 } /* ~Namespace <Anonymous> */
+
+f32 Jafg::LTextScale::InStaticPointsImpl(LViewport const& Viewport, ETextScale TextScale) noexcept
+{
+    EApplicationScale Scale{Viewport.GetMaxAllowApplicationScale()};
+    if (EApplicationScale UserMaxScale{*GetSingleton<JUserPreferences>().ApplicationScaleMode}; UserMaxScale != EApplicationScale::Auto)
+    {
+        Scale = EApplicationScale{maths::min(std::to_underlying(Scale), std::to_underlying(UserMaxScale))};
+    }
+    return ::TextBoxInStaticPointsImpl(TextScale, Scale);
+}
+
+void Jafg::LRenderData::Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text)
+{
+    this->FontSize = Brush.TextScale.InStaticPoints(Viewport);
+    this->bDirty = false;
+
+    LVec2F Pencil{maths::zero_vector<LVec2F>};
+    this->Collection = Subsystem.GetGlyphInfos(Text, this->FontSize, &Pencil, 0);
+
+    //# TODO: This for line gaps. LineHeight + line_gap
+    this->DesiredSize = {Pencil.x, this->Collection.LineHeight * Brush.Tightening};
+
+    return;
+}
 
 void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -222,10 +296,9 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
     return this->My_Fonts.size() - 1;
 }
 
-Jafg::LGetGlyphInfosResult Jafg::JFontSubsystem::GetGlyphInfos(LString const& Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept
+Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept
 {
     check(Pencil)
-
 
     auto& Font{this->My_Fonts[FontIndex]};
     check(Font.Source.empty() == false)
@@ -235,9 +308,11 @@ Jafg::LGetGlyphInfosResult Jafg::JFontSubsystem::GetGlyphInfos(LString const& Te
 
     FT_Set_Pixel_Sizes(Font.My_FT_Face, 0, FontSize);
 
-    LGetGlyphInfosResult Result{
+    LGlyphCollection Result{
         .Ascender = Font.My_FT_Face->size->metrics.ascender * HarfBuzzScale,
         .Descender = Font.My_FT_Face->size->metrics.descender * HarfBuzzScale,
+        .PencilBegin = *Pencil,
+        ._check_UsedString = LString{Text},
         };
     // TODO: Is this correct? Or should we use the absolute descender value?
     Result.LineHeight = Result.Ascender - Result.Descender;
@@ -245,7 +320,7 @@ Jafg::LGetGlyphInfosResult Jafg::JFontSubsystem::GetGlyphInfos(LString const& Te
     hb_font_t* HBFont{hb_ft_font_create(Font.My_FT_Face, nullptr)};
     hb_buffer_t* HBBuffer{hb_buffer_create()};
 
-    hb_buffer_add_utf8(HBBuffer, Text.c_str(), -1, 0, -1);
+    hb_buffer_add_utf8(HBBuffer, Text.data(), static_cast<int>(Text.size()), 0, static_cast<int>(Text.size()));
     hb_buffer_set_direction(HBBuffer, HB_DIRECTION_LTR);
     hb_buffer_set_script(HBBuffer, HB_SCRIPT_LATIN);
     hb_buffer_set_language(HBBuffer, hb_language_from_string("en", -1));
@@ -294,8 +369,10 @@ Jafg::LGetGlyphInfosResult Jafg::JFontSubsystem::GetGlyphInfos(LString const& Te
                 static_cast<f32>(GlyphUV.AtlasBounds[1]) / AtlasExtend.y,
                 },
             Font.Atlas->GetBindlessIndex(),
-            UBO::BindlessTextureArray::NearestClampToEdgeSamplerIdx,
-            (Font.PixelRange / Font.AtlasGlyphSize) * FontSize
+            std::to_underlying(UBO::Bindless::Sampler::NearestClampToEdgeSamplerIdx),
+            (Font.PixelRange / Font.AtlasGlyphSize) * FontSize,
+            GlyphInfos[Idx].cluster,
+            *Pencil
             );
 
         *Pencil += Advance;
@@ -304,6 +381,8 @@ Jafg::LGetGlyphInfosResult Jafg::JFontSubsystem::GetGlyphInfos(LString const& Te
 
     hb_buffer_destroy(HBBuffer);
     hb_font_destroy(HBFont);
+
+    Result.PencilEnd = *Pencil;
 
     return Result;
 }

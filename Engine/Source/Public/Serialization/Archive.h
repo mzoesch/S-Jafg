@@ -5,6 +5,9 @@
 namespace Serde
 {
 
+template<typename T> struct TIsString : std::false_type {};
+template<typename T> inline constexpr bool IsString_v{TIsString<T>::value};
+
 //# The base struct for all serializers.
 template<typename T, typename TArchive>
 struct TSerializer final
@@ -113,7 +116,7 @@ struct LIStringArchive final
     DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LIStringArchive)
     constexpr ~LIStringArchive() noexcept = default;
 
-    template<typename T> requires (Behavior == EBehavior::Panic)
+    template<typename T> requires(Behavior == EBehavior::Panic)
     inline decltype(auto) operator>>(this auto&& Self, T& t) noexcept
         requires CDeserializable<T, std::remove_cvref_t<decltype(Self)>>
     {
@@ -128,7 +131,7 @@ struct LIStringArchive final
         return std::forward<decltype(Self)>(Self);
     }
 
-    template<typename T> requires (Behavior != EBehavior::Panic)
+    template<typename T> requires(Behavior != EBehavior::Panic)
     inline bool operator>>(this auto&& Self, T& t) noexcept
         requires CDeserializable<T, std::remove_cvref_t<decltype(Self)>>
     {
@@ -518,9 +521,24 @@ FORCEINLINE bool FromStringRelaxed(T* Field, LStringView Value) noexcept
     return Ar >> *Field;
 }
 
+template<> struct TIsString<LString> : std::true_type {};
+template<> struct TIsString<Lu8String> : std::true_type {};
+template<> struct TIsString<Lu16String> : std::true_type {};
+template<> struct TIsString<Lu32String> : std::true_type {};
+template<> struct TIsString<LStringView> : std::true_type {};
+template<> struct TIsString<Lu8StringView> : std::true_type {};
+template<> struct TIsString<Lu16StringView> : std::true_type {};
+template<> struct TIsString<Lu32StringView> : std::true_type {};
+template<> struct TIsString<char const*> : std::true_type {};
+template<> struct TIsString<unsigned char const*> : std::true_type {};
+template<> struct TIsString<signed char const*> : std::true_type {};
+template<> struct TIsString<char8_t const*> : std::true_type {};
+template<> struct TIsString<char16_t const*> : std::true_type {};
+template<> struct TIsString<char32_t const*> : std::true_type {};
+
 } /* ~Namespace Serde */
 
-template<typename T> requires requires (T t) { {t.ToString()} -> std::convertible_to<LString>; }
+template<typename T> requires requires(T t) { {t.ToString()} -> std::convertible_to<LString>; }
 struct std::formatter<T> : std::formatter<std::string>
 {
     FORCEINLINE std::format_context::iterator format(T const& Value, std::format_context& Context) const

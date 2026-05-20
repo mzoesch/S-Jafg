@@ -2,6 +2,7 @@
 
 #include "Platform/PlatformMisc.h"
 #include "Async/TaskUtility.h"
+#include <unistd.h>
 
 namespace Jafg
 {

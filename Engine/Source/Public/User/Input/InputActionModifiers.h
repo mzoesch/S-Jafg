@@ -23,7 +23,7 @@ struct LInputActionMappedKeySwizzleYZModifier;
 //#
 //# Factory function to create a modifier of type TModifier.
 //#
-template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
+template <typename TModifier> requires(std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
 FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeInputModifier() noexcept;
 
 struct LInputActionMappedTriggerModifier
@@ -56,7 +56,7 @@ struct LInputActionMappedKeySwizzleYZModifier final : public LInputActionMappedT
     virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::xzy(InValue); }
 };
 
-template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
+template <typename TModifier> requires(std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
 FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeInputModifier() noexcept
 {
     return TUnique<LInputActionMappedTriggerModifier>{ new TModifier{} };

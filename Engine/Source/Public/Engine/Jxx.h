@@ -551,7 +551,7 @@ struct TDeferredObjectExec
 
     inline ~TDeferredObjectExec()
     {
-        if (this->bReleased == false)
+        if (!this->bReleased)
         {
             MakeCxxObjectFinal(Class);
         }
@@ -603,7 +603,7 @@ struct NewDeferredObjectFn
     template<typename TCxxClass> requires AllowedTreeNode<TCxxClass>
     TResult<TCxxClass> operator()(CastTo<TCxxClass>, TDynInit const& Init) const
     {
-        return TResult<TCxxClass>{std::move((*this)(Init))};
+        return TResult<TCxxClass>{(*this)(Init)};
     }
 
     template<typename TCxxClass, typename... TArgs> requires

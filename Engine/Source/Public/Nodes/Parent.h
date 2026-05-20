@@ -45,7 +45,6 @@ public:
 
     virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
     virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override;
-    virtual void _RemoveHoverState() noexcept override;
 
     virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
     virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;

@@ -21,6 +21,8 @@ struct LRenderTarget
         vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eAverage };
     };
 
+    NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
+
     ENGINE_API void Initialize(CreateInfo Info);
     ENGINE_API void Render(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
 

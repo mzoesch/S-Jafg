@@ -4,7 +4,18 @@
 
 #include "Nodes/Node.h"
 
+#define JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
+    virtual ::Jafg::LNodeReply SweepFocus(::Jafg::LNodeSweepInfo const& Info, LVec2F const& Location) override \
+    {\
+        if (this->IsHitTestable() && !this->bEnabled)\
+        { \
+            return LNodeReply::Handled(); \
+        } \
+        return Super::SweepFocus(Info, Location); \
+    }
+
 #define JAFG_NODE_BUTTON_BOILERPLATE() \
+    JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
     virtual LNodeReply OnCursorEnter() override \
     { \
         if (!this->bEnabled)\
@@ -122,14 +133,24 @@ struct LStyleBase
 namespace Detail
 {
 
-template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush>
+template<typename TBrush>
 struct TButtonBaseStyle
 {
-    TBrush NormalBrush   {LRegionBrush{.Tint = {0x15,0x15,0x15}, .OutlineTint = Colors::Black}};
-    TBrush HoverBrush    {LRegionBrush{.Tint = {0x1C,0x1C,0x1C}, .OutlineTint = Colors::White}};
-    TBrush PressBrush    {LRegionBrush{.Tint = {0x24,0x24,0x24}, .OutlineTint = Colors::White}};
-    TBrush SelectedBrush {LRegionBrush{.Tint = {0x24,0x24,0x24}, .OutlineTint = Colors::White}};
-    TBrush DisabledBrush {LRegionBrush{.Tint = {0x0F,0x0F,0x0F}, .OutlineTint = Colors::Black}};
+    TBrush NormalBrush;
+    TBrush HoverBrush;
+    TBrush PressBrush;
+    TBrush SelectedBrush;
+    TBrush DisabledBrush;
+};
+
+template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush>
+struct TButtonBaseStyle<TBrush>
+{
+    TBrush NormalBrush   {LRegionBrush{.Tint={0x15,0x15,0x15}, .BorderTint={0x15,0x15,0x15}, .OutlineTint=Colors::Black}};
+    TBrush HoverBrush    {LRegionBrush{.Tint={0x1C,0x1C,0x1C}, .BorderTint={0x1C,0x1C,0x1C}, .OutlineTint=Colors::White}};
+    TBrush PressBrush    {LRegionBrush{.Tint={0x24,0x24,0x24}, .BorderTint={0x24,0x24,0x24}, .OutlineTint=Colors::White}};
+    TBrush SelectedBrush {LRegionBrush{.Tint={0x24,0x24,0x24}, .BorderTint={0x24,0x24,0x24}, .OutlineTint=Colors::White}};
+    TBrush DisabledBrush {LRegionBrush{.Tint={0x0F,0x0F,0x0F}, .BorderTint={0x0F,0x0F,0x0F}, .OutlineTint=Colors::Black}};
 };
 
 } /* ~Namespace Detail */
@@ -155,11 +176,14 @@ class TButtonBase
 
 public:
 
+    //# The default visibility for buttons.
+    inline static constexpr auto DefaultVisibility{ENodeVisibility::DerivedHitTestInvisible};
+
     typedef TBrush _ButtonBaseBrush;
 
     TButtonStyle<TBrush> Style;
 
-    constexpr TButtonBase(TNode& InOwner) noexcept : Owner(InOwner) {}
+    constexpr TButtonBase(TNode& InOwner) noexcept : Owner{InOwner} {}
     virtual ~TButtonBase() = default;
 
     NODISCARD constexpr bool IsEnabled() const noexcept { return this->bEnabled; }
@@ -255,43 +279,6 @@ protected:
         }
         return;
     }
-
-    // LNodeReply ButtonBase_OnCursorEnter()
-    // {
-    //     if (this->bEnabled == false)
-    //     {
-    //         return {};
-    //     }
-    //     if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-    //     {
-    //         this->Owner.*BrushProj = this->Style.HoverBrush;
-    //     }
-    //     if (this->Owner.OnCursorEnterEvent)
-    //     {
-    //         if (auto Reply{this->Owner.OnCursorEnterEvent(this->Owner)}; Reply.IsHandled())
-    //         {
-    //             return Reply;
-    //         }
-    //     }
-    //     return LNodeReply::Handled();
-    // }
-
-    // void ButtonBase_OnCursorLeave()
-    // {
-    //     if (this->bEnabled == false)
-    //     {
-    //         return;
-    //     }
-    //     if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-    //     {
-    //         this->Owner.*BrushProj = this->Style.NormalBrush;
-    //     }
-    //     if (this->Owner.OnCursorLeaveEvent)
-    //     {
-    //         this->Owner.OnCursorLeaveEvent(this->Owner);
-    //     }
-    //     return;
-    // }
 
     LNodeReply ButtonBase_OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
     {
@@ -442,8 +429,9 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
         return NODE_FACTORY_RESULT();
     }
 
+
 #define JAFG_NODE_FACTORY_STYLE_BOILERPLATE(Stem, Member) \
-    decltype(auto) Member(this auto&& Self, TButtonStyle<Brush> const& Style) noexcept \
+    decltype(auto) Member(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TFactoredNode::Member) const& Style) noexcept \
     { \
         NODE_FACTORY_SELF().Member = Style; \
         return NODE_FACTORY_RESULT(); \
@@ -460,13 +448,13 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
         NODE_FACTORY_SELF().Member.template ChainEverywhere<Proj...>(Values...); \
         return NODE_FACTORY_RESULT(); \
     } \
-    template<typename decltype(TSelf::Member)::flag_type Flags, auto Proj> \
+    template<typename decltype(TFactoredNode::Member)::flag_type Flags, auto Proj> \
     decltype(auto) JAFG_JOIN_OUTER_THREE(In, Stem, Brush)(this auto&& Self, algo::proj_member_t<decltype(Proj)> const& Value) noexcept \
     { \
         NODE_FACTORY_SELF().Member.template Set<Flags, Proj>(Value); \
         return NODE_FACTORY_RESULT(); \
     } \
-    template<typename decltype(TSelf::Member)::flag_type Flags, auto... Proj> \
+    template<typename decltype(TFactoredNode::Member)::flag_type Flags, auto... Proj> \
     decltype(auto) JAFG_JOIN_OUTER_THREE(In, Stem, BrushChained)(this auto&& Self, algo::proj_member_t<decltype(Proj)> const&... Values) noexcept \
     { \
         NODE_FACTORY_SELF().Member.template Chain<Flags, Proj...>(Values...); \
@@ -474,37 +462,6 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
     }
 
     JAFG_NODE_FACTORY_STYLE_BOILERPLATE(, Style)
-
-    // decltype(auto) Style(this auto&& Self, TButtonStyle<Brush> const& Style) noexcept
-    // {
-    //     NODE_FACTORY_SELF().Style = Style;
-    //     return NODE_FACTORY_RESULT();
-    // }
-    // template<auto Proj>
-    // decltype(auto) InAllBrushes(this auto&& Self, algo::proj_member_t<decltype(Proj)> const& Value) noexcept
-    // {
-    //     NODE_FACTORY_SELF().Style.template SetEverywhere<Proj>(Value);
-    //     return NODE_FACTORY_RESULT();
-    // }
-    // template<auto... Proj>
-    // decltype(auto) InAllBrushesChained(this auto&& Self, algo::proj_member_t<decltype(Proj)> const&... Values) noexcept
-    // {
-    //     NODE_FACTORY_SELF().Style.template ChainEverywhere<Proj...>(Values...);
-    //     return NODE_FACTORY_RESULT();
-    // }
-    // template<typename decltype(TSelf::Style)::flag_type Flags, auto Proj>
-    // decltype(auto) InBrush(this auto&& Self, algo::proj_member_t<decltype(Proj)> const& Value) noexcept
-    // {
-    //     NODE_FACTORY_SELF().Style.template Set<Flags, Proj>(Value);
-    //     return NODE_FACTORY_RESULT();
-    // }
-    // template<typename decltype(TSelf::Style)::flag_type Flags, auto... Proj>
-    // decltype(auto) InBrushChained(this auto&& Self, algo::proj_member_t<decltype(Proj)> const&... Values) noexcept
-    // {
-    //     NODE_FACTORY_SELF().Style.template Chain<Flags, Proj...>(Values...);
-    //     return NODE_FACTORY_RESULT();
-    // }
 };
 
 } /* ~Namespace Jafg */
-

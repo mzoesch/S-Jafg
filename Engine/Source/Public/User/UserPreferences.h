@@ -139,6 +139,8 @@ public:
 
     CLASS_FIELD(Config)
     TPreference<std::size_t> PreferredDragPadding{ 3 };
+    CLASS_FIELD(Config)
+    TPreference<LColor> ViewportBackgroundTint  { Colors::Black };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

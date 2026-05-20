@@ -119,6 +119,11 @@ struct extent2
     {
         return *reinterpret_cast<extent2 const*>(&Native);
     }
+    template<typename Value>
+    NODISCARD FORCEINLINE static constexpr extent2 from_vec(TVec2<Value,maths::defaultp> Vec) noexcept
+    {
+        return {.width=static_cast<u32>(Vec.x), .height=static_cast<u32>(Vec.y)};
+    }
 
     NODISCARD FORCEINLINE constexpr operator type&() noexcept { return *reinterpret_cast<type*>( this ); }
     NODISCARD FORCEINLINE constexpr operator type const&() const noexcept { return *reinterpret_cast<type const*>(this); }
@@ -150,7 +155,7 @@ static_assert(offsetof(extent2, height) == offsetof(extent2::type, height));
 static_assert(std::is_same_v<extent2::type, vk::Extent2D>);
 
 //# High-level texture coordinates behavior.
-enum struct tex_coord_behavior
+enum struct tex_coord_behavior : u8
 {
     //# Scale UVs normalized.
     Scale,
@@ -163,6 +168,7 @@ enum struct tex_coord_behavior
 };
 namespace uv
 {
+inline constexpr LVec4F identity{0.0f, 0.0f, 1.0f, 1.0f};
 inline constexpr LVec4F fit_v(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
 {
     f32 CenterU{(UVs.x + UVs.z) * 0.5f};

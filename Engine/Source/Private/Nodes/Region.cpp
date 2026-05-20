@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Rhi/VisualInstance.h"
 #include "Rhi/NodeRenderInfo.h"
-#include "Rhi/BindlessTextureArray.h"
+#include "Rhi/Bindless.h"
 
 void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) const noexcept
 {
@@ -13,35 +13,80 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
         return;
     }
 
-    u32 TextureIndex{UBO::BindlessTextureArray::IdentityMulIdx};
-    if (this->Texture.get())
+    if (std::holds_alternative<LTexture>(this->Background))
     {
-        if (this->Texture->IsBindless() == false)
+        auto& Texture{std::get<LTexture>(this->Background).Texture};
+        check(Texture.get())
+        if (!Texture->IsBindless())
         {
-            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*this->Texture);
-            check(this->Texture->IsBindless())
+            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*Texture);
+            check(Texture->IsBindless())
         }
-        TextureIndex = this->Texture->GetBindlessIndex();
+        Info.AddInstance({
+            .Rect = Rect,
+            .TexCoordRect = {Texture.get()
+                ? rhi::uv::pipe({0.0f, 0.0f, 1.0f, 1.0f}, Texture->GetExtentAsVec2F(), Rect.Extent
+                    , this->TexCoordBehavior, this->TexturePadding, std::get<LTexture>(this->Background).TextureScale)
+                : LVec4F{0.0f, 0.0f, 1.0f, 1.0f}
+                },
+            .Radii = this->bClampRadii
+                ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+                : this->Radii,
+            .Tint = this->Tint,
+            .BorderTint = this->BorderTint,
+            .OutlineTint = this->OutlineTint,
+            .OutlineThickness = this->OutlineThickness,
+            .TextureIndex = Texture->GetBindlessIndex(),
+            .SamplerIndex = std::to_underlying(this->SamplerAddressMode),
+            });
     }
+    else if (std::holds_alternative<LIcon>(this->Background))
+    {
+        Info.AddInstance({
+            .Rect = {maths::round(Rect.Offset), maths::round(Rect.Extent)},
+            .Radii = this->bClampRadii
+                ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+                : this->Radii,
+            .Tint = this->BorderTint,
+            .BorderTint = this->BorderTint,
+            .OutlineTint = this->OutlineTint,
+            .OutlineThickness = this->OutlineThickness,
+            .SamplerIndex = std::to_underlying(this->SamplerAddressMode),
+            });
 
-    Info.AddInstance({
-        .Rect = Rect,
-        .Tint = this->Tint,
-        .BackgroundTint = this->BackgroundTint,
-        .Radii = this->bClampRadii
-            ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
-            : this->Radii,
-        .OutlineTint = this->OutlineTint,
-        .TexCoordRect = {this->Texture.get()
-            ? rhi::uv::pipe({0.0f, 0.0f, 1.0f, 1.0f}, this->Texture->GetExtentAsVec2F(), Rect.Extent
-                , this->TexCoordBehavior, this->TexturePadding, this->TextureScale)
-            : LVec4F{0.0f, 0.0f, 1.0f, 1.0f}
-            },
-        .OutlineThickness = this->OutlineThickness,
-        .TextureIndex = TextureIndex,
-        .SamplerIndex = this->SamplerAddressMode,
-        .MsdfPixelRange = 0.0f,
-        });
+        if (std::get<LIcon>(this->Background).Scale > 0)
+        {
+            auto& IconTexture{std::get<LIcon>(this->Background).Texture};
+            check(IconTexture.get())
+            if (!IconTexture->IsBindless())
+            {
+                Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*IconTexture);
+                check(IconTexture->IsBindless())
+            }
+            LVec2F IconExtent{static_cast<f32>(IconTexture->GetExtent().width * std::get<LIcon>(this->Background).Scale)
+                    , static_cast<f32>(IconTexture->GetExtent().height * std::get<LIcon>(this->Background).Scale)};
+            Info.AddInstance({
+                .Rect = {maths::round(Rect.Offset + Rect.Extent/2.0f - (IconExtent/2.0f)), IconExtent},
+                .Tint = this->Tint,
+                .BorderTint = this->BorderTint,
+                .TextureIndex = IconTexture->GetBindlessIndex(),
+                });
+        }
+    }
+    else
+    {
+        Info.AddInstance({
+            .Rect = Rect,
+            .Radii = this->bClampRadii
+                ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+                : this->Radii,
+            .Tint = this->Tint,
+            .BorderTint = this->BorderTint,
+            .OutlineTint = this->OutlineTint,
+            .OutlineThickness = this->OutlineThickness,
+            .SamplerIndex = std::to_underlying(this->SamplerAddressMode),
+            });
+    }
 
     return;
 }

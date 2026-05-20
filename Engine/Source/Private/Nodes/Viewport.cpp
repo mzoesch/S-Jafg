@@ -242,7 +242,7 @@ void Jafg::LViewport::DispatchInputs()
 
     for (auto It{this->Surface.GetMutableUnconsumedInputsDangerous().begin()}; It != this->Surface.GetMutableUnconsumedInputsDangerous().end();)
     {
-        if (!(It->State & ERawInputStateBits::Press))
+        if (!(It->State & (ERawInputStateBits::Press|ERawInputStateBits::Repeat)))
         {
             ++It;
             continue;

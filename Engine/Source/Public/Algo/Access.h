@@ -146,7 +146,7 @@ struct distance_to_fn final
 struct valid_index_fn final
 {
     template<forward_range TRange, typename T>
-        requires (std::is_integral_v<T> || std::is_enum_v<T>)
+        requires(std::is_integral_v<T> || std::is_enum_v<T>)
     NODISCARD FORCEINLINE bool
     operator()(TRange&& Range, T Index) const noexcept
     {
@@ -544,6 +544,20 @@ struct utf16_to_utf8_fn final
 };
 #endif /* PLATFORM_WINDOWS */
 
+struct utf8_char_length_fn final
+{
+    template<typename T> requires(std::is_same_v<T, char> || std::is_same_v<T, char8_t>
+        || std::is_same_v<T, char16_t> || std::is_same_v<T, char32_t> || std::is_same_v<T, wchar_t>)
+    NODISCARD FORCEINLINE constexpr std::size_t operator()(T Char) const noexcept
+    {
+        if ((Char & 0x80) == 0) { return 1; } /* ASCII byte. */
+        if ((Char & 0xE0) == 0xC0) { return 2; } /* 2-byte sequence. */
+        if ((Char & 0xF0) == 0xE0) { return 3; } /* 3-byte sequence. */
+        if ((Char & 0xF8) == 0xF0) { return 4; } /* 4-byte sequence. */
+        checkNoEntry() return 1; /* Invalid UTF-8; We return one so we do not hang indefinitely. */
+    }
+};
+
 } /* ~Namespace detail */
 
 inline constexpr detail::reserve_fn reserve{};
@@ -590,6 +604,7 @@ inline constexpr detail::add_spaces_to_camel_case_fn add_spaces_to_camel_case{};
     inline constexpr detail::utf8_to_utf16_fn utf8_to_utf16{};
     inline constexpr detail::utf16_to_utf8_fn utf16_to_utf8{};
 #endif /* PLATFORM_WINDOWS */
+inline constexpr detail::utf8_char_length_fn utf8_char_length{};
 
 struct case_insensitive_hash final
 {
@@ -617,6 +632,20 @@ FORCEINLINE U sub(T const& Container, range_size_t<T> Begin, range_size_t<T> End
 {
     check(Begin <= End && End <= size(Container))
     return U{begin(Container) + Begin, begin(Container) + End};
+}
+//# Subs from N until the right end.
+template<random_access_range T, typename U = T>
+    requires std::constructible_from<U, iterator_t<T>, sentinel_t<T>>
+FORCEINLINE U right_sub(T const& Container, range_size_t<T> N) noexcept
+{
+    return sub<T,U>(Container, N, size(Container));
+}
+//# Subs from the left until N.
+template<random_access_range T, typename U = T>
+    requires std::constructible_from<U, iterator_t<T>, sentinel_t<T>>
+FORCEINLINE U left_sub(T const& Container, range_size_t<T> N) noexcept
+{
+    return sub<T,U>(Container, 0, N);
 }
 //# Chops N elements from the left.
 template<random_access_range T, typename U = T>
@@ -723,9 +752,10 @@ inline decltype(auto) now() noexcept
     return clock::now();
 }
 
-inline f64 time_diff(clock::time_point A, clock::time_point B) noexcept
+template<typename T = f64, typename TRatio = std::chrono::seconds::period>
+inline T time_diff(clock::time_point A, clock::time_point B) noexcept
 {
-    return std::chrono::duration_cast<std::chrono::duration<f64>>(B - A).count();
+    return std::chrono::duration_cast<std::chrono::duration<T, TRatio>>(B - A).count();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -749,11 +779,16 @@ template<typename TBase, typename TDerived> inline constexpr bool is_base_of_wea
 struct raii_leave final
 {
     std::move_only_function<void()> Delegate;
+
+    raii_leave() = delete;
+    raii_leave(std::move_only_function<void()> Delegate) noexcept : Delegate{std::move(Delegate)} {}
+    PROHIBIT_COPY(raii_leave)
+    DEFAULT_MOVE(raii_leave)
     ~raii_leave()
     {
-        if (Delegate)
+        if (this->Delegate)
         {
-            Delegate();
+            this->Delegate();
         }
     }
 };

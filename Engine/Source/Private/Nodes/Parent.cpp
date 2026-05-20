@@ -74,7 +74,7 @@ Jafg::LNodeReply Jafg::WParent::SweepFocus(LNodeSweepInfo const& Info, LVec2F co
 
 Jafg::LNodeReply Jafg::WParent::Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location)
 {
-    if (!(Location.has_value() || (this->GetNodeState() & ENodeStateBits::Hovered)))
+    if (!(Location.has_value() || (this->_GetNodeState() & Detail::NodeStateSwept)))
     {
         return {};
     }
@@ -95,21 +95,21 @@ Jafg::LNodeReply Jafg::WParent::Sweep(LNodeSweepInfo const& Info, std::optional<
                 break;
             }
         }
-        else if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
+        else if ((*It)->_GetNodeState() & Detail::NodeStateSwept)
         {
             auto Reply{(*It)->Sweep(ChildInfo, {})};
-            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
+            check(!((*It)->_GetNodeState() & Detail::NodeStateSwept))
             check(!Reply.IsHandled())
         }
         continue;
     }
     for (;It != this->Children.rend(); ++It)
     {
-        if ((*It)->GetNodeState() & ENodeStateBits::Hovered)
+        if ((*It)->_GetNodeState() & Detail::NodeStateSwept)
         {
             check(It->get())
             auto Reply{(*It)->Sweep(ChildInfo, {})};
-            check(!((*It)->GetNodeState() & ENodeStateBits::Hovered))
+            check(!((*It)->_GetNodeState() & Detail::NodeStateSwept))
             check(!Reply.IsHandled())
         }
     }
@@ -117,23 +117,11 @@ Jafg::LNodeReply Jafg::WParent::Sweep(LNodeSweepInfo const& Info, std::optional<
     if (Result.IsHandled())
     {
         check(Location.has_value())
-        this->_RemoveHoverDispatchedState();
+        this->_RemoveDispatchedState();
         return Result;
     }
 
     return Super::Sweep(Info, Location);
-}
-
-void Jafg::WParent::_RemoveHoverState() noexcept
-{
-    for (auto& Child : this->Children)
-    {
-        Child->_RemoveHoverState();
-        checkCode(Child->_check_StateInvariant())
-    }
-
-    Super::_RemoveHoverState();
-    return;
 }
 
 Jafg::LNodeReply Jafg::WParent::OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)

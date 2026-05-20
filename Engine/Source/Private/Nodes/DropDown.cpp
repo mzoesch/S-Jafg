@@ -2,13 +2,17 @@
 
 #include "Nodes/DropDown.h"
 #include "Nodes/FloatingWidget.h"
+#include "Nodes/HButton.h"
 #include "Nodes/HRegion.h"
-#include "Nodes/TextBox.h"
+#include "Nodes/Text.h"
 #include "Nodes/TextButton.h"
 #include "User/UserPreferences.h"
+#include "Nodes/TextIconizedSeparator.h"
 
 Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubMenu const& Submenu)
 {
+    Position = maths::round(Position);
+
     WDismissibleFloatingWidget* Result;
     ConstructDeferredWidget(Jafg::TNodeStaticInit<WDismissibleFloatingWidget>{Viewport}).Style().SaveTo(&Result)
         .Decorate(false)
@@ -19,7 +23,8 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
         {
             WVRegion* Region;
             BeginStyling(Container).StaticRoot<WVRegion>().SaveTo(&Region)
-                .Tint(*GetSingleton<JUserPreferences>().OverlayColor);
+                .Tint(*GetSingleton<JUserPreferences>().OverlayColor)
+                .Padding({0, LDropDownMenuCreateInfo::RecommendedPadding});
             if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Warning)) if (Submenu.Children.empty())
             {
                 LOG_WARNING(LogWidgetFramework, "Submenu [{}] has no children.", Submenu.DisplayName)
@@ -29,48 +34,124 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                 std::visit([Result, &CreateInfo, Region]<typename T0>(T0&& Node)
                 {
                     typedef std::decay_t<T0> T;
-                    if constexpr (std::is_same_v<T, LDropDownNodeSubMenu>)
-                    {
-                        unimplemented()
-                    }
-                    else if constexpr (std::is_same_v<T, LDropDownNodeOption>)
+                    if constexpr (std::is_same_v<T, LDropDownNodeOption>)
                     {
                         auto& Prefs{GetSingleton<JUserPreferences>()};
-                        Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButton>()
-                            .Anchor(EAnchor::Fill)
-                            .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
+                        Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButtonIconizedDouble>()
+                            .Anchor(EAnchor::HFill)
+                            .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
                             .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
                             .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
-                            .InAllLeftIconBrushes<&LTextButtonIconBrush::bAlwaysPad>(true)
-                            .OnKeyUpFocused([Result, OnClose = CreateInfo.OnOptionCloseResult, Action = Node.OnAction](auto&&...)
-                            {
-                                check(Result)
-                                check(!!Action)
-                                if (!Action().is_handled())
+                            .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
+                            .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
+                            .OnKeyUpFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
+                                (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                                 {
-                                    if (OnClose)
+                                    check(Result)
+                                    check(!!Action)
+                                    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                                     {
-                                        if (!OnClose(*Result).is_handled())
+                                        if (Action(Self, Info, Event).is_handled())
+                                        {
+                                            return LNodeReply::Handled();
+                                        }
+                                        if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
                                         {
                                             check(Result->IsTopLevel())
                                             Result->MarkAsGarbage_v2();
                                         }
+                                        return LNodeReply::Handled();
                                     }
-                                    else
-                                    {
-                                        check(Result->IsTopLevel())
-                                        Result->MarkAsGarbage_v2();
-                                    }
-                                }
-                                return LNodeReply::Handled();
-                            })
+                                    return LNodeReply::Unhandled();
+                                })
                             .Content(Node.Selector.DisplayName)
                             .LeftIcon(Node.Selector.Icon.GetResolved())
+                            .Enabled(Node.IsEnabled)
                             .Unique()
                             );
                     }
+                    else if constexpr (std::is_same_v<T, LDropDownNodeInformation>)
+                    {
+                        Region->AddChild(NewNode(Region->GetViewport())
+                            .Class<WText>()
+                            .Padding(std::holds_alternative<LDropDownNodeInformation::IconPadding>(Node.Padding)
+                                    ? LPadding{LDropDownMenuCreateInfo::RecommendedTextPadding, 0, LDropDownMenuCreateInfo::RecommendedPadding.Size, 0}
+                                : std::holds_alternative<LDropDownNodeInformation::MinPadding>(Node.Padding)
+                                    ? LPadding{LDropDownMenuCreateInfo::RecommendedPadding, 0.0f}
+                                : std::holds_alternative<LPadding>(Node.Padding)
+                                    ? std::get<LPadding>(Node.Padding)
+                                    : LPadding{}
+                                )
+                            .TextTint(Colors::Gray)
+                            .Content(Node.What)
+                            .Unique()
+                            );
+                    }
+                    else if constexpr (std::is_same_v<T, LDropDownNodeCustom>)
+                    {
+                        check(!!Node.OnCreate)
+                        auto& Prefs{GetSingleton<JUserPreferences>()};
+                        Region->AddChild(NewNode(Region->GetViewport()).Class<LDropDownNodeCustom::Parent>()
+                            .Anchor(EAnchor::HFill)
+                            .Visibility(ENodeVisibility::Visible) /* Allow custom nodes to be swept. */
+                            .Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                            .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
+                            .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
+                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
+                            .OnKeyUpFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
+                                (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                                {
+                                    check(Result)
+                                    check(!!Action)
+                                    if (auto reply{Action(Self, Info, Event)}; reply.is_handled())
+                                    {
+                                        if (reply.should_kill())
+                                        {
+                                            if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
+                                            {
+                                                check(Result->IsTopLevel())
+                                                Result->MarkAsGarbage_v2();
+                                            }
+                                        }
+                                        return LNodeReply::Handled();
+                                    }
+                                    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                                    {
+                                        if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
+                                        {
+                                            check(Result->IsTopLevel())
+                                            Result->MarkAsGarbage_v2();
+                                        }
+                                        return LNodeReply::Handled();
+                                    }
+                                    return LNodeReply::Unhandled();
+                                })
+                            [Node.OnCreate(Region->GetViewport(), *Result)]
+                            .Enabled(Node.IsEnabled)
+                            .Unique()
+                            );
+                    }
+                    else if constexpr (std::is_same_v<T, LDropDownNodeScratch>)
+                    {
+                        Region->AddChild(Node.OnCreate(Region->GetViewport(), *Result).Unique());
+                    }
                     else if constexpr (std::is_same_v<T, LDropDownNodeSeparator>)
                     {
+                        Region->AddChild(NewNode(Region->GetViewport())
+                            .Class<WTextIconizedLeftSeparator>()
+                            .Padding({5_spt, 0})
+                            .TextScale(ETextScale::Small)
+                            .TextTint(Colors::Gray)
+                            .Content(Node.DisplayName)
+                            .Icon(Node.Icon.GetResolved())
+                            .Thickness(Node.Thickness)
+                            .Unique()
+                            );
+                    }
+                    else if constexpr (std::is_same_v<T, LDropDownNodeSubMenu>)
+                    {
+                        std::unreachable();
                     }
                     else
                     {

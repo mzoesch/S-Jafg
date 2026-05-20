@@ -33,6 +33,7 @@ struct LDelegateHandle final
 
     FORCEINLINE constexpr void Reset() noexcept { this->Handle = 0; return; }
     FORCEINLINE constexpr bool IsValid() const noexcept { return this->Handle != 0; }
+    NODISCARD FORCEINLINE constexpr bool operator!() const noexcept { return !this->IsValid(); }
 
     FORCEINLINE constexpr u64 UnderlyingValue() const noexcept { return this->Handle; }
 

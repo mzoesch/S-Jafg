@@ -4,50 +4,33 @@
 
 #include "Nodes/TextBox.h"
 #include "Nodes/ButtonBase.h"
+#include "Nodes/Icon.h"
+#include "Nodes/Iconized.h"
 #include "TextButton.generated.h"
 
 namespace Jafg
 {
 
 struct LFactoryTextButton;
+struct LFactoryTextButtonIconizedLeft;
+struct LFactoryTextButtonIconizedRight;
+struct LFactoryTextButtonIconizedDouble;
 
-struct LTextButtonIconBrush
-{
-    enum struct Align{ Left, Center, Right, };
-
-    u32 Scale{ 1 };
-    bool bAlwaysPad{};
-    LNodeSize1 InwardsPadding{ 4_spt };
-    LNodeSize1 MinIconSize{ 20_spt };
-    Align Alignment{ Align::Center };
-    LColor Tint{ Colors::White };
-};
+typedef TButtonStyle<LTextBoxBrush> LTextButtonTextStyle;
 
 namespace Detail
 {
-
-struct LTextButtonBaseTextStyle
+struct LTextButtonIconStyleBase
 {
-    LTextBrush NormalBrush{ ETextScale::Body };
-    LTextBrush HoverBrush{ ETextScale::Body };
-    LTextBrush PressBrush{ ETextScale::Body };
-    LTextBrush SelectedBrush{ ETextScale::Body };
-    LTextBrush DisabledBrush{ ETextScale::Body };
+    LIconBrush NormalBrush;
+    LIconBrush HoverBrush;
+    LIconBrush PressBrush;
+    LIconBrush SelectedBrush;
+    LIconBrush DisabledBrush;
+    LIconBrush DecoupledBrush;
 };
-
-struct LTextButtonBaseIconStyle
-{
-    LTextButtonIconBrush NormalBrush;
-    LTextButtonIconBrush HoverBrush;
-    LTextButtonIconBrush PressBrush;
-    LTextButtonIconBrush SelectedBrush;
-    LTextButtonIconBrush DisabledBrush;
-    LTextButtonIconBrush DecoupledBrush;
-};
-
 } /* ~Namespace Detail */
-
-enum struct EIconStyleBits
+enum struct ETextButtonIconStyleBits
 {
     Identity = 0x0 << 0,
     Normal = 0x1 << 0,
@@ -56,38 +39,23 @@ enum struct EIconStyleBits
     Selected = 0x1 << 3,
     Disabled = 0x1 << 4,
     Decoupled = 0x1 << 5,
-
     count = 6,
 };
-ENUM_STRUCT_FLAGS(EIconStyleBits, EIconStyleFlags)
-
-struct LTextButtonTextStyle : Detail::LTextButtonBaseTextStyle
+ENUM_STRUCT_FLAGS(ETextButtonIconStyleBits, ETextButtonIconStyleFlags)
+struct LTextButtonIconStyle : Detail::LTextButtonIconStyleBase
     , LStyleBase<
-        EStyleFlags,
-        &Detail::LTextButtonBaseTextStyle::NormalBrush,
-        &Detail::LTextButtonBaseTextStyle::HoverBrush,
-        &Detail::LTextButtonBaseTextStyle::PressBrush,
-        &Detail::LTextButtonBaseTextStyle::SelectedBrush,
-        &Detail::LTextButtonBaseTextStyle::DisabledBrush
+        ETextButtonIconStyleFlags,
+        &Detail::LTextButtonIconStyleBase::NormalBrush,
+        &Detail::LTextButtonIconStyleBase::HoverBrush,
+        &Detail::LTextButtonIconStyleBase::PressBrush,
+        &Detail::LTextButtonIconStyleBase::SelectedBrush,
+        &Detail::LTextButtonIconStyleBase::DisabledBrush,
+        &Detail::LTextButtonIconStyleBase::DecoupledBrush
         >
 {
 };
 
-struct LTextButtonIconStyle : Detail::LTextButtonBaseIconStyle
-    , LStyleBase<
-        EIconStyleFlags,
-        &Detail::LTextButtonBaseIconStyle::NormalBrush,
-        &Detail::LTextButtonBaseIconStyle::HoverBrush,
-        &Detail::LTextButtonBaseIconStyle::PressBrush,
-        &Detail::LTextButtonBaseIconStyle::SelectedBrush,
-        &Detail::LTextButtonBaseIconStyle::DisabledBrush,
-        &Detail::LTextButtonBaseIconStyle::DecoupledBrush
-        >
-{
-};
-
-//# A button with text content and an optional icon on the left or right. Use this for buttons that only display text/icons to save performance.
-//# TODO: Instead of a button make a WIconTextBox and then => WIconTextButton
+//# A button with text content.
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTextButton)
 class ENGINE_API WTextButton : public WTextBox, public TButtonBase<WTextButton, LBoxBrush, &WTextBox::Brush>
 {
@@ -97,13 +65,37 @@ protected:
 
     explicit WTextButton(LNodeDynamicInit const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(TButtonBase::DefaultVisibility);
     }
     template<typename TCxxClass>
     explicit WTextButton(TNodeStaticInit<TCxxClass> const& Init) noexcept : Super{Init}, TButtonBase{*this}
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->SetVisibility(TButtonBase::DefaultVisibility);
     }
+
+public:
+
+    virtual void Construct() override;
+    JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus()
+    virtual LNodeReply OnCursorEnter() override;
+    virtual void OnCursorLeave() override;
+    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual void OnEnabledStateChanged() override;
+    virtual void OnSelectedStateChanged() override;
+
+    LTextButtonTextStyle TextStyle;
+};
+
+//# A text button with an optional icon on the left or right which may be decupled form the button logic to serve as an extra input target.
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryTextButtonIconizedDouble)
+class ENGINE_API WTextButtonIconizedDouble : public WTextButton, public LIconizedDouble
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WTextButtonIconizedDouble)
 
 public:
 
@@ -118,25 +110,20 @@ public:
     virtual void OnEnabledStateChanged() override;
     virtual void OnSelectedStateChanged() override;
 
-    LTextButtonTextStyle TextStyle;
-
-    LTexture2Ref LeftIcon;
-    LTextButtonIconBrush LeftIconBrush;
     LTextButtonIconStyle LeftIconStyle;
-
-    LTexture2Ref RightIcon;
-    LTextButtonIconBrush RightIconBrush;
     LTextButtonIconStyle RightIconStyle;
 
+    //# Whether the respective icon has their own hitbox and can receive input independently of the button.
     bool bDecoupledLeftIcon{};
     bool bDecoupledRightIcon{};
     TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
-    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
     TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
+    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
     TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
 
 private:
 
+    // TODO: Remove.
     LVec2F GetLeftIconTopLeft(LVec2F Translation) const noexcept;
     LVec2F GetRightIconTopLeft(LVec2F Translation) const noexcept;
 
@@ -146,16 +133,23 @@ private:
     LDelegateHandle RightHandle{ nullptr };
 };
 
-struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
+struct LFactoryTextButton : TFactoryButtonBase<WTextButton>
 {
     NODE_FACTORY_BODY(WTextButton)
 
-    decltype(auto) LeftIcon(this auto&& Self, LTexture2Ref InIcon) noexcept
+    JAFG_NODE_FACTORY_STYLE_BOILERPLATE(Text, TextStyle)
+};
+
+struct LFactoryTextButtonIconizedDouble : NODE_FACTORY_PARENT(WTextButtonIconizedDouble)
+{
+    NODE_FACTORY_BODY(WTextButtonIconizedDouble)
+
+    decltype(auto) LeftIcon(this auto&& Self, LOptionalTexture2Ref InIcon) noexcept
     {
-        NODE_FACTORY_SELF().LeftIcon = std::move(InIcon);
+        NODE_FACTORY_SELF().LeftIcon = InIcon.GetResolved();
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) LeftIconBrush(this auto&& Self, LTextButtonIconBrush const& Brush) noexcept
+    decltype(auto) LeftIconBrush(this auto&& Self, LIconBrush const& Brush) noexcept
     {
         NODE_FACTORY_SELF().LeftIconBrush = Brush;
         return NODE_FACTORY_RESULT();
@@ -175,7 +169,7 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
         NODE_FACTORY_SELF().LeftIconBrush.MinIconSize = MinSize;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) LeftIconAlignment(this auto&& Self, LTextButtonIconBrush::Align Alignment) noexcept
+    decltype(auto) LeftIconAlignment(this auto&& Self, LIconBrush::Align Alignment) noexcept
     {
         NODE_FACTORY_SELF().LeftIconBrush.Alignment = Alignment;
         return NODE_FACTORY_RESULT();
@@ -187,12 +181,12 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
     }
     JAFG_NODE_FACTORY_STYLE_BOILERPLATE(LeftIcon, LeftIconStyle)
 
-    decltype(auto) RightIcon(this auto&& Self, LTexture2Ref InIcon) noexcept
+    decltype(auto) RightIcon(this auto&& Self, LOptionalTexture2Ref InIcon) noexcept
     {
         NODE_FACTORY_SELF().RightIcon = std::move(InIcon);
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) RightIconBrush(this auto&& Self, LTextButtonIconBrush const& Brush) noexcept
+    decltype(auto) RightIconBrush(this auto&& Self, LIconBrush const& Brush) noexcept
     {
         NODE_FACTORY_SELF().RightIconBrush = Brush;
         return NODE_FACTORY_RESULT();
@@ -212,7 +206,7 @@ struct LFactoryTextButton : public TFactoryButtonBase<WTextButton>
         NODE_FACTORY_SELF().RightIconBrush.MinIconSize = MinSize;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) RightIconAlignment(this auto&& Self, LTextButtonIconBrush::Align Alignment) noexcept
+    decltype(auto) RightIconAlignment(this auto&& Self, LIconBrush::Align Alignment) noexcept
     {
         NODE_FACTORY_SELF().RightIconBrush.Alignment = Alignment;
         return NODE_FACTORY_RESULT();

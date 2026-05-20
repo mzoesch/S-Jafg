@@ -7,7 +7,6 @@
 #include "Nodes/UserWidget.h"
 #include "Nodes/DropDown.h"
 #include "Nodes/HParent.h"
-#include "Nodes/HRegion.h"
 #include "Nodes/VParent.h"
 #include "Rhi/NodeRenderInfo.h"
 
@@ -132,14 +131,6 @@ void Jafg::WTabOverlay::Draw(LNodeRenderInfo const& Info) const
         Info.AddInstance({
             .Rect = Rect,
             .Tint = HighlightColor,
-            .BackgroundTint = Colors::Black,
-            .Radii = maths::zero_vector<LVec4F>,
-            .OutlineTint = Colors::White,
-            .TexCoordRect = {0.0f, 0.0f, 1.0f, 1.0f},
-            .OutlineThickness = 0.0f,
-            .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
-            .SamplerIndex = UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx,
-            .MsdfPixelRange = 0.0f,
             });
     }
 
@@ -172,7 +163,8 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
 
     if (std::holds_alternative<TSubclassOf<WUserWidget>>(Info.Panel))
     {
-        this->Switcher->AddChild(NewNode(this->GetViewport()).Class(std::get<TSubclassOf<WUserWidget>>(Info.Panel).GetClassOrDefault()).Unique());
+        this->Switcher->AddChild(NewNode(this->GetViewport())
+            .Class(std::get<TSubclassOf<WUserWidget>>(Info.Panel).GetClassOrDefault()).Unique());
     }
     else
     {
@@ -247,9 +239,22 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
         this->RegisterTab(std::move(Sibling));
     }
 
+    this->ShowTabSelector();
+
     check(algo::contains(this->Tabs, Result.first, algo::pair_first{}))
     check(algo::find(this->Tabs, Result.first, algo::pair_first{})->second == Result.second)
     return Result;
+}
+
+bool Jafg::WTabOverlay::HideTabSelector()
+{
+    if (this->Selectors->GetChildren().size() > 1)
+    {
+        this->Selectors->SetVisibility(ENodeVisibility::IntransitiveHitTestInvisible);
+        return false;
+    }
+    this->Selectors->SetVisibility(ENodeVisibility::Collapsed);
+    return true;
 }
 
 Jafg::WUserWidget* Jafg::WTabOverlay::FindWidgetSlow(LJxxClass const& Class) noexcept
@@ -350,18 +355,22 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
 
     CreateDropDownMenu(
         this->GetViewport(),
-        Location,
-        {
-            .OnOptionCloseResult = [](WDismissibleFloatingWidget& Self)
-            {
-                return algo::reply::unhandled();
-            }
-        }, {.Children = {
+        Location, {}, {.Children = {
+            LDropDownNodeOption{
+                .Selector = {
+                    .DisplayName = "Hide Tab Selectors",
+                    },
+                .IsEnabled = this->Selectors->GetChildren().size() < 2,
+                .OnAction = [&Selector](auto&&...)
+                {
+                    Selector.GetParentUntilChecked<WTabOverlay>()->HideTabSelector();
+                    return algo::reply::unhandled();
+                },},
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Close Tab",
                     },
-                .OnAction = [&Selector]
+                .OnAction = [&Selector](auto&&...)
                 {
                     Selector.GetParentUntilChecked<WTabOverlay>()->CloseTab(&Selector);
                     return algo::reply::unhandled();
@@ -371,7 +380,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                     .DisplayName = "Move Right",
                     .Icon = "Icons/Jafg.ArrowRight",
                     },
-                .OnAction = [&Selector]
+                .OnAction = [&Selector](auto&&...)
                 {
                     Selector.GetParentUntilChecked<WTabOverlayParent>()->MoveHere(
                         Selector, *Selector.GetParentUntilChecked<WTabOverlay>(), WTabOverlayParent::EDirection::Right, false
@@ -379,11 +388,11 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                     return algo::reply::unhandled();
                 },},
             LDropDownNodeOption{
-                    .Selector = {
+                .Selector = {
                     .DisplayName = "Move Down",
                     .Icon = "Icons/Jafg.ArrowDown",
                     },
-                .OnAction = [&Selector]
+                .OnAction = [&Selector](auto&&...)
                 {
                     Selector.GetParentUntilChecked<WTabOverlayParent>()->MoveHere(
                         Selector, *Selector.GetParentUntilChecked<WTabOverlay>(), WTabOverlayParent::EDirection::Down, false
@@ -395,7 +404,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                     .DisplayName = "Split Right",
                     .Icon = "Icons/Jafg.SplitX",
                     },
-                .OnAction = [&Selector]
+                .OnAction = [&Selector](auto&&...)
                 {
                     Selector.GetParentUntilChecked<WTabOverlayParent>()->MoveHere(
                         Selector, *Selector.GetParentUntilChecked<WTabOverlay>(), WTabOverlayParent::EDirection::Right, true
@@ -403,11 +412,11 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                     return algo::reply::unhandled();
                 },},
             LDropDownNodeOption{
-                    .Selector = {
+                .Selector = {
                     .DisplayName = "Split Down",
                     .Icon = "Icons/Jafg.SplitY",
                     },
-                .OnAction = [&Selector]
+                .OnAction = [&Selector](auto&&...)
                 {
                     Selector.GetParentUntilChecked<WTabOverlayParent>()->MoveHere(
                         Selector, *Selector.GetParentUntilChecked<WTabOverlay>(), WTabOverlayParent::EDirection::Down, true
@@ -654,11 +663,11 @@ Jafg::WTabOverlay::StepResult Jafg::WTabOverlay::StepThrough(WParent& Node, LVec
 void Jafg::WTabOverlaySelector::LoadRightIcon()
 {
     this->RightIcon = this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.SmallX");
-    this->RightIconStyle.SetEverywhere<&LTextButtonIconBrush::InwardsPadding>(16_spt);
-    this->RightIconStyle.SetEverywhere<&LTextButtonIconBrush::MinIconSize>(16_spt);
-    this->RightIconStyle.SetEverywhere<&LTextButtonIconBrush::Alignment>(LTextButtonIconBrush::Align::Center);
+    this->RightIconStyle.SetEverywhere<&LIconBrush::InwardsPadding>(16_spt);
+    this->RightIconStyle.SetEverywhere<&LIconBrush::MinIconSize>(16_spt);
+    this->RightIconStyle.SetEverywhere<&LIconBrush::Alignment>(LIconBrush::Align::Center);
     this->bDecoupledRightIcon = true;
-    this->RightIconStyle.Set<EIconStyleBits::Decoupled, &LTextButtonIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
+    this->RightIconStyle.Set<ETextButtonIconStyleBits::Decoupled, &LIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
     this->DecoupledRightKeyDown = [](auto&, auto&){ return LNodeReply::Handled(); };
     this->DecoupledRightKeyUp = [this](LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {

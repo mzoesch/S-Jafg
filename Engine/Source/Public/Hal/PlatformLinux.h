@@ -216,6 +216,10 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #endif /* !IN_DEBUG */
 #endif /* !FORCEINLINE */
 
+#ifndef JAFG_PLATFORM_U64_SIZET_EQ
+    #define JAFG_PLATFORM_U64_SIZET_EQ                                  1
+#endif /* JAFG_PLATFORM_U64_SIZET_EQ */
+
 namespace Jafg
 {
 

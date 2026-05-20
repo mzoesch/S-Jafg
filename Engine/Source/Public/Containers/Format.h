@@ -12,7 +12,7 @@ FORCEINLINE LString SprintF(LJafgChar const* Format, TArgs&&... Args) noexcept
 }
 
 template<typename... TArgs>
-FORCEINLINE LWString WSprintF(LWideChar const* Format, TArgs&&... Args) noexcept
+FORCEINLINE LWString WSprintF(wchar_t const* Format, TArgs&&... Args) noexcept
 {
     return std::vformat(Format, std::make_format_args(Args...));
 }

@@ -11,7 +11,7 @@ namespace
 #if JAFG_DO_CHECKS
 void AssertInvariantImpl(Jafg::WNode const& Node)
 {
-    check(!(Node.GetNodeState() & Jafg::ENodeStateBits::Hovered))
+    check(!(Node._GetNodeState() & Jafg::Detail::NodeStateSwept))
 
     if (Jafg::WParent const* Parent{Node.As<Jafg::WParent>()})
     {
@@ -26,23 +26,39 @@ void AssertInvariantImpl(Jafg::WNode const& Node)
 }
 void AssertInvariant(Jafg::WNode const& Node)
 {
-    if (!(Node.GetNodeState() & Jafg::ENodeStateBits::Hovered))
-    {
-        AssertInvariantImpl(Node);
-    }
-    else
+    if (Node._GetNodeState() & Jafg::Detail::NodeStateSwept)
     {
         Jafg::WParent const* Parent{Node.GetParent()};
         while (Parent)
         {
-            check(Parent->GetNodeState() & Jafg::ENodeStateBits::Hovered)
+            check(Parent->_GetNodeState() & Jafg::Detail::ENodeStateBits::Fallthrough)
             Parent = Parent->GetParent();
         }
+    }
+    else
+    {
+        AssertInvariantImpl(Node);
     }
 
     return;
 }
 #endif /* JAFG_DO_CHECKS */
+
+void RemoveFallthroughTransitively(Jafg::WNode& Node) noexcept
+{
+    if (auto* Parent{Node.As<Jafg::WParent>()})
+    {
+        for (auto& Child : Parent->GetChildren())
+        {
+            check(Child.get())
+            RemoveFallthroughTransitively(*Child);
+        }
+    }
+
+    Node._RemoveDispatchedState();
+    Node._RemoveFallthroughState();
+    return;
+}
 
 } /* ~Namespace <Anonymous> */
 
@@ -54,34 +70,34 @@ Jafg::LNodeReply Jafg::WNode::Sweep(LNodeSweepInfo const& Info, std::optional<LV
         {
             if (this->AabbTest(Info, *Location))
             {
-                if (this->NodeState & ENodeStateBits::HoveredDispatched)
+                if (this->NodeState & Detail::ENodeStateBits::Dispatched)
                 {
+                    checkCode(::AssertInvariant(*this))
                     return this->OnCursorMoved(*Location);
                 }
-                if (this->NodeState & ENodeStateBits::Hovered)
-                {
-                    return {};
-                }
-                checkCode(::AssertInvariant(*this))
-                this->NodeState |= ENodeStateBits::Hovered | ENodeStateBits::HoveredDispatched;
+
+                this->NodeState |= Detail::ENodeStateBits::Fallthrough;
                 WParent* Parent{this->Parent};
                 while (Parent)
                 {
-                    if (Parent->GetNodeState() & ENodeStateBits::Hovered)
+                    if (Parent->_GetNodeState() & Detail::ENodeStateBits::Fallthrough)
                     {
                         break;
                     }
-                    Parent->NodeState |= ENodeStateBits::Hovered;
+                    Parent->NodeState |= Detail::ENodeStateBits::Fallthrough;
                     Parent = Parent->GetParent();
                     continue;
                 }
+                this->NodeState |= Detail::ENodeStateBits::Dispatched;
+
                 checkCode(::AssertInvariant(*this))
                 return this->OnCursorEnter();
             }
         }
     }
 
-    this->_RemoveHoverState();
+    this->_RemoveDispatchedState();
+    ::RemoveFallthroughTransitively(*this);
     checkCode(::AssertInvariant(*this))
     return {};
 }
@@ -252,7 +268,6 @@ void Jafg::WNode::_check_Destruct()
         jassert(!algo::contains(this->Parent->GetChildren(), this, algo::unique_raw{}))
     }
 }
-
 #endif /* JAFG_DO_CHECKS */
 
 TJxxUnique<Jafg::WNode> Jafg::WNode::RemoveFromTreeImpl() noexcept

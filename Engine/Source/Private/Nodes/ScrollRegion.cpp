@@ -106,14 +106,6 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
             Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetVBackgroundScrollPositionFromOuter(), this->GetVBackgroundScrollSize()},
                 .Tint = this->BarBrush.VBackgroundTint,
-                .BackgroundTint = Colors::Black,
-                .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black,
-                .TexCoordRect = maths::zero_vector<LVec4F>,
-                .OutlineThickness = 0.0f,
-                .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
-                .SamplerIndex = UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx,
-                .MsdfPixelRange = 0.0f,
                 });
         }
         if (this->BarBrush.VScrollBarWidth > 0.0f)
@@ -121,14 +113,6 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
             Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetVForegroundScrollPositionFromOuter(ScrollOffsetYPercent), this->GetVForegroundScrollSize()},
                 .Tint = this->BarBrush.VTint,
-                .BackgroundTint = Colors::Black,
-                .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black,
-                .TexCoordRect = maths::zero_vector<LVec4F>,
-                .OutlineThickness = 0.0f,
-                .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
-                .SamplerIndex = UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx,
-                .MsdfPixelRange = 0.0f,
                 });
         }
     }
@@ -140,14 +124,6 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
             Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetHBackgroundScrollPositionFromOuter(), this->GetHBackgroundScrollSize()},
                 .Tint = this->BarBrush.HBackgroundTint,
-                .BackgroundTint = Colors::Black,
-                .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black,
-                .TexCoordRect = maths::zero_vector<LVec4F>,
-                .OutlineThickness = 0.0f,
-                .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
-                .SamplerIndex = UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx,
-                .MsdfPixelRange = 0.0f,
                 });
         }
         if (this->BarBrush.HScrollBarHeight > 0.0f)
@@ -155,14 +131,6 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
             Info.AddInstance({
                 .Rect = {AnchoredTopLeftFromMostOuter + this->GetHForegroundScrollPositionFromOuter(ScrollOffsetXPercent), this->GetHForegroundScrollSize()},
                 .Tint = this->BarBrush.HTint,
-                .BackgroundTint = Colors::Black,
-                .Radii = maths::zero_vector<LVec4F>,
-                .OutlineTint = Colors::Black,
-                .TexCoordRect = maths::zero_vector<LVec4F>,
-                .OutlineThickness = 0.0f,
-                .TextureIndex = UBO::BindlessTextureArray::IdentityMulIdx,
-                .SamplerIndex = UBO::BindlessTextureArray::LinearClampToEdgeSamplerIdx,
-                .MsdfPixelRange = 0.0f,
                 });
         }
     }

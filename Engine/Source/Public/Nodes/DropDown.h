@@ -14,6 +14,10 @@ struct LFactoryDropDown;
 
 struct LDropDownMenuCreateInfo final
 {
+    inline static constexpr auto RecommendedPadding{8_spt};
+    inline static constexpr auto RecommendedPaddedTextPadding{LIconBrush::DefaultMinIconSize + LIconBrush::DefaultInwardsPadding};
+    inline static constexpr auto RecommendedTextPadding{RecommendedPadding + RecommendedPaddedTextPadding};
+
     //#
     //# If not handled or unbound.
     //# The window will destroy itself.
@@ -40,7 +44,7 @@ public:
 
     inline void SetDropDownRoot(LDropDownRoot Root) noexcept
     {
-        check(this->_HasBegunLife() == false)
+        check(!this->_HasBegunLife())
         this->DropDownRoot = std::move(Root);
     }
 

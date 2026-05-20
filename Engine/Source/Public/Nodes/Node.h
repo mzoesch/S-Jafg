@@ -37,7 +37,6 @@ enum struct ENodeSize
     //# Points behave differently depending on user preferences and the size of the viewport they are painted in.
     Points,
 };
-
 //# One-dimensional widget size.
 struct LNodeSize1 final
 {
@@ -63,6 +62,24 @@ struct LNodeSize1 final
     {
         return this->Type == Other.Type && this->Size == Other.Size;
     }
+    FORCEINLINE constexpr LNodeSize1 operator+(LNodeSize1 const& Other) const noexcept
+    {
+        check(this->Type == Other.Type)
+        return LNodeSize1{this->Type, this->Size + Other.Size};
+    }
+    FORCEINLINE constexpr LNodeSize1 operator-(LNodeSize1 const& Other) const noexcept
+    {
+        check(this->Type == Other.Type)
+        return LNodeSize1{this->Type, this->Size - Other.Size};
+    }
+    FORCEINLINE constexpr LNodeSize1 operator-() const noexcept
+    {
+        return LNodeSize1{this->Type, -this->Size};
+    }
+    FORCEINLINE constexpr LNodeSize1 operator/(f32 Scalar) const noexcept
+    {
+        return LNodeSize1{this->Type, this->Size / Scalar};
+    }
     FORCEINLINE constexpr LNodeSize1 operator*(f32 Scalar) const noexcept
     {
         return LNodeSize1{this->Type, this->Size * Scalar};
@@ -73,7 +90,6 @@ struct LNodeSize1 final
         return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
     }
 };
-
 //# Two-dimensional widget size.
 struct LNodeSize2 final
 {
@@ -115,9 +131,8 @@ struct LNodeSize2 final
 
 struct LWhitespace final
 {
-    ENodeSize Type{ ENodeSize::Points };
+    ENodeSize Type{ ENodeSize::StaticPoints };
     LVec4F Size;
-
 
     FORCEINLINE constexpr LWhitespace() noexcept : Size{maths::zero_vector<LVec4F>} {}
 
@@ -128,6 +143,7 @@ struct LWhitespace final
 
     FORCEINLINE constexpr LWhitespace(LNodeSize1 Scalar) noexcept : Type{Scalar.Type}, Size{Scalar.Size} {}
     FORCEINLINE constexpr LWhitespace(LNodeSize1 Horizontal, f32 Vertical) noexcept : Type{Horizontal.Type}, Size{Horizontal.Size, Vertical, Horizontal.Size, Vertical} {}
+    FORCEINLINE constexpr LWhitespace(f32 Horizontal, LNodeSize1 Vertical) noexcept : Type{Vertical.Type}, Size{Horizontal, Vertical.Size, Horizontal, Vertical.Size} {}
     FORCEINLINE constexpr LWhitespace(LNodeSize1 Left, f32 Top, f32 Right, f32 South) noexcept : Type{Left.Type}, Size{Left.Size, Top, Right, South} {}
 
     DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LWhitespace)
@@ -154,7 +170,6 @@ struct LWhitespace final
         return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
     }
 };
-
 typedef LWhitespace LPadding;
 typedef LWhitespace LMargin;
 
@@ -207,7 +222,6 @@ enum Type : u8
 
 } /* ~Namespace EAnchor */
 ENUM_CLASS_FLAGS(EAnchor::Type)
-
 //#
 //# The anchor for complex anchoring only.
 //# This struct may not be used when dealing with widgets that only support a simple layout flow.
@@ -313,7 +327,6 @@ struct LAnchor final
     FORCEINLINE constexpr bool operator==(LAnchor const& InOther) const noexcept { return this->Anchors == InOther.Anchors; }
     FORCEINLINE LString ToString() const noexcept { return maths::to_string(this->Anchors); }
 };
-
 namespace Anchors
 {
 
@@ -327,7 +340,6 @@ inline static constexpr LAnchor VFill   { 0.0, 0.0, 0.0, 1.0 };
 inline static constexpr LAnchor HFill   { 0.0, 0.0, 1.0, 0.0 };
 
 } /* ~Namespace Anchors */
-
 inline constexpr void LAnchor::ApplyConstraints(EAnchor::Type InConstraints) noexcept
 {
     if (InConstraints & EAnchor::VTop)    { this->Anchors += Anchors::VTop.Anchors; }
@@ -459,17 +471,36 @@ private:
     std::optional<TClassStorage<WNode>> Focus;
 };
 
+namespace Detail
+{
+
+//#
+//# Defines the state flags a node can be in. Not all combinations are valid.
+//# @see #WNode::_check_StateInvariant
+//#
 enum struct ENodeStateBits
 {
+    //# The node has nothing.
     Identity = 0x0 << 0,
-    Hovered = 0x1 << 0,
-    HoveredDispatched = 0x1 << 1,
+    //#
+    //# The node is advised to either
+    //# - let events fallthrough to children (even if they are itself not in a state to handle any events)
+    //# - or decide on their own to either handle events or let them bubble down.
+    //#
+    Fallthrough = 0x1 << 0,
+    //#
+    //# Events have been dispatched for this node. Event counterparts will be called later on (this is guaranteed by jafg).
+    //# Events that dispatch must be fallthrough.
+    //#
+    Dispatched = 0x1 << 1,
+    //#
+    //# Node is focused. The viewport gives special care for them.
+    //# @see #LViewport
+    //#
     Focused = 0x1 << 2,
 };
 ENUM_STRUCT_FLAGS(ENodeStateBits, ENodeStateFlags)
-
-namespace Detail
-{
+inline constexpr ENodeStateFlags NodeStateSwept{ENodeStateBits::Fallthrough | ENodeStateBits::Dispatched};
 
 struct LViewport2OuterProj
 {
@@ -532,8 +563,8 @@ private:
 } /* ~Namespace Detail */
 
 #define NODE_FACTORY_PARENT(Node) public Node::Super::LFactory
-#define NODE_FACTORY_BODY(Node) typedef Node TSelf;
-#define DETAIL_JAFG_NODE_FACTORY_SELF() (*StaticCastChecked<typename std::remove_cvref_t<decltype(Self)>::TSelf>(&Self.GetRawNode()))
+#define NODE_FACTORY_BODY(Node) typedef Node TFactoredNode;
+#define DETAIL_JAFG_NODE_FACTORY_SELF() (*StaticCastChecked<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode>(&Self.GetRawNode()))
 #define NODE_FACTORY_SELF() check(Self._IsDecommissioned() == false) DETAIL_JAFG_NODE_FACTORY_SELF()
 #define NODE_FACTORY_RESULT() std::forward<decltype(Self)>(Self)
 
@@ -635,7 +666,7 @@ struct LBeginStylingFnResult final
 } /* ~Namespace Detail */
 
 #define JAFG_NODE_FACTORY_DELEGATE_BINDINGS(f, callable) \
-        decltype(auto) f(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TSelf::callable) Event) noexcept \
+        decltype(auto) f(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TFactoredNode::callable) Event) noexcept \
     { \
         NODE_FACTORY_SELF().callable = std::move(Event); \
         return NODE_FACTORY_RESULT(); \
@@ -727,8 +758,8 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         Self._Release();
         Self._Decommission();
 #endif /* JAFG_DO_CHECKS */
-        return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TSelf>(
-            static_cast<typename std::remove_cvref_t<decltype(Self)>::TSelf*>(&Cache)
+        return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode>(
+            static_cast<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode*>(&Cache)
             );
     }
 
@@ -836,47 +867,48 @@ public:
     {
         check(!this->_check_bFocused)
         checkCode(this->_check_bFocused = true)
-        check((this->NodeState & ENodeStateBits::Focused) == ENodeStateBits::Identity)
+        check(!(this->NodeState & Detail::ENodeStateBits::Focused))
         checkCode(this->_check_StateInvariant())
-        this->NodeState |= ENodeStateBits::Focused;
+        this->NodeState |= Detail::ENodeStateBits::Focused;
         checkCode(this->_check_StateInvariant())
     }
     //# Called each tick for a focused node regardless if the parent node allways ticking.
     virtual void OnFocusTick()
     {
         check(this->_check_bFocused)
-        check((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+        check(this->NodeState & Detail::ENodeStateBits::Focused)
     }
     //# Always called if the node loses focus. This is guaranteed.
     virtual void OnFocusLost()
     {
         check(this->_check_bFocused)
         checkCode(this->_check_bFocused = false)
-        check((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+        check(this->NodeState & Detail::ENodeStateBits::Focused)
         checkCode(this->_check_StateInvariant())
-        this->NodeState &= ~ENodeStateFlags{ENodeStateBits::Focused};
+        this->NodeState &= ~Detail::ENodeStateFlags{Detail::ENodeStateBits::Focused};
         checkCode(this->_check_StateInvariant())
     }
 
     //# Sweep an optional cursor location over this node.
     virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location);
     //# Public internal method for jafg. Do not use.
-    FORCEINLINE virtual void _RemoveHoverState() noexcept
+    FORCEINLINE void _RemoveFallthroughState() noexcept
     {
-        this->_RemoveHoverDispatchedState();
-        if (this->NodeState & ENodeStateBits::Hovered) { this->NodeState &= ~ENodeStateFlags{ENodeStateBits::Hovered}; }
-        return;
+        if (this->NodeState & Detail::ENodeStateBits::Fallthrough)
+        {
+            check(!(this->NodeState & Detail::ENodeStateBits::Dispatched))
+            this->NodeState &= ~Detail::ENodeStateFlags{Detail::ENodeStateBits::Fallthrough};
+        }
     }
     //# Public internal method for jafg. Do not use.
-    FORCEINLINE void _RemoveHoverDispatchedState() noexcept
+    FORCEINLINE void _RemoveDispatchedState() noexcept
     {
-        if (this->NodeState & ENodeStateBits::HoveredDispatched)
+        if (this->NodeState & Detail::ENodeStateBits::Dispatched)
         {
-            check(this->NodeState & ENodeStateBits::Hovered)
-            this->NodeState &= ~ENodeStateFlags{ENodeStateBits::HoveredDispatched};
+            check(this->NodeState & Detail::ENodeStateBits::Fallthrough)
+            this->NodeState &= ~Detail::ENodeStateFlags{Detail::ENodeStateBits::Dispatched};
             this->OnCursorLeave();
         }
-        return;
     }
 
     //#
@@ -970,25 +1002,26 @@ public:
     //# @return Whether this is the focused widget or any of its children.
     NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const noexcept; /* Warning: Slow. */
 
-    FORCEINLINE constexpr ENodeStateFlags GetNodeState() const noexcept { return this->NodeState; }
+    //# Public internal method for jafg. Do not use.
+    FORCEINLINE constexpr Detail::ENodeStateFlags _GetNodeState() const noexcept { return this->NodeState; }
 
-    FORCEINLINE bool ShouldNowTick() const { return this->bAllowTick && NodeVisibility::IsTicked(this->Visibility); }
-    FORCEINLINE bool GetRawShouldTick() const { return this->bAllowTick; }
-    FORCEINLINE void SetShouldTick(const bool bInShouldTick) { this->bAllowTick = bInShouldTick; }
-    FORCEINLINE bool ShouldNowDraw() const { return NodeVisibility::IsDrawn(this->Visibility); }
-    FORCEINLINE auto GetVisibility() const { return this->Visibility; }
-    FORCEINLINE bool IsPainted() const { return this->ShouldNowDraw(); }
-    FORCEINLINE bool IsHitTestable() const { return NodeVisibility::IsHitTestable(this->Visibility); }
-    FORCEINLINE bool CanChildrenBeHitTestable() const { return NodeVisibility::IsDerivedHitTestable(this->Visibility); }
-    FORCEINLINE bool ShouldCheckForInputs() const { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
-    FORCEINLINE bool TransformsWidgetLayout() const { return NodeVisibility::TransformsWidgetLayout(this->Visibility); }
-    FORCEINLINE bool IsVisible() const { return this->Visibility == ENodeVisibility::Visible; }
-    FORCEINLINE bool IsHidden() const { return this->Visibility == ENodeVisibility::Hidden; }
-    FORCEINLINE bool IsCollapsed() const { return this->Visibility == ENodeVisibility::Collapsed; }
-    FORCEINLINE bool IsDerivedHitTestInvisible() const { return this->Visibility == ENodeVisibility::DerivedHitTestInvisible; }
-    FORCEINLINE bool IsTransitiveHitTestInvisible() const { return this->Visibility == ENodeVisibility::TransitiveHitTestInvisible; }
-    FORCEINLINE bool IsIntransitiveHitTestInvisible() const { return this->Visibility == ENodeVisibility::IntransitiveHitTestInvisible; }
-                void SetVisibility(ENodeVisibility InVisibility);
+    FORCEINLINE constexpr bool ShouldNowTick() const noexcept { return this->bAllowTick && NodeVisibility::IsTicked(this->Visibility); }
+    FORCEINLINE constexpr bool GetRawShouldTick() const noexcept { return this->bAllowTick; }
+    FORCEINLINE constexpr void SetShouldTick(bool bTick) noexcept { this->bAllowTick = bTick; }
+    FORCEINLINE constexpr bool ShouldNowDraw() const noexcept { return NodeVisibility::IsDrawn(this->Visibility); }
+    FORCEINLINE constexpr auto GetVisibility() const noexcept { return this->Visibility; }
+    FORCEINLINE constexpr bool IsPainted() const noexcept { return this->ShouldNowDraw(); }
+    FORCEINLINE constexpr bool IsHitTestable() const noexcept { return NodeVisibility::IsHitTestable(this->Visibility); }
+    FORCEINLINE constexpr bool CanChildrenBeHitTestable() const noexcept { return NodeVisibility::IsDerivedHitTestable(this->Visibility); }
+    FORCEINLINE constexpr bool ShouldCheckForInputs() const noexcept { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
+    FORCEINLINE constexpr bool TransformsWidgetLayout() const noexcept { return NodeVisibility::TransformsWidgetLayout(this->Visibility); }
+    FORCEINLINE constexpr bool IsVisible() const noexcept { return this->Visibility == ENodeVisibility::Visible; }
+    FORCEINLINE constexpr bool IsHidden() const noexcept { return this->Visibility == ENodeVisibility::Hidden; }
+    FORCEINLINE constexpr bool IsCollapsed() const noexcept { return this->Visibility == ENodeVisibility::Collapsed; }
+    FORCEINLINE constexpr bool IsDerivedHitTestInvisible() const noexcept { return this->Visibility == ENodeVisibility::DerivedHitTestInvisible; }
+    FORCEINLINE constexpr bool IsTransitiveHitTestInvisible() const noexcept { return this->Visibility == ENodeVisibility::TransitiveHitTestInvisible; }
+    FORCEINLINE constexpr bool IsIntransitiveHitTestInvisible() const noexcept { return this->Visibility == ENodeVisibility::IntransitiveHitTestInvisible; }
+    void SetVisibility(ENodeVisibility InVisibility);
 
     //# Only if old and new are different.
     virtual void OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility) {}
@@ -1156,7 +1189,7 @@ private:
     bool _check_bMouseEntered{};
 #endif /* JAFG_DO_CHECKS */
     bool bAllowTick{ true };
-    ENodeStateFlags NodeState{ ENodeStateBits::Identity };
+    Detail::ENodeStateFlags NodeState{ Detail::ENodeStateBits::Identity };
     ENodeVisibility Visibility{ ENodeVisibility::TransitiveHitTestInvisible };
 
     //# Parent of this widget.
@@ -1205,22 +1238,30 @@ struct LNewNodeFnResult final
 {
     LViewport& Viewport;
 
-    template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
-    typename TNode::LFactory Class() const
+    template<typename TNode, typename... TArgs> requires std::is_base_of_v<WNode, TNode>
+        // && std::is_constructible_v<TNode, TNodeStaticInit<TNode> const&, TArgs&&...>
+    typename TNode::LFactory Class(TArgs&&... Args) const
     {
-        return this->Class<TNode>(TNode::StaticClass());
+        return typename TNode::LFactory{
+            *ConstructNodeImpl(TNodeStaticInit<TNode>{.Outer=this->Viewport}, std::forward<TArgs>(Args)...).release()
+            };
     }
-    template<typename TNode = WNode> requires std::is_base_of_v<WNode, TNode>
+
+    template<typename TNode=WNode> requires std::is_base_of_v<WNode, TNode>
     typename TNode::LFactory Class(LJxxClass const& Class) const
     {
-        return typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class}).release()};
+        return typename TNode::LFactory{
+            *ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class}).release()
+            };
     }
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    template<typename TNode=WNode> requires std::is_base_of_v<WNode, TNode>
     typename TNode::LFactory Class(TSubclassOf<TNode> Class) const
     {
-        return typename TNode::LFactory{*ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class.GetClassOrDefault()}).release()};
+        return typename TNode::LFactory{
+            *ConstructNodeImpl(CastTo<TNode>{}, {.Outer=this->Viewport,.Class=Class.GetClassOrDefault()}).release()
+            };
     }
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    template<typename TNode=WNode> requires std::is_base_of_v<WNode, TNode>
     typename TNode::LFactory Class(TNodeInjection<TNode> const& Injection) const
     {
         return this->Class<TNode>(Injection.Class);
@@ -1293,10 +1334,10 @@ FORCEINLINE LNodeReply WNode::SweepFocus(LNodeSweepInfo const& Info, LVec2F cons
 
 FORCEINLINE void WNode::_ResetFocusState() noexcept
 {
-    if ((this->NodeState & ENodeStateBits::Focused) != ENodeStateBits::Identity)
+    if ((this->NodeState & Detail::ENodeStateBits::Focused) != Detail::ENodeStateBits::Identity)
     {
         this->AttachedViewport.ChangeFocusImpl({});
-        check((this->NodeState & ENodeStateBits::Focused) == ENodeStateBits::Identity)
+        check(!(this->NodeState & Detail::ENodeStateBits::Focused))
     }
     return;
 }
