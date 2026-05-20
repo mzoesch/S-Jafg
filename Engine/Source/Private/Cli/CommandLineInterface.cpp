@@ -4,7 +4,6 @@
 #include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
 #include "Async/TaskUtility.h"
-#include "Algo/Sort.h"
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const noexcept
 {
@@ -131,21 +130,18 @@ Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType
     if (InType.Identifier.empty())
     {
         LOG_ERROR(LogCli, "Failed to register type. Identifier is empty.")
-        return { };
+        return {};
     }
     if (this->GetObject(InType.Identifier))
     {
         LOG_ERROR(LogCli, "Failed to register type. Identifier [{}] already in use.", InType.GetIdentifier())
-        return { };
+        return {};
     }
 
     InType.Uuid = ++this->UuidCursor;
     this->Types.emplace_back(std::move(InType));
 
-    LCliType One, Two;
-    One < Two;
-
-    Algo::SortQuick(&this->Types);
+    algo::sort_weak(this->Types);
 
     return LCliCommandHandle{this->UuidCursor};
 }
@@ -155,13 +151,13 @@ bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
     check( Tasks::IsOnMasterThread() )
     check( InHandle )
 
-    if (InHandle->IsValid() == false)
+    if (!InHandle->IsValid())
     {
         LOG_WARNING(LogCli, "Received invalid type handle.")
         return false;
     }
 
-    if (auto It { algo::find(this->Types, InHandle->Uuid, &LCliType::Uuid) }; It != this->Types.end())
+    if (auto It{algo::find(this->Types, InHandle->Uuid, &LCliType::Uuid)}; It != this->Types.end())
     {
         LOG_VERBOSE(LogCli, "Unregistering type [{}].", It->GetIdentifier())
         this->Types.erase(It);
@@ -175,9 +171,9 @@ bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
 
 Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand&& InCommand)
 {
-    check( Tasks::IsOnMasterThread() )
+    check(Tasks::IsOnMasterThread())
     LOG_VERBOSE(LogCli, "Registering command [{}].", InCommand.GetIdentifier())
-    check( InCommand.Uuid == LCliObject::NoUuid )
+    check(InCommand.Uuid == LCliObject::NoUuid)
 
     if (InCommand.Identifier.empty())
     {
@@ -193,7 +189,7 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
     InCommand.Uuid = ++this->UuidCursor;
     this->Commands.emplace_back(std::move(InCommand));
 
-    Algo::SortQuick(&this->Commands);
+    algo::sort_weak(this->Commands);
 
     return LCliCommandHandle{this->UuidCursor};
 }
@@ -240,7 +236,7 @@ Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVaria
     InVariable.Uuid = ++this->UuidCursor;
     this->Variables.emplace_back(std::move(InVariable));
 
-    Algo::SortQuick(&this->Variables);
+    algo::sort_weak(this->Variables);
 
     return LCliCommandHandle{this->UuidCursor};
 }

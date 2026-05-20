@@ -699,8 +699,129 @@ FORCEINLINE void inline_left_chop_shrink(T* Container, range_size_t<T> N) noexce
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Weak
-//# Weak find. Only requires left equality comparable.
+// Weak - weak implementations of algorithms that required less correctly specified traits -- as the standard really
+// tries to force one to define literally mathematical perfect reflexive, symmetric, and transitive type comparisons
+// for all types involved in any way imaginable forming a total order even for finding elements!??... why
+template<typename TLhs, typename TRhs>
+inline constexpr bool is_weak_eq_v{requires(TLhs const& Lhs, TRhs const& Rhs){ {Lhs==Rhs} -> std::convertible_to<bool>; }};
+template<typename TLhs, typename TRhs>
+inline constexpr bool is_weak_eq_three_way_v{requires(TLhs const& Lhs, TRhs const& Rhs){
+    {Lhs<=>Rhs} -> std::convertible_to<std::partial_ordering>;
+    {Lhs<=>Rhs} -> std::convertible_to<std::weak_ordering>;
+    {Lhs<=>Rhs} -> std::convertible_to<std::strong_ordering>;
+    }};
+template<typename TLhs, typename TRhs>
+inline constexpr bool is_weak_eq_lt_v{requires(TLhs const& Lhs, TRhs const& Rhs){ {Lhs<Rhs} -> std::convertible_to<bool>; }};
+template<typename TLhs, typename TRhs>
+inline constexpr bool is_weak_eq_lteq_v{requires(TLhs const& Lhs, TRhs const& Rhs){ {Lhs<=Rhs} -> std::convertible_to<bool>; }};
+template<typename TLhs, typename TRhs>
+inline constexpr bool is_weak_eq_gt_v{requires(TLhs const& Lhs, TRhs const& Rhs){ {Lhs>Rhs} -> std::convertible_to<bool>; }};
+template<typename TLhs, typename TRhs>
+inline constexpr bool is_weak_eq_gteq_v{requires(TLhs const& Lhs, TRhs const& Rhs){ {Lhs>=Rhs} -> std::convertible_to<bool>; }};
+
+template<typename TIter, typename TSent, typename TComp, typename TProj> requires std::sentinel_for<TSent, TIter>
+inline constexpr bool is_it_comparable_v{requires(TIter Begin, TSent Sent, TComp Comp, TProj Proj)
+{
+    {Comp(Proj(*Begin), Proj(*Sent))} -> std::convertible_to<bool>;
+}};
+template<typename TRange, typename TComp, typename TProj>
+inline constexpr bool is_range_comparable_v{requires(iterator_t<TRange> Begin, sentinel_t<TRange> Sent, TComp Comp, TProj Proj)
+{
+    {Comp(Proj(*Begin), Proj(*Sent))} -> std::convertible_to<bool>;
+}};
+
+struct equal_to_weak final
+{
+    template<typename TLhs, typename TRhs>
+        requires is_weak_eq_v<TLhs, TRhs>
+    NODISCARD FORCEINLINE constexpr bool operator()(TLhs const& Lhs, TRhs const& Rhs) const
+    {
+        return Lhs == Rhs;
+    }
+};
+struct three_way_weak final
+{
+    template<typename TLhs, typename TRhs>
+        requires is_weak_eq_three_way_v<TLhs, TRhs>
+    NODISCARD FORCEINLINE constexpr decltype(auto) operator()(TLhs const& Lhs, TRhs const& Rhs) const
+    {
+        return Lhs <=> Rhs;
+    }
+};
+struct less_weak final
+{
+    template<typename TLhs, typename TRhs>
+        requires is_weak_eq_lt_v<TLhs, TRhs>
+    NODISCARD FORCEINLINE constexpr bool operator()(TLhs const& Lhs, TRhs const& Rhs) const
+    {
+        return Lhs < Rhs;
+    }
+};
+struct less_equal_weak final
+{
+    template<typename TLhs, typename TRhs>
+        requires is_weak_eq_lteq_v<TLhs, TRhs>
+    NODISCARD FORCEINLINE constexpr bool operator()(TLhs const& Lhs, TRhs const& Rhs) const
+    {
+        return Lhs <= Rhs;
+    }
+};
+struct greater_weak final
+{
+    template<typename TLhs, typename TRhs>
+        requires is_weak_eq_gt_v<TLhs, TRhs>
+    NODISCARD FORCEINLINE constexpr bool operator()(TLhs const& Lhs, TRhs const& Rhs) const
+    {
+        return Lhs > Rhs;
+    }
+};
+struct greater_equal_weak final
+{
+    template<typename TLhs, typename TRhs>
+        requires is_weak_eq_gteq_v<TLhs, TRhs>
+    NODISCARD FORCEINLINE constexpr bool operator()(TLhs const& Lhs, TRhs const& Rhs) const
+    {
+        return Lhs >= Rhs;
+    }
+};
+
+namespace detail
+{
+
+template<typename TProj, typename TComp>
+struct reflexive_proj_for_weak_stl final
+{
+    TComp Comp;
+    TProj Proj;
+    template<typename T>
+    NODISCARD FORCEINLINE bool operator()(T&& Lhs, T&& Rhs) const noexcept
+    {
+        return this->Comp(std::invoke(this->Proj, std::forward<T>(Lhs)), std::invoke(this->Proj, std::forward<T>(Rhs)));
+    }
+};
+
+struct sort_weak_fn
+{
+    template<std::random_access_iterator TIter, std::sentinel_for<TIter> TSent, typename TComp=less_weak, typename TProj=identity>
+        requires is_it_comparable_v<TIter, TSent, TComp, TProj>
+    constexpr void
+    operator()(TIter Begin, TSent Sent, TComp Comp={}, TProj Proj={}) const noexcept
+    {
+        std::sort(Begin, Sent, reflexive_proj_for_weak_stl{.Comp=std::move(Comp), .Proj=std::move(Proj)});
+    }
+    template<random_access_range TRange, typename TComp=less_weak, typename TProj=identity>
+        requires is_range_comparable_v<TRange, TComp, TProj>
+    constexpr void
+    operator()(TRange&& Range, TComp Comp={}, TProj Proj={}) const noexcept
+    {
+        (*this)(begin(Range), end(Range), std::move(Comp), std::move(Proj));
+    }
+};
+} /* ~Namespace detail */
+
+//# Weak implementation of the std::ranges::sort that does not require mathematically perfect comparisons.
+inline constexpr detail::sort_weak_fn sort_weak{};
+
 NODISCARD FORCEINLINE constexpr auto wfind(ITERATOR Begin, ITERATOR End, const auto& Value) noexcept
 {
     return std::find(Begin, End, Value);
