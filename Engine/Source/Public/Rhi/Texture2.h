@@ -69,12 +69,12 @@ struct LTexture2 final
         return;
     }
     static TSharedRef<LTexture2> FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
+    static TSharedRef<LTexture2> FromTextureView(LStringView View);
     PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
     ~LTexture2() = default;
 
     FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->MipMap0.IsAllocated(); }
     ENGINE_API EResult LoadToHost(HostInfo const& Info);
-    ENGINE_API EResult LoadToHostFromMemory();
     inline void FreeFromHost() noexcept
     {
         if (this->MipMap0.IsAllocated())
@@ -154,8 +154,29 @@ struct LOptionalTexture2Ref
 
     std::variant<std::monostate, LTexture2Ref, LString> Variant;
 
-    ENGINE_API LTexture2Ref GetResolved() const;
-    ENGINE_API LTexture2Ref Resolve();
+    inline LTexture2Ref GetResolved() const
+    {
+        if (std::holds_alternative<LTexture2Ref>(this->Variant))
+        {
+            return std::get<LTexture2Ref>(this->Variant);
+        }
+        if (std::holds_alternative<LString>(this->Variant))
+        {
+            return LTexture2::FromTextureView(std::get<LString>(this->Variant));
+        }
+        return {};
+    }
+    inline LTexture2Ref Resolve()
+    {
+        this->Variant = this->GetResolved();
+        check(std::holds_alternative<LTexture2Ref>(this->Variant))
+        if (!std::get<LTexture2Ref>(this->Variant).get())
+        {
+            this->Variant = std::monostate{};
+            return {};
+        }
+        return std::get<LTexture2Ref>(this->Variant);
+    }
 };
 
 } /* ~Namespace Jafg */

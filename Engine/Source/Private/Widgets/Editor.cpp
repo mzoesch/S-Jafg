@@ -3,23 +3,21 @@
 #include "Widgets/Editor.h"
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VParent.h"
+#include "Nodes/DropDownTabBar.h"
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
-#include "Nodes/DropDown.h"
 #include "Core/App.h"
 #include "Widgets/TagInspector.h"
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
 #include "Widgets/WorldViewer.h"
 
-#include "Nodes/Text.h"
-
 Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
 {
     check(this->GetChildren().size() == 1)
     check(this->GetChildren().front()->AsStatic<WVParent>().GetChildren().size() == 1)
-    check(this->GetChildren().front()->AsStatic<WVParent>().GetChildren().front()->IsA<WDropDown>())
+    check(this->GetChildren().front()->AsStatic<WVParent>().GetChildren().front()->IsA<WDropDownTabBar>())
     return this->GetChildren().front()->AsStatic<WParent>();
 }
 
@@ -31,11 +29,11 @@ void Jafg::WEditor::Construct()
     BeginStyling(*this).StaticRoot<WVParent>()
         .Anchor(EAnchor::Fill)
     [
-        NewStaticNode(WDropDown)
+        NewStaticNode(WDropDownTabBar)
             .MinDesiredSize({ENodeSize::StaticPoints, 0, 10.0f})
-            .DropDownRoot({.Nodes={
-                LDropDownNodeSubMenu{
-                    .DisplayName = "File",
+            .Tabs({.SubMenus={
+                LDropDownNodeSubmenu{
+                    .Selector = {.DisplayName="File"},
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = {
@@ -46,11 +44,11 @@ void Jafg::WEditor::Construct()
                             },
                         },
                     },
-                LDropDownNodeSubMenu{
-                    .DisplayName = "Edit",
+                LDropDownNodeSubmenu{
+                    .Selector = { .DisplayName="Edit" },
                     },
-                LDropDownNodeSubMenu{
-                    .DisplayName = "View",
+                LDropDownNodeSubmenu{
+                    .Selector = { .DisplayName="View" },
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = WWorldViewer::TabSelectorCreateInfo(),
@@ -70,28 +68,28 @@ void Jafg::WEditor::Construct()
                             },
                         },
                     },
-                LDropDownNodeSubMenu{
-                    .DisplayName = "Build",
+                LDropDownNodeSubmenu{
+                    .Selector = { .DisplayName="Build" },
                     },
-                LDropDownNodeSubMenu{
-                    .DisplayName = "Help",
+                LDropDownNodeSubmenu{
+                    .Selector = { .DisplayName="Help" },
                     },
                 },})
     ];
 
-    {
-        auto& Overlay{this->FindNewOverlay()};
-        Overlay.RegisterTab(WClassInspector::TabCreateInfo());
-    }
+    // {
+    //     auto& Overlay{this->FindNewOverlay()};
+    //     Overlay.RegisterTab(WClassInspector::TabCreateInfo());
+    // }
     {
         auto& Overlay{this->FindNewOverlay()};
         Overlay.RegisterTab(WWorldViewer::TabCreateInfo());
     }
-    {
-        auto& Overlay{this->FindNewOverlay()};
-        Overlay.RegisterTab(WTagInspector::TabCreateInfo());
-        Overlay.RegisterTab(WColorInspector::TabCreateInfo());
-    }
+    // {
+    //     auto& Overlay{this->FindNewOverlay()};
+    //     Overlay.RegisterTab(WTagInspector::TabCreateInfo());
+    //     Overlay.RegisterTab(WColorInspector::TabCreateInfo());
+    // }
 
     // if ( Surface->GetOwnedController())
     // {

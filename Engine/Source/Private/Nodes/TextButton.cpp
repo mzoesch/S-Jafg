@@ -160,7 +160,7 @@ void Jafg::WTextButtonIconizedDouble::Draw(LNodeRenderInfo const& Info) const
 
     if (this->LeftIcon.get() && this->LeftIconBrush.Scale > 0.0f)
     {
-        if (this->LeftIcon->IsBindless() == false)
+        if (!this->LeftIcon->IsBindless())
         {
             this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->LeftIcon);
             check(this->LeftIcon->IsBindless())
@@ -174,7 +174,7 @@ void Jafg::WTextButtonIconizedDouble::Draw(LNodeRenderInfo const& Info) const
     }
     if (this->RightIcon.get() && this->RightIconBrush.Scale > 0.0f)
     {
-        if (this->RightIcon->IsBindless() == false)
+        if (!this->RightIcon->IsBindless())
         {
             this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->RightIcon);
             check(this->RightIcon->IsBindless())

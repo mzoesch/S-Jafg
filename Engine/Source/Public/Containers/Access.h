@@ -904,7 +904,20 @@ struct raii_leave final
     raii_leave() = delete;
     raii_leave(std::move_only_function<void()> Delegate) noexcept : Delegate{std::move(Delegate)} {}
     PROHIBIT_COPY(raii_leave)
-    DEFAULT_MOVE(raii_leave)
+    raii_leave(raii_leave&&) noexcept = default;
+    raii_leave& operator=(raii_leave&& Rhs) noexcept
+    {
+        if (this != &Rhs)
+        {
+            if (this->Delegate)
+            {
+                this->Delegate();
+            }
+            this->Delegate = std::move(Rhs.Delegate);
+            check(!Rhs.Delegate)
+        }
+        return *this;
+    }
     ~raii_leave()
     {
         if (this->Delegate)

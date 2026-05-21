@@ -8,8 +8,9 @@
 #include "Nodes/TextButton.h"
 #include "User/UserPreferences.h"
 #include "Nodes/TextIconizedSeparator.h"
+#include "Nodes/DismissibleFloatingWidget.h"
 
-Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubMenu const& Submenu)
+Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubmenu const& Submenu)
 {
     Position = maths::round(Position);
 
@@ -21,17 +22,21 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
         .InitialWindowPosition(Position)
         .Content([Result, &CreateInfo, &Submenu](WFloatingWidget& FloatingWidget, WParent& Container)
         {
+            typedef std::pair<std::size_t, algo::raii_leave> SubmenuWindow_t;
+            std::size_t Id{};
+            auto SubmenuWindow{std::make_shared<SubmenuWindow_t>(0, []{})};
             WVRegion* Region;
             BeginStyling(Container).StaticRoot<WVRegion>().SaveTo(&Region)
                 .Tint(*GetSingleton<JUserPreferences>().OverlayColor)
                 .Padding({0, LDropDownMenuCreateInfo::RecommendedPadding});
             if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Warning)) if (Submenu.Children.empty())
             {
-                LOG_WARNING(LogWidgetFramework, "Submenu [{}] has no children.", Submenu.DisplayName)
+                LOG_WARNING(LogWidgetFramework, "SubMenu [{}] has no nodes.", Submenu.Selector.DisplayName)
             }
             for (auto& Child : Submenu.Children)
             {
-                std::visit([Result, &CreateInfo, Region]<typename T0>(T0&& Node)
+                ++Id;
+                std::visit([Result, &CreateInfo, Region, SubmenuWindow, Id]<typename T0>(T0&& Node)
                 {
                     typedef std::decay_t<T0> T;
                     if constexpr (std::is_same_v<T, LDropDownNodeOption>)
@@ -45,6 +50,12 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                             .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
                             .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
                             .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
+                            .OnCursorEnter([SubmenuWindow](auto&&...)
+                            {
+                                check(SubmenuWindow.get())
+                                *SubmenuWindow = SubmenuWindow_t{0,[]{}};
+                                return LNodeReply::Unhandled();
+                            })
                             .OnKeyUpFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
                                 (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                                 {
@@ -99,6 +110,12 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                             .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
                             .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
                             .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
+                            .OnCursorEnter([SubmenuWindow](auto&&...)
+                            {
+                                check(SubmenuWindow.get())
+                                *SubmenuWindow = SubmenuWindow_t{0,[]{}};
+                                return LNodeReply::Unhandled();
+                            })
                             .OnKeyUpFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
                                 (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                                 {
@@ -149,9 +166,60 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                             .Unique()
                             );
                     }
-                    else if constexpr (std::is_same_v<T, LDropDownNodeSubMenu>)
+                    else if constexpr (std::is_same_v<T, LDropDownNodeSubmenu>)
                     {
-                        std::unreachable();
+                        auto& Prefs{GetSingleton<JUserPreferences>()};
+                        Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButtonIconizedDouble>()
+                            .Anchor(EAnchor::HFill)
+                            .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
+                            .InBrush<EStyleBits::Hover|EStyleBits::Selected, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
+                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
+                            .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
+                            .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
+                            .Selectable(true)
+                            .OnCursorEnter([NodeCopy=Node, SubmenuWindow, Id](WNode& Self)
+                            {
+                                static_assert(std::is_same_v<decltype(NodeCopy), LDropDownNodeSubmenu>);
+                                check(SubmenuWindow.get())
+                                if (SubmenuWindow->first != Id)
+                                {
+                                    SubmenuWindow->first = Id;
+                                    auto Window{TClassStorage<WDismissibleFloatingWidget>{&CreateDropDownMenu(
+                                          Self.GetViewport()
+                                        // TODO: Fix translation.
+                                        , Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                                            + LVec2F{Self.GetAnchoredSize_v2().x, 0.0f}
+                                            - LVec2F{0.0f, LDropDownMenuCreateInfo::RecommendedPadding.InStaticPoints(Self.GetViewport())}
+                                        , {}
+                                        , NodeCopy
+                                        )}};
+                                    TClassStorage Me{&Self.AsStatic<WTextButtonIconizedDouble>()};
+                                    Me->SetSelected(true);
+                                    SubmenuWindow->second = algo::raii_leave{[Window=std::move(Window), Me=std::move(Me)] mutable
+                                    {
+                                        if (Window.IsValidSlow())
+                                        {
+                                            check(Window->IsTopLevel())
+                                            Window->MarkAsGarbage_v2();
+                                        }
+                                        if (Me.IsValidSlow())
+                                        {
+                                            Me->SetSelected(false);
+                                        }
+                                    }};
+                                    check(!Window.get_unsafe())
+                                    check(!Me.get_unsafe())
+                                }
+                                return LNodeReply::Handled();
+                            })
+                            .Content(Node.Selector.DisplayName)
+                            .LeftIcon(Node.Selector.Icon.GetResolved())
+                            .RightIcon(LTexture2::FromTextureView("Icons/Jafg.ExtendRight"))
+                            .template InAllRightIconBrushes<&LIconBrush::Alignment>(LIconBrush::Align::Right)
+                            .Enabled(Node.IsEnabled)
+                            .Unique()
+                            );
                     }
                     else
                     {
@@ -163,109 +231,4 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
         });
 
     return *Result;
-}
-
-void Jafg::WDropDown::Construct()
-{
-    Super::Construct();
-
-    BeginStyling(*this)
-        .StaticRoot<WHRegion>().SaveTo(&this->RootSubmenuContainer)
-        .Anchor(EAnchor::Fill)
-        .Tint(*GetSingleton<JUserPreferences>().BackgroundColor)
-        ;
-
-    for (LDropDownNodeSubMenu& SubMenu: this->DropDownRoot.Nodes)
-    {
-        this->RootSubmenuContainer->AddChild(NewStaticNode(WTextBox).SkipBrushDraw(true)
-            .Visibility(ENodeVisibility::Visible)
-            .Content(SubMenu.DisplayName)
-            .Tint(*GetSingleton<JUserPreferences>().PrimaryColor)
-            .OnCursorEnter([this, &SubMenu](WNode& Node){ return this->OnMouseEnterInRoot(Node, SubMenu); })
-            .Unique()
-            );
-    }
-
-    return;
-}
-
-void Jafg::WDropDown::Select(WTextBox* Target /* = nullptr */)
-{
-    check(this->RootSubmenuContainer)
-    for (auto& Child: this->RootSubmenuContainer->GetChildren())
-    {
-        check(Child.get())
-        if (auto* TextBox{StaticCast<WTextBox>(&*Child)}; TextBox != Target)
-        {
-            TextBox->Brush.bSkipBrushDraw = true;
-        }
-        continue;
-    }
-
-    if (Target)
-    {
-        check(algo::contains(this->RootSubmenuContainer->GetChildren(), Target, algo::unique_raw{}))
-        StaticCast<WTextBox>(Target)->Brush.bSkipBrushDraw = false;
-    }
-
-    return;
-}
-
-void Jafg::WDropDown::OnDismiss(WFloatingWidget& FloatingWidget)
-{
-    for (auto& Child: this->RootSubmenuContainer->GetChildren())
-    {
-        check(Child.get())
-        StaticCast<WTextBox>(&*Child)->Brush.bSkipBrushDraw = true;
-    }
-    for (auto& [SubMenu, Widget] : this->OpenSubmenus)
-    {
-        if (Widget.get() == &FloatingWidget)
-        {
-            Widget.release();
-            this->OpenSubmenus.erase(SubMenu);
-            break;
-        }
-    }
-
-    return;
-}
-
-Jafg::LNodeReply Jafg::WDropDown::OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubMenu const& Submenu)
-{
-    if (this->OpenSubmenus.contains(&Submenu))
-    {
-        check(this->OpenSubmenus[&Submenu])
-        check(Node.As<WTextBox>())
-        check(Node.As<WTextBox>()->Brush.bSkipBrushDraw == false)
-        return LNodeReply::Handled();
-    }
-
-    this->Select(&Node.AsStatic<WTextBox>());
-
-    TArray<TJxxUnique<WFloatingWidget>> SubmenusToClose; SubmenusToClose.reserve(this->OpenSubmenus.size());
-    for (auto& FloatingWidget: this->OpenSubmenus | std::views::values) { SubmenusToClose.push_back(std::move(FloatingWidget)); }
-    Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [SubmenusToClose = std::move(SubmenusToClose)]() mutable{});
-    this->OpenSubmenus.clear();
-
-    auto& FloatingWidget{CreateDropDownMenu(
-        this->GetViewport(),
-        // TODO: Fix the translation...
-        Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
-            + LVec2F{0.0, Node.GetAnchoredSize_v2().y},
-        {.OnOptionCloseResult = [this](auto&&...)
-        {
-            this->OpenSubmenus.clear();
-            this->Select(nullptr);
-            return algo::reply::handled();
-        }},
-        Submenu
-        )};
-    check(!FloatingWidget.OnDismissEvent.IsValid())
-    FloatingWidget.OnDismissEvent.Bind(this, &WDropDown::OnDismiss);
-    check(this->OpenSubmenus.contains(&Submenu) == false)
-
-    this->OpenSubmenus.emplace(&Submenu, TJxxUnique<WFloatingWidget>{&FloatingWidget});
-
-    return LNodeReply::Handled();
 }

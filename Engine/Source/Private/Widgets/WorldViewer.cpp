@@ -6,7 +6,6 @@
 #include "Framework/Frontend.h"
 #include "Nodes/Button.h"
 #include "Nodes/Region.h"
-#include "Nodes/DropDownForward.h"
 #include "Nodes/DropDown.h"
 #include "Nodes/HParent.h"
 #include "Nodes/TextButton.h"
@@ -29,25 +28,25 @@ void Jafg::WWorldViewer::Construct()
 
     this->RenderTargetViewport.Vk_OnLateInit();
 
-    ConstructDeferredWidget(Jafg::TNodeStaticInit<WUserWidget>{this->RenderTargetViewport})
-        .Style()
-    [
-        NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::Fill).Tint(Colors::White)
-        [
-              // NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Blue).MinDesiredSize(25_spt2)
-              NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(6_spt2)
-            + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Red).MinDesiredSize(5_spt2)
-            + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(4_spt2)
-            + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Red).MinDesiredSize(3_spt2)
-            + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(2_spt2)
-            + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::White).MinDesiredSize(1_spt2)
-            + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomRight).Tint(Colors::Red).MinDesiredSize(10_spt2)
-            // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopRight).Tint(Colors::Green).MinDesiredSize(25_spt2)
-            // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomRight).Tint(Colors::Green).MinDesiredSize(25_spt2)
-            // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomLeft).Tint(Colors::Black).MinDesiredSize(25_spt2)
-            // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::CenterCenter).Tint(Colors::RebeccaPurple).MinDesiredSize(25_spt2)
-        ]
-    ];
+    // ConstructDeferredWidget(Jafg::TNodeStaticInit<WUserWidget>{this->RenderTargetViewport})
+    //     .Style()
+    // [
+    //     NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::Fill).Tint(Colors::White)
+    //     [
+    //           // NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Blue).MinDesiredSize(25_spt2)
+    //           NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(6_spt2)
+    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Red).MinDesiredSize(5_spt2)
+    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(4_spt2)
+    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Red).MinDesiredSize(3_spt2)
+    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(2_spt2)
+    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::White).MinDesiredSize(1_spt2)
+    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomRight).Tint(Colors::Red).MinDesiredSize(10_spt2)
+    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopRight).Tint(Colors::Green).MinDesiredSize(25_spt2)
+    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomRight).Tint(Colors::Green).MinDesiredSize(25_spt2)
+    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomLeft).Tint(Colors::Black).MinDesiredSize(25_spt2)
+    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::CenterCenter).Tint(Colors::RebeccaPurple).MinDesiredSize(25_spt2)
+    //     ]
+    // ];
 
     BeginStyling(*this).StaticRoot<WHParent>()
         .Padding(3_pt)
@@ -293,7 +292,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                     return LDropDownNodeCustom::reply::handled(true);
                 }
                 return LDropDownNodeCustom::reply::unhandled();
-            }},
+            },},
         LDropDownNodeInformation{
             .What = SprintF("Min-Resolution: {}x{}", WWorldViewer::MinViewportExtent.width, WWorldViewer::MinViewportExtent.height),
             },
@@ -333,9 +332,36 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
             .IsEnabled = this->IsManual(),
             .OnAction=[](auto&&...){ return LDropDownNodeCustom::reply::unhandled(); }},
         // TODO: Make an option for commonly used resolutions
-        LDropDownNodeOption{
+        LDropDownNodeSeparator{.DisplayName = "WORLD"},
+        LDropDownNodeSubmenu{
             .Selector = {
-                .DisplayName = "Option 1",
+                .DisplayName = "Connect to",
+                .Icon = "Icons/Jafg.Sphere",
+                },
+            .Children = {
+                LDropDownNodeOption{
+                    .Selector = {
+                        .DisplayName = "Localhost",
+                        .Icon = "Icons/Jafg.Sphere",
+                        },
+                    },
+                LDropDownNodeOption{
+                    .Selector = {
+                        .DisplayName = "Localhost",
+                        .Icon = "Icons/Jafg.Sphere",
+                        },
+                    },
+                },
+            },
+        LDropDownNodeSubmenu{
+            .Selector = {
+                .DisplayName = "Connect to",
+                .Icon = "Icons/Jafg.Sphere",
+                },
+            },
+        LDropDownNodeSubmenu{
+            .Selector = {
+                .DisplayName = "Connect to",
                 .Icon = "Icons/Jafg.Sphere",
                 },
             },

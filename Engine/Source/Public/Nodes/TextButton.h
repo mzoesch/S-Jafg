@@ -144,9 +144,9 @@ struct LFactoryTextButtonIconizedDouble : NODE_FACTORY_PARENT(WTextButtonIconize
 {
     NODE_FACTORY_BODY(WTextButtonIconizedDouble)
 
-    decltype(auto) LeftIcon(this auto&& Self, LOptionalTexture2Ref InIcon) noexcept
+    decltype(auto) LeftIcon(this auto&& Self, LOptionalTexture2Ref Icon) noexcept
     {
-        NODE_FACTORY_SELF().LeftIcon = InIcon.GetResolved();
+        NODE_FACTORY_SELF().LeftIcon = Icon.GetResolved();
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) LeftIconBrush(this auto&& Self, LIconBrush const& Brush) noexcept
@@ -181,9 +181,9 @@ struct LFactoryTextButtonIconizedDouble : NODE_FACTORY_PARENT(WTextButtonIconize
     }
     JAFG_NODE_FACTORY_STYLE_BOILERPLATE(LeftIcon, LeftIconStyle)
 
-    decltype(auto) RightIcon(this auto&& Self, LOptionalTexture2Ref InIcon) noexcept
+    decltype(auto) RightIcon(this auto&& Self, LOptionalTexture2Ref Icon) noexcept
     {
-        NODE_FACTORY_SELF().RightIcon = std::move(InIcon);
+        NODE_FACTORY_SELF().RightIcon = Icon.GetResolved();
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) RightIconBrush(this auto&& Self, LIconBrush const& Brush) noexcept

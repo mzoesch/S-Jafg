@@ -7,11 +7,15 @@
 #define JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
     virtual ::Jafg::LNodeReply SweepFocus(::Jafg::LNodeSweepInfo const& Info, LVec2F const& Location) override \
     {\
-        if (this->IsHitTestable() && !this->bEnabled)\
-        { \
-            return LNodeReply::Handled(); \
+        if (auto Result{Super::SweepFocus(Info, Location)}; Result.IsHandled()) \
+        {\
+            if (!this->bEnabled) \
+            { \
+                return ::Jafg::LNodeReply::Handled(); \
+            } \
+            return Result; \
         } \
-        return Super::SweepFocus(Info, Location); \
+        return {}; \
     }
 
 #define JAFG_NODE_BUTTON_BOILERPLATE() \

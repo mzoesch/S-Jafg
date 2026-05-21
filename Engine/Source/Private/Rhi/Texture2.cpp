@@ -66,6 +66,16 @@ Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanR
     return Result;
 }
 
+Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromTextureView(LStringView View)
+{
+    if (GMutableEngine)
+    {
+        return GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
+            ->FromTextureViewIdentifier(View);
+    }
+    LOG_FATAL(LogRhi, "GMutableEngine is invalid.")
+}
+
 Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
 {
     check(this->Path.empty() == false)
@@ -215,36 +225,4 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
         }};
 
     return;
-}
-
-Jafg::LTexture2Ref Jafg::LOptionalTexture2Ref::GetResolved() const
-{
-    if (std::holds_alternative<LTexture2Ref>(this->Variant))
-    {
-        return std::get<LTexture2Ref>(this->Variant);
-    }
-
-    if (std::holds_alternative<LString>(this->Variant))
-    {
-        if (GMutableEngine)
-        {
-            return GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
-                ->FromTextureViewIdentifier(std::get<LString>(this->Variant));
-        }
-        LOG_FATAL(LogRhi, "GMutableEngine is invalid.")
-    }
-
-    return {};
-}
-
-Jafg::LTexture2Ref Jafg::LOptionalTexture2Ref::Resolve()
-{
-    this->Variant = this->GetResolved();
-    check(std::holds_alternative<LTexture2Ref>(this->Variant))
-    if (!std::get<LTexture2Ref>(this->Variant).get())
-    {
-        this->Variant = std::monostate{};
-        return {};
-    }
-    return std::get<LTexture2Ref>(this->Variant);
 }

@@ -350,7 +350,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     for (auto const* Widget : this->TopLevelWidgets)
     {
         check(Widget)
-        check(IsValidFast(&Widget->GetOuter(), Widget))
+        check(IsValidFast(Widget->GetOuter(), Widget))
         if (Widget->TransformsWidgetLayout())
         {
             STAT_QUICK_CYCLE_START(Widget->GetNameAsString())

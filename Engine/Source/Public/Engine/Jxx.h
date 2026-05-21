@@ -1242,11 +1242,10 @@ FORCEINLINE TObj const& JCxxClass::AsStatic() const noexcept
 //# @remark This function may be used on any thread, but of course, after this function returned the boolean, it
 //#         might get immediately invalid.
 //#
-NODISCARD FORCEINLINE bool IsValidFast(LClassOuter const* Outer, JCxxClass const* Obj) noexcept
+NODISCARD FORCEINLINE bool IsValidFast(LClassOuter const& Outer, JCxxClass const* Obj) noexcept
 {
-    check(Outer)
     if (Obj == nullptr) { return false; }
-    if (!Outer->IsHiredHere(Obj)) { return false; }
+    if (!Outer.IsHiredHere(Obj)) { return false; }
     return !Obj->_IsGarbage();
 }
 
@@ -1401,7 +1400,7 @@ struct TClassStorage final
     FORCEINLINE constexpr explicit operator bool() const noexcept { return !!this->Pointer; }
     FORCEINLINE constexpr bool operator!() const noexcept { return !this->Pointer; }
 
-    FORCEINLINE bool IsValidFast() const noexcept { return Jafg::IsValidFast(this->Outer, this->Pointer); }
+    FORCEINLINE bool IsValidFast() const noexcept { return this->Outer && Jafg::IsValidFast(*this->Outer, this->Pointer); }
     FORCEINLINE bool IsValidSlow() const noexcept { return Jafg::IsValidSlow(this->Outer, this->Pointer); }
 
     FORCEINLINE TObj* get() noexcept { check(!this->Pointer || this->IsValidFast()) return this->Pointer; }
