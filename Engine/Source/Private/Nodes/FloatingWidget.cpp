@@ -24,9 +24,9 @@ void Jafg::WFloatingWidget::Construct()
                 .MinDesiredSize({0_spt, 16})
                 .Anchor(EAnchor::HFill)
                 .Tint(Colors::DarkerGray)
-                .OnKeyDownFocused([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LNodeReply
+                .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
                 {
-                    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                     {
                         Data.Surface._SetMouseCursor(ECursor::Hand);
                         WFloatingWidget* Window{StaticCast<WFloatingWidget>(Self.GetParent()->GetParent())};
@@ -34,11 +34,7 @@ void Jafg::WFloatingWidget::Construct()
                         Window->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(Window, &WFloatingWidget::UiTickMove);
                         return LNodeReply::Handled();
                     }
-                    return {};
-                })
-                .OnKeyUpFocused([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event) -> LNodeReply
-                {
-                    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                     {
                         Data.Surface._SetMouseCursor(ECursor::Default);
                         auto* Window{StaticCast<WFloatingWidget>(Self.GetParent()->GetParent())};
@@ -49,7 +45,7 @@ void Jafg::WFloatingWidget::Construct()
                         Window->MoveDragOffset.reset();
                         return LNodeReply::Handled();
                     }
-                    return {};
+                    return LNodeReply::Unhandled();
                 })
             [
                 NewStaticNode(WTextBox).SaveTo(&this->WindowTitle)
@@ -62,17 +58,21 @@ void Jafg::WFloatingWidget::Construct()
                     .Content("X")
                     .InAllBrushes<&LBoxBrush::OutlineThickness>(1)
                     .TextBrush({{ETextScale::Compact}})
-                    .OnKeyUpFocused([this](auto&, auto const&, auto const&)
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
                     {
-                        if (this->OnWindowClosedEvent.IsValid())
+                        if (Event.Is<ERawInputStateBits::Release>())
                         {
-                            if (this->OnWindowClosedEvent.Invoke(*this))
+                            if (this->OnWindowClosedEvent.IsValid())
                             {
-                                return LNodeReply::Handled();
+                                if (this->OnWindowClosedEvent.Invoke(*this))
+                                {
+                                    return LNodeReply::Handled();
+                                }
                             }
+                            this->RemoveFromParent2();
+                            return LNodeReply::Handled();
                         }
-                        this->RemoveFromParent2();
-                        return LNodeReply::Handled();
+                        return LNodeReply::Unhandled();
                     })
             ]
         ];
@@ -93,19 +93,23 @@ void Jafg::WFloatingWidget::Construct()
                 .Content("#")
                 .TextScale(ETextScale::Compact)
                 .Padding({2_spt})
-                .OnKeyDownFocused([this](auto&&...)
+                .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
                 {
-                    this->UiTickResizeHandle = this->GetViewport().OnLateTick.Emplace(this, &WFloatingWidget::UiTickResize);
-                    return LNodeReply::Handled();
-                })
-                .OnKeyUpFocused([this](auto&&...)
-                {
-                    if (this->UiTickResizeHandle.IsValid())
+                    if (Event.Is<ERawInputStateBits::Press>())
                     {
-                        this->GetViewport().OnLateTick.Remove(&this->UiTickResizeHandle);
+                        this->UiTickResizeHandle = this->GetViewport().OnLateTick.Emplace(this, &WFloatingWidget::UiTickResize);
+                        return LNodeReply::Handled();
                     }
-                    this->ResizeDragOffset.reset();
-                    return LNodeReply::Handled();
+                    if (Event.Is<ERawInputStateBits::Release>())
+                    {
+                        if (this->UiTickResizeHandle.IsValid())
+                        {
+                            this->GetViewport().OnLateTick.Remove(&this->UiTickResizeHandle);
+                        }
+                        this->ResizeDragOffset.reset();
+                        return LNodeReply::Handled();
+                    }
+                    return LNodeReply::Unhandled();
                 });
         }
         else

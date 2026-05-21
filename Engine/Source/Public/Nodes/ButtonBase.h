@@ -49,8 +49,7 @@
         Super::OnCursorLeave(); \
         return; \
     } \
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyDownFocused(Info, Event); } \
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyUpFocused(Info, Event); }
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyEventFocused(Info, Event); } \
 
 namespace Jafg
 {
@@ -284,9 +283,9 @@ protected:
         return;
     }
 
-    LNodeReply ButtonBase_OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    LNodeReply ButtonBase_OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
     {
-        if (this->bEnabled == false)
+        if (!this->bEnabled)
         {
             return {};
         }
@@ -295,32 +294,17 @@ protected:
         {
             if (this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
             {
-                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                    , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
                 {
-                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
+                    if (this->bUpdateBrushOnStateChange && !this->bSelected)
                     {
                         this->Owner.*BrushProj = this->Style.PressBrush;
                     }
                     auto Result{LNodeReply::Handled()};
-                    if (this->Owner.OnKeyDownFocusedEvent)
+                    if (this->Owner.OnKeyEventFocusedDelegate)
                     {
-                        if (auto Reply{this->Owner.OnKeyDownFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
-                        {
-                            Result = Reply;
-                        }
-                    }
-                    return Result;
-                }
-                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
-                {
-                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-                    {
-                        this->Owner.*BrushProj = this->Style.PressBrush;
-                    }
-                    auto Result{LNodeReply::Handled()};
-                    if (this->Owner.OnKeyDownFocusedEvent)
-                    {
-                        if (auto Reply{this->Owner.OnKeyDownFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
+                        if (auto Reply{this->Owner.OnKeyEventFocusedDelegate(this->Owner, Info, Event)}; Reply.IsHandled())
                         {
                             Result = Reply;
                         }
@@ -328,71 +312,34 @@ protected:
                     return Result;
                 }
             }
+
+            if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                    , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
+            {
+                if (this->bUpdateBrushOnStateChange && !this->bSelected)
+                {
+                    this->Owner.*BrushProj = this->Style.HoverBrush;
+                }
+                auto Result{LNodeReply::Handled()};
+                if (this->Owner.OnKeyEventFocusedDelegate)
+                {
+                    if (auto Reply{this->Owner.OnKeyEventFocusedDelegate(this->Owner, Info, Event)}; Reply.IsHandled())
+                    {
+                        Result = Reply;
+                    }
+                }
+                return Result;
+            }
         }
 
-        if (this->Owner.OnKeyDownFocusedEvent)
+        if (this->Owner.OnKeyEventFocusedDelegate)
         {
-            if (auto Reply{this->Owner.OnKeyDownFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
+            if (auto Reply{this->Owner.OnKeyEventFocusedDelegate(this->Owner, Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
         }
-        return {};
-    }
 
-    LNodeReply ButtonBase_OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-    {
-        if (this->bEnabled == false)
-        {
-            return {};
-        }
-
-        if (Info.CursorLocation.has_value())
-        {
-            if (this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
-            {
-                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
-                {
-                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-                    {
-                        this->Owner.*BrushProj = this->Style.HoverBrush;
-                    }
-                    auto Result{LNodeReply::Handled()};
-                    if (this->Owner.OnKeyUpFocusedEvent)
-                    {
-                        if (auto Reply{this->Owner.OnKeyUpFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
-                        {
-                            Result = Reply;
-                        }
-                    }
-                    return Result;
-                }
-                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
-                {
-                    if (this->bUpdateBrushOnStateChange && this->bSelected == false)
-                    {
-                        this->Owner.*BrushProj = this->Style.HoverBrush;
-                    }
-                    auto Result{LNodeReply::Handled()};
-                    if (this->Owner.OnKeyUpFocusedEvent)
-                    {
-                        if (auto Reply{this->Owner.OnKeyUpFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
-                        {
-                            Result = Reply;
-                        }
-                    }
-                    return Result;
-                }
-            }
-        }
-
-        if (this->Owner.OnKeyUpFocusedEvent)
-        {
-            if (auto Reply{this->Owner.OnKeyUpFocusedEvent(this->Owner, Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
         return {};
     }
 

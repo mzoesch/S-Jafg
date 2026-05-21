@@ -79,8 +79,7 @@ public:
     JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus()
     virtual LNodeReply OnCursorEnter() override;
     virtual void OnCursorLeave() override;
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
     virtual void OnEnabledStateChanged() override;
     virtual void OnSelectedStateChanged() override;
 
@@ -105,8 +104,7 @@ public:
     virtual LNodeReply OnCursorEnter() override;
     virtual LNodeReply OnCursorMoved(const LVec2F& InLocation) override;
     virtual void OnCursorLeave() override;
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
     virtual void OnEnabledStateChanged() override;
     virtual void OnSelectedStateChanged() override;
 
@@ -114,12 +112,8 @@ public:
     LTextButtonIconStyle RightIconStyle;
 
     //# Whether the respective icon has their own hitbox and can receive input independently of the button.
-    bool bDecoupledLeftIcon{};
-    bool bDecoupledRightIcon{};
-    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyDown;
-    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyDown;
-    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledLeftKeyUp;
-    TFunction2<LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)> DecoupledRightKeyUp;
+    EVENT_DECL(DecoupledLeftKeyEvent, LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event))
+    EVENT_DECL(DecoupledRightKeyEvent, LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event))
 
 private:
 

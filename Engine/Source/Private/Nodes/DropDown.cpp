@@ -56,26 +56,26 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                 *SubmenuWindow = SubmenuWindow_t{0,[]{}};
                                 return LNodeReply::Unhandled();
                             })
-                            .OnKeyUpFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
-                                (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                            .OnKeyEventFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
+                            (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                            {
+                                check(Result)
+                                check(!!Action)
+                                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                                 {
-                                    check(Result)
-                                    check(!!Action)
-                                    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                                    if (Action(Self, Info, Event).is_handled())
                                     {
-                                        if (Action(Self, Info, Event).is_handled())
-                                        {
-                                            return LNodeReply::Handled();
-                                        }
-                                        if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
-                                        {
-                                            check(Result->IsTopLevel())
-                                            Result->MarkAsGarbage_v2();
-                                        }
                                         return LNodeReply::Handled();
                                     }
-                                    return LNodeReply::Unhandled();
-                                })
+                                    if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
+                                    {
+                                        check(Result->IsTopLevel())
+                                        Result->MarkAsGarbage_v2();
+                                    }
+                                    return LNodeReply::Handled();
+                                }
+                                return LNodeReply::Unhandled();
+                            })
                             .Content(Node.Selector.DisplayName)
                             .LeftIcon(Node.Selector.Icon.GetResolved())
                             .Enabled(Node.IsEnabled)
@@ -116,7 +116,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                 *SubmenuWindow = SubmenuWindow_t{0,[]{}};
                                 return LNodeReply::Unhandled();
                             })
-                            .OnKeyUpFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
+                            .OnKeyEventFocused([Result, OnOptionCloseResult=CreateInfo.OnOptionCloseResult, Action=Node.OnAction]
                                 (WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                                 {
                                     check(Result)
@@ -133,7 +133,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                         }
                                         return LNodeReply::Handled();
                                     }
-                                    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                                    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                                     {
                                         if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
                                         {

@@ -78,10 +78,8 @@ public:
     virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
     virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override;
 
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent) override;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     virtual void UpdateDesiredSize() const override;
 

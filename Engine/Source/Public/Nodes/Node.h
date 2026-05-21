@@ -581,9 +581,9 @@ struct LNodeKeyEventInfo final
     LFrontend const& Frontend;
     LSurface& Surface;
     LViewport& Viewport;
-    WNode& FocusedNode;
+    std::optional<std::reference_wrapper<WNode>> FocusedNode;
 
-    std::optional<LVec2F> const& CursorLocation;
+    std::optional<LVec2F> CursorLocation;
 
     const LVec2F Translation;
 };
@@ -736,10 +736,8 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorMoved, OnCursorMovedEvent)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnCursorLeave, OnCursorLeaveEvent)
 
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDownFocused, OnKeyDownFocusedEvent)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUpFocused, OnKeyUpFocusedEvent)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyDownUnfocused, OnKeyDownUnfocusedEvent)
-    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyUpUnfocused, OnKeyUpUnfocusedEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyEventFocused, OnKeyEventFocusedDelegate)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyEventUnfocused, OnKeyEventUnfocusedDelegate)
 
     template<typename T> requires std::is_base_of_v<WNode, T>
     decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept
@@ -953,21 +951,12 @@ public:
 
     //#
     //# Only called if focused. Should not be bubbled.
-    //# @note If not handled, then #OnKey(Down|Up)Unfocused might still get called even if this node was focused.
+    //# @note If not handled, then #OnKeyEventUnfocused might still get called even if this node was focused.
     //#
-    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyDownFocusedEvent;
-    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyUpFocusedEvent;
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyEventFocusedDelegate;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
     {
-        if (this->OnKeyDownFocusedEvent) if (auto Reply{this->OnKeyDownFocusedEvent(*this, Info, Event)}; Reply.IsHandled())
-        {
-            return Reply;
-        }
-        return LNodeReply::Unhandled();
-    }
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-    {
-        if (this->OnKeyUpFocusedEvent) if (auto Reply{this->OnKeyUpFocusedEvent(*this, Info, Event)}; Reply.IsHandled())
+        if (this->OnKeyEventFocusedDelegate) if (auto Reply{this->OnKeyEventFocusedDelegate(*this, Info, Event)}; Reply.IsHandled())
         {
             return Reply;
         }
@@ -978,19 +967,10 @@ public:
     //# Called from top to bottom, but should be handled in reversed order (bottom to top) for all input receivable
     //# nodes, if their #Visibility allows it, for all consumable user inputs.
     //#
-    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyDownUnfocusedEvent;
-    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyUpUnfocusedEvent;
-    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+    TFunction2<LNodeReply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnKeyEventUnfocusedDelegate;
+    virtual LNodeReply OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
     {
-        if (this->OnKeyDownUnfocusedEvent) if (auto Reply{this->OnKeyDownUnfocusedEvent(*this, Info, Event)}; Reply.IsHandled())
-        {
-            return Reply;
-        }
-        return LNodeReply::Unhandled();
-    }
-    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-    {
-        if (this->OnKeyUpUnfocusedEvent) if (auto Reply{this->OnKeyUpUnfocusedEvent(*this, Info, Event)}; Reply.IsHandled())
+        if (this->OnKeyEventUnfocusedDelegate) if (auto Reply{this->OnKeyEventUnfocusedDelegate(*this, Info, Event)}; Reply.IsHandled())
         {
             return Reply;
         }

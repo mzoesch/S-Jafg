@@ -327,44 +327,34 @@ void Jafg::WDragRegion::OnCursorLeave()
     return;
 }
 
-Jafg::LNodeReply Jafg::WDragRegion::OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WDragRegion::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
-    if (auto Reply{Super::OnKeyDownFocused(Data, Event)}; Reply.IsHandled())
+    if (auto Reply{Super::OnKeyEventFocused(Info, Event)}; Reply.IsHandled())
     {
         return Reply;
     }
 
-    if (!this->GetChildren().empty() && Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+    if (!this->GetChildren().empty() && Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
     {
-        check(this->UiTickMoveHandle.IsValid() == false)
-        this->UiTickMoveHandle = Data.Viewport.OnLateTick.Emplace(this, &WDragRegion::UiTickMove);
-        this->InitialMouseLocation = Data.Surface.GetMouseLocation();
+        check(!this->UiTickMoveHandle.IsValid())
+        this->UiTickMoveHandle = Info.Viewport.OnLateTick.Emplace(this, &WDragRegion::UiTickMove);
+        this->InitialMouseLocation = Info.Surface.GetMouseLocation();
         if (this->InitialMouseLocation.has_value())
         {
-            this->DragChildOffset = this->CalculateDragChildOffset(Data.Translation);
+            this->DragChildOffset = this->CalculateDragChildOffset(Info.Translation);
         }
         return LNodeReply::Handled();
     }
 
-    return LNodeReply::Unhandled();
-}
-
-Jafg::LNodeReply Jafg::WDragRegion::OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
-{
-    if (auto Reply{Super::OnKeyUpFocused(Data, Event)}; Reply.IsHandled())
-    {
-        return Reply;
-    }
-
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
     {
         this->InitialMouseLocation.reset();
         if (this->UiTickMoveHandle.IsValid())
         {
-            Data.Viewport.OnLateTick.Remove(&this->UiTickMoveHandle);
+            Info.Viewport.OnLateTick.Remove(&this->UiTickMoveHandle);
             if (!this->bEntered)
             {
-                Data.Surface._SetMouseCursor(ECursor::Default);
+                Info.Surface._SetMouseCursor(ECursor::Default);
             }
         }
         return LNodeReply::Handled();

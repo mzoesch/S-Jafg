@@ -189,11 +189,11 @@ void Jafg::WEditableTextButton::OnFocusLost()
     return;
 }
 
-Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (!this->bEnabled)
     {
-        return Super::OnKeyDownFocused(Info, Event);
+        return Super::OnKeyEventFocused(Info, Event);
     }
 
     if (Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>(Info.Frontend.GetPhysicalKey(ELogicalKey::BackSpace))) // || PlatformDelete?
@@ -260,7 +260,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyDownFocused(LNodeKeyEventInfo c
         }
 
         this->OnTextCommit(ETextCommit::OnEnter);
-        return Super::OnKeyDownFocused(Info, Event);
+        return Super::OnKeyEventFocused(Info, Event);
     }
 
     if (Event.Is<ERawInputStateBits::Press>(Info.Frontend.GetPhysicalKey(ELogicalKey::LeftMouseButton)))
@@ -281,7 +281,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyDownFocused(LNodeKeyEventInfo c
         }
     }
 
-    return Super::OnKeyDownFocused(Info, Event);
+    return Super::OnKeyEventFocused(Info, Event);
 }
 
 void Jafg::WEditableTextButton::OnChangedImpl() noexcept

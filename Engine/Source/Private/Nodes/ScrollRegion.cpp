@@ -218,24 +218,23 @@ bool Jafg::WScrollRegion::UserInterfaceTick()
     return {};
 }
 
-Jafg::LNodeReply Jafg::WScrollRegion::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (Info.CursorLocation.has_value())
     {
         if (this->AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
         {
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp)))
             {
                 this->HandleMouseWheelUp(Event.Value);
                 return LNodeReply::Handled();
             }
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown)))
             {
                 this->HandleMouseWheelDown(Event.Value);
                 return LNodeReply::Handled();
             }
-
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
             {
                 if (this->MBDownOnScrollbar(Info.CursorLocation))
                 {
@@ -244,107 +243,62 @@ Jafg::LNodeReply Jafg::WScrollRegion::OnKeyDownFocused(LNodeKeyEventInfo const& 
             }
         }
     }
-    return Super::OnKeyDownFocused(Info, Event);
-}
 
-Jafg::LNodeReply Jafg::WScrollRegion::OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
     {
-       if (this->MBUpOnScrollbar())
-       {
-           return LNodeReply::Handled();
-       }
-    }
-    return Super::OnKeyUpFocused(Info, Event);
-}
-
-Jafg::LNodeReply Jafg::WScrollRegion::OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
-{
-    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-
-    {
-        const f32 maxScrollY{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)};
-        const f32 ScrollOffsetY{this->ScrollPosition.y * maxScrollY};
-
-        const f32 maxScrollX{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f)};
-        const f32 ScrollOffsetX{this->ScrollPosition.x * maxScrollX};
-
-        for (auto& Child : this->GetChildren())
+        if (this->MBUpOnScrollbar())
         {
-            check(Child.get())
-            if (&*Child == Data.Viewport.GetFocusedWidget())
-            {
-                continue;
-            }
-            if (Child->ShouldCheckForInputs() == false)
-            {
-                continue;
-            }
-            if (Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()) == false)
-            {
-                continue;
-            }
-
-            if (auto Reply{Child->OnKeyDownUnfocused(Data, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-            continue;
+            return LNodeReply::Handled();
         }
     }
 
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp))
+    return Super::OnKeyEventFocused(Info, Event);
+}
+
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+{
+    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
+
+    const f32 maxScrollY{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f)};
+    const f32 ScrollOffsetY{this->ScrollPosition.y * maxScrollY};
+    const f32 maxScrollX{maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f)};
+    const f32 ScrollOffsetX{this->ScrollPosition.x * maxScrollX};
+    for (auto& Child : this->GetChildren())
+    {
+        check(Child.get())
+        if (&*Child == Data.Viewport.GetFocusedWidget())
+        {
+            continue;
+        }
+        if (!Child->ShouldCheckForInputs())
+        {
+            continue;
+        }
+        if (!Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()))
+        {
+            continue;
+        }
+
+        if (auto Reply{Child->OnKeyEventUnfocused(Data, Event)}; Reply.IsHandled())
+        {
+            return Reply;
+        }
+        continue;
+    }
+
+    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp)))
     {
         this->HandleMouseWheelUp(Event.Value);
         return LNodeReply::Handled();
     }
-    if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown))
+    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown)))
     {
         this->HandleMouseWheelDown(Event.Value);
         return LNodeReply::Handled();
     }
 
     /* Not super. */
-    return WNode::OnKeyDownUnfocused(Data, Event);
-}
-
-Jafg::LNodeReply Jafg::WScrollRegion::OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& InKeyEvent)
-{
-    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
-
-    {
-        const f32 maxScrollY = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f);
-        const f32 ScrollOffsetY = this->ScrollPosition.y * maxScrollY;
-
-        const f32 maxScrollX = maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f);
-        const f32 ScrollOffsetX = this->ScrollPosition.x * maxScrollX;
-
-        for (auto& Child : this->GetChildren())
-        {
-            check(Child.get())
-
-            if (&*Child == Data.Viewport.GetFocusedWidget())
-            {
-                continue;
-            }
-            if (Child->ShouldCheckForInputs() == false)
-            {
-                continue;
-            }
-            if (Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()) == false)
-            {
-                continue;
-            }
-            if (auto Reply{Child->OnKeyUpUnfocused(Data, InKeyEvent)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-            continue;
-        }
-    }
-
-    return WNode::OnKeyUpUnfocused(Data, InKeyEvent);
+    return WNode::OnKeyEventUnfocused(Data, Event);
 }
 
 void Jafg::WScrollRegion::UpdateDesiredSize() const
@@ -361,7 +315,7 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
 
 bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorLocation)
 {
-    check(this->UserInterfaceTickDelegateHandle.IsValid() == false)
+    check(!this->UserInterfaceTickDelegateHandle.IsValid())
 
     if (!CursorLocation)
     {

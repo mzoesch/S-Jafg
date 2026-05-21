@@ -84,7 +84,7 @@ struct LDropDownNodeCustom final
     TCopyableFunction<LFactoryNode(LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)> OnCreate;
     bool IsEnabled{ true };
     // TODO: Add shortcut hint
-    //# Always invoked if a key is released. Check yourself if you want to handle this.
+    //# Always invoked if a key event is triggered. Check yourself if you want to handle this.
     TCopyableFunction<reply(WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)> OnAction;
 };
 

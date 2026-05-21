@@ -119,7 +119,7 @@ void Jafg::LViewport::DispatchInputs()
         }
     }
 
-    auto& CursorLocation{this->Surface.GetMouseLocation()};
+    auto CursorLocation{this->Surface.GetMouseLocation()};
 
     if (CursorLocation.has_value())
     {
@@ -174,136 +174,78 @@ void Jafg::LViewport::DispatchInputs()
         }
     }
 
-    for (auto It{this->Surface.GetMutableUnconsumedInputsDangerous().begin()}; It != this->Surface.GetMutableUnconsumedInputsDangerous().end();)
+    auto HandleEventType{[this, CursorLocation](ERawInputStateFlags Flags)
     {
-        if (!(It->State & ERawInputStateBits::Release))
+        for (auto It{this->Surface.GetMutableUnconsumedInputsDangerous().begin()}; It != this->Surface.GetMutableUnconsumedInputsDangerous().end();)
         {
-            ++It;
-            continue;
-        }
-
-        if (this->FocusedWidget)
-        {
-            if (auto Reply{this->FocusedWidget->OnKeyUpFocused({
-                .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
-                .FocusedNode = *this->FocusedWidget, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
-                }, *It)};
-                Reply.IsHandled())
+            if (!(It->State & Flags))
             {
-                if (Reply.DoesConsume())
-                {
-                    It = this->Surface.ConsumeKey(It);
-                    this->HandleReply(std::move(Reply));
-                    continue;
-                }
-                this->HandleReply(std::move(Reply));
+                ++It;
+                continue;
             }
-        }
 
-        if (CursorLocation.has_value())
-        {
-            bool bConsumed{};
-            for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
+            if (this->FocusedWidget)
             {
-                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({}, *CursorLocation))
+                if (auto Reply{this->FocusedWidget->OnKeyEventFocused({
+                    .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
+                    .FocusedNode = *this->FocusedWidget,
+                    .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                    }, *It)};
+                    Reply.IsHandled())
                 {
-                    if (auto Reply{(*It2)->OnKeyUpUnfocused({
-                        .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
-                        .FocusedNode = **It2, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
-                        }, *It)};
-                        Reply.IsHandled())
+                    if (Reply.DoesConsume())
                     {
-                        bConsumed = Reply.DoesConsume();
-
-                        if (bConsumed)
-                        {
-                            It = this->Surface.ConsumeKey(It);
-                        }
+                        It = this->Surface.ConsumeKey(It);
                         this->HandleReply(std::move(Reply));
-                        if (bConsumed)
-                        {
-                            break;
-                        }
+                        continue;
                     }
-                }
-                continue;
-            }
-
-            if (bConsumed)
-            {
-                continue;
-            }
-        }
-
-        ++It;
-
-        continue;
-    }
-
-    for (auto It{this->Surface.GetMutableUnconsumedInputsDangerous().begin()}; It != this->Surface.GetMutableUnconsumedInputsDangerous().end();)
-    {
-        if (!(It->State & (ERawInputStateBits::Press|ERawInputStateBits::Repeat)))
-        {
-            ++It;
-            continue;
-        }
-
-        if (this->FocusedWidget)
-        {
-            if (auto Reply{this->FocusedWidget->OnKeyDownFocused({
-                .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
-                .FocusedNode = *this->FocusedWidget, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
-                }, *It)};
-                Reply.IsHandled())
-            {
-                if (Reply.DoesConsume())
-                {
-                    It = this->Surface.ConsumeKey(It);
                     this->HandleReply(std::move(Reply));
-                    continue;
                 }
-                this->HandleReply(std::move(Reply));
             }
-        }
 
-        if (CursorLocation.has_value())
-        {
-            bool bConsumed{};
-            for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
+            if (CursorLocation.has_value())
             {
-                if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({}, *CursorLocation))
+                bool bConsumed{};
+                for (auto It2{this->TopLevelWidgets.rbegin()}; It2 != this->TopLevelWidgets.rend(); ++It2)
                 {
-                    if (auto Reply{(*It2)->OnKeyDownUnfocused({
-                        .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
-                        .FocusedNode = **It2, .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
-                        }, *It)};
-                        Reply.IsHandled())
+                    if ((*It2)->ShouldCheckForInputs() && (*It2)->AabbTest({}, *CursorLocation))
                     {
-                        bConsumed = Reply.DoesConsume();
-                        if (bConsumed)
+                        if (auto Reply{(*It2)->OnKeyEventUnfocused({
+                            .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
+                            .FocusedNode = this->FocusedWidget ? *this->FocusedWidget : std::optional<std::reference_wrapper<WNode>>{},
+                            .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                            }, *It)};
+                            Reply.IsHandled())
                         {
-                            It = this->Surface.ConsumeKey(It);
-                        }
-                        this->HandleReply(std::move(Reply));
-                        if (bConsumed)
-                        {
-                            break;
+                            bConsumed = Reply.DoesConsume();
+
+                            if (bConsumed)
+                            {
+                                It = this->Surface.ConsumeKey(It);
+                            }
+                            this->HandleReply(std::move(Reply));
+                            if (bConsumed)
+                            {
+                                break;
+                            }
                         }
                     }
                     continue;
                 }
+
+                if (bConsumed)
+                {
+                    continue;
+                }
             }
 
-            if (bConsumed)
-            {
-                continue;
-            }
+            ++It;
+            continue;
         }
+    }};
 
-        ++It;
-
-        continue;
-    }
+    HandleEventType(ERawInputStateBits::Release);
+    HandleEventType(ERawInputStateBits::Press|ERawInputStateBits::Repeat);
 
     return;
 }

@@ -46,8 +46,7 @@ public:
     virtual LNodeReply SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location) override;
     virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) override;
 
-    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const override
     {

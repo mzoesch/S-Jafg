@@ -54,8 +54,7 @@ public:
     virtual LNodeReply OnCursorEnter() override;
     virtual void OnCursorLeave() override;
 
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     NODISCARD FORCEINLINE constexpr auto const& GetDragChildSlots() const noexcept { return this->DragChildSlots; }
 

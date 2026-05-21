@@ -65,30 +65,24 @@ void Jafg::WTextButton::OnCursorLeave()
     return;
 }
 
-Jafg::LNodeReply Jafg::WTextButton::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WTextButton::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->bEnabled && !this->bSelected && this->bUpdateBrushOnStateChange)
     {
-        if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-            || Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                    , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
         {
             this->TextBrush = this->TextStyle.PressBrush;
         }
-    }
-    return this->ButtonBase_OnKeyDownFocused(Info, Event);
-}
 
-Jafg::LNodeReply Jafg::WTextButton::OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (this->bEnabled && !this->bSelected && this->bUpdateBrushOnStateChange)
-    {
-        if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-            || Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                     , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
         {
             this->TextBrush = this->TextStyle.HoverBrush;
         }
     }
-    return this->ButtonBase_OnKeyUpFocused(Info, Event);
+
+    return WTextBox::OnKeyEventFocused(Info, Event);
 }
 
 void Jafg::WTextButton::OnEnabledStateChanged()
@@ -241,7 +235,7 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& In
 {
     if (this->bUpdateBrushOnStateChange && this->bEnabled && this->TransformsWidgetLayout())
     {
-        if (this->bDecoupledLeftIcon && maths::aabb_point({
+        if (this->DecoupledLeftKeyEvent.IsValid() && maths::aabb_point({
             // TODO: Fix translation.
             .Offset = this->GetLeftIconTopLeft(maths::zero_vector<LVec2F>),
             .Extent = {
@@ -281,7 +275,7 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& In
                 });
             }
         }
-        if (this->bDecoupledRightIcon && maths::aabb_point({
+        if (this->DecoupledRightKeyEvent.IsValid() && maths::aabb_point({
             // TODO: Fix translation.
             .Offset = this->GetRightIconTopLeft(maths::zero_vector<LVec2F>),
             .Extent = {
@@ -335,34 +329,34 @@ void Jafg::WTextButtonIconizedDouble::OnCursorLeave()
     return;
 }
 
-Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->bEnabled)
     {
-        if (auto& Surface{this->GetViewport().GetSurface()}; Surface.HasMouseLocation())
+        if (Info.CursorLocation)
         {
-            if (this->DecoupledLeftKeyDown && maths::aabb_point({
+            if (this->DecoupledLeftKeyEvent.IsValid() && maths::aabb_point({
                 .Offset = this->GetLeftIconTopLeft(Info.Translation),
                 .Extent = {
                     static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale),
                     static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)
                     },
-                }, Surface.GetMouseLocationValue()))
+                }, *Info.CursorLocation))
             {
-                if (auto Reply{this->DecoupledLeftKeyDown(Info, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledLeftKeyEvent(Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
             }
-            else if (this->DecoupledRightKeyDown && maths::aabb_point({
+            else if (this->DecoupledRightKeyEvent.IsValid() && maths::aabb_point({
                 .Offset = this->GetRightIconTopLeft(Info.Translation),
                 .Extent = {
                     static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale),
                     static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)
                     },
-                }, Surface.GetMouseLocationValue()))
+                }, *Info.CursorLocation))
             {
-                if (auto Reply{this->DecoupledRightKeyDown(Info, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledRightKeyEvent(Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
@@ -371,62 +365,22 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyDownFocused(LNodeKeyEvent
 
         if (!this->bSelected && this->bUpdateBrushOnStateChange)
         {
-            if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-                || Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
             {
                 this->LeftIconBrush = this->LeftIconStyle.PressBrush;
                 this->RightIconBrush = this->RightIconStyle.PressBrush;
             }
-        }
-    }
-    return Super::OnKeyDownFocused(Info, Event);
-}
-
-Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyUpFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (this->bEnabled)
-    {
-        if (auto& Surface{this->GetViewport().GetSurface()}; Surface.HasMouseLocation())
-        {
-            if (this->DecoupledLeftKeyUp && maths::aabb_point({
-                .Offset = this->GetLeftIconTopLeft(Info.Translation),
-                .Extent = {
-                    static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale),
-                    static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)
-                    },
-                }, Surface.GetMouseLocationValue()))
-            {
-                if (auto Reply{this->DecoupledLeftKeyUp(Info, Event)}; Reply.IsHandled())
-                {
-                    return Reply;
-                }
-            }
-            else if (this->DecoupledRightKeyUp && maths::aabb_point({
-                .Offset = this->GetRightIconTopLeft(Info.Translation),
-                .Extent = {
-                    static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale),
-                    static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)
-                    },
-                }, Surface.GetMouseLocationValue()))
-            {
-                if (auto Reply{this->DecoupledRightKeyUp(Info, Event)}; Reply.IsHandled())
-                {
-                    return Reply;
-                }
-            }
-        }
-
-        if (!this->bSelected && this->bUpdateBrushOnStateChange)
-        {
-            if (   Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-                || Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+            if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
             {
                 this->LeftIconBrush = this->LeftIconStyle.HoverBrush;
                 this->RightIconBrush = this->RightIconStyle.HoverBrush;
             }
         }
     }
-    return Super::OnKeyUpFocused(Info, Event);
+
+    return Super::OnKeyEventFocused(Info, Event);
 }
 
 void Jafg::WTextButtonIconizedDouble::OnEnabledStateChanged()

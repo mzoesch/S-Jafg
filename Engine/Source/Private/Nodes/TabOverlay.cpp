@@ -181,9 +181,9 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
 
     BeginStyling(*this->Selectors).StaticRoot<WTabOverlaySelector>(std::move(Info.Selector)).SaveTo(&this->Tabs.back().first)
         .Selected(bActivated)
-        .OnKeyDownFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+        .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
             {
                 check(this->Switcher)
                 this->SetSelectedTab(*StaticCast<WTabOverlaySelector>(&Self));
@@ -196,34 +196,26 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
                 }
                 return LNodeReply::Handled();
             }
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
             {
                 this->CreateTabMenu(Info.CursorLocation, *StaticCast<WTabOverlaySelector>(&Self));
                 return LNodeReply::Handled();
             }
-            return LNodeReply::Unhandled();
-        })
-        .OnKeyUpFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-        {
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton))
+            if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton)))
             {
                 this->CloseTab(StaticCast<WTabOverlaySelector>(&Self));
                 return LNodeReply::Handled();
             }
             return LNodeReply::Unhandled();
         })
-        .OnKeyDownUnfocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+        .OnKeyEventUnfocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton))
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
             {
                 this->CreateTabMenu(Info.CursorLocation, *StaticCast<WTabOverlaySelector>(&Self));
                 return LNodeReply::Handled();
             }
-            return LNodeReply::Unhandled();
-        })
-        .OnKeyUpUnfocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-        {
-            if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton))
+            if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::MiddleMouseButton)))
             {
                 this->CloseTab(StaticCast<WTabOverlaySelector>(&Self));
                 return LNodeReply::Handled();
@@ -666,13 +658,14 @@ void Jafg::WTabOverlaySelector::LoadRightIcon()
     this->RightIconStyle.SetEverywhere<&LIconBrush::InwardsPadding>(16_spt);
     this->RightIconStyle.SetEverywhere<&LIconBrush::MinIconSize>(16_spt);
     this->RightIconStyle.SetEverywhere<&LIconBrush::Alignment>(LIconBrush::Align::Center);
-    this->bDecoupledRightIcon = true;
     this->RightIconStyle.Set<ETextButtonIconStyleBits::Decoupled, &LIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
-    this->DecoupledRightKeyDown = [](auto&, auto&){ return LNodeReply::Handled(); };
-    this->DecoupledRightKeyUp = [this](LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+    this->DecoupledRightKeyEvent = [this](LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {
-        auto* TabOverlay{this->GetParentUntilChecked<WTabOverlay>()};
-        TabOverlay->CloseTab(this);
+        if (Event.Is<ERawInputStateBits::Release>())
+        {
+            auto* TabOverlay{this->GetParentUntilChecked<WTabOverlay>()};
+            TabOverlay->CloseTab(this);
+        }
         return LNodeReply::Handled();
     };
 

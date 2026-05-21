@@ -124,36 +124,20 @@ Jafg::LNodeReply Jafg::WParent::Sweep(LNodeSweepInfo const& Info, std::optional<
     return Super::Sweep(Info, Location);
 }
 
-Jafg::LNodeReply Jafg::WParent::OnKeyDownUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WParent::OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     for (auto& Child : this->Children)
     {
         check(Child.get())
         if (Child->ShouldCheckForInputs() && Child->AabbTest({.Translation=Info.Translation}, Info.Surface.GetMouseLocationValue()))
         {
-            if (auto Reply{Child->OnKeyDownUnfocused(Info, Event)}; Reply.IsHandled())
+            if (auto Reply{Child->OnKeyEventUnfocused(Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
         }
     }
-    return Super::OnKeyDownUnfocused(Info, Event);
-}
-
-Jafg::LNodeReply Jafg::WParent::OnKeyUpUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    for (auto& Child : this->Children)
-    {
-        check(Child.get())
-        if (Child->ShouldCheckForInputs() && Child->AabbTest({.Translation=Info.Translation}, Info.Surface.GetMouseLocationValue()))
-        {
-            if (auto Reply{Child->OnKeyUpUnfocused(Info, Event)}; Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-    }
-    return Super::OnKeyUpUnfocused(Info, Event);
+    return Super::OnKeyEventUnfocused(Info, Event);
 }
 
 bool Jafg::WParent::IsNodeInVisiblePath(WNode const& Node) const

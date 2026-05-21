@@ -26,12 +26,7 @@ protected:
 public:
 
     virtual void Tick() override;
-
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpFocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-
-    virtual LNodeReply OnKeyDownUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
-    virtual LNodeReply OnKeyUpUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
 private:
 

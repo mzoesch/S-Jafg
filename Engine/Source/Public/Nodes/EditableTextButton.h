@@ -67,7 +67,7 @@ public:
     virtual void OnCursorLeave() override;
     virtual void OnFocusReceived() override;
     virtual void OnFocusLost() override;
-    virtual LNodeReply OnKeyDownFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     LCaretBrush CaretBrush;
 

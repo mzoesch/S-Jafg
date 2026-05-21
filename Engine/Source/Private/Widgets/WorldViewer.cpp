@@ -56,14 +56,14 @@ void Jafg::WWorldViewer::Construct()
             .InAllBrushesChained<&LRegionBrush::Tint, &LRegionBrush::Background>
                 (Colors::White, LRegionBrush::Icon("Icons/Jafg.Menu"))
             .InAllBrushesChained<&LRegionBrush::Radii>(LVec4F{50.0f})
-            .OnKeyDownFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event) -> LNodeReply
+            .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
-                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                 {
                     this->CreateMenuDropDown(Info.CursorLocation.value_or(maths::zero_vector<LVec2F>));
                     return LNodeReply::Handled();
                 }
-                return {};
+                return LNodeReply::Unhandled();
             })
     ];
 
@@ -214,7 +214,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
     CreateDropDownMenu(this->GetViewport(), Where, {}, {.Children={
         LDropDownNodeSeparator{.DisplayName = "VIEWPORT"},
         LDropDownNodeCustom{
-            .OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget) -> LFactoryNode
+            .OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
             {
                 return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
                 + NewNode(Viewport).Class<WButton>()
@@ -232,9 +232,9 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         .Texture=LOptionalTexture2Ref{"Icons/Jafg.Checkmark"}.GetResolved(),
                         .Scale=this->DesiredViewportExtent.has_value() ? 0u : 1u,
                         })
-                    .OnKeyUpFocused([this, SharedNodes, Res](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    .OnKeyEventFocused([this, SharedNodes, Res](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
-                        if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
                             && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
                             )
                         {
@@ -279,7 +279,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
             },
             .OnAction=[this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
-                if (Event.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                 {
                     if (this->DesiredViewportExtent)
                     {
