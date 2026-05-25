@@ -6,9 +6,9 @@
     Validate compiler and forward declare JAFG Windows logic.
 -----------------------------------------------------------------------------*/
 
-#if !PLATFORM_WINDOWS
+#if !JAFG_PLATFORM_WINDOWS
     #error "Wanted to override generic platform types with Windows specific types, but platform is not Windows."
-#endif /* !PLATFORM_WINDOWS */
+#endif /* !JAFG_PLATFORM_WINDOWS */
 
 #if JAFG_WITH_GCC || JAFG_WITH_CLANG
     #ifdef _MSC_VER
@@ -53,7 +53,6 @@ struct LPrimitivePlatformTypesGeneric;
 //# The platform types specification for Windows.
 struct LPrimitivePlatformTypesWindows final : public LPrimitivePlatformTypesGeneric
 {
-    #define JAFG_PLATFORM_U64_SIZET_EQ 1
     typedef wchar_t LChar;
 };
 
@@ -244,11 +243,11 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
 
-#if AS_CLIENT
+#if JAFG_AS_CLIENT
     #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
         #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER              1
     #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
-#endif /* AS_CLIENT */
+#endif /* JAFG_AS_CLIENT */
 
 #ifndef JAFG_WITH_REST_CLS
     #define JAFG_WITH_REST_CLS                                          1
@@ -290,10 +289,6 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
 #ifndef JAFG_PLATFORM_USES_UTF16
     #define JAFG_PLATFORM_USES_UTF16                                    1
 #endif /* !JAFG_PLATFORM_USES_UTF16 */
-
-#ifndef JAFG_PLATFORM_WCHAR_SIZE
-    #define JAFG_PLATFORM_WCHAR_SIZE                                    2
-#endif /* !JAFG_PLATFORM_WCHAR_SIZE */
 
 #ifndef LITERAL_TEXT
     #define LITERAL_TEXT(x)                                             LITERAL_WIDE(x)
@@ -362,19 +357,19 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
 #endif /* !NOINLINE */
 
 #ifndef FORCEINLINE
-    #if IN_DEBUG
+    #if JAFG_IN_DEBUG
         //#
         //# Inlining is disabled in debug builds as following the debugger through inlined code is a pain
         //# in the ass.
         //#
         #define FORCEINLINE                                             inline
-    #else /* IN_DEBUG */
+    #else /* JAFG_IN_DEBUG */
         #if JAFG_WITH_MSVC
             #define FORCEINLINE                                         _forceinline
         #else JAFG_WITH_GCC || JAFG_WITH_CLANG
             #define FORCEINLINE                                         __attribute__ ((always_inline))
         #endif /* JAFG_WITH_GCC || JAFG_WITH_CLANG */
-    #endif /* !IN_DEBUG */
+    #endif /* !JAFG_IN_DEBUG */
 #endif /* !FORCEINLINE */
 
 // ~Compiler dependent features

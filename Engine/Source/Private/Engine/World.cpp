@@ -13,7 +13,6 @@
 #include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
 #include "User/UserPreferences.h"
-#include "Nodes/WorldNode.h"
 #include "Rhi/NodeRenderInfo.h"
 #include "Components/ActorComponentForward.h"
 
@@ -33,7 +32,7 @@ LString Jafg::LWorldParameters::ToString() const
             Out.append(", ");
         }
 
-        Out.append(Jafg::SprintF("{}={}", Param.Key, Param.Value));
+        Out.append(algo::sprintf("{}={}", Param.Key, Param.Value));
         continue;
     }
 
@@ -114,10 +113,10 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     this->RealTimeWhenWorldStarted = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
 
-    if (auto& Track{GMutableEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPreInit.IsValid())
+    if (auto& Track{Detail::GMutableEngine->GetTrackFromWorld(*this)}; Track.Callbacks.OnPreInit)
     {
-        Track.Callbacks.OnWorldPreInit(*this);
-        Track.Callbacks.OnWorldPreInit.Reset();
+        Track.Callbacks.OnPreInit(*this);
+        algo::swap_default(&Track.Callbacks.OnPreInit);
     }
     this->SupremePolicies->OnWorldPreInit();
 
@@ -140,10 +139,10 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     this->GetEngine().OnWorldBeginLife.Broadcast(this);
     this->WorldState = EWorldState::Running;
 
-    if (auto& Track{GMutableEngine->GetTrackFromWorld(this)}; Track.Callbacks.OnWorldPostInit.IsValid())
+    if (auto& Track{Detail::GMutableEngine->GetTrackFromWorld(*this)}; Track.Callbacks.OnPostInit)
     {
-        Track.Callbacks.OnWorldPostInit(*this);
-        Track.Callbacks.OnWorldPostInit.Reset();
+        Track.Callbacks.OnPostInit(*this);
+        algo::swap_default(&Track.Callbacks.OnPostInit);
     }
     this->SupremePolicies->OnWorldPostInit();
 
@@ -158,8 +157,8 @@ Jafg::LEngine const& Jafg::LWorld::GetEngine() const noexcept
 
 Jafg::LEngine& Jafg::LWorld::GetEngine() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
-    return *GMutableEngine;
+    check(Detail::GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
+    return *Detail::GMutableEngine;
 }
 
 Jafg::LCommandLineInterface const& Jafg::LWorld::GetCommandLineInterface() const noexcept
@@ -170,8 +169,8 @@ Jafg::LCommandLineInterface const& Jafg::LWorld::GetCommandLineInterface() const
 
 Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
-    return GMutableEngine->GetCommandLineInterface();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
+    return Detail::GMutableEngine->GetCommandLineInterface();
 }
 
 Jafg::LLocalEgo const& Jafg::LWorld::GetLocalEgo() const noexcept
@@ -182,8 +181,8 @@ Jafg::LLocalEgo const& Jafg::LWorld::GetLocalEgo() const noexcept
 
 Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() noexcept
 {
-    check(GMutableEngine && "Absence of GEnGMutableEnginegine when a world exists is undefined behavior.")
-    return GMutableEngine->GetLocalEgo();
+    check(Detail::GMutableEngine && "Absence of GEnGMutableEnginegine when a world exists is undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo();
 }
 
 void Jafg::LWorld::Tick(f32 Dt)
@@ -360,68 +359,45 @@ void Jafg::LWorld::Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const
     return;
 }
 
-Jafg::APersonaController* Jafg::LWorld::Login(LTransientPersona Persona, LString* OutRejectionReason /* = nullptr */)
+std::expected<Jafg::APersonaController*,LString> Jafg::LWorld::Login(LTransientPersona Persona)
 {
     check(this->SupremePolicies)
     check(this->GetWorldState() == EWorldState::Running)
 
-    checkCode
-    (
-        if (Persona.Type == EIncomingConnectionRequest::Local)
-        {
-            check(Persona.Node)
-        }
-    )
-
-    if (Persona.Node)
+    if (std::holds_alternative<LTransientPersona::Local>(*Persona))
     {
-        if (Persona.Node->IsOwnedPersonaControllerValid())
+        if (auto& Lackey{std::get<LTransientPersona::Local>(*Persona).Lackey}; Lackey.IsOwnedPersonaControllerValid())
         {
-            LOG_WARNING(LogWorld,
-                "World node [{}] already possesses persona controller [{}]. Rejecting login request.",
-                Persona.Node->GetNameAsString(),
-                Persona.Node->GetOwnedPersonaControllerChecked()->GetNameAsString()
-                )
-
-            if (OutRejectionReason)
-            {
-                *OutRejectionReason = Jafg::SprintF(
-                    "Surface [{}] already possesses persona controller [{}].",
-                    Persona.Node->GetNameAsString(),
-                    Persona.Node->GetOwnedPersonaControllerChecked()->GetNameAsString()
-                    );
-            }
-
-            return nullptr;
+            return std::unexpected(algo::sprintf(
+                "Lackey already possesses persona controller [{}]. Rejecting login request."
+                , Lackey.GetOwnedPersonaControllerChecked()->GetNameAsString()
+                ));
         }
     }
 
-    auto Pc{this->SupremePolicies->OnIncomingConnectionRequest(Persona.Type, OutRejectionReason)};
-    if (Pc.get() == nullptr)
+    auto Pc{this->SupremePolicies->OnIncomingConnectionRequest(
+        std::holds_alternative<LTransientPersona::Proxy>(*Persona) ? ASupremePolicies::Proxy : ASupremePolicies::Local
+        )};
+    if (!Pc)
     {
-        return nullptr;
+        return std::unexpected{Pc.error()};
     }
-    auto* Result{Pc.get()};
+    auto& Result{*Pc.value()};
 
-    if (Persona.Type == EIncomingConnectionRequest::Local)
+    if (std::holds_alternative<LTransientPersona::Local>(*Persona))
     {
-        check(Persona.Node->IsOwnedPersonaControllerValid() == false)
-        Persona.Node->PossessPersonaController(std::move(Pc));
-    }
-    else if (Persona.Type == EIncomingConnectionRequest::Remote)
-    {
-        jassertNoEntry()
+        auto& Local{std::get<LTransientPersona::Local>(*Persona)};
+        check(!Local.Lackey.IsOwnedPersonaControllerValid())
+        Local.Lackey.PossessPersonaController(std::move(Pc).value());
     }
     else
     {
-        jassertNoEntry()
+        std::unreachable();
     }
+    check(!Pc.value().get())
 
-    Pc.release();
-    check(Persona.Node == nullptr || Persona.Node->IsOwnedPersonaControllerValid())
-    this->SupremePolicies->OnPersonaControllerCreated(*Result);
-    check(Persona.Node == nullptr || Persona.Node->IsOwnedPersonaControllerValid())
-    return Result;
+    this->SupremePolicies->OnPersonaControllerCreated(Result);
+    return &Result;
 }
 
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
@@ -521,9 +497,9 @@ void Jafg::LWorld::OnTearDown()
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
 
     LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     std::size_t ActorCount{};
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
     for (auto Idx{0uz}; Idx < this->GetEmployees().size();)
     {
         TUnique<JCxxClass> const& Obj{this->GetEmployees()[Idx]};
@@ -538,9 +514,9 @@ void Jafg::LWorld::OnTearDown()
         if (Obj->IsA<AActor>())
         {
             Obj->MarkAsGarbage_v2(EJxxRecordTearDownReason::OuterTearDown);
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
             ++ActorCount;
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
             check(Obj.get() == nullptr)
             Idx = 0;
             continue;

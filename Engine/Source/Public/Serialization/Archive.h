@@ -53,7 +53,7 @@ inline constexpr bool IsValidIArchiveStreamType_v{
 struct LCopyPrefs final{};
 
 template<typename TArchive>
-inline constexpr bool IsTextArchive_v{ std::is_same_v<typename TArchive::value_type, LJafgChar> };
+inline constexpr bool IsTextArchive_v{ std::is_same_v<typename TArchive::value_type, char> };
 template<typename TArchive>
 inline constexpr bool IsBinaryArchive_v{ std::is_same_v<typename TArchive::value_type, u8> };
 
@@ -75,7 +75,7 @@ enum struct EBehavior
 //# Lightweight default archive for output streams. Panics if anything goes wrong.
 struct LOStringArchive final
 {
-    typedef LJafgChar value_type;
+    typedef char value_type;
 
     constexpr LOStringArchive() noexcept = default;
     LOStringArchive(LCopyPrefs, LOStringArchive const&) noexcept {}
@@ -98,7 +98,7 @@ struct LOStringArchive final
 template<typename TStream, EBehavior Behavior> requires std::is_same_v<LString, TStream> || std::is_same_v<LStringView, TStream>
 struct LIStringArchive final
 {
-    typedef LJafgChar value_type;
+    typedef char value_type;
 
     constexpr LIStringArchive(TStream&& InStream) noexcept
         requires std::is_same_v<TStream, LString>
@@ -200,11 +200,11 @@ struct TDeserializer<TArray<T>, TArchive>
 
         if (Value.starts_with('[') == false)
         {
-            return {.Errc=std::errc::invalid_argument, .Error=Jafg::SprintF("Expected '[' at the start of: \n{}", Value)};
+            return {.Errc=std::errc::invalid_argument, .Error=algo::sprintf("Expected '[' at the start of: \n{}", Value)};
         }
         if (Value.ends_with(']') == false)
         {
-            return {.Errc=std::errc::invalid_argument, .Error=Jafg::SprintF("Expected ']' at the end of: \n{}", Value)};
+            return {.Errc=std::errc::invalid_argument, .Error=algo::sprintf("Expected ']' at the end of: \n{}", Value)};
         }
 
         const LStringView View{Value.begin() + 1, Value.end() - 1};
@@ -244,7 +244,7 @@ struct TDeserializer<TArray<T>, TArchive>
                 {
                     return {
                         .Errc = R.Errc,
-                        .Error = Jafg::SprintF("Subargument failed with [{}] at [{}]."
+                        .Error = algo::sprintf("Subargument failed with [{}] at [{}]."
                             , R.Error.has_value() ? R.Error.value() : "<unknown error>"
                             , Element
                             )
@@ -271,7 +271,7 @@ struct TDeserializer<TArray<T>, TArchive>
             {
                 return {
                     .Errc = R.Errc,
-                    .Error = Jafg::SprintF("Subargument failed with [{}] at [{}]."
+                    .Error = algo::sprintf("Subargument failed with [{}] at [{}]."
                         , R.Error.has_value() ? R.Error.value() : "<unknown error>"
                         , Element
                         )
@@ -365,7 +365,7 @@ struct TDeserializer<bool, TArchive>
         }
         return {
             .Errc = std::errc::invalid_argument,
-            .Error = Jafg::SprintF("Could not interpret [{}] as a boolean.", Value)
+            .Error = algo::sprintf("Could not interpret [{}] as a boolean.", Value)
             };
     }
 };
@@ -407,7 +407,7 @@ struct TSerializer<LColor, TArchive>
 {
     void operator()(TArchive& Ar, LColor const& Field) const noexcept
     {
-        Ar.Stream << Jafg::SprintF("0x{:02X}{:02X}{:02X}{:02X}", Field.R, Field.G, Field.B, Field.A);
+        Ar.Stream << algo::sprintf("0x{:02X}{:02X}{:02X}{:02X}", Field.R, Field.G, Field.B, Field.A);
     }
 };
 template<typename TArchive> requires IsTextIArchive_v<TArchive>
@@ -421,7 +421,7 @@ struct TDeserializer<LColor, TArchive>
         {
             return {
                 .Errc = std::errc::invalid_argument,
-                .Error = Jafg::SprintF("Expected '0x' at the start of: {}", Value)
+                .Error = algo::sprintf("Expected '0x' at the start of: {}", Value)
                 };
         }
 
@@ -429,7 +429,7 @@ struct TDeserializer<LColor, TArchive>
         {
             return {
                 .Errc = std::errc::invalid_argument,
-                .Error = Jafg::SprintF("Expected a size of '10' but got '{}' from: {}", Value.size(), Value)
+                .Error = algo::sprintf("Expected a size of '10' but got '{}' from: {}", Value.size(), Value)
                 };
         }
 
@@ -442,7 +442,7 @@ struct TDeserializer<LColor, TArchive>
 
             return{
                 .Errc = std::errc::invalid_argument,
-                .Error = Jafg::SprintF("Expected one of the values of [0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F] but got '{}' at index '{}' from: {}",
+                .Error = algo::sprintf("Expected one of the values of [0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F] but got '{}' at index '{}' from: {}",
                     Value[Idx], Idx, Value
                     )
                 };

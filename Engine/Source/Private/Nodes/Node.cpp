@@ -251,8 +251,8 @@ Jafg::LFrontend const& Jafg::WNode::GetFrontend() const noexcept
 
 Jafg::LFrontend& Jafg::WNode::GetMutableFrontend() const noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
-    return GMutableEngine->GetLocalEgo().GetFrontend();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo().GetFrontend();
 }
 
 #if JAFG_DO_CHECKS

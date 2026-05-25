@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#if PLATFORM_WASM
+#if JAFG_PLATFORM_WASM
 
 #include "Hal/PlatformWasm.h"
 
@@ -24,4 +24,4 @@ void SleepNoStats(const double InSeconds)
 
 } /* ~Namespace Jafg::PlatformHal */
 
-#endif /* PLATFORM_WASM */
+#endif /* JAFG_PLATFORM_WASM */

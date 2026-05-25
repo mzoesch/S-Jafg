@@ -192,21 +192,21 @@ TArray<LString> Finder::FindFiles(
         {
             if (bKeepExtension)
             {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                 LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                 Out.Emplace(LSimpleString(Temp.c_str()));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                 Out.Emplace(p.path().filename().c_str());
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
             }
             else
             {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                 LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                 Out.Emplace(std::move(SimpleTemp));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                 Out.Emplace(p.path().stem().c_str());
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
             }
         }
         else
@@ -215,21 +215,21 @@ TArray<LString> Finder::FindFiles(
             {
                 if (bKeepExtension)
                 {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                     LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                     Out.Emplace(LSimpleString(Temp.c_str()));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                     Out.Emplace(p.path().filename().c_str());
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
                 }
                 else
                 {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                     LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                     Out.Emplace::move(SimpleTemp));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                     Out.Emplace(p.path().stem().c_str());
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
                 }
             }
         }
@@ -296,19 +296,19 @@ TArray<LString> Finder::FindFilesRecursively(
         {
             if (bKeepExtension)
             {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                 LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                 Out.Emplace(LSimpleString(Temp.c_str()));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                 Out.Emplace(p.path().c_str());
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
             }
             else
             {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                 LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                 Out.Emplace(std::move(SimpleTemp));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                 if (p.path().has_parent_path())
                 {
                     LString Str = p.path().parent_path().c_str();
@@ -319,7 +319,7 @@ TArray<LString> Finder::FindFilesRecursively(
                 {
                     Out.Emplace(p.path().stem().c_str());
                 }
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
             }
         }
         else
@@ -328,19 +328,19 @@ TArray<LString> Finder::FindFilesRecursively(
             {
                 if (bKeepExtension)
                 {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                     LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                     Out.Emplace(LSimpleString(Temp.c_str()));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                     Out.Emplace(p.path().c_str());
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
                 }
                 else
                 {
-#if PLATFORM_WINDOWS && UNICODE
+#if JAFG_PLATFORM_WINDOWS && UNICODE
                     LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                     Out.Emplace::move(SimpleTemp));
-#else /* PLATFORM_WINDOWS && UNICODE */
+#else /* JAFG_PLATFORM_WINDOWS && UNICODE */
                     if (p.path().has_parent_path())
                     {
                         LString Str = p.path().parent_path().c_str();
@@ -351,7 +351,7 @@ TArray<LString> Finder::FindFilesRecursively(
                     {
                         Out.Emplace(p.path().stem().c_str());
                     }
-#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+#endif /* !(JAFG_PLATFORM_WINDOWS && UNICODE) */
                 }
             }
         }

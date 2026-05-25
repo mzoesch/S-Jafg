@@ -12,11 +12,11 @@ namespace Jafg
     typedef u32 LThreadId;
 #elif JAFG_WITH_GCC || JAFG_WITH_CLANG
     typedef __gthread_t LThreadId;
-#elif PLATFORM_WASM
+#elif JAFG_PLATFORM_WASM
     typedef unsigned long LThreadId;
-#else /* PLATFORM_WASM */
+#else /* JAFG_PLATFORM_WASM */
     #error "Missing implementation for this platform."
-#endif /* !PLATFORM_WASM */
+#endif /* !JAFG_PLATFORM_WASM */
 
 typedef std::move_only_function<void(void)> LTaskDelegate;
 

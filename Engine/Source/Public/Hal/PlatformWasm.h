@@ -2,9 +2,9 @@
 
 #pragma once
 
-#if !PLATFORM_WASM
+#if !JAFG_PLATFORM_WASM
     #error "Wanted to override generic platform types with wasm specific types, but platform is not wasm."
-#endif /* !PLATFORM_WASM */
+#endif /* !JAFG_PLATFORM_WASM */
 
 #ifndef __EMSCRIPTEN__
     #error "__EMSCRIPTEN__ is not defined."

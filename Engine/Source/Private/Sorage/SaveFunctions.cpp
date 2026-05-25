@@ -9,7 +9,7 @@
 #define EMIT_ERROR_SQL(InDescription)                                                    \
     if (OutError)                                                                        \
     {                                                                                    \
-        *OutError = ::Jafg::SprintF("SQL {}: [{}].", InDescription, sqlite3_errmsg(Con)); \
+        *OutError = ::algo::sprintf("SQL {}: [{}].", InDescription, sqlite3_errmsg(Con)); \
     }                                                                                    \
     else                                                                                 \
     {                                                                                    \
@@ -19,7 +19,7 @@
 #define EMIT_ERROR(Format, ...)                            \
     if (OutError)                                          \
     {                                                      \
-        *OutError = ::Jafg::SprintF(Format __VA_OPT__(,) __VA_ARGS__); \
+        *OutError = ::algo::sprintf(Format __VA_OPT__(,) __VA_ARGS__); \
     }                                                      \
     else                                                   \
     {                                                      \
@@ -42,7 +42,7 @@ struct LSql3Con final
         {
             if (OutError)
             {
-                *OutError = Jafg::SprintF("Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
+                *OutError = algo::sprintf("Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
             }
             else
             {
@@ -170,7 +170,7 @@ bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Met
     {
         const LString Sql
         {
-            Jafg::SprintF("INSERT INTO Meta VALUES ( \"{}\" );", Meta.DisplayName)
+            algo::sprintf("INSERT INTO Meta VALUES ( \"{}\" );", Meta.DisplayName)
         };
 
         if (sqlite3_exec(Con, Sql.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)

@@ -53,12 +53,12 @@ struct LRawInput final
     f32 Value{ 1.0f };
     ERawInputStateFlags State;
 
+    /* Do not merge this two with constexpr exprs as this confuses clangds intellisense... */
     template<ERawInputStateFlags State>
     bool Is() const noexcept
     {
         return !!(this->State & State);
     }
-
     template<ERawInputStateFlags State, typename ... TKeys> requires(sizeof...(TKeys) > 0
         && (... && (std::same_as<std::remove_cvref_t<TKeys>, LPhysicalKey>
              || std::same_as<std::remove_cvref_t<TKeys>, std::optional<LPhysicalKey>>)))
@@ -69,7 +69,7 @@ struct LRawInput final
 
     LString ToString() const noexcept
     {
-        return SprintF("{{{}: {:.2f} M:{} S:{}}}"
+        return algo::sprintf("{{{}: {:.2f} M:{} S:{}}}"
             , this->PhysicalKey.ToString(), this->Value, LexToString(this->Mods), LexToString(this->State));
     }
 };

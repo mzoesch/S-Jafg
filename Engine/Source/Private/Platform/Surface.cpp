@@ -122,8 +122,8 @@ Jafg::LEngine const& Jafg::LSurfaceBase::GetEngine() const noexcept
 
 Jafg::LEngine& Jafg::LSurfaceBase::GetMutableEngine() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
-    return *GMutableEngine;
+    check(Detail::GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
+    return *Detail::GMutableEngine;
 }
 
 Jafg::LLocalEgo const& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
@@ -134,8 +134,8 @@ Jafg::LLocalEgo const& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
 
 Jafg::LLocalEgo& Jafg::LSurfaceBase::GetMutableLocalEgo() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
-    return GMutableEngine->GetLocalEgo();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo();
 }
 
 Jafg::LFrontend const& Jafg::LSurfaceBase::GetFrontend() const noexcept
@@ -146,6 +146,6 @@ Jafg::LFrontend const& Jafg::LSurfaceBase::GetFrontend() const noexcept
 
 Jafg::LFrontend& Jafg::LSurfaceBase::GetMutableFrontend() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
-    return GMutableEngine->GetLocalEgo().GetFrontend();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo().GetFrontend();
 }

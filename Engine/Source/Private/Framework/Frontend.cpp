@@ -61,8 +61,8 @@ Jafg::LEngine const& Jafg::LFrontendBase::GetEngine() const noexcept
 
 Jafg::LEngine& Jafg::LFrontendBase::GetMutableEngine() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine when an object of LFrontendBase exists is undefined behavior.")
-    return *GMutableEngine;
+    check(Detail::GMutableEngine && "Absence of GMutableEngine when an object of LFrontendBase exists is undefined behavior.")
+    return *Detail::GMutableEngine;
 }
 
 Jafg::LLocalEgo const& Jafg::LFrontendBase::GetLocalEgo() const noexcept
@@ -73,8 +73,8 @@ Jafg::LLocalEgo const& Jafg::LFrontendBase::GetLocalEgo() const noexcept
 
 Jafg::LLocalEgo& Jafg::LFrontendBase::GetMutableLocalEgo() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine when an object of LFrontendBase exists is undefined behavior.")
-    return GMutableEngine->GetLocalEgo();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine when an object of LFrontendBase exists is undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo();
 }
 
 void Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior) noexcept

@@ -24,7 +24,7 @@
 //# be disabled in shipping builds.
 //#
 #ifndef JAFG_DO_DOUBLE_CHECK_LIFETIMES
-    #define JAFG_DO_DOUBLE_CHECK_LIFETIMES                              !IN_SHIPPING
+    #define JAFG_DO_DOUBLE_CHECK_LIFETIMES                              !JAFG_IN_SHIPPING
 #endif /* !JAFG_DO_DOUBLE_CHECK_LIFETIMES */
 
 // ~Compiler options
@@ -1538,7 +1538,7 @@ struct std::formatter<TSubclassOf<T>> : std::formatter<LString>
         {
             return std::formatter<LString>::format(InClass->GetNameAsString(), InContext);
         }
-        return std::formatter<LString>::format(Jafg::SprintF("{}?", T::StaticClass().GetNameAsString()), InContext);
+        return std::formatter<LString>::format(algo::sprintf("{}?", T::StaticClass().GetNameAsString()), InContext);
     }
 };
 
@@ -1583,7 +1583,7 @@ struct Serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
             {
                 return {
                     .Errc = std::errc::invalid_argument,
-                    .Error = Jafg::SprintF("Package [{}] is not a class. Found [{}].",
+                    .Error = algo::sprintf("Package [{}] is not a class. Found [{}].",
                         Package->GetFullyQualifiedName(), Jafg::LexToString(Package->GetType())
                         )
                     };
@@ -1593,7 +1593,7 @@ struct Serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
         {
             return {
                 .Errc = std::errc::invalid_argument,
-                .Error = Jafg::SprintF("No such package: [{}].", Ar.Stream)
+                .Error = algo::sprintf("No such package: [{}].", Ar.Stream)
                 };
         }
         return {};

@@ -130,15 +130,15 @@ FORCEINLINE LString LInputActionValue::ToString() const
     }
     if (this->ValueType == EInputActionCategory::Axis1D)
     {
-        return Jafg::SprintF("{:.3f}", this->Value.x);
+        return algo::sprintf("{:.3f}", this->Value.x);
     }
     if (this->ValueType == EInputActionCategory::Axis2D)
     {
-        return Jafg::SprintF("{:.3f},{:.3f}", this->Value.x, this->Value.y);
+        return algo::sprintf("{:.3f},{:.3f}", this->Value.x, this->Value.y);
     }
     if (this->ValueType == EInputActionCategory::Axis3D)
     {
-        return Jafg::SprintF("{:.3f},{:.3f},{:.3f}", this->Value.x, this->Value.y, this->Value.z);
+        return algo::sprintf("{:.3f},{:.3f},{:.3f}", this->Value.x, this->Value.y, this->Value.z);
     }
 
     checkNoEntry()

@@ -29,7 +29,7 @@ void Jafg::WClassInspector::Construct()
         Container->AddChild(NewStaticNode(WTextBox)
             .Anchor(EAnchor::HFill)
             .Tint((!!(Idx++ % 2)) ? *Prefs.ProximityColorA : *Prefs.ProximityColorB)
-            .Content(SprintF("{}{}", LString(Indent*8, ' '), Child.GetFullyQualifiedName()))
+            .Content(algo::sprintf("{}{}", LString(Indent*8, ' '), Child.GetFullyQualifiedName()))
             .Unique());
     }};
     auto AddChild{[AddElement](this const auto& Self, LJxxClass const& Element, std::size_t Indent) -> void

@@ -12,8 +12,8 @@ Jafg::LEngine const& Jafg::LEngineGetters::GetEngine() const noexcept
 
 Jafg::LEngine& Jafg::LEngineGetters::GetMutableEngine() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
-    return *GMutableEngine;
+    check(Detail::GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
+    return *Detail::GMutableEngine;
 }
 
 Jafg::LLocalEgo const& Jafg::LEngineGetters::GetLocalEgo() const noexcept
@@ -24,8 +24,8 @@ Jafg::LLocalEgo const& Jafg::LEngineGetters::GetLocalEgo() const noexcept
 
 Jafg::LLocalEgo& Jafg::LEngineGetters::GetMutableLocalEgo() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
-    return GMutableEngine->GetLocalEgo();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo();
 }
 
 Jafg::LCommandLineInterface const& Jafg::LEngineGetters::GetCommandLineInterface() const noexcept
@@ -36,8 +36,8 @@ Jafg::LCommandLineInterface const& Jafg::LEngineGetters::GetCommandLineInterface
 
 Jafg::LCommandLineInterface& Jafg::LEngineGetters::GetMutableCommandLineInterface() noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
-    return GMutableEngine->GetCommandLineInterface();
+    check(Detail::GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
+    return Detail::GMutableEngine->GetCommandLineInterface();
 }
 
 Jafg::Detail::LReflectedTagRegistry& Jafg::Detail::GetJxxTagRegistry() noexcept
@@ -389,7 +389,7 @@ bool Jafg::LJxxClass::DerivesFrom(LJxxClass const& Parent) const noexcept
 void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
 {
     // TODO: Add arg to ignore pulling
-    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    check(Detail::GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
 
     LPath Path{InPath};
     if (Path == LPath{})
@@ -401,8 +401,8 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
     LOG_VERBOSE(LogObjectInternal, "Pulling config for [{}]", this->GetNameAsString())
     check(Class.IsConfig())
 
-    GMutableEngine->Config.PullConfigFile(Path);
-    if (auto* Section{GMutableEngine->Config.GetConfigSection(Path, this->GetNameAsString())})
+    Detail::GMutableEngine->Config.PullConfigFile(Path);
+    if (auto* Section{Detail::GMutableEngine->Config.GetConfigSection(Path, this->GetNameAsString())})
     {
         for (auto& [Key, Value] : *Section)
         {
@@ -418,7 +418,7 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
 
 void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
 {
-    check(GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
+    check(Detail::GMutableEngine && "Absence of GMutableEngine if undefined behavior.")
 
     LPath Path{InPath};
     if (Path == LPath{})
@@ -436,9 +436,9 @@ void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
     {
         Entries[LString{Field.Identifier}] = Field.Get(*this);
     }
-    if (Entries.empty() == false)
+    if (!Entries.empty())
     {
-        GMutableEngine->Config.AddConfigSection(Path, this->GetNameAsString(), Entries);
+        Detail::GMutableEngine->Config.AddConfigSection(Path, this->GetNameAsString(), Entries);
     }
 
     return;
@@ -686,14 +686,14 @@ void Jafg::LClassOuter::RegisterToEngine()
 
     if (GEngine)
     {
-        GMutableEngine->RegisterClassOuter(this);
+        Detail::GMutableEngine->RegisterClassOuter(this);
     }
     else
     {
         Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this]
         {
-            check(GMutableEngine)
-            GMutableEngine->RegisterClassOuter(this);
+            check(Detail::GMutableEngine)
+            Detail::GMutableEngine->RegisterClassOuter(this);
             return;
         });
     }
@@ -704,9 +704,9 @@ void Jafg::LClassOuter::RegisterToEngine()
 void Jafg::LClassOuter::UnregisterFromEngine()
 {
     check(Tasks::IsOnMasterThread())
-    check(GMutableEngine)
+    check(Detail::GMutableEngine)
 
-    GMutableEngine->UnregisterClassOuter(this);
+    Detail::GMutableEngine->UnregisterClassOuter(this);
 
     return;
 }

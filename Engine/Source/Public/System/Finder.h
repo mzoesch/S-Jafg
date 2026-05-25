@@ -2,12 +2,12 @@
 
 #pragma once
 
-#if PLATFORM_WINDOWS /* Just some windows nonsense... */
+#if JAFG_PLATFORM_WINDOWS /* Just some windows nonsense... */
     #ifdef CreateFile
         #pragma push_macro( "CreateFile" )
         #undef CreateFile
     #endif /* CreateFile */
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 //#
 //# Functions in this namespace will panic if something goes wrong unless stated otherwise.
@@ -19,6 +19,17 @@ namespace Detail
 {
 ENGINE_API LPath GetEngineRootDir();
 ENGINE_API LPath GetSelfProcDir();
+//#
+//# When in a corrupted state, avoid touching the heap. Therefore, this is a legal way to access the
+//# path for the target core dump. It is guaranteed to be always valid and accessible.
+//#
+//# Modifying this variable in any way is UB und a race condition which could lead to a catastrophic SIGSEGV.
+//#
+ENGINE_API extern LPath DumpFile;
+#if JAFG_PLATFORM_LINUX
+    //# Same as #DumpFile -- no modifying allowed.
+    ENGINE_API extern std::optional<LPath> _gdb;
+#endif /* JAFG_PLATFORM_LINUX */
 } /* ~Namespace Detail */
 
 inline LPath GetCwd();
@@ -90,14 +101,14 @@ inline void MakeFileBackup(LPath const& File, bool bMakeIfSame = false, i32 Coun
 
 inline LString Normalize(LString File) noexcept
 {
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     auto Location{File.find('\\')};
     while (Location != File.npos)
     {
         File[Location] = '/';
         Location = File.find('\\', Location);
     }
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
     return File;
 }
 

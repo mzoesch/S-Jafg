@@ -117,12 +117,10 @@ public:
         return Result;
     }
 
-    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode const* GetFocusedWidget() const { return DynamicCast<TNode>(this->FocusedWidget.get()); }
-    FORCEINLINE constexpr WNode const* GetFocusedWidget() const { return this->FocusedWidget.get(); }
     FORCEINLINE constexpr bool IsFocusedWidgetValid() const noexcept { return !!this->FocusedWidget; }
-
-
+    template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+    FORCEINLINE TNode const* GetFocusedWidget() const;
+    FORCEINLINE constexpr WNode const* GetFocusedWidget() const;
 
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
     FORCEINLINE constexpr void ConvertTLToBLOrigin(LVec2F* Vector) const noexcept

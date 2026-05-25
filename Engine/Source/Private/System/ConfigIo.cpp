@@ -250,13 +250,13 @@ bool Serialize(LString* ContentF, const LStringView& InSection, const LStringVie
     std::optional<std::size_t> SectionMaybe = ::FindSection(*ContentF, InSection);
     if (!SectionMaybe)
     {
-        ContentF->append(Jafg::SprintF("[{}]\n", InSection));
+        ContentF->append(algo::sprintf("[{}]\n", InSection));
         SectionMaybe = ::FindSection(*ContentF, InSection);
     }
     std::size_t Section = *SectionMaybe;
 
     ::GoToNextLine(*ContentF, &Section);
-    ContentF->insert(Section, Jafg::SprintF("{}={}\n", InKey, InValue));
+    ContentF->insert(Section, algo::sprintf("{}={}\n", InKey, InValue));
 
     return true;
 }

@@ -80,7 +80,7 @@ Jafg::LEye_v2 Jafg::APawn::GetEye() const noexcept
 
 bool Jafg::APawn::IsPossessedLocally() const noexcept
 {
-    return this->IsOwningControllerValid() && this->GetOwningControllerChecked()->IsOwningNodeValid();
+    return this->IsOwningControllerValid() && this->GetOwningControllerChecked()->IsLocallyPossessed();
 }
 
 Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept

@@ -8,18 +8,18 @@
 #include "Engine/Engine.h"
 #include "Engine/Jxx.h"
 
-#if WITH_TESTS
+#if JAFG_WITH_TESTS
     #include "TestCore/TestRunner.h"
-#endif /* WITH_TESTS */
+#endif /* JAFG_WITH_TESTS */
 
 using namespace Jafg;
 
 #ifndef JAFG_FORCE_LOG_FLUSH_INTERVAL
-    #if IN_SHIPPING
+    #if JAFG_IN_SHIPPING
         #define JAFG_FORCE_LOG_FLUSH_INTERVAL                           10.0
-    #else /* IN_SHIPPING */
+    #else /* JAFG_IN_SHIPPING */
         #define JAFG_FORCE_LOG_FLUSH_INTERVAL                           0.2
-    #endif /* !IN_SHIPPING */
+    #endif /* !JAFG_IN_SHIPPING */
 #endif /* JAFG_FORCE_LOG_FLUSH_INTERVAL */
 
 namespace
@@ -43,7 +43,7 @@ void FlushLogs()
     Jafg::FlushOutStreams();
     if (GEngine)
     {
-        GMutableEngine->LastStdOutFlush = LEngine::Clock::now();
+        Detail::GMutableEngine->LastStdOutFlush = algo::now();
     }
     return;
 }
@@ -73,8 +73,8 @@ void EngineTick()
     }
 
     App::Detail::BeginExitIfRequested();
-    GMutableEngine->DefaultTimeAdvance();
-    GMutableEngine->Tick();
+    Detail::GMutableEngine->DefaultTimeAdvance();
+    Detail::GMutableEngine->Tick();
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;
@@ -92,7 +92,7 @@ void EngineExit()
 
     if (GEngine)
     {
-        GMutableEngine->TearDown();
+        Detail::GMutableEngine->TearDown();
     }
 
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
@@ -101,9 +101,9 @@ void EngineExit()
 
     if (GEngine)
     {
-        delete GMutableEngine;
+        delete Detail::GMutableEngine;
         GEngine = nullptr;
-        GMutableEngine = nullptr;
+        Detail::GMutableEngine = nullptr;
     }
 
     (void)Detail::GetJxxTagRegistry().Destroy();
@@ -197,7 +197,7 @@ EPlatformExit::Type AgnosticLaunch()
         return ::GetMostSignificantExitReason();
     }
 
-#if !WITH_TESTS
+#if !JAFG_WITH_TESTS
 #if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
     algo::raii_leave _{&EngineExit};
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
@@ -206,10 +206,15 @@ EPlatformExit::Type AgnosticLaunch()
 
     App::Detail::PauseBeforeExit = !!App::GetCommandLineArgument(App::PauseBeforeExit);
     App::Detail::AlwaysReportCrash = !!App::GetCommandLineArgument(App::AlwaysReportCrash);
+    App::Detail::bDumpStack = !!App::GetCommandLineArgument(App::DumpStack);
+    LOG_VERBOSE(LogLaunch, "PauseBeforeExit={}", App::Detail::PauseBeforeExit)
+    LOG_VERBOSE(LogLaunch, "AlwaysReportCrash={}", App::Detail::AlwaysReportCrash)
+    LOG_VERBOSE(LogLaunch, "DumpStack={}", App::Detail::bDumpStack)
 #if WITH_STATS
     App::Detail::AllowProfiling = App::CanEverProfile() && !!App::GetCommandLineArgument(App::AllowProfiling);
+    LOG_VERBOSE(LogLaunch, "AllowProfiling={}", App::Detail::AllowProfiling)
 #endif /* WITH_STATS */
-#endif /* !WITH_TESTS */
+#endif /* !JAFG_WITH_TESTS */
 
     Tasks::RegisterThread(ENamedThreads::Master);
 
@@ -217,12 +222,17 @@ EPlatformExit::Type AgnosticLaunch()
     Finder::CreateDirectories(Finder::GetTempDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
-    LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", Finder::Detail::GetEngineRootDir())
-    LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", Finder::Detail::GetSelfProcDir())
+    LOG_VERBOSE(LogLaunch, "Engine root directory is [{}].", Finder::Detail::GetEngineRootDir())
+    LOG_VERBOSE(LogLaunch, "Real engine root directory is [{}].", Finder::Detail::GetSelfProcDir())
 
-#if WITH_TESTS
+    /* This is technically a race cond but who really cares. */
+    Finder::Detail::DumpFile = absolute(Finder::GetMostRecentMemDumpFile());
+    Finder::CreateDirectories(Finder::Detail::DumpFile.parent_path());
+    LOG_VERBOSE(LogLaunch, "Preferred dump file is [{}].", Finder::Detail::DumpFile)
+
+#if JAFG_WITH_TESTS
     return Tester::LTestFramework{}.RunRegisteredTests();
-#else /* WITH_TESTS  */
+#else /* JAFG_WITH_TESTS  */
 
 #if WITH_STATS
     if (App::IsAllowProfiling())
@@ -243,8 +253,8 @@ EPlatformExit::Type AgnosticLaunch()
 
     STAT_CYCLE_START(AlEngineInit, "EngineInit")
     check(GEngine == nullptr)
-    GMutableEngine = new LEngine{};
-    GEngine = GMutableEngine;
+    Detail::GMutableEngine = new LEngine{};
+    GEngine = Detail::GMutableEngine;
     check(GEngine)
     if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
@@ -258,7 +268,7 @@ EPlatformExit::Type AgnosticLaunch()
     if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(AlObjects)
 
-    GMutableEngine->Initialize();
+    Detail::GMutableEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
     if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(AlEngineInit)
@@ -266,10 +276,10 @@ EPlatformExit::Type AgnosticLaunch()
 #if JAFG_WITH_FOREIGN_SUPPORT
     STAT_CYCLE_START(AlEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
     JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
-    GMutableEngine->RefetchPlugins(Prefs.AdditionalPluginsSearchPaths);
+    Detail::GMutableEngine->RefetchPlugins(Prefs.AdditionalPluginsSearchPaths);
     for (LString const& Plugin : Prefs.EnabledEnginePlugins)
     {
-        GMutableEngine->LoadPluginNoFailure(Plugin);
+        Detail::GMutableEngine->LoadPluginNoFailure(Plugin);
     }
     if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     STAT_CYCLE_END(AlEnabledEnginePluginsLoad)
@@ -284,13 +294,13 @@ EPlatformExit::Type AgnosticLaunch()
 
 #if JAFG_WITH_REST_CLS
     STAT_CYCLE_START(AlReSTCliLoad, "ReSTCliLoad")
-    GMutableEngine->SetReSTCliCorePaths();
+    Detail::GMutableEngine->SetReSTCliCorePaths();
     if (auto const& ReSTCliPrefs{GetSingleton<JReSTCliPreferences>()}; ReSTCliPrefs.bAlwaysDisable == false)
     {
         if ((ReSTCliPrefs.bAutoStart && !App::GetCommandLineArgument(Params::ReST_DisableAutoStart))
             || !!App::GetCommandLineArgument(Params::ReST_InstantStart))
         {
-            GMutableEngine->StartReSTCliServer();
+            Detail::GMutableEngine->StartReSTCliServer();
         }
     }
     if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
@@ -301,9 +311,10 @@ EPlatformExit::Type AgnosticLaunch()
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     LaunchProgress::FinishAndGiveUpMemory();
 
-    GMutableEngine->PreviousFrameTime = algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now());
-    Hal::YieldThread();
-    GMutableEngine->FrameTime = algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    Detail::GMutableEngine->FrameStartTimePoint = algo::now();
+    std::this_thread::yield();
+    Detail::GMutableEngine->FrameStartElapsedTime = App::GetElapsedTime(Detail::GMutableEngine->FrameStartTimePoint);
+    Detail::GMutableEngine->DefaultTimeAdvance();
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")
@@ -318,5 +329,5 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
 
     return ::GetMostSignificantExitReason();
-#endif /* !WITH_TESTS */
+#endif /* !JAFG_WITH_TESTS */
 }

@@ -47,7 +47,7 @@ LPath GetSelfProcDir()
     if (CachedSelfProcDir.empty())
     {
         check(Jafg::Tasks::IsOnMasterThread())
-#if PLATFORM_LINUX
+#if JAFG_PLATFORM_LINUX
         char Buffer[JAFG_PLATFORM_MAX_PATH] = { 0 };
         auto Ret{ readlink("/proc/self/exe", Buffer, JAFG_PLATFORM_MAX_PATH) };
         if (Ret == -1)
@@ -57,21 +57,27 @@ LPath GetSelfProcDir()
         Buffer[Ret] = '\0';
         CachedSelfProcDir = LString{ Buffer };
         CachedSelfProcDir = CachedSelfProcDir.parent_path();
-#elif PLATFORM_WINDOWS
+#elif JAFG_PLATFORM_WINDOWS
         TCHAR Buffer[JAFG_PLATFORM_MAX_PATH]{ 0 };
         GetModuleFileName(nullptr, Buffer, JAFG_PLATFORM_MAX_PATH);
         CachedSelfProcDir = LPath{Buffer};
         CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
         CachedSelfProcDir = CachedSelfProcDir.remove_filename();
         CachedSelfProcDir = LPath{algo::left_chop(CachedSelfProcDir.native(), 1)};
-#else /* PLATFORM_WINDOWS */
+#else /* JAFG_PLATFORM_WINDOWS */
     #error "Missing implementation for this platform."
-#endif /* !PLATFORM_WINDOWS */
+#endif /* !JAFG_PLATFORM_WINDOWS */
     }
 
     return CachedSelfProcDir;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
+
+ENGINE_API LPath DumpFile{ "unsettling.dump"};
+
+#if JAFG_PLATFORM_LINUX
+    ENGINE_API std::optional<LPath> _gdb;
+#endif /* JAFG_PLATFORM_LINUX */
 
 } /* ~Namespace Finder::Detail */
 
@@ -134,7 +140,7 @@ LString const& CompilerVersion() noexcept
 
 LString const& CxxStandard() noexcept
 {
-    static LString Standard{Jafg::SprintF("C++{}", __cplusplus)};
+    static LString Standard{algo::sprintf("C++{}", __cplusplus)};
     return Standard;
 }
 
@@ -145,6 +151,8 @@ LStringView GetTargetConfiguration() noexcept { return LStringView{DETAIL_ENGINE
 LStringView GetTargetCompound() noexcept { return LStringView{DETAIL_ENGINE_TARGET_COMPOUND}; }
 LStringView GetTargetPlatformCompound() noexcept { return LStringView{DETAIL_ENGINE_PLATFORM_COMPOUND}; }
 LStringView GetTargetPath() noexcept { return LStringView{DETAIL_ENGINE_CONFIG_COMPOUND}; }
+LStringView GetExpectedRuntime() noexcept { return LStringView{DETAIL_ENGINE_EXPECTED_RUNTIME}; }
+LStringView GetExpectedRuntimePath() noexcept { return LStringView{"Binaries/" DETAIL_ENGINE_CONFIG_COMPOUND "/" DETAIL_ENGINE_EXPECTED_RUNTIME}; }
 
 ENGINE_API LProgramParameter CoreHelp{{
     .Identifier = "Help",
@@ -174,6 +182,10 @@ ENGINE_API LProgramParameter AlwaysReportCrash{{
     .Identifier = "Jafg.AlwaysReportCrash",
     .Description = "Whether to always show crash dialog windows (if a front-end is available) and report them.",
     }};
+ENGINE_API LProgramParameter DumpStack{{
+    .Identifier = "Jafg.DumpStack",
+    .Description = "Whether to also dump the stack instead of only a core dump if supported.",
+    }};
 ENGINE_API LProgramParameter AllowProfiling{{
     .Identifier = "Jafg.AllowProfiling",
     .Description = "Whether to allow profiling and stats gathering.",
@@ -190,6 +202,7 @@ namespace Jafg::App::Detail
 
 ENGINE_API bool bAlreadyCrashed{};
 ENGINE_API bool bSuppressCrashDialog{};
+ENGINE_API bool bDumpStack{};
 
 ENGINE_API bool bShouldRequestExit{};
 ENGINE_API bool bEngineRequestingExit{};
@@ -251,7 +264,7 @@ void Jafg::App::Detail::WaitForDebuggerGracefully(bool bAllowInstantBreak)
 
     while (!App::IsTracerPidValidNow())
     {
-        Hal::SleepNoStats(1.0);
+        App::SleepNoStats(1.0);
     }
 
     LOG_INFO(LogJafgInternal, "Debugger attached - continuing.")
@@ -318,8 +331,8 @@ void Jafg::App::RequestEngineExit(i32 CustomExitStatus, LString Reason) noexcept
     }
 }
 
-void Jafg::Hal::Sleep(f64 InSeconds)
+void Jafg::App::Sleep(f64 InSeconds)
 {
     STAT_CYCLE_FUNCTION()
-    Hal::SleepNoStats(InSeconds);
+    SleepNoStats(InSeconds);
 }

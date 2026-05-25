@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Nodes/UserWidget.h"
+#include "Framework/Lackey.h"
 #include "Nodes/GenericTabInfos.h"
 #include "Rhi/RenderTarget.h"
 #include "WorldViewer.generated.h"
@@ -12,7 +13,7 @@ namespace Jafg
 
 //# A widget to view a world in a primitive manner.
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WWorldViewer : public WUserWidget
+class ENGINE_API WWorldViewer : public WUserWidget, public LLocalLackey
 {
     GENERATED_CLASS_BODY()
 
@@ -21,7 +22,8 @@ class ENGINE_API WWorldViewer : public WUserWidget
 protected:
 
     explicit WWorldViewer(LNodeDynamicInit const& Init) noexcept
-        : Super{Init}, RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
+        : Super{Init}, LLocalLackey{Init.Outer}
+        , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
     {
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetShouldTick(true);
@@ -29,7 +31,8 @@ protected:
     }
     template<typename TCxxClass>
     explicit WWorldViewer(TNodeStaticInit<TCxxClass> const& Init) noexcept
-        : Super{Init}, RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
+        : Super{Init}, LLocalLackey{Init.Outer}
+        , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
     {
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetShouldTick(true);
@@ -61,6 +64,8 @@ public:
     //#
     std::optional<rhi::extent2> DesiredViewportExtent;
     FORCEINLINE bool IsManual() const noexcept { return this->DesiredViewportExtent.has_value(); }
+
+    void TravelTo(LWorld& World);
 
 private:
 

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#if PLATFORM_WASM
+#if JAFG_PLATFORM_WASM
 
 #include "Platform/Surface.h"
 #include "Nodes/Viewport.h"
@@ -399,4 +399,4 @@ bool Jafg::LSurfaceDom::IsVSync() const
     return false;
 }
 
-#endif /* PLATFORM_WASM */
+#endif /* JAFG_PLATFORM_WASM */

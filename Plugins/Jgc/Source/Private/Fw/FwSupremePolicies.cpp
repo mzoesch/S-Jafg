@@ -8,7 +8,6 @@
 #include "Components/DebugCameraComponent.h"
 #include "User/LocalEgo.h"
 #include "User/Frontend/JgcPauseScreen.h"
-#include "Nodes/WorldNode.h"
 
 void Jgc::AFwSupremePolicies::OnWorldPreInit()
 {
@@ -90,7 +89,7 @@ void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControlle
 
     if (Pc.IsLocallyPossessed())
     {
-        if (Pc.IsOwningNodeValid())
+        if (Pc.IsOwningLackey<Jafg::ELackey::Local>())
         {
             // TODO:
             //      Parent have TJxxUnique<T>.
@@ -98,7 +97,7 @@ void Jgc::AFwSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControlle
             //      If a child is emplaced into its parent. Query for outer viewport. If exits -> construct, else defer.
             //      Once attached. Children cannot be removed unless they are destroyed. They can never change their parent again.
 
-            Jafg::ConstructWidget(Jafg::TNodeStaticInit<WPauseScreen>{Pc.GetOwningNodeChecked()->GetViewport()});
+            Jafg::ConstructWidget(Jafg::TNodeStaticInit<WPauseScreen>{Pc.GetOwningLackey<Jafg::ELackey::Local>().Viewport});
         }
         else
         {

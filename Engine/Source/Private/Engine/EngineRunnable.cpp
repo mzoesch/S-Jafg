@@ -7,11 +7,11 @@ Jafg::ETaskExit::Type Jafg::LEngineRunnable::Run()
 {
     STAT_CYCLE_FUNCTION()
 
-    while (this->IsStopped() == false)
+    while (!this->IsStopped())
     {
         if (Tasks::TryRunTasks(ENamedThreads::WorkerThread, ETaskTime::Whenever, 1) == 0)
         {
-            Jafg::Hal::SleepNoStats(0.2);
+            App::SleepNoStats(0.2);
         }
 
         continue;

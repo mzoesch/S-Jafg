@@ -5,13 +5,13 @@
 #include "Containers/ComplexQueue.h"
 #include "Core/App.h"
 #include "Stats/Stats.h"
-#if JAFG_WITH_GCC || PLATFORM_LINUX
+#if JAFG_WITH_GCC || JAFG_PLATFORM_LINUX
     #include <thread>
 #endif /* WITH_GCC */
-#if PLATFORM_WASM
+#if JAFG_PLATFORM_WASM
     #include <emscripten/threading.h>
     // #include <c++/v1/__threading_support>
-#endif /* PLATFORM_WASM */
+#endif /* JAFG_PLATFORM_WASM */
 
 namespace
 {
@@ -30,13 +30,13 @@ namespace
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
 #elif JAFG_WITH_GCC || JAFG_WITH_CLANG
-    #if PLATFORM_WASM
+    #if JAFG_PLATFORM_WASM
         static_assert(::std::is_same_v<::Jafg::LThreadId, ::std::__libcpp_thread_id>, "Compiler specific thread id is not the same.");
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() pthread_self()
-    #else /* PLATFORM_WASM */
+    #else /* JAFG_PLATFORM_WASM */
         static_assert(std::is_same_v<::Jafg::LThreadId, pthread_t>, "Compiler specific thread id is not the same.");
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() __gthread_self()
-    #endif /* !PLATFORM_WASM */
+    #endif /* !JAFG_PLATFORM_WASM */
 #endif /* WITH_GCC */
 
 static_assert(
@@ -136,16 +136,16 @@ FORCEINLINE void RenameMe(const LString& InDisplayName)
 {
     jassert( InDisplayName.size() * sizeof(LString::value_type) < 16 && "Thread name may not exceed 16 bytes." )
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     LWString WideDisplayName = algo::utf8_to_utf16(InDisplayName);
     ::SetThreadDescription(::GetCurrentThread(), WideDisplayName.c_str());
     LOG_VERBOSE(LogTaskUtility, "Renamed thread to [{}].", InDisplayName)
-#elif PLATFORM_LINUX
+#elif JAFG_PLATFORM_LINUX
     pthread_setname_np(pthread_self(), InDisplayName.c_str());
     LOG_VERBOSE(LogTaskUtility, "Renamed thread to [{}].", InDisplayName)
-#else /* PLATFORM_LINUX */
+#else /* JAFG_PLATFORM_LINUX */
     LOG_WARNING(LogTaskUtility, "Failed to rename thread to [{}].", InDisplayName)
-#endif /* !PLATFORM_LINUX */
+#endif /* !JAFG_PLATFORM_LINUX */
 
     return;
 }
@@ -204,7 +204,7 @@ LString Jafg::LexToString(const ENamedThreads::Type Thread)
     {
     case ENamedThreads::Master:  { return "Master";  }
     case ENamedThreads::Failure: { return "Failure"; }
-    default: { return Jafg::SprintF("Thread_{}", static_cast<LThreadId>(Thread)); }
+    default: { return algo::sprintf("Thread_{}", static_cast<LThreadId>(Thread)); }
     }
 }
 
@@ -569,7 +569,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
         if (ErrorLevel >= ETaskExit::SanitizedFailure)
         {
-            LString ErrorLevelStr = Jafg::SprintF(
+            LString ErrorLevelStr = algo::sprintf(
                 "Thread {}[{}] with aggregator {}[{}] failed to initialize with a sanitized failure code: {}[{}].",
                 Runnable->GetHumanReadableName(), LexToString(ThreadName),
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
@@ -681,7 +681,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 }
                 if (LambdaErrorLevel >= ETaskExit::SanitizedFailure)
                 {
-                    LString ErrorLevelStr = Jafg::SprintF(
+                    LString ErrorLevelStr = algo::sprintf(
                         "Thread {}[{}] failed to initialize with a sanitized failure code: {}[{}].",
                         MyRunnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)

@@ -5,12 +5,11 @@
 #include "Framework/Actor.h"
 #include "Framework/Pawn.h"
 
-TJxxUnique<Jafg::APersonaController> Jafg::ASupremePolicies::OnIncomingConnectionRequest(
-      EIncomingConnectionRequest IncomingConnection
-    , LString* OutRejectionReason /* = nullptr */
-    )
+std::expected<TJxxUnique<Jafg::APersonaController>, LString> Jafg::ASupremePolicies::OnIncomingConnectionRequest(EConnectionRequest Req)
 {
-    return TJxxUnique<APersonaController>{SpawnObject(CastTo<APersonaController>{}, {this->GetWorld(), this->PersonaControllerClass.GetClassOrDefault()})};
+    return TJxxUnique<APersonaController>{
+        SpawnObject(CastTo<APersonaController>{}, {this->GetWorld(), this->PersonaControllerClass.GetClassOrDefault()})
+        };
 }
 
 void Jafg::ASupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)

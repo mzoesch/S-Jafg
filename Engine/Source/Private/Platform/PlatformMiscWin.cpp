@@ -2,7 +2,7 @@
 
 #if 0
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
 
 #include "Nodes/InterfaceTypes.h"
 #include "Platform/PlatformMisc.h"
@@ -224,7 +224,7 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
         Viewport.WidthMm  = Size.X;
         Viewport.HeightMm = Size.Y;
 
-        Viewport.Name = Jafg::SprintF("[{}] Generic Pnp Monitor ({}x{}px)",
+        Viewport.Name = algo::sprintf("[{}] Generic Pnp Monitor ({}x{}px)",
             GPlatformMisc->PhysicalViewports.size(),
             Viewport.WidthPx, Viewport.HeightPx
             );
@@ -272,6 +272,6 @@ bool Jafg::PlatformMisc::SetPhysicalViewports()
     return true;
 }
 
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 #endif /* 0 */

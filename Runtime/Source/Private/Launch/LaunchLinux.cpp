@@ -1,10 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
-#if PLATFORM_LINUX
+#if JAFG_PLATFORM_LINUX
 
 #include "Core/App.h"
 #include "Engine/Engine.h"
 #include <csignal>
+#include <sys/resource.h>
+#include <sys/prctl.h>
 
 extern EPlatformExit::Type AgnosticLaunch();
 
@@ -21,7 +23,7 @@ void SignumPosixAction_JafgHandler_Fatal(i32 Signal, siginfo_t* Info, void* InCo
     if (App::Detail::bAlreadyCrashed)
     {
         LOG_ERROR(LogJafgInternal, "Already crashed - ignoring signal [{}].", Signal)
-        LOnPlatformBreak::ExitQuietly();
+        App::Detail::TrapMe();
     }
 
     App::Detail::bAlreadyCrashed = true;
@@ -60,7 +62,7 @@ void SignumPosixAction_JafgHandler_Fatal(i32 Signal, siginfo_t* Info, void* InCo
     }
     ::write(STDERR_FILENO, "].\n", 3);
 
-    LOnPlatformBreak::OnProgramPanicImpl(Emitted);
+    App::Detail::TrapMe(Emitted);
 }
 
 NORETURN
@@ -78,7 +80,7 @@ void SignumPosixAction_JafgHandler_Exit(i32 InSignal, siginfo_t*, void*)
     {
         Signal = Name;
     }
-    App::RequestEngineExit(SprintF("Received signal [{}]: {}", InSignal, Signal));
+    App::RequestEngineExit(algo::sprintf("Received signal [{}]: {}", InSignal, Signal));
 }
 
 } /* ~Namespace <Anonymous> */
@@ -128,7 +130,7 @@ i32 main(i32 c, char const* v[])
 
     ///////////////////////////////////////////////////////////////////////////////
     // ISO C99
-    ::sigaction(SIGABRT, &Action_Fatal, nullptr); /* Abnormal termination from ::abort. */
+    //::sigaction(SIGABRT, &Action_Fatal, nullptr); /* Abnormal termination from ::abort. */
     ::sigaction(SIGFPE,  &Action_Fatal, nullptr); /* Erroneous arithmetic operation. */
     ::sigaction(SIGHUP,  &Action_Error, nullptr); /* Hangup signal of terminal or helicopter parent. */ // We do not really care.
     ::sigaction(SIGILL,  &Action_Fatal, nullptr); /* Illegal instruction. */
@@ -147,6 +149,43 @@ i32 main(i32 c, char const* v[])
     ::sigaction(SIGBUS,  &Action_Fatal, nullptr); /* Bus error (bad memory access). */
     ::sigaction(SIGSYS,  &Action_Fatal, nullptr); /* Bad system call (SVr4). */
 
+    {
+        /* TODO: Is this safe? Probably not -- fix */
+        struct rlimit rl{RLIM_INFINITY, RLIM_INFINITY};
+        setrlimit(RLIMIT_CORE, &rl);
+        prctl(PR_SET_DUMPABLE, 1);
+    }
+
+    if (char const* EnvPtr{std::getenv("PATH")})
+    {
+        LString Env{EnvPtr};
+
+        auto Start{0uz};
+        while (Start < Env.size())
+        {
+            auto End{Env.find(':', Start)};
+            if (End == std::string::npos)
+            {
+                End = Env.size();
+            }
+            if (auto Candidate{algo::sub<LString, LPath>(Env, Start, End) / "gdb"};
+                std::filesystem::exists(Candidate) && std::filesystem::is_regular_file(Candidate))
+            {
+                auto Perms{std::filesystem::status(Candidate).permissions()};
+                if (   (Perms & std::filesystem::perms::owner_exec ) != std::filesystem::perms::none
+                    || (Perms & std::filesystem::perms::group_exec ) != std::filesystem::perms::none
+                    || (Perms & std::filesystem::perms::others_exec) != std::filesystem::perms::none)
+                {
+                    Finder::Detail::_gdb = Candidate;
+                    break;
+                }
+            }
+            Start = End + 1;
+        }
+    }
+    if constexpr (IS_COMPILED_LOG(LogJafgInternal, Verbose))
+    LOG_VERBOSE(LogLaunch, "gdb=[{}].", Finder::Detail::_gdb ? *Finder::Detail::_gdb : "<not found>")
+
     ErrorLevel = AgnosticLaunch();
 
     if (App::IsPauseBeforeExit())
@@ -161,4 +200,4 @@ i32 main(i32 c, char const* v[])
     return ErrorLevel;
 }
 
-#endif /* PLATFORM_LINUX */
+#endif /* JAFG_PLATFORM_LINUX */

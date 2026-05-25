@@ -25,44 +25,83 @@ class LEngine;
 class LWorld;
 class JEngineSubsystem;
 class LCommandLineInterface;
+class AWorldObject;
 
 } /* ~Namespace Jafg */
 
 //# The engine singleton. Prefer to use #GEngine instead of #GMutableEngine.
 ENGINE_API extern Jafg::LEngine const* GEngine;
-ENGINE_API extern Jafg::LEngine* GMutableEngine;
 
 namespace Jafg
 {
-
 namespace Detail
 {
 
+ENGINE_API extern LEngine* GMutableEngine;
+
 struct LWorldTrack final
 {
+    friend LEngine;
+    friend LWorld;
+    friend AWorldObject;
+
+    //# One time callbacks for initialization.
     struct LCallbacks
     {
-        TFunction<void(LWorld&)> OnWorldPreInit;
-        TFunction<void(LWorld&)> OnWorldPostInit;
+        TFunction2<void(LWorld& World)> OnPreInit;
+        TFunction2<void(LWorld& World)> OnPostInit;
     };
 
+    struct CreateInfo
+    {
+        LString HumanReadableName{ "Transient World" };
+    };
     LWorldTrack() noexcept = delete;
     constexpr LWorldTrack(LWorldTrack&&) noexcept = default;
-    constexpr LWorldTrack(LString HumanReadableName) noexcept
-        : ChildWorld{ std::make_unique<LWorld>(std::move(HumanReadableName)) }
+    constexpr LWorldTrack(CreateInfo Info)
+        : ChildWorld{std::make_unique<LWorld>(std::move(Info.HumanReadableName))}
     {
-        check( this->ChildWorld.get() != nullptr && this->ChildWorld->GetWorldState() == EWorldState::PreInitializing )
+        check(this->ChildWorld.get() && this->ChildWorld->GetWorldState() == EWorldState::PreInitializing)
     }
-    constexpr ~LWorldTrack() noexcept { check( this->ChildWorld.get() == nullptr || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill ) }
+    constexpr ~LWorldTrack() noexcept { check(this->ChildWorld.get() || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill) }
 
-    ENGINE_API void CreateWorldFromParams();
+    NODISCARD FORCEINLINE constexpr bool IsWaitingForTravel() const noexcept { return !this->TravelUrl.empty(); }
+    FORCEINLINE bool IsValid() const noexcept { return !!this->ChildWorld.get(); }
+    NODISCARD FORCEINLINE LWorld& GetWorld() const noexcept { check(this->IsValid()) return *this->ChildWorld; }
 
-    FORCEINLINE bool IsWaitingForTravel() const noexcept { return this->TravelUrl.empty() == false; }
+private:
+
     LString TravelUrl;
-    LCallbacks Callbacks;
-
-    FORCEINLINE bool IsValid() const noexcept { return this->ChildWorld.get() != nullptr; }
     TUnique<LWorld> ChildWorld;
+    LCallbacks Callbacks;
+};
+
+//#
+//# After a world has been summoned. They have to be initialized right after. Delaying initialization for even one
+//# tick is undefined behavior.
+//#
+struct LWorldTrackInitializer final
+{
+    LWorldTrackInitializer() noexcept = delete;
+    LWorldTrackInitializer(LWorldStorage Storage) noexcept : Storage{std::move(Storage)} { check(this->Storage.IsValid()) }
+    PROHIBIT_COPY(LWorldTrackInitializer)
+    DEFAULT_CONSTEXPR_MOVE(LWorldTrackInitializer)
+#if JAFG_DO_CHECKS
+    inline ~LWorldTrackInitializer() noexcept
+    {
+        /* Raii check to assert that you have initialized the world. */
+        check(this->Storage.IsNull())
+    }
+#endif /* JAFG_DO_CHECKS */
+
+    //#
+    //# Browse the world after initialization. This is required.
+    //#
+    LWorld& Browse(LString Url, LWorldTrack::LCallbacks Callbacks = {});
+
+private:
+
+    LWorldStorage Storage;
 };
 
 } /* ~Namespace Detail */
@@ -81,12 +120,9 @@ public:
     // Time Related Stuff.
     ///////////////////////////////////////////////////////////////////////////////
 
-    typedef std::chrono::high_resolution_clock Clock;
-    typedef Clock::time_point Timepoint;
-
     ENGINE_API void DefaultTimeAdvance();
 
-    Timepoint LastStdOutFlush;
+    algo::clock::time_point LastStdOutFlush;
 
     //#
     //# The maximum delta time allowed between frames.
@@ -94,12 +130,20 @@ public:
     //#
     static inline constexpr f64 MaxDeltaTime{ 1.0 / 3.0 };
 
-    f64 FrameTime{};
-    f64 PreviousFrameTime{};
+    //# The time when the current frame started. Everything is calculated relative to this.
+    algo::clock::time_point FrameStartTimePoint;
+    //# The elapsed time from static storage initialization to the current frame.
+    f64 FrameStartElapsedTime{};
+    //# The last frame's start elapsed time.
+    f64 PreviousFrameStartElapsedTime{};
 
+    //# Clamped delta time when encountering spikes.
     f64 DeltaTime{};
+    //# The actual time. Never use this for any sort of logic -- only stats, etc.
     f64 RealDeltaTime{};
+    //# Time lost while clamping #DeltaTime.
     f64 LostDeltaTime{};
+    //# Time the engines master thread spend idle.
     f64 IdleDeltaTime{};
     constexpr bool HasLostDeltaTime() const noexcept { return this->LostDeltaTime > 0.0; }
     constexpr bool HasIdleDeltaTime() const noexcept { return this->IdleDeltaTime > 0.0; }
@@ -110,7 +154,7 @@ public:
     //# All time related members are measured in seconds except stated otherwise.
     struct TimeStat final
     {
-        Timepoint Start{ Clock::now() };
+        algo::clock::time_point Start{ algo::now() };
         u64 FrameCount{};
         f64 Low{ std::numeric_limits<f64>::max() };
         f64 High{ -1.0 };
@@ -121,7 +165,7 @@ public:
     f64 StatisticsPeriod{ 1.0 };
     //# How many frames have passed in this statistic sweep.
     u64 StatisticsFrameCount{};
-    Timepoint LastStatisticsTime{ Clock::now() };
+    algo::clock::time_point LastStatisticsTime{ algo::now() };
     TimeStat CurrentStat;
     TimeStat PreviousStat;
 
@@ -162,12 +206,22 @@ public:
     // Track Related.
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API Detail::LWorldTrack& GetTrackFromWorld(LWorld const* World);
-
+    //#
     //# Summon a completely new fresh world.
-    ENGINE_API LWorldStorage SummonWorld(LString const& HumanReadableName);
+    //# @note Master thread of course only.
+    //#
+    ENGINE_API Detail::LWorldTrackInitializer SummonWorld(Detail::LWorldTrack::CreateInfo Info);
 
-    ENGINE_API bool IsWorldValid(LWorld const* World) const;
+    //# Unlike worlds, track pointer may change location at any time. It is not safe to store them.
+    NODISCARD FORCEINLINE Detail::LWorldTrack& GetTrackFromWorld(LWorld const& World)
+    {
+        return *algo::find_checked(this->Tracks, &World, [](auto const& E){ return E.ChildWorld.get(); });
+    }
+
+    //#
+    //# Whether your world pointer is still valid.
+    //#
+    ENGINE_API bool IsWorldValid(LWorld const* World) const noexcept;
 
     //#
     //# Browse the provided world to a new url at the next opportunity.
@@ -176,8 +230,10 @@ public:
     //#    <LevelName>
     //#    <LevelName>?<option>?... (@see #LWorldParameters for how to format options.)
     //#
-    FORCEINLINE void Browse(LWorld const* World, LString const& Url, Detail::LWorldTrack::LCallbacks Callbacks = {})
-        { this->Browse(this->GetTrackFromWorld(World), Url, std::move(Callbacks)); }
+    FORCEINLINE LWorld& Browse(LWorld& World, LString Url, Detail::LWorldTrack::LCallbacks Callbacks = {})
+    {
+        return this->Browse(this->GetTrackFromWorld(World), std::move(Url), std::move(Callbacks));
+    }
 
     //# @return True if registered successfully.
     ENGINE_API  bool RegisterLevel(LLevel const& Level);
@@ -197,7 +253,7 @@ public:
 
 private:
 
-    ENGINE_API void Browse(Detail::LWorldTrack& Track, LString const& Url, Detail::LWorldTrack::LCallbacks Callbacks);
+    ENGINE_API LWorld& Browse(Detail::LWorldTrack& Track, LString Url, Detail::LWorldTrack::LCallbacks Callbacks);
     bool IsTrackUrlInternal(LString const& Url) const;
     bool TravelTrack(Detail::LWorldTrack& Track);
     LLevel* GetLevelByInternalUrl(LString const& Url);
@@ -281,5 +337,15 @@ private:
     LReStCli ReSTCli;
 #endif /* JAFG_WITH_REST_CLS */
 };
+
+inline LWorld& Detail::LWorldTrackInitializer::Browse(LString Url, LWorldTrack::LCallbacks Callbacks /* = {}*/)
+{
+    check(this->Storage.IsValid())
+    check(GMutableEngine)
+    auto& Result{GMutableEngine->Browse(*this->Storage, std::move(Url), std::move(Callbacks))};
+    this->Storage.Reset();
+
+    return Result;
+}
 
 } /* ~Namespace Jafg */

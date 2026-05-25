@@ -1,6 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/WorldViewer.h"
+
+#include "Engine/Engine.h"
 #include "Nodes/Viewport.h"
 #include "Platform/Surface.h"
 #include "Framework/Frontend.h"
@@ -16,6 +18,8 @@
 #include "Nodes/Text.h"
 #include "Widgets/Input_Vector2.h"
 #include "Nodes/HButton.h"
+#include "Engine/World.h"
+#include "Nodes/EditableTextButton.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -176,6 +180,28 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
     return;
 }
 
+void Jafg::WWorldViewer::TravelTo(LWorld& World)
+{
+    LOG_VERBOSE(LogWorld, "[{}]: Traveling to world [{}@{}]."
+        , this->GetNameAsString(), World.GetHumanReadableName(), World.GetUnderlyingLevelName())
+
+    if (auto Result{World.Login({LTransientPersona::Local{
+        .Lackey=*this
+        }})})
+    {
+        check(this->IsOwnedPersonaControllerValid())
+    }
+    else
+    {
+        LOG_ERROR(LogWidgetFramework,
+            "[{}]: Failed to login to world [{}@{}]. Reason: {}",
+            this->GetNameAsString(), World.GetHumanReadableName(), World.GetUnderlyingLevelName(), Result.error()
+            )
+    }
+
+    return;
+}
+
 void Jafg::WWorldViewer::InitializeRenderTarget()
 {
     this->RenderTarget.Initialize({
@@ -211,7 +237,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
     };
     auto SharedNodes{std::make_shared<LSharedNodes>()};
     auto Res{std::make_shared<LVec2u64>(this->RenderTarget.GetExtent().width, this->RenderTarget.GetExtent().height)};
-    CreateDropDownMenu(this->GetViewport(), Where, {}, {.Children={
+    CreateDropDownMenu(this->GetViewport(), Where, {}, {
         LDropDownNodeSeparator{.DisplayName = "VIEWPORT"},
         LDropDownNodeCustom{
             .OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
@@ -294,79 +320,126 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                 return LDropDownNodeCustom::reply::unhandled();
             },},
         LDropDownNodeInformation{
-            .What = SprintF("Min-Resolution: {}x{}", WWorldViewer::MinViewportExtent.width, WWorldViewer::MinViewportExtent.height),
+            .What = algo::sprintf("Min-Resolution: {}x{}", WWorldViewer::MinViewportExtent.width, WWorldViewer::MinViewportExtent.height),
             },
-        LDropDownNodeCustom{
-            .OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget) -> LFactoryNode
+        LDropDownNodeCustom{.OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
             {
-                return
-                    NewNode(Viewport).Class<WText>().SaveTo(&SharedNodes->DisplayText)
-                        .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
-                        .MinDesiredSize({128_spt, 0})
-                        .TextTint(this->IsManual() ? Colors::White : Colors::Gray)
-                        .Content("Resolution")
-                    + NewNode(Viewport).Class<WInput_Vector2>(*Res).SaveTo(&SharedNodes->VectorInput)
-                        .OnVectorChanged([Res](WInput_Vector2& Self)
+                return NewNode(Viewport).Class<WText>().SaveTo(&SharedNodes->DisplayText)
+                    .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
+                    .MinDesiredSize({128_spt, 0})
+                    .TextTint(this->IsManual() ? Colors::White : Colors::Gray)
+                    .Content("Resolution")
+                + NewNode(Viewport).Class<WInput_Vector2>(*Res).SaveTo(&SharedNodes->VectorInput)
+                    .OnVectorChanged([Res](WInput_Vector2& Self)
+                    {
+                        *Res = Self.Get<u64>();
+                    })
+                    .Enabled(this->IsManual())
+                    .OnDestruct([this, Res](auto&&...)
+                    {
+                        if (this->IsManual())
                         {
-                            *Res = Self.Get<u64>();
-                        })
-                        .Enabled(this->IsManual())
-                        .OnDestruct([this, Res](auto&&...)
-                        {
-                            if (this->IsManual())
+                            if constexpr (IS_COMPILED_LOG(LogWidgets, Verbose))
+                            if (Res->x < WWorldViewer::MinViewportExtent.width || Res->y < WWorldViewer::MinViewportExtent.height)
                             {
-                                if constexpr (IS_COMPILED_LOG(LogWidgets, Verbose))
-                                if (Res->x < WWorldViewer::MinViewportExtent.width || Res->y < WWorldViewer::MinViewportExtent.height)
-                                {
-                                    LOG_VERBOSE(LogWidgets
-                                        , "[{}]: Clamping resolution {} to minimum allowed resolution {}."
-                                        , this->GetNameAsString(), maths::to_string(*Res)
-                                        , maths::to_string(maths::max(*Res, WWorldViewer::MinViewportExtent.ToVec<u64>()))
-                                        )
-                                }
-                                *Res = maths::max(*Res, WWorldViewer::MinViewportExtent.ToVec<u64>());
-                                this->DesiredViewportExtent = rhi::extent2::from_vec(*Res);
+                                LOG_VERBOSE(LogWidgets
+                                    , "[{}]: Clamping resolution {} to minimum allowed resolution {}."
+                                    , this->GetNameAsString(), maths::to_string(*Res)
+                                    , maths::to_string(maths::max(*Res, WWorldViewer::MinViewportExtent.ToVec<u64>()))
+                                    )
                             }
-                        });
+                            *Res = maths::max(*Res, WWorldViewer::MinViewportExtent.ToVec<u64>());
+                            this->DesiredViewportExtent = rhi::extent2::from_vec(*Res);
+                        }
+                    });
             },
             .IsEnabled = this->IsManual(),
-            .OnAction=[](auto&&...){ return LDropDownNodeCustom::reply::unhandled(); }},
+            .OnAction=[](auto&&...){ return LDropDownNodeCustom::reply::unhandled(); },
+            },
         // TODO: Make an option for commonly used resolutions
         LDropDownNodeSeparator{.DisplayName = "WORLD"},
-        LDropDownNodeSubmenu{
+        LDropDownNodeDeferredSubMenu{
             .Selector = {
                 .DisplayName = "Connect to",
                 .Icon = "Icons/Jafg.Sphere",
                 },
-            .Children = {
-                LDropDownNodeOption{
+            .OnChildren = {[this, SharedNodes, Res]
+            {
+                TArray<LDropDownNode> Result;
+
+                Result.emplace_back(LDropDownNodeSeparator{.DisplayName="ENGINE WORLDS"});
+                if (auto& Tracks{this->GetEngine().GetTracks()}; Tracks.empty())
+                {
+                    Result.emplace_back(LDropDownNodeInformation{.What="There are currenelty no worlds running."});
+                }
+                else
+                {
+                    for (auto& Track : Tracks)
+                    {
+                        auto& World{Track.GetWorld()};
+                        if (World.GetWorldState() == EWorldState::Running)
+                        {
+                            Result.emplace_back(LDropDownNodeOption{
+                                .Selector = {
+                                    .DisplayName = World.GetHumanReadableName(),
+                                    .Icon = "Icons/Jafg.Sphere",
+                                    },
+                                .OnAction = [this, &World](auto&&...)
+                                {
+                                    this->TravelTo(World);
+                                    return algo::reply::unhandled();
+                                },});
+                        }
+                        else
+                        {
+                            Result.emplace_back(LDropDownNodeInformation{
+                                .What = algo::sprintf("{} (Not joinable)", World.GetHumanReadableName()),
+                                });
+                        }
+                    }
+                }
+
+                struct LNewWorldNodes
+                {
+                    WEditableTextButton* Name{};
+                };
+                auto NewWorldNodes{std::make_shared<LNewWorldNodes>()};
+                Result.emplace_back(LDropDownNodeSeparator{.DisplayName="NEW WORLD"});
+                Result.emplace_back(LDropDownNodeScratch{.OnCreate=[SharedNodes, Res, NewWorldNodes]
+                (LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+                {
+                    auto& Prefs{GetSingleton<JUserPreferences>()};
+                    return NewNode(Viewport).Class<WHParent>()
+                        .Anchor(EAnchor::HFill)
+                        .Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                    [
+                        NewNode(Viewport).Class<WText>().SaveTo(&SharedNodes->DisplayText)
+                            .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
+                            .MinDesiredSize({128_spt, 0})
+                            .TextTint(Colors::White)
+                            .Content("Name")
+                        + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->Name)
+                            .MinDesiredSize({128_spt, 0})
+                            .Padding({2_spt, 0})
+                            .Style(Prefs.EditorEditableTextButtonStyle())
+                            .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+                            .Content("Editor World")
+                            .PlaceholderContent("Name of new world")
+                    ];},});
+                Result.emplace_back(LDropDownNodeOption{
                     .Selector = {
-                        .DisplayName = "Localhost",
-                        .Icon = "Icons/Jafg.Sphere",
+                        .DisplayName = "Create New World",
                         },
-                    },
-                LDropDownNodeOption{
-                    .Selector = {
-                        .DisplayName = "Localhost",
-                        .Icon = "Icons/Jafg.Sphere",
-                        },
-                    },
-                },
-            },
-        LDropDownNodeSubmenu{
-            .Selector = {
-                .DisplayName = "Connect to",
-                .Icon = "Icons/Jafg.Sphere",
-                },
-            },
-        LDropDownNodeSubmenu{
-            .Selector = {
-                .DisplayName = "Connect to",
-                .Icon = "Icons/Jafg.Sphere",
-                },
-            },
-        },}
-        );
+                    .OnAction = [this, NewWorldNodes](auto&&...)
+                    {
+                        check(NewWorldNodes.get() && NewWorldNodes->Name)
+                        auto World{this->GetMutableEngine().SummonWorld({.HumanReadableName=NewWorldNodes->Name->GetContent()})};
+                        this->TravelTo(World.Browse("Level"));
+                        return algo::reply::unhandled();
+                    },});
+                return Result;
+            },},},
+        });
 
     return;
 }

@@ -6,8 +6,8 @@
 
 Jafg::LFrontend& Jafg::JFrontendSubsystem::GetFrontend() noexcept
 {
-    check(GMutableEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid.")
-    return GMutableEngine->GetLocalEgo().GetFrontend();
+    check(Detail::GMutableEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid.")
+    return Detail::GMutableEngine->GetLocalEgo().GetFrontend();
 }
 
 Jafg::LFrontend const& Jafg::JFrontendSubsystem::GetFrontend() const noexcept

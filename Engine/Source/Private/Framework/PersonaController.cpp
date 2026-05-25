@@ -1,24 +1,21 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/PersonaController.h"
-#include "Nodes/WorldNode.h"
 #include "Engine/Engine.h"
 
 void Jafg::APersonaController::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
 
-    if (this->IsOwningNodeValid())
+    if (this->IsOwningLackeyValid())
     {
         if (!App::IsTearingDown())
         {
-            LOG_WARNING(LogEgo,
-                "Persona controller [{}] is ending life while still possessed by a world node. World node will no longer posses a controller.",
-                this->GetNameAsString()
-                )
+            LOG_WARNING(LogEgo, "[{}]: Ending life while still possessed by a lackey."
+                , this->GetNameAsString())
         }
 
-        this->GetOwningNodeChecked()->PossessPersonaController(nullptr, true);
+        algo::leak(this->GetOwningBaseLackey().PossessPersonaController(nullptr, true));
     }
 
     if (this->IsOwnedPawnValid())

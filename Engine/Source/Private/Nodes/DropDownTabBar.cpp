@@ -102,7 +102,7 @@ Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDow
             this->Select(nullptr);
             return algo::reply::handled();
         }},
-        Submenu
+        Submenu.Children
         )};
     check(!FloatingWidget.OnDismissEvent.IsValid())
     FloatingWidget.OnDismissEvent.Bind(this, &WDropDownTabBar::OnDismiss);

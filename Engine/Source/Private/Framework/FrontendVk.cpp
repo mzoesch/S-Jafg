@@ -7,10 +7,10 @@
 #include "Framework/FrontendVk.h"
 
 #include <GLFW/glfw3.h>
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"
@@ -197,7 +197,7 @@ LNamedPhysicalKeyToPhysicalKeyResult NamedPhysicalKeyToPhysicalKey(Jafg::ELogica
 
 } /* ~Namespace <Anonymous> */
 
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
 static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
       vk::DebugUtilsMessageSeverityFlagBitsEXT Severity
     , vk::DebugUtilsMessageTypeFlagsEXT Type
@@ -254,7 +254,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
 
     return VK_FALSE;
 }
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 
 void Jafg::Detail::FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation Allocation) noexcept
 {
@@ -410,7 +410,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
             &Pv.WorkareaOffsetPx.x, &Pv.WorkareaOffsetPx.y,
             &Pv.WorkareaPx.x, &Pv.WorkareaPx.y
             );
-        Pv.Prefix = Jafg::SprintF("{}-", MonitorIndex);
+        Pv.Prefix = algo::sprintf("{}-", MonitorIndex);
         Pv.Name = glfwGetMonitorName(Monitor);
         // if (Monitor == PrimaryMonitor)
         // {
@@ -449,9 +449,9 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     this->Vk_FetchAndCheckInstanceExtensions();
     this->Vk_FetchAndCheckInstanceLayers();
     this->Vk_CreateInstance();
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     this->Vk_SetupDebugUtilsMessenger();
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 
     LOG_VERBOSE(LogVulkan, "Initializing Vulkan dispatch loader with instance.")
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*this->Vk_Instance);
@@ -464,10 +464,10 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
      * data from it. This will allow for some great optimizations...
      */
     LSurfaceCreateInfo SurfaceInfo{
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
         /* For development purposes, we want a smaller window as it does not cover so much space. */
         .DesiredDimensionsPx = { 855, 475 },
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
         .HumanReadableName = "Jafg - @mzoesch",
         };
     TUnique QuerySurface{ std::make_unique<LSurface>(SurfaceInfo) };
@@ -1159,7 +1159,7 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
         LOG_VERBOSE(LogVulkan, "    {} spec[{}]", LStringView{Layer.layerName}, Layer.specVersion)
     }
 
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     if (algo::contains(this->Vk_AvailableInstanceLayers, "VK_LAYER_KHRONOS_validation", [](vk::LayerProperties const& Layer)
         {
             return LStringView{Layer.layerName};
@@ -1174,7 +1174,7 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
             this->Vk_RequiredInstanceLayers.emplace_back("VK_LAYER_KHRONOS_validation");
         }
     }
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 
     // if (algo::contains(this->Vk_AvailableInstanceLayers, "VK_LAYER_RENDERDOC_Capture", [](vk::LayerProperties const& Layer)
     // {
@@ -1277,7 +1277,7 @@ void Jafg::LFrontendVk::Vk_CreateInstance()
     return;
 }
 
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
 void Jafg::LFrontendVk::Vk_SetupDebugUtilsMessenger()
 {
     LOG_VERBOSE(LogVulkan, "Setting up Vulkan debug utils messenger ext.")
@@ -1307,7 +1307,7 @@ void Jafg::LFrontendVk::Vk_SetupDebugUtilsMessenger()
 
     return;
 }
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 
 void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
 {

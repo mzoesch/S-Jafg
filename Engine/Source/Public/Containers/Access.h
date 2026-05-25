@@ -12,6 +12,17 @@
 namespace algo
 {
 
+//# The maximal aligned type.
+typedef f64 max_align_t;
+
+inline constexpr bool is_u64_size_t_v{ std::is_same_v<u64, std::size_t> };
+inline constexpr bool is_u32_size_t_v{ std::is_same_v<u32, std::size_t> };
+
+inline constexpr bool is_little_endian{ std::endian::native == std::endian::little };
+inline constexpr bool is_big_endian{ std::endian::native == std::endian::big };
+
+inline constexpr std::size_t wchar_size{ sizeof(wchar_t) };
+
 using namespace std::ranges;
 
 using std::swap;
@@ -499,7 +510,7 @@ struct add_spaces_to_camel_case_fn final
     }
 };
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
 struct utf8_to_utf16_fn final
 {
     template<contiguous_iterator TIt, std::unsigned_integral TSize>
@@ -542,7 +553,7 @@ struct utf16_to_utf8_fn final
         return (*this)(algo::begin(Range), algo::size(Range));
     }
 };
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 struct utf8_char_length_fn final
 {
@@ -600,10 +611,10 @@ inline constexpr detail::erase_exactly_once_checked_fn erase_exactly_once_checke
 //# Recursive joins elements to a string.
 inline constexpr detail::join_fn join{};
 inline constexpr detail::add_spaces_to_camel_case_fn add_spaces_to_camel_case{};
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     inline constexpr detail::utf8_to_utf16_fn utf8_to_utf16{};
     inline constexpr detail::utf16_to_utf8_fn utf16_to_utf8{};
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 inline constexpr detail::utf8_char_length_fn utf8_char_length{};
 
 struct case_insensitive_hash final
@@ -946,6 +957,32 @@ struct reply final : public reply_base
     FORCEINLINE static constexpr reply handled() noexcept { return reply{true}; }
     FORCEINLINE static constexpr reply unhandled() noexcept { return {}; }
 };
+
+template<typename... TArgs>
+FORCEINLINE LString sprintf(char const* Format, TArgs&&... Args) noexcept
+{
+    return std::vformat(Format, std::make_format_args(Args...));
+}
+template<typename... TArgs>
+FORCEINLINE LWString wsprintf(wchar_t const* Format, TArgs&&... Args) noexcept
+{
+    return std::vformat(Format, std::make_format_args(Args...));
+}
+template<typename... TArgs>
+FORCEINLINE auto native_sprintf(LChar const* Format, TArgs&&... Args) noexcept
+{
+#if JAFG_PLATFORM_USES_UTF8
+    return std::vformat(Format, std::make_format_args(Args...));
+#else /* JAFG_PLATFORM_USES_UTF8 */
+    return std::vformat(Format, std::make_wformat_args(Args...));
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
+}
+
+template<typename T, typename TDeleter>
+FORCEINLINE constexpr std::unique_ptr<T,TDeleter>::pointer leak(std::unique_ptr<T, TDeleter>&& Ptr) noexcept
+{
+    return Ptr.release();
+}
 
 } /* ~Namespace algo */
 

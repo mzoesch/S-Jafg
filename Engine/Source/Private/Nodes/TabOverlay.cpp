@@ -347,7 +347,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
 
     CreateDropDownMenu(
         this->GetViewport(),
-        Location, {}, {.Children = {
+        Location, {}, {
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Hide Tab Selectors",
@@ -415,8 +415,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                         );
                     return algo::reply::unhandled();
                 },},
-        },}
-        );
+        });
 
     return;
 }

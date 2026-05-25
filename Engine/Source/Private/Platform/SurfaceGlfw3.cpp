@@ -6,10 +6,10 @@
 
 #include "Rhi/RendererCore.h"
 #include <GLFW/glfw3.h>
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
@@ -188,13 +188,13 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     check(GEngine)
     this->SetVSync(*GetSingleton<JUserPreferences>().bVSyncEnabled);
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     const HWND NativeWindowHandle{glfwGetWin32Window(this->Handle)};
     check(NativeWindowHandle)
     const u32 PlatformDpi{::GetDpiForWindow(NativeWindowHandle)};
-#else /* PLATFORM_WINDOWS */
+#else /* JAFG_PLATFORM_WINDOWS */
     const u32 PlatformDpi = 96; // Sketchy
-#endif /* !PLATFORM_WINDOWS */
+#endif /* !JAFG_PLATFORM_WINDOWS */
     // TODO: Update this when the window is moved to another monitor with different DPI.
     this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
     LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: {}, DPI: [{}]"

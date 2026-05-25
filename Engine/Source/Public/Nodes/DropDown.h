@@ -19,7 +19,7 @@ struct LDropDownNodeCustom;
 struct LDropDownNodeScratch;
 struct LDropDownNodeSeparator;
 struct LDropDownNodeSubmenu;
-// struct LDropDownNodeDeferredSubMenu;
+struct LDropDownNodeDeferredSubMenu;
 
 typedef std::variant<
       LDropDownNodeOption
@@ -28,6 +28,7 @@ typedef std::variant<
     , LDropDownNodeScratch
     , LDropDownNodeSeparator
     , LDropDownNodeSubmenu
+    , LDropDownNodeDeferredSubMenu
     > LDropDownNode;
 
 //# A simple one-time action.
@@ -111,10 +112,13 @@ struct LDropDownNodeSubmenu final
     TArray<LDropDownNode> Children;
 };
 
-// struct LDropDownNodeDeferredSubMenu final
-// {
-// };
-
+struct LDropDownNodeDeferredSubMenu final
+{
+    LTabSelectorCreateInfo Selector;
+    bool IsEnabled{ true };
+    //# Has to be valid.
+    TCopyableFunction<TArray<LDropDownNode>()> OnChildren;
+};
 
 struct LDropDownMenuCreateInfo final
 {
@@ -128,6 +132,6 @@ struct LDropDownMenuCreateInfo final
     //#
     TCopyableFunction<algo::reply(WDismissibleFloatingWidget& Self)> OnOptionCloseResult;
 };
-ENGINE_API WDismissibleFloatingWidget& CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubmenu const& Submenu);
+ENGINE_API WDismissibleFloatingWidget& CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, TArray<LDropDownNode> const& Submenu);
 
 } /* ~Namespace Jafg */

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Engine/WorldObject.h"
+#include "Framework/Lackey.h"
 #include "SupremePolicies.generated.h"
 
 namespace Jafg
@@ -47,7 +48,8 @@ public:
     //# @return The persona controller to use for this connection. If nullptr is returned, the connection is rejected.
     //#         The persona controller must be deferred.
     //#
-    virtual TJxxUnique<APersonaController> OnIncomingConnectionRequest(EIncomingConnectionRequest IncomingConnection, LString* OutRejectionReason = nullptr);
+    enum EConnectionRequest{ Local, Proxy, };
+    virtual std::expected<TJxxUnique<APersonaController>, LString> OnIncomingConnectionRequest(EConnectionRequest Req);
 
     //#
     //# Called after a persona controller has been created.

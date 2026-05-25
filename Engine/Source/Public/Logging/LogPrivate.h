@@ -125,7 +125,7 @@ template<ELogVerbosity::Type Verbosity, ELogVerbosity::Type CategoryVerbosity, t
 FORCEINLINE void LogMessage(std::format_string<TArgs...> Format, TArgs&&... Args)
 {
     /* Not thread safe. But who actually care. It's just logs. */
-#if PLATFORM_WASM
+#if JAFG_PLATFORM_WASM
     if constexpr ((Verbosity < CategoryVerbosity) == false)
     {
         if constexpr (Verbosity == ELogVerbosity::Warning)
@@ -141,12 +141,12 @@ FORCEINLINE void LogMessage(std::format_string<TArgs...> Format, TArgs&&... Args
             ::emscripten_log(EM_LOG_CONSOLE, std::format(Format, Args...));
         }
     }
-#else /* PLATFORM_WASM */
+#else /* JAFG_PLATFORM_WASM */
     if constexpr ((Verbosity < CategoryVerbosity) == false)
     {
         std::cout << std::format(Format, std::forward<TArgs>(Args)...) << '\n';
     }
-#endif /* !PLATFORM_WASM */
+#endif /* !JAFG_PLATFORM_WASM */
 
     return;
 }

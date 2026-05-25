@@ -54,9 +54,9 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
     /* This will make this collection, so do not set it before, while subsystems are still initializing. */
     this->Class = Class;
 
-    if (bRegisterDeferredDelegate && GMutableEngine)
+    if (bRegisterDeferredDelegate && Detail::GMutableEngine)
     {
-        this->OnForeignPluginLoadedHandle = GMutableEngine->OnForeignPluginLoaded.Emplace(this, &LSubsystemCollection::OnForeignPluginLoaded);
+        this->OnForeignPluginLoadedHandle = Detail::GMutableEngine->OnForeignPluginLoaded.Emplace(this, &LSubsystemCollection::OnForeignPluginLoaded);
     }
 
     this->SubsystemInstances.shrink_to_fit();
@@ -279,9 +279,9 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
     this->Outer = nullptr;
     this->Class.SetClass(nullptr);
 
-    if (GMutableEngine)
+    if (Detail::GMutableEngine)
     {
-        GMutableEngine->OnForeignPluginLoaded.Remove(&this->OnForeignPluginLoadedHandle);
+        Detail::GMutableEngine->OnForeignPluginLoaded.Remove(&this->OnForeignPluginLoadedHandle);
         check(this->OnForeignPluginLoadedHandle.IsValid() == false)
     }
     else

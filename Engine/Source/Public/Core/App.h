@@ -23,7 +23,7 @@ struct LEngineVersion
     NODISCARD FORCEINLINE constexpr std::strong_ordering operator<=>(LEngineVersion const& Other) const = default;
     FORCEINLINE LString ToString() const
     {
-        return Jafg::SprintF("{}.{}.{}.{}", this->Major, this->Minor, this->Patch, this->Revision);
+        return algo::sprintf("{}.{}.{}.{}", this->Major, this->Minor, this->Patch, this->Revision);
     }
 };
 
@@ -60,6 +60,10 @@ ENGINE_API LStringView GetTargetCompound() noexcept;
 ENGINE_API LStringView GetTargetPlatformCompound() noexcept;
 //# E.g.: "Linux-x86_64/Client-Shipping", ...
 ENGINE_API LStringView GetTargetPath() noexcept;
+//# E.g: "Runtime"
+ENGINE_API LStringView GetExpectedRuntime() noexcept;
+//# E.g.: "Binaries/Linux-x86_64/Client-Shipping/Runtime", ...
+ENGINE_API LStringView GetExpectedRuntimePath() noexcept;
 
 ENGINE_API extern LProgramParameter CoreHelp;
 ENGINE_API extern LProgramParameter Version;
@@ -67,6 +71,7 @@ ENGINE_API extern LProgramParameter Help;
 ENGINE_API extern LProgramParameter WaitForDebugger;
 ENGINE_API extern LProgramParameter IgnoreInstantDebuggerBreak;
 ENGINE_API extern LProgramParameter AlwaysReportCrash;
+ENGINE_API extern LProgramParameter DumpStack;
 ENGINE_API extern LProgramParameter AllowProfiling;
 ENGINE_API extern LProgramParameter PauseBeforeExit;
 
@@ -76,6 +81,8 @@ namespace Detail
 ENGINE_API extern bool bAlreadyCrashed;
 //# Not supported in all configurations.
 ENGINE_API extern bool bSuppressCrashDialog;
+//# Not supported in all configurations.
+ENGINE_API extern bool bDumpStack;
 ENGINE_API void WaitForDebuggerGracefully(bool bAllowInstantBreak);
 
 //# Whether the engine should exit at the next opportunity.
@@ -130,7 +137,7 @@ FORCEINLINE constexpr bool IsPauseBeforeExit() noexcept { return Detail::PauseBe
 FORCEINLINE constexpr bool IsTracerPidValid() noexcept { return Detail::IsTracerPidValid; }
 FORCEINLINE bool IsTracerPidValidNow()
 {
-    Detail::IsTracerPidValid = Hal::IsTracerPidValidVerySlow();
+    Detail::IsTracerPidValid = Detail::IsTracerPidValidVerySlow();
     return IsTracerPidValid();
 }
 FORCEINLINE constexpr bool IsAlwaysReportCrash() noexcept { return Detail::AlwaysReportCrash; }
@@ -220,28 +227,24 @@ inline void PrettyPrintApiUsage() noexcept
     return;
 }
 
-inline std::chrono::high_resolution_clock::time_point GetStaticStorageInitializationTime() noexcept
+inline algo::clock::time_point GetStaticStorageInitializationTime() noexcept
 {
     return Detail::StaticContainerInitializationTime;
 }
 
-inline f64 GetElapsedTime() noexcept
+inline f64 GetElapsedTime(algo::clock::time_point Since = algo::now()) noexcept
 {
-    return algo::time_diff(GetStaticStorageInitializationTime(), std::chrono::high_resolution_clock::now());
+    return algo::time_diff(GetStaticStorageInitializationTime(), Since);
 }
-
-} /* ~Namespace App */
-
-namespace Hal
-{
 
 //#
 //# Very dangerous function. Use with care and never in critical code paths.
 //# Currently not supported for all platforms.
 //#
 ENGINE_API void Sleep(f64 InSeconds);
+ENGINE_API void SleepNoStats(f64 InSeconds);
 
-} /* ~Namespace PlatformHal */
+} /* ~Namespace App */
 
 } /* ~Namespace Jafg */
 

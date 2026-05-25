@@ -14,22 +14,13 @@ void Jafg::WInput_Vector2::Construct()
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    TButtonStyle<LBoxBrush> Style;
-    Style.ChainEverywhere<
-        &LBoxBrush::Tint, &LBoxBrush::OutlineTint, &LBoxBrush::OutlineThickness, &LBoxBrush::Radii, &LBoxBrush::Padding
-        >(*Prefs.InputColor, {0x8F}, 1, LVec4F{4}, {5_spt, 0});
-    Style.Chain<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::OutlineTint>({0x5F});
-
-    LTextButtonTextStyle TextStyle;
-    TextStyle.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
-
     WEditableTextButton *ButtonX, *ButtonY;
     BeginStyling(*this).StaticRoot<WEditableTextButton>().SaveTo(&ButtonX)
         .MinDesiredSize({64_spt, 0})
         .MaxDesiredSize({64_spt, 0})
         .Padding({2_spt, 0})
-        .Style(Style)
-        .TextStyle(TextStyle)
+        .Style(Prefs.EditorEditableTextButtonStyle())
+        .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::X, Content); })
         .Content("1920")
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
@@ -37,8 +28,8 @@ void Jafg::WInput_Vector2::Construct()
         .MinDesiredSize({64_spt, 0})
         .MaxDesiredSize({64_spt, 0})
         .Padding({2_spt, 0})
-        .Style(Style)
-        .TextStyle(TextStyle)
+        .Style(Prefs.EditorEditableTextButtonStyle())
+        .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::Y, Content); })
         .Content("1080")
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);

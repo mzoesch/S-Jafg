@@ -6,6 +6,9 @@
 #include "Engine/Jxx.h"
 #include "User/UserPreferencesForward.h"
 #include "Rhi/Material.h"
+#include "Nodes/ButtonBase.h"
+#include "Nodes/Box.h"
+#include "Nodes/TextBox.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -141,6 +144,29 @@ public:
     TPreference<std::size_t> PreferredDragPadding{ 3 };
     CLASS_FIELD(Config)
     TPreference<LColor> ViewportBackgroundTint  { Colors::Black };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Editor
+    ///////////////////////////////////////////////////////////////////////////////
+
+    // TODO: This should just be TPreference<TButtonStyle<LBoxBrush>> but we wait until we adopt the cxx26 reflection
+    //       system as writing serde for this is just boring und unnecessary when in a couple of months we can completely
+    //       automate it.
+    TButtonStyle<LBoxBrush> EditorEditableTextButtonStyle() const noexcept
+    {
+        TButtonStyle<LBoxBrush> Result;
+        Result.ChainEverywhere<
+            &LBoxBrush::Tint, &LBoxBrush::OutlineTint, &LBoxBrush::OutlineThickness, &LBoxBrush::Radii, &LBoxBrush::Padding
+            >(*this->InputColor, {0x8F}, 1, LVec4F{4}, {5_spt, 0});
+        Result.Chain<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::OutlineTint>({0x5F});
+        return Result;
+    }
+    TButtonStyle<LTextBoxBrush> EditorEditableTextButtonTextStyle() const noexcept
+    {
+        TButtonStyle<LTextBoxBrush> Result;
+        Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
+        return Result;
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

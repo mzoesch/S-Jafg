@@ -33,22 +33,37 @@ void Jafg::WEditor::Construct()
             .MinDesiredSize({ENodeSize::StaticPoints, 0, 10.0f})
             .Tabs({.SubMenus={
                 LDropDownNodeSubmenu{
-                    .Selector = {.DisplayName="File"},
+                    .Selector = {.DisplayName="File",},
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = {
+                                .DisplayName = "Open Engine in Explorer",
+                                .Icon = "Icons/Jafg.Directory",
+                                },
+                            .OnAction = [this](auto&&...){ this->GetFrontend().OpenDirectory(Finder::GetCwd()); return algo::reply::unhandled(); }
+                            },
+                        LDropDownNodeOption{
+                            .Selector = {
+                                .DisplayName = "Open Engine in Terminal",
+                                .Icon = "Icons/Jafg.Terminal",
+                                },
+                            .OnAction = [this](auto&&...){ this->GetFrontend().OpenTerminal(Finder::GetCwd()); return algo::reply::unhandled(); }
+                            },
+                        LDropDownNodeSeparator{.DisplayName="EXIT",},
+                        LDropDownNodeOption{
+                            .Selector = {
                                 .DisplayName = "Exit",
-                                .Icon = "Icons/Jafg.Leave"
+                                .Icon = "Icons/Jafg.Leave",
                                 },
                             .OnAction = [](auto&&...){ App::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
                             },
                         },
                     },
                 LDropDownNodeSubmenu{
-                    .Selector = { .DisplayName="Edit" },
+                    .Selector = {.DisplayName="Edit",},
                     },
                 LDropDownNodeSubmenu{
-                    .Selector = { .DisplayName="View" },
+                    .Selector = {.DisplayName="View",},
                     .Children = {
                         LDropDownNodeOption{
                             .Selector = WWorldViewer::TabSelectorCreateInfo(),
@@ -69,10 +84,10 @@ void Jafg::WEditor::Construct()
                         },
                     },
                 LDropDownNodeSubmenu{
-                    .Selector = { .DisplayName="Build" },
+                    .Selector = {.DisplayName="Build",},
                     },
                 LDropDownNodeSubmenu{
-                    .Selector = { .DisplayName="Help" },
+                    .Selector = {.DisplayName="Help",},
                     },
                 },})
     ];

@@ -10,8 +10,8 @@ Jafg::LCliObject* Jafg::LCliObject::GetRegisteredObjectByUuid() const
         return nullptr;
     }
 
-    check(GMutableEngine)
-    return GMutableEngine->GetCommandLineInterface().GetObjectAsserted(*this);
+    check(Detail::GMutableEngine)
+    return Detail::GMutableEngine->GetCommandLineInterface().GetObjectAsserted(*this);
 }
 
 void Jafg::LCliObject::ExpandToUuid()

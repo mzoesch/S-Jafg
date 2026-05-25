@@ -54,11 +54,11 @@ public:
 
     FORCEINLINE SizeType GetSizeSlow();
 
-#if WITH_TESTS
+#if JAFG_WITH_TESTS
 public:
-#else /* WITH_TESTS */
+#else /* JAFG_WITH_TESTS */
 private:
-#endif /* !WITH_TESTS */
+#endif /* !JAFG_WITH_TESTS */
 
     struct TNode;
 

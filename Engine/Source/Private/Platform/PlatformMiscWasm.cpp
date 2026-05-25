@@ -2,7 +2,7 @@
 
 #include "Minimal.afx"
 
-#if PLATFORM_WASM
+#if JAFG_PLATFORM_WASM
 
 #include "Platform/PlatformMisc.h"
 
@@ -30,4 +30,4 @@ bool Jafg::PlatformMisc::SetPhysicalViewports()
     return true;
 }
 
-#endif /* PLATFORM_WASM */
+#endif /* JAFG_PLATFORM_WASM */

@@ -13,6 +13,7 @@
 #include "Platform/SurfaceForward.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
+#include "Framework/LackeyForward.h"
 
 namespace Jafg
 {
@@ -83,30 +84,26 @@ inline LStringView LexToString(EWorldTimeBehavior Type) noexcept
         case EWorldTimeBehavior::Linear:   return "Linear";
         case EWorldTimeBehavior::Desist:   return "Desist";
         case EWorldTimeBehavior::Simulate: return "Simulate";
-        default:                           return "<Unknown>";
     }
-}
-
-enum struct EIncomingConnectionRequest : u8
-{
-    Local,
-    Remote,
-};
-inline LStringView LexToString(EIncomingConnectionRequest Type) noexcept
-{
-    switch (Type)
-    {
-    case EIncomingConnectionRequest::Local:  return "Local";
-    case EIncomingConnectionRequest::Remote: return "Remote";
-    default:                                 return "<Unknown>";
-    }
+    std::unreachable();
 }
 
 struct LTransientPersona final
 {
-    EIncomingConnectionRequest Type;
-    WWorldNode* Node{};
-    //# TODO: Net stuff etc.
+    struct Spec
+    {
+    };
+    struct Local
+    {
+        LLocalLackey& Lackey;
+    };
+    struct Proxy
+    {
+        //# TODO: Net stuff etc.
+    };
+    std::variant<Spec, Local, Proxy> Variant;
+
+    NODISCARD constexpr auto& operator*() noexcept { return this->Variant; }
 };
 
 //#
@@ -172,12 +169,8 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    LWorld(LString const& InHumanReadableName) noexcept
-        : LClassOuter{InHumanReadableName}, WorldState(EWorldState::PreInitializing)
-        , Vk_WorldDescriptorSets{nullptr, nullptr, nullptr}
-    {
-        return;
-    }
+    LWorld(LString HumanReadableName) noexcept : LClassOuter{std::move(HumanReadableName)} {}
+    ~LWorld() noexcept { check(this->WorldState == EWorldState::WaitingForKill) }
 
     // LClassOuter implementation
     virtual bool IsWorld() const noexcept override { return true; }
@@ -211,7 +204,7 @@ public:
 
     void Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const;
 
-    ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
+    ENGINE_API std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
 
     FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
     FORCEINLINE LLevel const& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
@@ -300,7 +293,7 @@ private:
     TArray<LTickableObject*> TickableObjects;
     TArray<LTickableObject*> DeletedTickableObjects;
 
-    EWorldState WorldState;
+    EWorldState WorldState{ EWorldState::PreInitializing };
 
     LSubsystemCollection Collection{ "World" };
 
@@ -318,7 +311,7 @@ private:
     //#
     ASupremePolicies* SupremePolicies{};
 
-    TFrameArray<vk::raii::DescriptorSet> Vk_WorldDescriptorSets;
+    TFrameArray<vk::raii::DescriptorSet> Vk_WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<LMappedDeviceBuffer> Vk_WorldBuffers;
 };
 

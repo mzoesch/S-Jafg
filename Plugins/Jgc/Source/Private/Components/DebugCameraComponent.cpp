@@ -2,21 +2,21 @@
 
 #include "Components/DebugCameraComponent.h"
 #include "Components/SceneComponent.h"
+#include "Framework/LackeyForward.h"
 #include "Framework/PersonaController.h"
 #include "Platform/Surface.h"
 #include "User/Input/InputTypes.h"
 #include "User/Input/InputActionValue.h"
-#include "Nodes/WorldNode.h"
 
 bool Jgc::ADebugCameraComponent::ActivateUserInputContext() const noexcept
 {
     if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
     {
-        if (auto* Node{Ctrl->GetOwningNode()})
+        if (auto* Lackey{Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>()})
         {
-            auto& UserInput{Node->GetUserInput()};
-            (void) UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("RhiDebug"));
-            return UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"));
+            bool b1{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("RhiDebug"))};
+            bool b2{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"))};
+            return b1 && b2;
         }
     }
     return false;

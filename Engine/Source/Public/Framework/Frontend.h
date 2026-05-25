@@ -47,7 +47,7 @@ struct LPhysicalViewport
 
     FORCEINLINE LString ToHumanReadableName() const
     {
-        return Jafg::SprintF("{}{} ({}x{}px)",
+        return algo::sprintf("{}{} ({}x{}px)",
             this->Prefix,
             this->Name,
             this->WorkareaPx.x, this->WorkareaPx.y

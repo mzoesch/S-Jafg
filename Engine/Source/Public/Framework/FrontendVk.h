@@ -2,8 +2,10 @@
 
 #pragma once
 
-#include "Framework/FrontendForward.h"
 #include "Framework/Frontend.h"
+#if JAFG_PLATFORM_DESKTOP
+    #include "Framework/FrontendNativeDesktop.h"
+#endif /* JAFG_PLATFORM_DESKTOP */
 #include "Rhi/ImmutableBuffer.h"
 #include "Rhi/Bindless.h"
 
@@ -49,7 +51,12 @@ struct LStageLinearImageCreateInfo
     vk::ImageCreateInfo Info;
 };
 
-class LFrontendVk final : public LFrontendBase
+class LFrontendVk final :
+#if JAFG_PLATFORM_DESKTOP
+    public LFrontendNativeDesktop
+#else /* JAFG_PLATFORM_DESKTOP */
+    public LFrontendBase
+#endif /* !JAFG_PLATFORM_DESKTOP */
 {
 public:
 
@@ -71,7 +78,7 @@ public:
         {
             return std::move(Result).value();
         }
-        return SprintF("SC: {}", Key.Scancode);
+        return algo::sprintf("SC: {}", Key.Scancode);
     }
 
     FORCEINLINE auto const& Vk_GetContext() const noexcept { return this->Vk_Context; }
@@ -86,9 +93,9 @@ public:
 
     FORCEINLINE auto const& Vk_GetInstance() const noexcept { return this->Vk_Instance; }
 
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     FORCEINLINE auto const& Vk_GetDebugUtilsMessenger() const noexcept { return this->Vk_DebugUtilsMessenger; }
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 
     FORCEINLINE auto const& Vk_GetAvailablePhysicalDevices() const noexcept { return this->Vk_AvailablePhysicalDevices; }
     FORCEINLINE auto const& Vk_GetPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
@@ -196,9 +203,9 @@ private:
     void Vk_FetchAndCheckInstanceExtensions();
     void Vk_FetchAndCheckInstanceLayers();
     void Vk_CreateInstance();
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     void Vk_SetupDebugUtilsMessenger();
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
     void Vk_PickPhysicalDevice();
     void Vk_SetMaxMsaaSamples();
     void Vk_CreateLogicalDevice(LSurface const& QuerySurface);
@@ -222,10 +229,10 @@ private:
     TArray<vk::ExtensionProperties> Vk_AvailableInstanceExtensions;
     TArray<LString> Vk_RequiredInstanceExtensions{
         vk::KHRSurfaceExtensionName,
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
         vk::EXTDebugUtilsExtensionName,
         // VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME,
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
         };
 
     TArray<vk::LayerProperties> Vk_AvailableInstanceLayers;
@@ -233,9 +240,9 @@ private:
 
     vk::raii::Instance Vk_Instance{ nullptr };
 
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     vk::raii::DebugUtilsMessengerEXT Vk_DebugUtilsMessenger{ nullptr };
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 
     TArray<LRankedPhysicalDevice> Vk_AvailablePhysicalDevices;
     vk::raii::PhysicalDevice Vk_PhysicalDevice{ nullptr };

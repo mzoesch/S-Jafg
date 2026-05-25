@@ -8,7 +8,7 @@
 //# If not defined, always do stats except in shipping builds.
 //#
 #ifndef WITH_STATS
-    #define WITH_STATS                                                  (!IN_SHIPPING)
+    #define WITH_STATS                                                  (!JAFG_IN_SHIPPING)
 #endif /* !WITH_STATS */
 
 //#

@@ -10,7 +10,7 @@
 #include "Nodes/TextIconizedSeparator.h"
 #include "Nodes/DismissibleFloatingWidget.h"
 
-Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, LDropDownNodeSubmenu const& Submenu)
+Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, TArray<LDropDownNode> const& Children)
 {
     Position = maths::round(Position);
 
@@ -20,7 +20,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
         .CreateResizeUi(false)
         .InitialWindowSize({100_pt, 0})
         .InitialWindowPosition(Position)
-        .Content([Result, &CreateInfo, &Submenu](WFloatingWidget& FloatingWidget, WParent& Container)
+        .Content([Result, &CreateInfo, &Children](WFloatingWidget& FloatingWidget, WParent& Container)
         {
             typedef std::pair<std::size_t, algo::raii_leave> SubmenuWindow_t;
             std::size_t Id{};
@@ -29,11 +29,11 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
             BeginStyling(Container).StaticRoot<WVRegion>().SaveTo(&Region)
                 .Tint(*GetSingleton<JUserPreferences>().OverlayColor)
                 .Padding({0, LDropDownMenuCreateInfo::RecommendedPadding});
-            if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Warning)) if (Submenu.Children.empty())
+            if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Warning)) if (Children.empty())
             {
-                LOG_WARNING(LogWidgetFramework, "SubMenu [{}] has no nodes.", Submenu.Selector.DisplayName)
+                LOG_WARNING(LogWidgetFramework, "SubMenu has no nodes.")
             }
-            for (auto& Child : Submenu.Children)
+            for (auto& Child : Children)
             {
                 ++Id;
                 std::visit([Result, &CreateInfo, Region, SubmenuWindow, Id]<typename T0>(T0&& Node)
@@ -192,7 +192,63 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                             + LVec2F{Self.GetAnchoredSize_v2().x, 0.0f}
                                             - LVec2F{0.0f, LDropDownMenuCreateInfo::RecommendedPadding.InStaticPoints(Self.GetViewport())}
                                         , {}
-                                        , NodeCopy
+                                        , NodeCopy.Children
+                                        )}};
+                                    TClassStorage Me{&Self.AsStatic<WTextButtonIconizedDouble>()};
+                                    Me->SetSelected(true);
+                                    SubmenuWindow->second = algo::raii_leave{[Window=std::move(Window), Me=std::move(Me)] mutable
+                                    {
+                                        if (Window.IsValidSlow())
+                                        {
+                                            check(Window->IsTopLevel())
+                                            Window->MarkAsGarbage_v2();
+                                        }
+                                        if (Me.IsValidSlow())
+                                        {
+                                            Me->SetSelected(false);
+                                        }
+                                    }};
+                                    check(!Window.get_unsafe())
+                                    check(!Me.get_unsafe())
+                                }
+                                return LNodeReply::Handled();
+                            })
+                            .Content(Node.Selector.DisplayName)
+                            .LeftIcon(Node.Selector.Icon.GetResolved())
+                            .RightIcon(LTexture2::FromTextureView("Icons/Jafg.ExtendRight"))
+                            .template InAllRightIconBrushes<&LIconBrush::Alignment>(LIconBrush::Align::Right)
+                            .Enabled(Node.IsEnabled)
+                            .Unique()
+                            );
+                    }
+                    else if constexpr (std::is_same_v<T, LDropDownNodeDeferredSubMenu>)
+                    {
+                        auto& Prefs{GetSingleton<JUserPreferences>()};
+                        Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButtonIconizedDouble>()
+                            .Anchor(EAnchor::HFill)
+                            .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
+                            .InBrush<EStyleBits::Hover|EStyleBits::Selected, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
+                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColor2)
+                            .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
+                            .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
+                            .Selectable(true)
+                            .OnCursorEnter([NodeCopy=Node, SubmenuWindow, Id](WNode& Self)
+                            {
+                                static_assert(std::is_same_v<decltype(NodeCopy), LDropDownNodeDeferredSubMenu>);
+                                check(SubmenuWindow.get())
+                                check(NodeCopy.OnChildren)
+                                if (SubmenuWindow->first != Id)
+                                {
+                                    SubmenuWindow->first = Id;
+                                    auto Window{TClassStorage<WDismissibleFloatingWidget>{&CreateDropDownMenu(
+                                          Self.GetViewport()
+                                        // TODO: Fix translation.
+                                        , Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                                            + LVec2F{Self.GetAnchoredSize_v2().x, 0.0f}
+                                            - LVec2F{0.0f, LDropDownMenuCreateInfo::RecommendedPadding.InStaticPoints(Self.GetViewport())}
+                                        , {}
+                                        , NodeCopy.OnChildren()
                                         )}};
                                     TClassStorage Me{&Self.AsStatic<WTextButtonIconizedDouble>()};
                                     Me->SetSelected(true);

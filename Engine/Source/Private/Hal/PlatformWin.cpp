@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
 
 #include "Minimal.afx"
 #include "Core/Application.h"
@@ -214,4 +214,4 @@ bool IsTracerPidValidVerySlow()
 
 } /* ~Namespace Jafg::Hal */
 
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */

@@ -6,10 +6,10 @@
     #error "JAFG_PLATFORM_USES_STD_FINDER is false."
 #endif /* !JAFG_PLATFORM_USES_STD_FINDER */
 
-#if PLATFORM_WINDOWS /* Just some windows nonsense... */
+#if JAFG_PLATFORM_WINDOWS /* Just some windows nonsense... */
     #pragma push_macro( "CreateFile" )
     #undef CreateFile
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 inline LPath Finder::GetCwd()
 {
@@ -64,8 +64,8 @@ inline bool Finder::AreFilesIdentical(LPath const& A, LPath const& B)
         return !F1 != !F2;
     }
 
-    LJafgChar C1;
-    LJafgChar C2;
+    std::ifstream::char_type C1;
+    std::ifstream::char_type C2;
     while (true)
     {
         if (F1.get(C1).fail())
@@ -156,7 +156,7 @@ inline std::optional<LString> Finder::TryReadFile(LPath const& File, LString* Ou
     {
         if (OutHumanReadableError)
         {
-            *OutHumanReadableError = Jafg::SprintF("Failed to open file: [{}].", File);
+            *OutHumanReadableError = algo::sprintf("Failed to open file: [{}].", File);
         }
 
         return { };
@@ -175,7 +175,7 @@ inline std::optional<TArray<u8>> Finder::TryReadFileAsBinary(LPath const& File, 
     {
         if (OutHumanReadableError)
         {
-            *OutHumanReadableError = Jafg::SprintF("Failed to open file at [{}].", File);
+            *OutHumanReadableError = algo::sprintf("Failed to open file at [{}].", File);
         }
 
         return { };
@@ -186,15 +186,15 @@ inline std::optional<TArray<u8>> Finder::TryReadFileAsBinary(LPath const& File, 
 
     F.seekg(0, std::ios::beg);
 
-    if (F.read(reinterpret_cast<LJafgChar*>(Buffer.data()), Buffer.size()).fail())
+    if (F.read(reinterpret_cast<std::ifstream::char_type*>(Buffer.data()), Buffer.size()).fail())
     {
         F.close();
         if (OutHumanReadableError)
         {
-            *OutHumanReadableError = Jafg::SprintF("Failed to read file at [{}].", File);
+            *OutHumanReadableError = algo::sprintf("Failed to read file at [{}].", File);
         }
 
-        return { };
+        return {};
     }
 
     F.close();
@@ -413,6 +413,6 @@ inline TArray<LPath> Finder::FindFilesRecursivelyByName(LPath const& Directory, 
     return Out;
 }
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     #pragma pop_macro( "CreateFile" )
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */

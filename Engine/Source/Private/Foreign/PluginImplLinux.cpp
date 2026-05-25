@@ -2,7 +2,7 @@
 
 #include "Engine/EngineCompileTimeConstants.h"
 
-#if JAFG_WITH_FOREIGN_SUPPORT && PLATFORM_LINUX
+#if JAFG_WITH_FOREIGN_SUPPORT && JAFG_PLATFORM_LINUX
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"
@@ -52,7 +52,7 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
         return EPluginLoadReturnCode::PlatformError;
     }
 
-    const LString Symbol{ Jafg::SprintF("GetPluginLifetime_{}", this->GetIdentifier()) };
+    const LString Symbol{ algo::sprintf("GetPluginLifetime_{}", this->GetIdentifier()) };
 
     typedef LPluginLifetime* (*LCreatePluginLifetime)();
     const LCreatePluginLifetime CreatePluginLifetime{ reinterpret_cast<LCreatePluginLifetime>(::dlsym(this->NativeHandle, Symbol.c_str())) };
@@ -118,4 +118,4 @@ EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownRea
 
 } /* ~Namespace Jafg */
 
-#endif /* JAFG_WITH_FOREIGN_SUPPORT && PLATFORM_LINUX */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT && JAFG_PLATFORM_LINUX */

@@ -13,27 +13,27 @@
 #endif /* JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY */
 
 #ifndef JAFG_LOG_DEFAULT_VERBOSITY
-    #if IN_DEBUG
+    #if JAFG_IN_DEBUG
         #define JAFG_LOG_DEFAULT_VERBOSITY               JAFG_DEBUG_DEFAULT_LOG_VERBOSITY
-    #elif IN_DEVELOPMENT
+    #elif JAFG_IN_DEVELOPMENT
         #define JAFG_LOG_DEFAULT_VERBOSITY               JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY
-    #elif IN_SHIPPING
+    #elif JAFG_IN_SHIPPING
         #define JAFG_LOG_DEFAULT_VERBOSITY               JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #else /* IN_SHIPPING */
+    #else /* JAFG_IN_SHIPPING */
         #error "Could not resolve build configuration."
-    #endif  /* !IN_SHIPPING */
+    #endif  /* !JAFG_IN_SHIPPING */
 #endif /* !JAFG_LOG_DEFAULT_VERBOSITY */
 
 #ifndef JAFG_LOG_DEFAULT_VERBOSITY_TASKS
-    #if IN_DEBUG
+    #if JAFG_IN_DEBUG
         #define JAFG_LOG_DEFAULT_VERBOSITY_TASKS         JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY
-    #elif IN_DEVELOPMENT
+    #elif JAFG_IN_DEVELOPMENT
         #define JAFG_LOG_DEFAULT_VERBOSITY_TASKS         JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #elif IN_SHIPPING
+    #elif JAFG_IN_SHIPPING
         #define JAFG_LOG_DEFAULT_VERBOSITY_TASKS         JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #else /* IN_SHIPPING */
+    #else /* JAFG_IN_SHIPPING */
         #error "Could not resolve build configuration."
-    #endif  /* !IN_SHIPPING */
+    #endif  /* !JAFG_IN_SHIPPING */
 #endif /* JAFG_LOG_DEFAULT_VERBOSITY_TASKS */
 
 DECLARE_INLINE_LOG_CATEGORY( LogCarnifex,                     JAFG_LOG_DEFAULT_VERBOSITY                             )

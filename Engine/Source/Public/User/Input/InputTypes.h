@@ -117,7 +117,7 @@ struct LPhysicalKey final
     }
     ENGINE_API LString ToString() const noexcept
     {
-        return SprintF("{{Scancode: {}, Logical: {}}}", this->Scancode, this->Logical);
+        return algo::sprintf("{{Scancode: {}, Logical: {}}}", this->Scancode, this->Logical);
     }
 };
 

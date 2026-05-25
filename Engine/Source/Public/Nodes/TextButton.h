@@ -16,8 +16,6 @@ struct LFactoryTextButtonIconizedLeft;
 struct LFactoryTextButtonIconizedRight;
 struct LFactoryTextButtonIconizedDouble;
 
-typedef TButtonStyle<LTextBoxBrush> LTextButtonTextStyle;
-
 namespace Detail
 {
 struct LTextButtonIconStyleBase
@@ -83,7 +81,7 @@ public:
     virtual void OnEnabledStateChanged() override;
     virtual void OnSelectedStateChanged() override;
 
-    LTextButtonTextStyle TextStyle;
+    TButtonStyle<LTextBoxBrush> TextStyle;
 };
 
 //# A text button with an optional icon on the left or right which may be decupled form the button logic to serve as an extra input target.

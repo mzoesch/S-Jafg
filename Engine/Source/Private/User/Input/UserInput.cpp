@@ -213,7 +213,7 @@ std::optional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& ActingController, TArray<LRawInput>* Inputs, EInputActionTriggerBits TriggerMask)
 {
-    STAT_QUICK_CYCLE_START(Jafg::SprintF("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerMask)))
+    STAT_QUICK_CYCLE_START(algo::sprintf("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerMask)))
 
     check(Inputs)
     check(TriggerMask != EInputActionTriggerBits::Identity)

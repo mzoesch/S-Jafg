@@ -15,9 +15,9 @@
 //# Generally speaking, it is not recommended to use debug builds during development.
 //# @see AssertionMacros.h for more information about what macros are enabled in this build configuration.
 //#
-#ifndef IN_DEBUG
-    #define IN_DEBUG                    0
-#endif /* !IN_DEBUG */
+#ifndef JAFG_IN_DEBUG
+    #define JAFG_IN_DEBUG                    0
+#endif /* !JAFG_IN_DEBUG */
 
 //#
 //# If this is true, then the build is in development mode.
@@ -25,9 +25,9 @@
 //# This is the recommended build configuration for development.
 //# @see AssertionMacros.h for more information about what macros are enabled in this build configuration.
 //#
-#ifndef IN_DEVELOPMENT
-    #define IN_DEVELOPMENT              0
-#endif /* !IN_DEVELOPMENT */
+#ifndef JAFG_IN_DEVELOPMENT
+    #define JAFG_IN_DEVELOPMENT              0
+#endif /* !JAFG_IN_DEVELOPMENT */
 
 //#
 //# If this is true, then the build is in shipping mode.
@@ -38,28 +38,28 @@
 //# in shipping builds if these errors are not reproducible in debug or development builds.
 //# @see AssertionMacros.h for more information about what macros are enabled in this build configuration.
 //#
-#ifndef IN_SHIPPING
-    #define IN_SHIPPING                 0
-#endif /* !IN_SHIPPING */
+#ifndef JAFG_IN_SHIPPING
+    #define JAFG_IN_SHIPPING                 0
+#endif /* !JAFG_IN_SHIPPING */
 
-#if !(IN_DEBUG || IN_DEVELOPMENT || IN_SHIPPING)
+#if !(JAFG_IN_DEBUG || JAFG_IN_DEVELOPMENT || JAFG_IN_SHIPPING)
     #error "No build configuration specified."
-#endif /* !(IN_DEBUG || IN_DEVELOPMENT || IN_SHIPPING) */
-#if IN_DEBUG
-    #if IN_DEVELOPMENT || IN_SHIPPING
+#endif /* !(JAFG_IN_DEBUG || JAFG_IN_DEVELOPMENT || JAFG_IN_SHIPPING) */
+#if JAFG_IN_DEBUG
+    #if JAFG_IN_DEVELOPMENT || JAFG_IN_SHIPPING
         #error "Multiple build configurations specified."
-    #endif /* IN_DEVELOPMENT || IN_SHIPPING */
-#endif /* IN_DEBUG */
-#if IN_DEVELOPMENT
-    #if IN_DEBUG || IN_SHIPPING
+    #endif /* JAFG_IN_DEVELOPMENT || JAFG_IN_SHIPPING */
+#endif /* JAFG_IN_DEBUG */
+#if JAFG_IN_DEVELOPMENT
+    #if JAFG_IN_DEBUG || JAFG_IN_SHIPPING
         #error "Multiple build configurations specified."
-    #endif /* IN_SHIPPING */
-#endif /* IN_DEVELOPMENT */
-#if IN_SHIPPING
-    #if IN_DEBUG || IN_DEVELOPMENT
+    #endif /* JAFG_IN_SHIPPING */
+#endif /* JAFG_IN_DEVELOPMENT */
+#if JAFG_IN_SHIPPING
+    #if JAFG_IN_DEBUG || JAFG_IN_DEVELOPMENT
         #error "Multiple build configurations specified."
-    #endif /* IN_DEVELOPMENT */
-#endif /* IN_SHIPPING */
+    #endif /* JAFG_IN_DEVELOPMENT */
+#endif /* JAFG_IN_SHIPPING */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Whether this is a reflected build.
@@ -69,35 +69,35 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Build targets.
-#ifndef AS_CLIENT
-    #define AS_CLIENT                   0
+#ifndef JAFG_AS_CLIENT
+    #define JAFG_AS_CLIENT                   0
     #define WITH_LOCAL_LAYER            0
-#else /* !AS_CLIENT */
+#else /* !JAFG_AS_CLIENT */
     /* This includes everything that cannot be daemonized (rendering, local access layer, etc.). */
     #define WITH_LOCAL_LAYER            1
-#endif /* AS_CLIENT */
-#ifndef AS_DAEMON
-    #define AS_DAEMON                   0
-#endif /* !AS_DAEMON */
+#endif /* JAFG_AS_CLIENT */
+#ifndef JAFG_AS_DAEMON
+    #define JAFG_AS_DAEMON                   0
+#endif /* !JAFG_AS_DAEMON */
 
-#if !(AS_CLIENT || AS_DAEMON)
+#if !(JAFG_AS_CLIENT || JAFG_AS_DAEMON)
     #error "No build platform specified."
-#endif /* !(AS_CLIENT || AS_DAEMON) */
-#if AS_CLIENT
-    #if AS_DAEMON
+#endif /* !(JAFG_AS_CLIENT || JAFG_AS_DAEMON) */
+#if JAFG_AS_CLIENT
+    #if JAFG_AS_DAEMON
         #error "Multiple build targets specified."
-    #endif /* AS_DAEMON */
-#endif /* AS_CLIENT */
-#if AS_DAEMON
-    #if AS_CLIENT
+    #endif /* JAFG_AS_DAEMON */
+#endif /* JAFG_AS_CLIENT */
+#if JAFG_AS_DAEMON
+    #if JAFG_AS_CLIENT
         #error "Multiple build targets specified."
-    #endif /* AS_CLIENT */
-#endif /* AS_DAEMON */
+    #endif /* JAFG_AS_CLIENT */
+#endif /* JAFG_AS_DAEMON */
 
 /* Default to no tests. */
-#ifndef WITH_TESTS
-    #define WITH_TESTS                  0
-#endif /* !WITH_TESTS */
+#ifndef JAFG_WITH_TESTS
+    #define JAFG_WITH_TESTS                  0
+#endif /* !JAFG_WITH_TESTS */
 
 //
 // This is of course just hardcoded here for now.
@@ -105,11 +105,11 @@
 // the IDEA to determine what test should run.
 //
 #ifndef DO_TEST_UNITS
-    #if WITH_TESTS
+    #if JAFG_WITH_TESTS
         #define DO_TEST_UNITS           1
-    #else /* WITH_TESTS */
+    #else /* JAFG_WITH_TESTS */
         #define DO_TEST_UNITS           0
-    #endif /* !WITH_TESTS */
+    #endif /* !JAFG_WITH_TESTS */
 #endif /* !DO_TEST_UNITS */
 
 
@@ -165,21 +165,21 @@
 #endif /* !JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
 
 #if JAFG_DO_EVER_CHECKS
-    #if IN_SHIPPING
+    #if JAFG_IN_SHIPPING
         #define JAFG_DO_CHECKS                                                   JAFG_DO_CHECKS_IN_SHIPPING
         #if JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
             #define JAFG_DO_SLOW_CHECKS                                          JAFG_DO_CHECKS_IN_SHIPPING
         #else /* JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
             #define JAFG_DO_SLOW_CHECKS                                          0
         #endif /* !JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
-    #else /* IN_SHIPPING */
+    #else /* JAFG_IN_SHIPPING */
         #define JAFG_DO_CHECKS                                                   1
-        #if IN_DEVELOPMENT
+        #if JAFG_IN_DEVELOPMENT
             #define JAFG_DO_SLOW_CHECKS                                          JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
-        #else /* IN_DEVELOPMENT */
+        #else /* JAFG_IN_DEVELOPMENT */
             #define JAFG_DO_SLOW_CHECKS                                          JAFG_ALLOW_SLOW_CHECKS
-        #endif /* !IN_DEVELOPMENT */
-    #endif /* !IN_SHIPPING */
+        #endif /* !JAFG_IN_DEVELOPMENT */
+    #endif /* !JAFG_IN_SHIPPING */
 #else /* JAFG_DO_EVER_CHECKS */
     #define JAFG_DO_CHECKS                                                       0
     #define JAFG_DO_SLOW_CHECKS                                                  0
@@ -200,9 +200,9 @@
 #define PRIVATE_JAFG_BUILD_H_INCLUDED                                            1
 
 #if JAFG_WITH_MSVC
-    #if IN_DEBUG
+    #if JAFG_IN_DEBUG
         #ifndef _DEBUG
             #define _DEBUG
         #endif /* _DEBUG */
-    #endif /* IN_DEBUG */
+    #endif /* JAFG_IN_DEBUG */
 #endif /* JAFG_WITH_MSVC */

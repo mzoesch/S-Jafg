@@ -1,17 +1,17 @@
 // Copyright mzoesch. All rights reserved.
 
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
 
 #include "Core/Application.h"
 #include "Platform/PlatformMisc.h"
 
 #if JAFG_WITH_MSVC
-    #if !IN_SHIPPING
+    #if !JAFG_IN_SHIPPING
         #ifndef _DEBUG
             #erorr "_DEBUG must be defined to use <crtdbg.h>."
         #endif /* !_DEBUG */
         #include <crtdbg.h>
-    #endif /* !IN_SHIPPING */
+    #endif /* !JAFG_IN_SHIPPING */
 #endif /* JAFG_WITH_MSVC */
 
 using namespace Jafg;
@@ -65,16 +65,16 @@ EPlatformExit::Type SehUnwinder()
 }
 #endif /* JAFG_WITH_MSVC */
 
-#if IN_SHIPPING
+#if JAFG_IN_SHIPPING
 i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
-#else /* IN_SHIPPING */
+#else /* JAFG_IN_SHIPPING */
 i32 main(i32 ArgC, char* ArgV[])
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
 {
-#if IN_SHIPPING
+#if JAFG_IN_SHIPPING
     i32 ArgC{__argc};
     char** ArgV{__argv};
-#endif /* IN_SHIPPING */
+#endif /* JAFG_IN_SHIPPING */
 
     i32 ErrorLevel{};
 
@@ -96,12 +96,12 @@ i32 main(i32 ArgC, char* ArgV[])
     Application::Private::bAlwaysReportCrash = Application::HasCmdLineParameter("AlwaysReportCrash");
 #endif /* JAFG_WITH_MSVC */
 
-#if !IN_SHIPPING && JAFG_WITH_MSVC
+#if !JAFG_IN_SHIPPING && JAFG_WITH_MSVC
     //_CrtSetDebugFillThreshold(SIZE_MAX);
-#endif /* !IN_SHIPPING && JAFG_WITH_MSVC */
+#endif /* !JAFG_IN_SHIPPING && JAFG_WITH_MSVC */
 
 #if JAFG_WITH_MSVC
-#if !IN_SHIPPING
+#if !JAFG_IN_SHIPPING
     if (Application::HasTracerPidNow() && (Application::IsAlwaysReportCrash() == false))
     {
         LOG_VERBOSE(LogPlatform, "Suppressing crash dialog due to presence of tracer pid.")
@@ -115,7 +115,7 @@ i32 main(i32 ArgC, char* ArgV[])
         _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_WNDW);
         _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_WNDW);
     }
-#endif /* !IN_SHIPPING */
+#endif /* !JAFG_IN_SHIPPING */
     ErrorLevel = SehUnwinder();
 #else /* JAFG_WITH_MSVC */
     ErrorLevel = AgnosticLaunch();
@@ -133,4 +133,4 @@ i32 main(i32 ArgC, char* ArgV[])
     return ErrorLevel;
 }
 
-#endif /* PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WINDOWS */

@@ -167,34 +167,18 @@ function(_jafg_add_module_impl
 
     if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
         target_compile_definitions(${module_name} PRIVATE
-            PLATFORM_LINUX=1
+            JAFG_PLATFORM_LINUX=1
             )
     elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
         target_compile_definitions(${module_name} PRIVATE
-            PLATFORM_WINDOWS=1
+            JAFG_PLATFORM_WINDOWS=1
             )
     elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM)
         target_compile_definitions(${module_name} PRIVATE
-                PLATFORM_WASM=1
+            JAFG_PLATFORM_WASM=1
             )
     else()
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_PLATFORM [${JAFG_TARGET_PLATFORM}].")
-    endif()
-
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        target_compile_definitions(${module_name} PRIVATE
-            JAFG_WITH_MSVC=1
-            )
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_definitions(${module_name} PRIVATE
-            JAFG_WITH_GCC=1
-            )
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_definitions(${module_name} PRIVATE
-            JAFG_WITH_CLANG=1
-            )
-    else()
-        message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
     endif()
 
     target_compile_definitions(${module_name} PRIVATE
@@ -203,16 +187,16 @@ function(_jafg_add_module_impl
 
     if(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_CLIENT)
         target_compile_definitions(${module_name} PRIVATE
-            AS_CLIENT=1
+            JAFG_AS_CLIENT=1
             )
     elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_DAEMON)
         target_compile_definitions(${module_name} PRIVATE
-            AS_DAEMON=1
+            JAFG_AS_DAEMON=1
             )
     elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_TESTUNIT)
         target_compile_definitions(${module_name} PRIVATE
-            AS_CLIENT=1
-            WITH_TESTS=1
+            JAFG_AS_CLIENT=1
+            JAFG_WITH_TESTS=1
             )
     else()
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_TYPE [${JAFG_TARGET_TYPE}].")
@@ -220,15 +204,15 @@ function(_jafg_add_module_impl
 
     if(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG)
         target_compile_definitions(${module_name} PRIVATE
-            IN_DEBUG=1
+            JAFG_IN_DEBUG=1
             )
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEVELOPMENT)
         target_compile_definitions(${module_name} PRIVATE
-            IN_DEVELOPMENT=1
+            JAFG_IN_DEVELOPMENT=1
             )
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_SHIPPING)
         target_compile_definitions(${module_name} PRIVATE
-            IN_SHIPPING=1
+            JAFG_IN_SHIPPING=1
             )
     else()
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_CONFIG [${JAFG_TARGET_CONFIG}].")

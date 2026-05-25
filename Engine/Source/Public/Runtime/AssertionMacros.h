@@ -91,7 +91,7 @@
     #define checkCode(Code)                     do { Code; } while ( false );
 
     //#
-    //# Behaves like a checkNoEntry except when JAFG_DO_CHECKS is false (only usually IN_SHIPPING), it will
+    //# Behaves like a checkNoEntry except when JAFG_DO_CHECKS is false (only usually JAFG_IN_SHIPPING), it will
     //# evaluate to a static-assert instead of being compiled out like check-like macros. Useful for control paths
     //# that are not essential for a quick prototype but should be implemented when encountering them in the wild.
     //#
@@ -149,7 +149,7 @@
 //# Same as jassertNoEntry but more user-friendly with a message. Eww, is this that GoLang?
 //#
 #define panic(Msg)                              JAFG_GORGEOUS_TRAP_MSG( "Program panicked. " Msg )
-#define panicMsgf(Format, ...)                  JAFG_GORGEOUS_TRAP_MSG( ::Jafg::SprintF             \
+#define panicMsgf(Format, ...)                  JAFG_GORGEOUS_TRAP_MSG( ::algo::sprintf             \
                                                 (                                                 \
                                                     "Program panicked. " Format ""  __VA_OPT__(,) __VA_ARGS__ \
                                                 ).c_str() )
@@ -217,7 +217,7 @@
 
 //# Just break if a debugger is watching us. Do nothing else.
 #define PRIVATE_JAFG_TRY_BREAK_NO_FACADE()       \
-    if (::Jafg::Hal::IsTracerPidValidVerySlow()) \
+    if (::Jafg::App::Detail::IsTracerPidValidVerySlow()) \
     {                                           \
         JAFG_PLATFORM_BREAK()                   \
     }
@@ -228,7 +228,7 @@
 //#
 #define PRIVATE_JAFG_TRAP_OR_BREAK()                 \
     {                                               \
-        if (::Jafg::Hal::IsTracerPidValidVerySlow()) \
+        if (::Jafg::App::Detail::IsTracerPidValidVerySlow()) \
         {                                           \
             PRIVATE_JAFG_GORGEOUS_BREAK_IMPL();      \
         }                                           \
@@ -250,7 +250,7 @@
 //#
 #define PRIVATE_JAFG_TRAP_OR_BREAK_MSG(Msg)                   \
     {                                                        \
-        if (::Jafg::Hal::IsTracerPidValidVerySlow())          \
+        if (::Jafg::App::Detail::IsTracerPidValidVerySlow())          \
         {                                                    \
             /* Discard the Msg if a debugger is watching. */ \
             PRIVATE_JAFG_GORGEOUS_BREAK_IMPL();               \
@@ -274,7 +274,7 @@
 #define PRIVATE_JAFG_GORGEOUS_TRAP_IMPL_MSG(Msg) \
     ::Jafg::FlushOutStreams();              \
     PRIVATE_JAFG_TRY_BREAK_NO_FACADE();           \
-    ::Jafg::LOnPlatformBreak::OnProgramPanic     \
+    ::Jafg::App::Detail::TrapMe     \
     (                                           \
         Msg,                                    \
         __FILE__,                               \
@@ -291,7 +291,7 @@
 
 //# Combines an expression with a formatted message.
 #define PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...) \
-    ::Jafg::SprintF                                                         \
+    ::algo::sprintf                                                         \
     (                                                                      \
         "Program panicked. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__ \
     )
@@ -306,7 +306,7 @@
     "Program panicked. Reason: [" #Expr "]. " Msg ""                   \
     JAFG_LOG_COLOR_END
 #define PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...) \
-    ::Jafg::SprintF                                                              \
+    ::algo::sprintf                                                              \
     (                                                                           \
         JAFG_LOG_COLOR_FATAL                                                     \
         "Program panicked. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__      \
@@ -323,7 +323,7 @@
 
 //# Combines an expression with a formatted message.
 #define PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...)            \
-    ::Jafg::SprintF                                                                  \
+    ::algo::sprintf                                                                  \
     (                                                                               \
         "Program run into an error. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__ \
     )
@@ -338,7 +338,7 @@
     "Program run into an error. Reason: [" #Expr "]. " Msg ""        \
     JAFG_LOG_COLOR_END
 #define PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...)       \
-    ::Jafg::SprintF                                                                  \
+    ::algo::sprintf                                                                  \
     (                                                                               \
         JAFG_LOG_COLOR_ERROR                                                         \
         "Program run into an error. Reason: [" #Expr "]. " Format "" __VA_OPT__(,) __VA_ARGS__ \
@@ -399,7 +399,7 @@ consteval void ConstevalAssertionFailure()
 #define PRIVATE_JAFG_ASSERT_WEAK_IMPL_ON_FAIL(Expr)  \
     PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR(Expr)          \
     {                                               \
-        if (::Jafg::Hal::IsTracerPidValidVerySlow()) \
+        if (::Jafg::App::Detail::IsTracerPidValidVerySlow()) \
         {                                           \
             PRIVATE_JAFG_GORGEOUS_BREAK_IMPL()       \
         }                                           \

@@ -59,15 +59,15 @@
         return TRUE;                                            \
     }
 
-#if PLATFORM_LINUX
+#if JAFG_PLATFORM_LINUX
     #define PRIVATE_JAFG_PLUGINS_NATIVE_CALLS(InPluginLifetime)   \
         PRIVATE_JAFG_PLUGINS_LINUX_NATIVE_CALLS(InPluginLifetime)
-#elif PLATFORM_WINDOWS
+#elif JAFG_PLATFORM_WINDOWS
     #define PRIVATE_JAFG_PLUGINS_NATIVE_CALLS(InPluginLifetime) \
         PRIVATE_JAFG_PLUGINS_WIN_NATIVE_CALLS(InPluginLifetime)
 #else
     #error "Unsupported platform."
-#endif /* PLATFORM_LINUX */
+#endif /* JAFG_PLATFORM_LINUX */
 
 #else /* JAFG_WITH_FOREIGN_SUPPORT */
 

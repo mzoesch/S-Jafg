@@ -19,16 +19,16 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
             this->FixedTick(static_cast<f32>(DeltaTime));
             LastTickTime = Now;
         }
-#if !PLATFORM_WASM
+#if !JAFG_PLATFORM_WASM
         else
         {
             if (f64 TimeRemaining{this->TickInterval - DeltaTime}; TimeRemaining > 0.001)
             {
                 /* Spare cpu time for other tasks. */
-                Jafg::Hal::SleepNoStats(TimeRemaining * 0.997);
+                App::SleepNoStats(TimeRemaining * 0.997);
             }
         }
-#endif /* !PLATFORM_WASM */
+#endif /* !JAFG_PLATFORM_WASM */
 
         continue;
     }

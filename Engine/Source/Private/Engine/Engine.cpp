@@ -18,15 +18,18 @@
 #include "User/UserPreferences.h"
 
 #ifndef JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES
-    #if IN_SHIPPING
+    #if JAFG_IN_SHIPPING
         #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      2.0
-    #else /* IN_SHIPPING */
+    #else /* JAFG_IN_SHIPPING */
         #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      0.7
-    #endif /* !IN_SHIPPING */
+    #endif /* !JAFG_IN_SHIPPING */
 #endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
 
 ENGINE_API Jafg::LEngine const* GEngine{};
-ENGINE_API Jafg::LEngine* GMutableEngine{};
+namespace Jafg::Detail
+{
+ENGINE_API LEngine* GMutableEngine{};
+} /* ~Namespace Jafg::Detail */
 
 bool Jafg::LWorldStorage::IsValid() const noexcept
 {
@@ -169,20 +172,20 @@ void Jafg::LEngine::Initialize()
         .Exec([](LCommandExecutionInfo const&, LCommandArgs const& InArgs, LCommandExecutionResponse& OutResponse)
         {
             check(InArgs.GetArgCount() == 2)
-            if (LCliVariable* Var = GMutableEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
+            if (LCliVariable* Var = Detail::GMutableEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
             {
                 i32 Cursor = 1;
                 if (Var->GetType()->CanParse(InArgs, &Cursor) == false)
                 {
                     OutResponse.Rc = ECommandReturnCode::TypeError;
-                    OutResponse.StdOut = Jafg::SprintF("Cannot parse [{}] as [{}]", InArgs[1].Name, Var->GetType()->GetIdentifier());
+                    OutResponse.StdOut = algo::sprintf("Cannot parse [{}] as [{}]", InArgs[1].Name, Var->GetType()->GetIdentifier());
                     return;
                 }
 
                 if (Var->SetValue(InArgs[1].Name))
                 {
                     OutResponse.Rc = ECommandReturnCode::Success;
-                    OutResponse.StdOut = Jafg::SprintF("Updated [{}] to [{}]", Var->GetIdentifier(), Var->GetValue());
+                    OutResponse.StdOut = algo::sprintf("Updated [{}] to [{}]", Var->GetIdentifier(), Var->GetValue());
                 }
                 else
                 {
@@ -192,7 +195,7 @@ void Jafg::LEngine::Initialize()
             else
             {
                 OutResponse.Rc = ECommandReturnCode::SemanticError;
-                OutResponse.StdOut = Jafg::SprintF("No such variable [{}]", InArgs[0].Name);
+                OutResponse.StdOut = algo::sprintf("No such variable [{}]", InArgs[0].Name);
             }
         })});
 
@@ -205,12 +208,12 @@ void Jafg::LEngine::Initialize()
             if (const LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(Args[0].Name); Var)
             {
                 OutResponse.Rc = ECommandReturnCode::Success;
-                OutResponse.StdOut = Jafg::SprintF("[{}] == [{}]", Var->GetIdentifier(), Var->GetValue());
+                OutResponse.StdOut = algo::sprintf("[{}] == [{}]", Var->GetIdentifier(), Var->GetValue());
             }
             else
             {
                 OutResponse.Rc = ECommandReturnCode::SemanticError;
-                OutResponse.StdOut = Jafg::SprintF("No such variable [{}]", Args[0].Name);
+                OutResponse.StdOut = algo::sprintf("No such variable [{}]", Args[0].Name);
             }
             return;
         })});
@@ -232,7 +235,7 @@ void Jafg::LEngine::Initialize()
         {
             check(Args.GetArgCount() == 1)
             LWorld* World{Args[0].GetAs<LWorld>()};
-            OutResponse.StdOut = Jafg::SprintF("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
+            OutResponse.StdOut = algo::sprintf("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
             OutResponse.Rc = ECommandReturnCode::Success;
         })});
 
@@ -243,12 +246,12 @@ void Jafg::LEngine::Initialize()
         .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
         {
             check(Args.GetArgCount() == 2)
-            check(GMutableEngine)
-            LWorld* World{ Args[0].GetAs<LWorld>() };
-            LString Url{ Args[1].GetAs<LString>() };
-            GMutableEngine->Browse(World, Url);
+            check(Detail::GMutableEngine)
+            LWorld& World{*Args[0].GetAs<LWorld>()};
+            LString Url{Args[1].GetAs<LString>()};
+            Detail::GMutableEngine->Browse(World, Url);
             OutResponse.Rc = ECommandReturnCode::Success;
-            OutResponse.StdOut = Jafg::SprintF("Browsing to URL [{}] in world [{}]", Url, World->GetHumanReadableName());
+            OutResponse.StdOut = algo::sprintf("Browsing to URL [{}] in world [{}]", Url, World.GetHumanReadableName());
         })});
 
         this->GetCommandLineInterface().RegisterCommandChecked({"_Trap", "Traps jafg.",
@@ -297,7 +300,7 @@ void Jafg::LEngine::Initialize()
     this->Collection.InitializeSubsystems<JEngineSubsystem>();
 
 #if WITH_LOCAL_LAYER
-    check(this->LocalEgo.IsDecommissioned() == false)
+    check(!this->LocalEgo.IsDecommissioned())
     this->LocalEgo.Initialize();
 #endif /* WITH_LOCAL_LAYER */
 
@@ -452,13 +455,13 @@ void Jafg::LEngine::DefaultTimeAdvance()
 
     if (UserPreferences.bVSyncEnabled == false && UserPreferences.MaxFps != JUserPreferences::UnlimitedFps)
     {
-        if (f64 ElapsedTime{algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now()) - GEngine->FrameTime};
+        if (f64 ElapsedTime{algo::time_diff(App::GetStaticStorageInitializationTime(), algo::clock::now()) - GEngine->FrameStartElapsedTime};
             ElapsedTime < 1.0 / *UserPreferences.MaxFps)
         {
-            LEngine::Timepoint SleepStart{LEngine::Clock::now()};
+            auto SleepStart{algo::now()};
             f64 SleepTime{(1.0 / *UserPreferences.MaxFps) - ElapsedTime};
-            Hal::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
-            this->IdleDeltaTime = algo::time_diff(SleepStart, LEngine::Clock::now());
+            App::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
+            this->IdleDeltaTime = algo::time_diff(SleepStart, algo::now());
             if (this->IdleDeltaTime > this->CurrentStat.HighestIdle)
             {
                 this->CurrentStat.HighestIdle = this->IdleDeltaTime;
@@ -466,10 +469,10 @@ void Jafg::LEngine::DefaultTimeAdvance()
         }
     }
 
-    this->PreviousFrameTime = this->FrameTime;
-    this->FrameTime = algo::time_diff(App::GetStaticStorageInitializationTime(), LEngine::Clock::now());
+    this->FrameStartTimePoint = algo::now();
+    this->PreviousFrameStartElapsedTime = std::exchange(this->FrameStartElapsedTime, App::GetElapsedTime(this->FrameStartTimePoint));
 
-    this->DeltaTime = this->FrameTime - this->PreviousFrameTime;
+    this->DeltaTime = this->FrameStartElapsedTime - this->PreviousFrameStartElapsedTime;
     if (this->DeltaTime < this->CurrentStat.Low)
     {
         this->CurrentStat.Low = this->DeltaTime;
@@ -501,10 +504,11 @@ void Jafg::LEngine::DefaultTimeAdvance()
         this->DeltaTime = LEngine::MaxDeltaTime;
     }
 
-    if (std::chrono::duration<f64>(LEngine::Clock::now() - this->LastStatisticsTime).count() > this->StatisticsPeriod)
+    if (std::chrono::duration<f64>(this->FrameStartTimePoint - this->LastStatisticsTime).count() > this->StatisticsPeriod)
     {
         this->PreviousStat = this->CurrentStat;
         algo::swap_default(&this->CurrentStat);
+        this->LastStatisticsTime = this->FrameStartTimePoint;
     }
 
     return;
@@ -553,38 +557,25 @@ void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
     return;
 }
 
-Jafg::Detail::LWorldTrack& Jafg::LEngine::GetTrackFromWorld(LWorld const* World)
+Jafg::Detail::LWorldTrackInitializer Jafg::LEngine::SummonWorld(Detail::LWorldTrack::CreateInfo Info)
 {
-    check( World )
-
-    auto It{ algo::find(this->Tracks, World, [](auto const& E){ return E.ChildWorld.get(); }) };
-    check( It != this->Tracks.end() )
-
-    return *It;
-}
-
-Jafg::LWorldStorage Jafg::LEngine::SummonWorld(LString const& HumanReadableName)
-{
-    check( Tasks::IsOnMasterThread() )
-
-    if (algo::contains(this->Tracks, HumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }))
+    check(Tasks::IsOnMasterThread())
+    if constexpr (IS_COMPILED_LOG(LogEngine, Warning))
+    if (algo::contains(this->Tracks, Info.HumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }))
     {
-        LOG_WARNING(LogEngine, "A world with the name [{}] is already summoned.", HumanReadableName)
+        LOG_WARNING(LogEngine, "A world with the name [{}] is already summoned.", Info.HumanReadableName)
     }
-
-    this->Tracks.emplace_back(Detail::LWorldTrack{HumanReadableName});
-    return LWorldStorage{ this->Tracks.back().ChildWorld.get() };
+    return {LWorldStorage{&this->Tracks.emplace_back(std::move(Info)).GetWorld()}};
 }
 
-bool Jafg::LEngine::IsWorldValid(LWorld const* World) const
+bool Jafg::LEngine::IsWorldValid(LWorld const* World) const noexcept
 {
-    return algo::contains_if(this->Tracks, [World](auto const& E) -> bool
+    return World && algo::contains_if(this->Tracks, [World](auto const& E) -> bool
     {
         if (E.ChildWorld.get() == World)
         {
             return E.IsValid();
         }
-
         return false;
     });
 }
@@ -613,17 +604,17 @@ bool Jafg::LEngine::RegisterLevel(LLevel&& Level)
     return true;
 }
 
-void Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LString const& Url, Detail::LWorldTrack::LCallbacks Callbacks)
+Jafg::LWorld& Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LString Url, Detail::LWorldTrack::LCallbacks Callbacks)
 {
-    check( Track.ChildWorld.get() )
-    check( Track.TravelUrl.empty() )
+    check(Track.IsValid())
+    check(!Track.IsWaitingForTravel())
 
-    LOG_VERBOSE(LogEngine, "Browsing world [{}] to [{}].", Track.ChildWorld->GetHumanReadableName(), Url)
+    LOG_VERBOSE(LogEngine, "[{}]: Browsing world to [{}].", Track.ChildWorld->GetHumanReadableName(), Url)
 
-    if (this->IsTrackUrlInternal(Url) == false)
+    if (!this->IsTrackUrlInternal(Url))
     {
-        unimplemented()
-        return;
+        // TODO: Not implemented.
+        std::unreachable();
     }
 
     if (auto Idx{Url.find('?')}; Idx != LString::npos)
@@ -641,10 +632,10 @@ void Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LString const& Url, Detai
         }
     }
 
-    Track.TravelUrl = Url;
+    Track.TravelUrl = std::move(Url);
     Track.Callbacks = std::move(Callbacks);
 
-    return;
+    return Track.GetWorld();
 }
 
 bool Jafg::LEngine::IsTrackUrlInternal(LString const& Url) const
@@ -1071,7 +1062,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         Info["TargetConfig"] = App::GetTargetConfiguration();
         Info["bEverRender"] = GEngine->CanEverRender();
 
-        Info["Uptime"] = GEngine->FrameTime;
+        Info["Uptime"] = GEngine->FrameStartElapsedTime;
         Info["Ticks"] = GEngine->FrameCount;
         Info["AvgDeltaTime"] = algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start) / GEngine->PreviousStat.FrameCount;
         Info["AvgTickRate"] = GEngine->PreviousStat.FrameCount / algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start);

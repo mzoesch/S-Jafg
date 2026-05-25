@@ -2,72 +2,83 @@
 
 #pragma once
 
-#include <string>
-#include <bit>
-#include <cstdint>
 
 /*-----------------------------------------------------------------------------
     Common types for almost all compilers and platforms.
 -----------------------------------------------------------------------------*/
 
-namespace Jafg
+namespace Jafg::Detail
 {
 
 struct LPrimitivePlatformTypesGeneric
 {
-    typedef std::uint8_t                u8;
-    typedef std::uint16_t               u16;
-    typedef std::uint32_t               u32;
-    typedef std::uint64_t               u64;
-    typedef std::int8_t                 i8;
-    typedef std::int16_t                i16;
-    typedef std::int32_t                i32;
-    typedef std::int64_t                i64;
+    typedef std::uint8_t  u8;
+    typedef std::uint16_t u16;
+    typedef std::uint32_t u32;
+    typedef std::uint64_t u64;
+    typedef std::int8_t   i8;
+    typedef std::int16_t  i16;
+    typedef std::int32_t  i32;
+    typedef std::int64_t  i64;
 
-    typedef float                       f32;
-    typedef double                      f64;
+    typedef float  f32;
+    typedef double f64;
 
-    //# Char used by jafg. 8-bit fixed-width representation of 7-bit characters.
-    typedef char                        LJafgChar;
     //# Native char.
-    typedef char                        LChar;
+    typedef char LChar;
 };
 
-} /* ~Namespace Jafg */
+} /* ~Namespace Jafg::Detail */
+
+#ifndef JAFG_WITH_GCC
+    #if (!!__GNUC__) && !(__clang__)
+        #define JAFG_WITH_GCC               1
+    #endif /* !!__GNUC__ && !(__clang__)) */
+#endif /* !JAFG_WITH_GCC */
+#ifndef JAFG_WITH_MSVC
+    #if _MSC_VER
+        #define JAFG_WITH_MSVC              1
+    #endif /* _MSC_VER */
+#endif /* !JAFG_WITH_MSVC */
+#ifndef JAFG_WITH_CLANG
+    #if __clang__
+        #define JAFG_WITH_CLANG             1
+    #endif /* __clang__ */
+#endif /* !JAFG_WITH_CLANG */
 
 
 /*-----------------------------------------------------------------------------
     Define supported platforms.
 -----------------------------------------------------------------------------*/
 
-#ifndef PLATFORM_LINUX
-    #define PLATFORM_LINUX              0
-#endif /* !PLATFORM_LINUX */
-#ifndef PLATFORM_WASM
-    #define PLATFORM_WASM               0
-#endif /* !PLATFORM_WASM */
-#ifndef PLATFORM_WINDOWS
-    #define PLATFORM_WINDOWS            0
-#endif /* !PLATFORM_WINDOWS */
+#ifndef JAFG_PLATFORM_LINUX
+    #define JAFG_PLATFORM_LINUX              0
+#endif /* !JAFG_PLATFORM_LINUX */
+#ifndef JAFG_PLATFORM_WASM
+    #define JAFG_PLATFORM_WASM               0
+#endif /* !JAFG_PLATFORM_WASM */
+#ifndef JAFG_PLATFORM_WINDOWS
+    #define JAFG_PLATFORM_WINDOWS            0
+#endif /* !JAFG_PLATFORM_WINDOWS */
 
-#if !(PLATFORM_LINUX || PLATFORM_WASM || PLATFORM_WINDOWS)
+#if !(JAFG_PLATFORM_LINUX || JAFG_PLATFORM_WASM || JAFG_PLATFORM_WINDOWS)
     #error "No platforms specified."
-#endif /* !(PLATFORM_LINUX || PLATFORM_WASM || PLATFORM_WINDOWS) */
-#if PLATFORM_LINUX
-    #if PLATFORM_WASM || PLATFORM_WINDOWS
+#endif /* !(JAFG_PLATFORM_LINUX || JAFG_PLATFORM_WASM || JAFG_PLATFORM_WINDOWS) */
+#if JAFG_PLATFORM_LINUX
+    #if JAFG_PLATFORM_WASM || JAFG_PLATFORM_WINDOWS
         #error "Multiple platforms specified."
-    #endif /* PLATFORM_WASM || PLATFORM_WINDOWS */
-#endif /* PLATFORM_LINUX */
-#if PLATFORM_WASM
-    #if PLATFORM_LINUX || PLATFORM_WINDOWS
+    #endif /* JAFG_PLATFORM_WASM || JAFG_PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_LINUX */
+#if JAFG_PLATFORM_WASM
+    #if JAFG_PLATFORM_LINUX || JAFG_PLATFORM_WINDOWS
         #error "Multiple platforms specified."
-    #endif /* PLATFORM_LINUX || PLATFORM_WINDOWS */
-#endif /* PLATFORM_WASM */
-#if PLATFORM_WINDOWS
-    #if PLATFORM_LINUX || PLATFORM_WASM
+    #endif /* JAFG_PLATFORM_LINUX || JAFG_PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_WASM */
+#if JAFG_PLATFORM_WINDOWS
+    #if JAFG_PLATFORM_LINUX || JAFG_PLATFORM_WASM
         #error "Multiple platforms specified."
-    #endif /* PLATFORM_LINUX || PLATFORM_WASM */
-#endif /* PLATFORM_WINDOWS */
+    #endif /* JAFG_PLATFORM_LINUX || JAFG_PLATFORM_WASM */
+#endif /* JAFG_PLATFORM_WINDOWS */
 
 
 /*-----------------------------------------------------------------------------
@@ -78,28 +89,24 @@ struct LPrimitivePlatformTypesGeneric
     #error "DETAIL_JAFG_CPLUSPLUS is not defined."
 #endif /* DETAIL_JAFG_CPLUSPLUS */
 
-#if PLATFORM_LINUX
+#if JAFG_PLATFORM_LINUX
     #include "Hal/PlatformLinux.h"
-#elif PLATFORM_WASM
+#elif JAFG_PLATFORM_WASM
     #include "Hal/PlatformWasm.h"
-#elif PLATFORM_WINDOWS
+#elif JAFG_PLATFORM_WINDOWS
     #include "Hal/PlatformWin.h"
-#else /* PLATFORM_WINDOWS */
+#else /* JAFG_PLATFORM_WINDOWS */
     #error "Failed to resolve platform."
-#endif /* !PLATFORM_WINDOWS */
+#endif /* !JAFG_PLATFORM_WINDOWS */
 
 
 /*-----------------------------------------------------------------------------
     Implicitly generated macros.
 -----------------------------------------------------------------------------*/
 
-#ifndef PLATFORM_DESKTOP
-    #if (PLATFORM_WINDOWS || PLATFORM_LINUX)
-        #define PLATFORM_DESKTOP                                        1
-    #else /* (PLATFORM_WINDOWS || PLATFORM_LINUX) */
-        #define PLATFORM_DESKTOP                                        0
-    #endif /* !(PLATFORM_WINDOWS || PLATFORM_LINUX) */
-#endif /* PLATFORM_DESKTOP */
+#ifndef JAFG_PLATFORM_DESKTOP
+    #define JAFG_PLATFORM_DESKTOP                                        0
+#endif /* JAFG_PLATFORM_DESKTOP */
 
 #ifndef JAFG_WITH_GCC
     #define JAFG_WITH_GCC                                                0
@@ -135,7 +142,7 @@ struct LPrimitivePlatformTypesGeneric
 
 //# Whether the platform uses the Posix Api.
 #ifndef JAFG_PLATFORM_USES_POSIX
-    #define JAFG_PLATFORM_USES_POSIX                                     (!PLATFORM_WINDOWS)
+    #define JAFG_PLATFORM_USES_POSIX                                     (!JAFG_PLATFORM_WINDOWS)
 #endif /* !JAFG_PLATFORM_USES_POSIX */
 
 //# Branch prediction hint: Is this boolean expression likely to be true?
@@ -178,18 +185,18 @@ struct LPrimitivePlatformTypesGeneric
     #define JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND                     0
 #endif /* !JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
 
-#if AS_CLIENT
+#if JAFG_AS_CLIENT
     #if !(JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER || JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND)
         #error "No frontend layer specified."
     #endif /* !(JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER || JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND) */
     #if (JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER && JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND)
         #error "Multiple frontend layers specified."
     #endif /* (JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER && JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND) */
-#else /* AS_CLIENT */
+#else /* JAFG_AS_CLIENT */
     #if (JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER || JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND)
         #error "Frontend layer specified but not in client build."
     #endif /* (JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER || JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND) */
-#endif /* !AS_CLIENT */
+#endif /* !JAFG_AS_CLIENT */
 
 //# Whether to compile with the ReST command line system.
 #ifndef JAFG_WITH_REST_CLS
@@ -371,11 +378,6 @@ struct LPrimitivePlatformTypesGeneric
     #error "No platform encoding is defined."
 #endif /* !JAFG_PLATFORM_USES_UTF8 && !JAFG_PLATFORM_USES_UTF16 && !JAFG_PLATFORM_USES_UTF32 */
 
-//# The size of the wchar_t type on the current platform.
-#ifndef JAFG_PLATFORM_WCHAR_SIZE
-    #error "Platform is missing JAFG_PLATFORM_WCHAR_SIZE definition."
-#endif /* !JAFG_PLATFORM_WCHAR_SIZE */
-
 //# The literal wide prefix for the current platform.
 #ifndef LITERAL_WIDE /* Compiler-dependent feature. Evaluates to a correct macro for almost all compilers and platforms. */
     #define LITERAL_WIDE(x)                                             L##x
@@ -431,11 +433,6 @@ struct LPrimitivePlatformTypesGeneric
     #error "Platform is missing JAFG_PLATFORM_USES_STD_FINDER definition."
 #endif /* JAFG_PLATFORM_USES_STD_FINDER */
 
-//# The exit type for the platform.
-#ifndef JAFG_PLATFORM_EXIT_TYPE
-    #define JAFG_PLATFORM_EXIT_TYPE                                     ::Jafg::LPlatformTypes::i32
-#endif /* JAFG_PLATFORM_EXIT_TYPE */
-
 //# The maximal number of frames that can be stored when tracing.
 #ifndef JAFG_PLATFORM_MAX_FRAMES
     #define JAFG_PLATFORM_MAX_FRAMES                                    128
@@ -469,7 +466,15 @@ struct LPrimitivePlatformTypesGeneric
 
 //# Tells the compiler to always inline a function or method.
 #ifndef FORCEINLINE
-    #error "Platform is missing FORCEINLINE definition."
+    #if JAFG_IN_DEBUG
+        //#
+        //# Inlining is disabled in debug builds as following the debugger through inlined code is a pain
+        //# in the ass.
+        //#
+        #define FORCEINLINE                                             inline
+    #else /* JAFG_IN_DEBUG */
+        #error "Platform is missing FORCEINLINE definition."
+    #endif /* !JAFG_IN_DEBUG */
 #endif /* !FORCEINLINE */
 
 #ifndef NODISCARD /* Compiler-dependent feature. Evaluates to a correct macro for almost all compilers and platforms. */
@@ -493,72 +498,39 @@ struct LPrimitivePlatformTypesGeneric
     Generalize types based on the specific platform used.
 -----------------------------------------------------------------------------*/
 
-//# Set this macro to a struct that defines different types for the platform if necessary.
-#ifndef JAFG_PLATFORM_TYPES_STRUCT
-    #define JAFG_PLATFORM_TYPES_STRUCT                                  ::JAFG::LPrimitivePlatformTypesGeneric
-#endif /* JAFG_PLATFORM_TYPES_STRUCT */
-
-//# The maximal aligned type for the current compiled platform.
-#ifndef JAFG_MAX_ALIGN_TYPE /* No other type is more aligned than double on a common platform. */
-    #define JAFG_MAX_ALIGN_TYPE                                         JAFG_PLATFORM_TYPES_STRUCT::f64
-#endif /* !JAFG_MAX_ALIGN_TYPE */
-
-namespace Jafg
-{
-
-typedef JAFG_MAX_ALIGN_TYPE                                              LMaxAlign;
-
-//# The actual used primitive platform types. This is always valid.
-typedef JAFG_PLATFORM_TYPES_STRUCT                                       LPlatformTypes;
-
-#ifndef JAFG_PLATFORM_U64_SIZET_EQ
-    #define JAFG_PLATFORM_U64_SIZET_EQ                                   0
-#endif /* !JAFG_PLATFORM_U64_SIZET_EQ */
-
-#ifndef JAFG_PLATFORM_U32_SIZET_EQ
-    #define JAFG_PLATFORM_U32_SIZET_EQ                                   0
-#endif /* !JAFG_PLATFORM_U32_SIZET_EQ */
-
-namespace Detail
+namespace Jafg::Detail
 {
 
 //# Is true if RTTI is enabled for the current compiler.
-constexpr bool IsRttiEnabled()
+inline constexpr bool IsRttiEnabled
 {
 #if JAFG_WITH_CLANG
-    return __has_feature(cxx_rtti);
+    __has_feature(cxx_rtti)
 #elif WITH_GCC
-    return __GXX_RTTI;
+    __GXX_RTTI
 #elif JAFG_WITH_MSVC
     #ifdef _CPPRTTI
-        return true;
+        true
     #else /* _CPPRTTI */
-        return false;
+        false
     #endif /* !_CPPRTTI */
 #else /* JAFG_WITH_MSVC */
     /* Assume it is enabled by default. */
-    return true;
+    true
 #endif /* !JAFG_WITH_MSVC */
-}
-
-static_assert(IsRttiEnabled() == false, "No, stupid feature.");
-
-static inline constexpr bool IsLittleEndian { std::endian::native == std::endian::little };
-static inline constexpr bool IsBigEndian    { std::endian::native == std::endian::big };
+};
+static_assert(!IsRttiEnabled, "No, stupid feature.");
 
 #if JAFG_PLATFORM_USES_LITTLE_ENDIAN
-    static_assert(IsLittleEndian);
-    static_assert(IsBigEndian == false);
+    static_assert(std::endian::native == std::endian::little);
+    static_assert(std::endian::native != std::endian::big);
 #endif /* JAFG_PLATFORM_USES_LITTLE_ENDIAN */
-
 #if JAFG_PLATFORM_USES_BIG_ENDIAN
-    static_assert(IsBigEndian);
-    static_assert(IsLittleEndian == false);
+static_assert(std::endian::native == std::endian::big);
+static_assert(std::endian::native != std::endian::little);
 #endif /* JAFG_PLATFORM_USES_BIG_ENDIAN */
 
-} /* ~Namespace Detail */
-
-template <typename T>
+template<typename T>
 concept IsPrimitivePlatformTypesValid = requires
 {
     typename T::u8;
@@ -573,109 +545,54 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::f32;
     typename T::f64;
 
-    typename T::LJafgChar;
     typename T::LChar;
 };
+static_assert(IsPrimitivePlatformTypesValid<LPrimitivePlatformTypes>);
 
-static_assert(IsPrimitivePlatformTypesValid<LPlatformTypes>, "JAFG::LPlatformTypes is not valid.");
+static_assert(sizeof(LPrimitivePlatformTypes::u8)  == 1);
+static_assert(sizeof(LPrimitivePlatformTypes::u16) == 2);
+static_assert(sizeof(LPrimitivePlatformTypes::u32) == 4);
+static_assert(sizeof(LPrimitivePlatformTypes::u64) == 8);
+static_assert(sizeof(LPrimitivePlatformTypes::i8)  == 1);
+static_assert(sizeof(LPrimitivePlatformTypes::i16) == 2);
+static_assert(sizeof(LPrimitivePlatformTypes::i32) == 4);
+static_assert(sizeof(LPrimitivePlatformTypes::i64) == 8);
 
-static_assert(sizeof(LPlatformTypes::u8)                == 1);
-static_assert(sizeof(LPlatformTypes::u16)               == 2);
-static_assert(sizeof(LPlatformTypes::u32)               == 4);
-static_assert(sizeof(LPlatformTypes::u64)               == 8);
-static_assert(sizeof(LPlatformTypes::i8)                == 1);
-static_assert(sizeof(LPlatformTypes::i16)               == 2);
-static_assert(sizeof(LPlatformTypes::i32)               == 4);
-static_assert(sizeof(LPlatformTypes::i64)               == 8);
-
-static_assert(sizeof(LPlatformTypes::f32)               == 4);
-static_assert(sizeof(LPlatformTypes::f64)               == 8);
-
-static_assert(sizeof(wchar_t)    == JAFG_PLATFORM_WCHAR_SIZE );
-static_assert(sizeof(char)                              == 1 );
-static_assert(sizeof(char8_t)                           == 1 );
-static_assert(sizeof(char16_t)                          == 2 );
-static_assert(sizeof(char32_t)                          == 4 );
+static_assert(sizeof(LPrimitivePlatformTypes::f32) == 4);
+static_assert(sizeof(LPrimitivePlatformTypes::f64) == 8);
 
 #if JAFG_PLATFORM_USES_64_BIT
-    static_assert(sizeof(void*) == sizeof(LPlatformTypes::u64));
-    static_assert(sizeof(void*) == sizeof(LPlatformTypes::i64));
+    static_assert(sizeof(void*) == sizeof(LPrimitivePlatformTypes::u64));
+    static_assert(sizeof(void*) == sizeof(LPrimitivePlatformTypes::i64));
 #endif /* JAFG_PLATFORM_USES_64_BIT */
 #if JAFG_PLATFORM_USES_32_BIT
-    static_assert(sizeof(void*) == sizeof(LPlatformTypes::u32));
-    static_assert(sizeof(void*) == sizeof(LPlatformTypes::i32));
+    static_assert(sizeof(void*) == sizeof(LPrimitivePlatformTypes::u32));
+    static_assert(sizeof(void*) == sizeof(LPrimitivePlatformTypes::i32));
 #endif /* JAFG_PLATFORM_USES_32_BIT */
 
-template <typename T>
-concept IsOnProgramPanicValid = requires
-    (
-        T t,
-        LPlatformTypes::LJafgChar* InBaseMessage,
-        LPlatformTypes::LJafgChar* InMessage,
-        LPlatformTypes::LJafgChar* InFile,
-        LPlatformTypes::u64        InLine
-    )
-{
-    { t.ExitQuietly() } -> std::same_as<void>;
-    { t.OnProgramPanicImpl(InBaseMessage) } -> std::same_as<void>;
-    { t.OnProgramPanic(InMessage, InFile, InLine) } -> std::same_as<void>;
-};
-
-static_assert(IsOnProgramPanicValid<LOnPlatformBreak>);
-
-#if JAFG_PLATFORM_U64_SIZET_EQ
-    static_assert(std::is_same_v<LPlatformTypes::u64, std::size_t>);
-#else /* JAFG_PLATFORM_U64_SIZET_EQ */
-    static_assert(!std::is_same_v<LPlatformTypes::u64, std::size_t>);
-#endif /* !JAFG_PLATFORM_U64_SIZET_EQ */
-#if JAFG_PLATFORM_U32_SIZET_EQ
-    static_assert(std::is_same_v<LPlatformTypes::u32, std::size_t>);
-#else /* JAFG_PLATFORM_U32_SIZET_EQ */
-    static_assert(!std::is_same_v<LPlatformTypes::u32, std::size_t>);
-#endif /* !JAFG_PLATFORM_U32_SIZET_EQ */
-
-} /* ~Namespace Jafg */
+} /* ~Namespace Jafg::Detail */
 
 
 /*-----------------------------------------------------------------------------
     Make platform primitives public.
 -----------------------------------------------------------------------------*/
 
-typedef Jafg::LPlatformTypes::u8                                         u8;
-typedef Jafg::LPlatformTypes::u16                                        u16;
-typedef Jafg::LPlatformTypes::u32                                        u32;
-typedef Jafg::LPlatformTypes::u64                                        u64;
-typedef Jafg::LPlatformTypes::i8                                         i8;
-typedef Jafg::LPlatformTypes::i16                                        i16;
-typedef Jafg::LPlatformTypes::i32                                        i32;
-typedef Jafg::LPlatformTypes::i64                                        i64;
+typedef Jafg::Detail::LPrimitivePlatformTypes::u8       u8;
+typedef Jafg::Detail::LPrimitivePlatformTypes::u16      u16;
+typedef Jafg::Detail::LPrimitivePlatformTypes::u32      u32;
+typedef Jafg::Detail::LPrimitivePlatformTypes::u64      u64;
+typedef Jafg::Detail::LPrimitivePlatformTypes::i8       i8;
+typedef Jafg::Detail::LPrimitivePlatformTypes::i16      i16;
+typedef Jafg::Detail::LPrimitivePlatformTypes::i32      i32;
+typedef Jafg::Detail::LPrimitivePlatformTypes::i64      i64;
 
-typedef Jafg::LPlatformTypes::f32                                        f32;
-typedef Jafg::LPlatformTypes::f64                                        f64;
+typedef Jafg::Detail::LPrimitivePlatformTypes::f32 f32;
+typedef Jafg::Detail::LPrimitivePlatformTypes::f64 f64;
 
-typedef Jafg::LPlatformTypes::LJafgChar                                  LJafgChar;
-typedef Jafg::LPlatformTypes::LChar                                      LChar;
+typedef Jafg::Detail::LPrimitivePlatformTypes::LChar LChar;
 
-
-/*-----------------------------------------------------------------------------
-    HAL free function that must be valid and implemented on all platforms.
------------------------------------------------------------------------------*/
-
-namespace Jafg::Hal
+namespace Jafg::App::Detail
 {
-
-static constexpr JAFG_PLATFORM_EXIT_TYPE JAFGPanicExitCode{ 0b100000000 };
-
-//#
-//# Very dangerous function. Use with care and never in critical code paths.
-//# Currently not supported for all platforms.
-//#
-ENGINE_API void SleepNoStats(const f64 InSeconds);
-
-//#
-//# May not be supported on all platforms. Use with caution.
-//#
-ENGINE_API void YieldThread();
 
 //#
 //# Checks the process address of the tracer PID. If the process is not valid, it returns false.
@@ -683,4 +600,27 @@ ENGINE_API void YieldThread();
 //#
 ENGINE_API bool IsTracerPidValidVerySlow();
 
-} /* ~Namespace JAFG::Hal */
+struct TrapMeFn
+{
+    [[noreturn]]
+    ENGINE_API void operator()() const noexcept;
+
+    [[noreturn]]
+    ENGINE_API void operator()(std::string_view Message) const noexcept;
+
+    [[noreturn]]
+    void operator()(this auto&& Self, std::string_view Message, std::string_view File, std::size_t Line) noexcept
+    {
+        std::ostringstream Stream;
+        Stream << "Fuck. Jafg entered an one-way enclosing block inside a critical control path and lost the war of being a good boy." << "\n\n"
+               << Message << "\n\n"
+               << "~File: " << File << "\n"
+               << "~Line: " << Line
+               ;
+        Self.operator()(Stream.str());
+    }
+};
+
+inline constexpr TrapMeFn TrapMe{};
+
+} /* ~Namespace Jafg::App::Detail */

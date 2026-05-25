@@ -4,9 +4,9 @@
 
 #include "Platform/Surface.h"
 
-#if !PLATFORM_WASM
+#if !JAFG_PLATFORM_WASM
     #error "Tried to include wasm specific platform code on a non-wasm platform."
-#endif /* !PLATFORM_WASM */
+#endif /* !JAFG_PLATFORM_WASM */
 
 namespace Jafg
 {

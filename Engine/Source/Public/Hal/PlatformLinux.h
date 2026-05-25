@@ -6,9 +6,13 @@
     Validate compiler and forward declare JAFG Linux logic.
 -----------------------------------------------------------------------------*/
 
-#if !PLATFORM_LINUX
+#if !JAFG_PLATFORM_LINUX
     #error "Wanted to override generic platform types with Linux specific types, but platform is not Linux."
-#endif /* !PLATFORM_LINUX */
+#endif /* !JAFG_PLATFORM_LINUX */
+
+#if !(__linux__)
+    #error "This is not linux; lol."
+#endif /* !(__linux__) */
 
 #ifndef __cplusplus
     #error "No cpp standard specified."
@@ -18,76 +22,39 @@
     #endif /* __cplusplus < DETAIL_JAFG_CPLUSPLUS */
 #endif /* __cplusplus */
 
-namespace Jafg
+namespace Jafg::Detail
 {
 
-struct LPrimitivePlatformTypesGeneric;
+typedef LPrimitivePlatformTypesGeneric LPrimitivePlatformTypes;
 
-//# The platform types specification for Linux.
-struct LPrimitivePlatformTypesLinux final : public LPrimitivePlatformTypesGeneric
-{
-};
-
-//# Make it public.
-#ifndef JAFG_PLATFORM_TYPES_STRUCT
-    #define JAFG_PLATFORM_TYPES_STRUCT                                  ::Jafg::LPrimitivePlatformTypesLinux
-#endif /* !JAFG_PLATFORM_TYPES_STRUCT */
-
-//# The platform break implementation details for break behavior on Linux.
-struct LOnPlatformBreakLinux;
-
-//# Make it public.
-typedef LOnPlatformBreakLinux                                           LOnPlatformBreak;
-
-} /* ~Namespace Jafg */
+} /* ~Namespace Jafg::Detail */
 
 extern "C"
 {
-
-extern void __assert_fail
-(
-    const char *__assertion,
-    const char *__file,
-    unsigned int __line,
-    const char *__function
-)
-noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
-
+extern void __assert_fail(
+    char const* assertion,
+    char const* file, unsigned int line, char const* function
+    ) noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 } /* extern "C" */
 
 #if !JAFG_WITH_CLANG
     #error "Linux only supports clang as a valid compiler for the moment."
 #endif /* !JAFG_WITH_CLANG */
 
-#if !(__clang__)
-    #error "We think we are on a clang compiler, but the compiler does not think so. And she / he ("it" would be disrespectful) must know right?"
-#endif /* !(__clang__) */
-
 #if !defined(__GLIBCXX__)
     #error "Wrong std library. We need libstdc++."
 #endif /* !__GLIBCXX__ */
-
 #if defined(_LIBCPP_VERSION)
-    #error "Wrong std library. No LLVM por favor."
+    #error "Wrong std library. No LLVM."
 #endif /* _LIBCPP_VERSION */
-
-#if !(__linux__)
-    #error "This is not linux; lol."
-#endif /* !(__linux__) */
-
-
-/*-----------------------------------------------------------------------------
-    Change compiler behavior.
------------------------------------------------------------------------------*/
 
 #if JAFG_DO_COMPILER_DIAGNOSTIC_SETUP
     #include "Definitions/PushCommonClangDiagnostics.h"
 #endif /* JAFG_DO_COMPILER_DIAGNOSTIC_SETUP */
 
-
-/*-----------------------------------------------------------------------------
-    Define platform specific macros.
------------------------------------------------------------------------------*/
+#ifndef JAFG_PLATFORM_DESKTOP
+    #define JAFG_PLATFORM_DESKTOP                                       1
+#endif /* !JAFG_PLATFORM_DESKTOP */
 
 #ifndef JAFG_UNLIKELY
     #define JAFG_UNLIKELY(Expr)                                         (__builtin_expect(!!(Expr), 0))
@@ -97,11 +64,11 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #define JAFG_LIKELY(Expr)                                           (__builtin_expect(!!(Expr), 1))
 #endif /* !JAFG_LIKELY */
 
-#if AS_CLIENT
+#if JAFG_AS_CLIENT
     #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
         #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER              1
     #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
-#endif /* AS_CLIENT */
+#endif /* JAFG_AS_CLIENT */
 
 #ifndef JAFG_WITH_REST_CLS
     #define JAFG_WITH_REST_CLS                                          1
@@ -142,10 +109,6 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 #ifndef JAFG_PLATFORM_USES_UTF8
     #define JAFG_PLATFORM_USES_UTF8                                     1
 #endif /* !JAFG_PLATFORM_USES_UTF8 */
-
-#ifndef JAFG_PLATFORM_WCHAR_SIZE
-    #define JAFG_PLATFORM_WCHAR_SIZE                                    4
-#endif /* !JAFG_PLATFORM_WCHAR_SIZE */
 
 #ifndef LITERAL_TEXT
     #define LITERAL_TEXT(x)                                             x
@@ -205,42 +168,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 #endif /* !NOINLINE */
 
 #ifndef FORCEINLINE
-    #if IN_DEBUG
-        //#
-        //# Inlining is disabled in debug builds as following the debugger through inlined code is a pain
-        //# in the ass.
-        //#
-        #define FORCEINLINE                                             inline
-    #else /* IN_DEBUG */
+    #if !JAFG_IN_DEBUG
         #define FORCEINLINE                                             __attribute__ ((always_inline))
-    #endif /* !IN_DEBUG */
+    #endif /* !JAFG_IN_DEBUG */
 #endif /* !FORCEINLINE */
-
-#ifndef JAFG_PLATFORM_U64_SIZET_EQ
-    #define JAFG_PLATFORM_U64_SIZET_EQ                                  1
-#endif /* JAFG_PLATFORM_U64_SIZET_EQ */
-
-namespace Jafg
-{
-
-struct LOnPlatformBreakLinux final
-{
-    [[noreturn]] NOINLINE
-    ENGINE_API static void ExitQuietly();
-
-    [[noreturn]] NOINLINE
-    ENGINE_API static void OnProgramPanicImpl
-    (
-        LPrimitivePlatformTypesGeneric::LJafgChar const* InMessage
-    );
-
-    [[noreturn]] NOINLINE
-    ENGINE_API static void OnProgramPanic
-    (
-        LPrimitivePlatformTypesGeneric::LJafgChar const* InBaseMessage,
-        LPrimitivePlatformTypesGeneric::LJafgChar const* InFile,
-        LPrimitivePlatformTypesGeneric::u64       const  InLine
-    );
-};
-
-} /* ~Namespace Jafg */

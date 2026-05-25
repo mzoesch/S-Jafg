@@ -3,11 +3,11 @@
 #pragma once
 
 #ifndef JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER
-    #if IN_SHIPPING
+    #if JAFG_IN_SHIPPING
         #define JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER                    0
-    #else /* IN_SHIPPING */
+    #else /* JAFG_IN_SHIPPING */
         #define JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER                    1
-    #endif /* !IN_SHIPPING */
+    #endif /* !JAFG_IN_SHIPPING */
 #endif /* !JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER */
 
 //#

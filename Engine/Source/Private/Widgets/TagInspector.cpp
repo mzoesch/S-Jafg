@@ -27,7 +27,7 @@ void Jafg::WTagInspector::Construct()
         Container->AddChild(NewStaticNode(WTextBox)
             .Anchor(EAnchor::HFill)
             .Tint((!!(Idx % 2)) ? *Prefs.ProximityColorA : *Prefs.ProximityColorB)
-            .Content(SprintF("{:0{}} -- {}", Idx, Width, Detail::GetJxxTagRegistry().GetAllocator()[Idx]))
+            .Content(algo::sprintf("{:0{}} -- {}", Idx, Width, Detail::GetJxxTagRegistry().GetAllocator()[Idx]))
             .Unique());
     }
     return;

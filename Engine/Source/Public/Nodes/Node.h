@@ -1332,6 +1332,16 @@ NODISCARD FORCEINLINE bool WNode::IsFocusWidgetTransitive() const noexcept
     return this->IsFocusWidget();
 }
 
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode const* LViewport::GetFocusedWidget() const
+{
+    return DynamicCast<TNode>(this->FocusedWidget.get());
+}
+FORCEINLINE constexpr WNode const* LViewport::GetFocusedWidget() const
+{
+    return this->FocusedWidget.get();
+}
+
 } /* ~Namespace Jafg */
 
 FORCEINLINE constexpr Jafg::LNodeSize1 operator ""_spt(unsigned long long Value) noexcept

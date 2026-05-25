@@ -15,17 +15,6 @@
 #include "Core/Build.h"
 
 //#
-//# Core includes.
-//#
-#include "Runtime/AssertionForward.h"
-#include "Hal/Platform.h"
-#include "Memory/Llmm.h"
-#include "Runtime/Asan.h"
-#include "Core/CoreMacros.h"
-#include "Core/CoreDefines.h"
-#include "Core/CoreConcepts.h"
-
-//#
 //# Standard, Platform-APIs and Third-Party.
 //#
 #include <iostream>
@@ -51,6 +40,20 @@
 #include <stdarg.h>
 #include <cstring>
 #include <regex>
+#include <expected>
+#include <bit>
+#include <cstdint>
+
+//#
+//# Core includes.
+//#
+#include "Runtime/AssertionForward.h"
+#include "Hal/Platform.h"
+#include "Memory/Llmm.h"
+#include "Runtime/Asan.h"
+#include "Core/CoreMacros.h"
+#include "Core/CoreDefines.h"
+#include "Core/CoreConcepts.h"
 
 //#
 //# Forward Containers.
@@ -58,7 +61,6 @@
 #include "Containers/EnumCore.h"
 #include "Containers/IteratorTraits.h"
 #include "Containers/CoreContainers.h"
-#include "Containers/Format.h"
 #include "Containers/FuckTheStdGiveMeUb.h"
 #include "Containers/DynamicBitset.h"
 

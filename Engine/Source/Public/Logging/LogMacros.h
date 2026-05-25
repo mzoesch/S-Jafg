@@ -10,10 +10,10 @@
 //# These macro changes if any logging category can log in said verbosity level.
 //#
 #ifndef JAFG_LOG_ENABLE_TRACE
-    #define JAFG_LOG_ENABLE_TRACE                (IN_DEBUG)
+    #define JAFG_LOG_ENABLE_TRACE                (JAFG_IN_DEBUG)
 #endif /* JAFG_LOG_ENABLE_TRACE */
 #ifndef JAFG_LOG_ENABLE_VERBOSE
-    #define JAFG_LOG_ENABLE_VERBOSE              (IN_DEBUG || IN_DEVELOPMENT)
+    #define JAFG_LOG_ENABLE_VERBOSE              (JAFG_IN_DEBUG || JAFG_IN_DEVELOPMENT)
 #endif /* JAFG_LOG_ENABLE_VERBOSE */
 #ifndef JAFG_LOG_ENABLE_INFO
     #define JAFG_LOG_ENABLE_INFO                 1
@@ -134,7 +134,7 @@
 //# @param Format       Format string literal in the style of std::format.
 //#
 #define LOG_FATAL(Category, Format, ...)  \
-    JAFG_GORGEOUS_TRAP_MSG(::Jafg::SprintF( \
+    JAFG_GORGEOUS_TRAP_MSG(::algo::sprintf( \
         "[{}] - {}: " Format "", Category.GetCategory(), JAFG_PRETTY_FUNCTION_NAME __VA_OPT__(,) __VA_ARGS__).c_str())
 #define PRIVATE_JAFG_LOG_FATAL_CORE(Category, Format, ...) \
     JAFG_GORGEOUS_TRAP_MSG(std::vformat(                   \

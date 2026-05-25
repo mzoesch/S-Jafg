@@ -7,18 +7,18 @@
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const noexcept
 {
-    if (GMutableEngine)
+    if (Detail::GMutableEngine)
     {
-        return &GMutableEngine->GetCommandLineInterface();
+        return &Detail::GMutableEngine->GetCommandLineInterface();
     }
     return nullptr;
 }
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectRaiiHandle::GetCommandLineInterface() const noexcept
 {
-    if (GMutableEngine)
+    if (Detail::GMutableEngine)
     {
-        return &GMutableEngine->GetCommandLineInterface();
+        return &Detail::GMutableEngine->GetCommandLineInterface();
     }
     return nullptr;
 }
@@ -50,14 +50,14 @@ void Jafg::LCommandLineInterface::Invoke(LCommandExecutionInfo const& Info, LStr
     if (Cmd == nullptr)
     {
         Response.Rc = ECommandReturnCode::Unknown;
-        Response.StdErr = Jafg::SprintF("No such command [{}]", CommandStr);
+        Response.StdErr = algo::sprintf("No such command [{}]", CommandStr);
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
         Response.Rc = ECommandReturnCode::Failure;
-        Response.StdErr = Jafg::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        Response.StdErr = algo::sprintf("Command [{}] has no overloads and is therefore not invokable", CommandStr);
         return;
     }
 

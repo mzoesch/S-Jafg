@@ -15,7 +15,7 @@ void Jafg::LLocalEgo::Initialize()
     check(Tasks::IsOnMasterThread())
     check(this->bDecommissioned == false)
 
-    LCommandLineInterface& Cli{GMutableEngine->GetCommandLineInterface() };
+    LCommandLineInterface& Cli{Detail::GMutableEngine->GetCommandLineInterface() };
     this->VariableHandle_UpdateFrustum = Cli.RegisterVariable({"UpdateFrustum", LCliType::Type("Bool"), "true"});
     this->VariableHandle_VisualizeFrustum = Cli.RegisterVariable({"VisualizeFrustum", LCliType::Type("Bool"), "false"});
     this->VariableHandle_FrustumNearPlane = Cli.RegisterVariable({"NearFrustumPlane", LCliType::Type("Float"), "0.1f",
@@ -28,17 +28,14 @@ void Jafg::LLocalEgo::Initialize()
 
             for (auto& Track : GEngine->GetTracks())
             {
-                if (Track.ChildWorld)
+                auto& World{Track.GetWorld()};
+                for (auto& Employee : World.GetEmployees())
                 {
-                    auto& World{*Track.ChildWorld};
-                    for (auto& Employee : World.GetEmployees())
+                    if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
                     {
-                        if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
+                        if (Pawn->IsPossessedLocally())
                         {
-                            if (Pawn->IsPossessedLocally())
-                            {
-                                Pawn->SetNearFrustum(NearFrustum);
-                            }
+                            Pawn->SetNearFrustum(NearFrustum);
                         }
                     }
                 }
@@ -57,17 +54,14 @@ void Jafg::LLocalEgo::Initialize()
 
             for (auto& Track : GEngine->GetTracks())
             {
-                if (Track.ChildWorld)
+                auto& World{Track.GetWorld()};
+                for (auto& Employee : World.GetEmployees())
                 {
-                    auto& World{*Track.ChildWorld};
-                    for (auto& Employee : World.GetEmployees())
+                    if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
                     {
-                        if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
+                        if (Pawn->IsPossessedLocally())
                         {
-                            if (Pawn->IsPossessedLocally())
-                            {
-                                Pawn->SetFarFrustum(FarFrustum);
-                            }
+                            Pawn->SetFarFrustum(FarFrustum);
                         }
                     }
                 }
@@ -87,7 +81,7 @@ void Jafg::LLocalEgo::Initialize()
 
 void Jafg::LLocalEgo::TearDown()
 {
-    check(GMutableEngine)
+    check(Detail::GMutableEngine)
     check(this->bDecommissioned == false)
     checkCode(this->bDecommissioned = true)
 
@@ -97,10 +91,10 @@ void Jafg::LLocalEgo::TearDown()
     this->Frontend.TearDown();
     this->Outer.TearDown();
 
-    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_UpdateFrustum);
-    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
-    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
-    GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
+    Detail::GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_UpdateFrustum);
+    Detail::GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
+    Detail::GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
+    Detail::GMutableEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
 
     return;
 }
@@ -113,8 +107,8 @@ Jafg::LEngine const& Jafg::LLocalEgo::GetEngine() const
 
 Jafg::LEngine& Jafg::LLocalEgo::GetMutableEngine()
 {
-    check(GMutableEngine)
-    return *GMutableEngine;
+    check(Detail::GMutableEngine)
+    return *Detail::GMutableEngine;
 }
 
 Jafg::LCommandLineInterface const& Jafg::LLocalEgo::GetCommandLineInterface() const
@@ -125,6 +119,6 @@ Jafg::LCommandLineInterface const& Jafg::LLocalEgo::GetCommandLineInterface() co
 
 Jafg::LCommandLineInterface& Jafg::LLocalEgo::GetMutableCommandLineInterface()
 {
-    check(GMutableEngine)
-    return GMutableEngine->GetCommandLineInterface();
+    check(Detail::GMutableEngine)
+    return Detail::GMutableEngine->GetCommandLineInterface();
 }

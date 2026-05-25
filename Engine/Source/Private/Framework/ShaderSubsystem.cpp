@@ -11,13 +11,13 @@
 namespace
 {
 
-LPath Slangc{LPath{Jafg::SprintF("Vendor/Slang-{}/bin/slangc{}",
+LPath Slangc{LPath{algo::sprintf("Vendor/Slang-{}/bin/slangc{}",
     Jafg::App::GetTargetPlatformCompound(),
-#if PLATFORM_WINDOWS
+#if JAFG_PLATFORM_WINDOWS
     ".exe"
-#else /* PLATFORM_WINDOWS */
+#else /* JAFG_PLATFORM_WINDOWS */
     ""
-#endif /* !PLATFORM_WINDOWS */
+#endif /* !JAFG_PLATFORM_WINDOWS */
     )}.make_preferred()};
 
 std::unordered_map<LString, Jafg::LDeviceVertexInputStateCreateProviderSig>& GetStaticVertexInputStateCreateProviders() noexcept
@@ -556,7 +556,7 @@ void Jafg::JShaderSubsystem::RefetchShaders()
                 {
                     check(L.Sets.has_value())
                     check(L.Stage.has_value())
-                    return SprintF("Unique@{}[{}]", vk::to_string(*L.Stage), algo::join(*L.Sets, [](LFetchedShader::Layout::Set const& S) -> LString
+                    return algo::sprintf("Unique@{}[{}]", vk::to_string(*L.Stage), algo::join(*L.Sets, [](LFetchedShader::Layout::Set const& S) -> LString
                     {
                         return S.Identifier + "(" + vk::to_string(S.DescriptorType) + ")";
                     }));
@@ -564,7 +564,7 @@ void Jafg::JShaderSubsystem::RefetchShaders()
                 else if (L.Type == LFetchedShader::Layout::eShared)
                 {
                     check(L.Identifier.has_value())
-                    return SprintF("Shared[{}]", *L.Identifier);
+                    return algo::sprintf("Shared[{}]", *L.Identifier);
                 }
                 else
                 {

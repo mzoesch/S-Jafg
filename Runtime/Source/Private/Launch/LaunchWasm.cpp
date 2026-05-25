@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#if PLATFORM_WASM
+#if JAFG_PLATFORM_WASM
 
 #include "Core/Application.h"
 #include "Engine/Engine.h"
@@ -86,4 +86,4 @@ i32 main(i32 Argc, char* Argv[])
     return static_cast<i32>(ErrorLevel);
 }
 
-#endif /* PLATFORM_WASM */
+#endif /* JAFG_PLATFORM_WASM */
