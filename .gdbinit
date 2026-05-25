@@ -17,7 +17,10 @@ def jafg_load_master_gdb_init() -> None:
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
 
-    module.master_entry()
+    module.master_entry([
+        # Add your own pretty printers here.
+        "Engine/pretty_gdb.py",
+        ])
 
     return None
 

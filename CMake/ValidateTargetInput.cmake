@@ -1,23 +1,23 @@
 # Copyright mzoesch. All rights reserved.
 
 # The following are all platforms that Jafg supports.
-set(JAFG_PLATFORM_LINUX     "Linux")
-set(JAFG_PLATFORM_WINDOWS   "Windows")
-set(JAFG_PLATFORM_WASM      "Wasm")
+set(JAFG_PLATFORM_LINUX     "lnx")
+set(JAFG_PLATFORM_WINDOWS   "win")
+set(JAFG_PLATFORM_WASM      "wasm")
 
 # The following are all architectures that Jafg supports. We only differentiate between x86 and x86_64.
 set(JAFG_ARCHITECTURE_x64   "x86_64")
 set(JAFG_ARCHITECTURE_x86   "x86")
 
 # The following are all target types that Jafg supports.
-set(JAFG_TARGET_CLIENT      "Client")
-set(JAFG_TARGET_DAEMON      "Daemon")
-set(JAFG_TARGET_TESTUNIT    "TestUnit")
+set(JAFG_TARGET_CLIENT      "cl")
+set(JAFG_TARGET_DAEMON      "daemon")
+set(JAFG_TARGET_TEST        "test")
 
 # The following are all configurations that Jafg supports.
-set(JAFG_CONFIG_DEBUG       "Debug")
-set(JAFG_CONFIG_DEVELOPMENT "Development")
-set(JAFG_CONFIG_SHIPPING    "Shipping")
+set(JAFG_CONFIG_DEBUG       "dbg")
+set(JAFG_CONFIG_DEVELOPMENT "dev")
+set(JAFG_CONFIG_SHIPPING    "ship")
 
 ###############################################################################
 # Validate the target input.
@@ -37,7 +37,7 @@ set(JAFG_ALLOWED_ARCHITECTURES
 set(JAFG_ALLOWED_TARGET_TYPES
     ${JAFG_TARGET_CLIENT}
     ${JAFG_TARGET_DAEMON}
-    ${JAFG_TARGET_TESTUNIT}
+    ${JAFG_TARGET_TEST}
     )
 
 set(JAFG_ALLOWED_CONFIGURATIONS

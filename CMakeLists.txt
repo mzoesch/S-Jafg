@@ -1,7 +1,6 @@
 # Copyright mzoesch. All rights reserved.
 
-# Update to 4.0 when CLion supports it.
-cmake_minimum_required(VERSION      3.30)
+cmake_minimum_required(VERSION      4.2)
 
 # C++23 is required; core Jafg systems will not compile with any other standard.
 set(CMAKE_CXX_STANDARD              23)
@@ -22,15 +21,15 @@ set(JAFG_ENGINE_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 ###############################################################################
 # Try to configure the targets of Jafg automatically based of the host system and / or other variables.
 include(CMake/ConfigurationPrediction.cmake)
-# The target platform to compile for [Linux, Wasm, Windows].
+# The target platform to compile for [lnx, wasm, win].
 if(NOT DEFINED JAFG_TARGET_PLATFORM)
     message(FATAL_ERROR "JAFG_TARGET_PLATFORM is not defined. Please define it with -DJAFG_TARGET_PLATFORM=<platform>.")
 endif()
-# The target to compile for [Client, Daemon, TestUnit].
+# The target to compile for [cl, daemon, test].
 if(NOT DEFINED JAFG_TARGET_TYPE)
     message(FATAL_ERROR "JAFG_TARGET_TYPE is not defined. Please define it with -DJAFG_TARGET_TYPE=<target>.")
 endif()
-# The configuration to compile for [Debug, Development, Shipping].
+# The configuration to compile for [dbg, dev, ship].
 if(NOT DEFINED JAFG_TARGET_CONFIG)
     message(FATAL_ERROR "JAFG_TARGET_CONFIG is not defined. Please define it with -DJAFG_TARGET_CONFIG=<configuration>.")
 endif()
@@ -39,11 +38,11 @@ include(CMake/ValidateCompiler.cmake)
 include(CMake/RetrieveVersionNumber.cmake)
 include(CMake/RetrieveMinCPlusPlus.cmake)
 if(NOT CMAKE_BUILD_TYPE)
-    if(JAFG_TARGET_CONFIG STREQUAL "Debug")
+    if(JAFG_TARGET_CONFIG STREQUAL "dbg")
         set(CMAKE_BUILD_TYPE Debug)
-    elseif(JAFG_TARGET_CONFIG STREQUAL "Development")
+    elseif(JAFG_TARGET_CONFIG STREQUAL "dev")
         set(CMAKE_BUILD_TYPE RelWithDebInfo)
-    elseif(JAFG_TARGET_CONFIG STREQUAL "Shipping")
+    elseif(JAFG_TARGET_CONFIG STREQUAL "ship")
         set(CMAKE_BUILD_TYPE Release)
     else()
         message(FATAL_ERROR "Could not infer CMAKE_BUILD_TYPE.")

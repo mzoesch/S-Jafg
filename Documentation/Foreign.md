@@ -6,4 +6,4 @@ When declaring a foreign plugin, you have to:
   - ... inherit from `Jafg::LPluginLifetime` (and optionally use the provided methods to add important functionally during lifetime milestones).  
   - ... add the `DEFINE_PLUGIN(YourApi, YourLifetime, YourName)` below.
 
-You can see an example at `~/Plugins/Jgc/Source/Private/Plugin.cpp`.
+You can see an example at `~/Plugins/Jgc/src/Plugin.cpp`.

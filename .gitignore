@@ -13,13 +13,10 @@
 __pycache__/ 
 
 # Binary files
-/Binaries/
+/bin/
 
 # Decompiling
 /ghidra/
-
-# Compiled source files
-/Intermediates/
 
 # Long term storage
 /Saved/

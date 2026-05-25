@@ -79,24 +79,31 @@ function(_jafg_add_module_impl
 
     string(TOUPPER "${module_name}" module_name_upper)
 
-    set(module_int_dir "${JAFG_ENGINE_ROOT}/Intermediates/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
+    set(module_int_dir "${JAFG_ENGINE_ROOT}/Temp/int/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
     PrebuildModuleWithMotor(${module_rel_dir})
     if(NOT EXISTS "${module_int_dir}")
         message(FATAL_ERROR "Module intermediate directory [${module_int_dir}] is not valid. Motor failed silently.")
     endif()
 
     file(GLOB_RECURSE src_files
-        "${module_dir}/Source/*.afx"
-        "${module_dir}/Source/*.pch"
-        "${module_dir}/Source/*.h"
-        "${module_dir}/Source/*.hpp"
-        "${module_dir}/Source/*.c"
-        "${module_dir}/Source/*.cpp"
+        "${module_dir}/include/*.afx"
+        "${module_dir}/include/*.pch"
+        "${module_dir}/include/*.h"
+        "${module_dir}/include/*.hpp"
+        "${module_dir}/include/*.c"
+        "${module_dir}/include/*.cpp"
+        "${module_dir}/src/*.afx"
+        "${module_dir}/src/*.pch"
+        "${module_dir}/src/*.h"
+        "${module_dir}/src/*.hpp"
+        "${module_dir}/src/*.c"
+        "${module_dir}/src/*.cpp"
+        "${module_int_dir}/gh/*.h"
         "${module_int_dir}/gt/*.cpp"
         )
 
     file(GLOB_RECURSE src_files_c
-        "${module_dir}/Source/*.c"
+        "${module_dir}/src/*.c"
         )
 
     if(${module_type} STREQUAL JAFG_MODULE_TYPE_LAUNCH)
@@ -144,21 +151,20 @@ function(_jafg_add_module_impl
     endforeach()
 
     target_include_directories(${module_name} PUBLIC
-        "${module_dir}/Source/Public"
+        "${module_dir}/include"
         "${module_int_dir}/gh"
         )
     target_include_directories(${module_name} PRIVATE
-        "${module_dir}/Source/Internal"
-        "${JAFG_ENGINE_ROOT}/Intermediates/${module_rel_dir}"
+        "${JAFG_ENGINE_ROOT}/Temp/int/${module_rel_dir}"
         )
 
     set_target_properties(${module_name} PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
-        LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
-        RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
+        ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
+        LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
+        RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
         )
 
-    set(pch_file "${module_dir}/Source/Internal/Module.pch")
+    set(pch_file "${module_dir}/src/module.pch")
     if(EXISTS "${pch_file}")
         target_precompile_headers(${module_name} PRIVATE
             "${pch_file}"
@@ -193,7 +199,7 @@ function(_jafg_add_module_impl
         target_compile_definitions(${module_name} PRIVATE
             JAFG_AS_DAEMON=1
             )
-    elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_TESTUNIT)
+    elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_TEST)
         target_compile_definitions(${module_name} PRIVATE
             JAFG_AS_CLIENT=1
             JAFG_WITH_TESTS=1
@@ -353,7 +359,7 @@ function(_jafg_add_module_impl
     ###############################################################################
     # Human readable plugin info file
     if(${module_type} STREQUAL JAFG_MODULE_TYPE_PLUGIN)
-        set(_target_root_plugin_jafg "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/manifest.jafg")
+        set(_target_root_plugin_jafg "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/manifest.jafg")
         if(NOT EXISTS "${_target_root_plugin_jafg}")
             retrieve_file_content_no_fail("${JAFG_ENGINE_ROOT}/${module_rel_dir}/Config/.ver" _target_ver)
 
@@ -389,8 +395,8 @@ function(_jafg_add_module_impl
     \"Bin\": \"${prefix}${module_name}${suffix}\"
 }
 ")
-#    \"Bin\": \"Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/${prefix}${module_name}${suffix}\"
-            file(MAKE_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
+#    \"Bin\": \"bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/${prefix}${module_name}${suffix}\"
+            file(MAKE_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
             file(WRITE "${_target_root_plugin_jafg}" "${_target_root_plugin_jafg_content}")
             message(STATUS "[${module_rel_dir}]: Created plugin info file at [${_target_root_plugin_jafg}].")
         endif()
@@ -403,7 +409,7 @@ function(_jafg_add_module_impl
 #    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
 #        target_compile_options(${module_name} PRIVATE
 #            "SHELL:-Xclang -load"
-#            "SHELL:-Xclang ${JAFG_ENGINE_ROOT}/Binaries/Reflex/libReflexHook.so"
+#            "SHELL:-Xclang ${JAFG_ENGINE_ROOT}/bin/Reflex/libReflexHook.so"
 #            "SHELL:-Xclang -add-plugin"
 #            "SHELL:-Xclang jafg_reflex"
 #            )

@@ -5,9 +5,9 @@ if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
     set_target_properties(${module_name} PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
-            LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
-            RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}"
+            ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}"
+            LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}"
+            RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}"
             )
 
     ###############################################################################
@@ -311,8 +311,8 @@ if(_guard)
             message(STATUS "Slangc already extracted for OS [${_os}] at [${_dst_slang_extraction_dir}].")
         endif()
     endfunction()
-    _DownalodSlangc("Windows-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/windows-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
-    _DownalodSlangc("Linux-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/linux-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
+    _DownalodSlangc("win-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/win-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
+    _DownalodSlangc("lnx-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/lnx-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
 
     ###############################################################################
     # Fonts

@@ -43,22 +43,11 @@ pub struct JPacket
 
 pub(crate) fn reflect_module(args: &Cli)
 {
-    let dir_internal: String = paths::get_relative_source_dir_internal(args);
     let dir_public: String = paths::get_relative_source_dir_public(args);
 
     /* Relative to the engine root directory. */
     let mut files: Vec<String> = Vec::new();
 
-    if finder::exists_dir(&dir_internal)
-    {
-        for entry in WalkDir::new(dir_internal).into_iter().filter_map(|e| e.ok())
-        {
-            if entry.path().is_file() && entry.path().extension().is_some() && entry.path().extension().unwrap().to_str().unwrap() == "h"
-            {
-                files.push(paths::to_posix_path(entry.path().to_str().unwrap()));
-            }
-        }
-    }
     if finder::exists_dir(&dir_public)
     {
         for entry in WalkDir::new(dir_public).into_iter().filter_map(|e| e.ok())
@@ -258,8 +247,8 @@ fn get_generated_file_stub_checked(file: &str) -> String
 
 fn reflect_file(args: &Cli, file: &str) -> Option<JPacketUnit>
 {
-    if     file == "Engine/Source/Public/Engine/CxxClassMacros.h"
-        || file == "Engine/Source/Public/Engine/CxxRecordMacros.h"
+    if     file == "Engine/include/Engine/CxxClassMacros.h"
+        || file == "Engine/include/Engine/CxxRecordMacros.h"
     {
         // Very, very special file that declares a lot of stuff. But sadly confuses our tokenizer...
         // It would take simply too much time to implement special rules that are commonly accepted over all files
@@ -362,14 +351,10 @@ fn write_packet(args: &Cli, unit: JPacketUnit) -> i32
     ));
 
     let mut include_path = unit.name;
-    include_path = match include_path.find("/Source/Public/")
+    include_path = match include_path.find("/include/")
     {
-        Some(i) => include_path[i+15..].to_string(),
-        None => match include_path.find("/Source/Internal/")
-        {
-            Some(i) => include_path[i+17..].to_string(),
-            None => panic!("Could not find the include path for [{}].", include_path),
-        }
+        Some(i) => include_path[i+9..].to_string(),
+        None => panic!("Could not find the include path for [{}].", include_path),
     };
 
     t_builder.push_str(&format!(r##"

@@ -32,11 +32,11 @@ Only when making changes to the reflection system you will additionally need `>=
    ```
    If you want to customize the build configuration, run the following instead:
    ```bash
-   mkdir build && cmake -B build --preset "<PLATFORM>-x64--<TYPE>-<CONFIG>" 
+   mkdir build && cmake -B build --preset "<PLATFORM>-x64_86--<TYPE>-<CONFIG>" 
    ```
    with:
    - `PLATFORM`: The target platform you want to build for [`lnx`, `win`]
-   - `TYPE`: The target type you want to build for [`client`, `daemon`, `testunit`]
-   - `CONFIG`: The target configuration you want to build for [`sanitized`, `debug`, `development`, `shipping`]
+   - `TYPE`: The target type you want to build for [`cl`, `daemon`, `test`]
+   - `CONFIG`: The target configuration you want to build for [`sanitized`, `dbg`, `dev`, `ship`]
 2. Compile it with `cmake --build build --target JgcRuntime` (The `JgcRuntime` target is the main executable of Jafg with core plugins enabled).
-3. Then run the executable located in `Binaries/.../Runtime(.exe)`.
+3. Then run the executable located in `bin/.../Runtime(.exe)`.

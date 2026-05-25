@@ -8,9 +8,9 @@ pub const PATH_WORKSPACE: &str = "jafg.jafgworkspace";
 pub const PATH_SAVED_DIR: &str = "Saved";
 
 #[allow(dead_code)]
-pub const PATH_BINARIES: &str = "Binaries";
+pub const PATH_BINARIES: &str = "bin";
 #[allow(dead_code)]
-pub const PATH_INTERMEDIATES: &str = "Intermediates";
+pub const PATH_INTERMEDIATES: &str = "Temp/int";
 
 #[allow(dead_code)]
 pub const FILE_PCH_H: &str = "ModulePch.generated.h";
@@ -118,29 +118,17 @@ pub fn construct_relative_gt_path(args: &Cli) -> String
 #[allow(dead_code)]
 pub fn get_relative_source_dir(args: &Cli) -> String
 {
-    return format!("{}/Source", args.module);
-}
-
-#[allow(dead_code)]
-pub fn get_relative_source_dir_internal(args: &Cli) -> String
-{
-    return format!("{}/Internal", get_relative_source_dir(args));
-}
-
-#[allow(dead_code)]
-pub fn get_relative_source_dir_private(args: &Cli) -> String
-{
-    return format!("{}/Private", get_relative_source_dir(args));
+    return format!("{}/src", args.module);
 }
 
 #[allow(dead_code)]
 pub fn get_relative_source_dir_public(args: &Cli) -> String
 {
-    return format!("{}/Public", get_relative_source_dir(args));
+    return format!("{}/include", args.module);
 }
 
 #[allow(dead_code)]
 pub fn get_relative_source_dir_test(args: &Cli) -> String
 {
-    return format!("{}/Test", get_relative_source_dir(args));
+    return format!("{}/tests", args.module);
 }

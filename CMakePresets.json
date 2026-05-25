@@ -13,7 +13,7 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "JAFG_TARGET_PLATFORM": "Linux",
+        "JAFG_TARGET_PLATFORM": "lnx",
         "JAFG_TARGET_ARCHITECTURE": "x86_64"
       }
     },
@@ -48,7 +48,7 @@
       "name": "windows-base",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_PLATFORM": "Windows",
+        "JAFG_TARGET_PLATFORM": "win",
         "JAFG_TARGET_ARCHITECTURE": "x86_64"
       }
     },
@@ -76,42 +76,42 @@
       "name": "debug",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_CONFIG": "Debug"
+        "JAFG_TARGET_CONFIG": "dbg"
       }
     },
     {
       "name": "development",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_CONFIG": "Development"
+        "JAFG_TARGET_CONFIG": "dev"
       }
     },
     {
       "name": "shipping",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_CONFIG": "Shipping"
+        "JAFG_TARGET_CONFIG": "ship"
       }
     },
     {
       "name": "client",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_TYPE": "Client"
+        "JAFG_TARGET_TYPE": "cl"
       }
     },
     {
       "name": "daemon",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_TYPE": "Daemon"
+        "JAFG_TARGET_TYPE": "daemon"
       }
     },
     {
-      "name": "testunit",
+      "name": "test",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_TYPE": "TestUnit"
+        "JAFG_TARGET_TYPE": "test"
       }
     },
     {
@@ -122,7 +122,7 @@
       }
     },
     {
-      "name": "lnx-x64--client-shipping",
+      "name": "lnx-x86_64--cl-ship",
       "displayName": "Linux | Client-Shipping",
       "inherits": [
         "linux",
@@ -131,7 +131,7 @@
       ]
     },
     {
-      "name": "lnx-x64--client-development",
+      "name": "lnx-x86_64--cl-dev",
       "displayName": "Linux | Client-Development",
       "inherits": [
         "linux",
@@ -140,7 +140,7 @@
       ]
     },
     {
-      "name": "lnx-x64--client-debug",
+      "name": "lnx-x86_64--cl-dbg",
       "displayName": "Linux | Client-Debug",
       "inherits": [
         "linux",
@@ -149,7 +149,7 @@
       ]
     },
     {
-      "name": "lnx-x64--client-sanitized",
+      "name": "lnx-x86_64--cl-sanitized",
       "displayName": "Linux | Client-Sanitized",
       "inherits": [
         "linux",
@@ -159,7 +159,7 @@
       ]
     },
     {
-      "name": "lnx-x64--daemon-shipping",
+      "name": "lnx-x86_64--daemon-ship",
       "displayName": "Linux | Daemon-Shipping",
       "inherits": [
         "linux",
@@ -168,7 +168,7 @@
       ]
     },
     {
-      "name": "lnx-x64--daemon-development",
+      "name": "lnx-x86_64--daemon-dev",
       "displayName": "Linux | Daemon-Development",
       "inherits": [
         "linux",
@@ -177,7 +177,7 @@
       ]
     },
     {
-      "name": "lnx-x64--daemon-debug",
+      "name": "lnx-x86_64--daemon-dbg",
       "displayName": "Linux | Daemon-Debug",
       "inherits": [
         "linux",
@@ -186,7 +186,7 @@
       ]
     },
     {
-      "name": "lnx-x64--daemon-sanitized",
+      "name": "lnx-x86_64--daemon-sanitized",
       "displayName": "Linux | Daemon-Sanitized",
       "inherits": [
         "linux",
@@ -196,44 +196,44 @@
       ]
     },
     {
-      "name": "lnx-x64--testunit-shipping",
+      "name": "lnx-x86_64--test-ship",
       "displayName": "Linux | TestUnit-Shipping",
       "inherits": [
         "linux",
-        "testunit",
+        "test",
         "shipping"
       ]
     },
     {
-      "name": "lnx-x64--testunit-development",
+      "name": "lnx-x86_64--test-dev",
       "displayName": "Linux | TestUnit-Development",
       "inherits": [
         "linux",
-        "testunit",
+        "test",
         "development"
       ]
     },
     {
-      "name": "lnx-x64--testunit-debug",
+      "name": "lnx-x86_64--test-dbg",
       "displayName": "Linux | TestUnit-Debug",
       "inherits": [
         "linux",
-        "testunit",
+        "test",
         "debug"
       ]
     },
     {
-      "name": "lnx-x64--testunit-sanitized",
+      "name": "lnx-x86_64--test-sanitized",
       "displayName": "Linux | TestUnit-Sanitized",
       "inherits": [
         "linux",
-        "testunit",
+        "test",
         "debug",
         "sanitized"
       ]
     },
     {
-      "name": "win-x64--client-shipping",
+      "name": "win-x86_64--cl-ship",
       "displayName": "Windows | Client-Shipping",
       "inherits": [
         "windows-msvc",
@@ -242,7 +242,7 @@
       ]
     },
     {
-      "name": "win-x64--client-development",
+      "name": "win-x86_64--cl-dev",
       "displayName": "Windows | Client-Development",
       "inherits": [
         "windows-msvc",
@@ -251,7 +251,7 @@
       ]
     },
     {
-      "name": "win-x64--client-debug",
+      "name": "win-x86_64--cl-dbg",
       "displayName": "Windows | Client-Debug",
       "inherits": [
         "windows-msvc",
@@ -260,7 +260,7 @@
       ]
     },
     {
-      "name": "win-x64--client-sanitized",
+      "name": "win-x86_64--cl-sanitized",
       "displayName": "Windows | Client-Sanitized",
       "inherits": [
         "windows-msvc",
@@ -270,7 +270,7 @@
       ]
     },
     {
-      "name": "win-x64--daemon-shipping",
+      "name": "win-x86_64--daemon-ship",
       "displayName": "Windows | Daemon-Shipping",
       "inherits": [
         "windows-msvc",
@@ -279,7 +279,7 @@
       ]
     },
     {
-      "name": "win-x64--daemon-development",
+      "name": "win-x86_64--daemon-dev",
       "displayName": "Windows | Daemon-Development",
       "inherits": [
         "windows-msvc",
@@ -288,7 +288,7 @@
       ]
     },
     {
-      "name": "win-x64--daemon-debug",
+      "name": "win-x86_64--daemon-dbg",
       "displayName": "Windows | Daemon-Debug",
       "inherits": [
         "windows-msvc",
@@ -297,7 +297,7 @@
       ]
     },
     {
-      "name": "win-x64--daemon-sanitized",
+      "name": "win-x86_64--daemon-sanitized",
       "displayName": "Windows | Daemon-Sanitized",
       "inherits": [
         "windows-msvc",
@@ -307,44 +307,44 @@
       ]
     },
     {
-      "name": "win-x64--testunit-shipping",
+      "name": "win-x86_64--test-ship",
       "displayName": "Windows | TestUnit-Shipping",
       "inherits": [
         "windows-msvc",
-        "testunit",
+        "test",
         "shipping"
       ]
     },
     {
-      "name": "win-x64--testunit-development",
+      "name": "win-x86_64--test-dev",
       "displayName": "Windows | TestUnit-Development",
       "inherits": [
         "windows-msvc",
-        "testunit",
+        "test",
         "development"
       ]
     },
     {
-      "name": "win-x64--testunit-debug",
+      "name": "win-x86_64--test-dbg",
       "displayName": "Windows | TestUnit-Debug",
       "inherits": [
         "windows-msvc",
-        "testunit",
+        "test",
         "debug"
       ]
     },
     {
-      "name": "win-x64--testunit-sanitized",
+      "name": "win-x86_64--test-sanitized",
       "displayName": "Windows | TestUnit-Sanitized",
       "inherits": [
         "windows-msvc",
-        "testunit",
+        "test",
         "debug",
         "sanitized"
       ]
     },
     {
-      "name": "msys-x64--client-shipping",
+      "name": "msys-x86_64--cl-ship",
       "displayName": "Windows | Client-Shipping",
       "inherits": [
         "windows-msys",
@@ -353,7 +353,7 @@
       ]
     },
     {
-      "name": "msys-x64--client-development",
+      "name": "msys-x86_64--cl-dev",
       "displayName": "Windows | Client-Development",
       "inherits": [
         "windows-msys",
@@ -362,7 +362,7 @@
       ]
     },
     {
-      "name": "msys-x64--client-debug",
+      "name": "msys-x86_64--cl-dbg",
       "displayName": "Windows | Client-Debug",
       "inherits": [
         "windows-msys",
@@ -371,7 +371,7 @@
       ]
     },
     {
-      "name": "msys-x64--client-sanitized",
+      "name": "msys-x86_64--cl-sanitized",
       "displayName": "Windows | Client-Sanitized",
       "inherits": [
         "windows-msys",
@@ -381,7 +381,7 @@
       ]
     },
     {
-      "name": "msys-x64--daemon-shipping",
+      "name": "msys-x86_64--daemon-ship",
       "displayName": "Windows | Daemon-Shipping",
       "inherits": [
         "windows-msys",
@@ -390,7 +390,7 @@
       ]
     },
     {
-      "name": "msys-x64--daemon-development",
+      "name": "msys-x86_64--daemon-dev",
       "displayName": "Windows | Daemon-Development",
       "inherits": [
         "windows-msys",
@@ -399,7 +399,7 @@
       ]
     },
     {
-      "name": "msys-x64--daemon-debug",
+      "name": "msys-x86_64--daemon-dbg",
       "displayName": "Windows | Daemon-Debug",
       "inherits": [
         "windows-msys",
@@ -408,7 +408,7 @@
       ]
     },
     {
-      "name": "msys-x64--daemon-sanitized",
+      "name": "msys-x86_64--daemon-sanitized",
       "displayName": "Windows | Daemon-Sanitized",
       "inherits": [
         "windows-msys",
@@ -418,38 +418,38 @@
       ]
     },
     {
-      "name": "msys-x64--testunit-shipping",
+      "name": "msys-x86_64--test-ship",
       "displayName": "Windows | TestUnit-Shipping",
       "inherits": [
         "windows-msys",
-        "testunit",
+        "test",
         "shipping"
       ]
     },
     {
-      "name": "msys-x64--testunit-development",
+      "name": "msys-x86_64--test-dev",
       "displayName": "Windows | TestUnit-Development",
       "inherits": [
         "windows-msys",
-        "testunit",
+        "test",
         "development"
       ]
     },
     {
-      "name": "msys-x64--testunit-debug",
+      "name": "msys-x86_64--test-dbg",
       "displayName": "Windows | TestUnit-Debug",
       "inherits": [
         "windows-msys",
-        "testunit",
+        "test",
         "debug"
       ]
     },
     {
-      "name": "msys-x64--testunit-sanitized",
+      "name": "msys-x86_64--test-sanitized",
       "displayName": "Windows | TestUnit-Sanitized",
       "inherits": [
         "windows-msys",
-        "testunit",
+        "test",
         "debug",
         "sanitized"
       ]

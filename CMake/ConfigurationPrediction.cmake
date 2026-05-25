@@ -11,11 +11,11 @@
 
 if(NOT DEFINED JAFG_TARGET_PLATFORM)
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-        set(JAFG_TARGET_PLATFORM    Linux)
+        set(JAFG_TARGET_PLATFORM    "lnx")
     elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Emscripten")
-        set(JAFG_TARGET_PLATFORM    Wasm)
+        set(JAFG_TARGET_PLATFORM    "wasm")
     elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-        set(JAFG_TARGET_PLATFORM    Windows)
+        set(JAFG_TARGET_PLATFORM    "win")
     else()
         message(
             FATAL_ERROR
@@ -32,10 +32,10 @@ endif()
 
 if(NOT DEFINED JAFG_TARGET_TYPE)
     message(WARNING "JAFG_TARGET_TYPE was not defined. Setting it implicitly to [Client].")
-    set(JAFG_TARGET_TYPE Client)
+    set(JAFG_TARGET_TYPE "cl")
 endif()
 
 if(NOT DEFINED JAFG_TARGET_CONFIG)
     message(WARNING "JAFG_TARGET_CONFIG was not defined. Setting it implicitly to [Shipping].")
-    set(JAFG_TARGET_CONFIG Shipping)
+    set(JAFG_TARGET_CONFIG "ship")
 endif()

@@ -152,7 +152,7 @@ LStringView GetTargetCompound() noexcept { return LStringView{DETAIL_ENGINE_TARG
 LStringView GetTargetPlatformCompound() noexcept { return LStringView{DETAIL_ENGINE_PLATFORM_COMPOUND}; }
 LStringView GetTargetPath() noexcept { return LStringView{DETAIL_ENGINE_CONFIG_COMPOUND}; }
 LStringView GetExpectedRuntime() noexcept { return LStringView{DETAIL_ENGINE_EXPECTED_RUNTIME}; }
-LStringView GetExpectedRuntimePath() noexcept { return LStringView{"Binaries/" DETAIL_ENGINE_CONFIG_COMPOUND "/" DETAIL_ENGINE_EXPECTED_RUNTIME}; }
+LStringView GetExpectedRuntimePath() noexcept { return LStringView{"bin/" DETAIL_ENGINE_CONFIG_COMPOUND "/" DETAIL_ENGINE_EXPECTED_RUNTIME}; }
 
 ENGINE_API LProgramParameter CoreHelp{{
     .Identifier = "Help",
