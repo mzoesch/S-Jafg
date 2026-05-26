@@ -19,6 +19,7 @@ struct LRenderTarget
         vk::SampleCountFlagBits SampleCount;
         //# If set to eNone, then this #LRenderTarget will not resolve the msaa image.
         vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eAverage };
+        LColor ClearColor{ Colors::Black };
     };
 
     NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
@@ -57,6 +58,8 @@ struct LRenderTarget
         check(this->ResolvedTarget.has_value())
         this->ResolvedTarget->BindlessIndex = Value;
     }
+
+    vk::ClearValue ClearColor{vk::ClearColorValue{std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}}};
 
 protected:
 

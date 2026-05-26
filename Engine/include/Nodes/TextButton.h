@@ -121,8 +121,8 @@ private:
 
     std::size_t DecoupledLeftIconFrame{};
     std::size_t DecoupledRightIconFrame{};
-    LDelegateHandle LeftHandle{ nullptr };
-    LDelegateHandle RightHandle{ nullptr };
+    LDelegateHandle LeftHandle;
+    LDelegateHandle RightHandle;
 };
 
 struct LFactoryTextButton : TFactoryButtonBase<WTextButton>

@@ -61,9 +61,9 @@ Jafg::LNodeReply Jafg::WParent::SweepFocus(LNodeSweepInfo const& Info, LVec2F co
     if (this->CanChildrenBeHitTestable())
     {
         LNodeSweepInfo ChildInfo{.Translation=Info.Translation + Info.ChildTranslationHint,};
-        for (auto& Child : this->Children)
+        for (auto It{this->Children.rbegin()}; It != this->Children.rend(); ++It)
         {
-            if (auto Reply{Child->SweepFocus(ChildInfo, Location)}; Reply.IsHandled())
+            if (auto Reply{(*It)->SweepFocus(ChildInfo, Location)}; Reply.IsHandled())
             {
                 return Reply;
             }

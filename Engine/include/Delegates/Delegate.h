@@ -3,43 +3,76 @@
 #pragma once
 
 //# Represents a handle to a delegate.
-struct LDelegateHandle final
+struct LDelegateHandle
 {
-    constexpr LDelegateHandle() noexcept = delete;
-    FORCEINLINE constexpr LDelegateHandle(std::nullptr_t) noexcept : Handle(0) { return; }
-    FORCEINLINE constexpr LDelegateHandle(const LDelegateHandle& InOther) noexcept = default;
-    FORCEINLINE constexpr LDelegateHandle(LDelegateHandle&& InOther) noexcept
-    {
-        this->Handle = InOther.Handle;
-        InOther.Handle = 0;
+    typedef std::size_t value_type;
 
-        return;
-    }
-    FORCEINLINE constexpr LDelegateHandle& operator=(std::nullptr_t) noexcept { this->Handle = 0; return *this; }
-    FORCEINLINE constexpr LDelegateHandle& operator=(const LDelegateHandle& InOther) noexcept = default;
-    FORCEINLINE constexpr LDelegateHandle& operator=(LDelegateHandle&& InOther) noexcept
-    {
-        this->Handle = InOther.Handle;
-        InOther.Handle = 0;
-        return *this;
-    }
+    inline static constexpr value_type InvalidHandle{};
 
-    FORCEINLINE constexpr explicit LDelegateHandle(const u64 InHandle)
-        : Handle(InHandle)
+    FORCEINLINE constexpr LDelegateHandle() noexcept = default;
+    DEFAULT_REALLOC_OF_ANY_FORM(LDelegateHandle)
+    FORCEINLINE constexpr ~LDelegateHandle() noexcept = default;
+
+    FORCEINLINE constexpr void Reset() noexcept { this->Handle = {}; }
+    FORCEINLINE constexpr bool IsValid() const noexcept { return *this->Handle != InvalidHandle; }
+    FORCEINLINE constexpr operator bool() const noexcept { return this->IsValid(); }
+
+    FORCEINLINE static LDelegateHandle From(value_type Handle) noexcept
     {
-        check( this->Handle != 0 )
-        return;
+        LDelegateHandle Result;
+        Result.Handle.Value = Handle;
+        return Result;
     }
 
-    FORCEINLINE constexpr void Reset() noexcept { this->Handle = 0; return; }
-    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Handle != 0; }
-    NODISCARD FORCEINLINE constexpr bool operator!() const noexcept { return !this->IsValid(); }
+    FORCEINLINE constexpr value_type UnderlyingValue() const noexcept { return *this->Handle; }
 
-    FORCEINLINE constexpr u64 UnderlyingValue() const noexcept { return this->Handle; }
+protected:
+
+    algo::exchange_storage<value_type, InvalidHandle> Handle;
+};
+
+//# Automatic unbinding delegate handle on destruction.
+template<typename TDelegate>
+struct TRaiiDelegateHandle : private LDelegateHandle
+{
+    FORCEINLINE constexpr TRaiiDelegateHandle(TDelegate& Delegate) noexcept : LDelegateHandle{}, Delegate{Delegate} {}
+    PROHIBIT_COPY(TRaiiDelegateHandle)
+    DEFAULT_MOVE(TRaiiDelegateHandle)
+    FORCEINLINE constexpr ~TRaiiDelegateHandle() noexcept { this->Unbind(); }
+
+    FORCEINLINE constexpr void Reset() noexcept { this->Handle = {}; }
+    FORCEINLINE constexpr void Unbind() noexcept
+    {
+        if (this->IsValid())
+        {
+            this->Delegate.get().Remove(&**this);
+        }
+    }
+    FORCEINLINE constexpr bool IsValid() const noexcept { return *this->Handle != InvalidHandle; }
+    FORCEINLINE constexpr operator bool() const noexcept { return this->IsValid(); }
+
+    FORCEINLINE LDelegateHandle& operator*() noexcept { return static_cast<LDelegateHandle&>(*this); }
+    FORCEINLINE LDelegateHandle const& operator*() const noexcept { return static_cast<LDelegateHandle const&>(*this); }
+
+    FORCEINLINE static TRaiiDelegateHandle From(TDelegate& Delegate, LDelegateHandle const& Handle) noexcept
+    {
+        TRaiiDelegateHandle Result{Delegate};
+        Result.Handle.Value = Handle.UnderlyingValue();
+        return Result;
+    }
+
+    template<typename T>
+    FORCEINLINE static TRaiiDelegateHandle Make(TDelegate& Delegate, T Functor) noexcept
+        requires(TDelegate::value_type::template is_valid_functor_v<T>)
+    {
+        return From(Delegate, Delegate.Emplace(std::move(Functor)));
+    }
+
+    FORCEINLINE constexpr value_type UnderlyingValue() const noexcept { return *this->Handle; }
 
 private:
 
-    u64 Handle;
+    std::reference_wrapper<TDelegate> Delegate;
 };
 
 template<typename TSig>
@@ -55,51 +88,52 @@ class TMulticastDelegate<bool(TParams...)>
 public:
 
     typedef TFunction<bool(TParams...)> LDelegate;
+    typedef TFunction<bool(TParams...)> value_type;
 
     FORCEINLINE LDelegateHandle Add(LDelegate&& Delegate) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, std::move(Delegate));
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
 
     template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle Emplace(TFunctor&& Functor) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, std::forward<TFunctor>(Functor));
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
 
     template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle Emplace(TFunctor* Functor) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, Functor);
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
 
     template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<bool, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE LDelegateHandle Emplace(TObj* Object, TMemberFunctor MemberFunctor) noexcept
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate{ Object, MemberFunctor });
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
 
     template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle EmplaceStrong(TFunctor&& Functor)
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate::CreateStrong(std::forward<TFunctor>(Functor)));
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
     template<typename TFunctor> requires(std::is_same_v<TFunctor, LDelegate> == false && std::is_invocable_r_v<bool, TFunctor, TParams...>)
     FORCEINLINE LDelegateHandle EmplaceWeak(TFunctor* Functor)
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate::CreateWeak(Functor));
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
     template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<bool, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE LDelegateHandle EmplaceMember(TObj* Object, TMemberFunctor MemberFunctor)
     {
         this->Delegates.emplace_back(++this->Cursor, LDelegate::CreateMember(Object, MemberFunctor));
-        return LDelegateHandle{ this->Cursor };
+        return LDelegateHandle::From(this->Cursor);
     }
 
     //# @return True, if at least one delegate was called.

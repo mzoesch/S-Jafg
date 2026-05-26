@@ -84,7 +84,7 @@ private:
     std::optional<LDragChildOffset> DragChildOffset;
 
     bool UiTickMove();
-    LDelegateHandle UiTickMoveHandle{ nullptr };
+    LDelegateHandle UiTickMoveHandle;
     std::optional<LVec2F> InitialMouseLocation;
 
     struct LChildSlot

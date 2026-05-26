@@ -236,8 +236,7 @@ public:
     }
 
     //# @return True if registered successfully.
-    ENGINE_API  bool RegisterLevel(LLevel const& Level);
-    ENGINE_API  bool RegisterLevel(LLevel&& Level);
+    ENGINE_API  bool RegisterLevel(LLevel Level);
     FORCEINLINE bool IsLevelRegistered(LString const& Identifier) const { return algo::contains(this->RegisteredLevels, Identifier, &LLevel::Identifier); }
 
     //#

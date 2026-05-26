@@ -75,6 +75,11 @@ struct LStyleBase
 {
     typedef typename UFlags::type flag_type;
 
+    constexpr void ForEachEverywhere(this auto&& Self, auto&& F) noexcept
+    {
+        ([&](auto&& Brush) -> void{ (F(Self.*Brush));}(BrushProj), ...);
+    }
+
     template<auto Proj>
     constexpr void SetEverywhere(this auto&& Self, algo::proj_member_t<decltype(Proj)> const& Value) noexcept
     {

@@ -27,14 +27,14 @@ void LJgcPluginLifetime::OnFinishedLoading()
 
     LOG_VERBOSE(LogJgcLifetime, "Creating jgc levels.")
 #if WITH_LOCAL_LAYER
-    if (Jafg::Detail::GMutableEngine->RegisterLevel
+    if (!Jafg::Detail::GMutableEngine->RegisterLevel
     (
         Jafg::LLevel{
             .Identifier = "LevelFrontend",
             .InputMode = Jafg::EInputModeBits::HideMouseCursor,
             .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
             }
-    ) == false)
+    ))
     {
         LOG_WARNING(LogJgcLifetime, "Level [LevelFrontend] is already registered.")
     }

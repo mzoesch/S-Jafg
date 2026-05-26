@@ -13,7 +13,6 @@
 #include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
 #include "User/UserPreferences.h"
-#include "Rhi/NodeRenderInfo.h"
 #include "Components/ActorComponentForward.h"
 
 LString Jafg::LWorldParameters::ToString() const
@@ -206,7 +205,7 @@ void Jafg::LWorld::Tick(f32 Dt)
     return;
 }
 
-void Jafg::LWorld::Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const
+void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const
 {
     STAT_CYCLE_FUNCTION()
 
@@ -254,7 +253,7 @@ void Jafg::LWorld::Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const
     // };
     // const std::span CornersSpan{Corners};
 
-    LActorRenderInfo ActorInfo{static_cast<LRenderInfo const&>(Info), Eye};
+    LActorRenderInfo ActorInfo{Info, Eye};
     auto& Frontend{ActorInfo.Frontend};
     auto& Surface{ActorInfo.Surface};
     if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
@@ -361,8 +360,9 @@ void Jafg::LWorld::Draw(LNodeRenderInfo const& Info, LEye_v2 const& Eye) const
 
 std::expected<Jafg::APersonaController*,LString> Jafg::LWorld::Login(LTransientPersona Persona)
 {
-    check(this->SupremePolicies)
+    check(Tasks::IsOnMasterThread())
     check(this->GetWorldState() == EWorldState::Running)
+    check(this->SupremePolicies)
 
     if (std::holds_alternative<LTransientPersona::Local>(*Persona))
     {

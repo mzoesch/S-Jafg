@@ -10,6 +10,17 @@ void Jafg::LRenderTarget::Initialize(CreateInfo Info)
 
     check(Info.Extent.width > 0 && Info.Extent.height > 0)
 
+    if (Frontend.Vk_GetSurfaceFormat().format == vk::Format::eB8G8R8A8Srgb)
+    {
+        //# TODO: Why does this work?
+        auto C{Info.ClearColor.ToLinearColor()};
+        this->ClearColor = {vk::ClearColorValue(std::array<f32,4>{C.R, C.G, C.B, C.A})};
+    }
+    else
+    {
+        LOG_FATAL(LogVulkan, "Render target does not support format [{}].", vk::to_string(Frontend.Vk_GetSurfaceFormat().format))
+    }
+
     this->Extent = Info.Extent;
     this->ResolveFlags = Info.ResolveMode;
 
@@ -103,7 +114,6 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
             },
         });
 
-    constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
     vk::RenderingAttachmentInfo ColorAttachmentInfo{
         .imageView = this->MsaaTarget.ImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,

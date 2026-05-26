@@ -91,12 +91,12 @@ public:
 protected:
 
     bool UiTickMove();
-    LDelegateHandle UiTickMoveHandle{ nullptr };
+    LDelegateHandle UiTickMoveHandle;
     std::optional<LVec2F> MoveDragOffset;
 
     bool bDecorate{ true };
     bool bCreateResizeUi{ true };
-    LDelegateHandle UiTickResizeHandle{ nullptr };
+    LDelegateHandle UiTickResizeHandle;
     bool UiTickResize();
     std::optional<LVec2F> ResizeDragOffset;
 

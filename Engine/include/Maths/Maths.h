@@ -120,14 +120,21 @@ struct TTrans final
 using LTransformF = TTrans<maths::single_precision,maths::defaultp>;
 using LTransformD = TTrans<maths::double_precision,maths::defaultp>;
 
-template<typename T,maths::qual_t Q>
-struct TRect2 final
+template<maths::length_t L,typename TReal,maths::qual_t Q>
+struct TRect final
 {
-    TVec2<T,Q> Offset;
-    TVec2<T,Q> Extent;
+    TVec<L,TReal,Q> Offset;
+    TVec<L,TReal,Q> Extent;
 };
-using LRect2F = TRect2<f32,maths::defaultp>;
-using LRect2D = TRect2<f32,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TRect1 = TRect<1,TReal,Q>;
+using LRect1F = TRect1<maths::single_precision,maths::defaultp>;
+using LRect1D = TRect1<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TRect2 = TRect<2,TReal,Q>;
+using LRect2F = TRect2<maths::single_precision,maths::defaultp>;
+using LRect2D = TRect2<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TRect3 = TRect<3,TReal,Q>;
+using LRect3F = TRect3<maths::single_precision,maths::defaultp>;
+using LRect3D = TRect3<maths::double_precision,maths::defaultp>;
 
 //#
 //# Types used for world coordinates.
@@ -711,6 +718,20 @@ template<length_t L, typename T,qual_t Q>
 inline constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt(maths::squared_magnitude(v)); }
 
 template<typename T,qual_t Q>
+inline constexpr bool aabb(TRect1<T,Q> const& a, TRect1<T,Q> const& b) noexcept
+{
+    return !(a.Offset.x > b.Offset.x + b.Extent.x
+          || a.Offset.x + a.Extent.x < b.Offset.x
+          );
+}
+template<typename T,qual_t Q>
+inline constexpr bool aabb_point(TRect1<T,Q> const& a, TVec1<T,Q> const& p) noexcept
+{
+    return !(p.x < a.Offset.x
+          || p.x > a.Offset.x + a.Extent.x
+          );
+}
+template<typename T,qual_t Q>
 inline constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
 {
     return !(a.Offset.x > b.Offset.x + b.Extent.x
@@ -726,6 +747,28 @@ inline constexpr bool aabb_point(TRect2<T,Q> const& a, TVec2<T,Q> const& p) noex
           || p.x > a.Offset.x + a.Extent.x
           || p.y < a.Offset.y
           || p.y > a.Offset.y + a.Extent.y
+          );
+}
+template<typename T,qual_t Q>
+inline constexpr bool aabb(TRect3<T,Q> const& a, TRect3<T,Q> const& b) noexcept
+{
+    return !(a.Offset.x > b.Offset.x + b.Extent.x
+          || a.Offset.x + a.Extent.x < b.Offset.x
+          || a.Offset.y > b.Offset.y + b.Extent.y
+          || a.Offset.y + a.Extent.y < b.Offset.y
+          || a.Offset.z > b.Offset.z + b.Extent.z
+          || a.Offset.z + a.Extent.z < b.Offset.z
+          );
+}
+template<typename T,qual_t Q>
+inline constexpr bool aabb_point(TRect3<T,Q> const& a, TVec3<T,Q> const& p) noexcept
+{
+    return !(p.x < a.Offset.x
+          || p.x > a.Offset.x + a.Extent.x
+          || p.y < a.Offset.y
+          || p.y > a.Offset.y + a.Extent.y
+          || p.z < a.Offset.z
+          || p.z > a.Offset.z + a.Extent.z
           );
 }
 

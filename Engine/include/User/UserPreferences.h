@@ -168,6 +168,13 @@ public:
         return Result;
     }
 
+    CLASS_FIELD(Config)
+    TPreference<LString> EditorLastWorldName{ "Editor World" };
+    CLASS_FIELD(Config)
+    TPreference<LString> EditorLastWorldLevelName{ "" };
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorAutoLaunchLastWorld{ false };
+
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins
     ///////////////////////////////////////////////////////////////////////////////

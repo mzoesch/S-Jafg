@@ -20,6 +20,7 @@ class WParent;
 class LViewport;
 struct LWidgetConstructor;
 struct LMappedDeviceBuffer;
+struct LRenderInfo;
 struct LNodeRenderInfo;
 
 namespace Detail
@@ -813,6 +814,11 @@ public:
         Super::OnGarbage(Reason);
     }
     // ~JCxxClass implementation
+
+    typedef TRaiiDelegateHandle<TMulticastDelegate<bool()>> LRaiiViewportHandle;
+    typedef TRaiiDelegateHandle<TMulticastDelegate<bool(LRenderInfo const& Info)>> LRaiiPreDrawHandle;
+    typedef TRaiiDelegateHandle<TMulticastDelegate<bool(LNodeRenderInfo const& Info)>> LRaiiDrawHandle;
+
 
     //#
     //# Called when this widget is constructed. This method replaces the #BeginLife super method.

@@ -183,8 +183,7 @@ i32 main(i32 c, char const* v[])
             Start = End + 1;
         }
     }
-    if constexpr (IS_COMPILED_LOG(LogJafgInternal, Verbose))
-    LOG_VERBOSE(LogLaunch, "gdb=[{}].", Finder::Detail::_gdb ? *Finder::Detail::_gdb : "<not found>")
+    LOG_VERBOSE(LogInformation, "gdb={}", Finder::Detail::_gdb ? *Finder::Detail::_gdb : "<not found>")
 
     ErrorLevel = AgnosticLaunch();
 

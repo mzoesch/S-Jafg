@@ -577,7 +577,7 @@ void Jafg::LClassOuter::TearDown() noexcept
     if (this->HumanReadableName.starts_with("<torn-down:"))
     {
         check(this->Employees.empty())
-        check(this->bWasRegisteredToEngine == false)
+        check(!this->bWasRegisteredToEngine)
         return;
     }
 

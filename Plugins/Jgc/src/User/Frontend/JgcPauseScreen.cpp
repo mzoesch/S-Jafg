@@ -22,20 +22,20 @@ void Jgc::WPauseScreen::Construct()
 
     // Frontend.Vk_AddTextureToGlobalBindlessArray(&*Tex);
 
-    Jafg::BeginStyling(*this).StaticRoot<Jafg::WOverlay>()
-        .Anchor(Jafg::EAnchor::CenterCenter)
-        .MinDesiredSize({200_pt, 200})
-    [
-        NewStaticNode(Jafg::WTextBox)
-            .Anchor(Jafg::EAnchor::CenterCenter)
-            .Tint(Colors::Green)
-            .BorderTint(Colors::Red)
-            .OutlineTint(Colors::Blue)
-            .MinDesiredSize({400_pt, 150})
-            .TextAlign(Jafg::ETextHAlign::Right)
-            .TextAlign(Jafg::ETextVAlign::Bottom)
-            .Content("hioasdfphjkoasdfhpjoasdfhpjasdfhjp")
-    ];
+    // Jafg::BeginStyling(*this).StaticRoot<Jafg::WOverlay>()
+    //     .Anchor(Jafg::EAnchor::CenterCenter)
+    //     .MinDesiredSize({200_pt, 200})
+    // [
+    //     NewStaticNode(Jafg::WTextBox)
+    //         .Anchor(Jafg::EAnchor::CenterCenter)
+    //         .Tint(Colors::Green)
+    //         .BorderTint(Colors::Red)
+    //         .OutlineTint(Colors::Blue)
+    //         .MinDesiredSize({400_pt, 150})
+    //         .TextAlign(Jafg::ETextHAlign::Right)
+    //         .TextAlign(Jafg::ETextVAlign::Bottom)
+    //         .Content("hioasdfphjkoasdfhpjoasdfhpjasdfhjp")
+    // ];
 
     // Jafg::BeginStyling(*this).Root<Jafg::WRegion>()
     //     .Anchor(Jafg::EAnchor::CenterCenter)

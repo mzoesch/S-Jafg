@@ -80,7 +80,7 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
                     Info.TextureSubsystem,
                     Info.MaterialSubsystem,
                     Info.FontSubsystem,
-                    Translation, LRect2D{
+                    Translation, LRect2F{
                         .Offset = AnchoredTopLeftFromMostOuter,
                         .Extent = this->GetAnchoredSize_v2(),
                         },

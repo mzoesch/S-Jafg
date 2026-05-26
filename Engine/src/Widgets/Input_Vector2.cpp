@@ -22,7 +22,6 @@ void Jafg::WInput_Vector2::Construct()
         .Style(Prefs.EditorEditableTextButtonStyle())
         .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::X, Content); })
-        .Content("1920")
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
     BeginStyling(*this).StaticRoot<WEditableTextButton>().SaveTo(&ButtonY)
         .MinDesiredSize({64_spt, 0})
@@ -31,7 +30,6 @@ void Jafg::WInput_Vector2::Construct()
         .Style(Prefs.EditorEditableTextButtonStyle())
         .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::Y, Content); })
-        .Content("1080")
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
 
     if (std::holds_alternative<LVec2i64>(this->Vector))

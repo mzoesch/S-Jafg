@@ -52,6 +52,11 @@ private:
 
 public:
 
+    template<typename TFunctor>
+    inline static constexpr bool is_valid_functor_v{
+        !std::is_same_v<TFunctor, TFunction> && std::is_invocable_r_v<TRet, TFunctor, TParams...>
+        };
+
     FORCEINLINE constexpr TFunction() noexcept = default;
     FORCEINLINE constexpr TFunction(std::nullptr_t) noexcept : Impl(nullptr) { }
     FORCEINLINE constexpr TFunction& operator=(std::nullptr_t) noexcept { this->Impl.operator=(nullptr); return *this; }

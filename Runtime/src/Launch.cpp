@@ -204,16 +204,37 @@ EPlatformExit::Type AgnosticLaunch()
 
     LOG_INFO(LogLaunch, "Finished static storage initialization after {} seconds.", App::GetElapsedTime())
 
+    LOG_VERBOSE(LogInformation, "BuildTime={}", App::BuildTime())
+    LOG_VERBOSE(LogInformation, "BuildDate={}", App::BuildDate())
+    LOG_VERBOSE(LogInformation, "BuildVcsBranch={}", App::BuildVcsBranch())
+    LOG_VERBOSE(LogInformation, "BuildVcsRevision={}", App::BuildVcsRevision())
+
+    LOG_VERBOSE(LogInformation, "EngineVersion={}", App::EngineVersion())
+    LOG_VERBOSE(LogInformation, "EngineVersionHash={}", App::EngineVersionHash())
+
+    LOG_VERBOSE(LogInformation, "CompilerVersion={}", App::CompilerVersion())
+    LOG_VERBOSE(LogInformation, "CxxStandard={}", App::CxxStandard())
+
+    LOG_VERBOSE(LogInformation, "TargetPlatform={}", App::GetTargetPlatform())
+    LOG_VERBOSE(LogInformation, "TargetArchitecture={}", App::GetTargetArchitecture())
+    LOG_VERBOSE(LogInformation, "TargetType={}", App::GetTargetType())
+    LOG_VERBOSE(LogInformation, "TargetConfiguration={}", App::GetTargetConfiguration())
+    LOG_VERBOSE(LogInformation, "TargetCompound={}", App::GetTargetCompound())
+    LOG_VERBOSE(LogInformation, "TargetPlatformCompound={}", App::GetTargetPlatformCompound())
+    LOG_VERBOSE(LogInformation, "TargetPath={}", App::GetTargetPath())
+    LOG_VERBOSE(LogInformation, "ExpectedRuntime={}", App::GetExpectedRuntime())
+    LOG_VERBOSE(LogInformation, "ExpectedRuntimePath={}", App::GetExpectedRuntimePath())
+
     App::Detail::PauseBeforeExit = !!App::GetCommandLineArgument(App::PauseBeforeExit);
+    LOG_VERBOSE(LogInformation, "PauseBeforeExit={}", App::Detail::PauseBeforeExit)
     App::Detail::AlwaysReportCrash = !!App::GetCommandLineArgument(App::AlwaysReportCrash);
+    LOG_VERBOSE(LogInformation, "AlwaysReportCrash={}", App::Detail::AlwaysReportCrash)
     App::Detail::bDumpStack = !!App::GetCommandLineArgument(App::DumpStack);
-    LOG_VERBOSE(LogLaunch, "PauseBeforeExit={}", App::Detail::PauseBeforeExit)
-    LOG_VERBOSE(LogLaunch, "AlwaysReportCrash={}", App::Detail::AlwaysReportCrash)
-    LOG_VERBOSE(LogLaunch, "DumpStack={}", App::Detail::bDumpStack)
+    LOG_VERBOSE(LogInformation, "DumpStack={}", App::Detail::bDumpStack)
 #if WITH_STATS
     App::Detail::AllowProfiling = App::CanEverProfile() && !!App::GetCommandLineArgument(App::AllowProfiling);
-    LOG_VERBOSE(LogLaunch, "AllowProfiling={}", App::Detail::AllowProfiling)
 #endif /* WITH_STATS */
+    LOG_VERBOSE(LogInformation, "AllowProfiling={}", App::IsAllowProfiling())
 #endif /* !JAFG_WITH_TESTS */
 
     Tasks::RegisterThread(ENamedThreads::Master);
@@ -222,8 +243,8 @@ EPlatformExit::Type AgnosticLaunch()
     Finder::CreateDirectories(Finder::GetTempDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
-    LOG_VERBOSE(LogLaunch, "Engine root directory is [{}].", Finder::Detail::GetEngineRootDir())
-    LOG_VERBOSE(LogLaunch, "Real engine root directory is [{}].", Finder::Detail::GetSelfProcDir())
+    LOG_VERBOSE(LogInformation, "EngineDir={}", Finder::Detail::GetEngineRootDir())
+    LOG_VERBOSE(LogInformation, "ProcDir={}", Finder::Detail::GetSelfProcDir())
 
     /* This is technically a race cond but who really cares. */
     Finder::Detail::DumpFile = absolute(Finder::GetMostRecentMemDumpFile());

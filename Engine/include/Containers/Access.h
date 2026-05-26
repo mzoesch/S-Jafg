@@ -984,6 +984,35 @@ FORCEINLINE constexpr std::unique_ptr<T,TDeleter>::pointer leak(std::unique_ptr<
     return Ptr.release();
 }
 
+template<typename T, T Default>
+struct exchange_storage
+{
+    FORCEINLINE constexpr exchange_storage() noexcept : Value{Default} {}
+    FORCEINLINE constexpr exchange_storage(exchange_storage const&) noexcept = default;
+    FORCEINLINE constexpr exchange_storage(exchange_storage&& Other) noexcept : Value{std::exchange(Other.Value, Default)} {}
+    FORCEINLINE exchange_storage& operator=(exchange_storage const&) noexcept = default;
+    FORCEINLINE exchange_storage& operator=(exchange_storage&& Rhs) noexcept
+    {
+        if (this != &Rhs)
+        {
+            this->Value = std::exchange(Rhs.Value, Default);
+        }
+        return *this;
+    }
+    FORCEINLINE constexpr ~exchange_storage() noexcept = default;
+
+    FORCEINLINE constexpr T exchange(T NewValue) noexcept { return std::exchange(this->Value, NewValue); }
+
+    FORCEINLINE constexpr T& get() noexcept { return this->Value; }
+    FORCEINLINE constexpr T const& get() const noexcept { return this->Value; }
+    FORCEINLINE constexpr T& operator*() noexcept { return this->Value; }
+    FORCEINLINE constexpr T const& operator*() const noexcept { return this->Value; }
+    FORCEINLINE constexpr T const* operator->() const noexcept { return &this->Value; }
+    FORCEINLINE constexpr T* operator->() noexcept { return &this->Value; }
+
+    T Value;
+};
+
 } /* ~Namespace algo */
 
 static_assert(sizeof(algo::npos) == sizeof(std::string::npos));

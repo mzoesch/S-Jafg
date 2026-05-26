@@ -165,7 +165,7 @@ private:
     };
     bool MouseTabMoveTick(WTabOverlaySelector& Selector);
     StepResult StepThrough(WParent& Node, LVec2F Location) const noexcept;
-    LDelegateHandle UiTickHandle{ nullptr };
+    LDelegateHandle UiTickHandle;
     std::optional<StepResult> LastStepResult;
     std::optional<StepResult::EDirection> DrawOption;
     EModFlags LastMouseFlags{ EModBits::Identity };

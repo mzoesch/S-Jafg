@@ -140,6 +140,8 @@ struct TPreference<T, std::enable_if_t<TUseDefaultPreferenceImpl_v<T>>>
     FORCEINLINE explicit constexpr operator T const&() const noexcept { return this->Value; }
     FORCEINLINE constexpr T& operator*() noexcept { return this->Value; }
     FORCEINLINE constexpr T const& operator*() const noexcept { return this->Value; }
+    FORCEINLINE constexpr T* operator->() noexcept { return &this->Value; }
+    FORCEINLINE constexpr T const* operator->() const noexcept { return &this->Value; }
 
     FORCEINLINE constexpr T const& GetDefaultValue() const noexcept { return this->DefaultValue; }
     FORCEINLINE constexpr T const& GetCurrentValue() const noexcept { return this->Value; }

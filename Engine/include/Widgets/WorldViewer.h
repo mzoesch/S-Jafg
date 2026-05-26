@@ -6,6 +6,7 @@
 #include "Framework/Lackey.h"
 #include "Nodes/GenericTabInfos.h"
 #include "Rhi/RenderTarget.h"
+#include "Platform/Surface.h"
 #include "WorldViewer.generated.h"
 
 namespace Jafg
@@ -22,7 +23,7 @@ class ENGINE_API WWorldViewer : public WUserWidget, public LLocalLackey
 protected:
 
     explicit WWorldViewer(LNodeDynamicInit const& Init) noexcept
-        : Super{Init}, LLocalLackey{Init.Outer}
+        : Super{Init}, LLocalLackey{this->RenderTargetViewport}
         , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
     {
         this->SetVisibility(ENodeVisibility::Visible);
@@ -49,7 +50,6 @@ public:
 
     virtual void Construct() override;
     virtual void Tick() override;
-    virtual void Destruct() override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     NODISCARD FORCEINLINE constexpr LRenderTarget const& GetWorldRenderTarget() const noexcept { return this->RenderTarget; }
@@ -66,23 +66,29 @@ public:
     FORCEINLINE bool IsManual() const noexcept { return this->DesiredViewportExtent.has_value(); }
 
     void TravelTo(LWorld& World);
+    void QueueTravelTo(LWorld& World);
 
 private:
 
     void InitializeRenderTarget();
     bool OnPreDraw(LRenderInfo const& Info);
-    void PreDraw(LRenderInfo const& Info) { this->RenderTargetViewport.Draw(Info); }
+    void PreDraw(LRenderInfo const& Info);
 
     void CreateMenuDropDown(LVec2F Where);
 
     void _ctor_SetBackgroundTint();
+
+    WNode* Placeholder{};
 
     algo::clock::time_point LastUnstableDiff;
     std::optional<rhi::extent2> LastUnstableExtent;
 
     LRenderTarget RenderTarget;
     LViewport RenderTargetViewport;
-    LDelegateHandle OnPreDrawHandle{ nullptr };
+    LRaiiPreDrawHandle OnPreDrawHandle{this->GetViewport().GetSurface().OnPreRender};
+
+    LWorld* QueuedTravelWorld{};
+    LRaiiViewportHandle QueueHandle{this->GetViewport().OnLateTick};
 };
 
 } /* ~Namespace Jafg */

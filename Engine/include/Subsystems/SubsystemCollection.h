@@ -167,7 +167,7 @@ private:
     //# All initialized current subsystem instances.
     TArray<JSubsystem*> SubsystemInstances;
 
-    LDelegateHandle OnForeignPluginLoadedHandle{ nullptr };
+    LDelegateHandle OnForeignPluginLoadedHandle;
 };
 
 template<typename TPredicate> requires std::is_invocable_r_v<void, TPredicate>

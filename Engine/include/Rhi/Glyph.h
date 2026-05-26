@@ -12,6 +12,7 @@ struct LGlyphCollection final
 {
     struct Info final
     {
+        // TODO: Replace with LRect2F
         LVec4F Rect{ maths::zero_vector<LVec4F> };
         LVec4F TexCoordRect{ maths::zero_vector<LVec4F> };
         u32 BindlessTextureIndex{};
@@ -68,7 +69,19 @@ struct LGlyphCollection final
         auto It{this->GlyphInfos.begin()};
         for (;It != this->GlyphInfos.end(); ++It)
         {
-            if (It->Pencil.x > Location.x)
+            auto Rect{LRect1F{
+                .Offset = LVec1F{It->Rect.x},
+                .Extent = LVec1F{It->Rect.z},
+                }};
+            if (maths::aabb_point(Rect, LVec1F{Location.x}))
+            {
+                if (It != this->GlyphInfos.begin() && Location.x < Rect.Offset.x + Rect.Extent.x * 0.5f)
+                {
+                    --It;
+                }
+                break;
+            }
+            if (Location.x < Rect.Offset.x)
             {
                 break;
             }

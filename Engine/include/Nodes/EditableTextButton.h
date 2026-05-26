@@ -147,7 +147,7 @@ private:
     bool bBeamed{};
     f32 CaretBlinker{};
     std::size_t CaretCursor{};
-    LDelegateHandle UserInterfaceTickDelegateHandle{ nullptr };
+    LDelegateHandle UserInterfaceTickDelegateHandle;
 };
 
 struct LFactoryEditableTextButton : NODE_FACTORY_PARENT(WEditableTextButton)

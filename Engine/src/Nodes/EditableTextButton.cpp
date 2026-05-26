@@ -11,10 +11,24 @@ void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
 {
     Super::Draw(Info);
 
-    // if (this->GetContent().empty() && !(this->PlaceholderContent.empty() || this->TextBrush.bSkipBrushDraw))
-    // {
-    //
-    // }
+    if (this->GetContent().empty() && !(this->PlaceholderContent.empty() || this->TextBrush.bSkipBrushDraw))
+    {
+        auto TopLeft{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + this->GetRelativeTextTopLeft()};
+        for (auto const& Glyph : this->GetTextRenderData().Collection)
+        {
+            // TODO: Clamp to pixels? Currently sometimes a little bit blurry.
+            Info.AddInstance({
+                .Rect = {{TopLeft.x + Glyph.Rect.x, TopLeft.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
+                .TexCoordRect = Glyph.TexCoordRect,
+                .Tint = this->PlaceholderTint,
+                .OutlineTint = this->TextBrush.OutlineTint,
+                .OutlineThickness = this->TextBrush.OutlineThickness,
+                .TextureIndex = Glyph.BindlessTextureIndex,
+                .SamplerIndex = Glyph.SamplerIndex,
+                .MsdfPixelRange = Glyph.MsdfPixelRange,
+                });
+        }
+    }
 
     if (this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed && this->IsFocusWidget())
     {
@@ -79,9 +93,8 @@ void Jafg::WEditableTextButton::UpdateDesiredSize() const
         this->GetTextRenderData().Update(this->GetViewport()
             , *this->GetFrontend().GetSubsystemChecked<JFontSubsystem>()
             , this->TextBrush
-            , this->GetContent()
+            , this->PlaceholderContent
             );
-        check(!this->IsTextRenderDataDirty<&WTextBox::TextBrush>())
     }
 
     Super::UpdateDesiredSize();
@@ -313,12 +326,17 @@ std::size_t Jafg::WEditableTextButton::MoveCaretTo(LVec2F Location)
     {
         this->SetCaretCursorToEnd();
     }
-    else if (this->GetContent().empty())
+    else if (!this->GetContent().empty())
     {
         auto& Collection{this->GetTextRenderData().Collection};
-        auto It{Collection.end_location({RelativeTopLeft, Location.y})};
-        check(It != Collection.end())
-        this->SetCaretCursor(It->Cluster);
+        if (auto It{Collection.end_location({RelativeTopLeft, Location.y})}; It == Collection.end())
+        {
+            this->SetCaretCursorToEnd();
+        }
+        else
+        {
+            this->SetCaretCursor(It->Cluster);
+        }
     }
     else
     {

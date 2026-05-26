@@ -141,7 +141,7 @@ private:
 
     mutable LVec2F DesiredSizeOfChildren{ maths::zero_vector<LVec2F> };
 
-    LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
+    LDelegateHandle UserInterfaceTickDelegateHandle;
     bool bUiTickV:1{};
     bool bUiTickH:1{};
     LVec2F MbOffset{ maths::zero_vector<LVec2F> };

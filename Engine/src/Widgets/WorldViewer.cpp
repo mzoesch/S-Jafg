@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/WorldViewer.h"
-
 #include "Engine/Engine.h"
 #include "Nodes/Viewport.h"
 #include "Platform/Surface.h"
@@ -20,6 +19,7 @@
 #include "Nodes/HButton.h"
 #include "Engine/World.h"
 #include "Nodes/EditableTextButton.h"
+#include "Nodes/CheckmarkButton.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -32,25 +32,14 @@ void Jafg::WWorldViewer::Construct()
 
     this->RenderTargetViewport.Vk_OnLateInit();
 
-    // ConstructDeferredWidget(Jafg::TNodeStaticInit<WUserWidget>{this->RenderTargetViewport})
-    //     .Style()
-    // [
-    //     NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::Fill).Tint(Colors::White)
-    //     [
-    //           // NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Blue).MinDesiredSize(25_spt2)
-    //           NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(6_spt2)
-    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Red).MinDesiredSize(5_spt2)
-    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(4_spt2)
-    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Red).MinDesiredSize(3_spt2)
-    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::Green).MinDesiredSize(2_spt2)
-    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopLeft).Tint(Colors::White).MinDesiredSize(1_spt2)
-    //         + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomRight).Tint(Colors::Red).MinDesiredSize(10_spt2)
-    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::TopRight).Tint(Colors::Green).MinDesiredSize(25_spt2)
-    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomRight).Tint(Colors::Green).MinDesiredSize(25_spt2)
-    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::BottomLeft).Tint(Colors::Black).MinDesiredSize(25_spt2)
-    //         // + NewNode(this->RenderTargetViewport).Class<WRegion>().Anchor(EAnchor::CenterCenter).Tint(Colors::RebeccaPurple).MinDesiredSize(25_spt2)
-    //     ]
-    // ];
+    BeginStyling(*this).StaticRoot<WText>().SaveTo(&this->Placeholder)
+        .Visibility(ENodeVisibility::Visible)
+        .Anchor(EAnchor::Fill)
+        .TextScale(ETextScale::Header)
+        .TextAlign(ETextHAlign::Center)
+        .TextAlign(ETextVAlign::Center)
+        .Content("No World Loaded")
+        ;
 
     BeginStyling(*this).StaticRoot<WHParent>()
         .Padding(3_pt)
@@ -70,6 +59,13 @@ void Jafg::WWorldViewer::Construct()
                 return LNodeReply::Unhandled();
             })
     ];
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    if (*Prefs.EditorAutoLaunchLastWorld && !Prefs.EditorLastWorldName->empty() && !Prefs.EditorLastWorldLevelName->empty())
+    {
+        auto World{this->GetMutableEngine().SummonWorld({.HumanReadableName=*Prefs.EditorLastWorldName})};
+        this->QueueTravelTo(World.Browse(*Prefs.EditorLastWorldLevelName));
+    }
 
     return;
 }
@@ -135,16 +131,6 @@ void Jafg::WWorldViewer::Tick()
     return;
 }
 
-void Jafg::WWorldViewer::Destruct()
-{
-    if (this->OnPreDrawHandle.IsValid())
-    {
-        this->GetViewport().GetSurface().OnPreRender.Remove(&this->OnPreDrawHandle);
-    }
-    Super::Destruct();
-    return;
-}
-
 void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
 {
     if (this->RenderTarget.IsInitialized())
@@ -199,6 +185,55 @@ void Jafg::WWorldViewer::TravelTo(LWorld& World)
             )
     }
 
+    check(this->Placeholder)
+    this->Placeholder->SetVisibility(ENodeVisibility::Collapsed);
+
+    return;
+}
+
+void Jafg::WWorldViewer::QueueTravelTo(LWorld& World)
+{
+    if (this->QueuedTravelWorld)
+    {
+        LOG_WARNING(LogWidgetFramework, "[{}]: Already have a queued world travel to. Aborting previous queued travel."
+            , this->GetNameAsString())
+        this->QueuedTravelWorld = nullptr;
+        this->QueueHandle.Unbind();
+    }
+
+    if (World.GetWorldState() == EWorldState::Running)
+    {
+        this->TravelTo(World);
+    }
+
+    this->QueuedTravelWorld = &World;
+    this->QueueHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]
+    {
+        check(this->QueuedTravelWorld)
+
+        if (!this->GetEngine().IsWorldValid(this->QueuedTravelWorld))
+        {
+            LOG_WARNING(LogWidgetFramework, "[{}]: Queued world is no longer valid. Aborting travel.", this->GetNameAsString())
+            this->QueuedTravelWorld = nullptr;
+            return true;
+        }
+
+        if (this->QueuedTravelWorld->GetWorldState() == EWorldState::TearingDown || this->QueuedTravelWorld->GetWorldState() == EWorldState::WaitingForKill)
+        {
+            LOG_WARNING(LogWidgetFramework, "[{}]: Queued world is tearing down or waiting for kill. Aborting travel.", this->GetNameAsString())
+            this->QueuedTravelWorld = nullptr;
+            return true;
+        }
+
+        if (this->QueuedTravelWorld->GetWorldState() == EWorldState::Running)
+        {
+            this->TravelTo(*std::exchange(this->QueuedTravelWorld, nullptr));
+            return true;
+        }
+
+        return false;
+    });
+
     return;
 }
 
@@ -213,7 +248,15 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
 
     if (!this->OnPreDrawHandle)
     {
-        this->OnPreDrawHandle = this->GetViewport().GetSurface().OnPreRender.Emplace(this, &WWorldViewer::OnPreDraw);
+        this->OnPreDrawHandle = LRaiiPreDrawHandle::Make(this->GetViewport().GetSurface().OnPreRender,
+        [this](LRenderInfo const& Info)
+        {
+            if (this->GetMostOuterParent().IsNodeInVisiblePath(*this))
+            {
+                this->RenderTarget.Render(Info, std::bind(&WWorldViewer::PreDraw, this, std::placeholders::_1));
+            }
+            return false;
+        });
     }
 
     return;
@@ -226,6 +269,22 @@ bool Jafg::WWorldViewer::OnPreDraw(LRenderInfo const& Info)
         this->RenderTarget.Render(Info, std::bind(&WWorldViewer::PreDraw, this, std::placeholders::_1));
     }
     return {};
+}
+
+void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
+{
+    if (this->IsOwnedPersonaControllerValid())
+    {
+        if (auto& Ctrl{*this->GetOwnedPersonaControllerChecked()}; Ctrl.IsOwnedPawnValid())
+        {
+            auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
+            Pawn.GetWorld().Draw(Info, Pawn.GetEye());
+        }
+    }
+
+    this->RenderTargetViewport.Draw(Info);
+
+    return;
 }
 
 void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
@@ -243,21 +302,9 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
             .OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
             {
                 return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
-                + NewNode(Viewport).Class<WButton>()
+                + NewNode(Viewport).Class<WCheckmarkButton>()
                     .Anchor(EAnchor::CenterLeft)
-                    .MinDesiredSize(16_spt2)
-                    .MaxDesiredSize(16_spt2)
-                    .InAllBrushes<&LRegionBrush::Tint>(Colors::White)
-                    .InBrush<EStyleBits::Normal, &LRegionBrush::BorderTint>(LColor{0x14})
-                    .InBrush<EStyleBits::Hover, &LRegionBrush::BorderTint>(LColor{0x1C})
-                    .InBrush<EStyleBits::Press, &LRegionBrush::BorderTint>(LColor{0x24})
-                    .InBrush<EStyleBits::Selected, &LRegionBrush::BorderTint>(LColor{0x24})
-                    .InBrush<EStyleBits::Disabled, &LRegionBrush::BorderTint>(LColor{0x0F})
-                    .InAllBrushesChained<&LRegionBrush::OutlineTint, &LRegionBrush::OutlineThickness>(LColor{0x52}, 1)
-                    .InAllBrushesChained<&LRegionBrush::Background>(LRegionBrush::LIcon{
-                        .Texture=LOptionalTexture2Ref{"Icons/Jafg.Checkmark"}.GetResolved(),
-                        .Scale=this->DesiredViewportExtent.has_value() ? 0u : 1u,
-                        })
+                    .Checked(!this->DesiredViewportExtent.has_value())
                     .OnKeyEventFocused([this, SharedNodes, Res](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
@@ -273,10 +320,8 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                                 this->DesiredViewportExtent = WWorldViewer::DefaultExtent;
                             }
 
-                            auto& Btn{Self.AsStatic<WButton>()};
-                            auto& Icon{std::get<LRegionBrush::LIcon>(Btn.Brush.Background)};
-                            Icon.Scale = this->DesiredViewportExtent.has_value() ? 0u : 1u;
-                            Btn.Style.SetEverywhere<&LRegionBrush::Background>(Icon);
+                            auto& Btn{Self.AsStatic<WCheckmarkButton>()};
+                            Btn.SetChecked(!this->DesiredViewportExtent.has_value());
 
                             check(SharedNodes->DisplayText && SharedNodes->VectorInput)
                             LVec2u64 ShownVector{this->DesiredViewportExtent.has_value()
@@ -296,11 +341,10 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         }
                         return LNodeReply::Unhandled();
                     })
-                + NewNode(Viewport).Class<WText>() // Should not be a button. but more like WIconizedText
+                + NewNode(Viewport).Class<WText>()
                     .Anchor(EAnchor::HFill)
                     .Visibility(ENodeVisibility::TransitiveHitTestInvisible)
                     .Padding({6_spt, 0.0f, 0.0f, 0.0f})
-                    // .InAllBrushesChained<&LBoxBrush::bSkipBrushDraw, &LBoxBrush::Padding>(true, LPadding{6_spt, 0.0f, 0.0f, 0.0f})
                     .Content("Auto Resolve Resolution");
             },
             .OnAction=[this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
@@ -322,7 +366,8 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeInformation{
             .What = algo::sprintf("Min-Resolution: {}x{}", WWorldViewer::MinViewportExtent.width, WWorldViewer::MinViewportExtent.height),
             },
-        LDropDownNodeCustom{.OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+        LDropDownNodeCustom{
+            .OnCreate=[this, SharedNodes, Res](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
             {
                 return NewNode(Viewport).Class<WText>().SaveTo(&SharedNodes->DisplayText)
                     .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
@@ -363,14 +408,14 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                 .DisplayName = "Connect to",
                 .Icon = "Icons/Jafg.Sphere",
                 },
-            .OnChildren = {[this, SharedNodes, Res]
+            .OnChildren = {[this]
             {
                 TArray<LDropDownNode> Result;
 
                 Result.emplace_back(LDropDownNodeSeparator{.DisplayName="ENGINE WORLDS"});
                 if (auto& Tracks{this->GetEngine().GetTracks()}; Tracks.empty())
                 {
-                    Result.emplace_back(LDropDownNodeInformation{.What="There are currenelty no worlds running."});
+                    Result.emplace_back(LDropDownNodeInformation{.What="There are currently no worlds running."});
                 }
                 else
                 {
@@ -402,10 +447,11 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                 struct LNewWorldNodes
                 {
                     WEditableTextButton* Name{};
+                    WEditableTextButton* LevelName{};
                 };
                 auto NewWorldNodes{std::make_shared<LNewWorldNodes>()};
                 Result.emplace_back(LDropDownNodeSeparator{.DisplayName="NEW WORLD"});
-                Result.emplace_back(LDropDownNodeScratch{.OnCreate=[SharedNodes, Res, NewWorldNodes]
+                Result.emplace_back(LDropDownNodeScratch{.OnCreate=[NewWorldNodes]
                 (LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
                 {
                     auto& Prefs{GetSingleton<JUserPreferences>()};
@@ -413,18 +459,39 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         .Anchor(EAnchor::HFill)
                         .Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0})
                     [
-                        NewNode(Viewport).Class<WText>().SaveTo(&SharedNodes->DisplayText)
+                        NewNode(Viewport).Class<WText>()
                             .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
                             .MinDesiredSize({128_spt, 0})
                             .TextTint(Colors::White)
-                            .Content("Name")
+                            .Content("World Name")
                         + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->Name)
                             .MinDesiredSize({128_spt, 0})
                             .Padding({2_spt, 0})
                             .Style(Prefs.EditorEditableTextButtonStyle())
                             .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
-                            .Content("Editor World")
-                            .PlaceholderContent("Name of new world")
+                            .Content(*Prefs.EditorLastWorldName)
+                            .PlaceholderContent("World Name")
+                    ];},});
+                Result.emplace_back(LDropDownNodeScratch{.OnCreate=[NewWorldNodes]
+                (LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+                {
+                    auto& Prefs{GetSingleton<JUserPreferences>()};
+                    return NewNode(Viewport).Class<WHParent>()
+                        .Anchor(EAnchor::HFill)
+                        .Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                    [
+                        NewNode(Viewport).Class<WText>()
+                            .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
+                            .MinDesiredSize({128_spt, 0})
+                            .TextTint(Colors::White)
+                            .Content("Level Name")
+                        + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->LevelName)
+                            .MinDesiredSize({128_spt, 0})
+                            .Padding({2_spt, 0})
+                            .Style(Prefs.EditorEditableTextButtonStyle())
+                            .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+                            .Content(*Prefs.EditorLastWorldLevelName)
+                            .PlaceholderContent("Level Name")
                     ];},});
                 Result.emplace_back(LDropDownNodeOption{
                     .Selector = {
@@ -432,13 +499,54 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         },
                     .OnAction = [this, NewWorldNodes](auto&&...)
                     {
-                        check(NewWorldNodes.get() && NewWorldNodes->Name)
+                        check(NewWorldNodes.get() && NewWorldNodes->Name && NewWorldNodes->LevelName)
+                        auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+                        Prefs.EditorLastWorldName = NewWorldNodes->Name->GetContent();
+                        Prefs.EditorLastWorldLevelName = NewWorldNodes->LevelName->GetContent();
                         auto World{this->GetMutableEngine().SummonWorld({.HumanReadableName=NewWorldNodes->Name->GetContent()})};
-                        this->TravelTo(World.Browse("Level"));
+                        this->QueueTravelTo(World.Browse(NewWorldNodes->LevelName->GetContent()));
                         return algo::reply::unhandled();
                     },});
                 return Result;
             },},},
+        LDropDownNodeCustom{
+            .OnCreate=[](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+            {
+                auto& Prefs{GetSingleton<JUserPreferences>()};
+                return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
+                + NewNode(Viewport).Class<WCheckmarkButton>()
+                    .Anchor(EAnchor::CenterLeft)
+                    .Checked(*Prefs.EditorAutoLaunchLastWorld)
+                    .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                            && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
+                            )
+                        {
+                            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                            MutablePrefs.EditorAutoLaunchLastWorld = !*MutablePrefs.EditorAutoLaunchLastWorld;
+                            Self.AsStatic<WCheckmarkButton>().SetChecked(*MutablePrefs.EditorAutoLaunchLastWorld);
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewNode(Viewport).Class<WText>()
+                    .Anchor(EAnchor::HFill)
+                    .Visibility(ENodeVisibility::TransitiveHitTestInvisible)
+                    .Padding({6_spt, 0.0f, 0.0f, 0.0f})
+                    .Content("Auto-Launch Last World");
+                },
+            .OnAction=[](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+            {
+                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorAutoLaunchLastWorld = !*MutablePrefs.EditorAutoLaunchLastWorld;
+                    return LDropDownNodeCustom::reply::handled(true);
+                }
+                return LDropDownNodeCustom::reply::unhandled();
+            },
+            },
         });
 
     return;

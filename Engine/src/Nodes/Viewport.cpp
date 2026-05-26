@@ -400,11 +400,11 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 
 void Jafg::LViewport::TearDown()
 {
-    while (this->TopLevelWidgets.empty() == false)
+    while (!this->TopLevelWidgets.empty())
     {
         this->TopLevelWidgets.back()->MarkAsGarbage_v2();
     }
-    algo::orphan(&this->TopLevelWidgets);
+    this->TopLevelWidgets.clear();
 
     return;
 }

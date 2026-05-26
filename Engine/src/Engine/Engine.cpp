@@ -580,25 +580,14 @@ bool Jafg::LEngine::IsWorldValid(LWorld const* World) const noexcept
     });
 }
 
-bool Jafg::LEngine::RegisterLevel(LLevel const& Level)
+bool Jafg::LEngine::RegisterLevel(LLevel Level)
 {
     if (this->IsLevelRegistered(Level.Identifier))
     {
         return false;
     }
 
-    this->RegisteredLevels.emplace_back(Level);
-
-    return true;
-}
-
-bool Jafg::LEngine::RegisterLevel(LLevel&& Level)
-{
-    if (this->IsLevelRegistered(Level.Identifier))
-    {
-        return false;
-    }
-
+    LOG_VERBOSE(LogEngine, "Registering level [{}].", Level.Identifier)
     this->RegisteredLevels.emplace_back(std::move(Level));
 
     return true;
