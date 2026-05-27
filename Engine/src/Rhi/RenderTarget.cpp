@@ -4,7 +4,7 @@
 #include "Rhi/NodeRenderInfo.h"
 #include "Framework/Frontend.h"
 
-void Jafg::LRenderTarget::Initialize(CreateInfo Info)
+void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
 {
     auto& Frontend{Info.Frontend};
 
@@ -12,9 +12,9 @@ void Jafg::LRenderTarget::Initialize(CreateInfo Info)
 
     if (Frontend.Vk_GetSurfaceFormat().format == vk::Format::eB8G8R8A8Srgb)
     {
-        //# TODO: Why does this work?
-        auto C{Info.ClearColor.ToLinearColor()};
-        this->ClearColor = {vk::ClearColorValue(std::array<f32,4>{C.R, C.G, C.B, C.A})};
+        //# TODO: Why does this work? Why is this f32?
+        this->ClearColor = {vk::ClearColorValue(std::array<f32,4>{
+            Info.ClearColor.r, Info.ClearColor.g, Info.ClearColor.b, Info.ClearColor.a})};
     }
     else
     {

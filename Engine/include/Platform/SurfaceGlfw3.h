@@ -65,7 +65,7 @@ public:
     ENGINE_API void SetVSync(bool bEnabled);
     NODISCARD FORCEINLINE bool IsVSync() const noexcept { return this->bVSync; }
     NODISCARD FORCEINLINE bool CanEverResize() const noexcept { return true; }
-    ENGINE_API void SetResizable(const bool bResizable);
+    ENGINE_API void SetResizable(bool bResizable);
     NODISCARD FORCEINLINE bool IsResizable() const noexcept { return this->bResizable; }
 
     FORCEINLINE bool _HasPendingResize() const noexcept { return this->bPendingResize; }
@@ -96,8 +96,6 @@ public:
     FORCEINLINE auto const& Vk_GetSwapchainImageViews() const noexcept { return this->Vk_SwapchainImageViews; }
     FORCEINLINE auto const& Vk_GetColorImage() const noexcept { return this->Vk_ColorImage; }
     FORCEINLINE auto const& Vk_GetColorImageView() const noexcept { return this->Vk_ColorImageView; }
-    FORCEINLINE auto const& Vk_GetDepthImage() const noexcept { return this->Vk_DepthImage; }
-    FORCEINLINE auto const& Vk_GetDepthImageView() const noexcept { return this->Vk_DepthImageView; }
 
     FORCEINLINE auto const& Vk_GetPresentSemaphores() const noexcept { return this->Vk_ImageAvailableSemaphores; }
     FORCEINLINE auto const& Vk_GetRenderSemaphores() const noexcept { return this->Vk_RenderSemaphores; }
@@ -141,7 +139,6 @@ private:
         );
         void __Vk_CreateImageViews();
         void __Vk_CreateColorResources();
-        void __Vk_CreateDepthResources();
         void __Vk_CreateSynchObjects();
 
     void Vk_CreateCommandBuffers();
@@ -178,8 +175,6 @@ private:
     TArray<vk::raii::ImageView> Vk_SwapchainImageViews;
     LDeviceImage Vk_ColorImage;
     vk::raii::ImageView Vk_ColorImageView{ nullptr };
-    LDeviceImage Vk_DepthImage;
-    vk::raii::ImageView Vk_DepthImageView{ nullptr };
 
     TFrameArray<vk::raii::Semaphore> Vk_ImageAvailableSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);

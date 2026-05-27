@@ -244,6 +244,7 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         .Extent = this->DesiredViewportExtent.has_value() ? *this->DesiredViewportExtent : rhi::extent2::from_vec(this->GetAnchoredSize_v2()),
         .SampleCount = this->GetViewport().GetSurface().GetFrontend().Vk_GetMaxMsaaSampleCount(),
         .ResolveMode = vk::ResolveModeFlagBits::eAverage,
+        .ClearColor = LinearColors::DeepSkyBlue,
         });
 
     if (!this->OnPreDrawHandle)

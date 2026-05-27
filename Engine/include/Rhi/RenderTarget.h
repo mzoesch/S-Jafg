@@ -19,12 +19,12 @@ struct LRenderTarget
         vk::SampleCountFlagBits SampleCount;
         //# If set to eNone, then this #LRenderTarget will not resolve the msaa image.
         vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eAverage };
-        LColor ClearColor{ Colors::Black };
+        LLinearColor ClearColor{ LinearColors::Black };
     };
 
     NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
 
-    ENGINE_API void Initialize(CreateInfo Info);
+    ENGINE_API void Initialize(CreateInfo const& Info);
     ENGINE_API void Render(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
 
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }

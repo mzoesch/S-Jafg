@@ -374,7 +374,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
         .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
-        .oldLayout = vk::ImageLayout::eUndefined,
+        .oldLayout = vk::ImageLayout::eUndefined, // this is wrong, more like: ePresentSrcKHR
         .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
@@ -388,28 +388,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
             },
         });
 
-    Vk_TransitionImageLayout({
-        .srcStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
-        .srcAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-        .dstStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
-        .dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-        .oldLayout = vk::ImageLayout::eUndefined,
-        .newLayout = vk::ImageLayout::eDepthAttachmentOptimal,
-        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->Vk_DepthImage.GetBuffer(),
-        .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eDepth,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-            },
-        });
-
     constexpr vk::ClearValue ClearColor(vk::ClearColorValue(std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}));
-    constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
-
     vk::RenderingAttachmentInfo ColorAttachmentInfo{
         .imageView = this->Vk_ColorImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
@@ -420,20 +399,14 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .storeOp = vk::AttachmentStoreOp::eStore,
         .clearValue = ClearColor
         };
-    vk::RenderingAttachmentInfo DepthAttachmentInfo{
-        .imageView   = this->Vk_DepthImageView,
-        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
-        .loadOp      = vk::AttachmentLoadOp::eClear,
-        .storeOp     = vk::AttachmentStoreOp::eDontCare,
-        .clearValue  = ClearDepth
-        };
 
     vk::RenderingInfo RenderingInfo{
-        .renderArea = { .offset = { 0, 0 }, .extent = this->SurfaceExtent },
+        .renderArea = {.offset={ 0, 0 }, .extent=this->SurfaceExtent},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &ColorAttachmentInfo,
-        .pDepthAttachment = &DepthAttachmentInfo
+        .pDepthAttachment = nullptr,
+        .pStencilAttachment = nullptr,
         };
 
     this->OnPreRender.Broadcast(Info);
@@ -470,20 +443,18 @@ void Jafg::LSurfaceGlfw3::OnRender()
     Info.CommandBuffer.end();
 
     vk::PipelineStageFlags DstStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
-    const vk::SubmitInfo SubmitInfo{
+    Info.Frontend.Vk_GetGraphicsQueue().submit(vk::SubmitInfo{
         .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_ImageAvailableSemaphores[Info.Frame],
         .pWaitDstStageMask = &DstStageMask,
         .commandBufferCount = 1, .pCommandBuffers = &Info.CommandBuffer,
         .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->Vk_RenderSemaphores[ImageIndex]
-        };
-    Info.Frontend.Vk_GetGraphicsQueue().submit(SubmitInfo, *this->Vk_FlightFences[Info.Frame]);
+        }, *this->Vk_FlightFences[Info.Frame]);
 
-    const vk::PresentInfoKHR PresentInfo{
+    Result = Info.Frontend.Vk_GetGraphicsQueue().presentKHR({
         .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->Vk_RenderSemaphores[ImageIndex],
         .swapchainCount = 1, .pSwapchains = &*this->Vk_VkMySwapchain,
         .pImageIndices = &ImageIndex
-        };
-    Result = Info.Frontend.Vk_GetGraphicsQueue().presentKHR(PresentInfo);
+        });
 
     this->Vk_LastFrameInFlightIndex = Info.Frame;
     this->Vk_CurrentFrameInFlightIndex.reset();
@@ -1085,7 +1056,6 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     this->__Vk_CreateImageViews();
     this->__Vk_CreateColorResources();
-    this->__Vk_CreateDepthResources();
     this->__Vk_CreateSynchObjects();
 
     return;
@@ -1204,40 +1174,6 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
         .format = Frontend.Vk_GetSurfaceFormat().format,
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-            },
-        }};
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::__Vk_CreateDepthResources()
-{
-    LOG_VERBOSE(LogVulkan, "Creating depth resources for surface [{}].", this->GetHumanReadableName())
-
-    auto& Frontend{ this->GetFrontend() };
-
-    this->Vk_DepthImage = Frontend.Vk_CreateDeviceLocalImage({
-        .imageType = vk::ImageType::e2D,
-        .format = Frontend.Vk_GetPreferredDepthFormat(),
-        .extent = vk::Extent3D{ this->SurfaceExtent.width, this->SurfaceExtent.height, 1 },
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = Frontend.Vk_GetMaxMsaaSampleCount(),
-        .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        .sharingMode = vk::SharingMode::eExclusive,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        });
-    this->Vk_DepthImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->Vk_DepthImage.GetBuffer(),
-        .viewType = vk::ImageViewType::e2D,
-        .format = Frontend.Vk_GetPreferredDepthFormat(),
-        .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eDepth,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,

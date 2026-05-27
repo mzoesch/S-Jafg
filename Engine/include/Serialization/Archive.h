@@ -284,8 +284,8 @@ struct TDeserializer<TArray<T>, TArchive>
     }
 };
 
-template<typename T, typename TArchive> requires std::is_same_v<T, LString> || std::is_same_v<T, LStringView>
-    && IsTextOArchive_v<TArchive>
+template<typename T, typename TArchive> requires((std::is_same_v<T, LString> || std::is_same_v<T, LStringView>)
+    && IsTextOArchive_v<TArchive>)
 struct TSerializer<T, TArchive>
 {
     void operator()(TArchive& Ar, T const& Field) const noexcept
@@ -309,8 +309,8 @@ struct TDeserializer<LStringView, TArchive>
     constexpr TDeserializer() noexcept = delete;
 };
 
-template<typename T, typename TArchive> requires std::is_integral_v<T> || std::is_floating_point_v<T>
-    && IsTextOArchive_v<TArchive>
+template<typename T, typename TArchive> requires((std::is_integral_v<T> || std::is_floating_point_v<T>)
+    && IsTextOArchive_v<TArchive>)
 struct TSerializer<T, TArchive>
 {
     void operator()(TArchive& Ar, T const& Field) const noexcept
@@ -318,8 +318,8 @@ struct TSerializer<T, TArchive>
         Ar.Stream << Field;
     }
 };
-template<typename T, typename TArchive> requires std::is_integral_v<T> || std::is_floating_point_v<T>
-    && IsTextIArchive_v<TArchive>
+template<typename T, typename TArchive> requires((std::is_integral_v<T> || std::is_floating_point_v<T>)
+    && IsTextIArchive_v<TArchive>)
 struct TDeserializer<T, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, T& Field) const noexcept
@@ -407,7 +407,7 @@ struct TSerializer<LColor, TArchive>
 {
     void operator()(TArchive& Ar, LColor const& Field) const noexcept
     {
-        Ar.Stream << algo::sprintf("0x{:02X}{:02X}{:02X}{:02X}", Field.R, Field.G, Field.B, Field.A);
+        Ar.Stream << algo::sprintf("0x{:02X}{:02X}{:02X}{:02X}", Field.r, Field.g, Field.b, Field.a);
     }
 };
 template<typename TArchive> requires IsTextIArchive_v<TArchive>
@@ -464,21 +464,21 @@ struct TDeserializer<LColor, TArchive>
                 }
         };
 
-        Field.R = GetValue(Value, 2);
-        Field.R <<= 4;
-        Field.R |= GetValue(Value, 3);
+        Field.r = GetValue(Value, 2);
+        Field.r <<= 4;
+        Field.r |= GetValue(Value, 3);
 
-        Field.G = GetValue(Value, 4);
-        Field.G <<= 4;
-        Field.G |= GetValue(Value, 5);
+        Field.g = GetValue(Value, 4);
+        Field.g <<= 4;
+        Field.g |= GetValue(Value, 5);
 
-        Field.B = GetValue(Value, 6);
-        Field.B <<= 4;
-        Field.B |= GetValue(Value, 7);
+        Field.b = GetValue(Value, 6);
+        Field.b <<= 4;
+        Field.b |= GetValue(Value, 7);
 
-        Field.A = GetValue(Value, 8);
-        Field.A <<= 4;
-        Field.A |= GetValue(Value, 9);
+        Field.a = GetValue(Value, 8);
+        Field.a <<= 4;
+        Field.a |= GetValue(Value, 9);
 
         return {};
     }
