@@ -13,6 +13,7 @@ namespace Jafg
 class LLocalEgo;
 class LUserInput;
 
+//# A pc is the world-entity-bridge possessed by a lackey to allow to interact with a world.
 DECLARE_JAFG_CLASS()
 class ENGINE_API APersonaController : public AActor
 {
@@ -97,7 +98,7 @@ public:
 
 private:
 
-    LLackey Lackey{};
+    LLackey Lackey;
     TJxxUnique<APawn> Pawn;
 };
 

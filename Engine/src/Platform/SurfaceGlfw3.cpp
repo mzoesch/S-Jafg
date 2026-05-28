@@ -348,6 +348,14 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .DescriptorPool = *this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex],
         .Frame = *this->Vk_CurrentFrameInFlightIndex,
         .Image = ImageIndex,
+        .VkViewport = {
+            .width = static_cast<f32>(this->SurfaceExtent.width), .height = static_cast<f32>(this->SurfaceExtent.height),
+            .minDepth = 0.0f, .maxDepth = 1.0f
+            },
+        .VkScissor = vk::Rect2D{
+            .offset = {0, 0},
+            .extent = this->SurfaceExtent,
+            },
         };
 
     Vk_TransitionImageLayout({
@@ -412,12 +420,8 @@ void Jafg::LSurfaceGlfw3::OnRender()
     this->OnPreRender.Broadcast(Info);
 
     Info.CommandBuffer.beginRendering(RenderingInfo);
-    Info.CommandBuffer.setViewport(0, vk::Viewport{
-        .x = 0.0f, .y = 0.0f,
-        .width = static_cast<f32>(this->SurfaceExtent.width), .height = static_cast<f32>(this->SurfaceExtent.height),
-        .minDepth = 0.0f, .maxDepth = 1.0f
-        });
-    Info.CommandBuffer.setScissor(0, {vk::Rect2D{{0, 0}, this->SurfaceExtent}});
+    Info.CommandBuffer.setViewport(0, Info.VkViewport);
+    Info.CommandBuffer.setScissor(0, Info.VkScissor);
     this->GetViewport().Draw(Info);
     Info.CommandBuffer.endRendering();
 
@@ -504,6 +508,11 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)
 {
     check(Tasks::IsOnMasterThread())
     check(this->Handle)
+
+    if (LexToString(Cursor) == "Default")
+    {
+        JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
+    }
 
     LOG_TRACE(LogPlatform, "Setting mouse cursor to [{}].", LexToString(Cursor))
 
@@ -641,12 +650,13 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
 
 void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
 {
-    if (this->bMouseInsideSurface == false)
+    if (!this->bMouseInsideSurface)
     {
         //#
         //# So some platforms allow this. But not all. To preserve consistency across all platforms,
         //# We discard this input.
         //#
+        this->MouseLocation.reset();
         return;
     }
 
@@ -656,7 +666,7 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
         return;
     }
 
-    if (this->MouseLocation.has_value() == false)
+    if (!this->MouseLocation.has_value())
     {
         this->MouseLocation = {XPos,YPos};
         return;
@@ -665,7 +675,7 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
     LVec2D Offset{XPos - this->MouseLocation->x, this->MouseLocation->y - YPos};
     this->MouseLocation = {XPos,YPos};
 
-    if (Offset.x != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseX), &LRawInput::PhysicalKey) == false)
+    if (Offset.x != 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseX), &LRawInput::PhysicalKey))
     {
         this->UpdateKeyState({
             .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseX),
@@ -673,7 +683,7 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
             .State = ERawInputStateBits::Press,
             });
     }
-    if (Offset.y != 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseY), &LRawInput::PhysicalKey) == false)
+    if (Offset.y != 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseY), &LRawInput::PhysicalKey))
     {
         this->UpdateKeyState({
             .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseY),
@@ -687,7 +697,7 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
 
 void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOffset)
 {
-    if (YOffset > 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp), &LRawInput::PhysicalKey) == false)
+    if (YOffset > 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp), &LRawInput::PhysicalKey))
     {
         this->UpdateKeyState({
             .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp),
@@ -695,7 +705,7 @@ void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOff
             .State = ERawInputStateBits::Press,
             });
     }
-    else if (YOffset < 0.0f && algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown), &LRawInput::PhysicalKey) == false)
+    else if (YOffset < 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown), &LRawInput::PhysicalKey))
     {
         this->UpdateKeyState({
             .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown),
@@ -707,7 +717,7 @@ void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOff
     return;
 }
 
-void Jafg::LSurfaceGlfw3::MouseEnterCallback(const i32 Entered)
+void Jafg::LSurfaceGlfw3::MouseEnterCallback(i32 Entered)
 {
     this->MouseLocation.reset();
 

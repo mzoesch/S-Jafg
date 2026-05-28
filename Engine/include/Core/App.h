@@ -35,6 +35,12 @@ NODISCARD NOINLINE ENGINE_API LString const& BuildDate() noexcept;
 NODISCARD NOINLINE ENGINE_API LString const& BuildVcsBranch() noexcept;
 //# Latest engine revision.
 NODISCARD NOINLINE ENGINE_API LString const& BuildVcsRevision() noexcept;
+//# Default remote of the vcs.
+NODISCARD NOINLINE ENGINE_API LString const& VcsRemote() noexcept;
+//# Engine upstream.
+NODISCARD NOINLINE ENGINE_API LString const& VcsUpstream() noexcept;
+//# Engine homepage.
+NODISCARD NOINLINE ENGINE_API LString const& Homepage() noexcept;
 
 //# Engine version.
 NODISCARD ENGINE_API LEngineVersion EngineVersion() noexcept;

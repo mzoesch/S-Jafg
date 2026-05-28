@@ -73,7 +73,7 @@ class LLocalLackey : public Detail::TLackeyBase<ELackey::Local>
 {
 public:
 
-    LLocalLackey(LViewport& Viewport) noexcept : Viewport{Viewport} {}
+    LLocalLackey(LViewport& Viewport) noexcept : Viewport{Viewport}, UserInput{Viewport} {}
 
     typedef Detail::TLackeyBase<ELackey::Local> Super;
 

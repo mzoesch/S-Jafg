@@ -58,10 +58,10 @@ class Color_Printer(JafgPrettyStringPrinter):
 
     def to_string(self):
         return 'RGBA: 0x{:02X}{:02X}{:02X}{:02X}'.format(
-            int(self.val['R'].cast(gdb.lookup_type('unsigned int'))),
-            int(self.val['G'].cast(gdb.lookup_type('unsigned int'))),
-            int(self.val['B'].cast(gdb.lookup_type('unsigned int'))),
-            int(self.val['A'].cast(gdb.lookup_type('unsigned int')))
+            int(self.val['r'].cast(gdb.lookup_type('unsigned int'))),
+            int(self.val['g'].cast(gdb.lookup_type('unsigned int'))),
+            int(self.val['b'].cast(gdb.lookup_type('unsigned int'))),
+            int(self.val['a'].cast(gdb.lookup_type('unsigned int')))
             )
 
 
@@ -73,7 +73,7 @@ class LinearColor_Printer(JafgPrettyStringPrinter):
 
     def to_string(self):
         return 'RGBA: {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
-            float(self.val['R']), float(self.val['G']), float(self.val['B']), float(self.val['A'])
+            float(self.val['r']), float(self.val['g']), float(self.val['b']), float(self.val['a'])
             )
 
 
@@ -86,7 +86,7 @@ class JafgWhitespace_Printer(JafgPrettyStringPrinter):
     def to_string(self):
         return '{} "vec4({}, {}, {}, {})"'.format(
             self.val['Type'],
-            self.val['Left'], self.val['Top'], self.val['Right'], self.val['Bottom']
+            self.val['Size.x'], self.val['Size.y'], self.val['Size.z'], self.val['Size.w']
             )
 
 
@@ -108,7 +108,6 @@ class JafgWidgetSize_Printer(JafgPrettyStringPrinter):
 
 def jafg_pretty_lookup(val: any) -> any:
     type_str: str = str(val.type.strip_typedefs())
-    print(f'WHAT: {type_str}')
 
     printers = [
         GlmVec_Printer,

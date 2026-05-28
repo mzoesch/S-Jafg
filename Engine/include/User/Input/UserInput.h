@@ -20,13 +20,13 @@ class LUserInput final
 {
 public:
 
-    typedef TArray<std::pair<EInputMode, TArray<LUserInputTag>>> LContextStack;
+    typedef TArray<std::pair<bool, TArray<LUserInputTag>>> LContextStack;
 
-    constexpr LUserInput() noexcept = default;
+    constexpr LUserInput() noexcept = delete;
+    constexpr LUserInput(LViewport& Viewport) noexcept : Viewport{Viewport} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
     constexpr ~LUserInput() noexcept = default;
     //# Jafg internal method. Do not use!
-    FORCEINLINE constexpr void _SetSurface(LSurface& InSurface) noexcept { this->Surface = &InSurface; }
 
     void DispatchInputDelegates(APersonaController& ActingController);
 
@@ -64,13 +64,19 @@ public:
     //# The active contexts will be removed.
     //# @return Has value if a previous applied context snapshot was applied.
     //#
-    ENGINE_API std::optional<EInputMode> PopContexts() noexcept;
+    ENGINE_API std::optional<bool> PopContexts() noexcept;
 
     FORCEINLINE auto const& GetActiveContexts() const noexcept { return this->ActiveContexts; }
     FORCEINLINE auto& GetMutableActiveContexts() noexcept { return this->ActiveContexts; }
 
     FORCEINLINE auto const& GetContextStack() const noexcept { return this->ContextStack; }
     FORCEINLINE auto& GetMutableContextStack() noexcept { return this->ContextStack; }
+
+    FORCEINLINE constexpr bool IsConsumingMouse() const noexcept { return this->bConsumeMouse; }
+    ENGINE_API void SetConsumeMouse(bool bConsume) noexcept;
+
+    //# Public internal flag. Do not use!
+    bool _bCurrentlyConsuming{};
 
 private:
 
@@ -79,7 +85,8 @@ private:
     //# Early contexts will be processed first.
     TArray<LUserInputTag> ActiveContexts;
     LContextStack ContextStack;
-    LSurface* Surface{};
+    LViewport& Viewport;
+    bool bConsumeMouse{};
 };
 
 } /* ~Namespace Jafg */

@@ -155,6 +155,7 @@ public:
     struct TimeStat final
     {
         algo::clock::time_point Start{ algo::now() };
+        //# How many frames have passed in this statistic sweep.
         u64 FrameCount{};
         f64 Low{ std::numeric_limits<f64>::max() };
         f64 High{ -1.0 };
@@ -163,8 +164,6 @@ public:
     };
     //# How often stats should be averaged.
     f64 StatisticsPeriod{ 1.0 };
-    //# How many frames have passed in this statistic sweep.
-    u64 StatisticsFrameCount{};
     algo::clock::time_point LastStatisticsTime{ algo::now() };
     TimeStat CurrentStat;
     TimeStat PreviousStat;

@@ -26,7 +26,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 Data.UserInput.PushContexts();
                 Data.UserInput.ActivateContext("PauseScreen");
-                Data.Viewport.GetSurface().SetInputMode(Jafg::EInputModeBits::ShowMouseCursor);
+                Data.UserInput.SetConsumeMouse(false);
                 return {.bDirty=true};
             });
 
@@ -147,9 +147,9 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {},
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                if (auto InputMode{Data.UserInput.PopContexts()}; InputMode.has_value())
+                if (auto ConsumesMouse{Data.UserInput.PopContexts()}; ConsumesMouse.has_value())
                 {
-                    Data.Viewport.GetSurface().SetInputMode(*InputMode);
+                    Data.UserInput.SetConsumeMouse(*ConsumesMouse);
                 }
                 else
                 {

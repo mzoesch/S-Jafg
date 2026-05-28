@@ -4,14 +4,15 @@
 
 #include "Engine/Jxx.h"
 #include "Rhi/StaticMesh.h"
+#include "Subsystems/EngineSubsystem.h"
 #include "MeshSubsystem.generated.h"
 
 namespace Jafg
 {
 
 //# A mesh that was loaded by the program and may be used across many different objects.
-DECLARE_JAFG_CLASS(EJxxClassBits::Singleton)
-class JMeshSubsystem final : public JCxxClass
+DECLARE_JAFG_CLASS()
+class JMeshSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

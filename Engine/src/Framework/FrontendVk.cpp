@@ -618,7 +618,7 @@ void Jafg::LFrontendVk::TearDown()
 {
     LFrontendBase::TearDown();
 
-    GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
+    this->GetMutableEngine().GetSubsystemChecked<JMeshSubsystem>()->PurgeUnused();
 
     algo::swap_default(&this->Vk_ImmutableBuffers);
 
@@ -632,7 +632,6 @@ void Jafg::LFrontendVk::TearDown()
 
     return;
 }
-
 
 std::optional<Jafg::LPhysicalKey> Jafg::LFrontendVk::GetPhysicalKey(ELogicalKey LogicalKey) const noexcept
 {

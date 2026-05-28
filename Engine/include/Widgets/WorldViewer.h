@@ -52,6 +52,10 @@ public:
     virtual void Tick() override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
+    virtual void OnFocusLost() override;
+
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+
     NODISCARD FORCEINLINE constexpr LRenderTarget const& GetWorldRenderTarget() const noexcept { return this->RenderTarget; }
     NODISCARD FORCEINLINE constexpr LViewport& GetWorldRenderTargetViewport() noexcept { return this->RenderTargetViewport; }
     NODISCARD FORCEINLINE constexpr LViewport const& GetWorldRenderTargetViewport() const noexcept { return this->RenderTargetViewport; }
@@ -68,11 +72,15 @@ public:
     void TravelTo(LWorld& World);
     void QueueTravelTo(LWorld& World);
 
+    void OnPerspectiveDepthTestChanged();
+
 private:
 
     void InitializeRenderTarget();
     bool OnPreDraw(LRenderInfo const& Info);
     void PreDraw(LRenderInfo const& Info);
+
+    void DispatchInputDelegates();
 
     void CreateMenuDropDown(LVec2F Where);
 
@@ -83,12 +91,20 @@ private:
     algo::clock::time_point LastUnstableDiff;
     std::optional<rhi::extent2> LastUnstableExtent;
 
+    bool bDatedRenderTarget{};
     LRenderTarget RenderTarget;
     LViewport RenderTargetViewport;
     LRaiiPreDrawHandle OnPreDrawHandle{this->GetViewport().GetSurface().OnPreRender};
 
     LWorld* QueuedTravelWorld{};
     LRaiiViewportHandle QueueHandle{this->GetViewport().OnLateTick};
+
+    //
+    // Even though early it says. It is after viewport delegate input dispatching. This is intended.
+    // A viewport should always have priority for consumables so that a malicious input context cannot annoy
+    // the user.
+    //
+    LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
 };
 
 } /* ~Namespace Jafg */

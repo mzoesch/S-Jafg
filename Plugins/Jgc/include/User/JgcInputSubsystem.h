@@ -3,14 +3,14 @@
 #pragma once
 
 #include "JgcMinimal.afx"
-#include "Subsystems/LocalEgoSubsystem.h"
+#include "Subsystems/FrontendSubsystem.h"
 #include "JgcInputSubsystem.generated.h"
 
 namespace Jgc
 {
 
 DECLARE_JAFG_CLASS()
-class JgcInputSubsystem final : public Jafg::JLocalEgoSubsystem
+class JgcInputSubsystem final : public Jafg::JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 

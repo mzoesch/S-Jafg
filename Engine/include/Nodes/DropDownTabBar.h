@@ -15,7 +15,7 @@ struct LFactoryDropDownTabbar;
 
 struct LTabbarCreateInfo
 {
-    TArray<LDropDownNodeSubmenu> SubMenus;
+    TArray<LDropDownNodeParent> SubMenus;
 };
 
 //# A drop-down tab-bar is a collection widget for drop-downs.
@@ -42,11 +42,11 @@ private:
 
     void Select(WTextBox* Target = nullptr);
     void OnDismiss(WFloatingWidget& FloatingWidget);
-    LNodeReply OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubmenu const& Submenu);
+    LNodeReply OnMouseEnterInRoot(WNode& Node, LDropDownNodeParent const& Submenu);
 
     LTabbarCreateInfo Tabs;
     WParent* RootSubmenuContainer{};
-    std::unordered_map<LDropDownNodeSubmenu const*, TJxxUnique<WFloatingWidget>> OpenSubmenus;
+    std::unordered_map<LDropDownNodeParent const*, TJxxUnique<WFloatingWidget>> OpenSubmenus;
 };
 
 struct LFactoryDropDownTabbar : NODE_FACTORY_PARENT(WDropDownTabBar)

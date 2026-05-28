@@ -48,7 +48,7 @@ inline LString LexToString(EInputActionTriggerFlags Flags) noexcept
 
     LString Result{Stream.str()};
     if (Result.empty()) { return "Identity"; }
-    return Stream.str();
+    return Result;
 }
 
 } /* ~Namespace Jafg */

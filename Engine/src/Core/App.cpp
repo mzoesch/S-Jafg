@@ -108,6 +108,24 @@ LString const& BuildVcsRevision() noexcept
     return Branch;
 }
 
+LString const& VcsRemote() noexcept
+{
+    static LString Remote{DETAIL_ENGINE_VCS_REMOTE};
+    return Remote;
+}
+
+LString const& VcsUpstream() noexcept
+{
+    static LString Upstream{DETAIL_ENGINE_VCS_UPSTREAM};
+    return Upstream;
+}
+
+LString const& Homepage() noexcept
+{
+    static LString Homepage{DETAIL_ENGINE_HOMEPAGE_URL};
+    return Homepage;
+}
+
 LEngineVersion EngineVersion() noexcept
 {
     return

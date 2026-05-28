@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include "Minimal.afx"
 
 namespace Jafg

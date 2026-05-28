@@ -71,6 +71,7 @@ public:
     //# allow tick inside the widget's #Tick, then you have to be satisfied with that.
     //# This event is for very, very few widgets - do not abuse its abilities to justify bad object structure design.
     //#
+    mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnEarlyTick)
     mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnLateTick)
 
     //# Internal methods used by Jafg. Do not call yourself.

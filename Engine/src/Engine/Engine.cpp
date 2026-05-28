@@ -385,8 +385,6 @@ void Jafg::LEngine::TearDown()
     this->Collection.TearDownSubsystems();
     this->Outer.TearDown();
 
-    GetMutableSingleton<JMeshSubsystem>().PurgeUnused();
-
     Tasks::Private::StopAndJoinRemainingThreads();
 
     LOG_VERBOSE(LogJafgInternal, "Deallocating  {} registered levels.", this->RegisteredLevels.size())
@@ -485,7 +483,7 @@ void Jafg::LEngine::DefaultTimeAdvance()
     this->RealDeltaTime = this->DeltaTime;
 
     ++this->FrameCount;
-    ++this->StatisticsFrameCount;
+    ++this->CurrentStat.FrameCount;
 
     if (this->DeltaTime > LEngine::MaxDeltaTime)
     {

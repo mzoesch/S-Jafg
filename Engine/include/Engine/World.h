@@ -161,7 +161,7 @@ FORCEINLINE LCommandArgsTypeRet_t<const LWorld> LCommandArgs::GetAs<const LWorld
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface, and a world
 //# may draw to multiple surfaces.
 //#
-class LWorld final : public LClassOuter
+class LWorld final : public LClassOuter, public LEngineGetters
 {
     friend AActor;
 
@@ -177,14 +177,6 @@ public:
     // ~LClassOuter implementation
 
     void InitializeWorld(std::optional<LLevel> const& Level = {}, LString&& Url = {});
-
-    //# There are no checked alternatives, as the engine must be valid at all times if a world exists.
-    ENGINE_API LEngine const& GetEngine() const noexcept;
-    ENGINE_API LEngine& GetEngine() noexcept;
-    ENGINE_API LCommandLineInterface const& GetCommandLineInterface() const noexcept;
-    ENGINE_API LCommandLineInterface& GetCommandLineInterface() noexcept;
-    ENGINE_API LLocalEgo const& GetLocalEgo() const noexcept;
-    ENGINE_API LLocalEgo& GetLocalEgo() noexcept;
 
     //#
     //# The real URL that was used to launch this world. This might not be valid.

@@ -20,6 +20,7 @@ struct LRenderTarget
         //# If set to eNone, then this #LRenderTarget will not resolve the msaa image.
         vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eAverage };
         LLinearColor ClearColor{ LinearColors::Black };
+        bool bDepthTest{};
     };
 
     NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
@@ -29,6 +30,10 @@ struct LRenderTarget
 
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
     NODISCARD FORCEINLINE constexpr rhi::extent2 const& GetExtentAsLValue() const noexcept { return this->Extent; }
+
+    NODISCARD FORCEINLINE constexpr bool IsDepthTested() const noexcept { return !!this->DepthImage.GetBuffer(); }
+    NODISCARD FORCEINLINE constexpr auto const& GetDepthImage() const noexcept { return this->DepthImage; }
+    NODISCARD FORCEINLINE constexpr auto const& GetDepthImageView() const noexcept { return this->DepthImageView; }
 
     NODISCARD FORCEINLINE constexpr auto const& GetMsaa() const noexcept { return this->MsaaTarget; }
     NODISCARD FORCEINLINE constexpr bool IsResolvingMsaa() const noexcept { return this->ResolveFlags != vk::ResolveModeFlagBits::eNone; }
@@ -64,6 +69,9 @@ struct LRenderTarget
 protected:
 
     rhi::extent2 Extent;
+
+    LDeviceImage DepthImage;
+    vk::raii::ImageView DepthImageView{ nullptr };
 
     struct Target
     {

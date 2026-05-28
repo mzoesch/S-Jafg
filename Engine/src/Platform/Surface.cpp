@@ -7,58 +7,13 @@
 void Jafg::LSurfaceBase::BeginNewFrame()
 {
     this->PlatformInput.clear();
-
-    for (auto Idx{0uz}; Idx < this->RawInputs.size();)
-    {
-        auto& Input{this->RawInputs[Idx]};
-
-        check(Input.PhysicalKey != LPhysicalKey{})
-        check(Input.State != ERawInputStateBits::Identity)
-
-        if (   Input.PhysicalKey.IsLogical(ELogicalKey::MouseXY)
-            || Input.PhysicalKey.IsLogical(ELogicalKey::MouseWheelUp)
-            || Input.PhysicalKey.IsLogical(ELogicalKey::MouseWheelDown)
-            )
-        {
-            this->RawInputs.erase(this->RawInputs.begin() + Idx);
-            continue;
-        }
-
-        if (Input.State & ERawInputStateBits::Press)
-        {
-#if JAFG_DO_CHECKS
-            auto OldState{Input.State};
-#endif /* JAFG_DO_CHECKS */
-            Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Press};
-            check((Input.State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
-            check((Input.State | ERawInputStateBits::Press) == OldState)
-            Input.State |= ERawInputStateBits::Hold;
-        }
-
-        if (Input.State & ERawInputStateBits::Repeat)
-        {
-#if JAFG_DO_CHECKS
-            auto OldState{Input.State};
-#endif /* JAFG_DO_CHECKS */
-            Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Repeat};
-            check((Input.State & ERawInputStateBits::Repeat) == ERawInputStateBits::Identity)
-            check((Input.State | ERawInputStateBits::Repeat) == OldState)
-        }
-
-        if (Input.State & ERawInputStateBits::Release)
-        {
-            this->RawInputs.erase(this->RawInputs.begin() + Idx);
-            continue;
-        }
-
-        ++Idx;
-    }
+    this->DecayInputs();
 
     this->AsSurface()->PollPlatformEvents();
 
     for (auto const& Input : this->VirtualInput)
     {
-        if (algo::contains(this->RawInputs, Input.PhysicalKey, &LRawInput::PhysicalKey) == false)
+        if (!algo::contains(this->RawInputs, Input.PhysicalKey, &LRawInput::PhysicalKey))
         {
             this->UpdateKeyState(Input);
         }
@@ -114,38 +69,53 @@ void Jafg::LSurfaceBase::UpdateKeyState(LRawInput const& InRawInput)
     return;
 }
 
-Jafg::LEngine const& Jafg::LSurfaceBase::GetEngine() const noexcept
+void Jafg::LSurfaceBase::DecayInputs()
 {
-    check(GEngine && "Absence of GEngine while a surface exists is undefined behavior.")
-    return *GEngine;
-}
+    for (auto It{this->RawInputs.begin()}; It != this->RawInputs.end();)
+    {
+        auto& Input{*It};
 
-Jafg::LEngine& Jafg::LSurfaceBase::GetMutableEngine() noexcept
-{
-    check(Detail::GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
-    return *Detail::GMutableEngine;
-}
+        check(Input.PhysicalKey != LPhysicalKey{})
+        check(Input.State != ERawInputStateBits::Identity)
 
-Jafg::LLocalEgo const& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
-{
-    check(GEngine && "Absence of GEngine while a surface exists is undefined behavior.")
-    return GEngine->GetLocalEgo();
-}
+        if (Input.PhysicalKey.IsAnyLogicalOf(
+              ELogicalKey::MouseX, ELogicalKey::MouseY
+            , ELogicalKey::MouseWheelUp, ELogicalKey::MouseWheelDown
+            ))
+        {
+            It = this->RawInputs.erase(It);
+            continue;
+        }
 
-Jafg::LLocalEgo& Jafg::LSurfaceBase::GetMutableLocalEgo() noexcept
-{
-    check(Detail::GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
-    return Detail::GMutableEngine->GetLocalEgo();
-}
+        if (Input.State & ERawInputStateBits::Press)
+        {
+#if JAFG_DO_CHECKS
+            auto OldState{Input.State};
+#endif /* JAFG_DO_CHECKS */
+            Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Press};
+            check((Input.State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
+            check((Input.State | ERawInputStateBits::Press) == OldState)
+            Input.State |= ERawInputStateBits::Hold;
+        }
 
-Jafg::LFrontend const& Jafg::LSurfaceBase::GetFrontend() const noexcept
-{
-    check(GEngine && "Absence of GEngine while a surface exists is undefined behavior.")
-    return GEngine->GetLocalEgo().GetFrontend();
-}
+        if (Input.State & ERawInputStateBits::Repeat)
+        {
+#if JAFG_DO_CHECKS
+            auto OldState{Input.State};
+#endif /* JAFG_DO_CHECKS */
+            Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Repeat};
+            check((Input.State & ERawInputStateBits::Repeat) == ERawInputStateBits::Identity)
+            check((Input.State | ERawInputStateBits::Repeat) == OldState)
+        }
 
-Jafg::LFrontend& Jafg::LSurfaceBase::GetMutableFrontend() noexcept
-{
-    check(Detail::GMutableEngine && "Absence of GMutableEngine while a surface exists is undefined behavior.")
-    return Detail::GMutableEngine->GetLocalEgo().GetFrontend();
+        if (Input.State & ERawInputStateBits::Release)
+        {
+            It = this->RawInputs.erase(It);
+            continue;
+        }
+
+        ++It;
+    }
+
+    return;
 }

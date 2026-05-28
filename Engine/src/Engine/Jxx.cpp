@@ -28,6 +28,18 @@ Jafg::LLocalEgo& Jafg::LEngineGetters::GetMutableLocalEgo() noexcept
     return Detail::GMutableEngine->GetLocalEgo();
 }
 
+Jafg::LFrontend const& Jafg::LEngineGetters::GetFrontend() const noexcept
+{
+    check(GEngine && "Absence of GEngine is undefined behavior.")
+    return GEngine->GetLocalEgo().GetFrontend();
+}
+
+Jafg::LFrontend& Jafg::LEngineGetters::GetMutableFrontend() noexcept
+{
+    check(Detail::GMutableEngine && "Absence of GMutableEngine is undefined behavior.")
+    return Detail::GMutableEngine->GetLocalEgo().GetFrontend();
+}
+
 Jafg::LCommandLineInterface const& Jafg::LEngineGetters::GetCommandLineInterface() const noexcept
 {
     check(GEngine && "Absence of GEngine is undefined behavior.")

@@ -74,30 +74,20 @@ void Jafg::WWorldViewer::Tick()
 {
     Super::Tick();
 
-    if (this->DesiredViewportExtent)
+    if (this->bDatedRenderTarget)
     {
-        // Just temp of course.
-        if (auto& Surface{this->GetViewport().GetSurface()};
-            Surface.HasPlatformKeyState(*Surface.GetFrontend().GetPhysicalKey(ELogicalKey::NumPadAdd), ERawInputStateBits::Press))
-        {
-            this->DesiredViewportExtent = rhi::extent2{this->DesiredViewportExtent->width + 50, this->DesiredViewportExtent->height + 50};
-        }
-        if (auto& Surface{this->GetViewport().GetSurface()};
-            Surface.HasPlatformKeyState(*Surface.GetFrontend().GetPhysicalKey(ELogicalKey::NumPadSubtract), ERawInputStateBits::Press))
-        {
-            this->DesiredViewportExtent = rhi::extent2{
-                maths::max(this->DesiredViewportExtent->width,  51u) - 50,
-                maths::max(this->DesiredViewportExtent->height, 51u) - 50,
-                };
-        }
-
+        LOG_VERBOSE(LogWidgets, "[{}]: Render target is dated. Recreating render target.", this->GetNameAsString())
+        this->GetViewport().GetSurface().GetMutableFrontend()._Vk_WaitIdle();
+        this->InitializeRenderTarget();
+    }
+    else if (this->DesiredViewportExtent)
+    {
         if (*this->DesiredViewportExtent != this->RenderTarget.GetExtent())
         {
             LOG_TRACE(LogWidgets, "[{}]: Desired viewport extent changed to [{}]. Recreating render target.", this->GetNameAsString(), *this->DesiredViewportExtent)
             this->GetViewport().GetSurface().GetMutableFrontend()._Vk_WaitIdle();
             this->InitializeRenderTarget();
         }
-
         this->LastUnstableExtent.reset();
     }
     else if (rhi::extent2 UnstableSize{rhi::extent2::from_vec(this->GetAnchoredSize_v2())}; UnstableSize.width > 0 && UnstableSize.height > 0)
@@ -125,6 +115,14 @@ void Jafg::WWorldViewer::Tick()
                 this->InitializeRenderTarget();
                 this->LastUnstableExtent.reset();
             }
+        }
+    }
+
+    if (!this->ConsumeHandle.IsValid())
+    {
+        if (this->UserInput._bCurrentlyConsuming)
+        {
+            this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]{ this->DispatchInputDelegates(); return false; });
         }
     }
 
@@ -164,6 +162,62 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
     Super::Draw(Info);
 
     return;
+}
+
+void Jafg::WWorldViewer::OnFocusLost()
+{
+    Super::OnFocusLost();
+
+    if (this->ConsumeHandle.IsValid())
+    {
+        LOG_TRACE(LogWidgetFramework, "[{}]: Escaping user input capture due to focus loss.", this->GetNameAsString())
+        check(this->UserInput._bCurrentlyConsuming)
+        this->UserInput._bCurrentlyConsuming = false;
+        this->ConsumeHandle.Unbind();
+        if (this->Viewport.GetSurface()._GetNativeHandleDangerous())
+        {
+            this->Viewport.GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
+        }
+    }
+
+    return;
+}
+
+Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+    {
+        if (this->IsOwnedPersonaControllerValid())
+        {
+            if (!this->ConsumeHandle.IsValid())
+            {
+                LOG_TRACE(LogWidgetFramework, "[{}]: Entering user input capture.", this->GetNameAsString())
+                check(!this->UserInput._bCurrentlyConsuming)
+                this->UserInput._bCurrentlyConsuming = true;
+                this->Viewport.GetSurface().SetInputMode(this->UserInput.IsConsumingMouse()
+                    ? EInputModeBits::HideMouseCursor : EInputModeBits::ShowMouseCursor);
+                return LNodeReply::Handled();
+            }
+        }
+    }
+
+    if (Event.Is<ERawInputStateBits::Press>(this->Viewport.GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::F1)))
+    {
+        if (Event.Mods & EModBits::Shift)
+        {
+            if (this->ConsumeHandle.IsValid())
+            {
+                LOG_TRACE(LogWidgetFramework, "[{}]: Escaping user input capture.", this->GetNameAsString())
+                check(this->UserInput._bCurrentlyConsuming)
+                this->UserInput._bCurrentlyConsuming = false;
+                this->ConsumeHandle.Unbind();
+                this->Viewport.GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
+                return LNodeReply::Handled();
+            }
+        }
+    }
+
+    return Super::OnKeyEventFocused(Info, Event);
 }
 
 void Jafg::WWorldViewer::TravelTo(LWorld& World)
@@ -237,14 +291,29 @@ void Jafg::WWorldViewer::QueueTravelTo(LWorld& World)
     return;
 }
 
+void Jafg::WWorldViewer::OnPerspectiveDepthTestChanged()
+{
+    if (this->RenderTarget.IsInitialized())
+    {
+        auto& Prefs{GetSingleton<JUserPreferences>()};
+        LOG_VERBOSE(LogWidgets, "Perspective depth test changed to [{}].", *Prefs.PerspectiveDepthTest)
+        this->bDatedRenderTarget = true;
+    }
+
+    return;
+}
+
 void Jafg::WWorldViewer::InitializeRenderTarget()
 {
+    this->bDatedRenderTarget = false;
+
     this->RenderTarget.Initialize({
         .Frontend = this->GetViewport().GetSurface().GetFrontend(),
         .Extent = this->DesiredViewportExtent.has_value() ? *this->DesiredViewportExtent : rhi::extent2::from_vec(this->GetAnchoredSize_v2()),
         .SampleCount = this->GetViewport().GetSurface().GetFrontend().Vk_GetMaxMsaaSampleCount(),
         .ResolveMode = vk::ResolveModeFlagBits::eAverage,
         .ClearColor = LinearColors::DeepSkyBlue,
+        .bDepthTest = *GetSingleton<JUserPreferences>().PerspectiveDepthTest,
         });
 
     if (!this->OnPreDrawHandle)
@@ -284,6 +353,24 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
     }
 
     this->RenderTargetViewport.Draw(Info);
+
+    return;
+}
+
+void Jafg::WWorldViewer::DispatchInputDelegates()
+{
+    check(this->IsOwnedPersonaControllerValid())
+
+    if (algo::any_of(this->Viewport.GetSurface().GetUnconsumedInputs(), [this](LRawInput const& Input)
+    {
+        return Input.PhysicalKey == *this->Viewport.GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::F1);
+    }))
+    {
+        JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
+    }
+
+    auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+    this->UserInput.DispatchInputDelegates(Ctrl);
 
     return;
 }
@@ -546,8 +633,46 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                     return LDropDownNodeCustom::reply::handled(true);
                 }
                 return LDropDownNodeCustom::reply::unhandled();
-            },
-            },
+            },},
+        LDropDownNodeCustom{
+            .OnCreate=[this](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+            {
+                auto& Prefs{GetSingleton<JUserPreferences>()};
+                return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
+                + NewNode(Viewport).Class<WCheckmarkButton>()
+                    .Anchor(EAnchor::CenterLeft)
+                    .Checked(*Prefs.PerspectiveDepthTest)
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                            && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
+                            )
+                        {
+                            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                            MutablePrefs.PerspectiveDepthTest = !*MutablePrefs.PerspectiveDepthTest;
+                            Self.AsStatic<WCheckmarkButton>().SetChecked(*MutablePrefs.PerspectiveDepthTest);
+                            this->OnPerspectiveDepthTestChanged();
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewNode(Viewport).Class<WText>()
+                    .Anchor(EAnchor::HFill)
+                    .Visibility(ENodeVisibility::TransitiveHitTestInvisible)
+                    .Padding({6_spt, 0.0f, 0.0f, 0.0f})
+                    .Content("Depth test");
+                },
+            .OnAction=[this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+            {
+                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.PerspectiveDepthTest = !*MutablePrefs.PerspectiveDepthTest;
+                    this->OnPerspectiveDepthTestChanged();
+                    return LDropDownNodeCustom::reply::handled(true);
+                }
+                return LDropDownNodeCustom::reply::unhandled();
+            },},
         });
 
     return;

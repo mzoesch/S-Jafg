@@ -135,7 +135,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
 
-    this->GetEngine().OnWorldBeginLife.Broadcast(this);
+    this->GetMutableEngine().OnWorldBeginLife.Broadcast(this);
     this->WorldState = EWorldState::Running;
 
     if (auto& Track{Detail::GMutableEngine->GetTrackFromWorld(*this)}; Track.Callbacks.OnPostInit)
@@ -146,42 +146,6 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     this->SupremePolicies->OnWorldPostInit();
 
     return;
-}
-
-Jafg::LEngine const& Jafg::LWorld::GetEngine() const noexcept
-{
-    check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
-    return *GEngine;
-}
-
-Jafg::LEngine& Jafg::LWorld::GetEngine() noexcept
-{
-    check(Detail::GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
-    return *Detail::GMutableEngine;
-}
-
-Jafg::LCommandLineInterface const& Jafg::LWorld::GetCommandLineInterface() const noexcept
-{
-    check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
-    return GEngine->GetCommandLineInterface();
-}
-
-Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() noexcept
-{
-    check(Detail::GMutableEngine && "Absence of GMutableEngine when a world exists is undefined behavior.")
-    return Detail::GMutableEngine->GetCommandLineInterface();
-}
-
-Jafg::LLocalEgo const& Jafg::LWorld::GetLocalEgo() const noexcept
-{
-    check(GEngine && "Absence of GEngine when a world exists is undefined behavior.")
-    return GEngine->GetLocalEgo();
-}
-
-Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() noexcept
-{
-    check(Detail::GMutableEngine && "Absence of GEnGMutableEnginegine when a world exists is undefined behavior.")
-    return Detail::GMutableEngine->GetLocalEgo();
 }
 
 void Jafg::LWorld::Tick(f32 Dt)
@@ -255,7 +219,6 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const
 
     LActorRenderInfo ActorInfo{Info, Eye};
     auto& Frontend{ActorInfo.Frontend};
-    auto& Surface{ActorInfo.Surface};
     if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
     {
         ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
@@ -276,7 +239,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const
         .view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up),
         .proj = glm::perspectiveRH_ZO(
             Eye.VertFov,
-            static_cast<f32>(Surface.Vk_GetSwapchainExtent().width) / static_cast<f32>(Surface.Vk_GetSwapchainExtent().height),
+            Info.VkViewport.width / Info.VkViewport.height,
             Eye.NearFrustum, Eye.FarFrustum
             ),
         };

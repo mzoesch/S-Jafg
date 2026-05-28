@@ -56,6 +56,9 @@ public:
     CLASS_FIELD(Config)
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
 
+    CLASS_FIELD(Config)
+    TPreference<bool> PerspectiveDepthTest{ true };
+
     //# If set, this material should be preferred by mesh renders to use.
     std::optional<LMaterialInstanceRef> MeshMaterialPreference;
 
@@ -174,6 +177,8 @@ public:
     TPreference<LString> EditorLastWorldLevelName{ "" };
     CLASS_FIELD(Config)
     TPreference<bool> EditorAutoLaunchLastWorld{ false };
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorShowRate{ true };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

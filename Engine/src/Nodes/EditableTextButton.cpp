@@ -177,7 +177,7 @@ void Jafg::WEditableTextButton::OnFocusReceived()
     check(!this->UserInterfaceTickDelegateHandle)
     this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.Emplace(this, &WEditableTextButton::UserInterfaceTick);
 
-    if (this->GetViewport().GetSurface().HasMouseLocation())
+    if (this->GetViewport().GetSurface().HasMouseLocationForOrtho())
     {
         this->MoveCaretTo(this->GetViewport().GetSurface().GetMouseLocationValue());
     }

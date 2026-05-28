@@ -440,7 +440,8 @@ bool Jafg::WDragRegion::UiTickMove()
         }
     }
 
-    if (!this->GetViewport().GetSurface().HasMouseLocation())
+    auto& Surface{this->GetViewport().GetSurface()};
+    if (!Surface.HasMouseLocationForOrtho())
     {
         return {};
     }
@@ -525,12 +526,12 @@ bool Jafg::WDragRegion::UiTickMove()
     f32 DesiredSize;
     if (this->Cf == ENodePrimitiveControlFlow::Horizontal)
     {
-        DesiredSize = {this->GetViewport().GetSurface().GetMouseLocationValue().x - this->DragChildOffset->Offset - Offset - (SpaceSpt * 0.5f)};
+        DesiredSize = {Surface.GetMouseLocationValue().x - this->DragChildOffset->Offset - Offset - (SpaceSpt * 0.5f)};
     }
     else
     {
         check(this->Cf == ENodePrimitiveControlFlow::Vertical)
-        DesiredSize = {this->GetViewport().GetSurface().GetMouseLocationValue().y - this->DragChildOffset->Offset - Offset - (SpaceSpt * 0.5f)};
+        DesiredSize = {Surface.GetMouseLocationValue().y - this->DragChildOffset->Offset - Offset - (SpaceSpt * 0.5f)};
     }
 
     if (Slot.MaxDesiredSize.has_value())

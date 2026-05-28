@@ -31,6 +31,8 @@ typedef std::variant<
     , LDropDownNodeDeferredSubMenu
     > LDropDownNode;
 
+typedef std::variant<LDropDownNodeSubmenu, LDropDownNodeDeferredSubMenu> LDropDownNodeParent;
+
 //# A simple one-time action.
 struct LDropDownNodeOption final
 {

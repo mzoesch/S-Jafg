@@ -33,7 +33,7 @@ struct LOuter2WorldProj
 //#
 //# An object that uses a world as its outer.
 //# Additionally, defines utility functions to help with world and engine access.
-//# If you want a simpler base class, use JObjectBase. There is nothing that prevents JObjectBase
+//# If you want a simpler base class, use JCxxClass. There is nothing that prevents JCxxClass
 //# classes to be spawned in worlds too.
 //#
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)

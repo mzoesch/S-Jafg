@@ -164,7 +164,7 @@ bool Jafg::WFloatingWidget::UiTickMove()
 
 bool Jafg::WFloatingWidget::UiTickResize()
 {
-    if (this->ResizeDragOffset.has_value() == false)
+    if (!this->ResizeDragOffset.has_value())
     {
         this->ResizeDragOffset =
             this->GetViewport().GetSurface().GetMouseLocationValue()

@@ -32,6 +32,9 @@ struct LRenderInfo
     u32 Frame;
     //# The image in question.
     u32 Image;
+
+    vk::Viewport VkViewport;
+    vk::Rect2D VkScissor;
 };
 
 } /* ~Namespace Jafg */

@@ -38,6 +38,15 @@ public:
     // ~LTabOverlayPossibilities implementation
 
     virtual void Construct() override;
+    virtual void Tick() override;
+
+private:
+
+    WParent* OverlayRoot;
+    WParent* Bar{};
+
+    algo::clock::time_point LastRatePoint;
+    WTextBox* Rate{};
 };
 
 } /* ~Namespace Jafg */

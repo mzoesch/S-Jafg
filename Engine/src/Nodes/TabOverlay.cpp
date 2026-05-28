@@ -528,7 +528,7 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
 
     this->LastMouseFlags = It->Mods;
 
-    if (!this->GetViewport().GetSurface().HasMouseLocation())
+    if (!this->GetViewport().GetSurface().HasMouseLocationForOrtho())
     {
         ResetDrawOption();
         ResetTempBox();

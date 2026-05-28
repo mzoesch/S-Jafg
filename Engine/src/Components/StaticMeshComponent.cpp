@@ -19,7 +19,7 @@ void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
 
 void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
 {
-    this->Mesh = GetSingleton<JMeshSubsystem>().FromFile(Mesh, MeshState);
+    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState);
 }
 
 void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef InMaterialInstance) noexcept

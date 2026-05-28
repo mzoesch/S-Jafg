@@ -66,7 +66,7 @@ inline LString LexToString(EModFlags Flags) noexcept
 
     LString Result{Stream.str()};
     if (Result.empty()) { return "Identity"; }
-    return Stream.str();
+    return Result;
 }
 
 //#
@@ -106,16 +106,26 @@ struct LPhysicalKey final
         check(Key >= ELogicalKey::FirstLogicalKey && Key <= ELogicalKey::LastKey)
         return LPhysicalKey{.Logical = static_cast<i32>(Key)};
     }
-    FORCEINLINE bool IsLogical(ELogicalKey Key) const noexcept
+
+    FORCEINLINE bool IsLogical() const noexcept
     {
-        check(Key >= ELogicalKey::FirstLogicalKey && Key <= ELogicalKey::LastKey)
-        return this->Logical == static_cast<i32>(Key);
+        return this->Logical >= static_cast<i32>(ELogicalKey::FirstLogicalKey) && this->Logical <= static_cast<i32>(ELogicalKey::LastKey);
     }
+
+    template<typename... TKeys> requires(sizeof...(TKeys) > 0
+        && (... && (std::same_as<std::remove_cvref_t<TKeys>, ELogicalKey>)))
+    FORCEINLINE bool IsAnyLogicalOf(TKeys... Keys) const noexcept
+    {
+        check(((Keys >= ELogicalKey::FirstLogicalKey) && (Keys <= ELogicalKey::LastKey)) && ...)
+        return ((this->Logical == static_cast<i32>(Keys)) || ...);
+    }
+
     FORCEINLINE constexpr bool operator==(LPhysicalKey const& Other) const noexcept
     {
         return this->Scancode == Other.Scancode && this->Logical == Other.Logical;
     }
-    ENGINE_API LString ToString() const noexcept
+
+    LString ToString() const noexcept
     {
         return algo::sprintf("{{Scancode: {}, Logical: {}}}", this->Scancode, this->Logical);
     }

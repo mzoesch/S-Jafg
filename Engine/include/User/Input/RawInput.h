@@ -59,7 +59,7 @@ struct LRawInput final
     {
         return !!(this->State & State);
     }
-    template<ERawInputStateFlags State, typename ... TKeys> requires(sizeof...(TKeys) > 0
+    template<ERawInputStateFlags State, typename... TKeys> requires(sizeof...(TKeys) > 0
         && (... && (std::same_as<std::remove_cvref_t<TKeys>, LPhysicalKey>
              || std::same_as<std::remove_cvref_t<TKeys>, std::optional<LPhysicalKey>>)))
     bool Is(TKeys&&... Keys) const noexcept

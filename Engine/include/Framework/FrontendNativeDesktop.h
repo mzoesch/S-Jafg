@@ -17,6 +17,7 @@ public:
 
     ENGINE_API void OpenDirectory(LPath const& Directory) const;
     ENGINE_API void OpenTerminal(LPath const& Directory) const;
+    ENGINE_API void OpenUrl(LStringView Url) const;
 };
 
 } /* ~Namespace Jafg */

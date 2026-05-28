@@ -20,13 +20,27 @@ void Jafg::WDropDownTabBar::Construct()
 
     for (auto& SubMenu: this->Tabs.SubMenus)
     {
+        LString DisplayName;
+        if (std::holds_alternative<LDropDownNodeSubmenu>(SubMenu))
+        {
+            DisplayName = std::get<LDropDownNodeSubmenu>(SubMenu).Selector.DisplayName;
+        }
+        else if (std::holds_alternative<LDropDownNodeDeferredSubMenu>(SubMenu))
+        {
+            DisplayName = std::get<LDropDownNodeDeferredSubMenu>(SubMenu).Selector.DisplayName;
+        }
+        else
+        {
+            std::unreachable();
+        }
         this->RootSubmenuContainer->AddChild(NewStaticNode(WTextBox).SkipBrushDraw(true)
             .Visibility(ENodeVisibility::Visible)
-            .Content(SubMenu.Selector.DisplayName)
+            .Content(std::move(DisplayName))
             .Tint(*GetSingleton<JUserPreferences>().PrimaryColor)
             .OnCursorEnter([this, &SubMenu](WNode& Node){ return this->OnMouseEnterInRoot(Node, SubMenu); })
             .Unique()
             );
+        continue;
     }
 
     return;
@@ -74,7 +88,7 @@ void Jafg::WDropDownTabBar::OnDismiss(WFloatingWidget& FloatingWidget)
     return;
 }
 
-Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDownNodeSubmenu const& Submenu)
+Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDownNodeParent const& Submenu)
 {
     if (this->OpenSubmenus.contains(&Submenu))
     {
@@ -91,24 +105,55 @@ Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDow
     Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [SubmenusToClose = std::move(SubmenusToClose)]() mutable{});
     this->OpenSubmenus.clear();
 
-    auto& FloatingWidget{CreateDropDownMenu(
-        this->GetViewport(),
-        // TODO: Fix the translation...
-        Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
-            + LVec2F{0.0, Node.GetAnchoredSize_v2().y},
-        {.OnOptionCloseResult = [this](auto&&...)
-        {
-            this->OpenSubmenus.clear();
-            this->Select(nullptr);
-            return algo::reply::handled();
-        }},
-        Submenu.Children
-        )};
-    check(!FloatingWidget.OnDismissEvent.IsValid())
-    FloatingWidget.OnDismissEvent.Bind(this, &WDropDownTabBar::OnDismiss);
+    WDismissibleFloatingWidget* FloatingWidget;
+    if (std::holds_alternative<LDropDownNodeSubmenu>(Submenu))
+    {
+        FloatingWidget = &CreateDropDownMenu(
+                this->GetViewport(),
+                // TODO: Fix the translation...
+                Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                + LVec2F{0.0, Node.GetAnchoredSize_v2().y},
+                {
+                    .OnOptionCloseResult = [this](auto&&...)
+                    {
+                        this->OpenSubmenus.clear();
+                        this->Select(nullptr);
+                        return algo::reply::handled();
+                    }
+                },
+                std::get<LDropDownNodeSubmenu>(Submenu).Children
+                );
+    }
+    else if (std::holds_alternative<LDropDownNodeDeferredSubMenu>(Submenu))
+    {
+        check(std::get<LDropDownNodeDeferredSubMenu>(Submenu).OnChildren)
+        FloatingWidget = &CreateDropDownMenu(
+                this->GetViewport(),
+                // TODO: Fix the translation...
+                Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                + LVec2F{0.0, Node.GetAnchoredSize_v2().y},
+                {
+                    .OnOptionCloseResult = [this](auto&&...)
+                    {
+                        this->OpenSubmenus.clear();
+                        this->Select(nullptr);
+                        return algo::reply::handled();
+                    }
+                },
+                std::get<LDropDownNodeDeferredSubMenu>(Submenu).OnChildren()
+                );
+    }
+    else
+    {
+        std::unreachable();
+    }
+
+    check(FloatingWidget)
+    check(!FloatingWidget->OnDismissEvent.IsValid())
+    FloatingWidget->OnDismissEvent.Bind(this, &WDropDownTabBar::OnDismiss);
     check(!this->OpenSubmenus.contains(&Submenu))
 
-    this->OpenSubmenus.emplace(&Submenu, TJxxUnique<WFloatingWidget>{&FloatingWidget});
+    this->OpenSubmenus.emplace(&Submenu, TJxxUnique<WFloatingWidget>{FloatingWidget});
 
     return LNodeReply::Handled();
 }

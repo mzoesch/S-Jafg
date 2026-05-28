@@ -27,13 +27,48 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
     this->MsaaTarget = {};
     this->ResolvedTarget.reset();
 
+    auto Samples{rhi::vk_clamp_msaa_samples(Info.SampleCount, Frontend.Vk_GetMaxMsaaSampleCount())};
+
+    if (Info.bDepthTest)
+    {
+        this->DepthImage = Frontend.Vk_CreateDeviceLocalImage({
+            .imageType = vk::ImageType::e2D,
+            .format = Frontend.Vk_GetPreferredDepthFormat(),
+            .extent = vk::Extent3D{this->Extent.width, this->Extent.height, 1},
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = Samples,
+            .tiling = vk::ImageTiling::eOptimal,
+            .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
+            .sharingMode = vk::SharingMode::eExclusive,
+            .initialLayout = vk::ImageLayout::eUndefined,
+            });
+        this->DepthImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+            .image = this->DepthImage.GetBuffer(),
+            .viewType = vk::ImageViewType::e2D,
+            .format = Frontend.Vk_GetPreferredDepthFormat(),
+            .subresourceRange = {
+                .aspectMask = vk::ImageAspectFlagBits::eDepth,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+                },
+            }};
+    }
+    else
+    {
+        this->DepthImageView = nullptr;
+        this->DepthImage.Free();
+    }
+
     vk::ImageCreateInfo ImageCreateInfo{
         .imageType = vk::ImageType::e2D,
         .format = Frontend.Vk_GetSurfaceFormat().format,
         .extent = vk::Extent3D{this->Extent.width, this->Extent.height, 1},
         .mipLevels = 1,
         .arrayLayers = 1,
-        .samples =  rhi::vk_clamp_msaa_samples(Info.SampleCount, Frontend.Vk_GetMsaaSampleLimits()),
+        .samples = Samples,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eColorAttachment
             | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc,
@@ -93,7 +128,26 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
     check(!!this->MsaaTarget.Image.GetBuffer())
     check(this->Extent.width > 0 && this->Extent.height > 0)
 
-    auto& Surface{Info.Surface};
+    LRenderInfo RenderInfo{
+        .UserPreferences = Info.UserPreferences,
+        .Frontend = Info.Frontend,
+        .Surface = Info.Surface,
+        .CommandBuffer = Info.CommandBuffer,
+        .DescriptorPool = Info.DescriptorPool,
+        .Frame = Info.Frame,
+        .Image = Info.Image,
+        .VkViewport = vk::Viewport{
+            .x = 0.0f, .y = 0.0f,
+            .width=static_cast<f32>(this->Extent.width), .height=static_cast<f32>(this->Extent.height),
+            .minDepth = 0.0f, .maxDepth = 1.0f
+            },
+        .VkScissor = vk::Rect2D{
+            .offset = {0, 0},
+            .extent = *this->Extent,
+            },
+        };
+
+    auto& Surface{RenderInfo.Surface};
 
     Surface.Vk_TransitionImageLayout({
         .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -114,6 +168,30 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
             },
         });
 
+    if (this->IsDepthTested())
+    {
+        Surface.Vk_TransitionImageLayout({
+            .srcStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+            .srcAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            .dstStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+            .dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            .oldLayout = vk::ImageLayout::eUndefined,
+            .newLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+            .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+            .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+            .image = this->DepthImage.GetBuffer(),
+            .subresourceRange = {
+                .aspectMask = vk::ImageAspectFlagBits::eDepth,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+                },
+            });
+    }
+
+    constexpr vk::ClearValue ClearDepth{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
+
     vk::RenderingAttachmentInfo ColorAttachmentInfo{
         .imageView = this->MsaaTarget.ImageView,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
@@ -124,24 +202,26 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
         .storeOp = vk::AttachmentStoreOp::eStore,
         .clearValue = ClearColor,
         };
+    vk::RenderingAttachmentInfo DepthAttachmentInfo{
+        .imageView   = this->DepthImageView,
+        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .loadOp      = vk::AttachmentLoadOp::eClear,
+        .storeOp     = vk::AttachmentStoreOp::eDontCare,
+        .clearValue  = ClearDepth
+        };
 
-    vk::RenderingInfo RenderingInfo{
+    RenderInfo.CommandBuffer.beginRendering({
         .renderArea = {.offset={0, 0}, .extent=*this->Extent},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &ColorAttachmentInfo,
-        .pDepthAttachment = nullptr,
-        };
-
-    Info.CommandBuffer.beginRendering(RenderingInfo);
-    Info.CommandBuffer.setViewport(0, vk::Viewport{
-        .x = 0.0f, .y = 0.0f,
-        .width=static_cast<f32>(this->Extent.width), .height=static_cast<f32>(this->Extent.height),
-        .minDepth = 0.0f, .maxDepth = 1.0f
+        .pDepthAttachment = this->IsDepthTested() ? &DepthAttachmentInfo : nullptr,
+        .pStencilAttachment = nullptr,
         });
-    Info.CommandBuffer.setScissor(0, vk::Rect2D{.offset={0, 0}, .extent=*this->Extent,});
-    What(Info);
-    Info.CommandBuffer.endRendering();
+    RenderInfo.CommandBuffer.setViewport(0, RenderInfo.VkViewport);
+    RenderInfo.CommandBuffer.setScissor(0, RenderInfo.VkScissor);
+    What(RenderInfo);
+    RenderInfo.CommandBuffer.endRendering();
 
     Surface.Vk_TransitionImageLayout({
         .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,

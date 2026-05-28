@@ -36,7 +36,7 @@ struct LSurfaceCreateInfo
 };
 
 //# Interface for a generic surface that the RHI may use to draw on.
-class LSurfaceBase
+class LSurfaceBase : public LEngineGetters
 {
 public:
 
@@ -69,6 +69,7 @@ public:
     FORCEINLINE bool IsShowMouseCursor() const noexcept { return static_cast<bool>(this->InputMode & EInputModeBits::ShowMouseCursor); }
 
     FORCEINLINE bool HasMouseLocation() const noexcept { return this->MouseLocation.has_value(); }
+    FORCEINLINE bool HasMouseLocationForOrtho() const noexcept { return this->IsShowMouseCursor() && this->HasMouseLocation(); }
     FORCEINLINE auto const& GetMouseLocation() const noexcept { return this->MouseLocation; }
     FORCEINLINE LVec2F GetMouseLocationValue() const noexcept { check( this->MouseLocation.has_value() ) return this->MouseLocation.value(); }
 
@@ -139,13 +140,6 @@ public:
         return Result;
     }
 
-    ENGINE_API LEngine const& GetEngine() const noexcept;
-    ENGINE_API LEngine& GetMutableEngine() noexcept;
-    ENGINE_API LLocalEgo const& GetLocalEgo() const noexcept;
-    ENGINE_API LLocalEgo& GetMutableLocalEgo() noexcept;
-    ENGINE_API LFrontend const& GetFrontend() const noexcept;
-    ENGINE_API LFrontend& GetMutableFrontend() noexcept;
-
 protected:
 
     FORCEINLINE void AddBufferedPlatformInput(LString InInput) noexcept { this->PlatformInput.emplace_back(std::move(InInput)); }
@@ -160,6 +154,8 @@ protected:
     rhi::extent2 SurfaceExtent;
 
 private:
+
+    void DecayInputs();
 
     LString HumanReadableName{ "Transient" };
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.

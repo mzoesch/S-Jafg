@@ -24,6 +24,31 @@ if(_guard)
         )
     if(NOT VCS_BRANCH)
         set(VCS_BRANCH "UnknownVcsBranch")
+        set(VCS_REMOTE "UnknownVcsRemote")
+        set(VCS_URL "UnknownVcsUrl")
+    else()
+        execute_process(
+            COMMAND             git config --get branch.${VCS_BRANCH}.remote
+            WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+            OUTPUT_VARIABLE     VCS_REMOTE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+            )
+        if(NOT VCS_REMOTE)
+            set(VCS_REMOTE "UnknownVcsRemote")
+            set(VCS_URL "UnknownVcsUrl")
+        else()
+            execute_process(
+                COMMAND             git remote get-url ${VCS_REMOTE}
+                WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+                OUTPUT_VARIABLE     VCS_URL
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_QUIET
+                )
+            if(NOT VCS_URL)
+                set(VCS_URL "UnknownVcsUrl")
+            endif()
+        endif()
     endif()
 
     execute_process(
@@ -67,6 +92,10 @@ if(_guard)
     message(STATUS "DETAIL_ENGINE_VCS_BRANCH: ${VCS_BRANCH}")
     message(STATUS "DETAIL_ENGINE_VCS_REVISION: ${VCS_REVISION}")
 
+    message(STATUS "DETAIL_ENGINE_VCS_REMOTE: ${VCS_REMOTE}")
+    message(STATUS "DETAIL_ENGINE_VCS_UPSTREAM: ${VCS_URL}")
+    message(STATUS "DETAIL_ENGINE_HOMEPAGE_URL: ${PROJECT_HOMEPAGE_URL}")
+
     message(STATUS "DETAIL_ENGINE_TARGET_PLATFORM: ${JAFG_TARGET_PLATFORM}")
     message(STATUS "DETAIL_ENGINE_TARGET_ARCHITECTURE: ${JAFG_TARGET_ARCHITECTURE}")
     message(STATUS "DETAIL_ENGINE_TARGET_TYPE: ${JAFG_TARGET_TYPE}")
@@ -85,6 +114,10 @@ if(_guard)
         DETAIL_ENGINE_VERSION_HASH="${PROJECT_VERSION_HASH}"
         DETAIL_ENGINE_VCS_BRANCH="${VCS_BRANCH}"
         DETAIL_ENGINE_VCS_REVISION="${VCS_REVISION}"
+
+        DETAIL_ENGINE_VCS_REMOTE="${VCS_REMOTE}"
+        DETAIL_ENGINE_VCS_UPSTREAM="${VCS_URL}"
+        DETAIL_ENGINE_HOMEPAGE_URL="${PROJECT_HOMEPAGE_URL}"
 
         DETAIL_ENGINE_TARGET_PLATFORM="${JAFG_TARGET_PLATFORM}"
         DETAIL_ENGINE_TARGET_ARCHITECTURE="${JAFG_TARGET_ARCHITECTURE}"

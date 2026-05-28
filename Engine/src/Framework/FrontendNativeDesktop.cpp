@@ -55,4 +55,17 @@ void Jafg::LFrontendNativeDesktop::OpenTerminal(LPath const& Directory) const
 #endif /* !JAFG_PLATFORM_WINDOWS */
 }
 
+void Jafg::LFrontendNativeDesktop::OpenUrl(LStringView Url) const
+{
+#if JAFG_PLATFORM_LINUX
+    LString Cmd{"xdg-open \"" + LString{Url} + "\""};
+    LOG_VERBOSE(LogSystem, "Executing: {}", Cmd)
+    std::system(Cmd.c_str());
+#elif JAFG_PLATFORM_WINDOWS
+    #error Missing implementation.
+#else /* JAFG_PLATFORM_WINDOWS */
+    #error Missing implementation.
+#endif /* !JAFG_PLATFORM_WINDOWS */
+}
+
 #endif /* JAFG_PLATFORM_DESKTOP */

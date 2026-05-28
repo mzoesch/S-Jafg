@@ -3,6 +3,7 @@
 #include "User/Input/UserInput.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
+#include "Platform/Cursor.h"
 #include "User/LocalEgo.h"
 #include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
@@ -24,9 +25,9 @@ LString Jafg::LexToString(EInputActionCategory::Type InType)
 
 void Jafg::LUserInput::DispatchInputDelegates(APersonaController& ActingController)
 {
-    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Triggered);
-    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Ongoing);
-    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Surface->GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Completed);
+    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Viewport.GetSurface().GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Triggered);
+    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Viewport.GetSurface().GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Ongoing);
+    this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Viewport.GetSurface().GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Completed);
 }
 
 bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, std::size_t Where /* = INDEX_NONE */) noexcept
@@ -174,18 +175,16 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LStringView> const& Contexts) n
     return bOut;
 }
 
-void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */) noexcept
+void Jafg::LUserInput::PushContexts(bool bEmpty /* = true */) noexcept
 {
-    check(this->Surface)
-
     if (bEmpty)
     {
-        this->ContextStack.emplace_back(this->Surface->GetInputMode(), std::move(this->ActiveContexts));
+        this->ContextStack.emplace_back(this->IsConsumingMouse(), std::move(this->ActiveContexts));
         check(this->ActiveContexts.empty())
     }
     else
     {
-        this->ContextStack.emplace_back(this->Surface->GetInputMode(), this->ActiveContexts);
+        this->ContextStack.emplace_back(this->IsConsumingMouse(), this->ActiveContexts);
         check(this->ContextStack.back().second.size() == this->ActiveContexts.size())
     }
 
@@ -194,7 +193,7 @@ void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */) noexcept
     return;
 }
 
-std::optional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
+std::optional<bool> Jafg::LUserInput::PopContexts() noexcept
 {
     if (this->ContextStack.empty())
     {
@@ -205,10 +204,29 @@ std::optional<Jafg::EInputMode> Jafg::LUserInput::PopContexts() noexcept
     check(this->ContextStack.back().second.empty())
 
     LOG_VERBOSE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.size())
-    EInputMode Result{this->ContextStack.back().first};
+    bool Result{this->ContextStack.back().first};
     this->ContextStack.pop_back();
 
     return Result;
+}
+
+void Jafg::LUserInput::SetConsumeMouse(bool bConsume) noexcept
+{
+    check(Tasks::IsOnMasterThread())
+
+    if (this->bConsumeMouse == bConsume)
+    {
+        return;
+    }
+    this->bConsumeMouse = bConsume;
+    LOG_VERBOSE(LogUserInput, "Setting consume mouse to [{}].", bConsume)
+
+    if (this->_bCurrentlyConsuming)
+    {
+        this->Viewport.GetSurface().SetInputMode(this->bConsumeMouse ? EInputModeBits::HideMouseCursor : EInputModeBits::ShowMouseCursor);
+    }
+
+    return;
 }
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& ActingController, TArray<LRawInput>* Inputs, EInputActionTriggerBits TriggerMask)
@@ -218,7 +236,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& 
     check(Inputs)
     check(TriggerMask != EInputActionTriggerBits::Identity)
 
-    LUserInputRegistry const& Registry{this->Surface->GetLocalEgo().GetUserInputRegistry()};
+    LUserInputRegistry const& Registry{this->Viewport.GetSurface().GetLocalEgo().GetUserInputRegistry()};
     for (auto ContextName : this->ActiveContexts)
     {
         auto& Context{*Registry.GetContextByNameChecked(ContextName)};
@@ -306,7 +324,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& 
                 if (Value.IsNonZero())
                 {
                     if (auto Result{Action.Callback({
-                        .Viewport = this->Surface->GetViewport(),
+                        .Viewport = this->Viewport,
                         .Controller = ActingController,
                         .UserInput = *this,
                         }, Value)}; Result.bDirty)

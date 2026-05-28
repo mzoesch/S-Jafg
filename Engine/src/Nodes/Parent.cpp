@@ -129,7 +129,7 @@ Jafg::LNodeReply Jafg::WParent::OnKeyEventUnfocused(LNodeKeyEventInfo const& Inf
     for (auto& Child : this->Children)
     {
         check(Child.get())
-        if (Child->ShouldCheckForInputs() && Child->AabbTest({.Translation=Info.Translation}, Info.Surface.GetMouseLocationValue()))
+        if (Child->ShouldCheckForInputs() && Child->AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
         {
             if (auto Reply{Child->OnKeyEventUnfocused(Info, Event)}; Reply.IsHandled())
             {

@@ -16,6 +16,7 @@ bool Jgc::ADebugCameraComponent::ActivateUserInputContext() const noexcept
         {
             bool b1{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("RhiDebug"))};
             bool b2{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"))};
+            Lackey->GetUserInput().SetConsumeMouse(true);
             return b1 && b2;
         }
     }

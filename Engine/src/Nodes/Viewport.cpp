@@ -119,7 +119,11 @@ void Jafg::LViewport::DispatchInputs()
         }
     }
 
-    auto CursorLocation{this->Surface.GetMouseLocation()};
+    std::optional<LVec2F> CursorLocation;
+    if (this->Surface.HasMouseLocationForOrtho())
+    {
+        CursorLocation = this->Surface.GetMouseLocationValue();
+    }
 
     if (CursorLocation.has_value())
     {
@@ -253,6 +257,8 @@ void Jafg::LViewport::DispatchInputs()
 void Jafg::LViewport::Tick()
 {
     STAT_CYCLE_FUNCTION()
+
+    this->OnEarlyTick.Broadcast();
 
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
