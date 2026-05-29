@@ -788,7 +788,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
         {
             check( Thread.Thread.has_value())
             Thread.Runnable->Stop(ERunnableStopReason::EngineTermination);
-            auto TimeBeforeJoin{std::chrono::high_resolution_clock::now()};
+            auto TimeBeforeJoin{algo::now()};
             if (Thread.Thread->joinable())
             {
                 Thread.Thread->join();

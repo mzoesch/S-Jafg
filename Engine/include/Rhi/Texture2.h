@@ -99,8 +99,8 @@ struct LTexture2 final
     FORCEINLINE constexpr auto GetWidth() const noexcept { return this->Meta.Extent.width; }
     FORCEINLINE constexpr auto GetHeight() const noexcept { return this->Meta.Extent.height; }
     FORCEINLINE constexpr auto GetFormat() const noexcept { return this->Meta.Format; }
-    FORCEINLINE constexpr auto GetChannelsPerPixel() const noexcept { return Vk_GetChannelsPerPixel(this->GetFormat()); }
-    FORCEINLINE constexpr auto GetBytesPerPixel() const noexcept { return Vk_GetBytesPerPixel(this->GetFormat()); }
+    FORCEINLINE constexpr auto GetChannelsPerPixel() const noexcept { return rhi::vk_channels_per_pixel(this->GetFormat()); }
+    FORCEINLINE constexpr auto GetBytesPerPixel() const noexcept { return rhi::vk_bytes_per_pixel(this->GetFormat()); }
     FORCEINLINE constexpr u32  GetMipLevels() const noexcept { return this->Meta.MipLevels; }
     FORCEINLINE constexpr auto GetSamplesPerTexel() const noexcept { return this->Meta.Samples; }
 

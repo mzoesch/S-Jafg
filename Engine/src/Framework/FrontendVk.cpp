@@ -256,7 +256,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
 }
 #endif /* !JAFG_IN_SHIPPING */
 
-void Jafg::Detail::FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation Allocation) noexcept
+void Jafg::Detail::FreeDeviceAllocation(vk::Buffer Handle, rhi::device_allocation Allocation) noexcept
 {
     if (JAFG_LIKELY(GEngine))
     {
@@ -284,7 +284,7 @@ void Jafg::Detail::FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation All
     return;
 }
 
-void Jafg::Detail::FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allocation) noexcept
+void Jafg::Detail::FreeDeviceAllocation(vk::Image Handle, rhi::device_allocation Allocation) noexcept
 {
     if (JAFG_LIKELY(GEngine))
     {
@@ -995,7 +995,7 @@ Jafg::LDeviceImage Jafg::LFrontendVk::Vk_CreateDeviceLocalImage(vk::ImageCreateI
 Jafg::LDeviceImage Jafg::LFrontendVk::Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info) const
 {
     check(Info.Data)
-    auto N{static_cast<size_t>(Vk_GetBytesPerPixel(Info.Info.format) * Info.Info.extent.width * Info.Info.extent.height)};
+    auto N{static_cast<std::size_t>(rhi::vk_bytes_per_pixel(Info.Info.format) * Info.Info.extent.width * Info.Info.extent.height)};
     auto StagingBuffer{this->Vk_CreateMappedBuffer({.size = N, .usage = vk::BufferUsageFlagBits::eTransferSrc})};
     std::memcpy(StagingBuffer.GetData(), Info.Data, N);
 
@@ -1352,7 +1352,7 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
         panic("Failed to find a suitable physical device.")
     }
 
-    if (const auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PreferredPhysicalDevice.empty() == false)
+    if (const auto& Prefs{GetSingleton<JUserPreferences>()}; !Prefs.PreferredPhysicalDevice->empty())
     {
         for (auto const& [Rating, PhysicalDevice] : this->Vk_AvailablePhysicalDevices)
         {
@@ -1360,10 +1360,9 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
             {
                 if (Rating == 0)
                 {
-                    LOG_WARNING(LogVulkan, "Preferred physical device [{}] found but is no longer suitable. Clearing user prefs and falling back to best rated device.",
+                    LOG_WARNING(LogVulkan, "Preferred physical device [{}] found but is no longer suitable. Falling back to best rated device.",
                         Prefs.PreferredPhysicalDevice
                         )
-                    algo::orphan(&GetMutableSingleton<JUserPreferences>().PreferredPhysicalDevice);
                 }
                 else
                 {
@@ -1377,10 +1376,9 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
             continue;
         }
 
-        LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Clearing user prefs and falling back to best rated device.",
+        LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Falling back to best rated device.",
             Prefs.PreferredPhysicalDevice
             )
-        algo::orphan(&GetMutableSingleton<JUserPreferences>().PreferredPhysicalDevice);
     }
 
     if (!*this->Vk_PhysicalDevice)

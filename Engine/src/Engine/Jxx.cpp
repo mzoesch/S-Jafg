@@ -410,7 +410,7 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
     }
 
     auto& Class{const_cast<LJxxClass&>(this->GetVirtualTable())};
-    LOG_VERBOSE(LogObjectInternal, "Pulling config for [{}]", this->GetNameAsString())
+    LOG_VERBOSE(LogObjectInternal, "[{}{}]: Pulling config.", Path, this->GetNameAsString())
     check(Class.IsConfig())
 
     Detail::GMutableEngine->Config.PullConfigFile(Path);
@@ -420,6 +420,9 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
         {
             if (auto It{algo::find(Class.GetMutableFieldsDangerous(), Key, &LJxxClassField::Identifier)}; It != Class.GetFields().end())
             {
+                LOG_VERBOSE(LogObjectInternal, "[{}{}]: Overriding entry [{}] from [{}] to [{}]."
+                    , Path, this->GetNameAsString(), Key, It->Get(*this), Value
+                    )
                 It->Set(this, Value);
             }
         }
@@ -439,14 +442,28 @@ void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
     }
 
     auto& Class{this->GetVirtualTable()};
-    LOG_VERBOSE(LogObjectInternal, "Pushing config for [{}]", this->GetNameAsString())
+    LOG_VERBOSE(LogObjectInternal, "[{}{}]: Pushing config.", Path, this->GetNameAsString())
     check(Class.IsConfig())
 
     std::unordered_map<LString, LString> Entries;
     Entries.reserve(Class.GetFields().size());
     for (LJxxClassField const& Field : Class.GetFields())
     {
-        Entries[LString{Field.Identifier}] = Field.Get(*this);
+        check(Field.IsModified && Field.Get)
+        if (Field.IsModified(*this))
+        {
+            LOG_VERBOSE(LogObjectInternal, "[{}{}]: Updating entry [{}] to latest since it is modified."
+                , Path, this->GetNameAsString(), Field.Identifier)
+            Entries[LString{Field.Identifier}] = Field.Get(*this);
+        }
+        else
+        {
+            if (Detail::GMutableEngine->Config.RemoveConfigValue(Path, this->GetNameAsString(), LString{Field.Identifier}))
+            {
+                LOG_VERBOSE(LogObjectInternal, "[{}{}]: Removing entry [{}] since it is not modified anymore."
+                    , Path, this->GetNameAsString(), Field.Identifier)
+            }
+        }
     }
     if (!Entries.empty())
     {

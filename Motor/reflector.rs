@@ -477,7 +477,8 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
 .reflexive_emplace_back(::Jafg::LJxxClassField{{                                           \
     /* Field Name   */ "{member}",                                                            \
     /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
-    /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}) \
+    /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
+    /* Filed Modified */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(_JAFG_OHGCRCHD_TObj, {member}) \
 }})                                                                                            \
 "##));
         }

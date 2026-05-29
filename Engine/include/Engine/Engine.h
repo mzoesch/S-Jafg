@@ -97,7 +97,7 @@ struct LWorldTrackInitializer final
     //#
     //# Browse the world after initialization. This is required.
     //#
-    LWorld& Browse(LString Url, LWorldTrack::LCallbacks Callbacks = {});
+    inline LWorld& Browse(LString Url, LWorldTrack::LCallbacks Callbacks = {});
 
 private:
 
@@ -174,7 +174,7 @@ public:
 
     ENGINE_API  bool CanEverRender() const noexcept;
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
 
     FORCEINLINE LLocalEgo& GetLocalEgo() noexcept { return this->LocalEgo; }
     FORCEINLINE LLocalEgo const& GetLocalEgo() const noexcept { return this->LocalEgo; }
@@ -183,7 +183,7 @@ private:
 
     LLocalEgo LocalEgo;
 
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
 public:
 

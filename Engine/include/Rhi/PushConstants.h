@@ -88,14 +88,14 @@ inline void AddPushConstantProvider() noexcept
 {
     if constexpr (requires {TPushConstant::AutoActorPush;})
     {
-        AddPushConstantProviderImpl(LString{GetTypeName<TPushConstant>()}, LPushConstantSigs{
+        AddPushConstantProviderImpl(LString{algo::type_name<TPushConstant>()}, LPushConstantSigs{
             .Provider = &PushConstantProvider<TPushConstant>.operator(),
             .AutoActorPush = &TPushConstant::AutoActorPush
             });
     }
     else
     {
-        AddPushConstantProviderImpl(LString{GetTypeName<TPushConstant>()}, LPushConstantSigs{
+        AddPushConstantProviderImpl(LString{algo::type_name<TPushConstant>()}, LPushConstantSigs{
             .Provider = &PushConstantProvider<TPushConstant>.operator()
             });
     }

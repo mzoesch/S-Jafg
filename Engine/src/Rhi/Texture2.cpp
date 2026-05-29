@@ -46,7 +46,7 @@ Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanR
     }
     else if (SrcFormat == vk::Format::eR8G8B8Unorm && Info.Format == vk::Format::eR8G8B8A8Srgb)
     {
-        Tex.MipMap0.Allocate(Vk_GetBytesPerPixel(Info.Format) * Tex.GetWidth() * Tex.GetHeight());
+        Tex.MipMap0.Allocate(rhi::vk_bytes_per_pixel(Info.Format) * Tex.GetWidth() * Tex.GetHeight());
         for (u32 i{0}; i < Tex.GetWidth() * Tex.GetHeight(); ++i)
         {
             Tex.MipMap0[i * 4 + 0] = Data[i * 3 + 0];
@@ -95,14 +95,14 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
 
     this->Meta.Format = Info.Format;
 
-    auto Bin{ Finder::ReadFileAsBinary(this->Path) };
+    auto Bin{Finder::ReadFileAsBinary(this->Path)};
     LVec2i32 StbiExtent;
     i32 NrChannels;
     ::stbi_set_flip_vertically_on_load(false);
     u8* Data{::stbi_load_from_memory(
           Bin.data(), static_cast<int>(Bin.size())
         , &StbiExtent.x, &StbiExtent.y, &NrChannels
-        , static_cast<i32>(Vk_GetChannelsPerPixel(this->Meta.Format))
+        , static_cast<i32>(rhi::vk_channels_per_pixel(this->Meta.Format))
         )};
     if (stbi_failure_reason())
     {
@@ -111,11 +111,11 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     check(Data && StbiExtent.x > 0 && StbiExtent.y > 0)
 
     if constexpr (IS_COMPILED_LOG(LogRhi, Verbose))
-    if (NrChannels != static_cast<i32>(Vk_GetChannelsPerPixel(Meta.Format)))
+    if (NrChannels != static_cast<i32>(rhi::vk_channels_per_pixel(this->Meta.Format)))
     {
         LOG_TRACE(LogRhi,
             "Potential misuse: Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
-            this->Path, NrChannels, Vk_GetChannelsPerPixel(Meta.Format)
+            this->Path, NrChannels, rhi::vk_channels_per_pixel(this->Meta.Format)
             )
     }
 

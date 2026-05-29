@@ -741,7 +741,7 @@ inline constexpr bool is_range_comparable_v{requires(iterator_t<TRange> Begin, s
     {Comp(Proj(*Begin), Proj(*Sent))} -> std::convertible_to<bool>;
 }};
 
-struct equal_to_weak final
+struct equal_to_weak_fn final
 {
     template<typename TLhs, typename TRhs>
         requires is_weak_eq_v<TLhs, TRhs>
@@ -750,7 +750,8 @@ struct equal_to_weak final
         return Lhs == Rhs;
     }
 };
-struct three_way_weak final
+inline constexpr equal_to_weak_fn equal_to_weak{};
+struct three_way_weak_fn final
 {
     template<typename TLhs, typename TRhs>
         requires is_weak_eq_three_way_v<TLhs, TRhs>
@@ -759,7 +760,8 @@ struct three_way_weak final
         return Lhs <=> Rhs;
     }
 };
-struct less_weak final
+inline constexpr three_way_weak_fn three_way_weak{};
+struct less_weak_fn final
 {
     template<typename TLhs, typename TRhs>
         requires is_weak_eq_lt_v<TLhs, TRhs>
@@ -768,7 +770,8 @@ struct less_weak final
         return Lhs < Rhs;
     }
 };
-struct less_equal_weak final
+inline constexpr less_weak_fn less_weak{};
+struct less_equal_weak_fn final
 {
     template<typename TLhs, typename TRhs>
         requires is_weak_eq_lteq_v<TLhs, TRhs>
@@ -777,7 +780,8 @@ struct less_equal_weak final
         return Lhs <= Rhs;
     }
 };
-struct greater_weak final
+inline constexpr less_equal_weak_fn less_equal_weak{};
+struct greater_weak_fn final
 {
     template<typename TLhs, typename TRhs>
         requires is_weak_eq_gt_v<TLhs, TRhs>
@@ -786,7 +790,8 @@ struct greater_weak final
         return Lhs > Rhs;
     }
 };
-struct greater_equal_weak final
+inline constexpr greater_weak_fn greater_weak{};
+struct greater_equal_weak_fn final
 {
     template<typename TLhs, typename TRhs>
         requires is_weak_eq_gteq_v<TLhs, TRhs>
@@ -795,6 +800,36 @@ struct greater_equal_weak final
         return Lhs >= Rhs;
     }
 };
+inline constexpr greater_equal_weak_fn greater_equal_weak{};
+
+struct lexicographical_string_compare_fn
+{
+    template<range TLhs, range TRhs>
+    NODISCARD FORCEINLINE constexpr bool operator()(TLhs&& Lhs, TRhs&& Rhs) const
+    {
+        auto N{std::min(algo::size(Lhs), algo::size(Rhs))};
+        for (auto Idx{0uz}; Idx < N; ++Idx)
+        {
+            auto LhsLetter{Lhs[Idx]};
+            auto RhsLetter{Rhs[Idx]};
+
+            auto LhsLower{std::tolower(LhsLetter)};
+            auto RhsLower{std::tolower(RhsLetter)};
+
+            if (LhsLower != RhsLower)
+            {
+                return LhsLower < RhsLower;
+            }
+
+            if (LhsLetter != RhsLetter)
+            {
+                return LhsLetter < RhsLetter;
+            }
+        }
+        return algo::size(Lhs) < algo::size(Rhs);
+    }
+};
+inline constexpr lexicographical_string_compare_fn lexicographical_string_compare{};
 
 namespace detail
 {
@@ -813,14 +848,14 @@ struct reflexive_proj_for_weak_stl final
 
 struct sort_weak_fn
 {
-    template<std::random_access_iterator TIter, std::sentinel_for<TIter> TSent, typename TComp=less_weak, typename TProj=identity>
+    template<std::random_access_iterator TIter, std::sentinel_for<TIter> TSent, typename TComp=less_weak_fn, typename TProj=identity>
         requires is_it_comparable_v<TIter, TSent, TComp, TProj>
     constexpr void
     operator()(TIter Begin, TSent Sent, TComp Comp={}, TProj Proj={}) const noexcept
     {
         std::sort(Begin, Sent, reflexive_proj_for_weak_stl{.Comp=std::move(Comp), .Proj=std::move(Proj)});
     }
-    template<random_access_range TRange, typename TComp=less_weak, typename TProj=identity>
+    template<random_access_range TRange, typename TComp=less_weak_fn, typename TProj=identity>
         requires is_range_comparable_v<TRange, TComp, TProj>
     constexpr void
     operator()(TRange&& Range, TComp Comp={}, TProj Proj={}) const noexcept
@@ -878,7 +913,14 @@ NODISCARD FORCEINLINE constexpr auto wfind_pointer(RANGE Container, const auto& 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Time stuff
-typedef std::chrono::high_resolution_clock clock;
+
+//#
+//# Clock used by jafg.
+//# Warning: Do not use high resolution clocks as they are affected by timezones and user preferences
+//# which could lead to irreversible broken engine states.
+//#
+typedef std::chrono::steady_clock clock;
+
 inline decltype(auto) now() noexcept
 {
     return clock::now();
@@ -907,6 +949,29 @@ struct is_base_of_weak : std::true_type{};
 template<typename TBase, typename TDerived>
 struct is_base_of_weak<TBase,TDerived,true> : std::bool_constant<std::is_base_of_v<TBase,TDerived>>{};
 template<typename TBase, typename TDerived> inline constexpr bool is_base_of_weak_v{is_base_of_weak<TBase,TDerived>::value};
+
+template<typename T>
+FORCEINLINE constexpr std::string_view type_name() noexcept
+{
+    constexpr std::string_view Signature{ JAFG_FUNCTION_SIG };
+#if JAFG_WITH_MSVC
+    constexpr std::string_view StructPrefix{ "class std::basic_string_view<char,struct std::char_traits<char> > __cdecl algo::type_name<struct " };
+    constexpr std::string_view ClassPrefix{ "class std::basic_string_view<char,struct std::char_traits<char> > __cdecl algo::type_name<class " };
+    constexpr std::string_view Suffix{ ">(void) noexcept" };
+
+    if (Signature.starts_with(StructPrefix))
+    {
+        return Signature.substr(StructPrefix.size(), Signature.size() - StructPrefix.size() - Suffix.size());
+    }
+    return Signature.substr(ClassPrefix.size(), Signature.size() - ClassPrefix.size() - Suffix.size());
+#elif JAFG_WITH_CLANG || JAFG_WITH_GCC
+    constexpr std::string_view Prefix{ "std::string_view algo::type_name() [T = " };
+    constexpr std::string_view Suffix{ "]" };
+    return Signature.substr(Prefix.size(), Signature.size() - Prefix.size() - Suffix.size());
+#else /* JAFG_WITH_CLANG || JAFG_WITH_GCC */
+    #error "Missing compiler implementation."
+#endif /* !(JAFG_WITH_CLANG || JAFG_WITH_GCC) */
+}
 
 struct raii_leave final
 {

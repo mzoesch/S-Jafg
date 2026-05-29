@@ -121,7 +121,7 @@ ENGINE_API extern TArray<LString> RawCommandLine;
 ENGINE_API extern TArray<LProgramArgument> ProcessedCommandLine;
 
 //# Init time of Jafg. The engine will always use this as the most earliest relative time point.
-ENGINE_API extern std::chrono::high_resolution_clock::time_point StaticContainerInitializationTime;
+ENGINE_API extern algo::clock::time_point StaticContainerInitializationTime;
 
 } /* ~Namespace Detail */
 

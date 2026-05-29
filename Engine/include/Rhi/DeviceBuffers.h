@@ -10,8 +10,8 @@ namespace Jafg
 namespace Detail
 {
 
-ENGINE_API void FreeDeviceAllocation(vk::Buffer Handle, LDeviceAllocation Allocation) noexcept;
-ENGINE_API void FreeDeviceAllocation(vk::Image Handle, LDeviceAllocation Allocation) noexcept;
+ENGINE_API void FreeDeviceAllocation(vk::Buffer Handle, rhi::device_allocation Allocation) noexcept;
+ENGINE_API void FreeDeviceAllocation(vk::Image Handle, rhi::device_allocation Allocation) noexcept;
 
 } /* ~Namespace Jafg::Detail */
 
@@ -22,7 +22,7 @@ struct TGenericDeviceBuffer
     static_assert(sizeof(T) == POINTER_BYTE_SIZE);
 
     constexpr TGenericDeviceBuffer() noexcept : Buffer{nullptr}, Allocation{nullptr} {}
-    constexpr TGenericDeviceBuffer(T InBuffer, LDeviceAllocation InAllocation) noexcept : Buffer{InBuffer}, Allocation{InAllocation} {}
+    constexpr TGenericDeviceBuffer(T InBuffer, rhi::device_allocation InAllocation) noexcept : Buffer{InBuffer}, Allocation{InAllocation} {}
     PROHIBIT_COPY(TGenericDeviceBuffer)
     constexpr TGenericDeviceBuffer(TGenericDeviceBuffer&& Other) noexcept : Buffer{ Other.Buffer }, Allocation{ Other.Allocation }
     {
@@ -47,7 +47,7 @@ struct TGenericDeviceBuffer
 
     FORCEINLINE constexpr T GetBuffer() const noexcept { return this->Buffer; }
     FORCEINLINE constexpr T operator*() const noexcept { return this->Buffer; }
-    FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return this->Allocation; }
+    FORCEINLINE constexpr rhi::device_allocation GetAllocation() const noexcept { return this->Allocation; }
 
     constexpr inline void Release() noexcept
     {
@@ -65,7 +65,7 @@ struct TGenericDeviceBuffer
 private:
 
     T Buffer;
-    LDeviceAllocation Allocation;
+    rhi::device_allocation Allocation;
 };
 
 typedef TGenericDeviceBuffer<vk::Buffer> LDeviceBuffer;
@@ -76,7 +76,7 @@ struct LDetailedDeviceBuffer final : private LDeviceBuffer
 {
     constexpr LDetailedDeviceBuffer() noexcept
         : LDeviceBuffer{}, Info{} {}
-    constexpr LDetailedDeviceBuffer(vk::Buffer InBuffer, LDeviceAllocation InAllocation, LDeviceAllocationInfo&& InInfo) noexcept
+    constexpr LDetailedDeviceBuffer(vk::Buffer InBuffer, rhi::device_allocation InAllocation, rhi::device_allocation_info&& InInfo) noexcept
         : LDeviceBuffer{ InBuffer, InAllocation }, Info{ std::move(InInfo) } {}
     PROHIBIT_COPY(LDetailedDeviceBuffer)
     constexpr LDetailedDeviceBuffer(LDetailedDeviceBuffer&& Other) noexcept
@@ -97,8 +97,8 @@ struct LDetailedDeviceBuffer final : private LDeviceBuffer
 
     FORCEINLINE constexpr vk::Buffer GetBuffer() const noexcept { return LDeviceBuffer::GetBuffer(); }
     FORCEINLINE constexpr vk::Buffer operator*() const noexcept { return LDeviceBuffer::GetBuffer(); }
-    FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
-    FORCEINLINE constexpr LDeviceAllocationInfo const& GetAllocationInfo() const noexcept { return this->Info; }
+    FORCEINLINE constexpr rhi::device_allocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
+    FORCEINLINE constexpr rhi::device_allocation_info const& GetAllocationInfo() const noexcept { return this->Info; }
 
     constexpr inline void Release() noexcept
     {
@@ -114,7 +114,7 @@ struct LDetailedDeviceBuffer final : private LDeviceBuffer
 
 private:
 
-    LDeviceAllocationInfo Info;
+    rhi::device_allocation_info Info;
 };
 
 //# A device buffer that is mapped to host visible memory.
@@ -122,7 +122,7 @@ struct LMappedDeviceBuffer final : private LDeviceBuffer
 {
     constexpr LMappedDeviceBuffer() noexcept
         : LDeviceBuffer{}, Data{nullptr} {}
-    constexpr LMappedDeviceBuffer(vk::Buffer InBuffer, LDeviceAllocation InAllocation, void* InData) noexcept
+    constexpr LMappedDeviceBuffer(vk::Buffer InBuffer, rhi::device_allocation InAllocation, void* InData) noexcept
         : LDeviceBuffer{ InBuffer, InAllocation }, Data{ InData } {}
     PROHIBIT_COPY(LMappedDeviceBuffer)
     constexpr LMappedDeviceBuffer(LMappedDeviceBuffer&& Other) noexcept
@@ -143,7 +143,7 @@ struct LMappedDeviceBuffer final : private LDeviceBuffer
 
     FORCEINLINE constexpr vk::Buffer GetBuffer() const noexcept { return LDeviceBuffer::GetBuffer(); }
     FORCEINLINE constexpr vk::Buffer operator*() const noexcept { return LDeviceBuffer::GetBuffer(); }
-    FORCEINLINE constexpr LDeviceAllocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
+    FORCEINLINE constexpr rhi::device_allocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
     FORCEINLINE constexpr void* GetData() const noexcept { return this->Data; }
 
     constexpr inline void Release() noexcept

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "User/Preferences/PreferenceTypes.h"
+#include "Minimal.afx"
 
 namespace Jafg
 {
@@ -46,3 +46,6 @@ inline constexpr f64 LexToDouble(EApplicationScale Scale) noexcept
 }
 
 } /* ~Namespace Jafg */
+
+JAFG_PREF_OF(Jafg::EPolygonMode)
+JAFG_PREF_OF(Jafg::EApplicationScale)

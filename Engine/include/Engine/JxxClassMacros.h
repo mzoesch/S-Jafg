@@ -251,6 +251,18 @@ ConstructionHelper                                                    \
             (CastedObject); \
     }
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(ObjectType, Name) \
+    [](::Jafg::JCxxClass const& Object) -> bool \
+    {\
+         ObjectType const& CastedObject{*StaticCastChecked< ObjectType >(&Object)}; \
+         return ObjectType ::\
+            JAFG_JOIN_OUTER_TWO(_IsFieldModified_, Name)\
+            (CastedObject); \
+    }
+
 
 #ifndef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION
     #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION( \
@@ -398,6 +410,10 @@ private: /* Restore default visibility. */
     inline static ::LString JAFG_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)(Derived const& Class)                       \
     {                                                                                      \
         return ::Serde::ToString(Class.MyClassMember);                                \
+    } \
+    inline static bool JAFG_JOIN_OUTER_FOUR(_, IsFieldModified, _, MyClassMember)(Derived const& Class)\
+    {\
+        return Class.MyClassMember.IsModified(); \
     }
 
 

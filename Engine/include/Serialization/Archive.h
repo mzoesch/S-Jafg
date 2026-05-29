@@ -124,9 +124,9 @@ struct LIStringArchive final
         {
             if (R.Error.has_value())
             {
-                LOG_ERROR(LogSerialization, "Serialization from string to [{}] failed: ", Jafg::GetTypeName<T>(), *R.Error)
+                LOG_ERROR(LogSerialization, "Serialization from string to [{}] failed: ", algo::type_name<T>(), *R.Error)
             }
-            panicMsgf("Serialization from string to [{}] failed with [{}]", Jafg::GetTypeName<T>(), std::to_underlying(R.Errc))
+            panicMsgf("Serialization from string to [{}] failed with [{}]", algo::type_name<T>(), std::to_underlying(R.Errc))
         }
         return std::forward<decltype(Self)>(Self);
     }
@@ -141,7 +141,7 @@ struct LIStringArchive final
             {
                 if (R.Error.has_value())
                 {
-                    LOG_ERROR(LogSerialization, "Serialization from string to [{}] failed: ", Jafg::GetTypeName<T>(), *R.Error)
+                    LOG_ERROR(LogSerialization, "Serialization from string to [{}] failed: ", algo::type_name<T>(), *R.Error)
                 }
             }
            return false;
@@ -389,6 +389,8 @@ struct TSerializer<T, TArchive>
         }
     }
 };
+
+//# TODO: Is is of course shit. Because we cannot verify the cast. But lets wait for c++26 to fix this...
 template<typename T, typename TArchive> requires std::is_enum_v<T>
     && IsTextIArchive_v<TArchive>
 struct TDeserializer<T, TArchive>

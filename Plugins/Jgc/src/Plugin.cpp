@@ -26,7 +26,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     check(Jafg::Detail::GMutableEngine)
 
     LOG_VERBOSE(LogJgcLifetime, "Creating jgc levels.")
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     if (!Jafg::Detail::GMutableEngine->RegisterLevel
     (
         Jafg::LLevel{
@@ -38,7 +38,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     {
         LOG_WARNING(LogJgcLifetime, "Level [LevelFrontend] is already registered.")
     }
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() != 1)
     {

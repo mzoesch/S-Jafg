@@ -96,6 +96,7 @@ inline std::optional<LString>    TryReadFile(LPath const& File, LString* OutHuma
 inline std::optional<TArray<u8>> TryReadFileAsBinary(LPath const& File, LString* OutHumanReadableError = nullptr);
 
 inline void OverrideFile(LPath const& File, LStringView Content, bool bUseNativeLineEndings = false);
+inline void OverrideFileIfDifferent(LPath const& File, LStringView Content, bool bUseNativeLineEndings = false);
 
 inline void MakeFileBackup(LPath const& File, bool bMakeIfSame = false, i32 Count = 5, LStringView Extension = ".old");
 

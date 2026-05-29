@@ -62,7 +62,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
         }
     }
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     if (!App::Detail::bSuppressCrashDialog && !IsTracerPidValidVerySlow())
     {
         auto EscapeMessage{[](LStringView String)
@@ -123,7 +123,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
     {
         LOG_VERBOSE(LogJafgInternal, "Suppressed jafg crash dialog window.")
     }
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     ///////////////////////////////////////////////////////////////////////////////
     // The final absolute end.

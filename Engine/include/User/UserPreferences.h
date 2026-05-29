@@ -25,33 +25,37 @@ protected:
 
 public:
 
-    enum { UnlimitedFps = 0 };
+    enum { UnlimitedTps = 0 };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Audio
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    TPreference<f32> MasterVolume{ 1.f, 0.f, 1.f };
+    TClampedPreference<f32> MasterVolume{ 1.0f, 0.0f, 1.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> MusicVolume{ 1.f, 0.f, 1.f };
+    TClampedPreference<f32> MusicVolume{ 1.0f, 0.0f, 1.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> MiscVolume{ 1.f, 0.f, 1.f };
+    TClampedPreference<f32> MiscVolume{ 1.0f, 0.0f, 1.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> VoiceVolume{ 1.f, 0.f, 1.f };
+    TClampedPreference<f32> VoiceVolume{ 1.0f, 0.0f, 1.0f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rendering pipeline
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LString PreferredPhysicalDevice;
+    TPreference<LString> PreferredPhysicalDevice;
 
     CLASS_FIELD(Config)
-    TPreference<bool> bVSyncEnabled{ true };
-    //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
+    TPreference<rhi::present_mode> DesiredPresentMode{ rhi::present_mode::Fifo };
+    //#
+    //# The cap for ticks per second.
+    //# If Jafg is running with the local layer then this preference only has an effect if the present mode
+    //# is not blocking.
+    //#
     CLASS_FIELD(Config)
-    TPreference<i32> MaxFps{ UnlimitedFps };
+    TPreference<i32> MaxTps{ UnlimitedTps };
 
     CLASS_FIELD(Config)
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
@@ -174,9 +178,9 @@ public:
     CLASS_FIELD(Config)
     TPreference<LString> EditorLastWorldName{ "Editor World" };
     CLASS_FIELD(Config)
-    TPreference<LString> EditorLastWorldLevelName{ "" };
+    TPreference<LString> EditorLastWorldLevelName;
     CLASS_FIELD(Config)
-    TPreference<bool> EditorAutoLaunchLastWorld{ false };
+    TPreference<bool> EditorAutoLaunchLastWorld;
     CLASS_FIELD(Config)
     TPreference<bool> EditorShowRate{ true };
 
@@ -188,13 +192,13 @@ public:
     //# Additional plugin search paths that are used to fetch plugin info metadata.
     //#
     CLASS_FIELD(Config)
-    TArray<LString> AdditionalPluginsSearchPaths;
+    TPreference<TArray<LString>> AdditionalPluginsSearchPaths;
 
     //#
     //# The plugins that are loaded when the engine loads.
     //#
     CLASS_FIELD(Config)
-    TArray<LString> EnabledEnginePlugins{ "JafgGameplayCore" };
+    TPreference<TArray<LString>> EnabledEnginePlugins{ {"JafgGameplayCore"} };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Storage
@@ -205,7 +209,7 @@ public:
     //# The default ist Saved/Saves.
     //#
     CLASS_FIELD(Config)
-    TArray<LString> AdditionalSavesSearchPaths;
+    TPreference<TArray<LString>> AdditionalSavesSearchPaths;
 };
 
 } /* ~Namespace Jafg */

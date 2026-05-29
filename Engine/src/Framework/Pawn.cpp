@@ -100,13 +100,13 @@ void Jafg::APawn::_SetOwningController(APersonaController* New)
 
     this->OwningController = New;
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     if (New)
     {
         this->NearFrustum = New->GetLocalEgo().GetVariable_FrustumNearPlane();
         this->FarFrustum = New->GetLocalEgo().GetVariable_FrustumFarPlane();
     }
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     for (auto const& Comp : this->GetComponents())
     {

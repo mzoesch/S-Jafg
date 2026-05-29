@@ -257,12 +257,14 @@ NODISCARD FORCEINLINE LRegistryClassPackage& LRegistryPackage::AsClass() noexcep
 
 typedef TFunction2<void(JCxxClass* Object, LStringView Value)> LSetCxxClassField;
 typedef TFunction2<LString(JCxxClass const& Object)> LGetCxxClassField;
+typedef TFunction2<bool(JCxxClass const& Object)> LIsModifiedCxxClassField;
 //# A reflected field for a class.
 struct LJxxClassField final
 {
     LStringView Identifier;
     LSetCxxClassField Set;
     mutable LGetCxxClassField Get;
+    mutable LIsModifiedCxxClassField IsModified;
 };
 
 enum struct EJxxRecordTearDownReason

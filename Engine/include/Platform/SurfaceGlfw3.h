@@ -61,9 +61,6 @@ public:
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
 
-    NODISCARD FORCEINLINE bool CanEverVSync() const noexcept { return true; }
-    ENGINE_API void SetVSync(bool bEnabled);
-    NODISCARD FORCEINLINE bool IsVSync() const noexcept { return this->bVSync; }
     NODISCARD FORCEINLINE bool CanEverResize() const noexcept { return true; }
     ENGINE_API void SetResizable(bool bResizable);
     NODISCARD FORCEINLINE bool IsResizable() const noexcept { return this->bResizable; }
@@ -82,7 +79,6 @@ public:
     FORCEINLINE auto Vk_GetDesiredSurfaceFormat() const noexcept { return this->Vk_DesiredSurfaceFormat; }
 
     FORCEINLINE auto const& Vk_GetAvailablePresentModes() const noexcept { return this->Vk_AvailablePresentModes; }
-    FORCEINLINE auto Vk_GetDesiredPresentMode() const noexcept { return this->Vk_DesiredPresentMode; }
     FORCEINLINE auto const& Vk_GetPresentMode() const noexcept { return this->Vk_PresentMode; }
 
     FORCEINLINE auto _GetWindowFrameSizeTopLeft() const noexcept { return this->WindowFrameSizeTopLeft; }
@@ -147,7 +143,6 @@ private:
     GLFWcursor* Cursor{};
     GLFWwindow* Handle{};
 
-    bool bVSync:1{};
     bool bResizable:1{};
 
     bool bPendingResize{};
@@ -162,8 +157,7 @@ private:
     vk::SurfaceFormatKHR Vk_DesiredSurfaceFormat{.format = vk::Format::eB8G8R8A8Srgb, .colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear};
 
     std::vector<vk::PresentModeKHR> Vk_AvailablePresentModes;
-    vk::PresentModeKHR Vk_DesiredPresentMode{ vk::PresentModeKHR::eMailbox };
-    vk::PresentModeKHR Vk_PresentMode{ vk::PresentModeKHR::eImmediate };
+    vk::PresentModeKHR Vk_PresentMode{ vk::PresentModeKHR::eFifo };
 
     LVec2i32 WindowFrameSizeTopLeft{ maths::zero_vector<LVec2i32> };
     LVec2i32 WindowFrameSizeBottomRight{ maths::zero_vector<LVec2i32> };

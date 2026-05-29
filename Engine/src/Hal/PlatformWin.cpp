@@ -132,7 +132,7 @@ void Jafg::LOnPlatformBreakWindows::OnProgramPanicImpl
 
     ///////////////////////////////////////////////////////////////////////////////
     // Dialog
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     if (App::Private::bGSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
     {
         const LWString Caption{LITERAL_WIDE("Jafg panicked; We are fucked.")};
@@ -149,7 +149,7 @@ void Jafg::LOnPlatformBreakWindows::OnProgramPanicImpl
     {
         LOG_VERBOSE(LogJafgInternal, "Suppressed jafg crash dialog window.")
     }
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     // TODO: Stacktrace
 

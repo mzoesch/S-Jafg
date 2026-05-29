@@ -4,9 +4,9 @@
 
 #include "Minimal.afx"
 
-#if !WITH_LOCAL_LAYER
-    #error "WITH_LOCAL_LAYER is requried."
-#endif /* !WITH_LOCAL_LAYER */
+#if !JAFG_WITH_LOCAL_LAYER
+    #error "JAFG_WITH_LOCAL_LAYER is requried."
+#endif /* !JAFG_WITH_LOCAL_LAYER */
 
 namespace Jafg
 {

@@ -204,7 +204,7 @@ inline std::optional<TArray<u8>> Finder::TryReadFileAsBinary(LPath const& File, 
 
 inline void Finder::OverrideFile(LPath const& File, LStringView Content, bool bUseNativeLineEndings)
 {
-    if (DoesFileExist(File) == false)
+    if (!DoesFileExist(File))
     {
         CreateFile(File, true);
     }
@@ -215,10 +215,44 @@ inline void Finder::OverrideFile(LPath const& File, LStringView Content, bool bU
         std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? static_cast<std::ios::openmode>(0) : std::ios::binary)
     };
 
+    if (!Out)
+    {
+        LOG_FATAL(LogSystem, "[{}]: Failed to open.", File)
+    }
+
     Out.write(&*Content.begin(), Content.size());
     Out.close();
 
-    LOG_TRACE(LogSystem, "File [{}] overridden.", File )
+    LOG_TRACE(LogSystem, "[{}]: File overridden.", File)
+
+    return;
+}
+
+inline void Finder::OverrideFileIfDifferent(LPath const& File, LStringView Content, bool bUseNativeLineEndings)
+{
+    if (!DoesFileExist(File))
+    {
+        OverrideFile(File, Content, bUseNativeLineEndings);
+        return;
+    }
+
+    std::ifstream F{File, std::ios::binary};
+    if (!F)
+    {
+        LOG_FATAL(LogSystem, "[{}]: Failed to open.", File)
+    }
+
+    std::ostringstream Buffer; Buffer << F.rdbuf();
+    F.close();
+
+    if (Buffer.str() != Content)
+    {
+        OverrideFile(File, Content, bUseNativeLineEndings);
+    }
+    else
+    {
+        LOG_TRACE(LogSystem, "[{}]: Skipped file override due to identical content.", File)
+    }
 
     return;
 }

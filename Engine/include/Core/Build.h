@@ -71,10 +71,10 @@
 // Build targets.
 #ifndef JAFG_AS_CLIENT
     #define JAFG_AS_CLIENT                   0
-    #define WITH_LOCAL_LAYER            0
+    #define JAFG_WITH_LOCAL_LAYER            0
 #else /* !JAFG_AS_CLIENT */
     /* This includes everything that cannot be daemonized (rendering, local access layer, etc.). */
-    #define WITH_LOCAL_LAYER            1
+    #define JAFG_WITH_LOCAL_LAYER            1
 #endif /* JAFG_AS_CLIENT */
 #ifndef JAFG_AS_DAEMON
     #define JAFG_AS_DAEMON                   0

@@ -67,13 +67,14 @@ void EngineTick()
     check(GEngine)
     check(Tasks::IsOnMasterThread())
 
-    if (algo::time_diff(GEngine->LastStdOutFlush, std::chrono::high_resolution_clock::now()) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
+    App::Detail::BeginExitIfRequested();
+    Detail::GMutableEngine->DefaultTimeAdvance();
+
+    if (algo::time_diff(GEngine->LastStdOutFlush, GEngine->FrameStartTimePoint) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
     {
         ::FlushLogs();
     }
 
-    App::Detail::BeginExitIfRequested();
-    Detail::GMutableEngine->DefaultTimeAdvance();
     Detail::GMutableEngine->Tick();
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
@@ -297,8 +298,8 @@ EPlatformExit::Type AgnosticLaunch()
 #if JAFG_WITH_FOREIGN_SUPPORT
     STAT_CYCLE_START(AlEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
     JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
-    Detail::GMutableEngine->RefetchPlugins(Prefs.AdditionalPluginsSearchPaths);
-    for (LString const& Plugin : Prefs.EnabledEnginePlugins)
+    Detail::GMutableEngine->RefetchPlugins(*Prefs.AdditionalPluginsSearchPaths);
+    for (LString const& Plugin : *Prefs.EnabledEnginePlugins)
     {
         Detail::GMutableEngine->LoadPluginNoFailure(Plugin);
     }

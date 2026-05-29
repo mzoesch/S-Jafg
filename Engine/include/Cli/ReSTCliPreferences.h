@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Engine/Jxx.h"
-#include "User/Preferences/PreferenceTypes.h"
 #include "ReSTCliPreferences.generated.h"
 
 namespace Jafg

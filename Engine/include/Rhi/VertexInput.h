@@ -42,7 +42,7 @@ extern void AddVertexProviderImpl(LString Name, LDeviceVertexInputStateCreatePro
 template<typename TVertexInput> requires CDeviceVertexInput<TVertexInput>
 inline void AddVertexProvider() noexcept
 {
-    AddVertexProviderImpl(LString{GetTypeName<TVertexInput>()}, &DeviceVertexInputStateCreateProvider<TVertexInput>.operator());
+    AddVertexProviderImpl(LString{algo::type_name<TVertexInput>()}, &DeviceVertexInputStateCreateProvider<TVertexInput>.operator());
 }
 
 } /* ~Namespace Detail */

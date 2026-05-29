@@ -79,9 +79,6 @@ public:
     //# In physical pixels.
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetSurfaceExtent() const noexcept { return this->SurfaceExtent; }
 
-    NODISCARD bool CanEverVSync() const noexcept PURE_VIRTUAL()
-              void SetVSync(const bool bEnabled) PURE_VIRTUAL()
-    NODISCARD bool IsVSync() const noexcept PURE_VIRTUAL()
     NODISCARD bool CanEverResize() const PURE_VIRTUAL()
               void SetResizable(bool bResizable) PURE_VIRTUAL()
     NODISCARD bool IsResizable() const noexcept PURE_VIRTUAL()

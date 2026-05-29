@@ -186,7 +186,6 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     glfwSetInputMode(this->Handle, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
     check(GEngine)
-    this->SetVSync(*GetSingleton<JUserPreferences>().bVSyncEnabled);
 
 #if JAFG_PLATFORM_WINDOWS
     const HWND NativeWindowHandle{glfwGetWin32Window(this->Handle)};
@@ -579,26 +578,6 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
-{
-    check(Tasks::IsOnMasterThread())
-    check(this->Handle)
-
-    if (this->IsVSync() == bEnabled)
-    {
-        return;
-    }
-
-    this->bVSync = bEnabled;
-
-    /* TODO: How to handle this?? */
-
-    // glfwMakeContextCurrent(this->Handle);
-    // glfwSwapInterval(this->bVSync ? 1 : 0);
-
-    return;
-}
-
 void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
 {
     check(Tasks::IsOnMasterThread())
@@ -858,6 +837,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
 
     auto& Frontend{this->GetMutableFrontend()};
+    auto& Prefs{GetSingleton<JUserPreferences>()};
 
     {
         LVec2i32 _FramebufferSize;
@@ -875,10 +855,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         }
     }
 
-    {
-        STAT_QUICK_CYCLE_START("VkDevice.waitIdle")
-        Frontend.Vk_GetDevice().waitIdle();
-    }
+    Frontend._Vk_WaitIdle();
 
     this->Vk_SwapchainImageViews.clear();
     this->Vk_SwapchainImages.clear();
@@ -943,15 +920,14 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     }
 
     {
-        // this->Vk_DesiredPresentMode = vk::PresentModeKHR::eFifo;
-        auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(this->Vk_AvailablePresentModes, this->Vk_DesiredPresentMode)};
-        if (AvailablePresentMode.has_value() == false)
+        auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(this->Vk_AvailablePresentModes, rhi::vk_to_khr_present_mode(*Prefs.DesiredPresentMode))};
+        if (!AvailablePresentMode.has_value())
         {
             // We may always use FIFO as the std guarantees its existence.
             // https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html
             LOG_WARNING(LogVulkan,
                 "Desired present mode [{}] is not available on the current platform. Falling back to FIFO.",
-                vk::to_string(this->Vk_DesiredPresentMode)
+                rhi::to_string(*Prefs.DesiredPresentMode)
                 )
             this->Vk_PresentMode = vk::PresentModeKHR::eFifo;
         }
@@ -1110,7 +1086,7 @@ std::optional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentMod
 
     for (const auto& AvailablePresentMode : AvailablePresentModes)
     {
-        if (AvailablePresentMode == vk::PresentModeKHR::eMailbox)
+        if (AvailablePresentMode == DesiredPresentMode)
         {
             return AvailablePresentMode;
         }

@@ -28,7 +28,7 @@ private:
 
     std::string_view Name;
     bool bStopped = false;
-    std::chrono::high_resolution_clock::time_point BeginTime;
+    algo::clock::time_point BeginTime;
 };
 
 FORCEINLINE LStat::LStat(const std::string_view& InName) noexcept
@@ -36,7 +36,7 @@ FORCEINLINE LStat::LStat(const std::string_view& InName) noexcept
     if (GTracer)
     {
         this->Name = InName;
-        this->BeginTime = std::chrono::high_resolution_clock::now();
+        this->BeginTime = algo::now();
     }
     else
     {

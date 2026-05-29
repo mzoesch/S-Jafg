@@ -299,10 +299,10 @@ void Jafg::LEngine::Initialize()
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JEngineSubsystem>();
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     check(!this->LocalEgo.IsDecommissioned())
     this->LocalEgo.Initialize();
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     return;
 }
@@ -313,9 +313,9 @@ void Jafg::LEngine::Tick()
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     this->LocalEgo.Tick(static_cast<f32>(this->DeltaTime));
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     for (Detail::LWorldTrack& Track : this->Tracks)
     {
@@ -338,12 +338,12 @@ void Jafg::LEngine::Tick()
         continue;
     }
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     for (auto const& Surface : this->LocalEgo.GetFrontend().GetSurfaces())
     {
         Surface->OnRender();
     }
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
 
@@ -363,9 +363,9 @@ void Jafg::LEngine::TearDown()
     }
 #endif /* JAFG_WITH_REST_CLS */
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     this->LocalEgo.GetFrontend()._Vk_WaitIdle();
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     LOG_VERBOSE(LogEngine, "Deallocating {} registered tracks.", this->Tracks.size())
     for (auto const& Track : this->Tracks)
@@ -377,10 +377,10 @@ void Jafg::LEngine::TearDown()
     }
     algo::orphan(&this->Tracks);
 
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     check(this->LocalEgo.IsDecommissioned() == false)
     this->LocalEgo.TearDown();
-#endif /* WITH_LOCAL_LAYER */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     this->Collection.TearDownSubsystems();
     this->Outer.TearDown();
@@ -446,23 +446,53 @@ void Jafg::LEngine::TearDown()
 void Jafg::LEngine::DefaultTimeAdvance()
 {
     STAT_CYCLE_FUNCTION()
-    JUserPreferences const& UserPreferences{GetSingleton<JUserPreferences>()};
+    JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
 
     this->LostDeltaTime = 0.0;
     this->IdleDeltaTime = 0.0;
 
-    if (UserPreferences.bVSyncEnabled == false && UserPreferences.MaxFps != JUserPreferences::UnlimitedFps)
+    if (Prefs.MaxTps != JUserPreferences::UnlimitedTps)
     {
-        if (f64 ElapsedTime{algo::time_diff(App::GetStaticStorageInitializationTime(), algo::clock::now()) - GEngine->FrameStartElapsedTime};
-            ElapsedTime < 1.0 / *UserPreferences.MaxFps)
+#if JAFG_WITH_LOCAL_LAYER
+#if JAFG_DO_CHECKS
+        static bool bNotified{};
+#endif /* JAFG_DO_CHECKS */
+        if (rhi::is_present_mode_blocking(*Prefs.DesiredPresentMode))
         {
-            auto SleepStart{algo::now()};
-            f64 SleepTime{(1.0 / *UserPreferences.MaxFps) - ElapsedTime};
-            App::SleepNoStats(maths::max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
-            this->IdleDeltaTime = algo::time_diff(SleepStart, algo::now());
-            if (this->IdleDeltaTime > this->CurrentStat.HighestIdle)
+#if JAFG_DO_CHECKS
+            if (!bNotified)
             {
-                this->CurrentStat.HighestIdle = this->IdleDeltaTime;
+                bNotified = true;
+                LOG_WARNING(LogEngine, "The desired present mode [{}] is a blocking mode. MaxTps of [{}] is ignored."
+                    , rhi::to_string(*Prefs.DesiredPresentMode), *Prefs.MaxTps)
+            }
+#endif /* JAFG_DO_CHECKS */
+        }
+        else
+#endif /* JAFG_WITH_LOCAL_LAYER */
+        {
+#if JAFG_DO_CHECKS
+            bNotified = false;
+#endif /* JAFG_DO_CHECKS */
+            if (auto ElapsedTime{algo::time_diff(App::GetStaticStorageInitializationTime(), algo::now()) - GEngine->FrameStartElapsedTime};
+                ElapsedTime < 1.0 / *Prefs.MaxTps)
+            {
+                auto SleepStart{algo::now()};
+                f64 IdleTime{maths::max((1.0 / *Prefs.MaxTps) - ElapsedTime, 0.0)};
+                if (constexpr auto Spin{0.001}; IdleTime > Spin)
+                {
+                    App::SleepNoStats(IdleTime - Spin);
+                }
+                while (algo::time_diff(SleepStart, algo::now()) < IdleTime)
+                {
+                    std::this_thread::yield();
+                }
+
+                this->IdleDeltaTime = algo::time_diff(SleepStart, algo::now());
+                if (this->IdleDeltaTime > this->CurrentStat.HighestIdle)
+                {
+                    this->CurrentStat.HighestIdle = this->IdleDeltaTime;
+                }
             }
         }
     }
@@ -516,11 +546,11 @@ void Jafg::LEngine::DefaultTimeAdvance()
 // ReSharper disable once CppMemberFunctionMayBeStatic
 bool Jafg::LEngine::CanEverRender() const noexcept
 {
-#if WITH_LOCAL_LAYER
+#if JAFG_WITH_LOCAL_LAYER
     return true;
-#else /* WITH_LOCAL_LAYER */
+#else /* JAFG_WITH_LOCAL_LAYER */
     return false;
-#endif /* !WITH_LOCAL_LAYER */
+#endif /* !JAFG_WITH_LOCAL_LAYER */
 }
 
 void Jafg::LEngine::RegisterClassOuter(LClassOuter* Outer)

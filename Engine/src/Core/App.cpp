@@ -239,7 +239,7 @@ ENGINE_API bool AlwaysReportCrash{};
 ENGINE_API TArray<LString> RawCommandLine;
 ENGINE_API TArray<LProgramArgument> ProcessedCommandLine;
 
-ENGINE_API std::chrono::high_resolution_clock::time_point StaticContainerInitializationTime{ std::chrono::high_resolution_clock::now() };
+ENGINE_API algo::clock::time_point StaticContainerInitializationTime{ algo::now() };
 
 } /* ~Namespace Jafg::App::Detail */
 

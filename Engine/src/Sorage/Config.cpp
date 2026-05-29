@@ -2,8 +2,10 @@
 
 #include "Storage/Config.h"
 
-//# An iterator over a string that yields each line as a string view.
+namespace
+{
 
+//# An iterator over a string that yields each line as a string view.
 enum struct line_iterator_behavior
 {
     Primitive,
@@ -115,9 +117,11 @@ private:
     std::string_view String;
 };
 
+} /* ~Namespace <Anonymous> */
+
 void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
 {
-    if (Finder::DoesFileExist(Path) == false)
+    if (!Finder::DoesFileExist(Path))
     {
         this->Map[Path];
         return;
@@ -135,19 +139,19 @@ void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
 
         if (LineStrView.starts_with('['))
         {
-            if (LineStrView.ends_with(']') == false)
+            if (!LineStrView.ends_with(']'))
             {
-                LOG_FATAL(LogConfigIo, "Malformed config file [{}]. Section header does not end with ']'. Line: [{}]", Path, Line)
+                LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. Section header does not end with ']'. Line: [{}]", Path, Line)
             }
             LineStrView = LineStrView.substr(1, LineStrView.size() - 2);
             if (LineStrView.empty())
             {
-                LOG_FATAL(LogConfigIo, "Malformed config file [{}]. Section header is empty. Line: [{}]", Path, Line)
+                LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. Section header is empty. Line: [{}]", Path, Line)
             }
             LString LineStr{LineStrView};
             if (ImportedSections.contains(LineStr))
             {
-                LOG_FATAL(LogConfigIo, "Malformed config file [{}]. Section header [{}] is duplicated. Line: [{}]", Path, LineStr, Line)
+                LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. Section header [{}] is duplicated. Line: [{}]", Path, LineStr, Line)
             }
 
             ImportedSections[LineStr];
@@ -162,18 +166,18 @@ void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
             {
                 continue;
             }
-            LOG_FATAL(LogConfigIo, "Malformed config file [{}]. No '=' found in entry. Line: [{}]", Path, Line)
+            LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. No '=' found in entry. Line: [{}]", Path, Line)
         }
 
         if (CurrentEntries == nullptr)
         {
-            LOG_FATAL(LogConfigIo, "Malformed config file [{}]. No section header found before entry. Line: [{}]", Path, Line)
+            LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. No section header found before entry. Line: [{}]", Path, Line)
         }
 
         LString Key{LineStrView.substr(0, EqualSignIdx)};
         if (Key.empty())
         {
-            LOG_FATAL(LogConfigIo, "Malformed config file [{}]. Key is empty. Line: [{}]", Path, Line)
+            LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. Key is empty. Line: [{}]", Path, Line)
         }
 
         LString Value;
@@ -192,7 +196,7 @@ void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
                 }
                 else
                 {
-                    LOG_FATAL(LogConfigIo, "Malformed config file [{}]. Invalid escape sequence '\\{}'. Line: [{}]", Path, C, Line)
+                    LOG_FATAL(LogConfigIo, "[{}]: Malformed config file. Invalid escape sequence '\\{}'. Line: [{}]", Path, C, Line)
                 }
                 bEscaped = false;
             }
@@ -211,14 +215,14 @@ void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
         if (CurrentEntries->contains(Key))
         {
             LOG_FATAL(LogConfigIo
-                , "Malformed config file [{}]. Key [{}] is a duplicate. Line: [{}]"
+                , "[{}]: Malformed config file. Key [{}] is a duplicate. Line: [{}]"
                 , Path, Key, Line
                 )
         }
         (*CurrentEntries)[Key] = std::move(Value);
     }
 
-    if (ImportedSections.empty() == false)
+    if (!ImportedSections.empty())
     {
         this->Map[Path] = std::move(ImportedSections);
     }
@@ -228,26 +232,50 @@ void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
 
 void Jafg::LConfig::PushConfigFile(LPath const& Path)
 {
-    if (Finder::DoesFileExist(Path) == false)
+    check(this->Map.contains(Path))
+
+    if (!Finder::DoesFileExist(Path))
     {
         Finder::CreateFile(Path);
     }
 
-    std::stringstream Content;
-    for (auto const& [Section, Entries] : this->Map[Path])
+    TArray<LString> Sections; Sections.reserve(this->Map[Path].size());
+    for (auto const& Section: this->Map[Path] | std::views::keys)
     {
-        check( Section.contains('\\') == false
-            && Section.contains('\n') == false
-            && Section.contains('[')  == false
-            && Section.contains(']')  == false
+        Sections.emplace_back(Section);
+    }
+    algo::sort(Sections, algo::lexicographical_string_compare);
+
+    std::stringstream Content;
+    for (LString const& Section : Sections)
+    {
+        check( !Section.contains('\\')
+            && !Section.contains('\n')
+            && !Section.contains('[')
+            && !Section.contains(']')
             )
-        Content << "[" << Section << "]\n";
-        for (auto const& [Key, Value] : Entries)
+        TArray<LString> Entries; Entries.reserve(this->Map[Path][Section].size());
+        for (auto const& Entry : this->Map[Path][Section] | std::views::keys)
         {
-            check( Key.contains('\\') == false
-                && Key.contains('\n') == false
-                && Key.contains('[')  == false
-                && Key.contains(']')  == false
+            Entries.emplace_back(Entry);
+        }
+
+        if (Entries.empty())
+        {
+            continue;
+        }
+
+        Content << "[" << Section << "]\n";
+
+        algo::sort(Entries, algo::lexicographical_string_compare);
+        for (LString const& Key : Entries)
+        {
+            auto& Value{this->Map[Path][Section][Key]};
+
+            check( !Key.contains('\\')
+                && !Key.contains('\n')
+                && !Key.contains('[')
+                && !Key.contains(']')
                 )
             Content << Key << "=";
             for (char C : Value)
@@ -269,7 +297,7 @@ void Jafg::LConfig::PushConfigFile(LPath const& Path)
         }
     }
 
-    Finder::OverrideFile(Path, Content.str());
+    Finder::OverrideFileIfDifferent(Path, Content.str());
 
     return;
 }

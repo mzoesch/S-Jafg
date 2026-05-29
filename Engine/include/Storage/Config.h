@@ -20,14 +20,14 @@ struct LConfig final
     //# Only pulls the config file if it was not pulled before.
     inline void PullConfigFile(LPath const& Path)
     {
-        if (this->Map.contains(Path) == false)
+        if (!this->Map.contains(Path))
         {
             this->ForcePullConfigFile(Path);
         }
     }
     //#
     //# Always pulls the config file and overwrites any existing values.
-    //# Values that exists here but on in the file will *not* be erased.
+    //# Values that exists here but not in the file will *not* be erased.
     //#
     ENGINE_API void ForcePullConfigFile(LPath const& Path);
 
@@ -43,6 +43,17 @@ struct LConfig final
     inline void SetConfigValue(LPath const& Path, LString const& Section, LString const& Key, LString Value)
     {
         this->Map[Path][Section][Key] = std::move(Value);
+    }
+    inline bool RemoveConfigValue(LPath const& Path, LString const& Section, LString const& Key) noexcept
+    {
+        if (auto It1{this->Map.find(Path)}; It1 != this->Map.end())
+        {
+            if (auto It2{It1->second.find(Section)}; It2 != It1->second.end())
+            {
+                return It2->second.erase(Key) > 0;
+            }
+        }
+        return false;
     }
     inline std::optional<LString> GetConfigValue(LPath const& Path, LString const& Section, LString const& Key) const
     {
