@@ -629,46 +629,17 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
 
 void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
 {
-    if (!this->bMouseInsideSurface)
+    if (this->bMouseInsideSurface)
+    {
+        this->MouseLocation = {XPos,YPos};
+    }
+    else
     {
         //#
         //# So some platforms allow this. But not all. To preserve consistency across all platforms,
         //# We discard this input.
         //#
         this->MouseLocation.reset();
-        return;
-    }
-
-    if (this->IsShowMouseCursor())
-    {
-        this->MouseLocation = {XPos,YPos};
-        return;
-    }
-
-    if (!this->MouseLocation.has_value())
-    {
-        this->MouseLocation = {XPos,YPos};
-        return;
-    }
-
-    LVec2D Offset{XPos - this->MouseLocation->x, this->MouseLocation->y - YPos};
-    this->MouseLocation = {XPos,YPos};
-
-    if (Offset.x != 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseX), &LRawInput::PhysicalKey))
-    {
-        this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseX),
-            .Value = static_cast<f32>(Offset.x),
-            .State = ERawInputStateBits::Press,
-            });
-    }
-    if (Offset.y != 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseY), &LRawInput::PhysicalKey))
-    {
-        this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseY),
-            .Value = static_cast<f32>(Offset.y),
-            .State = ERawInputStateBits::Press,
-            });
     }
 
     return;

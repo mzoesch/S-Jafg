@@ -9,7 +9,31 @@ void Jafg::LSurfaceBase::BeginNewFrame()
     this->PlatformInput.clear();
     this->DecayInputs();
 
+    auto LastMouseLocation{this->MouseLocation};
     this->AsSurface()->PollPlatformEvents();
+
+    if (!this->IsShowMouseCursor() && LastMouseLocation && this->MouseLocation)
+    {
+        LVec2D Offset{this->MouseLocation->x - LastMouseLocation->x, LastMouseLocation->y - this->MouseLocation->y};
+        if (Offset.x != 0.0f)
+        {
+            check(!algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseX), &LRawInput::PhysicalKey))
+            this->UpdateKeyState({
+                .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseX),
+                .Value = static_cast<f32>(Offset.x),
+                .State = ERawInputStateBits::Press,
+                });
+        }
+        if (Offset.y != 0.0f)
+        {
+            check(!algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseY), &LRawInput::PhysicalKey))
+            this->UpdateKeyState({
+                .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseY),
+                .Value = static_cast<f32>(Offset.y),
+                .State = ERawInputStateBits::Press,
+                });
+        }
+    }
 
     for (auto const& Input : this->VirtualInput)
     {
