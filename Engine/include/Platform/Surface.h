@@ -24,7 +24,7 @@ class LLocalEgo;
 
 struct LSurfaceCreateInfo
 {
-    bool bFullScreen           = false;
+    bool bFullscreen           = false;
     bool bResizable            = true;
     bool bBorderless           = false;
     // bool bUseNativeResolution  = true;

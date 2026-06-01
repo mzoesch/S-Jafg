@@ -58,7 +58,7 @@ void Jafg::WParent::Draw(LNodeRenderInfo const& Info) const
 
 Jafg::LNodeReply Jafg::WParent::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {
-    if (this->CanChildrenBeHitTestable())
+    if (Info.bSweepChildren && this->CanChildrenBeHitTestable())
     {
         LNodeSweepInfo ChildInfo{.Translation=Info.Translation + Info.ChildTranslationHint,};
         for (auto It{this->Children.rbegin()}; It != this->Children.rend(); ++It)
@@ -83,25 +83,28 @@ Jafg::LNodeReply Jafg::WParent::Sweep(LNodeSweepInfo const& Info, std::optional<
 
     LNodeReply Result;
     auto It{this->Children.rbegin()};
-    for (;It != this->Children.rend(); ++It)
+    if (Info.bSweepChildren)
     {
-        check(It->get())
-        if ((*It)->ShouldCheckForInputs())
+        for (;It != this->Children.rend(); ++It)
         {
-            if (auto Reply{(*It)->Sweep(ChildInfo, Location)}; Reply.IsHandled())
+            check(It->get())
+            if ((*It)->ShouldCheckForInputs())
             {
-                Result = Reply;
-                ++It;
-                break;
+                if (auto Reply{(*It)->Sweep(ChildInfo, Location)}; Reply.IsHandled())
+                {
+                    Result = Reply;
+                    ++It;
+                    break;
+                }
             }
+            else if ((*It)->_GetNodeState() & Detail::NodeStateSwept)
+            {
+                auto Reply{(*It)->Sweep(ChildInfo, {})};
+                check(!((*It)->_GetNodeState() & Detail::NodeStateSwept))
+                check(!Reply.IsHandled())
+            }
+            continue;
         }
-        else if ((*It)->_GetNodeState() & Detail::NodeStateSwept)
-        {
-            auto Reply{(*It)->Sweep(ChildInfo, {})};
-            check(!((*It)->_GetNodeState() & Detail::NodeStateSwept))
-            check(!Reply.IsHandled())
-        }
-        continue;
     }
     for (;It != this->Children.rend(); ++It)
     {

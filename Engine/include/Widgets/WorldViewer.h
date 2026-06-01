@@ -12,11 +12,21 @@
 namespace Jafg
 {
 
-//# A widget to view a world in a primitive manner.
+class WText;
+class WTextBox;
+class WTextButton;
+class WHButton;
+class WVButton;
+class WWorldViewer;
+class WWorldViewerHierarchy;
+
+//# A widget to perspectively view a world in a primitive manner.
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WWorldViewer : public WUserWidget, public LLocalLackey
 {
     GENERATED_CLASS_BODY()
+
+    friend WWorldViewerHierarchy;
 
     inline static constexpr rhi::extent2 DefaultExtent{640,480};
 
@@ -74,6 +84,9 @@ public:
 
     void OnPerspectiveDepthTestChanged();
 
+    NODISCARD FORCEINLINE constexpr bool HasHierarchy() const noexcept { return this->Hierarchy != nullptr; }
+    NODISCARD FORCEINLINE constexpr WWorldViewerHierarchy* GetHierarchy() const noexcept { return this->Hierarchy; }
+
 private:
 
     void InitializeRenderTarget();
@@ -105,6 +118,59 @@ private:
     // the user.
     //
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
+
+    WWorldViewerHierarchy* Hierarchy{};
+};
+
+//#
+//# A widget to view a world in a hierarchical manner.
+//# Each viewer can have exact one hierarchy widget and each hierarchical widget can only connect to one world viewer.
+//#
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WWorldViewerHierarchy : public WUserWidget
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WWorldViewerHierarchy)
+
+public:
+
+    JAFG_DEFAULT_TAB_CANDIDATE("Hierarchy", "Icons/Jafg.Hierarchy")
+
+    virtual void Construct() override;
+    virtual void Destruct() override;
+
+    void OnWorldViewerUpdate();
+
+private:
+
+    WWorldViewer* FindSmart() const noexcept;
+    WWorldViewer* FindInViewport(LViewport const& Viewport) const noexcept;
+    WWorldViewer* FindInNode(WNode& Node) const noexcept;
+
+    static inline constexpr LNodeSize2 TypeSize{128_spt, 0.0f};
+    static inline constexpr LWhitespace ListPadding{20_spt, 0.0f};
+    WParent* Container;
+
+    WWorldViewer* WorldViewer{};
+    WText* ConnectedText{};
+    void UpdateConnectedArea();
+    void UpdateWorldObjectList();
+    void OnWorldObjectListKeyEventFocus(WHButton& Self, AActor& Actor, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+
+    WTextBox* SelectedWorldObjectText{};
+    void UpdateSelectedWorldObjectText(std::size_t Count, std::size_t Selected);
+
+    inline LWorld* GetWorld() const noexcept
+    {
+        if (this->WorldViewer && this->WorldViewer->IsOwnedPersonaControllerValid())
+        {
+            return &this->WorldViewer->GetOwnedPersonaControllerChecked()->GetWorld();
+        }
+        return nullptr;
+    }
 };
 
 } /* ~Namespace Jafg */

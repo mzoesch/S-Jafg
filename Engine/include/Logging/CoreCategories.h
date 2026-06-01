@@ -46,6 +46,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogCli,                          JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogConfigIo,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogController,                   JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogEcs,                          JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogEditor,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogEgo,                          JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogEngine,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogFontSubsystem,                JAFG_LOG_DEFAULT_VERBOSITY                             )

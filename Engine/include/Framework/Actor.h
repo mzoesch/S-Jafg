@@ -17,16 +17,29 @@ class ENGINE_API AActor : public AWorldObject, private LTickableObject
 
 protected:
 
-    // DEFAULT_WORLD_CONSTRUCTORS(AActor)
-
-    DEFAULT_WORLD_DYNAMIC_CTOR(AActor)
-    DEFAULT_WORLD_STATIC_CTOR(AActor)
+    explicit AActor(LWorldDynamicInit const& Init) noexcept : Super{Init}
+        , DisplayName{Init.Class.GetFullyQualifiedName()}
+    {
+    }
+    template<typename TCxxClass>
+    explicit AActor(TWorldStaticInit<TCxxClass> const& Init) noexcept : Super{Init}
+        , DisplayName{TCxxClass::StaticClass().GetFullyQualifiedName()}
+    {
+    }
 
 public:
 
     virtual void BeginLife() override;
     virtual void Tick(f32 Dt) override { check(this->bLives && this->_IsGarbage() == false) }
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
+
+#if JAFG_WITH_LOCAL_LAYER
+    //#
+    //# DisplayName is for editor purposes only. Do not query for it, try to find objects with the name.
+    //# A display name can change at any time and might be localized ect.
+    //#
+    LString DisplayName;
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     template<typename TActorComponent> requires std::is_base_of_v<AActorComponent, TActorComponent>
     FORCEINLINE TActorComponent* EmplaceComponent(TFunction<void(TActorComponent& Comp)> const& Callback = {})

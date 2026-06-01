@@ -284,7 +284,7 @@ struct TDeserializer<TArray<T>, TArchive>
     }
 };
 
-template<typename T, typename TArchive> requires((std::is_same_v<T, LString> || std::is_same_v<T, LStringView>)
+template<typename T, typename TArchive> requires((std::is_same_v<T, LString> || std::is_same_v<T, LPath> || std::is_same_v<T, LStringView>)
     && IsTextOArchive_v<TArchive>)
 struct TSerializer<T, TArchive>
 {
@@ -297,6 +297,15 @@ template<typename TArchive> requires IsTextIArchive_v<TArchive>
 struct TDeserializer<LString, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, LString& Field) const noexcept
+    {
+        Field.assign(Ar.Stream);
+        return {};
+    }
+};
+template<typename TArchive> requires IsTextIArchive_v<TArchive>
+struct TDeserializer<LPath, TArchive>
+{
+    LDeserializationResult operator()(TArchive const& Ar, LPath& Field) const noexcept
     {
         Field.assign(Ar.Stream);
         return {};

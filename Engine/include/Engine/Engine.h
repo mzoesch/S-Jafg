@@ -63,7 +63,7 @@ struct LWorldTrack final
     {
         check(this->ChildWorld.get() && this->ChildWorld->GetWorldState() == EWorldState::PreInitializing)
     }
-    constexpr ~LWorldTrack() noexcept { check(this->ChildWorld.get() || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill) }
+    constexpr ~LWorldTrack() noexcept { check(!this->ChildWorld.get() || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill) }
 
     NODISCARD FORCEINLINE constexpr bool IsWaitingForTravel() const noexcept { return !this->TravelUrl.empty(); }
     FORCEINLINE bool IsValid() const noexcept { return !!this->ChildWorld.get(); }

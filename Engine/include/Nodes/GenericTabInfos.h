@@ -5,6 +5,7 @@
 #include "Nodes/Node.h"
 #include "Nodes/UserWidget.h"
 #include "Rhi/Texture2.h"
+#include "GenericTabInfos.generated.h"
 
 namespace Jafg
 {
@@ -34,7 +35,7 @@ concept CTabSelectorCandidate = requires
 //# Use this struct to describe a tap you want to add to #WTabOverlay.
 struct LTabCreateInfo final
 {
-    LTabSelectorCreateInfo Selector;
+    std::optional<LTabSelectorCreateInfo> Selector;
     std::variant<TSubclassOf<WUserWidget>, TJxxUnique<WUserWidget>> Panel;
 
     decltype(auto) operator+(LTabCreateInfo&& Sibling) && noexcept
@@ -53,6 +54,20 @@ concept CTabCandidate = requires
     { T::TabCreateInfo() } -> std::same_as<LTabCreateInfo>;
 };
 
+DECLARE_JAFG_CLASS()
+class ENGINE_API JTabSelectorInfoRetriever : public JNodeData
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTORS(JTabSelectorInfoRetriever)
+
+public:
+
+    std::optional<LTabSelectorCreateInfo> Selector;
+};
+
 #define JAFG_DEFAULT_TAB_CREATE_INFO() \
     inline static ::Jafg::LTabCreateInfo TabCreateInfo() noexcept \
     { \
@@ -62,8 +77,21 @@ concept CTabCandidate = requires
             }; \
     }
 
+#define JAFG_DEFAULT_TAB_DYNAMIC_RETRIEVER() \
+    virtual ::algo::reply AddData(::Jafg::JNodeData& Data) override \
+    { \
+        if (auto* Retriever{Data.As<::Jafg::JTabSelectorInfoRetriever>()}) \
+        { \
+            check(!Retriever->Selector) \
+            Retriever->Selector = Derived::TabSelectorCreateInfo(); \
+            return ::algo::reply::handled(); \
+        } \
+        return {}; \
+    }
+
 #define JAFG_DEFAULT_TAB_CANDIDATE(InDisplayName, InIcon) \
     JAFG_DEFAULT_TAB_SELECTOR_CREATE_INFO(InDisplayName, InIcon) \
-    JAFG_DEFAULT_TAB_CREATE_INFO()
+    JAFG_DEFAULT_TAB_CREATE_INFO() \
+    JAFG_DEFAULT_TAB_DYNAMIC_RETRIEVER()
 
 } /* ~Namespace Jafg */

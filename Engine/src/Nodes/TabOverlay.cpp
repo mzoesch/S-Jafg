@@ -20,7 +20,6 @@ inline constexpr LColor HighlightColor{0xFF, 0xFF, 0xFF, 0x10,};
 Jafg::LFactoryTabOverlayParent Jafg::LTabOverlayPossibilities::GetNewOverlayParent()
 {
     return NewNode(this->Owner.GetViewport()).Class<WTabOverlayParent>()
-        // .SetInitialState(LInitialHDragRegionState{100_pt,{},100_pt})
         .Anchor(EAnchor::TopLeft)
         .Possibilities(*this)
         .Tint(*GetSingleton<JUserPreferences>().BackgroundColor)
@@ -36,11 +35,17 @@ Jafg::LFactoryTabOverlay Jafg::LTabOverlayPossibilities::GetNewOverlay()
         ;
 }
 
-Jafg::WTabOverlay& Jafg::LTabOverlayPossibilities::FindNewOverlay()
+Jafg::WTabOverlay& Jafg::LTabOverlayPossibilities::FindNewOverlay(f32 Dist /* = {} */)
 {
-    if (auto* Parent{this->Owner.FindNodeInVisiblePath<WTabOverlayParent>()})
+    if (WTabOverlayParent* Parent{this->Owner.FindNodeInVisiblePath<WTabOverlayParent>()})
     {
-        return Parent->AddChild(this->GetNewOverlay().Unique()).AsStatic<WTabOverlay>();
+        auto& Result{Parent->AddChild(this->GetNewOverlay().Unique())};
+        if (Dist != 0.0f)
+        {
+            check(Dist > 0.0f)
+            Parent->SetDistFor(Result, Dist);
+        }
+        return Result.AsStatic<WTabOverlay>();
     }
     this->GetOverlayRoot().AddChild(this->GetNewOverlayParent()
         .Anchor(EAnchor::Fill)
@@ -50,7 +55,7 @@ Jafg::WTabOverlay& Jafg::LTabOverlayPossibilities::FindNewOverlay()
             )
         .Unique()
         );
-    return this->FindNewOverlay();
+    return this->FindNewOverlay(Dist);
 }
 
 Jafg::WUserWidget& Jafg::LTabOverlayPossibilities::AddWindow(LTabCreateInfo Info, bool bFocus)
@@ -62,7 +67,7 @@ Jafg::WUserWidget& Jafg::LTabOverlayPossibilities::AddWindow(LTabCreateInfo Info
         {
             if (auto* Widget{this->Selected->FindWidgetSlow(Panel.GetClassOrDefault())})
             {
-                auto It{algo::find_checked(this->Selected->GetTabs(), Widget, algo::pair_second{})};
+                auto It{algo::find_checked(this->Selected->GetTabs(), Widget, algo::pair_second)};
                 this->Selected->SetSelectedTab(*It->first);
                 return *Widget;
             }
@@ -71,7 +76,7 @@ Jafg::WUserWidget& Jafg::LTabOverlayPossibilities::AddWindow(LTabCreateInfo Info
         {
             if (auto* Widget{Overlay->FindWidgetSlow(Panel.GetClassOrDefault())})
             {
-                auto It{algo::find_checked(Overlay->GetTabs(), Widget, algo::pair_second{})};
+                auto It{algo::find_checked(Overlay->GetTabs(), Widget, algo::pair_second)};
                 Overlay->SetSelectedTab(*It->first);
                 return *Widget;
             }
@@ -94,7 +99,7 @@ Jafg::WUserWidget& Jafg::LTabOverlayPossibilities::AddWindow(LTabCreateInfo Info
 
     WUserWidget* Result{Overlay->RegisterTab(std::move(Info)).second};
     check(Result)
-    auto It{algo::find_checked(Overlay->GetTabs(), Result, algo::pair_second{})};
+    auto It{algo::find_checked(Overlay->GetTabs(), Result, algo::pair_second)};
     Overlay->SetSelectedTab(*It->first);
     return *Result;
 }
@@ -170,7 +175,8 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
     {
         this->Switcher->AddConstructedChild(std::get<TJxxUnique<WUserWidget>>(std::move(Info.Panel)));
     }
-    this->Tabs.emplace_back(nullptr, this->Switcher->GetChildren().back()->AsChecked<WUserWidget>());
+    auto& Tab{this->Tabs.emplace_back(nullptr, this->Switcher->GetChildren().back()->AsChecked<WUserWidget>())};
+    check(!Tab.first && Tab.second)
 
     bool bActivated{};
     if (this->Switcher->GetChildren().size() == 1)
@@ -179,7 +185,29 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
         this->Switcher->SetActiveNodeByIndex(0);
     }
 
-    BeginStyling(*this->Selectors).StaticRoot<WTabOverlaySelector>(std::move(Info.Selector)).SaveTo(&this->Tabs.back().first)
+    if (!Info.Selector)
+    {
+        auto Retriever{NewUniqueObject(TCxxStaticInit<JTabSelectorInfoRetriever>{.Outer=this->GetOuter()})};
+        if (auto reply{Tab.second->AddData(*Retriever)}; reply.is_handled())
+        {
+            if (!Retriever->Selector)
+            {
+                LOG_FATAL(LogWidgetFramework, "[{}]: Class provides dynamic tab selector info retrieval but did not return any valid info."
+                    , Tab.second->GetNameAsString()
+                    )
+            }
+            Info.Selector = std::move(*Retriever->Selector);
+        }
+        else
+        {
+            LOG_FATAL(LogWidgetFramework, "[{}]: Class does not provide required dynamic tab selector info retrieval."
+                , Tab.second->GetNameAsString()
+                )
+        }
+    }
+
+    check(Info.Selector)
+    BeginStyling(*this->Selectors).StaticRoot<WTabOverlaySelector>(std::move(*Info.Selector)).SaveTo(&Tab.first)
         .Selected(bActivated)
         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
         {
@@ -233,8 +261,8 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
 
     this->ShowTabSelector();
 
-    check(algo::contains(this->Tabs, Result.first, algo::pair_first{}))
-    check(algo::find(this->Tabs, Result.first, algo::pair_first{})->second == Result.second)
+    check(algo::contains(this->Tabs, Result.first, algo::pair_first))
+    check(algo::find(this->Tabs, Result.first, algo::pair_first)->second == Result.second)
     return Result;
 }
 
@@ -499,7 +527,7 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
         if (this->TempBox)
         {
             check(this->Selectors == this->TempBox->GetParentChecked())
-            auto Idx{algo::distance_to(this->Selectors->GetChildren(), this->TempBox, algo::unique_raw{})};
+            auto Idx{algo::distance_to(this->Selectors->GetChildren(), this->TempBox, algo::unique_raw)};
             this->Selectors->ReorderChild(Selector, Idx);
         }
 
@@ -553,7 +581,7 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
         if (!this->TempBox)
         {
             Selector.SetVisibility(ENodeVisibility::Collapsed);
-            this->TempBox = &this->Selectors->AddChildAt(algo::distance_to(this->Selectors->GetChildren(), &Selector, algo::unique_raw{}),
+            this->TempBox = &this->Selectors->AddChildAt(algo::distance_to(this->Selectors->GetChildren(), &Selector, algo::unique_raw),
                 NewNode(this->GetViewport()).Class<WBox>()
                 .Anchor(EAnchor::VFill)
                 .MinDesiredSize(
@@ -687,7 +715,7 @@ void Jafg::WTabOverlayParent::OnRemoveChildPost(WNode& Child)
             {
                 WTabOverlayParent& Parent{this->GetParent()->AsStatic<WTabOverlayParent>()};
                 LOG_TRACE(LogWidgets, "Removing redundant overlay parent.")
-                auto Idx{algo::distance(Parent.GetChildren(), algo::find(Parent.GetChildren(), this, algo::unique_raw{}))};
+                auto Idx{algo::distance(Parent.GetChildren(), algo::find(Parent.GetChildren(), this, algo::unique_raw))};
                 auto bOld{std::exchange(Parent.bPreventAutoKillOnChildLoss, true)};
                 auto Child{this->GetChildren()[0]->RemoveFromTree()};
                 check(this->GetChildren().empty())
@@ -705,11 +733,11 @@ void Jafg::WTabOverlayParent::MoveHere(WTabOverlaySelector& WhoSelector, WTabOve
 {
     check(this->Possibilities)
     check(!this->_IsGarbage())
-    check(algo::contains(this->GetChildren(), &Where, algo::unique_raw{}))
+    check(algo::contains(this->GetChildren(), &Where, algo::unique_raw))
     check(!Where._IsGarbage())
 
     WTabOverlay& Who{*WhoSelector.GetParentUntilChecked<WTabOverlay>()};
-    bool bWhoInline{algo::contains(this->GetChildren(), &Who, algo::unique_raw{})};
+    bool bWhoInline{algo::contains(this->GetChildren(), &Who, algo::unique_raw)};
     if (bWhoInline && !bDuplicate)
     {
         if (&Who == &Where)
@@ -728,16 +756,16 @@ void Jafg::WTabOverlayParent::MoveHere(WTabOverlaySelector& WhoSelector, WTabOve
     }
 
     algo::raii_leave _{[this, bOld = std::exchange(this->bPreventAutoKillOnChildLoss, true)]{ this->bPreventAutoKillOnChildLoss = bOld; }};
-    std::size_t WhereDistance(algo::distance_to(this->GetChildren(), &Where, algo::unique_raw{}));
-    std::size_t WhoDistance(algo::distance_to(this->GetChildren(), &Who, algo::unique_raw{}));
+    std::size_t WhereDistance(algo::distance_to(this->GetChildren(), &Where, algo::unique_raw));
+    std::size_t WhoDistance(algo::distance_to(this->GetChildren(), &Who, algo::unique_raw));
 
-    LTabCreateInfo CreateInfo{.Selector={
+    LTabCreateInfo CreateInfo{.Selector=LTabSelectorCreateInfo{
         .DisplayName = WhoSelector.GetContent(),
         .Icon = bDuplicate ? WhoSelector.LeftIcon : std::move(WhoSelector.LeftIcon),
         },};
     if (bDuplicate)
     {
-        CreateInfo.Panel = algo::find_checked(Who.GetTabs(), &WhoSelector, algo::pair_first{})
+        CreateInfo.Panel = algo::find_checked(Who.GetTabs(), &WhoSelector, algo::pair_first)
             ->second->GetVirtualTable();
     }
     else
@@ -749,22 +777,58 @@ void Jafg::WTabOverlayParent::MoveHere(WTabOverlaySelector& WhoSelector, WTabOve
     {
         TReference<WTabOverlayParent> Target{*this};
 
+        if (this->IsParentValid() && this->GetParent()->IsA<WTabOverlayParent>())
+        {
+            check(algo::all_of(this->GetParentChecked()->AsStatic<WTabOverlayParent>().GetChildren(), [this](auto& E)
+            {
+                check(E.get()) return E->Anchor == this->GetParentChecked()->AsStatic<WTabOverlayParent>().GetChildDesiredAnchor();
+            }))
+        }
+
         // If the size is one, we can trivially change the control flow without needing to create sub parents.
         if (this->GetChildren().size() == 1)
         {
-            if (this->Cf == ENodePrimitiveControlFlow::Horizontal && (Direction == EDirection::Up || Direction == EDirection::Down))
+            if (this->GetCf() == ENodePrimitiveControlflow::Horizontal && (Direction == EDirection::Up || Direction == EDirection::Down))
             {
-                this->Cf = ENodePrimitiveControlFlow::Vertical;
+                if (this->IsParentValid() && this->GetParentChecked()->IsA<WTabOverlayParent>())
+                {
+                    auto& Parent{this->GetParentChecked()->AsStatic<WTabOverlayParent>()};
+                    this->Anchor = Parent.GetChildDesiredAnchor();
+                }
+                else if (this->Anchor != EAnchor::Fill)
+                {
+                    check(this->Anchor == EAnchor::HFill)
+                    this->Anchor = EAnchor::VFill;
+                }
+                this->SetCfWithSideEffects(ENodePrimitiveControlflow::Vertical);
             }
-            else if (this->Cf == ENodePrimitiveControlFlow::Vertical && (Direction == EDirection::Left || Direction == EDirection::Right))
+            else if (this->GetCf() == ENodePrimitiveControlflow::Vertical && (Direction == EDirection::Left || Direction == EDirection::Right))
             {
-                this->Cf = ENodePrimitiveControlFlow::Horizontal;
+                if (this->IsParentValid() && this->GetParentChecked()->IsA<WTabOverlayParent>())
+                {
+                    auto& Parent{this->GetParentChecked()->AsStatic<WTabOverlayParent>()};
+                    this->Anchor = Parent.GetChildDesiredAnchor();
+                }
+                else if (this->Anchor != EAnchor::Fill)
+                {
+                    check(this->Anchor == EAnchor::VFill)
+                    this->Anchor = EAnchor::HFill;
+                }
+                this->SetCfWithSideEffects(ENodePrimitiveControlflow::Horizontal);
             }
         }
 
+        if (this->IsParentValid() && this->GetParent()->IsA<WTabOverlayParent>())
+        {
+            check(algo::all_of(this->GetParentChecked()->AsStatic<WTabOverlayParent>().GetChildren(), [this](auto& E)
+            {
+                check(E.get()) return E->Anchor == this->GetParentChecked()->AsStatic<WTabOverlayParent>().GetChildDesiredAnchor();
+            }))
+        }
+
         std::optional<std::size_t> Idx;
-        if ((this->Cf == ENodePrimitiveControlFlow::Horizontal && (Direction == EDirection::Left || Direction == EDirection::Right))
-         || (this->Cf == ENodePrimitiveControlFlow::Vertical   && (Direction == EDirection::Up   || Direction == EDirection::Down)))
+        if ((this->GetCf() == ENodePrimitiveControlflow::Horizontal && (Direction == EDirection::Left || Direction == EDirection::Right))
+         || (this->GetCf() == ENodePrimitiveControlflow::Vertical   && (Direction == EDirection::Up   || Direction == EDirection::Down)))
         {
             Idx = (Direction == EDirection::Left || Direction == EDirection::Up) ? WhereDistance : WhereDistance + 1;
             if (Where._IsGarbage())
@@ -785,13 +849,17 @@ void Jafg::WTabOverlayParent::MoveHere(WTabOverlaySelector& WhoSelector, WTabOve
 
             LOG_TRACE(LogWidgets, "Creating new overlay parent for tab movement.")
             Target = *StaticCast<WTabOverlayParent>(&this->AddChildAt(WhereDistance, this->Possibilities->GetNewOverlayParent().Unique()));
+            check(algo::all_of(this->GetChildren(), [this](auto& E){ check(E.get()) return E->Anchor == this->GetChildDesiredAnchor(); }))
+
             if (Direction == EDirection::Left || Direction == EDirection::Right)
             {
-                Target->Cf = ENodePrimitiveControlFlow::Horizontal;
+                check(Target->Anchor == EAnchor::HFill)
+                Target->SetCfWithSideEffects(ENodePrimitiveControlflow::Horizontal);
             }
             else if (Direction == EDirection::Up || Direction == EDirection::Down)
             {
-                Target->Cf = ENodePrimitiveControlFlow::Vertical;
+                check(Target->Anchor == EAnchor::VFill)
+                Target->SetCfWithSideEffects(ENodePrimitiveControlflow::Vertical);
             }
 
             auto RemovedTabOverlay{Where.RemoveFromTree()};
@@ -809,6 +877,8 @@ void Jafg::WTabOverlayParent::MoveHere(WTabOverlaySelector& WhoSelector, WTabOve
         {
             Target->AddChildAt(*Idx, this->GetPossibilitiesChecked()->GetNewOverlay().Unique())
                 .AsStatic<WTabOverlay>().RegisterTab(std::move(CreateInfo));
+            check(algo::all_of(Target->GetChildren(), [&Target](auto& E){ check(E.get()) return E->Anchor == Target->GetChildDesiredAnchor(); }))
+            check(algo::all_of(this->GetChildren(), [this](auto& E){ check(E.get()) return E->Anchor == this->GetChildDesiredAnchor(); }))
         }
     }
     else if (Where._IsGarbage())

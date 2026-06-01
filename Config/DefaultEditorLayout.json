@@ -1,0 +1,29 @@
+{
+    "Surfaces": [
+        {
+            "bFullscreen": false,
+            "bBorderless": false,
+            "Dimensions": [
+                1280,
+                720
+            ],
+            "Layout": {
+                "Controlflow": "Horizontal",
+                "Children": [
+                    {
+                        "Dist": 0.67,
+                        "Children": [
+                            "::Jafg::WWorldViewer"
+                        ]
+                    },
+                    {
+                        "Dist": 0.33,
+                        "Children": [
+                            "::Jafg::WWorldViewerHierarchy"
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

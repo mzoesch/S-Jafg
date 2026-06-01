@@ -18,8 +18,7 @@
         return {}; \
     }
 
-#define JAFG_NODE_BUTTON_BOILERPLATE() \
-    JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
+#define JAFG_NODE_BUTTON_BOILERPLATE_OnCursorEnter() \
     virtual LNodeReply OnCursorEnter() override \
     { \
         if (!this->bEnabled)\
@@ -33,7 +32,9 @@
             this->_ButtonBase_SetBrush(this->Style.HoverBrush); \
         } \
         return Super::OnCursorEnter(); \
-    } \
+    }
+
+#define JAFG_NODE_BUTTON_BOILERPLATE_OnCursorLeave() \
     virtual void OnCursorLeave() override \
     { \
         if (!this->bEnabled)\
@@ -48,8 +49,19 @@
         } \
         Super::OnCursorLeave(); \
         return; \
-    } \
-    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override { return this->ButtonBase_OnKeyEventFocused(Info, Event); } \
+    }
+
+#define JAFG_NODE_BUTTON_BOILERPLATE_OnKeyEventFocused() \
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override \
+    {\
+        return this->ButtonBase_OnKeyEventFocused(Info, Event); \
+    }
+
+#define JAFG_NODE_BUTTON_BOILERPLATE() \
+    JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
+    JAFG_NODE_BUTTON_BOILERPLATE_OnCursorEnter() \
+    JAFG_NODE_BUTTON_BOILERPLATE_OnCursorLeave() \
+    JAFG_NODE_BUTTON_BOILERPLATE_OnKeyEventFocused()
 
 namespace Jafg
 {
@@ -69,7 +81,7 @@ enum struct EStyleBits
 };
 ENUM_STRUCT_FLAGS(EStyleBits, EStyleFlags)
 
-//# To use your flags here you have to declare the #end member as in #EStyleBits.
+//# To use your flags here you have to declare the #count member as done in #EStyleBits.
 template<typename UFlags, auto... BrushProj> requires std::is_base_of_v<Detail::LFlags, UFlags>
 struct LStyleBase
 {

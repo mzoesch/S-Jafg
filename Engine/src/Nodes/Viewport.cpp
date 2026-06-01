@@ -91,14 +91,16 @@ void Jafg::LViewport::DispatchInputs()
                     auto Size{Node.GetAnchoredSize_v2()};
                     auto Desired{Node.GetDesiredSize_v2()};
                     auto Min{Node.MinDesiredSize.InStaticPoints(Node.GetViewport())};
+                    auto Max{Node.MaxDesiredSize.InStaticPoints(Node.GetViewport())};
 
                     ss << std::string(Indent * 2, ' ') << Node.GetNameAsString()
                         << " ("
-                            << LexToString(Node.GetVisibility()) << " "
+                            << LexToString(Node.GetVisibility()) << " anchor-" << Node.Anchor.ToString() << " "
                             << "aabb{" << static_cast<i64>(Offset.x) << "," << static_cast<i64>(Offset.y)
                                 << ", " << static_cast<i64>(Size.x) << "," << static_cast<i64>(Size.y) << "}"
                             << " desired{" << static_cast<i64>(Desired.x) << "," << static_cast<i64>(Desired.y) << "}"
                             << " min{" << static_cast<i64>(Min.x) << "," << static_cast<i64>(Min.y) << "}"
+                            << " max{" << static_cast<i64>(Max.x) << "," << static_cast<i64>(Max.y) << "}"
                         << ")\n"
                         ;
 

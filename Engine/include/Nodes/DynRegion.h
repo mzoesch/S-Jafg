@@ -35,10 +35,6 @@ public:
     virtual LVec2F GetAnchoredSizeForChild(WNode const& DirectChild) const override
     {
         check(DirectChild.TransformsWidgetLayout())
-        if (!DirectChild.Anchor.IsStretchedHorizontal())
-        {
-            return Super::GetAnchoredSizeForChild(DirectChild);
-        }
         return DynamicControlFlowOrchestration.GetAnchoredSizeForChild(this->Cf, *this, DirectChild, this->Space);
     }
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const& DirectChild) const override
@@ -51,7 +47,7 @@ public:
 
 protected:
 
-    ENodePrimitiveControlFlow Cf{ ENodePrimitiveControlFlow::Horizontal };
+    ENodePrimitiveControlflow Cf{ ENodePrimitiveControlflow::Stacked };
 };
 
 struct LFactoryDynRegion : NODE_FACTORY_PARENT(WDynRegion)

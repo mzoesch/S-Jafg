@@ -61,7 +61,7 @@ void Jafg::WDropDownTabBar::Select(WTextBox* Target /* = nullptr */)
 
     if (Target)
     {
-        check(algo::contains(this->RootSubmenuContainer->GetChildren(), Target, algo::unique_raw{}))
+        check(algo::contains(this->RootSubmenuContainer->GetChildren(), Target, algo::unique_raw))
         StaticCast<WTextBox>(Target)->Brush.bSkipBrushDraw = false;
     }
 

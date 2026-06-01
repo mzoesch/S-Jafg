@@ -39,6 +39,49 @@
 
 #include "Framework/FrontendForward.h"
 
+namespace vk
+{
+
+NLOHMANN_JSON_SERIALIZE_ENUM(CompareOp, {
+    {CompareOp::eNever, "eNever"},
+    {CompareOp::eLess, "eLess"},
+    {CompareOp::eEqual, "eEqual"},
+    {CompareOp::eLessOrEqual, "eLessOrEqual"},
+    {CompareOp::eGreater, "eGreater"},
+    {CompareOp::eNotEqual, "eNotEqual"},
+    {CompareOp::eGreaterOrEqual, "eGreaterOrEqual"},
+    {CompareOp::eAlways, "eAlways"},
+    })
+NLOHMANN_JSON_SERIALIZE_ENUM(StencilOp, {
+    {StencilOp::eKeep, "eKeep"},
+    {StencilOp::eZero, "eZero"},
+    {StencilOp::eReplace, "eReplace"},
+    {StencilOp::eIncrementAndClamp, "eIncrementAndClamp"},
+    {StencilOp::eDecrementAndClamp, "eDecrementAndClamp"},
+    {StencilOp::eInvert, "eInvert"},
+    {StencilOp::eIncrementAndWrap, "eIncrementAndWrap"},
+    {StencilOp::eDecrementAndWrap, "eDecrementAndWrap"},
+    })
+NLOHMANN_JSON_SERIALIZE_ENUM(PrimitiveTopology, {
+    {PrimitiveTopology::ePointList, "ePointList"},
+    {PrimitiveTopology::eLineList, "eLineList"},
+    {PrimitiveTopology::eLineStrip, "eLineStrip"},
+    {PrimitiveTopology::eTriangleList, "eTriangleList"},
+    {PrimitiveTopology::eTriangleStrip, "eTriangleStrip"},
+    {PrimitiveTopology::eTriangleFan, "eTriangleFan"},
+    {PrimitiveTopology::eLineListWithAdjacency, "eLineListWithAdjacency"},
+    {PrimitiveTopology::eLineStripWithAdjacency, "eLineStripWithAdjacency"},
+    {PrimitiveTopology::eTriangleListWithAdjacency, "eTriangleListWithAdjacency"},
+    {PrimitiveTopology::eTriangleStripWithAdjacency, "eTriangleStripWithAdjacency"},
+    {PrimitiveTopology::ePatchList, "ePatchList"},
+    })
+
+ENGINE_API void from_json(json const& j, PipelineInputAssemblyStateCreateInfo& Info);
+ENGINE_API void from_json(json const& j, PipelineDepthStencilStateCreateInfo& Info);
+ENGINE_API void from_json(json const& j, StencilOpState& State);
+
+} /* ~Namespace vk */
+
 namespace rhi
 {
 

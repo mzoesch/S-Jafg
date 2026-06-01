@@ -38,7 +38,7 @@ public:
     {
         if (this->ActiveNode)
         {
-            return algo::distance_to(this->GetChildren(), this->ActiveNode, algo::unique_raw{});
+            return algo::distance_to(this->GetChildren(), this->ActiveNode, algo::unique_raw);
         }
         return {};
     }

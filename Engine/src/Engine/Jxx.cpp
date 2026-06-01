@@ -256,21 +256,7 @@ std::size_t Jafg::Detail::LJxxRecordRegistry::RemovePackagesOf(const LLoadedPlug
     check(this->PendingPackages.empty())
 
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
-
-    if (this->SingletonOuter)
-    {
-        for (auto Idx{0uz}; Idx < this->SingletonOuter->GetEmployees().size();)
-        {
-            auto const& Singleton{this->SingletonOuter->GetEmployees()[Idx]};
-            if (Singleton->GetVirtualTable().GetPluginHandle() == Handle)
-            {
-                Singleton->MarkAsGarbage_v2(EJxxRecordTearDownReason::PluginUnload);
-                continue;
-            }
-            ++Idx;
-            continue;
-        }
-    }
+    this->RemoveSingletonsOf(Handle);
 
 #if JAFG_DO_CHECKS
     std::size_t It1{};
@@ -357,6 +343,9 @@ void Jafg::Detail::LJxxRecordRegistry::TearDown()
 {
     check(Tasks::IsOnMasterThread())
 
+    check(this->SingletonOuter)
+
+    this->RemoveSingletonsOf(std::nullopt);
     delete this->SingletonOuter;
     this->SingletonOuter = nullptr;
 
@@ -371,6 +360,34 @@ void Jafg::Detail::LJxxRecordRegistry::TearDown()
 
     algo::orphan(&this->PendingPackages);
     algo::orphan(&this->RegisteredPackages);
+
+    return;
+}
+
+void Jafg::Detail::LJxxRecordRegistry::RemoveSingletonsOf(std::optional<LLoadedPluginHandle> Handle)
+{
+    LOG_VERBOSE(LogPackager, "Removing singletons of plugin [{}]...", Handle.has_value() ? algo::sprintf("0x{:X}", static_cast<u32>(*Handle)) : "nullopt")
+
+    if (this->SingletonOuter)
+    {
+        for (auto Idx{0uz}; Idx < this->SingletonOuter->GetEmployees().size();)
+        {
+            auto const* Singleton{&*this->SingletonOuter->GetEmployees()[Idx]};
+            check(Singleton->GetVirtualTable().IsSingleton())
+            auto const& VTable{Singleton->GetVirtualTable()};
+            if (!Handle || VTable.GetPluginHandle() == Handle)
+            {
+                check(VTable.Singleton)
+                check(VTable.Singleton == &*Singleton)
+                this->SingletonOuter->GetEmployees()[Idx]->MarkAsGarbage_v2(EJxxRecordTearDownReason::PluginUnload);
+                check(VTable.Singleton == &*Singleton)
+                const_cast<LJxxClass&>(VTable).Singleton = nullptr;
+                continue;
+            }
+            ++Idx;
+            continue;
+        }
+    }
 
     return;
 }
@@ -554,7 +571,7 @@ void Jafg::Detail::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
 {
     check(&*Child)
 
-    if (auto It{algo::find(this->GarbageChildren, Child.get(), algo::unique_raw{})}; It != this->GarbageChildren.end())
+    if (auto It{algo::find(this->GarbageChildren, Child.get(), algo::unique_raw)}; It != this->GarbageChildren.end())
     {
         checkSlow(It->get() == Child.get())
         check(It->get()->_IsGarbage())
@@ -570,7 +587,7 @@ void Jafg::Detail::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
                 )
             Child->MarkAsGarbage(JCxxClass::EMarkAsGarbageBehavior::Ignore, EJxxRecordTearDownReason::Default);
         }
-        check(!algo::contains(this->GarbageChildren, Child.get(), algo::unique_raw{}))
+        check(!algo::contains(this->GarbageChildren, Child.get(), algo::unique_raw))
     }
 
     check(Child.get())

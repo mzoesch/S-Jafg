@@ -19,6 +19,7 @@ def jafg_load_master_gdb_init() -> None:
 
     module.master_entry([
         # Add your own pretty printers here.
+        # For security reasons jafg will no longer detect pretty printers in engine plugin modules.
         "Engine/pretty_gdb.py",
         ])
 

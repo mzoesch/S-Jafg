@@ -114,3 +114,4 @@
 //#
 #include "Serialization/Archive.h"
 #include "User/PreferenceTypes.h"
+#include "Serialization/Json.h"

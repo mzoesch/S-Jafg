@@ -82,7 +82,7 @@ Jafg::LNodeReply Jafg::WTextButton::OnKeyEventFocused(LNodeKeyEventInfo const& I
         }
     }
 
-    return WTextBox::OnKeyEventFocused(Info, Event);
+    return this->ButtonBase_OnKeyEventFocused(Info, Event);
 }
 
 void Jafg::WTextButton::OnEnabledStateChanged()

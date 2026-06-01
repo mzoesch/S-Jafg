@@ -20,6 +20,8 @@
 #include "Engine/World.h"
 #include "Nodes/EditableTextButton.h"
 #include "Nodes/CheckmarkButton.h"
+#include "Nodes/ScrollRegion.h"
+#include "Nodes/VParent.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -146,9 +148,21 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
                     , this->GetNameAsString())
             }
         }
+
+        LRect2F Rect;
+        if (this->IsManual())
+        {
+            Rect = {.Offset=this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+                    .Extent=this->GetAnchoredSize_v2()};
+        }
+        else
+        {
+            Rect = {.Offset=maths::round(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)),
+                    .Extent=this->RenderTarget.GetExtent().ToVec<f32>()};
+        }
+
         Info.AddInstance({
-            .Rect = {.Offset=this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-                     .Extent=this->GetAnchoredSize_v2()},
+            .Rect = Rect,
             .TexCoordRect = {rhi::uv::fit(rhi::uv::identity
                 , this->RenderTarget.GetExtent().ToVec<f32>(), this->GetAnchoredSize_v2()
                 , rhi::tex_coord_behavior::FitAspect)},
@@ -241,6 +255,11 @@ void Jafg::WWorldViewer::TravelTo(LWorld& World)
 
     check(this->Placeholder)
     this->Placeholder->SetVisibility(ENodeVisibility::Collapsed);
+
+    if (this->Hierarchy)
+    {
+        this->Hierarchy->OnWorldViewerUpdate();
+    }
 
     return;
 }
@@ -555,7 +574,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->Name)
                             .MinDesiredSize({128_spt, 0})
                             .Padding({2_spt, 0})
-                            .Style(Prefs.EditorEditableTextButtonStyle())
+                            .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
                             .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
                             .Content(*Prefs.EditorLastWorldName)
                             .PlaceholderContent("World Name")
@@ -576,7 +595,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->LevelName)
                             .MinDesiredSize({128_spt, 0})
                             .Padding({2_spt, 0})
-                            .Style(Prefs.EditorEditableTextButtonStyle())
+                            .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
                             .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
                             .Content(*Prefs.EditorLastWorldLevelName)
                             .PlaceholderContent("Level Name")
@@ -681,4 +700,247 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
 void Jafg::WWorldViewer::_ctor_SetBackgroundTint()
 {
     this->BorderTint = *GetSingleton<JUserPreferences>().ViewportBackgroundTint;
+}
+
+void Jafg::WWorldViewerHierarchy::Construct()
+{
+    Super::Construct();
+
+    check(!this->WorldViewer)
+    this->WorldViewer = this->FindSmart();
+    check(!this->WorldViewer->HasHierarchy())
+    this->WorldViewer->Hierarchy = this;
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    BeginStyling(*this).StaticRoot<WVRegion>()
+        .Anchor(EAnchor::Fill)
+        .Tint(*Prefs.ForegroundColor)
+    [
+        NewStaticNode(WHParent)
+            .Anchor(EAnchor::HFill)
+            .Padding({5_spt})
+            .HSpace(5_spt)
+        [
+            NewStaticNode(WEditableTextButton) // TODO: Make a derived class WEditableTextButtonIconizedLeft with search magnifier icon
+                .Anchor(EAnchor::Fill)
+                .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
+                .PlaceholderContent("Search...")
+            +
+            NewStaticNode(WText).SaveTo(&this->ConnectedText)
+                .MinDesiredSize({96_spt, 0})
+                .MaxDesiredSize({96_spt, 0})
+                .TextAlign(ETextHAlign::Center)
+                .TextAlign(ETextVAlign::Center)
+                .TextTint(Colors::Gray)
+        ]
+        +
+        NewStaticNode(WHRegion).Anchor(EAnchor::HFill)
+            .Tint(*Prefs.ForegroundColorVariant)
+            .Padding(ListPadding)
+        [
+            NewStaticNode(WText)
+                .Anchor(EAnchor::HFill)
+                .Content("Object Label")
+            +
+            NewStaticNode(WText)
+                .Content("Type")
+                .MinDesiredSize(WWorldViewerHierarchy::TypeSize)
+                .MaxDesiredSize(WWorldViewerHierarchy::TypeSize)
+        ]
+        +
+        NewStaticNode(WScrollRegion)
+            .Anchor(EAnchor::Fill)
+            .SkipBrushDraw(true)
+        [
+            NewStaticNode(WVParent).SaveTo(&this->Container).Anchor(EAnchor::Fill)
+        ]
+        +
+        NewStaticNode(WTextBox).SaveTo(&this->SelectedWorldObjectText)
+            .Anchor(EAnchor::HFill)
+            .Tint(*Prefs.ForegroundColorVariant)
+    ];
+
+    this->OnWorldViewerUpdate();
+
+    return;
+}
+
+void Jafg::WWorldViewerHierarchy::Destruct()
+{
+    Super::Destruct();
+
+    if (this->WorldViewer)
+    {
+        check(this->WorldViewer->HasHierarchy())
+        check(this->WorldViewer->Hierarchy == this)
+        this->WorldViewer->Hierarchy = nullptr;
+        this->WorldViewer = nullptr;
+    }
+
+    return;
+}
+
+void Jafg::WWorldViewerHierarchy::OnWorldViewerUpdate()
+{
+    this->UpdateConnectedArea();
+    this->UpdateWorldObjectList();
+    this->UpdateSelectedWorldObjectText(0, 0);
+
+    return;
+}
+
+Jafg::WWorldViewer* Jafg::WWorldViewerHierarchy::FindSmart() const noexcept
+{
+    auto* Result{this->FindInViewport(this->GetViewport())};
+    if (!Result && &this->GetViewport() != &this->GetViewport().GetSurface().GetViewport())
+    {
+        Result = this->FindInViewport(this->GetViewport().GetSurface().GetViewport());
+    }
+    if (!Result)
+    {
+        for (auto& Surface : this->GetViewport().GetSurface().GetFrontend().GetSurfaces())
+        {
+            if (&*Surface == &this->GetViewport().GetSurface())
+            {
+                continue;
+            }
+            if (auto* Found{this->FindInViewport(Surface->GetViewport())})
+            {
+                Result = Found;
+                break;
+            }
+        }
+    }
+
+    return Result;
+}
+
+Jafg::WWorldViewer* Jafg::WWorldViewerHierarchy::FindInViewport(LViewport const& Viewport) const noexcept
+{
+    for (auto& Node : Viewport.GetTopLevelWidgets())
+    {
+        if (auto* Result{this->FindInNode(*Node)})
+        {
+            return Result;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+Jafg::WWorldViewer* Jafg::WWorldViewerHierarchy::FindInNode(WNode& Node) const noexcept
+{
+    if (auto* Casted{Node.As<WWorldViewer>()})
+    {
+        if (!Casted->HasHierarchy())
+        {
+            return Casted;
+        }
+    }
+
+    if (auto* Parent{Node.As<WParent>()})
+    {
+        for (auto& Child : Parent->GetChildren())
+        {
+            if (auto* Result{this->FindInNode(*Child)})
+            {
+                return Result;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+void Jafg::WWorldViewerHierarchy::UpdateConnectedArea()
+{
+    check(this->ConnectedText)
+
+    if (this->WorldViewer)
+    {
+        if (this->WorldViewer->IsOwnedPersonaControllerValid())
+        {
+            this->ConnectedText->SetContent("[connected]");
+        }
+        else
+        {
+            this->ConnectedText->SetContent("[waiting]");
+        }
+    }
+    else
+    {
+        this->ConnectedText->SetContent("[disconnected]");
+    }
+
+    return;
+}
+
+void Jafg::WWorldViewerHierarchy::UpdateWorldObjectList()
+{
+    check(this->Container)
+    this->Container->RemoveChildren();
+
+    if (auto* World{this->GetWorld()})
+    {
+        auto& Prefs{GetSingleton<JUserPreferences>()};
+
+        auto Counter{0uz};
+        for (auto& E: World->GetEmployees())
+        {
+            auto* Actor{E->As<AActor>()};
+            if (!Actor)
+            {
+                continue;
+            }
+
+            if (Actor->IsA<APersonaController>())
+            {
+                continue;
+            }
+
+            this->Container->AddChild(NewStaticNode(WHButton)
+                .Anchor(EAnchor::HFill)
+                .Style(Prefs.EditorProximityBoxStyle2<LRegionBrush>(Counter++))
+                .Padding(ListPadding)
+                .Selectable(true)
+                .OnKeyEventFocused([this, Actor](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                {
+                    check(Actor)
+                    this->OnWorldObjectListKeyEventFocus(Self.AsStatic<WHButton>(), *Actor, Info, Event);
+                    return LNodeReply::Handled();
+                })
+                [
+                    NewStaticNode(WText).Content(Actor->DisplayName)
+                        .Anchor(EAnchor::HFill)
+                    +
+                    NewStaticNode(WText).Content(Actor->GetNameAsString())
+                        .MinDesiredSize(WWorldViewerHierarchy::TypeSize)
+                        .MaxDesiredSize(WWorldViewerHierarchy::TypeSize)
+                        .TextTint(Colors::Gray)
+                ]
+                .Unique());
+            }
+    }
+
+    return;
+}
+
+void Jafg::WWorldViewerHierarchy::OnWorldObjectListKeyEventFocus(WHButton& Self, AActor& Actor, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+    {
+        JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
+    }
+
+    return;
+}
+
+void Jafg::WWorldViewerHierarchy::UpdateSelectedWorldObjectText(std::size_t Count, std::size_t Selected)
+{
+    check(this->SelectedWorldObjectText)
+    this->SelectedWorldObjectText->SetContent(algo::sprintf("{} objects ({} selected)", Count, Selected));
+    return;
 }

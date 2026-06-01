@@ -2,10 +2,8 @@
 
 #include "Framework/ShaderSubsystem.h"
 #include "Stats/Stats.h"
-#include "Serialization/Json.h"
 #include "Rhi/PushConstants.h"
 #include "Rhi/FromString.h"
-#include "Rhi/FromJson.h"
 #include "Core/App.h"
 
 namespace
@@ -414,8 +412,14 @@ void Jafg::JShaderSubsystem::RefetchShaders()
             Shader->DstPrefix = LPath{ShaderJson["DstPrefix"].get<LString>()}.make_preferred();
         }
 
-        Shader->PipelineInputAssemblyState = Vk_FromJson<vk::PipelineInputAssemblyStateCreateInfo>(DN, "PipelineInputAssemblyState", ShaderJson);
-        Shader->PipelineDepthStencilState = Vk_FromJson<vk::PipelineDepthStencilStateCreateInfo>(DN, "PipelineDepthStencilState", ShaderJson);
+        if (ShaderJson.contains("PipelineInputAssemblyState"))
+        {
+            Shader->PipelineInputAssemblyState = ShaderJson.at("PipelineInputAssemblyState").get<vk::PipelineInputAssemblyStateCreateInfo>();
+        }
+        if (ShaderJson.contains("PipelineDepthStencilState"))
+        {
+            Shader->PipelineDepthStencilState = ShaderJson.at("PipelineDepthStencilState").get<vk::PipelineDepthStencilStateCreateInfo>();
+        }
 
         if (ShaderJson.contains("VertexInput"))
         {

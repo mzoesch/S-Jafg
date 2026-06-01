@@ -222,6 +222,7 @@ public:
 
 private:
 
+    void RemoveSingletonsOf(std::optional<LLoadedPluginHandle> Handle);
     LClassOuter* SingletonOuter{};
 
     LPackages PendingPackages;
@@ -427,7 +428,7 @@ public:
     {
     }
     PROHIBIT_REALLOC_OF_ANY_FORM(LJxxClass)
-    ~LJxxClass() = default;
+    ~LJxxClass() noexcept { check(!this->Singleton) }
 
     NODISCARD FORCEINLINE auto const& GetMallocCxxFn() const noexcept { return this->MallocCxx; }
     NODISCARD FORCEINLINE auto const& GetBeginClassLifeFn() const noexcept { return this->BeginClassLife; }
@@ -673,6 +674,7 @@ struct NewObjectFn
 //# Create a new jxx-object.
 //# Use this function and not new/delete, etc.
 //# @note Jxx-objects may not be allocated on the stack.
+//# @note You can also create unique objects with #NewUniqueObject.
 //#
 inline constexpr Detail::NewObjectFn<decltype(NewDeferredObject), LCxxDynamicInit, TCxxStaticInit, JCxxClass, AActor, WNode> NewObject{NewDeferredObject};
 
@@ -994,7 +996,7 @@ public:
     FORCEINLINE TUnique<JCxxClass> Poach(JCxxClass* Employee) noexceptcheck
     {
         check(Employee)
-        auto It{algo::find(this->Employees, Employee, algo::unique_raw{})};
+        auto It{algo::find(this->Employees, Employee, algo::unique_raw)};
         check( It != this->Employees.end() )
 
         TUnique Out{std::move(*It)};
@@ -1008,7 +1010,7 @@ public:
     FORCEINLINE TUnique<JCxxClass> PoachToNull(JCxxClass* Employee) noexceptcheck
     {
         check( Employee )
-        auto It{algo::find(this->Employees, Employee, algo::unique_raw{})};
+        auto It{algo::find(this->Employees, Employee, algo::unique_raw)};
         check( It != this->Employees.end() )
 
         TUnique Out{std::move(*It)};
@@ -1601,3 +1603,45 @@ struct Serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
         return {};
     }
 };
+
+namespace Jafg
+{
+
+namespace Detail
+{
+
+template<typename TCreator, typename TDynInit, template<typename> typename TStatInit, typename TRootNode, typename... TForbiddenNodes>
+struct NewUniqueObjectFn
+{
+    //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new jxx-object.
+    template<typename TCxxClass>
+    inline static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+
+    FORCEINLINE TJxxUnique<TRootNode> operator()(TDynInit const& Init) const
+    {
+        return TJxxUnique<TRootNode>{this->Creator(Init)};
+    }
+
+    template<typename TCxxClass> requires AllowedTreeNode<TCxxClass>
+    FORCEINLINE TJxxUnique<TCxxClass> operator()(CastTo<TCxxClass> Target, TDynInit const& Init) const
+    {
+        return TJxxUnique<TCxxClass>{this->Creator(Target, Init)};
+    }
+
+    template<typename TCxxClass, typename... TArgs> requires
+           AllowedTreeNode<TCxxClass>
+        && NewStaticCxxFn::is_constructible_v<TCxxClass, TStatInit<TCxxClass> const&, TArgs&&...>
+    FORCEINLINE TJxxUnique<TCxxClass> operator()(TStatInit<TCxxClass> const& Init, TArgs&&... Args) const
+    {
+        return TJxxUnique<TCxxClass>{this->Creator(Init, std::forward<TArgs>(Args)...)};
+    }
+
+    TCreator& Creator;
+};
+
+} /* ~Namespace Detail */
+
+//# Creates a unique object.
+inline constexpr Detail::NewUniqueObjectFn<decltype(NewObject), LCxxDynamicInit, TCxxStaticInit, JCxxClass, AActor, WNode> NewUniqueObject{NewObject};
+
+} /* ~Namespace Jafg */

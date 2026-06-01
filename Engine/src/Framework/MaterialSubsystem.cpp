@@ -6,7 +6,6 @@
 #include "Framework/ShaderSubsystem.h"
 #include "User/LocalEgo.h"
 #include "Stats/Stats.h"
-#include "Serialization/Json.h"
 #include "Rhi/GraphicsPipelineFactory.h"
 
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)

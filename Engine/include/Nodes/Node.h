@@ -94,7 +94,7 @@ struct LNodeSize1 final
 //# Two-dimensional widget size.
 struct LNodeSize2 final
 {
-    ENodeSize Type{ ENodeSize::Points };
+    ENodeSize Type{ ENodeSize::StaticPoints };
     LVec2F Size;
 
     FORCEINLINE constexpr LNodeSize2() noexcept : Size{maths::zero_vector<LVec2F>} {}
@@ -575,6 +575,8 @@ struct LNodeSweepInfo final
     const LVec2F Translation{ maths::zero_vector<LVec2F> };
     //# Hint for an additional translation for all children.
     const LVec2F ChildTranslationHint{ maths::zero_vector<LVec2F> };
+    //# Hint to not sweep children.
+    const bool bSweepChildren{ true };
 };
 
 struct LNodeKeyEventInfo final
@@ -1014,7 +1016,7 @@ public:
     //# Called if the surface was resized.
     virtual void OnSurfaceResize() {}
 
-    //# Mark this node and alls its children as garbage and remove them, from their parent.
+    //# Mark this node and alls its children as garbage and remove them from their parent.
     virtual void RemoveFromParent2();
     //# Removes this node from the node tree, so that it can be reparented.
     NODISCARD FORCEINLINE auto RemoveFromTree(this auto&& Self) noexcept

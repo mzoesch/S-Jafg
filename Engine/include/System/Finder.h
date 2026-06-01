@@ -34,6 +34,9 @@ ENGINE_API extern LPath DumpFile;
 
 inline LPath GetCwd();
 
+//# Default configs for the engine. User configs should never be here.
+inline LPath GetDefaultConfigDir() { return LPath{"Config"}; }
+
 //#
 //# Everything that should be saved for a longer period of time. But if they get deleted by the user, it's ok.
 //#

@@ -64,6 +64,7 @@ public:
     NODISCARD FORCEINLINE bool CanEverResize() const noexcept { return true; }
     ENGINE_API void SetResizable(bool bResizable);
     NODISCARD FORCEINLINE bool IsResizable() const noexcept { return this->bResizable; }
+    ENGINE_API void SetWindowSize(LVec2u32 Size);
 
     FORCEINLINE bool _HasPendingResize() const noexcept { return this->bPendingResize; }
     FORCEINLINE auto _GetPendingResizeExtent() const noexcept { return this->PendingResizeExtent; }

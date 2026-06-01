@@ -132,7 +132,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 
     check(Tasks::IsOnMasterThread())
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
-    check(Info.bFullScreen == false && "Full screen windows are not yet supported.")
+    check(Info.bFullscreen == false && "Full screen windows are not yet supported.")
 
     if (this->CanEverResize())
     {
@@ -593,6 +593,17 @@ void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
 
     LOG_VERBOSE(LogSurface, "Setting window resizeability to [{}].", this->IsResizable() ? "true" : "false")
     glfwSetWindowAttrib(this->Handle, GLFW_RESIZABLE, this->IsResizable() ? GLFW_TRUE : GLFW_FALSE);
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::SetWindowSize(LVec2u32 Size)
+{
+    check(Tasks::IsOnMasterThread())
+    check(this->Handle)
+
+    LOG_VERBOSE(LogSurface, "Setting window size to [{}x{}].", Size.x, Size.y)
+    glfwSetWindowSize(this->Handle, static_cast<i32>(Size.x), static_cast<i32>(Size.y));
 
     return;
 }

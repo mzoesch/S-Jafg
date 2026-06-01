@@ -51,35 +51,40 @@ concept void_mutable_predicate = requires(TFn&& Fn, TWhat What) { std::invoke(st
 //# Identity projection.
 using std::identity;
 //# Projection to the raw underlying value of a unique pointer.
-struct unique_raw final
+struct unique_raw_t final
 {
     template<typename T, typename Deleter> NODISCARD FORCEINLINE constexpr T*
     operator()(TUnique<T,Deleter> const& Ptr) const noexcept { return Ptr.get(); }
 };
+inline constexpr unique_raw_t unique_raw{};
 //# Projection to a dereferenced unique pointer const reference.
-struct unique_deref final
+struct unique_deref_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr T&
     operator()(TUnique<T> const& Ptr) const noexcept { check(Ptr.get()) return *Ptr.get(); }
 };
+inline constexpr unique_deref_t unique_deref{};
 //# Projection to a dereferenced raw pointer.
-struct raw_pointer_deref final
+struct raw_pointer_deref_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr T&
     operator()(T* Ptr) const noexcept { check(Ptr) return *Ptr; }
 };
+inline constexpr raw_pointer_deref_t raw_pointer_deref{};
 //# Projection to the first item in a pair.
-struct pair_first final
+struct pair_first_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr decltype(auto)
     operator()(T&& Pair) const noexcept { return std::forward<T>(Pair).first; }
 };
+inline constexpr pair_first_t pair_first{};
 //# Projection to the second item in a pair.
-struct pair_second final
+struct pair_second_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr decltype(auto)
     operator()(T&& Pair) const noexcept { return std::forward<T>(Pair).second; }
 };
+inline constexpr pair_second_t pair_second{};
 //# The record from a projection to a member of said record.
 template<typename T> struct proj_record;
 template<typename T, typename U> struct proj_record<U T::*> { typedef T type; };
@@ -88,21 +93,24 @@ template<typename T> using proj_record_t = typename proj_record<T>::type;
 template<typename T> struct proj_member;
 template<typename T, typename U> struct proj_member<U T::*> { typedef U type; };
 template<typename T> using proj_member_t = typename proj_member<T>::type;
-struct universal_deref final
+struct universal_deref_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr decltype(auto)
     operator()(T&& Value) const noexcept { return *Value; }
 };
-struct universal_ref final
+inline constexpr universal_deref_t universal_deref{};
+struct universal_ref_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr decltype(auto)
     operator()(T&& Value) const noexcept { return &Value; }
 };
-struct universal_ptr_noop final
+inline constexpr universal_ref_t universal_ref{};
+struct universal_ptr_noop_t final
 {
     template<typename T> NODISCARD FORCEINLINE constexpr decltype(auto)
     operator()(T&& Value) const noexcept { return &*Value; }
 };
+inline constexpr universal_ptr_noop_t universal_ptr_noop{};
 
 //# Whether a container can reserve memory.
 template<typename T>

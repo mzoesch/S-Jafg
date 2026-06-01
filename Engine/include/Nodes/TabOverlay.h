@@ -32,7 +32,7 @@ struct LTabOverlayPossibilities
     FORCEINLINE void RegisterOverlay(WTabOverlay& TabOverlay) noexcept;
     FORCEINLINE void UnregisterOverlay(WTabOverlay& TabOverlay) noexcept;
     ENGINE_API LFactoryTabOverlay GetNewOverlay();
-    ENGINE_API WTabOverlay& FindNewOverlay();
+    ENGINE_API WTabOverlay& FindNewOverlay(f32 Dist = {});
 
     ENGINE_API LFactoryTabOverlayParent GetNewOverlayParent();
 
@@ -300,14 +300,14 @@ struct LFactoryTabOverlayParent : NODE_FACTORY_PARENT(WTabOverlayParent)
 
 FORCEINLINE void LTabOverlayPossibilities::RegisterOverlay(WTabOverlay& TabOverlay) noexcept
 {
-    check(!algo::contains(this->Overlays, &TabOverlay, algo::universal_ptr_noop{}))
+    check(!algo::contains(this->Overlays, &TabOverlay, algo::universal_ptr_noop))
     this->Overlays.emplace_back(TabOverlay);
     return;
 }
 
 FORCEINLINE void LTabOverlayPossibilities::UnregisterOverlay(WTabOverlay& TabOverlay) noexcept
 {
-    auto It{algo::find(this->Overlays, &TabOverlay, algo::universal_ptr_noop{})};
+    auto It{algo::find(this->Overlays, &TabOverlay, algo::universal_ptr_noop)};
     check(It != this->Overlays.end())
     this->Overlays.erase(It);
     return;

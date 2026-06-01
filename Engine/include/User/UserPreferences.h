@@ -147,8 +147,19 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> DangerColor             { LColor{0x94, 0x33, 0x33} };
 
+    NODISCARD FORCEINLINE LColor const& GetProximityColor(std::integral auto Idx) const noexcept
+    {
+        if (Idx % 2)
+        {
+            return *this->ProximityColorA;
+        }
+        return *this->ProximityColorB;
+    }
+
     CLASS_FIELD(Config)
     TPreference<std::size_t> PreferredDragPadding{ 3 };
+    CLASS_FIELD(Config)
+    TPreference<std::size_t> PreferredDragOverlap{ 2 };
     CLASS_FIELD(Config)
     TPreference<LColor> ViewportBackgroundTint  { Colors::Black };
 
@@ -159,16 +170,49 @@ public:
     // TODO: This should just be TPreference<TButtonStyle<LBoxBrush>> but we wait until we adopt the cxx26 reflection
     //       system as writing serde for this is just boring und unnecessary when in a couple of months we can completely
     //       automate it.
-    TButtonStyle<LBoxBrush> EditorEditableTextButtonStyle() const noexcept
+    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorEditableTextButtonStyle() const noexcept
     {
-        TButtonStyle<LBoxBrush> Result;
-        Result.ChainEverywhere<
-            &LBoxBrush::Tint, &LBoxBrush::OutlineTint, &LBoxBrush::OutlineThickness, &LBoxBrush::Radii, &LBoxBrush::Padding
+        TButtonStyle<TBrush> Result;
+        Result.template ChainEverywhere<
+            &TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii, &TBrush::Padding
             >(*this->InputColor, {0x8F}, 1, LVec4F{4}, {5_spt, 0});
-        Result.Chain<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::OutlineTint>({0x5F});
+        Result.template Chain<EStyleBits::Normal|EStyleBits::Disabled, &TBrush::OutlineTint>({0x5F});
         return Result;
     }
-    TButtonStyle<LTextBoxBrush> EditorEditableTextButtonTextStyle() const noexcept
+    NODISCARD TButtonStyle<LTextBoxBrush> EditorEditableTextButtonTextStyle() const noexcept
+    {
+        TButtonStyle<LTextBoxBrush> Result;
+        Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
+        return Result;
+    }
+
+    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorProximityBoxStyle(std::integral auto Idx) const noexcept
+    {
+        TButtonStyle<TBrush> Style;
+        Style.template Set<EStyleBits::Normal, &TBrush::Tint>(this->GetProximityColor(Idx));
+        Style.template Chain<EStyleBits::Hover, &TBrush::Tint>(*this->PrimaryColor);
+        Style.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*this->PrimaryColorVariant);
+        return Style;
+    }
+    NODISCARD TButtonStyle<LTextBoxBrush> EditorProximityBoxTextStyle() const noexcept
+    {
+        TButtonStyle<LTextBoxBrush> Result;
+        Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
+        return Result;
+    }
+
+    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorProximityBoxStyle2(std::integral auto Idx) const noexcept
+    {
+        TButtonStyle<TBrush> Style;
+        Style.template Set<EStyleBits::Normal, &TBrush::Tint>(this->GetProximityColor(Idx));
+        Style.template Chain<EStyleBits::Hover, &TBrush::Tint>(*this->PrimaryColor2);
+        Style.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*this->PrimaryColorVariant2);
+        return Style;
+    }
+    NODISCARD TButtonStyle<LTextBoxBrush> EditorProximityBoxTextStyle2() const noexcept
     {
         TButtonStyle<LTextBoxBrush> Result;
         Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
@@ -183,6 +227,8 @@ public:
     TPreference<bool> EditorAutoLaunchLastWorld;
     CLASS_FIELD(Config)
     TPreference<bool> EditorShowRate{ true };
+    CLASS_FIELD(Config)
+    TPreference<LPath> EditorLastLayout{ "Config/DefaultEditorLayout.json" };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

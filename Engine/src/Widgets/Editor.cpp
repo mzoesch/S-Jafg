@@ -15,6 +15,13 @@
 #include "Widgets/ClassInspector.h"
 #include "Widgets/WorldViewer.h"
 
+void Jafg::WEditor::BeginClassLife(LBeginClassLifeInfo const& Info)
+{
+    Super::BeginClassLife(Info);
+    Finder::CreateDirectories(WEditor::GetUserLayoutsPath());
+    return;
+}
+
 Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
 {
     check(this->OverlayRoot)
@@ -24,6 +31,7 @@ Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
 void Jafg::WEditor::Construct()
 {
     Super::Construct();
+    this->DiscoverLayouts();
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
     BeginStyling(*this).StaticRoot<WVParent>().SaveTo(&this->OverlayRoot)
@@ -71,6 +79,10 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = WWorldViewer::TabSelectorCreateInfo(),
                                 .OnAction = [this](auto&&...){ this->AddWindow<WWorldViewer>(true); return algo::reply::unhandled(); },
+                                },
+                            LDropDownNodeOption{
+                                .Selector = WWorldViewerHierarchy::TabSelectorCreateInfo(),
+                                .OnAction = [this](auto&&...){ this->AddWindow<WWorldViewerHierarchy>(true); return algo::reply::unhandled(); },
                                 },
                             LDropDownNodeOption{
                                 .Selector = WTagInspector::TabSelectorCreateInfo(),
@@ -128,19 +140,7 @@ void Jafg::WEditor::Construct()
         ]
     ];
 
-    // {
-    //     auto& Overlay{this->FindNewOverlay()};
-    //     Overlay.RegisterTab(WClassInspector::TabCreateInfo());
-    // }
-    {
-        auto& Overlay{this->FindNewOverlay()};
-        Overlay.RegisterTab(WWorldViewer::TabCreateInfo());
-    }
-    // {
-    //     auto& Overlay{this->FindNewOverlay()};
-    //     Overlay.RegisterTab(WTagInspector::TabCreateInfo());
-    //     Overlay.RegisterTab(WColorInspector::TabCreateInfo());
-    // }
+    this->ApplyEditorLayout(this->LoadEditorLayout(*Prefs.EditorLastLayout));
 
     return;
 }
@@ -180,6 +180,133 @@ void Jafg::WEditor::Tick()
     }
 
     Super::Tick();
+
+    return;
+}
+
+TArray<LPath> const& Jafg::WEditor::DiscoverLayouts()
+{
+    LOG_VERBOSE(LogEditor, "Discovering editor layouts.")
+
+    this->DiscoveredLayouts.clear();
+
+    this->DiscoveredLayouts.emplace_back(Finder::GetDefaultConfigDir()/"DefaultEditorLayout.json");
+    this->DiscoveredLayouts.append_range(Finder::FindFilesRecursively(WEditor::GetUserLayoutsPath(), true, ".*\\.json"));
+
+    LOG_VERBOSE(LogEditor, "Discovered [{}] layouts at:", this->DiscoveredLayouts.size())
+    for (auto const& Layout : this->DiscoveredLayouts)
+    {
+        LOG_VERBOSE(LogEditor, " - {}", Layout);
+    }
+
+    return this->GetDiscoveredLayouts();
+}
+
+Jafg::LEditorLayout Jafg::WEditor::LoadEditorLayout(LPath Path)
+{
+    LOG_VERBOSE(LogEditor, "[{}]: Loading.", Path);
+
+    LEditorLayout Result = json::parse(Finder::ReadFile(Path), nullptr, false).get<LEditorLayout>();
+    Result.Path = std::move(Path);
+
+    if (Result.Surfaces.empty())
+    {
+        LOG_FATAL(LogEditor, "[{}]: Layout must contain at least one surface. Failed to load layout.", Result.Path);
+    }
+
+    auto ValidateFlow{[](this auto&& Self, LPath const& P, LEditorLayout::LFlow const& F) -> void
+    {
+        if (F.Controlflow != ENodePrimitiveControlflow::Horizontal && F.Controlflow != ENodePrimitiveControlflow::Vertical)
+        {
+            LOG_FATAL(LogEditor, "[{}]: Flow is not valid.", P)
+        }
+        if (F.Children.empty())
+        {
+            LOG_FATAL(LogEditor, "[{}]: Flow must contain at least one child. Failed to load layout.", P)
+        }
+
+        for (auto const& Child : F.Children)
+        {
+            if (std::holds_alternative<LEditorLayout::LFlow>(Child))
+            {
+                Self(P, std::get<LEditorLayout::LFlow>(Child));
+            }
+            else if (std::holds_alternative<LEditorLayout::LNodes>(Child))
+            {
+                if (std::get<LEditorLayout::LNodes>(Child).Dist < 0.0f || std::get<LEditorLayout::LNodes>(Child).Dist > 1.0f)
+                {
+                    LOG_FATAL(LogEditor, "[{}]: Invalid node distribution [{} <= {} <= {}].",
+                        P, 0.0f, std::get<LEditorLayout::LNodes>(Child).Dist, 1.0f)
+                }
+                if (std::get<LEditorLayout::LNodes>(Child).Children.empty())
+                {
+                    LOG_FATAL(LogEditor, "[{}]: Nodes must contain at least one child. Failed to load layout.", P)
+                }
+            }
+            else
+            {
+                std::unreachable();
+            }
+        }
+
+        return;
+    }};
+
+    for (auto const& Surface : Result.Surfaces)
+    {
+        ValidateFlow(Result.Path, Surface.Layout);
+    }
+
+    return Result;
+}
+
+void Jafg::WEditor::ApplyEditorLayout(LEditorLayout const& Layout)
+{
+    LOG_VERBOSE(LogEditor, "[{}]: Applying layout.", Layout.Path);
+
+    auto& Surface{this->GetViewport().GetSurface()};
+    check(!Layout.Surfaces.empty())
+
+    auto& S{Layout.Surfaces[0]};
+    check(!S.bFullscreen && "WiP -- Not currently supported.")
+    check(!S.bBorderless && "WiP -- Not currently supported.")
+    auto& L{S.Layout};
+
+    auto LoadChildrenToOverlay{[](WTabOverlay& Overlay, TArray<LString> Nodes)
+    {
+        for (auto& Node : Nodes)
+        {
+            TSubclassOf<WUserWidget> Class{Detail::GetGlobalCxxRecordRegistry().GetClassByNameAsserted(Node)->StaticClass};
+            if (!Class.IsValidType())
+            {
+                LOG_FATAL(LogEditor, "[{}]: Class [{}] is not a valid {}. Failed to load layout."
+                    , Node, Class.GetClass()->GetFullyQualifiedName(), WUserWidget::StaticClass().GetFullyQualifiedName())
+            }
+            Overlay.RegisterTab({.Panel = Class,});
+        }
+    }};
+
+    check(L.Controlflow == ENodePrimitiveControlflow::Horizontal)
+    for (auto& Child : L.Children)
+    {
+        if (std::holds_alternative<LEditorLayout::LNodes>(Child))
+        {
+            auto& Nodes{std::get<LEditorLayout::LNodes>(Child)};
+            WTabOverlay& Overlay{this->FindNewOverlay(Nodes.Dist)};
+            LoadChildrenToOverlay(Overlay, Nodes.Children);
+        }
+        else
+        {
+            std::unreachable();
+        }
+    }
+
+    Surface.SetWindowSize(S.Dimensions);
+
+    for (auto It{Layout.Surfaces.begin() + 1}; It != Layout.Surfaces.end(); ++It)
+    {
+        LOG_FATAL(LogEditor, "Currently only one surface is allowed.")
+    }
 
     return;
 }

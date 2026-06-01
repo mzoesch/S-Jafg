@@ -265,7 +265,7 @@ void Jafg::WNode::_check_Destruct()
 {
     if (this->Parent)
     {
-        jassert(!algo::contains(this->Parent->GetChildren(), this, algo::unique_raw{}))
+        jassert(!algo::contains(this->Parent->GetChildren(), this, algo::unique_raw))
     }
 }
 #endif /* JAFG_DO_CHECKS */

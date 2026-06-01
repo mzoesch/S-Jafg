@@ -84,9 +84,47 @@ class JafgWhitespace_Printer(JafgPrettyStringPrinter):
         return
 
     def to_string(self):
-        return '{} "vec4({}, {}, {}, {})"'.format(
+        return '{} - vec4({}, {}, {}, {})'.format(
             self.val['Type'],
-            self.val['Size.x'], self.val['Size.y'], self.val['Size.z'], self.val['Size.w']
+            self.val['Size']['x'], self.val['Size']['y'], self.val['Size']['z'], self.val['Size']['w']
+            )
+
+
+class JafgNodeSize1_Printer(JafgPrettyStringPrinter):
+    def __init__(self, val, str_repr):
+        super().__init__(val, str_repr)
+        self.patterns = ['^Jafg::LNodeSize1',]
+        return
+
+    def to_string(self):
+        return '{} - vec1({})'.format(
+            self.val['Type'],
+            self.val['Size']
+        )
+
+
+class JafgNodeSize2_Printer(JafgPrettyStringPrinter):
+    def __init__(self, val, str_repr):
+        super().__init__(val, str_repr)
+        self.patterns = ['^Jafg::LNodeSize2',]
+        return
+
+    def to_string(self):
+        return '{} - vec2({}, {})'.format(
+            self.val['Type'],
+            self.val['Size']['x'], self.val['Size']['y']
+        )
+
+
+class JafgAnchor_Printer(JafgPrettyStringPrinter):
+    def __init__(self, val, str_repr):
+        super().__init__(val, str_repr)
+        self.patterns = ['^Jafg::LAnchor',]
+        return
+
+    def to_string(self):
+        return 'vec4({}, {}, {}, {})'.format(
+            self.val['Anchors']['x'], self.val['Anchors']['y'], self.val['Anchors']['z'], self.val['Anchors']['w']
             )
 
 
@@ -114,6 +152,9 @@ def jafg_pretty_lookup(val: any) -> any:
         Color_Printer,
         LinearColor_Printer,
         JafgWhitespace_Printer,
+        JafgNodeSize1_Printer,
+        JafgNodeSize2_Printer,
+        JafgAnchor_Printer,
         JafgWidgetSize_Printer,
         ]
 

@@ -7,7 +7,13 @@
 namespace Jafg
 {
 
-enum struct ENodePrimitiveControlFlow{ Stacked, Horizontal, Vertical, };
+enum struct ENodePrimitiveControlflow{ Stacked, Horizontal, Vertical, };
+
+NLOHMANN_JSON_SERIALIZE_ENUM(ENodePrimitiveControlflow, {
+    {ENodePrimitiveControlflow::Stacked, "Stacked"},
+    {ENodePrimitiveControlflow::Horizontal, "Horizontal"},
+    {ENodePrimitiveControlflow::Vertical, "Vertical"},
+    })
 
 namespace Detail
 {
@@ -52,16 +58,14 @@ struct StackedControlFlowFn
                 Self.GetAnchoredSize_v2().x
                 - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport())
                 - Target.GetAnchoredSize_v2().x
-            )
-            + Target.GetLostAnchoredSize_v2().x * 0.5f,
+            ),
             Self.Padding.GetTopOffset().InStaticPoints(Self.GetViewport())
             + Target.Anchor.MinY *
             (
                 Self.GetAnchoredSize_v2().y
                 - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport())
                 - Target.GetAnchoredSize_v2().y
-            )
-            + Target.GetLostAnchoredSize_v2().y * 0.5f,
+            ),
             };
         Out += Self.GetAnchoredTopLeftFromMostOuter();
         return Out;
@@ -144,16 +148,14 @@ struct HorizontalControlFlowFn
 
         LVec2F Out{
             Self.Padding.GetLeftOffset().InStaticPoints(Self.GetViewport())
-            + Offset
-            + Target.GetLostAnchoredSize_v2().x,
+            + Offset,
             Self.Padding.GetTopOffset().InStaticPoints(Self.GetViewport())
             + Target.Anchor.MinY *
             (
                 Self.GetAnchoredSize_v2().y
                 - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport())
                 - Target.GetAnchoredSize_v2().y
-            )
-            + Target.GetLostAnchoredSize_v2().y
+            ),
             };
         Out += Self.GetAnchoredTopLeftFromMostOuter();
         return Out;
@@ -235,11 +237,9 @@ struct VerticalControlFlowFn
                 Self.GetAnchoredSize_v2().x
                 - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport())
                 - Target.GetAnchoredSize_v2().x
-            )
-            + Target.GetLostAnchoredSize_v2().x * 0.5,
+            ),
             Self.Padding.GetTopOffset().InStaticPoints(Self.GetViewport())
-            + Offset
-            + Target.GetLostAnchoredSize_v2().y * 0.5
+            + Offset,
             };
         Out += Self.GetAnchoredTopLeftFromMostOuter();
         return Out;
@@ -250,20 +250,20 @@ struct VerticalControlFlowFn
 inline constexpr Detail::HorizontalControlFlowFn HorizontalControlFlow{};
 inline constexpr Detail::VerticalControlFlowFn VerticalControlFlow{};
 
-template<ENodePrimitiveControlFlow Cf>
+template<ENodePrimitiveControlflow Cf>
 struct StaticControlFlowOrchestration
 {
     FORCEINLINE LVec2F UpdateDesiredSize(WParent const& Self, LNodeSize1 Space = {}) const noexcept
     {
-        if constexpr (Cf == ENodePrimitiveControlFlow::Stacked)
+        if constexpr (Cf == ENodePrimitiveControlflow::Stacked)
         {
             return StackedControlFlow.UpdateDesiredSize(Self);
         }
-        else if constexpr (Cf == ENodePrimitiveControlFlow::Horizontal)
+        else if constexpr (Cf == ENodePrimitiveControlflow::Horizontal)
         {
             return HorizontalControlFlow.UpdateDesiredSize(Self, Space);
         }
-        else if constexpr (Cf == ENodePrimitiveControlFlow::Vertical)
+        else if constexpr (Cf == ENodePrimitiveControlflow::Vertical)
         {
             return VerticalControlFlow.UpdateDesiredSize(Self, Space);
         }
@@ -275,15 +275,15 @@ struct StaticControlFlowOrchestration
 
     FORCEINLINE LVec2F GetAnchoredSizeForChild(WParent const& Self, WNode const& Target, LNodeSize1 Space = {}) const noexcept
     {
-        if constexpr (Cf == ENodePrimitiveControlFlow::Stacked)
+        if constexpr (Cf == ENodePrimitiveControlflow::Stacked)
         {
             return StackedControlFlow.GetAnchoredSizeForChild(Self, Target);
         }
-        else if constexpr (Cf == ENodePrimitiveControlFlow::Horizontal)
+        else if constexpr (Cf == ENodePrimitiveControlflow::Horizontal)
         {
             return HorizontalControlFlow.GetAnchoredSizeForChild(Self, Target, Space);
         }
-        else if constexpr (Cf == ENodePrimitiveControlFlow::Vertical)
+        else if constexpr (Cf == ENodePrimitiveControlflow::Vertical)
         {
             return VerticalControlFlow.GetAnchoredSizeForChild(Self, Target, Space);
         }
@@ -295,15 +295,15 @@ struct StaticControlFlowOrchestration
 
     FORCEINLINE LVec2F GetAnchoredTopLeftFromMostOuterForChild(WParent const& Self, WNode const& Target, LNodeSize1 Space = {}) const noexcept
     {
-        if constexpr (Cf == ENodePrimitiveControlFlow::Stacked)
+        if constexpr (Cf == ENodePrimitiveControlflow::Stacked)
         {
             return StackedControlFlow.GetAnchoredTopLeftFromMostOuterForChild(Self, Target);
         }
-        else if constexpr (Cf == ENodePrimitiveControlFlow::Horizontal)
+        else if constexpr (Cf == ENodePrimitiveControlflow::Horizontal)
         {
             return HorizontalControlFlow.GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
         }
-        else if constexpr (Cf == ENodePrimitiveControlFlow::Vertical)
+        else if constexpr (Cf == ENodePrimitiveControlflow::Vertical)
         {
             return VerticalControlFlow.GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
         }
@@ -319,35 +319,35 @@ namespace Detail
 
 struct DynamicControlFlowOrchestrationFn
 {
-    FORCEINLINE LVec2F UpdateDesiredSize(ENodePrimitiveControlFlow Cf, WParent const& Self, LNodeSize1 Space = {}) const noexcept
+    FORCEINLINE LVec2F UpdateDesiredSize(ENodePrimitiveControlflow Cf, WParent const& Self, LNodeSize1 Space = {}) const noexcept
     {
         switch (Cf)
         {
-        case ENodePrimitiveControlFlow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Stacked>().UpdateDesiredSize(Self, Space);
-        case ENodePrimitiveControlFlow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Horizontal>().UpdateDesiredSize(Self, Space);
-        case ENodePrimitiveControlFlow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Vertical>().UpdateDesiredSize(Self, Space);
+        case ENodePrimitiveControlflow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Stacked>().UpdateDesiredSize(Self, Space);
+        case ENodePrimitiveControlflow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Horizontal>().UpdateDesiredSize(Self, Space);
+        case ENodePrimitiveControlflow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Vertical>().UpdateDesiredSize(Self, Space);
         default: std::unreachable();
         }
     }
 
-    FORCEINLINE LVec2F GetAnchoredSizeForChild(ENodePrimitiveControlFlow Cf, WParent const& Self, WNode const& Target, LNodeSize1 Space = {}) const noexcept
+    FORCEINLINE LVec2F GetAnchoredSizeForChild(ENodePrimitiveControlflow Cf, WParent const& Self, WNode const& Target, LNodeSize1 Space = {}) const noexcept
     {
         switch (Cf)
         {
-        case ENodePrimitiveControlFlow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Stacked>().GetAnchoredSizeForChild(Self, Target, Space);
-        case ENodePrimitiveControlFlow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Horizontal>().GetAnchoredSizeForChild(Self, Target, Space);
-        case ENodePrimitiveControlFlow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Vertical>().GetAnchoredSizeForChild(Self, Target, Space);
+        case ENodePrimitiveControlflow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Stacked>().GetAnchoredSizeForChild(Self, Target, Space);
+        case ENodePrimitiveControlflow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Horizontal>().GetAnchoredSizeForChild(Self, Target, Space);
+        case ENodePrimitiveControlflow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Vertical>().GetAnchoredSizeForChild(Self, Target, Space);
         default: std::unreachable();
         }
     }
 
-    FORCEINLINE LVec2F GetAnchoredTopLeftFromMostOuterForChild(ENodePrimitiveControlFlow Cf, WParent const& Self, WNode const& Target, LNodeSize1 Space = {}) const noexcept
+    FORCEINLINE LVec2F GetAnchoredTopLeftFromMostOuterForChild(ENodePrimitiveControlflow Cf, WParent const& Self, WNode const& Target, LNodeSize1 Space = {}) const noexcept
     {
         switch (Cf)
         {
-        case ENodePrimitiveControlFlow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Stacked>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
-        case ENodePrimitiveControlFlow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Horizontal>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
-        case ENodePrimitiveControlFlow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlFlow::Vertical>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
+        case ENodePrimitiveControlflow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Stacked>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
+        case ENodePrimitiveControlflow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Horizontal>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
+        case ENodePrimitiveControlflow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Vertical>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
         default: std::unreachable();
         }
     }
