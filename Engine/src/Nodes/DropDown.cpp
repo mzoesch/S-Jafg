@@ -61,18 +61,21 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                             {
                                 check(Result)
                                 check(!!Action)
-                                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                                if (Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
                                 {
-                                    if (Action(Self, Info, Event).is_handled())
+                                    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                                     {
+                                        if (Action(Self, Info, Event).is_handled())
+                                        {
+                                            return LNodeReply::Handled();
+                                        }
+                                        if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
+                                        {
+                                            check(Result->IsTopLevel())
+                                            Result->MarkAsGarbage_v2();
+                                        }
                                         return LNodeReply::Handled();
                                     }
-                                    if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
-                                    {
-                                        check(Result->IsTopLevel())
-                                        Result->MarkAsGarbage_v2();
-                                    }
-                                    return LNodeReply::Handled();
                                 }
                                 return LNodeReply::Unhandled();
                             })
@@ -121,26 +124,29 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                 {
                                     check(Result)
                                     check(!!Action)
-                                    if (auto reply{Action(Self, Info, Event)}; reply.is_handled())
+                                    if (Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
                                     {
-                                        if (reply.should_kill())
+                                        if (auto reply{Action(Self, Info, Event)}; reply.is_handled())
+                                        {
+                                            if (reply.should_kill())
+                                            {
+                                                if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
+                                                {
+                                                    check(Result->IsTopLevel())
+                                                    Result->MarkAsGarbage_v2();
+                                                }
+                                            }
+                                            return LNodeReply::Handled();
+                                        }
+                                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                                         {
                                             if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
                                             {
                                                 check(Result->IsTopLevel())
                                                 Result->MarkAsGarbage_v2();
                                             }
+                                            return LNodeReply::Handled();
                                         }
-                                        return LNodeReply::Handled();
-                                    }
-                                    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
-                                    {
-                                        if (!OnOptionCloseResult || !OnOptionCloseResult(*Result).is_handled())
-                                        {
-                                            check(Result->IsTopLevel())
-                                            Result->MarkAsGarbage_v2();
-                                        }
-                                        return LNodeReply::Handled();
                                     }
                                     return LNodeReply::Unhandled();
                                 })

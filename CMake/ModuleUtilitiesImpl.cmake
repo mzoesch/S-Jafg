@@ -193,7 +193,7 @@ function(_jafg_add_module_impl
 
     if(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_CLIENT)
         target_compile_definitions(${module_name} PRIVATE
-            JAFG_AS_CLIENT=1
+            JAFG_WITH_LOCAL_LAYER=1
             )
     elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_DAEMON)
         target_compile_definitions(${module_name} PRIVATE
@@ -201,7 +201,7 @@ function(_jafg_add_module_impl
             )
     elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_TEST)
         target_compile_definitions(${module_name} PRIVATE
-            JAFG_AS_CLIENT=1
+            JAFG_WITH_LOCAL_LAYER=1
             JAFG_WITH_TESTS=1
             )
     else()

@@ -452,7 +452,11 @@ void Jafg::LViewport::ChangeFocusImpl(TClassStorage<WNode> Node)
         this->FocusedWidget.get_unsafe()->OnFocusLost();
     }
     this->FocusedWidget = Node;
-    if (this->FocusedWidget)
+    if (!this->FocusedWidget.IsValidFast())
+    {
+        this->FocusedWidget.Reset();
+    }
+    else if (this->FocusedWidget)
     {
         LOG_TRACE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusReceived();

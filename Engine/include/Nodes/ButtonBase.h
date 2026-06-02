@@ -78,6 +78,8 @@ enum struct EStyleBits
     Disabled = 0x1 << 4,
 
     count = 5,
+    ActiveCombi = Hover | Press | Selected,
+    InactiveCombi = Normal | Disabled,
 };
 ENUM_STRUCT_FLAGS(EStyleBits, EStyleFlags)
 
@@ -299,45 +301,27 @@ protected:
             return {};
         }
 
-        if (Info.CursorLocation.has_value())
-        {
-            if (this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
-            {
-                if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-                    , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
-                {
-                    if (this->bUpdateBrushOnStateChange && !this->bSelected)
-                    {
-                        this->Owner.*BrushProj = this->Style.PressBrush;
-                    }
-                    auto Result{LNodeReply::Handled()};
-                    if (this->Owner.OnKeyEventFocusedDelegate)
-                    {
-                        if (auto Reply{this->Owner.OnKeyEventFocusedDelegate(this->Owner, Info, Event)}; Reply.IsHandled())
-                        {
-                            Result = Reply;
-                        }
-                    }
-                    return Result;
-                }
-            }
+        auto Result{LNodeReply::Unhandled()};
 
-            if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+        if (Info.CursorLocation && this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
+        {
+            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
+                , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
+            {
+                if (this->bUpdateBrushOnStateChange && !this->bSelected)
+                {
+                    this->Owner.*BrushProj = this->Style.PressBrush;
+                }
+                Result = LNodeReply::Handled();
+            }
+            else if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
                     , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
             {
                 if (this->bUpdateBrushOnStateChange && !this->bSelected)
                 {
                     this->Owner.*BrushProj = this->Style.HoverBrush;
                 }
-                auto Result{LNodeReply::Handled()};
-                if (this->Owner.OnKeyEventFocusedDelegate)
-                {
-                    if (auto Reply{this->Owner.OnKeyEventFocusedDelegate(this->Owner, Info, Event)}; Reply.IsHandled())
-                    {
-                        Result = Reply;
-                    }
-                }
-                return Result;
+                Result = LNodeReply::Handled();
             }
         }
 
@@ -349,7 +333,7 @@ protected:
             }
         }
 
-        return {};
+        return Result;
     }
 
     TNode& Owner;

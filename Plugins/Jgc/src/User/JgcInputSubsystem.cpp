@@ -18,17 +18,17 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 
     if (Jafg::LUserInputContext* Context{Registry.RegisterContext(Jafg::LUserInputContext{"DebugCamera"})})
     {
-        Context->MapAction(&Registry,
-            {"Pause", Jafg::EInputActionCategory::Boolean},
-            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Escape).value(), Jafg::EInputActionTriggerBits::Triggered,
-            {},
-            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
-            {
-                Data.UserInput.PushContexts();
-                Data.UserInput.ActivateContext("PauseScreen");
-                Data.UserInput.SetConsumeMouse(false);
-                return {.bDirty=true};
-            });
+        // Context->MapAction(&Registry,
+        //     {"Pause", Jafg::EInputActionCategory::Boolean},
+        //     Frontend.GetPhysicalKey(Jafg::ELogicalKey::Escape).value(), Jafg::EInputActionTriggerBits::Triggered,
+        //     {},
+        //     [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+        //     {
+        //         Data.UserInput.PushContexts();
+        //         Data.UserInput.ActivateContext("PauseScreen");
+        //         Data.UserInput.SetConsumeMouse(false);
+        //         return {.bDirty=true};
+        //     });
 
         Context->MapAction(&Registry,
             {"Moving", Jafg::EInputActionCategory::Axis3D},

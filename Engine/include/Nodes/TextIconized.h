@@ -34,7 +34,7 @@ public:
 
 private:
 
-    LVec2F GetIconTopLeft(LVec2F Translation) const noexcept
+    NODISCARD LVec2F GetIconTopLeft(LVec2F Translation) const noexcept
     {
         return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
             + IconLocation.GetRelativeLeftIconTopLeft
@@ -62,7 +62,7 @@ public:
 
 private:
 
-    LVec2F GetIconTopLeft(LVec2F Translation) const noexcept
+    NODISCARD LVec2F GetIconTopLeft(LVec2F Translation) const noexcept
     {
         return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
             + IconLocation.GetRelativeRightIconTopLeft

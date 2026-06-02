@@ -494,6 +494,7 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, EJxxRecordT
 {
     check(Tasks::IsOnMasterThread())
 
+    check(this->_HasBegunLife())
     check(this->_IsGarbage() == false)
     this->bGarbage = true;
 

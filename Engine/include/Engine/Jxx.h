@@ -556,7 +556,7 @@ struct TDeferredObjectExec
     {
         if (!this->bReleased)
         {
-            MakeCxxObjectFinal(Class);
+            MakeCxxObjectFinal(this->Class);
         }
     }
 

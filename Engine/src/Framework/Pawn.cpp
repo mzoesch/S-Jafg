@@ -29,10 +29,9 @@ void Jafg::APawn::DefaultInit()
 {
     this->SetEverTickConstructorOnlyFlag();
 
-    if (this->RootComponent == nullptr)
+    if (!this->HasRootComponent())
     {
-        this->RootComponent = this->EmplaceComponent<ASceneComponent>();
-        this->RootComponent->SetTranslation(maths::zero_vector<LWorldVec3>);
+        this->EmplaceRootComponent();
     }
 
     return;
@@ -66,15 +65,15 @@ void Jafg::APawn::OnGarbage(EJxxRecordTearDownReason Reason)
 
 Jafg::LEye_v2 Jafg::APawn::GetEye() const noexcept
 {
-    check(this->RootComponent)
+    check(this->HasRootComponent())
     return {
         .VertFov = this->VertFov,
         .NearFrustum = this->NearFrustum,
         .FarFrustum = this->FarFrustum,
-        .Translation = this->RootComponent->GetTranslation(),
-        .Front = this->RootComponent->GetRotator() * maths::forward_vector<LWorldVec3>,
+        .Translation = this->GetRootComponent().GetTranslation(),
+        .Front = this->GetRootComponent().GetRotator() * maths::forward_vector<LWorldVec3>,
         /* Maybe hard lock this to maths::up_vector? */
-        .Up = this->RootComponent->GetRotator() * maths::up_vector<LWorldVec3>,
+        .Up = this->GetRootComponent().GetRotator() * maths::up_vector<LWorldVec3>,
         };
 }
 

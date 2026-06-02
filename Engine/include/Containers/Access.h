@@ -717,6 +717,31 @@ FORCEINLINE void inline_left_chop_shrink(T* Container, range_size_t<T> N) noexce
     return;
 }
 
+struct to_array_fn
+{
+    template <input_range TRange>
+    auto operator()(TRange&& Range) const noexcept
+    {
+        typedef range_value_t<TRange> T;
+        TArray<T> Result; Result.reserve(this->Reservation);
+        for (auto&& Element: Range)
+        {
+            Result.emplace_back(std::forward<decltype(Element)>(Element));
+        }
+        return Result;
+    }
+
+    std::size_t Reservation{};
+};
+//# Transform a range into TArray. You may use to_array_fn{N} to reserve N elements.
+inline constexpr to_array_fn to_array{};
+
+template<input_range TRange>
+NODISCARD FORCEINLINE decltype(auto) operator|(TRange&& Range, to_array_fn const& F) noexcept
+{
+    return F(std::forward<decltype(Range)>(Range));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Weak - weak implementations of algorithms that required less correctly specified traits -- as the standard really
 // tries to force one to define literally mathematical perfect reflexive, symmetric, and transitive type comparisons

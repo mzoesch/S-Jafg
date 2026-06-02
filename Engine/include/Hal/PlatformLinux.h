@@ -64,11 +64,11 @@ extern void __assert_fail(
     #define JAFG_LIKELY(Expr)                                           (__builtin_expect(!!(Expr), 1))
 #endif /* !JAFG_LIKELY */
 
-#if JAFG_AS_CLIENT
+#if JAFG_WITH_LOCAL_LAYER
     #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
         #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER              1
     #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
-#endif /* JAFG_AS_CLIENT */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
 #ifndef JAFG_WITH_REST_CLS
     #define JAFG_WITH_REST_CLS                                          1

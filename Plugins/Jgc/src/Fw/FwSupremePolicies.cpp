@@ -17,7 +17,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.MetallicGold")};
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZModel.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -25,7 +25,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -33,7 +33,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -41,7 +41,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -49,7 +49,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Icosphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -57,7 +57,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cylinder.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -65,7 +65,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cone.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -73,7 +73,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
-    ->EmplaceComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Torus.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
@@ -116,7 +116,7 @@ TJxxUnique<Jafg::APawn> Jgc::AFwSupremePolicies::GetPawnForPersonaController(Jaf
         return nullptr;
     }
 
-    Pawn->GetComponentChecked<Jafg::ASceneComponent>()->SetTranslation({0.f, 2.0f, 0.f});
+    Pawn->GetComponentChecked<Jafg::ASceneComponent>().SetTranslation({0.f, 2.0f, 0.f});
     if (Pc.IsLocallyPossessed())
     {
         Pawn->EmplaceComponent<ADebugCameraComponent>();

@@ -22,11 +22,15 @@ class ENGINE_API ASceneComponent : public AActorComponent
 {
     GENERATED_CLASS_BODY()
 
+    friend AActor;
+
 protected:
 
     DEFAULT_WORLD_CONSTRUCTORS(ASceneComponent)
 
 public:
+
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     void SetTransform(const LWorldTrans& InTransform, const ESceneSweep SweepType = ESceneSweep::Teleport) noexcept { check(SweepType == ESceneSweep::Teleport) this->Trans = InTransform; }
 
@@ -43,9 +47,12 @@ public:
     NODISCARD FORCEINLINE constexpr LWorldQuat const& GetRotator() const noexcept { return this->Trans.R; }
     NODISCARD FORCEINLINE constexpr LWorldVec3 const& GetScale() const noexcept { return this->Trans.S; }
 
+    NODISCARD FORCEINLINE TArray<ASceneComponent*> const& GetChildren() const noexcept { return this->Children; }
+
 private:
 
     LWorldTrans Trans{ maths::identity<LWorldTrans> };
+    TArray<ASceneComponent*> Children;
 };
 
 } /* ~Namespace Jafg */

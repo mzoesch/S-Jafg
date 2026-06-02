@@ -8,7 +8,10 @@
 namespace Jafg
 {
 
+class WEditableTextButton;
+class WEditableTextButtonIconizedLeft;
 struct LFactoryEditableTextButton;
+typedef TFactoryIconized<WEditableTextButtonIconizedLeft> LFactoryEditableTextButtonIconizedLeft;
 
 enum struct ETextCommit : u8
 {
@@ -148,6 +151,32 @@ private:
     f32 CaretBlinker{};
     std::size_t CaretCursor{};
     LDelegateHandle UserInterfaceTickDelegateHandle;
+};
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryEditableTextButtonIconizedLeft)
+class WEditableTextButtonIconizedLeft : public WEditableTextButton, public LIconized
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WEditableTextButtonIconizedLeft)
+
+public:
+
+    virtual void Draw(LNodeRenderInfo const& Info) const override;
+    virtual void UpdateDesiredSize() const override;
+
+    // TODO: Also add decoupled icon; Extra class?
+
+private:
+
+    NODISCARD LVec2F GetIconTopLeft(LVec2F Translation) const noexcept
+    {
+        return this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)
+            + IconLocation.GetRelativeLeftIconTopLeft
+                <&WEditableTextButtonIconizedLeft::Icon, &WEditableTextButtonIconizedLeft::IconBrush>(*this, this->Brush.Padding);
+    }
 };
 
 struct LFactoryEditableTextButton : NODE_FACTORY_PARENT(WEditableTextButton)

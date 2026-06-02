@@ -60,6 +60,22 @@ public:
 
     FORCEINLINE LWorld& GetWorld() noexcept { return this->GetOuter().AsWorld(); }
     FORCEINLINE LWorld const& GetWorld() const noexcept { return this->GetOuter().AsWorld(); }
+
+#if JAFG_WITH_EDITOR
+    //#
+    //# DisplayName is for editor purposes only. Do not query for it, try to find objects with the name.
+    //# A display name can change at any time and might be localized ect.
+    //#
+    LString EditorName;
+    NODISCARD FORCEINLINE LString const& GetEditorNameOrDefault() const noexcept
+    {
+        if (this->EditorName.empty())
+        {
+            return this->GetNameAsString();
+        }
+        return this->EditorName;
+    }
+#endif /* JAFG_WITH_EDITOR */
 };
 
 //# Do not use NewObject for AWorldObjects; instead use these.

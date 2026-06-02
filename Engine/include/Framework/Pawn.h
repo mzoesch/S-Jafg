@@ -68,9 +68,6 @@ private:
 
     APersonaController* OwningController{};
 
-    //# The root scene component that specifies the actual transform for this pawn.
-    ASceneComponent* RootComponent{};
-
     f32 VertFov{ 1.0471975511965977461542144610931676280657231331250352736583148641026054687620696662093449417807056893273826955044274355490312815 };
     f32 NearFrustum{ 0.1f };
     f32 FarFrustum{ 1.0f };
@@ -82,7 +79,6 @@ private:
     f64  LastMouseX       = 0.0;
     f64  LastMouseY       = 0.0;
     bool bFirstMouseCallback = true;
-
 };
 
 } /* ~Namespace Jafg */

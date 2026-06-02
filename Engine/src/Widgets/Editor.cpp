@@ -85,6 +85,10 @@ void Jafg::WEditor::Construct()
                                 .OnAction = [this](auto&&...){ this->AddWindow<WWorldViewerHierarchy>(true); return algo::reply::unhandled(); },
                                 },
                             LDropDownNodeOption{
+                                .Selector = WWorldViewerInspector::TabSelectorCreateInfo(),
+                                .OnAction = [this](auto&&...){ this->AddWindow<WWorldViewerInspector>(true); return algo::reply::unhandled(); },
+                                },
+                            LDropDownNodeOption{
                                 .Selector = WTagInspector::TabSelectorCreateInfo(),
                                 .OnAction = [this](auto&&...){ this->AddWindow<WTagInspector>(true); return algo::reply::unhandled(); },
                                 },

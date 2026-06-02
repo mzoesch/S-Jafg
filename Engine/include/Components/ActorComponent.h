@@ -11,7 +11,7 @@ namespace Jafg
 
 class AActor;
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API AActorComponent : public AWorldObject
 {
     GENERATED_CLASS_BODY()
@@ -22,12 +22,11 @@ protected:
 
     DEFAULT_WORLD_CONSTRUCTORS(AActorComponent)
 
-private:
+public:
 
     //# Do not use. Use #OnAttach.
     virtual void BeginLife() override final { Super::BeginLife(); }
-
-public:
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     //#
     //# Called when this component is attached to an actor. This call might be deferred quite a while if the actor
@@ -50,7 +49,7 @@ public:
     virtual void Render(LActorRenderInfo const& Info) noexcept {}
 
     FORCEINLINE constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
-    FORCEINLINE CONSTEXPR_CHECK AActor& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
+    FORCEINLINE constexpr AActor& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
 
 private:
 

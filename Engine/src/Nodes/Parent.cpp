@@ -4,6 +4,7 @@
 #include "Nodes/UserWidget.h"
 #include "Nodes/Viewport.h"
 #include "Platform/Surface.h"
+#include "Core/App.h"
 
 void Jafg::WParent::Construct()
 {
@@ -257,6 +258,7 @@ Jafg::WNode& Jafg::WParent::AddChildAt(std::size_t Index, TJxxUnique<WNode> Chil
     check(Child.get())
     check(algo::contains(this->GetChildren(), &*Child, [](auto const& E){return &*E;}) == false)
     check(!Child->_HasBegunLife())
+    check(!App::IsTearingDown())
 
     WNode& Result{this->OnAddChild(Index, std::move(Child), false)};
 

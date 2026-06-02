@@ -6,6 +6,10 @@ void Jafg::AActor::BeginLife()
 {
     Super::BeginLife();
 
+    /*
+     * Components that do not live.
+     * But these components may emplace other components on their #OnAttach method that then will live.
+     */
     TArray<AActorComponent*> PreComponents; PreComponents.reserve(this->Components.size());
     for (auto& Comp : this->Components)
     {
@@ -20,7 +24,7 @@ void Jafg::AActor::BeginLife()
 
     if (this->CanEverTick())
     {
-        this->GetWorld().RegisterTickableObject(static_cast<LTickableObject*>(this));
+        this->GetWorld().RegisterTickableObject(this);
     }
 
     return;
@@ -35,7 +39,6 @@ void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
     if (this->CanEverTick())
     {
         auto& World{this->GetWorld()};
-
         if (World.IsTickableObjectsPutMutexLocked())
         {
             World.DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
@@ -44,6 +47,10 @@ void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
         {
             algo::erase_exactly_once_checked(&World.TickableObjects, static_cast<LTickableObject*>(this));
         }
+    }
+    else
+    {
+        check(!algo::contains(this->GetWorld().TickableObjects, static_cast<LTickableObject*>(this)))
     }
 
     return;

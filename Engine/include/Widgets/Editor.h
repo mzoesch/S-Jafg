@@ -78,7 +78,7 @@ class ENGINE_API WEditor final : public WUserWidget, public LTabOverlayPossibili
 
 protected:
 
-    inline  explicit WEditor(LNodeDynamicInit const& Init) noexcept
+    inline explicit WEditor(LNodeDynamicInit const& Init) noexcept
         : Super{Init}, LTabOverlayPossibilities{*static_cast<WUserWidget*>(this)}
     {
         this->SetShouldTick(true);

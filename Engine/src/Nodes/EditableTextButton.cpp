@@ -37,6 +37,7 @@ void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
               this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)
             + LVec2F{this->Brush.Padding.GetLeftOffset().InStaticPoints(this->GetViewport()), 0.0}
             + LVec2F{0.0, (this->GetDesiredSize_v2().y - CaretSize.y) * 0.5}
+            + this->TextDrawOffset
             };
 
         LStringView CaretContent;
@@ -290,7 +291,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
         if (this->GetViewport().GetFocusedWidget() == this)
         {
             this->OnTextCommit(ETextCommit::OnCleared);
-            return LNodeReply::Handled();
+            return LNodeReply{TClassStorage<WNode>{}};
         }
     }
 
@@ -318,13 +319,13 @@ std::size_t Jafg::WEditableTextButton::MoveCaretTo(LVec2F Location)
      */
     const f32 BaseTopLeft
     {
-        this->GetAnchoredTopLeftFromMostOuter().x // + this->CaretBrush.HOffset
+        this->GetAnchoredTopLeftFromMostOuter().x + this->TextDrawOffset.x// + this->CaretBrush.HOffset
     };
 
     f32 RelativeTopLeft{Location.x - BaseTopLeft};
     if (RelativeTopLeft < 0.0)
     {
-        this->SetCaretCursorToEnd();
+        this->SetCaretCursorToBegin();
     }
     else if (!this->GetContent().empty())
     {
@@ -344,4 +345,23 @@ std::size_t Jafg::WEditableTextButton::MoveCaretTo(LVec2F Location)
     }
 
     return this->CaretCursor;
+}
+
+void Jafg::WEditableTextButtonIconizedLeft::Draw(LNodeRenderInfo const& Info) const
+{
+    Super::Draw(Info);
+    if (this->Icon.get())
+    {
+        Detail::DrawIcon(Info, this->GetIconTopLeft(Info.Translation), this->Icon, this->IconBrush);
+    }
+    return;
+}
+
+void Jafg::WEditableTextButtonIconizedLeft::UpdateDesiredSize() const
+{
+    Super::UpdateDesiredSize();
+    auto Size{this->GetIconSize(this->GetViewport())};
+    this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
+    this->TextDrawOffset = Size;
+    return;
 }

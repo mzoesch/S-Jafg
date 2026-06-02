@@ -69,29 +69,34 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Build targets.
-#ifndef JAFG_AS_CLIENT
-    #define JAFG_AS_CLIENT                   0
+#ifndef JAFG_WITH_LOCAL_LAYER
     #define JAFG_WITH_LOCAL_LAYER            0
-#else /* !JAFG_AS_CLIENT */
-    /* This includes everything that cannot be daemonized (rendering, local access layer, etc.). */
-    #define JAFG_WITH_LOCAL_LAYER            1
-#endif /* JAFG_AS_CLIENT */
+#else /* !JAFG_WITH_LOCAL_LAYER */
+    #if !JAFG_IN_SHIPPING
+        #define JAFG_WITH_EDITOR             1
+    #else /* !JAFG_IN_SHIPPING */
+        #define JAFG_WITH_EDITOR             0
+    #endif /* JAFG_IN_SHIPPING */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 #ifndef JAFG_AS_DAEMON
     #define JAFG_AS_DAEMON                   0
 #endif /* !JAFG_AS_DAEMON */
 
-#if !(JAFG_AS_CLIENT || JAFG_AS_DAEMON)
+#if !(JAFG_WITH_LOCAL_LAYER || JAFG_AS_DAEMON)
     #error "No build platform specified."
-#endif /* !(JAFG_AS_CLIENT || JAFG_AS_DAEMON) */
-#if JAFG_AS_CLIENT
+#endif /* !(JAFG_WITH_LOCAL_LAYER || JAFG_AS_DAEMON) */
+#if JAFG_WITH_LOCAL_LAYER
     #if JAFG_AS_DAEMON
         #error "Multiple build targets specified."
     #endif /* JAFG_AS_DAEMON */
-#endif /* JAFG_AS_CLIENT */
+#endif /* JAFG_WITH_LOCAL_LAYER */
 #if JAFG_AS_DAEMON
-    #if JAFG_AS_CLIENT
+    #if JAFG_WITH_LOCAL_LAYER
         #error "Multiple build targets specified."
-    #endif /* JAFG_AS_CLIENT */
+    #endif /* JAFG_WITH_LOCAL_LAYER */
+    #if JAFG_WITH_EDITOR
+        #error "Editor build is not supported in daemon build."
+    #endif /* JAFG_WITH_EDITOR */
 #endif /* JAFG_AS_DAEMON */
 
 /* Default to no tests. */

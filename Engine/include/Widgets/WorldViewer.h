@@ -7,6 +7,7 @@
 #include "Nodes/GenericTabInfos.h"
 #include "Rhi/RenderTarget.h"
 #include "Platform/Surface.h"
+#include "Nodes/HButton.h"
 #include "WorldViewer.generated.h"
 
 namespace Jafg
@@ -19,6 +20,15 @@ class WHButton;
 class WVButton;
 class WWorldViewer;
 class WWorldViewerHierarchy;
+class WWorldViewerInspector;
+class WEditableTextButton;
+
+namespace Detail
+{
+
+class WWorldViewerHierarchyObjectHButton;
+
+} /* ~Namespace Detail */
 
 //# A widget to perspectively view a world in a primitive manner.
 DECLARE_JAFG_WIDGET()
@@ -27,6 +37,7 @@ class ENGINE_API WWorldViewer : public WUserWidget, public LLocalLackey
     GENERATED_CLASS_BODY()
 
     friend WWorldViewerHierarchy;
+    friend WWorldViewerInspector;
 
     inline static constexpr rhi::extent2 DefaultExtent{640,480};
 
@@ -61,6 +72,7 @@ public:
     virtual void Construct() override;
     virtual void Tick() override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
+    virtual void Destruct() override;
 
     virtual void OnFocusLost() override;
 
@@ -86,6 +98,14 @@ public:
 
     NODISCARD FORCEINLINE constexpr bool HasHierarchy() const noexcept { return this->Hierarchy != nullptr; }
     NODISCARD FORCEINLINE constexpr WWorldViewerHierarchy* GetHierarchy() const noexcept { return this->Hierarchy; }
+    NODISCARD FORCEINLINE constexpr bool HasInspector() const noexcept { return this->Inspector != nullptr; }
+    NODISCARD FORCEINLINE constexpr WWorldViewerInspector* GetInspector() const noexcept { return this->Inspector; }
+
+    //# Select new actors. All actors must be valid.
+    void SelectActors(TArray<AActor*> Actors, bool bForce = false);
+    //# Jafg guarantees that all listed actors are valid.
+    MULTI_EVENT_DECL(OnActorsSelected, TArray<AActor*> const& Old, TArray<AActor*> const& New)
+    NODISCARD FORCEINLINE constexpr auto const& GetSelectedActors() const noexcept { return this->SelectedActors; }
 
 private:
 
@@ -119,7 +139,10 @@ private:
     //
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
 
+    TArray<AActor*> SelectedActors;
+
     WWorldViewerHierarchy* Hierarchy{};
+    WWorldViewerInspector* Inspector{};
 };
 
 //#
@@ -142,6 +165,7 @@ public:
     virtual void Construct() override;
     virtual void Destruct() override;
 
+    void _OnWorldViewerDestruct();
     void OnWorldViewerUpdate();
 
 private:
@@ -152,16 +176,23 @@ private:
 
     static inline constexpr LNodeSize2 TypeSize{128_spt, 0.0f};
     static inline constexpr LWhitespace ListPadding{20_spt, 0.0f};
-    WParent* Container;
 
     WWorldViewer* WorldViewer{};
+    LDelegateHandle OnActorsSelectedHandle;
+    void DisconnectFromViewer();
+    bool OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+
     WText* ConnectedText{};
     void UpdateConnectedArea();
-    void UpdateWorldObjectList();
-    void OnWorldObjectListKeyEventFocus(WHButton& Self, AActor& Actor, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
 
+    WParent* Container{};
+    void* LastContainerElemSelected{};
+    void UpdateWorldObjectList(TArray<AActor*> const& Old, TArray<AActor*> const& New);
     WTextBox* SelectedWorldObjectText{};
-    void UpdateSelectedWorldObjectText(std::size_t Count, std::size_t Selected);
+    void UpdateSelectedWorldObjectText(std::size_t Count, std::size_t Shown, std::size_t Selected);
+
+    LNodeReply OnWorldObjectListKeyEventFocus(Detail::WWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+    LNodeReply OnWorldObjectListKeyEventUnfocus(Detail::WWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
 
     inline LWorld* GetWorld() const noexcept
     {
@@ -172,5 +203,87 @@ private:
         return nullptr;
     }
 };
+
+//#
+//# A widget that displays details about a selected object.
+//# Just like #WWorldViewerHierarchy this widget thas a one-to-one relation to the world viewer.
+//#
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WWorldViewerInspector : public WUserWidget
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WWorldViewerInspector)
+
+public:
+
+    JAFG_DEFAULT_TAB_CANDIDATE("Details", "Icons/Jafg.Information")
+
+    virtual void Construct() override;
+    virtual void Destruct() override;
+
+    void _OnWorldViewerDestruct();
+    void OnWorldViewerUpdate();
+
+private:
+
+    WWorldViewer* FindSmart() const noexcept;
+    WWorldViewer* FindInViewport(LViewport const& Viewport) const noexcept;
+    WWorldViewer* FindInNode(WNode& Node) const noexcept;
+
+    WWorldViewer* WorldViewer{};
+    LDelegateHandle OnActorsSelectedHandle;
+    void DisconnectFromViewer();
+    bool OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+
+    WText* ConnectedText{};
+    void UpdateConnectedArea();
+
+    WEditableTextButton* EditableObjectDisplayName{};
+    WParent* Container{};
+    WEditableTextButton* ContainerSearch{};
+    void UpdateObjectDisplayName();
+
+    WParent* ComponentContainerWrapper{};
+    WParent* ComponentContainer{};
+    AActorComponent* SelectedComponent{};
+    void UpdateObjectDetails();
+    void ReloadInnerComponents();
+    void SelectComponent(AActorComponent* Component);
+};
+
+namespace Detail
+{
+
+struct LFactoryWorldViewerHierarchyObjectHButton;
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryWorldViewerHierarchyObjectHButton)
+class WWorldViewerHierarchyObjectHButton : public WHButton
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WWorldViewerHierarchyObjectHButton)
+
+public:
+
+    AActor* Actor{};
+};
+
+struct LFactoryWorldViewerHierarchyObjectHButton : NODE_FACTORY_PARENT(WWorldViewerHierarchyObjectHButton)
+{
+    NODE_FACTORY_BODY(WWorldViewerHierarchyObjectHButton)
+
+    constexpr decltype(auto) Actor(this auto&& Self, AActor* Actor) noexcept
+    {
+        NODE_FACTORY_SELF().Actor = Actor;
+        return NODE_FACTORY_RESULT();
+    }
+};
+
+} /* ~Namespace Detail */
 
 } /* ~Namespace Jafg */

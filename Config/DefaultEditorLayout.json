@@ -11,15 +11,21 @@
                 "Controlflow": "Horizontal",
                 "Children": [
                     {
-                        "Dist": 0.67,
+                        "Dist": 0.5,
                         "Children": [
                             "::Jafg::WWorldViewer"
                         ]
                     },
                     {
-                        "Dist": 0.33,
+                        "Dist": 0.25,
                         "Children": [
                             "::Jafg::WWorldViewerHierarchy"
+                        ]
+                    },
+                    {
+                        "Dist": 0.25,
+                        "Children": [
+                            "::Jafg::WWorldViewerInspector"
                         ]
                     }
                 ]
