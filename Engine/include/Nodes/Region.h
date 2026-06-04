@@ -59,21 +59,6 @@ struct LRegionBrush
     NODISCARD FORCEINLINE static LIcon Icon(LOptionalTexture2Ref const& Texture) noexcept { return LIcon{Texture.GetResolved()}; }
 };
 
-namespace Detail
-{
-
-template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush>
-struct TButtonBaseStyle<TBrush>
-{
-    TBrush NormalBrush   {LRegionBrush{.Tint={0x15,0x15,0x15}, .BorderTint={0x15,0x15,0x15}, .OutlineTint=Colors::Black}};
-    TBrush HoverBrush    {LRegionBrush{.Tint={0x1C,0x1C,0x1C}, .BorderTint={0x1C,0x1C,0x1C}, .OutlineTint=Colors::White}};
-    TBrush PressBrush    {LRegionBrush{.Tint={0x24,0x24,0x24}, .BorderTint={0x24,0x24,0x24}, .OutlineTint=Colors::White}};
-    TBrush SelectedBrush {LRegionBrush{.Tint={0x24,0x24,0x24}, .BorderTint={0x24,0x24,0x24}, .OutlineTint=Colors::White}};
-    TBrush DisabledBrush {LRegionBrush{.Tint={0x0F,0x0F,0x0F}, .BorderTint={0x0F,0x0F,0x0F}, .OutlineTint=Colors::Black}};
-};
-
-} /* ~Namespace Detail */
-
 //# A region is an overlay node that can be customized with a #LRegionBrush.
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryRegion)
 class ENGINE_API WRegion : public WOverlay

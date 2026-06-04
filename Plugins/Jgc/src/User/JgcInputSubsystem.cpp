@@ -16,6 +16,24 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
     Jafg::LUserInputRegistry& Registry{this->GetMutableLocalEgo().GetUserInputRegistry()};
 
+    if (Jafg::LUserInputContext* Context{Registry.RegisterContext(Jafg::LUserInputContext{"DebugCameraCapturer"})})
+    {
+        Context->MapAction(&Registry,
+            {"Mouse Capture", Jafg::EInputActionCategory::Boolean},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::RightMouseButton), Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                Data.UserInput.ActivateContext("DebugCamera");
+                Data.UserInput.SetConsumeMouse(true);
+                return {.bDirty=true};
+            });
+    }
+    else
+    {
+        LOG_WARNING(LogUserInput, "Failed to register [DebugCameraCapturer] user input context.")
+    }
+
     if (Jafg::LUserInputContext* Context{Registry.RegisterContext(Jafg::LUserInputContext{"DebugCamera"})})
     {
         // Context->MapAction(&Registry,
@@ -29,6 +47,17 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
         //         Data.UserInput.SetConsumeMouse(false);
         //         return {.bDirty=true};
         //     });
+
+        Context->MapAction(&Registry,
+            {"Mouse Uncapture", Jafg::EInputActionCategory::Boolean},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::RightMouseButton), Jafg::EInputActionTriggerBits::Completed,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                Data.UserInput.DeactivateContext("DebugCamera");
+                Data.UserInput.SetConsumeMouse(false);
+                return {.bDirty=true};
+            });
 
         Context->MapAction(&Registry,
             {"Moving", Jafg::EInputActionCategory::Axis3D},
@@ -102,6 +131,69 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 }
                 return {};
             });
+
+        Context->MapAction(&Registry,
+            {"VelocityIncrease", Jafg::EInputActionCategory::Axis1D},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseWheelUp),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                {
+                    if (auto* Comp{Pawn->GetComponent<ADebugCameraComponent>()})
+                    {
+                        Comp->OnVelocityMultiplierChange(Value);
+                    }
+                    else
+                    {
+                        LOG_WARNING(LogUserInput,
+                            "Debug camera action was triggered but pawn [{}] does not possess a ::Jgc::JDebugCameraComponent.",
+                            Pawn->GetNameAsString()
+                            )
+                    }
+                }
+                else
+                {
+                    LOG_WARNING(LogUserInput,
+                        "Debug camera action was triggered but controller [{}] does not possess any pawn to move.",
+                        Data.Controller.GetNameAsString()
+                        )
+                }
+                return {};
+            });
+
+        Context->MapAction(&Registry,
+            {"VelocityDecrease", Jafg::EInputActionCategory::Axis1D},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseWheelDown),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                {
+                    if (auto* Comp{Pawn->GetComponent<ADebugCameraComponent>()})
+                    {
+                        Comp->OnVelocityMultiplierChange(Value);
+                    }
+                    else
+                    {
+                        LOG_WARNING(LogUserInput,
+                            "Debug camera action was triggered but pawn [{}] does not possess a ::Jgc::JDebugCameraComponent.",
+                            Pawn->GetNameAsString()
+                            )
+                    }
+                }
+                else
+                {
+                    LOG_WARNING(LogUserInput,
+                        "Debug camera action was triggered but controller [{}] does not possess any pawn to move.",
+                        Data.Controller.GetNameAsString()
+                        )
+                }
+                return {};
+            });
+
 
         Context->MapAction(&Registry,
             {"Rotating", Jafg::EInputActionCategory::Axis2D},

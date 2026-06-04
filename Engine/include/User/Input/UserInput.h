@@ -26,9 +26,9 @@ public:
     constexpr LUserInput(LViewport& Viewport) noexcept : Viewport{Viewport} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
     constexpr ~LUserInput() noexcept = default;
-    //# Jafg internal method. Do not use!
 
-    void DispatchInputDelegates(APersonaController& ActingController);
+    //# Jafg internal method. Do not use!
+    void _DispatchInputDelegates(APersonaController& ActingController);
 
     //#
     //# Activate a context.

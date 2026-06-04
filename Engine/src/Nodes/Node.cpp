@@ -155,22 +155,29 @@ void Jafg::WNode::SetDesiredSizeInSpt(LVec2F Size) const noexcept
 {
     this->DesiredSize_v2 = Size;
 
-    LVec2F SptMinSize{this->MinDesiredSize.InStaticPoints(this->GetViewport())};
-    LVec2F SptMaxSize{this->MaxDesiredSize.InStaticPoints(this->GetViewport())};
-
-    this->DesiredSize_v2.x = maths::max(this->DesiredSize_v2.x, SptMinSize.x);
-    this->DesiredSize_v2.y = maths::max(this->DesiredSize_v2.y, SptMinSize.y);
-
-    if (SptMaxSize.x > 0.0f)
+    if (this->TransformsWidgetLayout())
     {
-        this->DesiredSize_v2.x = maths::min(this->DesiredSize_v2.x, SptMaxSize.x);
-    }
-    if (SptMaxSize.y > 0.0f)
-    {
-        this->DesiredSize_v2.y = maths::min(this->DesiredSize_v2.y, SptMaxSize.y);
-    }
+        LVec2F SptMinSize{this->MinDesiredSize.InStaticPoints(this->GetViewport())};
+        LVec2F SptMaxSize{this->MaxDesiredSize.InStaticPoints(this->GetViewport())};
 
-    check(this->DesiredSize_v2.x >= 0.0f && this->DesiredSize_v2.y >= 0.0f)
+        this->DesiredSize_v2.x = maths::max(this->DesiredSize_v2.x, SptMinSize.x);
+        this->DesiredSize_v2.y = maths::max(this->DesiredSize_v2.y, SptMinSize.y);
+
+        if (SptMaxSize.x > 0.0f)
+        {
+            this->DesiredSize_v2.x = maths::min(this->DesiredSize_v2.x, SptMaxSize.x);
+        }
+        if (SptMaxSize.y > 0.0f)
+        {
+            this->DesiredSize_v2.y = maths::min(this->DesiredSize_v2.y, SptMaxSize.y);
+        }
+
+        check(this->DesiredSize_v2.x >= 0.0f && this->DesiredSize_v2.y >= 0.0f)
+    }
+    else
+    {
+        check(this->DesiredSize_v2 == maths::zero_vector<LVec2F>)
+    }
 
     return;
 }
@@ -186,10 +193,17 @@ void Jafg::WNode::UpdateAnchoredSize() const
         return;
     }
 
-    LVec2F Out;
-    Out.x = maths::max(this->Anchor.MaxX * static_cast<f32>(this->AttachedViewport.GetExtent().width), this->DesiredSize_v2.x);
-    Out.y = maths::max(this->Anchor.MaxY * static_cast<f32>(this->AttachedViewport.GetExtent().height), this->DesiredSize_v2.y);
-    this->SetAnchoredSize(Out);
+    if (this->TransformsWidgetLayout())
+    {
+        LVec2F Out;
+        Out.x = maths::max(this->Anchor.MaxX * static_cast<f32>(this->AttachedViewport.GetExtent().width), this->DesiredSize_v2.x);
+        Out.y = maths::max(this->Anchor.MaxY * static_cast<f32>(this->AttachedViewport.GetExtent().height), this->DesiredSize_v2.y);
+        this->SetAnchoredSize(Out);
+    }
+    else
+    {
+        this->SetAnchoredSize(maths::zero_vector<LVec2F>);
+    }
 
     return;
 }
@@ -199,15 +213,22 @@ void Jafg::WNode::SetAnchoredSize(LVec2F const& InSize) const noexcept
     this->AnchoredSize_v2 = InSize;
     this->LostAnchoredSize_v2 = maths::zero_vector<LVec2F>;
 
-    if (this->MaxDesiredSize.Size.x > 0.0)
+    if (this->TransformsWidgetLayout())
     {
-        this->LostAnchoredSize_v2.x = maths::max(this->AnchoredSize_v2.x - this->MaxDesiredSize.InStaticPoints(this->GetViewport()).x, 0.0f);
-        this->AnchoredSize_v2.x = maths::min(this->AnchoredSize_v2.x, this->MaxDesiredSize.InStaticPoints(this->GetViewport()).x);
+        if (this->MaxDesiredSize.Size.x > 0.0)
+        {
+            this->LostAnchoredSize_v2.x = maths::max(this->AnchoredSize_v2.x - this->MaxDesiredSize.InStaticPoints(this->GetViewport()).x, 0.0f);
+            this->AnchoredSize_v2.x = maths::min(this->AnchoredSize_v2.x, this->MaxDesiredSize.InStaticPoints(this->GetViewport()).x);
+        }
+        if (this->MaxDesiredSize.Size.y > 0.0)
+        {
+            this->LostAnchoredSize_v2.y = maths::max(this->AnchoredSize_v2.y - this->MaxDesiredSize.InStaticPoints(this->GetViewport()).y, 0.0f);
+            this->AnchoredSize_v2.y = maths::min(this->AnchoredSize_v2.y, this->MaxDesiredSize.InStaticPoints(this->GetViewport()).y);
+        }
     }
-    if (this->MaxDesiredSize.Size.y > 0.0)
+    else
     {
-        this->LostAnchoredSize_v2.y = maths::max(this->AnchoredSize_v2.y - this->MaxDesiredSize.InStaticPoints(this->GetViewport()).y, 0.0f);
-        this->AnchoredSize_v2.y = maths::min(this->AnchoredSize_v2.y, this->MaxDesiredSize.InStaticPoints(this->GetViewport()).y);
+        check(this->AnchoredSize_v2 == maths::zero_vector<LVec2F>)
     }
 
     return;

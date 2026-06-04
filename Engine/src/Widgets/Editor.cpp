@@ -10,10 +10,161 @@
 #include "Core/App.h"
 #include "Engine/Engine.h"
 #include "Nodes/HParent.h"
+#include "Nodes/Text.h"
+#include "Nodes/Button.h"
 #include "Widgets/TagInspector.h"
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
 #include "Widgets/WorldViewer.h"
+#include "Widgets/Input_Vector3.h"
+
+#if JAFG_WITH_EDITOR
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    struct RowPair final
+    {
+        std::size_t FrameCount{};
+        EStyleBits Bit{EStyleBits::Identity};
+        WTextButton* Label;
+        WButton* Content;
+        WInput_Vector3* Vector;
+        WButton* Reset;
+    };
+
+    auto Translation{std::make_shared<RowPair>()};
+    auto Rotation{std::make_shared<RowPair>()};
+    auto Scale{std::make_shared<RowPair>()};
+
+    auto MakeLabel{[&Info, &Prefs](std::shared_ptr<RowPair> Pointer, LString Content)
+    {
+        return NewNode(Info.Viewport).Class<WTextButton>().SaveTo(&Pointer->Label)
+            .MinDesiredSize({128_spt, 0})
+            .Anchor(EAnchor::VFill)
+            .InBrushChained<EStyleBits::ActiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColorVariant, {20_spt, 0, 0, 0})
+            .InBrushChained<EStyleBits::InactiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColor, {20_spt, 0, 0, 0})
+            .InAllTextBrushes<&LTextBoxBrush::TextVAlign>(ETextVAlign::Center)
+            .Content(std::move(Content))
+            .OnBrushChanged([Pointer](auto& Self, EStyleBits Bit)
+            {
+                check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
+                if (Pointer->FrameCount < GEngine->FrameCount || Bit != EStyleBits::Normal)
+                {
+                    Pointer->FrameCount = GEngine->FrameCount;
+                    Pointer->Bit = Bit;
+                    ApplyStyleBit(Pointer->Content->Style, Pointer->Content->Brush, Bit);
+                }
+                else
+                {
+                    ApplyStyleBit(Pointer->Label->Style, Pointer->Label->Brush, Pointer->Bit);
+                }
+
+                return;
+            });
+    }};
+
+    auto MakeContent{[&Info, &Prefs](std::shared_ptr<RowPair> Pointer, Detail::LNodeFactoryBase&& Factory)
+    {
+        return NewNode(Info.Viewport).Class<WButton>().SaveTo(&Pointer->Content)
+            .Anchor(EAnchor::HFill)
+            .Visibility(ENodeVisibility::Visible)
+            .Padding({12_spt, 3})
+            .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColorVariant)
+            .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColor)
+            .OnBrushChanged([Pointer](auto& Self, EStyleBits Bit)
+            {
+                check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
+                if (Pointer->FrameCount < GEngine->FrameCount || Bit != EStyleBits::Normal)
+                {
+                    Pointer->FrameCount = GEngine->FrameCount;
+                    Pointer->Bit = Bit;
+                    ApplyStyleBit(Pointer->Label->Style, Pointer->Label->Brush, Pointer->Bit);
+                }
+                else
+                {
+                    ApplyStyleBit(Pointer->Content->Style, Pointer->Content->Brush, Bit);
+                }
+
+                return;
+            })
+        [
+            std::move(Factory)
+        ];
+    }};
+
+    auto MakeReset([&Info, &Prefs](std::shared_ptr<RowPair> Pointer, LVec3D const& Identity, bool bEnabled)
+    {
+        check(Pointer.get() && Pointer->Vector)
+        return NewNode(Info.Viewport).Class<WButton>().SaveTo(&Pointer->Reset)
+            .Anchor(EAnchor::VFill)
+            .MinDesiredSize({24_spt, 20})
+            .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColorVariant)
+            .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColor)
+            .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
+            .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
+            .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.Reset"))
+            .Enabled(bEnabled)
+            .OnKeyEventFocused([Pointer, Identity](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+            {
+                if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                {
+                    check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
+                    Pointer->Vector->Set(Identity);
+                    return LNodeReply::Handled();
+                }
+                return LNodeReply::Unhandled();
+            })
+            ;
+    });
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .HSpace(1_spt)
+    [
+        MakeLabel(Translation, "Translation")
+        + MakeContent(Translation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.T}).SaveTo(&Translation->Vector)
+            .OnVectorChanged([Pointer=Translation, Field=&Info.Field](WInput_Vector3& Self)
+            {
+                check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
+                Field->T = Self.Get<f64>();
+                Pointer->Reset->SetEnabled(Field->T != maths::zero_vector<LVec3F>);
+            }))
+        + MakeReset(Translation, maths::zero_vector<LVec3D>, Info.Field.T != maths::zero_vector<LVec3F>)
+    ]
+    + NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .HSpace(1_spt)
+    [
+        MakeLabel(Rotation, "Rotation")
+        + MakeContent(Rotation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{maths::euler_angles_deg(Info.Field.R)}).SaveTo(&Rotation->Vector)
+            .OnVectorChanged([Pointer=Rotation, Field=&Info.Field](WInput_Vector3& Self)
+            {
+                check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
+                Field->R = maths::rotator_deg(Self.Get<f64>());
+                Pointer->Reset->SetEnabled(Field->R != maths::identity<LWorldQuat>);
+            }))
+        + MakeReset(Rotation, maths::zero_vector<LVec3D>, Info.Field.R != maths::identity<LWorldQuat>)
+    ]
+    + NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .HSpace(1_spt)
+    [
+        MakeLabel(Scale, "Scale")
+        + MakeContent(Scale, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.S}).SaveTo(&Scale->Vector)
+            .OnVectorChanged([Pointer=Scale, Field=&Info.Field](WInput_Vector3& Self)
+            {
+                check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
+                Field->S = Self.Get<f64>();
+                Pointer->Reset->SetEnabled(Field->T != maths::zero_vector<LVec3F>);
+            }))
+        + MakeReset(Scale, maths::one_vector<LVec3D>, Info.Field.S != maths::one_vector<LVec3F>)
+    ];
+}
+
+#endif /* JAFG_WITH_EDITOR */
 
 void Jafg::WEditor::BeginClassLife(LBeginClassLifeInfo const& Info)
 {

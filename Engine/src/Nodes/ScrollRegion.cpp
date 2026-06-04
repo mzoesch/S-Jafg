@@ -255,7 +255,7 @@ Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventFocused(LNodeKeyEventInfo const&
     return Super::OnKeyEventFocused(Info, Event);
 }
 
-Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
@@ -266,7 +266,7 @@ Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo cons
     for (auto& Child : this->GetChildren())
     {
         check(Child.get())
-        if (&*Child == Data.Viewport.GetFocusedWidget())
+        if (&*Child == Info.Viewport.GetFocusedWidget())
         {
             continue;
         }
@@ -274,12 +274,12 @@ Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo cons
         {
             continue;
         }
-        if (!Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, Data.Surface.GetMouseLocationValue()))
+        if (!Child->AabbTest({.Translation={-ScrollOffsetX, -ScrollOffsetY}}, *Info.CursorLocation))
         {
             continue;
         }
 
-        if (auto Reply{Child->OnKeyEventUnfocused(Data, Event)}; Reply.IsHandled())
+        if (auto Reply{Child->OnKeyEventUnfocused(Info, Event)}; Reply.IsHandled())
         {
             return Reply;
         }
@@ -298,7 +298,7 @@ Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo cons
     }
 
     /* Not super. */
-    return WNode::OnKeyEventUnfocused(Data, Event);
+    return WNode::OnKeyEventUnfocused(Info, Event);
 }
 
 void Jafg::WScrollRegion::UpdateDesiredSize() const
@@ -502,7 +502,7 @@ void Jafg::WScrollRegion::HandleMouseWheelUp(f32 Value)
     auto& Prefs{GetSingleton<JUserPreferences>()};
     this->ScrollPosition.y = maths::clamp(
         this->ScrollPosition.y
-        + maths::sign(Value)
+        + Value
         *   (*Prefs.MouseWheelScrollSpeed /
             maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f))
         * (Prefs.bInvertVerticalScrollWheel ? -1.0f : 1.0f),
@@ -516,7 +516,7 @@ void Jafg::WScrollRegion::HandleMouseWheelDown(f32 Value)
     auto& Prefs{GetSingleton<JUserPreferences>()};
     this->ScrollPosition.y = maths::clamp(
         this->ScrollPosition.y
-        + maths::sign(Value)
+        + Value
         *   (*Prefs.MouseWheelScrollSpeed /
             maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f))
         * (Prefs.bInvertVerticalScrollWheel ? -1.0f : 1.0f),

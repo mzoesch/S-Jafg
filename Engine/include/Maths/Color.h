@@ -339,3 +339,13 @@ namespace LinearColors
 #include "Maths/ColorValues.h"
 
 } /* ~Namespace LinearColors */
+
+FORCEINLINE constexpr LColor operator ""_color(unsigned long long Value) noexcept
+{
+    return LColor{
+        static_cast<uint8_t>((Value >> 24) & 0xFF),
+        static_cast<uint8_t>((Value >> 16) & 0xFF),
+        static_cast<uint8_t>((Value >> 8) & 0xFF),
+        static_cast<uint8_t>(Value & 0xFF)
+        };
+}

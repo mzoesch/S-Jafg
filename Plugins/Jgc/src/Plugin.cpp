@@ -31,7 +31,6 @@ void LJgcPluginLifetime::OnFinishedLoading()
     (
         Jafg::LLevel{
             .Identifier = "LevelFrontend",
-            .InputMode = Jafg::EInputModeBits::HideMouseCursor,
             .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
             }
     ))

@@ -264,6 +264,21 @@ ConstructionHelper                                                    \
     }
 
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY(ObjectType, Name) \
+    [](LViewport& Viewport, ::Jafg::JCxxClass& Object) -> ::Jafg::Detail::LNodeFactoryBase \
+    {\
+        ObjectType& CastedObject{*StaticCastChecked< ObjectType >(&Object)}; \
+        return ::Jafg::GetEditorNode(::Jafg::TEditorNodeCreateInfo<decltype(CastedObject.Name)>{ \
+            .Viewport=Viewport, \
+            .Owner=Object, \
+            .Field=CastedObject.Name, \
+            }); \
+    }
+
+
 #ifndef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION
     #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_SUBCLASS_DEFINITION( \
     MyClassName,                                                                         \
@@ -415,6 +430,33 @@ private: /* Restore default visibility. */
     {\
         return Class.MyClassMember.IsModified(); \
     }
+
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Editor
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Editor already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Editor */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Editor(MyClassMember, ...) \
+    inline static void JAFG_JOIN_OUTER_FOUR(_, EditorFieldFactory, _, MyClassMember)(Derived& Class) \
+    { \
+    }
+
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags(MyClassMember, ...) \
+    inline static constexpr ::Jafg::EJxxFieldFlags JAFG_JOIN_OUTER_FOUR(_, FieldFlags, _, MyClassMember)()  noexcept\
+    { \
+        return Jafg::CombineJxxFieldFlags(JAFG_MAP(PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags_TRANSFORM \
+            , __VA_ARGS__) ::Jafg::EJxxFieldBits::Identity); \
+    }
+
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags_TRANSFORM
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags_TRANSFORM already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags_TRANSFORM */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags_TRANSFORM(Element) \
+    ::Jafg::EJxxFieldBits::Element,
 
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly
@@ -669,4 +711,4 @@ private: /* Restore default visibility. */
         __LINE__,                            \
         _,                                   \
         MY_GENERATED_CLASS_FIELD_DECLARATION \
-        )()
+        )(__VA_ARGS__)

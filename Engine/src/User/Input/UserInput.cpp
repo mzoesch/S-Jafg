@@ -23,7 +23,7 @@ LString Jafg::LexToString(EInputActionCategory::Type InType)
     return "Invalid";
 }
 
-void Jafg::LUserInput::DispatchInputDelegates(APersonaController& ActingController)
+void Jafg::LUserInput::_DispatchInputDelegates(APersonaController& ActingController)
 {
     this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Viewport.GetSurface().GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Triggered);
     this->DispatchInputDelegatesForKeyCategory(ActingController, &this->Viewport.GetSurface().GetMutableUnconsumedInputsDangerous(), EInputActionTriggerBits::Ongoing);
@@ -36,11 +36,11 @@ bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, std::size_t Where /* =
 
     if (algo::contains(this->ActiveContexts, Tag))
     {
-        LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", Tag.ToString())
+        LOG_TRACE(LogUserInput, "Context [{}] is already active. Cannot activate.", Tag.ToString())
         return false;
     }
 
-    LOG_VERBOSE(LogUserInput, "Activating context [{}].", Tag)
+    LOG_TRACE(LogUserInput, "Activating context [{}].", Tag)
     if (Where == static_cast<decltype(Where)>(INDEX_NONE) || Where >= this->ActiveContexts.size())
     {
         this->ActiveContexts.emplace_back(Tag);
@@ -113,11 +113,11 @@ bool Jafg::LUserInput::DeactivateContext(LUserInputTag Tag) noexcept
 
     if (algo::contains(this->ActiveContexts, Tag) == false)
     {
-        LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", Tag)
+        LOG_TRACE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", Tag)
         return false;
     }
 
-    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", Tag)
+    LOG_TRACE(LogUserInput, "Deactivating context [{}].", Tag)
     auto Removed{ algo::erase(&this->ActiveContexts, Tag) };
     check( Removed == 1 )
 
@@ -188,7 +188,7 @@ void Jafg::LUserInput::PushContexts(bool bEmpty /* = true */) noexcept
         check(this->ContextStack.back().second.size() == this->ActiveContexts.size())
     }
 
-    LOG_VERBOSE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.back().second.size())
+    LOG_TRACE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.back().second.size())
 
     return;
 }
@@ -203,7 +203,7 @@ std::optional<bool> Jafg::LUserInput::PopContexts() noexcept
     this->ActiveContexts = std::move(this->ContextStack.back().second);
     check(this->ContextStack.back().second.empty())
 
-    LOG_VERBOSE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.size())
+    LOG_TRACE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.size())
     bool Result{this->ContextStack.back().first};
     this->ContextStack.pop_back();
 
@@ -219,7 +219,7 @@ void Jafg::LUserInput::SetConsumeMouse(bool bConsume) noexcept
         return;
     }
     this->bConsumeMouse = bConsume;
-    LOG_VERBOSE(LogUserInput, "Setting consume mouse to [{}].", bConsume)
+    LOG_TRACE(LogUserInput, "Setting consume mouse to [{}].", bConsume)
 
     if (this->_bCurrentlyConsuming)
     {

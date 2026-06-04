@@ -59,6 +59,7 @@ protected:
     DEFAULT_NODE_CONSTRUCTORS_BODY(WEditableTextButton)
     {
         this->Anchor = EAnchor::Fill;
+        this->bTextAffectsDesiredWidth = false;
     }
 
 public:

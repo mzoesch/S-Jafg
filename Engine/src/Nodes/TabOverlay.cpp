@@ -679,6 +679,26 @@ Jafg::WTabOverlay::StepResult Jafg::WTabOverlay::StepThrough(WParent& Node, LVec
     return {.Overlay={}};
 }
 
+void Jafg::WTabOverlaySelector::CtorLogic() noexcept
+{
+    this->SetSelectable(true);
+
+    this->Style.ChainEverywhere<&LBoxBrush::Padding>({3_spt, 0});
+    this->Style.Set<EStyleBits::Normal, &LBoxBrush::Tint>(0x15);
+    this->Style.Set<EStyleBits::Press, &LBoxBrush::Tint>(0x1C);
+    this->Style.Set<EStyleBits::Hover, &LBoxBrush::Tint>(0x24);
+    this->Style.Set<EStyleBits::Selected, &LBoxBrush::Tint>(0x24);
+    this->Style.Set<EStyleBits::Disabled, &LBoxBrush::Tint>(0x0F);
+
+    this->TextStyle.Set<EStyleBits::Normal, &LTextBoxBrush::Tint>(0x90);
+    this->LeftIconStyle.Set<ETextButtonIconStyleBits::Normal, &LIconBrush::Tint>(0x90);
+    this->RightIconStyle.Set<ETextButtonIconStyleBits::Normal, &LIconBrush::Tint>(0x90);
+    this->LeftIconStyle.SetEverywhere<&LIconBrush::bAlwaysPad>(true);
+    this->LoadRightIcon();
+
+    return;
+}
+
 void Jafg::WTabOverlaySelector::LoadRightIcon()
 {
     this->RightIcon = this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.SmallX");

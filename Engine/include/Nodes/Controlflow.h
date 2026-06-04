@@ -83,13 +83,21 @@ struct HorizontalControlFlowFn
     FORCEINLINE LVec2F UpdateDesiredSize(WParent const& Self, LNodeSize1 Space) const noexcept
     {
         LVec2F DesiredSize{maths::zero_vector<LVec2F>};
+        auto TransformerChildCount{0uz};
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            DesiredSize.x += Child->GetDesiredSize_v2().x;
-            DesiredSize.y  = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
+            if (Child->TransformsWidgetLayout())
+            {
+                DesiredSize.x += Child->GetDesiredSize_v2().x;
+                DesiredSize.y  = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
+                ++TransformerChildCount;
+            }
         }
-        DesiredSize.x += (Space * (Self.GetChildren().size() - 1)).InStaticPoints(Self.GetViewport());
+        if (TransformerChildCount > 0)
+        {
+            DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount + 1);
+        }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
     }
@@ -115,7 +123,7 @@ struct HorizontalControlFlowFn
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().size() - 1)
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() + 1)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -133,7 +141,9 @@ struct HorizontalControlFlowFn
     {
         check(Target.TransformsWidgetLayout())
 
-        f32 Offset{};
+        auto SpaceSpt{Space.InStaticPoints(Self.GetViewport())};
+
+        f32 Offset{SpaceSpt};
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
@@ -142,7 +152,7 @@ struct HorizontalControlFlowFn
                 break;
             }
             Offset += Child->GetAnchoredSize_v2().x;
-            Offset += Space.InStaticPoints(Self.GetViewport());
+            Offset += SpaceSpt;
             continue;
         }
 
@@ -167,13 +177,21 @@ struct VerticalControlFlowFn
     FORCEINLINE LVec2F UpdateDesiredSize(WParent const& Self, LNodeSize1 Space) const noexcept
     {
         LVec2F DesiredSize{ maths::zero_vector<LVec2F> };
+        auto TransformerChildCount{0uz};
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            DesiredSize.x  = maths::max(DesiredSize.x, Child->GetDesiredSize_v2().x);
-            DesiredSize.y += Child->GetDesiredSize_v2().y;
+            if (Child->TransformsWidgetLayout())
+            {
+                DesiredSize.x  = maths::max(DesiredSize.x, Child->GetDesiredSize_v2().x);
+                DesiredSize.y += Child->GetDesiredSize_v2().y;
+                ++TransformerChildCount;
+            }
         }
-        DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().size() - 1);
+        if (TransformerChildCount > 0)
+        {
+            DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount + 1);
+        }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
     }
@@ -199,7 +217,7 @@ struct VerticalControlFlowFn
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().size() - 1)
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() + 1)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -217,7 +235,9 @@ struct VerticalControlFlowFn
     {
         check(Target.TransformsWidgetLayout())
 
-        f32 Offset{};
+        auto SpaceSpt{Space.InStaticPoints(Self.GetViewport())};
+
+        f32 Offset{SpaceSpt};
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
@@ -226,7 +246,7 @@ struct VerticalControlFlowFn
                 break;
             }
             Offset += Child->GetAnchoredSize_v2().y;
-            Offset += Space.InStaticPoints(Self.GetViewport());
+            Offset += SpaceSpt;
             continue;
         }
 

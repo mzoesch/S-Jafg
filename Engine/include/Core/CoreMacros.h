@@ -77,6 +77,23 @@
 #define JAFG_INIT_EIGHT( DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
 #define JAFG_INIT_NINE(  DefaultValue ) { DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue, DefaultValue }
 
+#define JAFG_MAP_ONE(   Transform, What1)                                                         Transform(What1)
+#define JAFG_MAP_TWO(   Transform, What1, What2)                                                  Transform(What1) Transform(What2)
+#define JAFG_MAP_THREE( Transform, What1, What2, What3)                                           Transform(What1) Transform(What2) Transform(What3)
+#define JAFG_MAP_FOUR(  Transform, What1, What2, What3, What4)                                    Transform(What1) Transform(What2) Transform(What3) Transform(What4)
+#define JAFG_MAP_FIVE(  Transform, What1, What2, What3, What4, What5)                             Transform(What1) Transform(What2) Transform(What3) Transform(What4) Transform(What5)
+#define JAFG_MAP_SIX(   Transform, What1, What2, What3, What4, What5, What6)                      Transform(What1) Transform(What2) Transform(What3) Transform(What4) Transform(What5) Transform(What6)
+#define JAFG_MAP_SEVEN( Transform, What1, What2, What3, What4, What5, What6, What7)               Transform(What1) Transform(What2) Transform(What3) Transform(What4) Transform(What5) Transform(What6) Transform(What7)
+#define JAFG_MAP_EIGHT( Transform, What1, What2, What3, What4, What5, What6, What7, What8)        Transform(What1) Transform(What2) Transform(What3) Transform(What4) Transform(What5) Transform(What6) Transform(What7) Transform(What8)
+#define JAFG_MAP_NINE(  Transform, What1, What2, What3, What4, What5, What6, What7, What8, What9) Transform(What1) Transform(What2) Transform(What3) Transform(What4) Transform(What5) Transform(What6) Transform(What7) Transform(What8) Transform(What9)
+
+#define JAFG_GET_MAP(_ONE, _TWO, _THREE, _FOUR, _FIVE, _SIX, _SEVEN, _EIGHT, _NINE, NAME, ...) NAME
+
+//# Map a number of elements against #Transform until a maximum of nine elements.
+#define JAFG_MAP(Transform, ...) \
+    JAFG_GET_MAP(__VA_ARGS__, JAFG_MAP_NINE, JAFG_MAP_EIGHT, JAFG_MAP_SEVEN, JAFG_MAP_SIX, JAFG_MAP_FIVE, JAFG_MAP_FOUR, JAFG_MAP_THREE, JAFG_MAP_TWO, JAFG_MAP_ONE) \
+    (Transform, __VA_ARGS__)
+
 //#
 //# Use this macro for formatting raw string literals.
 //# @remark MSVC is by far more permissive, so it supports this feature natively as they always decay raw string

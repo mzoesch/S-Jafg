@@ -537,7 +537,14 @@ void Jafg::WDragRegion::ApplyDists(f32 Distribution) const
 
     for (auto const& [Child, Slot]: this->DragChildSlots)
     {
-        this->SetSizeForChildNoMinMax(*Child, Distribution * Slot.Dist);
+        if (this->bUseGrid)
+        {
+            this->SetSizeForChildNoMinMax(*Child, maths::round(Distribution * Slot.Dist));
+        }
+        else
+        {
+            this->SetSizeForChildNoMinMax(*Child, Distribution * Slot.Dist);
+        }
     }
 
     return;

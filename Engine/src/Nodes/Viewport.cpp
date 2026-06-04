@@ -127,9 +127,39 @@ void Jafg::LViewport::DispatchInputs()
         CursorLocation = this->Surface.GetMouseLocationValue();
     }
 
+    for (auto It{this->KeyDelegates.begin()}; It != this->KeyDelegates.end();)
+    {
+        if (!this->Surface.HasConsumableKey(It->Key) || this->Surface.HasConsumableKeyState(It->Key, It->Flags))
+        {
+            if (It->G)
+            {
+                It->G();
+            }
+            this->Surface.ConsumeWeakKey(It->Key);
+            It = this->KeyDelegates.erase(It);
+            continue;
+        }
+
+        if (It->F && It->F())
+        {
+            if (It->G)
+            {
+                It->G();
+            }
+            this->Surface.ConsumeWeakKey(It->Key);
+            It = this->KeyDelegates.erase(It);
+            continue;
+        }
+
+        this->Surface.ConsumeWeakKey(It->Key);
+        ++It;
+        continue;
+    }
+
     if (CursorLocation.has_value())
     {
-        if (this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press))
+        if (this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press)
+            || this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton), ERawInputStateBits::Press))
         {
             bool bHandled{};
             for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
@@ -138,7 +168,8 @@ void Jafg::LViewport::DispatchInputs()
                 {
                     if (Reply.DoesConsume())
                     {
-                        this->Surface.ConsumeKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
+                        this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
+                        this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton));
                     }
                     this->HandleReply(std::move(Reply));
                     bHandled = true;
@@ -148,6 +179,7 @@ void Jafg::LViewport::DispatchInputs()
             if (!bHandled)
             {
                 this->Surface.ConsumeKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
+                this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton));
                 this->HandleReply({TClassStorage<WNode>{}});
             }
         }

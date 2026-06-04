@@ -14,6 +14,14 @@ namespace Detail{ struct TextLocationFn; }
 enum struct ETextHAlign : u8 { Left, Center, Right, /* TODO: Justify */ };
 enum struct ETextVAlign : u8 { Top, Center, Bottom };
 
+enum struct ETextCutoff
+{
+    Cutoff,
+    Fade,
+    TribbleDot,
+    NoBounds,
+};
+
 enum struct ETextScale : u8
 {
     Header,
@@ -85,7 +93,18 @@ struct LRenderData final
     LGlyphCollection Collection;
     LVec2F DesiredSize{ maths::zero_vector<LVec2F>};
 
+    struct LTextInfo final
+    {
+        ETextCutoff Cutoff;
+        LColor Tint;
+        LColor OutlineTint;
+        f32 OutlineThickness;
+        f32 LeftThrust{};
+        bool bFadeLeftOverdraw{ false };
+    };
+
     ENGINE_API void Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text);
+    ENGINE_API void Render(LNodeRenderInfo const& Info, LRect2F const& Rect, LTextInfo const& TextInfo) const;
 };
 
 //# A building block that combines many aspects that are need for mutable text containers. Completely optional.
@@ -105,8 +124,12 @@ struct TMutableTextContainer
     FORCEINLINE void SetContent(LString InContent) { this->Content = std::move(InContent); this->OnChangedImpl(); }
     FORCEINLINE constexpr LString const& GetContent() const noexcept { return this->Content; }
 
+    bool bTextAffectsDesiredWidth{ true };
+    ETextCutoff TextCutoff{ ETextCutoff::NoBounds };
+
     //# Offset is only for drawing and does not affect the desired size in any way.
     mutable LVec2F TextDrawOffset{ maths::zero_vector<LVec2F> };
+    mutable LVec2F TextThrust{ maths::zero_vector<LVec2F> };
     //# Reduction of the playroom. For rendering only. Does not affect the desired size in any way.
     mutable LVec2F TextPlayroomReduction{ maths::zero_vector<LVec2F> };
 
@@ -152,6 +175,18 @@ struct TFactoryMutableTextContainer : NODE_FACTORY_PARENT(TNode)
     constexpr decltype(auto) Content(this auto&& Self, LString Content) noexcept
     {
         NODE_FACTORY_SELF().SetContent(std::move(Content));
+        return NODE_FACTORY_RESULT();
+    }
+
+    constexpr decltype(auto) TextAffectsDesiredWidth(this auto&& Self, bool bAffects) noexcept
+    {
+        NODE_FACTORY_SELF().bTextAffectsDesiredWidth = bAffects;
+        return NODE_FACTORY_RESULT();
+    }
+
+    constexpr decltype(auto) TextCutoff(this auto&& Self, ETextCutoff Cutoff) noexcept
+    {
+        NODE_FACTORY_SELF().TextCutoff = Cutoff;
         return NODE_FACTORY_RESULT();
     }
 

@@ -4,6 +4,13 @@
 
 #include "Nodes/Node.h"
 
+#define JAFG_NODE_BUTTON_BOILERPLATE_Construct() \
+    virtual void Construct() override \
+    { \
+        Super::Construct(); \
+        this->ButtonBase_Construct(); \
+    }
+
 #define JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
     virtual ::Jafg::LNodeReply SweepFocus(::Jafg::LNodeSweepInfo const& Info, LVec2F const& Location) override \
     {\
@@ -23,13 +30,13 @@
     { \
         if (!this->bEnabled)\
         {\
-            check(!this->Owner._check_MutableMouseEntered()) \
-            checkCode(this->Owner._check_MutableMouseEntered() = true)\
+            check(!this->_ButtonBase_Owner._check_MutableMouseEntered()) \
+            checkCode(this->_ButtonBase_Owner._check_MutableMouseEntered() = true)\
             return {};\
         }\
         if (this->bUpdateBrushOnStateChange && !this->bSelected) \
         { \
-            this->_ButtonBase_SetBrush(this->Style.HoverBrush); \
+            this->_ButtonBase_SetBrush(::Jafg::EStyleBits::Hover); \
         } \
         return Super::OnCursorEnter(); \
     }
@@ -39,13 +46,13 @@
     { \
         if (!this->bEnabled)\
         {\
-            check(this->Owner._check_MutableMouseEntered()) \
-            checkCode(this->Owner._check_MutableMouseEntered() = false)\
+            check(this->_ButtonBase_Owner._check_MutableMouseEntered()) \
+            checkCode(this->_ButtonBase_Owner._check_MutableMouseEntered() = false)\
             return;\
         }\
         if (this->bUpdateBrushOnStateChange && !this->bSelected) \
         { \
-            this->_ButtonBase_SetBrush(this->Style.NormalBrush); \
+            this->_ButtonBase_SetBrush(::Jafg::EStyleBits::Normal); \
         } \
         Super::OnCursorLeave(); \
         return; \
@@ -58,6 +65,7 @@
     }
 
 #define JAFG_NODE_BUTTON_BOILERPLATE() \
+    JAFG_NODE_BUTTON_BOILERPLATE_Construct() \
     JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus() \
     JAFG_NODE_BUTTON_BOILERPLATE_OnCursorEnter() \
     JAFG_NODE_BUTTON_BOILERPLATE_OnCursorLeave() \
@@ -82,6 +90,22 @@ enum struct EStyleBits
     InactiveCombi = Normal | Disabled,
 };
 ENUM_STRUCT_FLAGS(EStyleBits, EStyleFlags)
+
+inline constexpr LStringView LexToString(EStyleBits Bit) noexcept
+{
+    switch (Bit)
+    {
+    case EStyleBits::Identity: return "Identity";
+    case EStyleBits::Normal: return "Normal";
+    case EStyleBits::Hover: return "Hover";
+    case EStyleBits::Press: return "Press";
+    case EStyleBits::Selected: return "Selected";
+    case EStyleBits::Disabled: return "Disabled";
+    case EStyleBits::ActiveCombi: return "ActiveCombi";
+    case EStyleBits::InactiveCombi: return "InactiveCombi";
+    default: std::unreachable();
+    }
+}
 
 //# To use your flags here you have to declare the #count member as done in #EStyleBits.
 template<typename UFlags, auto... BrushProj> requires std::is_base_of_v<Detail::LFlags, UFlags>
@@ -129,28 +153,53 @@ struct LStyleBase
         }(std::make_index_sequence<sizeof...(BrushProj)>{});
         return;
     }
+
+    template<auto P, typename Obj, typename V>
+    constexpr void Assign(Obj&& Obj_, V&& Value)
+    {
+        Obj_.*P = std::forward<V>(Value);
+    }
+
+    template<std::size_t N, auto First, auto... Rest>
+    inline static constexpr auto nth_value = []() {
+    if constexpr (N == 0) return First;
+    else return nth_value<N - 1, Rest...>;
+    }();
+
     template<UFlags Flags, auto... Proj>
     constexpr void Chain(this auto&& Self, algo::proj_member_t<decltype(Proj)> const&... Values) noexcept
     {
         static_assert(sizeof...(Proj) == sizeof...(Values));
+
+        // Pack Values into a tuple so we can index into them
+        auto ValTuple = std::forward_as_tuple(Values...);
+
         [&]<std::size_t... Seq>(std::index_sequence<Seq...>)
         {
-            auto Apply{[&]<std::size_t Idx>(auto&& Brush)
+            // For each brush member pointer (indexed by BrushSeq)
+            auto Apply{[&]<std::size_t BrushSeq>(auto&& Brush)
             {
                 for (auto FlagIdx{0uz}; FlagIdx < std::to_underlying(flag_type::count); ++FlagIdx)
                 {
                     if (!!(Flags & UFlags{0x01 << FlagIdx}))
                     {
-                        if (Idx == FlagIdx)
+                        if (BrushSeq == FlagIdx)
                         {
-                            ((((Self.*Brush).*Proj) = Values), ...);
+                            constexpr auto ProjTuple = std::make_tuple(std::integral_constant<decltype(Proj), Proj>{}...);
+                            [&]<std::size_t... ProjSeq>(std::index_sequence<ProjSeq...>)
+                            {
+                                auto assign_one = [&]<std::size_t N>() {
+                                    constexpr auto MPtr = std::tuple_element_t<N, decltype(ProjTuple)>::value;
+                                    (Self.*Brush).*MPtr = std::get<N>(ValTuple);
+                                };
+                                (assign_one.template operator()<ProjSeq>(), ...);
+                            }(std::make_index_sequence<sizeof...(Proj)>{});
                         }
                     }
                 }
             }};
             (Apply.template operator()<Seq>(BrushProj), ...);
         }(std::make_index_sequence<sizeof...(BrushProj)>{});
-        return;
     }
 };
 
@@ -182,6 +231,45 @@ struct TButtonStyle : Detail::TButtonBaseStyle<TBrush>
     typedef EStyleFlags flag_type;
 };
 
+template<typename T, typename U>
+FORCEINLINE constexpr void ApplyStyleBit(U& Style, T& Brush, EStyleBits Bit) noexcept
+{
+    switch (Bit)
+    {
+    case EStyleBits::Normal:
+    {
+        Brush = Style.NormalBrush;
+        break;
+    }
+    case EStyleBits::Hover:
+    {
+        Brush = Style.HoverBrush;
+        break;
+    }
+    case EStyleBits::Press:
+    {
+        Brush = Style.PressBrush;
+        break;
+    }
+    case EStyleBits::Selected:
+    {
+        Brush = Style.SelectedBrush;
+        break;
+    }
+    case EStyleBits::Disabled:
+    {
+        Brush = Style.DisabledBrush;
+        break;
+    }
+    default:
+    {
+        std::unreachable();
+    }
+    }
+
+    return;
+}
+
 //# Inherit from this to access common button logic.
 template<typename TNode, typename TBrush, auto BrushProj> requires std::is_base_of_v<LRegionBrush, TBrush>
 class TButtonBase
@@ -197,8 +285,19 @@ public:
 
     TButtonStyle<TBrush> Style;
 
-    constexpr TButtonBase(TNode& InOwner) noexcept : Owner{InOwner} {}
+    constexpr TButtonBase(TNode& InOwner) noexcept : _ButtonBase_Owner{InOwner} {}
     virtual ~TButtonBase() = default;
+
+    EVENT_DECL(OnBrushChangedEvent, void(TNode& Self, EStyleBits Bit))
+    inline virtual void OnBrushChanged(EStyleBits Bit) noexcept
+    {
+        if (this->OnBrushChangedEvent.IsValid())
+        {
+            this->OnBrushChangedEvent(this->_ButtonBase_Owner, Bit);
+        }
+
+        return;
+    }
 
     NODISCARD constexpr bool IsEnabled() const noexcept { return this->bEnabled; }
     constexpr void SetEnabled(bool bInEnabled) noexcept
@@ -214,11 +313,11 @@ public:
         {
             if (this->bEnabled)
             {
-                this->Owner.*BrushProj = this->Style.NormalBrush;
+                this->_ButtonBase_SetBrush(EStyleBits::Normal);
             }
             else
             {
-                this->Owner.*BrushProj = this->Style.DisabledBrush;
+                this->_ButtonBase_SetBrush(EStyleBits::Disabled);
             }
         }
 
@@ -246,11 +345,11 @@ public:
         {
             if (this->bSelected)
             {
-                this->Owner.*BrushProj = this->Style.SelectedBrush;
+                this->_ButtonBase_SetBrush(EStyleBits::Selected);
             }
             else
             {
-                this->Owner.*BrushProj = this->Style.NormalBrush;
+                this->_ButtonBase_SetBrush(EStyleBits::Normal);
             }
         }
 
@@ -263,9 +362,10 @@ public:
     NODISCARD constexpr bool IsUpdateBrushOnStateChange() const noexcept { return this->bUpdateBrushOnStateChange; }
     constexpr void SetUpdateBrushOnStateChange(bool bInUpdate) noexcept { this->bUpdateBrushOnStateChange = bInUpdate; }
 
-    FORCEINLINE void _ButtonBase_SetBrush(TBrush const& Brush) noexcept
+    FORCEINLINE void _ButtonBase_SetBrush(EStyleBits Bits) noexcept
     {
-        this->Owner.*BrushProj = Brush;
+        ApplyStyleBit(this->Style, this->_ButtonBase_Owner.*BrushProj, Bits);
+        this->OnBrushChanged(Bits);
     }
 
 protected:
@@ -278,17 +378,17 @@ protected:
             {
                 if (this->bSelected)
                 {
-                    this->Owner.*BrushProj = this->Style.SelectedBrush;
+                    this->_ButtonBase_SetBrush(EStyleBits::Selected);
                 }
                 else
                 {
-                    this->Owner.*BrushProj = this->Style.NormalBrush;
+                    this->_ButtonBase_SetBrush(EStyleBits::Normal);
                 }
             }
             else
             {
                 check(this->bSelected == false)
-                this->Owner.*BrushProj = this->Style.DisabledBrush;
+                this->_ButtonBase_SetBrush(EStyleBits::Disabled);
             }
         }
         return;
@@ -303,14 +403,14 @@ protected:
 
         auto Result{LNodeReply::Unhandled()};
 
-        if (Info.CursorLocation && this->Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
+        if (Info.CursorLocation && this->_ButtonBase_Owner.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
         {
             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
                 , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
             {
                 if (this->bUpdateBrushOnStateChange && !this->bSelected)
                 {
-                    this->Owner.*BrushProj = this->Style.PressBrush;
+                    this->_ButtonBase_SetBrush(EStyleBits::Press);
                 }
                 Result = LNodeReply::Handled();
             }
@@ -319,15 +419,15 @@ protected:
             {
                 if (this->bUpdateBrushOnStateChange && !this->bSelected)
                 {
-                    this->Owner.*BrushProj = this->Style.HoverBrush;
+                    this->_ButtonBase_SetBrush(EStyleBits::Hover);
                 }
                 Result = LNodeReply::Handled();
             }
         }
 
-        if (this->Owner.OnKeyEventFocusedDelegate)
+        if (this->_ButtonBase_Owner.OnKeyEventFocusedDelegate)
         {
-            if (auto Reply{this->Owner.OnKeyEventFocusedDelegate(this->Owner, Info, Event)}; Reply.IsHandled())
+            if (auto Reply{this->_ButtonBase_Owner.OnKeyEventFocusedDelegate(this->_ButtonBase_Owner, Info, Event)}; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -336,7 +436,7 @@ protected:
         return Result;
     }
 
-    TNode& Owner;
+    TNode& _ButtonBase_Owner;
     bool bEnabled:1 { true };
     bool bSelectable:1 {};
     bool bSelected:1 {};
@@ -373,6 +473,7 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
         return NODE_FACTORY_RESULT();
     }
 
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnBrushChanged, OnBrushChangedEvent)
 
 #define JAFG_NODE_FACTORY_STYLE_BOILERPLATE(Stem, Member) \
     decltype(auto) Member(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TFactoredNode::Member) const& Style) noexcept \

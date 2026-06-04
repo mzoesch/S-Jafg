@@ -216,17 +216,7 @@ protected:
 
 private:
 
-    inline void CtorLogic() noexcept
-    {
-        this->SetSelectable(true);
-        this->Style.SetEverywhere<&LBoxBrush::Padding>({3_spt, 0});
-        this->TextStyle.NormalBrush.Tint = {0x90};
-        this->LeftIconStyle.NormalBrush.Tint = {0x90};
-        this->RightIconStyle.NormalBrush.Tint = {0x90};
-        this->LeftIconStyle.SetEverywhere<&LIconBrush::bAlwaysPad>(true);
-        this->LoadRightIcon();
-    }
-
+    void CtorLogic() noexcept;
     void LoadRightIcon();
 };
 

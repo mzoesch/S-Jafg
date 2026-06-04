@@ -4,14 +4,14 @@
             "bFullscreen": false,
             "bBorderless": false,
             "Dimensions": [
-                1280,
-                720
+                1600,
+                900
             ],
             "Layout": {
                 "Controlflow": "Horizontal",
                 "Children": [
                     {
-                        "Dist": 0.5,
+                        "Dist": 0.45,
                         "Children": [
                             "::Jafg::WWorldViewer"
                         ]
@@ -23,7 +23,7 @@
                         ]
                     },
                     {
-                        "Dist": 0.25,
+                        "Dist": 0.30,
                         "Children": [
                             "::Jafg::WWorldViewerInspector"
                         ]

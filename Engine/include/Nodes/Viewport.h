@@ -7,6 +7,7 @@
 #include "Rhi/Material.h"
 #include "Platform/SurfaceForward.h"
 #include "Engine/Jxx.h"
+#include "User/Input/RawInput.h"
 
 namespace Jafg
 {
@@ -59,6 +60,20 @@ public:
     //# Outer for this viewport only.
     FORCEINLINE LClassOuter& GetOuter() noexcept { return this->Outer; }
     FORCEINLINE LClassOuter const& GetOuter() const noexcept { return this->Outer; }
+
+    //#
+    //# Emplace two delegates until the state flag for the given key is met.
+    //# F will be called each time the viewport processes its inputs and G will be called
+    //# after the state flag is met. It is guaranteed that F will never be called after G.
+    //# Both functors are optional.
+    //# Both events will consume the key if available.
+    //#
+    template<ERawInputStateFlags Flags>
+    //#
+    FORCEINLINE void EmplaceUntil(LPhysicalKey Key, TFunction2<bool()> F, TFunction<void()> G) noexcept
+    {
+        this->KeyDelegates.emplace_back(Flags, Key, std::move(F), std::move(G));
+    }
 
     //#
     //# !!!DO NOT USE!!! - Please read carefully.
@@ -149,6 +164,15 @@ private:
     //# we use the platform dpi.
     //#
     f32 BaseDpi{ 96.0f };
+
+    struct LKeyDelegate final
+    {
+        ERawInputStateFlags Flags;
+        LPhysicalKey Key;
+        TFunction2<bool()> F;
+        TFunction2<void()> G;
+    };
+    TArray<LKeyDelegate> KeyDelegates;
 
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;

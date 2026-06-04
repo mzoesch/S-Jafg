@@ -51,6 +51,7 @@ public:
 
 private:
 
+    CLASS_FIELD(EditorVisible)
     LWorldTrans Trans{ maths::identity<LWorldTrans> };
     TArray<ASceneComponent*> Children;
 };

@@ -71,7 +71,7 @@ public:
     FORCEINLINE bool HasMouseLocation() const noexcept { return this->MouseLocation.has_value(); }
     FORCEINLINE bool HasMouseLocationForOrtho() const noexcept { return this->IsShowMouseCursor() && this->HasMouseLocation(); }
     FORCEINLINE auto const& GetMouseLocation() const noexcept { return this->MouseLocation; }
-    FORCEINLINE LVec2F GetMouseLocationValue() const noexcept { check( this->MouseLocation.has_value() ) return this->MouseLocation.value(); }
+    FORCEINLINE LVec2F GetMouseLocationValue() const noexcept { check( this->MouseLocation.has_value() ) return *this->MouseLocation; }
 
     FORCEINLINE LViewport& GetViewport() noexcept { return this->SurfaceViewport; }
     FORCEINLINE LViewport const& GetViewport() const noexcept { return this->SurfaceViewport; }
@@ -103,7 +103,12 @@ public:
         }
         return false;
     }
-    FORCEINLINE bool HasConsumableKeyState(LPhysicalKey Key, ERawInputStateFlags Flags) const noexcept
+    NODISCARD FORCEINLINE bool HasConsumableKey(LPhysicalKey Key) const noexcept
+    {
+        check(Key != LPhysicalKey{})
+        return algo::contains(this->UnconsumedInputs, Key, &LRawInput::PhysicalKey);
+    }
+    NODISCARD FORCEINLINE bool HasConsumableKeyState(LPhysicalKey Key, ERawInputStateFlags Flags) const noexcept
     {
         check(Key != LPhysicalKey{})
         if (auto It{algo::find(this->UnconsumedInputs, Key, &LRawInput::PhysicalKey)}; It != this->UnconsumedInputs.end())
@@ -116,6 +121,11 @@ public:
     {
         check(Key != LPhysicalKey{})
         algo::erase_exactly_once_checked(&this->UnconsumedInputs, Key, &LRawInput::PhysicalKey);
+    }
+    FORCEINLINE void ConsumeWeakKey(LPhysicalKey Key) noexcept
+    {
+        check(Key != LPhysicalKey{})
+        algo::erase_once(&this->UnconsumedInputs, Key, &LRawInput::PhysicalKey);
     }
     FORCEINLINE decltype(auto) ConsumeKey(algo::iterator_t<TArray<LRawInput>> It) noexcept
     {

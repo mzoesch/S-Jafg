@@ -65,6 +65,9 @@ public:
 
     //# If set, this material should be preferred by mesh renders to use.
     std::optional<LMaterialInstanceRef> MeshMaterialPreference;
+    //# Might not be supported in all configurations.
+    bool bHighlightFontRects{};
+    LColor FontRectHighlightColor{ 0xFF000030_color };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
@@ -167,6 +170,13 @@ public:
     // Editor
     ///////////////////////////////////////////////////////////////////////////////
 
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorAxisTintX{ Colors::Crimson };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorAxisTintY{ Colors::LimeGreen };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorAxisTintZ{ Colors::DeepSkyBlue };
+
     // TODO: This should just be TPreference<TButtonStyle<LBoxBrush>> but we wait until we adopt the cxx26 reflection
     //       system as writing serde for this is just boring und unnecessary when in a couple of months we can completely
     //       automate it.
@@ -176,7 +186,7 @@ public:
         TButtonStyle<TBrush> Result;
         Result.template ChainEverywhere<
             &TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii, &TBrush::Padding
-            >(*this->InputColor, {0x8F}, 1, LVec4F{4}, {5_spt, 0});
+            >(*this->InputColor, {0x8F}, 1, LVec4F{5.0f}, {5_spt, 0});
         Result.template Chain<EStyleBits::Normal|EStyleBits::Disabled, &TBrush::OutlineTint>({0x5F});
         return Result;
     }

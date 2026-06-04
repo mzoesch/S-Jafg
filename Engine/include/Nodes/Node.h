@@ -511,56 +511,6 @@ struct LViewport2OuterProj
     }
 };
 
-struct LBeginStylingFnResult;
-struct LNodeFactoryBase
-{
-    friend LBeginStylingFnResult;
-
-    constexpr LNodeFactoryBase() noexcept = delete;
-    constexpr LNodeFactoryBase(WNode& InNode) noexcept : Node{InNode} {}
-    PROHIBIT_COPY(LNodeFactoryBase)
-    LNodeFactoryBase(LNodeFactoryBase&& O) noexcept
-        : Node{O.Node}
-        , Siblings{std::move(O.Siblings)}
-#if JAFG_DO_CHECKS
-        , _bReleased{O._bReleased}
-        , _bDecommissioned{O._bDecommissioned}
-#endif /* JAFG_DO_CHECKS */
-    {
-        check(O.Siblings.empty())
-        checkCode(O._bReleased = true)
-        checkCode(O._bDecommissioned = true)
-    }
-    LNodeFactoryBase& operator=(LNodeFactoryBase&& Rhs) noexcept = delete;
-    ~LNodeFactoryBase()
-    {
-        /* A factory does not have to be decommissioned in order to be destroyed. */
-        check(this->_bReleased && this->Siblings.empty())
-    }
-
-#if JAFG_DO_CHECKS
-    FORCEINLINE constexpr void _Release() noexcept { check(this->_bReleased == false) this->_bReleased = true; }
-    FORCEINLINE constexpr bool _IsReleased() const noexcept { return this->_bReleased; }
-    FORCEINLINE constexpr void _Decommission() noexcept { check(this->_bDecommissioned == false) this->_bDecommissioned = true; }
-    FORCEINLINE constexpr bool _IsDecommissioned() const noexcept { return this->_bDecommissioned; }
-#endif /* JAFG_DO_CHECKS */
-
-    FORCEINLINE auto& GetRawNode() noexcept { check(this->_IsDecommissioned() == false) return this->Node; }
-    FORCEINLINE auto const& GetRawNode() const noexcept { check(this->_IsDecommissioned() == false) return this->Node; }
-
-    FORCEINLINE auto& GetMutableSiblings() noexcept { check(this->_IsDecommissioned() == false) return this->Siblings; }
-    FORCEINLINE auto const& GetSiblings() const noexcept { check(this->_IsDecommissioned() == false) return this->Siblings; }
-
-private:
-
-    WNode& Node;
-    TArray<WNode*> Siblings;
-#if JAFG_DO_CHECKS
-    bool _bReleased{};
-    bool _bDecommissioned{};
-#endif /* JAFG_DO_CHECKS */
-};
-
 } /* ~Namespace Detail */
 
 #define NODE_FACTORY_PARENT(Node) public Node::Super::LFactory
@@ -741,30 +691,6 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
 
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyEventFocused, OnKeyEventFocusedDelegate)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyEventUnfocused, OnKeyEventUnfocusedDelegate)
-
-    template<typename T> requires std::is_base_of_v<WNode, T>
-    decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept
-    {
-        if (Out)
-        {
-            *Out = StaticCastChecked<T>(&Self.GetRawNode());
-        }
-        return NODE_FACTORY_RESULT();
-    }
-
-    decltype(auto) Unique(this auto&& Self) noexcept
-    {
-        auto& Cache{Self.GetRawNode()};
-#if JAFG_DO_CHECKS
-        Self._Release();
-        Self._Decommission();
-#endif /* JAFG_DO_CHECKS */
-        return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode>(
-            static_cast<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode*>(&Cache)
-            );
-    }
-
-    inline decltype(auto) operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept;
 };
 
 //# Pass arbitrary data typesafe down the hierarchy. Using this often is a good indicator for bad design.
@@ -1194,7 +1120,38 @@ private:
     mutable LVec2F LostAnchoredSize_v2{ maths::zero_vector<LVec2F> };
 };
 
-inline decltype(auto) LFactoryNode::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
+NODISCARD inline decltype(auto) Detail::LNodeFactoryBase::Unique(this auto&& Self) noexcept
+{
+    auto& Cache{Self.GetRawNode()};
+#if JAFG_DO_CHECKS
+    Self._Release();
+    Self._Decommission();
+#endif /* JAFG_DO_CHECKS */
+    return TJxxUnique<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode>(
+        static_cast<typename std::remove_cvref_t<decltype(Self)>::TFactoredNode*>(&Cache)
+        );
+}
+
+NODISCARD inline decltype(auto) Detail::LNodeFactoryBase::UniqueXs(this auto&& Self, TArray<TJxxUnique<WNode>>* Xs) noexcept
+{
+    check(Xs)
+    for (auto* Sibling : Self.GetSiblings())
+    {
+        Xs->emplace_back(Sibling);
+    }
+    algo::orphan(&Self.GetMutableSiblings());
+    return std::forward<decltype(Self)>(Self).Unique();
+}
+
+template<typename T> requires std::is_base_of_v<WNode, T>
+inline decltype(auto) Detail::LNodeFactoryBase::SaveTo(this auto&& Self, T** Out) noexcept
+{
+    check(Out)
+    *Out = StaticCastChecked<T>(&Self.GetRawNode());
+    return std::forward<decltype(Self)>(Self);
+}
+
+inline decltype(auto) Detail::LNodeFactoryBase::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
 {
     Self.GetMutableSiblings().emplace_back(&F.GetRawNode());
 

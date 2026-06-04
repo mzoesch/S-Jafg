@@ -220,7 +220,7 @@ void Jafg::WWorldViewer::OnFocusLost()
 
 Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
-    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
     {
         if (this->IsOwnedPersonaControllerValid())
         {
@@ -231,7 +231,16 @@ Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& 
                 this->UserInput._bCurrentlyConsuming = true;
                 this->Viewport.GetSurface().SetInputMode(this->UserInput.IsConsumingMouse()
                     ? EInputModeBits::HideMouseCursor : EInputModeBits::ShowMouseCursor);
-                return LNodeReply::Handled();
+
+                if (!this->ConsumeHandle.IsValid())
+                {
+                    if (this->UserInput._bCurrentlyConsuming)
+                    {
+                        this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]{ this->DispatchInputDelegates(); return false; });
+                    }
+                }
+
+                return LNodeReply::Handled(false);
             }
         }
     }
@@ -430,7 +439,7 @@ void Jafg::WWorldViewer::DispatchInputDelegates()
     }
 
     auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
-    this->UserInput.DispatchInputDelegates(Ctrl);
+    this->UserInput._DispatchInputDelegates(Ctrl);
 
     return;
 }
@@ -777,7 +786,8 @@ void Jafg::WWorldViewerHierarchy::Construct()
             +
             NewStaticNode(WEditableTextButtonIconizedLeft)
                 .Anchor(EAnchor::Fill)
-                .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
+                .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
+                .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
                 .Icon("Icons/Jafg.Search")
                 .PlaceholderContent("Search...")
             +
@@ -1198,7 +1208,8 @@ void Jafg::WWorldViewerInspector::Construct()
         [
             NewStaticNode(WEditableTextButton).SaveTo(&this->EditableObjectDisplayName)
                 .Anchor(EAnchor::Fill)
-                .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
+                .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
+                .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
                 .OnContentCommitted([this](WEditableTextButton& Self, LString const& Content, ETextCommit Commit)
                 {
                     if (this->WorldViewer)
@@ -1235,7 +1246,8 @@ void Jafg::WWorldViewerInspector::Construct()
         [
             NewStaticNode(WEditableTextButtonIconizedLeft).SaveTo(&this->ContainerSearch)
                 .Anchor(EAnchor::Fill)
-                .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
+                .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
+                .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
                 .Icon("Icons/Jafg.Search")
                 .PlaceholderContent("Search...")
         ]
@@ -1482,8 +1494,10 @@ void Jafg::WWorldViewerInspector::UpdateObjectDetails()
             })
             .Unique()
             );
-        this->Container->AddChild(NewStaticNode(WVParent).SaveTo(&this->ComponentContainer)
+        this->Container->AddChild(NewStaticNode(WVRegion).SaveTo(&this->ComponentContainer)
             .Anchor(EAnchor::HFill)
+            .VSpace(1_spt)
+            .Tint(Colors::Black)
             .Unique()
             );
 
@@ -1564,11 +1578,77 @@ void Jafg::WWorldViewerInspector::SelectComponent(AActorComponent* Component)
 
     if (this->SelectedComponent)
     {
-        this->ComponentContainer->AddChild(NewStaticNode(WText).Content("Selected").Unique());
-    }
-    else
-    {
-        this->ComponentContainer->RemoveChildren();
+        auto& Prefs{GetSingleton<JUserPreferences>()};
+
+        std::unordered_map<LString, TArray<TJxxUnique<WNode>>> Layout;
+        auto Iterator{this->SelectedComponent->GetVirtualTable().FieldIter()};
+        for (auto It{Iterator.begin()}; It != Iterator.end(); ++It)
+        {
+            if (JxxFieldBits::IsEditorVisible(It->Flags))
+            {
+                auto& Array{Layout[It.GetClass().GetFullyQualifiedName()]};
+                TArray<TJxxUnique<WNode>> Xs;
+                Array.emplace_back(It->EditorFactory(this->GetViewport(), *this->SelectedComponent).UniqueXs(&Xs));
+                for (auto& X: Xs)
+                {
+                    Array.emplace_back(std::move(X));
+                }
+            }
+        }
+
+        TArray<LString> Categories; Categories.reserve(Layout.size());
+        for (LString const& Category: Layout | algo::views::keys)
+        {
+            Categories.emplace_back(Category);
+        }
+        algo::sort(Categories, algo::lexicographical_string_compare);
+
+        for (LString const& Category: Categories)
+        {
+            auto CategoryNodes{std::make_shared<TArray<WNode*>>()};
+            this->ComponentContainer->AddChild(NewStaticNode(WTextButtonIconizedDouble)
+                .Anchor(EAnchor::HFill)
+                .InAllBrushes<&LBoxBrush::Tint>(*Prefs.ForegroundColorVariant)
+                .LeftIcon("Icons/Jafg.ExtendDown")
+                .Content(Category)
+                .Selectable(true)
+                .Selected(true)
+                .OnKeyEventFocused([CategoryNodes](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                {
+                    check(CategoryNodes.get())
+
+                    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                    {
+                        auto& Casted{Self.AsStatic<WTextButtonIconizedDouble>()};
+                        Casted.SetSelected(!Casted.IsSelected());
+
+                        if (Casted.IsSelected())
+                        {
+                            Casted.LeftIcon = LTexture2::FromTextureView("Icons/Jafg.ExtendDown");
+                        }
+                        else
+                        {
+                            Casted.LeftIcon = LTexture2::FromTextureView("Icons/Jafg.ExtendRight");
+                        }
+
+                        for (auto* Node: *CategoryNodes)
+                        {
+                            check(Node)
+                            Node->SetVisibility(Casted.IsSelected() ? ENodeVisibility::IntransitiveHitTestInvisible : ENodeVisibility::Collapsed);
+                        }
+                        return LNodeReply::Handled();
+                    }
+                    return LNodeReply::Unhandled();
+                })
+                .Unique()
+                );
+            TArray<TJxxUnique<WNode>>& Nodes{Layout.at(Category)};
+            for (auto& Node: Nodes)
+            {
+                CategoryNodes->emplace_back(Node.get());
+                this->ComponentContainer->AddChild(std::move(Node));
+            }
+        }
     }
 
     this->ReloadInnerComponents();

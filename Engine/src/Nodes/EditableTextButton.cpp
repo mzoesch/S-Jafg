@@ -9,25 +9,48 @@
 
 void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
 {
+    LVec2F CachedTextDrawOffset{this->TextDrawOffset};
+    LVec2F CachedTextThrust{this->TextThrust};
+
+    LVec2F TopLeftMostOuter{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)};
+
+    if (this->IsFocusWidget() && !(this->GetTextRenderData().Collection.GlyphInfos.empty() || this->TextBrush.bSkipBrushDraw))
+    {
+        LGlyphCollection::Info& Back{this->GetTextRenderData().Collection.GlyphInfos.back()};
+        LVec2F LastTopRight{this->GetRelativeTextTopLeft() + Back.Pencil + LVec2F{Back.Rect.z, 0.0f}};
+        LVec2F Extent{this->GetAnchoredSize_v2()
+            - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
+            - this->TextDrawOffset
+            - this->TextPlayroomReduction
+            };
+
+        LVec2F Overdraw{LastTopRight - Extent};
+        if (Overdraw.x > 0.0f)
+        {
+            this->TextDrawOffset.x -= Overdraw.x;
+            this->TextThrust.x -= Overdraw.x;
+        }
+    }
+
     Super::Draw(Info);
 
     if (this->GetContent().empty() && !(this->PlaceholderContent.empty() || this->TextBrush.bSkipBrushDraw))
     {
-        auto TopLeft{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + this->GetRelativeTextTopLeft()};
-        for (auto const& Glyph : this->GetTextRenderData().Collection)
-        {
-            // TODO: Clamp to pixels? Currently sometimes a little bit blurry.
-            Info.AddInstance({
-                .Rect = {{TopLeft.x + Glyph.Rect.x, TopLeft.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
-                .TexCoordRect = Glyph.TexCoordRect,
+        this->GetTextRenderData().Render(Info,
+            {
+                .Offset = TopLeftMostOuter + this->GetRelativeTextTopLeft(),
+                .Extent = this->GetAnchoredSize_v2()
+                    - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
+                    - this->TextDrawOffset
+                    - this->TextPlayroomReduction
+            },
+            {
+                .Cutoff = this->TextCutoff,
                 .Tint = this->PlaceholderTint,
                 .OutlineTint = this->TextBrush.OutlineTint,
                 .OutlineThickness = this->TextBrush.OutlineThickness,
-                .TextureIndex = Glyph.BindlessTextureIndex,
-                .SamplerIndex = Glyph.SamplerIndex,
-                .MsdfPixelRange = Glyph.MsdfPixelRange,
-                });
-        }
+            }
+            );
     }
 
     if (this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed && this->IsFocusWidget())
@@ -82,6 +105,9 @@ void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
 
         Info.AddInstance({.Rect={maths::round(CaretTopLeft), CaretSize}, .Tint=this->CaretBrush.Tint});
     }
+
+    this->TextDrawOffset = CachedTextDrawOffset;
+    this->TextThrust = CachedTextThrust;
 
     return;
 }
@@ -205,9 +231,14 @@ void Jafg::WEditableTextButton::OnFocusLost()
 
 Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
+    if (auto Reply{Super::OnKeyEventFocused(Info, Event)}; Reply.IsHandled())
+    {
+        return Reply;
+    }
+
     if (!this->bEnabled)
     {
-        return Super::OnKeyEventFocused(Info, Event);
+        return LNodeReply::Unhandled();
     }
 
     if (Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>(Info.Frontend.GetPhysicalKey(ELogicalKey::BackSpace))) // || PlatformDelete?
@@ -279,7 +310,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
 
     if (Event.Is<ERawInputStateBits::Press>(Info.Frontend.GetPhysicalKey(ELogicalKey::LeftMouseButton)))
     {
-        if (Info.Surface.HasMouseLocation())
+        if (Info.Surface.HasMouseLocationForOrtho())
         {
             this->MoveCaretTo(Info.Surface.GetMouseLocationValue());
         }
@@ -295,7 +326,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
         }
     }
 
-    return Super::OnKeyEventFocused(Info, Event);
+    return LNodeReply::Unhandled();
 }
 
 void Jafg::WEditableTextButton::OnChangedImpl() noexcept

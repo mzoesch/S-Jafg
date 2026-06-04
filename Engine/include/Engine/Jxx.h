@@ -46,6 +46,8 @@ class NextIsBaseJxxClass;
 class AActor;
 class WNode;
 class LWorld;
+class LViewport;
+struct LEditorNodeCreateInfo;
 
 namespace Detail
 {
@@ -54,6 +56,23 @@ class LCarnifex;
 struct LReflectedTag;
 struct LRegistryPackage;
 struct LRegistryClassPackage;
+struct LBeginStylingFnResult;
+template<typename TCxxClass>
+struct TJxxDelete;
+
+} /* ~Namespace Detail */
+
+} /* ~Namespace Jafg */
+
+//# Unique pointer for jcxx classes.
+template<typename TCxxClass, typename Deleter = Jafg::Detail::TJxxDelete<TCxxClass>>
+using TJxxUnique = TUnique<TCxxClass, Deleter>;
+
+namespace Jafg
+{
+
+namespace Detail
+{
 
 //#
 //# The tag registry is for tags that are replicated over the network from authorities to the clients.
@@ -72,6 +91,65 @@ struct LReflectedTag final : public TTag<u16>
     {
         return GetJxxTagRegistry().GetReprSafe(*this);
     }
+};
+
+struct LNodeFactoryBase
+{
+    friend LBeginStylingFnResult;
+
+    typedef WNode TFactoredNode;
+
+    constexpr LNodeFactoryBase() noexcept = delete;
+    constexpr LNodeFactoryBase(WNode& InNode) noexcept : Node{InNode} {}
+    PROHIBIT_COPY(LNodeFactoryBase)
+    LNodeFactoryBase(LNodeFactoryBase&& O) noexcept
+        : Node{O.Node}
+    , Siblings{std::move(O.Siblings)}
+#if JAFG_DO_CHECKS
+    , _bReleased{O._bReleased}
+    , _bDecommissioned{O._bDecommissioned}
+#endif /* JAFG_DO_CHECKS */
+    {
+        check(O.Siblings.empty())
+        checkCode(O._bReleased = true)
+        checkCode(O._bDecommissioned = true)
+    }
+    LNodeFactoryBase& operator=(LNodeFactoryBase&& Rhs) noexcept = delete;
+    ~LNodeFactoryBase()
+    {
+        /* A factory does not have to be decommissioned in order to be destroyed. */
+        check(this->_bReleased && this->Siblings.empty())
+    }
+
+#if JAFG_DO_CHECKS
+    FORCEINLINE constexpr void _Release() noexcept { check(this->_bReleased == false) this->_bReleased = true; }
+    FORCEINLINE constexpr bool _IsReleased() const noexcept { return this->_bReleased; }
+    FORCEINLINE constexpr void _Decommission() noexcept { check(this->_bDecommissioned == false) this->_bDecommissioned = true; }
+    FORCEINLINE constexpr bool _IsDecommissioned() const noexcept { return this->_bDecommissioned; }
+#endif /* JAFG_DO_CHECKS */
+
+    FORCEINLINE auto& GetRawNode() noexcept { check(this->_IsDecommissioned() == false) return this->Node; }
+    FORCEINLINE auto const& GetRawNode() const noexcept { check(this->_IsDecommissioned() == false) return this->Node; }
+
+    FORCEINLINE auto& GetMutableSiblings() noexcept { check(this->_IsDecommissioned() == false) return this->Siblings; }
+    FORCEINLINE auto const& GetSiblings() const noexcept { check(this->_IsDecommissioned() == false) return this->Siblings; }
+
+    //# Hatch the node out of their factory to the real life.
+    NODISCARD inline decltype(auto) Unique(this auto&& Self) noexcept;
+    //# Hatch the leading node out of their factory; end the whole chain; and extent xs with potential siblings of the leader.
+    NODISCARD inline decltype(auto) UniqueXs(this auto&& Self, TArray<TJxxUnique<WNode>>* Xs) noexcept;
+    template<typename T> requires std::is_base_of_v<WNode, T>
+    decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept;
+    inline decltype(auto) operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept;
+
+private:
+
+    WNode& Node;
+    TArray<WNode*> Siblings;
+#if JAFG_DO_CHECKS
+    bool _bReleased{};
+    bool _bDecommissioned{};
+#endif /* JAFG_DO_CHECKS */
 };
 
 //# A package for a reflected record.
@@ -256,16 +334,84 @@ NODISCARD FORCEINLINE LRegistryClassPackage& LRegistryPackage::AsClass() noexcep
 
 } /* ~Namespace Detail */
 
+//# Categorical flags for fields of a JCxxClass.
+enum struct EJxxFieldBits
+{
+    Identity = 0 << 0,
+    //# This field is serialized.
+    Config = 1 << 0,
+    //# This field is visible in the editor.
+    EditorVisible  = 1 << 1,
+    //# This field is visible and editable in the editor. Implies #EditorVisible.
+    EditorEditable = 1 << 2,
+};
+ENUM_STRUCT_FLAGS(EJxxFieldBits, EJxxFieldFlags)
+
+namespace JxxFieldBits
+{
+
+NODISCARD FORCEINLINE constexpr bool IsSerde(EJxxFieldFlags Flags) noexcept
+{
+    return !!(Flags & EJxxFieldBits::Config);
+}
+
+NODISCARD FORCEINLINE constexpr bool IsEditorVisible(EJxxFieldFlags Flags) noexcept
+{
+    return (Flags & EJxxFieldBits::EditorVisible) || (Flags & EJxxFieldBits::EditorEditable);
+}
+
+NODISCARD FORCEINLINE constexpr bool IsEditorEditable(EJxxFieldFlags Flags) noexcept
+{
+    return !!(Flags & EJxxFieldBits::EditorEditable);
+}
+
+} /* ~Namespace JxxFieldBits */
+
+template<typename... TFlags>
+FORCEINLINE constexpr EJxxFieldFlags CombineJxxFieldFlags(TFlags&&... Flags) noexcept
+{
+    static_assert((std::is_same_v<TFlags, EJxxFieldBits> &&...));
+    if constexpr (sizeof...(Flags) > 0)
+    {
+        return (EJxxFieldFlags{EJxxFieldBits::Identity} | (Flags |...));
+    }
+    return EJxxFieldBits::Identity;
+}
+
 typedef TFunction2<void(JCxxClass* Object, LStringView Value)> LSetCxxClassField;
 typedef TFunction2<LString(JCxxClass const& Object)> LGetCxxClassField;
 typedef TFunction2<bool(JCxxClass const& Object)> LIsModifiedCxxClassField;
+#if JAFG_WITH_EDITOR
+    typedef TFunction2<Detail::LNodeFactoryBase(LViewport& Viewport, JCxxClass& Object)> LEditorFieldFactory;
+#endif /* JAFG_WITH_EDITOR */
 //# A reflected field for a class.
 struct LJxxClassField final
 {
+    //# Always valid.
     LStringView Identifier;
+    //# Always valid.
+    EJxxFieldFlags Flags;
+    //# Valid if #JxxFieldBits::IsSerde else nullptr.
     LSetCxxClassField Set;
+    //# Valid if #JxxFieldBits::IsSerde else nullptr.
     mutable LGetCxxClassField Get;
+    //# Valid if #JxxFieldBits::IsSerde else nullptr.
     mutable LIsModifiedCxxClassField IsModified;
+#if JAFG_WITH_EDITOR
+    //# Valid if #JxxFieldBits::IsEditorVisible else nullptr.
+    mutable LEditorFieldFactory EditorFactory;
+#endif /* JAFG_WITH_EDITOR */
+};
+
+template<typename T>
+struct TEditorNodeCreateInfo final
+{
+    //# The owning viewport of the new editor node.
+    LViewport& Viewport;
+    //# The owner that owns the data-field.
+    JCxxClass& Owner;
+    //# The field that is made accessible.
+    T& Field;
 };
 
 enum struct EJxxRecordTearDownReason
@@ -314,7 +460,7 @@ private:
 enum struct EJxxClassBits
 {
     //# No flags are set. This is the default value.
-    None            = 0 << 0,
+    Identity        = 0 << 0,
     //# The class is abstract and can therefore not be instantiated.
     Abstract        = 1 << 0,
     //# Fields with the CLASS_FIELD macro are serialized both ways.
@@ -330,9 +476,9 @@ FORCEINLINE constexpr EJxxClassFlags CombineJxxClassFlags(TFlags&&... Flags) noe
     static_assert((std::is_same_v<TFlags, EJxxClassBits> &&...));
     if constexpr (sizeof...(Flags) > 0)
     {
-        return (EJxxClassFlags{EJxxClassBits::None} | (Flags |...));
+        return (EJxxClassFlags{EJxxClassBits::Identity} | (Flags |...));
     }
-    return EJxxClassBits::None;
+    return EJxxClassBits::Identity;
 }
 
 //# Class initializer.
@@ -399,6 +545,8 @@ typedef JCxxClass*(*MallocCxxFn)(LCxxDynamicInit const&);
 typedef void(*BeginClassLifeFn)(LBeginClassLifeInfo const&);
 typedef void(*EndClassLifeFn)(LEndClassLifeInfo const&);
 
+struct LJxxClassChainIterator;
+
 } /* ~Namespace Detail */
 
 //# A reflected class.
@@ -440,6 +588,8 @@ public:
     NODISCARD FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
     NODISCARD FORCEINLINE auto GetParent()         noexcept -> LJxxClass*                { check( this->Parent ) return this->Parent; }
     NODISCARD FORCEINLINE auto GetParent()   const noexcept -> LJxxClass const*          { check( this->Parent ) return this->Parent; }
+    NODISCARD FORCEINLINE auto GetParentUnsafe()         noexcept -> LJxxClass*          { return this->Parent; }
+    NODISCARD FORCEINLINE auto GetParentUnsafe()   const noexcept -> LJxxClass const*    { return this->Parent; }
     NODISCARD FORCEINLINE auto GetChildren()       noexcept -> TArray<LJxxClass*>&       { return this->Children; }
     NODISCARD FORCEINLINE auto GetChildren() const noexcept -> TArray<LJxxClass*> const& { return this->Children; }
 
@@ -448,16 +598,21 @@ public:
     NODISCARD ENGINE_API  bool DerivesFrom(LJxxClass const& Parent) const noexcept;
 
     NODISCARD FORCEINLINE auto GetFlags()       const noexcept { return this->Flags; }
-    NODISCARD FORCEINLINE bool HasAnyFlags()    const noexcept { return  this->Flags != EJxxClassBits::None;                               }
-    NODISCARD FORCEINLINE bool IsAbstract()     const noexcept { return (this->Flags  & EJxxClassBits::Abstract)  != EJxxClassBits::None; }
-    NODISCARD FORCEINLINE bool IsNotAbstract()  const noexcept { return (this->Flags  & EJxxClassBits::Abstract)  == EJxxClassBits::None; }
-    NODISCARD FORCEINLINE bool IsConfig()       const noexcept { return (this->Flags  & EJxxClassBits::Config)    != EJxxClassBits::None; }
-    NODISCARD FORCEINLINE bool IsNotConfig()    const noexcept { return (this->Flags  & EJxxClassBits::Config)    == EJxxClassBits::None; }
-    NODISCARD FORCEINLINE bool IsSingleton()    const noexcept { return (this->Flags  & EJxxClassBits::Singleton) != EJxxClassBits::None; }
-    NODISCARD FORCEINLINE bool IsNotSingleton() const noexcept { return (this->Flags  & EJxxClassBits::Singleton) == EJxxClassBits::None; }
+    NODISCARD FORCEINLINE bool HasAnyFlags()    const noexcept { return  this->Flags != EJxxClassBits::Identity;                               }
+    NODISCARD FORCEINLINE bool IsAbstract()     const noexcept { return (this->Flags  & EJxxClassBits::Abstract)  != EJxxClassBits::Identity; }
+    NODISCARD FORCEINLINE bool IsNotAbstract()  const noexcept { return (this->Flags  & EJxxClassBits::Abstract)  == EJxxClassBits::Identity; }
+    NODISCARD FORCEINLINE bool IsConfig()       const noexcept { return (this->Flags  & EJxxClassBits::Config)    != EJxxClassBits::Identity; }
+    NODISCARD FORCEINLINE bool IsNotConfig()    const noexcept { return (this->Flags  & EJxxClassBits::Config)    == EJxxClassBits::Identity; }
+    NODISCARD FORCEINLINE bool IsSingleton()    const noexcept { return (this->Flags  & EJxxClassBits::Singleton) != EJxxClassBits::Identity; }
+    NODISCARD FORCEINLINE bool IsNotSingleton() const noexcept { return (this->Flags  & EJxxClassBits::Singleton) == EJxxClassBits::Identity; }
 
-    NODISCARD FORCEINLINE TArray<LJxxClassField> const& GetFields() const noexcept { return this->Fields; }
-    NODISCARD FORCEINLINE TArray<LJxxClassField>& GetMutableFieldsDangerous() noexcept { return this->Fields; }
+    //# Only returns the fields that this class declares. This does not include fields that this class inherits.
+    NODISCARD FORCEINLINE TArray<LJxxClassField> const& GetFieldsOfThisClassOnly() const noexcept { return this->Fields; }
+    NODISCARD FORCEINLINE TArray<LJxxClassField>& GetMutableFieldsOfThisClassOnlyDangerous() noexcept { return this->Fields; }
+
+    //# Returns all fields from top to this class with all fields that this class inherits and declares if any.
+    NODISCARD FORCEINLINE auto FieldIter() const noexcept;
+    NODISCARD FORCEINLINE auto MutableFieldIter() noexcept;
 
     template<typename TCxxClass = JCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
     NODISCARD FORCEINLINE TCxxClass const& GetSingleton() const noexcept;
@@ -484,6 +639,123 @@ private:
 namespace Detail
 {
 
+//# Iterator that traverses from top most root to the leaf over all inherited fields of said leaf.
+template<typename T> requires std::is_same_v<std::remove_const_t<T>, LJxxClass>
+struct TJxxClassFieldIterator
+{
+    inline static constexpr bool is_const{std::is_const_v<T>};
+
+    struct Iterator
+    {
+        friend TJxxClassFieldIterator;
+
+        FORCEINLINE Iterator(TArray<T*> const& Chain, std::size_t ClassIndex, std::size_t FieldIndex) noexcept
+            : Chain{Chain}
+            , ClassIndex{ClassIndex}
+            , FieldIndex{FieldIndex}
+        {
+        }
+        FORCEINLINE Iterator(Iterator const& It) noexcept
+            : Chain{It.Chain}
+            , ClassIndex{It.ClassIndex}
+            , FieldIndex{It.FieldIndex}
+        {
+        }
+
+        NODISCARD FORCEINLINE auto& operator*() noexcept
+        {
+            if constexpr (is_const)
+            {
+                return this->Chain[this->ClassIndex]->GetFieldsOfThisClassOnly()[this->FieldIndex];
+            }
+            else
+            {
+                return this->Chain[this->ClassIndex]->GetMutableFieldsOfThisClassOnlyDangerous()[this->FieldIndex];
+            }
+        }
+        NODISCARD FORCEINLINE auto* operator->() noexcept
+        {
+            if constexpr (is_const)
+            {
+                return &this->Chain[this->ClassIndex]->GetFieldsOfThisClassOnly()[this->FieldIndex];
+            }
+            else
+            {
+                return &this->Chain[this->ClassIndex]->GetMutableFieldsOfThisClassOnlyDangerous()[this->FieldIndex];
+            }
+        }
+
+        //# Iterator must point to a valid field.
+        NODISCARD FORCEINLINE T& GetClass() noexcept
+        {
+            check(algo::valid_index(this->Chain, this->ClassIndex))
+            return *this->Chain[this->ClassIndex];
+        }
+
+        FORCEINLINE Iterator& operator++() noexcept
+        {
+            ++this->FieldIndex;
+
+            while (this->ClassIndex < this->Chain.size())
+            {
+                if (this->FieldIndex < this->Chain[this->ClassIndex]->GetFieldsOfThisClassOnly().size())
+                {
+                    break;
+                }
+
+                ++this->ClassIndex;
+                this->FieldIndex = 0;
+                continue;
+            }
+
+            return *this;
+        }
+
+        NODISCARD FORCEINLINE constexpr bool operator==(Iterator const& Rhs) const noexcept
+        {
+            check(&this->Chain == &Rhs.Chain)
+            return this->ClassIndex == Rhs.ClassIndex && this->FieldIndex == Rhs.FieldIndex;
+        }
+
+    private:
+
+        TArray<T*> const& Chain;
+        std::size_t ClassIndex{0uz};
+        std::size_t FieldIndex{0uz};
+    };
+
+    NODISCARD FORCEINLINE TJxxClassFieldIterator(T& Leaf) noexcept
+    {
+        TArray<T*> Transient;
+        for (auto* Parent{&Leaf}; Parent != nullptr; Parent = Parent->GetParentUnsafe())
+        {
+            Transient.emplace_back(Parent);
+        }
+        this->Chain.reserve(Transient.size());
+        this->Chain.assign(Transient.rbegin(), Transient.rend());
+        return;
+    }
+
+    NODISCARD FORCEINLINE Iterator begin() const noexcept
+    {
+        Iterator It{this->Chain, 0uz, 0uz};
+        while (It.ClassIndex < this->Chain.size() && this->Chain[It.ClassIndex]->GetFieldsOfThisClassOnly().empty())
+        {
+            ++It.ClassIndex;
+        }
+        return It;
+    }
+
+    NODISCARD FORCEINLINE Iterator end() const noexcept
+    {
+        return Iterator{this->Chain, this->Chain.size(), 0};
+    }
+
+private:
+
+    TArray<T*> Chain;
+};
+
 NODISCARD FORCEINLINE TArray<LJxxClass const*> LJxxRecordRegistry::GetClassesByBase(LJxxClass const& Base) const noexcept
 {
     TArray<LJxxClass const*> Out;
@@ -507,6 +779,16 @@ NODISCARD FORCEINLINE LString const& LRegistryClassPackage::GetFullyQualifiedNam
 }
 
 } /* ~Namespace Detail */
+
+FORCEINLINE auto LJxxClass::FieldIter() const noexcept
+{
+    return Detail::TJxxClassFieldIterator{*this};
+}
+
+FORCEINLINE auto LJxxClass::MutableFieldIter() noexcept
+{
+    return Detail::TJxxClassFieldIterator{*this};
+}
 
 //# Cast the result of a new object to a specific compile-time class.
 template<typename TCxxClass> requires algo::is_base_of_weak_v<JCxxClass, TCxxClass>
@@ -1302,10 +1584,6 @@ struct TJxxDelete
 
 } /* ~Namespace Jafg */
 
-//# Unique pointer for jcxx classes.
-template<typename TCxxClass, typename Deleter = Jafg::Detail::TJxxDelete<TCxxClass>>
-using TJxxUnique = TUnique<TCxxClass, Deleter>;
-
 //#
 //# This struct is meant as a wrapper class for storing object pointers for a longer time.
 //# It is *not* meant for quick storing (e.g., inside a function) and is also not meant to be passed as an argument
@@ -1643,5 +1921,16 @@ struct NewUniqueObjectFn
 
 //# Creates a unique object.
 inline constexpr Detail::NewUniqueObjectFn<decltype(NewObject), LCxxDynamicInit, TCxxStaticInit, JCxxClass, AActor, WNode> NewUniqueObject{NewObject};
+
+#if JAFG_WITH_EDITOR
+
+//# If you have custom editor types that you want to present, you have to specialize this function.
+template<typename T> Detail::LNodeFactoryBase GetEditorNode(TEditorNodeCreateInfo<T> const& Info) noexcept = delete;
+//# These common specializations are provided by jafg.
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3F>(TEditorNodeCreateInfo<LVec3F> const& Info) noexcept;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3D>(TEditorNodeCreateInfo<LVec3D> const& Info) noexcept;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept;
+
+#endif /* JAFG_WITH_EDITOR */
 
 } /* ~Namespace Jafg */

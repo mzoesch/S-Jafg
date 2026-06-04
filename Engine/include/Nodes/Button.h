@@ -33,17 +33,6 @@ protected:
 
 public:
 
-    virtual void Construct() override
-    {
-        Super::Construct();
-        this->ButtonBase_Construct();
-    }
-
-    virtual void Draw(LNodeRenderInfo const& Info) const override
-    {
-        Super::Draw(Info);
-    }
-
     JAFG_NODE_BUTTON_BOILERPLATE()
 };
 

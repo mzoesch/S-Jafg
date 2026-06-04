@@ -488,6 +488,11 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     check(this->Handle)
     check(Tasks::IsOnMasterThread())
 
+    if (this->InputMode == InMode)
+    {
+        return;
+    }
+
     this->InputMode = InMode;
 
     if (this->IsShowMouseCursor())
@@ -496,7 +501,6 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     }
     else
     {
-        this->MouseLocation.reset();
         glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
@@ -656,23 +660,82 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOffset)
+void Jafg::LSurfaceGlfw3::ScrollCallback(double XOffset, double YOffset)
 {
-    if (YOffset > 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp), &LRawInput::PhysicalKey))
+    if (XOffset < 0.0f)
     {
-        this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp),
-            .Value = static_cast<f32>(YOffset),
-            .State = ERawInputStateBits::Press,
-            });
+        auto It{algo::find(this->GetMutableRawInputsDangerous(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelLeft), &LRawInput::PhysicalKey)};
+        if (It != this->GetRawInputs().end())
+        {
+            /* Mouse wheel inputs get decayed at the beginning of each tick, therefore, this found input is from the same tick, and we can add it. */
+            check(It->State == ERawInputStateBits::Press)
+            It->Value += static_cast<f32>(XOffset);
+        }
+        else
+        {
+            this->UpdateKeyState({
+                .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelLeft),
+                .Value = static_cast<f32>(XOffset),
+                .State = ERawInputStateBits::Press,
+                });
+        }
     }
-    else if (YOffset < 0.0f && !algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown), &LRawInput::PhysicalKey))
+
+    if (YOffset > 0.0f)
     {
-        this->UpdateKeyState({
-            .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown),
-            .Value = static_cast<f32>(YOffset),
-            .State = ERawInputStateBits::Press,
-            });
+        auto It{algo::find(this->GetMutableRawInputsDangerous(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp), &LRawInput::PhysicalKey)};
+        if (It != this->GetRawInputs().end())
+        {
+            /* Mouse wheel inputs get decayed at the beginning of each tick, therefore, this found input is from the same tick, and we can add it. */
+            check(It->State == ERawInputStateBits::Press)
+            It->Value += static_cast<f32>(YOffset);
+        }
+        else
+        {
+            this->UpdateKeyState({
+                .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelUp),
+                .Value = static_cast<f32>(YOffset),
+                .State = ERawInputStateBits::Press,
+                });
+        }
+    }
+
+    if (XOffset > 0.0f)
+    {
+        auto It{algo::find(this->GetMutableRawInputsDangerous(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelRight), &LRawInput::PhysicalKey)};
+        if (It != this->GetRawInputs().end())
+        {
+            /* Mouse wheel inputs get decayed at the beginning of each tick, therefore, this found input is from the same tick, and we can add it. */
+            check(It->State == ERawInputStateBits::Press)
+            It->Value += static_cast<f32>(XOffset);
+        }
+        else
+        {
+            this->UpdateKeyState({
+                .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelRight),
+                .Value = static_cast<f32>(XOffset),
+                .State = ERawInputStateBits::Press,
+                });
+        }
+    }
+
+    if (YOffset < 0.0f)
+    {
+        auto It{algo::find(this->GetMutableRawInputsDangerous(), LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown), &LRawInput::PhysicalKey)};
+        if (It != this->GetRawInputs().end())
+        {
+            /* Mouse wheel inputs get decayed at the beginning of each tick, therefore, this found input is from the same tick, and we can add it. */
+            check(It->State == ERawInputStateBits::Press)
+            It->Value += static_cast<f32>(YOffset);
+        }
+        else
+        {
+            this->UpdateKeyState({
+                .PhysicalKey = LPhysicalKey::FromLogical(ELogicalKey::MouseWheelDown),
+                .Value = static_cast<f32>(YOffset),
+                .State = ERawInputStateBits::Press,
+                });
+        }
     }
 
     return;

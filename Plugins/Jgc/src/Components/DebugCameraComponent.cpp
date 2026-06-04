@@ -15,8 +15,8 @@ bool Jgc::ADebugCameraComponent::ActivateUserInputContext() const noexcept
         if (auto* Lackey{Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>()})
         {
             bool b1{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("RhiDebug"))};
-            bool b2{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCamera"))};
-            Lackey->GetUserInput().SetConsumeMouse(true);
+            bool b2{Lackey->GetUserInput().ActivateContext(Jafg::LUserInputTag::AsTagChecked("DebugCameraCapturer"))};
+            Lackey->GetUserInput().SetConsumeMouse(false);
             return b1 && b2;
         }
     }
@@ -29,7 +29,7 @@ void Jgc::ADebugCameraComponent::OnMove(Jafg::LInputActionValue const& Value)
     {
         LWorldVec3 Front{Sc->GetRotator() * maths::forward_vector<LVec3F>};
 
-        auto Value3D{Value.GetAxis3DValue() * 10.0f};
+        auto Value3D{Value.GetAxis3DValue() * this->VelocityMultiplier};
 
         Value3D *= this->GetWorld().GetDeltaTime();
 
@@ -72,6 +72,14 @@ void Jgc::ADebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
             this->GetOwningActor().GetNameAsString()
             )
     }
+
+    return;
+}
+
+void Jgc::ADebugCameraComponent::OnVelocityMultiplierChange(Jafg::LInputActionValue const& Value)
+{
+    this->VelocityMultiplier = maths::clamp(this->VelocityMultiplier + Value.GetAxis1DValue(), MinVelocityMultiplier, MaxVelocityMultiplier);
+    LOG_WARNING(LogTemporal, "{}", this->VelocityMultiplier)
 
     return;
 }

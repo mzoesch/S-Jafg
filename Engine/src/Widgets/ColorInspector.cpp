@@ -18,7 +18,7 @@ void Jafg::WColorInspector::Construct()
         .Tint(*Prefs.ForegroundColor)
         [NewStaticNode(WVParent).SaveTo(&Container).Anchor(EAnchor::Fill)];
 
-    auto& Fields{JUserPreferences::StaticClass().GetFields()};
+    auto& Fields{JUserPreferences::StaticClass().GetFieldsOfThisClassOnly()};
     TArray<LJxxClassField const*> Targets; Targets.reserve(Fields.size());
     Targets.emplace_back(algo::find_pointer_checked(Fields, "BackgroundColor", &LJxxClassField::Identifier));
     Targets.emplace_back(algo::find_pointer_checked(Fields, "AccentColor", &LJxxClassField::Identifier));

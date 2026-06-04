@@ -743,7 +743,7 @@ NODISCARD FORCEINLINE decltype(auto) operator|(TRange&& Range, to_array_fn const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Weak - weak implementations of algorithms that required less correctly specified traits -- as the standard really
+// Weak - weak implementations of algorithms that require less correctly specified traits -- as the standard really
 // tries to force one to define literally mathematical perfect reflexive, symmetric, and transitive type comparisons
 // for all types involved in any way imaginable forming a total order even for finding elements!??... why
 template<typename TLhs, typename TRhs>

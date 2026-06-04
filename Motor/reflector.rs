@@ -453,7 +453,8 @@ fn on_add_class__VA_ARGS__(packet: &JPacket) -> String
     {
         let config: bool = arg.contains("@C");
         let default_only: bool = arg.contains("@D");
-        let member: String = arg.replace("@C", "").replace("@D", "");
+        let editor: bool = arg.contains("@E");
+        let member: String = arg.replace("@C", "").replace("@D", "").replace("@E", "");
 
         if default_only
         {
@@ -471,14 +472,42 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
 );                                                                                                       \
 "##));
         }
-        else if config && !default_only
+        else if config && editor
         {
             out.push_str(&format!(r##"                                                        \
 .reflexive_emplace_back(::Jafg::LJxxClassField{{                                           \
     /* Field Name   */ "{member}",                                                            \
+    /* Field Flags */ _JAFG_OHGCRCHD_TObj::_FieldFlags_{member}(), \
     /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
     /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
-    /* Filed Modified */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(_JAFG_OHGCRCHD_TObj, {member}) \
+    /* Filed Modified */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(_JAFG_OHGCRCHD_TObj, {member}), \
+    /* Field Editor Factory */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY(_JAFG_OHGCRCHD_TObj, {member}) \
+}})                                                                                            \
+"##));
+        }
+        else if config && !editor
+        {
+            out.push_str(&format!(r##"                                                        \
+.reflexive_emplace_back(::Jafg::LJxxClassField{{                                           \
+    /* Field Name   */ "{member}",                                                            \
+    /* Field Flags */ _JAFG_OHGCRCHD_TObj::_FieldFlags_{member}(), \
+    /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
+    /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
+    /* Filed Modified */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(_JAFG_OHGCRCHD_TObj, {member}), \
+    /* Field Editor Factory */ nullptr \
+}})                                                                                            \
+"##));
+        }
+        else if editor
+        {
+            out.push_str(&format!(r##"                                                        \
+.reflexive_emplace_back(::Jafg::LJxxClassField{{                                           \
+    /* Field Name   */ "{member}",                                                            \
+    /* Field Flags */ _JAFG_OHGCRCHD_TObj::_FieldFlags_{member}(), \
+    /* Field Setter */ nullptr,\
+    /* Field Getter */ nullptr, \
+    /* Filed Modified */ nullptr, \
+    /* Field Editor Factory */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY(_JAFG_OHGCRCHD_TObj, {member}) \
 }})                                                                                            \
 "##));
         }
@@ -537,6 +566,10 @@ fn add_class(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPa
         if field.info.contains(&"Config".to_string())
         {
             arg.push_str("@C");
+        }
+        if field.info.contains(&"EditorVisible".to_string()) || field.info.contains(&"EditorEditable".to_string())
+        {
+            arg.push_str("@E");
         }
         // if field.info.contains(&"DefaultOnly".to_string())
         // {
@@ -780,6 +813,19 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(     \
 
                     analyzed_count += 1;
                 }
+                if self_packet.args.contains(&"EditorVisible".to_string())
+                    || self_packet.args.contains(&"EditorEditable".to_string())
+                {
+                    h_builder.push_str(&format!(r##"                        \
+PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Editor(     \
+        /* My Class Member */ {} __VA_OPT__(,) __VA_ARGS__                                            \
+    )                                                                       \
+"##,
+                                                self_packet.name,
+                    ));
+
+                    analyzed_count += 1;
+                }
 
 //                 if self_packet.args.contains(&"DefaultOnly".to_string())
 //                 {
@@ -799,6 +845,15 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(     \
                         analyzed_count, self_packet.args.len(), self_packet.args
                         );
                 }
+
+                h_builder.push_str(&format!(r##"                        \
+PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Flags(     \
+    /* My Class Member */ {} __VA_OPT__(,) __VA_ARGS__                                            \
+)                                                                       \
+"##,
+                                            self_packet.name,
+                ));
+
 
                 return;
             }

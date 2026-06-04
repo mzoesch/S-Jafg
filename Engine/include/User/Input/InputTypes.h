@@ -85,8 +85,8 @@ inline LStringView LexToString(ELogicalKey Key) noexcept
 {
     switch (Key)
     {
-#define DETAIL_JAFG_INPUT_TYPES_WRAPPER(Key) case ELogicalKey::Key: return #Key;
-#include "User/Input/InputTypesDetail.h"
+    #define DETAIL_JAFG_INPUT_TYPES_WRAPPER(Key) case ELogicalKey::Key: return #Key;
+    #include "User/Input/InputTypesDetail.h"
     default: break;
     }
     std::unreachable();

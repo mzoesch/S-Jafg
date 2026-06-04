@@ -22,7 +22,7 @@ struct TDefaultPreference
     FORCEINLINE constexpr TDefaultPreference() noexcept(std::is_nothrow_default_constructible_v<T>)
         requires std::is_default_constructible_v<T>
         : Default{}, Value{} {}
-    FORCEINLINE constexpr TDefaultPreference(T const& InValue) noexcept(std::is_nothrow_constructible_v<T>)
+    FORCEINLINE explicit constexpr TDefaultPreference(T const& InValue) noexcept(std::is_nothrow_constructible_v<T>)
         : Default{InValue}, Value{InValue} {}
     FORCEINLINE constexpr TDefaultPreference& operator=(this auto&& Self, T InValue) noexcept(std::is_nothrow_copy_assignable_v<T>)
         requires std::is_move_assignable_v<T>
@@ -64,7 +64,7 @@ struct TDefaultClampedPreference
     static_assert(std::is_copy_constructible_v<T>);
     static_assert(algo::is_weak_eq_v<T,T>);
 
-    FORCEINLINE constexpr TDefaultClampedPreference(T const& InValue) noexcept(std::is_nothrow_constructible_v<T>)
+    FORCEINLINE explicit constexpr TDefaultClampedPreference(T const& InValue) noexcept(std::is_nothrow_constructible_v<T>)
         : Default{InValue}, Value{InValue} {}
     FORCEINLINE constexpr TDefaultClampedPreference& operator=(this auto&& Self, T InValue) noexcept(std::is_nothrow_copy_assignable_v<T>)
         requires std::is_move_assignable_v<T>
@@ -153,11 +153,13 @@ private:
     template<> struct TPreference<type> : public Jafg::TDefaultPreference<type>\
     { \
         using TDefaultPreference::TDefaultPreference; \
+        using TDefaultPreference::operator=; \
     };
 #define JAFG_CLAMPED_PREF_OF(type) \
     template<> struct TClampedPreference<type> : public Jafg::TDefaultClampedPreference<type>\
     {\
         using TDefaultClampedPreference::TDefaultClampedPreference; \
+        using TDefaultClampedPreference::operator=; \
     };
 
 JAFG_PREF_OF(bool)

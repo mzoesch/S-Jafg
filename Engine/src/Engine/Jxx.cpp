@@ -195,6 +195,18 @@ void Jafg::Detail::LJxxRecordRegistry::LoadPendingPackages(const LLoadedPluginHa
                         )
                 }
             }
+
+            for (auto& Field: ClassPackage.StaticClass.FieldIter())
+            {
+                if (JxxFieldBits::IsSerde(Field.Flags))
+                {
+                    jassert(Field.Get && Field.Set && Field.IsModified)
+                }
+                if (JxxFieldBits::IsEditorEditable(Field.Flags))
+                {
+                    jassert(Field.EditorFactory)
+                }
+            }
         }
         else
         {
@@ -430,17 +442,23 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
     LOG_VERBOSE(LogObjectInternal, "[{}{}]: Pulling config.", Path, this->GetNameAsString())
     check(Class.IsConfig())
 
+    auto Iterator{Class.MutableFieldIter()};
+
     Detail::GMutableEngine->Config.PullConfigFile(Path);
     if (auto* Section{Detail::GMutableEngine->Config.GetConfigSection(Path, this->GetNameAsString())})
     {
         for (auto& [Key, Value] : *Section)
         {
-            if (auto It{algo::find(Class.GetMutableFieldsDangerous(), Key, &LJxxClassField::Identifier)}; It != Class.GetFields().end())
+            for (auto It{Iterator.begin()}; It != Iterator.end(); ++It)
             {
-                LOG_VERBOSE(LogObjectInternal, "[{}{}]: Overriding entry [{}] from [{}] to [{}]."
-                    , Path, this->GetNameAsString(), Key, It->Get(*this), Value
-                    )
-                It->Set(this, Value);
+                if (It->Identifier == Key)
+                {
+                    LOG_VERBOSE(LogObjectInternal, "[{}{}]: Overriding entry [{}] from [{}] to [{}]."
+                        , Path, this->GetNameAsString(), Key, It->Get(*this), Value
+                        )
+                    It->Set(this, Value);
+                    break;
+                }
             }
         }
     }
@@ -463,9 +481,13 @@ void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
     check(Class.IsConfig())
 
     std::unordered_map<LString, LString> Entries;
-    Entries.reserve(Class.GetFields().size());
-    for (LJxxClassField const& Field : Class.GetFields())
+    for (LJxxClassField const& Field : Class.FieldIter())
     {
+        if (!JxxFieldBits::IsSerde(Field.Flags))
+        {
+            continue;
+        }
+
         check(Field.IsModified && Field.Get)
         if (Field.IsModified(*this))
         {

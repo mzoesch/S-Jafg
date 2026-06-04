@@ -36,6 +36,7 @@ public:
 
     void OnMove(Jafg::LInputActionValue const& Value);
     void OnRotate(Jafg::LInputActionValue const& Value);
+    void OnVelocityMultiplierChange(Jafg::LInputActionValue const& Value);
 
     FORCEINLINE constexpr f32 GetSensitivity() const noexcept { return this->Sensitivity; }
     FORCEINLINE void SetSensitivity(f32 NewSensitivity) noexcept { this->Sensitivity = NewSensitivity; }
@@ -44,7 +45,9 @@ private:
 
     //# Sensitivity in radians per pixel.
     f32 Sensitivity{0.1f};
-
+    inline static constexpr f32 MinVelocityMultiplier{0.0f};
+    inline static constexpr f32 MaxVelocityMultiplier{1'000.0f};
+    f32 VelocityMultiplier{10.0f};
     f32 CachedPitch{};
 };
 

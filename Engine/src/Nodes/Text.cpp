@@ -11,21 +11,20 @@ void Jafg::WText::Draw(LNodeRenderInfo const& Info) const
 
     if (!(this->GetContent().empty() || this->TextBrush.bSkipBrushDraw))
     {
-        auto TopLeft{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + this->GetRelativeTextTopLeft()};
-        for (auto const& Glyph : this->GetTextRenderData().Collection)
-        {
-            // TODO: Clamp to pixels? Currently sometimes a little bit blurry.
-            Info.AddInstance({
-                .Rect = {{TopLeft.x + Glyph.Rect.x, TopLeft.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
-                .TexCoordRect = Glyph.TexCoordRect,
+        this->GetTextRenderData().Render(Info, {
+            .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + this->GetRelativeTextTopLeft(),
+            .Extent = this->GetAnchoredSize_v2()
+                - this->TextBrush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
+                - this->TextDrawOffset
+                - this->TextPlayroomReduction,
+            },
+            {
+                .Cutoff = this->TextCutoff,
                 .Tint = this->TextBrush.Tint,
                 .OutlineTint = this->TextBrush.OutlineTint,
                 .OutlineThickness = this->TextBrush.OutlineThickness,
-                .TextureIndex = Glyph.BindlessTextureIndex,
-                .SamplerIndex = Glyph.SamplerIndex,
-                .MsdfPixelRange = Glyph.MsdfPixelRange,
-                });
-        }
+            }
+            );
     }
 
     return;

@@ -7,6 +7,7 @@
 #include "Rhi/VisualInstance.h"
 #include "User/UserPreferences.h"
 #include "Nodes/Font.h"
+#include "Rhi/NodeRenderInfo.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -151,6 +152,104 @@ void Jafg::LRenderData::Update(LViewport const& Viewport, JFontSubsystem const& 
 
     //# TODO: This for line gaps. LineHeight + line_gap
     this->DesiredSize = {Pencil.x, this->Collection.LineHeight * Brush.Tightening};
+
+    return;
+}
+
+void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect, LTextInfo const& TextInfo) const
+{
+    auto AddGlyph{[&](LGlyphCollection::Info const& Glyph)
+    {
+        if (TextInfo.bFadeLeftOverdraw)
+        {
+            if (Glyph.Pencil.x + TextInfo.LeftThrust < 0.0f)
+            {
+                f32 Missed{Glyph.Pencil.x + Glyph.Rect.z + TextInfo.LeftThrust};
+                if (Missed > 0.0f)
+                {
+                    Info.AddInstance({
+                        .Rect = {
+                            .Offset = {Rect.Offset.x + Glyph.Rect.x + (Glyph.Rect.z - Missed), Rect.Offset.y + Glyph.Rect.y},
+                            .Extent = {Missed, Glyph.Rect.w}
+                            },
+                        .TexCoordRect = {
+                            Glyph.TexCoordRect.x + ((Glyph.TexCoordRect.z - Glyph.TexCoordRect.x) * ((Glyph.Rect.z - Missed) / Glyph.Rect.z)),
+                            Glyph.TexCoordRect.y,
+                            Glyph.TexCoordRect.z,
+                            Glyph.TexCoordRect.w
+                            },
+                        .Tint = TextInfo.Tint,
+                        .OutlineTint = TextInfo.OutlineTint,
+                        .OutlineThickness = TextInfo.OutlineThickness,
+                        .TextureIndex = Glyph.BindlessTextureIndex,
+                        .SamplerIndex = Glyph.SamplerIndex,
+                        .MsdfPixelRange = Glyph.MsdfPixelRange,
+                        });
+                }
+                return;
+            }
+        }
+
+        Info.AddInstance({
+            .Rect = {{Rect.Offset.x + Glyph.Rect.x, Rect.Offset.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
+            .TexCoordRect = Glyph.TexCoordRect,
+            .Tint = TextInfo.Tint,
+            .OutlineTint = TextInfo.OutlineTint,
+            .OutlineThickness = TextInfo.OutlineThickness,
+            .TextureIndex = Glyph.BindlessTextureIndex,
+            .SamplerIndex = Glyph.SamplerIndex,
+            .MsdfPixelRange = Glyph.MsdfPixelRange,
+            });
+
+        return;
+    }};
+
+    switch (TextInfo.Cutoff)
+    {
+    case ETextCutoff::Cutoff:
+    {
+        for (LGlyphCollection::Info const& Glyph: this->Collection)
+        {
+            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.Extent.x)
+            {
+                break;
+            }
+            AddGlyph(Glyph);
+        }
+        break;
+    }
+    case ETextCutoff::Fade:
+    {
+        for (LGlyphCollection::Info const& Glyph: this->Collection)
+        {
+            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.Extent.x)
+            {
+                break;
+            }
+            AddGlyph(Glyph);
+        }
+    }
+    case ETextCutoff::NoBounds:
+    {
+        for (LGlyphCollection::Info const& Glyph: this->Collection)
+        {
+            AddGlyph(Glyph);
+        }
+        break;
+    }
+    default: std::unreachable();
+    }
+
+#if !JAFG_IN_SHIPPING
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    if (Prefs.bHighlightFontRects)
+    {
+        Info.AddInstance({
+            .Rect = Rect,
+            .Tint = Prefs.FontRectHighlightColor,
+            });
+    }
+#endif /* !JAFG_IN_SHIPPING */
 
     return;
 }

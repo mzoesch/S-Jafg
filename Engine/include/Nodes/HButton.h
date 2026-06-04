@@ -33,12 +33,6 @@ protected:
 
 public:
 
-    virtual void Construct() override
-    {
-        Super::Construct();
-        this->ButtonBase_Construct();
-    }
-
     JAFG_NODE_BUTTON_BOILERPLATE()
 };
 

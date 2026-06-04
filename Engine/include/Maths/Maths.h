@@ -821,17 +821,17 @@ template<typename T,qual_t Q> inline constexpr T& roll_l(TVec3<T,Q>* v)  noexcep
 template<typename T,qual_t Q>
 inline constexpr TQua<T,Q> rotator(TVec3<T,Q> const& rads) noexcept
 {
-    auto P{glm::angleAxis(maths::pitch(rads), maths::right_vector<LWorldVec3>)};
-    auto Y{glm::angleAxis(-maths::yaw(rads),  maths::up_vector<LWorldVec3>)};
-    auto R{glm::angleAxis(maths::roll(rads),  maths::forward_vector<LWorldVec3>)};
+    auto P{glm::angleAxis(maths::pitch(rads), maths::right_vector<TVec3<T,Q>>)};
+    auto Y{glm::angleAxis(-maths::yaw(rads),  maths::up_vector<TVec3<T,Q>>)};
+    auto R{glm::angleAxis(maths::roll(rads),  maths::forward_vector<TVec3<T,Q>>)};
     return Y * P * R;
 }
 template<typename T> requires std::is_floating_point_v<T>
 inline constexpr TQua<T,defaultp> rotator(T pitch, T yaw, T roll) noexcept
 {
-    auto P{glm::angleAxis(pitch, maths::right_vector<LWorldVec3>)};
-    auto Y{glm::angleAxis(-yaw,  maths::up_vector<LWorldVec3>)};
-    auto R{glm::angleAxis(roll,  maths::forward_vector<LWorldVec3>)};
+    auto P{glm::angleAxis(pitch, maths::right_vector<TVec3<T,world_qual>>)};
+    auto Y{glm::angleAxis(-yaw,  maths::up_vector<TVec3<T,world_qual>>)};
+    auto R{glm::angleAxis(roll,  maths::forward_vector<TVec3<T,world_qual>>)};
     return Y * P * R;
 }
 template<typename T> requires(!std::is_floating_point_v<T>)

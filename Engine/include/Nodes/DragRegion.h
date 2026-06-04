@@ -79,6 +79,12 @@ public:
         return EAnchor::HFill;
     }
 
+    //#
+    //# Whether to use the pixels as a grid.
+    //# This is visual only. It has no effect on behavior.
+    //#
+    bool bUseGrid{true};
+
 private:
 
     //#

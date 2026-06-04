@@ -5,146 +5,10 @@
 #include "Framework/Frontend.h"
 #include "Rhi/NodeRenderInfo.h"
 
-void Jafg::WTextButton::Construct()
+void Jafg::WTextButton::OnBrushChanged(EStyleBits Bit) noexcept
 {
-    Super::Construct();
-    this->ButtonBase_Construct();
-
-    if (this->bUpdateBrushOnStateChange)
-    {
-        if (this->bEnabled)
-        {
-            if (this->bSelected)
-            {
-                this->TextBrush = this->TextStyle.SelectedBrush;
-            }
-            else
-            {
-                this->TextBrush = this->TextStyle.NormalBrush;
-            }
-        }
-        else
-        {
-            this->TextBrush = this->TextStyle.DisabledBrush;
-        }
-    }
-
-    return;
-}
-
-Jafg::LNodeReply Jafg::WTextButton::OnCursorEnter()
-{
-    if (!this->bEnabled)
-    {
-        check(!this->_check_MutableMouseEntered())
-        checkCode(this->_check_MutableMouseEntered() = true)
-        return {};
-    }
-    if (this->bUpdateBrushOnStateChange && !this->bSelected)
-    {
-        this->_ButtonBase_SetBrush(this->Style.HoverBrush);
-        this->TextBrush = this->TextStyle.HoverBrush;
-    }
-    return Super::OnCursorEnter();
-}
-
-void Jafg::WTextButton::OnCursorLeave()
-{
-    if (!this->bEnabled)
-    {
-        check(this->_check_MutableMouseEntered())
-        checkCode(this->_check_MutableMouseEntered() = false)
-        return;
-    }
-    if (this->bUpdateBrushOnStateChange && !this->bSelected)
-    {
-        this->_ButtonBase_SetBrush(this->Style.NormalBrush);
-        this->TextBrush = this->TextStyle.NormalBrush;
-    }
-    Super::OnCursorLeave();
-    return;
-}
-
-Jafg::LNodeReply Jafg::WTextButton::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-{
-    if (this->bEnabled && !this->bSelected && this->bUpdateBrushOnStateChange)
-    {
-        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-                    , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
-        {
-            this->TextBrush = this->TextStyle.PressBrush;
-        }
-
-        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)
-                     , LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
-        {
-            this->TextBrush = this->TextStyle.HoverBrush;
-        }
-    }
-
-    return this->ButtonBase_OnKeyEventFocused(Info, Event);
-}
-
-void Jafg::WTextButton::OnEnabledStateChanged()
-{
-    TButtonBase::OnEnabledStateChanged();
-    if (this->bUpdateBrushOnStateChange)
-    {
-        if (this->bEnabled)
-        {
-            this->TextBrush = this->TextStyle.NormalBrush;
-        }
-        else
-        {
-            this->TextBrush = this->TextStyle.DisabledBrush;
-        }
-    }
-    return;
-}
-
-void Jafg::WTextButton::OnSelectedStateChanged()
-{
-    TButtonBase::OnSelectedStateChanged();
-    if (this->bUpdateBrushOnStateChange)
-    {
-        if (this->bSelected)
-        {
-            this->TextBrush = this->TextStyle.SelectedBrush;
-        }
-        else
-        {
-            this->TextBrush = this->TextStyle.NormalBrush;
-        }
-    }
-    return;
-}
-
-void Jafg::WTextButtonIconizedDouble::Construct()
-{
-    Super::Construct();
-
-    if (this->bUpdateBrushOnStateChange)
-    {
-        if (this->bEnabled)
-        {
-            if (this->bSelected)
-            {
-                this->LeftIconBrush = this->LeftIconStyle.SelectedBrush;
-                this->RightIconBrush = this->RightIconStyle.SelectedBrush;
-            }
-            else
-            {
-                this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
-                this->RightIconBrush = this->RightIconStyle.NormalBrush;
-            }
-        }
-        else
-        {
-            this->LeftIconBrush = this->LeftIconStyle.DisabledBrush;
-            this->RightIconBrush = this->RightIconStyle.DisabledBrush;
-        }
-    }
-
+    TButtonBase::OnBrushChanged(Bit);
+    ApplyStyleBit(this->TextStyle, this->TextBrush, Bit);
     return;
 }
 
@@ -219,16 +83,6 @@ void Jafg::WTextButtonIconizedDouble::UpdateDesiredSize() const
     }
 
     return;
-}
-
-Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorEnter()
-{
-    if (this->bEnabled && this->bUpdateBrushOnStateChange && !this->bSelected)
-    {
-        this->LeftIconBrush = this->LeftIconStyle.HoverBrush;
-        this->RightIconBrush = this->RightIconStyle.HoverBrush;
-    }
-    return Super::OnCursorEnter();
 }
 
 Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& InLocation)
@@ -318,17 +172,6 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& In
     return Super::OnCursorMoved(InLocation);
 }
 
-void Jafg::WTextButtonIconizedDouble::OnCursorLeave()
-{
-    if (this->bEnabled && this->bUpdateBrushOnStateChange && !this->bSelected)
-    {
-        this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
-        this->RightIconBrush = this->RightIconStyle.NormalBrush;
-    }
-    Super::OnCursorLeave();
-    return;
-}
-
 Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     if (this->bEnabled)
@@ -383,41 +226,11 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyEventFocused(LNodeKeyEven
     return Super::OnKeyEventFocused(Info, Event);
 }
 
-void Jafg::WTextButtonIconizedDouble::OnEnabledStateChanged()
+void Jafg::WTextButtonIconizedDouble::OnBrushChanged(EStyleBits Bit) noexcept
 {
-    Super::OnEnabledStateChanged();
-    if (this->bUpdateBrushOnStateChange)
-    {
-        if (this->bEnabled)
-        {
-            this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
-            this->RightIconBrush = this->RightIconStyle.NormalBrush;
-        }
-        else
-        {
-            this->LeftIconBrush = this->LeftIconStyle.DisabledBrush;
-            this->RightIconBrush = this->RightIconStyle.DisabledBrush;
-        }
-    }
-    return;
-}
-
-void Jafg::WTextButtonIconizedDouble::OnSelectedStateChanged()
-{
-    Super::OnSelectedStateChanged();
-    if (this->bUpdateBrushOnStateChange)
-    {
-        if (this->bSelected)
-        {
-            this->LeftIconBrush = this->LeftIconStyle.SelectedBrush;
-            this->RightIconBrush = this->RightIconStyle.SelectedBrush;
-        }
-        else
-        {
-            this->LeftIconBrush = this->LeftIconStyle.NormalBrush;
-            this->RightIconBrush = this->RightIconStyle.NormalBrush;
-        }
-    }
+    Super::OnBrushChanged(Bit);
+    ApplyStyleBit(this->LeftIconStyle, this->LeftIconBrush, Bit);
+    ApplyStyleBit(this->RightIconStyle, this->RightIconBrush, Bit);
     return;
 }
 

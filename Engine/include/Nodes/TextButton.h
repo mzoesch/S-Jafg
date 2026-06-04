@@ -73,13 +73,8 @@ protected:
 
 public:
 
-    virtual void Construct() override;
-    JAFG_NODE_BUTTON_BOILERPLATE_SweepFocus()
-    virtual LNodeReply OnCursorEnter() override;
-    virtual void OnCursorLeave() override;
-    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual void OnEnabledStateChanged() override;
-    virtual void OnSelectedStateChanged() override;
+    JAFG_NODE_BUTTON_BOILERPLATE()
+    virtual void OnBrushChanged(EStyleBits Bit) noexcept override;
 
     TButtonStyle<LTextBoxBrush> TextStyle;
 };
@@ -96,15 +91,11 @@ protected:
 
 public:
 
-    virtual void Construct() override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
     virtual void UpdateDesiredSize() const override;
-    virtual LNodeReply OnCursorEnter() override;
     virtual LNodeReply OnCursorMoved(const LVec2F& InLocation) override;
-    virtual void OnCursorLeave() override;
     virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
-    virtual void OnEnabledStateChanged() override;
-    virtual void OnSelectedStateChanged() override;
+    virtual void OnBrushChanged(EStyleBits Bit) noexcept override;
 
     LTextButtonIconStyle LeftIconStyle;
     LTextButtonIconStyle RightIconStyle;
