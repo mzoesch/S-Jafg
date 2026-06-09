@@ -122,7 +122,7 @@ struct LCommandArgs
         typedef LCommandArgsTypeRet_t<TField> return_type;
         static_assert(std::is_default_constructible_v<return_type>);
         return_type Field{};
-        Serde::FromString<return_type>(&Field, this->GetCatRepresentation());
+        serde::FromString<return_type>(&Field, this->GetCatRepresentation());
         return Field;
     }
 

@@ -34,22 +34,22 @@ void Jafg::WInput_Vector2::Construct()
 
     if (std::holds_alternative<LVec2i64>(this->Vector))
     {
-        ButtonX->ContentPredicate = Serde::IsIntegral;
-        ButtonY->ContentPredicate = Serde::IsIntegral;
+        ButtonX->ContentPredicate = serde::IsIntegral;
+        ButtonY->ContentPredicate = serde::IsIntegral;
         ButtonX->SetContent(std::to_string(std::get<LVec2i64>(this->Vector).x));
         ButtonY->SetContent(std::to_string(std::get<LVec2i64>(this->Vector).y));
     }
     else if (std::holds_alternative<LVec2u64>(this->Vector))
     {
-        ButtonX->ContentPredicate = Serde::IsUIntegral;
-        ButtonY->ContentPredicate = Serde::IsUIntegral;
+        ButtonX->ContentPredicate = serde::IsUIntegral;
+        ButtonY->ContentPredicate = serde::IsUIntegral;
         ButtonX->SetContent(std::to_string(std::get<LVec2u64>(this->Vector).x));
         ButtonY->SetContent(std::to_string(std::get<LVec2u64>(this->Vector).y));
     }
     else if (std::holds_alternative<LVec2D>(this->Vector))
     {
-        ButtonX->ContentPredicate = Serde::IsNumeric;
-        ButtonY->ContentPredicate = Serde::IsNumeric;
+        ButtonX->ContentPredicate = serde::IsNumeric;
+        ButtonY->ContentPredicate = serde::IsNumeric;
         ButtonX->SetContent(std::to_string(std::get<LVec2D>(this->Vector).x));
         ButtonY->SetContent(std::to_string(std::get<LVec2D>(this->Vector).y));
     }
@@ -88,7 +88,7 @@ void Jafg::WInput_Vector2::SetInputEnabled(bool bEnabled)
 
 void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const& NewValue)
 {
-    check(Serde::IsNumeric(NewValue))
+    check(serde::IsNumeric(NewValue))
 
     if (!this->bIgnoreChangeEvents && !NewValue.empty())
     {
@@ -97,11 +97,11 @@ void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<LVec2i64>(this->Vector)};
             if (Part == EPart::X)
             {
-                Serde::FromString(&Vec.x, NewValue);
+                serde::FromString(&Vec.x, NewValue);
             }
             else
             {
-                Serde::FromString(&Vec.y, NewValue);
+                serde::FromString(&Vec.y, NewValue);
             }
             this->Vector.emplace<LVec2i64>(Vec);
         }
@@ -110,11 +110,11 @@ void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<LVec2u64>(this->Vector)};
             if (Part == EPart::X)
             {
-                Serde::FromString(&Vec.x, NewValue);
+                serde::FromString(&Vec.x, NewValue);
             }
             else
             {
-                Serde::FromString(&Vec.y, NewValue);
+                serde::FromString(&Vec.y, NewValue);
             }
             this->Vector.emplace<LVec2u64>(Vec);
         }
@@ -123,11 +123,11 @@ void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<LVec2D>(this->Vector)};
             if (Part == EPart::X)
             {
-                Serde::FromString(&Vec.x, NewValue);
+                serde::FromString(&Vec.x, NewValue);
             }
             else
             {
-                Serde::FromString(&Vec.y, NewValue);
+                serde::FromString(&Vec.y, NewValue);
             }
             this->Vector.emplace<LVec2D>(Vec);
         }

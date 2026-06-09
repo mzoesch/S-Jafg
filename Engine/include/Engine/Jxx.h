@@ -142,6 +142,18 @@ struct LNodeFactoryBase
     decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept;
     inline decltype(auto) operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept;
 
+    template<typename TFunc>
+    decltype(auto) Delegate(this auto&& Self, TFunc&& Func) noexcept
+    requires std::is_invocable_r_v<void, TFunc, std::remove_cvref_t<decltype(Self)>&>
+    {
+        if constexpr (algo::bool_testable<TFunc>) if (!Func)
+        {
+            return std::forward<decltype(Self)>(Self);
+        }
+        Func(static_cast<std::remove_cvref_t<decltype(Self)>&>(Self));
+        return std::forward<decltype(Self)>(Self);
+    }
+
 private:
 
     WNode& Node;
@@ -408,10 +420,12 @@ struct TEditorNodeCreateInfo final
 {
     //# The owning viewport of the new editor node.
     LViewport& Viewport;
-    //# The owner that owns the data-field.
-    JCxxClass& Owner;
+    //# The owner that owns the data-field. This field is optional and may be null.
+    JCxxClass* Owner{};
     //# The field that is made accessible.
     T& Field;
+    //# Optional default value.
+    std::optional<T> Default;
 };
 
 enum struct EJxxRecordTearDownReason
@@ -1834,8 +1848,8 @@ struct std::formatter<Jafg::Detail::LReflectedTag> : std::formatter<LString>
 };
 
 template<typename TCxxClass, typename TArchive> requires std::is_base_of_v<Jafg::JCxxClass, TCxxClass>
-    && Serde::IsTextOArchive_v<TArchive>
-struct Serde::TSerializer<TSubclassOf<TCxxClass>, TArchive>
+    && serde::os_string_archive_v<TArchive>
+struct serde::TSerializer<TSubclassOf<TCxxClass>, TArchive>
 {
     void operator()(TArchive& Ar, TSubclassOf<TCxxClass> const& Field) const
     {
@@ -1850,8 +1864,8 @@ struct Serde::TSerializer<TSubclassOf<TCxxClass>, TArchive>
     }
 };
 template<typename TCxxClass, typename TArchive> requires std::is_base_of_v<Jafg::JCxxClass, TCxxClass>
-    && Serde::IsTextIArchive_v<TArchive>
-struct Serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
+    && serde::is_string_archive_v<TArchive>
+struct serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, TSubclassOf<TCxxClass>& Field) const
     {
@@ -1930,6 +1944,22 @@ template<typename T> Detail::LNodeFactoryBase GetEditorNode(TEditorNodeCreateInf
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3F>(TEditorNodeCreateInfo<LVec3F> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3D>(TEditorNodeCreateInfo<LVec3D> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept;
+
+template<>
+struct TEditorNodeCreateInfo<LString> final
+{
+    //# The owning viewport of the new editor node.
+    LViewport& Viewport;
+    //# The owner that owns the data-field. This field is optional and may be null.
+    JCxxClass* Owner{};
+    //# The field that is made accessible.
+    LString& Field;
+    //# Optional default value.
+    std::optional<LString> Default;
+    //# Optional human-readable name.
+    LString What{"String"};
+};
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LString>(TEditorNodeCreateInfo<LString> const& Info) noexcept;
 
 #endif /* JAFG_WITH_EDITOR */
 

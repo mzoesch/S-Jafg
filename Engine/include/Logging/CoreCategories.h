@@ -36,6 +36,7 @@
     #endif  /* !JAFG_IN_SHIPPING */
 #endif /* JAFG_LOG_DEFAULT_VERBOSITY_TASKS */
 
+DECLARE_INLINE_LOG_CATEGORY( LogAssetSubsystem,               JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogCarnifex,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogChunkGeneration,              JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogChunkManipulation,            JAFG_LOG_DEFAULT_VERBOSITY                             )

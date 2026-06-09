@@ -19,7 +19,7 @@ void Jgc::AFwSupremePolicies::OnWorldPreInit()
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZModel.glb"));
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZ.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetTranslation(LWorldVec3{0,0,-10});
     });

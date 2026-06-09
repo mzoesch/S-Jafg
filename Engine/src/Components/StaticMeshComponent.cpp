@@ -78,8 +78,8 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
     check(this->MaterialInstance->Material.get())
 
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    auto& Instance{Info.UserPreferences.MeshMaterialPreference.has_value()
-        ? **Info.UserPreferences.MeshMaterialPreference
+    auto& Instance{Info.UserPreferences.EditorMeshMaterialPreference.has_value()
+        ? **Info.UserPreferences.EditorMeshMaterialPreference
         : *this->MaterialInstance
         };
 

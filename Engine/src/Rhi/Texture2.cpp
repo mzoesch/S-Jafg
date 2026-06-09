@@ -66,12 +66,12 @@ Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanR
     return Result;
 }
 
-Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromTextureView(LStringView View)
+Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromAsset(LStringView View)
 {
     if (Detail::GMutableEngine)
     {
         return Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
-            ->FromTextureViewIdentifier(View);
+            ->FromAsset(View);
     }
     LOG_FATAL(LogRhi, "GMutableEngine is invalid.")
 }

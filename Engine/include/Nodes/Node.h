@@ -59,34 +59,34 @@ struct LNodeSize1 final
         return *this;
     }
 
-    FORCEINLINE constexpr bool operator==(LNodeSize1 const& Other) const noexcept
+    NODISCARD FORCEINLINE constexpr bool operator==(LNodeSize1 const& Other) const noexcept
     {
         return this->Type == Other.Type && this->Size == Other.Size;
     }
-    FORCEINLINE constexpr LNodeSize1 operator+(LNodeSize1 const& Other) const noexcept
+    NODISCARD FORCEINLINE constexpr LNodeSize1 operator+(LNodeSize1 const& Other) const noexcept
     {
         check(this->Type == Other.Type)
         return LNodeSize1{this->Type, this->Size + Other.Size};
     }
-    FORCEINLINE constexpr LNodeSize1 operator-(LNodeSize1 const& Other) const noexcept
+    NODISCARD FORCEINLINE constexpr LNodeSize1 operator-(LNodeSize1 const& Other) const noexcept
     {
         check(this->Type == Other.Type)
         return LNodeSize1{this->Type, this->Size - Other.Size};
     }
-    FORCEINLINE constexpr LNodeSize1 operator-() const noexcept
+    NODISCARD FORCEINLINE constexpr LNodeSize1 operator-() const noexcept
     {
         return LNodeSize1{this->Type, -this->Size};
     }
-    FORCEINLINE constexpr LNodeSize1 operator/(f32 Scalar) const noexcept
-    {
-        return LNodeSize1{this->Type, this->Size / Scalar};
-    }
-    FORCEINLINE constexpr LNodeSize1 operator*(f32 Scalar) const noexcept
+    NODISCARD FORCEINLINE constexpr LNodeSize1 operator*(f32 Scalar) const noexcept
     {
         return LNodeSize1{this->Type, this->Size * Scalar};
     }
+    NODISCARD FORCEINLINE constexpr LNodeSize1 operator/(f32 Scalar) const noexcept
+    {
+        return LNodeSize1{this->Type, this->Size / Scalar};
+    }
 
-    FORCEINLINE constexpr f32 InStaticPoints(LViewport const& Viewport) const noexcept
+    NODISCARD FORCEINLINE constexpr f32 InStaticPoints(LViewport const& Viewport) const noexcept
     {
         return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
     }
@@ -115,16 +115,34 @@ struct LNodeSize2 final
     FORCEINLINE constexpr LNodeSize2(LNodeSize1 X, f32 Y) noexcept : Type{X.Type}, Size{X.Size, Y} {}
     FORCEINLINE constexpr LNodeSize2(f32 X, LNodeSize1 Y) noexcept : Type{Y.Type}, Size{X, Y.Size} {}
 
-    FORCEINLINE constexpr bool operator==(LNodeSize2 const& Other) const noexcept
+    NODISCARD FORCEINLINE constexpr bool operator==(LNodeSize2 const& Other) const noexcept
     {
         return this->Type == Other.Type && this->Size == Other.Size;
     }
-    FORCEINLINE constexpr LNodeSize2 operator*(f32 Scalar) const noexcept
+    NODISCARD FORCEINLINE constexpr LNodeSize2 operator+(LNodeSize2 const& Other) const noexcept
+    {
+        check(this->Type == Other.Type)
+        return {this->Type, this->Size + Other.Size};
+    }
+    NODISCARD FORCEINLINE constexpr LNodeSize2 operator-(LNodeSize2 const& Other) const noexcept
+    {
+        check(this->Type == Other.Type)
+        return {this->Type, this->Size - Other.Size};
+    }
+    NODISCARD FORCEINLINE constexpr LNodeSize2 operator-() const noexcept
+    {
+        return {this->Type, -this->Size};
+    }
+    NODISCARD FORCEINLINE constexpr LNodeSize2 operator*(f32 Scalar) const noexcept
     {
         return {this->Type, this->Size * Scalar};
     }
+    NODISCARD FORCEINLINE constexpr LNodeSize2 operator/(f32 Scalar) const noexcept
+    {
+        return {this->Type, this->Size / Scalar};
+    }
 
-    FORCEINLINE constexpr LVec2F InStaticPoints(LViewport const& Viewport) const noexcept
+    NODISCARD FORCEINLINE constexpr LVec2F InStaticPoints(LViewport const& Viewport) const noexcept
     {
         return Detail::GetNodeSizeInStaticPoints(*this, Viewport);
     }
@@ -178,10 +196,7 @@ typedef LWhitespace LMargin;
 //# How to anchor a child to its parent if the parent can have children.
 //# This enum can be used for simple and complex anchoring.
 //#
-namespace EAnchor
-{
-
-enum Type : u8
+enum struct EAnchor
 {
     //# Default behavior. Usually this is the VTop | HLeft.
     Identity   = 0x0 << 0,
@@ -205,7 +220,7 @@ enum Type : u8
     HFill      = 0x1 << 7,
 
     //#
-    //# Compounds.
+    //# Common compounds.
     //#
 
     TopLeft         = VTop    | HLeft,
@@ -220,9 +235,6 @@ enum Type : u8
 
     Fill            = VFill | HFill,
 };
-
-} /* ~Namespace EAnchor */
-ENUM_CLASS_FLAGS(EAnchor::Type)
 //#
 //# The anchor for complex anchoring only.
 //# This struct may not be used when dealing with widgets that only support a simple layout flow.
@@ -248,40 +260,48 @@ struct LAnchor final
 
     FORCEINLINE constexpr LAnchor() noexcept : Anchors(maths::zero_vector<LVec4F>) { }
     FORCEINLINE constexpr LAnchor(f32 InUniformAnchors) noexcept
-        : Anchors(InUniformAnchors, InUniformAnchors, InUniformAnchors, InUniformAnchors)
+        : Anchors{InUniformAnchors, InUniformAnchors, InUniformAnchors, InUniformAnchors}
     {
         check(this->IsNormalized())
     }
     FORCEINLINE constexpr LAnchor(f32 InHorizontalUniform, f32 InVerticalUniform) noexcept
-        : Anchors(InHorizontalUniform, InVerticalUniform, InHorizontalUniform, InVerticalUniform)
+        : Anchors{InHorizontalUniform, InVerticalUniform, InHorizontalUniform, InVerticalUniform}
     {
         check(this->IsNormalized())
     }
     FORCEINLINE constexpr LAnchor(f32 InMinX, f32 InMinY, f32 InMaxX, f32 InMaxY) noexcept
-        : Anchors(InMinX, InMinY, InMaxX, InMaxY)
+        : Anchors{InMinX, InMinY, InMaxX, InMaxY}
     {
         check(this->IsNormalized())
     }
-    FORCEINLINE constexpr LAnchor(EAnchor::Type InAnchors) noexcept
-        : Anchors(maths::zero_vector<LVec4F>)
+    FORCEINLINE constexpr LAnchor(EAnchor InAnchors) noexcept
+        : Anchors{maths::zero_vector<LVec4F>}
     {
         this->ApplyConstraints(InAnchors);
     }
-    FORCEINLINE constexpr LAnchor(LAnchor const& InOther, EAnchor::Type InConstraints) noexcept
-        : Anchors(InOther.Anchors)
+    FORCEINLINE constexpr LAnchor(LAnchor const& InOther, EAnchor InConstraints) noexcept
+        : Anchors{InOther.Anchors}
     {
         this->ApplyConstraints(InConstraints);
     }
-    FORCEINLINE constexpr LAnchor(LVec4F const& InOther, const EAnchor::Type InConstraints) noexcept
+    FORCEINLINE constexpr LAnchor(LVec4F const& InOther, const EAnchor InConstraints) noexcept
         : Anchors(InOther)
     {
         this->ApplyConstraints(InConstraints);
     }
-    FORCEINLINE constexpr LAnchor(LVec4F const& InAnchors) noexcept : Anchors(InAnchors) { }
-    FORCEINLINE constexpr LAnchor(LAnchor const& InOther) noexcept : Anchors(InOther.Anchors) { }
-    FORCEINLINE constexpr LAnchor(LAnchor&& InOther) noexcept : Anchors(std::move(InOther.Anchors)) { }
-    FORCEINLINE constexpr LAnchor& operator=(LAnchor const& InOther) noexcept { this->Anchors = InOther.Anchors; return *this; }
-    FORCEINLINE constexpr LAnchor& operator=(LAnchor&& InOther) noexcept { this->Anchors = std::move(InOther.Anchors); return *this; }
+    FORCEINLINE constexpr LAnchor(LVec4F const& InAnchors) noexcept
+        : Anchors{InAnchors}
+    {
+        check(this->IsNormalized())
+    }
+    FORCEINLINE constexpr LAnchor(LAnchor const& InOther) noexcept
+        : Anchors{InOther.Anchors}
+    {
+        check(this->IsNormalized())
+    }
+
+    FORCEINLINE constexpr LAnchor& operator=(LAnchor const& Rhs) noexcept { this->Anchors = Rhs.Anchors; return *this; }
+    FORCEINLINE constexpr LAnchor operator+(LAnchor const& Rhs) const noexcept { return LAnchor{this->Anchors + Rhs.Anchors}; }
 
     constexpr bool IsNormalized() const noexcept
     {
@@ -315,7 +335,7 @@ struct LAnchor final
         return;
     }
 
-    inline constexpr void ApplyConstraints(EAnchor::Type InConstraints) noexcept;
+    inline constexpr void ApplyConstraints(EAnchor InConstraints) noexcept;
 
     FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0; }
     FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0; }
@@ -341,16 +361,18 @@ inline static constexpr LAnchor VFill   { 0.0, 0.0, 0.0, 1.0 };
 inline static constexpr LAnchor HFill   { 0.0, 0.0, 1.0, 0.0 };
 
 } /* ~Namespace Anchors */
-inline constexpr void LAnchor::ApplyConstraints(EAnchor::Type InConstraints) noexcept
+inline constexpr void LAnchor::ApplyConstraints(EAnchor InConstraints) noexcept
 {
-    if (InConstraints & EAnchor::VTop)    { this->Anchors += Anchors::VTop.Anchors; }
-    if (InConstraints & EAnchor::VCenter) { this->Anchors += Anchors::VCenter.Anchors; }
-    if (InConstraints & EAnchor::VBottom) { this->Anchors += Anchors::VBottom.Anchors; }
-    if (InConstraints & EAnchor::HLeft)   { this->Anchors += Anchors::HLeft.Anchors; }
-    if (InConstraints & EAnchor::HCenter) { this->Anchors += Anchors::HCenter.Anchors; }
-    if (InConstraints & EAnchor::HRight)  { this->Anchors += Anchors::HRight.Anchors; }
-    if (InConstraints & EAnchor::VFill)   { this->Anchors += Anchors::VFill.Anchors; }
-    if (InConstraints & EAnchor::HFill)   { this->Anchors += Anchors::HFill.Anchors; }
+    auto Constraints{std::to_underlying(InConstraints)};
+
+    if (Constraints & std::to_underlying(EAnchor::VTop))    { this->Anchors += Anchors::VTop.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::VCenter)) { this->Anchors += Anchors::VCenter.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::VBottom)) { this->Anchors += Anchors::VBottom.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::HLeft))   { this->Anchors += Anchors::HLeft.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::HCenter)) { this->Anchors += Anchors::HCenter.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::HRight))  { this->Anchors += Anchors::HRight.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::VFill))   { this->Anchors += Anchors::VFill.Anchors; }
+    if (Constraints & std::to_underlying(EAnchor::HFill))   { this->Anchors += Anchors::HFill.Anchors; }
 
     check(this->IsNormalized())
 
@@ -640,9 +662,16 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         NODE_FACTORY_SELF().Anchor = Anchor;
         return NODE_FACTORY_RESULT();
     }
-    decltype(auto) Anchor(this auto&& Self, EAnchor::Type Anchor) noexcept
+    decltype(auto) Anchor(this auto&& Self, EAnchor Anchor) noexcept
     {
         NODE_FACTORY_SELF().Anchor = Anchor;
+        return NODE_FACTORY_RESULT();
+    }
+
+    decltype(auto) MinMaxDesiredSize(this auto&& Self, LNodeSize2 Size) noexcept
+    {
+        Self.MinDesiredSize(Size);
+        Self.MaxDesiredSize(Size);
         return NODE_FACTORY_RESULT();
     }
 
@@ -657,17 +686,6 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         return NODE_FACTORY_RESULT();
     }
 
-    template<typename TFunc>
-    decltype(auto) Delegate(this auto&& Self, TFunc&& Func) noexcept
-        requires std::is_invocable_r_v<void, TFunc, std::remove_cvref_t<decltype(Self)>&>
-    {
-        if constexpr (algo::bool_testable<TFunc>) if (!Func)
-        {
-            return NODE_FACTORY_RESULT();
-        }
-        Func(static_cast<std::remove_cvref_t<decltype(Self)>&>(Self));
-        return NODE_FACTORY_RESULT();
-    }
     template<typename T>
     decltype(auto) Inject(this auto&& Self, TNodeInjection<T>& Injection) noexcept
     {
@@ -787,6 +805,10 @@ public:
             .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Data.Translation),
             .Extent = this->GetAnchoredSize_v2()
             }, Location);
+    }
+    FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Data, std::optional<LVec2F> const& Location) const noexcept
+    {
+        return Location && this->AabbTest(Data, *Location);
     }
 
     //# Sweep this node and all its children from bottom to top for focus.
@@ -1154,11 +1176,12 @@ inline decltype(auto) Detail::LNodeFactoryBase::SaveTo(this auto&& Self, T** Out
 inline decltype(auto) Detail::LNodeFactoryBase::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
 {
     Self.GetMutableSiblings().emplace_back(&F.GetRawNode());
-
-    // If this hits, but usage is correct append siblings to self.
-    // But I do not see a case where a correct usage would lead to this.
-    check(F.GetSiblings().empty())
-
+    for (auto* Sibling : F.GetSiblings())
+    {
+        check(Sibling)
+        Self.GetMutableSiblings().emplace_back(Sibling);
+    }
+    algo::orphan(&F.GetMutableSiblings());
     checkCode(F._Release())
     checkCode(F._Decommission())
     return NODE_FACTORY_RESULT();
@@ -1231,7 +1254,7 @@ inline constexpr Detail::BeginStylingFn BeginStyling{};
 //# Call this inside #BeginStyling to create new child/sibling nodes.
 inline constexpr Detail::NewNodeFn NewNode{};
 //# Just some boilerplate helpers. Completely optional.
-#define NewStaticNode(NodeClass) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>()
+#define NewStaticNode(NodeClass, ...) ::Jafg::NewNode(this->GetViewport()).Class<NodeClass>(__VA_ARGS__)
 #define NewDynamicNode(Subclass) ::Jafg::NewNode(this->GetViewport()).Class(Subclass)
 
 } /* ~Namespace Jafg */

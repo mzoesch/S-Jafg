@@ -10,6 +10,7 @@ namespace Jafg
 
 class LViewport;
 class WParent;
+struct LFactoryUserWidget;
 
 //#
 //# A user widget is a visual node that can be added to #Viewport of a surface as a top level node.
@@ -19,7 +20,7 @@ class WParent;
 //# If you see yourself digging through the children of a user widget, then this action should be implemented
 //# as a method of the user widget itself.
 //#
-DECLARE_JAFG_WIDGET()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryUserWidget)
 class ENGINE_API WUserWidget : public WOverlay
 {
     GENERATED_CLASS_BODY()
@@ -88,5 +89,14 @@ struct TDeferredUserWidgetExec : public TDeferredObjectExec<TNode>
 
 inline constexpr Detail::NewDeferredObjectFn<LNodeDynamicInit, TNodeStaticInit, Detail::TDeferredUserWidgetExec, WUserWidget> ConstructDeferredWidget{};
 inline constexpr Detail::NewObjectFn<decltype(ConstructDeferredWidget), LNodeDynamicInit, TNodeStaticInit, WUserWidget> ConstructWidget{ConstructDeferredWidget};
+
+//#
+//# The only purpose of this factory is to distinguish user widgets factories from node factories to enable a type-
+//# safe to pass them around.
+//#
+struct LFactoryUserWidget : NODE_FACTORY_PARENT(WUserWidget)
+{
+    NODE_FACTORY_BODY(WUserWidget)
+};
 
 } /* ~Namespace Jafg */

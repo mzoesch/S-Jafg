@@ -23,7 +23,7 @@ void Jafg::LLocalEgo::Initialize()
     {
         if (GEngine)
         {
-            f32 NearFrustum; Serde::FromString(&NearFrustum, InValue);
+            f32 NearFrustum; serde::FromString(&NearFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes near frustum to [{}].", NearFrustum)
 
             for (auto& Track : GEngine->GetTracks())
@@ -49,7 +49,7 @@ void Jafg::LLocalEgo::Initialize()
     {
         if (GEngine)
         {
-            f32 FarFrustum; Serde::FromString(&FarFrustum, InValue);
+            f32 FarFrustum; serde::FromString(&FarFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes far frustum to [{}].", FarFrustum)
 
             for (auto& Track : GEngine->GetTracks())

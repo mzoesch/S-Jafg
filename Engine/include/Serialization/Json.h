@@ -2,21 +2,21 @@
 
 #pragma once
 
-namespace Serde
+namespace serde
 {
 
 template<typename T>
 [[noreturn]]
 void NlohmannSink(T const& Error) noexcept;
 
-} /* ~Namespace Serde */
+} /* ~Namespace serde */
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-W#warnings"
 #endif /* JAFG_WITH_CLANG */
     #define JSON_NOEXCEPTION
-    #define JSON_THROW_USER ::Serde::NlohmannSink
+    #define JSON_THROW_USER ::serde::NlohmannSink
     #include "nlohmann/json.hpp"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
@@ -24,7 +24,7 @@ void NlohmannSink(T const& Error) noexcept;
 
 using json = nlohmann::json;
 
-namespace Serde
+namespace serde
 {
 
 template<typename T>
@@ -139,7 +139,7 @@ inline void JsonExpectKeyTypes(json const& j, TArgs&&... Args) noexcept
     return;
 }
 
-} /* ~Namespace Serde */
+} /* ~Namespace serde */
 
 namespace glm
 {
@@ -172,8 +172,8 @@ void from_json(json const& j, vec<N,T,Q>& p)
 {
     typedef vec<N,T,Q> U;
 
-    Serde::JsonExpectType<U>(j, json::value_t::array);
-    Serde::JsonExpectSize<U>(j, N);
+    serde::JsonExpectType<U>(j, json::value_t::array);
+    serde::JsonExpectSize<U>(j, N);
 
     if constexpr (N == 2)
     {
@@ -206,13 +206,13 @@ void from_json(json const& j, vec<N,T,Q>& p)
 namespace Json
 {
 
-inline constexpr Serde::LJsonKey Object(LStringView Key) noexcept { return {Key, json::value_t::object}; }
-inline constexpr Serde::LJsonKey Bool(LStringView Key) noexcept { return {Key, json::value_t::boolean}; }
-inline constexpr Serde::LJsonKey String(LStringView Key) noexcept { return {Key, json::value_t::string}; }
-inline constexpr Serde::LJsonKey Array(LStringView Key) noexcept { return {Key, json::value_t::array}; }
-inline constexpr Serde::LJsonKey Integer(LStringView Key) noexcept { return {Key, json::value_t::number_integer}; }
-inline constexpr Serde::LJsonKey UInteger(LStringView Key) noexcept { return {Key, json::value_t::number_unsigned}; }
-inline constexpr Serde::LJsonKey Float(LStringView Key) noexcept { return {Key, json::value_t::number_float}; }
+inline constexpr serde::LJsonKey Object(LStringView Key) noexcept { return {Key, json::value_t::object}; }
+inline constexpr serde::LJsonKey Bool(LStringView Key) noexcept { return {Key, json::value_t::boolean}; }
+inline constexpr serde::LJsonKey String(LStringView Key) noexcept { return {Key, json::value_t::string}; }
+inline constexpr serde::LJsonKey Array(LStringView Key) noexcept { return {Key, json::value_t::array}; }
+inline constexpr serde::LJsonKey Integer(LStringView Key) noexcept { return {Key, json::value_t::number_integer}; }
+inline constexpr serde::LJsonKey UInteger(LStringView Key) noexcept { return {Key, json::value_t::number_unsigned}; }
+inline constexpr serde::LJsonKey Float(LStringView Key) noexcept { return {Key, json::value_t::number_float}; }
 
 inline bool DoesObjectContainKeys(json const& Object, TArray<LStringView> Keys, LString* OutMissingKey = nullptr) noexcept
 {

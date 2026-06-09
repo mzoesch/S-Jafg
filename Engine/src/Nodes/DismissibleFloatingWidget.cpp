@@ -2,7 +2,6 @@
 
 #include "Nodes/DismissibleFloatingWidget.h"
 #include "Platform/Surface.h"
-#include "User/Input/InputTypes.h"
 
 Jafg::LNodeReply Jafg::WDismissibleFloatingWidget::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {

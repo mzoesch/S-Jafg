@@ -2,6 +2,9 @@
 !/.gitignore
 !/Icons/
 
+!/Jafg.IdentityAdd.jasset
 !/Jafg.IdentityAdd.png
+!/Jafg.IdentityMul.jasset
 !/Jafg.IdentityMul.png
+!/Jafg.IdentityNormal.jasset
 !/Jafg.IdentityNormal.png

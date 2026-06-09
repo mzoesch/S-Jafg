@@ -69,7 +69,7 @@ struct LTexture2 final
         return;
     }
     static TSharedRef<LTexture2> FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
-    static TSharedRef<LTexture2> FromTextureView(LStringView View);
+    static TSharedRef<LTexture2> FromAsset(LStringView View);
     PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
     ~LTexture2() = default;
 
@@ -162,7 +162,7 @@ struct LOptionalTexture2Ref
         }
         if (std::holds_alternative<LString>(this->Variant))
         {
-            return LTexture2::FromTextureView(std::get<LString>(this->Variant));
+            return LTexture2::FromAsset(std::get<LString>(this->Variant));
         }
         return {};
     }

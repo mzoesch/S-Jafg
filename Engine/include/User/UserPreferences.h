@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include "Engine/Jxx.h"
 #include "User/UserPreferencesForward.h"
 #include "Rhi/Material.h"
@@ -13,6 +12,8 @@
 
 namespace Jafg
 {
+
+class WEditor;
 
 DECLARE_JAFG_CLASS(EJxxClassBits::Config, EJxxClassBits::Singleton)
 class JUserPreferences final : public JCxxClass
@@ -61,10 +62,9 @@ public:
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
 
     CLASS_FIELD(Config)
-    TPreference<bool> PerspectiveDepthTest{ true };
-
+    TPreference<bool> EditorPerspectiveDepthTestHint{ true };
     //# If set, this material should be preferred by mesh renders to use.
-    std::optional<LMaterialInstanceRef> MeshMaterialPreference;
+    std::optional<LMaterialInstanceRef> EditorMeshMaterialPreference;
     //# Might not be supported in all configurations.
     bool bHighlightFontRects{};
     LColor FontRectHighlightColor{ 0xFF000030_color };
@@ -135,6 +135,22 @@ public:
     TPreference<LColor> DisabledColor           { 0x1B };
     CLASS_FIELD(Config)
     TPreference<LColor> TextColor               { 0xFF };
+
+    TPreference<LStylePalette> PrimaryPalette{{
+        .Normal=  {.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Hover=   {.Tint=0x286090FF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
+        .Press=   {.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Selected={.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Disabled={.Tint=0x122B40FF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
+        }};
+    TPreference<LStylePalette> SecondaryPalette{{
+        .Normal=  {.Tint=0x2F2F2FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Hover=   {.Tint=0x3F3F3FFF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
+        .Press=   {.Tint=0x4F4F4FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Selected={.Tint=0x5F5F5FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Disabled={.Tint=0x1F1F1FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
+        }};
+
     CLASS_FIELD(Config)
     TPreference<LColor> PrimaryColor            { LColor{0x1D, 0x78, 0xD6} };
     CLASS_FIELD(Config)
@@ -167,8 +183,38 @@ public:
     TPreference<LColor> ViewportBackgroundTint  { Colors::Black };
 
     ///////////////////////////////////////////////////////////////////////////////
+    // Foreign plugins
+    ///////////////////////////////////////////////////////////////////////////////
+
+    //#
+    //# Additional plugin search paths that are used to fetch plugin info metadata.
+    //#
+    CLASS_FIELD(Config)
+    TPreference<TArray<LString>> AdditionalPluginsSearchPaths;
+
+    //#
+    //# The plugins that are loaded when the engine loads.
+    //#
+    CLASS_FIELD(Config)
+    TPreference<TArray<LString>> EnabledEnginePlugins{ {"JafgGameplayCore"} };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Storage
+    ///////////////////////////////////////////////////////////////////////////////
+
+    //#
+    //# Additional saves search paths that are used to fetch saves info metadata.
+    //# The default ist Saved/Saves.
+    //#
+    CLASS_FIELD(Config)
+    TPreference<TArray<LString>> AdditionalSavesSearchPaths;
+
+    ///////////////////////////////////////////////////////////////////////////////
     // Editor
     ///////////////////////////////////////////////////////////////////////////////
+
+    //# The editor if active.
+    WEditor* Editor{};
 
     CLASS_FIELD(Config)
     TPreference<LColor> EditorAxisTintX{ Colors::Crimson };
@@ -177,9 +223,146 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> EditorAxisTintZ{ Colors::DeepSkyBlue };
 
-    // TODO: This should just be TPreference<TButtonStyle<LBoxBrush>> but we wait until we adopt the cxx26 reflection
-    //       system as writing serde for this is just boring und unnecessary when in a couple of months we can completely
-    //       automate it.
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorSortDirectoriesFirst{ true };
+
+    CLASS_FIELD(Config)
+    TPreference<LString> EditorLastWorldName{ "Editor World" };
+    CLASS_FIELD(Config)
+    TPreference<LString> EditorLastWorldLevelName;
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorAutoLaunchLastWorld;
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorShowRate{ true };
+    CLASS_FIELD(Config)
+    TPreference<LPath> EditorLastLayout{ "Config/DefaultEditorLayout.json" };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Factories
+    ///////////////////////////////////////////////////////////////////////////////
+
+    template<typename TBrush>
+    inline static constexpr bool valid_brush_v{std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>};
+    template<typename TBrush>
+    inline static constexpr bool paddable_brush_v{valid_brush_v<TBrush> && std::is_base_of_v<LBoxBrush, TBrush>};
+
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    void ApplyPaletteForState(TBrush& Brush, LStylePalette::State const& State) const noexcept
+    {
+        Brush.Tint = State.Tint;
+        Brush.BorderTint = State.Tint;
+        Brush.OutlineTint = State.Outline;
+    }
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    void ApplyIconsizedPaletteForState(TBrush& Brush, LStylePalette::State const& State) const noexcept
+    {
+        Brush.Tint = State.TextTint;
+        Brush.BorderTint = State.Tint;
+        Brush.OutlineTint = State.Outline;
+    }
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    void ApplyPalette(TButtonStyle<TBrush>& Style, LStylePalette const& Palette) const noexcept
+    {
+        this->ApplyPaletteForState(Style.NormalBrush, Palette.Normal);
+        this->ApplyPaletteForState(Style.HoverBrush, Palette.Hover);
+        this->ApplyPaletteForState(Style.PressBrush, Palette.Press);
+        this->ApplyPaletteForState(Style.SelectedBrush, Palette.Selected);
+        this->ApplyPaletteForState(Style.DisabledBrush, Palette.Disabled);
+    }
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    void ApplyIconizedPalette(TButtonStyle<TBrush>& Style, LStylePalette const& Palette) const noexcept
+    {
+        this->ApplyIconsizedPaletteForState(Style.NormalBrush, Palette.Normal);
+        this->ApplyIconsizedPaletteForState(Style.HoverBrush, Palette.Hover);
+        this->ApplyIconsizedPaletteForState(Style.PressBrush, Palette.Press);
+        this->ApplyIconsizedPaletteForState(Style.SelectedBrush, Palette.Selected);
+        this->ApplyIconsizedPaletteForState(Style.DisabledBrush, Palette.Disabled);
+    }
+
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    void PadStyle(TButtonStyle<TBrush>& Brush, LPadding Padding) const noexcept
+    {
+        if constexpr (std::is_base_of_v<LBoxBrush, TBrush>)
+        {
+            Brush.template SetEverywhere<&LBoxBrush::Padding>(Padding);
+        }
+    }
+
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorBaseButton() const noexcept
+    {
+        TButtonStyle<TBrush> Result;
+        Result.template ChainEverywhere<&TBrush::OutlineThickness, &TBrush::Radii>(1, LVec4F{5.0f});
+        this->PadStyle(Result, {5_spt, 0});
+        return Result;
+    }
+
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorPrimaryButton() const noexcept
+    {
+        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
+        this->ApplyPalette(Result, *this->PrimaryPalette);
+        return Result;
+    }
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorPrimaryButton(LOptionalTexture2Ref Icon) const noexcept
+    {
+        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
+        this->ApplyIconizedPalette(Result, *this->PrimaryPalette);
+        Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
+        return Result;
+    }
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorSecondaryButton() const noexcept
+    {
+        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
+        this->ApplyPalette(Result, *this->SecondaryPalette);
+        return Result;
+    }
+    template<typename TBrush> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorSecondaryButton(LOptionalTexture2Ref Icon) const noexcept
+    {
+        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
+        this->ApplyIconizedPalette(Result, *this->SecondaryPalette);
+        Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
+        return Result;
+    }
+
+
+
+
+    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorPrimaryButtonStyle() const noexcept
+    {
+        auto& Prefs{GetSingleton<JUserPreferences>()};
+
+        TButtonStyle<TBrush> Result;
+        Result.template ChainEverywhere
+            <&TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii>
+            (*Prefs.PrimaryColor, {0x8F}, 1, LVec4F{5.0f});
+            this->PadStyle(Result, {5_spt, 0});
+        Result.template Chain<EStyleBits::Hover, &TBrush::Tint>(*Prefs.PrimaryColorVariant);
+        Result.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*Prefs.PrimaryColorVariant);
+        Result.template Chain<EStyleBits::Disabled, &TBrush::Tint>(*this->DisabledColor);
+        return Result;
+    }
+    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorSecondaryButtonStyle() const noexcept
+    {
+        TButtonStyle<TBrush> Result;
+        Result.template ChainEverywhere<
+            &TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii>
+            (*this->AccentColor, {0x8F}, 1, LVec4F{5.0f});
+        if constexpr (std::same_as<TBrush, LTextBoxBrush>)
+        {
+            Result.template SetEverywhere<&TBrush::Padding>({5_spt, 0});
+        }
+        Result.template Chain<EStyleBits::Hover, &TBrush::Tint>(*this->PrimaryColor);
+        Result.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*this->PrimaryColorVariant);
+        Result.template Chain<EStyleBits::Disabled, &TBrush::Tint>(*this->DisabledColor);
+        return Result;
+    }
+
     template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
     NODISCARD TButtonStyle<TBrush> EditorEditableTextButtonStyle() const noexcept
     {
@@ -228,44 +411,6 @@ public:
         Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
         return Result;
     }
-
-    CLASS_FIELD(Config)
-    TPreference<LString> EditorLastWorldName{ "Editor World" };
-    CLASS_FIELD(Config)
-    TPreference<LString> EditorLastWorldLevelName;
-    CLASS_FIELD(Config)
-    TPreference<bool> EditorAutoLaunchLastWorld;
-    CLASS_FIELD(Config)
-    TPreference<bool> EditorShowRate{ true };
-    CLASS_FIELD(Config)
-    TPreference<LPath> EditorLastLayout{ "Config/DefaultEditorLayout.json" };
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Foreign plugins
-    ///////////////////////////////////////////////////////////////////////////////
-
-    //#
-    //# Additional plugin search paths that are used to fetch plugin info metadata.
-    //#
-    CLASS_FIELD(Config)
-    TPreference<TArray<LString>> AdditionalPluginsSearchPaths;
-
-    //#
-    //# The plugins that are loaded when the engine loads.
-    //#
-    CLASS_FIELD(Config)
-    TPreference<TArray<LString>> EnabledEnginePlugins{ {"JafgGameplayCore"} };
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Storage
-    ///////////////////////////////////////////////////////////////////////////////
-
-    //#
-    //# Additional saves search paths that are used to fetch saves info metadata.
-    //# The default ist Saved/Saves.
-    //#
-    CLASS_FIELD(Config)
-    TPreference<TArray<LString>> AdditionalSavesSearchPaths;
 };
 
 } /* ~Namespace Jafg */

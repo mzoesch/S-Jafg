@@ -26,29 +26,29 @@ public:
     virtual void UpdateDesiredSize() const override
     {
         Super::UpdateDesiredSize();
-        this->SetDesiredSizeInSpt(HorizontalControlFlow.UpdateDesiredSize(*this, this->HSpace));
+        this->SetDesiredSizeInSpt(HorizontalControlFlow.UpdateDesiredSize(*this, this->Space));
         return;
     }
     virtual LVec2F GetAnchoredSizeForChild(WNode const& DirectChild) const override
     {
-        return HorizontalControlFlow.GetAnchoredSizeForChild(*this, DirectChild, this->HSpace);
+        return HorizontalControlFlow.GetAnchoredSizeForChild(*this, DirectChild, this->Space);
     }
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const& DirectChild) const override
     {
-        return HorizontalControlFlow.GetAnchoredTopLeftFromMostOuterForChild(*this, DirectChild, this->HSpace);
+        return HorizontalControlFlow.GetAnchoredTopLeftFromMostOuterForChild(*this, DirectChild, this->Space);
     }
 
     //# Horizontal space between children.
-    LNodeSize1 HSpace{};
+    LNodeSize1 Space;
 };
 
 struct LFactoryHRegion : NODE_FACTORY_PARENT(WHRegion)
 {
     NODE_FACTORY_BODY(WHRegion)
 
-    FORCEINLINE decltype(auto) HSpace(this auto&& Self, LNodeSize1 HSpace) noexcept
+    FORCEINLINE decltype(auto) Space(this auto&& Self, LNodeSize1 Space) noexcept
     {
-        NODE_FACTORY_SELF().HSpace = HSpace;
+        NODE_FACTORY_SELF().Space = Space;
         return NODE_FACTORY_RESULT();
     }
 };

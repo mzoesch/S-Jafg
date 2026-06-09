@@ -5,12 +5,17 @@
 #include "Nodes/UserWidget.h"
 #include "Nodes/GenericTabInfos.h"
 #include "Nodes/TabOverlay.h"
+#include "Nodes/VRegion.h"
 #include "Editor.generated.h"
 
 namespace Jafg
 {
 
 class WTabOverlay;
+class WEditor;
+class WEditorCategorySeparator;
+struct LFactoryEditorCategorySeparator;
+struct LEditorLayout;
 
 struct LEditorLayout final
 {
@@ -41,7 +46,6 @@ struct LEditorLayout final
 
     LPath Path;
     TArray<LSurface> Surfaces;
-
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout::LNodes, Dist, Children)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout::LFlow, Controlflow, Children)
@@ -50,12 +54,12 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout, Surfaces)
 inline void to_json(json& j, LEditorLayout::LChild const& C){ std::visit([&j](auto&& Arg){ j = Arg; }, C); }
 inline void from_json(json const& j, LEditorLayout::LChild& C)
 {
-    Serde::JsonExpectType<LEditorLayout::LChild>(j, json::value_t::object);
+    serde::JsonExpectType<LEditorLayout::LChild>(j, json::value_t::object);
     if (j.contains("Controlflow"))
     {
         if (j.contains("Dist"))
         {
-            Serde::JsonSink<LEditorLayout::LChild>(j, "Expected either a LFlow or LNodes but found keys for both. Failed to parse layout.");
+            serde::JsonSink<LEditorLayout::LChild>(j, "Expected either a LFlow or LNodes but found keys for both. Failed to parse layout.");
         }
         C = j.get<LEditorLayout::LFlow>();
     }
@@ -63,13 +67,87 @@ inline void from_json(json const& j, LEditorLayout::LChild& C)
     {
         if (j.contains("Controlflow"))
         {
-            Serde::JsonSink<LEditorLayout::LChild>(j, "Expected either a LFlow or LNodes but found keys for both. Failed to parse layout.");
+            serde::JsonSink<LEditorLayout::LChild>(j, "Expected either a LFlow or LNodes but found keys for both. Failed to parse layout.");
         }
         C = j.get<LEditorLayout::LNodes>();
     }
 
     return;
 }
+
+ENGINE_API void ToggleEditorNodesTransitively(WNode& Node, bool bEnabled);
+
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WEditorBackground final : public WVRegion
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WEditorBackground)
+    {
+        this->Anchor = EAnchor::HFill;
+        this->Brush.Tint = Colors::Black;
+        this->Space = 1_spt;
+        this->Padding = {0_spt, 0, 0, 1};
+    }
+};
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryEditorCategorySeparator)
+class ENGINE_API WEditorCategorySeparator final : public WTextButtonIconizedDouble
+{
+    GENERATED_CLASS_BODY()
+
+    friend LFactoryEditorCategorySeparator;
+
+protected:
+
+    explicit WEditorCategorySeparator(LNodeDynamicInit const& Init) noexcept
+        : Super{Init}
+    {
+        this->_ctor_Logic();
+    }
+    template<typename TCxxClass> explicit WEditorCategorySeparator(TNodeStaticInit<TCxxClass> const& Init, LString Category) noexcept
+        : Super{Init}
+    {
+        this->SetContent(std::move(Category));
+        this->_ctor_Logic();
+    }
+
+public:
+
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+
+private:
+
+    void _ctor_Logic();
+    TArray<std::pair<ENodeVisibility, WNode*>> Nodes;
+};
+
+struct LFactoryEditorCategorySeparator : NODE_FACTORY_PARENT(WEditorCategorySeparator)
+{
+    NODE_FACTORY_BODY(WEditorCategorySeparator)
+
+    decltype(auto) operator[](this auto&& Self, LNodeFactoryBase&& F) noexcept
+    {
+        check(!F._IsReleased())
+        auto& Node{DETAIL_JAFG_NODE_FACTORY_SELF()};
+
+        Self.GetMutableSiblings().emplace_back(&F.GetRawNode());
+        Node.Nodes.emplace_back(F.GetRawNode().GetVisibility(), &F.GetRawNode());
+        for (auto* Sibling: F.GetSiblings())
+        {
+            check(Sibling)
+            Node.Nodes.emplace_back(Sibling->GetVisibility(), Sibling);
+            Self.GetMutableSiblings().emplace_back(Sibling);
+        }
+        algo::orphan(&F.GetMutableSiblings());
+        checkCode(F._Release())
+        checkCode(F._Decommission())
+
+        return NODE_FACTORY_RESULT();
+    }
+};
 
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WEditor final : public WUserWidget, public LTabOverlayPossibilities

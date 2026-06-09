@@ -29,8 +29,8 @@ public:
     //# Removes all loaded textures that are not referenced anymore.
     void PurgeUnused() noexcept;
 
-    LTextureView const& GetTextureView(LStringView Name) const noexcept;
-    void RefetchingTextureViews();
+    LTextureView const& GetTextureView(LStringView Asset) const noexcept;
+    void RefetchTextureViews();
 
     FORCEINLINE auto GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
     FORCEINLINE auto const& GetTextures() const noexcept { return this->Textures; }
@@ -41,13 +41,13 @@ public:
         , ETexture2State State = ETexture2StateBits::Device
         );
 
-    LTexture2Ref FromTextureViewIdentifier(LStringView TextureView, ETexture2State State = ETexture2StateBits::Device);
+    LTexture2Ref FromAsset(LStringView Asset, ETexture2State State = ETexture2StateBits::Device);
     LTexture2Ref FromTextureView(LTextureView const& View, ETexture2State State = ETexture2StateBits::Device);
 
 private:
 
     TArray<LTextureView> TextureViews;
-    TArray<LString> GuaranteedTextureIdentifiers{ "Jafg.IdentityMul" };
+    TArray<LString> GuaranteedTextureIdentifiers{ "Textures/Jafg.IdentityMul" };
     TArray<LTexture2Ref> GuaranteedTextures;
     std::unordered_map<LPath, std::shared_ptr<LTexture2>> Textures;
 };

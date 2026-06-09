@@ -3,20 +3,21 @@
 #include "Framework/TextureSubsystem.h"
 #include "Rhi/TextureView.h"
 #include "Engine/Engine.h"
+#include "Framework/AssetDiscoverer.h"
 #include "Stats/Stats.h"
 #include "Rhi/FromString.h"
 
 void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
-    this->RefetchingTextureViews();
+    this->RefetchTextureViews();
 
     auto& Frontend{this->GetFrontend()};
-    for (auto const& Gti : this->GuaranteedTextureIdentifiers)
+    for (auto const& Gti: this->GuaranteedTextureIdentifiers)
     {
-        this->GuaranteedTextures.emplace_back(this->FromTextureViewIdentifier(Gti));
+        this->GuaranteedTextures.emplace_back(this->FromAsset(Gti));
     }
-    for (auto& Gt : this->GuaranteedTextures)
+    for (auto& Gt: this->GuaranteedTextures)
     {
         Frontend.Vk_AddTextureToGlobalBindlessArray(&*Gt);
     }
@@ -42,102 +43,42 @@ void Jafg::JTextureSubsystem::PurgeUnused() noexcept
     return;
 }
 
-Jafg::LTextureView const& Jafg::JTextureSubsystem::GetTextureView(LStringView Name) const noexcept
+Jafg::LTextureView const& Jafg::JTextureSubsystem::GetTextureView(LStringView Asset) const noexcept
 {
-    auto It{algo::find(this->TextureViews, Name, &LTextureView::Name)};
+    auto It{algo::find(this->TextureViews, Asset, &LTextureView::Name)};
     if (It == this->TextureViews.end())
     {
-        LOG_FATAL(LogTextureSubsystem, "No such texture view [{}].", Name)
+        LOG_FATAL(LogTextureSubsystem, "No such texture view [{}].", Asset)
     }
     return *It;
 }
 
-void Jafg::JTextureSubsystem::RefetchingTextureViews()
+void Jafg::JTextureSubsystem::RefetchTextureViews()
 {
     STAT_CYCLE_FUNCTION()
+    algo::orphan(&this->TextureViews);
     LOG_VERBOSE(LogTextureSubsystem, "Refetching texture views.")
 
-    algo::orphan(&this->TextureViews);
-
-    LString MissingKey; Json::EError Error;
-    for (auto TextureViewFiles{Finder::FindFilesRecursively("Content/TextureViews", true, ".*\\.json")}; auto const& TextureViewFile : TextureViewFiles)
+    for (auto& Assets{*this->GetEngine().GetSubsystemChecked<JAssetDiscoverer>()};
+        auto const& Path: Assets.GetHeaders()
+            | algo::views::filter([](auto const& Pair){ return Pair.second.Type == Detail::EAsset::Texture; })
+            | algo::views::keys)
     {
-        LTextureView TextureView{.Path=TextureViewFile,.Name=Finder::Normalize(TextureViewFile.string().substr(21, TextureViewFile.string().size() - 21 - 5))};
-        json TextureViewJson = json::parse(Finder::ReadFile(TextureView.Path), nullptr, false);
-        if (TextureViewJson.is_discarded())
+        if constexpr (IS_COMPILED_LOG(LogTextureSubsystem, Trace))
         {
-            LOG_FATAL(LogTextureSubsystem, "[{}]: Texture view is not valid json. Failed to load.", TextureView.Path)
-        }
-
-        if (Json::DoesObjectContainTypeCheckedKeys(TextureViewJson, {{"Texture", Json::LKeyType::String}, {"Format", Json::LKeyType::String}}, &MissingKey, &Error) == false)
-        {
-            if (MissingKey.empty())
-            {
-                LOG_FATAL(LogTextureSubsystem, "[{}]: Texture view is not a json object. Failed to load.", TextureView.Path)
-            }
-            LOG_FATAL(LogTextureSubsystem, "[{}]: Texture view does not contain key [{}]. Failed to load.", TextureView.Path, MissingKey)
-        }
-
-        TextureView.Texture = Finder::GetTexturesDir() / TextureViewJson["Texture"].get<LString>();
-        if (Finder::DoesFileExist(TextureView.Texture) == false)
-        {
-            LOG_FATAL(LogTextureSubsystem, "[{}]: No such texture [{}]."
-                , TextureView.Path, TextureView.Texture
+            LTextureView TextureView = Assets.PullAsset<LTextureView>(Path);
+            LOG_TRACE(LogTextureSubsystem,
+                "[{}@{}]: Format: [{}], MipLevels [{}], MSAA [{}]."
+                , TextureView.Name, TextureView.Path, vk::to_string(TextureView.Format)
+                , TextureView.MipLevels.has_value() ? std::to_string(*TextureView.MipLevels) : "AUTO"
+                , TextureView.MaxSampleCount.has_value() ? vk::to_string(*TextureView.MaxSampleCount) : "AUTO"
                 )
+            this->TextureViews.emplace_back(std::move(TextureView));
         }
-
-        TextureView.Format = Vk_FromString<vk::Format>(TextureViewJson["Format"].get<LString>());
-        if (TextureView.Format == vk::Format::eUndefined)
+        else
         {
-            LOG_FATAL(LogTextureSubsystem, "[{}]: Unsupported format string [{}]. Failed to load."
-                , TextureView.Path, TextureViewJson["Format"].get<LString>()
-                )
+            this->TextureViews.emplace_back(Assets.PullAsset<LTextureView>(Path));
         }
-
-        if (TextureViewJson.contains("MipLevels"))
-        {
-            if (TextureViewJson["MipLevels"].is_null())
-            {
-                check(TextureView.MipLevels.has_value() == false)
-            }
-            else
-            {
-                if (TextureViewJson["MipLevels"].is_number_unsigned() == false)
-                {
-                    LOG_FATAL(LogTextureSubsystem, "[{}]: MipLevels entry is not an unsinged number. Failed to load.", TextureView.Path)
-                }
-                u32 MipLevels{TextureViewJson["MipLevels"].get<u32>()};
-                if (MipLevels == 0)
-                {
-                    LOG_FATAL(LogTextureSubsystem, "[{}]: MipLevels entry cannot be 0. Failed to load.", TextureView.Path)
-                }
-                TextureView.MipLevels = MipLevels;
-            }
-        }
-
-        if (TextureViewJson.contains("MaxSampleCount"))
-        {
-            if (TextureViewJson["MaxSampleCount"].is_null())
-            {
-                check(TextureView.MaxSampleCount.has_value() == false)
-            }
-            else
-            {
-                if (TextureViewJson["MaxSampleCount"].is_string() == false)
-                {
-                    LOG_FATAL(LogTextureSubsystem, "[{}]: MaxSampleCount entry is not a string. Failed to load.", TextureView.Path)
-                }
-                TextureView.MaxSampleCount = Vk_FromString<vk::SampleCountFlagBits>(TextureViewJson["MaxSampleCount"].get<LString>());
-            }
-        }
-
-        LOG_TRACE(LogTextureSubsystem,
-            "[{}@{}]: Format: [{}], MipLevels [{}], MSAA [{}]."
-            , TextureView.Name, TextureView.Path, vk::to_string(TextureView.Format)
-            , TextureView.MipLevels.has_value() ? std::to_string(*TextureView.MipLevels) : "AUTO"
-            , TextureView.MaxSampleCount.has_value() ? vk::to_string(*TextureView.MaxSampleCount) : "AUTO"
-            )
-        this->TextureViews.emplace_back(std::move(TextureView));
     }
 
     LOG_VERBOSE(LogTextureSubsystem, "Finished loading [{}] texture views.", this->TextureViews.size())
@@ -182,9 +123,9 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPath const& Path
     return this->Textures[Path];
 }
 
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureViewIdentifier(LStringView TextureView, ETexture2State State /* = ETexture2StateBits::Device */)
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromAsset(LStringView Asset, ETexture2State State /* = ETexture2StateBits::Device */)
 {
-    return this->FromTextureView(this->GetTextureView(TextureView), State);
+    return this->FromTextureView(this->GetTextureView(Asset), State);
 }
 
 Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LTextureView const& View, ETexture2State State /* = ETexture2StateBits::Device */)

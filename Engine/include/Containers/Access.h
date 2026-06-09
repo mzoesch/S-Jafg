@@ -15,6 +15,9 @@ namespace algo
 //# The maximal aligned type.
 typedef f64 max_align_t;
 
+template<typename...> struct always_false : std::false_type {};
+template<typename... T> inline constexpr bool always_false_v{ always_false<T...>::value };
+
 inline constexpr bool is_u64_size_t_v{ std::is_same_v<u64, std::size_t> };
 inline constexpr bool is_u32_size_t_v{ std::is_same_v<u32, std::size_t> };
 

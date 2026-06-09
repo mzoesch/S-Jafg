@@ -40,7 +40,7 @@ void Jafg::WColorInspector::Construct()
     {
         if (!Target) { continue; }
         LColor Color{ Colors::Black };
-        Serde::FromString(&Color, Target->Get(Prefs));
+        serde::FromString(&Color, Target->Get(Prefs));
         Container->AddChild(NewStaticNode(WTextBox)
             .Anchor(EAnchor::HFill)
             .Tint(Color)

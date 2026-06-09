@@ -96,6 +96,100 @@ struct HorizontalControlFlowFn
         }
         if (TransformerChildCount > 0)
         {
+            DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount - 1);
+        }
+        DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
+        return DesiredSize;
+    }
+
+    FORCEINLINE LVec2F GetAnchoredSizeForChild(WParent const& Self, WNode const& Target, LNodeSize1 Space) const noexcept
+    {
+        check(Target.TransformsWidgetLayout())
+        if (!Target.Anchor.IsStretchedHorizontal())
+        {
+            return StackedControlFlow.GetAnchoredSizeForChild(Self, Target);
+        }
+
+        f32 TotalDesiredSize{};
+        f32 TotalFreeUsage{}; /* In percent */
+
+        for (auto& Child : Self.GetChildren())
+        {
+            check(Child.get())
+            TotalDesiredSize += Child->GetDesiredSize_v2().x;
+            TotalFreeUsage   += Child->Anchor.MaxX;
+        }
+
+        const f32 FreeSpace{
+            (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
+            - TotalDesiredSize
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() - 1)
+            };
+        const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
+
+        return{
+            Target.GetDesiredSize_v2().x
+          + Target.Anchor.MaxX * InverseFreeUsage * FreeSpace
+          , maths::max(
+              Target.GetDesiredSize_v2().y,
+              Target.Anchor.MaxY * (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
+              )
+          };
+    }
+
+    FORCEINLINE LVec2F GetAnchoredTopLeftFromMostOuterForChild(WParent const& Self, WNode const& Target, LNodeSize1 Space) const noexcept
+    {
+        check(Target.TransformsWidgetLayout())
+
+        auto SpaceSpt{Space.InStaticPoints(Self.GetViewport())};
+
+        f32 Offset{};
+        for (auto& Child : Self.GetChildren())
+        {
+            check(Child.get())
+            if (&*Child == &Target)
+            {
+                break;
+            }
+            Offset += Child->GetAnchoredSize_v2().x;
+            Offset += SpaceSpt;
+            continue;
+        }
+
+        LVec2F Out{
+            Self.Padding.GetLeftOffset().InStaticPoints(Self.GetViewport())
+            + Offset,
+            Self.Padding.GetTopOffset().InStaticPoints(Self.GetViewport())
+            + Target.Anchor.MinY *
+            (
+                Self.GetAnchoredSize_v2().y
+                - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport())
+                - Target.GetAnchoredSize_v2().y
+            ),
+            };
+        Out += Self.GetAnchoredTopLeftFromMostOuter();
+        return Out;
+    }
+};
+
+struct HorizontalInclusiveControlFlowFn
+{
+    FORCEINLINE LVec2F UpdateDesiredSize(WParent const& Self, LNodeSize1 Space) const noexcept
+    {
+        LVec2F DesiredSize{maths::zero_vector<LVec2F>};
+        auto TransformerChildCount{0uz};
+        for (auto& Child : Self.GetChildren())
+        {
+            check(Child.get())
+            if (Child->TransformsWidgetLayout())
+            {
+                DesiredSize.x += Child->GetDesiredSize_v2().x;
+                DesiredSize.y  = maths::max(DesiredSize.y, Child->GetDesiredSize_v2().y);
+                ++TransformerChildCount;
+            }
+        }
+        if (TransformerChildCount > 0)
+        {
             DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount + 1);
         }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
@@ -173,6 +267,100 @@ struct HorizontalControlFlowFn
 };
 
 struct VerticalControlFlowFn
+{
+    FORCEINLINE LVec2F UpdateDesiredSize(WParent const& Self, LNodeSize1 Space) const noexcept
+    {
+        LVec2F DesiredSize{ maths::zero_vector<LVec2F> };
+        auto TransformerChildCount{0uz};
+        for (auto& Child : Self.GetChildren())
+        {
+            check(Child.get())
+            if (Child->TransformsWidgetLayout())
+            {
+                DesiredSize.x  = maths::max(DesiredSize.x, Child->GetDesiredSize_v2().x);
+                DesiredSize.y += Child->GetDesiredSize_v2().y;
+                ++TransformerChildCount;
+            }
+        }
+        if (TransformerChildCount > 0)
+        {
+            DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount - 1);
+        }
+        DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
+        return DesiredSize;
+    }
+
+    FORCEINLINE LVec2F GetAnchoredSizeForChild(WParent const& Self, WNode const& Target, LNodeSize1 Space) const noexcept
+    {
+        check(Target.TransformsWidgetLayout())
+        if (!Target.Anchor.IsStretchedVertical())
+        {
+            return StackedControlFlow.GetAnchoredSizeForChild(Self, Target);
+        }
+
+        f32 TotalDesiredSize{};
+        f32 TotalFreeUsage{}; /* In percent */
+
+        for (auto& Child : Self.GetChildren())
+        {
+            check(Child.get())
+            TotalDesiredSize += Child->GetDesiredSize_v2().y;
+            TotalFreeUsage   += Child->Anchor.MaxY;
+        }
+
+        const f32 FreeSpace{
+            (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
+            - TotalDesiredSize
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() - 1)
+            };
+        const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
+
+        return{
+            maths::max(
+                Target.GetDesiredSize_v2().x,
+                Target.Anchor.MaxX * (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
+                )
+            , Target.GetDesiredSize_v2().y
+            + Target.Anchor.MaxY * InverseFreeUsage * FreeSpace
+        };
+    }
+
+    FORCEINLINE LVec2F GetAnchoredTopLeftFromMostOuterForChild(WParent const& Self, WNode const& Target, LNodeSize1 Space) const noexcept
+    {
+        check(Target.TransformsWidgetLayout())
+
+        auto SpaceSpt{Space.InStaticPoints(Self.GetViewport())};
+
+        f32 Offset{};
+        for (auto& Child : Self.GetChildren())
+        {
+            check(Child.get())
+            if (&*Child == &Target)
+            {
+                break;
+            }
+            Offset += Child->GetAnchoredSize_v2().y;
+            Offset += SpaceSpt;
+            continue;
+        }
+
+        LVec2F Out{
+            Self.Padding.GetLeftOffset().InStaticPoints(Self.GetViewport())
+            + Target.Anchor.MinX *
+            (
+                Self.GetAnchoredSize_v2().x
+                - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport())
+                - Target.GetAnchoredSize_v2().x
+            ),
+            Self.Padding.GetTopOffset().InStaticPoints(Self.GetViewport())
+            + Offset,
+            };
+        Out += Self.GetAnchoredTopLeftFromMostOuter();
+        return Out;
+    }
+};
+
+struct VerticalInclusiveControlFlowFn
 {
     FORCEINLINE LVec2F UpdateDesiredSize(WParent const& Self, LNodeSize1 Space) const noexcept
     {

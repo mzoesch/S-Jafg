@@ -186,7 +186,7 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyEventFocused(LNodeKeyEven
                     },
                 }, *Info.CursorLocation))
             {
-                if (auto Reply{this->DecoupledLeftKeyEvent(Info, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledLeftKeyEvent(*this, Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }
@@ -199,7 +199,7 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyEventFocused(LNodeKeyEven
                     },
                 }, *Info.CursorLocation))
             {
-                if (auto Reply{this->DecoupledRightKeyEvent(Info, Event)}; Reply.IsHandled())
+                if (auto Reply{this->DecoupledRightKeyEvent(*this, Info, Event)}; Reply.IsHandled())
                 {
                     return Reply;
                 }

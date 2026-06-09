@@ -229,7 +229,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
     i32 Port{*Prefs.Port};
     if (auto* Arg{App::GetCommandLineArgument(Params::ReST_Port)})
     {
-        Serde::FromString(&Port, Arg->GetValue());
+        serde::FromString(&Port, Arg->GetValue());
     }
     LOG_VERBOSE(LogReST, "Listening on [{}:{}].", Host, Port)
 

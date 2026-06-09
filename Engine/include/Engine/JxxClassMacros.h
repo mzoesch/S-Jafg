@@ -273,7 +273,7 @@ ConstructionHelper                                                    \
         ObjectType& CastedObject{*StaticCastChecked< ObjectType >(&Object)}; \
         return ::Jafg::GetEditorNode(::Jafg::TEditorNodeCreateInfo<decltype(CastedObject.Name)>{ \
             .Viewport=Viewport, \
-            .Owner=Object, \
+            .Owner=&Object, \
             .Field=CastedObject.Name, \
             }); \
     }
@@ -420,11 +420,11 @@ private: /* Restore default visibility. */
     inline static void JAFG_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(Derived* Class, ::LStringView _InValue) \
     {                \
         check( Class )                                                                         \
-        ::Serde::FromString(&Class->MyClassMember, _InValue);                          \
+        ::serde::FromString(&Class->MyClassMember, _InValue);                          \
     }                                                                                         \
     inline static ::LString JAFG_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)(Derived const& Class)                       \
     {                                                                                      \
-        return ::Serde::ToString(Class.MyClassMember);                                \
+        return ::serde::ToString(Class.MyClassMember);                                \
     } \
     inline static bool JAFG_JOIN_OUTER_FOUR(_, IsFieldModified, _, MyClassMember)(Derived const& Class)\
     {\

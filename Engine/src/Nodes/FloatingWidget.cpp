@@ -4,26 +4,50 @@
 #include "Platform/Surface.h"
 #include "Nodes/Viewport.h"
 #include "Nodes/Region.h"
+#include "Nodes/Text.h"
 #include "Nodes/TextButton.h"
+#include "Nodes/Button.h"
 #include "Nodes/VParent.h"
+#include "User/UserPreferences.h"
+
+void Jafg::WFloatingWidget::DestroyFloatingWidgetControlled()
+{
+    if (this->OnWindowClosedEvent.IsValid())
+    {
+        if (this->OnWindowClosedEvent.Invoke(*this))
+        {
+            return;
+        }
+    }
+
+    check(!this->GetParent())
+    this->MarkAsGarbage_v2();
+
+    return;
+}
 
 void Jafg::WFloatingWidget::Construct()
 {
     Super::Construct();
     check(this->IsTopLevel() && "WFloatingWidgets must be top level.")
 
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
     WParent* Container{};
     if (this->bDecorate)
     {
-        BeginStyling(*this).StaticRoot<WVParent>().SaveTo(&Container)
+        BeginStyling(*this).StaticRoot<WVRegion>().SaveTo(&Container)
             .Anchor(EAnchor::TopLeft)
             .Visibility(ENodeVisibility::IntransitiveHitTestInvisible)
+            .Tint(*Prefs.ForegroundColor)
+            .OutlineTint(Colors::Gray)
+            .OutlineThickness(1)
         [
             NewStaticNode(WRegion)
                 .Visibility(ENodeVisibility::Visible)
                 .MinDesiredSize({0_spt, 16})
                 .Anchor(EAnchor::HFill)
-                .Tint(Colors::DarkerGray)
+                .Tint(*Prefs.BackgroundColor)
                 .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
                 {
                     if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -48,28 +72,20 @@ void Jafg::WFloatingWidget::Construct()
                     return LNodeReply::Unhandled();
                 })
             [
-                NewStaticNode(WTextBox).SaveTo(&this->WindowTitle)
+                NewStaticNode(WText).SaveTo(&this->WindowTitle)
                     .Anchor(EAnchor::CenterCenter)
                     .Content(this->InitialTitle.empty() ? "Floating Window" : std::move(this->InitialTitle))
                     .TextTint(Colors::White)
                 +
-                NewStaticNode(WTextButton)
+                NewStaticNode(WButton)
                     .Anchor(EAnchor::CenterRight)
-                    .Content("X")
-                    .InAllBrushes<&LBoxBrush::OutlineThickness>(1)
-                    .TextBrush({{ETextScale::Compact}})
+                    .MinDesiredSize(24_spt2)
+                    .Style(Prefs.EditorPrimaryButton<LRegionBrush>("Icons/Jafg.X"))
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>())
                         {
-                            if (this->OnWindowClosedEvent.IsValid())
-                            {
-                                if (this->OnWindowClosedEvent.Invoke(*this))
-                                {
-                                    return LNodeReply::Handled();
-                                }
-                            }
-                            this->RemoveFromParent2();
+                            this->DestroyFloatingWidgetControlled();
                             return LNodeReply::Handled();
                         }
                         return LNodeReply::Unhandled();
@@ -128,16 +144,21 @@ void Jafg::WFloatingWidget::Construct()
 
 bool Jafg::WFloatingWidget::UiTickMove()
 {
-    if (this->MoveDragOffset.has_value() == false)
+    auto& Surface{this->GetViewport().GetSurface()};
+    if (!Surface.HasMouseLocationForOrtho())
     {
-        this->MoveDragOffset =
-            this->GetViewport().GetSurface().GetMouseLocationValue()
+        return {};
+    }
+
+    if (!this->MoveDragOffset.has_value())
+    {
+        this->MoveDragOffset = Surface.GetMouseLocationValue()
                 // TODO: This is wrong. How do we get the translation here?
                 - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>);
         return {};
     }
 
-    LVec2F NewPos{this->GetViewport().GetSurface().GetMouseLocationValue() - this->MoveDragOffset.value()};
+    LVec2F NewPos{Surface.GetMouseLocationValue() - this->MoveDragOffset.value()};
 
     if (NewPos.x + 25.0 > this->GetViewport().GetExtent().width)
     {

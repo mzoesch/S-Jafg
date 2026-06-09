@@ -4,12 +4,13 @@
 
 #include "Nodes/UserWidget.h"
 #include "Nodes/VRegion.h"
-#include "Nodes/TextBox.h"
+#include "Nodes/Text.h"
 #include "FloatingWidget.generated.h"
 
 namespace Jafg
 {
 
+class WText;
 class WTextBox;
 class WVRegion;
 class WFloatingWidget;
@@ -29,6 +30,9 @@ protected:
     }
 
 public:
+
+    //# Prefer this over #RemoveFromParent2 or #MarkAsGarbage_v2.
+    void DestroyFloatingWidgetControlled();
 
     //#
     //# This event will let you create the content of the floating window. It has to be bound at construction time.
@@ -57,7 +61,7 @@ public:
     }
     FORCEINLINE void SetWindowPosition(LVec2F Offset) noexcept
     {
-        this->GetWindow().GetParent()->Padding = {ENodeSize::StaticPoints, Offset.x, Offset.y, 0, 0};
+        this->GetWindow().GetParent()->Padding = {ENodeSize::StaticPoints, std::round(Offset.x), std::round(Offset.y), 0, 0};
     }
 
     FORCEINLINE constexpr bool IsDecorated() const noexcept { return this->bDecorate; }
@@ -80,12 +84,12 @@ public:
     FORCEINLINE constexpr void SetInitialTitle(LString S) noexcept { check(this->_HasBegunLife() == false) this->InitialTitle = std::move(S); }
     FORCEINLINE constexpr bool IsWindowTitleValid() const noexcept { return this->WindowTitle != nullptr; }
     FORCEINLINE void SetWindowTitle(LString Title) noexcept { this->GetMutableWindowTitle().SetContent(std::move(Title)); }
-    FORCEINLINE constexpr WTextBox const& GetWindowTitle() const noexcept { check(this->WindowTitle) return *this->WindowTitle; }
-    FORCEINLINE constexpr WTextBox& GetMutableWindowTitle() noexcept { check(this->WindowTitle) return *this->WindowTitle; }
+    FORCEINLINE constexpr WText const& GetWindowTitle() const noexcept { check(this->WindowTitle) return *this->WindowTitle; }
+    FORCEINLINE constexpr WText& GetMutableWindowTitle() noexcept { check(this->WindowTitle) return *this->WindowTitle; }
 
     FORCEINLINE constexpr void SetInitialWindowSize(LNodeSize2 Size) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowSize = Size; }
     FORCEINLINE constexpr void SetInitialWindowPosition(LVec2F Position) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowPosition = Position; }
-    FORCEINLINE constexpr void SetInitialWindowAnchor(EAnchor::Type Anchor) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowAnchor = Anchor; }
+    FORCEINLINE constexpr void SetInitialWindowAnchor(EAnchor Anchor) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowAnchor = Anchor; }
     FORCEINLINE constexpr void SetInitialWindowVisibility(ENodeVisibility Visibility) noexcept { check(this->_HasBegunLife() == false) this->InitialWindowVisibility = Visibility; }
 
 protected:
@@ -103,12 +107,12 @@ protected:
 private:
 
     LString InitialTitle;
-    WTextBox* WindowTitle{};
+    WText* WindowTitle{};
 
     LNodeSize2 InitialWindowSize{ 640_spt, 360 };
     static constexpr LVec2F MinWindowSizeInSpt{ 1, 1 };
     LVec2F InitialWindowPosition{ maths::zero_vector<LVec2F> };
-    EAnchor::Type InitialWindowAnchor{ EAnchor::TopLeft };
+    EAnchor InitialWindowAnchor{ EAnchor::TopLeft };
     ENodeVisibility InitialWindowVisibility{ ENodeVisibility::Visible };
 };
 
@@ -144,7 +148,7 @@ struct LFactoryFloatingWidget : NODE_FACTORY_PARENT(WFloatingWidget)
         NODE_FACTORY_SELF().SetInitialWindowPosition(Position);
         return NODE_FACTORY_RESULT();
     }
-    constexpr decltype(auto) InitialWindowAnchor(this auto&& Self, EAnchor::Type Anchor) noexcept
+    constexpr decltype(auto) InitialWindowAnchor(this auto&& Self, EAnchor Anchor) noexcept
     {
         NODE_FACTORY_SELF().SetInitialWindowAnchor(Anchor);
         return NODE_FACTORY_RESULT();

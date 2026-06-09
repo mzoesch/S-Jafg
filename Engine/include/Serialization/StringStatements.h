@@ -4,7 +4,7 @@
 
 #include "Minimal.afx"
 
-namespace Serde
+namespace serde
 {
 
 namespace Detail
@@ -12,7 +12,7 @@ namespace Detail
 
 struct StringStatementsBaseFn
 {
-    template<algo::input_range TRange> requires IsString_v<std::remove_cvref_t<std::decay_t<TRange>>>
+    template<algo::input_range TRange> requires string_v<std::remove_cvref_t<std::decay_t<TRange>>>
     NODISCARD FORCEINLINE constexpr bool
     operator()(this auto&& Self, TRange&& Range) noexcept
     {
@@ -110,4 +110,4 @@ inline constexpr Detail::IsNumericFn IsNumeric{};
 inline constexpr Detail::IsIntegralFn IsIntegral{};
 inline constexpr Detail::IsUIntegralFn IsUIntegral{};
 
-} /* ~Namespace Serde */
+} /* ~Namespace serde */

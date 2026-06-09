@@ -69,7 +69,7 @@ public:
     NODISCARD FORCEINLINE ENodePrimitiveControlflow GetCf() const noexcept { return this->Cf; }
     void SetCfWithSideEffects(ENodePrimitiveControlflow Controlflow) noexcept;
 
-    NODISCARD FORCEINLINE EAnchor::Type GetChildDesiredAnchor() const noexcept
+    NODISCARD FORCEINLINE EAnchor GetChildDesiredAnchor() const noexcept
     {
         if (this->Cf == ENodePrimitiveControlflow::Horizontal)
         {

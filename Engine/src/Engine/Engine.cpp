@@ -1124,7 +1124,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
             }
 
             u64 ConvertedId;
-            if (Serde::FromStringRelaxed(&ConvertedId, Id) == false)
+            if (serde::FromStringRelaxed(&ConvertedId, Id) == false)
             {
                 OutResponse->SetStatusCode(ReST::BadRequest_400);
                 OutResponse->SetContent(R"({"error":"Invalid 'id' parameter."})", "application/json");

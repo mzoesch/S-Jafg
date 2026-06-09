@@ -13,7 +13,8 @@
                     {
                         "Dist": 0.45,
                         "Children": [
-                            "::Jafg::WWorldViewer"
+                            "::Jafg::WWorldViewer",
+                            "::Jafg::WFinder"
                         ]
                     },
                     {

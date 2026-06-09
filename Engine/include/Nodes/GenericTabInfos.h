@@ -36,7 +36,7 @@ concept CTabSelectorCandidate = requires
 struct LTabCreateInfo final
 {
     std::optional<LTabSelectorCreateInfo> Selector;
-    std::variant<TSubclassOf<WUserWidget>, TJxxUnique<WUserWidget>> Panel;
+    std::variant<TSubclassOf<WUserWidget>, TJxxUnique<WUserWidget>, LFactoryUserWidget> Panel;
 
     decltype(auto) operator+(LTabCreateInfo&& Sibling) && noexcept
     {

@@ -55,11 +55,6 @@ inline LPath GetSavedDir() noexcept { return LPath{"Saved"}; }
 inline LPath GetUserPreferencesFile() noexcept { return GetSavedDir() / "MyPreferences.cfg"; }
 
 inline LPath GetContentDir() noexcept { return LPath{"Content"}; }
-inline LPath GetMaterialsDir() noexcept { return GetContentDir() / "Materials"; }
-inline LPath GetModelsDir() noexcept { return GetContentDir() / "Models"; }
-//# Jafg will automatically look for shaders in this directory trailing with ".shader.json".
-inline LPath GetShadersDir() noexcept { return GetContentDir() / "Shaders"; }
-inline LPath GetTexturesDir() noexcept { return GetContentDir() / "Textures"; }
 
 inline bool DoesExist(LPath const& Path);
 inline bool DoesExistChecked(LPath const& Path) { bool bOut{DoesExist(Path)}; check(bOut) return bOut; }

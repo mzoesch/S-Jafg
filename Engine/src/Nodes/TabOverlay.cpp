@@ -171,10 +171,16 @@ Jafg::WTabOverlay::Tab Jafg::WTabOverlay::RegisterTab(LTabCreateInfo&& Info)
         this->Switcher->AddChild(NewNode(this->GetViewport())
             .Class(std::get<TSubclassOf<WUserWidget>>(Info.Panel).GetClassOrDefault()).Unique());
     }
-    else
+    else if (std::holds_alternative<TJxxUnique<WUserWidget>>(Info.Panel))
     {
         this->Switcher->AddConstructedChild(std::get<TJxxUnique<WUserWidget>>(std::move(Info.Panel)));
     }
+    else
+    {
+        check(std::holds_alternative<LFactoryUserWidget>(Info.Panel))
+        this->Switcher->AddChild(std::get<LFactoryUserWidget>(Info.Panel).Unique());
+    }
+
     auto& Tab{this->Tabs.emplace_back(nullptr, this->Switcher->GetChildren().back()->AsChecked<WUserWidget>())};
     check(!Tab.first && Tab.second)
 
@@ -701,12 +707,12 @@ void Jafg::WTabOverlaySelector::CtorLogic() noexcept
 
 void Jafg::WTabOverlaySelector::LoadRightIcon()
 {
-    this->RightIcon = this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromTextureViewIdentifier("Icons/Jafg.SmallX");
+    this->RightIcon = this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromAsset("Icons/Jafg.SmallX");
     this->RightIconStyle.SetEverywhere<&LIconBrush::InwardsPadding>(16_spt);
     this->RightIconStyle.SetEverywhere<&LIconBrush::MinIconSize>(16_spt);
     this->RightIconStyle.SetEverywhere<&LIconBrush::Alignment>(LIconBrush::Align::Center);
     this->RightIconStyle.Set<ETextButtonIconStyleBits::Decoupled, &LIconBrush::Tint>(*GetSingleton<JUserPreferences>().DangerColor);
-    this->DecoupledRightKeyEvent = [this](LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
+    this->DecoupledRightKeyEvent = [this](auto& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
     {
         if (Event.Is<ERawInputStateBits::Release>())
         {

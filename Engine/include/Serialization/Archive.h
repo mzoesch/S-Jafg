@@ -2,80 +2,437 @@
 
 #pragma once
 
-namespace Serde
+namespace serde
 {
 
-template<typename T> struct TIsString : std::false_type {};
-template<typename T> inline constexpr bool IsString_v{TIsString<T>::value};
+//#
+//# Whether this enum is marked as stable.
+//# Changes to values of the enum or changing its size will break backwards compatibility.
+//# Appending new values is ok. Modifying existing values is not. Changed the std::underlying_t is not ok.
+//#
+//# TODO: We need some kind of tool that can handle ABI changes. Maybe with ImHex?
+//#
+template<typename T> struct is_stable_enum : std::false_type {};
+template<typename T> inline constexpr bool is_stable_enum_v{is_stable_enum<T>::value};
+template<typename T> concept stable_enum = std::is_enum_v<T> && is_stable_enum_v<T>;
+
+template<typename T> inline static constexpr bool is_primitive_v{std::is_arithmetic_v<T>||std::is_enum_v<T>};
+
+enum struct arch_type : u8{ string, binary, };
+
+enum struct behavior
+{
+    panic,
+    log,
+    relaxed,
+};
+
+template<typename TArchive> inline constexpr bool string_archive_v{ std::remove_cvref_t<TArchive>::arch_type == arch_type::string };
+template<typename TArchive> inline constexpr bool bin_archive_v{ std::remove_cvref_t<TArchive>::arch_type == arch_type::binary };
+template<typename TArchive> inline constexpr bool os_archive_v{ std::remove_cvref_t<TArchive>::open_mode & std::ios::out };
+template<typename TArchive> inline constexpr bool is_archive_v{ std::remove_cvref_t<TArchive>::open_mode & std::ios::in };
+template<typename TArchive> inline constexpr bool os_string_archive_v{ string_archive_v<TArchive> && os_archive_v<TArchive> };
+template<typename TArchive> inline constexpr bool is_string_archive_v{ string_archive_v<TArchive> && is_archive_v<TArchive> };
+template<typename TArchive> inline constexpr bool os_bin_archive_v{ bin_archive_v<TArchive> && os_archive_v<TArchive> };
+template<typename TArchive> inline constexpr bool is_bin_archive_v{ bin_archive_v<TArchive> && is_archive_v<TArchive> };
+template<typename TArchive> inline constexpr bool ios_bin_archive_v{ bin_archive_v<TArchive> && is_archive_v<TArchive> && os_archive_v<TArchive> };
+
+template<typename TArchive> inline constexpr bool panic_archive_v{ !requires(TArchive){ TArchive::behavior_mode; } || TArchive::behavior_mode == behavior::panic };
+template<typename TArchive> inline constexpr bool log_archive_v{ requires(TArchive){ TArchive::behavior_mode; } && TArchive::behavior_mode == behavior::log };
+template<typename TArchive> inline constexpr bool relaxed_archive_v{ requires(TArchive){ TArchive::behavior_mode; } && TArchive::behavior_mode == behavior::relaxed };
+
+//#
+//# Whether for the given T the archive is valid.
+//# If the archive is an ios then T must not be const. But for is archives this invariant does not hold.
+//#
+template<typename TArchive, typename T>
+inline constexpr bool bin_archive_for_v{
+    (ios_bin_archive_v<TArchive> && !std::is_const_v<T>)
+ || (!ios_bin_archive_v<TArchive> && is_bin_archive_v<TArchive> && !std::is_const_v<T>)
+ || (!ios_bin_archive_v<TArchive> && os_bin_archive_v<TArchive> && (std::is_const_v<T> || !std::is_const_v<T>))
+ };
+template<typename TArchive, typename T>
+inline constexpr bool string_archive_for_v{
+    (is_string_archive_v<TArchive> && !std::is_const_v<T>)
+ || (os_string_archive_v<TArchive> && (std::is_const_v<T> || !std::is_const_v<T>))
+ };
+
+//# Struct to signal an archive to copy prefs.
+struct LCopyPrefs final{};
+template<typename TArchive, typename... TArgs> inline constexpr bool archive_prefs_copyable_v{ std::is_constructible_v<TArchive, LCopyPrefs, TArchive const&, TArgs&&...> };
+
+template<typename T> struct is_string : std::false_type {};
+template<typename T> inline constexpr bool string_v{is_string<T>::value};
 
 //# The base struct for all serializers.
 template<typename T, typename TArchive>
-struct TSerializer final
-{
-    TSerializer() = delete;
-};
-
+struct TSerializer;
 //# The base struct for all deserializers.
 template<typename T, typename TArchive>
-struct TDeserializer final
-{
-    TDeserializer() = delete;
-};
-
+struct TDeserializer;
 //# The result of a deserialization.
-struct LDeserializationResult
+struct LDeserializationResult final
 {
     std::errc Errc;
     std::optional<LString> Error;
 };
-
 //# Whether T is serializable.
 template<typename T, typename TArchive>
-concept CSerializable = std::is_default_constructible_v<TSerializer<T, TArchive>>
-    && requires(TSerializer<T, TArchive> const& F, TArchive& Ar, T const& t){{F(Ar, t)}->std::same_as<void>;};
-
+concept CSerializable = std::is_default_constructible_v<TSerializer<T, TArchive>> && (
+       (string_archive_v<TArchive> && requires(TSerializer<T, TArchive> const& F, TArchive& Ar, T const& t){{F(Ar, t)}->std::same_as<void>;})
+    || (bin_archive_v<TArchive> && requires(TSerializer<T, TArchive> const& F, TArchive& Ar, T const& t){{F(Ar, t)}->std::same_as<void>;})
+    );
 //# Whether T is deserializable.
 template<typename T, typename TArchive>
-concept CDeserializable = std::is_default_constructible_v<TDeserializer<T, TArchive>>
-    && requires(TDeserializer<T, TArchive> const& F, TArchive const& Ar, T& t){{F(Ar, t)}->std::same_as<LDeserializationResult>;};
-
+concept CDeserializable = std::is_default_constructible_v<TDeserializer<T, TArchive>> && (
+       (string_archive_v<TArchive> && requires(TDeserializer<T, TArchive> const& F, TArchive const& Ar, T& t){{F(Ar, t)}->std::same_as<LDeserializationResult>;})
+    || (bin_archive_v<TArchive> && requires(TDeserializer<T, TArchive> const& F, TArchive& Ar, T& t){{F(Ar, t)}->std::same_as<LDeserializationResult>;})
+    );
 //# Whether T can be serialized and deserialized.
-// template<typename T, typename TArchive>
-// concept CTwoWaySerializable = CSerializable<T, TArchive> && CDeserializable<T, TArchive>;
+template<typename T, typename TArchive>
+concept CTwoWaySerializable = CSerializable<T, TArchive> && CDeserializable<T, TArchive>;
 
-template<typename TArchive>
-inline constexpr bool IsValidIArchiveStreamType_v{
-       requires(TArchive Ar){{Ar.Stream}->std::same_as<LString&>;}
-    || requires(TArchive Ar){{Ar.Stream}->std::same_as<LStringView&>;}
-    };
+#define SERDE_BIN_NON_INTRUSIVE_TRANSFORM(X) (Field.X)
+#define SERDE_BIN_NON_INTRUSIVE(T, ...) \
+    template<typename TArchive, typename U> requires(::serde::bin_archive_for_v<TArchive, U> && std::is_same_v<std::remove_const_t<U>, T>) \
+    inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept \
+    { \
+        Ar JAFG_MAP(SERDE_BIN_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) ; \
+    }
 
-//# Struct to signal an archive to copy prefs.
-struct LCopyPrefs final{};
-
-template<typename TArchive>
-inline constexpr bool IsTextArchive_v{ std::is_same_v<typename TArchive::value_type, char> };
-template<typename TArchive>
-inline constexpr bool IsBinaryArchive_v{ std::is_same_v<typename TArchive::value_type, u8> };
-
-template<typename TArchive>
-inline constexpr bool IsTextOArchive_v{ IsTextArchive_v<TArchive> && requires(TArchive Ar){{Ar.Stream}->std::same_as<std::stringstream&>;} };
-template<typename TArchive>
-inline constexpr bool IsTextIArchive_v{ IsTextArchive_v<TArchive> && IsValidIArchiveStreamType_v<TArchive> };
-
-template<typename TArchive, typename... TArgs>
-inline constexpr bool IsArchivePrefsCopyable_v{ std::is_constructible_v<TArchive, LCopyPrefs, TArchive const&, TArgs&&...> };
-
-enum struct EBehavior
+namespace detail
 {
-    Panic,
-    Log,
-    Ignore,
+
+template<typename TStream>
+struct bin_archive_base
+{
+    typedef u64 range_size_type;
+    typedef bool optional_marker_type;
+    static_assert(sizeof(bool) == 1);
+    typedef TStream stream_type;
+    typedef typename stream_type::char_type char_type;
+    typedef typename stream_type::char_type value_type;
+
+    inline static constexpr auto arch_type{arch_type::binary};
+    inline static constexpr auto behavior_mode{behavior::panic};
+
+    NODISCARD FORCEINLINE bool operator!(this auto&& Self) noexcept { return !Self.get_stream(); }
 };
+
+template<typename TStream>
+struct os_archive_base : public bin_archive_base<TStream>
+{
+    typedef bin_archive_base<TStream> base_type;
+    using typename base_type::range_size_type;
+    using typename base_type::optional_marker_type;
+    using typename base_type::stream_type;
+    using typename base_type::char_type;
+    using typename base_type::value_type;
+
+    template<typename T> requires(!std::is_pointer_v<T>)
+    decltype(auto) write(this auto&& Self, T const& x) noexcept requires bin_archive_for_v<decltype(Self), T>
+    {
+        check(Self.out_stream())
+        serde_non_intrusive(Self, x);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<typename T>
+    decltype(auto) write_pod(this auto&& Self, T const& x) noexcept
+    {
+        static_assert(std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T>);
+        static_assert(!std::is_enum_v<T> || is_stable_enum_v<T>);
+        check(Self.out_stream())
+        if (!Self.m_stream.write(reinterpret_cast<char_type const*>(&x), sizeof(T)))
+        {
+            LOG_FATAL(LogSerialization, "[{}]: Failed to write primitive type.", algo::type_name<T>())
+        }
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<algo::contiguous_range T> requires std::is_trivially_copyable_v<typename T::value_type>
+    void write_input_range(this auto&& Self, T const& xs) noexcept
+    {
+        check(Self.out_stream())
+        Self.write_pod(static_cast<range_size_type>(algo::size(xs)));
+        Self.write_bulk(algo::data(xs), algo::size(xs));
+        return;
+    }
+    template<algo::input_range T> requires(!(algo::contiguous_range<T> && std::is_trivially_copyable_v<typename T::value_type>))
+    decltype(auto) write_input_range(this auto&& Self, T const& xs) noexcept
+        requires requires(decltype(Self)& ar, typename T::value_type const& x){ar.write(x);}
+    {
+        check(Self.out_stream())
+        Self.write_pod(static_cast<range_size_type>(algo::size(xs)));
+        for (auto const& x : xs)
+        {
+            Self.operator()(x);
+        }
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<typename T>
+    decltype(auto) write_bulk(this auto&& Self, T const* xs, range_size_type n) noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<T>);
+        check(Self.out_stream())
+        if (!Self.m_stream.write(reinterpret_cast<std::iostream::char_type const*>(xs), sizeof(T) * n))
+        {
+            LOG_FATAL(LogSerialization, "[{}]: Failed to write data of size [{}].", algo::type_name<T>(), sizeof(T) * n)
+        }
+        return std::forward<decltype(Self)>(Self);
+    }
+};
+
+template<typename TStream>
+struct is_archive_base : public bin_archive_base<TStream>
+{
+    typedef bin_archive_base<TStream> base_type;
+    using typename base_type::range_size_type;
+    using typename base_type::optional_marker_type;
+    using typename base_type::stream_type;
+    using typename base_type::char_type;
+    using typename base_type::value_type;
+
+    template<typename T> requires(!std::is_pointer_v<T> && !std::is_const_v<T>)
+    decltype(auto) read(this auto&& Self, T& x) noexcept requires bin_archive_for_v<decltype(Self), T>
+    {
+        check(Self.in_stream())
+        serde_non_intrusive(Self, x);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<typename T> requires(!std::is_const_v<T>)
+    decltype(auto) read_pod(this auto&& Self, T& x) noexcept
+    {
+        static_assert(std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T>);
+        static_assert(!std::is_enum_v<T> || is_stable_enum_v<T>);
+        check(Self.in_stream())
+        if (!Self.m_stream.read(reinterpret_cast<std::iostream::char_type*>(&x), sizeof(T)))
+        {
+            LOG_FATAL(LogSerialization, "[{}]: Failed to read primitive type.", algo::type_name<T>())
+        }
+        if (Self.m_stream.gcount() != sizeof(T))
+        {
+            LOG_FATAL(LogSerialization, "[{}]: Failed to read enough bytes for primitive type. Expected {} but got {}."
+                , algo::type_name<T>(), sizeof(T), Self.m_stream.gcount())
+        }
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<algo::contiguous_range T>
+        requires(std::is_trivially_copyable_v<typename T::value_type> && !std::is_const_v<T> && !std::is_const_v<typename T::value_type>)
+    decltype(auto) read_input_range(this auto&& Self, T& xs) noexcept
+    {
+        check(Self.in_stream())
+        range_size_type n;
+        Self.read_pod(n);
+        xs.resize(n);
+        Self.read_bulk(algo::data(xs), n);
+        return std::forward<decltype(Self)>(Self);
+    }
+    template<algo::input_range T>
+        requires(!(algo::contiguous_range<T> && std::is_trivially_copyable_v<typename T::value_type>)
+            && !std::is_const_v<T> && std::is_default_constructible_v<T>)
+    decltype(auto) read_input_range(this auto&& Self, T& xs) noexcept
+        requires requires(decltype(Self)& ar, typename T::value_type& x){ar.read(x);}
+    {
+        check(Self.in_stream())
+        range_size_type n;
+        Self.read_pod(n);
+        xs.clear();
+        for (range_size_type i{0uz}; i < n; ++i)
+        {
+            typename T::value_type x;
+            Self.operator()(x);
+            xs.insert(xs.end(), std::move(x));
+        }
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    template<typename T> requires(!std::is_const_v<T>)
+    decltype(auto) read_bulk(this auto&& Self, T* xs, std::size_t n) noexcept
+    {
+        static_assert(std::is_trivially_copyable_v<T>);
+        check(Self.in_stream())
+        if (!Self.m_stream.read(reinterpret_cast<std::iostream::char_type*>(xs), sizeof(T) * n))
+        {
+            LOG_FATAL(LogSerialization, "[{}]: Failed to read data of size [{}].", algo::type_name<T>(), sizeof(T) * n)
+        }
+        if (static_cast<std::size_t>(Self.m_stream.gcount()) != sizeof(T) * n)
+        {
+            LOG_FATAL(LogSerialization, "[{}]: Failed to read enough bytes for data. Expected {} but got {}."
+                , algo::type_name<T>(), sizeof(T) * n, Self.m_stream.gcount())
+        }
+        return std::forward<decltype(Self)>(Self);
+    }
+};
+
+} /* ~Namespace detail */
+
+struct os_bin_archive final : public detail::os_archive_base<std::ostream>
+{
+    inline static constexpr auto open_mode{std::ios::out};
+    typedef std::ostream stream_type;
+
+    template<typename... TArgs> requires std::constructible_from<std::ostream, TArgs&&...>
+    constexpr explicit os_bin_archive(TArgs&&... Args) noexcept
+        : m_stream{std::forward<TArgs>(Args)...}
+    {
+    }
+
+    //# Serde any type that can be serialized.
+    template<typename T> requires(!std::is_pointer_v<T>)
+    inline decltype(auto) operator()(this auto&& Self, T const& x) noexcept requires bin_archive_for_v<decltype(Self), T>
+    {
+        serde_non_intrusive(Self, x);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    //# This archive is open for input. Therefore, you read from it.
+    NODISCARD FORCEINLINE consteval bool in_stream() const noexcept { return false; }
+    //# This archive is open for output. Therefore, you write to it.
+    NODISCARD FORCEINLINE consteval bool out_stream() const noexcept { return true; }
+
+    NODISCARD FORCEINLINE std::ostream const& get_stream() const noexcept { return this->m_stream; }
+
+    std::ostream m_stream;
+};
+
+struct is_bin_archive final : public detail::is_archive_base<std::istream>
+{
+    inline static constexpr auto open_mode{std::ios::in};
+
+    template<typename... TArgs> requires std::constructible_from<std::istream, TArgs&&...>
+    constexpr explicit is_bin_archive(TArgs&&... Args) noexcept
+        : m_stream{std::forward<TArgs>(Args)...}
+    {
+    }
+
+    //# Serde any type that can be deserialized.
+    template<typename T> requires(!std::is_const_v<T> && !std::is_pointer_v<T>)
+    inline decltype(auto) operator()(this auto&& Self, T& x) noexcept requires bin_archive_for_v<decltype(Self), T>
+    {
+        serde_non_intrusive(Self, x);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    //# This archive is open for input. Therefore, you read from it.
+    NODISCARD FORCEINLINE consteval bool in_stream() const noexcept { return true; }
+    //# This archive is open for output. Therefore, you write to it.
+    NODISCARD FORCEINLINE consteval bool out_stream() const noexcept { return false; }
+
+    NODISCARD FORCEINLINE std::istream const& get_stream() const noexcept { return this->m_stream; }
+
+    std::istream m_stream;
+};
+
+struct ios_bin_archive : public detail::is_archive_base<std::iostream>, public detail::os_archive_base<std::iostream>
+{
+    inline static constexpr auto open_mode{std::ios::in|std::ios::out};
+
+    template<typename... TArgs> requires std::constructible_from<std::iostream, TArgs&&...>
+    constexpr explicit ios_bin_archive(std::ios_base::openmode mode, TArgs&&... Args) noexcept
+        : m_stream{std::forward<TArgs>(Args)...}, m_open_mode{mode}
+    {
+        check(this->in_stream() != this->out_stream())
+    }
+
+    //# Serde any type that can be serialized and deserialized.
+    template<typename T> requires(!std::is_const_v<T> && !std::is_pointer_v<T>)
+    inline decltype(auto) operator()(this auto&& Self, T& t) noexcept requires bin_archive_for_v<decltype(Self), T>
+    {
+        serde_non_intrusive(Self, t);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    //# This archive is open for input. Therefore, you read from it.
+    NODISCARD FORCEINLINE constexpr bool in_stream() const noexcept { return this->m_open_mode & std::ios::in; }
+    //# This archive is open for output. Therefore, you write to it.
+    NODISCARD FORCEINLINE constexpr bool out_stream() const noexcept { return this->m_open_mode & std::ios::out; }
+
+    NODISCARD FORCEINLINE bool operator!(this auto&& Self) noexcept { return !Self.get_stream(); }
+    NODISCARD FORCEINLINE std::iostream const& get_stream() const noexcept { return this->m_stream; }
+
+    std::iostream m_stream;
+
+private:
+
+    const std::ios_base::openmode m_open_mode;
+};
+
+#define SERDE_STRING_NON_INTRUSIVE_TRANSFORM(X) (Field.X)
+#define SERDE_STRING_NON_INTRUSIVE(T, ...) \
+    template<typename TArchive, typename U> requires(::serde::string_archive_for_v<TArchive, U> && std::is_same_v<std::remove_const_t<U>, T>) \
+    inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept \
+    { \
+        Ar JAFG_MAP(SERDE_STRING_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) ; \
+    }
+
+#define SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM(X) {_serde_local_enum_t::X, #X},
+#define SERDE_STRING_ENUM_NON_INTRUSIVE(T, ...) \
+    template<typename TArchive, typename U> requires(::serde::string_archive_for_v<TArchive, U> && std::is_same_v<std::remove_const_t<U>, T>) \
+    inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept \
+    { \
+        static_assert(std::is_enum_v<T>); \
+        typedef T _serde_local_enum_t; \
+        static constexpr std::pair<T, LStringView> const Members[]{ \
+            JAFG_MAP(SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) \
+            }; \
+        auto It{algo::find_if(Members, [&Ar](std::pair<T, LStringView> const& Member) \
+        {\
+            return Member.second == Ar.get_stream(); \
+        })}; \
+        if (It != std::end(Members)) \
+        { \
+            Field = It->first; \
+        } \
+        else \
+        { \
+            LOG_FATAL(LogSerialization, "Failed to deserialize enum [{}] from string [{}].", algo::type_name<T>(), Ar.get_stream()) \
+        } \
+    }
+
+template<behavior Behavior>
+struct is_string_archive final
+{
+    inline static constexpr auto open_mode{std::ios::in};
+    inline static constexpr auto arch_type{arch_type::string};
+    inline static constexpr auto behavior_mode{Behavior};
+
+    template<typename... TArgs> requires std::constructible_from<LStringView, TArgs&&...>
+    constexpr explicit is_string_archive(TArgs&&... Args) noexcept
+        : m_stream{std::forward<TArgs>(Args)...}
+    {
+    }
+
+    //# Serde any type that can be deserialized.
+    template<typename T> requires(!std::is_const_v<T> && !std::is_pointer_v<T>)
+    inline decltype(auto) operator()(this auto&& Self, T& x) noexcept requires string_archive_for_v<decltype(Self), T>
+    {
+        serde_non_intrusive(Self, x);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    //# This archive is open for input. Therefore, you read from it.
+    NODISCARD FORCEINLINE consteval bool in_stream() const noexcept { return true; }
+    //# This archive is open for output. Therefore, you write to it.
+    NODISCARD FORCEINLINE consteval bool out_stream() const noexcept { return false; }
+
+    NODISCARD FORCEINLINE LStringView const& get_stream() const noexcept { return this->m_stream; }
+
+    LStringView m_stream;
+};
+
+
+
 
 //# Lightweight default archive for output streams. Panics if anything goes wrong.
 struct LOStringArchive final
 {
     typedef char value_type;
+    inline static constexpr auto open_mode{std::ios::out};
+    inline static constexpr auto arch_type{arch_type::string};
 
     constexpr LOStringArchive() noexcept = default;
     LOStringArchive(LCopyPrefs, LOStringArchive const&) noexcept {}
@@ -95,10 +452,12 @@ struct LOStringArchive final
 };
 
 //# Lightweight default archive for input streams. Panics if anything goes wrong.
-template<typename TStream, EBehavior Behavior> requires std::is_same_v<LString, TStream> || std::is_same_v<LStringView, TStream>
+template<typename TStream, behavior Behavior> requires std::is_same_v<LString, TStream> || std::is_same_v<LStringView, TStream>
 struct LIStringArchive final
 {
     typedef char value_type;
+    inline static constexpr auto open_mode{std::ios::in};
+    inline static constexpr auto arch_type{arch_type::string};
 
     constexpr LIStringArchive(TStream&& InStream) noexcept
         requires std::is_same_v<TStream, LString>
@@ -116,7 +475,7 @@ struct LIStringArchive final
     DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LIStringArchive)
     constexpr ~LIStringArchive() noexcept = default;
 
-    template<typename T> requires(Behavior == EBehavior::Panic)
+    template<typename T> requires(Behavior == behavior::panic)
     inline decltype(auto) operator>>(this auto&& Self, T& t) noexcept
         requires CDeserializable<T, std::remove_cvref_t<decltype(Self)>>
     {
@@ -131,13 +490,13 @@ struct LIStringArchive final
         return std::forward<decltype(Self)>(Self);
     }
 
-    template<typename T> requires(Behavior != EBehavior::Panic)
+    template<typename T> requires(Behavior != behavior::panic)
     inline bool operator>>(this auto&& Self, T& t) noexcept
         requires CDeserializable<T, std::remove_cvref_t<decltype(Self)>>
     {
         if (auto R{TDeserializer<T, LIStringArchive>{}(Self, t)}; R.Errc != decltype(R.Errc){})
         {
-            if constexpr (Behavior == EBehavior::Log || Behavior == EBehavior::Panic)
+            if constexpr (Behavior == behavior::log || Behavior == behavior::panic)
             {
                 if (R.Error.has_value())
                 {
@@ -153,8 +512,8 @@ struct LIStringArchive final
 };
 
 template<typename T, typename TArchive> requires CSerializable<T, TArchive>
-    && IsTextOArchive_v<TArchive>
-    && IsArchivePrefsCopyable_v<TArchive>
+    && os_string_archive_v<TArchive>
+    && archive_prefs_copyable_v<TArchive>
 struct TSerializer<TArray<T>, TArchive>
 {
     void operator()(TArchive& Ar, TArray<T> const& Field) const noexcept
@@ -189,8 +548,8 @@ struct TSerializer<TArray<T>, TArchive>
 };
 
 template<typename T, typename TArchive> requires CDeserializable<T, TArchive>
-    && IsTextIArchive_v<TArchive>
-    && IsArchivePrefsCopyable_v<TArchive, LString&&>
+    && is_string_archive_v<TArchive>
+    && archive_prefs_copyable_v<TArchive, LString&&>
 struct TDeserializer<TArray<T>, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, TArray<T>& Field) const noexcept
@@ -285,7 +644,7 @@ struct TDeserializer<TArray<T>, TArchive>
 };
 
 template<typename T, typename TArchive> requires((std::is_same_v<T, LString> || std::is_same_v<T, LPath> || std::is_same_v<T, LStringView>)
-    && IsTextOArchive_v<TArchive>)
+    && os_string_archive_v<TArchive>)
 struct TSerializer<T, TArchive>
 {
     void operator()(TArchive& Ar, T const& Field) const noexcept
@@ -293,7 +652,7 @@ struct TSerializer<T, TArchive>
         Ar.Stream << Field;
     }
 };
-template<typename TArchive> requires IsTextIArchive_v<TArchive>
+template<typename TArchive> requires is_string_archive_v<TArchive>
 struct TDeserializer<LString, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, LString& Field) const noexcept
@@ -302,7 +661,7 @@ struct TDeserializer<LString, TArchive>
         return {};
     }
 };
-template<typename TArchive> requires IsTextIArchive_v<TArchive>
+template<typename TArchive> requires is_string_archive_v<TArchive>
 struct TDeserializer<LPath, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, LPath& Field) const noexcept
@@ -311,7 +670,7 @@ struct TDeserializer<LPath, TArchive>
         return {};
     }
 };
-template<typename TArchive> requires IsTextIArchive_v<TArchive>
+template<typename TArchive> requires is_string_archive_v<TArchive>
 struct TDeserializer<LStringView, TArchive>
 {
     //# Cannot store intermediate text in a non onwing object.
@@ -319,7 +678,7 @@ struct TDeserializer<LStringView, TArchive>
 };
 
 template<typename T, typename TArchive> requires((std::is_integral_v<T> || std::is_floating_point_v<T>)
-    && IsTextOArchive_v<TArchive>)
+    && os_string_archive_v<TArchive>)
 struct TSerializer<T, TArchive>
 {
     void operator()(TArchive& Ar, T const& Field) const noexcept
@@ -328,7 +687,7 @@ struct TSerializer<T, TArchive>
     }
 };
 template<typename T, typename TArchive> requires((std::is_integral_v<T> || std::is_floating_point_v<T>)
-    && IsTextIArchive_v<TArchive>)
+    && is_string_archive_v<TArchive>)
 struct TDeserializer<T, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, T& Field) const noexcept
@@ -341,7 +700,7 @@ struct TDeserializer<T, TArchive>
     }
 };
 
-template<typename TArchive> requires IsTextOArchive_v<TArchive>
+template<typename TArchive> requires os_string_archive_v<TArchive>
 struct TSerializer<bool, TArchive>
 {
     void operator()(TArchive& Ar, bool const& Field) const noexcept
@@ -356,7 +715,7 @@ struct TSerializer<bool, TArchive>
         }
     }
 };
-template<typename TArchive> requires IsTextIArchive_v<TArchive>
+template<typename TArchive> requires is_string_archive_v<TArchive>
 struct TDeserializer<bool, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, bool& Field) const noexcept
@@ -381,7 +740,7 @@ struct TDeserializer<bool, TArchive>
 
 
 template<typename T, typename TArchive> requires std::is_enum_v<T>
-    && IsTextOArchive_v<TArchive>
+    && os_string_archive_v<TArchive>
 struct TSerializer<T, TArchive>
 {
     void operator()(TArchive& Ar, T const& Field) const noexcept
@@ -401,7 +760,7 @@ struct TSerializer<T, TArchive>
 
 //# TODO: Is is of course shit. Because we cannot verify the cast. But lets wait for c++26 to fix this...
 template<typename T, typename TArchive> requires std::is_enum_v<T>
-    && IsTextIArchive_v<TArchive>
+    && is_string_archive_v<TArchive>
 struct TDeserializer<T, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, T& Field) const noexcept
@@ -413,7 +772,7 @@ struct TDeserializer<T, TArchive>
     }
 };
 
-template<typename TArchive> requires IsTextOArchive_v<TArchive>
+template<typename TArchive> requires os_string_archive_v<TArchive>
 struct TSerializer<LColor, TArchive>
 {
     void operator()(TArchive& Ar, LColor const& Field) const noexcept
@@ -421,7 +780,7 @@ struct TSerializer<LColor, TArchive>
         Ar.Stream << algo::sprintf("0x{:02X}{:02X}{:02X}{:02X}", Field.r, Field.g, Field.b, Field.a);
     }
 };
-template<typename TArchive> requires IsTextIArchive_v<TArchive>
+template<typename TArchive> requires is_string_archive_v<TArchive>
 struct TDeserializer<LColor, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, LColor& Field) const noexcept
@@ -505,49 +864,300 @@ NODISCARD FORCEINLINE LString ToString(T const& Field) noexcept
 }
 
 //# Quick conversion of the formation from T to T. If an error occurs the program will panic.
-template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EBehavior::Panic>>
+template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, behavior::panic>>
 FORCEINLINE void FromString(T* Field, LStringView Value) noexcept
 {
-    LIStringArchive<LStringView, EBehavior::Panic> Ar{Value};
+    LIStringArchive<LStringView, behavior::panic> Ar{Value};
     Ar >> *Field;
     return;
+}
+
+//# Quick conversion of the formation from T to T. If an error occurs the program will panic.
+template<typename T> requires string_archive_for_v<is_string_archive<behavior::panic>, T>
+FORCEINLINE void from_string(T* Field, LStringView Value) noexcept
+{
+    is_string_archive<behavior::panic> Ar{Value};
+    Ar(*Field);
+    return;
+}
+template<typename T> requires string_archive_for_v<is_string_archive<behavior::panic>, T>
+    && std::is_default_constructible_v<T> && std::is_move_constructible_v<T>
+FORCEINLINE T from_string(LStringView Value) noexcept
+{
+    T Field{};
+    is_string_archive<behavior::panic> Ar{Value};
+    Ar(Field);
+    return Field;
+}
+
+//#
+//# Quick conversion of the formation from T to T. If an error occurs it will return false and log a message
+//# if logging for #LogSerialization at error verbosity is enabled.
+//#
+template<typename T> requires string_archive_for_v<is_string_archive<behavior::log>, T>
+FORCEINLINE void from_string_logged(T* Field, LStringView Value) noexcept
+{
+    is_string_archive<behavior::log> Ar{Value};
+    Ar(*Field);
+    return;
+}
+template<typename T> requires string_archive_for_v<is_string_archive<behavior::log>, T>
+    && std::is_default_constructible_v<T> && std::is_move_constructible_v<T>
+FORCEINLINE T from_string_logged(LStringView Value) noexcept
+{
+    T Field{};
+    is_string_archive<behavior::log> Ar{Value};
+    Ar(Field);
+    return Field;
+}
+
+//# Quick conversion of the formation from T to T. If an error occurs it will return false.
+template<typename T> requires string_archive_for_v<is_string_archive<behavior::relaxed>, T>
+FORCEINLINE void from_string_relaxed(T* Field, LStringView Value) noexcept
+{
+    is_string_archive<behavior::relaxed> Ar{Value};
+    Ar(*Field);
+    return;
+}
+template<typename T> requires string_archive_for_v<is_string_archive<behavior::relaxed>, T>
+    && std::is_default_constructible_v<T> && std::is_move_constructible_v<T>
+FORCEINLINE T from_string_relaxed(LStringView Value) noexcept
+{
+    T Field{};
+    is_string_archive<behavior::relaxed> Ar{Value};
+    Ar(Field);
+    return Field;
 }
 
 //#
 //# Quick conversion of the formation from T to T. If an error occurs it will return false and log a message
 //# if logging for LogSerialization at error verbosity is enabled.
 //#
-template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EBehavior::Log>>
+template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, behavior::log>>
 FORCEINLINE bool FromStringLogged(T* Field, LStringView Value) noexcept
 {
-    LIStringArchive<LStringView, EBehavior::Log> Ar{Value};
+    LIStringArchive<LStringView, behavior::log> Ar{Value};
     return Ar >> *Field;
 }
 
 //# Quick conversion of the formation from T to T. If an error occurs it will return false.
-template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, EBehavior::Ignore>>
+template<typename T> requires CDeserializable<T, LIStringArchive<LStringView, behavior::relaxed>>
 FORCEINLINE bool FromStringRelaxed(T* Field, LStringView Value) noexcept
 {
-    LIStringArchive<LStringView, EBehavior::Ignore> Ar{Value};
+    LIStringArchive<LStringView, behavior::relaxed> Ar{Value};
     return Ar >> *Field;
 }
 
-template<> struct TIsString<LString> : std::true_type {};
-template<> struct TIsString<Lu8String> : std::true_type {};
-template<> struct TIsString<Lu16String> : std::true_type {};
-template<> struct TIsString<Lu32String> : std::true_type {};
-template<> struct TIsString<LStringView> : std::true_type {};
-template<> struct TIsString<Lu8StringView> : std::true_type {};
-template<> struct TIsString<Lu16StringView> : std::true_type {};
-template<> struct TIsString<Lu32StringView> : std::true_type {};
-template<> struct TIsString<char const*> : std::true_type {};
-template<> struct TIsString<unsigned char const*> : std::true_type {};
-template<> struct TIsString<signed char const*> : std::true_type {};
-template<> struct TIsString<char8_t const*> : std::true_type {};
-template<> struct TIsString<char16_t const*> : std::true_type {};
-template<> struct TIsString<char32_t const*> : std::true_type {};
+template<> struct is_string<LString> : std::true_type {};
+template<> struct is_string<Lu8String> : std::true_type {};
+template<> struct is_string<Lu16String> : std::true_type {};
+template<> struct is_string<Lu32String> : std::true_type {};
+template<> struct is_string<LStringView> : std::true_type {};
+template<> struct is_string<Lu8StringView> : std::true_type {};
+template<> struct is_string<Lu16StringView> : std::true_type {};
+template<> struct is_string<Lu32StringView> : std::true_type {};
+template<> struct is_string<char const*> : std::true_type {};
+template<> struct is_string<unsigned char const*> : std::true_type {};
+template<> struct is_string<signed char const*> : std::true_type {};
+template<> struct is_string<char8_t const*> : std::true_type {};
+template<> struct is_string<char16_t const*> : std::true_type {};
+template<> struct is_string<char32_t const*> : std::true_type {};
 
-} /* ~Namespace Serde */
+template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && is_primitive_v<U>)
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
+{
+    if constexpr (ios_bin_archive_v<TArchive>)
+    {
+        if (Ar.in_stream())
+        {
+            Ar.read_pod(Field);
+        }
+        else
+        {
+            Ar.write_pod(Field);
+        }
+    }
+    else if constexpr (is_bin_archive_v<TArchive>)
+    {
+        Ar.read_pod(Field);
+    }
+    else if constexpr (os_bin_archive_v<TArchive>)
+    {
+        Ar.write_pod(Field);
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+
+    return;
+}
+
+template<typename TArchive, typename U> requires(string_archive_for_v<TArchive, U> && (std::is_integral_v<U> || std::is_floating_point_v<U>))
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
+{
+    if constexpr (is_string_archive_v<TArchive>)
+    {
+        auto R{std::from_chars(algo::data(Ar.get_stream()), algo::data(Ar.get_stream()) + algo::size(Ar.get_stream()), Field)};
+        if constexpr (panic_archive_v<TArchive>)
+        {
+            if (R.ec != decltype(R.ec){})
+            {
+                LOG_FATAL(LogSerialization, "[{}]: Failed to deserialize from [{}] with error [{}]."
+                    , algo::type_name<U>(), Ar.get_stream(), std::to_underlying(R.ec))
+            }
+        }
+        else if constexpr (log_archive_v<TArchive>)
+        {
+            if (R.ec != decltype(R.ec){})
+            {
+                LOG_ERROR(LogSerialization, "[{}]: Failed to deserialize from [{}] with error [{}]."
+                    , algo::type_name<U>(), Ar.get_stream(), std::to_underlying(R.ec))
+            }
+        }
+        else if constexpr (relaxed_archive_v<TArchive>)
+        {
+        }
+        else
+        {
+            static_assert(algo::always_false_v<TArchive, U>);
+        }
+    }
+    else if constexpr (os_string_archive_v<TArchive>)
+    {
+        Ar.m_stream << Field;
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+
+    return;
+}
+
+template<typename TArchive, algo::input_range U> requires(bin_archive_for_v<TArchive, U>)
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
+{
+    if constexpr (ios_bin_archive_v<TArchive>)
+    {
+        if (Ar.in_stream())
+        {
+            Ar.read_input_range(Field);
+        }
+        else
+        {
+            Ar.write_input_range(Field);
+        }
+    }
+    else if constexpr (is_bin_archive_v<TArchive>)
+    {
+        Ar.read_input_range(Field);
+    }
+    else if constexpr (os_bin_archive_v<TArchive>)
+    {
+        Ar.write_input_range(Field);
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+
+    return;
+}
+
+template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && ios_bin_archive_v<TArchive>)
+inline void serde_non_intrusive(TArchive& Ar, LPath& Field) noexcept
+{
+    if (Ar.in_stream())
+    {
+        LString Dummy;
+        Ar(Dummy);
+        Field = std::move(Dummy);
+    }
+    else
+    {
+        LString Dummy{Field};
+        Ar(Dummy);
+    }
+
+    return;
+}
+
+template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && is_bin_archive_v<TArchive>)
+inline void serde_non_intrusive(TArchive& Ar, LPath& Field) noexcept
+{
+    LString Dummy;
+    Ar(Dummy);
+    Field = std::move(Dummy);
+    return;
+}
+
+template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && os_bin_archive_v<TArchive>)
+inline void serde_non_intrusive(TArchive& Ar, LPath const& Field) noexcept
+{
+    LString Dummy{Field};
+    Ar(Dummy);
+    return;
+}
+
+template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && ios_bin_archive_v<TArchive>)
+inline void serde_non_intrusive(TArchive& Ar, std::optional<U>& Field) noexcept
+{
+    static_assert(std::is_default_constructible_v<U>);
+
+    if (Ar.in_stream())
+    {
+        typename TArchive::optional_marker_type Marker;
+        Ar(Marker);
+        if (Marker)
+        {
+            Field.emplace();
+            Ar(*Field);
+        }
+    }
+    else
+    {
+        typename TArchive::optional_marker_type Marker{Field.has_value()};
+        Ar(Marker);
+        if (Field.has_value())
+        {
+            Ar(*Field);
+        }
+    }
+
+    return;
+}
+
+template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && is_bin_archive_v<TArchive>)
+inline void serde_non_intrusive(TArchive& Ar, std::optional<U>& Field) noexcept
+{
+    static_assert(std::is_default_constructible_v<U>);
+
+    typename TArchive::optional_marker_type Marker;
+    Ar(Marker);
+    if (Marker)
+    {
+        Field.emplace();
+        Ar(*Field);
+    }
+
+    return;
+}
+
+template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && os_bin_archive_v<TArchive>)
+inline void serde_non_intrusive(TArchive& Ar, std::optional<U> const& Field) noexcept
+{
+    typename TArchive::optional_marker_type Marker{Field.has_value()};
+    Ar(Marker);
+    if (Field.has_value())
+    {
+        Ar(*Field);
+    }
+
+    return;
+}
+
+} /* ~Namespace serde */
 
 template<typename T> requires requires(T t) { {t.ToString()} -> std::convertible_to<LString>; }
 struct std::formatter<T> : std::formatter<std::string>

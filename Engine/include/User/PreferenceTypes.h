@@ -90,7 +90,7 @@ struct TDefaultClampedPreference
             if constexpr (bLog)
             {
                 LOG_WARNING(LogPreferences, "[{}]: Value is smaller then their allowed min value: [{} < {}]"
-                    , algo::type_name<TDefaultClampedPreference>(), Serde::ToString(NewValue), Serde::ToString(this->GetMin())
+                    , algo::type_name<TDefaultClampedPreference>(), serde::ToString(NewValue), serde::ToString(this->GetMin())
                     )
             }
             this->Value = this->GetMin();
@@ -100,7 +100,7 @@ struct TDefaultClampedPreference
             if constexpr (bLog)
             {
                 LOG_WARNING(LogPreferences, "[{}]: Value is bigger then their allowed max value: [{} > {}]"
-                    , algo::type_name<TDefaultClampedPreference>(), Serde::ToString(NewValue), Serde::ToString(this->GetMax())
+                    , algo::type_name<TDefaultClampedPreference>(), serde::ToString(NewValue), serde::ToString(this->GetMax())
                     )
             }
             this->Value = this->GetMax();
@@ -199,18 +199,18 @@ struct TPreference<TArray<T>> : public Jafg::TDefaultPreference<TArray<T>>
     using Super::Super;
 };
 
-template<typename T, typename TArchive> requires Serde::CSerializable<T, TArchive>
-    && Serde::IsTextOArchive_v<TArchive>
-struct Serde::TSerializer<TPreference<T>, TArchive>
+template<typename T, typename TArchive> requires serde::CSerializable<T, TArchive>
+    && serde::os_string_archive_v<TArchive>
+struct serde::TSerializer<TPreference<T>, TArchive>
 {
     void operator()(TArchive& Ar, TPreference<T> const& Field) const noexcept
     {
         TSerializer<T, TArchive>{}(Ar, Field.Value);
     }
 };
-template<typename T, typename TArchive> requires Serde::CSerializable<T, TArchive>
-    && Serde::IsTextOArchive_v<TArchive>
-struct Serde::TSerializer<TClampedPreference<T>, TArchive>
+template<typename T, typename TArchive> requires serde::CSerializable<T, TArchive>
+    && serde::os_string_archive_v<TArchive>
+struct serde::TSerializer<TClampedPreference<T>, TArchive>
 {
     void operator()(TArchive& Ar, TClampedPreference<T> const& Field) const noexcept
     {
@@ -218,9 +218,9 @@ struct Serde::TSerializer<TClampedPreference<T>, TArchive>
     }
 };
 
-template<typename T, typename TArchive> requires Serde::CDeserializable<T, TArchive>
-    && Serde::IsTextIArchive_v<TArchive>
-struct Serde::TDeserializer<TPreference<T>, TArchive>
+template<typename T, typename TArchive> requires serde::CDeserializable<T, TArchive>
+    && serde::is_string_archive_v<TArchive>
+struct serde::TDeserializer<TPreference<T>, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, TPreference<T>& Field) const noexcept
     {
@@ -228,10 +228,10 @@ struct Serde::TDeserializer<TPreference<T>, TArchive>
     }
 };
 
-template<typename T, typename TArchive> requires Serde::CDeserializable<T, TArchive>
+template<typename T, typename TArchive> requires serde::CDeserializable<T, TArchive>
     && std::is_default_constructible_v<T> && std::is_move_assignable_v<T>
-    && Serde::IsTextIArchive_v<TArchive>
-struct Serde::TDeserializer<TClampedPreference<T>, TArchive>
+    && serde::is_string_archive_v<TArchive>
+struct serde::TDeserializer<TClampedPreference<T>, TArchive>
 {
     LDeserializationResult operator()(TArchive const& Ar, TClampedPreference<T>& Field) const noexcept
     {

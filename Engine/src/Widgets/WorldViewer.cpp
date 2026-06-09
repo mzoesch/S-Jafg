@@ -23,6 +23,7 @@
 #include "Nodes/ScrollRegion.h"
 #include "Nodes/VParent.h"
 #include "Core/App.h"
+#include "Widgets/Editor.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -349,7 +350,7 @@ void Jafg::WWorldViewer::OnPerspectiveDepthTestChanged()
     if (this->RenderTarget.IsInitialized())
     {
         auto& Prefs{GetSingleton<JUserPreferences>()};
-        LOG_VERBOSE(LogWidgets, "Perspective depth test changed to [{}].", *Prefs.PerspectiveDepthTest)
+        LOG_VERBOSE(LogWidgets, "Perspective depth test changed to [{}].", *Prefs.EditorPerspectiveDepthTestHint)
         this->bDatedRenderTarget = true;
     }
 
@@ -382,7 +383,7 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         .SampleCount = this->GetViewport().GetSurface().GetFrontend().Vk_GetMaxMsaaSampleCount(),
         .ResolveMode = vk::ResolveModeFlagBits::eAverage,
         .ClearColor = LinearColors::DeepSkyBlue,
-        .bDepthTest = *GetSingleton<JUserPreferences>().PerspectiveDepthTest,
+        .bDepthTest = *GetSingleton<JUserPreferences>().EditorPerspectiveDepthTestHint,
         });
 
     if (!this->OnPreDrawHandle)
@@ -710,7 +711,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                 return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
                 + NewNode(Viewport).Class<WCheckmarkButton>()
                     .Anchor(EAnchor::CenterLeft)
-                    .Checked(*Prefs.PerspectiveDepthTest)
+                    .Checked(*Prefs.EditorPerspectiveDepthTestHint)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
@@ -718,8 +719,8 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                             )
                         {
                             auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-                            MutablePrefs.PerspectiveDepthTest = !*MutablePrefs.PerspectiveDepthTest;
-                            Self.AsStatic<WCheckmarkButton>().SetChecked(*MutablePrefs.PerspectiveDepthTest);
+                            MutablePrefs.EditorPerspectiveDepthTestHint = !*MutablePrefs.EditorPerspectiveDepthTestHint;
+                            Self.AsStatic<WCheckmarkButton>().SetChecked(*MutablePrefs.EditorPerspectiveDepthTestHint);
                             this->OnPerspectiveDepthTestChanged();
                             return LNodeReply::Handled();
                         }
@@ -736,7 +737,7 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                 if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                 {
                     auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-                    MutablePrefs.PerspectiveDepthTest = !*MutablePrefs.PerspectiveDepthTest;
+                    MutablePrefs.EditorPerspectiveDepthTestHint = !*MutablePrefs.EditorPerspectiveDepthTestHint;
                     this->OnPerspectiveDepthTestChanged();
                     return LDropDownNodeCustom::reply::handled(true);
                 }
@@ -772,7 +773,7 @@ void Jafg::WWorldViewerHierarchy::Construct()
         NewStaticNode(WHParent)
             .Anchor(EAnchor::HFill)
             .Padding({5_spt})
-            .HSpace(5_spt)
+            .Space(5_spt)
         [
             NewStaticNode(WTextButtonIconizedDouble)
                 .InAllLeftIconBrushesChained<&LIconBrush::InwardsPadding, &LIconBrush::MinIconSize, &LIconBrush::Alignment>
@@ -1204,7 +1205,7 @@ void Jafg::WWorldViewerInspector::Construct()
         NewStaticNode(WHParent)
             .Anchor(EAnchor::HFill)
             .Padding({5_spt})
-            .HSpace(5_spt)
+            .Space(5_spt)
         [
             NewStaticNode(WEditableTextButton).SaveTo(&this->EditableObjectDisplayName)
                 .Anchor(EAnchor::Fill)
@@ -1242,7 +1243,7 @@ void Jafg::WWorldViewerInspector::Construct()
         NewStaticNode(WHParent)
             .Anchor(EAnchor::HFill)
             .Padding({5_spt})
-            .HSpace(5_spt)
+            .Space(5_spt)
         [
             NewStaticNode(WEditableTextButtonIconizedLeft).SaveTo(&this->ContainerSearch)
                 .Anchor(EAnchor::Fill)
@@ -1494,12 +1495,7 @@ void Jafg::WWorldViewerInspector::UpdateObjectDetails()
             })
             .Unique()
             );
-        this->Container->AddChild(NewStaticNode(WVRegion).SaveTo(&this->ComponentContainer)
-            .Anchor(EAnchor::HFill)
-            .VSpace(1_spt)
-            .Tint(Colors::Black)
-            .Unique()
-            );
+        this->Container->AddChild(NewStaticNode(WEditorBackground).SaveTo(&this->ComponentContainer).Unique());
 
         if (Actor.HasRootComponent())
         {
@@ -1624,11 +1620,11 @@ void Jafg::WWorldViewerInspector::SelectComponent(AActorComponent* Component)
 
                         if (Casted.IsSelected())
                         {
-                            Casted.LeftIcon = LTexture2::FromTextureView("Icons/Jafg.ExtendDown");
+                            Casted.LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendDown");
                         }
                         else
                         {
-                            Casted.LeftIcon = LTexture2::FromTextureView("Icons/Jafg.ExtendRight");
+                            Casted.LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendRight");
                         }
 
                         for (auto* Node: *CategoryNodes)

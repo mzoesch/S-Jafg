@@ -101,8 +101,8 @@ public:
     LTextButtonIconStyle RightIconStyle;
 
     //# Whether the respective icon has their own hitbox and can receive input independently of the button.
-    EVENT_DECL(DecoupledLeftKeyEvent, LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event))
-    EVENT_DECL(DecoupledRightKeyEvent, LNodeReply(LNodeKeyEventInfo const& Data, LKeyEvent const& Event))
+    EVENT_DECL(DecoupledLeftKeyEvent, LNodeReply(WTextButtonIconizedDouble& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event))
+    EVENT_DECL(DecoupledRightKeyEvent, LNodeReply(WTextButtonIconizedDouble& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event))
 
 private:
 
@@ -126,6 +126,9 @@ struct LFactoryTextButton : TFactoryButtonBase<WTextButton>
 struct LFactoryTextButtonIconizedDouble : NODE_FACTORY_PARENT(WTextButtonIconizedDouble)
 {
     NODE_FACTORY_BODY(WTextButtonIconizedDouble)
+
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(DecoupledLeftKey, DecoupledLeftKeyEvent)
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(DecoupledRightKey, DecoupledRightKeyEvent)
 
     decltype(auto) LeftIcon(this auto&& Self, LOptionalTexture2Ref Icon) noexcept
     {

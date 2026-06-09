@@ -427,7 +427,7 @@ void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Insta
     }
     case vk::DescriptorType::eSampledImage:
     {
-        this->SetSampledImage(Instance, Where, *this->TextureSubsystem->FromTextureViewIdentifier(Value));
+        this->SetSampledImage(Instance, Where, *this->TextureSubsystem->FromAsset(Value));
         break;
     }
     default:

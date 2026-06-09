@@ -90,27 +90,27 @@ void Jafg::WInput_Vector3::Construct()
 
     if (std::holds_alternative<SignedVector>(this->Vector))
     {
-        ButtonX->ContentPredicate = Serde::IsIntegral;
-        ButtonY->ContentPredicate = Serde::IsIntegral;
-        ButtonZ->ContentPredicate = Serde::IsIntegral;
+        ButtonX->ContentPredicate = serde::IsIntegral;
+        ButtonY->ContentPredicate = serde::IsIntegral;
+        ButtonZ->ContentPredicate = serde::IsIntegral;
         ButtonX->SetContent(this->FormatAxis(EPart::X, std::get<SignedVector>(this->Vector)));
         ButtonY->SetContent(this->FormatAxis(EPart::Y, std::get<SignedVector>(this->Vector)));
         ButtonZ->SetContent(this->FormatAxis(EPart::Z, std::get<SignedVector>(this->Vector)));
     }
     else if (std::holds_alternative<UnsignedVector>(this->Vector))
     {
-        ButtonX->ContentPredicate = Serde::IsUIntegral;
-        ButtonY->ContentPredicate = Serde::IsUIntegral;
-        ButtonZ->ContentPredicate = Serde::IsUIntegral;
+        ButtonX->ContentPredicate = serde::IsUIntegral;
+        ButtonY->ContentPredicate = serde::IsUIntegral;
+        ButtonZ->ContentPredicate = serde::IsUIntegral;
         ButtonX->SetContent(this->FormatAxis(EPart::X, std::get<UnsignedVector>(this->Vector)));
         ButtonY->SetContent(this->FormatAxis(EPart::Y, std::get<UnsignedVector>(this->Vector)));
         ButtonZ->SetContent(this->FormatAxis(EPart::Z, std::get<UnsignedVector>(this->Vector)));
     }
     else if (std::holds_alternative<FloatingVector>(this->Vector))
     {
-        ButtonX->ContentPredicate = Serde::IsNumeric;
-        ButtonY->ContentPredicate = Serde::IsNumeric;
-        ButtonZ->ContentPredicate = Serde::IsNumeric;
+        ButtonX->ContentPredicate = serde::IsNumeric;
+        ButtonY->ContentPredicate = serde::IsNumeric;
+        ButtonZ->ContentPredicate = serde::IsNumeric;
         ButtonX->SetContent(this->FormatAxis(EPart::X, std::get<FloatingVector>(this->Vector)));
         ButtonY->SetContent(this->FormatAxis(EPart::Y, std::get<FloatingVector>(this->Vector)));
         ButtonZ->SetContent(this->FormatAxis(EPart::Z, std::get<FloatingVector>(this->Vector)));
@@ -150,7 +150,7 @@ void Jafg::WInput_Vector3::SetInputEnabled(bool bEnabled)
 
 void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const& NewValue)
 {
-    check(Serde::IsNumeric(NewValue))
+    check(serde::IsNumeric(NewValue))
 
     if (!this->bIgnoreChangeEvents && !NewValue.empty())
     {
@@ -164,15 +164,15 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<SignedVector>(this->Vector)};
             if (Part == EPart::X)
             {
-                Serde::FromString(&Vec.x, NewValue);
+                serde::FromString(&Vec.x, NewValue);
             }
             else if (Part == EPart::Y)
             {
-                Serde::FromString(&Vec.y, NewValue);
+                serde::FromString(&Vec.y, NewValue);
             }
             else
             {
-                Serde::FromString(&Vec.z, NewValue);
+                serde::FromString(&Vec.z, NewValue);
             }
             this->Vector.emplace<SignedVector>(Vec);
         }
@@ -181,15 +181,15 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<UnsignedVector>(this->Vector)};
             if (Part == EPart::X)
             {
-                Serde::FromString(&Vec.x, NewValue);
+                serde::FromString(&Vec.x, NewValue);
             }
             else if (Part == EPart::Y)
             {
-                Serde::FromString(&Vec.y, NewValue);
+                serde::FromString(&Vec.y, NewValue);
             }
             else
             {
-                Serde::FromString(&Vec.z, NewValue);
+                serde::FromString(&Vec.z, NewValue);
             }
             this->Vector.emplace<UnsignedVector>(Vec);
         }
@@ -203,15 +203,15 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<FloatingVector>(this->Vector)};
             if (Part == EPart::X)
             {
-                Serde::FromString(&Vec.x, NewValue);
+                serde::FromString(&Vec.x, NewValue);
             }
             else if (Part == EPart::Y)
             {
-                Serde::FromString(&Vec.y, NewValue);
+                serde::FromString(&Vec.y, NewValue);
             }
             else
             {
-                Serde::FromString(&Vec.z, NewValue);
+                serde::FromString(&Vec.z, NewValue);
             }
             this->Vector.emplace<FloatingVector>(Vec);
         }

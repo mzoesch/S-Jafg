@@ -270,6 +270,28 @@ FORCEINLINE constexpr void ApplyStyleBit(U& Style, T& Brush, EStyleBits Bit) noe
     return;
 }
 
+struct LStylePalette final
+{
+    struct State final
+    {
+        LColor Tint;
+        LColor Outline;
+        LColor TextTint;
+
+        NODISCARD bool operator==(State const& Rhs) const noexcept = default;
+    };
+
+    State Normal;
+    State Hover;
+    State Press;
+    State Selected;
+    State Disabled;
+
+    NODISCARD bool operator==(LStylePalette const& Rhs) const noexcept = default;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LStylePalette::State, Tint, Outline, TextTint)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LStylePalette, Normal, Hover, Press, Selected, Disabled)
+
 //# Inherit from this to access common button logic.
 template<typename TNode, typename TBrush, auto BrushProj> requires std::is_base_of_v<LRegionBrush, TBrush>
 class TButtonBase
@@ -510,3 +532,46 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
 };
 
 } /* ~Namespace Jafg */
+
+JAFG_PREF_OF(Jafg::LStylePalette::State)
+JAFG_PREF_OF(Jafg::LStylePalette)
+
+namespace serde
+{
+
+template<typename TArchive> requires os_string_archive_v<TArchive>
+struct TSerializer<Jafg::LStylePalette::State, TArchive>
+{
+    void operator()(TArchive& Ar, Jafg::LStylePalette::State const& Field) const noexcept
+    {
+        json j; to_json(j, Field);
+        Ar << j.dump();
+    }
+};
+template<typename TArchive> requires os_string_archive_v<TArchive>
+struct TDeserializer<Jafg::LStylePalette::State, TArchive>
+{
+    void operator()(TArchive const& Ar, Jafg::LStylePalette::State& Field) const noexcept
+    {
+        json::parse(Ar, Field);
+    }
+};
+template<typename TArchive> requires os_string_archive_v<TArchive>
+struct TSerializer<Jafg::LStylePalette, TArchive>
+{
+    void operator()(TArchive& Ar, Jafg::LStylePalette const& Field) const noexcept
+    {
+        json j; to_json(j, Field);
+        Ar << j.dump();
+    }
+};
+template<typename TArchive> requires is_string_archive_v<TArchive>
+struct TDeserializer<Jafg::LStylePalette, TArchive>
+{
+    void operator()(TArchive const& Ar, Jafg::LStylePalette& Field) const noexcept
+    {
+        json::parse(Ar, Field);
+    }
+};
+
+} /* ~Namespace serde */

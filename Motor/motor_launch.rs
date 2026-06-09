@@ -43,6 +43,92 @@ struct Cli
     kind: ModuleKind,
 }
 
+fn generate_map_macros(n_max: usize) -> String
+{
+    let api_prefix = "JAFG";
+    let detail_api_prefix = "DETAIL_JAFG";
+
+    let mut out = String::new();
+    out.push_str("// Copyright mzoesch. All rights reserved.\n\n");
+
+    for n in 1..=n_max
+    {
+        let mut args = String::new();
+        args.push_str("Transform");
+
+        for i in 1..=n
+        {
+            if i % 10 == 1
+            {
+                args.push_str(", \\\n    ");
+            }
+            else
+            {
+                args.push_str(", ");
+            }
+            args.push_str(&format!("What{}", i));
+        }
+
+        let mut body = String::new();
+
+        for i in 1..=n
+        {
+            if i % 10 == 1
+            {
+                body.push_str("\\\n    ");
+            }
+            else
+            {
+                body.push(' ');
+            }
+            body.push_str(&format!("Transform(What{})", i));
+        }
+
+        out.push_str(&format!(
+            "#define {prefix}_MAP_{n}({args}) {body}\n",
+            prefix = detail_api_prefix
+            ));
+    }
+
+    out.push('\n');
+    out.push('\n');
+
+    out.push_str(&format!(
+        "#define {api_prefix}_GET_MAP( ",
+        ));
+
+    for n in 1..=n_max
+    {
+        if n % 10 == 1
+        {
+            out.push_str("\\\n    ");
+        }
+        out.push_str(&format!("_{}, ", n));
+    }
+
+    out.push_str("\\\n    NAME, ...) NAME\n\n\n");
+
+    out.push_str(&format!(
+        "#define {api_prefix}_MAP(Transform, ...) \\\n    {api_prefix}_GET_MAP(__VA_ARGS__, ",
+        ));
+
+    for n in (2..=n_max).rev()
+    {
+        if n % 10 == 0
+        {
+            out.push_str("\\\n    ");
+        }
+        out.push_str(&format!("{prefix}_MAP_{n}, ", prefix = detail_api_prefix));
+    }
+
+    out.push_str(&format!(
+        "{prefix}_MAP_1) \\\n    (Transform, __VA_ARGS__)\n",
+        prefix = detail_api_prefix
+        ));
+
+    out
+}
+
 fn main()
 {
     let cwd: std::path::PathBuf = std::env::current_dir().unwrap();
@@ -54,6 +140,17 @@ fn main()
     if args.verbose
     {
         println!("Launching pre-build for [{}] ...", args.module);
+    }
+
+    let jafg_map = paths::construct_relative_gh_path(&args) + "/JafgMap.h";
+    if args.module == "Engine" && !finder::exists_file(&jafg_map)
+    {
+        if args.verbose
+        {
+            println!("Generating JafgMap.h ...");
+        }
+        let map_content: String = generate_map_macros(360);
+        finder::write_to_file_if_different(&jafg_map, args.verbose, &map_content);
     }
 
     /*

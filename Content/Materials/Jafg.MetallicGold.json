@@ -2,9 +2,9 @@
     "Shader": "Jafg.Pbr",
     "Type": "Solid",
     "Properties" : {
-        "baseColorMap": "Jafg.MetallicGold/Base",
-        "metallicRoughnessMap": "Jafg.MetallicGold/Roughness",
-        "normalMap": "Jafg.MetallicGold/Normal",
+        "baseColorMap": "Textures/Jafg.MetallicGold/Base",
+        "metallicRoughnessMap": "Textures/Jafg.MetallicGold/Roughness",
+        "normalMap": "Textures/Jafg.MetallicGold/Normal",
         "sampler": "Jafg.LinearRepeatSampler"
     }
 }

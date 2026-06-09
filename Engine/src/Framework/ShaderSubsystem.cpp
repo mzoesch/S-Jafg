@@ -288,7 +288,7 @@ void Jafg::JShaderSubsystem::RefetchShaders()
     check(this->FetchedShaders.empty())
 
     LString MissingKey; Json::EError Error;
-    for (auto ShaderFiles{Finder::FindFilesRecursively(Finder::GetShadersDir(), true, ".*\\.json")}; auto const& TextureViewFile : ShaderFiles)
+    for (auto ShaderFiles{Finder::FindFilesRecursively(Finder::GetContentDir()/"Shaders", true, ".*\\.json")}; auto const& TextureViewFile : ShaderFiles)
     {
         std::unique_ptr Shader{ std::make_unique<LFetchedShader>(TextureViewFile, TextureViewFile.stem().string())};
         LString _PathStr{Shader->Path.string()};

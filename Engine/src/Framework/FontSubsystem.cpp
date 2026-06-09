@@ -423,7 +423,12 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32
     hb_buffer_set_direction(HBBuffer, HB_DIRECTION_LTR);
     hb_buffer_set_script(HBBuffer, HB_SCRIPT_LATIN);
     hb_buffer_set_language(HBBuffer, hb_language_from_string("en", -1));
-    hb_shape(HBFont, HBBuffer, nullptr, 0);
+
+    // TODO: When we can dynamically update our atlas disable this / make it an user option.
+    hb_feature_t HBFeatures[1];
+    hb_feature_from_string("liga=0", -1, &HBFeatures[0]);
+
+    hb_shape(HBFont, HBBuffer, HBFeatures, 1);
 
     uint32_t GlyphCount;
     hb_glyph_info_t* GlyphInfos{hb_buffer_get_glyph_infos(HBBuffer, &GlyphCount)};
