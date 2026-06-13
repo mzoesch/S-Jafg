@@ -7,6 +7,7 @@
 #include "Widgets/Editor.h"
 #include "Widgets/EditorFactory.h"
 #include "User/UserPreferences.h"
+#include "Framework/MeshSubsystem.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -14,15 +15,20 @@
     #pragma clang diagnostic ignored "-Wc++98-compat-extra-semi"
     #pragma clang diagnostic ignored "-Wdeprecated-literal-operator"
 #endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-function"
+#endif /* JAFG_WITH_GCC */
     #define TINYOBJLOADER_IMPLEMENTATION
     #include <tiny_obj_loader.h>
     #define TINYGLTF_IMPLEMENTATION
     #include <tiny_gltf.h>
-
-#include "Framework/MeshSubsystem.h"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* JAFG_WITH_GCC */
 
 static_assert(sizeof(uint8_t) == sizeof(u8));
 static_assert(sizeof(uint16_t) == sizeof(u16));

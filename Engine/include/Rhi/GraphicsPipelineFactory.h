@@ -26,13 +26,13 @@ struct LDevicePipelineFactory
         auto& Entrypoints{Self.ShaderEntrypoints[Path]};
 
         const auto Code{Finder::ReadFileAsBinary(Path)};
-        Self.ShaderModules.emplace_back(vk::raii::ShaderModule{
-            Self.Frontend.Vk_GetDevice(),
-            vk::ShaderModuleCreateInfo{
-                .codeSize = Code.size() * sizeof(u8),
-                .pCode = reinterpret_cast<u32 const*>(Code.data())
-                }
-            });
+
+        auto Result{Self.Frontend.Vk_GetDevice().createShaderModule(vk::ShaderModuleCreateInfo{
+            .codeSize = Code.size() * sizeof(u8),
+            .pCode = reinterpret_cast<u32 const*>(Code.data())
+            })};
+        check(Result.has_value())
+        Self.ShaderModules.emplace_back(std::move(*Result));
         auto ShaderModuleHandle{*Self.ShaderModules.back()};
 
         vk::ShaderStageFlags Stages{};
@@ -157,10 +157,13 @@ struct LDevicePipelineFactory
 
     decltype(auto) UniqueLayout(this auto&& Self, vk::DescriptorSetLayoutCreateInfo const& Layout) noexcept
     {
+        auto Result{Self.Frontend.Vk_GetDevice().createDescriptorSetLayout(Layout)};
+        check(Result.result == vk::Result::eSuccess)
         Self.UniqueDescriptorSetLayouts.emplace_back(Self.GetCurrentNumberOfLayouts(), vk::raii::DescriptorSetLayout{
             Self.Frontend.Vk_GetDevice(),
-            Layout
+            std::move(*Result.value),
             });
+        Result.value.release();
         return std::forward<decltype(Self)>(Self);
     }
 

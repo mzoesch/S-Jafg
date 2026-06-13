@@ -11,8 +11,6 @@
       "hidden": true,
       "inherits": "ninja-base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
         "JAFG_TARGET_PLATFORM": "lnx",
         "JAFG_TARGET_ARCHITECTURE": "x86_64"
       }

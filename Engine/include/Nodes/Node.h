@@ -243,6 +243,10 @@ struct LAnchor final
 {
     union
     {
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wpedantic"
+#endif /* JAFG_WITH_GCC */
         struct
         {
             f32 MinX;
@@ -250,6 +254,9 @@ struct LAnchor final
             f32 MaxX;
             f32 MaxY;
         };
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* JAFG_WITH_GCC */
 
         //#
         //# Minimum to maximum.

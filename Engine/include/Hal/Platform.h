@@ -506,8 +506,12 @@ inline constexpr bool IsRttiEnabled
 {
 #if JAFG_WITH_CLANG
     __has_feature(cxx_rtti)
-#elif WITH_GCC
-    __GXX_RTTI
+#elif JAFG_WITH_GCC
+    #ifdef __GXX_RTTI
+        true
+    #else /* __GXX_RTTI */
+        false
+    #endif /* !__GXX_RTTI */
 #elif JAFG_WITH_MSVC
     #ifdef _CPPRTTI
         true

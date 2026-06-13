@@ -45,7 +45,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
             .sharingMode = vk::SharingMode::eExclusive,
             .initialLayout = vk::ImageLayout::eUndefined,
             });
-        this->DepthTarget.ImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        this->DepthTarget.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
             .image = this->DepthTarget.Image.GetBuffer(),
             .viewType = vk::ImageViewType::e2D,
             .format = Frontend.Vk_GetPreferredDepthFormat(),
@@ -56,7 +56,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
                 .baseArrayLayer = 0,
                 .layerCount = 1,
                 },
-            }};
+            });
     }
 
     this->MsaaTarget.Image = Frontend.Vk_CreateDeviceLocalImage({
@@ -71,7 +71,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
             | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc,
         .initialLayout = vk::ImageLayout::eUndefined,
         });
-    this->MsaaTarget.ImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+    this->MsaaTarget.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
         .image = this->MsaaTarget.Image.GetBuffer(),
         .viewType = vk::ImageViewType::e2D,
         .format = Frontend.Vk_GetSurfaceFormat().format,
@@ -82,7 +82,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
             .baseArrayLayer = 0,
             .layerCount = 1,
             },
-            },};
+        });
 
     if (this->ResolveFlags != vk::ResolveModeFlagBits::eNone)
     {
@@ -101,7 +101,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
         this->ResolvedTarget.emplace(BindlessTarget{});
         auto& ResolvedMsaa{*this->ResolvedTarget};
         ResolvedMsaa.Image = Frontend.Vk_CreateDeviceLocalImage(ResolveImageCreateInfo);
-        ResolvedMsaa.ImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        ResolvedMsaa.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
             .image = ResolvedMsaa.Image.GetBuffer(),
             .viewType = vk::ImageViewType::e2D,
             .format = Frontend.Vk_GetSurfaceFormat().format,
@@ -112,7 +112,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
                 .baseArrayLayer = 0,
                 .layerCount = 1,
                 },
-                },};
+            });
     }
 
     if (Info.bAllowSelection)
@@ -128,7 +128,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
             .usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
             .initialLayout = vk::ImageLayout::eUndefined,
             });
-        this->SelectedTarget.ImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+        this->SelectedTarget.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
             .image = this->SelectedTarget.Image.GetBuffer(),
             .viewType = vk::ImageViewType::e2D,
             .format = vk::Format::eR8Unorm,
@@ -139,7 +139,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
                 .baseArrayLayer = 0,
                 .layerCount = 1,
                 },
-                },};
+            });
     }
 
     return;

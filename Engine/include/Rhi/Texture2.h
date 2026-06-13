@@ -45,7 +45,7 @@ struct LTexture2 final
         }
     }
 
-    constexpr LTexture2() noexcept = default;
+    LTexture2() noexcept = default;
     explicit LTexture2(LPath Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::None) noexcept
         : Path(std::move(Path))
     {

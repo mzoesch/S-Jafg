@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD              23)
 set(CMAKE_CXX_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_EXTENSIONS            OFF)
 
-include(CMake/WhatTheFuckIsThat.cmake)
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP    0)
+set(CMAKE_EXPERIMENTAL_CXX_MODULES          OFF)
 
 
 #
@@ -34,7 +35,6 @@ if(NOT DEFINED JAFG_TARGET_CONFIG)
     message(FATAL_ERROR "JAFG_TARGET_CONFIG is not defined. Please define it with -DJAFG_TARGET_CONFIG=<configuration>.")
 endif()
 include(CMake/ValidateTargetInput.cmake)
-include(CMake/ValidateCompiler.cmake)
 include(CMake/RetrieveVersionNumber.cmake)
 include(CMake/RetrieveMinCPlusPlus.cmake)
 if(NOT CMAKE_BUILD_TYPE)

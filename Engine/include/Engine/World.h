@@ -162,7 +162,7 @@ FORCEINLINE LCommandArgsTypeRet_t<const LWorld> LCommandArgs::GetAs<const LWorld
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface, and a world
 //# may draw to multiple surfaces.
 //#
-class LWorld final : public LClassOuter, public LEngineGetters
+class ENGINE_API LWorld final : public LClassOuter, public LEngineGetters
 {
     friend AActor;
 
@@ -197,7 +197,7 @@ public:
 
     void Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const;
 
-    ENGINE_API std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
+    std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
 
     FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
     FORCEINLINE LLevel const& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
@@ -207,15 +207,15 @@ public:
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
 
-    ENGINE_API  void RegisterTickableObject(LTickableObject* Tickable);
-    ENGINE_API  void UnregisterTickableObject(LTickableObject* Tickable);
+     void RegisterTickableObject(LTickableObject* Tickable);
+     void UnregisterTickableObject(LTickableObject* Tickable);
     FORCEINLINE bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     FORCEINLINE TArray<LTickableObject*> const& GetTickableObjects() const noexcept { return this->TickableObjects; }
     FORCEINLINE TArray<LTickableObject*>& GetMutableTickableObjects() noexcept { return this->TickableObjects; }
     FORCEINLINE TArray<LTickableObject*> const& GetDeletedTickableObjects() const noexcept { return this->DeletedTickableObjects; }
     FORCEINLINE TArray<LTickableObject*>& GetDeletedMutableTickableObjects() noexcept { return this->DeletedTickableObjects; }
 
-    ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const noexcept;
+    f32 GetRealTimeSecondsSinceWorldLaunch() const noexcept;
 
     //#
     //# Trace this world for physical hits.
@@ -250,7 +250,7 @@ public:
     template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
     FORCEINLINE auto const& Vk_GetWorldDataBuffer(TRenderInfo const& Info) const noexcept { return this->Vk_WorldBuffers[Info.Frame]; }
 
-    ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
+     static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LStringView InHumanReadableName) noexcept
     {
         auto* Out{GetWorldFromHumanReadableName(InHumanReadableName)};

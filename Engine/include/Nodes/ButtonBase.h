@@ -76,7 +76,7 @@ namespace Jafg
 
 struct LRegionBrush;
 
-enum struct EStyleBits
+enum struct EStyleBits : u32
 {
     Identity = 0x0 << 0,
     Normal = 0x1 << 0,
@@ -111,7 +111,7 @@ inline constexpr LStringView LexToString(EStyleBits Bit) noexcept
 template<typename UFlags, auto... BrushProj> requires std::is_base_of_v<Detail::LFlags, UFlags>
 struct LStyleBase
 {
-    typedef typename UFlags::type flag_type;
+    typedef typename UFlags::enum_type flag_type;
 
     constexpr void ForEachEverywhere(this auto&& Self, auto&& F) noexcept
     {
@@ -140,7 +140,7 @@ struct LStyleBase
             {
                 for (auto FlagIdx{0uz}; FlagIdx < std::to_underlying(flag_type::count); ++FlagIdx)
                 {
-                    if (!!(Flags & UFlags{0x01 << FlagIdx}))
+                    if (!!(Flags & UFlags{static_cast<typename UFlags::mask>(0x01 << FlagIdx)}))
                     {
                         if (Idx == FlagIdx)
                         {
@@ -181,7 +181,7 @@ struct LStyleBase
             {
                 for (auto FlagIdx{0uz}; FlagIdx < std::to_underlying(flag_type::count); ++FlagIdx)
                 {
-                    if (!!(Flags & UFlags{0x01 << FlagIdx}))
+                    if (!!(Flags & UFlags{static_cast<typename UFlags::mask>(0x01 << FlagIdx)}))
                     {
                         if (BrushSeq == FlagIdx)
                         {

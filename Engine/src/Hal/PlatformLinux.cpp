@@ -24,7 +24,7 @@ void Jafg::App::Detail::TrapMeFn::operator()() const noexcept
 void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noexcept
 {
     const pid_t Pid{::getpid()};
-    const pid_t Tid{::gettid()};
+    // const pid_t Tid{::gettid()};
 
     if (Finder::Detail::_gdb)
     {

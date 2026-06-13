@@ -28,7 +28,7 @@ struct LTextButtonIconStyleBase
     LIconBrush DecoupledBrush;
 };
 } /* ~Namespace Detail */
-enum struct ETextButtonIconStyleBits
+enum struct ETextButtonIconStyleBits : u32
 {
     Identity = 0x0 << 0,
     Normal = 0x1 << 0,

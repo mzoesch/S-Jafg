@@ -37,8 +37,8 @@ extern void __assert_fail(
     ) noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 } /* extern "C" */
 
-#if !JAFG_WITH_CLANG
-    #error "Linux only supports clang as a valid compiler for the moment."
+#if (!JAFG_WITH_CLANG) && (!JAFG_WITH_GCC)
+    #error "Linux only supports clang and gcc as a valid compiler for the moment."
 #endif /* !JAFG_WITH_CLANG */
 
 #if !defined(__GLIBCXX__)
@@ -49,7 +49,13 @@ extern void __assert_fail(
 #endif /* _LIBCPP_VERSION */
 
 #if JAFG_DO_COMPILER_DIAGNOSTIC_SETUP
-    #include "Definitions/PushCommonClangDiagnostics.h"
+    #if JAFG_WITH_CLANG
+        #include "Definitions/PushCommonClangDiagnostics.h"
+    #endif /* JAFG_WITH_CLANG */
+    #if JAFG_WITH_GCC
+        // #pragma clang diagnostic ignored "-Wformat-security"
+        #include "Definitions/PushCommonGccDiagnostics.h"
+    #endif
 #endif /* JAFG_DO_COMPILER_DIAGNOSTIC_SETUP */
 
 #ifndef JAFG_PLATFORM_DESKTOP
@@ -147,6 +153,7 @@ extern void __assert_fail(
     #if __has_builtin(__builtin_debugtrap)
         #define JAFG_PLATFORM_BREAK()                                   (__builtin_debugtrap());
     #else /* __has_builtin(__builtin_debugtrap) */
+        #include <signal.h>
         #define JAFG_PLATFORM_BREAK()                                   (raise(SIGTRAP));
     #endif /* !__has_builtin(__builtin_debugtrap) */
 #endif  /* !JAFG_PLATFORM_BREAK */

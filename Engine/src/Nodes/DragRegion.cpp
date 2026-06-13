@@ -609,11 +609,11 @@ bool Jafg::WDragRegion::UiTickMove()
         Offset += this->ProjVec((*It)->GetAnchoredSize_v2()) + SpaceSpt;
     }
     //# Space to move to the right or down.
-    f32 Remaining{};
-    for (auto It{this->GetChildren().begin() + algo::distance_to(this->GetChildren(), this->DragHint, algo::unique_raw)}; It != this->GetChildren().end(); ++It)
-    {
-        Remaining += SpaceSpt + this->ProjVec((*It)->GetDesiredSize_v2());
-    }
+    // f32 Remaining{};
+    // for (auto It{this->GetChildren().begin() + algo::distance_to(this->GetChildren(), this->DragHint, algo::unique_raw)}; It != this->GetChildren().end(); ++It)
+    // {
+    //     Remaining += SpaceSpt + this->ProjVec((*It)->GetDesiredSize_v2());
+    // }
 
     // auto Delta = *this->InitialDragLocation - Surface.GetMouseLocationValue(); // TODO: How??
     f32 DesiredSize = this->ProjVec(Surface.GetMouseLocationValue() - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)) // TODO: fix trans.

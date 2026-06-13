@@ -13,6 +13,11 @@
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Weverything"
 #endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wint-in-bool-context"
+    #pragma GCC diagnostic ignored "-Wunused-function"
+#endif /* JAFG_WITH_GCC */
     #include <harfbuzz/hb.h>
     #include <harfbuzz/hb-ft.h>
     #include <ft2build.h>
@@ -23,6 +28,9 @@
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
+    #pragma GCC diagnostic pop
+#if JAFG_WITH_GCC
+#endif /* JAFG_WITH_GCC */
 
 namespace
 {
@@ -42,8 +50,8 @@ f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScal
         case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeSingle; }
         case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeSingle; }
         case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeSingle; }
-        default: break;
         }
+        std::unreachable();
     }
     case Jafg::EApplicationScale::Double:
     {
@@ -54,8 +62,8 @@ f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScal
         case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeDouble; }
         case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeDouble; }
         case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeDouble; }
-        default: break;
         }
+        std::unreachable();
     }
     case Jafg::EApplicationScale::Triple:
     {
@@ -66,10 +74,10 @@ f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScal
         case Jafg::ETextScale::Body:      { return *Prefs.BodyFontSizeTriple; }
         case Jafg::ETextScale::Compact:   { return *Prefs.CompactFontSizeTriple; }
         case Jafg::ETextScale::Small:     { return *Prefs.SmallFontSizeTriple; }
-        default: break;
         }
+        std::unreachable();
     }
-    default: break;
+    case Jafg::EApplicationScale::Auto: std::unreachable();
     }
 
     std::unreachable();
@@ -228,6 +236,7 @@ void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect,
             }
             AddGlyph(Glyph);
         }
+        break;
     }
     case ETextCutoff::NoBounds:
     {

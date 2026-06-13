@@ -46,7 +46,7 @@ void Jafg::WTextureInspector::Construct()
             , this->Asset, LexToString(Header.Type))
     }
 
-    LTextureView View{Assets.PullAsset<LTextureView>(this->Asset)};
+    LTextureView View{Assets.PullAssetTextureView(this->Asset)};
     LTexture2Ref Texture{Textures.FromTextureView(View)};
 
     this->Path = this->Asset.string();

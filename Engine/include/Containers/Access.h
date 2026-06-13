@@ -1032,13 +1032,17 @@ FORCEINLINE constexpr std::string_view type_name() noexcept
         return Signature.substr(StructPrefix.size(), Signature.size() - StructPrefix.size() - Suffix.size());
     }
     return Signature.substr(ClassPrefix.size(), Signature.size() - ClassPrefix.size() - Suffix.size());
-#elif JAFG_WITH_CLANG || JAFG_WITH_GCC
+#elif JAFG_WITH_CLANG
     constexpr std::string_view Prefix{ "std::string_view algo::type_name() [T = " };
     constexpr std::string_view Suffix{ "]" };
     return Signature.substr(Prefix.size(), Signature.size() - Prefix.size() - Suffix.size());
-#else /* JAFG_WITH_CLANG || JAFG_WITH_GCC */
+#elif JAFG_WITH_GCC
+    constexpr std::string_view Prefix{ "constexpr std::string_view algo::type_name() [with T = " };
+    constexpr std::string_view Suffix{ "; std::string_view = std::basic_string_view<char>]" };
+    return Signature.substr(Prefix.size(), Signature.size() - Prefix.size() - Suffix.size());
+#else /* JAFG_WITH_GCC */
     #error "Missing compiler implementation."
-#endif /* !(JAFG_WITH_CLANG || JAFG_WITH_GCC) */
+#endif /* !JAFG_WITH_GCC */
 }
 
 struct raii_leave final

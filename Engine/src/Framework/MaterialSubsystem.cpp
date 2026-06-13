@@ -312,7 +312,7 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
     if (LayoutsToAllocate.empty() == false)
     {
         auto SetIdx{0uz};
-        auto DescriptorSets{Frontend.Vk_GetDevice().allocateDescriptorSets({
+        auto DescriptorSets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
             .descriptorPool = Frontend.Vk_GetDescriptorPool(),
             .descriptorSetCount = static_cast<u32>(LayoutsToAllocate.size()),
             .pSetLayouts = LayoutsToAllocate.data(),

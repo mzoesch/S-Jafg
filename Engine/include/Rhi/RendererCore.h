@@ -17,8 +17,12 @@
 #endif /* !JAFG_NO_GLFW3 */
 
 #define VK_NO_PROTOTYPES
-#define VULKAN_HPP_NO_CONSTRUCTORS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#define VULKAN_HPP_NO_CONSTRUCTORS
+#define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+#define VULKAN_HPP_NO_UNION_CONSTRUCTORS
+#define VULKAN_HPP_NO_EXCEPTIONS
+#include <vulkan/vulkan.hpp>
 #define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS // https://github.com/KhronosGroup/Vulkan-Hpp/issues/2264, fix: https://github.com/KhronosGroup/Vulkan-Hpp/pull/2312
 #include <vulkan/vulkan_raii.hpp>
 // #include <volk.h>
@@ -29,9 +33,16 @@
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Weverything"
 #endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-variable"
+#endif /* JAFG_WITH_GCC */
     #include "vk_mem_alloc.h"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
+#endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_CLANG
+    #pragma GCC diagnostic pop
 #endif /* JAFG_WITH_CLANG */
 
 #if PLATFORM_USES_WEBGL_TWO
@@ -39,6 +50,97 @@
 #endif /* PLATFORM_USES_WEBGL_TWO */
 
 #include "Framework/FrontendForward.h"
+
+namespace rhi
+{
+
+//#
+//# Wrapper function, because for some stupid reason vk without exceptions tries to be correct and does not give us
+//# very nice convenience ctors...
+//#
+template<typename T>
+inline decltype(auto) vk_build(vk::raii::Device const& d, T const& info, vk::Optional<vk::AllocationCallbacks const> allocator = nullptr) noexcept
+{
+#define DETAIL_RHI_VK_BUILD_IMPL(T) \
+    Vk##T result; \
+    check(d.getDispatcher()->vkCreate##T) \
+    vk::Result Result{static_cast<vk::Result>(d.getDispatcher()->vkCreate##T( \
+        static_cast<VkDevice>(*d), \
+        reinterpret_cast<Vk ## T ## CreateInfo const*>(&info), \
+        reinterpret_cast<VkAllocationCallbacks const*>(allocator.get()), \
+        &result \
+        ))}; \
+    check(Result == vk::Result::eSuccess) \
+    return vk::raii::T{d, result}; \
+
+    if constexpr (std::same_as<T, vk::CommandPoolCreateInfo>)
+    {
+        DETAIL_RHI_VK_BUILD_IMPL(CommandPool)
+    }
+    else if constexpr (std::same_as<T, vk::DescriptorPoolCreateInfo>)
+    {
+        DETAIL_RHI_VK_BUILD_IMPL(DescriptorPool)
+    }
+    else if constexpr (std::same_as<T, vk::DescriptorSetLayoutCreateInfo>)
+    {
+        DETAIL_RHI_VK_BUILD_IMPL(DescriptorSetLayout)
+    }
+    else if constexpr (std::same_as<T, vk::SamplerCreateInfo>)
+    {
+        DETAIL_RHI_VK_BUILD_IMPL(Sampler)
+    }
+    else if constexpr (std::same_as<T, vk::ImageViewCreateInfo>)
+    {
+        DETAIL_RHI_VK_BUILD_IMPL(ImageView)
+    }
+    else
+    {
+        static_assert(algo::always_false_v<T>);
+    }
+#undef DETAIL_RHI_VK_BUILD_IMPL
+}
+
+template<typename T>
+inline auto vk_allocate(vk::raii::Device const& d, T const& info) noexcept
+{
+#define DETAIL_RHI_VK_ALLOCATE_IMPL(T, Count, Pool, pool) \
+    check(d.getDispatcher()->vkAllocate##T##s); \
+    std::vector<vk::T> resources{info.Count}; \
+    vk::Result result{static_cast<vk::Result>(d.getDispatcher()->vkAllocate##T##s( \
+        static_cast<VkDevice>(*d), \
+        reinterpret_cast<Vk##T##AllocateInfo const*>(&info), \
+        reinterpret_cast<Vk##T*>(resources.data()) \
+        ))}; \
+    \
+    check(result == vk::Result::eSuccess) \
+    \
+    std::vector<vk::raii::T> raii_resources; \
+    if (result != vk::Result::eSuccess) \
+    { \
+        LOG_FATAL(LogRhi, "Failed to resources: [{}].", vk::to_string(result)) \
+    } \
+    raii_resources.reserve(resources.size()); \
+    for (auto& resource: resources) \
+    { \
+        raii_resources.emplace_back(d, *reinterpret_cast<Vk##T*>(&resource), static_cast<Vk##Pool>(info.pool)); \
+    } \
+    return raii_resources;
+
+    if constexpr (std::same_as<T, vk::DescriptorSetAllocateInfo>)
+    {
+        DETAIL_RHI_VK_ALLOCATE_IMPL(DescriptorSet, descriptorSetCount, DescriptorPool, descriptorPool)
+    }
+    else if constexpr (std::same_as<T, vk::CommandBufferAllocateInfo>)
+    {
+        DETAIL_RHI_VK_ALLOCATE_IMPL(CommandBuffer, commandBufferCount, CommandPool, commandPool)
+    }
+    else
+    {
+        static_assert(algo::always_false_v<T>);
+    }
+}
+
+} /* ~Namespace rhi */
 
 namespace vk
 {

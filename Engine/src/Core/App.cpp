@@ -147,6 +147,8 @@ LString const& CompilerVersion() noexcept
 {
 #if JAFG_WITH_CLANG
     static LString Version{__VERSION__};
+#elif JAFG_WITH_GCC
+    static LString Version{__VERSION__};
 #elif JAFG_WITH_MSVC
     static LString Version{std::to_string(_MSC_FULL_VER)};
 #else /* JAFG_WITH_MSVC */

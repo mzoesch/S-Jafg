@@ -104,13 +104,13 @@ private:
     {
         if (this->Behavior.bAlwaysShowVScrollbar) { return true; }
         if (this->Behavior.bAlwaysHideHScrollbar) { return false; }
-        return maths::eq_e(InVisibleY, 1.0) == false;
+        return maths::eq_e(InVisibleY, 1.0f) == false;
     }
     inline constexpr bool ShouldDrawHScrollbar(f32 InVisibleX) const noexcept
     {
         if (this->Behavior.bAlwaysShowHScrollbar) { return true; }
         if (this->Behavior.bAlwaysHideVScrollbar) { return false; }
-        return maths::eq_e(InVisibleX, 1.0) == false;
+        return maths::eq_e(InVisibleX, 1.0f) == false;
     }
 
     LVec2F GetVInteractiveAreaScrollSize() const;

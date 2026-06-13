@@ -66,7 +66,7 @@ void Jafg::JTextureSubsystem::RefetchTextureViews()
     {
         if constexpr (IS_COMPILED_LOG(LogTextureSubsystem, Trace))
         {
-            LTextureView TextureView = Assets.PullAsset<LTextureView>(Path);
+            LTextureView TextureView = Assets.PullAssetTextureView(Path);
             LOG_TRACE(LogTextureSubsystem,
                 "[{}@{}]: Format: [{}], MipLevels [{}], MSAA [{}]."
                 , TextureView.Name, TextureView.Path, vk::to_string(TextureView.Format)
@@ -77,7 +77,7 @@ void Jafg::JTextureSubsystem::RefetchTextureViews()
         }
         else
         {
-            this->TextureViews.emplace_back(Assets.PullAsset<LTextureView>(Path));
+            this->TextureViews.emplace_back(Assets.PullAssetTextureView(Path));
         }
     }
 

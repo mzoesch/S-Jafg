@@ -63,8 +63,7 @@ void Jafg::JAssetDiscoverer::PushAsset(LPath const& Path, LTextureView const& Vi
     return;
 }
 
-template<>
-Jafg::LTextureView Jafg::JAssetDiscoverer::PullAsset<Jafg::LTextureView>(LPath const& Path) const
+Jafg::LTextureView Jafg::JAssetDiscoverer::PullAssetTextureView(LPath const& Path) const
 {
     auto Canonical{finder::canonical(Path)};
     check(finder::descendant_of(Path))

@@ -499,7 +499,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
             },
         });
 
-    Info.CommandBuffer.end();
+    (void)Info.CommandBuffer.end();
 
     vk::PipelineStageFlags DstStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
     Info.Frontend.Vk_GetGraphicsQueue().submit(vk::SubmitInfo{
@@ -1325,12 +1325,10 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 {
     LOG_VERBOSE(LogVulkan, "Creating command pool for surface.")
 
-    vk::CommandPoolCreateInfo PoolInfo{
+    this->Vk_CommandPool = rhi::vk_build(this->GetFrontend().Vk_GetDevice(), vk::CommandPoolCreateInfo{
         .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
         .queueFamilyIndex = this->GetFrontend().Vk_GetGraphicsQueueFamilyIndex()
-        };
-
-    this->Vk_CommandPool = vk::raii::CommandPool{this->GetFrontend().Vk_GetDevice(), PoolInfo};
+        });
 
     return;
 }
@@ -1369,7 +1367,9 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     for (auto& RenderSemaphore : this->Vk_RenderSemaphores) { RenderSemaphore = nullptr; }
     for (auto& FlightFence : this->Vk_FlightFences) { FlightFence = nullptr; }
 
-    this->Vk_SurfaceCapabilities = Frontend.Vk_GetPhysicalDevice().getSurfaceCapabilitiesKHR(this->Vk_Surface);
+    auto Result{Frontend.Vk_GetPhysicalDevice().getSurfaceCapabilitiesKHR(this->Vk_Surface)};
+    check(Result.has_value())
+    this->Vk_SurfaceCapabilities = std::move(*Result);
     LOG_VERBOSE(LogVulkan, "Surface capabilities: "
                            "minImageCount [{}], maxImageCount [{}], currentExtent [{}x{}], "
                            "minImageExtent [{}x{}], maxImageExtent [{}x{}], maxImageArrayLayers [{}], "
@@ -1390,7 +1390,9 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         vk::to_string(this->Vk_SurfaceCapabilities.supportedUsageFlags)
         )
 
-    this->Vk_AvailableSurfaceFormats = Frontend.Vk_GetPhysicalDevice().getSurfaceFormatsKHR(this->Vk_Surface);
+    auto Result2{Frontend.Vk_GetPhysicalDevice().getSurfaceFormatsKHR(this->Vk_Surface)};
+    check(Result2.has_value())
+    this->Vk_AvailableSurfaceFormats = std::move(*Result2);
     LOG_VERBOSE(LogVulkan, "Available surface formats:")
     if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose)) for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
     {
@@ -1400,7 +1402,8 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
             )
     }
 
-    this->Vk_AvailablePresentModes = Frontend.Vk_GetPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface);
+    auto Result3{Frontend.Vk_GetPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface)};
+    this->Vk_AvailablePresentModes = std::move(*Result3);
     LOG_VERBOSE(LogVulkan, "Available present modes:")
     if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose)) for (auto const& PresentMode: this->Vk_AvailablePresentModes)
     {
@@ -1520,9 +1523,13 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         SwapChainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
     }
 
-    this->Vk_VkMySwapchain = vk::raii::SwapchainKHR{Frontend.Vk_GetDevice(), SwapChainCreateInfo};
+    auto SwapchainResult{Frontend.Vk_GetDevice().createSwapchainKHR(SwapChainCreateInfo)};
+    check(SwapchainResult.has_value())
+    this->Vk_VkMySwapchain = std::move(*SwapchainResult);
     {
-        for (const auto Images{this->Vk_VkMySwapchain.getImages()}; auto Image : Images)
+        auto ImagesResult{this->Vk_VkMySwapchain.getImages()};
+        check(ImagesResult.has_value())
+        for (auto Image: *ImagesResult)
         {
             this->Vk_SwapchainImages.push_back(Image);
         }
@@ -1592,7 +1599,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()
 
     for (auto const& SwapchainImage : this->Vk_SwapchainImages)
     {
-        this->Vk_SwapchainImageViews.emplace_back(vk::raii::ImageView{Frontend.Vk_GetDevice(), {
+        this->Vk_SwapchainImageViews.emplace_back(rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
             .image = SwapchainImage,
             .viewType = vk::ImageViewType::e2D,
             .format = Frontend.Vk_GetSurfaceFormat().format,
@@ -1603,7 +1610,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()
                 .baseArrayLayer = 0,
                 .layerCount = 1
                 }
-            }});
+            }));
     }
 
     LOG_VERBOSE(LogVulkan, "Created [{}] image views from swapchain images.", this->Vk_SwapchainImageViews.size())
@@ -1636,7 +1643,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
 
     this->Vk_ColorImage = Frontend.Vk_CreateDeviceLocalImage(ImageCreateInfo);
     // this->Vk_ColorImage = Frontend.Vk_CreateImage(ImageCreateInfo, AllocationCreateInfo);
-    this->Vk_ColorImageView = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+    this->Vk_ColorImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
         .image = this->Vk_ColorImage.GetBuffer(),
         .viewType = vk::ImageViewType::e2D,
         .format = Frontend.Vk_GetSurfaceFormat().format,
@@ -1647,7 +1654,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
             .baseArrayLayer = 0,
             .layerCount = 1,
             },
-        }};
+        });
 
     return;
 }
@@ -1662,10 +1669,16 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 
     for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlightInternal(); ++Idx)
     {
-        this->Vk_ImageAvailableSemaphores[Idx] = vk::raii::Semaphore{Device, vk::SemaphoreCreateInfo{}};
-        this->Vk_RenderSemaphores[Idx] = vk::raii::Semaphore{Device, vk::SemaphoreCreateInfo{}};
+        auto ImageSemaphoreResult{Device.createSemaphore(vk::SemaphoreCreateInfo{})};
+        check(ImageSemaphoreResult.has_value())
+        this->Vk_ImageAvailableSemaphores[Idx] = std::move(*ImageSemaphoreResult);
+        auto RenderSemaphoreResult{Device.createSemaphore(vk::SemaphoreCreateInfo{})};
+        check(RenderSemaphoreResult.has_value())
+        this->Vk_RenderSemaphores[Idx] = std::move(*RenderSemaphoreResult);
 
-        this->Vk_FlightFences[Idx] = vk::raii::Fence{Device, vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled }};
+        auto FenceResult{Device.createFence(vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled })};
+        check(FenceResult.has_value())
+        this->Vk_FlightFences[Idx] = std::move(*FenceResult);
 
         continue;
     }
@@ -1680,13 +1693,11 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
 {
     LOG_VERBOSE(LogVulkan, "Creating [{}] Vulkan command buffers for surface [{}].", this->Vk_GetNumberOfFramesInFlightInternal(), this->GetHumanReadableName())
 
-    vk::CommandBufferAllocateInfo Info{
+    auto CommandBuffers{rhi::vk_allocate(this->GetFrontend().Vk_GetDevice(), vk::CommandBufferAllocateInfo{
         .commandPool = this->Vk_CommandPool,
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = static_cast<uint32_t>(this->Vk_GetNumberOfFramesInFlightInternal())
-        };
-
-    auto CommandBuffers{vk::raii::CommandBuffers(this->GetFrontend().Vk_GetDevice(), Info)};
+        })};
     check(this->Vk_CommandBuffers.size() == CommandBuffers.size())
     for (auto Idx{0uz}; Idx < CommandBuffers.size(); ++Idx)
     {
@@ -1713,14 +1724,12 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
 
     for (auto Idx{0uz}; Idx < this->Vk_GetNumberOfFramesInFlightInternal(); ++Idx)
     {
-        vk::DescriptorPoolCreateInfo PoolInfo{
+        this->Vk_DescriptorPools[Idx] = rhi::vk_build(this->GetFrontend().Vk_GetDevice(), vk::DescriptorPoolCreateInfo{
             .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
             .maxSets = 2,
             .poolSizeCount = static_cast<u32>(Sizes.size()),
             .pPoolSizes = Sizes.data(),
-            };
-
-        this->Vk_DescriptorPools[Idx] = vk::raii::DescriptorPool{this->GetFrontend().Vk_GetDevice(), PoolInfo};
+            });
 
         continue;
     }

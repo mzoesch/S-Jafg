@@ -124,7 +124,8 @@ struct TTagRegistry
             return "<NotSet>";
         }
 
-        if (InTag.GetUnderlyingValue() - 1 < this->Tags.size())
+        /* #IsSet checks for zero. Therefore, the result is always at least zero. And this cast is safe. */
+        if (static_cast<typename TagType::SizeType>(InTag.GetUnderlyingValue() - 1) < this->Tags.size())
         {
             return this->GetReprFast(InTag);
         }

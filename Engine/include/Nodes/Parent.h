@@ -48,7 +48,7 @@ public:
 
     virtual LNodeReply OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
-    NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const override
+    NODISCARD FORCEINLINE virtual bool IsFocusWidgetTransitive() const noexcept override
     {
         if (Super::IsFocusWidgetTransitive()) { return true; }
         return algo::any_of(this->Children, [](auto& Child){ return Child->IsFocusWidgetTransitive(); });

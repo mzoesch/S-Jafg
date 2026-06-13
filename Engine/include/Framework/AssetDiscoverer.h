@@ -33,8 +33,7 @@ public:
 
     void PushAsset(LPath const& Path, LTextureView const& View);
 
-    template<typename T> T PullAsset(LPath const& Path) const;
-    template<> LTextureView PullAsset<LTextureView>(LPath const& Path) const;
+    LTextureView PullAssetTextureView(LPath const& Path) const;
 
 private:
 

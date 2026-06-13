@@ -36,8 +36,8 @@ template<typename TArchive, typename T> inline constexpr bool serde_for_v{ requi
 
 template<typename TArchive> inline constexpr bool string_archive_v{ std::remove_cvref_t<TArchive>::arch_type == arch_type::string };
 template<typename TArchive> inline constexpr bool bin_archive_v{ std::remove_cvref_t<TArchive>::arch_type == arch_type::binary };
-template<typename TArchive> inline constexpr bool os_archive_v{ std::remove_cvref_t<TArchive>::open_mode & std::ios::out };
-template<typename TArchive> inline constexpr bool is_archive_v{ std::remove_cvref_t<TArchive>::open_mode & std::ios::in };
+template<typename TArchive> inline constexpr bool os_archive_v{ static_cast<bool>(std::remove_cvref_t<TArchive>::open_mode & std::ios::out) };
+template<typename TArchive> inline constexpr bool is_archive_v{ static_cast<bool>(std::remove_cvref_t<TArchive>::open_mode & std::ios::in) };
 template<typename TArchive> inline constexpr bool os_string_archive_v{ string_archive_v<TArchive> && os_archive_v<TArchive> };
 template<typename TArchive> inline constexpr bool is_string_archive_v{ string_archive_v<TArchive> && is_archive_v<TArchive> };
 template<typename TArchive> inline constexpr bool os_bin_archive_v{ bin_archive_v<TArchive> && os_archive_v<TArchive> };
@@ -495,11 +495,11 @@ struct LOStringArchive final
     inline static constexpr auto open_mode{std::ios::out};
     inline static constexpr auto arch_type{arch_type::string};
 
-    constexpr LOStringArchive() noexcept = default;
+    LOStringArchive() noexcept = default;
     LOStringArchive(LCopyPrefs, LOStringArchive const&) noexcept {}
     PROHIBIT_COPY(LOStringArchive)
-    DEFAULT_CONSTEXPR_MOVE(LOStringArchive)
-    constexpr ~LOStringArchive() noexcept = default;
+    DEFAULT_MOVE(LOStringArchive)
+    ~LOStringArchive() noexcept = default;
 
     template<typename T>
     inline decltype(auto) operator<<(this auto&& Self, T const& t) noexcept

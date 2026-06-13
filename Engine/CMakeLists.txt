@@ -136,6 +136,7 @@ if(_guard)
         FetchContent_FastNoise2
         GIT_REPOSITORY      https://github.com/Auburn/FastNoise2.git
         GIT_TAG             v0.10.0-alpha
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/fastnoise2"
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
@@ -149,6 +150,7 @@ if(_guard)
         FetchContent_Freetype
         GIT_REPOSITORY      https://gitlab.freedesktop.org/freetype/freetype.git
         GIT_TAG             VER-2-13-3
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/freetype"
         )
     FetchContent_MakeAvailable(FetchContent_Freetype)
@@ -178,6 +180,7 @@ if(_guard)
         FetchContent_MsdfGen
         GIT_REPOSITORY      https://github.com/Chlumsky/msdfgen.git
         GIT_TAG             v1.13
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdfgen"
         )
     FetchContent_MakeAvailable(FetchContent_MsdfGen)
@@ -195,6 +198,7 @@ if(_guard)
         FetchContent_MsdfAtlasGen
         GIT_REPOSITORY      https://github.com/Chlumsky/msdf-atlas-gen.git
         GIT_TAG             v1.4
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdf-atlas-gen"
         )
     FetchContent_MakeAvailable(FetchContent_MsdfAtlasGen)
@@ -207,6 +211,7 @@ if(_guard)
         FetchContent_Glfw3
         GIT_REPOSITORY      https://github.com/glfw/glfw.git
         GIT_TAG             master
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/glfw3"
         )
     FetchContent_MakeAvailable(FetchContent_Glfw3)
@@ -224,6 +229,7 @@ if(_guard)
         FetchContent_Sqlite3
         GIT_REPOSITORY      https://github.com/mzoesch/S-Jafg-Sqlite3-Amalgamation.git
         GIT_TAG             trunk
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/sqlite3"
         )
     FetchContent_MakeAvailable(FetchContent_Sqlite3)
@@ -236,6 +242,7 @@ if(_guard)
         FetchContent_Vma
         GIT_REPOSITORY      https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
         GIT_TAG             master
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/vma"
         )
     FetchContent_MakeAvailable(FetchContent_Vma)
@@ -248,6 +255,7 @@ if(_guard)
         FetchContent_Glm
         GIT_REPOSITORY      https://github.com/g-truc/glm
         GIT_TAG             master
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/glm"
         )
     FetchContent_MakeAvailable(FetchContent_Glm)
@@ -260,6 +268,7 @@ if(_guard)
         FetchContent_NlohmannJson
         GIT_REPOSITORY      https://github.com/nlohmann/json
         GIT_TAG             master
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nlohmannjson"
         )
     FetchContent_MakeAvailable(FetchContent_NlohmannJson)
@@ -272,6 +281,7 @@ if(_guard)
         FetchContent_Stb
         GIT_REPOSITORY      https://github.com/nothings/stb
         GIT_TAG             master
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/stb"
         )
     FetchContent_MakeAvailable(FetchContent_Stb)
@@ -284,6 +294,7 @@ if(_guard)
         FetchContent_httplib
         GIT_REPOSITORY      https://github.com/yhirose/cpp-httplib
         GIT_TAG             v0.28.0
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/httplib"
         )
     FetchContent_MakeAvailable(FetchContent_httplib)
@@ -296,6 +307,7 @@ if(_guard)
         FetchContent_nativefiledialog_extended
         GIT_REPOSITORY      https://github.com/btzy/nativefiledialog-extended.git
         GIT_TAG             v1.3.0
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nativefiledialog-extended"
         )
     FetchContent_MakeAvailable(FetchContent_nativefiledialog_extended)
@@ -309,6 +321,7 @@ if(_guard)
         FetchContent_tinyobjloader
         GIT_REPOSITORY      https://github.com/tinyobjloader/tinyobjloader
         GIT_TAG             release
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinyobjloader"
         )
     FetchContent_MakeAvailable(FetchContent_tinyobjloader)
@@ -321,6 +334,7 @@ if(_guard)
         FetchContent_tinygltf
         GIT_REPOSITORY      https://github.com/syoyo/tinygltf.git
         GIT_TAG             release
+        GIT_SHALLOW         TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinygltf"
         )
     FetchContent_MakeAvailable(FetchContent_tinygltf)

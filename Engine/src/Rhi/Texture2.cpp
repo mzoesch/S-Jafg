@@ -211,7 +211,7 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
             }
         });
 
-    this->View = vk::raii::ImageView{Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
+    this->View = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
         .image = this->Handle.GetBuffer(),
         .viewType = vk::ImageViewType::e2D,
         .format = this->GetFormat(),
@@ -222,7 +222,7 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
             .baseArrayLayer = 0,
             .layerCount = 1,
             },
-        }};
+        });
 
     return;
 }

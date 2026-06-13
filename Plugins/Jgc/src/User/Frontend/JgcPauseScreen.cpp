@@ -12,9 +12,9 @@ void Jgc::WPauseScreen::Construct()
 {
     Super::Construct();
 
-    auto& Frontend{this->GetFrontend()};
+    // auto& Frontend{this->GetFrontend()};
 
-    auto& TextureSubsystem{*Frontend.GetSubsystemChecked<Jafg::JTextureSubsystem>()};
+    // auto& TextureSubsystem{*Frontend.GetSubsystemChecked<Jafg::JTextureSubsystem>()};
 
     this->Padding = 5_pt;
 

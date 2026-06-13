@@ -132,11 +132,11 @@ ENGINE_API extern LProgramParameter ReST_Port;
 
 } /* ~Namespace Params */
 
-class LReStCli final : public LRunnable
+class ENGINE_API LReStCli final : public LRunnable
 {
 public:
 
-    ENGINE_API LReStCli() noexcept;
+    LReStCli() noexcept;
     PROHIBIT_REALLOC_OF_ANY_FORM(LReStCli)
     ~LReStCli() noexcept override = default;
 
@@ -145,10 +145,10 @@ public:
 
     virtual void Exit() override;
 
-    ENGINE_API LReStCli& Get(std::string&& Pattern, ReST::LCallback&& Callback) noexcept;
-    ENGINE_API LReStCli& Get(std::string&& Pattern, LString&& Help, ReST::LCallback&& Callback) noexcept;
+    LReStCli& Get(std::string&& Pattern, ReST::LCallback&& Callback) noexcept;
+    LReStCli& Get(std::string&& Pattern, LString&& Help, ReST::LCallback&& Callback) noexcept;
 
-    ENGINE_API bool IsServerRunning() const noexcept;
+    bool IsServerRunning() const noexcept;
 
 protected:
 

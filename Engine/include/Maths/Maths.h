@@ -641,17 +641,11 @@ inline constexpr bool eq_zero(TVec<L,T,Q> const& a) noexcept
 }
 
 //# If a and b are equal under consideration of the tolerance value epsilon.
-#if JAFG_WITH_MSVC
-inline constexpr bool eq_e(std::floating_point auto a, decltype(a) b, f64 e = small_number_d) noexcept
-{
-    return maths::abs(a - b) < static_cast<decltype(a)>(e);
-}
-#else /* JAFG_WITH_MSVC */
-inline constexpr bool eq_e(std::floating_point auto a, decltype(a) b, decltype(a) e = static_cast<decltype(e)>(small_number_d)) noexcept
+template<std::floating_point T>
+inline constexpr bool eq_e(T a, T b, T e = static_cast<T>(small_number_d)) noexcept
 {
     return maths::abs(a - b) < e;
 }
-#endif /* !JAFG_WITH_MSVC */
 template<length_t L, typename T, qual_t Q>
 inline constexpr bool eq_e(TVec<L,T,Q> const& a, TVec<L,T,Q> const& b, T e = static_cast<T>(small_number_d)) noexcept
 {
@@ -663,17 +657,11 @@ inline constexpr bool eq_e(TVec<L,T,Q> const& a, TVec<L,T,Q> const& b, T e = sta
 }
 
 //# If a is equal to zero under consideration of the tolerance value epsilon.
-#if JAFG_WITH_MSVC
-inline constexpr bool eq_zero_e(std::floating_point auto a, f64 e = small_number_d) noexcept
-{
-    return maths::abs(a) < static_cast<decltype(a)>(e);
-}
-#else /* JAFG_WITH_MSVC */
-inline constexpr bool eq_zero_e(std::floating_point auto a, decltype(a) e = static_cast<decltype(e)>(small_number_d)) noexcept
+template<std::floating_point T>
+inline constexpr bool eq_zero_e(T a, T e = static_cast<T>(small_number_d)) noexcept
 {
     return maths::abs(a) < e;
 }
-#endif /* !JAFG_WITH_MSVC */
 
 template<length_t L, typename T, qual_t Q>
 inline constexpr bool eq_zero_e(TVec<L,T,Q> const& a, T e = static_cast<T>(small_number_d)) noexcept

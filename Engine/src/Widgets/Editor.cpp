@@ -101,7 +101,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
 
     auto MakeReset([&Info, &Prefs](std::shared_ptr<RowPair> Pointer, LVec3D const& Identity, bool bEnabled)
     {
-        check(Pointer.get() && Pointer->Vector)
+        check(Pointer.get() && !Pointer->Reset)
         return NewNode(Info.Viewport).Class<WButton>().SaveTo(&Pointer->Reset)
             .Anchor(EAnchor::VFill)
             .MinDesiredSize({24_spt, 20})

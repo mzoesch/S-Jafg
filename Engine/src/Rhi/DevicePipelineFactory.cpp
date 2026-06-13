@@ -42,15 +42,14 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         LOG_FATAL(LogRhi, "Failed to find descriptor set layout binding [{}].", Idx)
     }
 
-    vk::raii::PipelineLayout Layout{
-        Frontend.Vk_GetDevice(),
-        vk::PipelineLayoutCreateInfo{
-            .setLayoutCount = static_cast<u32>(DescriptorSetLayouts.size()),
-            .pSetLayouts = DescriptorSetLayouts.data(),
-            .pushConstantRangeCount = static_cast<u32>(this->PushConstantRange.size()),
-            .pPushConstantRanges = this->PushConstantRange.data(),
-            }
-       };
+    auto Result{this->Frontend.Vk_GetDevice().createPipelineLayout({
+        .setLayoutCount = static_cast<u32>(DescriptorSetLayouts.size()),
+        .pSetLayouts = DescriptorSetLayouts.data(),
+        .pushConstantRangeCount = static_cast<u32>(this->PushConstantRange.size()),
+        .pPushConstantRanges = this->PushConstantRange.data(),
+        })};
+    check(Result.has_value())
+    vk::raii::PipelineLayout Layout{std::move(Result.value)};
 
     check(this->ColorAttachmentFormat != vk::Format::eUndefined)
     check(this->DepthAttachmentFormat != vk::Format::eUndefined)
@@ -84,12 +83,10 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
     }
     algo::orphan(&this->UniqueDescriptorSetLayouts);
 
+    auto PipelineResult{this->Frontend.Vk_GetDevice().createGraphicsPipeline(nullptr, Chain.get<vk::GraphicsPipelineCreateInfo>())};
+    check(PipelineResult.has_value())
     return LGraphicsDevicePipeline{
-        .Pipeline = vk::raii::Pipeline{
-            Frontend.Vk_GetDevice(),
-            nullptr,
-            Chain.get<vk::GraphicsPipelineCreateInfo>()
-            },
+        .Pipeline = std::move(*PipelineResult),
         .Layout = std::move(Layout),
         .DescriptorSetLayouts = std::move(DescriptorSetLayouts),
         ._UniqueDescriptorSetLayout = std::move(Temp),

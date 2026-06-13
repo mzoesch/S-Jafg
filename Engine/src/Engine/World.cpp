@@ -86,7 +86,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     {
         LayoutsToAllocate.push_back(*Frontend.Vk_GetDescriptorSetLayouts().at("WorldData"));
     }
-    auto Sets = Frontend.Vk_GetDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo{
+    auto Sets = rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
         .descriptorPool = Frontend.Vk_GetDescriptorPool(),
         .descriptorSetCount = static_cast<u32>(Frontend.Vk_GetNumberOfFramesInFlight()),
         .pSetLayouts = LayoutsToAllocate.data(),
@@ -430,8 +430,8 @@ bool Jafg::LWorld::LineTraceByChannel(
     STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
     /* TODO: Save (as the tickables) the physics in a separate cached vector. */
     LHitResult Dummy;
-    for (auto& Obj : this->GetEmployees())
-    {
+    // for (auto& Obj : this->GetEmployees())
+    // {
         // if (auto* Actor{ Obj->As<AActor>() }; Actor && Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
         // {
         //     OutHits.push_back(Dummy);
@@ -443,8 +443,8 @@ bool Jafg::LWorld::LineTraceByChannel(
         //     }
         // }
 
-        continue;
-    }
+    //     continue;
+    // }
 
     return OutHits->empty() == false;
 }
@@ -485,9 +485,6 @@ void Jafg::LWorld::OnTearDown()
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
 
     LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
-#if !JAFG_IN_SHIPPING
-    std::size_t ActorCount{};
-#endif /* !JAFG_IN_SHIPPING */
     for (auto Idx{0uz}; Idx < this->GetEmployees().size();)
     {
         TUnique<JCxxClass> const& Obj{this->GetEmployees()[Idx]};
@@ -502,9 +499,6 @@ void Jafg::LWorld::OnTearDown()
         if (Obj->IsA<AActor>())
         {
             Obj->MarkAsGarbage_v2(EJxxRecordTearDownReason::OuterTearDown);
-#if !JAFG_IN_SHIPPING
-            ++ActorCount;
-#endif /* !JAFG_IN_SHIPPING */
             check(Obj.get() == nullptr)
             Idx = 0;
             continue;

@@ -509,10 +509,10 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     this->Vk_CreateVma();
 
     LOG_VERBOSE(LogVulkan, "Creating transient command pool.")
-    this->Vk_TransientCommandPool = vk::raii::CommandPool{this->Vk_Device, {
+    this->Vk_TransientCommandPool = rhi::vk_build(this->Vk_Device, vk::CommandPoolCreateInfo{
         .flags = vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-        .queueFamilyIndex = this->Vk_GraphicsQueueFamilyIndex // TODO: Queue that supports VK_QUEUE_TRANSFER_BIT.
-        }};
+        .queueFamilyIndex = this->Vk_GraphicsQueueFamilyIndex, // TODO: Queue that supports VK_QUEUE_TRANSFER_BIT.
+        });
 
     this->Vk_PreferredDepthFormat = this->Vk_FindSupportedFormat(
         {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
@@ -543,12 +543,13 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
                 .descriptorCount = 2048, /* Completely arbitrary limit. */
                 },
             };
-        this->Vk_DescriptorPool = vk::raii::DescriptorPool{this->Vk_Device, vk::DescriptorPoolCreateInfo{
-                .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, // TODO: Flags??
-                .maxSets = 1024, /* Completely arbitrary limit. */
-                .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
-                .pPoolSizes = Sizes.data(),
-            }};
+
+        this->Vk_DescriptorPool = rhi::vk_build(this->Vk_Device, vk::DescriptorPoolCreateInfo{
+            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, // TODO: Flags??
+            .maxSets = 1024, /* Completely arbitrary limit. */
+            .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
+            .pPoolSizes = Sizes.data(),
+            });
     }
 
     if (this->Vk_DescriptorSetLayouts.contains("WorldData"))
@@ -557,13 +558,10 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     }
     else
     {
-        this->Vk_DescriptorSetLayouts.emplace("WorldData", vk::raii::DescriptorSetLayout{
-            this->Vk_Device,
-            vk::DescriptorSetLayoutCreateInfo{
-                .bindingCount = static_cast<u32>(UBO::WorldData::Bindings().size()),
-                .pBindings = UBO::WorldData::Bindings().data(),
-                },
-            });
+        this->Vk_DescriptorSetLayouts.emplace("WorldData", rhi::vk_build(this->Vk_Device, vk::DescriptorSetLayoutCreateInfo{
+            .bindingCount = static_cast<u32>(UBO::WorldData::Bindings().size()),
+            .pBindings = UBO::WorldData::Bindings().data(),
+            }));
     }
     if (this->Vk_DescriptorSetLayouts.contains("Jafg.VisualShared"))
     {
@@ -571,13 +569,10 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     }
     else
     {
-        this->Vk_DescriptorSetLayouts.emplace("Jafg.VisualShared", vk::raii::DescriptorSetLayout{
-            this->Vk_Device,
-            vk::DescriptorSetLayoutCreateInfo{
-                .bindingCount = static_cast<u32>(UBO::VisualShared::Bindings().size()),
-                .pBindings = UBO::VisualShared::Bindings().data(),
-                },
-            });
+        this->Vk_DescriptorSetLayouts.emplace("Jafg.VisualShared", rhi::vk_build(this->Vk_Device, vk::DescriptorSetLayoutCreateInfo{
+            .bindingCount = static_cast<u32>(UBO::VisualShared::Bindings().size()),
+            .pBindings = UBO::VisualShared::Bindings().data(),
+            }));
     }
     if (this->Vk_DescriptorSetLayouts.contains("Jafg.BindlessTextures"))
     {
@@ -586,15 +581,12 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     else
     {
         auto Bindings{UBO::Bindless::GetBindings(this->Vk_BindlessTextureCapacity)};
-        this->Vk_DescriptorSetLayouts.emplace("Jafg.BindlessTextures", vk::raii::DescriptorSetLayout{
-            this->Vk_Device,
-            vk::DescriptorSetLayoutCreateInfo{
-                .pNext = &UBO::Bindless::FlagsInfo(),
-                .flags = vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
-                .bindingCount = static_cast<u32>(Bindings.size()),
-                .pBindings = Bindings.data(),
-                },
-            });
+        this->Vk_DescriptorSetLayouts.emplace("Jafg.BindlessTextures", rhi::vk_build(this->Vk_Device, vk::DescriptorSetLayoutCreateInfo{
+            .pNext = &UBO::Bindless::FlagsInfo(),
+            .flags = vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
+            .bindingCount = static_cast<u32>(Bindings.size()),
+            .pBindings = Bindings.data(),
+            }));
     }
 
     {
@@ -608,18 +600,19 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
                 .descriptorCount = UBO::Bindless::SamplerCount,
                 },
             };
-        this->Vk_BindlessTextureArrayDescriptorPool = vk::raii::DescriptorPool{this->Vk_Device, vk::DescriptorPoolCreateInfo{
+        this->Vk_BindlessTextureArrayDescriptorPool = rhi::vk_build(this->Vk_Device, vk::DescriptorPoolCreateInfo{
             .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind,
             .maxSets = 1,
             .poolSizeCount = static_cast<uint32_t>(Sizes.size()),
             .pPoolSizes = Sizes.data(),
-            }};
+            });
 
         vk::DescriptorSetVariableDescriptorCountAllocateInfo CountInfo{
             .descriptorSetCount = 1,
             .pDescriptorCounts = &this->Vk_BindlessTextureCapacity,
             };
-        auto Sets{this->Vk_Device.allocateDescriptorSets({
+
+        std::vector<vk::raii::DescriptorSet> Sets{rhi::vk_allocate(this->Vk_Device, vk::DescriptorSetAllocateInfo{
             .pNext = &CountInfo,
             .descriptorPool = this->Vk_BindlessTextureArrayDescriptorPool,
             .descriptorSetCount = 1,
@@ -936,7 +929,7 @@ vk::raii::CommandBuffer Jafg::LFrontendVk::Vk_BeginSingleTimeCommands(vk::Comman
         .commandBufferCount = 1
         };
 
-    vk::raii::CommandBuffer CommandBuffer{ std::move(this->Vk_Device.allocateCommandBuffers(AllocateInfo).front()) };
+    vk::raii::CommandBuffer CommandBuffer{ std::move(rhi::vk_allocate(this->Vk_Device, AllocateInfo).front()) };
 
     vk::CommandBufferBeginInfo BeginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit };
     CommandBuffer.begin(BeginInfo);
@@ -1247,7 +1240,9 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceExtensions()
 {
     LOG_VERBOSE(LogVulkan, "Refetching available instance extensions.")
 
-    this->Vk_AvailableInstanceExtensions = this->Vk_Context.enumerateInstanceExtensionProperties();
+    auto Result{this->Vk_Context.enumerateInstanceExtensionProperties()};
+    check(Result.has_value())
+    this->Vk_AvailableInstanceExtensions = std::move(*Result);
     LOG_VERBOSE(LogVulkan, "Available Vulkan instance extensions:")
     for (auto const& Extension : this->Vk_AvailableInstanceExtensions)
     {
@@ -1298,7 +1293,9 @@ void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceLayers()
 {
     LOG_VERBOSE(LogVulkan, "Refetching available instance layers.")
 
-    this->Vk_AvailableInstanceLayers = this->Vk_Context.enumerateInstanceLayerProperties();
+    auto Result{this->Vk_Context.enumerateInstanceLayerProperties()};
+    check(Result.has_value())
+    this->Vk_AvailableInstanceLayers = std::move(*Result);
     LOG_VERBOSE(LogVulkan, "Available Vulkan instance layers:")
     for (auto const& Layer : this->Vk_AvailableInstanceLayers)
     {
@@ -1369,7 +1366,9 @@ void Jafg::LFrontendVk::Vk_CreateInstance()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan instance.")
 
-    if (auto SupportedVersion{vk::enumerateInstanceVersion()}; SupportedVersion < ::Vk_ApiVersion)
+    auto Result{vk::enumerateInstanceVersion()};
+    check(Result.has_value())
+    if (auto SupportedVersion{*Result}; SupportedVersion < ::Vk_ApiVersion)
     {
         panicMsgf(
             "Vulkan API version [{}.{}.{}] is not supported. Supported version is [{}.{}.{}].",
@@ -1410,15 +1409,15 @@ void Jafg::LFrontendVk::Vk_CreateInstance()
         RequiredInstanceLayers_c_str.emplace_back(Layer.c_str());
     });
 
-    vk::InstanceCreateInfo CreateInfo{
+    auto InstanceResult{this->Vk_Context.createInstance({
         .pApplicationInfo = &ApplicationInfo,
         .enabledLayerCount = static_cast<u32>(RequiredInstanceLayers_c_str.size()),
         .ppEnabledLayerNames = RequiredInstanceLayers_c_str.data(),
         .enabledExtensionCount = static_cast<u32>(RequiredInstanceExtensions_c_str.size()),
         .ppEnabledExtensionNames = RequiredInstanceExtensions_c_str.data(),
-        };
-
-    this->Vk_Instance = vk::raii::Instance{ this->Vk_Context, CreateInfo };
+        })};
+    check(InstanceResult.has_value())
+    this->Vk_Instance = std::move(*InstanceResult);
 
     return;
 }
@@ -1442,14 +1441,14 @@ void Jafg::LFrontendVk::Vk_SetupDebugUtilsMessenger()
         // | vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding
         };
 
-    vk::DebugUtilsMessengerCreateInfoEXT CreateInfo{
+    auto Result{this->Vk_Instance.createDebugUtilsMessengerEXT(vk::DebugUtilsMessengerCreateInfoEXT{
         .messageSeverity = SeverityFlags,
         .messageType = TypeFlags,
         .pfnUserCallback = &::Hermes,
         .pUserData = this
-        };
-
-    this->Vk_DebugUtilsMessenger = this->Vk_Instance.createDebugUtilsMessengerEXT(CreateInfo);
+        })};
+    check(Result.has_value())
+    this->Vk_DebugUtilsMessenger = std::move(*Result);
 
     return;
 }
@@ -1463,7 +1462,9 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
     algo::orphan(&this->Vk_AvailablePhysicalDevices);
 
     TArray<vk::raii::PhysicalDevice> AvailablePhysicalDevices;
-    AvailablePhysicalDevices = this->Vk_Instance.enumeratePhysicalDevices();
+    auto Result{this->Vk_Instance.enumeratePhysicalDevices()};
+    check(Result.has_value())
+    AvailablePhysicalDevices = std::move(*Result);
 
     if (AvailablePhysicalDevices.empty())
     {
@@ -1718,7 +1719,9 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
     }
 
     /* We prefer a combined graphics+present queue (because performance), but also separate ones are ok. */
-    u32 PresentQueueFamilyIndex{this->Vk_PhysicalDevice.getSurfaceSupportKHR(GraphicsQueueFamilyIndex, *QuerySurface.Vk_GetSurface())
+    auto PresentQueueFamilySupport{this->Vk_PhysicalDevice.getSurfaceSupportKHR(GraphicsQueueFamilyIndex, *QuerySurface.Vk_GetSurface())};
+    check(PresentQueueFamilySupport.has_value())
+    u32 PresentQueueFamilyIndex{*PresentQueueFamilySupport
         ? GraphicsQueueFamilyIndex
         : static_cast<u32>(QueueFamilyProperties.size())};
 
@@ -1727,13 +1730,16 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
         /* Now try really hard to find a combined queue. */
         for (auto Idx{0uz}; Idx < QueueFamilyProperties.size(); ++Idx)
         {
-            if (   (QueueFamilyProperties[Idx].queueFlags & vk::QueueFlagBits::eGraphics)
-                && this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>( Idx ), *QuerySurface.Vk_GetSurface())
-            )
+            if ((QueueFamilyProperties[Idx].queueFlags & vk::QueueFlagBits::eGraphics))
             {
-                GraphicsQueueFamilyIndex = static_cast<u32>(Idx);
-                PresentQueueFamilyIndex  = GraphicsQueueFamilyIndex;
-                break;
+                auto Result{this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *QuerySurface.Vk_GetSurface())};
+                check(Result.has_value())
+                if (*Result)
+                {
+                    GraphicsQueueFamilyIndex = static_cast<u32>(Idx);
+                    PresentQueueFamilyIndex  = GraphicsQueueFamilyIndex;
+                    break;
+                }
             }
             continue;
         }
@@ -1743,7 +1749,9 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
         {
             for (auto Idx{0uz}; Idx < QueueFamilyProperties.size(); ++Idx)
             {
-                if (this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *QuerySurface.Vk_GetSurface()))
+                auto Result{this->Vk_PhysicalDevice.getSurfaceSupportKHR(static_cast<u32>(Idx), *QuerySurface.Vk_GetSurface())};
+                check(Result.has_value())
+                if (*Result)
                 {
                     PresentQueueFamilyIndex = static_cast<u32>(Idx);
                     break;
@@ -1849,9 +1857,11 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
         .ppEnabledExtensionNames = this->Vk_RequiredDeviceExtensions.data(),
         };
 
-    this->Vk_Device = vk::raii::Device{ this->Vk_PhysicalDevice, DeviceCreateInfo };
-    this->Vk_GraphicsQueue = vk::raii::Queue{ this->Vk_Device, GraphicsQueueFamilyIndex, 0 };
-    this->Vk_PresentQueue = vk::raii::Queue{ this->Vk_Device, PresentQueueFamilyIndex, 0 };
+    auto DeviceResult{this->Vk_PhysicalDevice.createDevice(DeviceCreateInfo)};
+    check(DeviceResult.has_value())
+    this->Vk_Device = std::move(*DeviceResult);
+    this->Vk_GraphicsQueue = this->Vk_Device.getQueue(GraphicsQueueFamilyIndex, 0);
+    this->Vk_PresentQueue = this->Vk_Device.getQueue(PresentQueueFamilyIndex, 0);
 
     this->Vk_GraphicsQueueFamilyIndex = GraphicsQueueFamilyIndex;
     this->Vk_PresentQueueFamilyIndex = PresentQueueFamilyIndex;
@@ -1917,7 +1927,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
         .maxLod = VK_LOD_CLAMP_NONE,
         .borderColor = vk::BorderColor::eFloatOpaqueWhite,
         };
-    this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::LinearRepeatSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx],
         };
@@ -1925,7 +1935,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eMirroredRepeat;
-    this->Vk_DefaultSamplers[UBO::Bindless::LinearMirroredRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::LinearMirroredRepeatSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::LinearMirroredRepeatSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::LinearMirroredRepeatSamplerIdx],
         };
@@ -1933,7 +1943,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
-    this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToEdgeSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::LinearClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToEdgeSamplerIdx],
         };
@@ -1941,7 +1951,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToBorder;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToBorder;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToBorder;
-    this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToBorderSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToBorderSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::LinearClampToBorderSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToBorderSamplerIdx],
         };
@@ -1961,7 +1971,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
-    this->Vk_DefaultSamplers[UBO::Bindless::NearestRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::NearestRepeatSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::NearestRepeatSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::NearestRepeatSamplerIdx],
         };
@@ -1969,7 +1979,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eMirroredRepeat;
-    this->Vk_DefaultSamplers[UBO::Bindless::NearestMirroredRepeatSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::NearestMirroredRepeatSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::NearestMirroredRepeatSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::NearestMirroredRepeatSamplerIdx],
         };
@@ -1977,7 +1987,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
-    this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToEdgeSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::NearestClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToEdgeSamplerIdx],
         };
@@ -1985,7 +1995,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     CreateInfo.addressModeU = vk::SamplerAddressMode::eClampToBorder;
     CreateInfo.addressModeV = vk::SamplerAddressMode::eClampToBorder;
     CreateInfo.addressModeW = vk::SamplerAddressMode::eClampToBorder;
-    this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToBorderSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToBorderSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     DescriptorImageInfos[UBO::Bindless::NearestClampToBorderSamplerIdx] = vk::DescriptorImageInfo{
         .sampler = this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToBorderSamplerIdx],
         };
@@ -1993,7 +2003,7 @@ void Jafg::LFrontendVk::Vk_UpdateSamplers()
     // CreateInfo.addressModeU = vk::SamplerAddressMode::eMirrorClampToEdge;
     // CreateInfo.addressModeV = vk::SamplerAddressMode::eMirrorClampToEdge;
     // CreateInfo.addressModeW = vk::SamplerAddressMode::eMirrorClampToEdge;
-    // this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx] = vk::raii::Sampler{this->Vk_Device, CreateInfo};
+    // this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx] = rhi::vk_build(this->Vk_Device, CreateInfo);
     // DescriptorImageInfos[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx] = vk::DescriptorImageInfo{
     //     .sampler = this->Vk_DefaultSamplers[UBO::BindlessTextureArray::NearestMirrorClampToEdgeSamplerIdx],
     //     };
@@ -2063,7 +2073,9 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
             , vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
             >();
         auto Families = PhysicalDevice.getQueueFamilyProperties();
-        auto Extensions = PhysicalDevice.enumerateDeviceExtensionProperties();
+        auto Result{PhysicalDevice.enumerateDeviceExtensionProperties()};
+        check(Result.has_value())
+        std::vector<vk::ExtensionProperties>& Extensions{*Result};
 
         if (Properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
         {
@@ -2090,9 +2102,9 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
             return !!(Qfp.queueFlags & vk::QueueFlagBits::eGraphics);
         });
 
-        bSupportsRequiredExtensions = algo::all_of(this->Vk_RequiredDeviceExtensions, [&Extensions](auto const& RequiredPhysicalDeviceExtensions)
+        bSupportsRequiredExtensions = algo::all_of(this->Vk_RequiredDeviceExtensions, [&Extensions](char const* RequiredPhysicalDeviceExtensions)
         {
-            return algo::any_of(Extensions, [RequiredPhysicalDeviceExtensions](auto const& AvailablePhysicalDeviceExtension)
+            return algo::any_of(Extensions, [RequiredPhysicalDeviceExtensions](auto AvailablePhysicalDeviceExtension)
             {
                 return std::strcmp(AvailablePhysicalDeviceExtension.extensionName, RequiredPhysicalDeviceExtensions);
             });

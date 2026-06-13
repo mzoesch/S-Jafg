@@ -90,8 +90,6 @@ function(_jafg_add_module_impl
         "${module_dir}/include/*.pch"
         "${module_dir}/include/*.h"
         "${module_dir}/include/*.hpp"
-        "${module_dir}/include/*.c"
-        "${module_dir}/include/*.cpp"
         "${module_dir}/src/*.afx"
         "${module_dir}/src/*.pch"
         "${module_dir}/src/*.h"
@@ -226,7 +224,7 @@ function(_jafg_add_module_impl
 
     ###############################################################################
     # Compiler flags
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(${module_name} PRIVATE
             -fno-rtti                   # No RTTI.
             # This is the default for clang, so just ignore it for now.
@@ -236,6 +234,7 @@ function(_jafg_add_module_impl
             -fvisibility=hidden         # Hides all symbols by default.
             -fvisibility-inlines-hidden # Fuck those inlines.
             -Wall -Wextra -Wpedantic    # Enable many warnings.
+            -Werror                     # Warnings as errors
             # -Weverything <-- To much for now.
             )
 #        target_link_options(${module_name} PRIVATE
@@ -264,7 +263,7 @@ function(_jafg_add_module_impl
     endif()
 
     if(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG)
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             target_compile_options(${module_name} PRIVATE
                 -g              # Debug symbols.
                 -O0             # Prevent optimizations.
@@ -278,7 +277,7 @@ function(_jafg_add_module_impl
             message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
         endif()
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEVELOPMENT)
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             target_compile_options(${module_name} PRIVATE
                 -g              # Debug symbols.
                 -O2             # Tsundere optimizations.
@@ -292,7 +291,7 @@ function(_jafg_add_module_impl
             message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
         endif()
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_SHIPPING)
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             if(JAFG_DO_DEBUG_SYMBOLS_IN_SHIPPING)
                 target_compile_options(${module_name} PRIVATE
                     -g              # Debug symbols.

@@ -3,6 +3,7 @@
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
 message(STATUS "CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 message(STATUS "JAFG_ENGINE_ROOT: ${JAFG_ENGINE_ROOT}")
+message(STATUS "CMAKE_C_COMPILER_ID: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
 
@@ -14,22 +15,20 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 ###############################################################################
 
 if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
-    string(REGEX MATCH ".*clang\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
-    if(NOT REGREX_MATCHED)
-        message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the Clang toolchain.")
+    message(STATUS "Checking C and C++ compiler for linux platform.")
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        message(FATAL_ERROR "CXX compiler [clang] or [gcc] is required for this platform [${JAFG_TARGET_PLATFORM}]. Current compiler [${CMAKE_CXX_COMPILER_ID}] with c[${CMAKE_C_COMPILER}] and c++[${CMAKE_CXX_COMPILER}].")
     endif()
 elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-    string(REGEX MATCH ".*clang\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
-    if(NOT REGREX_MATCHED)
-        string(REGEX MATCH ".*cl.exe$" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
-        if(NOT REGREX_MATCHED)
-            message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the Clang or MSVC toolchain.")
-        endif()
+    message(STATUS "Checking C and C++ compiler for windows platform.")
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang|MSVC")
+        message(FATAL_ERROR "CXX compiler [clang] or [msvc] is required for this platform [${JAFG_TARGET_PLATFORM}]. Current compiler [${CMAKE_CXX_COMPILER_ID}] with c[${CMAKE_C_COMPILER}] and c++[${CMAKE_CXX_COMPILER}].")
     endif()
 elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM)
+    message(STATUS "Checking C and C++ compiler for wasm platform.")
     string(REGEX MATCH ".*em\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
-    if(NOT REGREX_MATCHED)
-        message(FATAL_ERROR "C and CXX compiler [EM] is required for this platform [${JAFG_TARGET_PLATFORM}].")
+    if(NOT REGEX_MATCHED)
+        message(FATAL_ERROR "CXX compiler [em++] is required for this platform [${JAFG_TARGET_PLATFORM}]. Current compiler [${CMAKE_CXX_COMPILER_ID}] with c[${CMAKE_C_COMPILER}] and c++[${CMAKE_CXX_COMPILER}].")
     endif()
 else()
     message(FATAL_ERROR "Missing implementation here for JAFG_TARGET_PLATFORM [${JAFG_TARGET_PLATFORM}].")
@@ -121,7 +120,7 @@ if(NOT EXISTS "${JAFG_ENGINE_ROOT}/jafg.jafgworkspace")
 endif()
 
 function(DisableAllWarningsForTarget target_name)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(${target_name} PRIVATE
                 -w              # Suppress all warnings
                 )
@@ -146,7 +145,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(JAFG_DO_SANITIZED_BUILD)
     message(STATUS "Enabling sanitizers for the current build.")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         add_compile_definitions(
             JAFG_WITH_SANITIZERS=1
             )
@@ -174,7 +173,7 @@ endif()
 
 if(JAFG_DO_HARDEN_BUILD)
     message(STATUS "Enabling hardening flags for the current build.")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         add_link_options(
             -Wl,-z,relro,-z,now,-z,noexecstack  # relro:       Enable RELRO (Read-Only Relocations) and NX (No eXecute) stack.
                                                 # now:         Make the RELRO section read-only immediately after loading.

@@ -35,11 +35,11 @@ void Jafg::LViewport::Vk_OnLateInit()
     {
         LayoutsToAllocate.push_back(*Frontend.Vk_GetDescriptorSetLayouts().at("Jafg.VisualShared"));
     }
-    auto Sets = Frontend.Vk_GetDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo{
+    auto Sets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
         .descriptorPool = Frontend.Vk_GetDescriptorPool(),
         .descriptorSetCount = static_cast<u32>(Frontend.Vk_GetNumberOfFramesInFlight()),
         .pSetLayouts = LayoutsToAllocate.data(),
-        });
+        })};
     for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
     {
         this->Vk_VisualSharedDescriptorSets[Idx] = std::move(Sets[Idx]);
