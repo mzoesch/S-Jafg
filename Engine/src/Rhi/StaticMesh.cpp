@@ -4,6 +4,9 @@
 #include "Engine/Engine.h"
 #include "Rhi/VertexInput.h"
 #include "Rhi/RenderInfo.h"
+#include "Widgets/Editor.h"
+#include "Widgets/EditorFactory.h"
+#include "User/UserPreferences.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -15,6 +18,8 @@
     #include <tiny_obj_loader.h>
     #define TINYGLTF_IMPLEMENTATION
     #include <tiny_gltf.h>
+
+#include "Framework/MeshSubsystem.h"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
@@ -236,6 +241,97 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHi
 }
 
 } /* ~Namespace <Anonymous> */
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    auto SharedState(std::make_shared<LEditorRowState>());
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+    [
+        EditorComponentLabel(Info.Viewport, "Mesh", SharedState)
+        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WHParent>()
+                .Anchor(EAnchor::Fill)
+            [
+                NewNode(Info.Viewport).Class<WEditableTextButton>()
+                    .Anchor(EAnchor::HFill)
+                    .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
+                    .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+                    .Content(Info.Field ? Info.Field->GetPath().string() : "<not-set>")
+                + NewNode(Info.Viewport).Class<WTextButtonIconizedDouble>()
+                    .Style(Prefs.EditorSecondaryButton<LBoxBrush>())
+                    .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+                    .Content("Browse")
+                    .LeftIcon("Icons/Jafg.DirectorySearch")
+                    .OnKeyEventFocused([FieldPtr=&Info.Field](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) && Self.AabbTest(Info))
+                        {
+                            check(FieldPtr)
+                            auto& Field{*FieldPtr};
+                            check(Field.get())
+
+                            LPath DefaultPath;
+                            if (!Field->GetPath().empty() && Field->GetPath().has_parent_path())
+                            {
+                                DefaultPath = Field->GetPath().parent_path();
+                            }
+                            else
+                            {
+                                DefaultPath = Finder::GetContentDir();
+                            }
+
+                            if (auto AbsolutePath{Info.Viewport.GetSurface().OpenBlockingDialogForFile({
+                                .Filters = {FileDialogFilterPresets::Models}
+                                }, DefaultPath)}; !AbsolutePath)
+                            {
+                                LOG_INFO(LogEditor, "Directory selection cancelled. No path provided. Discarding request.")
+                            }
+                            else
+                            {
+                                LOG_VERBOSE(LogEditor, "Selected path: [{}].", *AbsolutePath)
+                                if (!finder::descendant_of(*AbsolutePath, Finder::GetContentDir()))
+                                {
+                                    LOG_FATAL(LogEditor, "[{}]: Path has to be a descendant of [{}].",
+                                        *AbsolutePath, absolute(Finder::GetContentDir()))
+                                }
+                                auto Path{finder::relative(*AbsolutePath, Finder::GetCwd())};
+                                EStaticMeshState NewState{EStaticMeshStateBits::None};
+                                if (Field->IsOnHost())
+                                {
+                                    NewState |= EStaticMeshStateBits::Host;
+                                }
+                                if (Field->IsOnDevice())
+                                {
+                                    NewState |= EStaticMeshStateBits::Device;
+                                }
+
+                                Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->FromFile(Path, NewState);
+                            }
+
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+            ]
+        ]
+        + EditorResetButton(Info.Viewport, true, [Field=Info.Field](WButton& Self)
+        {
+            check(!!Field)
+            check(GEngine)
+            Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_EditorWaitIdle();
+            Field->FreeFromHost();
+            Field->FreeFromDevice();
+            return;
+        }, LEditorRowState::Lambda<WButton>(SharedState))
+    ];
+}
 
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
 {

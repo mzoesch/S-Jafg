@@ -155,6 +155,14 @@ using Lu8StringView = std::u8string_view;
 using Lu16StringView = std::u16string_view;
 using Lu32StringView = std::u32string_view;
 
+#if JAFG_PLATFORM_USES_UTF8
+    using LNativeString = LString;
+#elif JAFG_PLATFORM_USES_UTF16
+    using LNativeString = LWString;
+#else /* JAFG_PLATFORM_USES_UTF16 */
+    #error "Missing encoing for native strings."
+#endif /* !JAFG_PLATFORM_USES_UTF16 */
+
 using LPath = std::filesystem::path;
 
 template<>

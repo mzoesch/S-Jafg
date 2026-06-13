@@ -6,6 +6,7 @@
 #if JAFG_PLATFORM_DESKTOP
     #include "Framework/FrontendNativeDesktop.h"
 #endif /* JAFG_PLATFORM_DESKTOP */
+#include "Rhi/RendererCore.h"
 #include "Rhi/ImmutableBuffer.h"
 #include "Rhi/Bindless.h"
 
@@ -81,6 +82,11 @@ public:
         return algo::sprintf("SC: {}", Key.Scancode);
     }
 
+    ENGINE_API void _RefreshUsablePhysicalViewports();
+
+    NODISCARD FORCEINLINE rhi::framework Vk_GetFramework() const noexcept { return this->Vk_Framework; }
+    NODISCARD ENGINE_API std::optional<rhi::present_mode> Vk_GetFirstSurfacePresentMode() const noexcept;
+
     FORCEINLINE auto const& Vk_GetContext() const noexcept { return this->Vk_Context; }
 
     FORCEINLINE auto const& Vk_GetAvailableInstanceExtensions() const noexcept { return this->Vk_AvailableInstanceExtensions; }
@@ -97,9 +103,9 @@ public:
     FORCEINLINE auto const& Vk_GetDebugUtilsMessenger() const noexcept { return this->Vk_DebugUtilsMessenger; }
 #endif /* !JAFG_IN_SHIPPING */
 
-    FORCEINLINE auto const& Vk_GetAvailablePhysicalDevices() const noexcept { return this->Vk_AvailablePhysicalDevices; }
-    FORCEINLINE auto const& Vk_GetPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
-    FORCEINLINE auto const& Vk_GetPhysicalDeviceMemoryProperties() const noexcept { return this->Vk_PhysicalDeviceMemoryProperties; }
+    NODISCARD FORCEINLINE auto const& Vk_GetAvailablePhysicalDevices() const noexcept { return this->Vk_AvailablePhysicalDevices; }
+    NODISCARD FORCEINLINE auto const& Vk_GetPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
+    NODISCARD FORCEINLINE auto const& Vk_GetPhysicalDeviceMemoryProperties() const noexcept { return this->Vk_PhysicalDeviceMemoryProperties; }
 
     FORCEINLINE vk::SampleCountFlagBits Vk_GetMaxMsaaSampleCount() const noexcept { return this->Vk_MaxMsaaSampleCount; }
     FORCEINLINE vk::SampleCountFlags Vk_GetMsaaSampleLimits() const noexcept { return this->Vk_MsaaSampleLimits; }
@@ -197,6 +203,10 @@ public:
 
     //# Public private function!!! NEVER use. For internal stuff only!!!!!!!!
     ENGINE_API void _Vk_WaitIdle();
+#if JAFG_WITH_EDITOR
+    //# You may use this in the editor only. This event is traced.
+    ENGINE_API void Vk_EditorWaitIdle();
+#endif /* JAFG_WITH_EDITOR */
 
 private:
 
@@ -223,6 +233,8 @@ private:
 
     //# @note All mip levels (including zero) will be in the optimal shader read only layout after this method completes.
     void Vk_Generate2DMipMaps(vk::Image Image, vk::Format Format, vk::Extent2D Extent, u32 MipLevels) const;
+
+    rhi::framework Vk_Framework{ rhi::framework::Identity };
 
     vk::raii::Context Vk_Context;
 

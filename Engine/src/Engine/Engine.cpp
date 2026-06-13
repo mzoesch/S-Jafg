@@ -456,14 +456,15 @@ void Jafg::LEngine::DefaultTimeAdvance()
 #if JAFG_DO_CHECKS
         static bool bNotified{};
 #endif /* JAFG_DO_CHECKS */
-        if (rhi::is_present_mode_blocking(*Prefs.DesiredPresentMode))
+        if (auto PresentMode{this->GetLocalEgo().GetFrontend().Vk_GetFirstSurfacePresentMode()};
+            PresentMode && !rhi::does_present_mode_allow_uncapped_tps(*PresentMode))
         {
 #if JAFG_DO_CHECKS
             if (!bNotified)
             {
                 bNotified = true;
-                LOG_WARNING(LogEngine, "The desired present mode [{}] is a blocking mode. MaxTps of [{}] is ignored."
-                    , rhi::to_string(*Prefs.DesiredPresentMode), *Prefs.MaxTps)
+                LOG_WARNING(LogEngine, "The current present mode [{}] is a blocking mode. MaxTps of [{}] is ignored."
+                    , serde::to_string(*PresentMode), *Prefs.MaxTps)
             }
 #endif /* JAFG_DO_CHECKS */
         }

@@ -799,16 +799,23 @@ public:
     //# Use this method to pass arbitrary typesafe data to the widget.
     virtual algo::reply AddData(JNodeData& Data) { return {}; }
 
-    FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Data, LVec2F const& Location) const noexcept
+    //# Aabb test this node.
+    NODISCARD FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Info, LVec2F const& Location) const noexcept
     {
         return this->TransformsWidgetLayout() && maths::aabb_point({
-            .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Data.Translation),
+            .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
             .Extent = this->GetAnchoredSize_v2()
             }, Location);
     }
-    FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Data, std::optional<LVec2F> const& Location) const noexcept
+    //# Convenience overload for #AabbTest to reduce boilerplate.
+    NODISCARD FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location) const noexcept
     {
-        return Location && this->AabbTest(Data, *Location);
+        return Location && this->AabbTest(Info, *Location);
+    }
+    //# Convenience overload for #AabbTest to reduce boilerplate.
+    NODISCARD FORCEINLINE constexpr bool AabbTest(LNodeKeyEventInfo const& Info) const noexcept
+    {
+        return Info.CursorLocation && this->AabbTest({.Translation = Info.Translation}, *Info.CursorLocation);
     }
 
     //# Sweep this node and all its children from bottom to top for focus.

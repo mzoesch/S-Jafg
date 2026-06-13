@@ -9,6 +9,8 @@
 namespace Jafg
 {
 
+struct LMaterialInstance;
+
 struct LActorRenderInfo : public LRenderInfo
 {
     //# The perspective eye.
@@ -21,6 +23,8 @@ struct LActorRenderInfo : public LRenderInfo
     //# buffer submission.
     //#
     vk::PolygonMode DefaultPerspectivePolygonMode;
+
+    LMaterialInstance* PreferredMaterial;
 
     // TODO:
     //  Remove world data from this render ino.

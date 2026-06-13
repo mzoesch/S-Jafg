@@ -1,0 +1,6 @@
+{
+    "Shader": "Jafg.Mesh.OutlinePost",
+    "Properties": {
+        "sampler": "Jafg.LinearRepeatSampler"
+    }
+}

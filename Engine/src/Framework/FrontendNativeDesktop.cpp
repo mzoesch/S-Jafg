@@ -6,7 +6,7 @@
 
 #if JAFG_PLATFORM_LINUX
     #include <cstdlib>
-#endif
+#endif /* JAFG_PLATFORM_LINUX */
 
 #include "Framework/Frontend.h"
 

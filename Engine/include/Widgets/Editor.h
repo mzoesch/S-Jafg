@@ -6,6 +6,7 @@
 #include "Nodes/GenericTabInfos.h"
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
+#include "Engine/Engine.h"
 #include "Editor.generated.h"
 
 namespace Jafg
@@ -13,6 +14,8 @@ namespace Jafg
 
 class WTabOverlay;
 class WEditor;
+class WButton;
+class WTextButton;
 class WEditorCategorySeparator;
 struct LFactoryEditorCategorySeparator;
 struct LEditorLayout;

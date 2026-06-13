@@ -24,6 +24,9 @@
 #include "Nodes/VParent.h"
 #include "Core/App.h"
 #include "Widgets/Editor.h"
+#include "Framework/MaterialSubsystem.h"
+#include "Framework/ShaderSubsystem.h"
+#include "Rhi/OutlineRendering.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -64,6 +67,14 @@ void Jafg::WWorldViewer::Construct()
                 return LNodeReply::Unhandled();
             })
     ];
+
+    auto& MaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
+
+
+    this->SelectionMaterialInstance = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Mesh.Outline");
+    check(this->SelectionMaterialInstance.get())
+    this->PostSelectionMaterialInstance = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Mesh.OutlinePost");
+    check(this->PostSelectionMaterialInstance.get())
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
     if (*Prefs.EditorAutoLaunchLastWorld && !Prefs.EditorLastWorldName->empty() && !Prefs.EditorLastWorldLevelName->empty())
@@ -384,20 +395,36 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         .ResolveMode = vk::ResolveModeFlagBits::eAverage,
         .ClearColor = LinearColors::DeepSkyBlue,
         .bDepthTest = *GetSingleton<JUserPreferences>().EditorPerspectiveDepthTestHint,
+        .bAllowSelection = true,
         });
 
     if (!this->OnPreDrawHandle)
     {
         this->OnPreDrawHandle = LRaiiPreDrawHandle::Make(this->GetViewport().GetSurface().OnPreRender,
-        [this](LRenderInfo const& Info)
-        {
-            if (this->GetMostOuterParent().IsNodeInVisiblePath(*this))
-            {
-                this->RenderTarget.Render(Info, std::bind(&WWorldViewer::PreDraw, this, std::placeholders::_1));
-            }
-            return false;
-        });
+            std::bind(&WWorldViewer::OnPreDraw, this, std::placeholders::_1));
     }
+
+    auto& MaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
+    auto& Frontend{this->GetFrontend()};
+    auto Binding = MaterialSubsystem.GetBinding(*this->PostSelectionMaterialInstance, "StencilTexture");
+    vk::DescriptorImageInfo Info{
+        .imageView = this->GetWorldRenderTarget().GetSelectedImageView(),
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+    check(Info.sampler == nullptr)
+    auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.Layout, [](auto const& E){ return E.first; })};
+    check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
+    std::array Writes{
+        vk::WriteDescriptorSet{
+            .dstSet = *It->second,
+            .dstBinding = Binding.Set,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampledImage,
+            .pImageInfo = &Info,
+            },
+        };
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 
     return;
 }
@@ -406,9 +433,30 @@ bool Jafg::WWorldViewer::OnPreDraw(LRenderInfo const& Info)
 {
     if (this->GetMostOuterParent().IsNodeInVisiblePath(*this))
     {
+        // TODO: Move this to after the main draw?
+        //       Currently we cannot depth test against the main draw. But if we do we may have the option
+        //       To discard fragments if they failed to depth test against the main draw. Currently everything is just 1.0 in the depth
+        //       Then we can also remove the depth image from this auxiliary render target.
+        if (!this->SelectedActors.empty())
+        {
+            this->RenderTarget.RenderSelected(Info, std::bind(&WWorldViewer::PreDrawSelected, this, std::placeholders::_1));
+        }
+
         this->RenderTarget.Render(Info, std::bind(&WWorldViewer::PreDraw, this, std::placeholders::_1));
     }
     return {};
+}
+
+void Jafg::WWorldViewer::PreDrawSelected(LRenderInfo const& Info)
+{
+    check(!this->SelectedActors.empty())
+
+    auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+    auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
+
+    Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, this->SelectedActors);
+
+    return;
 }
 
 void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
@@ -418,7 +466,48 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
         if (auto& Ctrl{*this->GetOwnedPersonaControllerChecked()}; Ctrl.IsOwnedPawnValid())
         {
             auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
-            Pawn.GetWorld().Draw(Info, Pawn.GetEye());
+            Pawn.GetWorld().Draw(Info, Pawn.GetEye(), nullptr, {});
+
+            if (!this->SelectedActors.empty())
+            {
+                check(this->PostSelectionMaterialInstance->FrequentDescriptorSets[Info.Frame].empty())
+                check(this->PostSelectionMaterialInstance->InfrequentDescriptorSets.size() == 1)
+
+                auto& ShaderSubsystem{*this->GetFrontend().GetSubsystemChecked<JShaderSubsystem>()};
+
+                auto& FetchedMaterial{this->PostSelectionMaterialInstance->Material->FetchedMaterial};
+                auto& Pipeline{this->PostSelectionMaterialInstance->Material->Pipeline};
+                algo::for_each(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, [&](auto& Set)
+                {
+                    auto const& [Idx, DescriptorSet] = Set;
+                    Info.CommandBuffer.bindDescriptorSets2({
+                        .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                        .layout = Pipeline.Layout,
+                        .firstSet = 0,
+                        .descriptorSetCount = 1,
+                        .pDescriptorSets = &*DescriptorSet,
+                        .dynamicOffsetCount = 0,
+                        .pDynamicOffsets = nullptr
+                        });
+                });
+
+                Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->PostSelectionMaterialInstance->Material->Pipeline);
+
+                PC::Outline pc{
+                    .InverseViewportExtent = {1.0f / static_cast<f32>(Info.VkViewport.width), 1.0f / static_cast<f32>(Info.VkViewport.height)},
+                    .Thickness = 2,
+                    .Tint = Colors::Orange,
+                    };
+                Info.CommandBuffer.pushConstants2({
+                    .layout = *Pipeline.Layout,
+                    .stageFlags = PC::Outline::Flags(),
+                    .offset = 0,
+                    .size = sizeof(PC::Outline),
+                    .pValues = &pc
+                    });
+
+                Info.CommandBuffer.draw(3, 1, 0, 0);
+            }
         }
     }
 

@@ -290,6 +290,19 @@ if(_guard)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_httplib_SOURCE_DIR})
 
     ###############################################################################
+    # nativefiledialog-extended
+    message(STATUS "Fetching nativefiledialog-extended...")
+    FetchContent_Declare(
+        FetchContent_nativefiledialog_extended
+        GIT_REPOSITORY      https://github.com/btzy/nativefiledialog-extended.git
+        GIT_TAG             v1.3.0
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nativefiledialog-extended"
+        )
+    FetchContent_MakeAvailable(FetchContent_nativefiledialog_extended)
+#    target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_nativefiledialog_extended_SOURCE_DIR}/include)
+    target_link_libraries(${_scoped_module_name} PRIVATE nfd)
+
+    ###############################################################################
     # tinyobjloader
     message(STATUS "Fetching tinyobjloader...")
     FetchContent_Declare(

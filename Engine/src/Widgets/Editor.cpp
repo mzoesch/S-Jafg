@@ -20,110 +20,9 @@
 #include "Widgets/Input_Vector3.h"
 #include "Widgets/AssetInspectors.h"
 #include "Nodes/EditableTextButton.h"
+#include "Widgets/EditorFactory.h"
 
 #if JAFG_WITH_EDITOR
-
-namespace
-{
-
-struct LState
-{
-    constexpr LState() noexcept = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LState)
-
-    typedef std::variant<Jafg::TButtonStyle<Jafg::LRegionBrush>*, Jafg::TButtonStyle<Jafg::LBoxBrush>*> StyleVariant;
-    typedef std::variant<Jafg::LRegionBrush*, Jafg::LBoxBrush*> BrushVariant;
-
-    std::size_t FrameCount{};
-    Jafg::EStyleBits Bit{Jafg::EStyleBits::Identity};
-    TArray<std::tuple<StyleVariant, BrushVariant, TFunction2<bool()>>> Pairs;
-
-    template<typename T>
-    static decltype(auto) Lambda(auto&& SharedState) noexcept
-    {
-        return [SharedState](auto&& F)
-        {
-            T& Button{*F.GetRawNode().template AsChecked<T>()};
-            SharedState->EmplaceNodes(Button, SharedState, [&Button]{ return Button.IsEnabled(); });
-        };
-    }
-
-    template<typename T>
-        requires (!std::is_const_v<T> && (std::is_base_of_v<Jafg::WTextButton, T> || std::is_base_of_v<Jafg::WButton, T>))
-    void EmplaceNodes(T& Node, auto&& SharedState, auto&& EnabledFunctor) noexcept
-    {
-        check(GEngine)
-        check(!Node.OnBrushChangedEvent.IsValid())
-
-        this->Pairs.emplace_back(&Node.Style, &Node.Brush, std::forward<decltype(EnabledFunctor)>(EnabledFunctor));
-        Node.OnBrushChangedEvent = [this, SharedState](auto& Self, Jafg::EStyleBits Bit)
-        {
-            (void)SharedState;
-
-            if (this->FrameCount < GEngine->FrameCount || Bit != Jafg::EStyleBits::Normal)
-            {
-                this->FrameCount = GEngine->FrameCount;
-                this->Bit = Bit;
-                for (auto& [StyleVariant, BrushVariant, Enabled]: this->Pairs)
-                {
-                    check(!!Enabled)
-                    std::visit([&Self, &Enabled, Bit](auto&& StylePtr, auto&& BrushPtr)
-                    {
-                        if (static_cast<void*>(&Self.Brush) != static_cast<void*>(BrushPtr) && Enabled())
-                        {
-                            if constexpr ((std::same_as<std::remove_cvref_t<std::decay_t<decltype(StylePtr)>>, Jafg::TButtonStyle<Jafg::LRegionBrush>*>
-                                    && std::same_as<std::remove_cvref_t<std::decay_t<decltype(BrushPtr)>>, Jafg::LRegionBrush*>)
-                                || (std::same_as<std::remove_cvref_t<std::decay_t<decltype(StylePtr)>>, Jafg::TButtonStyle<Jafg::LBoxBrush>*>
-                                    && std::same_as<std::remove_cvref_t<std::decay_t<decltype(BrushPtr)>>, Jafg::LBoxBrush*>))
-                            {
-                                Jafg::ApplyStyleBit(*StylePtr, *BrushPtr, Bit);
-                            }
-                            else
-                            {
-                                std::unreachable();
-                            }
-                        }
-                    }, StyleVariant, BrushVariant);
-                }
-            }
-            else
-            {
-                Jafg::ApplyStyleBit(Self.Style, Self.Brush, Bit);
-            }
-        };
-
-        return;
-    }
-};
-
-Jafg::LFactoryButton EditorResetButton(Jafg::LViewport& Viewport, bool bEnabled, TFunction2<void(Jafg::WButton& Self)> OnAction, auto&& Delegate)
-{
-    using namespace Jafg;
-    auto& Prefs{GetSingleton<JUserPreferences>()};
-
-    return NewNode(Viewport).Class<WButton>()
-        .Anchor(EAnchor::VFill)
-        .MinDesiredSize({24_spt, 20})
-        .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColorVariant)
-        .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColor)
-        .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
-        .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
-        .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.Reset"))
-        .Enabled(bEnabled)
-        .Delegate(Delegate)
-        .OnKeyEventFocused([OnAction=std::move(OnAction)](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event) mutable
-        {
-            if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
-            {
-                check(!!OnAction)
-                OnAction(Self.AsStatic<WButton>());
-                return LNodeReply::Handled();
-            }
-            return LNodeReply::Unhandled();
-        });
-}
-
-} /* ~Namespace <Anonymous> */
 
 template<>
 Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept
@@ -274,7 +173,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    struct MyState : public LState
+    struct MyState : public LEditorRowState
     {
         WEditableTextButton* EditableTextButton{};
         WButton* ResetButton{};
@@ -287,22 +186,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
-        NewNode(Info.Viewport).Class<WTextButton>()
-            .MinDesiredSize({128_spt, 0})
-            .Anchor(EAnchor::VFill)
-            .InBrushChained<EStyleBits::ActiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColorVariant, {20_spt, 0, 0, 0})
-            .InBrushChained<EStyleBits::InactiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColor, {20_spt, 0, 0, 0})
-            .InTextBrushChained<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
-            .InAllTextBrushes<&LTextBoxBrush::TextVAlign>(ETextVAlign::Center)
-            .Content(Info.What)
-            .Delegate(LState::Lambda<WTextButton>(SharedState))
-        + NewNode(Info.Viewport).Class<WButton>()
-            .Anchor(EAnchor::HFill)
-            .Visibility(ENodeVisibility::Visible)
-            .Padding({12_spt, 3})
-            .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColorVariant)
-            .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColor)
-            .Delegate(MyState::Lambda<WButton>(SharedState))
+        EditorComponentLabel(Info.Viewport, Info.What, SharedState)
+        + EditorComponentContentWrapper(Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WEditableTextButton>().SaveTo(&SharedState->EditableTextButton)
                 .Anchor(EAnchor::HFill)
@@ -337,7 +222,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
                     return;
                 })
         ]
-        + ::EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Field=&Info.Field](WButton& Self)
+        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Field=&Info.Field](WButton& Self)
         {
             check(SharedState.get())
             check(SharedState->Default)
@@ -488,6 +373,19 @@ void Jafg::WEditor::Construct()
                     LDropDownNodeSubmenu{
                         .Selector = {.DisplayName="View",},
                         .Children = {
+                            LDropDownNodeSeparator{.DisplayName="APPEARANCE"},
+                            LDropDownNodeOption{
+                                .Selector = {
+                                    .DisplayName = "Toggle Fullscreen",
+                                    .Icon = "Icons/Jafg.Fullscreen",
+                                    },
+                                .OnAction = [this](auto&&...)
+                                {
+                                    this->GetViewport().GetSurface().SetFullscreen(!this->GetViewport().GetSurface().IsFullscreen());
+                                    return algo::reply::unhandled();
+                                }
+                                },
+                            LDropDownNodeSeparator{.DisplayName="WIDGETS"},
                             LDropDownNodeOption{
                                 .Selector = WFinder::TabSelectorCreateInfo(),
                                 .OnAction = [this](auto&&...){ this->AddWindow<WFinder>(true); return algo::reply::unhandled(); },

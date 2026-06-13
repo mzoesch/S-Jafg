@@ -55,19 +55,31 @@ struct LRawInput final
 
     /* Do not merge this two with constexpr exprs as this confuses clangds intellisense... */
     template<ERawInputStateFlags State>
-    bool Is() const noexcept
+    NODISCARD FORCEINLINE bool Is() const noexcept
     {
         return !!(this->State & State);
     }
+    //# Takes any combination of (optional) physical and logical keys.
     template<ERawInputStateFlags State, typename... TKeys> requires(sizeof...(TKeys) > 0
         && (... && (std::same_as<std::remove_cvref_t<TKeys>, LPhysicalKey>
-             || std::same_as<std::remove_cvref_t<TKeys>, std::optional<LPhysicalKey>>)))
-    bool Is(TKeys&&... Keys) const noexcept
+             || std::same_as<std::remove_cvref_t<TKeys>, std::optional<LPhysicalKey>>
+             || std::same_as<std::remove_cvref_t<TKeys>, ELogicalKey>)))
+    NODISCARD FORCEINLINE bool Is(TKeys&&... Keys) const noexcept
     {
-        return !!(this->State & State) && ((this->PhysicalKey == Keys) || ...);
+        return !!(this->State & State) && ((this->PhysicalKey == [](auto&& Key)
+            {
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(Key)>, ELogicalKey>)
+                {
+                    return LPhysicalKey::FromLogical(Key);
+                }
+                else
+                {
+                    return std::forward<decltype(Key)>(Key);
+                }
+            }(std::forward<TKeys>(Keys))) || ...);
     }
 
-    LString ToString() const noexcept
+    NODISCARD LString ToString() const noexcept
     {
         return algo::sprintf("{{{}: {:.2f} M:{} S:{}}}"
             , this->PhysicalKey.ToString(), this->Value, LexToString(this->Mods), LexToString(this->State));

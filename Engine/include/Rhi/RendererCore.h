@@ -19,6 +19,7 @@
 #define VK_NO_PROTOTYPES
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS // https://github.com/KhronosGroup/Vulkan-Hpp/issues/2264, fix: https://github.com/KhronosGroup/Vulkan-Hpp/pull/2312
 #include <vulkan/vulkan_raii.hpp>
 // #include <volk.h>
 
@@ -465,14 +466,75 @@ namespace rhi
 typedef VmaAllocation device_allocation;
 typedef VmaAllocationInfo device_allocation_info;
 
-//# Present modes that jafg supports.
+enum struct framework
+{
+    Identity,
+    x11,
+    Wayland,
+    xWayland,
+    Cocoa,
+    Win32,
+};
+NODISCARD LStringView inline constexpr to_string(framework Framework) noexcept
+{
+    switch (Framework)
+    {
+    case framework::Identity: return "Identity";
+    case framework::x11: return "x11";
+    case framework::Wayland: return "Wayland";
+    case framework::xWayland: return "xWayland";
+    case framework::Cocoa: return "Cocoa";
+    case framework::Win32: return "Win32";
+    }
+    std::unreachable();
+}
+
+//# Present modes that jafg currently supports.
 enum struct present_mode
 {
+    //#
+    //# Just goes full throttle.
+    //# - VSync:                    No
+    //# - Tearing:                  Very visible
+    //# - Latency:                  As low as it gets
+    //# - Limited to Monitor-Hz:    No
+    //#
     Immediate,
+    //#
+    //# Same as Fifo, but instead of blocking if the rendering buffer is full it replaces the latest rendered image.
+    //# - VSync:                    Yes
+    //# - Tearing:                  No
+    //# - Latency:                  Low
+    //# - Limited to Monitor-Hz:    No
+    //#
     Mailbox,
+    //#
+    //# Traditional VSync for low refresh rate monitors this might look sloppy und feel unresponsive.
+    //# - VSync:                    Yes
+    //# - Tearing:                  No
+    //# - Latency:                  High
+    //# - Limited to Monitor-Hz:    Yes
+    //#
     Fifo,
+    //#
+    //# Same as Mailbox, but if the application misses the vertical blanking period, the image is transferred to
+    //# the screen right away for lower latency (but causing tearing), instead of waiting for the next one.
+    //# - VSync:                    Mostly
+    //# - Tearing:                  Sometimes
+    //# - Latency:                  Medium
+    //# - Limited to Monitor-Hz:    Usually
+    //#
     FifoRelaxed,
+    //#
+    //# Same as Mailbox, but might be more efficient on some platforms.
+    //# - VSync:                    Yes
+    //# - Tearing:                  No
+    //# - Latency:                  Low
+    //# - Limited to Monitor-Hz:    Yes
+    //#
+    FifoLatestReady,
 };
+SERDE_STRING_ENUM_NON_INTRUSIVE(present_mode, Immediate, Mailbox, Fifo, FifoRelaxed, FifoLatestReady)
 NODISCARD inline constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mode mode) noexcept
 {
     switch (mode)
@@ -481,21 +543,31 @@ NODISCARD inline constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mod
     case present_mode::Mailbox: return vk::PresentModeKHR::eMailbox;
     case present_mode::Fifo: return vk::PresentModeKHR::eFifo;
     case present_mode::FifoRelaxed: return vk::PresentModeKHR::eFifoRelaxed;
+    case present_mode::FifoLatestReady: return vk::PresentModeKHR::eFifoLatestReady;
     }
     std::unreachable();
 }
-NODISCARD inline constexpr bool is_present_mode_blocking(present_mode mode) noexcept
+NODISCARD inline constexpr std::optional<present_mode> vk_from_khr_present_mode(vk::PresentModeKHR mode) noexcept
 {
-    return mode == present_mode::Fifo || mode == present_mode::FifoRelaxed;
-}
-NODISCARD LStringView inline constexpr to_string(present_mode Mode) noexcept
-{
-    switch (Mode)
+    switch (mode)
     {
-    case present_mode::Immediate: return "Immediate";
-    case present_mode::Mailbox: return "Mailbox";
-    case present_mode::Fifo: return "Fifo";
-    case present_mode::FifoRelaxed: return "FifoRelaxed";
+    case vk::PresentModeKHR::eImmediate: return present_mode::Immediate;
+    case vk::PresentModeKHR::eMailbox: return present_mode::Mailbox;
+    case vk::PresentModeKHR::eFifo: return present_mode::Fifo;
+    case vk::PresentModeKHR::eFifoRelaxed: return present_mode::FifoRelaxed;
+    case vk::PresentModeKHR::eFifoLatestReady: return present_mode::FifoLatestReady;
+    default: return std::nullopt;
+    }
+}
+NODISCARD inline constexpr bool does_present_mode_allow_uncapped_tps(present_mode mode) noexcept
+{
+    switch (mode)
+    {
+    case present_mode::Immediate: return true;
+    case present_mode::Mailbox: return true;
+    case present_mode::Fifo: return false;
+    case present_mode::FifoRelaxed: return false;
+    case present_mode::FifoLatestReady: return true;
     }
     std::unreachable();
 }

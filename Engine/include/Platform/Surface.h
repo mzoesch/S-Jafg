@@ -31,7 +31,7 @@ struct LSurfaceCreateInfo
     // TODO: Desired monitor?
 
     //# Jafg officially supports the minimal dimensions of 640x475px up to the maximum for "normal" use cases.
-    LVec2u32 DesiredDimensionsPx{ 1280, 720 };
+    rhi::extent2 DesiredDimensionsPx{ 1280, 720 };
     LString HumanReadableName{ "Transient" };
 };
 
@@ -41,7 +41,7 @@ class LSurfaceBase : public LEngineGetters
 public:
 
     inline explicit LSurfaceBase(LSurfaceCreateInfo const& Info) noexcept
-        : SurfaceViewport{*this->AsSurface(), this->SurfaceExtent}
+        : FallbackExtent{Info.DesiredDimensionsPx}, SurfaceViewport{*this->AsSurface(), this->SurfaceExtent}
     {
         LOG_VERBOSE(LogSurface, "Creating surface [{}].", Info.HumanReadableName)
         this->HumanReadableName = Info.HumanReadableName;
@@ -159,6 +159,8 @@ protected:
     std::optional<LVec2F> MouseLocation;
 
     rhi::extent2 SurfaceExtent;
+    //# If the surface needs to resize but does not know to what. Then this should be used.
+    std::optional<rhi::extent2> FallbackExtent;
 
 private:
 

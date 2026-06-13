@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/MeshSubsystem.h"
+#include "Containers/Finder2.h"
 
 void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 {
@@ -22,6 +23,8 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 
 Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */) const
 {
+    check(Path.is_relative() && finder::descendant_of(Path, Finder::GetContentDir()))
+
     if (auto const& It{this->Meshes.find(Path)}; It != this->Meshes.end())
     {
         LStaticMesh& Mesh{*It->second};

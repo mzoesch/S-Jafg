@@ -36,6 +36,7 @@ struct LLevel;
 struct LSubsystemCollection;
 struct LRenderInfo;
 struct LNodeRenderInfo;
+struct LMaterialInstance;
 
 enum struct EWorldState : u8
 {
@@ -194,7 +195,7 @@ public:
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(f32 Dt);
 
-    void Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const;
+    void Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const;
 
     ENGINE_API std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
 

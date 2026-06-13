@@ -16,45 +16,6 @@ class LUserInput;
 class LViewport;
 class WUserWidget;
 
-//# Represents an external physical monitor.
-struct LPhysicalViewport
-{
-    void* Identifier{ nullptr };
-
-    // Physical size in millimeters.
-    LVec2i32 SizeMm;
-    // Virtual size in pixels.
-    LVec2i32 WorkareaPx;
-    // Offset of the workarea in pixels.
-    LVec2i32 WorkareaOffsetPx;
-
-    // Scale of content.
-    LVec2F ContentScale;
-
-    //# If multiple monitors of the same name exist, this prefix can help to distinguish them.
-    LString Prefix;
-    //# Name of the monitor.
-    LString Name;
-
-    //# Whether this is the primary monitor.
-    //# ??? Just fucking ignore that. For windows yay; for x11 yay; for wayland hell nah.
-    // bool bPrimary{ false };
-
-    // In this order: RGB.
-    LVec3i32 Bits;
-
-    i32 RefreshRateHz{ 0 };
-
-    FORCEINLINE LString ToHumanReadableName() const
-    {
-        return algo::sprintf("{}{} ({}x{}px)",
-            this->Prefix,
-            this->Name,
-            this->WorkareaPx.x, this->WorkareaPx.y
-            );
-    }
-};
-
 //#
 //# The frontend is owned by the local ego and shares its lifetime.
 //# The frontend is the main hub for all user interface elements. Create frontend subsystems to automatically
@@ -124,7 +85,8 @@ protected:
     //# There may be more physical viewports available on the platform, but these have some restrictions that prevent
     //# their use for us.
     //#
-    //# Some monitors may become unusable over time (for example, if they are disconnected).
+    //# Some monitors may become unusable over time (for example, if they are disconnected). So do not store them
+    //# for a long time. This array is updated when the platform notifies us about (hopefully).
     //#
     TArray<LPhysicalViewport> UsablePhysicalViewports;
 

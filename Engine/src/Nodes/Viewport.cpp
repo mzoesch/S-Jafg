@@ -178,7 +178,7 @@ void Jafg::LViewport::DispatchInputs()
             }
             if (!bHandled)
             {
-                this->Surface.ConsumeKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
+                this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
                 this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton));
                 this->HandleReply({TClassStorage<WNode>{}});
             }

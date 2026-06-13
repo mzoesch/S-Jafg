@@ -13,7 +13,7 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
 
     vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
         // TODO: Max user defined limit. Preferred material limit?
-        .rasterizationSamples = this->Frontend.Vk_GetMaxMsaaSampleCount(),
+        .rasterizationSamples = this->MultisamplingSampleCount ? *this->MultisamplingSampleCount : this->Frontend.Vk_GetMaxMsaaSampleCount(),
         .sampleShadingEnable = this->MultisamplingShadingEnable
         };
 
@@ -52,6 +52,9 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
             }
        };
 
+    check(this->ColorAttachmentFormat != vk::Format::eUndefined)
+    check(this->DepthAttachmentFormat != vk::Format::eUndefined)
+
     vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> Chain{
         {
             .stageCount = static_cast<u32>(this->Shaders.size()),
@@ -69,8 +72,8 @@ Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
         },
         {
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &this->Frontend.Vk_GetSurfaceFormat().format,
-            .depthAttachmentFormat = Frontend.Vk_GetPreferredDepthFormat(),
+            .pColorAttachmentFormats = &this->ColorAttachmentFormat,
+            .depthAttachmentFormat = this->DepthAttachmentFormat,
         }
     };
 

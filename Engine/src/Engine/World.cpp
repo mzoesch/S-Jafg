@@ -169,7 +169,7 @@ void Jafg::LWorld::Tick(f32 Dt)
     return;
 }
 
-void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const
+void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const
 {
     STAT_CYCLE_FUNCTION()
 
@@ -232,6 +232,8 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const
         std::unreachable();
     }
 
+    ActorInfo.PreferredMaterial = Instance;
+
     auto& WorldData{ActorInfo.WorldData};
     // model...
     WorldData.view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up);
@@ -286,37 +288,60 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye) const
 
     ActorInfo.CommandBuffer.setPolygonModeEXT(ActorInfo.DefaultPerspectivePolygonMode);
 
-    for (auto& Obj : this->GetEmployees())
+    if (Filter)
     {
-        if (Obj->IsA<AActor>() == false)
+        check(!Filter->empty())
+        for (auto* Actor: *Filter)
         {
-            continue;
-        }
-
-        AActor const* Actor{StaticCastChecked<AActor>(&*Obj)};
-        check(Actor->_IsGarbage() == false)
-
-        for (auto const& Comp : Actor->GetComponents())
-        {
-            if (Comp->ShouldRender())
+            check(!Actor->_IsGarbage())
+            for (auto const& Comp: Actor->GetComponents())
             {
-                Comp->Render(ActorInfo);
+                if (Comp->ShouldRender())
+                {
+                    Comp->Render(ActorInfo);
+                }
+
+                continue;
             }
 
             continue;
         }
-
-        // if
-        // (
-        //        Actor->IsRendererComponentValid()
-        //     && Actor->GetRendererComponent()->Cull(CornersSpan) == false
-        // )
-        // {
-        //     Actor->GetRendererComponent()->Draw(Viewport, Eye);
-        // }
-
-        continue;
     }
+    else
+    {
+        for (auto& Obj: this->GetEmployees())
+        {
+            if (!Obj->IsA<AActor>())
+            {
+                continue;
+            }
+
+            AActor const* Actor{StaticCastChecked<AActor>(&*Obj)};
+            check(!Actor->_IsGarbage())
+
+            for (auto const& Comp: Actor->GetComponents())
+            {
+                if (Comp->ShouldRender())
+                {
+                    Comp->Render(ActorInfo);
+                }
+
+                continue;
+            }
+
+            // if
+            // (
+            //        Actor->IsRendererComponentValid()
+            //     && Actor->GetRendererComponent()->Cull(CornersSpan) == false
+            // )
+            // {
+            //     Actor->GetRendererComponent()->Draw(Viewport, Eye);
+            // }
+
+            continue;
+        }
+    }
+
 
     return;
 }

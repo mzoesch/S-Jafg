@@ -3,14 +3,6 @@
 #if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
 
 #include "Platform/Surface.h"
-
-#include "Rhi/RendererCore.h"
-#include <GLFW/glfw3.h>
-#if JAFG_PLATFORM_WINDOWS
-    #define GLFW_EXPOSE_NATIVE_WIN32
-    #include <GLFW/glfw3native.h>
-#endif /* JAFG_PLATFORM_WINDOWS */
-
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Engine/Engine.h"
@@ -19,6 +11,36 @@
 #include "Stats/Stats.h"
 #include "Components/SceneComponent.h"
 #include "Nodes/UserWidget.h"
+#include "Rhi/RendererCore.h"
+
+#include <GLFW/glfw3.h>
+#if JAFG_PLATFORM_WINDOWS
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif /* JAFG_PLATFORM_WINDOWS */
+#if JAFG_PLATFORM_LINUX
+    #define GLFW_EXPOSE_NATIVE_X11
+    #define GLFW_EXPOSE_NATIVE_WAYLAND
+#endif /* JAFG_PLATFORM_LINUX */
+// #define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3native.h>
+#if JAFG_PLATFORM_LINUX
+    #ifdef Bool
+        #undef Bool
+    #endif /* Bool */
+    #ifdef Status
+        #undef Status
+    #endif /* Status */
+    #ifdef True
+        #undef True
+    #endif /* True */
+    #ifdef False
+        #undef False
+    #endif /* False */
+#endif /* JAFG_PLATFORM_LINUX */
+
+#include <nfd.h>
+#include <nfd.hpp>
+#include <nfd_glfw3.h>
 
 static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
 
@@ -130,9 +152,11 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 {
     STAT_CYCLE_FUNCTION()
 
+    auto& Frontend{this->GetMutableFrontend()};
+
     check(Tasks::IsOnMasterThread())
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
-    check(Info.bFullscreen == false && "Full screen windows are not yet supported.")
+    check(!(Info.bFullscreen && Info.bBorderless))
 
     if (this->CanEverResize())
     {
@@ -141,20 +165,30 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     }
     else
     {
-        check(this->IsResizable() == false)
-        if (Info.bResizable)
+        check(!this->IsResizable())
+       if (Info.bResizable)
         {
-            LOG_WARNING(LogSurface, "The surface [{}] does not support resizing, ignoring request.", this->GetHumanReadableName())
+            LOG_WARNING(LogSurface, "[{}]: The surface does not support resizing, ignoring request.", this->GetHumanReadableName())
         }
     }
 
     // glfwWindowHint(GLFW_DECORATED, Info.bBorderless ? GLFW_FALSE : GLFW_TRUE);
+    //
+    // So this is all wrong. Borderless is the only option on wayland/xwayland but other frameworks might give
+    // us the power to become truly fullscreen. We have to detect this, else everything is kinda messy.
+    //
     check(Info.bBorderless == false && "Borderless windows are not yet supported.")
 
+    check(this->FallbackExtent)
+
+    //
+    // If Info.bFullscreen, the we could here create a fullscreen window. But this is really broken and inconsistent
+    // across display frameworks, therefore, we create a normal window and then make it fullscreen later.
+    //
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
         this->Handle = glfwCreateWindow(
-            Info.DesiredDimensionsPx.x, Info.DesiredDimensionsPx.y,
+            Info.DesiredDimensionsPx.width, Info.DesiredDimensionsPx.height,
             this->GetHumanReadableName().c_str(),
             nullptr, nullptr
             );
@@ -208,6 +242,11 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     check(CSurface)
     this->Vk_Surface = vk::raii::SurfaceKHR{Instance, CSurface};
 
+    if (Info.bFullscreen)
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]{ this->SetFullscreen(true); });
+    }
+
     return;
 }
 
@@ -251,11 +290,12 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
     check(this->Handle)
     check(Tasks::IsOnMasterThread())
 
+    // TODO: this must not be here. but inside the frontend. This is not unique for every surface!!
     if (glfwWindowShouldClose(this->Handle))
     {
         App::RequestEngineExit("Window closed by user.");
     }
-
+    // TODO: This also!1
     glfwPollEvents();
 
     return;
@@ -283,15 +323,31 @@ void Jafg::LSurfaceGlfw3::OnRender()
     auto [Result, ImageIndex] = this->Vk_VkMySwapchain.acquireNextImage(
         std::numeric_limits<u64>::max(), this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex], nullptr
         );
-    check(ImageIndex < this->Vk_SwapchainImageViews.size())
-
     if (Result == vk::Result::eErrorOutOfDateKHR)
     {
+        //
+        // So, this just sucks when resizing on x11. But said framework is just too old/bad for that and throws
+        // (instead of accepting the status quo and take the performance hit of a suboptimal chain). Why.
+        // It would be too expansive (and unresponsive) to recreate the swapchain for every poll.
+        //
+        if (this->bPendingResize && this->GetFrontend().Vk_GetFramework() == rhi::framework::x11)
+        {
+            this->PendingTimeForResizeApply -= GEngine->DeltaTime;
+            if (this->PendingTimeForResizeApply > 0.0f)
+            {
+                /* Just skip. We do not care. */
+                return;
+            }
+        }
+
         LOG_VERBOSE(LogSurface, "Swapchain is out of date. Recreating swapchain.")
         this->Vk_CurrentFrameInFlightIndex.reset();
         this->Vk_CreateSwapchain();
         return;
     }
+
+    /* Must check #ImageIndex after eErrorOutOfDateKHR because if eErrorOutOfDateKHR, then #ImageIndex is undefined. */
+    check(ImageIndex < this->Vk_SwapchainImageViews.size())
 
     if (this->bPendingResize)
     {
@@ -469,8 +525,9 @@ void Jafg::LSurfaceGlfw3::OnRender()
         break;
     }
     case vk::Result::eSuboptimalKHR:
+    case vk::Result::eErrorOutOfDateKHR:
     {
-        LOG_WARNING(LogVulkan, "The swapchain is no longer optimal for the surface. Consider recreating the swapchain.")
+        LOG_VERBOSE(LogVulkan, "The swapchain is no longer optimal for the surface. Consider recreating the swapchain.")
         break;
     }
     default:
@@ -612,6 +669,71 @@ void Jafg::LSurfaceGlfw3::SetWindowSize(LVec2u32 Size)
     return;
 }
 
+bool Jafg::LSurfaceGlfw3::CanBorderless() const noexcept
+{
+    auto& Frontend{this->GetFrontend()};
+    return Frontend.Vk_GetFramework() == rhi::framework::x11
+        || Frontend.Vk_GetFramework() == rhi::framework::Cocoa
+        || Frontend.Vk_GetFramework() == rhi::framework::Win32;
+}
+
+bool Jafg::LSurfaceGlfw3::IsBorderless() const noexcept
+{
+    // TODO: Implement. Currently we only support wayland and xwayland, which do not support this, therefore, this is not implemented.
+    std::unreachable();
+    return false;
+}
+
+void Jafg::LSurfaceGlfw3::SetBorderless(bool bBorderless)
+{
+    std::unreachable();
+    return;
+}
+
+bool Jafg::LSurfaceGlfw3::IsFullscreen() const noexcept
+{
+    check(Tasks::IsOnMasterThread())
+    check(this->Handle)
+
+    return glfwGetWindowMonitor(this->Handle) != nullptr;
+}
+
+void Jafg::LSurfaceGlfw3::SetFullscreen(bool bFullscreen)
+{
+    check(Tasks::IsOnMasterThread())
+    check(this->Handle)
+
+    if (bFullscreen)
+    {
+        auto const& Viewport{this->GetPreferredPhysicalViewport()};
+        auto const& VideoMode{this->GetPreferredVideoMode(Viewport)};
+        this->FallbackExtent = this->SurfaceExtent;
+        LOG_VERBOSE(LogSurface, "[{}]: Entering fullscreen mode on viewport [{}-{}] with {}."
+            , this->GetHumanReadableName(), Viewport.Index, Viewport.Name, VideoMode.ToHumanReadableString())
+        glfwSetWindowMonitor(
+            this->Handle,
+            static_cast<GLFWmonitor*>(Viewport.Handle),
+            0, 0, VideoMode.ResolutionPx.x, VideoMode.ResolutionPx.y,
+            VideoMode.RefreshRateHz
+            );
+    }
+    else
+    {
+        if (!this->FallbackExtent)
+        {
+            LOG_FATAL(LogSurface, "Fallback extent is not set. Cannot exit fullscreen mode.")
+        }
+        glfwSetWindowMonitor(
+            this->Handle,
+            nullptr,
+            0, 0, this->FallbackExtent->width, this->FallbackExtent->height,
+            GLFW_DONT_CARE
+            );
+    }
+
+    return;
+}
+
 void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier)
 {
     check(this->Vk_CurrentFrameInFlightIndex.has_value())
@@ -625,6 +747,237 @@ void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const
     this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex].pipelineBarrier2(DependencyInfo);
 
     return;
+}
+
+//# We have to use this instead of a function because of sso.
+#ifdef DETAIL_JAFG_CAST_TO_NFDn
+    #error "Expected DETAIL_JAFG_CAST_TO_NFDn to be undefined."
+#endif /* DETAIL_JAFG_CAST_TO_NFDn */
+#define DETAIL_JAFG_CAST_TO_NFDn(JafgFilters) \
+    TArray<nfdnfilteritem_t> Filters; JafgFilters.reserve(Filters.size()); \
+    TArray<LNativeString> RaiiFilterDummy; RaiiFilterDummy.reserve(JafgFilters.size()*2); \
+    for (auto const& Filter: JafgFilters) \
+    { \
+        auto& DisplayNameRef{RaiiFilterDummy.emplace_back()}; \
+        auto& SpecRef{RaiiFilterDummy.emplace_back()}; \
+        DisplayNameRef.append(algo::utf8_to_native(LString{Filter.DisplayName})); \
+        SpecRef.append(algo::utf8_to_native(LString{Filter.Specs})); \
+        Filters.push_back({ \
+            .name = DisplayNameRef.c_str(), \
+            .spec = SpecRef.c_str(), \
+            }); \
+        continue; \
+    }
+
+std::optional<LPath> Jafg::LSurfaceGlfw3::OpenBlockingDialogForFile(LFileDialogInfo Info, LPath const& Default /* = Finder::GetCwd() */)
+{
+    LOG_VERBOSE(LogSurface, "Opening directory dialog in [{}].", Default.empty() ? "<auto>" : Default)
+
+    /* Value initialize in case GetNativeWindow fails; Which is okay. */
+    nfdwindowhandle_t Parent{};
+    check(!Parent.handle)
+    (void)NFD_GetNativeWindowFromGLFWWindow(this->Handle, &Parent);
+
+    DETAIL_JAFG_CAST_TO_NFDn(Info.Filters)
+
+    NFD::UniquePathN OutPath;
+    if (auto Result{NFD::OpenDialog(OutPath
+        , Filters.empty() ? nullptr : Filters.data(), static_cast<nfdfiltersize_t>(Filters.size())
+        , Default.c_str()
+        , Parent
+        )}; Result == NFD_ERROR)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error opening directory dialog: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error opening directory dialog: Unknown error.")
+    }
+    else if (Result == NFD_CANCEL)
+    {
+        return {};
+    }
+
+    check(OutPath.get())
+    return OutPath.get();
+}
+
+std::optional<TArray<LPath>> Jafg::LSurfaceGlfw3::OpenBlockingDialogForFiles(LFileDialogInfo Info, LPath const& Default)
+{
+    LOG_VERBOSE(LogSurface, "Opening directory dialog in [{}].", Default.empty() ? "<auto>" : Default)
+
+    /* Value initialize in case GetNativeWindow fails; Which is okay. */
+    nfdwindowhandle_t Parent{};
+    check(!Parent.handle)
+    (void)NFD_GetNativeWindowFromGLFWWindow(this->Handle, &Parent);
+
+    DETAIL_JAFG_CAST_TO_NFDn(Info.Filters)
+
+    NFD::UniquePathSet OutPaths;
+    if (auto Result{NFD::OpenDialogMultiple(OutPaths
+        , Filters.empty() ? nullptr : Filters.data(), static_cast<nfdfiltersize_t>(Filters.size())
+        , Default.c_str()
+        , Parent
+        )}; Result == NFD_ERROR)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error opening directory dialog: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error opening directory dialog: Unknown error.")
+    }
+    else if (Result == NFD_CANCEL)
+    {
+        return {};
+    }
+
+    nfdpathsetsize_t N;
+    if (auto Result{NFD::PathSet::Count(OutPaths, N)}; Result != NFD_OKAY)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error counting path set: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error counting path set: Unknown error.")
+    }
+
+    TArray<LPath> Result; Result.reserve(N);
+    for (auto Idx{0uz}; Idx < N; ++Idx)
+    {
+        NFD::UniquePathSetPathN Path;
+        if (auto Result{NFD::PathSet::GetPath(OutPaths, Idx, Path)}; Result != NFD_OKAY)
+        {
+            if (auto* Error{NFD_GetError()}; Error)
+            {
+                LOG_FATAL(LogSurface, "Error getting path from path set: {}.", Error)
+            }
+            LOG_FATAL(LogSurface, "Error getting path from path set: Unknown error.")
+        }
+        check(Path.get())
+        Result.emplace_back(&*Path);
+    }
+
+    return Result;
+}
+
+std::optional<LPath> Jafg::LSurfaceGlfw3::OpenBlockingDialogForFileToSave(LSaveFileDialogInfo Info)
+{
+    LOG_VERBOSE(LogSurface, "Opening save dialog in [{}].", Info.Path/Info.Name)
+
+    /* Value initialize in case GetNativeWindow fails; Which is okay. */
+    nfdwindowhandle_t Parent{};
+    check(!Parent.handle)
+    (void)NFD_GetNativeWindowFromGLFWWindow(this->Handle, &Parent);
+
+    DETAIL_JAFG_CAST_TO_NFDn(Info.Filters)
+
+    NFD::UniquePathN OutPath;
+    if (auto Result{NFD::SaveDialog(OutPath
+        , Filters.empty() ? nullptr : Filters.data(), static_cast<nfdfiltersize_t>(Filters.size())
+        , Info.Path.c_str(), Info.Name.c_str()
+        , Parent
+        )}; Result == NFD_ERROR)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error opening save directory dialog: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error opening save directory dialog: Unknown error.")
+    }
+    else if (Result == NFD_CANCEL)
+    {
+        return {};
+    }
+
+    check(OutPath.get())
+    return OutPath.get();
+}
+
+#undef DETAIL_JAFG_CAST_TO_NFDn
+
+std::optional<LPath> Jafg::LSurfaceGlfw3::OpenBlockingDialogForDirectory(LPath Default)
+{
+    LOG_VERBOSE(LogSurface, "Opening directory dialog in [{}].", Default.empty() ? "<auto>" : Default)
+
+    /* Value initialize in case GetNativeWindow fails; Which is okay. */
+    nfdwindowhandle_t Parent{};
+    check(!Parent.handle)
+    (void)NFD_GetNativeWindowFromGLFWWindow(this->Handle, &Parent);
+
+    NFD::UniquePathN OutPath;
+    if (auto Result{NFD::PickFolder(OutPath
+        , Default.c_str()
+        , Parent
+        )}; Result == NFD_ERROR)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error opening directory dialog: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error opening directory dialog: Unknown error.")
+    }
+    else if (Result == NFD_CANCEL)
+    {
+        return {};
+    }
+
+    check(OutPath.get())
+    return OutPath.get();
+}
+
+std::optional<TArray<LPath>> Jafg::LSurfaceGlfw3::OpenBlockingDialogForDirectories(LPath Default)
+{
+    LOG_VERBOSE(LogSurface, "Opening save directory dialog in [{}].", Default.empty() ? "<auto>" : Default)
+
+    /* Value initialize in case GetNativeWindow fails; Which is okay. */
+    nfdwindowhandle_t Parent{};
+    check(!Parent.handle)
+    (void)NFD_GetNativeWindowFromGLFWWindow(this->Handle, &Parent);
+
+    NFD::UniquePathSet OutPaths;
+    if (auto Result{NFD::PickFolderMultiple(OutPaths
+        , Default.c_str()
+        , Parent
+        )}; Result == NFD_ERROR)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error opening save directory dialog: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error opening save directory dialog: Unknown error.")
+    }
+    else if (Result == NFD_CANCEL)
+    {
+        return {};
+    }
+
+    nfdpathsetsize_t N;
+    if (auto Result{NFD::PathSet::Count(OutPaths, N)}; Result != NFD_OKAY)
+    {
+        if (auto* Error{NFD_GetError()}; Error)
+        {
+            LOG_FATAL(LogSurface, "Error counting path set: {}.", Error)
+        }
+        LOG_FATAL(LogSurface, "Error counting path set: Unknown error.")
+    }
+
+    TArray<LPath> Result; Result.reserve(N);
+    for (auto Idx{0uz}; Idx < N; ++Idx)
+    {
+        NFD::UniquePathSetPathN Path;
+        if (auto Result{NFD::PathSet::GetPath(OutPaths, Idx, Path)}; Result != NFD_OKAY)
+        {
+            if (auto* Error{NFD_GetError()}; Error)
+            {
+                LOG_FATAL(LogSurface, "Error getting path from path set: {}.", Error)
+            }
+            LOG_FATAL(LogSurface, "Error getting path from path set: Unknown error.")
+        }
+        check(Path.get())
+        Result.emplace_back(&*Path);
+    }
+
+    return Result;
 }
 
 void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Height)
@@ -861,6 +1214,113 @@ void Jafg::LSurfaceGlfw3::MouseButtonCallback(i32 Button, i32 Action, i32 Mods)
     return;
 }
 
+Jafg::LPhysicalViewport const& Jafg::LSurfaceGlfw3::GetPreferredPhysicalViewport()
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    auto& Viewports{this->GetFrontend().GetPhysicalViewports()};
+
+    if (!Prefs.PreferredMonitor.Value.empty())
+    {
+        auto It{algo::find(Viewports, *Prefs.PreferredMonitor, &LPhysicalViewport::Name)};
+        if (It != Viewports.end())
+        {
+            LOG_VERBOSE(LogSurface, "Using preferred monitor [{}-{}].", It->Index, It->Name)
+            return *It;
+        }
+        LOG_WARNING(LogSurface, "Preferred monitor [{}] not found. Falling back to primary monitor.", *Prefs.PreferredMonitor)
+    }
+
+    GLFWmonitor* Monitor{glfwGetPrimaryMonitor()};
+    check(Monitor)
+    auto It{algo::find(Viewports, Monitor, &LPhysicalViewport::Handle)};
+    if (It != Viewports.end())
+    {
+        LOG_VERBOSE(LogSurface, "Using primary monitor [{}-{}].", It->Index, It->Name)
+        return *It;
+    }
+
+    LOG_FATAL(LogSurface, "Primary monitor not found in physical viewports.")
+}
+
+Jafg::LPhysicalViewport::VideoMode Jafg::LSurfaceGlfw3::GetPreferredVideoMode(LPhysicalViewport const& Viewport)
+{
+    check(!Viewport.VideoModes.empty())
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    TArray<LPhysicalViewport::VideoMode> Candidates{Viewport.VideoModes};
+
+    if (Prefs.PreferredBpp.Value != maths::zero_vector<LVec3i32>)
+    {
+        TArray<LPhysicalViewport::VideoMode> Previous{Candidates};
+        algo::erase_if(&Candidates, [&Prefs](LPhysicalViewport::VideoMode const& VideoMode)
+        {
+            return VideoMode.Bits != Prefs.PreferredBpp.Value;
+        });
+        if (Candidates.empty())
+        {
+            LOG_WARNING(LogSurface, "No video mode found with preferred bpp [{}]. Ignoring preferred bpp."
+                , maths::to_string(Prefs.PreferredBpp.Value))
+            Candidates = std::move(Previous);
+        }
+    }
+
+    if (Prefs.PreferredResolutionPx.Value != maths::zero_vector<LVec2i32>)
+    {
+        TArray<LPhysicalViewport::VideoMode> Previous{Candidates};
+        algo::erase_if(&Candidates, [&Prefs](LPhysicalViewport::VideoMode const& VideoMode)
+        {
+            return VideoMode.ResolutionPx != Prefs.PreferredResolutionPx.Value;
+        });
+        if (Candidates.empty())
+        {
+            LOG_WARNING(LogSurface, "No video mode found with preferred resolution [{}]. Ignoring preferred resolution."
+                , maths::to_string(Prefs.PreferredResolutionPx.Value))
+            Candidates = std::move(Previous);
+        }
+    }
+
+    if (Prefs.PreferredRefreshRateHz.Value != 0)
+    {
+        TArray<LPhysicalViewport::VideoMode> Previous{Candidates};
+        algo::erase_if(&Candidates, [&Prefs](LPhysicalViewport::VideoMode const& VideoMode)
+        {
+            return VideoMode.RefreshRateHz != Prefs.PreferredRefreshRateHz.Value;
+        });
+        if (Candidates.empty())
+        {
+            LOG_WARNING(LogSurface, "No video mode found with preferred refresh rate [{}]. Ignoring preferred refresh rate."
+                , Prefs.PreferredRefreshRateHz.Value)
+            Candidates = std::move(Previous);
+        }
+    }
+
+    if (Candidates.empty())
+    {
+        LOG_WARNING(LogSurface, "No video modes found with the specified preferences. Falling back to default video mode.")
+        return Viewport.VideoModes.front();
+    }
+
+    if (Candidates.size() > 1)
+    {
+        algo::sort(Candidates, [](LPhysicalViewport::VideoMode const& A, LPhysicalViewport::VideoMode const& B)
+        {
+            if (A.RefreshRateHz != B.RefreshRateHz)
+            {
+                return A.RefreshRateHz > B.RefreshRateHz;
+            }
+            if (A.ResolutionPx != B.ResolutionPx)
+            {
+                return A.ResolutionPx.x * A.ResolutionPx.y > B.ResolutionPx.x * B.ResolutionPx.y;
+            }
+            return A.Bits.x * A.Bits.y * A.Bits.z > B.Bits.x * B.Bits.y * B.Bits.z;
+        });
+
+        LOG_WARNING(LogSurface, "Multiple video modes found with the specified preferences. Comparing with hz > resolution > bpp for selection.")
+    }
+
+    return Candidates.front();
+}
+
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 {
     LOG_VERBOSE(LogVulkan, "Creating command pool for surface.")
@@ -932,7 +1392,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     this->Vk_AvailableSurfaceFormats = Frontend.Vk_GetPhysicalDevice().getSurfaceFormatsKHR(this->Vk_Surface);
     LOG_VERBOSE(LogVulkan, "Available surface formats:")
-    for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
+    if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose)) for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
     {
         LOG_VERBOSE(LogVulkan, "    Format [{}], Color Space [{}]",
             vk::to_string(SurfaceFormat.format),
@@ -942,44 +1402,38 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     this->Vk_AvailablePresentModes = Frontend.Vk_GetPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface);
     LOG_VERBOSE(LogVulkan, "Available present modes:")
-    if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose))
+    if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose)) for (auto const& PresentMode: this->Vk_AvailablePresentModes)
     {
-        for (auto const& PresentMode : this->Vk_AvailablePresentModes)
-        {
-            LOG_VERBOSE(LogVulkan, "    Present Mode [{}]", vk::to_string(PresentMode))
-        }
+        LOG_VERBOSE(LogVulkan, "    Present Mode [{}]", vk::to_string(PresentMode))
     }
 
+    if (auto AvailableFormat{this->Vk_GetSwapchainSurfaceFormatKHR(this->Vk_DesiredSurfaceFormat)})
     {
-        auto AvailableFormat{this->Vk_GetSwapchainSurfaceFormatKHR(this->Vk_AvailableSurfaceFormats, this->Vk_DesiredSurfaceFormat)};
-        if (AvailableFormat.has_value() == false)
-        {
-            /* TODO: Is this even a fatal error?? Should we just use a non-optimal format then?! */
-            panicMsgf(
-                "Desired surface format [format={}, colorSpace={}] is not available on the current platform.",
-                vk::to_string(this->Vk_DesiredSurfaceFormat.format),
-                vk::to_string(this->Vk_DesiredSurfaceFormat.colorSpace)
-                )
-        }
-        Frontend.Vk_SetSurfaceFormat(AvailableFormat.value());
+        Frontend.Vk_SetSurfaceFormat(*AvailableFormat);
+    }
+    else
+    {
+        /* TODO: Is this even a fatal error?? Should we just use a non-optimal format then?! */
+        panicMsgf(
+            "Desired surface format [format={}, colorSpace={}] is not available on the current platform.",
+            vk::to_string(this->Vk_DesiredSurfaceFormat.format),
+            vk::to_string(this->Vk_DesiredSurfaceFormat.colorSpace)
+            )
     }
 
+    if (auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(rhi::vk_to_khr_present_mode(*Prefs.DesiredPresentMode))}; !AvailablePresentMode)
     {
-        auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(this->Vk_AvailablePresentModes, rhi::vk_to_khr_present_mode(*Prefs.DesiredPresentMode))};
-        if (!AvailablePresentMode.has_value())
-        {
-            // We may always use FIFO as the std guarantees its existence.
-            // https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html
-            LOG_WARNING(LogVulkan,
-                "Desired present mode [{}] is not available on the current platform. Falling back to FIFO.",
-                rhi::to_string(*Prefs.DesiredPresentMode)
-                )
-            this->Vk_PresentMode = vk::PresentModeKHR::eFifo;
-        }
-        else
-        {
-            this->Vk_PresentMode = AvailablePresentMode.value();
-        }
+        // We may always use FIFO as the std guarantees its existence.
+        // https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html
+        LOG_WARNING(LogVulkan,
+            "Desired present mode [{}] is not available on the current platform. Falling back to eFifo.",
+            serde::to_string(*Prefs.DesiredPresentMode)
+            )
+        this->Vk_PresentMode = vk::PresentModeKHR::eFifo;
+    }
+    else
+    {
+        this->Vk_PresentMode = AvailablePresentMode.value();
     }
 
     {
@@ -1092,9 +1546,9 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     return;
 }
 
-std::optional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats, vk::SurfaceFormatKHR DesiredSurfaceFormat)
+std::optional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(vk::SurfaceFormatKHR DesiredSurfaceFormat)
 {
-    for (auto const& AvailableFormat : AvailableFormats)
+    for (auto const& AvailableFormat: this->Vk_AvailableSurfaceFormats)
     {
         if (   AvailableFormat.format == DesiredSurfaceFormat.format
             && AvailableFormat.colorSpace == DesiredSurfaceFormat.colorSpace)
@@ -1108,41 +1562,24 @@ std::optional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceF
     return {};
 }
 
-std::optional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes, vk::PresentModeKHR DesiredPresentMode)
+std::optional<vk::PresentModeKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainPresentModeKHR(vk::PresentModeKHR DesiredPresentMode)
 {
-    // VK_PRESENT_MODE_IMMEDIATE_KHR: Images submitted by your application are transferred to the
-    //                                screen right away, which may result in tearing.
-    // VK_PRESENT_MODE_FIFO_KHR: The swap chain is a queue where the display takes an image from the front of the
-    //                           queue when the display is refreshed, and the program inserts rendered images at
-    //                           the back of the queue. If the queue is full, then the program has to wait. This is
-    //                           most similar to vertical sync as found in modern games. The moment that the display
-    //                           is refreshed is known as "vertical blank".
-    // VK_PRESENT_MODE_FIFO_RELAXED_KHR: This mode only differs from the previous one if the application is late and
-    //                                   the queue was empty at the last vertical blank. Instead of waiting for the
-    //                                   next vertical blank, the image is transferred right away when it finally
-    //                                   arrives. This may result in visible tearing.
-    // VK_PRESENT_MODE_MAILBOX_KHR: This is another variation of the second mode. Instead of blocking the
-    //                              application when the queue is full, the images that are already queued are
-    //                              simply replaced with the newer ones. This mode can be used to render frames as
-    //                              fast as possible while still avoiding tearing, resulting in fewer latency issues
-    //                              than standard vertical sync. This is commonly known as "triple buffering,"
-    //                              although the existence of three buffers alone does not necessarily mean that
-    //                              the framerate is unlocked
-
-    for (const auto& AvailablePresentMode : AvailablePresentModes)
+    if (algo::contains(this->Vk_AvailablePresentModes, DesiredPresentMode))
     {
-        if (AvailablePresentMode == DesiredPresentMode)
-        {
-            return AvailablePresentMode;
-        }
-
-        continue;
+        return DesiredPresentMode;
     }
 
-    LOG_WARNING(LogVulkan, "Preferred swap present mode [{}] not found. Using FIFO present mode."
-        , vk::to_string(DesiredPresentMode)
-        )
-    return vk::PresentModeKHR::eFifo;
+    /* Hardcoded fallback */
+    if (this->GetFrontend().Vk_GetFramework() == rhi::framework::x11 && DesiredPresentMode == vk::PresentModeKHR::eMailbox)
+    {
+        if (algo::contains(this->Vk_AvailablePresentModes, vk::PresentModeKHR::eImmediate))
+        {
+            LOG_WARNING(LogVulkan, "Preferred swap present mode [eMailbox] is not available on x11. Falling back to nonblocking eImmediate present mode.")
+            return vk::PresentModeKHR::eImmediate;
+        }
+    }
+
+    return {};
 }
 
 void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()

@@ -6,12 +6,6 @@
 #define VMA_IMPLEMENTATION
 #include "Framework/FrontendVk.h"
 
-#include <GLFW/glfw3.h>
-#if JAFG_PLATFORM_WINDOWS
-    #define GLFW_EXPOSE_NATIVE_WIN32
-    #include <GLFW/glfw3native.h>
-#endif /* JAFG_PLATFORM_WINDOWS */
-
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"
 #include "Stats/Stats.h"
@@ -21,6 +15,36 @@
 #include "Rhi/VisualInstance.h"
 #include "Rhi/Bindless.h"
 #include "Runtime/Parameter.h"
+
+#include <GLFW/glfw3.h>
+#if JAFG_PLATFORM_WINDOWS
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif /* JAFG_PLATFORM_WINDOWS */
+#if JAFG_PLATFORM_LINUX
+    #define GLFW_EXPOSE_NATIVE_X11
+    #define GLFW_EXPOSE_NATIVE_WAYLAND
+#endif /* JAFG_PLATFORM_LINUX */
+// #define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3native.h>
+#if JAFG_PLATFORM_LINUX
+    // Xlib??? What why.
+    #ifdef Bool
+        #undef Bool
+    #endif /* Bool */
+    #ifdef Status
+        #undef Status
+    #endif /* Status */
+    #ifdef True
+        #undef True
+    #endif /* True */
+    #ifdef False
+        #undef False
+    #endif /* False */
+#endif /* JAFG_PLATFORM_LINUX */
+
+#include <nfd.h>
+#include <nfd.hpp>
+#include <nfd_glfw3.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -53,6 +77,26 @@ void GlfwErrorCallback(i32 Error, char const* Description)
     }
 
     LOG_FATAL(LogPlatform, "GLFW Error (code {}): {}", Error, Description)
+}
+
+void GlfwMonitorCallback(GLFWmonitor* monitor, int event)
+{
+    if (event == GLFW_CONNECTED)
+    {
+        LOG_VERBOSE(LogSurface, "[{}]: Connected.", glfwGetMonitorName(monitor))
+    }
+    else if (event == GLFW_DISCONNECTED)
+    {
+        LOG_VERBOSE(LogSurface, "[{}]: Disconnected.", glfwGetMonitorName(monitor))
+    }
+    else
+    {
+        LOG_FATAL(LogSurface, "[{}]: Unknown event {}.", glfwGetMonitorName(monitor), event)
+    }
+
+    Jafg::Detail::GMutableEngine->GetLocalEgo().GetFrontend()._RefreshUsablePhysicalViewports();
+
+    return;
 }
 
 struct LNamedPhysicalKeyToPhysicalKeyResult final
@@ -361,6 +405,8 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
         panic("Failed to initialize glfw.")
     }
 
+    glfwSetMonitorCallback(::GlfwMonitorCallback);
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, ::GlfwContextVersionMajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, ::GlfwContextVersionMinor);
 
@@ -368,76 +414,51 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    const i32 Platform{glfwGetPlatform()};
-    if (Platform == GLFW_PLATFORM_WAYLAND)
+    check(this->Vk_Framework == rhi::framework::Identity)
     {
-        LOG_VERBOSE(LogSurface, "Using Wayland platform.")
-    }
-    if (Platform == GLFW_PLATFORM_X11)
-    {
-        LOG_VERBOSE(LogSurface, "Using X11 platform.")
-    }
-    if (Platform == GLFW_PLATFORM_WIN32)
-    {
-        LOG_VERBOSE(LogSurface, "Using Win32 platform.")
-    }
-
-    i32 MonitorCount{};
-    auto Monitors{glfwGetMonitors(&MonitorCount)};
-    if (MonitorCount < 1)
-    {
-        panic( "No suitable physical monitors detected." )
-    }
-    auto* PrimaryMonitor{glfwGetPrimaryMonitor()};
-    if (PrimaryMonitor == nullptr)
-    {
-        LOG_VERBOSE(LogSurface, "No primary monitor detected, picking first available monitor as primary.")
-        /* Just pick the first one. */
-        PrimaryMonitor = Monitors[0];
-        check(PrimaryMonitor)
-    }
-    LOG_VERBOSE(LogSurface, "Found [{}] physical monitors connected.", MonitorCount)
-    for (auto MonitorIndex{0uz}; MonitorIndex < static_cast<std::size_t>(MonitorCount); ++MonitorIndex)
-    {
-        GLFWmonitor* Monitor{Monitors[MonitorIndex]};
-        check(Monitor)
-
-        LPhysicalViewport Pv{};
-        Pv.Identifier = Monitor;
-        glfwGetMonitorPhysicalSize(Monitor, &Pv.SizeMm.x, &Pv.SizeMm.y);
-        glfwGetMonitorContentScale(Monitor, &Pv.ContentScale.x, &Pv.ContentScale.y);
-        glfwGetMonitorWorkarea(Monitor,
-            &Pv.WorkareaOffsetPx.x, &Pv.WorkareaOffsetPx.y,
-            &Pv.WorkareaPx.x, &Pv.WorkareaPx.y
-            );
-        Pv.Prefix = algo::sprintf("{}-", MonitorIndex);
-        Pv.Name = glfwGetMonitorName(Monitor);
-        // if (Monitor == PrimaryMonitor)
+        auto Platform{glfwGetPlatform()};
+#if JAFG_PLATFORM_WINDOWS
+        if (Platform == GLFW_PLATFORM_WIN32)
+        {
+            this->Vk_Framework = rhi::framework::Win32;
+        }
+#endif /* JAFG_PLATFORM_WINDOWS */
+        // if (Platform == GLFW_PLATFORM_COCOA)
         // {
-        //     Pv.bPrimary = true;
+        //     this->Vk_Framework = rhi::framework::Cocoa;
         // }
-        // else
-        // {
-        //     check( Pv.bPrimary == false )
-        // }
-
-        GLFWvidmode const* VidMode{ glfwGetVideoMode(Monitor) };
-        check( VidMode )
-        Pv.Bits.x = VidMode->redBits;
-        Pv.Bits.y = VidMode->greenBits;
-        Pv.Bits.z = VidMode->blueBits;
-
-        Pv.RefreshRateHz = VidMode->refreshRate;
-
-        LOG_VERBOSE(LogSurface, "    Physical Monitor [{}{}]: {}x{}px @ {}hz, {}x{}mm, RGB=[{}|{}|{}]",
-            Pv.Prefix, Pv.Name,
-            Pv.WorkareaPx.x, Pv.WorkareaPx.y,
-            Pv.RefreshRateHz,
-            Pv.SizeMm.x, Pv.SizeMm.y,
-            Pv.Bits.x, Pv.Bits.y, Pv.Bits.z
-            )
-        this->UsablePhysicalViewports.emplace_back(std::move(Pv));
+#if JAFG_PLATFORM_LINUX
+        if (Platform == GLFW_PLATFORM_WAYLAND)
+        {
+            this->Vk_Framework = rhi::framework::Wayland;
+        }
+        else if (Platform == GLFW_PLATFORM_X11)
+        {
+            this->Vk_Framework = rhi::framework::x11;
+        }
+#endif /* JAFG_PLATFORM_LINUX */
+        else
+        {
+            LOG_FATAL(LogSurface, "Unknown platform [{}] detected from glfw3.", Platform)
+        }
     }
+#if JAFG_PLATFORM_LINUX
+    //
+    // When using x11 we have a lot of power. But if this is just xWayland, we do not.
+    // Therefore, we have to distinguish between the two.
+    //
+    if (this->Vk_Framework == rhi::framework::x11)
+    {
+        if (std::getenv("WAYLAND_DISPLAY") != nullptr || (std::getenv("XDG_SESSION_TYPE")
+            && std::strcmp(std::getenv("XDG_SESSION_TYPE"), "wayland") == 0))
+        {
+            this->Vk_Framework = rhi::framework::xWayland;
+        }
+    }
+#endif /* JAFG_PLATFORM_LINUX */
+    LOG_VERBOSE(LogSurface, "Using framework [{}].", rhi::to_string(this->Vk_Framework))
+
+    this->_RefreshUsablePhysicalViewports();
 
     LOG_VERBOSE(LogVulkan, "Initializing Vulkan.")
 
@@ -445,6 +466,15 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
     check(glfwVulkanSupported())
+
+    if (NFD::Init() != NFD_OKAY)
+    {
+        if (auto* Error{NFD::GetError()})
+        {
+            LOG_FATAL(LogFrontend, "Failed to initialize native file dialog extended: {}", Error)
+        }
+        LOG_FATAL(LogFrontend, "Failed to initialize native file dialog extended.")
+    }
 
     this->Vk_FetchAndCheckInstanceExtensions();
     this->Vk_FetchAndCheckInstanceLayers();
@@ -463,14 +493,13 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
      * In order to create the best and optimal preferences for Vulkan, we first create a new surface to query
      * data from it. This will allow for some great optimizations...
      */
-    LSurfaceCreateInfo SurfaceInfo{
+    auto QuerySurface{std::make_unique<LSurface>(LSurfaceCreateInfo{
 #if !JAFG_IN_SHIPPING
         /* For development purposes, we want a smaller window as it does not cover so much space. */
         .DesiredDimensionsPx = { 855, 475 },
 #endif /* !JAFG_IN_SHIPPING */
         .HumanReadableName = "Jafg - @mzoesch",
-        };
-    TUnique QuerySurface{ std::make_unique<LSurface>(SurfaceInfo) };
+        })};
 
     this->Vk_CreateLogicalDevice(*QuerySurface);
 
@@ -622,7 +651,11 @@ void Jafg::LFrontendVk::TearDown()
 
     algo::swap_default(&this->Vk_ImmutableBuffers);
 
+    LOG_VERBOSE(LogVulkan, "Destroying transient command pool.")
     this->Vk_DescriptorPool.reset();
+
+    LOG_VERBOSE(LogFrontend, "Terminating native file dialog extended.")
+    NFD::Quit();
 
     LOG_VERBOSE(LogVulkan, "Destroying VMA.")
     vmaDestroyAllocator(this->Vk_VmaAllocator);
@@ -740,6 +773,110 @@ std::optional<LString> Jafg::LFrontendVk::Glfw_GetPhysicalKeyLocalizedRepr(LPhys
     }
 
     return {};
+}
+
+void Jafg::LFrontendVk::_RefreshUsablePhysicalViewports()
+{
+    LOG_VERBOSE(LogSurface, "Refreshing usable physical viewports.")
+
+    this->UsablePhysicalViewports.clear();
+
+    i32 MonitorCount{};
+    auto Monitors{glfwGetMonitors(&MonitorCount)};
+    if (MonitorCount < 1)
+    {
+        LOG_FATAL(LogSurface, "No suitable physical monitors detected.")
+    }
+    auto* PrimaryMonitor{glfwGetPrimaryMonitor()};
+    if (!PrimaryMonitor)
+    {
+        LOG_VERBOSE(LogSurface, "No primary monitor detected, picking first available monitor as primary.")
+        /* Just pick the first one. */
+        PrimaryMonitor = Monitors[0];
+        check(PrimaryMonitor)
+    }
+    LOG_VERBOSE(LogSurface, "Found [{}] physical monitors connected:", MonitorCount)
+    for (auto MonitorIndex{0uz}; MonitorIndex < static_cast<std::size_t>(MonitorCount); ++MonitorIndex)
+    {
+        GLFWmonitor* Monitor{Monitors[MonitorIndex]};
+        check(Monitor)
+
+        LPhysicalViewport Pv{};
+        Pv.Handle = Monitor;
+        glfwGetMonitorPhysicalSize(Monitor, &Pv.SizeMm.x, &Pv.SizeMm.y);
+        glfwGetMonitorContentScale(Monitor, &Pv.ContentScale.x, &Pv.ContentScale.y);
+        glfwGetMonitorWorkarea(Monitor,
+            &Pv.WorkareaOffsetPx.x, &Pv.WorkareaOffsetPx.y,
+            &Pv.WorkareaPx.x, &Pv.WorkareaPx.y
+            );
+        Pv.Index = MonitorIndex;
+        Pv.Name = glfwGetMonitorName(Monitor);
+        /* Not supported on all target platforms, therefore, never use it to stay consistent. */
+        // if (Monitor == PrimaryMonitor)
+        // {
+        //     Pv.bPrimary = true;
+        // }
+        // else
+        // {
+        //     check( Pv.bPrimary == false )
+        // }
+
+        int Count;
+        auto* Modes{glfwGetVideoModes(Monitor, &Count)};
+        check(Modes)
+        for (auto ModeIndex{0uz}; ModeIndex < static_cast<std::size_t>(Count); ++ModeIndex)
+        {
+            auto& Mode{Modes[ModeIndex]};
+            Pv.VideoModes.push_back({
+                .Bits = {Mode.redBits, Mode.greenBits, Mode.blueBits},
+                .ResolutionPx = {Mode.width, Mode.height},
+                .RefreshRateHz = Mode.refreshRate,
+                });
+        }
+
+        GLFWvidmode const* VidMode{glfwGetVideoMode(Monitor)};
+        check(VidMode)
+        Pv.CurrentVideoMode = LPhysicalViewport::VideoMode{
+            .Bits = {VidMode->redBits, VidMode->greenBits, VidMode->blueBits},
+            .ResolutionPx = {VidMode->width, VidMode->height},
+            .RefreshRateHz = VidMode->refreshRate,
+            };
+
+        LOG_VERBOSE(LogSurface, "    Physical Monitor [{}-{}]: {}x{}px, {}x{}mm vid[{}]",
+            Pv.Index, Pv.Name,
+            Pv.WorkareaPx.x, Pv.WorkareaPx.y,
+            Pv.SizeMm.x, Pv.SizeMm.y,
+            Pv.CurrentVideoMode.ToHumanReadableString()
+            )
+        for (auto const& Mode : Pv.VideoModes)
+        {
+            LOG_VERBOSE(LogSurface, "        - {}", Mode.ToHumanReadableString())
+        }
+        this->UsablePhysicalViewports.emplace_back(std::move(Pv));
+    }
+    for (auto MonitorIndex{0uz}; MonitorIndex < static_cast<std::size_t>(MonitorCount); ++MonitorIndex)
+    {
+        GLFWmonitor* Monitor{Monitors[MonitorIndex]};
+        check(Monitor)
+        if (Monitor == PrimaryMonitor)
+        {
+            auto& Pv{this->UsablePhysicalViewports[MonitorIndex]};
+            LOG_VERBOSE(LogSurface, "Physical monitor [{}-{}] is the primary monitor.", Pv.Index, Pv.Name)
+            break;
+        }
+        continue;
+    }
+
+    return;
+}
+
+std::optional<rhi::present_mode> Jafg::LFrontendVk::Vk_GetFirstSurfacePresentMode() const noexcept
+{
+    if (this->GetSurfaces().empty())
+    {
+        return std::nullopt;
+    }
+    return rhi::vk_from_khr_present_mode(this->GetSurfaces()[0]->Vk_GetPresentMode());
 }
 
 void Jafg::LFrontendVk::Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture)
@@ -1095,6 +1232,16 @@ void Jafg::LFrontendVk::_Vk_WaitIdle()
     this->Vk_Device.waitIdle();
     return;
 }
+
+#if JAFG_WITH_EDITOR
+void Jafg::LFrontendVk::Vk_EditorWaitIdle()
+{
+    // TODO: Some mutex checks for rendering??
+    STAT_CYCLE_FUNCTION()
+    this->Vk_Device.waitIdle();
+    return;
+}
+#endif /* JAFG_WITH_EDITOR */
 
 void Jafg::LFrontendVk::Vk_FetchAndCheckInstanceExtensions()
 {

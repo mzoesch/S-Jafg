@@ -111,6 +111,7 @@ private:
 
     void InitializeRenderTarget();
     bool OnPreDraw(LRenderInfo const& Info);
+    void PreDrawSelected(LRenderInfo const& Info);
     void PreDraw(LRenderInfo const& Info);
 
     void DispatchInputDelegates();
@@ -140,6 +141,8 @@ private:
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
 
     TArray<AActor*> SelectedActors;
+    LMaterialInstanceRef SelectionMaterialInstance;
+    LMaterialInstanceRef PostSelectionMaterialInstance;
 
     WWorldViewerHierarchy* Hierarchy{};
     WWorldViewerInspector* Inspector{};

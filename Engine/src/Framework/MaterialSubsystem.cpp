@@ -101,7 +101,7 @@ void Jafg::JMaterialSubsystem::ReloadMaterials()
         continue;
     }
 
-    LOG_VERBOSE(LogMaterialSubsystem, "Finished loading [{}] materials.", this->Materials.size())
+    LOG_VERBOSE(LogMaterialSubsystem, "Finished loading [{}] materials.", this->FetchedMaterials.size())
     return;
 }
 
@@ -203,7 +203,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     }
     }
 
-    for (auto const& Layout : FetchedShader.Layouts)
+    for (auto const& Layout: FetchedShader.Layouts)
     {
         if (Layout.Type == LFetchedShader::Layout::eUnique)
         {
@@ -248,6 +248,19 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) no
     for (auto const& PushConstant : FetchedShader.PushConstants)
     {
         Factory.PushConstant(this->ShaderSubsystem->GetPushConstantInfo(PushConstant));
+    }
+
+    Factory.ColorAttachmentFormat = Frontend.Vk_GetSurfaceFormat().format;
+    Factory.DepthAttachmentFormat = Frontend.Vk_GetPreferredDepthFormat();
+
+    if (Name == "Jafg.Mesh.Outline")
+    {
+        Factory.ColorAttachmentFormat = vk::Format::eR8Unorm;
+    }
+
+    if (FetchedShader.MsaaSamples)
+    {
+        Factory.MultisamplingSampleCount = *FetchedShader.MsaaSamples;
     }
 
     Material->Pipeline = Factory.Build();

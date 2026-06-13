@@ -52,7 +52,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogEgo,                          JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogEngine,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogFontSubsystem,                JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogForeign,                      JAFG_LOG_DEFAULT_VERBOSITY                             )
-DECLARE_INLINE_LOG_CATEGORY( LogFrontEnd,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogFrontend,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogGenPrevAssets,                JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogHyperlane,                    JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogInformation,                  JAFG_LOG_DEFAULT_VERBOSITY                             )

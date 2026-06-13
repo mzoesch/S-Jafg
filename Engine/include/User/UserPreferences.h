@@ -45,8 +45,21 @@ public:
     // Rendering pipeline
     ///////////////////////////////////////////////////////////////////////////////
 
+    //# System dependent. But should generally stay consistent.
     CLASS_FIELD(Config)
     TPreference<LString> PreferredPhysicalDevice;
+    //# System dependent. But should generally stay consistent.
+    CLASS_FIELD(Config)
+    TPreference<LString> PreferredMonitor;
+    //# Preferred bits per pixel. Zero means default. This is a legacy feature as most compositors straight up ignore this.
+    CLASS_FIELD(Config)
+    TPreference<LVec3i32> PreferredBpp{ maths::zero_vector<LVec3i32> };
+    //# Preferred resolution in pixel. Zero means default. This is a legacy feature as most compositors straight up ignore this.
+    CLASS_FIELD(Config)
+    TPreference<LVec2i32> PreferredResolutionPx{ maths::zero_vector<LVec2u32> };
+    //# Preferred refresh rate in hz. Zero means default. This is a legacy feature as most compositors straight up ignore this.
+    CLASS_FIELD(Config)
+    TPreference<i32> PreferredRefreshRateHz{ 0 };
 
     CLASS_FIELD(Config)
     TPreference<rhi::present_mode> DesiredPresentMode{ rhi::present_mode::Fifo };

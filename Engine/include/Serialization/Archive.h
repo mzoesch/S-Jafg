@@ -27,6 +27,13 @@ enum struct behavior
     relaxed,
 };
 
+//#
+//# Whether this type can be serialized or deserialized (or both) with the given archive.
+//# If the archive is os only, then it only checks for serialization, if the archive is is only, then it only check
+//# for deserialization. If the archive is ios, then both serialization and deserialization must be valid.
+//#
+template<typename TArchive, typename T> inline constexpr bool serde_for_v{ requires(TArchive& Ar, T& Field){serde_non_intrusive(Ar, Field);} };
+
 template<typename TArchive> inline constexpr bool string_archive_v{ std::remove_cvref_t<TArchive>::arch_type == arch_type::string };
 template<typename TArchive> inline constexpr bool bin_archive_v{ std::remove_cvref_t<TArchive>::arch_type == arch_type::binary };
 template<typename TArchive> inline constexpr bool os_archive_v{ std::remove_cvref_t<TArchive>::open_mode & std::ios::out };
@@ -379,19 +386,73 @@ private:
         static constexpr std::pair<T, LStringView> const Members[]{ \
             JAFG_MAP(SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) \
             }; \
-        auto It{algo::find_if(Members, [&Ar](std::pair<T, LStringView> const& Member) \
-        {\
-            return Member.second == Ar.get_stream(); \
-        })}; \
-        if (It != std::end(Members)) \
+        if constexpr (::serde::is_string_archive_v<TArchive>) \
         { \
-            Field = It->first; \
+            auto It{algo::find_if(Members, [&Ar](std::pair<T, LStringView> const& Member) \
+            {\
+                return Member.second == Ar.get_stream(); \
+            })}; \
+            if (It != std::end(Members)) \
+            { \
+                Field = It->first; \
+            } \
+            else \
+            { \
+                LOG_FATAL(LogSerialization, "Failed to deserialize enum [{}] from string [{}]." \
+                    , algo::type_name<T>(), Ar.get_stream()) \
+            } \
+        } \
+        else if constexpr (::serde::os_string_archive_v<TArchive>) \
+        { \
+            auto It{algo::find_if(Members, [&Field](std::pair<T, LStringView> const& Member) \
+            {\
+                return Member.first == Field; \
+            })}; \
+            if (It != std::end(Members)) \
+            { \
+                Ar.m_stream << It->second; \
+            } \
+            else \
+            { \
+                LOG_FATAL(LogSerialization, "Failed to serialize enum [{}] to string. No matching string found for value [{}]." \
+                    , algo::type_name<T>(), std::to_underlying(Field)) \
+            } \
         } \
         else \
         { \
-            LOG_FATAL(LogSerialization, "Failed to deserialize enum [{}] from string [{}].", algo::type_name<T>(), Ar.get_stream()) \
+            static_assert(::algo::always_false_v<T>, "Unsupported archive type for enum serialization."); \
         } \
     }
+
+struct os_string_archive final
+{
+    inline static constexpr auto open_mode{std::ios::out};
+    inline static constexpr auto arch_type{arch_type::string};
+    inline static constexpr auto behavior_mode{behavior::panic};
+
+    template<typename... TArgs> requires std::constructible_from<std::stringstream, TArgs&&...>
+    constexpr explicit os_string_archive(TArgs&&... Args) noexcept
+        : m_stream{std::forward<TArgs>(Args)...}
+    {
+    }
+
+    //# Serde any type that can be serialized.
+    template<typename T> requires(!std::is_pointer_v<T>)
+    inline decltype(auto) operator()(this auto&& Self, T& x) noexcept requires string_archive_for_v<decltype(Self), T>
+    {
+        serde_non_intrusive(Self, x);
+        return std::forward<decltype(Self)>(Self);
+    }
+
+    //# This archive is open for input. Therefore, you read from it.
+    NODISCARD FORCEINLINE consteval bool in_stream() const noexcept { return false; }
+    //# This archive is open for output. Therefore, you write to it.
+    NODISCARD FORCEINLINE consteval bool out_stream() const noexcept { return true; }
+
+    NODISCARD FORCEINLINE std::stringstream const& get_stream() const noexcept { return this->m_stream; }
+
+    std::stringstream m_stream;
+};
 
 template<behavior Behavior>
 struct is_string_archive final
@@ -700,6 +761,199 @@ struct TDeserializer<T, TArchive>
     }
 };
 
+template<maths::length_t L, typename TReal, maths::qual_t Q, typename TArchive>
+    requires((std::is_integral_v<TReal> || std::is_floating_point_v<TReal>) && os_string_archive_v<TArchive>)
+struct TSerializer<TVec<L,TReal,Q>, TArchive>
+{
+    void operator()(TArchive& Ar, TVec<L,TReal,Q> const& Field) const noexcept
+    {
+        Ar.Stream << "vec" << L << "(";
+        for (maths::length_t Idx{0}; Idx < L; ++Idx)
+        {
+            if (Idx > 0)
+            {
+                Ar.Stream << ',';
+            }
+            Ar.Stream << Field[Idx];
+        }
+        Ar.Stream << ")";
+    }
+};
+template<maths::length_t L, typename TReal, maths::qual_t Q, typename TArchive>
+    requires((std::is_integral_v<TReal> || std::is_floating_point_v<TReal>) && is_string_archive_v<TArchive>)
+struct TDeserializer<TVec<L,TReal,Q>, TArchive>
+{
+    LDeserializationResult operator()(TArchive const& Ar, TVec<L,TReal,Q>& Field) const noexcept
+    {
+
+        auto& Value{Ar.Stream};
+
+        if (!Value.starts_with("vec"))
+        {
+            return {.Errc=std::errc::invalid_argument, .Error=algo::sprintf("Expected 'vec' at the start of: \n{}", Value)};
+        }
+        if (!Value.ends_with(")"))
+        {
+            return {.Errc=std::errc::invalid_argument, .Error=algo::sprintf("Expected ')' at the end of: \n{}", Value)};
+        }
+
+        LStringView View{Value.begin() + 3, Value.end() - 1};
+        if (View.empty())
+        {
+            return {
+                .Errc = std::errc::invalid_argument,
+                .Error = algo::sprintf("Expected vector length and components in: \n{}", Value),
+                };
+        }
+
+        maths::length_t l{};
+        auto R{std::from_chars(algo::data(View), algo::data(View) + 1, l)};
+        if (R.ec != std::errc{})
+        {
+            return {
+                .Errc = R.ec,
+                .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
+                };
+        }
+        if (l != L)
+        {
+            return {
+                .Errc = std::errc::invalid_argument,
+                .Error = algo::sprintf("Expected vector of length '{}' but got '{}' in: \n{}", L, l, Value),
+                };
+        }
+        View = LStringView{View.begin()+1, View.end()};
+        if (View.empty())
+        {
+            return {
+                .Errc = std::errc::invalid_argument,
+                .Error = algo::sprintf("Expected vector components in: \n{}", Value),
+                };
+        }
+        if (View[0] != '(')
+        {
+            return {
+                .Errc = std::errc::invalid_argument,
+                .Error = algo::sprintf("Expected '(' at the start of vector components in: \n{}", Value),
+                };
+        }
+
+        View = LStringView{View.begin() + 1, View.end()};
+
+        if constexpr (L == 1)
+        {
+            auto R{std::from_chars(algo::data(View), algo::data(View) + 1, Field.x)};
+            return {
+                .Errc = R.ec,
+                .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
+                };
+        }
+
+        // x comp
+        if constexpr (L >= 1)
+        {
+            auto Pos{View.find_first_of(',')};
+            if (Pos == LStringView::npos)
+            {
+                return {
+                    .Errc = std::errc::invalid_argument,
+                    .Error = algo::sprintf("Expected ',' after x component in: \n{}", Value),
+                    };
+            }
+
+            LStringView ComponentX{View.begin(), Pos};
+            auto R{std::from_chars(algo::data(ComponentX), algo::data(ComponentX) + algo::size(ComponentX), Field.x)};
+            if (R.ec != std::errc{})
+            {
+                return {
+                    .Errc = R.ec,
+                    .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
+                    };
+            }
+
+            View = LStringView{View.begin() + Pos + 1, View.end()};
+        }
+        if constexpr (L >= 2)
+        {
+            // y comp
+            auto Pos{View.find_first_of(',')};
+            if (Pos == LStringView::npos)
+            {
+                return {
+                    .Errc = std::errc::invalid_argument,
+                    .Error = algo::sprintf("Expected ',' after y component in: \n{}", Value),
+                    };
+            }
+
+            LStringView ComponentY{View.begin(), Pos};
+            auto R{std::from_chars(algo::data(ComponentY), algo::data(ComponentY) + algo::size(ComponentY), Field.y)};
+            if (R.ec != std::errc{})
+            {
+                return {
+                    .Errc = R.ec,
+                    .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
+                    };
+            }
+
+            View = LStringView{View.begin() + Pos + 1, View.end()};
+        }
+        if constexpr (L >= 3)
+        {
+            // z comp
+            auto Pos{View.find_first_of(',')};
+            if (Pos == LStringView::npos)
+            {
+                return {
+                    .Errc = std::errc::invalid_argument,
+                    .Error = algo::sprintf("Expected ',' after z component in: \n{}", Value),
+                    };
+            }
+
+            LStringView ComponentZ{View.begin(), Pos};
+            auto R{std::from_chars(algo::data(ComponentZ), algo::data(ComponentZ) + algo::size(ComponentZ), Field.z)};
+            if (R.ec != std::errc{})
+            {
+                return {
+                    .Errc = R.ec,
+                    .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
+                    };
+            }
+
+            View = LStringView{View.begin() + Pos + 1, View.end()};
+        }
+        if constexpr (L >= 4)
+        {
+            // w comp
+            auto Pos{View.find_first_of(',')};
+            if (Pos == LStringView::npos)
+            {
+                return {
+                    .Errc = std::errc::invalid_argument,
+                    .Error = algo::sprintf("Expected ',' after w component in: \n{}", Value),
+                    };
+            }
+
+            LStringView ComponentW{View.begin(), Pos};
+            auto R{std::from_chars(algo::data(ComponentW), algo::data(ComponentW) + algo::size(ComponentW), Field.w)};
+            if (R.ec != std::errc{})
+            {
+                return {
+                    .Errc = R.ec,
+                    .Error = R.ptr ? LString{R.ptr} : std::optional<LString>{},
+                    };
+            }
+
+            View = LStringView{View.begin() + Pos + 1, View.end()};
+        }
+        if constexpr (L >= 5)
+        {
+            static_assert(algo::always_false_v<TVec<L,TReal,Q>>, "Unsupported vector length for deserialization.");
+        }
+
+        return {};
+    }
+};
+
 template<typename TArchive> requires os_string_archive_v<TArchive>
 struct TSerializer<bool, TArchive>
 {
@@ -861,6 +1115,16 @@ NODISCARD FORCEINLINE LString ToString(T const& Field) noexcept
     LOStringArchive Ar;
     Ar << Field;
     return Ar.Stream.str();
+}
+
+
+
+template<typename T> requires string_archive_for_v<os_string_archive, T> && serde_for_v<os_string_archive, T const>
+NODISCARD FORCEINLINE LString to_string(T const& Field) noexcept
+{
+    os_string_archive Ar;
+    Ar(Field);
+    return Ar.get_stream().str();
 }
 
 //# Quick conversion of the formation from T to T. If an error occurs the program will panic.

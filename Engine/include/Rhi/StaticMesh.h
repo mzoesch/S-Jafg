@@ -6,6 +6,7 @@
 #include "Rhi/VertexInput.h"
 #include "Rhi/ResourceReference.h"
 #include "Rhi/DeviceBuffers.h"
+#include "Engine/Jxx.h"
 
 namespace Jafg
 {
@@ -72,6 +73,14 @@ struct LStaticMesh final
     inline LStaticMesh() = default;
     inline LStaticMesh(LPath InPath, EStaticMeshState State = EStaticMeshStateBits::None) : Path{std::move(InPath)}
     {
+        this->Reload(State);
+    }
+    PROHIBIT_REALLOC_OF_ANY_FORM(LStaticMesh)
+    ~LStaticMesh() = default;
+
+    //# Reload, due to corruption, etc. Usually not used outside the editor.
+    void Reload(EStaticMeshState State = EStaticMeshStateBits::None)
+    {
         if (State & EStaticMeshStateBits::Host || State & EStaticMeshStateBits::Device)
         {
             auto Result{this->LoadToHost()};
@@ -89,8 +98,16 @@ struct LStaticMesh final
 
         return;
     }
-    PROHIBIT_REALLOC_OF_ANY_FORM(LStaticMesh)
-    ~LStaticMesh() = default;
+
+#if JAFG_WITH_EDITOR
+    void LoadDifferentMeshForAllClients(LPath Path, EStaticMeshState State = EStaticMeshStateBits::None)
+    {
+        this->Path = std::move(Path);
+        this->FreeFromHost();
+        this->FreeFromDevice();
+        this->Reload(State);
+    }
+#endif /* JAFG_WITH_EDITOR */
 
     FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->Vertices.size() > 0; }
     ENGINE_API EResult LoadToHost();
@@ -128,6 +145,7 @@ private:
 };
 
 typedef TSharedRef<LStaticMesh> LStaticMeshRef;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept;
 
 } /* ~Namespace Jafg */
 

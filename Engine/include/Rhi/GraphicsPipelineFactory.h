@@ -222,6 +222,7 @@ struct LDevicePipelineFactory
         .depthBiasSlopeFactor = 1.0f,
         .lineWidth = 1.0f
         };
+    std::optional<vk::SampleCountFlagBits> MultisamplingSampleCount;
     vk::Bool32 MultisamplingShadingEnable{ vk::False };
     vk::PipelineDepthStencilStateCreateInfo DepthStencilInfo{
         .depthTestEnable       = vk::True,
@@ -232,6 +233,9 @@ struct LDevicePipelineFactory
         };
 
     vk::PipelineColorBlendStateCreateInfo const* PipelineColorBlendStateCreateInfo{};
+
+    vk::Format ColorAttachmentFormat{ vk::Format::eUndefined };
+    vk::Format DepthAttachmentFormat{ vk::Format::eUndefined };
 
     std::array<vk::DynamicState, 3> DynamicStateInfo{
         vk::DynamicState::eViewport,

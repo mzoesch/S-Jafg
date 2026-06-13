@@ -40,9 +40,10 @@ private:
 
     LMaterialInstanceRef MaterialInstance;
     LTexture2Ref Texture;
+    CLASS_FIELD(EditorVisible)
     LStaticMeshRef Mesh;
 
-    JShaderSubsystem* ShaderSubsystem{nullptr};
+    JShaderSubsystem* ShaderSubsystem{};
 };
 
 } /* ~Namespace Jafg */

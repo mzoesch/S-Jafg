@@ -79,7 +79,4 @@ void Jgc::ADebugCameraComponent::OnRotate(Jafg::LInputActionValue const& Value)
 void Jgc::ADebugCameraComponent::OnVelocityMultiplierChange(Jafg::LInputActionValue const& Value)
 {
     this->VelocityMultiplier = maths::clamp(this->VelocityMultiplier + Value.GetAxis1DValue(), MinVelocityMultiplier, MaxVelocityMultiplier);
-    LOG_WARNING(LogTemporal, "{}", this->VelocityMultiplier)
-
-    return;
 }

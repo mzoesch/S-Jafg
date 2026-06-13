@@ -77,6 +77,8 @@ struct LFetchedShader final
     std::optional<vk::PipelineInputAssemblyStateCreateInfo> PipelineInputAssemblyState;
     std::optional<vk::PipelineDepthStencilStateCreateInfo> PipelineDepthStencilState;
 
+    std::optional<vk::SampleCountFlagBits> MsaaSamples;
+
     std::optional<LString> VertexInput;
     // Flatten this. with min vulkan guaranteed value.
     TArray<LString> PushConstants;

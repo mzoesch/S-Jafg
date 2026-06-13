@@ -397,9 +397,9 @@ struct erase_if_fn final
     operator()(TContainer* Container, TPred&& Pred, TProj Proj = {}) const
     {
         auto [It, End]{remove_if(*Container, std::forward<TPred>(Pred), std::move(Proj))};
-        const auto OldSize{size(Container)};
+        const auto OldSize{size(*Container)};
         Container->erase(It, End);
-        return OldSize - size(Container);
+        return OldSize - size(*Container);
     }
 };
 
@@ -521,7 +521,7 @@ struct add_spaces_to_camel_case_fn final
     }
 };
 
-#if JAFG_PLATFORM_WINDOWS
+#if JAFG_PLATFORM_USES_UTF16
 struct utf8_to_utf16_fn final
 {
     template<contiguous_iterator TIt, std::unsigned_integral TSize>
@@ -564,7 +564,34 @@ struct utf16_to_utf8_fn final
         return (*this)(algo::begin(Range), algo::size(Range));
     }
 };
-#endif /* JAFG_PLATFORM_WINDOWS */
+#endif /* JAFG_PLATFORM_USES_UTF16 */
+
+struct utf8_to_native_fn final
+{
+    template<std::contiguous_iterator TIt, std::unsigned_integral TSize>
+    NODISCARD FORCEINLINE LNativeString operator()(TIt It, TSize Size) const noexcept
+    {
+#if JAFG_PLATFORM_USES_UTF16
+        return utf8_to_utf16_fn{}(It, Size);
+#else /* JAFG_PLATFORM_USES_UTF16 */
+        LNativeString Result; Result.reserve(Size);
+        for (; Size > 0; --Size)
+        {
+            Result.push_back(*It++);
+        }
+        return Result;
+#endif /* !JAFG_PLATFORM_USES_UTF16 */
+    }
+    template<contiguous_range TRange>
+    NODISCARD FORCEINLINE LNativeString operator()(TRange&& Range) const noexcept
+    {
+#if JAFG_PLATFORM_USES_UTF16
+        return (*this)(algo::begin(Range), algo::size(Range));
+#else /* JAFG_PLATFORM_USES_UTF16 */
+        return std::forward<TRange>(Range);
+#endif /* !JAFG_PLATFORM_USES_UTF16 */
+    }
+};
 
 struct utf8_char_length_fn final
 {
@@ -626,6 +653,11 @@ inline constexpr detail::add_spaces_to_camel_case_fn add_spaces_to_camel_case{};
     inline constexpr detail::utf8_to_utf16_fn utf8_to_utf16{};
     inline constexpr detail::utf16_to_utf8_fn utf16_to_utf8{};
 #endif /* JAFG_PLATFORM_WINDOWS */
+//#
+//# A function that consumes the UTF-8, and converts it to the native string type.
+//# If the native string type is already provided, then this results in a noop.
+//#
+inline constexpr detail::utf8_to_native_fn utf8_to_native{};
 inline constexpr detail::utf8_char_length_fn utf8_char_length{};
 
 struct case_insensitive_hash final

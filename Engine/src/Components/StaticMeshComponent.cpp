@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "Rhi/PhysicalRendering.h"
 #include "Framework/Actor.h"
+#include "Rhi/OutlineRendering.h"
 
 void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
 {
@@ -67,21 +68,43 @@ void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef InMate
 
 void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
 {
-    if (this->Mesh.get() == nullptr)
-    {
-        LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
-    }
-    if (this->MaterialInstance.get() == nullptr)
-    {
-        LOG_FATAL(LogRhi, "No material instance set for this static mesh component. Failed to render.")
-    }
-    check(this->MaterialInstance->Material.get())
+    checkCode
+    (
+        if (!this->Mesh.get())
+        {
+            LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
+        }
+        if (!this->MaterialInstance.get())
+        {
+            LOG_FATAL(LogRhi, "No material instance set for this static mesh component. Failed to render.")
+        }
+        check(this->MaterialInstance->Material.get())
+    )
 
-    auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    auto& Instance{Info.UserPreferences.EditorMeshMaterialPreference.has_value()
-        ? **Info.UserPreferences.EditorMeshMaterialPreference
-        : *this->MaterialInstance
-        };
+#if JAFG_WITH_EDITOR
+    /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
+    if (!this->Mesh->IsOnDevice())
+    {
+        return;
+    }
+#endif /* !JAFG_WITH_EDITOR */
+    check(this->Mesh->IsOnDevice())
+
+    LMaterialInstance* InstancePtr{};
+    if (Info.PreferredMaterial)
+    {
+        InstancePtr = &*Info.PreferredMaterial;
+    }
+    else if (Info.UserPreferences.EditorMeshMaterialPreference)
+    {
+        InstancePtr = &**Info.UserPreferences.EditorMeshMaterialPreference;
+    }
+    else
+    {
+        InstancePtr = this->MaterialInstance.get();
+    }
+    check(InstancePtr)
+    LMaterialInstance& Instance{*InstancePtr};
 
     auto& Material{*Instance.Material};
     auto& Pipeline{Material.Pipeline};
@@ -90,7 +113,7 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
 
-    if (FetchedShader.Layouts.empty() == false)
+    if (!FetchedShader.Layouts.empty())
     {
         // Vulkan specs states at least 4.
         std::array<vk::DescriptorSet, 4> DescriptorSetsToBind;

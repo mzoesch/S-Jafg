@@ -45,7 +45,7 @@ void Jafg::LFrontendBase::TearDown()
 {
     STAT_CYCLE_FUNCTION()
 
-    LOG_VERBOSE(LogFrontEnd, "Tearing down frontend and all its surfaces.")
+    LOG_VERBOSE(LogFrontend, "Tearing down frontend and all its surfaces.")
 
     this->Collection.TearDownSubsystems();
     algo::orphan(&this->Surfaces);

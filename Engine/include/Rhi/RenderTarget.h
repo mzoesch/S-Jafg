@@ -21,19 +21,21 @@ struct LRenderTarget
         vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eAverage };
         LLinearColor ClearColor{ LinearColors::Black };
         bool bDepthTest{};
+        bool bAllowSelection{};
     };
 
     NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
 
     ENGINE_API void Initialize(CreateInfo const& Info);
+    ENGINE_API void RenderSelected(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
     ENGINE_API void Render(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
 
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
     NODISCARD FORCEINLINE constexpr rhi::extent2 const& GetExtentAsLValue() const noexcept { return this->Extent; }
 
-    NODISCARD FORCEINLINE constexpr bool IsDepthTested() const noexcept { return !!this->DepthImage.GetBuffer(); }
-    NODISCARD FORCEINLINE constexpr auto const& GetDepthImage() const noexcept { return this->DepthImage; }
-    NODISCARD FORCEINLINE constexpr auto const& GetDepthImageView() const noexcept { return this->DepthImageView; }
+    NODISCARD FORCEINLINE constexpr bool IsDepthTested() const noexcept { return !!this->DepthTarget.Image.GetBuffer(); }
+    NODISCARD FORCEINLINE constexpr auto const& GetDepthImage() const noexcept { return this->DepthTarget.Image; }
+    NODISCARD FORCEINLINE constexpr auto const& GetDepthImageView() const noexcept { return this->DepthTarget.ImageView; }
 
     NODISCARD FORCEINLINE constexpr auto const& GetMsaa() const noexcept { return this->MsaaTarget; }
     NODISCARD FORCEINLINE constexpr bool IsResolvingMsaa() const noexcept { return this->ResolveFlags != vk::ResolveModeFlagBits::eNone; }
@@ -64,26 +66,33 @@ struct LRenderTarget
         this->ResolvedTarget->BindlessIndex = Value;
     }
 
+    NODISCARD FORCEINLINE constexpr auto const& GetSelectedImage() const noexcept { return this->SelectedTarget.Image; }
+    NODISCARD FORCEINLINE constexpr auto const& GetSelectedImageView() const noexcept { return this->SelectedTarget.ImageView; }
+
     vk::ClearValue ClearColor{vk::ClearColorValue{std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}}};
 
 protected:
 
     rhi::extent2 Extent;
 
-    LDeviceImage DepthImage;
-    vk::raii::ImageView DepthImageView{ nullptr };
-
     struct Target
     {
         LDeviceImage Image;
         vk::raii::ImageView ImageView{ nullptr };
+    };
+    Target DepthTarget;
+
+    struct BindlessTarget : public Target
+    {
         mutable i64 BindlessIndex{ INDEX_NONE };
     };
-    Target MsaaTarget;
+    BindlessTarget MsaaTarget;
+
+    Target SelectedTarget;
 
     vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eNone };
     vk::ResolveModeFlagBits ResolveFlags{ vk::ResolveModeFlagBits::eAverage };
-    std::optional<Target> ResolvedTarget;
+    std::optional<BindlessTarget> ResolvedTarget;
 };
 
 } /* ~Namespace Jafg */

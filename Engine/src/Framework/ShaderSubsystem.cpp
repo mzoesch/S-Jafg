@@ -77,6 +77,11 @@ void PopulateChildFromParent(Jafg::LFetchedShader* Child, Jafg::LFetchedShader c
         Child->Layouts.insert_range(Child->Layouts.begin(), Parent.Layouts);
     }
 
+    if (Child->MsaaSamples.has_value() == false)
+    {
+        Child->MsaaSamples = Parent.MsaaSamples;
+    }
+
     return;
 }
 
@@ -419,6 +424,11 @@ void Jafg::JShaderSubsystem::RefetchShaders()
         if (ShaderJson.contains("PipelineDepthStencilState"))
         {
             Shader->PipelineDepthStencilState = ShaderJson.at("PipelineDepthStencilState").get<vk::PipelineDepthStencilStateCreateInfo>();
+        }
+
+        if (ShaderJson.contains("MultisamplingSampleCount"))
+        {
+            Shader->MsaaSamples = ShaderJson.at("MultisamplingSampleCount").get<vk::SampleCountFlagBits>();
         }
 
         if (ShaderJson.contains("VertexInput"))
