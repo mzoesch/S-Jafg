@@ -229,6 +229,7 @@ public:
         , ECollisionChannels Channels
         , LCollisionQueryParams const& Params
     ) const;
+    NODISCARD TArray<LHitResult> LineTraceNonPhysical(LWorldRay const& Ray, LWorldReal Distance) const;
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 

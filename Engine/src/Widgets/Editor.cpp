@@ -21,6 +21,17 @@
 #include "Widgets/AssetInspectors.h"
 #include "Nodes/EditableTextButton.h"
 #include "Widgets/EditorFactory.h"
+#include "Components/SceneComponent.h"
+#include "Framework/LackeyForward.h"
+#include "Framework/PersonaController.h"
+#include "Platform/Surface.h"
+#include "User/Input/InputTypes.h"
+#include "User/Input/InputActionValue.h"
+#include "Framework/Actor.h"
+#include "Framework/MaterialSubsystem.h"
+#include "Components/StaticMeshComponent.h"
+#include "User/LocalEgo.h"
+#include "Rhi/ViewProj.h"
 
 #if JAFG_WITH_EDITOR
 
@@ -198,7 +209,6 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
                 {
                     check(SharedState.get())
                     SharedState->ResetButton->SetEnabled(Content != *SharedState->Default);
-                    return;
                 })
                 .OnContentCommitted([SharedState, Field=&Info.Field](WEditableTextButton& Self, LString const& Content, ETextCommit Commit)
                 {
@@ -219,7 +229,6 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
                     {
                         Self.SetContent(*Field);
                     }
-                    return;
                 })
         ]
         + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Field=&Info.Field](WButton& Self)
@@ -230,7 +239,6 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
             check(SharedState->EditableTextButton && SharedState->ResetButton)
             SharedState->EditableTextButton->SetContent(*Field);
             SharedState->ResetButton->SetEnabled(*Field != *SharedState->Default);
-            return;
         }, MyState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
     ];
 }
@@ -257,8 +265,6 @@ void Jafg::ToggleEditorNodesTransitively(WNode& Node, bool bEnabled)
     {
         TextButton->SetEnabled(bEnabled);
     }
-
-    return;
 }
 
 Jafg::LNodeReply Jafg::WEditorCategorySeparator::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
@@ -301,15 +307,20 @@ void Jafg::WEditorCategorySeparator::_ctor_Logic()
     this->LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendDown");
     this->SetSelectable(true);
     this->SetSelected(true);
-
-    return;
 }
 
 void Jafg::WEditor::BeginClassLife(LBeginClassLifeInfo const& Info)
 {
     Super::BeginClassLife(Info);
     Finder::CreateDirectories(WEditor::GetUserLayoutsPath());
-    return;
+
+    if (!Detail::GMutableEngine->RegisterLevel({
+        .Identifier = "LevelEditor",
+        .SupremePoliciesClass = AEditorSupremePolicies::StaticClass(),
+        }))
+    {
+        LOG_WARNING(LogEditor, "Level [LevelEditor] failed to registered.")
+    }
 }
 
 Jafg::WParent& Jafg::WEditor::GetOverlayRoot() noexcept
@@ -627,4 +638,318 @@ void Jafg::WEditor::ApplyEditorLayout(LEditorLayout const& Layout)
     }
 
     return;
+}
+
+void Jafg::AEditorSupremePolicies::OnWorldPreInit()
+{
+    Super::OnWorldPreInit();
+
+    auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
+    auto MaterialInstance{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.MetallicGold")};
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZ.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{0,0,-10});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{0,0,-4});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{2,0,-4});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{4,0,-4});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Icosphere.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{6,0,-4});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cylinder.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{8,0,-4});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cone.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{10,0,-4});
+    });
+
+    SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
+    ->EmplaceRootComponent<AStaticMeshComponent>([MaterialInstance](AStaticMeshComponent& Comp)
+    {
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Torus.glb"));
+        Comp.SetMaterialInstance(std::move(MaterialInstance));
+        Comp.SetTranslation(LWorldVec3{12,0,-4});
+    });
+}
+
+void Jafg::AEditorSupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)
+{
+    Super::OnPersonaControllerCreated(Pc);
+    Pc.EmplaceComponent<AEditorPersonaControllerComponent>();
+}
+
+TJxxUnique<Jafg::APawn> Jafg::AEditorSupremePolicies::GetPawnForPersonaController(APersonaController const& Pc)
+{
+    auto Pawn{Super::GetPawnForPersonaController(Pc)};
+    if (Pawn.get() == nullptr)
+    {
+        return nullptr;
+    }
+
+    Pawn->GetComponentChecked<ASceneComponent>().SetTranslation({0.f, 2.0f, 0.f});
+    if (Pc.IsLocallyPossessed())
+    {
+        Pawn->EmplaceComponent<AEditorCameraComponent>();
+    }
+
+    return Pawn;
+}
+
+void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
+{
+    Super::OnAttach(InOwner);
+
+    LOG_TRACE(LogRhi, "Allocating debug editor buffers.")
+    auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
+    check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+
+    this->RayInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.DebugLine");
+
+    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        this->RayBuffers[Idx] = Frontend.Vk_CreateMappedBuffer({
+            .size = sizeof(LTransientRay) * AEditorPersonaControllerComponent::MaxLineCount,
+            .usage = vk::BufferUsageFlagBits::eStorageBuffer,
+            .sharingMode = vk::SharingMode::eExclusive
+            });
+        this->RayViewBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::ViewProj::CreateInfo());
+    }
+}
+
+void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Info) noexcept
+{
+    Super::Render(Info);
+
+    if (this->Rays.empty())
+    {
+        return;
+    }
+
+    check(this->RayInstance.get())
+    check(this->RayInstance->FrequentDescriptorSets[Info.Frame].size() == 1)
+    auto& Set = this->RayInstance->FrequentDescriptorSets[Info.Frame][0].second;
+
+    {
+        auto& RayBuffer = this->RayBuffers[Info.Frame];
+        check(RayBuffer.GetData())
+        std::memcpy(RayBuffer.GetData(), this->Rays.data(), sizeof(LTransientRay) * this->Rays.size());
+        vk::DescriptorBufferInfo BufferInfo{
+            .buffer = RayBuffer.GetBuffer(),
+            .offset = 0,
+            .range = sizeof(LTransientRay) * this->Rays.size(),
+            };
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = Set,
+            .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eStorageBuffer,
+            .pBufferInfo = &BufferInfo,
+            }};
+        Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
+
+    {
+        LMat4F View = Info.WorldData.view;
+        LMat4F Proj = Info.WorldData.proj;
+        UBO::ViewProj Vp;
+        Vp.Mat = Proj * View;
+        auto& ViewProjBuffer = this->RayViewBuffers[Info.Frame];
+        Vp.Upload(ViewProjBuffer);
+        auto BufferInfo{Vp.WriteInfo(*ViewProjBuffer)};
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = Set,
+            .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &BufferInfo,
+            }};
+        Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
+
+    Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->RayInstance->Material->Pipeline);
+
+    {
+        vk::DescriptorSet RayBufferDs = Set;
+        Info.CommandBuffer.bindDescriptorSets2({
+            .stageFlags = vk::ShaderStageFlagBits::eVertex,
+            .layout = *this->RayInstance->Material->Pipeline.Layout,
+            .firstSet = 0,
+            .descriptorSetCount = 1,
+            .pDescriptorSets = &RayBufferDs,
+            .dynamicOffsetCount = 0,
+            .pDynamicOffsets = nullptr
+            });
+    }
+
+    Info.CommandBuffer.draw(2, static_cast<u32>(this->Rays.size()), 0, 0);
+}
+
+void Jafg::AEditorPersonaControllerComponent::AddRay(RayCreateInfo Ray)
+{
+    this->Rays.emplace_back(Ray.WorldRay.Origin, Ray.WorldRay.Origin + Ray.WorldRay.Direction * Ray.Length);
+}
+
+bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
+{
+    if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
+    {
+        if (auto* Lackey{Ctrl->TryGetOwningLackey<ELackey::Local>()})
+        {
+            bool b1{Lackey->GetUserInput().ActivateContext(LUserInputTag::AsTagChecked("RhiDebug"))};
+            bool b2{Lackey->GetUserInput().ActivateContext(LUserInputTag::AsTagChecked("EditorCameraCapturer"))};
+            Lackey->GetUserInput().SetConsumeMouse(false);
+            return b1 && b2;
+        }
+    }
+    return false;
+}
+
+void Jafg::AEditorCameraComponent::OnTrace(rhi::extent2 Extent, LVec2F Location)
+{
+    LOG_WARNING(LogTemporal, "[{}] [{}]", Extent, maths::to_string(Location))
+
+    LVec2F ExtentF{static_cast<float>(Extent.width), static_cast<float>(Extent.height)};
+
+    auto& Pawn{this->GetOwningPawn()};
+    auto Eye{Pawn.GetEye()};
+
+    LMat4F view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up);
+    LMat4F proj = glm::perspectiveRH_ZO(
+        Eye.VertFov,
+        ExtentF.x / ExtentF.y,
+        Eye.NearFrustum, Eye.FarFrustum
+        );
+
+    float x = (2.0f * Location.x) / ExtentF.x - 1.0f;
+    float y = 1.0f - (2.0f * Location.y) / ExtentF.y;
+
+    LMat4F invProj = inverse(proj);
+    LMat4F invView = inverse(view);
+
+    LVec4F nearClip = LVec4F(x, y, 0.0f, 1.0f);
+    LVec4F farClip  = LVec4F(x, y, 1.0f, 1.0f);
+
+    LVec4F nearView = invProj * nearClip; nearView /= nearView.w;
+    LVec4F farView  = invProj * farClip;  farView  /= farView.w;
+
+    LVec3F nearWorld = LVec3F(invView * nearView);
+    LVec3F farWorld  = LVec3F(invView * farView);
+
+    LWorldRay ray;
+    ray.Origin = nearWorld;
+    ray.Direction = normalize(farWorld - nearWorld);
+
+    LOG_WARNING(LogTemporal, "      Ray Origin: [{}], Ray Direction: [{}]",
+        maths::to_string(ray.Origin), maths::to_string(ray.Direction))
+
+    auto& Pc{*Pawn.GetOwningControllerChecked()};
+    if (auto* PcComp{Pc.GetComponent<AEditorPersonaControllerComponent>()})
+    {
+        PcComp->AddRay({
+            .Tint = Colors::Red,
+            .Duration = 100.0f,
+            .Length = 500.0f,
+            .WorldRay = ray,
+            });
+    }
+
+    // auto Hits = Pawn.GetWorld().LineTraceNonPhysical(ray, 10'000.0f);
+    // for (auto& Hit: Hits)
+    // {
+    //     LOG_WARNING(LogTemporal, "      Hit: [{}]", Hit.Actor.GetNameAsString())
+    // }
+}
+
+void Jafg::AEditorCameraComponent::OnMove(LInputActionValue const& Value)
+{
+    if (auto* Sc{this->GetOwningActor().GetComponent<ASceneComponent>()})
+    {
+        LWorldVec3 Front{Sc->GetRotator() * maths::forward_vector<LVec3F>};
+
+        auto Value3D{Value.GetAxis3DValue() * this->VelocityMultiplier};
+
+        Value3D *= this->GetWorld().GetDeltaTime();
+
+        LWorldVec3 Delta{maths::zero_vector<LWorldVec3>};
+        Delta += Front * Value3D.x;
+        Delta += glm::normalize(glm::cross(Front, maths::up_vector<LWorldVec3>)) * Value3D.y;
+        Delta += maths::up_vector<LWorldVec3> * Value3D.z;
+        Sc->AddTranslation(Delta);
+    }
+    else
+    {
+        LOG_WARNING(LogEcs, "Component [{}] is attached to [{}] which does not possess a [{}].",
+            this->GetNameAsString(),
+            this->GetOwningActor().GetNameAsString(),
+            algo::type_name<ASceneComponent>()
+            )
+    }
+}
+
+void Jafg::AEditorCameraComponent::OnRotate(LInputActionValue const& Value)
+{
+    if (auto* Sc{this->GetOwningActor().GetComponent<ASceneComponent>()})
+    {
+        auto Value2D{Value.GetAxis2DValue() * this->Sensitivity};
+
+        /* Yaw */
+        Sc->AddRotator(maths::angle_axis(-glm::radians(Value2D.x), maths::up_vector<LWorldVec3>), ESceneSweep::Teleport);
+
+        /* Pitch */
+        LWorldReal Pitch{maths::clamp(this->CachedPitch + glm::radians(Value2D.y), glm::radians(-89.9f), glm::radians(89.9f))};
+        Sc->AddRotator(maths::angle_axis(-(this->CachedPitch - Pitch), Sc->GetRotator() * maths::right_vector<LWorldVec3>), ESceneSweep::Teleport);
+
+        Sc->SetRotator(maths::normalize(Sc->GetRotator()), ESceneSweep::Teleport);
+    }
+    else
+    {
+        LOG_WARNING(LogEcs, "Component [{}] is attached to [{}] which does not possess a [{}].",
+            this->GetNameAsString(),
+            this->GetOwningActor().GetNameAsString(),
+            algo::type_name<ASceneComponent>()
+            )
+    }
+}
+
+void Jafg::AEditorCameraComponent::OnVelocityMultiplierChange(LInputActionValue const& Value)
+{
+    this->VelocityMultiplier = maths::clamp(this->VelocityMultiplier + Value.GetAxis1DValue(), MinVelocityMultiplier, MaxVelocityMultiplier);
 }

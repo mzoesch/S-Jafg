@@ -29,7 +29,6 @@ public:
     {
         Super::UpdateDesiredSize();
         this->SetDesiredSizeInSpt(StackedControlFlow.UpdateDesiredSize(*this));
-        return;
     }
     virtual LVec2F GetAnchoredSizeForChild(WNode const& DirectChild) const override
     {

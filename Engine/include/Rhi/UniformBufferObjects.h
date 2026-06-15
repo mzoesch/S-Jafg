@@ -22,12 +22,12 @@ namespace UBO
 template<typename T, u32 Binding, vk::ShaderStageFlagBits... InFlags>
 struct TUbo
 {
-    inline void Upload(LMappedDeviceBuffer const& Buffer) const noexcept
+    void Upload(LMappedDeviceBuffer const& Buffer) const noexcept
     {
         check(Buffer.GetData() != nullptr)
         std::memcpy(Buffer.GetData(), this, sizeof(T));
     }
-    inline static constexpr vk::BufferCreateInfo CreateInfo()
+    static constexpr vk::BufferCreateInfo CreateInfo()
     {
         return vk::BufferCreateInfo{
             .size = sizeof(T),
@@ -35,7 +35,7 @@ struct TUbo
             .sharingMode = vk::SharingMode::eExclusive
             };
     }
-    inline static constexpr vk::DescriptorBufferInfo WriteInfo(vk::Buffer Buffer, vk::DeviceSize Offset = 0) noexcept
+    static constexpr vk::DescriptorBufferInfo WriteInfo(vk::Buffer Buffer, vk::DeviceSize Offset = 0) noexcept
     {
         return {
             .buffer = Buffer,
@@ -57,7 +57,7 @@ struct TUbo
 
         return Bindings;
     }
-    inline static constexpr vk::ShaderStageFlags Flags() noexcept { return (InFlags | ...); }
+    static constexpr vk::ShaderStageFlags Flags() noexcept { return (InFlags | ...); }
 };
 
 } /* ~Namespace UBO */

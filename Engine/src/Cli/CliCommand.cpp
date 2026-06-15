@@ -99,7 +99,7 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
         return true;
     }
 
-    i32 ArgCursor { 0 };
+    auto ArgCursor { 0uz };
     for (const LCliType& Param : this->Signature)
     {
         if (ArgCursor >= Args.GetArgCount())
@@ -133,7 +133,7 @@ TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& A
 
     TArray<LString> Out;
 
-    i32 ArgCursor { 0 };
+    auto ArgCursor { 0uz };
     for (const LCliType& Param : this->Signature)
     {
         if (ArgCursor >= Args.GetArgCount())

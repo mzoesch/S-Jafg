@@ -44,7 +44,7 @@ struct LRenderTarget
     FORCEINLINE constexpr bool IsMsaaBindless() const noexcept { return this->MsaaTarget.BindlessIndex != INDEX_NONE; }
     FORCEINLINE constexpr u32 GetMsaaBindlessIndex() const noexcept
     {
-        check(this->MsaaTarget.BindlessIndex >= std::numeric_limits<u32>::min() && this->MsaaTarget.BindlessIndex <= std::numeric_limits<u32>::max())
+        check(this->MsaaTarget.BindlessIndex >= 0 && this->MsaaTarget.BindlessIndex <= static_cast<i64>(std::numeric_limits<u32>::max()))
         return static_cast<u32>(this->MsaaTarget.BindlessIndex);
     }
     FORCEINLINE constexpr bool IsResolvedBindless() const noexcept { check(this->ResolvedTarget.has_value()) return this->ResolvedTarget->BindlessIndex != INDEX_NONE; }

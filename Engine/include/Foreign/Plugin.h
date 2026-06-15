@@ -108,27 +108,22 @@ struct LLoadedPlugin final
 {
     friend LEngine;
 
-    enum { InvalidUuid = 0 };
+    enum : u8 { InvalidUuid = 0 };
 
     FORCEINLINE LLoadedPlugin() = default;
-    FORCEINLINE LLoadedPlugin(LFetchedPlugin const& InFetched, LPath const& InBinPath)
-        : Fetched(InFetched), BinPath(InBinPath)
+    FORCEINLINE LLoadedPlugin(LFetchedPlugin InFetched, LPath InBinPath)
+        : Fetched{std::move(InFetched)}, BinPath{std::move(InBinPath)}
     {
     }
 
     FORCEINLINE LLoadedPlugin(LLoadedPlugin const& Other) noexcept = delete;
     FORCEINLINE LLoadedPlugin(LLoadedPlugin&& Other) noexcept
+        : Fetched{std::move(Other.Fetched)}, BinPath{std::move(Other.BinPath)}, Uuid{Other.Uuid}
+        , NativeHandle{Other.NativeHandle}, Lifetime{std::move(Other.Lifetime)}
     {
-        this->Fetched = std::move(Other.Fetched);
-        this->BinPath = std::move(Other.BinPath);
-        this->Uuid = Other.Uuid;
-        this->NativeHandle = Other.NativeHandle;
-        this->Lifetime = std::move(Other.Lifetime);
         Other.Uuid = InvalidUuid;
         Other.NativeHandle = nullptr;
         check( Other.Lifetime.get() == nullptr )
-
-        return;
     }
 
     FORCEINLINE LLoadedPlugin& operator=(const LLoadedPlugin& Other) noexcept = delete;
@@ -167,8 +162,8 @@ struct LLoadedPlugin final
 private:
 
     EPluginLoadReturnCode::Type OpenLibrary();
-    void PrepareLibraryClose(const EPluginShutdownReason::Type InReason);
-    EPluginLoadReturnCode::Type CloseLibrary(const EPluginShutdownReason::Type InReason);
+    void PrepareLibraryClose(EPluginShutdownReason::Type InReason);
+    EPluginLoadReturnCode::Type CloseLibrary(EPluginShutdownReason::Type InReason);
 
     LFetchedPlugin Fetched;
     LPath BinPath;

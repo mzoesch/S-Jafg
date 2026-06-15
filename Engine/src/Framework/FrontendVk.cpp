@@ -994,7 +994,7 @@ Jafg::LDetailedDeviceBuffer Jafg::LFrontendVk::Vk_CreateDetailedBuffer(vk::Buffe
         )};
     check( Res == VK_SUCCESS )
 
-    return { Buffer, Allocation, std::move(AllocationInfo) };
+    return { Buffer, Allocation, AllocationInfo };
 }
 
 Jafg::LMappedDeviceBuffer Jafg::LFrontendVk::Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const

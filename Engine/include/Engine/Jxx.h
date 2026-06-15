@@ -452,7 +452,6 @@ public:
         check(!this->FullyQualifiedName.empty())
         this->Tag = Detail::GetJxxTagRegistry().RegisterOrGet(this->FullyQualifiedName);
         check(this->Tag.IsSet())
-        return;
     }
     PROHIBIT_REALLOC_OF_ANY_FORM(LJxxRecord)
     ~LJxxRecord() noexcept = default;
@@ -747,7 +746,6 @@ struct TJxxClassFieldIterator
         }
         this->Chain.reserve(Transient.size());
         this->Chain.assign(Transient.rbegin(), Transient.rend());
-        return;
     }
 
     NODISCARD FORCEINLINE Iterator begin() const noexcept
@@ -817,7 +815,7 @@ struct TNewStaticCxxType final{};
 struct NewStaticCxxFn
 {
     template<typename TCxxClass, typename... TArgs>
-    inline static constexpr bool is_constructible_v{requires(TArgs&&... Args){new TCxxClass{std::forward<TArgs>(Args)...};}};
+    static constexpr bool is_constructible_v{requires(TArgs&&... Args){new TCxxClass{std::forward<TArgs>(Args)...};}};
 
     template<typename TCxxClass, typename... TArgs> requires std::is_base_of_v<JCxxClass, TCxxClass>
         && NewStaticCxxFn::is_constructible_v<TCxxClass, TArgs&&...>
@@ -831,24 +829,24 @@ inline constexpr NewStaticCxxFn NewStaticCxx{};
 template<typename TCxxClass> requires algo::is_base_of_weak_v<JCxxClass, TCxxClass>
 struct TDeferredObjectExec
 {
-    inline constexpr TDeferredObjectExec() noexcept = delete;
-    inline constexpr TDeferredObjectExec(TCxxClass& InClass) noexcept : Class(InClass) {}
-    inline constexpr TDeferredObjectExec(TDeferredObjectExec&& O) noexcept : Class(O.Class), bReleased{O.bReleased}
+    constexpr TDeferredObjectExec() noexcept = delete;
+    constexpr TDeferredObjectExec(TCxxClass& InClass) noexcept : Class(InClass) {}
+    constexpr TDeferredObjectExec(TDeferredObjectExec&& O) noexcept : Class(O.Class), bReleased{O.bReleased}
     {
         O.bReleased = true;
     }
     template<typename UCxxClass> requires std::is_base_of_v<JCxxClass, UCxxClass>
         && (std::is_base_of_v<TCxxClass, UCxxClass> || std::is_base_of_v<UCxxClass, TCxxClass>)
-    inline constexpr TDeferredObjectExec(TDeferredObjectExec<UCxxClass>&& O) noexcept :
+    constexpr TDeferredObjectExec(TDeferredObjectExec<UCxxClass>&& O) noexcept :
         Class{static_cast<TCxxClass&>(O.Class)}, bReleased{O.bReleased}
     {
         O.bReleased = true;
     }
 
-    inline constexpr TDeferredObjectExec& operator=(TDeferredObjectExec&&) noexcept = delete;
+    constexpr TDeferredObjectExec& operator=(TDeferredObjectExec&&) noexcept = delete;
     PROHIBIT_COPY(TDeferredObjectExec)
 
-    inline ~TDeferredObjectExec()
+    ~TDeferredObjectExec()
     {
         if (!this->bReleased)
         {
@@ -856,23 +854,23 @@ struct TDeferredObjectExec
         }
     }
 
-    inline constexpr TCxxClass* release() noexcept
+    constexpr TCxxClass* release() noexcept
     {
         check(this->bReleased == false)
         this->bReleased = true;
         return &this->Class;
     }
 
-    inline TCxxClass& operator*() noexcept { return this->Class; }
-    inline TCxxClass const& operator*() const noexcept { return this->Class; }
-    inline TCxxClass* operator->() noexcept { return &this->Class; }
-    inline TCxxClass const* operator->() const noexcept { return &this->Class; }
+    TCxxClass& operator*() noexcept { return this->Class; }
+    TCxxClass const& operator*() const noexcept { return this->Class; }
+    TCxxClass* operator->() noexcept { return &this->Class; }
+    TCxxClass const* operator->() const noexcept { return &this->Class; }
 
-    inline explicit operator TCxxClass*() noexcept { return &this->Class; }
-    inline explicit operator TCxxClass const*() const noexcept { return &this->Class; }
+    explicit operator TCxxClass*() noexcept { return &this->Class; }
+    explicit operator TCxxClass const*() const noexcept { return &this->Class; }
 
-    inline TCxxClass* operator&() noexcept { return &this->Class; }
-    inline TCxxClass* operator&() const noexcept { return &this->Class; }
+    TCxxClass* operator&() noexcept { return &this->Class; }
+    TCxxClass* operator&() const noexcept { return &this->Class; }
 
     TCxxClass& Class;
     bool bReleased{};
@@ -883,7 +881,7 @@ struct NewDeferredObjectFn
 {
     //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new deferred jxx-object.
     template<typename TCxxClass>
-    inline static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+    static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
 
     TResult<TRootNode> operator()(TDynInit const& Init) const
     {
@@ -940,7 +938,7 @@ struct NewObjectFn
 {
     //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new jxx-object.
     template<typename TCxxClass>
-    inline static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+    static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
 
     TRootNode* operator()(TDynInit const& Init) const
     {
@@ -1038,8 +1036,6 @@ public:
         // with a call to the delete operator).
         //
         check(this->bGarbage)
-
-        return;
     }
 
     //#
@@ -1086,7 +1082,6 @@ public:
         {
             this->PullConfig();
         }
-        return;
     }
 #if JAFG_DO_DOUBLE_CHECK_LIFETIMES
     NODISCARD FORCEINLINE constexpr bool _HasBegunLife() const noexcept { return this->bHasBegunLife; }
@@ -1107,7 +1102,6 @@ public:
             return;
         }
         this->MarkAsGarbage(EMarkAsGarbageBehavior::Default, Reason);
-        return;
     }
     //# Whether this object is marked as garbage and will be killed very soon. Usually at the very end of a tick.
     NODISCARD FORCEINLINE bool _IsGarbage() const noexcept { return this->bGarbage; }
@@ -1131,7 +1125,6 @@ public:
         {
             this->MarkAsGarbage(EMarkAsGarbageBehavior::DevourNow, Reason);
         }
-        return;
     }
 
     //#
@@ -1139,14 +1132,13 @@ public:
     //# Use this for immediate reaction to be killed. Otherwise, use the dctor that will usually be called at the end
     //# of the tick this delegate was called.
     //#
-    inline virtual void OnGarbage(EJxxRecordTearDownReason Reason)
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason)
     {
         check(this->_IsGarbage())
         if (this->GetVirtualTable().IsConfig())
         {
             this->PushConfig();
         }
-        return;
     }
 
     //#
@@ -1244,7 +1236,7 @@ private:
     ConstructionHelperLine,                                                     \
     ... /*OptionalAPI*/                                                         \
     )                                                                           \
-    inline static ::TSubclassOf<MyClassName> StaticSubclass() noexcept          \
+    static ::TSubclassOf<MyClassName> StaticSubclass() noexcept          \
     {                                                                           \
         return TSubclassOf<MyClassName>(MyClassName::StaticClass());            \
     }
@@ -1254,10 +1246,10 @@ class LClassOuter
 {
 public:
 
-    inline LClassOuter() noexcept : HumanReadableName("<anonymous>") { }
+    LClassOuter() noexcept : HumanReadableName("<anonymous>") { }
     ENGINE_API explicit LClassOuter(LString HumanReadableName, bool bRegisterToEngine = true) noexcept;
     PROHIBIT_REALLOC_OF_ANY_FORM(LClassOuter)
-    inline virtual ~LClassOuter() noexcept { this->TearDown(); }
+    virtual ~LClassOuter() noexcept { this->TearDown(); }
 
     ENGINE_API void TearDown() noexcept;
 
@@ -1273,7 +1265,6 @@ public:
     {
         check(this->IsHiredHere(Employee) == false)
         this->Employees.emplace_back(Employee);
-        return;
     }
 
     FORCEINLINE bool IsHiredHere(JCxxClass const* Employee) const noexcept { return algo::contains(this->Employees, Employee, &TUnique<JCxxClass>::get); }
@@ -1589,8 +1580,6 @@ struct TJxxDelete
         static_assert(sizeof(TCxxClass) > 0, "Can't delete pointer to incomplete type.");
         check(Ptr)
         Ptr->MarkAsGarbage_v2();
-
-        return;
     }
 };
 
@@ -1615,7 +1604,6 @@ struct TClassStorage final
             this->Outer = &InPointer->GetOuter();
         }
         checkCode(this->CheckValidState())
-        return;
     }
     FORCEINLINE constexpr TClassStorage(TClassStorage const& Other) noexcept = default;
     FORCEINLINE constexpr TClassStorage& operator=(TClassStorage const& Rhs) noexcept = default;
@@ -1626,7 +1614,6 @@ struct TClassStorage final
         Other.Outer = nullptr;
         Other.Pointer = nullptr;
         checkCode(this->CheckValidState(); Other.CheckValidState())
-        return;
     }
     FORCEINLINE constexpr TClassStorage& operator=(TClassStorage&& Rhs) noexcept
     {
@@ -1647,7 +1634,6 @@ struct TClassStorage final
         this->Outer = Other.Outer;
         this->Pointer = Other.Pointer;
         checkCode(this->CheckValidState())
-        return;
     }
     template<typename UObj> requires(!std::is_same_v<TObj, UObj> && std::is_base_of_v<TObj, UObj>)
     FORCEINLINE constexpr TClassStorage& operator=(TClassStorage<UObj> const& Rhs) noexcept
@@ -1665,7 +1651,6 @@ struct TClassStorage final
         InOther.Outer = nullptr;
         InOther.Pointer = nullptr;
         checkCode(this->CheckValidState() && InOther.CheckValidState())
-        return;
     }
     template<typename UObj> requires(!std::is_same_v<TObj, UObj> && std::is_base_of_v<TObj, UObj>)
     FORCEINLINE constexpr TClassStorage& operator=(TClassStorage<UObj>&& Rhs) noexcept
@@ -1907,7 +1892,7 @@ struct NewUniqueObjectFn
 {
     //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new jxx-object.
     template<typename TCxxClass>
-    inline static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+    static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
 
     FORCEINLINE TJxxUnique<TRootNode> operator()(TDynInit const& Init) const
     {

@@ -708,6 +708,8 @@ i32 Jafg::JShaderSubsystem::RecompileShader(LShaderCompilationRequest const& Req
         }
     }
 
+    SS << " -reflection-json " << Request.FetchedShader.GetDst().replace_extension(".json").string();
+
     auto SSStr{SS.str()};
     LOG_VERBOSE(LogSystem, "Executing: [{}].", SSStr)
     return std::system(SSStr.c_str());

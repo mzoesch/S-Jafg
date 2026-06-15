@@ -62,7 +62,6 @@ public:
             Child->OnSurfaceResize();
             continue;
         }
-        return;
     }
     virtual bool IsNodeInVisiblePath(WNode const& Node) const override;
     virtual WNode const* FindNodeInVisiblePathImpl(TSubclassOf<WNode> Class) const noexcept override;
@@ -150,8 +149,6 @@ inline Detail::LBeginStylingFnResult::~LBeginStylingFnResult()
 #if JAFG_DO_CHECKS
     this->Factory->_Release();
 #endif /* JAFG_DO_CHECKS */
-
-    return;
 }
 
 template<typename TNode /* = WNode */> requires std::is_base_of_v<WNode, TNode>

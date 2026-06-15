@@ -30,7 +30,6 @@ public:
     {
         Super::UpdateDesiredSize();
         this->SetDesiredSizeInSpt(DynamicControlFlowOrchestration.UpdateDesiredSize(this->Cf, *this, this->Space));
-        return;
     }
     virtual LVec2F GetAnchoredSizeForChild(WNode const& DirectChild) const override
     {

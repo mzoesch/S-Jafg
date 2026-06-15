@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-enum struct ENodePrimitiveControlflow{ Stacked, Horizontal, Vertical, };
+enum struct ENodePrimitiveControlflow : u8 { Stacked, Horizontal, Vertical, };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(ENodePrimitiveControlflow, {
     {ENodePrimitiveControlflow::Stacked, "Stacked"},

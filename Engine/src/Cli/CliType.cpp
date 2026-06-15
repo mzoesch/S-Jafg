@@ -21,7 +21,7 @@ bool Jafg::LCliType::SetVariable(const LCommandArgs& InValue, LString* OutValue)
     return true;
 }
 
-bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
+bool Jafg::LCliType::CanParse(const LCommandArgs& Args, std::size_t* Cursor) const
 {
     check(Cursor)
     if (this->OnParseType.IsValid())
@@ -41,7 +41,7 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
     return CliType->OnParseType.Invoke(Args, Cursor);
 }
 
-TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const
+TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const std::size_t Cursor, const u32 MaxSuggestions) const
 {
     if (this->OnSuggest.IsValid())
     {

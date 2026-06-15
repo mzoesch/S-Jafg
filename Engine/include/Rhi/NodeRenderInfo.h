@@ -14,8 +14,8 @@ class JFontSubsystem;
 
 struct LNodeRenderInfo : public LRenderInfo
 {
-    inline static constexpr u64 MaxBatchCount{16};
-    inline static constexpr u64 MaxInstanceCount{ 16'384 };
+    static constexpr u64 MaxBatchCount{16};
+    static constexpr u64 MaxInstanceCount{ 16'384 };
 
     LViewport const& Viewport;
     JTextureSubsystem const& TextureSubsystem;
@@ -32,11 +32,11 @@ struct LNodeRenderInfo : public LRenderInfo
 
     TArray<std::pair<vk::Rect2D, u64>>& Batches;
     TArray<LVisualInstance>& VisualInstances;
-    inline void BeginNewBatch(vk::Rect2D const& Scissor) const noexcept
+    void BeginNewBatch(vk::Rect2D const& Scissor) const noexcept
     {
         this->Batches.emplace_back(Scissor, this->VisualInstances.size());
     }
-    inline bool AddInstance(LVisualInstance Instance) const noexcept
+    bool AddInstance(LVisualInstance Instance) const noexcept
     {
         if (this->Cull.has_value())
         {

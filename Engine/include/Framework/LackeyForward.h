@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-enum struct ELackey
+enum struct ELackey : u8
 {
     Local, Proxy,
 };

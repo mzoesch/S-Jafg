@@ -101,7 +101,7 @@ inline decltype(auto) vk_build(vk::raii::Device const& d, T const& info, vk::Opt
 }
 
 template<typename T>
-inline auto vk_allocate(vk::raii::Device const& d, T const& info) noexcept
+auto vk_allocate(vk::raii::Device const& d, T const& info) noexcept
 {
 #define DETAIL_RHI_VK_ALLOCATE_IMPL(T, Count, Pool, pool) \
     check(d.getDispatcher()->vkAllocate##T##s); \
@@ -577,7 +577,7 @@ enum struct framework
     Cocoa,
     Win32,
 };
-NODISCARD LStringView inline constexpr to_string(framework Framework) noexcept
+NODISCARD LStringView constexpr to_string(framework Framework) noexcept
 {
     switch (Framework)
     {
@@ -637,7 +637,7 @@ enum struct present_mode
     FifoLatestReady,
 };
 SERDE_STRING_ENUM_NON_INTRUSIVE(present_mode, Immediate, Mailbox, Fifo, FifoRelaxed, FifoLatestReady)
-NODISCARD inline constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mode mode) noexcept
+NODISCARD constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mode mode) noexcept
 {
     switch (mode)
     {
@@ -649,7 +649,7 @@ NODISCARD inline constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mod
     }
     std::unreachable();
 }
-NODISCARD inline constexpr std::optional<present_mode> vk_from_khr_present_mode(vk::PresentModeKHR mode) noexcept
+NODISCARD constexpr std::optional<present_mode> vk_from_khr_present_mode(vk::PresentModeKHR mode) noexcept
 {
     switch (mode)
     {
@@ -661,7 +661,7 @@ NODISCARD inline constexpr std::optional<present_mode> vk_from_khr_present_mode(
     default: return std::nullopt;
     }
 }
-NODISCARD inline constexpr bool does_present_mode_allow_uncapped_tps(present_mode mode) noexcept
+NODISCARD constexpr bool does_present_mode_allow_uncapped_tps(present_mode mode) noexcept
 {
     switch (mode)
     {
@@ -734,7 +734,7 @@ enum struct tex_coord_behavior : u8
 namespace uv
 {
 inline constexpr LVec4F identity{0.0f, 0.0f, 1.0f, 1.0f};
-NODISCARD inline constexpr LVec4F fit_v(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
+NODISCARD constexpr LVec4F fit_v(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
 {
     f32 CenterU{(UVs.x + UVs.z) * 0.5f};
     f32 ScaledU{(UVs.w - UVs.y) * ((TargetExtent.x  / TargetExtent.y) / (Extent.x / Extent.y))};
@@ -743,7 +743,7 @@ NODISCARD inline constexpr LVec4F fit_v(LVec4F UVs, LVec2F Extent, LVec2F Target
         CenterU + ScaledU * 0.5f, UVs.w
         };
 }
-NODISCARD inline constexpr LVec4F fit_h(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
+NODISCARD constexpr LVec4F fit_h(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
 {
     f32 CenterV{(UVs.y + UVs.w) * 0.5f};
     f32 ScaledV{(UVs.z - UVs.x) * ((Extent.x / Extent.y) / (TargetExtent.x  / TargetExtent.y))};
@@ -752,7 +752,7 @@ NODISCARD inline constexpr LVec4F fit_h(LVec4F UVs, LVec2F Extent, LVec2F Target
         UVs.z, CenterV + ScaledV * 0.5f
         };
 }
-NODISCARD inline constexpr LVec4F fit_aspect(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
+NODISCARD constexpr LVec4F fit_aspect(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent) noexcept
 {
     f32 AspectRatio{(TargetExtent.x  / TargetExtent.y) / (Extent.x / Extent.y)};
     if (AspectRatio > 1.0f)
@@ -761,14 +761,14 @@ NODISCARD inline constexpr LVec4F fit_aspect(LVec4F UVs, LVec2F Extent, LVec2F T
     }
     return fit_h(UVs, Extent, TargetExtent);
 }
-NODISCARD inline constexpr LVec4F fit(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent, tex_coord_behavior Behavior) noexcept
+NODISCARD constexpr LVec4F fit(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent, tex_coord_behavior Behavior) noexcept
 {
     if (Behavior == tex_coord_behavior::FitV) { return fit_v(UVs, Extent, TargetExtent); }
     if (Behavior == tex_coord_behavior::FitH) { return fit_h(UVs, Extent, TargetExtent); }
     if (Behavior == tex_coord_behavior::FitAspect) { return fit_aspect(UVs, Extent, TargetExtent); }
     return UVs;
 }
-NODISCARD inline constexpr LVec4F scale(LVec4F const& UVs, f32 Scale) noexcept
+NODISCARD constexpr LVec4F scale(LVec4F const& UVs, f32 Scale) noexcept
 {
     check(Scale != 0.0f)
     LVec2F Center{(maths::xy(UVs) + maths::zw(UVs)) * 0.5f};
@@ -778,7 +778,7 @@ NODISCARD inline constexpr LVec4F scale(LVec4F const& UVs, f32 Scale) noexcept
         Center + HalfSize,
         };
 }
-NODISCARD inline constexpr LVec4F pad(LVec4F UVs, f32 Padding, LVec2F Extent) noexcept
+NODISCARD constexpr LVec4F pad(LVec4F UVs, f32 Padding, LVec2F Extent) noexcept
 {
     LVec2F PaddingUV{Padding / Extent.x, Padding / Extent.y};
     return {
@@ -786,7 +786,7 @@ NODISCARD inline constexpr LVec4F pad(LVec4F UVs, f32 Padding, LVec2F Extent) no
         maths::zw(UVs) - PaddingUV,
         };
 }
-NODISCARD inline constexpr LVec4F pipe(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent, tex_coord_behavior Behavior
+NODISCARD constexpr LVec4F pipe(LVec4F UVs, LVec2F Extent, LVec2F TargetExtent, tex_coord_behavior Behavior
     , f32 Padding = 0.0f, f32 Scale = 1.0f) noexcept
 {
     return pad(scale(fit(UVs, Extent, TargetExtent, Behavior), Scale), Padding, Extent);

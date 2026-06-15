@@ -14,7 +14,7 @@ namespace Detail{ struct TextLocationFn; }
 enum struct ETextHAlign : u8 { Left, Center, Right, /* TODO: Justify */ };
 enum struct ETextVAlign : u8 { Top, Center, Bottom };
 
-enum struct ETextCutoff
+enum struct ETextCutoff : u8
 {
     Cutoff,
     Fade,

@@ -11,7 +11,7 @@ class LCliType;
 struct LCommandArgs;
 
 //# @return True if the argument can be parsed as a valid type.
-typedef TFunction<bool(LCommandArgs const& Args, i32* Cursor)> LOnParseType;
+typedef TFunction<bool(LCommandArgs const& Args, std::size_t* Cursor)> LOnParseType;
 
 //#
 //# @param OutValue Is always valid.
@@ -20,7 +20,7 @@ typedef TFunction<bool(LCommandArgs const& Args, i32* Cursor)> LOnParseType;
 typedef TFunction<bool(const LCommandArgs& InValue, LString* OutValue)> LOnValueSet;
 
 //# @return A list of suggestions for the given arguments. The first index is the most common suggestion.
-typedef TFunction<TArray<LString>(LCommandArgs const& Args, i32 Cursor, u32 MaxSuggestions)> LOnSuggestType;
+typedef TFunction<TArray<LString>(LCommandArgs const& Args, std::size_t Cursor, u32 MaxSuggestions)> LOnSuggestType;
 
 //#
 //# Utility struct for a type T that may accept an arbitrary number of arguments which fit for said type T.
@@ -95,8 +95,8 @@ public:
     //#
     ENGINE_API bool SetVariable(const LCommandArgs& InValue, LString* OutValue) const;
 
-    ENGINE_API bool CanParse(const LCommandArgs& Args, i32* Cursor) const;
-    ENGINE_API TArray<LString> Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const;
+    ENGINE_API bool CanParse(const LCommandArgs& Args, std::size_t* Cursor) const;
+    ENGINE_API TArray<LString> Suggest(const LCommandArgs& Args, std::size_t Cursor, u32 MaxSuggestions) const;
 
     FORCEINLINE auto GetDefault() const -> const LString& { return this->Default; }
     FORCEINLINE bool IsTypeDelegateValid() const noexcept { return this->OnParseType.IsValid(); }

@@ -15,8 +15,9 @@ void Jafg::APawnComponent::OnAttach(AActor& InOwner)
 
     if (this->GetOwningActor().IsA<APawn>() == false)
     {
-        LOG_FATAL(LogUserInput, "Class [{}] requires to be attached a APawn but is on [{}].",
+        LOG_FATAL(LogUserInput, "Class [{}] requires to be attached a [{}] but is on [{}].",
             this->GetNameAsString(),
+            APawn::StaticClass().GetFullyQualifiedName(),
             this->GetOwningActor().GetNameAsString()
         )
     }

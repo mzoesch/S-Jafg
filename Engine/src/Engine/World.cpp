@@ -14,6 +14,7 @@
 #include "Framework/SupremePolicies.h"
 #include "User/UserPreferences.h"
 #include "Components/ActorComponentForward.h"
+#include "Components/StaticMeshComponent.h"
 
 LString Jafg::LWorldParameters::ToString() const
 {
@@ -429,7 +430,7 @@ bool Jafg::LWorld::LineTraceByChannel(
 
     STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
     /* TODO: Save (as the tickables) the physics in a separate cached vector. */
-    LHitResult Dummy;
+    // LHitResult Dummy;
     // for (auto& Obj : this->GetEmployees())
     // {
         // if (auto* Actor{ Obj->As<AActor>() }; Actor && Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
@@ -447,6 +448,38 @@ bool Jafg::LWorld::LineTraceByChannel(
     // }
 
     return OutHits->empty() == false;
+}
+
+TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldRay const& Ray, LWorldReal Distance) const
+{
+    STAT_CYCLE_FUNCTION()
+
+    check(maths::normalized(Ray.Direction)) // Do we want the user to allow this?
+    LWorldVec3 End{Ray.Origin + Ray.Direction * Distance};
+    check(maths::magnitude(Ray.Origin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
+
+    TArray<LHitResult> Results;
+    for (auto& Obj: this->GetEmployees())
+    {
+        if (auto* Actor{Obj->As<AActor>()})
+        {
+            for (auto& Comp: Actor->GetComponents())
+            {
+                if (auto* SComp{Comp->As<AStaticMeshComponent>()})
+                {
+                    // LWorldRect3 MeshBounds{
+                    //     .Offset = SComp->GetTranslation(),
+                    //     .Extent = LVec3F{5.0},
+                    //     };
+                    //
+                    // maths::aabb();
+
+                }
+            }
+        }
+    }
+
+    return Results;
 }
 
 Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept

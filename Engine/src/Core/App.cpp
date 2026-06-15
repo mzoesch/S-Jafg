@@ -292,7 +292,7 @@ void Jafg::App::Detail::WaitForDebuggerGracefully(bool bAllowInstantBreak)
 
     if (bAllowInstantBreak)
     {
-        if (!algo::contains(App::GetRawCommandLine(), "-Jafg.IgnoreInstantDebuggerBreak"))
+        if (!algo::contains(App::GetRawCommandLine(), std::string_view{"-Jafg.IgnoreInstantDebuggerBreak"}))
         {
             JAFG_PLATFORM_BREAK()
         }

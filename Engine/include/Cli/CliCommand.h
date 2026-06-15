@@ -91,7 +91,7 @@ struct LCommandArgsTypeRet final
     typedef T type;
 };
 template<typename T>
-using LCommandArgsTypeRet_t = typename LCommandArgsTypeRet<T>::type;
+using LCommandArgsTypeRet_t = LCommandArgsTypeRet<T>::type;
 
 //#
 //# The arguments that the command receives.
@@ -104,13 +104,13 @@ struct LCommandArgs
     DEFAULT_REALLOC_OF_ANY_FORM(LCommandArgs)
     FORCEINLINE ~LCommandArgs() = default;
 
-    FORCEINLINE i32    GetArgCount() const { check( this->IsValid() ) return this->SubArgs.size(); }
+    FORCEINLINE auto    GetArgCount() const { check( this->IsValid() ) return this->SubArgs.size(); }
     ENGINE_API LString GetCatRepresentation() const;
     ENGINE_API void    GetCatRepresentation(LString* AppendTo) const;
 
     FORCEINLINE bool IsValid() const { return Name.empty() ? true : this->SubArgs.empty(); }
 
-    FORCEINLINE const LCommandArgs& operator[](const i32 Index) const { return this->SubArgs[Index]; }
+    FORCEINLINE const LCommandArgs& operator[](std::size_t Index) const { return this->SubArgs[Index]; }
 
     //#
     //# Get the argument of the command to the given LCommandArgsTypeRet<TField>::Type C++ type.

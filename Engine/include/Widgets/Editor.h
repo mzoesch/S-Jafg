@@ -7,6 +7,9 @@
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
 #include "Engine/Engine.h"
+#include "Components/PawnComponent.h"
+#include "Components/PersonaControllerComponent.h"
+#include "Framework/SupremePolicies.h"
 #include "Editor.generated.h"
 
 namespace Jafg
@@ -200,6 +203,115 @@ private:
 
     algo::clock::time_point LastRatePoint;
     WTextBox* Rate{};
+};
+
+DECLARE_JAFG_CLASS()
+class ENGINE_API AEditorSupremePolicies final : public ASupremePolicies
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_WORLD_CONSTRUCTORS(AEditorSupremePolicies)
+
+public:
+
+    virtual void OnWorldPreInit() override;
+    virtual void OnPersonaControllerCreated(APersonaController& Pc) override;
+    virtual TJxxUnique<APawn> GetPawnForPersonaController(APersonaController const& Pc) override;
+};
+
+struct LTransientRay final // TODO: Move to own semi-reflected subclass
+{
+    constexpr LTransientRay(LVec3F Origin, LVec3F End) noexcept : Origin{Origin}, End{End} {}
+
+    LVec3F Origin;
+    f32 _pad0{1.0f};
+    LVec3F End;
+    f32 _pad1{1.0f};
+};
+
+DECLARE_JAFG_CLASS()
+class ENGINE_API AEditorPersonaControllerComponent final : public APersonaControllerComponent
+{
+GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(AEditorPersonaControllerComponent)
+    {
+        this->SetShouldRender(true);
+    }
+
+public:
+
+    static constexpr u64 MaxLineCount{128};
+
+    virtual void OnAttach(AActor& InOwner) override;
+    virtual void Render(LActorRenderInfo const& Info) noexcept override;
+
+    struct RayCreateInfo
+    {
+        LColor Tint;
+        f32 Duration;
+        f32 Length;
+        LWorldRay WorldRay;
+    };
+    void AddRay(RayCreateInfo Ray);
+
+private:
+
+    LMaterialInstanceRef RayInstance;
+
+    // vk::raii::DescriptorSetLayout RayDescriptorSetLayout{ nullptr };
+    std::vector<LTransientRay> Rays;
+    TFrameArray<LMappedDeviceBuffer> RayBuffers;
+
+    TFrameArray<LMappedDeviceBuffer> RayViewBuffers;
+    // TFrameArray<vk::raii::DescriptorSet> RayDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+};
+
+DECLARE_JAFG_CLASS()
+class ENGINE_API AEditorCameraComponent final : public APawnComponent
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_WORLD_CONSTRUCTORS(AEditorCameraComponent)
+
+public:
+
+    virtual void OnAttach(AActor& InOwner) override
+    {
+        Super::OnAttach(InOwner);
+        (void)this->ActivateUserInputContext();
+    }
+    virtual void OnNewPersonaController(APersonaController* New) override
+    {
+        Super::OnNewPersonaController(New);
+        (void)this->ActivateUserInputContext();
+    }
+
+    //# @return Whether the context was activated successfully.
+    bool ActivateUserInputContext() const noexcept;
+
+    void OnTrace(rhi::extent2 Extent, LVec2F Location);
+    void OnMove(LInputActionValue const& Value);
+    void OnRotate(LInputActionValue const& Value);
+    void OnVelocityMultiplierChange(LInputActionValue const& Value);
+
+    FORCEINLINE constexpr f32 GetSensitivity() const noexcept { return this->Sensitivity; }
+    FORCEINLINE void SetSensitivity(f32 NewSensitivity) noexcept { this->Sensitivity = NewSensitivity; }
+
+private:
+
+    //# Sensitivity in radians per pixel.
+    f32 Sensitivity{0.1f};
+    static constexpr f32 MinVelocityMultiplier{0.0f};
+    static constexpr f32 MaxVelocityMultiplier{1'000.0f};
+    f32 VelocityMultiplier{10.0f};
+    f32 CachedPitch{};
 };
 
 } /* ~Namespace Jafg */

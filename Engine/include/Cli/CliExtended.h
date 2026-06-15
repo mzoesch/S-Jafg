@@ -71,10 +71,10 @@ namespace Private
 
 ENGINE_API void AddExtendedPrimitivesToCli(LCommandLineInterface* Cli);
 
-ENGINE_API bool CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TArray<LString>& Values);
-ENGINE_API auto CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const TArray<LString>& Values) -> TArray<LString>;
-ENGINE_API bool CliStringImpl(const LCommandArgs& Args, i32* Cursor, const LString& Value);
-ENGINE_API auto CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const LString& Value) -> TArray<LString>;
+ENGINE_API bool CliQueryImpl(const LCommandArgs& Args, std::size_t* Cursor, const TArray<LString>& Values);
+ENGINE_API auto CliQuerySuggestImpl(const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions, const TArray<LString>& Values) -> TArray<LString>;
+ENGINE_API bool CliStringImpl(const LCommandArgs& Args, std::size_t* Cursor, const LString& Value);
+ENGINE_API auto CliStringSuggestImpl(const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions, const LString& Value) -> TArray<LString>;
 
 } /* ~Namespace Private */
 
@@ -89,12 +89,12 @@ FORCEINLINE LCliType LCliTypeFactory<LCliQuery>::Dispatch(LString&& InName, LStr
         std::move(InName),
         {},
         std::move(InHelp),
-        [Values = InArgs](const LCommandArgs& Args, i32* Cursor) -> bool
+        [Values = InArgs](const LCommandArgs& Args, auto* Cursor) -> bool
         {
             return Private::CliQueryImpl(Args, Cursor, Values);
         },
         nullptr,
-        [Values = InArgs](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+        [Values = InArgs](const LCommandArgs& Args, auto Cursor, u32 MaxSuggestions) -> TArray<LString>
         {
             return Private::CliQuerySuggestImpl(Args, Cursor, MaxSuggestions, Values);
         },
@@ -108,12 +108,12 @@ FORCEINLINE LCliType LCliTypeFactory<LCliString>::Dispatch(const LString& InValu
         InValue,
         {},
         {},
-        [Value = InValue](const LCommandArgs& Args, i32* Cursor) -> bool
+        [Value = InValue](const LCommandArgs& Args, auto* Cursor) -> bool
         {
             return Private::CliStringImpl(Args, Cursor, Value);
         },
         nullptr,
-        [Value = InValue](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+        [Value = InValue](const LCommandArgs& Args, auto Cursor, u32 MaxSuggestions) -> TArray<LString>
         {
             return Private::CliStringSuggestImpl(Args, Cursor, MaxSuggestions, Value);
         },

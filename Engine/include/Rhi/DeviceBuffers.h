@@ -76,8 +76,8 @@ struct LDetailedDeviceBuffer final : private LDeviceBuffer
 {
     constexpr LDetailedDeviceBuffer() noexcept
         : LDeviceBuffer{}, Info{} {}
-    constexpr LDetailedDeviceBuffer(vk::Buffer InBuffer, rhi::device_allocation InAllocation, rhi::device_allocation_info&& InInfo) noexcept
-        : LDeviceBuffer{ InBuffer, InAllocation }, Info{ std::move(InInfo) } {}
+    constexpr LDetailedDeviceBuffer(vk::Buffer InBuffer, rhi::device_allocation InAllocation, rhi::device_allocation_info InInfo) noexcept
+        : LDeviceBuffer{ InBuffer, InAllocation }, Info{ InInfo } {}
     PROHIBIT_COPY(LDetailedDeviceBuffer)
     constexpr LDetailedDeviceBuffer(LDetailedDeviceBuffer&& Other) noexcept
         : LDeviceBuffer{ std::move(Other) }, Info{ Other.Info }
@@ -88,9 +88,9 @@ struct LDetailedDeviceBuffer final : private LDeviceBuffer
     {
         check( this != &Other )
 
-        LDeviceBuffer::operator=(std::move(Other));
         this->Info = Other.Info;
         Other.Info = {};
+        LDeviceBuffer::operator=(std::move(Other));
 
         return *this;
     }

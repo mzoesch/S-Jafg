@@ -6,35 +6,17 @@ namespace Jafg
 {
 
 class AActor;
+class AActorComponent;
 
 struct LHitResult final
 {
-    //#
-    //# Whether this hit result is valid.
-    //# If the #Actor is null then all other fields are in UB.
-    //#
-    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Actor != nullptr; }
-
-    FORCEINLINE constexpr void Reset() noexcept { this->Actor = nullptr; }
-
-    template<typename TActor>
-    FORCEINLINE TActor* GetActor() { check( this->IsValid() ) return DynamicCast<TActor>(this->Actor); }
-    template<typename TActor>
-    FORCEINLINE TActor const* GetActor() const { check( this->IsValid() ) return DynamicCast<TActor>(this->Actor); }
-
-    //#
     //# Hit actor.
-    //#
-    AActor* Actor{};
-
-    //#
+    AActor& Actor;
+    //# Hit component.
+    AActorComponent& Component;
     //# Hit location in world space.
-    //#
     LWorldVec3 GlobalWorldLocation;
-
-    //#
     //# Optional hit surface normal.
-    //#
     std::optional<LWorldVec3> SurfaceNormal;
 };
 

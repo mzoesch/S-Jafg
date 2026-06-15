@@ -25,7 +25,7 @@ class LFrontendBase
 {
 public:
 
-    enum ENewSurfaceBehavior
+    enum ENewSurfaceBehavior : u8
     {
         //# Just add the new surface.
         NoAction,

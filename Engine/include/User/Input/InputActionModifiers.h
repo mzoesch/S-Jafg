@@ -29,31 +29,31 @@ FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeInputModifier() noexc
 struct LInputActionMappedTriggerModifier
 {
     virtual ~LInputActionMappedTriggerModifier() = default;
-    virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept = 0;
+    NODISCARD virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept = 0;
 };
 
 struct LInputActionMappedKeyNegateModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeyNegateModifier() override = default;
-    virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return -InValue; }
+    NODISCARD virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return -InValue; }
 };
 
 struct LInputActionMappedKeySwizzleXYModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleXYModifier() override = default;
-    virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::yxz(InValue); }
+    NODISCARD virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::yxz(InValue); }
 };
 
 struct LInputActionMappedKeySwizzleXZModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleXZModifier() override = default;
-    virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::zyx(InValue); }
+    NODISCARD virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::zyx(InValue); }
 };
 
 struct LInputActionMappedKeySwizzleYZModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleYZModifier() override = default;
-    virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::xzy(InValue); }
+    NODISCARD virtual LVec3F ApplyModifier(const LVec3F& InValue) const noexcept override { return maths::xzy(InValue); }
 };
 
 template <typename TModifier> requires(std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)

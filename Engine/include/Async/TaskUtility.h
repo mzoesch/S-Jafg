@@ -53,7 +53,7 @@ enum Type : i32
 };
 
 } /* ~Namespace NamedThreads */
-ENGINE_API LString LexToString(const ENamedThreads::Type Thread);
+ENGINE_API LString LexToString(ENamedThreads::Type Thread);
 
 //#
 //# Allows one to specify when a task should be executed on a specific thread if said thread supports it.
@@ -91,7 +91,7 @@ enum Type : u8
 
 } /* ~Namespace TaskTime */
 ENUM_CLASS_FLAGS(ETaskTime::Type)
-ENGINE_API LString LexToString(const ETaskTime::Type Time);
+ENGINE_API LString LexToString(ETaskTime::Type Time);
 
 namespace Tasks
 {
@@ -109,13 +109,13 @@ FORCEINLINE auto GetCurrentThreadNameChecked() -> ENamedThreads::Type;
 FORCEINLINE auto GetCurrentThreadNameAsserted() -> ENamedThreads::Type;
 ENGINE_API  auto GetCurrentThreadId() -> LThreadId;
 
-ENGINE_API  bool HasThread(const ENamedThreads::Type InThreadName);
+ENGINE_API  bool HasThread(ENamedThreads::Type InThreadName);
 FORCEINLINE bool HasMasterThread() { return HasThread(ENamedThreads::Master); }
 FORCEINLINE bool HasRendererThread() { return HasThread(ENamedThreads::Renderer); }
 FORCEINLINE bool HasWorkerThread() { return HasThread(ENamedThreads::WorkerThread); }
 FORCEINLINE bool HasReSTCliThread();
 
-ENGINE_API  bool IsOnThread(const ENamedThreads::Type InThreadName);
+ENGINE_API  bool IsOnThread(ENamedThreads::Type InThreadName);
 FORCEINLINE bool IsOnMasterThread() { return IsOnThread(ENamedThreads::Master); }
 FORCEINLINE bool IsOnRendererThread() { return IsOnThread(ENamedThreads::Renderer); }
 FORCEINLINE bool IsOnWorkerThread() { return IsOnThread(ENamedThreads::WorkerThread); }
@@ -130,7 +130,7 @@ ENGINE_API void Make(ENamedThreads::Type InThreadName, ETaskTime::Type InPreferr
 
 //# Launch a named thread. This thread is globally accessible by its ENamedThreads::Type.
 template <typename T, typename... Args> requires std::is_base_of_v<LRunnable, T>
-ETaskExit::Type LaunchNamedThread(const ENamedThreads::Type Thread, Args&&... InArgs);
+ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread, Args&&... InArgs);
 //#
 //# Launch a named thread where its ENamedThreads::Type is resolved at function call time.
 //# @return The ENamedThreads::Type of the thread that was just launched.
@@ -140,22 +140,22 @@ ETaskExit::Type LaunchNamedThread(const ENamedThreads::Type Thread, Args&&... In
 template <typename T, typename... Args>
 ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit, Args&&... InArgs);
 
-ENGINE_API bool IsThreadRunning(const ENamedThreads::Type InThreadName);
+ENGINE_API bool IsThreadRunning(ENamedThreads::Type InThreadName);
 
 enum ERunAllTasks : i32 { RunAllTasks = 0, };
 //# @return The number of tasks that were run.
-ENGINE_API i32 TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks);
+ENGINE_API i32 TryRunTasks(ENamedThreads::Type Which, ETaskTime::Type Time, i32 MaxTasks);
 
-ENGINE_API void StopThread(const ENamedThreads::Type ThreadName);
-ENGINE_API void JoinThread(const ENamedThreads::Type ThreadName);
+ENGINE_API void StopThread(ENamedThreads::Type ThreadName);
+ENGINE_API void JoinThread(ENamedThreads::Type ThreadName);
 
 namespace Private
 {
 
 ENGINE_API extern i32 CustomThreadCounter;
 
-ENGINE_API auto LaunchNamedThread(ENamedThreads::Type ThreadName, LRunnable* Runnable, const bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
-ENGINE_API void StopAndJoinRemainingThreads(const bool bJoinTasks = true);
+ENGINE_API auto LaunchNamedThread(ENamedThreads::Type ThreadName, LRunnable* Runnable, bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
+ENGINE_API void StopAndJoinRemainingThreads(bool bJoinTasks = true);
 
 //# @return True if added.
 ENGINE_API bool AddThreadsToCurrentTracerSession();

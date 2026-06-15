@@ -76,7 +76,7 @@ namespace Jafg
 
 struct LRegionBrush;
 
-enum struct EStyleBits : u32
+enum struct EStyleBits : u8
 {
     Identity = 0x0 << 0,
     Normal = 0x1 << 0,

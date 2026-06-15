@@ -80,10 +80,9 @@ void Jafg::WWorldViewer::Construct()
     if (*Prefs.EditorAutoLaunchLastWorld && !Prefs.EditorLastWorldName->empty() && !Prefs.EditorLastWorldLevelName->empty())
     {
         auto World{this->GetMutableEngine().SummonWorld({.HumanReadableName=*Prefs.EditorLastWorldName})};
-        this->QueueTravelTo(World.Browse(*Prefs.EditorLastWorldLevelName));
+        // this->QueueTravelTo(World.Browse(*Prefs.EditorLastWorldLevelName));
+        this->QueueTravelTo(World.Browse("LevelEditor"));
     }
-
-    return;
 }
 
 void Jafg::WWorldViewer::Tick()
@@ -141,8 +140,6 @@ void Jafg::WWorldViewer::Tick()
             this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]{ this->DispatchInputDelegates(); return false; });
         }
     }
-
-    return;
 }
 
 void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
@@ -188,8 +185,6 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
     }
 
     Super::Draw(Info);
-
-    return;
 }
 
 void Jafg::WWorldViewer::Destruct()
@@ -207,8 +202,6 @@ void Jafg::WWorldViewer::Destruct()
         this->Inspector->_OnWorldViewerDestruct();
         check(!this->Inspector)
     }
-
-    return;
 }
 
 void Jafg::WWorldViewer::OnFocusLost()
@@ -226,13 +219,38 @@ void Jafg::WWorldViewer::OnFocusLost()
             this->Viewport.GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
         }
     }
-
-    return;
 }
 
 Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
-    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
+    if (Info.CursorLocation && Event.Is<ERawInputStateBits::Press>(ELogicalKey::LeftMouseButton))
+    {
+        if (this->IsOwnedPersonaControllerValid())
+        {
+            auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+            if (Ctrl.IsOwnedPawnValid())
+            {
+                auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
+                if (auto* Comp{Pawn.GetComponent<AEditorCameraComponent>()})
+                {
+                    if (LVec2F Location{*Info.CursorLocation - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)};
+                        Location.x < 0.0f || Location.y < 0.0f || Location.x > this->GetAnchoredSize_v2().x || Location.y > this->GetAnchoredSize_v2().y)
+                    {
+                        LOG_WARNING(LogWidgetFramework, "[{}]: Click location [{}] is outside of the world viewer size [.Offset={},.Extent={}]. Ignoring trace request."
+                            , this->GetNameAsString(), maths::to_string(Location)
+                            , maths::to_string(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)), maths::to_string(this->GetAnchoredSize_v2()))
+                    }
+                    else
+                    {
+                        Comp->OnTrace(this->RenderTarget.GetExtent(), Location);
+                    }
+                    return LNodeReply::Handled();
+                }
+            }
+        }
+    }
+
+    if (Event.Is<ERawInputStateBits::Press>(ELogicalKey::RightMouseButton))
     {
         if (this->IsOwnedPersonaControllerValid())
         {
@@ -306,8 +324,6 @@ void Jafg::WWorldViewer::TravelTo(LWorld& World)
     {
         this->Inspector->OnWorldViewerUpdate();
     }
-
-    return;
 }
 
 void Jafg::WWorldViewer::QueueTravelTo(LWorld& World)
@@ -352,8 +368,6 @@ void Jafg::WWorldViewer::QueueTravelTo(LWorld& World)
 
         return false;
     });
-
-    return;
 }
 
 void Jafg::WWorldViewer::OnPerspectiveDepthTestChanged()
@@ -364,8 +378,6 @@ void Jafg::WWorldViewer::OnPerspectiveDepthTestChanged()
         LOG_VERBOSE(LogWidgets, "Perspective depth test changed to [{}].", *Prefs.EditorPerspectiveDepthTestHint)
         this->bDatedRenderTarget = true;
     }
-
-    return;
 }
 
 void Jafg::WWorldViewer::SelectActors(TArray<AActor*> Actors, bool bForce /* = false */)
@@ -380,8 +392,6 @@ void Jafg::WWorldViewer::SelectActors(TArray<AActor*> Actors, bool bForce /* = f
     auto Old{std::exchange(this->SelectedActors, std::move(Actors))};
     LOG_TRACE(LogWidgetFramework, "[{}]: Selected [{}] actors.", this->GetNameAsString(), this->SelectedActors.size())
     this->OnActorsSelected.Broadcast(Old, this->SelectedActors);
-
-    return;
 }
 
 void Jafg::WWorldViewer::InitializeRenderTarget()
@@ -425,8 +435,6 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
             },
         };
     Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-    return;
 }
 
 bool Jafg::WWorldViewer::OnPreDraw(LRenderInfo const& Info)
@@ -455,8 +463,6 @@ void Jafg::WWorldViewer::PreDrawSelected(LRenderInfo const& Info)
     auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
 
     Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, this->SelectedActors);
-
-    return;
 }
 
 void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
@@ -512,8 +518,6 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
     }
 
     this->RenderTargetViewport.Draw(Info);
-
-    return;
 }
 
 void Jafg::WWorldViewer::DispatchInputDelegates()
@@ -530,8 +534,6 @@ void Jafg::WWorldViewer::DispatchInputDelegates()
 
     auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
     this->UserInput._DispatchInputDelegates(Ctrl);
-
-    return;
 }
 
 void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
@@ -751,7 +753,8 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                         Prefs.EditorLastWorldName = NewWorldNodes->Name->GetContent();
                         Prefs.EditorLastWorldLevelName = NewWorldNodes->LevelName->GetContent();
                         auto World{this->GetMutableEngine().SummonWorld({.HumanReadableName=NewWorldNodes->Name->GetContent()})};
-                        this->QueueTravelTo(World.Browse(NewWorldNodes->LevelName->GetContent()));
+                        // this->QueueTravelTo(World.Browse(NewWorldNodes->LevelName->GetContent()));
+                        this->QueueTravelTo(World.Browse("LevelEditor"));
                         return algo::reply::unhandled();
                     },});
                 return Result;
@@ -1119,11 +1122,6 @@ void Jafg::WWorldViewerHierarchy::UpdateWorldObjectList(TArray<AActor*> const& O
                 continue;
             }
 
-            if (Actor->IsA<APersonaController>())
-            {
-                continue;
-            }
-
             this->Container->AddChild(NewStaticNode(Detail::WWorldViewerHierarchyObjectHButton).Actor(Actor)
                 .Anchor(EAnchor::HFill)
                 .Style(Prefs.EditorProximityBoxStyle2<LRegionBrush>(Counter++))
@@ -1351,8 +1349,6 @@ void Jafg::WWorldViewerInspector::Construct()
     ];
 
     this->OnWorldViewerUpdate();
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::Destruct()
@@ -1363,8 +1359,6 @@ void Jafg::WWorldViewerInspector::Destruct()
     {
         this->DisconnectFromViewer();
     }
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::_OnWorldViewerDestruct()
@@ -1373,8 +1367,6 @@ void Jafg::WWorldViewerInspector::_OnWorldViewerDestruct()
     check(this->WorldViewer->_IsGarbage())
     this->DisconnectFromViewer();
     this->OnWorldViewerUpdate();
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::OnWorldViewerUpdate()
@@ -1382,8 +1374,6 @@ void Jafg::WWorldViewerInspector::OnWorldViewerUpdate()
     this->UpdateConnectedArea();
     this->UpdateObjectDisplayName();
     this->UpdateObjectDetails();
-
-    return;
 }
 
 Jafg::WWorldViewer* Jafg::WWorldViewerInspector::FindSmart() const noexcept
@@ -1459,8 +1449,6 @@ void Jafg::WWorldViewerInspector::DisconnectFromViewer()
     this->WorldViewer->OnActorsSelected.Remove(&this->OnActorsSelectedHandle);
     this->WorldViewer->Inspector = nullptr;
     this->WorldViewer = nullptr;
-
-    return;
 }
 
 bool Jafg::WWorldViewerInspector::OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New)
@@ -1490,8 +1478,6 @@ void Jafg::WWorldViewerInspector::UpdateConnectedArea()
     {
         this->ConnectedText->SetContent("[disconnected]");
     }
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::UpdateObjectDisplayName()
@@ -1526,8 +1512,6 @@ void Jafg::WWorldViewerInspector::UpdateObjectDisplayName()
         this->EditableObjectDisplayName->EmptyContent();
         this->EditableObjectDisplayName->PlaceholderContent = "Object Display Name";
     }
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::UpdateObjectDetails()
@@ -1606,8 +1590,6 @@ void Jafg::WWorldViewerInspector::UpdateObjectDetails()
             .Unique()
             );
     }
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::ReloadInnerComponents()
@@ -1645,8 +1627,6 @@ void Jafg::WWorldViewerInspector::ReloadInnerComponents()
             .Unique()
             );
     }
-
-    return;
 }
 
 void Jafg::WWorldViewerInspector::SelectComponent(AActorComponent* Component)
@@ -1737,6 +1717,4 @@ void Jafg::WWorldViewerInspector::SelectComponent(AActorComponent* Component)
     }
 
     this->ReloadInnerComponents();
-
-    return;
 }

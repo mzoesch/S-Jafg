@@ -149,6 +149,26 @@ template<typename TReal,maths::qual_t Q> using TRect3 = TRect<3,TReal,Q>;
 using LRect3F = TRect3<maths::single_precision,maths::defaultp>;
 using LRect3D = TRect3<maths::double_precision,maths::defaultp>;
 
+template<maths::length_t L,typename TReal,maths::qual_t Q>
+struct TAabb final
+{
+    TVec<L,TReal,Q> Min;
+    TVec<L,TReal,Q> Max;
+};
+using LAabb2F = TAabb<2,maths::single_precision,maths::defaultp>;
+using LAabb2D = TAabb<2,maths::double_precision,maths::defaultp>;
+using LAabb3F = TAabb<3,maths::single_precision,maths::defaultp>;
+using LAabb3D = TAabb<3,maths::double_precision,maths::defaultp>;
+
+template<typename TReal,maths::qual_t Q>
+struct TRay final
+{
+    TVec3<TReal,Q> Origin;
+    TVec3<TReal,Q> Direction;
+};
+using LRayF = TRay<maths::single_precision,maths::defaultp>;
+using LRayD = TRay<maths::double_precision,maths::defaultp>;
+
 //#
 //# Types used for world coordinates.
 //#
@@ -160,6 +180,9 @@ using LWorldVec2  = TVec2<LWorldReal,world_qual>;
 using LWorldVec3  = TVec3<LWorldReal,world_qual>;
 using LWorldVec4  = TVec4<LWorldReal,world_qual>;
 using LWorldTrans = TTrans<LWorldReal,world_qual>;
+using LWorldAabb2 = TAabb<2,LWorldReal,world_qual>;
+using LWorldAabb3 = TAabb<3,LWorldReal,world_qual>;
+using LWorldRay   = TRay<LWorldReal,world_qual>;
 
 #define MATHS_CONSTANT(Constant)                                                                            \
     namespace detail                                                                                        \
@@ -712,28 +735,37 @@ using glm::atanh;
 using glm::dot;
 using glm::distance;
 using glm::cross;
+
+template<length_t L, typename T,qual_t Q>
+NODISCARD constexpr T squared_magnitude(TVec<L,T,Q> const& v) noexcept { return maths::dot(v, v); }
+template<length_t L, typename T,qual_t Q>
+NODISCARD constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt(maths::squared_magnitude(v)); }
+
 using glm::normalize;
 template<length_t L, typename T,qual_t Q>
-inline constexpr T squared_magnitude(TVec<L,T,Q> const& v) noexcept { return maths::dot(v, v); }
-template<length_t L, typename T,qual_t Q>
-inline constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt(maths::squared_magnitude(v)); }
+NODISCARD constexpr bool normalized(TVec<L,T,Q> const& v) noexcept
+{
+    /* Compare against squared magnitude instead of magnitude to avoid sqrt-op. */
+    // return maths::eq_e(maths::magnitude(v), static_cast<T>(1.0));
+    return maths::eq_e(maths::squared_magnitude(v), static_cast<T>(1.0));
+}
 
 template<typename T,qual_t Q>
-inline constexpr bool aabb(TRect1<T,Q> const& a, TRect1<T,Q> const& b) noexcept
+NODISCARD constexpr bool aabb(TRect1<T,Q> const& a, TRect1<T,Q> const& b) noexcept
 {
     return !(a.Offset.x > b.Offset.x + b.Extent.x
           || a.Offset.x + a.Extent.x < b.Offset.x
           );
 }
 template<typename T,qual_t Q>
-inline constexpr bool aabb_point(TRect1<T,Q> const& a, TVec1<T,Q> const& p) noexcept
+NODISCARD constexpr bool aabb_point(TRect1<T,Q> const& a, TVec1<T,Q> const& p) noexcept
 {
     return !(p.x < a.Offset.x
           || p.x > a.Offset.x + a.Extent.x
           );
 }
 template<typename T,qual_t Q>
-inline constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
+NODISCARD constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
 {
     return !(a.Offset.x > b.Offset.x + b.Extent.x
           || a.Offset.x + a.Extent.x < b.Offset.x
@@ -742,7 +774,7 @@ inline constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
           );
 }
 template<typename T,qual_t Q>
-inline constexpr bool aabb_point(TRect2<T,Q> const& a, TVec2<T,Q> const& p) noexcept
+NODISCARD constexpr bool aabb_point(TRect2<T,Q> const& a, TVec2<T,Q> const& p) noexcept
 {
     return !(p.x < a.Offset.x
           || p.x > a.Offset.x + a.Extent.x
@@ -751,7 +783,7 @@ inline constexpr bool aabb_point(TRect2<T,Q> const& a, TVec2<T,Q> const& p) noex
           );
 }
 template<typename T,qual_t Q>
-inline constexpr bool aabb(TRect3<T,Q> const& a, TRect3<T,Q> const& b) noexcept
+NODISCARD constexpr bool aabb(TRect3<T,Q> const& a, TRect3<T,Q> const& b) noexcept
 {
     return !(a.Offset.x > b.Offset.x + b.Extent.x
           || a.Offset.x + a.Extent.x < b.Offset.x
@@ -762,7 +794,7 @@ inline constexpr bool aabb(TRect3<T,Q> const& a, TRect3<T,Q> const& b) noexcept
           );
 }
 template<typename T,qual_t Q>
-inline constexpr bool aabb_point(TRect3<T,Q> const& a, TVec3<T,Q> const& p) noexcept
+NODISCARD constexpr bool aabb_point(TRect3<T,Q> const& a, TVec3<T,Q> const& p) noexcept
 {
     return !(p.x < a.Offset.x
           || p.x > a.Offset.x + a.Extent.x
@@ -771,6 +803,63 @@ inline constexpr bool aabb_point(TRect3<T,Q> const& a, TVec3<T,Q> const& p) noex
           || p.z < a.Offset.z
           || p.z > a.Offset.z + a.Extent.z
           );
+}
+
+inline bool IntersectRayAABB(const LRayF& ray, const LAabb3F& box, float& tNear, float& tFar)
+{
+    tNear = -INFINITY;
+    tFar  =  INFINITY;
+
+    // vec3 invDir = 1.0f / ray.Dir;
+
+    // X slab
+    if (ray.Direction.x != 0.0f)
+    {
+        float t1 = (box.Min.x - ray.Origin.x) / ray.Direction.x;
+        float t2 = (box.Max.x - ray.Origin.x) / ray.Direction.x;
+
+        if (t1 > t2) std::swap(t1, t2);
+
+        tNear = std::max(tNear, t1);
+        tFar  = std::min(tFar, t2);
+    }
+    else if (ray.Origin.x < box.Min.x || ray.Origin.x > box.Max.x)
+        return false;
+
+    // Y slab
+    if (ray.Direction.y != 0.0f)
+    {
+        float t1 = (box.Min.y - ray.Origin.y) / ray.Direction.y;
+        float t2 = (box.Max.y - ray.Origin.y) / ray.Direction.y;
+
+        if (t1 > t2) std::swap(t1, t2);
+
+        tNear = std::max(tNear, t1);
+        tFar  = std::min(tFar, t2);
+    }
+    else if (ray.Origin.y < box.Min.y || ray.Origin.y > box.Max.y)
+        return false;
+
+    // Z slab
+    if (ray.Direction.z != 0.0f)
+    {
+        float t1 = (box.Min.z - ray.Origin.z) / ray.Direction.z;
+        float t2 = (box.Max.z - ray.Origin.z) / ray.Direction.z;
+
+        if (t1 > t2) std::swap(t1, t2);
+
+        tNear = std::max(tNear, t1);
+        tFar  = std::min(tFar, t2);
+    }
+    else if (ray.Origin.z < box.Min.z || ray.Origin.z > box.Max.z)
+        return false;
+
+    return tFar >= tNear && tFar >= 0.0f;
+}
+inline LVec3F IntersectRayAABBPoint(const LRayF& ray, const LAabb3F& box, float& tNear, float& tFar)
+{
+    check(IntersectRayAABB(ray, box, tNear, tFar));
+    return ray.Origin + ray.Direction * tNear;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -798,16 +887,16 @@ using glm::pitch;
 using glm::yaw;
 using glm::roll;
 //# Rotations from a vector.
-template<typename T,qual_t Q> inline constexpr T pitch(TVec3<T,Q> const& v) noexcept { return v.x; }
-template<typename T,qual_t Q> inline constexpr T yaw(TVec3<T,Q> const& v)   noexcept { return v.y; }
-template<typename T,qual_t Q> inline constexpr T roll(TVec3<T,Q> const& v)  noexcept { return v.z; }
+template<typename T,qual_t Q> NODISCARD constexpr T pitch(TVec3<T,Q> const& v) noexcept { return v.x; }
+template<typename T,qual_t Q> NODISCARD constexpr T yaw(TVec3<T,Q> const& v)   noexcept { return v.y; }
+template<typename T,qual_t Q> NODISCARD constexpr T roll(TVec3<T,Q> const& v)  noexcept { return v.z; }
 //# Rotations from a vector. Returns mutable l-values.
-template<typename T,qual_t Q> inline constexpr T& pitch_l(TVec3<T,Q>* v) noexcept { check(v) return v->x; }
-template<typename T,qual_t Q> inline constexpr T& yaw_l(TVec3<T,Q>* v)   noexcept { check(v) return v->y; }
-template<typename T,qual_t Q> inline constexpr T& roll_l(TVec3<T,Q>* v)  noexcept { check(v) return v->z; }
+template<typename T,qual_t Q> NODISCARD constexpr T& pitch_l(TVec3<T,Q>* v) noexcept { check(v) return v->x; }
+template<typename T,qual_t Q> NODISCARD constexpr T& yaw_l(TVec3<T,Q>* v)   noexcept { check(v) return v->y; }
+template<typename T,qual_t Q> NODISCARD constexpr T& roll_l(TVec3<T,Q>* v)  noexcept { check(v) return v->z; }
 //# Quaternions from Euler angles.
 template<typename T,qual_t Q>
-inline constexpr TQua<T,Q> rotator(TVec3<T,Q> const& rads) noexcept
+NODISCARD constexpr TQua<T,Q> rotator(TVec3<T,Q> const& rads) noexcept
 {
     auto P{glm::angleAxis(maths::pitch(rads), maths::right_vector<TVec3<T,Q>>)};
     auto Y{glm::angleAxis(-maths::yaw(rads),  maths::up_vector<TVec3<T,Q>>)};
@@ -815,7 +904,7 @@ inline constexpr TQua<T,Q> rotator(TVec3<T,Q> const& rads) noexcept
     return Y * P * R;
 }
 template<typename T> requires std::is_floating_point_v<T>
-inline constexpr TQua<T,defaultp> rotator(T pitch, T yaw, T roll) noexcept
+NODISCARD constexpr TQua<T,defaultp> rotator(T pitch, T yaw, T roll) noexcept
 {
     auto P{glm::angleAxis(pitch, maths::right_vector<TVec3<T,world_qual>>)};
     auto Y{glm::angleAxis(-yaw,  maths::up_vector<TVec3<T,world_qual>>)};
@@ -823,39 +912,39 @@ inline constexpr TQua<T,defaultp> rotator(T pitch, T yaw, T roll) noexcept
     return Y * P * R;
 }
 template<typename T> requires(!std::is_floating_point_v<T>)
-inline constexpr TQua<LWorldReal,defaultp> rotator(T pitch, T yaw, T roll) noexcept
+NODISCARD constexpr TQua<LWorldReal,defaultp> rotator(T pitch, T yaw, T roll) noexcept
 {
     return maths::rotator<LWorldReal>(static_cast<LWorldReal>(pitch), static_cast<LWorldReal>(yaw), static_cast<LWorldReal>(roll));
 }
 template<typename T,qual_t Q>
-inline constexpr TQua<T,Q> rotator_deg(TVec3<T,Q> const& degs) noexcept
+NODISCARD constexpr TQua<T,Q> rotator_deg(TVec3<T,Q> const& degs) noexcept
 {
     return maths::rotator(maths::radians(degs));
 }
 template<typename T> requires std::is_floating_point_v<T>
-inline constexpr TQua<T,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
+NODISCARD constexpr TQua<T,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
 {
     return maths::rotator(maths::radians(pitch), maths::radians(yaw), maths::radians(roll));
 }
 template<typename T> requires(!std::is_floating_point_v<T>)
-inline constexpr TQua<LWorldReal,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
+NODISCARD constexpr TQua<LWorldReal,defaultp> rotator_deg(T pitch, T yaw, T roll) noexcept
 {
     return maths::rotator_deg<LWorldReal>(static_cast<LWorldReal>(pitch), static_cast<LWorldReal>(yaw), static_cast<LWorldReal>(roll));
 }
 //# Euler angles from a quaternion.
 template<typename T,qual_t Q>
-inline constexpr TVec3<T,Q> euler_angles(TQua<T,Q> const& q) noexcept
+NODISCARD constexpr TVec3<T,Q> euler_angles(TQua<T,Q> const& q) noexcept
 {
     auto Result{glm::eulerAngles(q)};
     return TVec3<T,Q>{Result.x,-Result.y,Result.z};
 }
 template<typename T,qual_t Q>
-inline constexpr TVec3<T,Q> euler_angles_deg(TQua<T,Q> const& q) noexcept
+NODISCARD constexpr TVec3<T,Q> euler_angles_deg(TQua<T,Q> const& q) noexcept
 {
     return maths::degrees(maths::euler_angles(q));
 }
 template<typename T, qualifier Q>
-inline constexpr TQua<T,Q> angle_axis(T a, TVec3<T,Q> const& v) noexcept { return glm::angleAxis(a, v); }
+NODISCARD constexpr TQua<T,Q> angle_axis(T a, TVec3<T,Q> const& v) noexcept { return glm::angleAxis(a, v); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Conversions
@@ -951,7 +1040,7 @@ inline constexpr std::array<f32,256> srgb_to_linear_table{
     };
 
 template<std::floating_point T>
-inline constexpr T srgb_to_linear(T srgb, T gamma = 2.4) noexcept
+NODISCARD constexpr T srgb_to_linear(T srgb, T gamma = 2.4) noexcept
 {
     if (srgb > static_cast<T>(0.04045))
     {
@@ -961,7 +1050,7 @@ inline constexpr T srgb_to_linear(T srgb, T gamma = 2.4) noexcept
 }
 
 template<std::floating_point T>
-inline constexpr T srgb_to_linear_22(T srgb, T gamma = 2.4) noexcept
+NODISCARD constexpr T srgb_to_linear_22(T srgb, T gamma = 2.4) noexcept
 {
     return pow(srgb, gamma);
 }

@@ -16,17 +16,13 @@ public:
 
     FORCEINLINE constexpr TBulkData() noexcept = default;
     PROHIBIT_COPY(TBulkData)
-    inline constexpr TBulkData(TBulkData&& Other) noexcept
+    constexpr TBulkData(TBulkData&& Other) noexcept
+        : Number{Other.Number}, Bulk{Other.Bulk}
     {
-        this->Number = Other.Number;
-        this->Bulk = Other.Bulk;
-
         Other.Number = 0;
         Other.Bulk = nullptr;
-
-        return;
     }
-    inline constexpr TBulkData& operator=(TBulkData&& Rhs) noexcept
+    constexpr TBulkData& operator=(TBulkData&& Rhs) noexcept
     {
         if (this != &Rhs)
         {
@@ -43,14 +39,12 @@ public:
 
         return *this;
     }
-    inline constexpr ~TBulkData() noexcept
+    constexpr ~TBulkData() noexcept
     {
         if (this->Bulk)
         {
             delete[] this->Bulk;
         }
-
-        return;
     }
 
     FORCEINLINE constexpr bool IsAllocated() const noexcept { return this->Bulk != nullptr; }
@@ -81,34 +75,28 @@ public:
         return this->Bulk[Idx];
     }
 
-    FORCEINLINE constexpr void Allocate(const std::size_t DomainNumber)
+    FORCEINLINE constexpr void Allocate(std::size_t DomainNumber)
     {
         check( this->IsAllocated() == false )
         check( DomainNumber > 0 )
 
         this->Number = DomainNumber;
         this->Bulk = new LDomain[this->Number];
-
-        return;
     }
 
-    FORCEINLINE void AllocateZeroed(const std::size_t DomainNumber)
+    FORCEINLINE void AllocateZeroed(std::size_t DomainNumber)
     {
         this->Allocate(DomainNumber);
         std::memset(this->Bulk, 0, this->GetByteSize());
-        return;
     }
 
-    FORCEINLINE void Serialize(LDomain const* InBulk, const std::size_t DomainNumber, const std::size_t InOffset = 0)
+    FORCEINLINE void Serialize(LDomain const* InBulk, std::size_t DomainNumber, std::size_t InOffset = 0)
     {
         check( this->IsAllocated() == false )
         check( InBulk && DomainNumber > 0 )
 
         this->Allocate(DomainNumber);
         std::memcpy(this->Bulk, InBulk + InOffset, this->GetByteSize());
-
-        return;
-
     }
 
     inline constexpr void Free() noexcept
@@ -120,8 +108,6 @@ public:
         this->Bulk = {};
 
         check( this->Number == 0 && this->Bulk == nullptr )
-
-        return;
     }
 
 private:

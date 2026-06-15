@@ -39,7 +39,7 @@ class ENGINE_API WWorldViewer : public WUserWidget, public LLocalLackey
     friend WWorldViewerHierarchy;
     friend WWorldViewerInspector;
 
-    inline static constexpr rhi::extent2 DefaultExtent{640,480};
+    static constexpr rhi::extent2 DefaultExtent{640,480};
 
 protected:
 
@@ -63,7 +63,7 @@ protected:
 
 public:
 
-    inline static constexpr rhi::extent2 MinViewportExtent{128,128};
+    static constexpr rhi::extent2 MinViewportExtent{128,128};
 
     virtual ~WWorldViewer() override;
 
@@ -177,8 +177,8 @@ private:
     WWorldViewer* FindInViewport(LViewport const& Viewport) const noexcept;
     WWorldViewer* FindInNode(WNode& Node) const noexcept;
 
-    static inline constexpr LNodeSize2 TypeSize{128_spt, 0.0f};
-    static inline constexpr LWhitespace ListPadding{20_spt, 0.0f};
+    static constexpr LNodeSize2 TypeSize{128_spt, 0.0f};
+    static constexpr LWhitespace ListPadding{20_spt, 0.0f};
 
     WWorldViewer* WorldViewer{};
     LDelegateHandle OnActorsSelectedHandle;
@@ -197,7 +197,7 @@ private:
     LNodeReply OnWorldObjectListKeyEventFocus(Detail::WWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
     LNodeReply OnWorldObjectListKeyEventUnfocus(Detail::WWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
 
-    inline LWorld* GetWorld() const noexcept
+    LWorld* GetWorld() const noexcept
     {
         if (this->WorldViewer && this->WorldViewer->IsOwnedPersonaControllerValid())
         {

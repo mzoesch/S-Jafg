@@ -61,7 +61,7 @@ void Jafg::LEngine::Initialize()
     /* Engine stuff. */
     {
         const bool bValid_TypeWorld{this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
-        [](LCommandArgs const& Args, i32* Cursor) -> bool
+        [](LCommandArgs const& Args, auto* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
             if (Args[*Cursor].Name.empty())
@@ -86,7 +86,7 @@ void Jafg::LEngine::Initialize()
             return bValid;
         },
         nullptr,
-        [](LCommandArgs const& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+        [](LCommandArgs const& Args, const auto Cursor, const u32 MaxSuggestions) -> TArray<LString>
         {
             const LCommandArgs* Target { nullptr };
 
@@ -135,7 +135,7 @@ void Jafg::LEngine::Initialize()
         .Token(LCliType::Type<LCliVariable>())
         .Token(LCliType{"VarType", "The value to set.",
             {},
-            [](LCommandArgs const& Args, i32* Cursor) -> bool
+            [](LCommandArgs const& Args, auto* Cursor) -> bool
             {
                 check(*Cursor < Args.GetArgCount())
                 if (Args[*Cursor].Name.empty())
@@ -146,7 +146,7 @@ void Jafg::LEngine::Initialize()
                 return true;
             },
             nullptr,
-            [](LCommandArgs const& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+            [](LCommandArgs const& Args, const auto Cursor, const u32 MaxSuggestions) -> TArray<LString>
             {
                 if (algo::valid_index(Args.SubArgs, Cursor - 1) == false)
                 {
@@ -173,7 +173,7 @@ void Jafg::LEngine::Initialize()
             check(InArgs.GetArgCount() == 2)
             if (LCliVariable* Var = Detail::GMutableEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
             {
-                i32 Cursor = 1;
+                auto Cursor = 1uz;
                 if (Var->GetType()->CanParse(InArgs, &Cursor) == false)
                 {
                     OutResponse.Rc = ECommandReturnCode::TypeError;

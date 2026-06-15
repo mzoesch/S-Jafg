@@ -9,10 +9,10 @@ namespace Jafg
 
 struct LIconBrush
 {
-    inline static constexpr auto DefaultInwardsPadding{ 4_spt };
-    inline static constexpr auto DefaultMinIconSize{ 20_spt };
+    static constexpr auto DefaultInwardsPadding{ 4_spt };
+    static constexpr auto DefaultMinIconSize{ 20_spt };
 
-    enum struct Align{ Left, Center, Right, };
+    enum struct Align : u8 { Left, Center, Right, };
 
     u32 Scale{ 1 };
     bool bAlwaysPad{};

@@ -13,7 +13,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     check( Cli )
 
     const bool bValid_TypeInteger { Cli->RegisterType({"Integer", "A 64 bit signed integer.", "0",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -43,7 +43,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -51,7 +51,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     ensureDiscard(bValid_TypeInteger);
 
     const bool bValid_TypeUInteger { Cli->RegisterType({"UInteger", "A 64 bit unsigned integer.", "0",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -81,7 +81,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -89,7 +89,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     ensureDiscard(bValid_TypeUInteger);
 
     const bool bValid_TypeByte { Cli->RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -119,7 +119,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         if (MaxSuggestions >= 2)
         {
@@ -137,7 +137,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     ensureDiscard(bValid_TypeByte);
 
     const bool bValid_TypeFloat { Cli->RegisterType({"Float", "A 32 bit floating point number.", "0.0",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -167,7 +167,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -175,7 +175,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     ensureDiscard(bValid_TypeFloat);
 
     const bool bValid_TypeString { Cli->RegisterType({"String", "A string.", "",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, auto* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.empty())
@@ -187,7 +187,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return true;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -195,7 +195,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     ensureDiscard(bValid_TypeString);
 
     const bool bValid_TypeBool { Cli->RegisterType({"Bool", "A boolean.", "false",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.empty())
@@ -240,7 +240,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         return false;
     },
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         if (MaxSuggestions >= 2)
         {
@@ -267,7 +267,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     check( Cli )
 
     const bool bValid_TypeAny { Cli->RegisterType({"Any", "Any value.", "",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.empty())
@@ -279,7 +279,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
         return true;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -287,7 +287,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     ensureDiscard(bValid_TypeAny);
 
     const bool bValid_TypeVar { Cli->RegisterType({"Var", "A variable.", "NULL",
-    [](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, std::size_t* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.empty())
@@ -310,7 +310,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
         return Var != nullptr;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         const LCommandArgs* Target { nullptr };
 
@@ -355,7 +355,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     return;
 }
 
-bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TArray<LString>& Values)
+bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, std::size_t* Cursor, const TArray<LString>& Values)
 {
     checkSlow( *Cursor < Args.GetArgCount() )
     if (Args[*Cursor].Name.empty())
@@ -372,7 +372,7 @@ bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TA
     return false;
 }
 
-TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const TArray<LString>& Values)
+TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions, const TArray<LString>& Values)
 {
     LCommandArgs const* Target{};
 
@@ -408,7 +408,7 @@ TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, con
     return Out;
 }
 
-bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, i32* Cursor, const LString& Value)
+bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, std::size_t* Cursor, const LString& Value)
 {
     checkSlow( *Cursor < Args.GetArgCount() )
     if (Args[*Cursor].Name.empty())
@@ -425,7 +425,7 @@ bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, i32* Cursor, const L
     return false;
 }
 
-TArray<LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const LString& Value)
+TArray<LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, std::size_t Cursor, const u32 MaxSuggestions, const LString& Value)
 {
     if (MaxSuggestions > 0)
     {

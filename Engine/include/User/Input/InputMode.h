@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-enum struct EInputModeBits
+enum struct EInputModeBits : u8
 {
     Identity = 0x00,
 

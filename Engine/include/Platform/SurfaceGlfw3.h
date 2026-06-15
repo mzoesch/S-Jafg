@@ -255,7 +255,7 @@ private:
     TFrameArray<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<vk::raii::Fence> Vk_FlightFences JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     u32 Vk_LastFrameInFlightIndex{};
-    std::optional<u32> Vk_CurrentFrameInFlightIndex{};
+    std::optional<u32> Vk_CurrentFrameInFlightIndex;
 
     TFrameArray<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     TFrameArray<vk::raii::DescriptorPool> Vk_DescriptorPools JAFG_VK_FRAME_ARRAY_INIT(nullptr);

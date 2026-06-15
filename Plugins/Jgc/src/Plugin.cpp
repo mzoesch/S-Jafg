@@ -2,7 +2,6 @@
 
 #include "Foreign/ForeignInclude.h"
 #include "Runtime/Parameter.h"
-#include "Fw/FwSupremePolicies.h"
 #include "Engine/Engine.h"
 #include "Widgets/Editor.h"
 
@@ -31,7 +30,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     (
         Jafg::LLevel{
             .Identifier = "LevelFrontend",
-            .SupremePoliciesClass = Jgc::AFwSupremePolicies::StaticClass(),
+            .SupremePoliciesClass = nullptr,//Jgc::AFwSupremePolicies::StaticClass(),
             }
     ))
     {

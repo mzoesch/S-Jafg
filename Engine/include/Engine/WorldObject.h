@@ -43,10 +43,10 @@ class ENGINE_API AWorldObject : public JCxxClass
 
 protected:
 
-    inline explicit AWorldObject(LWorldDynamicInit const& Init) noexcept
+    explicit AWorldObject(LWorldDynamicInit const& Init) noexcept
         : Super{LCxxDynamicInit{.Outer=Init.Outer,.Class=Init.Class}} {}
     template<typename TCxxClass>
-    inline explicit AWorldObject(TWorldStaticInit<TCxxClass> const& Init) noexcept
+    explicit AWorldObject(TWorldStaticInit<TCxxClass> const& Init) noexcept
         : Super{TCxxStaticInit<TCxxClass>{.Outer=Init.Outer}} {}
 
 public:

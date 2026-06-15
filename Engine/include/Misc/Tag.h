@@ -15,7 +15,7 @@ struct TTag
 
     using SizeType = T;
 
-    enum : SizeType { NO_TAG = 0 };
+    enum : u8 { NO_TAG = 0 };
 
     FORCEINLINE constexpr TTag() noexcept : Value(NO_TAG) { }
     FORCEINLINE constexpr TTag(const TTag& Other) noexcept = default;
@@ -73,7 +73,7 @@ struct TTagRegistry
     {
         if (const auto It{ algo::find(this->Tags, InRepr) }; It != this->Tags.end() )
         {
-            return TagType(static_cast<typename TagType::SizeType>(std::distance(this->Tags.begin(), It) + 1));
+            return TagType(static_cast<TagType::SizeType>(std::distance(this->Tags.begin(), It) + 1));
         }
         return TagType{};
     }
@@ -107,7 +107,7 @@ struct TTagRegistry
         this->Tags.emplace_back(std::forward<decltype(InRepr)>(InRepr));
         LOG_TRACE(LogTags, "Registered tag [{}].", this->Tags.back())
 
-        return TagType{static_cast<typename TagType::SizeType>(this->GetTagCount())};
+        return TagType{static_cast<TagType::SizeType>(this->GetTagCount())};
     }
 
     template <std::size_t N>
@@ -125,7 +125,7 @@ struct TTagRegistry
         }
 
         /* #IsSet checks for zero. Therefore, the result is always at least zero. And this cast is safe. */
-        if (static_cast<typename TagType::SizeType>(InTag.GetUnderlyingValue() - 1) < this->Tags.size())
+        if (static_cast<TagType::SizeType>(InTag.GetUnderlyingValue() - 1) < this->Tags.size())
         {
             return this->GetReprFast(InTag);
         }

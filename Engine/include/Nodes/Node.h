@@ -31,7 +31,7 @@ FORCEINLINE constexpr decltype(T::Size) GetNodeSizeInStaticPoints(T const& Size,
 
 } /* ~Namespace Detail */
 
-enum struct ENodeSize
+enum struct ENodeSize : u8
 {
     //# Static points may vary for each monitor and/or platform. But they behave consistently during an application launch.
     StaticPoints,
