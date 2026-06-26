@@ -1,0 +1,14 @@
+{
+    "pipelineRasterizationState": {
+        "depthClampEnable": false,
+        "rasterizerDiscardEnable": false,
+        "polygonMode": "eFill",
+        "cullMode": "eBack",
+        "frontFace": "eCounterClockwise",
+        "depthBiasEnable": false,
+        "depthBiasConstantFactor": 0.0,
+        "depthBiasClamp": 0.0,
+        "depthBiasSlopeFactor": 0.0,
+        "lineWidth": 1.0
+    }
+}

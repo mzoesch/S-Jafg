@@ -47,7 +47,7 @@ inline LString LexToString(EInputActionTriggerFlags Flags) noexcept
     if (Flags & EInputActionTriggerBits::Completed) { Stream << "Completed|"; }
 
     LString Result{Stream.str()};
-    if (Result.empty()) { return "Identity"; }
+    if (Result.empty()) { Result = "Identity"; }
     return Result;
 }
 

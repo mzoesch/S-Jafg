@@ -126,7 +126,7 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
     char LastChar = 0;
     while (static_cast<u64>(++Cursor) < InCommandLine.size())
     {
-        const char CurChar = InCommandLine[Cursor];
+        const char CurChar = InCommandLine[static_cast<std::size_t>(Cursor)];
         if (bInString)
         {
             if (CurChar == '"' && LastChar != '\\')
@@ -184,9 +184,12 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 
     if (bInString)
     {
-        return LCommandArgs{};
+        Out = LCommandArgs{};
+    }
+    else
+    {
+        check( ::IsValidArgs(Out) )
     }
 
-    check( ::IsValidArgs(Out) )
     return Out;
 }

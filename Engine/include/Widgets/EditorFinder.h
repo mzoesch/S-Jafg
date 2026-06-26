@@ -4,7 +4,6 @@
 
 #include "Nodes/UserWidget.h"
 #include "Nodes/GenericTabInfos.h"
-#include "Containers/Finder2.h"
 #include "EditorFinder.generated.h"
 
 namespace Jafg
@@ -34,7 +33,7 @@ private:
     f32 IndentSize{16};
     NODISCARD FORCEINLINE LPadding Indent2Padding(std::size_t Indent) const
     {
-        return LPadding{ENodeSize::StaticPoints, this->IndentSize * Indent, 0.0f, 0.0f, 0.0f};
+        return LPadding{ENodeSize::StaticPoints, this->IndentSize * static_cast<f32>(Indent), 0.0f, 0.0f, 0.0f};
     }
     NODISCARD FORCEINLINE f32 Padding2Indent(LPadding const& Padding) const
     {

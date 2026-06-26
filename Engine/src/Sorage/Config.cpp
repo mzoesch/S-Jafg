@@ -121,13 +121,13 @@ private:
 
 void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
 {
-    if (!Finder::DoesFileExist(Path))
+    if (!is_regular_file(Path))
     {
         this->Map[Path];
         return;
     }
 
-    auto Content{Finder::ReadFile(Path)};
+    auto Content{finder::read_file(Path)};
 
     Sections ImportedSections;
     Entries* CurrentEntries{};
@@ -234,10 +234,7 @@ void Jafg::LConfig::PushConfigFile(LPath const& Path)
 {
     check(this->Map.contains(Path))
 
-    if (!Finder::DoesFileExist(Path))
-    {
-        Finder::CreateFile(Path);
-    }
+    finder::ensure_file<finder::MakeParents>(Path);
 
     TArray<LString> Sections; Sections.reserve(this->Map[Path].size());
     for (auto const& Section: this->Map[Path] | std::views::keys)
@@ -297,7 +294,5 @@ void Jafg::LConfig::PushConfigFile(LPath const& Path)
         }
     }
 
-    Finder::OverrideFileIfDifferent(Path, Content.str());
-
-    return;
+    finder::override_file_if_different(Path, Content.str());
 }

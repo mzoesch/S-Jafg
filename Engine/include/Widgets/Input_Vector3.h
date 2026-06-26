@@ -146,7 +146,6 @@ private:
         case EPart::X: return Vec.x;
         case EPart::Y: return Vec.y;
         case EPart::Z: return Vec.z;
-        default: std::unreachable();
         }
     }
     NODISCARD FORCEINLINE auto& ProjVecL(EPart Part, auto& Vec) noexcept
@@ -156,7 +155,6 @@ private:
         case EPart::X: return Vec.x;
         case EPart::Y: return Vec.y;
         case EPart::Z: return Vec.z;
-        default: std::unreachable();
         }
     }
     NODISCARD FORCEINLINE LString FormatAxis(EPart Part, auto Vec) const noexcept

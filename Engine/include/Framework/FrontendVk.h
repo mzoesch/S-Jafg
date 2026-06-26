@@ -7,23 +7,12 @@
     #include "Framework/FrontendNativeDesktop.h"
 #endif /* JAFG_PLATFORM_DESKTOP */
 #include "Rhi/RendererCore.h"
-#include "Rhi/ImmutableBuffer.h"
 #include "Rhi/Bindless.h"
 
 namespace Jafg
 {
 
 struct LTexture2;
-
-struct LSlangCompilationRequest
-{
-    LPath In;
-    LPath Out;
-    LString Target{ "spirv" };
-    LString Profile{ "spirv_1_5" };
-    TArray<LString> IncludeDirectories;
-    TArray<LString> EntryPoints;
-};
 
 struct LStageBufferCreateInfo
 {
@@ -125,59 +114,40 @@ public:
     FORCEINLINE auto const& Vk_GetSurfaceFormat() const noexcept { check(this->Vk_SurfaceFormat.format != vk::Format::eUndefined) return this->Vk_SurfaceFormat; }
 
     FORCEINLINE auto Vk_GetNumberOfFramesInFlight() const noexcept { return this->Vk_FramesInFlight; }
+    //# Public internal method to Jafg. To not use.
     void _Vk_ReportFramesInFlight(u32 FramesInFlight) noexcept
     {
-        check(this->Vk_FramesInFlight == 0)
+        if (this->Vk_FramesInFlight != 0)
+        {
+            if (this->Vk_FramesInFlight != FramesInFlight)
+            {
+                LOG_FATAL(LogVulkan, "Number of frames in flight [{}] does not match the number of frames in flight reported by another surface [{}].", this->Vk_FramesInFlight, FramesInFlight)
+            }
+        }
         this->Vk_FramesInFlight = FramesInFlight;
+        if (this->Vk_FramesInFlight < 1 || this->Vk_FramesInFlight > rhi::max_frames_in_flight)
+        {
+            LOG_FATAL(LogVulkan, "Number of frames in flight [{}] is invalid. Must be between 1 and {}.", this->Vk_FramesInFlight, rhi::max_frames_in_flight)
+        }
     }
-
-    FORCEINLINE auto const& Vk_GetDefaultSamplers() const noexcept { return this->Vk_DefaultSamplers; }
-    FORCEINLINE auto const& Vk_GetLinearSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetLinearSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearMirroredRepeatSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetLinearSamplerClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToEdgeSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetLinearSamplerClampToBorder() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearClampToBorderSamplerIdx]; }
-    // FORCEINLINE auto const& Vk_GetLinearSamplerMirrorClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearMirrorClampToEdgeSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetNearestSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::NearestRepeatSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetNearestSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::NearestMirroredRepeatSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetNearestSamplerClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToEdgeSamplerIdx]; }
-    FORCEINLINE auto const& Vk_GetNearestSamplerClampToBorder() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::NearestClampToBorderSamplerIdx]; }
-    // FORCEINLINE auto const& Vk_GetNearestSamplerMirrorClampToEdge() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::NearestMirrorClampToEdgeSamplerIdx]; }
 
     //# @return A descriptor pool that lives for as long the frontend lives.
     FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
-    FORCEINLINE u32 Vk_GetBindlessTextureCapacity() const noexcept { return this->Vk_BindlessTextureCapacity; }
-    FORCEINLINE auto const& Vk_GetBindlessTextureArrayDescriptorPool() const noexcept { return this->Vk_BindlessTextureArrayDescriptorPool; }
-    FORCEINLINE auto const& Vk_GetBindlessTextureArrayDescriptorSet() const noexcept { return this->Vk_BindlessTextureArrayDescriptorSet; }
-    FORCEINLINE auto const& Vk_GetDescriptorSetLayouts() const noexcept { return this->Vk_DescriptorSetLayouts; }
-    FORCEINLINE auto&       Vk_GetMutableDescriptorSetLayouts() noexcept { return this->Vk_DescriptorSetLayouts; }
-    FORCEINLINE auto const& Vk_GetImmutableBuffers() const noexcept { return this->Vk_ImmutableBuffers; }
-    FORCEINLINE bool RegisterImmutableBuffers(LString const& Identifier, LImmutableBuffer&& Buffer) noexcept
-    {
-        if (this->Vk_ImmutableBuffers.contains(Identifier))
-        {
-            return false;
-        }
-        this->Vk_ImmutableBuffers.emplace(Identifier, std::move(Buffer));
-        return true;
-    }
-
-    ENGINE_API void Vk_AddTextureToGlobalBindlessArray(LTexture2* Texture);
-    ENGINE_API std::optional<std::size_t> _VK_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView);
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
     ENGINE_API void Vk_EndSingleTimeCommands(vk::raii::CommandBuffer CommandBuffer) const;
 
     //# Create any buffer through VMA.
-    ENGINE_API LDeviceBuffer Vk_CreateBuffer(
+    ENGINE_API rhi::device_buffer Vk_CreateBuffer(
           vk::BufferCreateInfo Info
         , vk::MemoryPropertyFlags Flags
         , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
-    ENGINE_API LDetailedDeviceBuffer Vk_CreateDetailedBuffer(
+    ENGINE_API rhi::detailed_device_buffer Vk_CreateDetailedBuffer(
           vk::BufferCreateInfo Info
         , vk::MemoryPropertyFlags Flags
         , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
-    ENGINE_API LMappedDeviceBuffer Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const;
+    ENGINE_API rhi::mapped_device_buffer Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const;
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API void Vk_CopyBuffer(vk::Buffer Src, vk::Buffer Dst, vk::BufferCopy BufferCopy, vk::CommandPool Pool = nullptr) const;
@@ -188,13 +158,13 @@ public:
     //#
     //# @see LStageBufferCreateInfo
     //#
-    ENGINE_API LDeviceBuffer Vk_StageBuffer(LStageBufferCreateInfo const& Info);
+    ENGINE_API rhi::device_buffer Vk_StageBuffer(LStageBufferCreateInfo const& Info);
 
-    ENGINE_API LDeviceImage Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo) const;
-    ENGINE_API LDeviceImage Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info) const;
+    ENGINE_API rhi::device_image Vk_CreateImage(vk::ImageCreateInfo const& Info, VmaAllocationCreateInfo const& AllocationCreateInfo) const;
+    ENGINE_API rhi::device_image Vk_CreateDeviceLocalImage(vk::ImageCreateInfo const& Info) const;
 
     //# The resulting image will be in optimal shader read only layout.
-    ENGINE_API LDeviceImage Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info) const;
+    ENGINE_API rhi::device_image Vk_StageLinearImage(LStageLinearImageCreateInfo const& Info) const;
 
     //# Transitions an image layout. !!This is not for flight frame command buffers!!
     ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier) const;
@@ -220,7 +190,6 @@ private:
     void Vk_SetMaxMsaaSamples();
     void Vk_CreateLogicalDevice(LSurface const& QuerySurface);
     void Vk_CreateVma();
-    void Vk_UpdateSamplers();
 
     std::optional<vk::Format> Vk_FindSupportedFormat(
           TArray<vk::Format> const& Candidates
@@ -284,14 +253,7 @@ private:
 
     u32 Vk_FramesInFlight{};
 
-    std::array<vk::raii::Sampler, UBO::Bindless::SamplerCount> Vk_DefaultSamplers JAFG_INIT_EIGHT(nullptr);
     vk::raii::DescriptorPool Vk_DescriptorPool{ nullptr };
-    u32 Vk_BindlessTextureCapacity{ 128u };
-    vk::raii::DescriptorPool Vk_BindlessTextureArrayDescriptorPool{ nullptr };
-    vk::raii::DescriptorSet Vk_BindlessTextureArrayDescriptorSet{ nullptr };
-    LDynamicBitset Vk_FreeBindlessTextures;
-    std::unordered_map<LString, vk::raii::DescriptorSetLayout> Vk_DescriptorSetLayouts;
-    std::unordered_map<LString, LImmutableBuffer> Vk_ImmutableBuffers;
 };
 
 FORCEINLINE LStageBufferCreateInfo LStageBufferCreateInfo::Vertex(LVertexCreateInfo const& Info) noexcept

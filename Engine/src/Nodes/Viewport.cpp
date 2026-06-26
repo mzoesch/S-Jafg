@@ -33,7 +33,7 @@ void Jafg::LViewport::Vk_OnLateInit()
     TArray<vk::DescriptorSetLayout> LayoutsToAllocate; LayoutsToAllocate.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
     for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
     {
-        LayoutsToAllocate.push_back(*Frontend.Vk_GetDescriptorSetLayouts().at("Jafg.VisualShared"));
+        LayoutsToAllocate.push_back(*Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetSharedDescriptorSetLayouts().at(UBO::VisualShared::name()));
     }
     auto Sets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
         .descriptorPool = Frontend.Vk_GetDescriptorPool(),
@@ -43,7 +43,7 @@ void Jafg::LViewport::Vk_OnLateInit()
     for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
     {
         this->Vk_VisualSharedDescriptorSets[Idx] = std::move(Sets[Idx]);
-        this->Vk_VisualSharedBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::VisualShared::CreateInfo());
+        this->Vk_VisualSharedBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::VisualShared::buffer_create_info());
     }
 
     auto SetInstance{[this](JMaterialSubsystem* Subsystem)
@@ -62,8 +62,6 @@ void Jafg::LViewport::Vk_OnLateInit()
     {
         Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [SetInstance]{ SetInstance(nullptr); });
     }
-
-    return;
 }
 
 void Jafg::LViewport::DispatchInputs()
@@ -284,8 +282,6 @@ void Jafg::LViewport::DispatchInputs()
 
     HandleEventType(ERawInputStateBits::Release);
     HandleEventType(ERawInputStateBits::Press|ERawInputStateBits::Repeat);
-
-    return;
 }
 
 void Jafg::LViewport::Tick()
@@ -303,8 +299,6 @@ void Jafg::LViewport::Tick()
     }
 
     this->OnLateTick.Broadcast();
-
-    return;
 }
 
 void Jafg::LViewport::Draw(LRenderInfo const& Info)
@@ -351,7 +345,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         continue;
     }
 
-    check(this->VisualBatches[NodeInfo.Frame].GetData())
+    check(this->VisualBatches[NodeInfo.Frame].data())
 
     if (!NodeInfo.VisualInstances.empty())
     {
@@ -368,11 +362,11 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
             .Proj = glm::orthoRH_ZO(0.0f, Dimensions.x, 0.0f, Dimensions.y, 0.0f, 1.0f),
             .Gamma = *GetSingleton<JUserPreferences>().InterfaceGamma,
             };
-        Shared.Upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
-        auto WorldDataWriteInfo{Shared.WriteInfo(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
+        Shared.upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
+        auto WorldDataWriteInfo{Shared.write_info(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
 
         std::memcpy(
-              this->VisualBatches[NodeInfo.Frame].GetData()
+              this->VisualBatches[NodeInfo.Frame].data()
             , NodeInfo.VisualInstances.data()
             , sizeof(std::remove_cvref_t<decltype(NodeInfo.VisualInstances)>::value_type) * NodeInfo.VisualInstances.size()
             );
@@ -404,11 +398,11 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 
         std::array<vk::DescriptorSet, 3> DescriptorSetsToBind;
         DescriptorSetsToBind[0] = *this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
-        DescriptorSetsToBind[1] = *Frontend.Vk_GetBindlessTextureArrayDescriptorSet();
+        DescriptorSetsToBind[1] = *Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetBindlessTextureArrayDescriptorSet();
         DescriptorSetsToBind[2] = *this->VisualBatchMaterialInstance->FrequentDescriptorSets[NodeInfo.Frame].front().second;
         NodeInfo.CommandBuffer.bindDescriptorSets2({
             .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-            .layout = *this->VisualBatchMaterialInstance->Material->Pipeline.Layout,
+            .layout = *this->VisualBatchMaterialInstance->Material->Pipeline.pipeline_layout,
             .firstSet = 0,
             .descriptorSetCount = DescriptorSetsToBind.size(),
             .pDescriptorSets = DescriptorSetsToBind.data(),
@@ -429,13 +423,11 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
             auto& Batch{NodeInfo.Batches[Idx]};
             NodeInfo.CommandBuffer.setScissor(0, Batch.first);
             NodeInfo.CommandBuffer.draw(
-                4, NextBegin - Batch.second,
-                0, Batch.second
+                4, static_cast<u32>(NextBegin - Batch.second),
+                0, static_cast<u32>(Batch.second)
                 );
         }
     }
-
-    return;
 }
 
 void Jafg::LViewport::TearDown()
@@ -445,8 +437,6 @@ void Jafg::LViewport::TearDown()
         this->TopLevelWidgets.back()->MarkAsGarbage_v2();
     }
     this->TopLevelWidgets.clear();
-
-    return;
 }
 
 void Jafg::LViewport::_AddWidget(WUserWidget* Widget)
@@ -462,8 +452,6 @@ void Jafg::LViewport::_AddWidget(WUserWidget* Widget)
     MakeCxxObjectFinal(*Widget);
 
     check(&Widget->GetViewport() == this)
-
-    return;
 }
 
 void Jafg::LViewport::_RemoveWidget(WUserWidget* Widget)
@@ -493,8 +481,6 @@ void Jafg::LViewport::ChangeFocusImpl(TClassStorage<WNode> Node)
         LOG_TRACE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusReceived();
     }
-
-    return;
 }
 
 void Jafg::LViewport::HandleReply(LNodeReply&& Reply)
@@ -509,6 +495,4 @@ void Jafg::LViewport::HandleReply(LNodeReply&& Reply)
     {
         this->ChangeFocusImpl(Reply.GetFocus());
     }
-
-    return;
 }

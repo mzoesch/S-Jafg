@@ -5,6 +5,6 @@
 namespace
 {
 
-Jafg::LRegisterPushConstant<Jafg::PC::MVP> MVPPushConstantsRegistration{};
+Jafg::LPushConstantRegistrator<Jafg::PC::MVP> _{};
 
 } /* ~Namespace <Anonymous> */

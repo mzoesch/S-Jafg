@@ -58,11 +58,6 @@ LString Jafg::LexToString(const ECommandReturnCode::Type& InType)
     {
         return FMT("PlatformError");
     }
-    default:
-    {
-        checkNoEntry()
-        return FMT("Unknown");
-    }
     }
 }
 
@@ -140,7 +135,7 @@ TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& A
         {
             if (bParseNotBeginTypedArg)
             {
-                Out.append_range(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.size()));
+                Out.append_range(Param.Suggest(Args, ArgCursor, MaxSuggestions - static_cast<u32>(Out.size())));
             }
             break;
         }
@@ -150,7 +145,7 @@ TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& A
             continue;
         }
 
-        Out.append_range(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.size()));
+        Out.append_range(Param.Suggest(Args, ArgCursor, MaxSuggestions - static_cast<u32>(Out.size())));
         break;
     }
 

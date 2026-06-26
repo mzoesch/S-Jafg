@@ -26,18 +26,18 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
     const pid_t Pid{::getpid()};
     // const pid_t Tid{::gettid()};
 
-    if (Finder::Detail::_gdb)
+    if (finder::detail::_lnx_gdb)
     {
         std::stringstream Stream;
-        Stream << *Finder::Detail::_gdb << " -p " << Pid
-               << " -batch -ex \"gcore " << Finder::Detail::DumpFile
+        Stream << *finder::detail::_lnx_gdb << " -p " << Pid
+               << " -batch -ex \"gcore " << finder::detail::dump_file
                << "\" -ex \"detach\" -ex \"quit\""
                ;
-        LOG_VERBOSE(LogJafgInternal, "Executing memory dump command: [{}].", Stream.str());
+        LOG_VERBOSE(LogJafgInternal, "Executing memory dump command: [{}].", Stream.str())
 
         if (auto Rc{std::system(Stream.str().c_str())}; Rc != 0)
         {
-            LOG_ERROR(LogPlatform, "Failed to create memory dump for our process [PID: {}]. Return code from [gdb] is [{}].", Pid, Rc);
+            LOG_ERROR(LogPlatform, "Failed to create memory dump for our process [PID: {}]. Return code from [gdb] is [{}].", Pid, Rc)
         }
     }
     else
@@ -52,13 +52,14 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
     if (bDumpStack)
     {
         std::stringstream Stream;
-        Stream << *Finder::Detail::_gdb << " -batch -ex \"thread apply all bt full\" "
-               << GetExpectedRuntimePath() << " " << Finder::Detail::DumpFile << " > "
-               << absolute(Finder::GetMostRecentStackTraceFile());
-        LOG_VERBOSE(LogJafgInternal, "Executing stack trace dump command: [{}].", Stream.str());
+        Stream << *finder::detail::_lnx_gdb << " -batch -ex \"thread apply all bt full\" "
+                /* It is okay to call this. As the funtion internally caches the result. */
+               << finder::detail::self_proc_slow() << " " << finder::detail::dump_file << " > "
+               << absolute(finder::most_recent_stack_trace_file());
+        LOG_VERBOSE(LogJafgInternal, "Executing stack trace dump command: [{}].", Stream.str())
         if (auto Rc{std::system(Stream.str().c_str())}; Rc != 0)
         {
-            LOG_ERROR(LogPlatform, "Failed to create stack trace dump for our process [PID: {}]. Return code from [gdb] is [{}].", Pid, Rc);
+            LOG_ERROR(LogPlatform, "Failed to create stack trace dump for our process [PID: {}]. Return code from [gdb] is [{}].", Pid, Rc)
         }
     }
 
@@ -139,7 +140,7 @@ void Jafg::App::SleepNoStats(f64 InSeconds)
 {
     if (i32 Micro{static_cast<i32>(InSeconds * maths::s2mus_d)}; Micro > 0)
     {
-        ::usleep(Micro);
+        ::usleep(static_cast<__useconds_t>(Micro));
     }
     else
     {

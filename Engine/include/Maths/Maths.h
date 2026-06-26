@@ -858,7 +858,7 @@ inline bool IntersectRayAABB(const LRayF& ray, const LAabb3F& box, float& tNear,
 }
 inline LVec3F IntersectRayAABBPoint(const LRayF& ray, const LAabb3F& box, float& tNear, float& tFar)
 {
-    check(IntersectRayAABB(ray, box, tNear, tFar));
+    check(IntersectRayAABB(ray, box, tNear, tFar))
     return ray.Origin + ray.Direction * tNear;
 }
 

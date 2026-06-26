@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Minimal.afx"
-#include "Rhi/MaxDesiredFramesInFlight.h"
+#include "Rhi/MaxFramesInFlight.h"
 
 #if !JAFG_NO_GLAD
     // #include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
@@ -41,12 +41,14 @@
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
-#if JAFG_WITH_CLANG
+#if JAFG_WITH_GCC
     #pragma GCC diagnostic pop
-#endif /* JAFG_WITH_CLANG */
+#endif /* JAFG_WITH_GCC */
 
-#if PLATFORM_USES_WEBGL_TWO
-    #include <GLES3/gl3.h>
+#ifdef PLATFORM_USES_WEBGL_TWO
+    #if PLATFORM_USES_WEBGL_TWO
+        #include <GLES3/gl3.h>
+    #endif /* PLATFORM_USES_WEBGL_TWO */
 #endif /* PLATFORM_USES_WEBGL_TWO */
 
 #include "Framework/FrontendForward.h"
@@ -138,6 +140,7 @@ auto vk_allocate(vk::raii::Device const& d, T const& info) noexcept
     {
         static_assert(algo::always_false_v<T>);
     }
+#undef DETAIL_RHI_VK_ALLOCATE_IMPL
 }
 
 } /* ~Namespace rhi */
@@ -145,47 +148,10 @@ auto vk_allocate(vk::raii::Device const& d, T const& info) noexcept
 namespace vk
 {
 
-NLOHMANN_JSON_SERIALIZE_ENUM(CompareOp, {
-    {CompareOp::eNever, "eNever"},
-    {CompareOp::eLess, "eLess"},
-    {CompareOp::eEqual, "eEqual"},
-    {CompareOp::eLessOrEqual, "eLessOrEqual"},
-    {CompareOp::eGreater, "eGreater"},
-    {CompareOp::eNotEqual, "eNotEqual"},
-    {CompareOp::eGreaterOrEqual, "eGreaterOrEqual"},
-    {CompareOp::eAlways, "eAlways"},
-    })
-NLOHMANN_JSON_SERIALIZE_ENUM(StencilOp, {
-    {StencilOp::eKeep, "eKeep"},
-    {StencilOp::eZero, "eZero"},
-    {StencilOp::eReplace, "eReplace"},
-    {StencilOp::eIncrementAndClamp, "eIncrementAndClamp"},
-    {StencilOp::eDecrementAndClamp, "eDecrementAndClamp"},
-    {StencilOp::eInvert, "eInvert"},
-    {StencilOp::eIncrementAndWrap, "eIncrementAndWrap"},
-    {StencilOp::eDecrementAndWrap, "eDecrementAndWrap"},
-    })
-NLOHMANN_JSON_SERIALIZE_ENUM(PrimitiveTopology, {
-    {PrimitiveTopology::ePointList, "ePointList"},
-    {PrimitiveTopology::eLineList, "eLineList"},
-    {PrimitiveTopology::eLineStrip, "eLineStrip"},
-    {PrimitiveTopology::eTriangleList, "eTriangleList"},
-    {PrimitiveTopology::eTriangleStrip, "eTriangleStrip"},
-    {PrimitiveTopology::eTriangleFan, "eTriangleFan"},
-    {PrimitiveTopology::eLineListWithAdjacency, "eLineListWithAdjacency"},
-    {PrimitiveTopology::eLineStripWithAdjacency, "eLineStripWithAdjacency"},
-    {PrimitiveTopology::eTriangleListWithAdjacency, "eTriangleListWithAdjacency"},
-    {PrimitiveTopology::eTriangleStripWithAdjacency, "eTriangleStripWithAdjacency"},
-    {PrimitiveTopology::ePatchList, "ePatchList"},
-    })
-
-ENGINE_API void from_json(json const& j, PipelineInputAssemblyStateCreateInfo& Info);
-ENGINE_API void from_json(json const& j, PipelineDepthStencilStateCreateInfo& Info);
-ENGINE_API void from_json(json const& j, StencilOpState& State);
-
 #pragma region SerdeEnums
+
 #pragma region SerdeEnumFormat
-SERDE_STRING_ENUM_NON_INTRUSIVE(Format,
+SERDE_STRING_AND_JSON_ENUM(Format,
     eUndefined,
     eR4G4UnormPack8,
     eR4G4B4A4UnormPack16,
@@ -544,7 +510,7 @@ SERDE_STRING_ENUM_NON_INTRUSIVE(Format,
     )
 #pragma endregion /* SerdeEnumFormat */
 
-SERDE_STRING_ENUM_NON_INTRUSIVE(SampleCountFlagBits,
+SERDE_STRING_AND_JSON_ENUM(SampleCountFlagBits,
     e1,
     e2,
     e4,
@@ -553,7 +519,243 @@ SERDE_STRING_ENUM_NON_INTRUSIVE(SampleCountFlagBits,
     e32,
     e64
     )
+
+SERDE_STRING_AND_JSON_ENUM(vk::ShaderStageFlagBits,
+    eVertex,
+    eTessellationControl,
+    eTessellationEvaluation,
+    eGeometry,
+    eFragment,
+    eCompute,
+    eAllGraphics,
+    eAll,
+    eRaygenKHR,
+    eRaygenNV,
+    eAnyHitKHR,
+    eAnyHitNV,
+    eClosestHitKHR,
+    eClosestHitNV,
+    eMissKHR,
+    eMissNV,
+    eIntersectionKHR,
+    eIntersectionNV,
+    eCallableKHR,
+    eCallableNV,
+    eTaskEXT,
+    eTaskNV,
+    eMeshEXT,
+    eMeshNV,
+    eSubpassShadingHUAWEI,
+    eClusterCullingHUAWEI
+    )
+
+SERDE_STRING_AND_JSON_ENUM(CompareOp,
+    eNever,
+    eLess,
+    eEqual,
+    eLessOrEqual,
+    eGreater,
+    eNotEqual,
+    eGreaterOrEqual,
+    eAlways
+    )
+
+SERDE_STRING_AND_JSON_ENUM(BlendFactor,
+    eZero,
+    eOne,
+    eSrcColor,
+    eOneMinusSrcColor,
+    eDstColor,
+    eOneMinusDstColor,
+    eSrcAlpha,
+    eOneMinusSrcAlpha,
+    eDstAlpha,
+    eOneMinusDstAlpha,
+    eConstantColor,
+    eOneMinusConstantColor,
+    eConstantAlpha,
+    eOneMinusConstantAlpha,
+    eSrcAlphaSaturate,
+    eSrc1Color,
+    eOneMinusSrc1Color,
+    eSrc1Alpha,
+    eOneMinusSrc1Alpha
+    )
+
+SERDE_STRING_AND_JSON_ENUM(BlendOp,
+    eAdd,
+    eSubtract,
+    eReverseSubtract,
+    eMin,
+    eMax,
+    eZeroEXT,
+    eSrcEXT,
+    eDstEXT,
+    eSrcOverEXT,
+    eDstOverEXT,
+    eSrcInEXT,
+    eDstInEXT,
+    eSrcOutEXT,
+    eDstOutEXT,
+    eSrcAtopEXT,
+    eDstAtopEXT,
+    eXorEXT,
+    eMultiplyEXT,
+    eScreenEXT,
+    eOverlayEXT,
+    eDarkenEXT,
+    eLightenEXT,
+    eColordodgeEXT,
+    eColorburnEXT,
+    eHardlightEXT,
+    eSoftlightEXT,
+    eDifferenceEXT,
+    eExclusionEXT,
+    eInvertEXT,
+    eInvertRgbEXT,
+    eLineardodgeEXT,
+    eLinearburnEXT,
+    eVividlightEXT,
+    eLinearlightEXT,
+    ePinlightEXT,
+    eHardmixEXT,
+    eHslHueEXT,
+    eHslSaturationEXT,
+    eHslColorEXT,
+    eHslLuminosityEXT,
+    ePlusEXT,
+    ePlusClampedEXT,
+    ePlusClampedAlphaEXT,
+    ePlusDarkerEXT,
+    eMinusEXT,
+    eMinusClampedEXT,
+    eContrastEXT,
+    eInvertOvgEXT,
+    eRedEXT,
+    eGreenEXT,
+    eBlueEXT
+    )
+
+SERDE_STRING_AND_JSON_ENUM(ColorComponentFlagBits,
+    eR,
+    eG,
+    eB,
+    eA
+    )
+
+SERDE_STRING_AND_JSON_ENUM(CullModeFlagBits,
+    eNone,
+    eFront,
+    eBack,
+    eFrontAndBack
+    )
+
+SERDE_STRING_AND_JSON_ENUM(FrontFace,
+    eCounterClockwise,
+    eClockwise
+    )
+
+SERDE_STRING_AND_JSON_ENUM(LogicOp,
+    eClear,
+    eAnd,
+    eAndReverse,
+    eCopy,
+    eAndInverted,
+    eNoOp,
+    eXor,
+    eOr,
+    eNor,
+    eEquivalent,
+    eInvert,
+    eOrReverse,
+    eCopyInverted,
+    eOrInverted,
+    eNand,
+    eSet
+    )
+
+SERDE_STRING_AND_JSON_ENUM(StencilOp,
+    eKeep,
+    eZero,
+    eReplace,
+    eIncrementAndClamp,
+    eDecrementAndClamp,
+    eInvert,
+    eIncrementAndWrap,
+    eDecrementAndWrap
+    )
+
+SERDE_STRING_AND_JSON_ENUM(VertexInputRate,
+    eVertex,
+    eInstance
+    )
+
+SERDE_STRING_AND_JSON_ENUM(PolygonMode,
+    eFill,
+    eLine,
+    ePoint,
+    eFillRectangleNV
+    )
+
+SERDE_STRING_AND_JSON_ENUM(PrimitiveTopology,
+    ePointList,
+    eLineList,
+    eLineStrip,
+    eTriangleList,
+    eTriangleStrip,
+    eTriangleFan,
+    eLineListWithAdjacency,
+    eLineStripWithAdjacency,
+    eTriangleListWithAdjacency,
+    eTriangleStripWithAdjacency,
+    ePatchList
+    )
 #pragma endregion /* SerdeEnums */
+
+SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineInputAssemblyStateCreateInfo
+    , topology, primitiveRestartEnable
+    )
+SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineRasterizationStateCreateInfo
+    , depthClampEnable, rasterizerDiscardEnable, polygonMode, cullMode, frontFace
+    , depthBiasEnable, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor
+    , lineWidth
+    )
+// SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineMultisampleStateCreateInfo // ?
+//     , rasterizationSamples, sampleShadingEnable, minSampleShading, pSampleMask/*ptr*/, alphaToCoverageEnable, alphaToOneEnable
+//     )
+SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(StencilOpState
+    , failOp, passOp, depthFailOp, compareOp, compareMask, writeMask, reference
+    )
+SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineDepthStencilStateCreateInfo
+    , depthTestEnable, depthWriteEnable, depthCompareOp, depthBoundsTestEnable, stencilTestEnable
+    , front, back, minDepthBounds, maxDepthBounds
+    )
+SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineColorBlendAttachmentState
+    , blendEnable, srcColorBlendFactor, dstColorBlendFactor, colorBlendOp
+    , srcAlphaBlendFactor, dstAlphaBlendFactor, alphaBlendOp, colorWriteMask
+    )
+
+template<typename T> requires requires(json const& j, T& bits) { {vk::from_json(j, bits)} -> std::same_as<void>; }
+void from_json(json const& j, Flags<T>& f)
+{
+    static_assert(std::is_enum_v<T>);
+    LStringView j_str{j.get<LStringView>()};
+
+    f = Flags<T>{};
+    while (true)
+    {
+        auto pos = j_str.find('|');
+        LStringView const& flag_str = (pos == LStringView::npos) ? j_str : j_str.substr(0, pos);
+        if (flag_str.empty())
+        {
+            break;
+        }
+        T flag{};
+        vk::from_json(json(flag_str), flag);
+        f |= flag;
+        j_str = (pos == LStringView::npos) ? LStringView{} : j_str.substr(pos + 1);
+    }
+}
 
 } /* ~Namespace vk */
 

@@ -4,11 +4,11 @@
 
 #include "Minimal.afx"
 
-namespace Jafg
+namespace rhi
 {
 
 //# The state that is required after a resource load function was called.
-enum struct EResourceStateBits
+enum struct resource_state_bits
 {
     //#
     //# No state is required. Just allocate the resource. The client will handle the rest.
@@ -27,9 +27,9 @@ enum struct EResourceStateBits
     //#
     Device = 1 << 1,
 };
-ENUM_STRUCT_FLAGS(EResourceStateBits, EResourceState)
+ENUM_STRUCT_FLAGS(resource_state_bits, resource_state_flags)
 
-template<typename T>
-using TSharedRef = std::shared_ptr<T>;
+//# Use this as we might want to handle resources differently later on.
+template<typename T> using shared_ref = std::shared_ptr<T>;
 
-} /* ~Namespace Jafg */
+} /* ~Namespace rhi */

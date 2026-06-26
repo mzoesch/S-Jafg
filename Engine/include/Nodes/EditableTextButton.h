@@ -29,7 +29,6 @@ inline LStringView LexToString(ETextCommit Enum) noexcept
     case ETextCommit::OnEnter:   { return "OnEnter"; }
     case ETextCommit::OnCleared: { return "OnCleared"; }
     case ETextCommit::FocusLost: { return "FocusLost"; }
-    default:                     { std::unreachable(); }
     }
 }
 

@@ -1,5 +1,0 @@
-{
-    "Inherits": "Jafg.Debug",
-    "Src": "Jafg.Mesh.Handedness.slang",
-    "Dst": "Jafg.Mesh.Handedness.spv"
-}

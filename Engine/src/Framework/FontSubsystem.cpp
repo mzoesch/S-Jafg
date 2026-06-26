@@ -3,6 +3,7 @@
 #include "Framework/FontSubsystem.h"
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
+#include "Framework/MaterialSubsystem.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/VisualInstance.h"
 #include "User/UserPreferences.h"
@@ -28,8 +29,8 @@
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
-    #pragma GCC diagnostic pop
 #if JAFG_WITH_GCC
+    #pragma GCC diagnostic pop
 #endif /* JAFG_WITH_GCC */
 
 namespace
@@ -267,6 +268,7 @@ void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
     Collection.InitializeDependency<JTextureSubsystem>(this);
+    Collection.InitializeDependency<JMaterialSubsystem>(this);
 
     check(this->My_FT_Library == nullptr)
     FT_Init_FreeType(&this->My_FT_Library);
@@ -313,7 +315,7 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
             )
     }
 
-    if (Finder::DoesFileExist(Info.Source) == false)
+    if (is_regular_file(Info.Source) == false)
     {
         LOG_FATAL(LogFontSubsystem
             , "No such font [{}]."
@@ -358,7 +360,7 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
     Packer.setMiterLimit(1.0);
     Packer.setInnerPixelPadding(Info.Padding.x);
     Packer.setOuterPixelPadding(Info.Padding.y);
-    Packer.pack(Glyphes.data(), Glyphes.size());
+    Packer.pack(Glyphes.data(), static_cast<int>(Glyphes.size()));
     LVec2i32 AtlasDimensions; Packer.getDimensions(AtlasDimensions.x, AtlasDimensions.y);
 
     msdf_atlas::GeneratorAttributes Attributes;
@@ -367,10 +369,11 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
         Generator(AtlasDimensions.x, AtlasDimensions.y);
     Generator.setAttributes(Attributes);
     Generator.setThreadCount(4);
-    Generator.generate(Glyphes.data(), Glyphes.size());
+    Generator.generate(Glyphes.data(), static_cast<int>(Glyphes.size()));
 
     auto Bitmap{static_cast<msdfgen::BitmapConstRef<msdf_atlas::byte, 3>>(Generator.atlasStorage())};
-    LByteBulkData Bulk; Bulk.Serialize(Bitmap.pixels, Bitmap.width * Bitmap.height * 3);
+    static_assert(sizeof(algo::byte_bulk::value_type) == sizeof(msdf_atlas::byte));
+    algo::byte_bulk Bulk; Bulk.serialize(reinterpret_cast<algo::byte_bulk::value_type const*>(Bitmap.pixels), static_cast<std::size_t>(Bitmap.width * Bitmap.height * 3));
     Result.Atlas = LTexture2::FromMemory(
         "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm,
         {static_cast<rhi::extent2::domain_type>(Bitmap.width), static_cast<rhi::extent2::domain_type>(Bitmap.height)},
@@ -378,7 +381,7 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
         );
     Result.Atlas->LoadToDevice(LTexture2::DeviceInfo{.DesiredMipLevels = 1,.Samples = vk::SampleCountFlagBits::e1,});
     Result.Atlas->FreeFromHost();
-    this->GetFrontend().Vk_AddTextureToGlobalBindlessArray(&*Result.Atlas);
+    this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*Result.Atlas);
     check(Result.Atlas->IsBindless())
 
     for (auto const& Glyph : Glyphes)
@@ -401,7 +404,7 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
     this->My_Fonts.push_back(std::move(Result));
     check(Result.Atlas.get() == nullptr)
 
-    return this->My_Fonts.size() - 1;
+    return static_cast<u32>(static_cast<i64>(this->My_Fonts.size()) - 1);
 }
 
 Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept
@@ -414,7 +417,7 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32
     check(Font.Atlas.get())
     check(Font.GlyphUVsMap.empty() == false)
 
-    FT_Set_Pixel_Sizes(Font.My_FT_Face, 0, FontSize);
+    FT_Set_Pixel_Sizes(Font.My_FT_Face, 0, static_cast<FT_UInt>(FontSize));
 
     LGlyphCollection Result{
         .Ascender = Font.My_FT_Face->size->metrics.ascender * HarfBuzzScale,
@@ -444,14 +447,14 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32
     hb_glyph_position_t* GlyphPositions{hb_buffer_get_glyph_positions(HBBuffer, &GlyphCount)};
 
     /* Move to baseline. */
-    Pencil->y += FontSize * Font.Ascender;
+    Pencil->y += FontSize * static_cast<f32>(Font.Ascender);
 
     auto AtlasExtend{Font.Atlas->GetExtentAsVec2F()};
     Result.GlyphInfos.reserve(GlyphCount);
     for (auto Idx{0uz}; Idx < GlyphCount; ++Idx)
     {
         uint32_t GlyphIndex{GlyphInfos[Idx].codepoint}; /* After shaping, this is the Glyph-ID. */
-        LVec2F Advance{GlyphPositions[Idx].x_advance * HarfBuzzScale, GlyphPositions[Idx].y_advance * HarfBuzzScale};
+        LVec2F Advance{ static_cast<f32>(GlyphPositions[Idx].x_advance) * HarfBuzzScale, static_cast<f32>(GlyphPositions[Idx].y_advance) * HarfBuzzScale};
 
         auto It{Font.GlyphUVsMap.find(GlyphIndex)};
         if (It == Font.GlyphUVsMap.end()) /* Non-printable or missing. */
@@ -461,7 +464,7 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32
         }
 
         GlyphUVs const& GlyphUV{It->second};
-        LVec2F Offset{GlyphPositions[Idx].x_offset * HarfBuzzScale, GlyphPositions[Idx].y_offset * HarfBuzzScale};
+        LVec2F Offset{ static_cast<f32>(GlyphPositions[Idx].x_offset) * HarfBuzzScale, static_cast<f32>(GlyphPositions[Idx].y_offset) * HarfBuzzScale};
         LVec2F LeftTop{
             Pencil->x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[0]) * FontSize,
             Pencil->y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[3]) * FontSize,

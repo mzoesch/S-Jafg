@@ -83,12 +83,13 @@
 
     //# Will evaluate to a check that will always fail at runtime.
     #define checkNoEntry()                      PRIVATE_JAFG_ASSERT_STRONG_IMPL_ON_FAIL( JAFG_NO_ENTRY_ASSERT_TEXT )
+    #define checkNoEntryOrElse(...)             PRIVATE_JAFG_ASSERT_STRONG_IMPL_ON_FAIL( JAFG_NO_ENTRY_ASSERT_TEXT )
 
     //#
     //# Allows concatenating multiple statements that are evaporated
     //# and therefore not compiled if JAFG_DO_CHECKS is false.
     //#
-    #define checkCode(Code)                     do { Code; } while ( false );
+    #define checkCode(...)                      do { __VA_ARGS__; } while ( false );
 
     //#
     //# Behaves like a checkNoEntry except when JAFG_DO_CHECKS is false (only usually JAFG_IN_SHIPPING), it will
@@ -168,6 +169,7 @@
     #define checkMsg(Expr, Msg)
     #define checkMsgf(Expr, Format, ...)
     #define checkNoEntry()
+    #define checkNoEntryOrElse(...)                 __VA_ARGS__;
     #define checkCode(Code)
 
     #if JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING

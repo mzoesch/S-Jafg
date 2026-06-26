@@ -4,12 +4,6 @@ include_guard(_guard)
 if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
-    set_target_properties(${module_name} PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}"
-            LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}"
-            RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}"
-            )
-
     ###############################################################################
     # Engine only compile time definitions
     if(NOT DEFINED _detail_jafg_version)
@@ -18,7 +12,7 @@ if(_guard)
 
     execute_process(
         COMMAND             git rev-parse --abbrev-ref HEAD
-        WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY   ${JAFG_ENGINE_ROOT}
         OUTPUT_VARIABLE     VCS_BRANCH
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
@@ -29,7 +23,7 @@ if(_guard)
     else()
         execute_process(
             COMMAND             git config --get branch.${VCS_BRANCH}.remote
-            WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+            WORKING_DIRECTORY   ${JAFG_ENGINE_ROOT}
             OUTPUT_VARIABLE     VCS_REMOTE
             OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_QUIET
@@ -40,7 +34,7 @@ if(_guard)
         else()
             execute_process(
                 COMMAND             git remote get-url ${VCS_REMOTE}
-                WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+                WORKING_DIRECTORY   ${JAFG_ENGINE_ROOT}
                 OUTPUT_VARIABLE     VCS_URL
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 ERROR_QUIET
@@ -81,7 +75,10 @@ if(_guard)
         set(PROJECT_VERSION_REVISION "0")
     endif()
 
-    set(JAFG_EXPECTED_RUNTIME "Runtime${CMAKE_EXECUTABLE_SUFFIX}")
+    file(RELATIVE_PATH DETAIL_ENGINE_ROOT_BINARY_PATH "${JAFG_ENGINE_ROOT}" "${CMAKE_BINARY_DIR}")
+    if(DETAIL_ENGINE_ROOT_BINARY_PATH MATCHES "(^|[\\/])\.\.([\\/]|$)")
+        message(FATAL_ERROR "[${DETAIL_ENGINE_ROOT_BINARY_PATH}]: DETAIL_ENGINE_ROOT_BINARY_PATH is not a valid relative path.")
+    endif()
 
     message(STATUS "DETAIL_ENGINE_VERSION: ${_detail_jafg_version}")
     message(STATUS "DETAIL_ENGINE_VERSION_MAJOR: ${PROJECT_VERSION_MAJOR}")
@@ -96,14 +93,11 @@ if(_guard)
     message(STATUS "DETAIL_ENGINE_VCS_UPSTREAM: ${VCS_URL}")
     message(STATUS "DETAIL_ENGINE_HOMEPAGE_URL: ${PROJECT_HOMEPAGE_URL}")
 
+    message(STATUS "DETAIL_ENGINE_ROOT_BINARY_PATH: ${DETAIL_ENGINE_ROOT_BINARY_PATH}")
     message(STATUS "DETAIL_ENGINE_TARGET_PLATFORM: ${JAFG_TARGET_PLATFORM}")
     message(STATUS "DETAIL_ENGINE_TARGET_ARCHITECTURE: ${JAFG_TARGET_ARCHITECTURE}")
     message(STATUS "DETAIL_ENGINE_TARGET_TYPE: ${JAFG_TARGET_TYPE}")
     message(STATUS "DETAIL_ENGINE_TARGET_CONFIGURATION: ${JAFG_TARGET_CONFIG}")
-    message(STATUS "DETAIL_ENGINE_TARGET_COMPOUND: ${JAFG_TARGET_COMPOUND}")
-    message(STATUS "DETAIL_ENGINE_PLATFORM_COMPOUND: ${JAFG_PLATFORM_COMPOUND}")
-    message(STATUS "DETAIL_ENGINE_CONFIG_COMPOUND: ${JAFG_COMPOUND_CONFIG_PATH}")
-    message(STATUS "DETAIL_ENGINE_EXPECTED_RUNTIME: ${JAFG_EXPECTED_RUNTIME}")
 
     target_compile_definitions(${_scoped_module_name} PRIVATE
         DETAIL_ENGINE_VERSION="${_detail_jafg_version}"
@@ -119,14 +113,11 @@ if(_guard)
         DETAIL_ENGINE_VCS_UPSTREAM="${VCS_URL}"
         DETAIL_ENGINE_HOMEPAGE_URL="${PROJECT_HOMEPAGE_URL}"
 
+        DETAIL_ENGINE_ROOT_BINARY_PATH="${DETAIL_ENGINE_ROOT_BINARY_PATH}"
         DETAIL_ENGINE_TARGET_PLATFORM="${JAFG_TARGET_PLATFORM}"
         DETAIL_ENGINE_TARGET_ARCHITECTURE="${JAFG_TARGET_ARCHITECTURE}"
         DETAIL_ENGINE_TARGET_TYPE="${JAFG_TARGET_TYPE}"
         DETAIL_ENGINE_TARGET_CONFIGURATION="${JAFG_TARGET_CONFIG}"
-        DETAIL_ENGINE_TARGET_COMPOUND="${JAFG_TARGET_COMPOUND}"
-        DETAIL_ENGINE_PLATFORM_COMPOUND="${JAFG_PLATFORM_COMPOUND}"
-        DETAIL_ENGINE_CONFIG_COMPOUND="${JAFG_COMPOUND_CONFIG_PATH}"
-        DETAIL_ENGINE_EXPECTED_RUNTIME="${JAFG_EXPECTED_RUNTIME}"
         )
 
     ###############################################################################
@@ -341,10 +332,10 @@ if(_guard)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_tinygltf_SOURCE_DIR})
 
     ###############################################################################
-    # slangc
+    # slang
     message(STATUS "Fetching slang...")
-    set(SLANGC_VERSION "2025.24.2")
-    function(_DownalodSlangc _os _archive _url)
+    set(SLANG_VERSION "2026.11")
+    function(_DownalodSlang _fldr _archive _url)
         if(NOT EXISTS "${_archive}")
             message(STATUS "Downloading Slang from [${_url}] to [${_archive}]...")
             file(DOWNLOAD
@@ -358,9 +349,9 @@ if(_guard)
                 message(FATAL_ERROR "Failed to download slang from [${_url}].")
             endif()
         else()
-            message(STATUS "Slangc archive already exists at [${_archive}].")
+            message(STATUS "Slang archive already exists at [${_archive}].")
         endif()
-        set(_dst_slang_extraction_dir "${JAFG_ENGINE_ROOT}/Vendor/Slang-${_os}")
+        set(_dst_slang_extraction_dir "${JAFG_ENGINE_ROOT}/Vendor/${_fldr}")
         if(NOT EXISTS "${_dst_slang_extraction_dir}/LICENSE")
             file(MAKE_DIRECTORY "${_dst_slang_extraction_dir}")
             execute_process(
@@ -368,11 +359,34 @@ if(_guard)
                 WORKING_DIRECTORY "${_dst_slang_extraction_dir}"
                 )
         else()
-            message(STATUS "Slangc already extracted for OS [${_os}] at [${_dst_slang_extraction_dir}].")
+            message(STATUS "Slang already extracted for OS [${_fldr}] at [${_dst_slang_extraction_dir}].")
         endif()
     endfunction()
-    _DownalodSlangc("win-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/win-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-windows-x86_64.zip")
-    _DownalodSlangc("lnx-x86_64" "${JAFG_ENGINE_ROOT}/Vendor/lnx-x86_64-slangc.zip" "https://github.com/shader-slang/slang/releases/download/v${SLANGC_VERSION}/slang-${SLANGC_VERSION}-linux-x86_64.zip")
+    _DownalodSlang(
+        "slang-${SLANG_VERSION}-win-x86_64"
+        "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-win-x86_64.zip"
+        "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/slang-${SLANG_VERSION}-windows-x86_64.zip"
+        )
+    _DownalodSlang(
+        "slang-${SLANG_VERSION}-lnx-x86_64"
+        "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-lnx-x86_64.zip"
+        "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/slang-${SLANG_VERSION}-linux-x86_64.zip"
+        )
+
+    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
+        find_package(slang REQUIRED
+            PATHS "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-lnx-x86_64"
+            NO_DEFAULT_PATH
+            )
+    elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+        find_package(slang REQUIRED
+        PATHS "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-win-x86_64"
+        NO_DEFAULT_PATH
+        )
+    else()
+        message(FATAL_ERROR "Missing implementation for target platform [${JAFG_TARGET_PLATFORM}].")
+    endif()
+    target_link_libraries(${_scoped_module_name} PRIVATE slang::slang)
 
     ###############################################################################
     # Fonts

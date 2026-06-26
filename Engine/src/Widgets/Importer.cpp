@@ -23,8 +23,8 @@ void Jafg::CreateImporter(LViewport& Viewport, finder::path const& Path, Detail:
     ConstructDeferredWidget(TNodeStaticInit<WDismissibleFloatingWidget>{.Outer=Viewport}).Style()
         .CreateResizeUi(false)
         .InitialWindowPosition({
-            Viewport.GetExtent().width/2.0f - FloatingSize.Size.x/2.0f,
-            Viewport.GetExtent().height/2.0f - FloatingSize.Size.y/2.0f,
+            static_cast<f32>(Viewport.GetExtent().width)/2.0f - FloatingSize.Size.x/2.0f,
+            static_cast<f32>(Viewport.GetExtent().height)/2.0f - FloatingSize.Size.y/2.0f,
             })
         .InitialTitle(algo::sprintf("Import \"{}\"", Path.filename().string()))
         .InitialWindowSize(FloatingSize)
@@ -173,10 +173,10 @@ void Jafg::Detail::WImporter::Construct()
                         && Self.AabbTest({.Translation=Info.Translation}, Info.CursorLocation))
                     {
                         auto& Assets{*Self.GetMutableEngine().GetSubsystemChecked<JAssetDiscoverer>()};
-                        auto Target{Finder::GetContentDir()}; Target/=this->Target->GetContent(); Target.concat(".jasset");
+                        auto Target{finder::content_dir()}; Target/=this->Target->GetContent(); Target.concat(".jasset");
                         Target = weakly_canonical(Target);
 
-                        if (!finder::descendant_of(Target, Finder::GetContentDir()))
+                        if (!finder::descendant_of(Target, finder::content_dir()))
                         {
                             check(this->ErrorMessage)
                             LOG_ERROR(LogWidgets, "[{}]: Target must be located in the Content directory.", Target)

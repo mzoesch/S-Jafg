@@ -30,7 +30,7 @@ public:
     ENGINE_API LRunnable();
     ENGINE_API LRunnable(const LString& InHumanReadableName);
     PROHIBIT_REALLOC_OF_ANY_FORM(LRunnable)
-    virtual ~LRunnable() = default;
+    ENGINE_API virtual ~LRunnable();
 
     //#
     //# Called on aggregating thread to initialize the runnable object.
@@ -66,10 +66,10 @@ public:
 
 protected:
 
-    virtual void OnStop(const ERunnableStopReason::Type InType) { }
+    virtual void OnStop(ERunnableStopReason::Type Type) {}
 
-    std::atomic_bool bStopped{ false };
     LString HumanReadableName;
+    std::atomic_bool bStopped{ false };
 };
 
 } /* ~Namespace Jafg */

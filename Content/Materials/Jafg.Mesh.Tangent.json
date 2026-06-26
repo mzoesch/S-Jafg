@@ -1,3 +1,4 @@
 {
-    "Shader": "Jafg.Mesh.Tangent"
+    "inherits": "Jafg.Perspective",
+    "shader": "Shaders/Jafg.Mesh.Tangent"
 }

@@ -270,7 +270,7 @@ void Jafg::WInput_Vector3::OnVectorDataChanged(bool bCallEvent)
                 Part = EPart::Z;
             }
 
-            checkCode(++Count);
+            checkCode(++Count)
         }
     }
 

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "Rhi/RendererCore.h"
+#include "Rhi/Objects.h"
 
 namespace Jafg::UBO
 {
 
-//# The global jafg commonly used bindless texture array.
-struct Bindless final
+struct Bindless : rhi::ubo_template<Bindless, vk::ShaderStageFlagBits::eFragment>
 {
-    //# Binding point for the bindless sampler.
+    //# Binding point for the bindless samplers.
     static constexpr u32 SamplerBinding{ 0 };
     //# Binding point for the bindless array.
     static constexpr u32 ArrayBinding{ 1 };
@@ -43,39 +43,9 @@ struct Bindless final
     // static constexpr u32 NearestMirrorClampToEdgeSamplerIdx{std::to_underlying(Sampler::NearestMirrorClampToEdgeSamplerIdx)};
     static constexpr u32 SamplerCount{std::to_underlying(Sampler::NearestClampToBorderSamplerIdx) + 1};
 
-    static std::array<vk::DescriptorSetLayoutBinding, 2> GetBindings(u32 Capacity) noexcept
+    static std::array<vk::DescriptorBindingFlags, 2> const& descriptor_binding_flags() noexcept
     {
-        return std::array{
-            vk::DescriptorSetLayoutBinding{
-                .binding = Bindless::SamplerBinding,
-                .descriptorType = vk::DescriptorType::eSampler,
-                .descriptorCount = SamplerCount,
-                .stageFlags = Flags(),
-                .pImmutableSamplers = nullptr
-                },
-            vk::DescriptorSetLayoutBinding{
-                .binding = Bindless::ArrayBinding,
-                .descriptorType = vk::DescriptorType::eSampledImage,
-                .descriptorCount = Capacity,
-                .stageFlags = Flags(),
-                .pImmutableSamplers = nullptr
-                },
-            };
-    }
-    static constexpr vk::ShaderStageFlags Flags() noexcept { return vk::ShaderStageFlagBits::eFragment; }
-
-    static vk::DescriptorSetLayoutBindingFlagsCreateInfo const& FlagsInfo() noexcept
-    {
-        static vk::DescriptorSetLayoutBindingFlagsCreateInfo FlagsInfo{
-            .bindingCount = static_cast<u32>(BindingFlags().size()),
-            .pBindingFlags = BindingFlags().data(),
-            };
-
-        return FlagsInfo;
-    }
-    static std::array<vk::DescriptorBindingFlags, 2> const& BindingFlags() noexcept
-    {
-        static std::array BindingFlags{
+        static std::array Flags{
             vk::DescriptorBindingFlags{},
             vk::DescriptorBindingFlags{
                   vk::DescriptorBindingFlagBits::ePartiallyBound
@@ -83,9 +53,32 @@ struct Bindless final
                 | vk::DescriptorBindingFlagBits::eUpdateAfterBind
                 },
             };
-
-        return BindingFlags;
+        return Flags;
+    }
+    static std::array<vk::DescriptorSetLayoutBinding, 2> bindings(u32 Capacity) noexcept
+    {
+        return std::array{
+            vk::DescriptorSetLayoutBinding{
+                .binding = SamplerBinding,
+                .descriptorType = vk::DescriptorType::eSampler,
+                .descriptorCount = SamplerCount,
+                .stageFlags = shader_stage_flags(),
+                .pImmutableSamplers = nullptr
+                },
+            vk::DescriptorSetLayoutBinding{
+                .binding = ArrayBinding,
+                .descriptorType = vk::DescriptorType::eSampledImage,
+                .descriptorCount = Capacity,
+                .stageFlags = shader_stage_flags(),
+                .pImmutableSamplers = nullptr
+                },
+            };
+    }
+    static vk::DescriptorSetLayoutCreateFlags descriptor_set_layout_flags() noexcept
+    {
+        return vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool;
     }
 };
+static_assert(rhi::ubo<Bindless>);
 
-} /* ~Namespace Jafg */
+} /* ~Namespace Jafg::UBO */

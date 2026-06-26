@@ -1,0 +1,9 @@
+{
+    "IncludeDirs": [
+        "Shaders/src",
+        "Shaders/include"
+    ],
+    "SourceFiles": [
+        "Shaders/src/Mesh.OutlinePost.slang"
+    ]
+}

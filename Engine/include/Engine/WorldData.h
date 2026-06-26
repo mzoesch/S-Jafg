@@ -2,15 +2,12 @@
 
 #pragma once
 
-#include "Rhi/UniformBufferObjects.h"
+#include "Rhi/Objects.h"
 
-namespace Jafg
+namespace Jafg::UBO
 {
 
-namespace UBO
-{
-
-struct WorldData final : public TUbo<WorldData, 0, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+struct WorldData final : rhi::ubo_template<WorldData, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
     // LMat4F model;                     // Model-to-world transformation matrix
     LMat4F view;                      // World-to-camera transformation matrix
@@ -23,8 +20,6 @@ struct WorldData final : public TUbo<WorldData, 0, vk::ShaderStageFlagBits::eVer
     float prefilteredCubeMipLevels;     // IBL prefiltered environment map mip levels
     float scaleIBLAmbient;              // IBL ambient contribution scale
 };
-static_assert(CUniformBufferObject<WorldData>);
+static_assert(rhi::ubo<WorldData>);
 
-} /* ~Namespace UBO */
-
-} /* ~Namespace Jafg */
+} /* ~Namespace Jafg::UBO */

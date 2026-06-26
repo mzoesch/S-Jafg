@@ -99,12 +99,18 @@ concept CDeserializable = std::is_default_constructible_v<TDeserializer<T, TArch
 template<typename T, typename TArchive>
 concept CTwoWaySerializable = CSerializable<T, TArchive> && CDeserializable<T, TArchive>;
 
-#define SERDE_BIN_NON_INTRUSIVE_TRANSFORM(X) (Field.X)
+//#
+//# Serializes a type to/from its binary representation.
+//# Usage example:
+//#    struct LExample { LString Name; i32 Value; };
+//#    SERDE_BIN_NON_INTRUSIVE(LExample, Name, Value)
+//#
+#define DETAIL_SERDE_BIN_NON_INTRUSIVE_TRANSFORM(X) (Field.X)
 #define SERDE_BIN_NON_INTRUSIVE(T, ...) \
     template<typename TArchive, typename U> requires(::serde::bin_archive_for_v<TArchive, U> && std::is_same_v<std::remove_const_t<U>, T>) \
     inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept \
     { \
-        Ar JAFG_MAP(SERDE_BIN_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) ; \
+        Ar JAFG_MAP(DETAIL_SERDE_BIN_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) ; \
     }
 
 namespace detail
@@ -368,15 +374,27 @@ private:
     const std::ios_base::openmode m_open_mode;
 };
 
-#define SERDE_STRING_NON_INTRUSIVE_TRANSFORM(X) (Field.X)
+//#
+//# Serializes a type to/from a string.
+//# Usage example:
+//#    struct LExample { LString Name; i32 Value; };
+//#    SERDE_STRING_NON_INTRUSIVE(LExample, Name, Value)
+//#
+#define DETAIL_SERDE_STRING_NON_INTRUSIVE_TRANSFORM(X) (Field.X)
 #define SERDE_STRING_NON_INTRUSIVE(T, ...) \
     template<typename TArchive, typename U> requires(::serde::string_archive_for_v<TArchive, U> && std::is_same_v<std::remove_const_t<U>, T>) \
     inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept \
     { \
-        Ar JAFG_MAP(SERDE_STRING_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) ; \
+        Ar JAFG_MAP(DETAIL_SERDE_STRING_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) ; \
     }
 
-#define SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM(X) {_serde_local_enum_t::X, #X},
+//#
+//# Serializes an enum to/from a string.
+//# Usage example:
+//#     enum struct EExample : u8 { A, B, C };
+//#     SERDE_STRING_ENUM_NON_INTRUSIVE(EExample, A, B, C)
+//#
+#define DETAIL_SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM(X) {_serde_local_enum_t::X, #X},
 #define SERDE_STRING_ENUM_NON_INTRUSIVE(T, ...) \
     template<typename TArchive, typename U> requires(::serde::string_archive_for_v<TArchive, U> && std::is_same_v<std::remove_const_t<U>, T>) \
     inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept \
@@ -384,7 +402,7 @@ private:
         static_assert(std::is_enum_v<T>); \
         typedef T _serde_local_enum_t; \
         static constexpr std::pair<T, LStringView> const Members[]{ \
-            JAFG_MAP(SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) \
+            JAFG_MAP(DETAIL_SERDE_STRING_ENUM_NON_INTRUSIVE_TRANSFORM, __VA_ARGS__) \
             }; \
         if constexpr (::serde::is_string_archive_v<TArchive>) \
         { \
@@ -423,6 +441,16 @@ private:
             static_assert(::algo::always_false_v<T>, "Unsupported archive type for enum serialization."); \
         } \
     }
+
+//#
+//# Convenience macro that can define both string-archive serde and to_json/from_json non-intrusive functions.
+//# Usage example:
+//#     enum struct EExample : u8 { A, B, C };
+//#     SERDE_STRING_AND_JSON_ENUM(EExample, A, B, C)
+//#
+#define SERDE_STRING_AND_JSON_ENUM(T, ...) \
+    SERDE_STRING_ENUM_NON_INTRUSIVE(T, __VA_ARGS__) \
+    SERDE_JSON_ENUM(T, __VA_ARGS__)
 
 struct os_string_archive final
 {

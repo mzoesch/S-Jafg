@@ -36,7 +36,7 @@ public:
 
 private:
 
-    std::array<LMappedDeviceBuffer, Vk_DesiredMaxFramesInFlight> uniformBuffers;
+    rhi::frame_array<rhi::mapped_device_buffer> uniformBuffers;
 
     LMaterialInstanceRef MaterialInstance;
     LTexture2Ref Texture;

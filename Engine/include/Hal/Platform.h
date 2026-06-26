@@ -88,6 +88,9 @@ struct LPrimitivePlatformTypesGeneric
 #ifndef DETAIL_JAFG_CPLUSPLUS
     #error "DETAIL_JAFG_CPLUSPLUS is not defined."
 #endif /* DETAIL_JAFG_CPLUSPLUS */
+#ifndef JAFG_DO_COMPILER_DIAGNOSTIC_SETUP
+    #define JAFG_DO_COMPILER_DIAGNOSTIC_SETUP                           1
+#endif /* JAFG_DO_COMPILER_DIAGNOSTIC_SETUP */
 
 #if JAFG_PLATFORM_LINUX
     #include "Hal/PlatformLinux.h"
@@ -105,17 +108,17 @@ struct LPrimitivePlatformTypesGeneric
 -----------------------------------------------------------------------------*/
 
 #ifndef JAFG_PLATFORM_DESKTOP
-    #define JAFG_PLATFORM_DESKTOP                                        0
+    #define JAFG_PLATFORM_DESKTOP                                       0
 #endif /* JAFG_PLATFORM_DESKTOP */
 
 #ifndef JAFG_WITH_GCC
-    #define JAFG_WITH_GCC                                                0
+    #define JAFG_WITH_GCC                                               0
 #endif /* !JAFG_WITH_GCC */
 #ifndef JAFG_WITH_MSVC
-    #define JAFG_WITH_MSVC                                               0
+    #define JAFG_WITH_MSVC                                              0
 #endif /* !JAFG_WITH_MSVC */
 #ifndef JAFG_WITH_CLANG
-    #define JAFG_WITH_CLANG                                              0
+    #define JAFG_WITH_CLANG                                             0
 #endif /* !JAFG_WITH_CLANG */
 #if !JAFG_WITH_GCC && !JAFG_WITH_MSVC && !JAFG_WITH_CLANG
     #error "No compiler spcified."
@@ -142,17 +145,17 @@ struct LPrimitivePlatformTypesGeneric
 
 //# Whether the platform uses the Posix Api.
 #ifndef JAFG_PLATFORM_USES_POSIX
-    #define JAFG_PLATFORM_USES_POSIX                                     (!JAFG_PLATFORM_WINDOWS)
+    #define JAFG_PLATFORM_USES_POSIX                                    (!JAFG_PLATFORM_WINDOWS)
 #endif /* !JAFG_PLATFORM_USES_POSIX */
 
 //# Branch prediction hint: Is this boolean expression likely to be true?
 #ifndef JAFG_UNLIKELY
-    #define JAFG_UNLIKELY(Expr)                                          (!!(Expr))
+    #define JAFG_UNLIKELY(Expr)                                         (!!(Expr))
 #endif /* !JAFG_UNLIKELY */
 
 //# Branch prediction hint: Is this boolean expression likely to be false?
 #ifndef JAFG_LIKELY
-    #define JAFG_LIKELY(Expr)                                            (!!(Expr))
+    #define JAFG_LIKELY(Expr)                                           (!!(Expr))
 #endif /* !JAFG_LIKELY */
 
 //# Whether to include and link glad. Some compilers may precede this.
@@ -200,22 +203,22 @@ struct LPrimitivePlatformTypesGeneric
 
 //# Whether to compile with the ReST command line system.
 #ifndef JAFG_WITH_REST_CLS
-    #define JAFG_WITH_REST_CLS                                           0
+    #define JAFG_WITH_REST_CLS                                          0
 #endif /* !JAFG_WITH_REST_CLS */
 
 //# Whether the used compiler supports extern template specifications.
 #ifndef JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
-    #define JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        0
+    #define JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS       0
 #endif /* !JAFG_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS */
 
 //# Whether this platform uses 64-bit integers as pointers.
 #ifndef JAFG_PLATFORM_USES_64_BIT
-    #define JAFG_PLATFORM_USES_64_BIT                                    0
+    #define JAFG_PLATFORM_USES_64_BIT                                   0
 #endif /* JAFG_PLATFORM_USES_64_BIT */
 
 //# Whether this platform uses 32-bit integers as pointers.
 #ifndef JAFG_PLATFORM_USES_32_BIT
-    #define JAFG_PLATFORM_USES_32_BIT                                    0
+    #define JAFG_PLATFORM_USES_32_BIT                                   0
 #endif /* JAFG_PLATFORM_USES_32_BIT */
 
 #if !(JAFG_PLATFORM_USES_64_BIT || JAFG_PLATFORM_USES_32_BIT)
@@ -228,7 +231,7 @@ struct LPrimitivePlatformTypesGeneric
 //# Whether this platform uses the little endian byte order.
 #ifndef JAFG_PLATFORM_USES_LITTLE_ENDIAN
     #ifdef JAFG_PLATFORM_USES_BIG_ENDIAN
-        #define JAFG_PLATFORM_USES_LITTLE_ENDIAN                         (!JAFG_PLATFORM_USES_BIG_ENDIAN)
+        #define JAFG_PLATFORM_USES_LITTLE_ENDIAN                        (!JAFG_PLATFORM_USES_BIG_ENDIAN)
     #else /* JAFG_PLATFORM_USES_BIG_ENDIAN */
         #error "Platform is missing JAFG_PLATFORM_USES_LITTLE_ENDIAN definition."
     #endif /* !JAFG_PLATFORM_USES_BIG_ENDIAN */
@@ -237,7 +240,7 @@ struct LPrimitivePlatformTypesGeneric
 //# Whether this platform uses the big endian byte order.
 #ifndef JAFG_PLATFORM_USES_BIG_ENDIAN
     #ifdef JAFG_PLATFORM_USES_LITTLE_ENDIAN
-        #define  JAFG_PLATFORM_USES_BIG_ENDIAN                           (!JAFG_PLATFORM_USES_LITTLE_ENDIAN)
+        #define  JAFG_PLATFORM_USES_BIG_ENDIAN                          (!JAFG_PLATFORM_USES_LITTLE_ENDIAN)
     #else /* JAFG_PLATFORM_USES_LITTLE_ENDIAN */
         #error "Platform is missing  JAFG_PLATFORM_USES_BIG_ENDIAN definition."
     #endif /* !JAFG_PLATFORM_USES_LITTLE_ENDIAN */
@@ -259,32 +262,32 @@ struct LPrimitivePlatformTypesGeneric
 //# script for said module.
 //#
 #ifndef JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES
-    #define JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES                      0
+    #define JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES                     0
 #endif /* !JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 //# Whether this platform's standard output buffer stream supports flushing.
 #ifndef JAFG_PLATFORM_SUPPORTS_STD_FLUSH
-    #define JAFG_PLATFORM_SUPPORTS_STD_FLUSH                             0
+    #define JAFG_PLATFORM_SUPPORTS_STD_FLUSH                            0
 #endif /* !JAFG_PLATFORM_SUPPORTS_STD_FLUSH */
 
 //# Whether the platform's standard output buffer stream supports ANSI escape codes.
 #ifndef JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES
-    #define JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES                          0
+    #define JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES                         0
 #endif /* !JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES */
 
 //# Whether logs are saved in memory for later retrieval.
 #ifndef JAFG_SAVE_LOGS_IN_MEMORY
-    #define JAFG_SAVE_LOGS_IN_MEMORY                                     JAFG_WITH_REST_CLS
+    #define JAFG_SAVE_LOGS_IN_MEMORY                                    JAFG_WITH_REST_CLS
 #endif /* !JAFG_SAVE_LOGS_IN_MEMORY */
 
 //# Whether the platform supports Single-Instruction-Multiple-Data intrinsics.
 #ifndef JAFG_PLATFORM_SUPPORTS_SIMD
-    #define JAFG_PLATFORM_SUPPORTS_SIMD                                  0
+    #define JAFG_PLATFORM_SUPPORTS_SIMD                                 0
 #endif /* !JAFG_PLATFORM_SUPPORTS_SIMD */
 
 //# Whether the platform supports C++23 stacktrace in the stl library.
 #ifndef JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE
-    #define JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE                        0
+    #define JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE                       0
 #endif /* !JAFG_PLATFORM_SUPPORTS_STD_STACKTRACE */
 
 //#
@@ -294,12 +297,12 @@ struct LPrimitivePlatformTypesGeneric
 //# reallocated if the underlying platform thinks it is necessary. JAFG does not provide any guarantees for that.
 //#
 #ifndef JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK
-    #define JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK                         0
+    #define JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK                        0
 #endif /* !JAFG_PLATFORM_SUPPORTS_MEMORY_SHRINK */
 
 //# Whether this platform uses the generic platform-agnostic loop provided by the runtime library of Jafg.
 #ifndef JAFG_PLATFORM_USES_NON_GENERIC_LOOP
-    #define JAFG_PLATFORM_USES_NON_GENERIC_LOOP                          0
+    #define JAFG_PLATFORM_USES_NON_GENERIC_LOOP                         0
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
 #if JAFG_PLATFORM_USES_NON_GENERIC_LOOP
     #ifndef JAFG_PLATFORM_GUARDED_LOOP
@@ -317,18 +320,18 @@ struct LPrimitivePlatformTypesGeneric
 //#       If your platform does not support clean defined destructor behavior, another non-trivial exit procedure
 //#       must be used.
 #ifndef JAFG_PLATFORM_USES_NON_GENERIC_EXIT
-    #define JAFG_PLATFORM_USES_NON_GENERIC_EXIT                          0
+    #define JAFG_PLATFORM_USES_NON_GENERIC_EXIT                         0
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
 
 //# Whether this platform uses UTF-8, UTF-16 or UTF-32 as its native character encoding.
 #ifndef JAFG_PLATFORM_USES_UTF8
-    #define JAFG_PLATFORM_USES_UTF8                                      0
+    #define JAFG_PLATFORM_USES_UTF8                                     0
 #endif /* !JAFG_PLATFORM_USES_UTF8 */
 #ifndef JAFG_PLATFORM_USES_UTF16
-    #define JAFG_PLATFORM_USES_UTF16                                     0
+    #define JAFG_PLATFORM_USES_UTF16                                    0
 #endif /* !JAFG_PLATFORM_USES_UTF16 */
 #ifndef JAFG_PLATFORM_USES_UTF32
-    #define JAFG_PLATFORM_USES_UTF32                                     0
+    #define JAFG_PLATFORM_USES_UTF32                                    0
 #endif /* !JAFG_PLATFORM_USES_UTF32 */
 
 #if !(JAFG_PLATFORM_USES_UTF8 || JAFG_PLATFORM_USES_UTF16 || JAFG_PLATFORM_USES_UTF32)

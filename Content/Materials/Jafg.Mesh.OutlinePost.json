@@ -1,6 +1,4 @@
 {
-    "Shader": "Jafg.Mesh.OutlinePost",
-    "Properties": {
-        "sampler": "Jafg.LinearRepeatSampler"
-    }
+    "inherits": "Jafg.Perspective",
+    "shader": "Shaders/Jafg.Mesh.OutlinePost"
 }

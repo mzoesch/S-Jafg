@@ -2,7 +2,7 @@
 
 #pragma once
 
-#if JAFG_WITH_SANITIZERS
+#if JAFG_DO_SANITIZED_BUILD
     #if JAFG_WITH_CLANG
         #ifndef JAFG_ASAN_NO_UB
             #define JAFG_ASAN_NO_UB                                     __attribute__ ((no_sanitize("undefined")))
@@ -11,7 +11,7 @@
             #define JAFG_ASAN_NO_NULL_UB                                __attribute__ ((no_sanitize("null")))
         #endif /* !JAFG_ASAN_NO_NULL_UB */
     #endif /* JAFG_WITH_CLANG */
-#endif /* !JAFG_WITH_SANITIZERS */
+#endif /* !JAFG_DO_SANITIZED_BUILD */
 
 #ifndef JAFG_ASAN_NO_UB
     #define JAFG_ASAN_NO_UB

@@ -19,7 +19,6 @@ class WNode;
 class WParent;
 class LViewport;
 struct LWidgetConstructor;
-struct LMappedDeviceBuffer;
 struct LRenderInfo;
 struct LNodeRenderInfo;
 
@@ -61,7 +60,7 @@ struct LNodeSize1 final
 
     NODISCARD FORCEINLINE constexpr bool operator==(LNodeSize1 const& Other) const noexcept
     {
-        return this->Type == Other.Type && this->Size == Other.Size;
+        return this->Type == Other.Type && maths::eq_e(this->Size, Other.Size);
     }
     NODISCARD FORCEINLINE constexpr LNodeSize1 operator+(LNodeSize1 const& Other) const noexcept
     {
@@ -344,10 +343,10 @@ struct LAnchor final
 
     inline constexpr void ApplyConstraints(EAnchor InConstraints) noexcept;
 
-    FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0; }
-    FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0; }
-    FORCEINLINE constexpr bool IsStretchedHorizontal() const noexcept { return this->MaxX > 0.0; }
-    FORCEINLINE constexpr bool IsStretchedVertical() const noexcept { return this->MaxY > 0.0; }
+    FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0f; }
+    FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0f; }
+    FORCEINLINE constexpr bool IsStretchedHorizontal() const noexcept { return this->MaxX > 0.0f; }
+    FORCEINLINE constexpr bool IsStretchedVertical() const noexcept { return this->MaxY > 0.f; }
 
     FORCEINLINE constexpr bool IsPushed() const noexcept { return this->IsPushedHorizontal() || this->IsPushedVertical(); }
     FORCEINLINE constexpr bool IsStretched() const noexcept { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
@@ -466,7 +465,6 @@ inline LString LexToString(ENodeVisibility Visibility)
     case ENodeVisibility::DerivedHitTestInvisible: { return "DerivedHitTestInvisible"; }
     case ENodeVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
     case ENodeVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
-    default: checkNoEntry() return { "<unknown>" };
     }
 }
 
@@ -993,9 +991,9 @@ public:
 
     FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
     FORCEINLINE WParent* GetParent() { return this->Parent; }
-    FORCEINLINE WParent* GetParentChecked() { auto* Out{this->GetParent()}; check(Out); return Out; }
+    FORCEINLINE WParent* GetParentChecked() { auto* Out{this->GetParent()}; check(Out) return Out; }
     FORCEINLINE WParent const* GetParent() const { return this->Parent; }
-    FORCEINLINE WParent const* GetParentChecked() const { auto const* Out{this->GetParent()}; check(Out); return Out; }
+    FORCEINLINE WParent const* GetParentChecked() const { auto const* Out{this->GetParent()}; check(Out) return Out; }
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
     FORCEINLINE TNode* GetParentUntil() noexcept;
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
@@ -1112,8 +1110,8 @@ public:
     LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const;
 
     std::optional<LMargin> GetMargin() const noexcept;
-    FORCEINLINE std::optional<LMargin> GetMarginChecked() const noexcept { std::optional Out{this->GetMargin()}; check(Out.has_value()); return Out; }
-    FORCEINLINE std::optional<LMargin> GetMarginAsserted() const noexcept { std::optional Out{this->GetMargin()}; jassert(Out.has_value()); return Out; }
+    FORCEINLINE std::optional<LMargin> GetMarginChecked() const noexcept { std::optional Out{this->GetMargin()}; check(Out.has_value()) return Out; }
+    FORCEINLINE std::optional<LMargin> GetMarginAsserted() const noexcept { std::optional Out{this->GetMargin()}; jassert(Out.has_value()) return Out; }
 
     //# The anchor to use.
     LAnchor Anchor{ EAnchor::TopLeft };

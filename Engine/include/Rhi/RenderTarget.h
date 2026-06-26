@@ -33,7 +33,7 @@ struct LRenderTarget
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
     NODISCARD FORCEINLINE constexpr rhi::extent2 const& GetExtentAsLValue() const noexcept { return this->Extent; }
 
-    NODISCARD FORCEINLINE constexpr bool IsDepthTested() const noexcept { return !!this->DepthTarget.Image.GetBuffer(); }
+    NODISCARD FORCEINLINE constexpr bool IsDepthTested() const noexcept { return !!*this->DepthTarget.Image; }
     NODISCARD FORCEINLINE constexpr auto const& GetDepthImage() const noexcept { return this->DepthTarget.Image; }
     NODISCARD FORCEINLINE constexpr auto const& GetDepthImageView() const noexcept { return this->DepthTarget.ImageView; }
 
@@ -77,7 +77,7 @@ protected:
 
     struct Target
     {
-        LDeviceImage Image;
+        rhi::device_image Image;
         vk::raii::ImageView ImageView{ nullptr };
     };
     Target DepthTarget;

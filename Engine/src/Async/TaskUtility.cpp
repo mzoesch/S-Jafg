@@ -167,6 +167,10 @@ Jafg::LRunnable::LRunnable(const LString& InHumanReadableName)
     return;
 }
 
+Jafg::LRunnable::~LRunnable()
+{
+}
+
 void Jafg::LRunnable::Join()
 {
     /*
@@ -217,7 +221,6 @@ LString Jafg::LexToString(const ETaskTime::Type Time)
     if (Time & ETaskTime::Late)                          { return "Late"; }
 
     panic( "Unknown task time." )
-    return "Unknown";
 }
 
 void Jafg::Tasks::RegisterThread(ENamedThreads::Type InThreadName)
@@ -284,8 +287,7 @@ LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
     if (::bTearingDown)
     {
         LOG_ERROR(LogTaskUtility, "Failed to get current thread display name.")
-        checkNoEntry()
-        return "NotRegistered";
+        checkNoEntryOrElse(return "NotRegistered")
     }
 
     if (const LEngineThread* Thread = algo::find_pointer(::EngineThreads, Me, &LEngineThread::Id); Thread)
@@ -293,8 +295,7 @@ LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
         return Thread->GetDisplayName();
     }
 
-    checkNoEntry()
-    return "NotRegistered";
+    checkNoEntryOrElse(return "NotRegistered")
 }
 
 LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
@@ -304,9 +305,7 @@ LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
     std::shared_lock Lock(::EngineThreadsMutex);
     if (::bTearingDown)
     {
-        LOG_ERROR(LogTaskUtility, "Failed to get current thread display name.")
-        jassertNoEntry()
-        return "NotRegistered";
+        LOG_FATAL(LogTaskUtility, "Failed to get current thread display name.")
     }
 
     if (const LEngineThread* Thread = algo::find_pointer(::EngineThreads, Me, &LEngineThread::Id); Thread)
@@ -315,7 +314,6 @@ LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
     }
 
     jassertNoEntry()
-    return "NotRegistered";
 }
 
 Jafg::ENamedThreads::Type Jafg::Tasks::GetCurrentThreadName()
@@ -677,7 +675,6 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         MyRunnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
                         )
-                    return;
                 }
                 if (LambdaErrorLevel >= ETaskExit::SanitizedFailure)
                 {

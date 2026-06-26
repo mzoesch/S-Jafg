@@ -3,20 +3,12 @@
 #pragma once
 
 #include "Subsystems/FrontendSubsystem.h"
-#include "Rhi/FetchedShader.h"
-#include "Rhi/VertexInput.h"
-#include "Rhi/PushConstants.h"
+#include "Rhi/Objects.h"
+#include "Rhi/ReflectedShader.h"
 #include "ShaderSubsystem.generated.h"
 
 namespace Jafg
 {
-
-struct LShaderCompilationRequest final
-{
-    LString Target{ "spirv" };
-    LString Profile{ "spirv_1_5" };
-    LFetchedShader const& FetchedShader;
-};
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JShaderSubsystem final : public JFrontendSubsystem
@@ -27,40 +19,78 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JShaderSubsystem)
 
-public:
-
     virtual void Initialize(LSubsystemCollection& Collection) override;
 
-    inline bool HasFetchedShader(LStringView Name) const noexcept { return algo::contains(this->FetchedShaders, Name, &LFetchedShader::Name); }
-    inline LFetchedShader const& GetFetchedShader(LStringView Name) const noexcept
+public:
+
+    struct Shader2 final
     {
-        auto It{algo::find(this->FetchedShaders, Name, &LFetchedShader::Name)};
-        if (It == this->FetchedShaders.end())
+        struct CompileTimeDefinition final
         {
-            LOG_FATAL(LogShaderSubsystem, "No such shader [{}].", Name)
-        }
-        return **It;
+            LString Identifier;
+            LString Value;
+        };
+
+        LPath Path;
+        std::vector<LString> IncludeDirs;
+        std::vector<CompileTimeDefinition> CompileTimeDefinitions;
+        std::inplace_vector<LPath, 2> SourceFiles;
+
+        static LPath GetDestination(LPath const& SourceFile) noexcept;
+        static LPath GetReflectionFile(LPath const& SourceFile) noexcept;
+    };
+
+    NODISCARD bool HasShader(LStringView Name) const noexcept
+    {
+        return algo::contains(this->ReflectedShaders, Name, &rhi::reflected_shader::Identifier);
     }
-    void RefetchShaders();
+    NODISCARD rhi::reflected_shader const& GetShader(LStringView Name) const noexcept
+    {
+        auto It{algo::find(this->ReflectedShaders, Name, &rhi::reflected_shader::Identifier)};
+        if (It == this->ReflectedShaders.end())
+        {
+            LOG_FATAL(LogShaderSubsystem, "[{}]: No such shader.", Name)
+        }
+        return *It;
+    }
 
-    void RecompileChangedShaders();
-    void RecompileAllShaders() { checkNoEntry() }
+    template<rhi::vertex_input TVertexInput>
+    inline void AddVertexProvider() noexcept { LVertexInputRegistrator<TVertexInput>{}; }
+    LVertexInputProvider const& GetVertexInput(LStringView Identifier) const noexcept;
 
-    //# @return System response.
-    i32 RecompileShader(LShaderCompilationRequest const& Request);
-
-    template<typename TVertexInput> requires CDeviceVertexInput<TVertexInput>
-    inline void AddVertexProvider() noexcept { Detail::AddVertexProvider<TVertexInput>(); }
-    vk::PipelineVertexInputStateCreateInfo GetVertexInputStateCreateInfo(LString const& Name) const;
-
-    template<typename TPushConstant> requires CPushConstant<TPushConstant>
-    inline void AddPushConstantProvider() noexcept { Detail::AddPushConstantProvider<TPushConstant>(); }
-    Detail::LPushConstantSigs const& GetPushConstant(LString const& Name) const;
-    Detail::LPushConstantInfo GetPushConstantInfo(LString const& Name) const;
+    template<rhi::pc TPushConstant>
+    inline void AddPushConstantProvider() noexcept { LPushConstantRegistrator<TPushConstant>{}; }
+    LPushConstantProvider const& GetPushConstant(LStringView Identifier) const noexcept;
 
 private:
 
-    TArray<std::unique_ptr<LFetchedShader>> FetchedShaders;
+    std::size_t RecompileShaderConditionally(Shader2 const& Shader, bool bForce = false);
+
+    //#
+    //# Once populated, shaders will never change their address again. This is guaranteed by jafg.
+    //#
+    //# TODO: Can't we solve with std::hive?
+    //#
+    TArray<rhi::reflected_shader> ReflectedShaders;
 };
+
+SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(JShaderSubsystem::Shader2::CompileTimeDefinition, Identifier, Value)
+inline void from_json(json const& j, JShaderSubsystem::Shader2& Shader) noexcept
+{
+    j.at("IncludeDirs").get_to(Shader.IncludeDirs);
+    for (auto& IncludeDir: Shader.IncludeDirs)
+    {
+        IncludeDir = finder::content_dir()/IncludeDir;
+    }
+    j.at("SourceFiles").get_to(Shader.SourceFiles);
+    for (auto& SourceFile: Shader.SourceFiles)
+    {
+        SourceFile = finder::content_dir()/SourceFile;
+    }
+    if (j.contains("CompileTimeDefinitions"))
+    {
+        j.at("CompileTimeDefinitions").get_to(Shader.CompileTimeDefinitions);
+    }
+}
 
 } /* ~Namespace Jafg */

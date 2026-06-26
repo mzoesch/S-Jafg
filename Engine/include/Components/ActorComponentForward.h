@@ -2,16 +2,14 @@
 
 #pragma once
 
+#include "Rhi/RendererCore.h"
 #include "Rhi/RenderInfo.h"
-#include "Rhi/PushConstants.h"
 #include "Engine/WorldData.h"
 
 namespace Jafg
 {
 
-struct LMaterialInstance;
-
-struct LActorRenderInfo : public LRenderInfo
+struct LActorRenderInfo: LRenderInfo
 {
     //# The perspective eye.
     LEye_v2 const& PerspectiveEye;
@@ -33,11 +31,6 @@ struct LActorRenderInfo : public LRenderInfo
     //  This should also be per world basis. The layout is maybe ok in the frontend?
     UBO::WorldData WorldData;
     vk::DescriptorSet WorldDataDescriptorSet;
-};
-
-struct LActorDrawInfo
-{
-    LWorldTrans const& Transform;
 };
 
 } /* ~Namespace Jafg */

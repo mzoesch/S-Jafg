@@ -15,6 +15,7 @@
 #include "User/UserPreferences.h"
 #include "Components/ActorComponentForward.h"
 #include "Components/StaticMeshComponent.h"
+#include "Framework/MaterialSubsystem.h"
 
 LString Jafg::LWorldParameters::ToString() const
 {
@@ -85,7 +86,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     TArray<vk::DescriptorSetLayout> LayoutsToAllocate; LayoutsToAllocate.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
     for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
     {
-        LayoutsToAllocate.push_back(*Frontend.Vk_GetDescriptorSetLayouts().at("WorldData"));
+        LayoutsToAllocate.push_back(*Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetSharedDescriptorSetLayouts().at(UBO::WorldData::name()));
     }
     auto Sets = rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
         .descriptorPool = Frontend.Vk_GetDescriptorPool(),
@@ -95,7 +96,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
     {
         this->Vk_WorldDescriptorSets[Idx] = std::move(Sets[Idx]);
-        this->Vk_WorldBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::WorldData::CreateInfo());
+        this->Vk_WorldBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::WorldData::buffer_create_info());
     }
 
     this->UnderlyingLevel = Level;
@@ -149,7 +150,7 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     return;
 }
 
-void Jafg::LWorld::Tick(f32 Dt)
+void Jafg::LWorld::Tick(f64 Dt)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -158,7 +159,7 @@ void Jafg::LWorld::Tick(f32 Dt)
     this->AcquireTickableObjectsLock();
     for (LTickableObject* Tickable : this->TickableObjects)
     {
-        Tickable->Tick(this->DeltaTime);
+        Tickable->Tick(static_cast<f32>(this->DeltaTime));
     }
     this->ReleaseTickableObjectsLock();
     for (LTickableObject* Tickable : this->DeletedTickableObjects)
@@ -166,8 +167,6 @@ void Jafg::LWorld::Tick(f32 Dt)
         algo::erase_once_checked(&this->TickableObjects, Tickable);
     }
     this->DeletedTickableObjects.clear();
-
-    return;
 }
 
 void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const
@@ -269,7 +268,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialIn
     WorldData.camPos = LVec4F{Eye.Translation, 1.0f};
 
     // Set PBR parameters
-    WorldData.exposure = 3.2;//4.5f;
+    WorldData.exposure = 3.2f;//4.5f;
     WorldData.gamma = 1.3f;//2.2f;
     WorldData.prefilteredCubeMipLevels = 1.0f;
     WorldData.scaleIBLAmbient = 1.0f;
@@ -277,8 +276,8 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialIn
     ActorInfo.WorldDataDescriptorSet = this->Vk_GetWorldDataDescriptorSet(ActorInfo);
 
     auto& WorldDataBuffer{this->Vk_GetWorldDataBuffer(ActorInfo)};
-    WorldData.Upload(WorldDataBuffer);
-    auto WorldDataWriteInfo{WorldData.WriteInfo(*WorldDataBuffer)};
+    WorldData.upload(WorldDataBuffer);
+    auto WorldDataWriteInfo{WorldData.write_info(*WorldDataBuffer)};
     std::array Writes{vk::WriteDescriptorSet{
         .dstSet = ActorInfo.WorldDataDescriptorSet,
         .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
@@ -394,7 +393,6 @@ void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
     if (algo::contains(this->TickableObjects, Tickable))
     {
         panic("Found duplicate tickable object")
-        return;
     }
 
     this->TickableObjects.push_back(Tickable);
@@ -459,25 +457,25 @@ TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldRay const& Ray
     check(maths::magnitude(Ray.Origin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
 
     TArray<LHitResult> Results;
-    for (auto& Obj: this->GetEmployees())
-    {
-        if (auto* Actor{Obj->As<AActor>()})
-        {
-            for (auto& Comp: Actor->GetComponents())
-            {
-                if (auto* SComp{Comp->As<AStaticMeshComponent>()})
-                {
-                    // LWorldRect3 MeshBounds{
-                    //     .Offset = SComp->GetTranslation(),
-                    //     .Extent = LVec3F{5.0},
-                    //     };
-                    //
-                    // maths::aabb();
-
-                }
-            }
-        }
-    }
+    // for (auto& Obj: this->GetEmployees())
+    // {
+    //     if (auto* Actor{Obj->As<AActor>()})
+    //     {
+    //         for (auto& Comp: Actor->GetComponents())
+    //         {
+    //             if (auto* SComp{Comp->As<AStaticMeshComponent>()})
+    //             {
+    //                 // LWorldRect3 MeshBounds{
+    //                 //     .Offset = SComp->GetTranslation(),
+    //                 //     .Extent = LVec3F{5.0},
+    //                 //     };
+    //                 //
+    //                 // maths::aabb();
+    //
+    //             }
+    //         }
+    //     }
+    // }
 
     return Results;
 }

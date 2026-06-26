@@ -6,15 +6,7 @@
       "hidden": true,
       "generator": "Ninja"
     },
-    {
-      "name": "linux",
-      "hidden": true,
-      "inherits": "ninja-base",
-      "cacheVariables": {
-        "JAFG_TARGET_PLATFORM": "lnx",
-        "JAFG_TARGET_ARCHITECTURE": "x86_64"
-      }
-    },
+
     {
       "name": "visual-base",
       "hidden": true,
@@ -42,6 +34,17 @@
       "hidden": true,
       "inherits": "visual-2026"
     },
+
+    {
+      "name": "linux",
+      "hidden": true,
+      "inherits": "ninja-base",
+      "cacheVariables": {
+        "JAFG_TARGET_PLATFORM": "lnx",
+        "JAFG_TARGET_ARCHITECTURE": "x86_64"
+      }
+    },
+
     {
       "name": "windows-base",
       "hidden": true,
@@ -70,11 +73,12 @@
             "CMAKE_CXX_COMPILER": "clang++.exe"
         }
     },
+
     {
-      "name": "debug",
+      "name": "shipping",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_CONFIG": "dbg"
+        "JAFG_TARGET_CONFIG": "ship"
       }
     },
     {
@@ -85,10 +89,25 @@
       }
     },
     {
-      "name": "shipping",
+      "name": "debug",
       "hidden": true,
       "cacheVariables": {
-        "JAFG_TARGET_CONFIG": "ship"
+        "JAFG_TARGET_CONFIG": "dbg"
+      }
+    },
+    {
+      "name": "sanitized",
+      "hidden": true,
+      "cacheVariables": {
+        "JAFG_DO_SANITIZED_BUILD": "ON"
+      }
+    },
+
+    {
+      "name": "editor",
+      "hidden": true,
+      "cacheVariables": {
+        "JAFG_TARGET_TYPE": "editor"
       }
     },
     {
@@ -112,13 +131,45 @@
         "JAFG_TARGET_TYPE": "test"
       }
     },
+
     {
-      "name": "sanitized",
-      "hidden": true,
-      "cacheVariables": {
-        "JAFG_DO_SANITIZED_BUILD": "ON"
-      }
+      "name": "lnx-x86_64--editor-ship",
+      "displayName": "Linux | Editor-Shipping",
+      "inherits": [
+        "linux",
+        "editor",
+        "shipping"
+      ]
     },
+    {
+      "name": "lnx-x86_64--editor-dev",
+      "displayName": "Linux | Editor-Development",
+      "inherits": [
+        "linux",
+        "editor",
+        "development"
+      ]
+    },
+    {
+      "name": "lnx-x86_64--editor-dbg",
+      "displayName": "Linux | Editor-Debug",
+      "inherits": [
+        "linux",
+        "editor",
+        "debug"
+      ]
+    },
+    {
+      "name": "lnx-x86_64--editor-sanitized",
+      "displayName": "Linux | Editor-Sanitized",
+      "inherits": [
+        "linux",
+        "editor",
+        "debug",
+        "sanitized"
+      ]
+    },
+
     {
       "name": "lnx-x86_64--cl-ship",
       "displayName": "Linux | Client-Shipping",
@@ -156,6 +207,7 @@
         "sanitized"
       ]
     },
+
     {
       "name": "lnx-x86_64--daemon-ship",
       "displayName": "Linux | Daemon-Shipping",
@@ -193,9 +245,10 @@
         "sanitized"
       ]
     },
+
     {
       "name": "lnx-x86_64--test-ship",
-      "displayName": "Linux | TestUnit-Shipping",
+      "displayName": "Linux | Test-Shipping",
       "inherits": [
         "linux",
         "test",
@@ -204,7 +257,7 @@
     },
     {
       "name": "lnx-x86_64--test-dev",
-      "displayName": "Linux | TestUnit-Development",
+      "displayName": "Linux | Test-Development",
       "inherits": [
         "linux",
         "test",
@@ -213,7 +266,7 @@
     },
     {
       "name": "lnx-x86_64--test-dbg",
-      "displayName": "Linux | TestUnit-Debug",
+      "displayName": "Linux | Test-Debug",
       "inherits": [
         "linux",
         "test",
@@ -222,231 +275,9 @@
     },
     {
       "name": "lnx-x86_64--test-sanitized",
-      "displayName": "Linux | TestUnit-Sanitized",
+      "displayName": "Linux | Test-Sanitized",
       "inherits": [
         "linux",
-        "test",
-        "debug",
-        "sanitized"
-      ]
-    },
-    {
-      "name": "win-x86_64--cl-ship",
-      "displayName": "Windows | Client-Shipping",
-      "inherits": [
-        "windows-msvc",
-        "client",
-        "shipping"
-      ]
-    },
-    {
-      "name": "win-x86_64--cl-dev",
-      "displayName": "Windows | Client-Development",
-      "inherits": [
-        "windows-msvc",
-        "client",
-        "development"
-      ]
-    },
-    {
-      "name": "win-x86_64--cl-dbg",
-      "displayName": "Windows | Client-Debug",
-      "inherits": [
-        "windows-msvc",
-        "client",
-        "debug"
-      ]
-    },
-    {
-      "name": "win-x86_64--cl-sanitized",
-      "displayName": "Windows | Client-Sanitized",
-      "inherits": [
-        "windows-msvc",
-        "client",
-        "debug",
-        "sanitized"
-      ]
-    },
-    {
-      "name": "win-x86_64--daemon-ship",
-      "displayName": "Windows | Daemon-Shipping",
-      "inherits": [
-        "windows-msvc",
-        "daemon",
-        "shipping"
-      ]
-    },
-    {
-      "name": "win-x86_64--daemon-dev",
-      "displayName": "Windows | Daemon-Development",
-      "inherits": [
-        "windows-msvc",
-        "daemon",
-        "development"
-      ]
-    },
-    {
-      "name": "win-x86_64--daemon-dbg",
-      "displayName": "Windows | Daemon-Debug",
-      "inherits": [
-        "windows-msvc",
-        "daemon",
-        "debug"
-      ]
-    },
-    {
-      "name": "win-x86_64--daemon-sanitized",
-      "displayName": "Windows | Daemon-Sanitized",
-      "inherits": [
-        "windows-msvc",
-        "daemon",
-        "debug",
-        "sanitized"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-ship",
-      "displayName": "Windows | TestUnit-Shipping",
-      "inherits": [
-        "windows-msvc",
-        "test",
-        "shipping"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-dev",
-      "displayName": "Windows | TestUnit-Development",
-      "inherits": [
-        "windows-msvc",
-        "test",
-        "development"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-dbg",
-      "displayName": "Windows | TestUnit-Debug",
-      "inherits": [
-        "windows-msvc",
-        "test",
-        "debug"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-sanitized",
-      "displayName": "Windows | TestUnit-Sanitized",
-      "inherits": [
-        "windows-msvc",
-        "test",
-        "debug",
-        "sanitized"
-      ]
-    },
-    {
-      "name": "msys-x86_64--cl-ship",
-      "displayName": "Windows | Client-Shipping",
-      "inherits": [
-        "windows-msys",
-        "client",
-        "shipping"
-      ]
-    },
-    {
-      "name": "msys-x86_64--cl-dev",
-      "displayName": "Windows | Client-Development",
-      "inherits": [
-        "windows-msys",
-        "client",
-        "development"
-      ]
-    },
-    {
-      "name": "msys-x86_64--cl-dbg",
-      "displayName": "Windows | Client-Debug",
-      "inherits": [
-        "windows-msys",
-        "client",
-        "debug"
-      ]
-    },
-    {
-      "name": "msys-x86_64--cl-sanitized",
-      "displayName": "Windows | Client-Sanitized",
-      "inherits": [
-        "windows-msys",
-        "client",
-        "debug",
-        "sanitized"
-      ]
-    },
-    {
-      "name": "msys-x86_64--daemon-ship",
-      "displayName": "Windows | Daemon-Shipping",
-      "inherits": [
-        "windows-msys",
-        "daemon",
-        "shipping"
-      ]
-    },
-    {
-      "name": "msys-x86_64--daemon-dev",
-      "displayName": "Windows | Daemon-Development",
-      "inherits": [
-        "windows-msys",
-        "daemon",
-        "development"
-      ]
-    },
-    {
-      "name": "msys-x86_64--daemon-dbg",
-      "displayName": "Windows | Daemon-Debug",
-      "inherits": [
-        "windows-msys",
-        "daemon",
-        "debug"
-      ]
-    },
-    {
-      "name": "msys-x86_64--daemon-sanitized",
-      "displayName": "Windows | Daemon-Sanitized",
-      "inherits": [
-        "windows-msys",
-        "daemon",
-        "debug",
-        "sanitized"
-      ]
-    },
-    {
-      "name": "msys-x86_64--test-ship",
-      "displayName": "Windows | TestUnit-Shipping",
-      "inherits": [
-        "windows-msys",
-        "test",
-        "shipping"
-      ]
-    },
-    {
-      "name": "msys-x86_64--test-dev",
-      "displayName": "Windows | TestUnit-Development",
-      "inherits": [
-        "windows-msys",
-        "test",
-        "development"
-      ]
-    },
-    {
-      "name": "msys-x86_64--test-dbg",
-      "displayName": "Windows | TestUnit-Debug",
-      "inherits": [
-        "windows-msys",
-        "test",
-        "debug"
-      ]
-    },
-    {
-      "name": "msys-x86_64--test-sanitized",
-      "displayName": "Windows | TestUnit-Sanitized",
-      "inherits": [
-        "windows-msys",
         "test",
         "debug",
         "sanitized"

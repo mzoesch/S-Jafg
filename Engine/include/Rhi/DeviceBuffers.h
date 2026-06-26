@@ -4,163 +4,142 @@
 
 #include "Rhi/RendererCore.h"
 
-namespace Jafg
+namespace rhi
 {
 
-namespace Detail
+namespace detail
 {
 
-ENGINE_API void FreeDeviceAllocation(vk::Buffer Handle, rhi::device_allocation Allocation) noexcept;
-ENGINE_API void FreeDeviceAllocation(vk::Image Handle, rhi::device_allocation Allocation) noexcept;
+ENGINE_API void free_device_allocation(vk::Buffer Handle, device_allocation Allocation) noexcept;
+ENGINE_API void free_device_allocation(vk::Image Handle, device_allocation Allocation) noexcept;
 
-} /* ~Namespace Jafg::Detail */
+} /* ~Namespace detail */
 
 //# A generic buffer located on the device.
 template<typename T>
-struct TGenericDeviceBuffer
+struct generic_device_buffer
 {
-    static_assert(sizeof(T) == POINTER_BYTE_SIZE);
+    static_assert(sizeof(T) == algo::ptr_size);
 
-    constexpr TGenericDeviceBuffer() noexcept : Buffer{nullptr}, Allocation{nullptr} {}
-    constexpr TGenericDeviceBuffer(T InBuffer, rhi::device_allocation InAllocation) noexcept : Buffer{InBuffer}, Allocation{InAllocation} {}
-    PROHIBIT_COPY(TGenericDeviceBuffer)
-    constexpr TGenericDeviceBuffer(TGenericDeviceBuffer&& Other) noexcept : Buffer{ Other.Buffer }, Allocation{ Other.Allocation }
+    constexpr generic_device_buffer() noexcept : buffer{nullptr}, allocation{nullptr} {}
+    constexpr generic_device_buffer(T InBuffer, device_allocation InAllocation) noexcept : buffer{InBuffer}, allocation{InAllocation} {}
+    PROHIBIT_COPY(generic_device_buffer)
+    constexpr generic_device_buffer(generic_device_buffer&& Other) noexcept
+        : buffer{std::exchange(Other.buffer, nullptr)}, allocation{std::exchange(Other.allocation, nullptr)} {}
+    generic_device_buffer& operator=(generic_device_buffer&& Rhs) noexcept
     {
-        Other.Buffer = nullptr;
-        Other.Allocation = nullptr;
-    }
-    TGenericDeviceBuffer& operator=(TGenericDeviceBuffer&& Other) noexcept
-    {
-        check( this != &Other )
-
-        Detail::FreeDeviceAllocation(this->Buffer, this->Allocation);
-
-        this->Buffer = Other.Buffer;
-        this->Allocation = Other.Allocation;
-
-        Other.Buffer = nullptr;
-        Other.Allocation = nullptr;
-
+        check(this != &Rhs)
+        detail::free_device_allocation(this->buffer, this->allocation);
+        this->buffer = std::exchange(Rhs.buffer, nullptr);
+        this->allocation = std::exchange(Rhs.allocation, nullptr);
         return *this;
     }
-    ~TGenericDeviceBuffer() noexcept { Detail::FreeDeviceAllocation(this->Buffer, this->Allocation); }
+    ~generic_device_buffer() noexcept { detail::free_device_allocation(this->buffer, this->allocation); }
 
-    FORCEINLINE constexpr T GetBuffer() const noexcept { return this->Buffer; }
-    FORCEINLINE constexpr T operator*() const noexcept { return this->Buffer; }
-    FORCEINLINE constexpr rhi::device_allocation GetAllocation() const noexcept { return this->Allocation; }
+    NODISCARD FORCEINLINE constexpr T operator*() const noexcept { return this->buffer; }
+    NODISCARD FORCEINLINE constexpr T get_buffer() const noexcept { return this->buffer; }
+    NODISCARD FORCEINLINE constexpr device_allocation get_allocation() const noexcept { return this->allocation; }
 
-    constexpr inline void Release() noexcept
+    constexpr void release() noexcept
     {
-        this->Buffer = nullptr;
-        this->Allocation = nullptr;
+        this->buffer = nullptr;
+        this->allocation = nullptr;
     }
 
-    inline void Free() noexcept
+    void free() noexcept
     {
-        Detail::FreeDeviceAllocation(this->Buffer, this->Allocation);
-        this->Buffer = nullptr;
-        this->Allocation = nullptr;
+        detail::free_device_allocation(this->buffer, this->allocation);
+        this->buffer = nullptr;
+        this->allocation = nullptr;
     }
 
 private:
 
-    T Buffer;
-    rhi::device_allocation Allocation;
+    T buffer;
+    device_allocation allocation;
 };
 
-typedef TGenericDeviceBuffer<vk::Buffer> LDeviceBuffer;
-typedef TGenericDeviceBuffer<vk::Image> LDeviceImage;
+typedef generic_device_buffer<vk::Buffer> device_buffer;
+typedef generic_device_buffer<vk::Image> device_image;
 
 //# A device buffer with detailed allocation info.
-struct LDetailedDeviceBuffer final : private LDeviceBuffer
+struct detailed_device_buffer final : private device_buffer
 {
-    constexpr LDetailedDeviceBuffer() noexcept
-        : LDeviceBuffer{}, Info{} {}
-    constexpr LDetailedDeviceBuffer(vk::Buffer InBuffer, rhi::device_allocation InAllocation, rhi::device_allocation_info InInfo) noexcept
-        : LDeviceBuffer{ InBuffer, InAllocation }, Info{ InInfo } {}
-    PROHIBIT_COPY(LDetailedDeviceBuffer)
-    constexpr LDetailedDeviceBuffer(LDetailedDeviceBuffer&& Other) noexcept
-        : LDeviceBuffer{ std::move(Other) }, Info{ Other.Info }
+    constexpr detailed_device_buffer() noexcept
+        : device_buffer{}, info{} {}
+    constexpr detailed_device_buffer(vk::Buffer Buffer, device_allocation Allocation, device_allocation_info Info) noexcept
+        : device_buffer{Buffer, Allocation}, info{Info} {}
+    PROHIBIT_COPY(detailed_device_buffer)
+    constexpr detailed_device_buffer(detailed_device_buffer&& Other) noexcept
+        : device_buffer{std::move(Other)}, info{std::exchange(Other.info, {})} {}
+    detailed_device_buffer& operator=(detailed_device_buffer&& Rhs) noexcept
     {
-        Other.Info = {};
-    }
-    LDetailedDeviceBuffer& operator=(LDetailedDeviceBuffer&& Other) noexcept
-    {
-        check( this != &Other )
-
-        this->Info = Other.Info;
-        Other.Info = {};
-        LDeviceBuffer::operator=(std::move(Other));
-
+        check(this != &Rhs)
+        this->info = std::exchange(Rhs.info, {});
+        device_buffer::operator=(std::move(Rhs));
         return *this;
     }
 
-    FORCEINLINE constexpr vk::Buffer GetBuffer() const noexcept { return LDeviceBuffer::GetBuffer(); }
-    FORCEINLINE constexpr vk::Buffer operator*() const noexcept { return LDeviceBuffer::GetBuffer(); }
-    FORCEINLINE constexpr rhi::device_allocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
-    FORCEINLINE constexpr rhi::device_allocation_info const& GetAllocationInfo() const noexcept { return this->Info; }
+    NODISCARD FORCEINLINE constexpr vk::Buffer operator*() const noexcept { return device_buffer::operator*(); }
+    NODISCARD FORCEINLINE constexpr vk::Buffer get_buffer() const noexcept { return device_buffer::get_buffer(); }
+    NODISCARD FORCEINLINE constexpr device_allocation get_allocation() const noexcept { return device_buffer::get_allocation(); }
+    NODISCARD FORCEINLINE constexpr device_allocation_info const& get_allocation_info() const noexcept { return this->info; }
 
-    constexpr inline void Release() noexcept
+    constexpr void release() noexcept
     {
-        LDeviceBuffer::Release();
-        this->Info = {};
+        device_buffer::release();
+        this->info = {};
     }
 
-    inline void Free() noexcept
+    void free() noexcept
     {
-        LDeviceBuffer::Free();
-        this->Info = {};
+        device_buffer::free();
+        this->info = {};
     }
 
 private:
 
-    rhi::device_allocation_info Info;
+    device_allocation_info info;
 };
 
 //# A device buffer that is mapped to host visible memory.
-struct LMappedDeviceBuffer final : private LDeviceBuffer
+struct mapped_device_buffer final : private device_buffer
 {
-    constexpr LMappedDeviceBuffer() noexcept
-        : LDeviceBuffer{}, Data{nullptr} {}
-    constexpr LMappedDeviceBuffer(vk::Buffer InBuffer, rhi::device_allocation InAllocation, void* InData) noexcept
-        : LDeviceBuffer{ InBuffer, InAllocation }, Data{ InData } {}
-    PROHIBIT_COPY(LMappedDeviceBuffer)
-    constexpr LMappedDeviceBuffer(LMappedDeviceBuffer&& Other) noexcept
-        : LDeviceBuffer{ std::move(Other) }, Data{ Other.Data }
+    constexpr mapped_device_buffer() noexcept
+        : device_buffer{}, m_data{nullptr} {}
+    constexpr mapped_device_buffer(vk::Buffer Buffer, device_allocation Allocation, void* Data) noexcept
+        : device_buffer{Buffer, Allocation}, m_data{Data} {}
+    PROHIBIT_COPY(mapped_device_buffer)
+    constexpr mapped_device_buffer(mapped_device_buffer&& Other) noexcept
+        : device_buffer{std::move(Other)}, m_data{std::exchange(Other.m_data, nullptr)} {}
+    mapped_device_buffer& operator=(mapped_device_buffer&& Other) noexcept
     {
-        Other.Data = nullptr;
-    }
-    LMappedDeviceBuffer& operator=(LMappedDeviceBuffer&& Other) noexcept
-    {
-        check( this != &Other )
-
-        LDeviceBuffer::operator=(std::move(Other));
-        this->Data = Other.Data;
-        Other.Data = nullptr;
-
+        check(this != &Other)
+        device_buffer::operator=(std::move(Other));
+        this->m_data = std::exchange(Other.m_data, nullptr);
         return *this;
     }
 
-    FORCEINLINE constexpr vk::Buffer GetBuffer() const noexcept { return LDeviceBuffer::GetBuffer(); }
-    FORCEINLINE constexpr vk::Buffer operator*() const noexcept { return LDeviceBuffer::GetBuffer(); }
-    FORCEINLINE constexpr rhi::device_allocation GetAllocation() const noexcept { return LDeviceBuffer::GetAllocation(); }
-    FORCEINLINE constexpr void* GetData() const noexcept { return this->Data; }
+    NODISCARD FORCEINLINE constexpr vk::Buffer operator*() const noexcept { return device_buffer::operator*(); }
+    NODISCARD FORCEINLINE constexpr vk::Buffer get_buffer() const noexcept { return device_buffer::get_buffer(); }
+    NODISCARD FORCEINLINE constexpr device_allocation get_allocation() const noexcept { return device_buffer::get_allocation(); }
+    NODISCARD FORCEINLINE constexpr void* data() const noexcept { return this->m_data; }
 
-    constexpr inline void Release() noexcept
+    constexpr void release() noexcept
     {
-        LDeviceBuffer::Release();
-        this->Data = nullptr;
+        device_buffer::release();
+        this->m_data = nullptr;
     }
 
-    inline void Free() noexcept
+    void free() noexcept
     {
-        LDeviceBuffer::Free();
-        this->Data = nullptr;
+        device_buffer::free();
+        this->m_data = nullptr;
     }
 
 private:
 
-    void* Data;
+    void* m_data;
 };
 
 //# A device buffer holing vertices and indices.
@@ -170,4 +149,4 @@ struct LDeviceIndexVertexBuffer
     // https://developer.nvidia.com/vulkan-memory-management
 };
 
-} /* ~Namespace Jafg */
+} /* ~Namespace rhi */

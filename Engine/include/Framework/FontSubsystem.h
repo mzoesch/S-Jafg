@@ -103,7 +103,7 @@ private:
 
     inline static constexpr u32 MaxAllowedFonts{10};
     FT_Library My_FT_Library{};
-    TStackArray<MyFont, MaxAllowedFonts> My_Fonts;
+    std::inplace_vector<MyFont, MaxAllowedFonts> My_Fonts;
 };
 
 } /* ~Namespace Jafg */

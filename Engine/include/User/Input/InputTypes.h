@@ -65,7 +65,10 @@ inline LString LexToString(EModFlags Flags) noexcept
     if (Flags & EModBits::NumLock) { Stream << "NumLock|"; }
 
     LString Result{Stream.str()};
-    if (Result.empty()) { return "Identity"; }
+    if (Result.empty())
+    {
+        Result = "Identity";
+    }
     return Result;
 }
 
@@ -87,7 +90,6 @@ inline LStringView LexToString(ELogicalKey Key) noexcept
     {
     #define DETAIL_JAFG_INPUT_TYPES_WRAPPER(Key) case ELogicalKey::Key: return #Key;
     #include "User/Input/InputTypesDetail.h"
-    default: break;
     }
     std::unreachable();
 }

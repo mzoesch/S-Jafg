@@ -4,26 +4,33 @@
 
 #include "Rhi/RendererCore.h"
 
-namespace Jafg
+namespace rhi
 {
 
-struct LGraphicsDevicePipeline
+struct graphics_pipeline final
 {
-    void Free() noexcept
+    NODISCARD constexpr decltype(auto) operator*() const& noexcept { return *this->pipeline; }
+
+    vk::raii::Pipeline pipeline{ nullptr };
+    vk::raii::PipelineLayout pipeline_layout{ nullptr };
+
+    struct descriptor_set_layout
     {
-        this->Pipeline.clear();
-        this->Layout.clear();
-        algo::orphan(&this->DescriptorSetLayouts);
-        algo::orphan(&this->_UniqueDescriptorSetLayout);
+        u32 space;
+        vk::raii::DescriptorSetLayout layout;
+    };
+    TArray<descriptor_set_layout> unique_descriptor_set_layouts;
+    NODISCARD vk::raii::DescriptorSetLayout const& get_unique_layout(u32 Space) const noexcept
+    {
+        for (auto const& Layout: this->unique_descriptor_set_layouts)
+        {
+            if (Layout.space == Space)
+            {
+                return Layout.layout;
+            }
+        }
+        LOG_FATAL(LogRhi, "No such descriptor set layout for space [{}].", Space)
     }
-
-    inline decltype(auto) operator*() const & noexcept { return *this->Pipeline; }
-
-    vk::raii::Pipeline Pipeline{ nullptr };
-    vk::raii::PipelineLayout Layout{ nullptr };
-
-    TArray<vk::DescriptorSetLayout> DescriptorSetLayouts;
-    TArray<vk::raii::DescriptorSetLayout> _UniqueDescriptorSetLayout;
 };
 
-} /* ~Namespace Jafg */
+} /* ~Namespace rhi */

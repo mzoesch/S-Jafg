@@ -2,7 +2,6 @@
 
 #include "Rhi/StaticMesh.h"
 #include "Engine/Engine.h"
-#include "Rhi/VertexInput.h"
 #include "Rhi/RenderInfo.h"
 #include "Widgets/Editor.h"
 #include "Widgets/EditorFactory.h"
@@ -14,6 +13,10 @@
     #pragma clang diagnostic ignored "-W#warnings"
     #pragma clang diagnostic ignored "-Wc++98-compat-extra-semi"
     #pragma clang diagnostic ignored "-Wdeprecated-literal-operator"
+    #pragma clang diagnostic ignored "-Wold-style-cast"
+    #pragma clang diagnostic ignored "-Wextra-semi-stmt"
+    #pragma clang diagnostic ignored "-Wtautological-type-limit-compare"
+    #pragma clang diagnostic ignored "-Wunused-function"
 #endif /* JAFG_WITH_CLANG */
 #if JAFG_WITH_GCC
     #pragma GCC diagnostic push
@@ -37,7 +40,7 @@ static_assert(sizeof(uint32_t) == sizeof(u32));
 namespace
 {
 
-Jafg::LRegisterDeviceVertexInput<Jafg::LStaticMesh::Vertex> StaticMeshVertexRegistration{};
+Jafg::LVertexInputRegistrator<Jafg::LStaticMesh::Vertex> _{};
 
 enum struct ETinyObjHint
 {
@@ -290,7 +293,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                             }
                             else
                             {
-                                DefaultPath = Finder::GetContentDir();
+                                DefaultPath = finder::content_dir();
                             }
 
                             if (auto AbsolutePath{Info.Viewport.GetSurface().OpenBlockingDialogForFile({
@@ -302,12 +305,12 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                             else
                             {
                                 LOG_VERBOSE(LogEditor, "Selected path: [{}].", *AbsolutePath)
-                                if (!finder::descendant_of(*AbsolutePath, Finder::GetContentDir()))
+                                if (!finder::descendant_of(*AbsolutePath, finder::content_dir()))
                                 {
                                     LOG_FATAL(LogEditor, "[{}]: Path has to be a descendant of [{}].",
-                                        *AbsolutePath, absolute(Finder::GetContentDir()))
+                                        *AbsolutePath, absolute(finder::content_dir()))
                                 }
-                                auto Path{finder::relative(*AbsolutePath, Finder::GetCwd())};
+                                auto Path{finder::relative(*AbsolutePath, finder::current_path())};
                                 EStaticMeshState NewState{EStaticMeshStateBits::None};
                                 if (Field->IsOnHost())
                                 {
@@ -344,7 +347,7 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
     check(this->Path.empty() == false)
     LOG_VERBOSE(LogRhi, "Loading static mesh from path [{}].", this->Path)
 
-    if (Finder::DoesFileExist(this->Path) == false)
+    if (is_regular_file(this->Path) == false)
     {
         return EResult::FileNotFound;
     }
@@ -394,7 +397,7 @@ void Jafg::LStaticMesh::LoadToDevice()
         LOG_TRACE(LogRhi, "Static mesh [{}] already loaded to device memory. Freeing previous device memory and reloading.", this->Path)
         this->FreeFromDevice();
     }
-    check(this->IndexCount == 0 && this->VertexBuffer.GetAllocation() == nullptr && this->IndexBuffer.GetAllocation() == nullptr)
+    check(this->IndexCount == 0 && this->VertexBuffer.get_allocation() == nullptr && this->IndexBuffer.get_allocation() == nullptr)
 
     this->VertexBuffer = Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
         .BufferCopy = vk::BufferCopy{0, 0, sizeof(this->Vertices[0]) * this->Vertices.size()},
@@ -407,19 +410,15 @@ void Jafg::LStaticMesh::LoadToDevice()
         }));
 
     this->IndexCount = static_cast<u32>(this->Indices.size());
-
-    return;
 }
 
 void Jafg::LStaticMesh::DrawIndexed(LRenderInfo const& Info) const
 {
     check(this->IndexCount > 0)
-    check(this->VertexBuffer.GetBuffer() && this->IndexBuffer.GetBuffer())
+    check(*this->VertexBuffer && *this->IndexBuffer)
 
-    Info.CommandBuffer.bindVertexBuffers(0, this->VertexBuffer.GetBuffer(), {0});
-    Info.CommandBuffer.bindIndexBuffer(this->IndexBuffer.GetBuffer(), 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
+    Info.CommandBuffer.bindVertexBuffers(0, *this->VertexBuffer, {0});
+    Info.CommandBuffer.bindIndexBuffer(*this->IndexBuffer, 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
 
     Info.CommandBuffer.drawIndexed(static_cast<u32>(this->IndexCount), 1, 0, 0, 0);
-
-    return;
 }

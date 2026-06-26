@@ -45,93 +45,6 @@ public:
     }
 };
 
-/* TODO: C++26 introduces a better option for this. So remove this class then. Just temp. */
-template<typename _Tp, std::size_t _Nm> requires(std::is_default_constructible_v<_Tp>)
-class TMySimpleFixedArray
-{
-public:
-
-    inline void push_back(_Tp const& Value) noexcept
-    {
-        JAFG_FWD_CHECK([_Size = this->Size]{ return _Size < _Nm; })
-        this->Data[this->Size++] = Value;
-    }
-
-    inline void push_back(_Tp&& Value) noexcept
-    {
-        JAFG_FWD_CHECK([_Size = this->Size]{ return _Size < _Nm; })
-        this->Data[this->Size++] = std::move(Value);
-    }
-
-    inline bool empty() noexcept
-    {
-        return this->Size == 0;
-    }
-
-    inline void clear() noexcept
-    {
-        for (auto Idx{ 0uz }; Idx < this->Size; ++Idx)
-        {
-            this->Data[Idx] = _Tp{};
-            continue;
-        }
-
-        this->Size = 0;
-
-        return;
-    }
-
-    [[nodiscard]] inline _Tp* data() noexcept
-    {
-        return this->Data.data();
-    }
-
-    [[nodiscard]] inline _Tp const* data() const noexcept
-    {
-        return this->Data.data();
-    }
-
-    [[nodiscard]] inline _Tp* begin() noexcept
-    {
-        return this->Data.data();
-    }
-
-    [[nodiscard]] inline _Tp const* begin() const noexcept
-    {
-        return this->Data.data();
-    }
-
-    [[nodiscard]] inline _Tp* end() noexcept
-    {
-        return this->Data.data() + this->Size;
-    }
-
-    [[nodiscard]] inline _Tp const* end() const noexcept
-    {
-        return this->Data.data() + this->Size;
-    }
-
-    [[nodiscard]] inline _Tp& operator[](std::size_t Index) noexcept
-    {
-        JAFG_FWD_CHECK([_Size = this->Size, Index]{ return Index < _Size; })
-        return this->Data[Index];
-    }
-
-    [[nodiscard]] inline _Tp const& operator[](std::size_t Index) const noexcept
-    {
-        JAFG_FWD_CHECK([_Size = this->Size, Index]{ return Index < _Size; })
-        return this->Data[Index];
-    }
-
-    [[nodiscard]] inline std::size_t size() const noexcept
-    {
-        return this->Size;
-    }
-
-    std::array<_Tp, _Nm> Data;
-    std::size_t Size{};
-};
-
 } /* ~Namespace Jafg */
 
 template<typename T, typename TCompare = std::less<T>, typename TAlloc = std::allocator<T>>
@@ -139,9 +52,6 @@ using TSet = std::set<T, TCompare, TAlloc>;
 
 template<typename T, typename Alloc = std::allocator<T>>
 using TArray = Jafg::TSimpleArray<T, Alloc>;
-
-template<typename _Tp, std::size_t _Nm>
-using TStackArray = Jafg::TMySimpleFixedArray<_Tp, _Nm>;
 
 using LString = std::string;
 using LWString = std::wstring;

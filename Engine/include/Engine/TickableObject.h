@@ -19,7 +19,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LTickableObject)
     virtual ~LTickableObject() = default;
 
-    virtual void Tick(const f32 Dt) = 0;
+    virtual void Tick(f32 Dt) = 0;
 
     FORCEINLINE virtual bool ShouldTickableObjectTick() const { return true; }
 };

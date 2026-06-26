@@ -28,4 +28,12 @@ def master_entry(scripts: list[str]) -> None:
 
         continue
 
+    nlohmann_module_file: str = 'Vendor/nlohmannjson/tools/gdb_pretty_printer/nlohmann-json.py'
+    nlohmann_module: str = str(nlohmann_module_file).replace('/', '_').replace('\\', '_').replace('.', '_')
+    spec = importlib.util.spec_from_file_location(nlohmann_module, nlohmann_module_file)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[nlohmann_module] = module
+    spec.loader.exec_module(module)
+    print(f'Executed nlohmann-json.py for pretty printing nlohmann::json types.')
+
     return None

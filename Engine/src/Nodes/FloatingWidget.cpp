@@ -160,22 +160,22 @@ bool Jafg::WFloatingWidget::UiTickMove()
 
     LVec2F NewPos{Surface.GetMouseLocationValue() - this->MoveDragOffset.value()};
 
-    if (NewPos.x + 25.0 > this->GetViewport().GetExtent().width)
+    if (NewPos.x + 25.0f > static_cast<f32>(this->GetViewport().GetExtent().width))
     {
-        NewPos.x = this->GetViewport().GetExtent().width - 25.0;
+        NewPos.x = static_cast<f32>(this->GetViewport().GetExtent().width) - 25.0f;
     }
-    if (NewPos.y + 25.0 > this->GetViewport().GetExtent().height)
+    if (NewPos.y + 25.0f > static_cast<f32>(this->GetViewport().GetExtent().height))
     {
-        NewPos.y = this->GetViewport().GetExtent().height - 25.0;
+        NewPos.y = static_cast<f32>(this->GetViewport().GetExtent().height) - 25.0f;
     }
 
-    if (NewPos.x - 75.0 + this->GetWindow().GetDesiredSize_v2().x < 0.0)
+    if (NewPos.x - 75.0f + this->GetWindow().GetDesiredSize_v2().x < 0.0)
     {
-        NewPos.x = 75.0 - this->GetWindow().GetDesiredSize_v2().x;
+        NewPos.x = 75.0f - this->GetWindow().GetDesiredSize_v2().x;
     }
-    if (NewPos.y < 0.0)
+    if (NewPos.y < 0.0f)
     {
-        NewPos.y = 0.0;
+        NewPos.y = 0.0f;
     }
 
     this->SetWindowPosition(NewPos);
@@ -203,8 +203,8 @@ bool Jafg::WFloatingWidget::UiTickResize()
         };
 
     LVec2F MaxSize{
-        this->GetViewport().GetExtent().width - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).x,
-        this->GetViewport().GetExtent().height - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).y
+        static_cast<f32>(this->GetViewport().GetExtent().width) - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).x,
+        static_cast<f32>(this->GetViewport().GetExtent().height) - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>).y
         };
 
     if (NewSize.x < 0.0)

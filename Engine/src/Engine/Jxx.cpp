@@ -164,7 +164,6 @@ void Jafg::Detail::LJxxRecordRegistry::LoadPendingPackages(const LLoadedPluginHa
         if (Package->GetFullyQualifiedName().empty())
         {
             panic( "Found loaded package with empty name." )
-            continue;
         }
 
         if (Package->IsClass())
@@ -179,7 +178,6 @@ void Jafg::Detail::LJxxRecordRegistry::LoadPendingPackages(const LLoadedPluginHa
                         ClassPackage.GetFullyQualifiedName(),
                         *RootClassName
                         )
-                    continue;
                 }
 
                 RootClassName = ClassPackage.GetFullyQualifiedName();
@@ -223,7 +221,6 @@ void Jafg::Detail::LJxxRecordRegistry::LoadPendingPackages(const LLoadedPluginHa
             if (Package->GetFullyQualifiedName() == OtherPackage->GetFullyQualifiedName())
             {
                 panicMsgf( "Found duplicate package names [{}].", Package->GetFullyQualifiedName() )
-                continue;
             }
 
             continue;
@@ -340,7 +337,6 @@ std::size_t Jafg::Detail::LJxxRecordRegistry::RemovePackagesOf(const LLoadedPlug
                 Class.ParentName,
                 static_cast<u32>(Handle)
                 )
-            continue;
         }
 
         continue;
@@ -435,7 +431,7 @@ void Jafg::JCxxClass::PullConfig(LPath const& InPath /* = {} */) noexcept
     LPath Path{InPath};
     if (Path == LPath{})
     {
-        Path = Finder::GetUserPreferencesFile();
+        Path = finder::user_preferences_file();
     }
 
     auto& Class{const_cast<LJxxClass&>(this->GetVirtualTable())};
@@ -473,7 +469,7 @@ void Jafg::JCxxClass::PushConfig(LPath const& InPath /* = {} */) const noexcept
     LPath Path{InPath};
     if (Path == LPath{})
     {
-        Path = Finder::GetUserPreferencesFile();
+        Path = finder::user_preferences_file();
     }
 
     auto& Class{this->GetVirtualTable()};
@@ -543,7 +539,7 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, EJxxRecordT
     }
     else if (Behavior == EMarkAsGarbageBehavior::Ignore)
     {
-        LOG_WARNING(LogObjectInternal, "Object [{}] is not being deleted by the carnifex.", this->GetNameAsString());
+        LOG_WARNING(LogObjectInternal, "Object [{}] is not being deleted by the carnifex.", this->GetNameAsString())
         Self.release();
     }
     else
@@ -639,6 +635,11 @@ Jafg::LClassOuter::LClassOuter(LString HumanReadableName, bool bRegisterToEngine
     }
 
     return;
+}
+
+Jafg::LClassOuter::~LClassOuter() noexcept
+{
+    this->TearDown();
 }
 
 void Jafg::LClassOuter::TearDown() noexcept

@@ -3,7 +3,7 @@
 #pragma once
 
 #if JAFG_WITH_CLANG
-    #define JAFG_RANGE_VAL_T(It, Proj) _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(It, Proj)
+    #define JAFG_RANGE_VAL_T(It, Proj) // _GLIBCXX26_RANGE_ALGO_DEF_VAL_T(It, Proj)
 #else /* JAFG_WITH_CLANG */
     //# TODO: Add security for non clang toolchains.
     #define JAFG_RANGE_VAL_T(It, Proj)
@@ -25,6 +25,7 @@ inline constexpr bool is_little_endian{ std::endian::native == std::endian::litt
 inline constexpr bool is_big_endian{ std::endian::native == std::endian::big };
 
 inline constexpr std::size_t wchar_size{ sizeof(wchar_t) };
+inline constexpr std::size_t ptr_size{ sizeof(void*) };
 
 using namespace std::ranges;
 
@@ -124,6 +125,88 @@ inline constexpr bool is_reservable_v = sized_range<T>
         { t.capacity() } -> std::same_as<decltype(n)>;
         { t.max_size() } -> std::same_as<decltype(n)>;
     };
+
+#if JAFG_WITH_CLANG
+namespace detail
+{
+
+template<typename T>
+struct access_protected_members_of_vector: std::vector<T>
+{
+    UTILITY_STRUCT(access_protected_members_of_vector)
+
+    NODISCARD
+    consteval
+    static typename std::vector<T>::size_type begin() noexcept
+    {
+        return offsetof(access_protected_members_of_vector, _M_impl._M_start);
+    }
+
+    NODISCARD
+    consteval
+    static typename std::vector<T>::size_type slack() noexcept
+    {
+        return offsetof(access_protected_members_of_vector, _M_impl._M_finish);
+    }
+
+    NODISCARD
+    consteval
+    static typename std::vector<T>::size_type end() noexcept
+    {
+        return offsetof(access_protected_members_of_vector, _M_impl._M_end_of_storage);
+    }
+};
+
+} /* detail */
+#elif JAFG_WITH_MSVC
+    //# ... private and not protected :( We prob. want something like a reinterpret cast.
+#else /* JAFG_WITH_MSVC */
+#endif /* !JAFG_WITH_MSVC */
+
+template<typename T>
+#if !JAFG_WITH_CLANG
+    //#
+    //# If this hits, we have to decide for another impl...
+    //# Currently this is not needed anymore, yea :D
+    //#
+    requires std::is_default_constructible_v<typename TContainer::value_type>
+#endif /* !JAFG_WITH_CLANG */
+//#
+//# Allows one to add uninitialized elements to a std::vector<T> without calling the default constructor of T
+//# with is usually forbidden as it leads to UB (as if the std actually cares about eliminating UB...).
+//#
+FORCEINLINE void add_uninitialized(std::vector<T>* Container, std::size_t Count = 1) noexcept
+{
+    check(Container)
+
+    typedef typename std::vector<T>::value_type value_type;
+    typedef typename std::vector<T>::size_type size_type;
+    typedef typename std::vector<T>::pointer pointer;
+
+#if JAFG_WITH_CLANG
+
+#if JAFG_DO_CHECKS
+    size_type OldSize{Container->size()};
+#endif /* JAFG_DO_CHECKS */
+
+    Container->reserve(Container->size() + Count);
+
+    pointer& Slack{*reinterpret_cast<pointer*>
+        (
+            reinterpret_cast<u8*>(Container) + detail::access_protected_members_of_vector<value_type>::slack()
+        )};
+    check(Slack)
+    check(static_cast<void const*>(std::to_address(Container->end())) == static_cast<void const*>(Slack))
+    Slack += Count;
+
+    check(Container->size() == OldSize + Count)
+    check(Container->size() <= Container->capacity())
+#else /* JAFG_WITH_CLANG */
+
+    Container->resize(Container->size() + Count);
+
+#endif /* !JAFG_WITH_CLANG */
+}
 
 namespace detail
 {
@@ -1004,6 +1087,237 @@ inline T time_diff(clock::time_point A, clock::time_point B) noexcept
 // Misc
 template<typename T> concept bool_testable = requires(T&& t) { static_cast<bool>(t); };
 
+struct dynamic_bit_set final
+{
+    typedef std::size_t size_type;
+    static constexpr size_type npos{std::numeric_limits<size_type>::max()};
+
+    constexpr dynamic_bit_set() noexcept = default;
+    explicit dynamic_bit_set(size_type Count) noexcept : BitCount{Count}, Words((BitCount + 63) / 64, 0) {}
+
+    //#
+    //# Set the first free bit.
+    //# @return The index of the set bit, or npos if no free found.
+    //#
+    NODISCARD size_type allocate() noexcept
+    {
+        for (auto WordIdx{0uz}; WordIdx < this->Words.size(); ++WordIdx)
+        {
+            size_type Word{this->Words[WordIdx]};
+            if (Word != std::numeric_limits<u64>::max())
+            {
+                size_type FreeBits{~Word};
+                size_type Bit{static_cast<size_type>(std::countr_zero(FreeBits))};
+                size_type Idx{WordIdx * 64 + Bit};
+
+                if (Idx >= this->BitCount)
+                {
+                    return npos;
+                }
+
+                this->Words[WordIdx] |= (1ull << Bit);
+                return Idx;
+            }
+        }
+        return npos;
+    }
+
+    void free(size_type Idx) noexcept
+    {
+        size_type Word{Idx / 64};
+        size_type Bit{Idx % 64};
+        this->Words[Word] &= ~(1ull << Bit);
+    }
+
+    NODISCARD bool allocated(size_type Idx) const noexcept
+    {
+        size_type Word{Idx / 64};
+        size_type Bit{Idx % 64};
+        return (this->Words[Word] >> Bit) & 1;
+    }
+
+    NODISCARD constexpr size_type bit_count() const noexcept { return this->BitCount; }
+    NODISCARD constexpr auto const& words() const noexcept { return this->Words; }
+
+private:
+
+    size_type BitCount{};
+    std::vector<u64> Words;
+};
+
+//#
+//# Stores trivial non-copyable data in a non-dynamic bulk container. Relies heavily on UB to enable optimizations.
+//# @note This container intentionally does not support copy operations (even though they are trivial), as it is
+//#       meant for very large binary data that should not be copied around.
+//#       If you still need to copy in bulk, you may use #serialize.
+//#
+template<typename T> requires std::is_trivially_copyable_v<T>
+struct bulk_data
+{
+    typedef T value_type;
+
+    FORCEINLINE constexpr bulk_data() noexcept : m_size{}, m_bulk{} {}
+    PROHIBIT_COPY(bulk_data)
+    constexpr bulk_data(bulk_data&& Other) noexcept
+        : m_size{std::exchange(Other.m_size, 0)}, m_bulk{std::exchange(Other.m_bulk, nullptr)} {}
+    constexpr bulk_data& operator=(bulk_data&& Rhs) noexcept
+    {
+        if (this != &Rhs)
+        {
+            if (this->allocated())
+            {
+                this->free_impl();
+            }
+            this->m_size = std::exchange(Rhs.m_size, 0);
+            this->m_bulk = std::exchange(Rhs.m_bulk, nullptr);
+        }
+        return *this;
+    }
+    constexpr ~bulk_data() noexcept
+    {
+        if (this->allocated())
+        {
+            this->free_impl();
+        }
+    }
+
+    NODISCARD FORCEINLINE constexpr bool allocated() const noexcept { return !!this->m_bulk; }
+
+    NODISCARD FORCEINLINE constexpr std::size_t size() const noexcept { return this->m_size; }
+    NODISCARD FORCEINLINE constexpr std::size_t byte_size() const noexcept { return this->size() * sizeof(value_type); }
+
+    NODISCARD FORCEINLINE constexpr value_type* data() noexcept { return this->m_bulk; }
+    NODISCARD FORCEINLINE constexpr value_type const* data() const noexcept { return this->m_bulk; }
+    NODISCARD FORCEINLINE constexpr value_type& operator*() noexcept { return this->m_bulk; }
+    NODISCARD FORCEINLINE constexpr value_type const& operator*() const noexcept { return this->m_bulk; }
+
+    NODISCARD FORCEINLINE constexpr auto begin() noexcept { return this->m_bulk; }
+    NODISCARD FORCEINLINE constexpr auto begin() const noexcept { return this->m_bulk; }
+    NODISCARD FORCEINLINE constexpr auto end() noexcept { return this->m_bulk + this->size(); }
+    NODISCARD FORCEINLINE constexpr auto end() const noexcept { return this->m_bulk + this->size(); }
+
+    NODISCARD FORCEINLINE constexpr value_type& operator[](std::size_t Idx) noexcept
+    {
+        check(this->m_bulk)
+        check(Idx < this->size())
+        return this->m_bulk[Idx];
+    }
+    NODISCARD FORCEINLINE constexpr value_type const& operator[](std::size_t Idx) const noexcept
+    {
+        check(this->m_bulk)
+        check(Idx < this->size())
+        return this->m_bulk[Idx];
+    }
+
+    FORCEINLINE constexpr void allocate(std::size_t Size) noexcept
+    {
+        check(!this->allocated())
+        check(Size > 0)
+        this->m_size = Size;
+        this->m_bulk = new value_type[this->m_size];
+    }
+
+    FORCEINLINE void allocate_zeroed(std::size_t Size) noexcept
+    {
+        this->allocate(Size);
+        std::memset(this->m_bulk, 0, this->byte_size());
+    }
+
+    FORCEINLINE void serialize(value_type const* Bulk, std::size_t Size, std::size_t Offset = 0)
+    {
+        check(!this->allocated())
+        check(Bulk && Size > 0)
+        this->allocate(Size);
+        std::memcpy(this->m_bulk, Bulk + Offset, this->byte_size());
+    }
+
+    constexpr void free() noexcept
+    {
+        this->free_impl();
+        this->release();
+    }
+
+    constexpr void release() noexcept
+    {
+        this->m_size = 0;
+        this->m_bulk = nullptr;
+    }
+
+private:
+
+    constexpr void free_impl() noexcept
+    {
+        check(this->m_bulk)
+        delete[] this->m_bulk;
+    }
+
+    std::size_t m_size;
+    value_type* m_bulk;
+};
+
+typedef bulk_data<std::byte> byte_bulk;
+
+struct transparent_string_hash final
+{
+    typedef void is_transparent;
+
+    decltype(auto) operator()(LStringView sv) const noexcept
+    {
+        return std::hash<LStringView>{}(sv);
+    }
+
+    decltype(auto) operator()(LString const& s) const noexcept
+    {
+        return std::hash<LStringView>{}(s);
+    }
+
+    decltype(auto) operator()(char const* s) const noexcept
+    {
+        return std::hash<LStringView>{}(s);
+    }
+};
+
+struct transparent_string_eq final
+{
+    typedef void is_transparent;
+
+    constexpr bool operator()(std::string_view Lhs, std::string_view Rhs) const noexcept
+    {
+        return Lhs == Rhs;
+    }
+    constexpr bool operator()(LString const& Lhs, LString const& Rhs) const noexcept
+    {
+        return Lhs == Rhs;
+    }
+    constexpr bool operator()(LString const& Lhs, char const* Rhs) const noexcept
+    {
+        return Lhs == Rhs;
+    }
+    constexpr bool operator()(char const* Lhs, LString const& Rhs) const noexcept
+    {
+        return Lhs == Rhs;
+    }
+    constexpr bool operator()(char const* Lhs, char const* Rhs) const noexcept
+    {
+        return std::strcmp(Lhs, Rhs) == 0;
+    }
+    constexpr bool operator()(std::string_view Lhs, char const* Rhs) const noexcept
+    {
+        return Lhs == Rhs;
+    }
+    constexpr bool operator()(char const* Lhs, std::string_view Rhs) const noexcept
+    {
+        return Lhs == Rhs;
+    }
+};
+
+//#
+//# Transparent string map which allows looking up elements with a numerus number of string-like types
+//# without expensive constructions of transient string objects.
+//#
+template<typename T>
+using transparent_unordered_string_map = std::unordered_map<LString, T, transparent_string_hash, transparent_string_eq>;
+
 namespace detail
 {
 //# This is UB, use only when it does not really matter.
@@ -1121,10 +1435,16 @@ FORCEINLINE constexpr std::unique_ptr<T,TDeleter>::pointer leak(std::unique_ptr<
     return Ptr.release();
 }
 
-template<typename T, T Default>
+//# A storage that exchanges the value on move.
+template<typename T, T Default = T{}>
 struct exchange_storage
 {
+    typedef T value_type;
+
     FORCEINLINE constexpr exchange_storage() noexcept : Value{Default} {}
+    template<typename... TArgs> requires std::constructible_from<T, TArgs...>
+    FORCEINLINE constexpr exchange_storage(TArgs&&... Args) noexcept : Value{std::forward<TArgs>(Args)...} {}
+
     FORCEINLINE constexpr exchange_storage(exchange_storage const&) noexcept = default;
     FORCEINLINE constexpr exchange_storage(exchange_storage&& Other) noexcept : Value{std::exchange(Other.Value, Default)} {}
     FORCEINLINE exchange_storage& operator=(exchange_storage const&) noexcept = default;

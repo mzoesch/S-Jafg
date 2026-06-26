@@ -318,8 +318,8 @@ bool Jafg::WDragRegion::IsLocationOverDragRect(LVec2F Translation, LVec2F Locati
         for (auto It{++this->GetChildren().begin()}; It != this->GetChildren().end(); ++It)
         {
             if (maths::aabb_point({
-                .Offset = this->GetAnchoredTopLeftFromMostOuterForChild(**It) - this->ProjFlt(*Prefs.PreferredDragOverlap) - this->ProjFlt(SpaceSpt),
-                .Extent = this->ProjFlt(SpaceSpt) + this->ProjFlt(2 * *Prefs.PreferredDragOverlap)
+                .Offset = this->GetAnchoredTopLeftFromMostOuterForChild(**It) - this->ProjFlt(static_cast<f32>(*Prefs.PreferredDragOverlap)) - this->ProjFlt(SpaceSpt),
+                .Extent = this->ProjFlt(SpaceSpt) + this->ProjFlt(2.0f * static_cast<f32>(*Prefs.PreferredDragOverlap))
                     + this->ProjFltInv(this->ProjVecInv(this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(this->GetViewport()))),
                 }, Location))
             {
@@ -346,14 +346,14 @@ f32 Jafg::WDragRegion::GetDistribution() const
     if (this->Cf == ENodePrimitiveControlflow::Horizontal)
     {
         Distribution = this->GetAnchoredSize_v2().x
-            - this->Space.InStaticPoints(this->GetViewport()) * (this->GetChildren().size() - 1)
+            - this->Space.InStaticPoints(this->GetViewport()) * static_cast<f32>((this->GetChildren().size() - 1))
             - this->Padding.GetDesiredSizeX().InStaticPoints(this->GetViewport());
     }
     else
     {
         check(this->Cf == ENodePrimitiveControlflow::Vertical)
         Distribution = this->GetAnchoredSize_v2().y
-            - this->Space.InStaticPoints(this->GetViewport()) * (this->GetChildren().size() - 1)
+            - this->Space.InStaticPoints(this->GetViewport()) * static_cast<f32>((this->GetChildren().size() - 1))
             - this->Padding.GetDesiredSizeY().InStaticPoints(this->GetViewport());
     }
 
@@ -373,7 +373,7 @@ void Jafg::WDragRegion::CacheDists() const
     {
         if (Slot.Dist == WDragRegion::DistAuto)
         {
-            Slot.Dist = 1.0f / this->GetChildren().size();
+            Slot.Dist = 1.0f / static_cast<f32>(this->GetChildren().size());
         }
         check(Slot.Dist != WDragRegion::DistAuto)
     }

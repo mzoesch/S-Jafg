@@ -120,10 +120,10 @@ struct LSubsystemCollection final
 
     ENGINE_API  JSubsystem const* GetSubsystem(TSubclassOf<JSubsystem> Class) const;
     ENGINE_API  JSubsystem*       GetSubsystem(TSubclassOf<JSubsystem> Class);
-    FORCEINLINE JSubsystem const* GetSubsystemChecked(TSubclassOf<JSubsystem> Class) const { JSubsystem const* Out { this->GetSubsystem(Class) }; check( Out ); return Out; }
-    FORCEINLINE JSubsystem*       GetSubsystemChecked(TSubclassOf<JSubsystem> Class) { JSubsystem* Out { this->GetSubsystem(Class) }; check( Out ); return Out; }
-    FORCEINLINE JSubsystem const* GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) const { JSubsystem const* Out { this->GetSubsystem(Class) }; jassert( Out ); return Out; }
-    FORCEINLINE JSubsystem*       GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) { JSubsystem* Out { this->GetSubsystem(Class) }; jassert( Out ); return Out; }
+    FORCEINLINE JSubsystem const* GetSubsystemChecked(TSubclassOf<JSubsystem> Class) const { JSubsystem const* Out { this->GetSubsystem(Class) }; check( Out ) return Out; }
+    FORCEINLINE JSubsystem*       GetSubsystemChecked(TSubclassOf<JSubsystem> Class) { JSubsystem* Out { this->GetSubsystem(Class) }; check( Out ) return Out; }
+    FORCEINLINE JSubsystem const* GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) const { JSubsystem const* Out { this->GetSubsystem(Class) }; jassert( Out ) return Out; }
+    FORCEINLINE JSubsystem*       GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) { JSubsystem* Out { this->GetSubsystem(Class) }; jassert( Out ) return Out; }
 
     template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
     FORCEINLINE TSubsystem const* GetSubsystem() const { return StaticCast<TSubsystem>(this->GetSubsystem(TSubsystem::StaticClass())); }

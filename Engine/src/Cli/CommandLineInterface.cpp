@@ -85,20 +85,20 @@ TArray<LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString&
     const LString CommandStr{ CliStatics::GetCommandFromText(InCommandLine) };
     if (CommandStr.empty())
     {
-        LOG_ERROR(LogCli, "Failed to extract command from input");
+        LOG_ERROR(LogCli, "Failed to extract command from input")
         return {};
     }
 
     LCliCommand const* Cmd{ this->GetCommand(CommandStr) };
     if (Cmd == nullptr)
     {
-        LOG_ERROR(LogCli, "No such command [{}]", CommandStr);
+        LOG_ERROR(LogCli, "No such command [{}]", CommandStr)
         return {};
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
-        LOG_ERROR(LogCli, "Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        LOG_ERROR(LogCli, "Command [{}] has no overloads and is therefore not invokable", CommandStr)
         return {};
     }
 
@@ -113,7 +113,7 @@ TArray<LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString&
             break;
         }
 
-        Out.append_range(Overloads.GetCommonSuggestions(Args, MaxSuggestions - Out.size(), InCommandLine.ends_with(' ')));
+        Out.append_range(Overloads.GetCommonSuggestions(Args, MaxSuggestions - static_cast<u32>(Out.size()), InCommandLine.ends_with(' ')));
 
         continue;
     }

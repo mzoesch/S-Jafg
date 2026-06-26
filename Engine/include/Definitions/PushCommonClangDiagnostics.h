@@ -3,80 +3,42 @@
 // @see https://clang.llvm.org/docs/DiagnosticsReference.html
 //
 
-/*-----------------------------------------------------------------------------
-    Raise.
------------------------------------------------------------------------------*/
-#pragma clang diagnostic error "-Wbraced-scalar-init"
-#pragma clang diagnostic error "-Wbuiltin-macro-redefined"
-#pragma clang diagnostic error "-Wc99-designator"
-#pragma clang diagnostic error "-Wdangling-else"
-#pragma clang diagnostic error "-Wdeprecated-literal-operator"
-#pragma clang diagnostic error "-Wduplicate-decl-specifier"
-#pragma clang diagnostic error "-Wdynamic-class-memaccess"
-#pragma clang diagnostic error "-Wextra-qualification"
-#pragma clang diagnostic error "-Wextra-semi"
-#pragma clang diagnostic error "-Wextra-tokens"
-#pragma clang diagnostic error "-Wignored-attributes"
-#pragma clang diagnostic error "-Winconsistent-missing-override"
-#pragma clang diagnostic error "-Winfinite-recursion"
-#pragma clang diagnostic error "-Winline-new-delete"
-#pragma clang diagnostic error "-Winvalid-noreturn"
-#pragma clang diagnostic error "-Wkeyword-macro"
-#pragma clang diagnostic error "-Wlogical-op-parentheses"
-#pragma clang diagnostic error "-Wmacro-redefined"
-#pragma clang diagnostic error "-Wmismatched-new-delete"
-#pragma clang diagnostic error "-Wmismatched-tags"
-#pragma clang diagnostic error "-Wmissing-braces"
-#pragma clang diagnostic error "-Wnontrivial-memcall"
-#pragma clang diagnostic error "-Wnull-character"
-#pragma clang diagnostic error "-Wnull-pointer-subtraction"
-#pragma clang diagnostic error "-Wparentheses"
-#pragma clang diagnostic error "-Wpessimizing-move"
-#pragma clang diagnostic error "-Wpragmas"
-#pragma clang diagnostic error "-Wpragma-once-outside-header"
-#pragma clang diagnostic error "-Wreorder-ctor"
-#pragma clang diagnostic error "-Wreorder-init-list"
-#pragma clang diagnostic error "-Wreturn-stack-address"
-#pragma clang diagnostic error "-Wreturn-type"
-#pragma clang diagnostic error "-Wself-assign-field"
-#pragma clang diagnostic error "-Wsign-compare"
-#pragma clang diagnostic error "-Wswitch"
-#pragma clang diagnostic error "-Wundefined-inline"
-#pragma clang diagnostic error "-Wuninitialized"
-#pragma clang diagnostic error "-Wunknown-pragmas"
-#pragma clang diagnostic error "-Wunknown-warning-option"
-#pragma clang diagnostic error "-Wunnecessary-virtual-specifier"
-#pragma clang diagnostic error "-Wunused-comparison"
-#pragma clang diagnostic error "-Wunused-lambda-capture"
-#pragma clang diagnostic error "-Wunused-result"
-
-/*-----------------------------------------------------------------------------
-    Ignore.
------------------------------------------------------------------------------*/
-#pragma clang diagnostic ignored "-Wcomment"
-#pragma clang diagnostic ignored "-Wcomments"
-#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#pragma clang diagnostic ignored "-Wc++20-extensions"
+#pragma clang diagnostic ignored "-Wc++98-compat"
+#pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
+#pragma clang diagnostic ignored "-Wctad-maybe-unsupported"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma clang diagnostic ignored "-Wdouble-promotion" // Maybe?
+#pragma clang diagnostic ignored "-Wexit-time-destructors" // We might want to look into this at a later time.
+#pragma clang diagnostic ignored "-Wfloat-equal"
+#pragma clang diagnostic ignored "-Wglobal-constructors" // We currently require this. but with c++26 reflection maybe not anymore??
+#pragma clang diagnostic ignored "-Wgnu-anonymous-struct" // All our compilers support this.
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
-#pragma clang diagnostic ignored "-Wnested-anon-types"
-#pragma clang diagnostic ignored "-Wnullability-extension"
+#pragma clang diagnostic ignored "-Wmissing-noreturn" // Maybe active this if we get around PURE_VIRTUAL()?
+#pragma clang diagnostic ignored "-Wmissing-prototypes" // Only fo del llmm ops. can we get around this?
+#pragma clang diagnostic ignored "-Wnested-anon-types" // All our compilers support this.
+#pragma clang diagnostic ignored "-Wnrvo" // Very interesting. We might want this later. But very annoying to deal with.
+#pragma clang diagnostic ignored "-Wpadded" // Considering: -Wno-error=padded
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#pragma clang diagnostic ignored "-Wreserved-macro-identifier"
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wshadow-field"
+#pragma clang diagnostic ignored "-Wshadow-field-in-constructor"
+#pragma clang diagnostic ignored "-Wshadow-header" // That's how it should be. Why is this a warning??
+#pragma clang diagnostic ignored "-Wsign-conversion" // To pedantic.
+#pragma clang diagnostic ignored "-Wswitch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#pragma clang diagnostic ignored "-Wunique-object-duplication" // Mmm, this one we might want.
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
+#pragma clang diagnostic ignored "-Wunused-member-function"
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wweak-vtables" // Just trust the compiler here.
 
-/*-----------------------------------------------------------------------------
-    Shipping only.
------------------------------------------------------------------------------*/
-#if JAFG_DO_ENABLE_SHIPPING_WARNINGS
-    #pragma clang diagnostic warning "-Wundefined-var-template"
-    #pragma clang diagnostic warning "-Wunused-but-set-variable"
-    #pragma clang diagnostic warning "-Wunused-private-field"
-    #pragma clang diagnostic warning "-Wunused-function"
-    #pragma clang diagnostic warning "-Wunused-variable"
-#else /* JAFG_DO_ENABLE_SHIPPING_WARNINGS */
-    #pragma clang diagnostic ignored "-Wundefined-var-template"
-    #pragma clang diagnostic ignored "-Wunused-but-set-variable"
-    #pragma clang diagnostic ignored "-Wunused-private-field"
-    #pragma clang diagnostic ignored "-Wunused-function"
+#if !JAFG_IN_SHIPPING
     #pragma clang diagnostic ignored "-Wunused-variable"
-#endif /* !JAFG_DO_ENABLE_SHIPPING_WARNINGS */
+#endif /* !JAFG_IN_SHIPPING */

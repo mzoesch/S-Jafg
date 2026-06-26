@@ -1,3 +1,4 @@
 {
-    "Shader": "Jafg.Mesh.Outline"
+    "inherits": "Jafg.Perspective",
+    "shader": "Shaders/Jafg.Mesh.Outline"
 }

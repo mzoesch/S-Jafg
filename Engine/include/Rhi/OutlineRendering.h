@@ -2,18 +2,18 @@
 
 #pragma once
 
-#include "Rhi/RenderInfo.h"
-#include "Rhi/PushConstants.h"
+#include "Rhi/RendererCore.h"
+#include "Rhi/Objects.h"
 
 namespace Jafg::PC
 {
 
-struct Outline final : public TPushConstant<Outline, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+struct Outline final: rhi::pc_template<Outline, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
     LVec2F InverseViewportExtent;
     u32 Thickness;
     LColor Tint;
 };
-static_assert(CPushConstant<Outline>);
+static_assert(rhi::pc<Outline>);
 
 } /* ~Namespace Jafg::PC */

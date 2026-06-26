@@ -1,10 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Storage/SaveFunctions.h"
-#include "sqlite3.h"
+#include "Definitions/PushNoWarnings.h"
+    #include "sqlite3.h"
+#include "Definitions/PopDiagnostics.h"
 #include "Serialization/MySqlite3.h"
 
 #define STORAGE_NAME "sqlite3.db"
+
+#ifdef SQLITE_STATIC // -Wold-style-cast
+    #undef SQLITE_STATIC
+#endif /* SQLITE_STATIC */
+// #define SQLITE_STATIC static_cast<sqlite3_destructor_type>(0)
+#define SQLITE_STATIC nullptr // -Wzero-as-null-pointer-constant
 
 #define EMIT_ERROR_SQL(InDescription)                                                    \
     if (OutError)                                                                        \
@@ -46,7 +54,7 @@ struct LSql3Con final
             }
             else
             {
-                LOG_ERROR(LogStorage, "Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
+                LOG_ERROR(LogStorage, "Failed to open database. Reason: [{}].", sqlite3_errmsg(Db))
             }
         }
 
@@ -138,13 +146,13 @@ private:
 
 bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Meta, LString* OutError /* = nullptr */)
 {
-    if (Finder::DoesDirectoryExist(InPath))
+    if (is_directory(InPath))
     {
         EMIT_ERROR("Directory already exists: [{}]", InPath)
         return false;
     }
 
-    Finder::CreateFile(InPath / STORAGE_NAME, true);
+    finder::ensure_file<finder::MakeParents>(InPath / STORAGE_NAME);
 
     LSql3Con Con(InPath, OutError);
     if (Con.IsValid() == false)

@@ -15,9 +15,9 @@ namespace Jafg
 //# Widget construction and destruction should be done here.
 //#
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
-class JFrontendSubsystem : public JSubsystem
+class ENGINE_API JFrontendSubsystem : public JSubsystem
 {
-    GENERATED_CLASS_BODY(ENGINE_API)
+    GENERATED_CLASS_BODY()
 
     friend LFrontendBase;
     friend LFrontend;
@@ -29,10 +29,10 @@ protected:
     virtual void Tick() {}
 
     FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
-    FORCEINLINE void SetShouldTick(const bool bShouldTick) noexcept { this->bShouldTick = bShouldTick; }
+    FORCEINLINE void SetShouldTick(bool bShouldTick) noexcept { this->bShouldTick = bShouldTick; }
 
-    ENGINE_API LFrontend& GetFrontend() noexcept;
-    ENGINE_API LFrontend const& GetFrontend() const noexcept;
+    LFrontend& GetFrontend() noexcept;
+    LFrontend const& GetFrontend() const noexcept;
 
 private:
 

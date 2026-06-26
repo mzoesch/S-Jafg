@@ -16,7 +16,7 @@
 //# @see AssertionMacros.h for more information about what macros are enabled in this build configuration.
 //#
 #ifndef JAFG_IN_DEBUG
-    #define JAFG_IN_DEBUG                    0
+    #define JAFG_IN_DEBUG                                                       0
 #endif /* !JAFG_IN_DEBUG */
 
 //#
@@ -26,7 +26,7 @@
 //# @see AssertionMacros.h for more information about what macros are enabled in this build configuration.
 //#
 #ifndef JAFG_IN_DEVELOPMENT
-    #define JAFG_IN_DEVELOPMENT              0
+    #define JAFG_IN_DEVELOPMENT                                                 0
 #endif /* !JAFG_IN_DEVELOPMENT */
 
 //#
@@ -39,7 +39,7 @@
 //# @see AssertionMacros.h for more information about what macros are enabled in this build configuration.
 //#
 #ifndef JAFG_IN_SHIPPING
-    #define JAFG_IN_SHIPPING                 0
+    #define JAFG_IN_SHIPPING                                                    0
 #endif /* !JAFG_IN_SHIPPING */
 
 #if !(JAFG_IN_DEBUG || JAFG_IN_DEVELOPMENT || JAFG_IN_SHIPPING)
@@ -62,24 +62,15 @@
 #endif /* JAFG_IN_SHIPPING */
 
 ///////////////////////////////////////////////////////////////////////////////
-// Whether this is a reflected build.
-#ifndef JAFG_IS_REFLECTED
-    #define JAFG_IS_REFLECTED            0
-#endif /* !JAFG_IS_REFLECTED */
-
-///////////////////////////////////////////////////////////////////////////////
 // Build targets.
+#ifndef JAFG_WITH_EDITOR
+    #define JAFG_WITH_EDITOR                                                    0
+#endif /* !JAFG_WITH_EDITOR */
 #ifndef JAFG_WITH_LOCAL_LAYER
-    #define JAFG_WITH_LOCAL_LAYER            0
-#else /* !JAFG_WITH_LOCAL_LAYER */
-    #if !JAFG_IN_SHIPPING
-        #define JAFG_WITH_EDITOR             1
-    #else /* !JAFG_IN_SHIPPING */
-        #define JAFG_WITH_EDITOR             0
-    #endif /* JAFG_IN_SHIPPING */
-#endif /* JAFG_WITH_LOCAL_LAYER */
+    #define JAFG_WITH_LOCAL_LAYER                                               0
+#endif /* !JAFG_WITH_LOCAL_LAYER */
 #ifndef JAFG_AS_DAEMON
-    #define JAFG_AS_DAEMON                   0
+    #define JAFG_AS_DAEMON                                                      0
 #endif /* !JAFG_AS_DAEMON */
 
 #if !(JAFG_WITH_LOCAL_LAYER || JAFG_AS_DAEMON)
@@ -101,7 +92,7 @@
 
 /* Default to no tests. */
 #ifndef JAFG_WITH_TESTS
-    #define JAFG_WITH_TESTS                  0
+    #define JAFG_WITH_TESTS                                                     0
 #endif /* !JAFG_WITH_TESTS */
 
 //
@@ -111,9 +102,9 @@
 //
 #ifndef DO_TEST_UNITS
     #if JAFG_WITH_TESTS
-        #define DO_TEST_UNITS           1
+        #define DO_TEST_UNITS                                                   1
     #else /* JAFG_WITH_TESTS */
-        #define DO_TEST_UNITS           0
+        #define DO_TEST_UNITS                                                   0
     #endif /* !JAFG_WITH_TESTS */
 #endif /* !DO_TEST_UNITS */
 
@@ -125,15 +116,21 @@
 //# Only true if viewed by the intellisense. Might not be supported on all IDEs or compiler servers.
 #ifndef WITH_IDEA_INTELLISENSE
     #ifdef __INTELLISENSE__
-        #define WITH_IDEA_INTELLISENSE          1
+        #define WITH_IDEA_INTELLISENSE                                          1
     #else /* __INTELLISENSE__ */
-        #define WITH_IDEA_INTELLISENSE          0
+        #define WITH_IDEA_INTELLISENSE                                          0
     #endif /* !__INTELLISENSE__ */
 #endif /* !WITH_IDEA_INTELLISENSE */
 
-#ifndef JAFG_WITH_SANITIZERS
-    #define JAFG_WITH_SANITIZERS                 0
-#endif /* !JAFG_WITH_SANITIZERS */
+#ifndef JAFG_DO_DEBUG_SYMBOLS_IN_SHIPPING
+    #define JAFG_DO_DEBUG_SYMBOLS_IN_SHIPPING                                   0
+#endif /* !JAFG_DO_DEBUG_SYMBOLS_IN_SHIPPING */
+#ifndef JAFG_DO_SANITIZED_BUILD
+    #define JAFG_DO_SANITIZED_BUILD                                             0
+#endif /* !JAFG_DO_SANITIZED_BUILD */
+#ifndef JAFG_DO_HARDEN_BUILD
+    #define JAFG_DO_HARDEN_BUILD                                                0
+#endif /* !JAFG_DO_HARDEN_BUILD */
 
 
 /*-----------------------------------------------------------------------------
@@ -142,22 +139,22 @@
 
 //# Whether to ever do checks. This affects all build configurations.
 #ifndef JAFG_DO_EVER_CHECKS
-    #define JAFG_DO_EVER_CHECKS                                                  1
+    #define JAFG_DO_EVER_CHECKS                                                 1
 #endif /* !JAFG_DO_EVER_CHECKS */
 
 //# Whether to override the default behavior to strip checks in shipping builds.
 #ifndef JAFG_DO_CHECKS_IN_SHIPPING
-    #define JAFG_DO_CHECKS_IN_SHIPPING                                           0
+    #define JAFG_DO_CHECKS_IN_SHIPPING                                          0
 #endif /* !JAFG_DO_CHECKS_IN_SHIPPING */
 
 //# Whether to allow to compile slow-checks in debug builds.
 #ifndef JAFG_ALLOW_SLOW_CHECKS
-    #define JAFG_ALLOW_SLOW_CHECKS                                               1
+    #define JAFG_ALLOW_SLOW_CHECKS                                              1
 #endif /* !JAFG_ALLOW_SLOW_CHECKS */
 
 //# Whether slow checks should share the same lifetime as normal checks among build configurations.
 #ifndef JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
-    #define JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME                            0
+    #define JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME                           0
 #endif /* !JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
 
 //#
@@ -166,28 +163,28 @@
 //# But it should always be turned off in production shipping.
 //#
 #ifndef JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING
-    #define JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING         0
+    #define JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING        0
 #endif /* !JAFG_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
 
 #if JAFG_DO_EVER_CHECKS
     #if JAFG_IN_SHIPPING
-        #define JAFG_DO_CHECKS                                                   JAFG_DO_CHECKS_IN_SHIPPING
+        #define JAFG_DO_CHECKS                                                  JAFG_DO_CHECKS_IN_SHIPPING
         #if JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
-            #define JAFG_DO_SLOW_CHECKS                                          JAFG_DO_CHECKS_IN_SHIPPING
+            #define JAFG_DO_SLOW_CHECKS                                         JAFG_DO_CHECKS_IN_SHIPPING
         #else /* JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
-            #define JAFG_DO_SLOW_CHECKS                                          0
+            #define JAFG_DO_SLOW_CHECKS                                         0
         #endif /* !JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
     #else /* JAFG_IN_SHIPPING */
-        #define JAFG_DO_CHECKS                                                   1
+        #define JAFG_DO_CHECKS                                                  1
         #if JAFG_IN_DEVELOPMENT
-            #define JAFG_DO_SLOW_CHECKS                                          JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
+            #define JAFG_DO_SLOW_CHECKS                                         JAFG_LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
         #else /* JAFG_IN_DEVELOPMENT */
-            #define JAFG_DO_SLOW_CHECKS                                          JAFG_ALLOW_SLOW_CHECKS
+            #define JAFG_DO_SLOW_CHECKS                                         JAFG_ALLOW_SLOW_CHECKS
         #endif /* !JAFG_IN_DEVELOPMENT */
     #endif /* !JAFG_IN_SHIPPING */
 #else /* JAFG_DO_EVER_CHECKS */
-    #define JAFG_DO_CHECKS                                                       0
-    #define JAFG_DO_SLOW_CHECKS                                                  0
+    #define JAFG_DO_CHECKS                                                      0
+    #define JAFG_DO_SLOW_CHECKS                                                 0
 #endif /* !JAFG_DO_EVER_CHECKS */
 
 #ifndef JAFG_DO_CHECKS
@@ -199,10 +196,10 @@
 
 //# Default to only do ensure if checks are enabled.
 #ifndef JAFG_DO_ENSURES
-    #define JAFG_DO_ENSURES                                                      JAFG_DO_CHECKS
+    #define JAFG_DO_ENSURES                                                     JAFG_DO_CHECKS
 #endif /* !JAFG_DO_ENSURES */
 
-#define PRIVATE_JAFG_BUILD_H_INCLUDED                                            1
+#define PRIVATE_JAFG_BUILD_H_INCLUDED                                           1
 
 #if JAFG_WITH_MSVC
     #if JAFG_IN_DEBUG

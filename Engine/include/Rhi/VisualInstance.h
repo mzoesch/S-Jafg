@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Rhi/UniformBufferObjects.h"
+#include "Rhi/Objects.h"
 #include "Rhi/Bindless.h"
 
 namespace Jafg
@@ -34,12 +34,12 @@ static_assert(sizeof(LVisualInstance) % 16 == 0);
 namespace UBO
 {
 
-struct VisualShared final : public TUbo<VisualShared, 0, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+struct VisualShared final : rhi::ubo_template<VisualShared, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
     LMat4F Proj;
     f32 Gamma;
 };
-static_assert(CUniformBufferObject<VisualShared>);
+static_assert(rhi::ubo<VisualShared>);
 
 } /* ~Namespace UBO */
 

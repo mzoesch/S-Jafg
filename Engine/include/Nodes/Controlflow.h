@@ -9,11 +9,11 @@ namespace Jafg
 
 enum struct ENodePrimitiveControlflow : u8 { Stacked, Horizontal, Vertical, };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(ENodePrimitiveControlflow, {
-    {ENodePrimitiveControlflow::Stacked, "Stacked"},
-    {ENodePrimitiveControlflow::Horizontal, "Horizontal"},
-    {ENodePrimitiveControlflow::Vertical, "Vertical"},
-    })
+SERDE_JSON_ENUM(ENodePrimitiveControlflow,
+    Stacked,
+    Horizontal,
+    Vertical
+    )
 
 namespace Detail
 {
@@ -96,7 +96,7 @@ struct HorizontalControlFlowFn
         }
         if (TransformerChildCount > 0)
         {
-            DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount - 1);
+            DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (static_cast<f32>(TransformerChildCount) - 1.0f);
         }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
@@ -123,7 +123,7 @@ struct HorizontalControlFlowFn
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() - 1)
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f : static_cast<f32>(Self.GetChildren().size()) - 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -190,7 +190,7 @@ struct HorizontalInclusiveControlFlowFn
         }
         if (TransformerChildCount > 0)
         {
-            DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount + 1);
+            DesiredSize.x += Space.InStaticPoints(Self.GetViewport()) * (static_cast<f32>(TransformerChildCount) + 1.0f);
         }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
@@ -217,7 +217,7 @@ struct HorizontalInclusiveControlFlowFn
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() + 1)
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f : static_cast<f32>(Self.GetChildren().size()) + 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -284,7 +284,7 @@ struct VerticalControlFlowFn
         }
         if (TransformerChildCount > 0)
         {
-            DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount - 1);
+            DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (static_cast<f32>(TransformerChildCount) - 1.0f);
         }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
@@ -311,7 +311,7 @@ struct VerticalControlFlowFn
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() - 1)
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f :static_cast<f32>(Self.GetChildren().size()) - 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -378,7 +378,7 @@ struct VerticalInclusiveControlFlowFn
         }
         if (TransformerChildCount > 0)
         {
-            DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount + 1);
+            DesiredSize.y += Space.InStaticPoints(Self.GetViewport()) * (static_cast<f32>(TransformerChildCount) + 1.0f);
         }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
@@ -405,7 +405,7 @@ struct VerticalInclusiveControlFlowFn
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0 : Self.GetChildren().size() + 1)
+            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f : static_cast<f32>(Self.GetChildren().size()) + 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -534,7 +534,6 @@ struct DynamicControlFlowOrchestrationFn
         case ENodePrimitiveControlflow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Stacked>().UpdateDesiredSize(Self, Space);
         case ENodePrimitiveControlflow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Horizontal>().UpdateDesiredSize(Self, Space);
         case ENodePrimitiveControlflow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Vertical>().UpdateDesiredSize(Self, Space);
-        default: std::unreachable();
         }
     }
 
@@ -545,7 +544,6 @@ struct DynamicControlFlowOrchestrationFn
         case ENodePrimitiveControlflow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Stacked>().GetAnchoredSizeForChild(Self, Target, Space);
         case ENodePrimitiveControlflow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Horizontal>().GetAnchoredSizeForChild(Self, Target, Space);
         case ENodePrimitiveControlflow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Vertical>().GetAnchoredSizeForChild(Self, Target, Space);
-        default: std::unreachable();
         }
     }
 
@@ -556,7 +554,6 @@ struct DynamicControlFlowOrchestrationFn
         case ENodePrimitiveControlflow::Stacked: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Stacked>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
         case ENodePrimitiveControlflow::Horizontal: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Horizontal>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
         case ENodePrimitiveControlflow::Vertical: return StaticControlFlowOrchestration<ENodePrimitiveControlflow::Vertical>().GetAnchoredTopLeftFromMostOuterForChild(Self, Target, Space);
-        default: std::unreachable();
         }
     }
 };

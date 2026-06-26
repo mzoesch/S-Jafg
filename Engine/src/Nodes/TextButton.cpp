@@ -4,23 +4,23 @@
 #include "Engine/Engine.h"
 #include "Framework/Frontend.h"
 #include "Rhi/NodeRenderInfo.h"
+#include "Framework/TextureSubsystem.h"
 
 void Jafg::WTextButton::OnBrushChanged(EStyleBits Bit) noexcept
 {
     TButtonBase::OnBrushChanged(Bit);
     ApplyStyleBit(this->TextStyle, this->TextBrush, Bit);
-    return;
 }
 
 void Jafg::WTextButtonIconizedDouble::Draw(LNodeRenderInfo const& Info) const
 {
     Super::Draw(Info);
 
-    if (this->LeftIcon.get() && this->LeftIconBrush.Scale > 0.0f)
+    if (this->LeftIcon.get() && static_cast<f32>(this->LeftIconBrush.Scale) > 0.0f)
     {
         if (!this->LeftIcon->IsBindless())
         {
-            this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->LeftIcon);
+            this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*this->LeftIcon);
             check(this->LeftIcon->IsBindless())
         }
         Info.AddInstance({
@@ -30,11 +30,11 @@ void Jafg::WTextButtonIconizedDouble::Draw(LNodeRenderInfo const& Info) const
             .TextureIndex = this->LeftIcon->GetBindlessIndex(),
             });
     }
-    if (this->RightIcon.get() && this->RightIconBrush.Scale > 0.0f)
+    if (this->RightIcon.get() && static_cast<f32>(this->RightIconBrush.Scale) > 0.0f)
     {
         if (!this->RightIcon->IsBindless())
         {
-            this->GetMutableFrontend().Vk_AddTextureToGlobalBindlessArray(&*this->RightIcon);
+            this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*this->RightIcon);
             check(this->RightIcon->IsBindless())
         }
         Info.AddInstance({
@@ -44,8 +44,6 @@ void Jafg::WTextButtonIconizedDouble::Draw(LNodeRenderInfo const& Info) const
             .TextureIndex = this->RightIcon->GetBindlessIndex(),
             });
     }
-
-    return;
 }
 
 void Jafg::WTextButtonIconizedDouble::UpdateDesiredSize() const
@@ -54,7 +52,7 @@ void Jafg::WTextButtonIconizedDouble::UpdateDesiredSize() const
 
     auto GetSize{[this](LTexture2Ref const& Ref, LIconBrush const& Brush)
     {
-        if (Ref.get() && Brush.Scale > 0.0f)
+        if (Ref.get() && static_cast<f32>(Brush.Scale) > 0.0f)
         {
             f32 Width{maths::max(
                 static_cast<f32>(Ref->GetExtent().width * Brush.Scale)
@@ -81,8 +79,6 @@ void Jafg::WTextButtonIconizedDouble::UpdateDesiredSize() const
         LVec2F Size{GetSize(this->RightIcon, this->RightIconBrush)};
         this->SetDesiredSizeInSpt(this->GetDesiredSize_v2() + Size);
     }
-
-    return;
 }
 
 Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& InLocation)
@@ -229,9 +225,9 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnKeyEventFocused(LNodeKeyEven
 void Jafg::WTextButtonIconizedDouble::OnBrushChanged(EStyleBits Bit) noexcept
 {
     Super::OnBrushChanged(Bit);
+
     ApplyStyleBit(this->LeftIconStyle, this->LeftIconBrush, Bit);
     ApplyStyleBit(this->RightIconStyle, this->RightIconBrush, Bit);
-    return;
 }
 
 LVec2F Jafg::WTextButtonIconizedDouble::GetLeftIconTopLeft(LVec2F Translation) const noexcept

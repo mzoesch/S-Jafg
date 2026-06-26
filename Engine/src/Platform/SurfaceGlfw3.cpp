@@ -38,9 +38,11 @@
     #endif /* False */
 #endif /* JAFG_PLATFORM_LINUX */
 
-#include <nfd.h>
-#include <nfd.hpp>
-#include <nfd_glfw3.h>
+#include "Definitions/PushNoWarnings.h"
+    #include <nfd.h>
+    #include <nfd.hpp>
+    #include <nfd_glfw3.h>
+#include "Definitions/PopDiagnostics.h"
 
 static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
 
@@ -152,8 +154,6 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 {
     STAT_CYCLE_FUNCTION()
 
-    auto& Frontend{this->GetMutableFrontend()};
-
     check(Tasks::IsOnMasterThread())
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
     check(!(Info.bFullscreen && Info.bBorderless))
@@ -246,8 +246,6 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     {
         Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]{ this->SetFullscreen(true); });
     }
-
-    return;
 }
 
 Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
@@ -267,8 +265,6 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
         glfwDestroyWindow(this->Handle);
         this->Handle = nullptr;
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::LateSetupVk()
@@ -279,8 +275,6 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->Vk_CreateDescriptorPools();
 
     this->GetViewport().Vk_OnLateInit();
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::PollPlatformEvents()
@@ -297,8 +291,6 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
     }
     // TODO: This also!1
     glfwPollEvents();
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::OnRender()
@@ -308,7 +300,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
     check(this->Handle)
     check(Tasks::IsOnRendererThread())
 
-    check(this->Vk_LastFrameInFlightIndex < Jafg::Vk_DesiredMaxFramesInFlight)
+    check(this->Vk_LastFrameInFlightIndex < rhi::max_frames_in_flight)
 
     check(this->Vk_CommandBuffers.size() == this->Vk_GetNumberOfFramesInFlightInternal())
 
@@ -332,7 +324,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         //
         if (this->bPendingResize && this->GetFrontend().Vk_GetFramework() == rhi::framework::x11)
         {
-            this->PendingTimeForResizeApply -= GEngine->DeltaTime;
+            this->PendingTimeForResizeApply -= static_cast<f32>(GEngine->DeltaTime);
             if (this->PendingTimeForResizeApply > 0.0f)
             {
                 /* Just skip. We do not care. */
@@ -351,7 +343,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
 
     if (this->bPendingResize)
     {
-        this->PendingTimeForResizeApply -= GEngine->DeltaTime;
+        this->PendingTimeForResizeApply -= static_cast<f32>(GEngine->DeltaTime);
 
         if (this->PendingTimeForResizeApply <= 0.0f)
         {
@@ -441,7 +433,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->Vk_ColorImage.GetBuffer(),
+        .image = *this->Vk_ColorImage,
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -536,8 +528,6 @@ void Jafg::LSurfaceGlfw3::OnRender()
         break;
     }
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
@@ -560,8 +550,6 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     {
         glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)
@@ -635,8 +623,6 @@ void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)
     {
         glfwSetCursor(this->Handle, this->Cursor);
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
@@ -654,8 +640,6 @@ void Jafg::LSurfaceGlfw3::SetResizable(const bool bResizable)
 
     LOG_VERBOSE(LogSurface, "Setting window resizeability to [{}].", this->IsResizable() ? "true" : "false")
     glfwSetWindowAttrib(this->Handle, GLFW_RESIZABLE, this->IsResizable() ? GLFW_TRUE : GLFW_FALSE);
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::SetWindowSize(LVec2u32 Size)
@@ -665,8 +649,6 @@ void Jafg::LSurfaceGlfw3::SetWindowSize(LVec2u32 Size)
 
     LOG_VERBOSE(LogSurface, "Setting window size to [{}x{}].", Size.x, Size.y)
     glfwSetWindowSize(this->Handle, static_cast<i32>(Size.x), static_cast<i32>(Size.y));
-
-    return;
 }
 
 bool Jafg::LSurfaceGlfw3::CanBorderless() const noexcept
@@ -681,13 +663,11 @@ bool Jafg::LSurfaceGlfw3::IsBorderless() const noexcept
 {
     // TODO: Implement. Currently we only support wayland and xwayland, which do not support this, therefore, this is not implemented.
     std::unreachable();
-    return false;
 }
 
 void Jafg::LSurfaceGlfw3::SetBorderless(bool bBorderless)
 {
     std::unreachable();
-    return;
 }
 
 bool Jafg::LSurfaceGlfw3::IsFullscreen() const noexcept
@@ -730,8 +710,6 @@ void Jafg::LSurfaceGlfw3::SetFullscreen(bool bFullscreen)
             GLFW_DONT_CARE
             );
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier)
@@ -745,8 +723,6 @@ void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const
         };
 
     this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex].pipelineBarrier2(DependencyInfo);
-
-    return;
 }
 
 //# We have to use this instead of a function because of sso.
@@ -845,7 +821,7 @@ std::optional<TArray<LPath>> Jafg::LSurfaceGlfw3::OpenBlockingDialogForFiles(LFi
     for (auto Idx{0uz}; Idx < N; ++Idx)
     {
         NFD::UniquePathSetPathN Path;
-        if (auto Result{NFD::PathSet::GetPath(OutPaths, Idx, Path)}; Result != NFD_OKAY)
+        if (auto Result{NFD::PathSet::GetPath(OutPaths, static_cast<nfdpathsetsize_t>(Idx), Path)}; Result != NFD_OKAY)
         {
             if (auto* Error{NFD_GetError()}; Error)
             {
@@ -965,7 +941,7 @@ std::optional<TArray<LPath>> Jafg::LSurfaceGlfw3::OpenBlockingDialogForDirectori
     for (auto Idx{0uz}; Idx < N; ++Idx)
     {
         NFD::UniquePathSetPathN Path;
-        if (auto Result{NFD::PathSet::GetPath(OutPaths, Idx, Path)}; Result != NFD_OKAY)
+        if (auto Result{NFD::PathSet::GetPath(OutPaths, static_cast<nfdpathsetsize_t>(Idx), Path)}; Result != NFD_OKAY)
         {
             if (auto* Error{NFD_GetError()}; Error)
             {
@@ -991,8 +967,6 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
      */
     // this->PendingTimeForResizeApply = 1.5f;
     this->PendingTimeForResizeApply = 0.2f;
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
@@ -1009,8 +983,6 @@ void Jafg::LSurfaceGlfw3::MouseCallback(f64 XPos, f64 YPos)
         //#
         this->MouseLocation.reset();
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::ScrollCallback(double XOffset, double YOffset)
@@ -1090,8 +1062,6 @@ void Jafg::LSurfaceGlfw3::ScrollCallback(double XOffset, double YOffset)
                 });
         }
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::MouseEnterCallback(i32 Entered)
@@ -1106,8 +1076,6 @@ void Jafg::LSurfaceGlfw3::MouseEnterCallback(i32 Entered)
     {
         this->bMouseInsideSurface = false;
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::CharCallback(const u32 Codepoint)
@@ -1136,8 +1104,6 @@ void Jafg::LSurfaceGlfw3::KeyCallback(i32 Key, i32 Scancode, i32 Action, i32 Mod
         .Mods = ModFlags,
         .State = State,
         });
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::MouseButtonCallback(i32 Button, i32 Action, i32 Mods)
@@ -1210,8 +1176,6 @@ void Jafg::LSurfaceGlfw3::MouseButtonCallback(i32 Button, i32 Action, i32 Mods)
         .Mods = ModFlags,
         .State = State,
         });
-
-    return;
 }
 
 Jafg::LPhysicalViewport const& Jafg::LSurfaceGlfw3::GetPreferredPhysicalViewport()
@@ -1324,13 +1288,10 @@ Jafg::LPhysicalViewport::VideoMode Jafg::LSurfaceGlfw3::GetPreferredVideoMode(LP
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 {
     LOG_VERBOSE(LogVulkan, "Creating command pool for surface.")
-
     this->Vk_CommandPool = rhi::vk_build(this->GetFrontend().Vk_GetDevice(), vk::CommandPoolCreateInfo{
         .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
         .queueFamilyIndex = this->GetFrontend().Vk_GetGraphicsQueueFamilyIndex()
         });
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
@@ -1481,15 +1442,9 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
             )
     }
 
-    if (Frontend.Vk_GetNumberOfFramesInFlight() == 0)
-    {
-        Frontend._Vk_ReportFramesInFlight(maths::clamp<u32>(Vk_DesiredMaxFramesInFlight, this->Vk_SurfaceCapabilities.minImageCount, this->Vk_SurfaceCapabilities.maxImageCount));
-    }
-    else
-    {
-        check( Frontend.Vk_GetNumberOfFramesInFlight() >= this->Vk_SurfaceCapabilities.minImageCount
-            && Frontend.Vk_GetNumberOfFramesInFlight() <= this->Vk_SurfaceCapabilities.maxImageCount )
-    }
+    Frontend._Vk_ReportFramesInFlight(maths::clamp<u32>(rhi::max_frames_in_flight, this->Vk_SurfaceCapabilities.minImageCount, this->Vk_SurfaceCapabilities.maxImageCount));
+    check( Frontend.Vk_GetNumberOfFramesInFlight() >= this->Vk_SurfaceCapabilities.minImageCount
+        && Frontend.Vk_GetNumberOfFramesInFlight() <= this->Vk_SurfaceCapabilities.maxImageCount )
 
     vk::SwapchainCreateInfoKHR SwapChainCreateInfo{
         .flags = vk::SwapchainCreateFlagsKHR{},
@@ -1549,8 +1504,6 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     this->__Vk_CreateImageViews();
     this->__Vk_CreateColorResources();
     this->__Vk_CreateSynchObjects();
-
-    return;
 }
 
 std::optional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(vk::SurfaceFormatKHR DesiredSurfaceFormat)
@@ -1614,8 +1567,6 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateImageViews()
     }
 
     LOG_VERBOSE(LogVulkan, "Created [{}] image views from swapchain images.", this->Vk_SwapchainImageViews.size())
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
@@ -1644,7 +1595,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
     this->Vk_ColorImage = Frontend.Vk_CreateDeviceLocalImage(ImageCreateInfo);
     // this->Vk_ColorImage = Frontend.Vk_CreateImage(ImageCreateInfo, AllocationCreateInfo);
     this->Vk_ColorImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->Vk_ColorImage.GetBuffer(),
+        .image = *this->Vk_ColorImage,
         .viewType = vk::ImageViewType::e2D,
         .format = Frontend.Vk_GetSurfaceFormat().format,
         .subresourceRange = {
@@ -1655,8 +1606,6 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateColorResources()
             .layerCount = 1,
             },
         });
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
@@ -1685,8 +1634,6 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
 
     this->Vk_LastFrameInFlightIndex = 0;
     check( this->Vk_CurrentFrameInFlightIndex.has_value() == false )
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
@@ -1703,8 +1650,6 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandBuffers()
     {
         this->Vk_CommandBuffers[Idx] = std::move(CommandBuffers[Idx]);
     }
-
-    return;
 }
 
 void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
@@ -1733,8 +1678,6 @@ void Jafg::LSurfaceGlfw3::Vk_CreateDescriptorPools()
 
         continue;
     }
-
-    return;
 }
 
 #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */

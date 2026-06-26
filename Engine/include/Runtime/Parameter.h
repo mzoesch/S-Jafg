@@ -55,9 +55,9 @@ struct LProgramParameter
             LOG_WARNING(LogProgramArguments, "Program argument [{}] already registered.", this->Identifier)
             App::Detail::RegisteredProgramParameters.erase(It);
         }
-        if (auto It{algo::find_if(App::Detail::RegisteredProgramParameters, [&Identifier = this->Identifier](LProgramParameter* Param)
+        if (auto It{algo::find_if(App::Detail::RegisteredProgramParameters, [&Id = this->Identifier](LProgramParameter* Param)
         {
-            return Param->Identifier == Identifier;
+            return Param->Identifier == Id;
         })}; It != App::Detail::RegisteredProgramParameters.end())
         {
             LOG_FATAL(LogProgramArguments, "Program argument [{}] already registered by another parameter.", this->Identifier)

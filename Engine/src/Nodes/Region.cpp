@@ -5,6 +5,7 @@
 #include "Rhi/VisualInstance.h"
 #include "Rhi/NodeRenderInfo.h"
 #include "Rhi/Bindless.h"
+#include "Framework/TextureSubsystem.h"
 
 void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) const noexcept
 {
@@ -13,13 +14,15 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
         return;
     }
 
+    auto& TextureSubsystem{*Info.Frontend.GetSubsystemChecked<JTextureSubsystem>()};
+
     if (std::holds_alternative<LTexture>(this->Background))
     {
         auto& Texture{std::get<LTexture>(this->Background).Texture};
         check(Texture.get())
         if (!Texture->IsBindless())
         {
-            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*Texture);
+            TextureSubsystem.AddTextureToGlobalBindlessArray(&*Texture);
             check(Texture->IsBindless())
         }
         Info.AddInstance({
@@ -60,7 +63,7 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
             check(IconTexture.get())
             if (!IconTexture->IsBindless())
             {
-                Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*IconTexture);
+                TextureSubsystem.AddTextureToGlobalBindlessArray(&*IconTexture);
                 check(IconTexture->IsBindless())
             }
             LVec2F IconExtent{static_cast<f32>(IconTexture->GetExtent().width * std::get<LIcon>(this->Background).Scale)

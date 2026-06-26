@@ -55,8 +55,8 @@ inline LStringView LexToString(EWorldState Type) noexcept
         case EWorldState::Running:         return "Running";
         case EWorldState::TearingDown:     return "TearingDown";
         case EWorldState::WaitingForKill:  return "WaitingForKill";
-        default:                           return "<Unknown>";
     }
+    std::unreachable();
 }
 
 enum struct EWorldTimeBehavior : u8
@@ -171,7 +171,7 @@ public:
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
     LWorld(LString HumanReadableName) noexcept : LClassOuter{std::move(HumanReadableName)} {}
-    ~LWorld() noexcept { check(this->WorldState == EWorldState::WaitingForKill) }
+    ~LWorld() noexcept override { check(this->WorldState == EWorldState::WaitingForKill) }
 
     // LClassOuter implementation
     virtual bool IsWorld() const noexcept override { return true; }
@@ -193,7 +193,7 @@ public:
     FORCEINLINE EWorldState GetWorldState() const noexcept { return this->WorldState; }
 
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
-    void Tick(f32 Dt);
+    void Tick(f64 Dt);
 
     void Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const;
 
@@ -305,8 +305,8 @@ private:
     //#
     ASupremePolicies* SupremePolicies{};
 
-    TFrameArray<vk::raii::DescriptorSet> Vk_WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    TFrameArray<LMappedDeviceBuffer> Vk_WorldBuffers;
+    rhi::frame_array<vk::raii::DescriptorSet> Vk_WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<rhi::mapped_device_buffer> Vk_WorldBuffers;
 };
 
 //#

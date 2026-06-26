@@ -46,7 +46,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
             .initialLayout = vk::ImageLayout::eUndefined,
             });
         this->DepthTarget.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-            .image = this->DepthTarget.Image.GetBuffer(),
+            .image = *this->DepthTarget.Image,
             .viewType = vk::ImageViewType::e2D,
             .format = Frontend.Vk_GetPreferredDepthFormat(),
             .subresourceRange = {
@@ -72,7 +72,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
         .initialLayout = vk::ImageLayout::eUndefined,
         });
     this->MsaaTarget.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->MsaaTarget.Image.GetBuffer(),
+        .image = *this->MsaaTarget.Image,
         .viewType = vk::ImageViewType::e2D,
         .format = Frontend.Vk_GetSurfaceFormat().format,
         .subresourceRange = {
@@ -102,7 +102,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
         auto& ResolvedMsaa{*this->ResolvedTarget};
         ResolvedMsaa.Image = Frontend.Vk_CreateDeviceLocalImage(ResolveImageCreateInfo);
         ResolvedMsaa.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-            .image = ResolvedMsaa.Image.GetBuffer(),
+            .image = *ResolvedMsaa.Image,
             .viewType = vk::ImageViewType::e2D,
             .format = Frontend.Vk_GetSurfaceFormat().format,
             .subresourceRange = {
@@ -129,7 +129,7 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
             .initialLayout = vk::ImageLayout::eUndefined,
             });
         this->SelectedTarget.ImageView = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-            .image = this->SelectedTarget.Image.GetBuffer(),
+            .image = *this->SelectedTarget.Image,
             .viewType = vk::ImageViewType::e2D,
             .format = vk::Format::eR8Unorm,
             .subresourceRange = {
@@ -141,14 +141,12 @@ void Jafg::LRenderTarget::Initialize(CreateInfo const& Info)
                 },
             });
     }
-
-    return;
 }
 
 void Jafg::LRenderTarget::RenderSelected(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const
 {
     check(!!What)
-    check(!!this->SelectedTarget.Image.GetBuffer())
+    check(!!*this->SelectedTarget.Image)
     check(this->Extent.width > 0 && this->Extent.height > 0)
 
     LRenderInfo RenderInfo{
@@ -181,7 +179,7 @@ void Jafg::LRenderTarget::RenderSelected(LRenderInfo const& Info, TFunction2<voi
         .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->SelectedTarget.Image.GetBuffer(),
+        .image = *this->SelectedTarget.Image,
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -240,7 +238,7 @@ void Jafg::LRenderTarget::RenderSelected(LRenderInfo const& Info, TFunction2<voi
 void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const
 {
     check(!!What)
-    check(!!this->MsaaTarget.Image.GetBuffer())
+    check(!!*this->MsaaTarget.Image)
     check(this->Extent.width > 0 && this->Extent.height > 0)
 
     LRenderInfo RenderInfo{
@@ -273,7 +271,7 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
         .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->MsaaTarget.Image.GetBuffer(),
+        .image = *this->MsaaTarget.Image,
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -294,7 +292,7 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
             .newLayout = vk::ImageLayout::eDepthAttachmentOptimal,
             .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
             .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-            .image = this->DepthTarget.Image.GetBuffer(),
+            .image = *this->DepthTarget.Image,
             .subresourceRange = {
                 .aspectMask = vk::ImageAspectFlagBits::eDepth,
                 .baseMipLevel = 0,
@@ -355,6 +353,4 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
             .layerCount = 1,
             },
         });
-
-    return;
 }

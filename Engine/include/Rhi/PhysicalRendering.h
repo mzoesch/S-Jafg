@@ -2,13 +2,15 @@
 
 #pragma once
 
+#include "Material.h"
 #include "Components/ActorComponentForward.h"
-#include "Rhi/GraphicsPipeline.h"
+#include "Rhi/RendererCore.h"
+#include "Rhi/Objects.h"
 
 namespace Jafg::PC
 {
 
-struct Pbr final : public TPushConstant<Pbr, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+struct Pbr final: rhi::pc_template<Pbr, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
     LMat4F Model;
     LVec4F baseColorFactor;
@@ -22,10 +24,10 @@ struct Pbr final : public TPushConstant<Pbr, vk::ShaderStageFlagBits::eVertex, v
     f32 alphaMask;
     f32 alphaMaskCutoff;
 
-    static void AutoActorPush(LActorRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline, LActorDrawInfo const& DrawInfo) noexcept
+    static void PushForActor(LActorRenderInfo const& Info, LMaterial const& Material, LPushConstantProvider::LActorInfo const& ActorInfo) noexcept
     {
         Pbr{
-            .Model = maths::model(DrawInfo.Transform),
+            .Model = maths::model(ActorInfo.Transform),
             .baseColorFactor = LVec4F{1.0f, 1.0f, 1.0f, 1.0f},
             .metallicFactor = 0,
             .roughnessFactor = 1,
@@ -36,9 +38,9 @@ struct Pbr final : public TPushConstant<Pbr, vk::ShaderStageFlagBits::eVertex, v
             .emissiveTextureSet = 0,
             .alphaMask = 0,
             .alphaMaskCutoff = 0,
-        }.Push(Info, Pipeline);
+        }.upload(Info.CommandBuffer, Material.Pipeline);
     }
 };
-static_assert(CPushConstant<Pbr>);
+static_assert(rhi::pc<Pbr>);
 
 } /* ~Namespace Jafg::PC */

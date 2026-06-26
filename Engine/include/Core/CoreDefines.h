@@ -24,8 +24,6 @@ enum Type : i32
 
 } /* ~Namespace EPlatformExit */
 
-enum : i8 { POINTER_BYTE_SIZE = sizeof(std::size_t) };
-
 #define JTXTW(x)        LITERAL_WIDE(x)
 #define JTXT8(x)        LITERAL_UTF8(x)
 #define JTXTu(x)        LITERAL_UTF16(x)

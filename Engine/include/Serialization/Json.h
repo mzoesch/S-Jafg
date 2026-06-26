@@ -16,13 +16,145 @@ void NlohmannSink(T const& Error) noexcept;
     #pragma clang diagnostic ignored "-W#warnings"
 #endif /* JAFG_WITH_CLANG */
     #define JSON_NOEXCEPTION
-    #define JSON_THROW_USER ::serde::NlohmannSink
+    #define JSON_THROW_USER                             ::serde::NlohmannSink
+    #define JSON_DISABLE_ENUM_SERIALIZATION             1
     #include "nlohmann/json.hpp"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
 
 using json = nlohmann::json;
+
+//# Do not use enum, as they can silently fail.
+#undef NLOHMANN_JSON_SERIALIZE_ENUM
+
+//# Do not use these, as they are not as powerful as our sad macro utopia.
+#undef NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
+#undef NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT
+#undef NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE
+
+//#
+//# Serializes an enum
+//# Usage example:
+//#     enum struct EExample : u8 { A, B, C };
+//#     SERDE_JSON_ENUM(EExample, A, B, C)
+//#
+#define SERDE_JSON_ENUM(T, ...) \
+    SERDE_JSON_ENUM_ONLY_SERIALIZE(T, __VA_ARGS__) \
+    SERDE_JSON_ENUM_ONLY_DESERIALIZE(T, __VA_ARGS__)
+#define DETAIL_SERDE_JSON_ENUM_TRANSFORM(X) {_serde_local_enum_t::X, #X},
+#define SERDE_JSON_ENUM_ONLY_SERIALIZE(T, ...) \
+    template<typename BasicJsonType>                                                            \
+    inline void to_json(BasicJsonType& j, const T& e)                                   \
+    {                                                                                           \
+        static_assert(std::is_enum_v<T>);          \
+        typedef T _serde_local_enum_t; \
+        static constexpr std::pair<T, LStringView> const Members[]{ \
+            JAFG_MAP(DETAIL_SERDE_JSON_ENUM_TRANSFORM, __VA_ARGS__) \
+                }; \
+        auto it = std::find_if(std::begin(Members), std::end(Members),                                      \
+                               [e](const std::pair<T, BasicJsonType>& ej_pair) -> bool  \
+        {                                                                                       \
+            return ej_pair.first == e;                                                          \
+        });                                                                                     \
+        if (it == std::end(Members)) \
+        { \
+            LOG_FATAL(LogSerialization, "Failed to serialize enum [{}] to JSON. No matching string found for value [{}]." \
+                , algo::type_name<T>(), std::to_underlying(e)) \
+        } \
+        else \
+        { \
+            j = it->second; \
+        } \
+    }
+#define SERDE_JSON_ENUM_ONLY_DESERIALIZE(T, ...) \
+    template<typename BasicJsonType>                                                            \
+    inline void from_json(const BasicJsonType& j, T& e)                                 \
+    {                                                                                           \
+        static_assert(std::is_enum_v<T>);          \
+        typedef T _serde_local_enum_t; \
+        static constexpr std::pair<T, LStringView> const Members[]{ \
+        JAFG_MAP(DETAIL_SERDE_JSON_ENUM_TRANSFORM, __VA_ARGS__) \
+        }; \
+        auto it = std::find_if(std::begin(Members), std::end(Members),                                      \
+                               [&j](const std::pair<T, BasicJsonType>& ej_pair) -> bool \
+        {                                                                                       \
+            return ej_pair.second == j;                                                         \
+        }); \
+        if (it == std::end(Members)) \
+        { \
+            LOG_FATAL(LogSerialization, "Failed to deserialize enum [{}] from JSON string [{}]." \
+                , algo::type_name<T>(), j.template get<LString>()) \
+        } \
+        else \
+        { \
+            e = it->first; \
+        } \
+    }
+#define SERDE_JSON_ENUM_PAIR_ONLY_DESERIALIZE(T, ...) \
+    template<typename BasicJsonType>                                                            \
+    inline void from_json(const BasicJsonType& j, T& e)                                 \
+    {                                                                                           \
+        static_assert(std::is_enum_v<T>);          \
+        static constexpr std::pair<T, LStringView> const Members[]{ \
+        __VA_ARGS__ \
+        }; \
+        auto it = std::find_if(std::begin(Members), std::end(Members),                                      \
+                               [&j](const std::pair<T, BasicJsonType>& ej_pair) -> bool \
+        {                                                                                       \
+            return ej_pair.second == j;                                                         \
+        }); \
+        if (it == std::end(Members)) \
+        { \
+            LOG_FATAL(LogSerialization, "Failed to deserialize enum [{}] from JSON string [{}]." \
+                , algo::type_name<T>(), j.template get<LString>()) \
+        } \
+        else \
+        { \
+            e = it->first; \
+        } \
+    }
+
+//#
+//# Serializes a type to/from JSON.
+//# Usage example:
+//#    struct LExample { LString Name; i32 Value; };
+//#    SERDE_JSON_TYPE_NON_INTRUSIVE(LExample, Name, Value)
+//#
+#define SERDE_JSON_TYPE_NON_INTRUSIVE(Type, ...)  \
+    SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, __VA_ARGS__) \
+    SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, __VA_ARGS__)
+#define SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { JAFG_MAP(NLOHMANN_JSON_TO, __VA_ARGS__) }
+#define SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { JAFG_MAP(NLOHMANN_JSON_FROM, __VA_ARGS__) }
+
+//#
+//# Serializes a type to/from JSON but if the fields are missing, the filed will be skipped and the current value will
+//# be left untouched.
+//#
+//# @warning This is very different from the nlohmann DEFAULT macro helper, that would default assign the missing
+//#          fields.
+//#
+//# Usage example:
+//#    struct LExample { LString Name; i32 Value; };
+//#    SERDE_STRING_NON_INTRUSIVE(LExample, Name, Value)
+//#
+#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE(Type, ...)  \
+    SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_SERIALIZE(Type, __VA_ARGS__) \
+    SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, __VA_ARGS__)
+#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...) \
+    SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, __VA_ARGS__)
+#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; JAFG_MAP(DETAIL_SERDE_JSON_TYPE_RELAXED, __VA_ARGS__) }
+#define DETAIL_SERDE_JSON_TYPE_RELAXED(v1) \
+    if (nlohmann_json_j.contains(#v1)) \
+    { \
+        NLOHMANN_JSON_FROM(v1) \
+    }
 
 namespace serde
 {

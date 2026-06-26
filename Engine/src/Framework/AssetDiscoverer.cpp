@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/AssetDiscoverer.h"
-#include "Containers/Finder2.h"
 
 #define DETAIL_JAFG_PULL_HEADER(Path, Asset) \
     std::ifstream F{Path, std::ios::binary}; \
@@ -33,10 +32,10 @@ void Jafg::JAssetDiscoverer::PushAsset(LPath const& Path, LTextureView const& Vi
 {
     LOG_VERBOSE(LogAssetSubsystem, "[{}]: Pushing asset to disk.", Path)
 
-    check(finder::descendant_of(Path, Finder::GetContentDir()))
-    check(finder::descendant_of(View.Texture, Finder::GetContentDir()))
+    check(finder::descendant_of(Path, finder::content_dir()))
+    check(finder::descendant_of(View.Texture, finder::content_dir()))
 
-    auto Embedded{finder::relative(View.Texture, Finder::GetContentDir())};
+    auto Embedded{relative(View.Texture, finder::content_dir())};
 
     std::ofstream F{Path, std::ios::binary};
     serde::os_bin_archive Ar{F.rdbuf()};
@@ -59,8 +58,6 @@ void Jafg::JAssetDiscoverer::PushAsset(LPath const& Path, LTextureView const& Vi
     F.close();
 
     this->Recache(Path);
-
-    return;
 }
 
 Jafg::LTextureView Jafg::JAssetDiscoverer::PullAssetTextureView(LPath const& Path) const
@@ -71,8 +68,8 @@ Jafg::LTextureView Jafg::JAssetDiscoverer::PullAssetTextureView(LPath const& Pat
 
     LTextureView Result;
     Result.Path = Canonical;
-    Result.Name = finder::relative(Result.Path, Finder::GetContentDir()).replace_extension();
-    Ar(Result.Texture); Result.Texture = Finder::GetContentDir()/Result.Texture;
+    Result.Name = relative(Result.Path, finder::content_dir()).replace_extension();
+    Ar(Result.Texture); Result.Texture = finder::content_dir()/Result.Texture;
     Ar(Result.Format);
     Ar(Result.MipLevels);
     Ar(Result.MaxSampleCount);

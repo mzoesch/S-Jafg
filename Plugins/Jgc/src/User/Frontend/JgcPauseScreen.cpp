@@ -93,7 +93,7 @@ void Jgc::WPauseScreen::Construct()
     //     .Texture(Tex)
     //     .SamplerAddressMode(vk::SamplerAddressMode::eMirroredRepeat)
     //     .BackgroundTint(Colors::Red)
-        ;
+        // ;
 
     return;
 }

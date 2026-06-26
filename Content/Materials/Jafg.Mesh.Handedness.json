@@ -1,3 +1,4 @@
 {
-    "Shader": "Jafg.Mesh.Handedness"
+    "inherits": "Jafg.Perspective",
+    "shader": "Shaders/Jafg.Mesh.Handedness"
 }

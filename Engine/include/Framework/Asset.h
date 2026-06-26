@@ -24,7 +24,7 @@ enum struct EAsset : u32
     Texture                 = 4,
     Font                    = 5,
 };
-inline constexpr LStringView LexToString(EAsset Asset) noexcept
+constexpr LStringView LexToString(EAsset Asset) noexcept
 {
     switch (Asset)
     {
@@ -34,7 +34,6 @@ inline constexpr LStringView LexToString(EAsset Asset) noexcept
     case EAsset::MaterialInstance: return "MaterialInstance";
     case EAsset::Texture: return "Texture";
     case EAsset::Font: return "Font";
-    default: return "<Unknown>";
     }
 }
 

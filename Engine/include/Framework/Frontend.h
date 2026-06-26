@@ -60,19 +60,19 @@ public:
 
     FORCEINLINE TArray<LPhysicalViewport> const& GetPhysicalViewports() const noexcept { return this->UsablePhysicalViewports; }
 
-    ENGINE_API void AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior = ENewSurfaceBehavior::NoAction) noexcept;
+    ENGINE_API LSurface& AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior = ENewSurfaceBehavior::NoAction) noexcept;
 
     FORCEINLINE std::size_t GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
     FORCEINLINE TArray<TUnique<LSurface>>& GetSurfaces() noexcept { return this->Surfaces; }
     FORCEINLINE TArray<TUnique<LSurface>> const& GetSurfaces() const noexcept { return this->Surfaces; }
 
     FORCEINLINE bool IsFocusedSurfaceValid() const { return this->FocusedSurface > INDEX_NONE; }
-    FORCEINLINE LSurface* GetFocusedSurface() noexcept { if (this->IsFocusedSurfaceValid()) { return this->Surfaces[this->FocusedSurface].get(); } return nullptr; }
-    FORCEINLINE LSurface* GetFocusedSurfaceChecked() noexcept { check(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
-    FORCEINLINE LSurface* GetFocusedSurfaceAsserted() noexcept { jassert(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
-    FORCEINLINE LSurface const* GetFocusedSurface() const noexcept { if (this->IsFocusedSurfaceValid()) { return this->Surfaces[this->FocusedSurface].get(); } return nullptr; }
-    FORCEINLINE LSurface const* GetFocusedSurfaceChecked() const noexcept { check(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
-    FORCEINLINE LSurface const* GetFocusedSurfaceAsserted() const noexcept { jassert(this->IsFocusedSurfaceValid()) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE LSurface* GetFocusedSurface() noexcept { if (this->IsFocusedSurfaceValid()) { return this->Surfaces[static_cast<std::size_t>(this->FocusedSurface)].get(); } return nullptr; }
+    FORCEINLINE LSurface* GetFocusedSurfaceChecked() noexcept { check(this->IsFocusedSurfaceValid()) return this->Surfaces[static_cast<std::size_t>(this->FocusedSurface)].get(); }
+    FORCEINLINE LSurface* GetFocusedSurfaceAsserted() noexcept { jassert(this->IsFocusedSurfaceValid()) return this->Surfaces[static_cast<std::size_t>(this->FocusedSurface)].get(); }
+    FORCEINLINE LSurface const* GetFocusedSurface() const noexcept { if (this->IsFocusedSurfaceValid()) { return this->Surfaces[static_cast<std::size_t>(this->FocusedSurface)].get(); } return nullptr; }
+    FORCEINLINE LSurface const* GetFocusedSurfaceChecked() const noexcept { check(this->IsFocusedSurfaceValid()) return this->Surfaces[static_cast<std::size_t>(this->FocusedSurface)].get(); }
+    FORCEINLINE LSurface const* GetFocusedSurfaceAsserted() const noexcept { jassert(this->IsFocusedSurfaceValid()) return this->Surfaces[static_cast<std::size_t>(this->FocusedSurface)].get(); }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
 

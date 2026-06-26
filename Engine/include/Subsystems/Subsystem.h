@@ -25,6 +25,7 @@ class ENGINE_API JSubsystem : public JCxxClass
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JSubsystem)
+    ENGINE_API ~JSubsystem() override;
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override final
     {

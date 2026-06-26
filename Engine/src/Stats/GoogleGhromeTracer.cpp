@@ -155,7 +155,7 @@ LString Jafg::Stats::Vendor::LGoogleChromeTracer::GetPath() const
 {
     check( this->Session.IsValid() )
 
-    LPath Path = Finder::GetSavedDir();
+    LPath Path = finder::saved_dir();
     Path /= "GoogleChrome";
     Path /= this->Session.Name;
     Path.concat(".json");

@@ -23,12 +23,13 @@
 //        STBI_ONLY_HDR
 //        STBI_ONLY_PIC
 //        STBI_ONLY_PNM   (.ppm and .pgm)
-#include <stb_image.h>
+#include "Definitions/PushNoWarnings.h"
+    #include <stb_image.h>
+    #define STB_IMAGE_WRITE_IMPLEMENTATION
+    #include <stb_image_write.h>
+#include "Definitions/PopDiagnostics.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-
-Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info)
+Jafg::LTexture2Ref Jafg::LTexture2::FromMemory(LStringView HumanReadableName, algo::byte_bulk&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info)
 {
     check(HumanReadableName.empty() == false)
 
@@ -46,13 +47,13 @@ Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanR
     }
     else if (SrcFormat == vk::Format::eR8G8B8Unorm && Info.Format == vk::Format::eR8G8B8A8Srgb)
     {
-        Tex.MipMap0.Allocate(rhi::vk_bytes_per_pixel(Info.Format) * Tex.GetWidth() * Tex.GetHeight());
+        Tex.MipMap0.allocate(rhi::vk_bytes_per_pixel(Info.Format) * Tex.GetWidth() * Tex.GetHeight());
         for (u32 i{0}; i < Tex.GetWidth() * Tex.GetHeight(); ++i)
         {
             Tex.MipMap0[i * 4 + 0] = Data[i * 3 + 0];
             Tex.MipMap0[i * 4 + 1] = Data[i * 3 + 1];
             Tex.MipMap0[i * 4 + 2] = Data[i * 3 + 2];
-            Tex.MipMap0[i * 4 + 3] = std::numeric_limits<u8>::max();
+            Tex.MipMap0[i * 4 + 3] = std::byte{std::numeric_limits<std::underlying_type_t<std::byte>>::max()};
         }
     }
     else
@@ -61,12 +62,12 @@ Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromMemory(LStringView HumanR
             , HumanReadableName, vk::to_string(SrcFormat), vk::to_string(Info.Format)
             )
     }
-    check(Tex.MipMap0.IsAllocated())
+    check(Tex.MipMap0.allocated())
 
     return Result;
 }
 
-Jafg::TSharedRef<Jafg::LTexture2> Jafg::LTexture2::FromAsset(LStringView View)
+Jafg::LTexture2Ref Jafg::LTexture2::FromAsset(LStringView View)
 {
     if (Detail::GMutableEngine)
     {
@@ -81,7 +82,7 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     check(this->Path.empty() == false)
     LOG_VERBOSE(LogRhi, "Loading texture2 from path [{}].", this->Path)
 
-    if (Finder::DoesFileExist(this->Path) == false)
+    if (is_regular_file(this->Path) == false)
     {
         return EResult::FileNotFound;
     }
@@ -91,16 +92,16 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
         LOG_VERBOSE(LogRhi, "Texture2 [{}] already loaded to host memory. Freeing previous host memory and reloading.", this->Path)
         this->FreeFromHost();
     }
-    check(this->Handle.GetAllocation() == nullptr)
+    check(!this->Handle.get_allocation())
 
     this->Meta.Format = Info.Format;
 
-    auto Bin{Finder::ReadFileAsBinary(this->Path)};
+    auto Bin{finder::read_binary_file(this->Path)};
     LVec2i32 StbiExtent;
     i32 NrChannels;
     ::stbi_set_flip_vertically_on_load(false);
     u8* Data{::stbi_load_from_memory(
-          Bin.data(), static_cast<int>(Bin.size())
+          reinterpret_cast<stbi_uc const*>(Bin.data()), static_cast<int>(Bin.size())
         , &StbiExtent.x, &StbiExtent.y, &NrChannels
         , static_cast<i32>(rhi::vk_channels_per_pixel(this->Meta.Format))
         )};
@@ -120,7 +121,7 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     }
 
     this->Meta.Extent = rhi::extent2{static_cast<rhi::extent2::domain_type>(StbiExtent.x), static_cast<rhi::extent2::domain_type>(StbiExtent.y)};
-    this->MipMap0.Serialize(Data, static_cast<std::size_t>(StbiExtent.x * StbiExtent.y) * this->GetBytesPerPixel());
+    this->MipMap0.serialize(reinterpret_cast<algo::byte_bulk::value_type*>(Data), static_cast<std::size_t>(StbiExtent.x * StbiExtent.y) * this->GetBytesPerPixel());
 
     ::stbi_image_free(Data);
 
@@ -212,7 +213,7 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
         });
 
     this->View = rhi::vk_build(Frontend.Vk_GetDevice(), vk::ImageViewCreateInfo{
-        .image = this->Handle.GetBuffer(),
+        .image = *this->Handle,
         .viewType = vk::ImageViewType::e2D,
         .format = this->GetFormat(),
         .subresourceRange = {
@@ -223,6 +224,4 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
             .layerCount = 1,
             },
         });
-
-    return;
 }

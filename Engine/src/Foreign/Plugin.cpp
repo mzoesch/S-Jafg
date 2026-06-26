@@ -24,9 +24,7 @@ LString LexToString(const EPluginLoadReturnCode::Type InValue)
     case EPluginLoadReturnCode::NoLifetimeHandle: { return "NoLifetimeHandle"; }
     case EPluginLoadReturnCode::NoLifetime: { return "NoLifetime"; }
     }
-
-    checkNoEntry()
-    return { };
+    std::unreachable();
 }
 
 LLoadedPlugin::~LLoadedPlugin()

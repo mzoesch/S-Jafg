@@ -160,7 +160,7 @@ bool Jafg::WEditableTextButton::UserInterfaceTick()
 
     if (!bHandled)
     {
-        this->CaretBlinker += GEngine->DeltaTime;
+        this->CaretBlinker += static_cast<f32>(GEngine->DeltaTime);
         if (this->CaretBlinker > this->CaretBrush.CaretBlinkerSpeed * 2.0f)
         {
             this->CaretBlinker = 0.0f;

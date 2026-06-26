@@ -2,26 +2,31 @@
 
 #pragma once
 
+#include "Material.h"
+#include "Rhi/RendererCore.h"
+#include "Rhi/Objects.h"
 #include "Components/ActorComponentForward.h"
-#include "Rhi/GraphicsPipeline.h"
 
 namespace Jafg::PC
 {
 
-struct MVP final : public TPushConstant<MVP, vk::ShaderStageFlagBits::eVertex>
+struct MVP final: rhi::pc_template<MVP, vk::ShaderStageFlagBits::eVertex,
+    vk::ShaderStageFlagBits::eFragment /**/
+    >
 {
-    LMat4F Model;
-    LMat4F View;
-    LMat4F Proj;
+    LMat4F M;
+    LMat4F V;
+    LMat4F P;
 
-    static void AutoActorPush(LActorRenderInfo const& Info, LGraphicsDevicePipeline const& Pipeline, LActorDrawInfo const& DrawInfo) noexcept
+    static void PushForActor(LActorRenderInfo const& Info, LMaterial const& Material, LPushConstantProvider::LActorInfo const& DrawInfo) noexcept
     {
         MVP{
-            .Model = maths::model(DrawInfo.Transform),
-            .View = Info.WorldData.view,
-            .Proj = Info.WorldData.proj,
-        }.Push(Info, Pipeline);
+            .M = maths::model(DrawInfo.Transform),
+            .V = Info.WorldData.view,
+            .P = Info.WorldData.proj,
+            }.upload(Info.CommandBuffer, Material.Pipeline);
     }
 };
+static_assert(rhi::pc<MVP>);
 
 } /* ~Namespace Jafg::PC */

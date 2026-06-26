@@ -1,3 +1,4 @@
 {
-    "Shader": "Jafg.Mesh.Normal"
+    "inherits": "Jafg.Perspective",
+    "shader": "Shaders/Jafg.Mesh.Normal"
 }

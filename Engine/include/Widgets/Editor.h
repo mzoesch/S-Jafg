@@ -53,10 +53,10 @@ struct LEditorLayout final
     LPath Path;
     TArray<LSurface> Surfaces;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout::LNodes, Dist, Children)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout::LFlow, Controlflow, Children)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout::LSurface, bFullscreen, bBorderless, Dimensions, Layout)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LEditorLayout, Surfaces)
+SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout::LNodes, Dist, Children)
+SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout::LFlow, Controlflow, Children)
+SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout::LSurface, bFullscreen, bBorderless, Dimensions, Layout)
+SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout, Surfaces)
 inline void to_json(json& j, LEditorLayout::LChild const& C){ std::visit([&j](auto&& Arg){ j = Arg; }, C); }
 inline void from_json(json const& j, LEditorLayout::LChild& C)
 {
@@ -178,7 +178,7 @@ public:
 
     static inline constexpr LPath GetUserLayoutsPath() noexcept
     {
-        return Finder::GetSavedDir() / "Layouts";
+        return finder::saved_dir() / "Layouts";
     }
     static void BeginClassLife(LBeginClassLifeInfo const& Info);
 
@@ -265,9 +265,9 @@ private:
 
     // vk::raii::DescriptorSetLayout RayDescriptorSetLayout{ nullptr };
     std::vector<LTransientRay> Rays;
-    TFrameArray<LMappedDeviceBuffer> RayBuffers;
+    rhi::frame_array<rhi::mapped_device_buffer> RayBuffers;
 
-    TFrameArray<LMappedDeviceBuffer> RayViewBuffers;
+    rhi::frame_array<rhi::mapped_device_buffer> RayViewBuffers;
     // TFrameArray<vk::raii::DescriptorSet> RayDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
 };
 

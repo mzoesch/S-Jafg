@@ -2,93 +2,84 @@
 
 #include "Rhi/GraphicsPipelineFactory.h"
 
-Jafg::LGraphicsDevicePipeline Jafg::LDevicePipelineFactory::Build()
+rhi::graphics_pipeline rhi::graphics_pipeline_factory::build(vk::raii::Device const& device)
 {
-    vk::PipelineVertexInputStateCreateInfo DummyPipelineVertexInputStateCreateInfo{
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = nullptr,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = nullptr,
-        };
-
-    vk::PipelineMultisampleStateCreateInfo MultisamplingInfo{
-        // TODO: Max user defined limit. Preferred material limit?
-        .rasterizationSamples = this->MultisamplingSampleCount ? *this->MultisamplingSampleCount : this->Frontend.Vk_GetMaxMsaaSampleCount(),
-        .sampleShadingEnable = this->MultisamplingShadingEnable
-        };
-
-    vk::PipelineDynamicStateCreateInfo DynamicStateInfo{
-        .dynamicStateCount = static_cast<u32>(this->DynamicStateInfo.size()),
-        .pDynamicStates = this->DynamicStateInfo.data(),
-        };
-
-    TArray<vk::DescriptorSetLayout> DescriptorSetLayouts;
-    for (auto Idx{0uz}; Idx < this->SharedDescriptorSetLayouts.size() + this->UniqueDescriptorSetLayouts.size(); ++Idx)
+    checkCode /* Should not happen as slangc already checks this. */
+    (
+        std::unordered_set<u32> UniqueSpaces;
+        auto Traverse{[&UniqueSpaces](auto&& List)
+        {
+            for (auto const& Layout: List)
+            {
+                if (UniqueSpaces.contains(Layout.binding))
+                {
+                    LOG_FATAL(LogMaterialSubsystem, "Multiple descriptor set layouts have the same space binding [{}].", Layout.binding)
+                }
+                UniqueSpaces.insert(Layout.binding);
+            }
+        }};
+        Traverse(this->unique_descriptor_set_layouts);
+        Traverse(this->shared_descriptor_set_layouts);
+    )
+    TArray<vk::DescriptorSetLayout> DescriptorSetLayouts; DescriptorSetLayouts.reserve(this->shared_descriptor_set_layouts.size() + this->unique_descriptor_set_layouts.size());
+    for (auto Idx{0uz}; Idx < this->unique_descriptor_set_layouts.size() + this->shared_descriptor_set_layouts.size(); ++Idx)
     {
-        if (auto It{algo::find(this->SharedDescriptorSetLayouts, Idx, &TDescriptorSetLayout<vk::DescriptorSetLayout>::Binding)};
-            It != this->SharedDescriptorSetLayouts.end())
+        if (auto It{algo::find(this->unique_descriptor_set_layouts, Idx, &descriptor_set_layout_pair<vk::raii::DescriptorSetLayout>::binding)};
+            It != this->unique_descriptor_set_layouts.end())
         {
-            DescriptorSetLayouts.emplace_back(It->DescriptorSetLayout);
+            DescriptorSetLayouts.emplace_back(*It->descriptor_set_layout);
             continue;
         }
-
-        if (auto It{algo::find(this->UniqueDescriptorSetLayouts, Idx, &TDescriptorSetLayout<vk::raii::DescriptorSetLayout>::Binding)};
-            It != this->UniqueDescriptorSetLayouts.end())
+        if (auto It{algo::find(this->shared_descriptor_set_layouts, Idx, &descriptor_set_layout_pair<vk::DescriptorSetLayout>::binding)};
+            It != this->shared_descriptor_set_layouts.end())
         {
-            DescriptorSetLayouts.emplace_back(*It->DescriptorSetLayout);
+            DescriptorSetLayouts.emplace_back(It->descriptor_set_layout);
             continue;
         }
-
         LOG_FATAL(LogRhi, "Failed to find descriptor set layout binding [{}].", Idx)
     }
-
-    auto Result{this->Frontend.Vk_GetDevice().createPipelineLayout({
+    vk::raii::PipelineLayout Layout{std::move(*device.createPipelineLayout({
         .setLayoutCount = static_cast<u32>(DescriptorSetLayouts.size()),
         .pSetLayouts = DescriptorSetLayouts.data(),
-        .pushConstantRangeCount = static_cast<u32>(this->PushConstantRange.size()),
-        .pPushConstantRanges = this->PushConstantRange.data(),
-        })};
-    check(Result.has_value())
-    vk::raii::PipelineLayout Layout{std::move(Result.value)};
+        .pushConstantRangeCount = static_cast<u32>(this->push_constant_ranges.size()),
+        .pPushConstantRanges = this->push_constant_ranges.data(),
+        }))};
 
-    check(this->ColorAttachmentFormat != vk::Format::eUndefined)
-    check(this->DepthAttachmentFormat != vk::Format::eUndefined)
-
-    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> Chain{
+    vk::PipelineDynamicStateCreateInfo PipelineDynamicState{
+        .dynamicStateCount = static_cast<u32>(this->dynamic_states.size()),
+        .pDynamicStates = this->dynamic_states.data(),
+        };
+    check(!this->color_attachment_formats.empty())
+    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> StructureChain{
         {
-            .stageCount = static_cast<u32>(this->Shaders.size()),
-            .pStages = this->Shaders.data(),
-            .pVertexInputState = this->VertexInputInfo.has_value() ? &*this->VertexInputInfo : &DummyPipelineVertexInputStateCreateInfo,
-            .pInputAssemblyState = &this->InputAssemblyInfo,
-            .pViewportState = &this->ViewportStateInfo,
-            .pRasterizationState = &this->RasterizationInfo,
-            .pMultisampleState   = &MultisamplingInfo,
-            .pDepthStencilState  = &this->DepthStencilInfo,
-            .pColorBlendState    = this->PipelineColorBlendStateCreateInfo,
-            .pDynamicState       = &DynamicStateInfo,
-            .layout = Layout,
-            .renderPass = nullptr,
+            .stageCount          = static_cast<u32>(this->shaders.size()),
+            .pStages             = this->shaders.data(),
+            .pVertexInputState   = &this->pipeline_vertex_input_state,
+            .pInputAssemblyState = &this->pipeline_input_assembly_state,
+            .pViewportState      = &this->pipeline_viewport_state,
+            .pRasterizationState = &this->pipeline_rasterization_state,
+            .pMultisampleState   = &this->pipeline_multisample_state,
+            .pDepthStencilState  = &this->pipeline_depth_stencil_state,
+            .pColorBlendState    = &this->pipeline_color_blend_state,
+            .pDynamicState       = &PipelineDynamicState,
+            .layout              = Layout,
+            .renderPass          = nullptr,
         },
         {
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &this->ColorAttachmentFormat,
-            .depthAttachmentFormat = this->DepthAttachmentFormat,
-        }
-    };
+            .colorAttachmentCount    = static_cast<u32>(this->color_attachment_formats.size()),
+            .pColorAttachmentFormats = this->color_attachment_formats.data(),
+            .depthAttachmentFormat   = this->depth_attachment_format,
+            .stencilAttachmentFormat = this->stencil_attachment_format,
+        },};
 
-    TArray<vk::raii::DescriptorSetLayout> Temp; Temp.reserve(this->UniqueDescriptorSetLayouts.size());
-    for (auto& DescriptorSetLayout : this->UniqueDescriptorSetLayouts)
+    TArray<graphics_pipeline::descriptor_set_layout> Temp; Temp.reserve(this->unique_descriptor_set_layouts.size());
+    for (auto& [Binding, DescriptorSetLayout]: this->unique_descriptor_set_layouts)
     {
-        Temp.emplace_back(std::move(DescriptorSetLayout.DescriptorSetLayout));
+        Temp.emplace_back(Binding, std::move(DescriptorSetLayout));
     }
-    algo::orphan(&this->UniqueDescriptorSetLayouts);
-
-    auto PipelineResult{this->Frontend.Vk_GetDevice().createGraphicsPipeline(nullptr, Chain.get<vk::GraphicsPipelineCreateInfo>())};
-    check(PipelineResult.has_value())
-    return LGraphicsDevicePipeline{
-        .Pipeline = std::move(*PipelineResult),
-        .Layout = std::move(Layout),
-        .DescriptorSetLayouts = std::move(DescriptorSetLayouts),
-        ._UniqueDescriptorSetLayout = std::move(Temp),
+    return {
+        .pipeline = std::move(*device.createGraphicsPipeline(nullptr, StructureChain.get<vk::GraphicsPipelineCreateInfo>())),
+        .pipeline_layout = std::move(Layout),
+        .unique_descriptor_set_layouts = std::move(Temp),
         };
 }

@@ -2,16 +2,19 @@
 
 #pragma once
 
+#include "Texture2.h"
 #include "Rhi/RendererCore.h"
-#include "Serialization/BulkData.h"
 #include "Rhi/ResourceReference.h"
 #include "Rhi/DeviceBuffers.h"
 
 namespace Jafg
 {
 
-typedef EResourceStateBits ETexture2StateBits;
-typedef EResourceState ETexture2State;
+struct LTexture2;
+typedef rhi::resource_state_bits ETexture2StateBits;
+typedef rhi::resource_state_flags ETexture2State;
+
+typedef rhi::shared_ref<LTexture2> LTexture2Ref;
 
 //# Represents a generic two-dimensional texture that can be uploaded to a device.
 struct LTexture2 final
@@ -34,15 +37,15 @@ struct LTexture2 final
         FileNotFound,
         LoadingError,
     };
-    inline static LStringView ResultToString(EResult Result) noexcept
+    static LStringView ResultToString(EResult Result) noexcept
     {
         switch (Result)
         {
         case EResult::Success: return "Success";
         case EResult::FileNotFound: return "FileNotFound";
         case EResult::LoadingError: return "LoadingError";
-        default: return "Unknown";
         }
+        std::unreachable();
     }
 
     LTexture2() noexcept = default;
@@ -68,27 +71,27 @@ struct LTexture2 final
 
         return;
     }
-    static TSharedRef<LTexture2> FromMemory(LStringView HumanReadableName, LByteBulkData&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
-    static TSharedRef<LTexture2> FromAsset(LStringView View);
+    static LTexture2Ref FromMemory(LStringView HumanReadableName, algo::byte_bulk&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
+    static LTexture2Ref FromAsset(LStringView View);
     PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
     ~LTexture2() = default;
 
-    FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->MipMap0.IsAllocated(); }
+    FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->MipMap0.allocated(); }
     ENGINE_API EResult LoadToHost(HostInfo const& Info);
     inline void FreeFromHost() noexcept
     {
-        if (this->MipMap0.IsAllocated())
+        if (this->MipMap0.allocated())
         {
-            this->MipMap0.Free();
+            this->MipMap0.free();
         }
     }
 
-    FORCEINLINE bool IsOnDevice() const noexcept { return this->Handle.GetBuffer(); }
+    FORCEINLINE bool IsOnDevice() const noexcept { return !!*this->Handle; }
     ENGINE_API void LoadToDevice(DeviceInfo const& Info);
     inline void FreeFromDevice() noexcept
     {
         this->View.clear();
-        this->Handle.Free();
+        this->Handle.free();
     }
 
     FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
@@ -104,9 +107,9 @@ struct LTexture2 final
     FORCEINLINE constexpr u32  GetMipLevels() const noexcept { return this->Meta.MipLevels; }
     FORCEINLINE constexpr auto GetSamplesPerTexel() const noexcept { return this->Meta.Samples; }
 
-    FORCEINLINE constexpr LByteBulkData const& GetFirstMipMap() const noexcept { return this->MipMap0; }
+    FORCEINLINE constexpr algo::byte_bulk const& GetFirstMipMap() const noexcept { return this->MipMap0; }
 
-    FORCEINLINE constexpr LDeviceImage const& GetDeviceHandle() const noexcept { return this->Handle; }
+    FORCEINLINE constexpr rhi::device_image const& GetDeviceHandle() const noexcept { return this->Handle; }
     FORCEINLINE bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
     FORCEINLINE constexpr auto const& GetImageView() const noexcept { return this->View; }
 
@@ -131,13 +134,11 @@ private:
 
     LPath Path;
     Metadata Meta;
-    LByteBulkData MipMap0;
-    LDeviceImage Handle;
+    algo::byte_bulk MipMap0;
+    rhi::device_image Handle;
     vk::raii::ImageView View{ nullptr };
     i64 BindlessIndex{ INDEX_NONE };
 };
-
-typedef TSharedRef<LTexture2> LTexture2Ref;
 
 //#
 //# - std::monostate: No texture.

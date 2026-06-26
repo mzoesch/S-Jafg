@@ -77,22 +77,22 @@ Jafg::LLocalEgo& Jafg::LFrontendBase::GetMutableLocalEgo() noexcept
     return Detail::GMutableEngine->GetLocalEgo();
 }
 
-void Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior) noexcept
+Jafg::LSurface& Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior) noexcept
 {
     check( Tasks::IsOnMasterThread() )
 
-    this->Surfaces.emplace_back(std::move(Surface));
+    auto& Result{*this->Surfaces.emplace_back(std::move(Surface))};
 
     if (Behavior == ENewSurfaceBehavior::Focus)
     {
-        this->FocusedSurface = this->Surfaces.size() - 1;
+        this->FocusedSurface = static_cast<i32>(this->Surfaces.size()) - 1;
         check( this->IsFocusedSurfaceValid() )
     }
     else if (Behavior == ENewSurfaceBehavior::FocusIfNoneFocused)
     {
         if (this->IsFocusedSurfaceValid() == false)
         {
-            this->FocusedSurface = this->Surfaces.size() - 1;
+            this->FocusedSurface = static_cast<i32>(this->Surfaces.size()) - 1;
             check( this->IsFocusedSurfaceValid() )
         }
     }
@@ -100,10 +100,10 @@ void Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehav
     {
         if (this->Surfaces.size() == 1)
         {
-            this->FocusedSurface = this->Surfaces.size() - 1;
+            this->FocusedSurface = static_cast<i32>(this->Surfaces.size()) - 1;
             check( this->IsFocusedSurfaceValid() )
         }
     }
 
-    return;
+    return Result;
 }

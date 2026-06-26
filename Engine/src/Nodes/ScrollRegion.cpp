@@ -17,8 +17,8 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
 
     const LVec2F AnchoredTopLeftFromMostOuter{this->GetAnchoredTopLeftFromMostOuter()};
-    const LVec2F MostOuterTopLeftContentArea {AnchoredTopLeftFromMostOuter + this->Padding.GetTopLeftOffset().InStaticPoints(Info.Viewport)};
-    const LVec2F MaxContentAreaSize {this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(Info.Viewport)};
+    // const LVec2F MostOuterTopLeftContentArea {AnchoredTopLeftFromMostOuter + this->Padding.GetTopLeftOffset().InStaticPoints(Info.Viewport)};
+    // const LVec2F MaxContentAreaSize {this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(Info.Viewport)};
 
     const f64 MaxScrollY{maths::max(static_cast<f64>(this->DesiredSizeOfChildren.y) - static_cast<f64>(this->GetAnchoredSize_v2().y), 0.0)};
     const f64 ScrollOffsetY{ this->ScrollPosition.y * MaxScrollY};
@@ -99,7 +99,7 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
         }
     }
 
-    if (this->GetAnchoredSize_v2().y > 0.0f && this->ShouldDrawVScrollbar(VisibleY))
+    if (this->GetAnchoredSize_v2().y > 0.0f && this->ShouldDrawVScrollbar(static_cast<f32>(VisibleY)))
     {
         if (this->BarBrush.VScrollBarBackgroundWidth > 0.0f)
         {
@@ -111,13 +111,13 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
         if (this->BarBrush.VScrollBarWidth > 0.0f)
         {
             Info.AddInstance({
-                .Rect = {AnchoredTopLeftFromMostOuter + this->GetVForegroundScrollPositionFromOuter(ScrollOffsetYPercent), this->GetVForegroundScrollSize()},
+                .Rect = {AnchoredTopLeftFromMostOuter + this->GetVForegroundScrollPositionFromOuter(static_cast<f32>(ScrollOffsetYPercent)), this->GetVForegroundScrollSize()},
                 .Tint = this->BarBrush.VTint,
                 });
         }
     }
 
-    if (this->GetAnchoredSize_v2().x > 0.0f && this->ShouldDrawHScrollbar(VisibleX))
+    if (this->GetAnchoredSize_v2().x > 0.0f && this->ShouldDrawHScrollbar(static_cast<f32>(VisibleX)))
     {
         if (this->BarBrush.HScrollBarBackgroundHeight > 0.0f)
         {
@@ -129,7 +129,7 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
         if (this->BarBrush.HScrollBarHeight > 0.0f)
         {
             Info.AddInstance({
-                .Rect = {AnchoredTopLeftFromMostOuter + this->GetHForegroundScrollPositionFromOuter(ScrollOffsetXPercent), this->GetHForegroundScrollSize()},
+                .Rect = {AnchoredTopLeftFromMostOuter + this->GetHForegroundScrollPositionFromOuter(static_cast<f32>(ScrollOffsetXPercent)), this->GetHForegroundScrollSize()},
                 .Tint = this->BarBrush.HTint,
                 });
         }
@@ -332,7 +332,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorL
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetVForegroundScrollPositionFromOuter()};
             maths::aabb_point({TopLeftForeground, this->GetVForegroundScrollSize()}, MouseLocation))
         {
-            this->MbOffset.y = (MouseLocation.y - TopLeftForeground.y) * -1.0f;
+            this->MbOffset.y = static_cast<f32>((MouseLocation.y - TopLeftForeground.y) * -1.0);
         }
         this->bUiTickV = true;
         this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.Emplace(this, &WScrollRegion::UserInterfaceTick);
@@ -347,7 +347,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorL
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetHForegroundScrollPositionFromOuter()};
             maths::aabb_point({.Offset = TopLeftForeground, .Extent = this->GetHForegroundScrollSize()}, MouseLocation))
         {
-            this->MbOffset.x = (MouseLocation.x - TopLeftForeground.x) * -1.0f;
+            this->MbOffset.x = static_cast<f32>((MouseLocation.x - TopLeftForeground.x) * -1.0);
         }
         this->bUiTickH = true;
         this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.Emplace(this, &WScrollRegion::UserInterfaceTick);

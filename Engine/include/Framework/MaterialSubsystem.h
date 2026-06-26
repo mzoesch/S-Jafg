@@ -18,11 +18,11 @@ class ENGINE_API JMaterialSubsystem final : public JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 
+    friend struct LResolveInheritance;
+
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JMaterialSubsystem)
-
-public:
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void TearDown() override
@@ -31,83 +31,67 @@ public:
         Super::TearDown();
     }
 
-    void ReloadMaterials();
+public:
+
+    //# Called automatically by Jafg. Usually you do not want to call this.
     void PurgeUnused();
 
-    //# Get a fetched material.
-    LFetchedMaterial const& GetFetchedMaterial(LString const& Name) const noexcept;
-    //# Get a fetched material that is allocated on the device and device ready.
-    LMaterialRef GetMaterial(LString const& Name) noexcept;
-    //# Get the instance of a material to specify unique data.
-    LMaterialInstanceRef GetInstance(LMaterialRef Material);
-    LMaterialInstanceRef GetInstanceFromMaterialName(LString const& MaterialName) { return this->GetInstance(this->GetMaterial(MaterialName)); }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // BEGIN Only for unique layouts.
-
-    //# @param FetchedMaterial Optional field if the caller already has the fetched material at hand.
-    struct LBinding{ vk::DescriptorType Type; u32 Layout; u32 Set; };
-    LBinding GetBinding(LMaterialInstance& Instance, LStringView Key);
-
-    void SetMaterialInstanceField(LMaterialInstance& Instance, LBinding Where, LString const& Value) const noexcept;
-    void SetSampler(LMaterialInstance& Instance, LBinding Where, vk::Sampler const& Sampler) const;
-    void SetSampledImage(LMaterialInstance& Instance, LBinding Where, LTexture2 const& Texture) const;
-
-    // END Only for unique layouts.
-    ///////////////////////////////////////////////////////////////////////////////
-
-    FORCEINLINE auto const& GetFetchedMaterials() const noexcept { return this->FetchedMaterials; }
-    FORCEINLINE auto const& GetMaterials() const noexcept { return this->Materials; }
-    FORCEINLINE auto const& GetSharedMaterialInstances() const noexcept { return this->MaterialInstances; }
-    FORCEINLINE void RegisterSharedMaterialInstance(LString const& Identifier, LMaterialInstanceRef Instance) noexcept
+    //# All materials templates known to this subsystem.
+    NODISCARD FORCEINLINE constexpr auto const& GetMaterialTemplates() const noexcept { return this->MaterialTemplates; }
+    //# All materials allocated by this subsystem.
+    NODISCARD FORCEINLINE constexpr auto const& GetMaterials() const noexcept { return this->Materials; }
+    //#
+    //# All instances that a client has set to share globally.
+    //# By default instances are not shared. But they can be easily registered here to be shared across many
+    //# objects and draw calls.
+    //#
+    NODISCARD FORCEINLINE constexpr auto const& GetSharedMaterialInstances() const noexcept { return this->MaterialInstances; }
+    FORCEINLINE void RegisterSharedMaterialInstance(LStringView Identifier, LMaterialInstanceRef Instance) noexcept
     {
-        if (this->MaterialInstances.contains(Identifier) == false)
+        if (this->MaterialInstances.contains(Identifier))
         {
-            this->MaterialInstances.emplace(Identifier, Instance);
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: Material instance with this identifier already exists.", Identifier)
         }
+        this->MaterialInstances.emplace(Identifier, Instance);
+    }
+    NODISCARD std::optional<LMaterialInstanceRef> FindSharedMaterialInstance(LStringView Identifier) noexcept
+    {
+        if (auto It{this->MaterialInstances.find(Identifier)}; It != this->MaterialInstances.end())
+        {
+            return It->second;
+        }
+        return {};
+    }
+    NODISCARD LMaterialInstanceRef FindOrAllocateSharedMaterialInstance(LStringView Identifier, LStringView Material) noexcept
+    {
+        if (auto Instance{this->FindSharedMaterialInstance(Identifier)})
+        {
+            return *Instance;
+        }
+        auto Result{this->GetInstanceFromMaterialName(Material)};
+        this->RegisterSharedMaterialInstance(Identifier, Result);
+        return Result;
     }
 
-    vk::PipelineColorBlendStateCreateInfo const& GetSolidColorBlending() const noexcept
+    //# Get a material that is device ready.
+    NODISCARD LMaterialRef GetMaterial(LStringView Name) noexcept;
+    //#
+    //# Get the instance of a material to specify unique data. Completely optional. You can use materials just
+    //# as is without any instance.
+    //#
+    NODISCARD LMaterialInstanceRef GetInstance(LMaterialRef Material);
+    NODISCARD LMaterialInstanceRef GetInstanceFromMaterialName(LStringView MaterialName) { return this->GetInstance(this->GetMaterial(MaterialName)); }
+
+    //#
+    //# Usually layouts are unique per pipeline. But some layouts are used across many shaders. You can find the here
+    //# or register you own.
+    //#
+    NODISCARD auto const& GetSharedDescriptorSetLayouts() const noexcept { return this->SharedDescriptorSetLayouts; }
+    vk::DescriptorSetLayout EmplaceSharedDescriptorSetLayout(LString Identifier, vk::raii::DescriptorSetLayout Layout) noexcept
     {
-        static vk::PipelineColorBlendAttachmentState State{
-            .blendEnable = vk::False,
-            .srcColorBlendFactor = vk::BlendFactor::eZero,
-            .dstColorBlendFactor = vk::BlendFactor::eZero,
-            .colorBlendOp = vk::BlendOp::eAdd,
-            .srcAlphaBlendFactor = vk::BlendFactor::eZero,
-            .dstAlphaBlendFactor = vk::BlendFactor::eZero,
-            .alphaBlendOp = vk::BlendOp::eAdd,
-            .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-                            | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
-            };
-        static vk::PipelineColorBlendStateCreateInfo Info{
-            .logicOpEnable = vk::False,
-            .logicOp = vk::LogicOp::eClear,
-            .attachmentCount = 1,
-            .pAttachments = &State
-            };
-        return Info;
-    }
-    vk::PipelineColorBlendStateCreateInfo const& GetTranslucentBlending() const noexcept
-    {
-        static vk::PipelineColorBlendAttachmentState State{
-            .blendEnable = vk::True,
-            .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
-            .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
-            .colorBlendOp = vk::BlendOp::eAdd,
-            .srcAlphaBlendFactor = vk::BlendFactor::eOne,
-            .dstAlphaBlendFactor = vk::BlendFactor::eZero,
-            .alphaBlendOp = vk::BlendOp::eAdd,
-            .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-                            | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
-            };
-        static vk::PipelineColorBlendStateCreateInfo Info{
-            .logicOpEnable = vk::False,
-            .logicOp = vk::LogicOp::eClear,
-            .attachmentCount = 1,
-            .pAttachments = &State
-            };
-        return Info;
+        auto [It, Emplaced]{this->SharedDescriptorSetLayouts.emplace(std::move(Identifier), std::move(Layout))};
+        check(Emplaced)
+        return *It->second;
     }
 
 private:
@@ -115,9 +99,25 @@ private:
     JTextureSubsystem* TextureSubsystem{};
     JShaderSubsystem* ShaderSubsystem{};
 
-    TArray<std::unique_ptr<LFetchedMaterial>> FetchedMaterials;
-    std::unordered_map<LString, std::shared_ptr<LMaterial>> Materials;
-    std::unordered_map<LString, std::shared_ptr<LMaterialInstance>> MaterialInstances;
+    //#
+    //# Once populated, materials will never change their address again. This is guaranteed by jafg.
+    //#
+    //# TODO: Can't we solve with std::hive?
+    //#
+    TArray<rhi::material_template> MaterialTemplates;
+    algo::transparent_unordered_string_map<LMaterialRef> Materials;
+    algo::transparent_unordered_string_map<LMaterialInstanceRef> MaterialInstances;
+    NODISCARD rhi::material_template const& GetMaterialTemplate(LStringView Identifier) noexcept
+    {
+        auto It{algo::find(this->MaterialTemplates, Identifier, &rhi::material_template::identifier)};
+        if (It == this->MaterialTemplates.end())
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such material.", Identifier)
+        }
+        return *It;
+    }
+
+    algo::transparent_unordered_string_map<vk::raii::DescriptorSetLayout> SharedDescriptorSetLayouts;
 };
 
 } /* ~Namespace Jafg */

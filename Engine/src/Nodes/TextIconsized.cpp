@@ -2,17 +2,18 @@
 
 #include "Nodes/TextIconized.h"
 #include "Framework/Frontend.h"
+#include "Framework/TextureSubsystem.h"
 #include "Rhi/NodeRenderInfo.h"
 
 void Jafg::Detail::DrawIcon(LNodeRenderInfo const& Info, LVec2F TopLeft, LTexture2Ref const& Icon, LIconBrush const& Brush) noexcept
 {
     check(Icon.get())
 
-    if (Brush.Scale > 0.0f)
+    if (static_cast<f32>(Brush.Scale) > 0.0f)
     {
         if (!Icon->IsBindless())
         {
-            Info.Frontend.Vk_AddTextureToGlobalBindlessArray(&*Icon);
+            Info.Frontend.GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*Icon);
             check(Icon->IsBindless())
         }
         Info.AddInstance({

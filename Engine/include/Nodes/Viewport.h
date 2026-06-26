@@ -180,9 +180,9 @@ private:
 
     LClassOuter Outer{ "SurfaceViewport" };
 
-    TFrameArray<LMappedDeviceBuffer> VisualBatches;
-    TFrameArray<vk::raii::DescriptorSet> Vk_VisualSharedDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    TFrameArray<LMappedDeviceBuffer> Vk_VisualSharedBuffers;
+    rhi::frame_array<rhi::mapped_device_buffer> VisualBatches;
+    rhi::frame_array<vk::raii::DescriptorSet> Vk_VisualSharedDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<rhi::mapped_device_buffer> Vk_VisualSharedBuffers;
     LMaterialInstanceRef VisualBatchMaterialInstance;
 };
 

@@ -188,11 +188,11 @@ public:
     ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier);
 
     //# @param Default The default path. If not set, the operating system will decide.
-    ENGINE_API std::optional<LPath> OpenBlockingDialogForFile(LFileDialogInfo Info, LPath const& Default = Finder::GetCwd());
-    ENGINE_API std::optional<TArray<LPath>> OpenBlockingDialogForFiles(LFileDialogInfo Info, LPath const& Default = Finder::GetCwd());
+    ENGINE_API std::optional<LPath> OpenBlockingDialogForFile(LFileDialogInfo Info, LPath const& Default = finder::current_path());
+    ENGINE_API std::optional<TArray<LPath>> OpenBlockingDialogForFiles(LFileDialogInfo Info, LPath const& Default = finder::current_path());
     ENGINE_API std::optional<LPath> OpenBlockingDialogForFileToSave(LSaveFileDialogInfo Info);
-    ENGINE_API std::optional<LPath> OpenBlockingDialogForDirectory(LPath Default = Finder::GetCwd());
-    ENGINE_API std::optional<TArray<LPath>> OpenBlockingDialogForDirectories(LPath Default = Finder::GetCwd());
+    ENGINE_API std::optional<LPath> OpenBlockingDialogForDirectory(LPath Default = finder::current_path());
+    ENGINE_API std::optional<TArray<LPath>> OpenBlockingDialogForDirectories(LPath Default = finder::current_path());
 
 private:
 
@@ -246,19 +246,19 @@ private:
     LVec2i32 FramebufferSize{ maths::zero_vector<LVec2i32> };
     vk::raii::SwapchainKHR Vk_VkMySwapchain{ nullptr };
 
-    TStackArray<vk::Image, Jafg::Vk_DesiredMaxFramesInFlight> Vk_SwapchainImages;
+    std::inplace_vector<vk::Image, rhi::max_frames_in_flight> Vk_SwapchainImages;
     TArray<vk::raii::ImageView> Vk_SwapchainImageViews;
-    LDeviceImage Vk_ColorImage;
+    rhi::device_image Vk_ColorImage;
     vk::raii::ImageView Vk_ColorImageView{ nullptr };
 
-    TFrameArray<vk::raii::Semaphore> Vk_ImageAvailableSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    TFrameArray<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    TFrameArray<vk::raii::Fence> Vk_FlightFences JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<vk::raii::Semaphore> Vk_ImageAvailableSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<vk::raii::Fence> Vk_FlightFences JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     u32 Vk_LastFrameInFlightIndex{};
     std::optional<u32> Vk_CurrentFrameInFlightIndex;
 
-    TFrameArray<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    TFrameArray<vk::raii::DescriptorPool> Vk_DescriptorPools JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<vk::raii::DescriptorPool> Vk_DescriptorPools JAFG_VK_FRAME_ARRAY_INIT(nullptr);
 };
 
 } /* ~Namespace Jafg */

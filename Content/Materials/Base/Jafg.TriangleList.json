@@ -1,0 +1,6 @@
+{
+    "pipelineInputAssemblyState": {
+        "topology": "eTriangleList",
+        "primitiveRestartEnable": false
+    }
+}

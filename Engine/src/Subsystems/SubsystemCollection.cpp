@@ -5,6 +5,10 @@
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 
+Jafg::JSubsystem::~JSubsystem()
+{
+}
+
 void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Class, bool bRegisterDeferredDelegate /* = true */)
 {
     STAT_CYCLE_FUNCTION()
@@ -22,6 +26,8 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
         check(Candidate)
         if (Candidate->IsNotAbstract())
         {
+            // TODO: Make this deferred, make the begin life final and calling the initialize().
+            //       Also add a check that #ShouldCreateSubsystem is only called once.
             this->SubsystemInstances.emplace_back(NewObject(CastTo<JSubsystem>{}, {*this->Outer, *Candidate}));
         }
         continue;

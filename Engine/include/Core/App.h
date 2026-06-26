@@ -52,6 +52,8 @@ NODISCARD NOINLINE ENGINE_API LString const& CompilerVersion() noexcept;
 //# Cxx standard for the engine.
 NODISCARD NOINLINE ENGINE_API LString const& CxxStandard() noexcept;
 
+//# Root binary path where this engine build searches for its resources.
+ENGINE_API LStringView GetEngineRootRelativeBinaryPath() noexcept;
 //# E.g.: "wasm", "lnx", ...
 ENGINE_API LStringView GetTargetPlatform() noexcept;
 //# E.g.: "x86_64", "x86", ...
@@ -60,16 +62,6 @@ ENGINE_API LStringView GetTargetArchitecture() noexcept;
 ENGINE_API LStringView GetTargetType() noexcept;
 //# E.g.: "dbg", "ship", ...
 ENGINE_API LStringView GetTargetConfiguration() noexcept;
-//# E.g.: "cl-ship", ...
-ENGINE_API LStringView GetTargetCompound() noexcept;
-//# E.g.: "wasm-x86", "lnx-x86_64", ...
-ENGINE_API LStringView GetTargetPlatformCompound() noexcept;
-//# E.g.: "lnx-x86_64/cl-ship", ...
-ENGINE_API LStringView GetTargetPath() noexcept;
-//# E.g: "Runtime"
-ENGINE_API LStringView GetExpectedRuntime() noexcept;
-//# E.g.: "bin/lnx-x86_64/cl-ship/Runtime", ...
-ENGINE_API LStringView GetExpectedRuntimePath() noexcept;
 
 ENGINE_API extern LProgramParameter CoreHelp;
 ENGINE_API extern LProgramParameter Version;
@@ -225,12 +217,11 @@ inline void PrettyPrintApiUsage() noexcept
         MaxSize = maths::max(MaxSize, static_cast<u64>(Param->Identifier.size()));
     });
     LOG_INFO(LogCli, "Available command line parameters:")
-    algo::for_each(Detail::RegisteredProgramParameters, [MaxSize](LProgramParameter* Param)
+    for (auto& Param: Detail::RegisteredProgramParameters)
     {
         LOG_INFO(LogCli, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description)
         LOG_INFO(LogCli, "   {:<{}}   Flags: {}", "", MaxSize, LexToString(Param->Flags))
-    });
-    return;
+    }
 }
 
 inline algo::clock::time_point GetStaticStorageInitializationTime() noexcept
@@ -253,10 +244,3 @@ ENGINE_API void SleepNoStats(f64 InSeconds);
 } /* ~Namespace App */
 
 } /* ~Namespace Jafg */
-
-namespace Finder
-{
-
-inline LPath GetRootBinaryDirectory() noexcept { auto Out{LPath{"bin"}/Jafg::App::GetTargetPath()}; Out.make_preferred(); return Out; }
-
-} /* ~Namespace Finder */

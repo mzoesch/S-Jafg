@@ -45,7 +45,7 @@ public:
         check( InOther.Uuid == NoUuid && InOther.Identifier.empty() && InOther.Help.empty() )
         return *this;
     }
-    virtual ~LCliObject() = default;
+    ENGINE_API ~LCliObject();
 
     FORCEINLINE auto GetIdentifier() const -> LString const& { return this->Identifier; }
     FORCEINLINE void SetIdentifier(const LString& InIdentifier) { this->Identifier = InIdentifier; }

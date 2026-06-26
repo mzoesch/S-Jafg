@@ -7,47 +7,50 @@
 #include "Async/TaskUtility.h"
 #include <unistd.h>
 
-namespace Finder::Detail
+namespace finder::detail
 {
 
-LPath GetEngineRootDir()
+path _engine_root_dir_slow()
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: [ENGINE_ROOT_DIR].")
-    return "";
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    static LPath CachedEngineRootDir;
-    if (CachedEngineRootDir.empty())
+    check(Jafg::Tasks::IsOnMasterThread())
+    LPath RealRootDir{self_proc_dir_slow()};
+    while (!RealRootDir.empty())
     {
-        check(Jafg::Tasks::IsOnMasterThread())
-        LPath RealRootDir{Finder::Detail::GetSelfProcDir()};
-        while (!RealRootDir.empty())
+        if (exists(RealRootDir/"jafg.jafgworkspace"))
         {
-            if (Finder::DoesFileExist(RealRootDir/"jafg.jafgworkspace"))
-            {
-                break;
-            }
-            RealRootDir.assign(RealRootDir.parent_path());
-            continue;
+            break;
         }
-        CachedEngineRootDir = RealRootDir;
+        if (RealRootDir.has_parent_path())
+        {
+            RealRootDir.assign(RealRootDir.parent_path());
+        }
+        else
+        {
+            break;
+        }
     }
-    check(Finder::DoesFileExist(CachedEngineRootDir/"jafg.jafgworkspace"))
-    return CachedEngineRootDir;
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
+
+    if (!is_regular_file(RealRootDir/"jafg.jafgworkspace"))
+    {
+        LOG_FATAL(LogSystem, "[{}]: Engine evaluated its root directly wrongfully", RealRootDir)
+    }
+
+    return RealRootDir;
 }
 
-LPath GetSelfProcDir()
+path self_proc_slow()
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: [SELF_PROC_DIR].")
-    return "";
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    static LPath CachedSelfProcDir;
+    check(Jafg::Tasks::IsOnMasterThread())
+
+static LPath CachedSelfProcDir;
     if (CachedSelfProcDir.empty())
     {
         check(Jafg::Tasks::IsOnMasterThread())
 #if JAFG_PLATFORM_LINUX
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif /* JAFG_WITH_CLANG */
         char Buffer[JAFG_PLATFORM_MAX_PATH] = { 0 };
         auto Ret{ readlink("/proc/self/exe", Buffer, JAFG_PLATFORM_MAX_PATH) };
         if (Ret == -1)
@@ -55,35 +58,38 @@ LPath GetSelfProcDir()
             panic("Failed to read the symbolic link.")
         }
         Buffer[Ret] = '\0';
-        CachedSelfProcDir = LString{ Buffer };
-        CachedSelfProcDir = CachedSelfProcDir.parent_path();
+#if JAFG_WITH_CLANG
+#pragma clang diagnostic pop
+#endif /* JAFG_WITH_CLANG */
+        CachedSelfProcDir = LString{Buffer};
 #elif JAFG_PLATFORM_WINDOWS
         TCHAR Buffer[JAFG_PLATFORM_MAX_PATH]{ 0 };
         GetModuleFileName(nullptr, Buffer, JAFG_PLATFORM_MAX_PATH);
         CachedSelfProcDir = LPath{Buffer};
         CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
-        CachedSelfProcDir = CachedSelfProcDir.remove_filename();
-        CachedSelfProcDir = LPath{algo::left_chop(CachedSelfProcDir.native(), 1)};
 #else /* JAFG_PLATFORM_WINDOWS */
-    #error "Missing implementation for this platform."
+#error "Missing implementation for this platform."
 #endif /* !JAFG_PLATFORM_WINDOWS */
     }
 
     return CachedSelfProcDir;
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-ENGINE_API LPath DumpFile{ "unsettling.dump"};
+ENGINE_API path dump_file{ "unsettling.dump"};
 
 #if JAFG_PLATFORM_LINUX
-    ENGINE_API std::optional<LPath> _gdb;
+    ENGINE_API std::optional<path> _lnx_gdb;
 #endif /* JAFG_PLATFORM_LINUX */
 
-} /* ~Namespace Finder::Detail */
+} /* ~Namespace finder::detail */
 
 namespace Jafg::App
 {
 
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdate-time"
+#endif /* JAFG_WITH_CLANG */
 LString const& BuildTime() noexcept
 {
     static LString BuildTime{__TIME__};
@@ -95,6 +101,9 @@ LString const& BuildDate() noexcept
     static LString BuildDate{__DATE__};
     return BuildDate;
 }
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* JAFG_WITH_CLANG */
 
 LString const& BuildVcsBranch() noexcept
 {
@@ -164,15 +173,11 @@ LString const& CxxStandard() noexcept
     return Standard;
 }
 
+LStringView GetEngineRootRelativeBinaryPath() noexcept { return LStringView{DETAIL_ENGINE_ROOT_BINARY_PATH}; }
 LStringView GetTargetPlatform() noexcept { return LStringView{DETAIL_ENGINE_TARGET_PLATFORM}; }
 LStringView GetTargetArchitecture() noexcept { return LStringView{DETAIL_ENGINE_TARGET_ARCHITECTURE}; }
 LStringView GetTargetType() noexcept { return LStringView{DETAIL_ENGINE_TARGET_TYPE}; }
 LStringView GetTargetConfiguration() noexcept { return LStringView{DETAIL_ENGINE_TARGET_CONFIGURATION}; }
-LStringView GetTargetCompound() noexcept { return LStringView{DETAIL_ENGINE_TARGET_COMPOUND}; }
-LStringView GetTargetPlatformCompound() noexcept { return LStringView{DETAIL_ENGINE_PLATFORM_COMPOUND}; }
-LStringView GetTargetPath() noexcept { return LStringView{DETAIL_ENGINE_CONFIG_COMPOUND}; }
-LStringView GetExpectedRuntime() noexcept { return LStringView{DETAIL_ENGINE_EXPECTED_RUNTIME}; }
-LStringView GetExpectedRuntimePath() noexcept { return LStringView{"bin/" DETAIL_ENGINE_CONFIG_COMPOUND "/" DETAIL_ENGINE_EXPECTED_RUNTIME}; }
 
 ENGINE_API LProgramParameter CoreHelp{{
     .Identifier = "Help",

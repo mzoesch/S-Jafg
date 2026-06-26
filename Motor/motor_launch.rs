@@ -18,6 +18,10 @@ struct Cli
     #[arg(long = "Verbose", default_value_t = false)]
     verbose: bool,
 
+    /// The binary dir.
+    #[arg(long = "BinaryDir")]
+    binary_dir: String,
+
     /// The module to build for.
     #[arg(long = "Module")]
     module: String,

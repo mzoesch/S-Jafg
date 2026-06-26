@@ -47,7 +47,7 @@ Jafg::LEngine::LEngine()
         Rc != ETaskExit::Success
         )
     {
-        LOG_FATAL(LogLaunch, "Failed to create worker thread: [{}].", static_cast<i32>(Rc));
+        LOG_FATAL(LogLaunch, "Failed to create worker thread: [{}].", static_cast<i32>(Rc))
     }
 }
 
@@ -331,7 +331,7 @@ void Jafg::LEngine::Tick()
         check(Track.IsValid())
         if (bTraveled == false && Track.ChildWorld->CanTick())
         {
-            Track.ChildWorld->Tick(static_cast<f32>(this->DeltaTime));
+            Track.ChildWorld->Tick(this->DeltaTime);
         }
 
         continue;
@@ -561,11 +561,9 @@ void Jafg::LEngine::RegisterClassOuter(LClassOuter* Outer)
     if (algo::contains(this->KnownOuters, Outer))
     {
         panic( "Outer already registered." )
-        return;
     }
 
     this->KnownOuters.emplace_back(Outer);
-    return;
 }
 
 void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
@@ -581,8 +579,6 @@ void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
     {
         panicMsgf( "Outer [{}] was not registered to engine.", Outer->GetHumanReadableName() )
     }
-
-    return;
 }
 
 Jafg::Detail::LWorldTrackInitializer Jafg::LEngine::SummonWorld(Detail::LWorldTrack::CreateInfo Info)
@@ -713,14 +709,11 @@ void Jafg::LEngine::RefetchPlugins(TArray<LString> const& AdditionalPaths)
 {
     check(Tasks::IsOnMasterThread())
 
-    this->FetchPlugins(Finder::GetRootBinaryDirectory());
-
-    for (const LString& AdditionalPath : AdditionalPaths)
+    this->FetchPlugins(App::GetEngineRootRelativeBinaryPath());
+    for (const LString& AdditionalPath: AdditionalPaths)
     {
         this->FetchPlugins(LPath{AdditionalPath});
     }
-
-    return;
 }
 
 Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPlugin(LString const& Name)
@@ -750,8 +743,6 @@ void Jafg::LEngine::LoadPluginNoFailure(LString const& Name)
     }
 
     panicMsgf( "Failed to load plugin [{}] with return code [{}].", Name, LexToString(ReturnCode) )
-
-    return;
 }
 
 Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(const LString& InName, const EPluginShutdownReason::Type InReason)
@@ -786,8 +777,6 @@ void Jafg::LEngine::UnLoadPluginNoFailure(const LString& InName, const EPluginSh
     }
 
     panicMsgf( "Failed to unload plugin [{}] with return code [{}].", InName, LexToString(ReturnCode) )
-
-    return;
 }
 
 Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plugin, const EPluginShutdownReason::Type Reason)
@@ -837,41 +826,36 @@ void Jafg::LEngine::UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPlugin
     }
 
     panicMsgf( "Failed to unload plugin [{}] with return code [{}].", InPlugin->GetIdentifier(), LexToString(ReturnCode) )
-
-    return;
 }
 
 void Jafg::LEngine::FetchPlugins(LPath const& Path)
 {
     STAT_CYCLE_FUNCTION()
 
-    LOG_VERBOSE(LogForeign, "Fetching in [{}]...", Path)
+    LOG_VERBOSE(LogForeign, "[{}]: Fetching.", Path)
 
     i32 Fetched{};
-    for(TArray Files{Finder::FindFilesRecursively(Path, true, ".*\\manifest.jafg")}; auto const& File : Files)
+    for(TArray Files{finder::retrieve_files<finder::recursive_directory_iterator>(Path, ".*\\manifest.jafg")};
+        auto const& File: Files)
     {
         if (this->FetchPlugin(File))
         {
             ++Fetched;
         }
-
-        continue;
     }
 
     if (Fetched > 0)
     {
-        LOG_VERBOSE(LogForeign, "Fetched [{}] plugins in [{}].", Fetched, Path)
+        LOG_VERBOSE(LogForeign, "[{}]: Fetched [{}] plugins.", Path, Fetched)
     }
-
-    return;
 }
 
 bool Jafg::LEngine::FetchPlugin(LPath const& Path)
 {
-    checkCode( Finder::CheckFile(Path) )
+    check(is_regular_file(Path))
 
     //# Do not use {} init, as this would trigger an implicit creation of an array...
-    const json PluginJson = json::parse(Finder::ReadFile(Path), nullptr, false);
+    const json PluginJson = json::parse(finder::read_file(Path), nullptr, false);
 
     if (PluginJson.is_discarded())
     {
@@ -1006,7 +990,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     const LPath Bin{ FetchedPlugin.AbsolutePath.parent_path() / FetchedPlugin.Bin };
     check( Bin.is_absolute() )
 
-    if (Finder::DoesFileExist(Bin) == false)
+    if (is_regular_file(Bin) == false)
     {
         LOG_ERROR(LogForeign, "Expected [{}] to exist.", FetchedPlugin.Identifier, Bin)
         return EPluginLoadReturnCode::NoBin;
@@ -1081,8 +1065,8 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
         Info["Uptime"] = GEngine->FrameStartElapsedTime;
         Info["Ticks"] = GEngine->FrameCount;
-        Info["AvgDeltaTime"] = algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start) / GEngine->PreviousStat.FrameCount;
-        Info["AvgTickRate"] = GEngine->PreviousStat.FrameCount / algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start);
+        Info["AvgDeltaTime"] = algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start) / static_cast<f64>(GEngine->PreviousStat.FrameCount);
+        Info["AvgTickRate"] = static_cast<f64>(GEngine->PreviousStat.FrameCount) / algo::time_diff(GEngine->PreviousStat.Start, GEngine->CurrentStat.Start);
         Info["MaxDeltaTime"] = LEngine::MaxDeltaTime;
         Info["LowestDeltaTime"] = GEngine->PreviousStat.Low;
         Info["HighestDeltaTime"] = GEngine->PreviousStat.High;
@@ -1163,8 +1147,6 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
         return;
     });
-
-    return;
 }
 
 void Jafg::LEngine::StartReSTCliServer()
@@ -1189,10 +1171,8 @@ void Jafg::LEngine::StartReSTCliServer()
         Rc != ETaskExit::Success
     )
     {
-        LOG_FATAL(LogEngine, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc));
+        LOG_FATAL(LogEngine, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc))
     }
-
-    return;
 }
 
 void Jafg::LEngine::StopReSTCliServer(ERunnableStopReason::Type Reason /* = ERunnableStopReason::EngineTermination */)
@@ -1200,7 +1180,5 @@ void Jafg::LEngine::StopReSTCliServer(ERunnableStopReason::Type Reason /* = ERun
     LOG_VERBOSE(LogEngine, "Trying to stop ReST CLI server...")
     this->ReSTCli.Stop(Reason);
     this->ReSTCli.Join();
-
-    return;
 }
 #endif /* JAFG_WITH_REST_CLS */

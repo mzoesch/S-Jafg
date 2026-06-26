@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Containers/Finder2.h"
 #include "Framework/Asset.h"
 #include "Nodes/UserWidget.h"
 #include "Nodes/Viewport.h"

@@ -273,7 +273,6 @@ FORCEINLINE LString LexToString(WTabOverlayParent::EDirection Direction) noexcep
     case WTabOverlayParent::EDirection::Up: { return "Up"; }
     case WTabOverlayParent::EDirection::Right: { return "Right"; }
     case WTabOverlayParent::EDirection::Down: { return "Down"; }
-    default: std::unreachable();
     }
 }
 

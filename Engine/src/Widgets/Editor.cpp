@@ -312,7 +312,7 @@ void Jafg::WEditorCategorySeparator::_ctor_Logic()
 void Jafg::WEditor::BeginClassLife(LBeginClassLifeInfo const& Info)
 {
     Super::BeginClassLife(Info);
-    Finder::CreateDirectories(WEditor::GetUserLayoutsPath());
+    finder::create_directories(WEditor::GetUserLayoutsPath());
 
     if (!Detail::GMutableEngine->RegisterLevel({
         .Identifier = "LevelEditor",
@@ -359,14 +359,14 @@ void Jafg::WEditor::Construct()
                                     .DisplayName = "Open Engine in Explorer",
                                     .Icon = "Icons/Jafg.Directory",
                                     },
-                                .OnAction = [this](auto&&...){ this->GetFrontend().OpenDirectory(Finder::GetCwd()); return algo::reply::unhandled(); }
+                                .OnAction = [this](auto&&...){ this->GetFrontend().OpenDirectory(finder::current_path()); return algo::reply::unhandled(); }
                                 },
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Open Engine in Terminal",
                                     .Icon = "Icons/Jafg.Terminal",
                                     },
-                                .OnAction = [this](auto&&...){ this->GetFrontend().OpenTerminal(Finder::GetCwd()); return algo::reply::unhandled(); }
+                                .OnAction = [this](auto&&...){ this->GetFrontend().OpenTerminal(finder::current_path()); return algo::reply::unhandled(); }
                                 },
                             LDropDownNodeSeparator{.DisplayName="EXIT",},
                             LDropDownNodeOption{
@@ -440,8 +440,8 @@ void Jafg::WEditor::Construct()
                             Result.emplace_back(LDropDownNodeInformation{"Jafg @mzoesch"});
                             Result.emplace_back(LDropDownNodeInformation{algo::sprintf("v{} at [{} - {}] from [{} @ {}]"
                                 , App::EngineVersion(), App::BuildTime(), App::BuildDate(), App::BuildVcsBranch(), App::BuildVcsRevision())});
-                            Result.emplace_back(LDropDownNodeInformation{algo::sprintf("Platform: {}", App::GetTargetPlatformCompound())});
-                            Result.emplace_back(LDropDownNodeInformation{algo::sprintf("Target: {}", App::GetTargetCompound())});
+                            Result.emplace_back(LDropDownNodeInformation{algo::sprintf("Platform: {}-{}", App::GetTargetPlatform(), App::GetTargetArchitecture())});
+                            Result.emplace_back(LDropDownNodeInformation{algo::sprintf("Target: {}-{}", App::GetTargetType(), App::GetTargetConfiguration())});
                             Result.emplace_back(LDropDownNodeSeparator{"RUNTIME"});
                             Result.emplace_back(LDropDownNodeInformation{algo::sprintf("Uptime: {}s in [{}]", static_cast<u64>(App::GetElapsedTime()), this->GetEngine().FrameCount)});
                             Result.emplace_back(LDropDownNodeInformation{algo::sprintf("Rate: {} ticks/s"
@@ -470,8 +470,6 @@ void Jafg::WEditor::Construct()
     ];
 
     this->ApplyEditorLayout(this->LoadEditorLayout(*Prefs.EditorLastLayout));
-
-    return;
 }
 
 void Jafg::WEditor::Tick()
@@ -509,8 +507,6 @@ void Jafg::WEditor::Tick()
     }
 
     Super::Tick();
-
-    return;
 }
 
 TArray<LPath> const& Jafg::WEditor::DiscoverLayouts()
@@ -519,13 +515,13 @@ TArray<LPath> const& Jafg::WEditor::DiscoverLayouts()
 
     this->DiscoveredLayouts.clear();
 
-    this->DiscoveredLayouts.emplace_back(Finder::GetDefaultConfigDir()/"DefaultEditorLayout.json");
-    this->DiscoveredLayouts.append_range(Finder::FindFilesRecursively(WEditor::GetUserLayoutsPath(), true, ".*\\.json"));
+    this->DiscoveredLayouts.emplace_back(finder::default_config_dir()/"DefaultEditorLayout.json");
+    this->DiscoveredLayouts.append_range(finder::retrieve_files<finder::recursive_directory_iterator>(WEditor::GetUserLayoutsPath(), ".*\\.json"));
 
     LOG_VERBOSE(LogEditor, "Discovered [{}] layouts at:", this->DiscoveredLayouts.size())
     for (auto const& Layout : this->DiscoveredLayouts)
     {
-        LOG_VERBOSE(LogEditor, " - {}", Layout);
+        LOG_VERBOSE(LogEditor, " - {}", Layout)
     }
 
     return this->GetDiscoveredLayouts();
@@ -533,14 +529,14 @@ TArray<LPath> const& Jafg::WEditor::DiscoverLayouts()
 
 Jafg::LEditorLayout Jafg::WEditor::LoadEditorLayout(LPath Path)
 {
-    LOG_VERBOSE(LogEditor, "[{}]: Loading.", Path);
+    LOG_VERBOSE(LogEditor, "[{}]: Loading.", Path)
 
-    LEditorLayout Result = json::parse(Finder::ReadFile(Path), nullptr, false).get<LEditorLayout>();
+    LEditorLayout Result = json::parse(finder::read_file(Path), nullptr, false).get<LEditorLayout>();
     Result.Path = std::move(Path);
 
     if (Result.Surfaces.empty())
     {
-        LOG_FATAL(LogEditor, "[{}]: Layout must contain at least one surface. Failed to load layout.", Result.Path);
+        LOG_FATAL(LogEditor, "[{}]: Layout must contain at least one surface. Failed to load layout.", Result.Path)
     }
 
     auto ValidateFlow{[](this auto&& Self, LPath const& P, LEditorLayout::LFlow const& F) -> void
@@ -591,7 +587,7 @@ Jafg::LEditorLayout Jafg::WEditor::LoadEditorLayout(LPath Path)
 
 void Jafg::WEditor::ApplyEditorLayout(LEditorLayout const& Layout)
 {
-    LOG_VERBOSE(LogEditor, "[{}]: Applying layout.", Layout.Path);
+    LOG_VERBOSE(LogEditor, "[{}]: Applying layout.", Layout.Path)
 
     auto& Surface{this->GetViewport().GetSurface()};
     check(!Layout.Surfaces.empty())
@@ -632,12 +628,10 @@ void Jafg::WEditor::ApplyEditorLayout(LEditorLayout const& Layout)
 
     Surface.SetWindowSize(S.Dimensions);
 
-    for (auto It{Layout.Surfaces.begin() + 1}; It != Layout.Surfaces.end(); ++It)
+    for (auto It{Layout.Surfaces.begin() + 1}; It != Layout.Surfaces.end(); /*++It*/)
     {
         LOG_FATAL(LogEditor, "Currently only one surface is allowed.")
     }
-
-    return;
 }
 
 void Jafg::AEditorSupremePolicies::OnWorldPreInit()
@@ -752,7 +746,7 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
             .usage = vk::BufferUsageFlagBits::eStorageBuffer,
             .sharingMode = vk::SharingMode::eExclusive
             });
-        this->RayViewBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::ViewProj::CreateInfo());
+        this->RayViewBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::ViewProj::buffer_create_info());
     }
 }
 
@@ -771,10 +765,10 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
 
     {
         auto& RayBuffer = this->RayBuffers[Info.Frame];
-        check(RayBuffer.GetData())
-        std::memcpy(RayBuffer.GetData(), this->Rays.data(), sizeof(LTransientRay) * this->Rays.size());
+        check(RayBuffer.data())
+        std::memcpy(RayBuffer.data(), this->Rays.data(), sizeof(LTransientRay) * this->Rays.size());
         vk::DescriptorBufferInfo BufferInfo{
-            .buffer = RayBuffer.GetBuffer(),
+            .buffer = *RayBuffer,
             .offset = 0,
             .range = sizeof(LTransientRay) * this->Rays.size(),
             };
@@ -793,8 +787,8 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
         UBO::ViewProj Vp;
         Vp.Mat = Proj * View;
         auto& ViewProjBuffer = this->RayViewBuffers[Info.Frame];
-        Vp.Upload(ViewProjBuffer);
-        auto BufferInfo{Vp.WriteInfo(*ViewProjBuffer)};
+        Vp.upload(ViewProjBuffer);
+        auto BufferInfo{Vp.write_info(*ViewProjBuffer)};
         std::array Writes{vk::WriteDescriptorSet{
             .dstSet = Set,
             .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1,
@@ -810,7 +804,7 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
         vk::DescriptorSet RayBufferDs = Set;
         Info.CommandBuffer.bindDescriptorSets2({
             .stageFlags = vk::ShaderStageFlagBits::eVertex,
-            .layout = *this->RayInstance->Material->Pipeline.Layout,
+            .layout = *this->RayInstance->Material->Pipeline.pipeline_layout,
             .firstSet = 0,
             .descriptorSetCount = 1,
             .pDescriptorSets = &RayBufferDs,

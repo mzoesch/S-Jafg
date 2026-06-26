@@ -1,12 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "Rhi/Objects.h"
 #include "Rhi/OutlineRendering.h"
-
-#include "Rhi/PushConstants.h"
 
 namespace
 {
 
-Jafg::LRegisterPushConstant<Jafg::PC::Outline> OutlinePushConstantsRegistration{};
+Jafg::LPushConstantRegistrator<Jafg::PC::Outline> _;
 
 } /* ~Namespace <Anonymous> */

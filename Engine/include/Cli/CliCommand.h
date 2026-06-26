@@ -252,7 +252,7 @@ public:
         return *this;
     }
 
-    FORCEINLINE i32  GetOverloadCount() const { return this->Overloads.size(); }
+    FORCEINLINE i32  GetOverloadCount() const { return static_cast<i32>(this->Overloads.size()); }
     FORCEINLINE auto GetOverloads()       ->       TArray<LCommandParams>& { return this->Overloads; }
     FORCEINLINE auto GetOverloads() const -> const TArray<LCommandParams>& { return this->Overloads; }
     FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Overloads.emplace_back(std::move(InParams)); }

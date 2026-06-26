@@ -13,9 +13,9 @@ namespace Jafg
 
 struct LEye_v2
 {
-    LWorldReal VertFov{ 1 };
-    LWorldReal NearFrustum{ 0.1 };
-    LWorldReal FarFrustum{ 10.0 };
+    LWorldReal VertFov{ static_cast<f32>(1.0) };
+    LWorldReal NearFrustum{ static_cast<LWorldReal>(0.1) };
+    LWorldReal FarFrustum{ static_cast<f32>(10.0) };
     LWorldVec3 Translation;
     LWorldVec3 Front;
     LWorldVec3 Up;

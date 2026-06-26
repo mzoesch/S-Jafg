@@ -4,6 +4,14 @@
 
 namespace Jafg::Params
 {
+ENGINE_API extern LProgramParameter ReST_DisableAutoStart;
+ENGINE_API extern LProgramParameter ReST_InstantStart;
+ENGINE_API extern LProgramParameter ReST_Host;
+ENGINE_API extern LProgramParameter ReST_Port;
+} /* ~Namespace Jafg::Params */
+
+namespace Jafg::Params
+{
 ENGINE_API LProgramParameter ReST_DisableAutoStart{{
     .Identifier = "Jafg.ReSTCli.DisableAutoStart",
     .Description = "Whether to disable automatic starting of the ReST CLI server on engine start "
@@ -38,7 +46,9 @@ ENGINE_API LProgramParameter ReST_Port{{
 
 #define CPPHTTPLIB_THREAD_POOL_COUNT                                    1
 #define CPPHTTPLIB_NO_EXCEPTIONS                                        1
-#include "httplib.h"
+#include "Definitions/PushNoWarnings.h"
+    #include "httplib.h"
+#include "Definitions/PopDiagnostics.h"
 
 namespace
 {
@@ -239,15 +249,15 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
     ::Server->set_keep_alive_timeout(static_cast<time_t>(*Prefs.KeepAliveTimeoutInSeconds));
     ::Server->set_read_timeout(
         static_cast<time_t>(*Prefs.ReadTimeoutInSeconds),
-        static_cast<time_t>((*Prefs.ReadTimeoutInSeconds - static_cast<time_t>(*Prefs.ReadTimeoutInSeconds)) * maths::s2mus_d)
+        static_cast<time_t>((*Prefs.ReadTimeoutInSeconds - *Prefs.ReadTimeoutInSeconds) * maths::s2mus_d)
         );
     ::Server->set_write_timeout(
         static_cast<time_t>(*Prefs.WriteTimeoutInSeconds),
-        static_cast<time_t>((*Prefs.WriteTimeoutInSeconds - static_cast<time_t>(*Prefs.WriteTimeoutInSeconds)) * maths::s2mus_d)
+        static_cast<time_t>((*Prefs.WriteTimeoutInSeconds - *Prefs.WriteTimeoutInSeconds) * maths::s2mus_d)
         );
     ::Server->set_idle_interval(
         static_cast<time_t>(*Prefs.IdleIntervalInSeconds),
-        static_cast<time_t>((*Prefs.IdleIntervalInSeconds - static_cast<time_t>(*Prefs.IdleIntervalInSeconds)) * maths::s2mus_d)
+        static_cast<time_t>((*Prefs.IdleIntervalInSeconds - *Prefs.IdleIntervalInSeconds) * maths::s2mus_d)
         );
 
     ::Server->set_payload_max_length(static_cast<size_t>(Prefs.PayLoadMaxLength));

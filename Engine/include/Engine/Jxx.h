@@ -246,8 +246,8 @@ public:
         }
         return nullptr;
     }
-    FORCEINLINE LRegistryPackage const* GetPackageByNameChecked(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetPackageByName(FullyQualifiedName) }; check( Out ); return Out; }
-    FORCEINLINE LRegistryPackage const* GetPackageByNameAsserted(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetPackageByName(FullyQualifiedName) }; jassert( Out ); return Out; }
+    FORCEINLINE LRegistryPackage const* GetPackageByNameChecked(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetPackageByName(FullyQualifiedName) }; check( Out ) return Out; }
+    FORCEINLINE LRegistryPackage const* GetPackageByNameAsserted(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetPackageByName(FullyQualifiedName) }; jassert( Out ) return Out; }
 
     FORCEINLINE LRegistryClassPackage const* GetClassByName(LStringView FullyQualifiedName) const noexcept
     {
@@ -260,8 +260,8 @@ public:
         }
         return nullptr;
     }
-    FORCEINLINE LRegistryClassPackage const* GetClassByNameChecked(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetClassByName(FullyQualifiedName) }; check( Out ); return Out; }
-    FORCEINLINE LRegistryClassPackage const* GetClassByNameAsserted(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetClassByName(FullyQualifiedName) }; jassert( Out ); return Out; }
+    FORCEINLINE LRegistryClassPackage const* GetClassByNameChecked(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetClassByName(FullyQualifiedName) }; check( Out ) return Out; }
+    FORCEINLINE LRegistryClassPackage const* GetClassByNameAsserted(LStringView FullyQualifiedName) const noexcept { auto const* Out{ this->GetClassByName(FullyQualifiedName) }; jassert( Out ) return Out; }
 
     // @return All derived classes of TCxxClass inclusive TCxxClass.
     template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
@@ -287,8 +287,8 @@ public:
 
         return nullptr;
     }
-    FORCEINLINE LRegistryPackage const* _GetPackageByNameWeakChecked(LStringView Name) const noexcept { auto const* Out{ this->_GetPackageByNameWeak(Name) }; check( Out ); return Out; }
-    FORCEINLINE LRegistryPackage const* _GetPackageByNameWeakAsserted(LStringView Name) const noexcept { auto const* Out{ this->_GetPackageByNameWeak(Name) }; jassert( Out ); return Out; }
+    FORCEINLINE LRegistryPackage const* _GetPackageByNameWeakChecked(LStringView Name) const noexcept { auto const* Out{ this->_GetPackageByNameWeak(Name) }; check( Out ) return Out; }
+    FORCEINLINE LRegistryPackage const* _GetPackageByNameWeakAsserted(LStringView Name) const noexcept { auto const* Out{ this->_GetPackageByNameWeak(Name) }; jassert( Out ) return Out; }
     //# For internal purposes only. Do not use.
     FORCEINLINE LRegistryClassPackage const* _GetClassByNameWeak(LStringView Name) const noexcept
     {
@@ -307,8 +307,8 @@ public:
 
         return nullptr;
     }
-    FORCEINLINE LRegistryClassPackage const* _GetClassByNameWeakChecked(LStringView Name) const noexcept { auto const* Out{ this->_GetClassByNameWeak(Name) }; check( Out ); return Out; }
-    FORCEINLINE LRegistryClassPackage const* _GetClassByNameWeakAsserted(LStringView Name) const noexcept { auto const* Out{ this->_GetClassByNameWeak(Name) }; jassert( Out ); return Out; }
+    FORCEINLINE LRegistryClassPackage const* _GetClassByNameWeakChecked(LStringView Name) const noexcept { auto const* Out{ this->_GetClassByNameWeak(Name) }; check( Out ) return Out; }
+    FORCEINLINE LRegistryClassPackage const* _GetClassByNameWeakAsserted(LStringView Name) const noexcept { auto const* Out{ this->_GetClassByNameWeak(Name) }; jassert( Out ) return Out; }
 
 private:
 
@@ -324,7 +324,7 @@ private:
 ENGINE_API LJxxRecordRegistry& GetGlobalCxxRecordRegistry() noexcept;
 
 //# A package for a reflected class.
-struct LRegistryClassPackage final : public LRegistryPackage
+struct LRegistryClassPackage final: LRegistryPackage
 {
     LRegistryClassPackage() noexcept = delete;
     LRegistryClassPackage(LJxxClass& InStaticClass) noexcept : LRegistryPackage{EType::Class}, StaticClass{InStaticClass} {}
@@ -503,7 +503,7 @@ struct LBeginClassLifeInfo final
 struct LEndClassLifeInfo final
 {
     LJxxClass const& Class;
-    EJxxRecordTearDownReason Reason;
+    EJxxRecordTearDownReason Reason{ EJxxRecordTearDownReason::Default };
 };
 
 namespace Detail
@@ -557,8 +557,6 @@ namespace Detail
 typedef JCxxClass*(*MallocCxxFn)(LCxxDynamicInit const&);
 typedef void(*BeginClassLifeFn)(LBeginClassLifeInfo const&);
 typedef void(*EndClassLifeFn)(LEndClassLifeInfo const&);
-
-struct LJxxClassChainIterator;
 
 } /* ~Namespace Detail */
 
@@ -1249,7 +1247,7 @@ public:
     LClassOuter() noexcept : HumanReadableName("<anonymous>") { }
     ENGINE_API explicit LClassOuter(LString HumanReadableName, bool bRegisterToEngine = true) noexcept;
     PROHIBIT_REALLOC_OF_ANY_FORM(LClassOuter)
-    virtual ~LClassOuter() noexcept { this->TearDown(); }
+    ENGINE_API virtual ~LClassOuter() noexcept;
 
     ENGINE_API void TearDown() noexcept;
 
@@ -1728,6 +1726,9 @@ public:
     constexpr TSubclassOf(std::nullptr_t) noexcept : Class{nullptr} { }
 
     TSubclassOf(EDefaultInit) noexcept : Class{&TObj::StaticClass()} { check(this->HasClass() && this->IsValidType()) }
+
+    TSubclassOf(TSubclassOf const& Other) noexcept = default;
+    TSubclassOf& operator=(TSubclassOf const& Rhs) noexcept = default;
 
     TSubclassOf(Jafg::LJxxClass const* InClass) noexcept : Class{InClass} { check(this->IsValidType()) }
     TSubclassOf(Jafg::LJxxClass const& InClass) noexcept : Class{&InClass} { check(this->IsValidType()) }

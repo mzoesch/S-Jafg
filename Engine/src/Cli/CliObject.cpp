@@ -3,6 +3,10 @@
 #include "Cli/CliObject.h"
 #include "Engine/Engine.h"
 
+Jafg::LCliObject::~LCliObject()
+{
+}
+
 Jafg::LCliObject* Jafg::LCliObject::GetRegisteredObjectByUuid() const
 {
     if (this->Uuid == LCliObject::NoUuid)

@@ -5,6 +5,6 @@
 namespace
 {
 
-Jafg::LRegisterPushConstant<Jafg::PC::Pbr> PbrPushConstantsRegistration{};
+Jafg::LPushConstantRegistrator<Jafg::PC::Pbr> _{};
 
 } /* ~Namespace <Anonymous> */

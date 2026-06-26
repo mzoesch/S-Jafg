@@ -1,0 +1,4 @@
+{
+    "inherits": "Jafg.Perspective",
+    "shader": "Shaders/Jafg.Pbr"
+}

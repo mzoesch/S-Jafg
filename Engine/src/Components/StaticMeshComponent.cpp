@@ -108,77 +108,92 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) noexcept
 
     auto& Material{*Instance.Material};
     auto& Pipeline{Material.Pipeline};
-    auto& FetchedMaterial{Material.FetchedMaterial};
-    auto& FetchedShader{FetchedMaterial.FetchedShader};
+    auto& MaterialTemplate{Material.Template};
+    auto& Shader{MaterialTemplate.my_shader};
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
 
-    if (!FetchedShader.Layouts.empty())
     {
         // Vulkan specs states at least 4.
         std::array<vk::DescriptorSet, 4> DescriptorSetsToBind;
         u32 NumDescriptorSets{0};
-        algo::for_each(Instance.InfrequentDescriptorSets, [&DescriptorSetsToBind, &NumDescriptorSets](auto const& Set)
+        for (auto It{Shader.begin_space()}; It != Shader.end_space(); ++It)
         {
-            check(Set.first < DescriptorSetsToBind.size())
-            check(DescriptorSetsToBind[Set.first] == nullptr)
-            DescriptorSetsToBind[Set.first] = *Set.second;
-            NumDescriptorSets = maths::max(NumDescriptorSets, Set.first + 1);
-        });
-        algo::for_each(Instance.FrequentDescriptorSets[Info.Frame], [&DescriptorSetsToBind, &NumDescriptorSets](auto const& Set)
-        {
-            check(Set.first < DescriptorSetsToBind.size())
-            check(DescriptorSetsToBind[Set.first] == nullptr)
-            DescriptorSetsToBind[Set.first] = *Set.second;
-            NumDescriptorSets = maths::max(NumDescriptorSets, Set.first + 1);
-        });
-
-        for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
-        {
-            if (auto const& Layout{FetchedShader.Layouts[Idx]}; Layout.Type == LFetchedShader::Layout::eShared)
-            {
-                check(Layout.Identifier.has_value())
-                if (Layout.Identifier.value() == "WorldData")
+            checkCode
+            (
+                if (*It >= 4)
                 {
-                    check(DescriptorSetsToBind[Idx] == nullptr)
-                    DescriptorSetsToBind[Idx] = Info.WorldDataDescriptorSet;
+                    LOG_FATAL(LogRhi, "Expected at most 4 descriptor sets to bind. But got [{}].", *It)
+                }
+            )
 
-                    // TODO: ?
-                    NumDescriptorSets = maths::max(NumDescriptorSets, static_cast<u32>(Idx + 1));
+            if (auto* Set{Instance.Vk_FindUniqueDescriptorSet(*It, Info.Frame)}; Set)
+            {
+                DescriptorSetsToBind[*It] = *Set;
+            }
+            else
+            {
+                if (auto* Attribute{It->find_user_attribute("Shared", 1uz)}; Attribute != nullptr)
+                {
+                    if (Attribute->front() == "Jafg::UBO::WorldData")
+                    {
+                        check(DescriptorSetsToBind[*It] == nullptr)
+                        DescriptorSetsToBind[*It] = Info.WorldDataDescriptorSet;
+                    }
+                    else
+                    {
+                        LOG_FATAL(LogRhi, "[{}]: No descriptor set for space [{}@{}] found. Unexpected shared attribute [{}]."
+                            , Shader.Identifier, *It, Info.Frame, Attribute->front())
+                    }
+                }
+                else
+                {
+                    LOG_FATAL(LogRhi, "[{}]: No descriptor set for space [{}@{}] found."
+                        , Shader.Identifier, *It, Info.Frame)
                 }
             }
+
+            NumDescriptorSets = maths::max(NumDescriptorSets, *It + 1);
         }
 
         checkCode
         (
-            for (vk::DescriptorSet const& SetToBind : DescriptorSetsToBind | std::views::take(NumDescriptorSets))
+            for (vk::DescriptorSet const& SetToBind: DescriptorSetsToBind | algo::views::take(NumDescriptorSets))
             {
-                check(SetToBind != nullptr)
+                check(!!SetToBind)
             }
         )
 
-        Info.CommandBuffer.bindDescriptorSets2({
-            /* TODO: Is this correct? The sets are vertex && fragment respectively -- not vertex | fragment. */
-            .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-            .layout = *Pipeline.Layout,
-            .firstSet = 0,
-            .descriptorSetCount = NumDescriptorSets,
-            .pDescriptorSets = DescriptorSetsToBind.data(),
-            .dynamicOffsetCount = 0,
-            .pDynamicOffsets = nullptr
-            });
+        if (NumDescriptorSets > 0)
+        {
+            Info.CommandBuffer.bindDescriptorSets2({
+                /* TODO: Is this correct? The sets are vertex && fragment respectively -- not vertex | fragment. */
+                .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                .layout = *Pipeline.pipeline_layout,
+                .firstSet = 0,
+                .descriptorSetCount = NumDescriptorSets,
+                .pDescriptorSets = DescriptorSetsToBind.data(),
+                .dynamicOffsetCount = 0,
+                .pDynamicOffsets = nullptr
+                });
+        }
     }
 
     check(this->ShaderSubsystem)
-    for (auto const& PushConstantName : FetchedMaterial.FetchedShader.PushConstants)
+    for (auto const& PushConstant: Shader.push_constant_iter())
     {
-        auto const& PushConstant{this->ShaderSubsystem->GetPushConstant(PushConstantName)};
-        check(PushConstant.AutoActorPush)
-        PushConstant.AutoActorPush(Info, Pipeline, LActorDrawInfo{.Transform=this->GetTransform()});
+        checkCode
+        (
+            if (!PushConstant.CxxName.has_value())
+            {
+                LOG_FATAL(LogRhi, "[{}]: Push constant at [{}@{}] has no CXX name."
+                    , Shader.Identifier, PushConstant.Space, PushConstant.Index)
+            }
+        )
+        auto& Pc{this->ShaderSubsystem->GetPushConstant(*PushConstant.CxxName)};
+        check(Pc.PushForActor)
+        Pc.PushForActor(Info, Material, {this->GetTransform()});
     }
 
     this->Mesh->DrawIndexed(Info);
-
-    return;
 }
-

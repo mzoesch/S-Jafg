@@ -7,102 +7,474 @@
 #include "User/LocalEgo.h"
 #include "Stats/Stats.h"
 #include "Rhi/GraphicsPipelineFactory.h"
+#include "Rhi/Objects.h"
+#include "Rhi/VisualInstance.h"
+#include "Engine/WorldData.h"
+
+namespace
+{
+
+struct UnresolvedMaterial final
+{
+    LPath Path;
+    LString Identifier;
+
+    TArray<LString> Inherits;
+    std::optional<LString> Shader;
+
+    std::optional<vk::PipelineInputAssemblyStateCreateInfo> PipelineInputAssemblyState;
+    std::optional<vk::PipelineRasterizationStateCreateInfo> PipelineRasterizationState;
+    // std::optional<vk::PipelineMultisampleStateCreateInfo> PipelineMultisampleState;
+    std::optional<vk::PipelineDepthStencilStateCreateInfo> PipelineDepthStencilState;
+    std::optional<rhi::material_template::pipeline_color_blend_state_wrapper> PipelineColorBlendState;
+
+    TArray<rhi::material_template::property> Properties;
+
+    NODISCARD FORCEINLINE constexpr bool IsFullyResolved() const noexcept
+    {
+        return this->Shader
+            && this->PipelineInputAssemblyState
+            && this->PipelineRasterizationState
+            // && this->PipelineMultisampleState
+            && this->PipelineDepthStencilState
+            && this->PipelineColorBlendState
+            ;
+    }
+};
+
+template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+void from_json(BasicJsonType const& j, ::UnresolvedMaterial& Material)
+{
+    const ::UnresolvedMaterial nlohmann_json_default_obj{};
+    if (j.contains("inherits"))
+    {
+        if (j.at("inherits").is_string())
+        {
+            LString Parent;
+            j.at("inherits").get_to(Parent);
+            Material.Inherits.emplace_back(std::move(Parent));
+        }
+        else
+        {
+            j.at("inherits").get_to(Material.Inherits);
+        }
+    }
+
+#define DETAIL_ENGINE_POPULATE_MEMBER(Json, Member) \
+    if (j.contains(Json)) \
+    { \
+        Material.Member.emplace(); \
+        j.at(Json).get_to(*Material.Member); \
+    }
+    DETAIL_ENGINE_POPULATE_MEMBER("shader", Shader)
+    DETAIL_ENGINE_POPULATE_MEMBER("pipelineInputAssemblyState", PipelineInputAssemblyState)
+    DETAIL_ENGINE_POPULATE_MEMBER("pipelineRasterizationState", PipelineRasterizationState)
+    // DETAIL_ENGINE_POPULATE_MEMBER("pipelineMultisampleState", PipelineMultisampleState)
+    DETAIL_ENGINE_POPULATE_MEMBER("pipelineDepthStencilState", PipelineDepthStencilState)
+    DETAIL_ENGINE_POPULATE_MEMBER("pipelineColorBlendState", PipelineColorBlendState)
+#undef DETAIL_ENGINE_POPULATE_MEMBER
+
+    if (j.contains("properties"))
+    {
+        for (auto const& [Key, Value]: j.at("properties").items())
+        {
+            auto& Ref{Material.Properties.emplace_back(Key)};
+            Ref.value = [](auto&& Value) -> LString
+            {
+                if (Value.is_string())
+                {
+                    return Value.template get<LString>();
+                }
+                if (Value.is_number_float())
+                {
+                    return algo::sprintf("{}", Value.template get<f64>());
+                }
+                if (Value.is_number())
+                {
+                    return algo::sprintf("{}", Value.template get<i64>());
+                }
+                if (Value.is_boolean())
+                {
+                    if (auto b{Value.template get<bool>()}; b)
+                    {
+                        return "true";
+                    }
+                    return "false";
+                }
+
+                LOG_FATAL(LogSerialization, "Unsupported property value type [{}].", Value.type_name())
+            }(Value);
+        }
+    }
+}
+
+struct LSccFinder final
+{
+    TArray<UnresolvedMaterial> const& Materials;
+
+    std::size_t Index{};
+    TArray<LStringView> Stack;
+    std::unordered_set<LStringView> OnStack;
+    std::unordered_map<LStringView, std::size_t> Indices;
+    std::unordered_map<LStringView, std::size_t> LowLink;
+
+    TArray<TArray<LStringView>> Sccs;
+
+    explicit LSccFinder(TArray<UnresolvedMaterial> const& Materials) noexcept : Materials{Materials}
+    {
+        for (auto& Material: this->Materials)
+        {
+            if (!this->Indices.contains(Material.Identifier))
+            {
+                this->Connect(Material);
+            }
+        }
+    }
+
+    void Connect(UnresolvedMaterial const& Material) noexcept
+    {
+        this->Indices[Material.Identifier] = this->Index;
+        this->LowLink[Material.Identifier] = this->Index;
+        ++this->Index;
+        this->Stack.emplace_back(Material.Identifier);
+        this->OnStack.insert(Material.Identifier);
+
+        for (auto const& Parent: Material.Inherits)
+        {
+            if (!this->Indices.contains(Parent))
+            {
+                auto It{algo::find(this->Materials, Parent, &UnresolvedMaterial::Identifier)};
+                if (It == this->Materials.end())
+                {
+                    LOG_FATAL(LogShaderSubsystem, "[{}]: No such shader.", Parent)
+                }
+                this->Connect(*It);
+                this->LowLink[Material.Identifier] = std::min(this->LowLink[Material.Identifier], this->LowLink[Parent]);
+            }
+            else if (this->OnStack.contains(Parent))
+            {
+                if (auto It{algo::find(this->Materials, Parent, &UnresolvedMaterial::Identifier)}; It == this->Materials.end())
+                {
+                    LOG_FATAL(LogShaderSubsystem, "[{}]: No such shader.", Parent)
+                }
+                this->LowLink[Material.Identifier] = std::min(this->LowLink[Material.Identifier], this->Indices[Parent]);
+            }
+        }
+
+        if (this->LowLink[Material.Identifier] == this->Indices[Material.Identifier])
+        {
+            TArray<LStringView> Scc;
+            while (true)
+            {
+                auto Top{this->Stack.back()};
+                this->Stack.pop_back();
+                this->OnStack.erase(Top);
+                Scc.emplace_back(Top);
+                if (Top == Material.Identifier)
+                {
+                    break;
+                }
+            }
+            this->Sccs.emplace_back(std::move(Scc));
+        }
+    }
+};
+
+void Populate(UnresolvedMaterial* Material, UnresolvedMaterial const& From) noexcept
+{
+    check(Material)
+#define DETAIL_ENGINE_POPULATE_MEMBER(Member) \
+    if (!Material->Member) \
+    { \
+        Material->Member = From.Member; \
+    }
+    DETAIL_ENGINE_POPULATE_MEMBER(Shader)
+    DETAIL_ENGINE_POPULATE_MEMBER(PipelineInputAssemblyState)
+    DETAIL_ENGINE_POPULATE_MEMBER(PipelineRasterizationState)
+    // DETAIL_ENGINE_POPULATE_MEMBER(PipelineMultisampleState)
+    DETAIL_ENGINE_POPULATE_MEMBER(PipelineDepthStencilState)
+    DETAIL_ENGINE_POPULATE_MEMBER(PipelineColorBlendState)
+#undef DETAIL_ENGINE_POPULATE_MEMBER
+
+    Material->Properties.insert_range(Material->Properties.cbegin(), From.Properties);
+}
+
+void TopDownPopulate(TArray<UnresolvedMaterial*> const& Unresolved) noexcept
+{
+    if (Unresolved.empty())
+    {
+        return;
+    }
+
+    auto IsLeaf{[&Unresolved](UnresolvedMaterial const& Material)
+    {
+        return !algo::any_of(Unresolved, [&Material](auto* Other)
+        {
+            return algo::contains(Other->Inherits, Material.Identifier);
+        });
+    }};
+    auto GetResolved{[Unresolved](auto const& Identifier) -> UnresolvedMaterial&
+    {
+        auto It{algo::find(Unresolved, Identifier, &UnresolvedMaterial::Identifier)};
+        if (It == Unresolved.end())
+        {
+            LOG_FATAL(LogShaderSubsystem, "[{}]: No such shader.", Identifier)
+        }
+        return **It;
+    }};
+
+    TArray<UnresolvedMaterial*> Siblings;
+    TArray<UnresolvedMaterial*> Unrelated;
+    for (auto* Material: Unresolved)
+    {
+        check(Material)
+
+        if (IsLeaf(*Material))
+        {
+            Siblings.emplace_back(Material);
+        }
+        else
+        {
+            Unrelated.emplace_back(Material);
+        }
+    }
+
+    ::TopDownPopulate(Unrelated);
+
+    for (UnresolvedMaterial* Sibling: Siblings)
+    {
+        for (auto const& Parent: Sibling->Inherits)
+        {
+            ::Populate(&GetResolved(Sibling->Identifier), GetResolved(Parent));
+        }
+    }
+}
+
+TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& ShaderSubsystem, TArray<UnresolvedMaterial> Materials) noexcept
+{
+    if (Materials.empty())
+    {
+        return {};
+    }
+
+    TArray<UnresolvedMaterial*> Unresolved; Unresolved.reserve(Materials.size());
+    for (auto& Material: Materials)
+    {
+        Unresolved.emplace_back(&Material);
+    }
+
+    ::TopDownPopulate(Unresolved);
+
+    TArray<rhi::material_template> Result; Result.reserve(Unresolved.size());
+    algo::for_each(Unresolved, [&ShaderSubsystem, &Result](UnresolvedMaterial* Material)
+    {
+        check(Material)
+        if (Material->IsFullyResolved())
+        {
+            LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Successfully resolved material.", Material->Path)
+            Result.push_back({
+                .my_shader = ShaderSubsystem.GetShader(*Material->Shader),
+                .identifier = std::move(Material->Identifier),
+                .pipeline_input_assembly_state = *Material->PipelineInputAssemblyState,
+                .pipeline_rasterization_state = *Material->PipelineRasterizationState,
+                // .pipeline_multisample_state = *Material->PipelineMultisampleState,
+                .pipeline_depth_stencil_state = *Material->PipelineDepthStencilState,
+                .pipeline_color_blend_state = *Material->PipelineColorBlendState,
+                .properties = Material->Properties,
+                });
+        }
+        else
+        {
+            LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Material is not fully resolved. Skipping.", Material->Path)
+        }
+    });
+
+    return Result;
+}
+
+} /* ~Namespace <Anonymous> */
+
+rhi::vk_binding Jafg::LMaterialInstance::GetBinding(LStringView Key) const noexcept
+{
+    check(this->Material.get())
+    auto& Shader{this->Material->Template.my_shader};
+
+    for (auto& Parameter: Shader.Parameters)
+    {
+        if (Parameter.Name == Key)
+        {
+            return {
+                .type = Parameter.as_descriptor_type(),
+                .space = Parameter.Space,
+                .index = Parameter.Index,
+                };
+        }
+    }
+    LOG_FATAL(LogMaterialSubsystem, "[{}]: No such set in any layout [{}]."
+        , Shader.Identifier, Key
+        )
+}
+
+void Jafg::LMaterialInstance::Vk_SetField(LFrontend& Frontend, rhi::vk_binding Where, LStringView Value)
+{
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Setting value [{}] for set identifier [{}::{}]."
+        , this->Material->Template.identifier, Value, Where.space, Where.index
+        )
+
+    switch (Where.type)
+    {
+    case vk::DescriptorType::eSampler:
+    {
+        if (Value == "Jafg.LinearRepeatSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerRepeat());
+        }
+        else if (Value == "Jafg.LinearMirroredRepeatSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerMirroredRepeat());
+        }
+        else if (Value == "Jafg.LinearClampToEdgeSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerClampToEdge());
+        }
+        else if (Value == "Jafg.LinearClampToBorderSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerClampToBorder());
+        }
+        else if (Value == "Jafg.NearestRepeatSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerRepeat());
+        }
+        else if (Value == "Jafg.NearestMirroredRepeatSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerMirroredRepeat());
+        }
+        else if (Value == "Jafg.NearestClampToEdgeSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToEdge());
+        }
+        else if (Value == "Jafg.NearestClampToBorderSampler")
+        {
+            this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToBorder());
+        }
+        else
+        {
+            LOG_FATAL(LogMaterialSubsystem
+                , "[{}]: No such sampler identifier [{}]. Failed to set value [{}] for set identifier [{}::{}]."
+                , this->Material->Template.identifier, Value, Value, Where.space, Where.index
+                )
+        }
+        break;
+    }
+    case vk::DescriptorType::eSampledImage:
+    {
+        this->Vk_SetSampledImage(Frontend, Where, *Frontend.GetSubsystemChecked<JTextureSubsystem>()->FromAsset(Value));
+        break;
+    }
+    default:
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}]: Unsupported descriptor type [{}] for set identifier [{}::{}]. Failed to set value [{}]."
+            , this->Material->Template.my_shader.Identifier, vk::to_string(Where.type), Where.space, Where.index, Value
+            )
+    }
+    }
+}
+
+void Jafg::LMaterialInstance::Vk_SetSampler(LFrontend const& Frontend, rhi::vk_binding Where, vk::Sampler const& Sampler)
+{
+    vk::DescriptorImageInfo ImageInfo{
+        .sampler = Sampler,
+        .imageView = nullptr,
+        .imageLayout = vk::ImageLayout::eUndefined,
+        };
+    check(ImageInfo.imageView == nullptr && ImageInfo.imageLayout == vk::ImageLayout::eUndefined)
+    std::array Writes{vk::WriteDescriptorSet{
+        .dstSet = this->Vk_GetUniqueDescriptorSet(Where.space),
+        .dstBinding = Where.index,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = vk::DescriptorType::eSampler,
+        .pImageInfo = &ImageInfo,
+        },};
+    /* TODO: If we wanna be pedantic we should add this write to a frame buffer and update in a batch like fashion. But how cares rn. */
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+}
+
+void Jafg::LMaterialInstance::Vk_SetSampledImage(LFrontend const& Frontend, rhi::vk_binding Where, LTexture2 const& Texture)
+{
+    vk::DescriptorImageInfo ImageInfo{
+        .sampler = nullptr,
+        .imageView = Texture.GetImageView(),
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+    std::array Writes{vk::WriteDescriptorSet{
+        .dstSet = this->Vk_GetUniqueDescriptorSet(Where.space),
+        .dstBinding = Where.index,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = vk::DescriptorType::eSampledImage,
+        .pImageInfo = &ImageInfo,
+        },};
+    /* TODO: Same as above. */
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+}
 
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
+
+    auto& Frontend{this->GetFrontend()};
+
     Collection.InitializeDependency<JTextureSubsystem>(this);
     Collection.InitializeDependency<JShaderSubsystem>(this);
 
     this->TextureSubsystem = Collection.GetSubsystemChecked<JTextureSubsystem>();
     this->ShaderSubsystem = Collection.GetSubsystemChecked<JShaderSubsystem>();
 
-    this->ReloadMaterials();
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout with capacity [{}].", UBO::Bindless::name(), this->TextureSubsystem->GetBindlessTextureArrayCapacity())
+    this->SharedDescriptorSetLayouts.emplace(UBO::Bindless::name(), UBO::Bindless::build(Frontend.Vk_GetDevice(), this->TextureSubsystem->GetBindlessTextureArrayCapacity()));
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout", UBO::WorldData::name())
+    this->SharedDescriptorSetLayouts.emplace(UBO::WorldData::name(), UBO::WorldData::build(Frontend.Vk_GetDevice()));
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout", UBO::VisualShared::name())
+    this->SharedDescriptorSetLayouts.emplace(UBO::VisualShared::name(), UBO::VisualShared::build(Frontend.Vk_GetDevice()));
 
-    return;
-}
+    STAT_QUICK_CYCLE_START("Fetching materials")
+    LOG_VERBOSE(LogMaterialSubsystem, "Fetching materials.")
 
-void Jafg::JMaterialSubsystem::ReloadMaterials()
-{
-    STAT_CYCLE_FUNCTION()
-    LOG_VERBOSE(LogMaterialSubsystem, "Reloading materials.")
-
-    check(this->ShaderSubsystem)
-
-    // TODO: We need to track changes and then change device information accordingly/rebuild pipelines, etc.
-    check(this->FetchedMaterials.empty())
-
-    LString MissingKey; Json::EError Error;
-    for (auto MaterialFiles{Finder::FindFilesRecursively("Content/Materials", true, ".*\\.json")}; auto const& MaterialFile : MaterialFiles)
+    check(this->MaterialTemplates.empty())
+    TArray<UnresolvedMaterial> Materials; // Of course this is just temp. We want to replace this with jasset.
+    for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>("Content/Materials", ".*\\.json"))
     {
-        json MaterialJson = json::parse(Finder::ReadFile(MaterialFile), nullptr, false);
-        if (MaterialJson.is_discarded())
-        {
-            LOG_FATAL(LogMaterialSubsystem, "Material [{}] is not valid json. Failed to load.", MaterialFile)
-        }
+        UnresolvedMaterial& Result{Materials.emplace_back()};
+        json::parse(finder::read_file(Material), nullptr, false).get_to(Result);
+        Result.Identifier = Material.stem().string(); // Also do not use stem but rel to content.
+        Result.Path = std::move(Material);
 
-        if (Json::DoesObjectContainTypeCheckedKeys(MaterialJson, {{"Shader", Json::LKeyType::String}}, &MissingKey, &Error) == false)
-        {
-            Json::DefaultFail(MaterialFile, MissingKey, Error);
-        }
-
-        std::unique_ptr Material{std::make_unique<LFetchedMaterial>(
-              MaterialFile
-            , MaterialFile.stem().string()
-            , this->ShaderSubsystem->GetFetchedShader(MaterialJson["Shader"].get<LString>())
-            )};
-
-        if (MaterialJson.contains("Type"))
-        {
-            if (MaterialJson["Type"].is_string() == false)
-            {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: Type entry is not a string. Failed to load.", Material->Path)
-            }
-            if (LString Type{MaterialJson["Type"].get<LString>()}; Type == "Solid")
-            {
-                Material->Type = LFetchedMaterial::Solid;
-            }
-            else if (Type == "Translucent")
-            {
-                Material->Type = LFetchedMaterial::Translucent;
-            }
-            else
-            {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such material type [{}]. Failed to load.", Material->Path, Type)
-            }
-        }
-
-        if (MaterialJson.contains("Properties"))
-        {
-            if (MaterialJson["Properties"].is_object() == false)
-            {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: Properties entry is not an object. Failed to load.", Material->Path)
-            }
-            for (auto const& Property : MaterialJson["Properties"].items())
-            {
-                if (Property.value().is_string() == false)
-                {
-                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Property value for key [{}] is not a string. Failed to load.", Material->Path, Property.key())
-                }
-                Material->Properties.emplace_back(LFetchedMaterial::Property{Property.key(), Property.value().get<LString>()});
-            }
-        }
-
-        check(algo::contains(this->FetchedMaterials, Material->Name, [](std::unique_ptr<LFetchedMaterial> const& M){ return M->Name; }) == false)
-
-        if constexpr (IS_COMPILED_LOG(LogMaterialSubsystem, Trace))
-        LOG_TRACE(LogMaterialSubsystem, "[{}]: Shader [{}], Properties [{}]."
-            , Material->Path
-            , Material->FetchedShader.Name
-            , algo::join(Material->Properties, [](auto const& P){ return P.Key + "=" + P.Value; })
-            )
-
-        this->FetchedMaterials.emplace_back(std::move(Material));
-        continue;
+        check(algo::count(Materials, Result.Identifier, &UnresolvedMaterial::Identifier) == 1)
     }
+    for (LSccFinder Finder{Materials}; auto& Scc: Finder.Sccs)
+    {
+        if (Scc.size() > 1)
+        {
+            LOG_FATAL(LogMaterialSubsystem, "Found inheritance cycle in shaders: [{}].", algo::join(Scc))
+        }
+    }
+    for (auto& Material: Materials)
+    {
+        if (algo::contains(Material.Inherits, Material.Identifier))
+        {
+            LOG_FATAL(LogMaterialSubsystem
+                , "[{}]: Reflexive inheritance is not allowed. [{}] inherits from [{}]."
+                , Material.Path, Material.Identifier, algo::join(Material.Inherits)
+                )
+        }
+    }
+    this->MaterialTemplates = ::ResolveInheritance(*this->ShaderSubsystem, std::move(Materials));
+    LOG_VERBOSE(LogMaterialSubsystem, "Fetched [{}] materials.", this->MaterialTemplates.size())
 
-    LOG_VERBOSE(LogMaterialSubsystem, "Finished loading [{}] materials.", this->FetchedMaterials.size())
-    return;
+    // Kinda awkward here. Is there a way around?
+    this->TextureSubsystem->_Vk_AllocateBindlessPool();
+    this->TextureSubsystem->_Vk_UpdateSamplers();
 }
 
 void Jafg::JMaterialSubsystem::PurgeUnused()
@@ -111,397 +483,358 @@ void Jafg::JMaterialSubsystem::PurgeUnused()
     {
         if (E.second.use_count() == 1)
         {
-            LOG_VERBOSE(LogTextureSubsystem, "Purging unused material instance [{}].", E.first)
+            LOG_VERBOSE(LogTextureSubsystem, "[{}]: Puring unreferenced material instance.", E.first)
             return true;
         }
-
         return false;
     });
     std::erase_if(this->Materials, [](auto& E) -> bool
     {
         if (E.second.use_count() == 1)
         {
-            LOG_VERBOSE(LogTextureSubsystem, "Purging unused material [{}].", E.first)
+            LOG_VERBOSE(LogTextureSubsystem, "[{}]: Puring unreferenced material.", E.first)
             return true;
         }
-
         return false;
     });
-
-    return;
 }
 
-Jafg::LFetchedMaterial const& Jafg::JMaterialSubsystem::GetFetchedMaterial(LString const& Name) const noexcept
+Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Name) noexcept
 {
-    auto It{algo::find(this->FetchedMaterials, Name, [](std::unique_ptr<LFetchedMaterial> const& M){ return M->Name; })};
-    if (It == this->FetchedMaterials.end())
+    if (auto It{this->Materials.find(Name)}; It != this->Materials.end())
     {
-        LOG_FATAL(LogMaterialSubsystem, "No such material [{}].", Name)
+        return It->second;
     }
-    return **It;
-}
 
-Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LString const& Name) noexcept
-{
     check(this->ShaderSubsystem && this->TextureSubsystem)
-
-    {
-        auto It{this->Materials.find(Name)};
-        if (It != this->Materials.end())
-        {
-            return It->second;
-        }
-    }
-
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    auto const& FetchedMaterial{this->GetFetchedMaterial(Name)};
-    std::shared_ptr Material{std::make_shared<LMaterial>(LMaterial{.FetchedMaterial=FetchedMaterial})};
 
-    auto& FetchedShader{FetchedMaterial.FetchedShader};
-    auto Factory{LDevicePipelineFactory{Frontend}};
-    Factory.Shader(FetchedShader.GetDst(), FetchedShader.Entrypoints);
+    rhi::graphics_pipeline_factory Factory;
 
-    if (FetchedShader.VertexInput.has_value())
-    {
-        Factory.VertexInput(this->ShaderSubsystem->GetVertexInputStateCreateInfo(*FetchedShader.VertexInput));
-    }
+    auto Result{std::make_shared<LMaterial>(this->GetMaterialTemplate(Name))};
+    auto& Material{*Result};
+    auto& Template{Material.Template};
+    auto& Shader{Template.my_shader};
 
-    if (FetchedShader.PipelineInputAssemblyState.has_value() == false)
     {
-        LOG_FATAL(LogMaterialSubsystem
-            , "[{}]: No pipeline input assembly state specified for this shader. Failed to create material."
-            , FetchedMaterial.Path
-            )
-    }
-    Factory.InputAssemblyInfo = *FetchedShader.PipelineInputAssemblyState;
-    if (FetchedShader.PipelineDepthStencilState.has_value() == false)
-    {
-        LOG_FATAL(LogMaterialSubsystem
-            , "[{}]: No pipeline depth stencil state specified for this shader. Failed to create material."
-            , FetchedMaterial.Path
-            )
-    }
-    Factory.DepthStencilInfo = *FetchedShader.PipelineDepthStencilState;
-
-    switch (FetchedMaterial.Type)
-    {
-    case LFetchedMaterial::Solid:
-    {
-        check(Factory.PipelineColorBlendStateCreateInfo == nullptr)
-        Factory.PipelineColorBlendStateCreateInfo = &this->GetSolidColorBlending();
-        break;
-    }
-    case LFetchedMaterial::Translucent:
-    {
-        check(Factory.PipelineColorBlendStateCreateInfo == nullptr)
-        Factory.PipelineColorBlendStateCreateInfo = &this->GetTranslucentBlending();
-        break;
-    }
-    default:
-    {
-        LOG_FATAL(LogMaterialSubsystem, "[{}]: Missing implementation for material type [{}].", FetchedMaterial.Path, std::to_string(FetchedMaterial.Type))
-    }
-    }
-
-    for (auto const& Layout: FetchedShader.Layouts)
-    {
-        if (Layout.Type == LFetchedShader::Layout::eUnique)
+        std::unordered_map<LPath, vk::ShaderModule> CodePaths;
+        algo::for_each(Shader.EntryPoints, [&](auto const& Entrypoint)
         {
-            TArray<vk::DescriptorSetLayoutBinding> Bindings; Bindings.reserve(Layout.Sets->size());
-            check(Layout.Stage.has_value())
-            check(Layout.Sets.has_value())
-            for (auto Idx{0uz}; Idx < Layout.Sets->size(); ++Idx)
+            if (!CodePaths.contains(Entrypoint.Code))
             {
-                auto const& Set{(*Layout.Sets)[Idx]};
-                Bindings.emplace_back(vk::DescriptorSetLayoutBinding{
-                    .binding = static_cast<u32>(Idx),
-                    .descriptorType = Set.DescriptorType,
-                    .descriptorCount = 1,
-                    .stageFlags = *Layout.Stage,
-                    .pImmutableSamplers = nullptr
-                    });
+                auto Code{finder::read_binary_file(Entrypoint.Code)};
+                auto Result{Frontend.Vk_GetDevice().createShaderModule({
+                    .codeSize = Code.size(),
+                    .pCode = reinterpret_cast<u32 const*>(Code.data()),
+                    })};
+                check(Result.has_value())
+                CodePaths[Entrypoint.Code] = *Factory.shader_modules.emplace_back(std::move(*Result));
             }
-            Factory.UniqueLayout({
-                .bindingCount = static_cast<u32>(Bindings.size()),
-                .pBindings = Bindings.data(),
+        });
+        for (auto const& Entrypoint: Shader.EntryPoints)
+        {
+            Factory.shaders.emplace_back(vk::PipelineShaderStageCreateInfo{
+                .stage = Entrypoint.Stage,
+                .module = CodePaths.at(Entrypoint.Code),
+                .pName = Entrypoint.Name.c_str(),
                 });
         }
-        else if (Layout.Type == LFetchedShader::Layout::eShared)
+    }
+
+    if (auto& VertEntry{*algo::find_checked(Shader.EntryPoints, vk::ShaderStageFlagBits::eVertex, &rhi::reflected_shader::entry_point::Stage)};
+        std::holds_alternative<rhi::reflected_shader::entry_point::custom_type>(VertEntry.Parameters))
+    {
+        auto& type{std::get<rhi::reflected_shader::entry_point::custom_type>(VertEntry.Parameters)};
+        if (auto It{type.UserAttributes.find("CxxName")}; It != type.UserAttributes.end())
         {
-            check(Layout.Identifier.has_value())
-            auto& SharedLayouts{Frontend.Vk_GetDescriptorSetLayouts()};
-            if (auto It2{SharedLayouts.find(*Layout.Identifier)}; It2 == SharedLayouts.end())
+            if (It->second.size() != 1)
             {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such shared layout [{}].", FetchedMaterial.Path, *Layout.Identifier)
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Custom vertex input type [{}] must have exactly one CxxName user attribute argument."
+                    , Name, type.Name)
+            }
+            Factory.pipeline_vertex_input_state = this->ShaderSubsystem->GetVertexInput(It->second.front()).Provider();
+        }
+        else
+        {
+            Factory.pipeline_vertex_input_state = this->ShaderSubsystem->GetVertexInput(type.Name).Provider();
+        }
+    }
+    else if (std::holds_alternative<rhi::reflected_shader::entry_point::generated_type>(VertEntry.Parameters))
+    {
+    }
+    else
+    {
+        std::unreachable();
+    }
+
+    Factory.pipeline_input_assembly_state = Template.pipeline_input_assembly_state;
+    Factory.pipeline_rasterization_state = Template.pipeline_rasterization_state;
+    // Factory.pipeline_multisample_state = Template.pipeline_multisample_state;
+    if (Template.my_shader.Identifier == "Shaders/Jafg.Mesh.Outline")
+    {
+        Factory.pipeline_multisample_state = vk::PipelineMultisampleStateCreateInfo{
+            .rasterizationSamples = vk::SampleCountFlagBits::e1,
+            .sampleShadingEnable = vk::False,
+            };
+    }
+    else
+    {
+        Factory.pipeline_multisample_state = vk::PipelineMultisampleStateCreateInfo{
+            .rasterizationSamples = Frontend.Vk_GetMaxMsaaSampleCount(), // TODO: user prefs.
+            .sampleShadingEnable = vk::False, /* TODO whats this?? */ // TODO: make part of material template.
+            };
+    }
+    Factory.pipeline_depth_stencil_state = Template.pipeline_depth_stencil_state;
+    {
+        Factory.pipeline_color_blend_attachment_states = Template.pipeline_color_blend_state.pipeline_color_blend_attachment_states;
+        Factory.pipeline_color_blend_state = vk::PipelineColorBlendStateCreateInfo{
+            .logicOpEnable = Template.pipeline_color_blend_state.logic_op_enable,
+            .logicOp = Template.pipeline_color_blend_state.logic_op,
+            .attachmentCount = static_cast<u32>(Factory.pipeline_color_blend_attachment_states.size()),
+            .pAttachments = Factory.pipeline_color_blend_attachment_states.data(),
+            };
+    }
+
+    std::unordered_map<u32, TArray<vk::DescriptorSetLayoutBinding>> DescriptorSetLayoutBindings;
+    std::unordered_map<LString, u32> SharedDescriptorSetLayoutBindings;
+    for (auto& DescriptorTableSlot: Shader.Parameters
+        | algo::views::filter([](auto& Parameter)
+        {
+            return Parameter.Kind == rhi::reflected_shader::binding_type::descriptor_table_slot;
+        }))
+    {
+        if (auto It{DescriptorTableSlot.UserAttributes.find("Shared")}; It != DescriptorTableSlot.UserAttributes.end())
+        {
+            if (It->second.size() != 1)
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Shared descriptor table slot [{}] must have exactly one Shared user attribute argument."
+                    , Name, DescriptorTableSlot.Name)
+            }
+            if (auto SharedIt{SharedDescriptorSetLayoutBindings.find(It->second.front())}; SharedIt != SharedDescriptorSetLayoutBindings.end())
+            {
+                if (SharedIt->second != DescriptorTableSlot.Space)
+                {
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Shared descriptor table slot [{}] has conflicting space bindings [{} != {}]."
+                        , Name, DescriptorTableSlot.Name, SharedIt->second, DescriptorTableSlot.Space)
+                }
             }
             else
             {
-                Factory.SharedLayout(*It2->second);
+                SharedDescriptorSetLayoutBindings.emplace(It->second.front(), DescriptorTableSlot.Space);
             }
         }
         else
         {
-            std::unreachable();
+            if (auto Flags{Shader.shader_stage_flags_for(DescriptorTableSlot)}; Flags != vk::ShaderStageFlags{})
+            {
+                DescriptorSetLayoutBindings[DescriptorTableSlot.Space].emplace_back(vk::DescriptorSetLayoutBinding{
+                    .binding = DescriptorTableSlot.Index,
+                    .descriptorType = DescriptorTableSlot.as_descriptor_type(),
+                    .descriptorCount = DescriptorTableSlot.binding_count(),
+                    .stageFlags = Flags,
+                    .pImmutableSamplers = nullptr,
+                    });
+            }
+        }
+    }
+    for (auto const& [Space, Bindings]: DescriptorSetLayoutBindings)
+    {
+        auto Result{Frontend.Vk_GetDevice().createDescriptorSetLayout({
+            .bindingCount = static_cast<u32>(Bindings.size()),
+            .pBindings = Bindings.data(),
+            })};
+        check(Result.has_value())
+        Factory.unique_descriptor_set_layouts.emplace_back(Space, std::move(*Result));
+    }
+    for (auto const& [Name, Space]: SharedDescriptorSetLayoutBindings)
+    {
+        checkCode
+        (
+            if (!this->SharedDescriptorSetLayouts.contains(Name)) /* #at throws always. This is just for a more human-readable error message during development. */
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such shared descriptor set layout at space [{}].", Name, Space)
+            }
+        )
+        Factory.shared_descriptor_set_layouts.emplace_back(Space, this->SharedDescriptorSetLayouts.at(Name));
+    }
+
+    for (auto& PushConstant: Shader.Parameters
+        | algo::views::filter([](auto& Parameter)
+        {
+            return Parameter.Kind == rhi::reflected_shader::binding_type::push_constant_buffer;
+        }))
+    {
+        if (auto Flags{Shader.shader_stage_flags_for(PushConstant)}; Flags != vk::ShaderStageFlags{})
+        {
+            check(std::holds_alternative<rhi::reflected_shader::binding_definition::constant_buffer>(PushConstant.Type)) // TODO: Support more pcs
+            auto& ConstantBuffer = std::get<rhi::reflected_shader::binding_definition::constant_buffer>(PushConstant.Type);
+            Factory.push_constant_ranges.emplace_back(vk::PushConstantRange{
+                .stageFlags = Flags,
+                .offset = ConstantBuffer.Offset,
+                .size = ConstantBuffer.Size,
+                });
         }
     }
 
-    for (auto const& PushConstant : FetchedShader.PushConstants)
+    check(Template.color_attachment_formats.empty())
+    check(Template.depth_attachment_format == vk::Format::eUndefined)
+    check(Template.stencil_attachment_format == vk::Format::eUndefined)
+
+    if (Template.my_shader.Identifier == "Shaders/Jafg.Mesh.Outline")
     {
-        Factory.PushConstant(this->ShaderSubsystem->GetPushConstantInfo(PushConstant));
+        Factory.color_attachment_formats = {vk::Format::eR8Unorm};
+    }
+    else
+    {
+        Factory.color_attachment_formats = {Frontend.Vk_GetSurfaceFormat().format};
     }
 
-    Factory.ColorAttachmentFormat = Frontend.Vk_GetSurfaceFormat().format;
-    Factory.DepthAttachmentFormat = Frontend.Vk_GetPreferredDepthFormat();
+    Factory.depth_attachment_format = Frontend.Vk_GetPreferredDepthFormat();
+    Factory.stencil_attachment_format = vk::Format::eUndefined;
 
-    if (Name == "Jafg.Mesh.Outline")
-    {
-        Factory.ColorAttachmentFormat = vk::Format::eR8Unorm;
-    }
-
-    if (FetchedShader.MsaaSamples)
-    {
-        Factory.MultisamplingSampleCount = *FetchedShader.MsaaSamples;
-    }
-
-    Material->Pipeline = Factory.Build();
-
-    this->Materials.emplace(FetchedMaterial.Name, Material);
-    return Material;
+    Material.Pipeline = Factory.build(Frontend.Vk_GetDevice());
+    this->Materials.emplace(Name, Result);
+    return Result;
 }
 
 Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Material)
 {
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
-    auto& FetchedMaterial{Material->FetchedMaterial};
-    auto& FetchedShader{FetchedMaterial.FetchedShader};
+    check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
-    auto Instance{std::make_shared<LMaterialInstance>(LMaterialInstance{.Material = Material})};
+    auto& MaterialTemplate{Material->Template};
+    auto& Shader{MaterialTemplate.my_shader};
 
-    auto UniqueIdx{0uz};
-    TArray<vk::DescriptorSetLayout> LayoutsToAllocate;
-    for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
+    auto Instance{std::make_shared<LMaterialInstance>(LMaterialInstance{.Material=Material})};
+
+    std::unordered_map<u32, rhi::reflected_shader::update_frequency> UpdateFrequencies;
+    for (auto& Parameter: Shader.Parameters)
     {
-        auto& Layout{FetchedShader.Layouts[Idx]};
-        if (Layout.Type == LFetchedShader::Layout::eShared)
+        if (Parameter.Kind != rhi::reflected_shader::binding_type::descriptor_table_slot)
+        {
+            continue;
+        }
+        if (Parameter.find_user_attribute("Shared"))
         {
             continue;
         }
 
-        if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
+        if (auto* Array{Parameter.find_user_attribute("UpdateFrequency", 1uz)})
+        {
+            rhi::reflected_shader::update_frequency Frequency{rhi::reflected_shader::from_string(Array->front())};
+            if (auto It{UpdateFrequencies.find(Parameter.Space)}; It != UpdateFrequencies.end())
+            {
+                if (It->second != Frequency)
+                {
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Conflicting update frequencies for space [{}]. [{} != {}]"
+                        , Shader.Identifier, Parameter.Space, static_cast<u32>(It->second), static_cast<u32>(Frequency))
+                }
+            }
+            else
+            {
+                UpdateFrequencies.emplace(Parameter.Space, Frequency);
+            }
+        }
+        else
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: No update frequency for space [{}].", Shader.Identifier, Parameter.Space)
+        }
+    }
+
+    TArray<vk::DescriptorSetLayout> UniqueLayouts;
+    for (auto const& [Space, Frequency]: UpdateFrequencies)
+    {
+        if (Frequency == rhi::reflected_shader::update_frequency::per_frame)
         {
             check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
             for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
             {
-                LayoutsToAllocate.emplace_back(*Material->Pipeline._UniqueDescriptorSetLayout[UniqueIdx]);
+                UniqueLayouts.emplace_back(*Material->Pipeline.get_unique_layout(Space));
             }
         }
-        else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
+        else if (Frequency == rhi::reflected_shader::update_frequency::rarely)
         {
-            LayoutsToAllocate.emplace_back(*Material->Pipeline._UniqueDescriptorSetLayout[UniqueIdx]);
+            UniqueLayouts.emplace_back(Material->Pipeline.get_unique_layout(Space));
         }
         else
         {
             std::unreachable();
         }
-
-        ++UniqueIdx;
-        continue;
     }
-    check(UniqueIdx == Material->Pipeline._UniqueDescriptorSetLayout.size())
-
-    if (LayoutsToAllocate.empty() == false)
+    if (!UniqueLayouts.empty())
     {
-        auto SetIdx{0uz};
-        auto DescriptorSets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
+        auto UniqueSets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
             .descriptorPool = Frontend.Vk_GetDescriptorPool(),
-            .descriptorSetCount = static_cast<u32>(LayoutsToAllocate.size()),
-            .pSetLayouts = LayoutsToAllocate.data(),
+            .descriptorSetCount = static_cast<u32>(UniqueLayouts.size()),
+            .pSetLayouts = UniqueLayouts.data(),
             })};
 
-        for (auto Idx{0uz}; Idx < FetchedShader.Layouts.size(); ++Idx)
+        auto Idx{0uz};
+        for (auto const& [Space, Frequency]: UpdateFrequencies)
         {
-            auto& Layout{FetchedShader.Layouts[Idx]};
-            if (Layout.Type == LFetchedShader::Layout::eShared)
+            if (Frequency == rhi::reflected_shader::update_frequency::per_frame)
             {
-                continue;
-            }
-            if (Layout.UpdateFrequency == LFetchedShader::Layout::ePerFrame)
-            {
-                check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
                 for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
                 {
-                    Instance->FrequentDescriptorSets[FramesInFlight].emplace_back(static_cast<u32>(Idx), std::move(DescriptorSets[SetIdx++]));
+                    Instance->FrequentDescriptorSets[FramesInFlight].emplace_back(Space, std::move(UniqueSets[Idx++]));
                 }
             }
-            else if (Layout.UpdateFrequency == LFetchedShader::Layout::eRarely)
+            else if (Frequency == rhi::reflected_shader::update_frequency::rarely)
             {
-                Instance->InfrequentDescriptorSets.emplace_back(static_cast<u32>(Idx), std::move(DescriptorSets[SetIdx++]));
+                Instance->InfrequentDescriptorSets.emplace_back(Space, std::move(UniqueSets[Idx++]));
             }
             else
             {
                 std::unreachable();
             }
-
-            continue;
         }
-
-        check(SetIdx == DescriptorSets.size())
+        check(Idx == UniqueLayouts.size())
     }
 
-    for (auto const& [Key, Value] : FetchedMaterial.Properties)
+    checkCode
+    (
+        std::unordered_map<u32, u32> InfrequentSpaces;
+        for (auto Space: Instance->InfrequentDescriptorSets | algo::views::keys)
+        {
+            if (InfrequentSpaces.contains(Space))
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Duplicate space [{}] in infrequent descriptor sets.", Shader.Identifier, Space)
+            }
+            InfrequentSpaces.emplace(Space, 1);
+        }
+        std::unordered_map<u32, u32> Frequent;
+        for (auto& Array: Instance->FrequentDescriptorSets)
+        {
+            for (auto const& Space: Array | algo::views::keys)
+            {
+                if (InfrequentSpaces.contains(Space))
+                {
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Space [{}] is both infrequent and frequent.", Shader.Identifier, Space)
+                }
+                if (auto It{Frequent.find(Space)}; It != Frequent.end())
+                {
+                    ++It->second;
+                }
+                else
+                {
+                    Frequent.emplace(Space, 1);
+                }
+            }
+        }
+        for (auto const& [Space, Count]: Frequent)
+        {
+            if (Count != Frontend.Vk_GetNumberOfFramesInFlight())
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Space [{}] is frequent but not present in all frames [{} != {}]."
+                    , Shader.Identifier, Space, Count, Frontend.Vk_GetNumberOfFramesInFlight())
+            }
+        }
+    )
+
+    for (auto const& [Key, Value]: MaterialTemplate.properties)
     {
-        this->SetMaterialInstanceField(*Instance, this->GetBinding(*Instance, Key), Value);
+        Instance->Vk_SetField(this->GetFrontend(), Instance->GetBinding(Key), Value);
     }
 
     return Instance;
-}
-
-Jafg::JMaterialSubsystem::LBinding Jafg::JMaterialSubsystem::GetBinding(LMaterialInstance& Instance, LStringView Key)
-{
-    check(this->ShaderSubsystem)
-    check(Instance.Material.get())
-
-    auto& FetchedShader{Instance.Material->FetchedMaterial.FetchedShader};
-    for (auto LayoutIdx{0uz}; LayoutIdx < FetchedShader.Layouts.size(); ++LayoutIdx)
-    {
-        auto& Layout{FetchedShader.Layouts[LayoutIdx]};
-        if (Layout.Sets.has_value() == false)
-        {
-            check(Layout.Identifier.has_value() && Layout.Type == LFetchedShader::Layout::eShared)
-            continue;
-        }
-        for (auto SetIdx{0uz}; SetIdx < Layout.Sets->size(); ++SetIdx)
-        {
-            auto& Set{(*Layout.Sets)[SetIdx]};
-            if (Set.Identifier != Key)
-            {
-                continue;
-            }
-            return {
-                .Type = Set.DescriptorType,
-                .Layout = static_cast<u32>(LayoutIdx),
-                .Set = static_cast<u32>(SetIdx),
-                };
-        }
-    }
-
-    LOG_FATAL(LogMaterialSubsystem
-        , "[{}]: No such set in any layout [{}]."
-        , Instance.Material->FetchedMaterial.Name, Key
-        )
-}
-
-void Jafg::JMaterialSubsystem::SetMaterialInstanceField(LMaterialInstance& Instance, LBinding Where, LString const& Value) const noexcept
-{
-    switch (Where.Type)
-    {
-    case vk::DescriptorType::eSampler:
-    {
-        if (Value == "Jafg.LinearRepeatSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerRepeat());
-        }
-        else if (Value == "Jafg.LinearMirroredRepeatSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerMirroredRepeat());
-        }
-        else if (Value == "Jafg.LinearClampToEdgeSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerClampToEdge());
-        }
-        else if (Value == "Jafg.LinearClampToBorderSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetLinearSamplerClampToBorder());
-        }
-        else if (Value == "Jafg.NearestRepeatSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerRepeat());
-        }
-        else if (Value == "Jafg.NearestMirroredRepeatSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerMirroredRepeat());
-        }
-        else if (Value == "Jafg.NearestClampToEdgeSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerClampToEdge());
-        }
-        else if (Value == "Jafg.NearestClampToBorderSampler")
-        {
-            this->SetSampler(Instance, Where, this->GetLocalEgo().GetFrontend().Vk_GetNearestSamplerClampToBorder());
-        }
-        else
-        {
-            LOG_FATAL(LogMaterialSubsystem
-                , "[{}]: No such sampler identifier [{}]. Failed to set value [{}] for set identifier [{}]."
-                , Instance.Material->FetchedMaterial.Name, Value, Value, Where.Set
-                )
-        }
-        break;
-    }
-    case vk::DescriptorType::eSampledImage:
-    {
-        this->SetSampledImage(Instance, Where, *this->TextureSubsystem->FromAsset(Value));
-        break;
-    }
-    default:
-    {
-        LOG_FATAL(LogMaterialSubsystem
-            , "[{}]: Unsupported descriptor type [{}] for set identifier [{}]. Failed to set value [{}]."
-            , Instance.Material->FetchedMaterial.Name, vk::to_string(Where.Type), Where.Set, Value
-            )
-    }
-    }
-}
-
-void Jafg::JMaterialSubsystem::SetSampler(LMaterialInstance& Instance, LBinding Where, vk::Sampler const& Sampler) const
-{
-    auto& Frontend{this->GetFrontend()};
-
-    auto It{algo::find(Instance.InfrequentDescriptorSets, Where.Layout, [](auto const& E){ return E.first; })};
-    check(It != Instance.InfrequentDescriptorSets.end())
-
-    vk::DescriptorImageInfo ImageInfo{
-        .sampler = Sampler,
-        };
-    check(ImageInfo.imageView == nullptr && ImageInfo.imageLayout == vk::ImageLayout::eUndefined)
-    std::array Writes{
-        vk::WriteDescriptorSet{
-            .dstSet = *It->second,
-            .dstBinding = Where.Set,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eSampler,
-            .pImageInfo = &ImageInfo,
-            },
-        };
-    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-    return;
-}
-
-void Jafg::JMaterialSubsystem::SetSampledImage(LMaterialInstance& Instance, LBinding Where, LTexture2 const& Texture) const
-{
-    auto& Frontend{this->GetFrontend()};
-
-    auto It{algo::find(Instance.InfrequentDescriptorSets, Where.Layout, [](auto const& E){ return E.first; })};
-    check(It != Instance.InfrequentDescriptorSets.end())
-
-    vk::DescriptorImageInfo ImageInfo{
-        .imageView = Texture.GetImageView(),
-        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        };
-    check(ImageInfo.sampler == nullptr)
-    std::array Writes{
-        vk::WriteDescriptorSet{
-            .dstSet = *It->second,
-            .dstBinding = Where.Set,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eSampledImage,
-            .pImageInfo = &ImageInfo,
-            },
-        };
-    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-    return;
 }

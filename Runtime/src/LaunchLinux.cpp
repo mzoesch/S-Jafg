@@ -8,6 +8,13 @@
 #include <sys/resource.h>
 #include <sys/prctl.h>
 
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
+    #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    #pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+#endif /* JAFG_WITH_CLANG */
+
 extern EPlatformExit::Type AgnosticLaunch();
 
 using namespace Jafg;
@@ -93,7 +100,7 @@ i32 main(i32 c, char const* v[])
     TArray<LString> Arguments; algo::for_each(v + 1, v + c, [&Arguments](auto* Arg){ Arguments.emplace_back(Arg); });
     App::Detail::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(App::GetRawCommandLine(), "-Jafg.WaitForDebugger"))
+    if (algo::contains(App::GetRawCommandLine(), "-Jafg.WaitForDebugger"sv))
     {
         App::Detail::WaitForDebuggerGracefully(true);
     }
@@ -130,7 +137,7 @@ i32 main(i32 c, char const* v[])
 
     ///////////////////////////////////////////////////////////////////////////////
     // ISO C99
-    //::sigaction(SIGABRT, &Action_Fatal, nullptr); /* Abnormal termination from ::abort. */
+    ::sigaction(SIGABRT, &Action_Fatal, nullptr); /* Abnormal termination from ::abort. */
     ::sigaction(SIGFPE,  &Action_Fatal, nullptr); /* Erroneous arithmetic operation. */
     ::sigaction(SIGHUP,  &Action_Error, nullptr); /* Hangup signal of terminal or helicopter parent. */ // We do not really care.
     ::sigaction(SIGILL,  &Action_Fatal, nullptr); /* Illegal instruction. */
@@ -176,14 +183,14 @@ i32 main(i32 c, char const* v[])
                     || (Perms & std::filesystem::perms::group_exec ) != std::filesystem::perms::none
                     || (Perms & std::filesystem::perms::others_exec) != std::filesystem::perms::none)
                 {
-                    Finder::Detail::_gdb = Candidate;
+                    finder::detail::_lnx_gdb = Candidate;
                     break;
                 }
             }
             Start = End + 1;
         }
     }
-    LOG_VERBOSE(LogInformation, "gdb={}", Finder::Detail::_gdb ? *Finder::Detail::_gdb : "<not found>")
+    LOG_VERBOSE(LogInformation, "gdb={}", finder::detail::_lnx_gdb ? *finder::detail::_lnx_gdb : "<not found>")
 
     ErrorLevel = AgnosticLaunch();
 
@@ -198,5 +205,9 @@ i32 main(i32 c, char const* v[])
 
     return ErrorLevel;
 }
+
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* JAFG_WITH_CLANG */
 
 #endif /* JAFG_PLATFORM_LINUX */

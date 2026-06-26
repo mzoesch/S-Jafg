@@ -327,7 +327,7 @@ void Jafg::WFinder::OnExtendUpdate(finder::path const& Path, LEntry& Entry)
         Entry.bExtended ? LTexture2::FromAsset("Icons/Jafg.ExtendDown") : LTexture2::FromAsset("Icons/Jafg.ExtendRight");
 
     auto Idx{algo::distance(this->Container->GetChildren(), algo::find_checked(this->Container->GetChildren(), &Parent, algo::unique_raw))};
-    auto Indent{this->Padding2Indent(Parent.Padding)};
+    auto Indent{static_cast<std::size_t>(this->Padding2Indent(Parent.Padding))};
 
     check(this->Container == Parent.GetParentChecked())
     if (Entry.bExtended)
@@ -340,7 +340,7 @@ void Jafg::WFinder::OnExtendUpdate(finder::path const& Path, LEntry& Entry)
     {
         auto Where{Idx + 1uz};
         auto& Children{this->Container->GetChildren()};
-        while (algo::valid_index(Children, Where) && this->Padding2Indent(Children[Where]->AsStatic<WParent>().Padding) > Indent)
+        while (algo::valid_index(Children, Where) && static_cast<std::size_t>(this->Padding2Indent(Children[Where]->AsStatic<WParent>().Padding)) > Indent)
         {
             Children[Where]->RemoveFromParent2();
         }

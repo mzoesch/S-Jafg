@@ -220,11 +220,6 @@ EPlatformExit::Type AgnosticLaunch()
     LOG_VERBOSE(LogInformation, "TargetArchitecture={}", App::GetTargetArchitecture())
     LOG_VERBOSE(LogInformation, "TargetType={}", App::GetTargetType())
     LOG_VERBOSE(LogInformation, "TargetConfiguration={}", App::GetTargetConfiguration())
-    LOG_VERBOSE(LogInformation, "TargetCompound={}", App::GetTargetCompound())
-    LOG_VERBOSE(LogInformation, "TargetPlatformCompound={}", App::GetTargetPlatformCompound())
-    LOG_VERBOSE(LogInformation, "TargetPath={}", App::GetTargetPath())
-    LOG_VERBOSE(LogInformation, "ExpectedRuntime={}", App::GetExpectedRuntime())
-    LOG_VERBOSE(LogInformation, "ExpectedRuntimePath={}", App::GetExpectedRuntimePath())
 
     App::Detail::PauseBeforeExit = !!App::GetCommandLineArgument(App::PauseBeforeExit);
     LOG_VERBOSE(LogInformation, "PauseBeforeExit={}", App::Detail::PauseBeforeExit)
@@ -240,17 +235,17 @@ EPlatformExit::Type AgnosticLaunch()
 
     Tasks::RegisterThread(ENamedThreads::Master);
 
-    std::filesystem::current_path(Finder::Detail::GetEngineRootDir());
-    Finder::CreateDirectories(Finder::GetTempDir());
-    Finder::CreateDirectories(Finder::GetDumpsDir());
-    Finder::CreateDirectories(Finder::GetSavedDir());
-    LOG_VERBOSE(LogInformation, "EngineDir={}", Finder::Detail::GetEngineRootDir())
-    LOG_VERBOSE(LogInformation, "ProcDir={}", Finder::Detail::GetSelfProcDir())
+    std::filesystem::current_path(finder::detail::_engine_root_dir_slow());
+    finder::create_directories(finder::temp_dir());
+    finder::create_directories(finder::dumps_dir());
+    finder::create_directories(finder::saved_dir());
+    LOG_VERBOSE(LogInformation, "EngineDir={}", finder::detail::_engine_root_dir_slow())
+    LOG_VERBOSE(LogInformation, "ProcDir={}", finder::detail::self_proc_dir_slow())
 
     /* This is technically a race cond but who really cares. */
-    Finder::Detail::DumpFile = absolute(Finder::GetMostRecentMemDumpFile());
-    Finder::CreateDirectories(Finder::Detail::DumpFile.parent_path());
-    LOG_VERBOSE(LogLaunch, "Preferred dump file is [{}].", Finder::Detail::DumpFile)
+    finder::detail::dump_file = absolute(finder::most_recent_mem_dump_file());
+    finder::create_directories(finder::detail::dump_file.parent_path());
+    LOG_VERBOSE(LogInformation, "DumpFile={}", finder::detail::dump_file)
 
 #if JAFG_WITH_TESTS
     return Tester::LTestFramework{}.RunRegisteredTests();

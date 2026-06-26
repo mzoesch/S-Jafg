@@ -138,7 +138,7 @@ inline Detail::LBeginStylingFnResult::~LBeginStylingFnResult()
     check(this->Factory.get())
     check(this->Factory->_bReleased == false)
 
-    u64 Idx{this->Where.has_value() ? this->Where.value() : this->Parent.GetChildren().size()};
+    u64 Idx{this->Where.has_value() ? static_cast<u64>(*this->Where) : this->Parent.GetChildren().size()};
     this->Parent.AddChildAt(Idx++, TJxxUnique<WNode>{&this->Factory->Node});
     for (auto* Sibling : this->Factory->Siblings)
     {

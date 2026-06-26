@@ -1,0 +1,8 @@
+{
+    "inherits": [
+        "Jafg.TriangleList",
+        "Jafg.DepthTested",
+        "Jafg.Rasterization",
+        "Jafg.SolidColorAttachment"
+    ]
+}

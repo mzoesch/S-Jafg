@@ -43,7 +43,7 @@
         _,                                                                                         \
         ConstructionHelper                                                                         \
         )();                                                                                       \
-        inline static ::Jafg::EJxxClassFlags Flags{::Jafg::CombineJxxClassFlags(__VA_ARGS__)};  \
+        static constexpr ::Jafg::EJxxClassFlags Flags{::Jafg::CombineJxxClassFlags(__VA_ARGS__)};  \
     };
 
 
@@ -100,7 +100,7 @@
         _,                                                                                                       \
         ConstructionHelper                                                                                       \
         )();                                                                                                     \
-        inline static ::Jafg::EJxxClassFlags Flags{::Jafg::CombineJxxClassFlags(__VA_ARGS__)};                \
+        static constexpr ::Jafg::EJxxClassFlags Flags{::Jafg::CombineJxxClassFlags(__VA_ARGS__)};                \
         typedef FactoryType LFactory;                                                             \
     };
 

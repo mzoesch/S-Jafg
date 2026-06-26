@@ -26,6 +26,7 @@
 #include "Widgets/Editor.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/ShaderSubsystem.h"
+#include "Framework/TextureSubsystem.h"
 #include "Rhi/OutlineRendering.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
@@ -146,11 +147,11 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
 {
     if (this->RenderTarget.IsInitialized())
     {
-        check(!!this->RenderTarget.GetMsaa().Image.GetBuffer())
+        check(!!*this->RenderTarget.GetMsaa().Image)
         if (!this->RenderTarget.IsResolvedBindless())
         {
             this->RenderTarget._SetResolvedBindlessIndex(
-                Info.Frontend._VK_AddTransientImageToGlobalBindlessArray(this->RenderTarget.GetResolved().ImageView)
+                Info.Frontend.GetSubsystemChecked<JTextureSubsystem>()->_Vk_AddTransientImageToGlobalBindlessArray(this->RenderTarget.GetResolved().ImageView)
                 .value_or(INDEX_NONE)
                 );
             if (!this->RenderTarget.IsResolvedBindless())
@@ -414,27 +415,44 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
             std::bind(&WWorldViewer::OnPreDraw, this, std::placeholders::_1));
     }
 
-    auto& MaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
     auto& Frontend{this->GetFrontend()};
-    auto Binding = MaterialSubsystem.GetBinding(*this->PostSelectionMaterialInstance, "StencilTexture");
-    vk::DescriptorImageInfo Info{
-        .imageView = this->GetWorldRenderTarget().GetSelectedImageView(),
-        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        };
-    check(Info.sampler == nullptr)
-    auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.Layout, [](auto const& E){ return E.first; })};
-    check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
-    std::array Writes{
-        vk::WriteDescriptorSet{
+
+    {
+        auto Binding = this->PostSelectionMaterialInstance->GetBinding("stencilTexture");
+        vk::DescriptorImageInfo Info{
+            .imageView = this->GetWorldRenderTarget().GetSelectedImageView(),
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            };
+        check(Info.sampler == nullptr)
+        auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, algo::pair_first)};
+        check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
+        std::array Writes{vk::WriteDescriptorSet{
             .dstSet = *It->second,
-            .dstBinding = Binding.Set,
+            .dstBinding = Binding.index,
             .dstArrayElement = 0,
             .descriptorCount = 1,
             .descriptorType = vk::DescriptorType::eSampledImage,
             .pImageInfo = &Info,
-            },
-        };
-    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+            },};
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
+    {
+        auto Binding = this->PostSelectionMaterialInstance->GetBinding("sampler");
+        vk::DescriptorImageInfo Info{
+            .sampler = Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToBorder(),
+            };
+        auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, algo::pair_first)};
+        check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = *It->second,
+            .dstBinding = Binding.index,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampler,
+            .pImageInfo = &Info,
+            },};
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
 }
 
 bool Jafg::WWorldViewer::OnPreDraw(LRenderInfo const& Info)
@@ -479,16 +497,16 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 check(this->PostSelectionMaterialInstance->FrequentDescriptorSets[Info.Frame].empty())
                 check(this->PostSelectionMaterialInstance->InfrequentDescriptorSets.size() == 1)
 
-                auto& ShaderSubsystem{*this->GetFrontend().GetSubsystemChecked<JShaderSubsystem>()};
+                // auto& ShaderSubsystem{*this->GetFrontend().GetSubsystemChecked<JShaderSubsystem>()};
 
-                auto& FetchedMaterial{this->PostSelectionMaterialInstance->Material->FetchedMaterial};
+                // auto& FetchedMaterial{this->PostSelectionMaterialInstance->Material->FetchedMaterial};
                 auto& Pipeline{this->PostSelectionMaterialInstance->Material->Pipeline};
                 algo::for_each(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, [&](auto& Set)
                 {
                     auto const& [Idx, DescriptorSet] = Set;
                     Info.CommandBuffer.bindDescriptorSets2({
                         .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                        .layout = Pipeline.Layout,
+                        .layout = Pipeline.pipeline_layout,
                         .firstSet = 0,
                         .descriptorSetCount = 1,
                         .pDescriptorSets = &*DescriptorSet,
@@ -505,8 +523,8 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                     .Tint = Colors::Orange,
                     };
                 Info.CommandBuffer.pushConstants2({
-                    .layout = *Pipeline.Layout,
-                    .stageFlags = PC::Outline::Flags(),
+                    .layout = *Pipeline.pipeline_layout,
+                    .stageFlags = PC::Outline::shader_stage_flags(),
                     .offset = 0,
                     .size = sizeof(PC::Outline),
                     .pValues = &pc

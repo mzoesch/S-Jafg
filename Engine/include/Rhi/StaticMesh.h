@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Rhi/RendererCore.h"
-#include "Rhi/VertexInput.h"
+#include "Rhi/Objects.h"
 #include "Rhi/ResourceReference.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Engine/Jxx.h"
@@ -13,21 +13,24 @@ namespace Jafg
 
 struct LRenderInfo;
 
-typedef EResourceStateBits EStaticMeshStateBits;
-typedef EResourceState EStaticMeshState;
+struct LStaticMesh;
+typedef rhi::shared_ref<LStaticMesh> LStaticMeshRef;
+
+typedef rhi::resource_state_bits EStaticMeshStateBits;
+typedef rhi::resource_state_flags EStaticMeshState;
 
 //# TODO: Make also an abstraction for instanced static meshes.
 //# TODO: Abstract the size of indices (u16 vs u32). (Currently u32 only.)
 struct LStaticMesh final
 {
-    struct Vertex final
+    struct Vertex final: rhi::vertex_input_template<Vertex>
     {
         LVec3F Position;
         LVec3F Normal;
         LVec2F TexCoord;
         LVec4F Tangent;
 
-        inline static std::array<vk::VertexInputBindingDescription, 1> const& BindingDescriptions() noexcept
+        NODISCARD static std::array<vk::VertexInputBindingDescription, 1> const& binding_descriptions() noexcept
         {
             static std::array Desc{vk::VertexInputBindingDescription{
                 .binding = 0,
@@ -37,7 +40,7 @@ struct LStaticMesh final
             return Desc;
         }
 
-        inline static std::array<vk::VertexInputAttributeDescription, 4> const& AttributeDescriptions() noexcept
+        NODISCARD static std::array<vk::VertexInputAttributeDescription, 4> const& attribute_descriptions() noexcept
         {
             static std::array Desc{
                 vk::VertexInputAttributeDescription{
@@ -61,7 +64,7 @@ struct LStaticMesh final
             return this->Position == V.Position && this->Normal == V.Normal && this->TexCoord == V.TexCoord && this->Tangent == V.Tangent;
         }
     };
-    static_assert(CDeviceVertexInput<Vertex>);
+    static_assert(rhi::vertex_input<Vertex>);
 
     enum struct EResult
     {
@@ -122,8 +125,8 @@ struct LStaticMesh final
     inline void FreeFromDevice() noexcept
     {
         this->IndexCount = 0;
-        this->VertexBuffer.Free();
-        this->IndexBuffer.Free();
+        this->VertexBuffer.free();
+        this->IndexBuffer.free();
     }
 
     ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
@@ -136,15 +139,14 @@ struct LStaticMesh final
 
     //# Device memory. Modify with care.
     u32 IndexCount{};
-    LDeviceBuffer VertexBuffer;
-    LDeviceBuffer IndexBuffer;
+    rhi::device_buffer VertexBuffer;
+    rhi::device_buffer IndexBuffer;
 
 private:
 
     LPath Path;
 };
 
-typedef TSharedRef<LStaticMesh> LStaticMeshRef;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept;
 
 } /* ~Namespace Jafg */

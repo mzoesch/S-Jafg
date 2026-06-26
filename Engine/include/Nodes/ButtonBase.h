@@ -289,8 +289,8 @@ struct LStylePalette final
 
     NODISCARD bool operator==(LStylePalette const& Rhs) const noexcept = default;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LStylePalette::State, Tint, Outline, TextTint)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LStylePalette, Normal, Hover, Press, Selected, Disabled)
+SERDE_JSON_TYPE_NON_INTRUSIVE(LStylePalette::State, Tint, Outline, TextTint)
+SERDE_JSON_TYPE_NON_INTRUSIVE(LStylePalette, Normal, Hover, Press, Selected, Disabled)
 
 //# Inherit from this to access common button logic.
 template<typename TNode, typename TBrush, auto BrushProj> requires std::is_base_of_v<LRegionBrush, TBrush>

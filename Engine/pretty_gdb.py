@@ -27,6 +27,15 @@ class JafgPrettyStringPrinter(JafgPrettyPrinter):
         return 'string'
 
 
+class CXX11_Path(JafgPrettyStringPrinter): # Only because: GNU C++ library renderers is outdated
+    def __init__(self, val, str_repr):
+        super().__init__(val, str_repr)
+        self.patterns = ['^std::filesystem::path$', '^std::filesystem::__cxx11::path$']
+
+    def to_string(self):
+        return '{}'.format(self.val['_M_pathname']['_M_dataplus']['_M_p'])
+
+
 class GlmVec_Printer(JafgPrettyStringPrinter):
     def __init__(self, val, str_repr):
         super().__init__(val, str_repr)
@@ -148,6 +157,7 @@ def jafg_pretty_lookup(val: any) -> any:
     type_str: str = str(val.type.strip_typedefs())
 
     printers = [
+        CXX11_Path,
         GlmVec_Printer,
         Color_Printer,
         LinearColor_Printer,

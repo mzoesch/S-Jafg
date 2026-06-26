@@ -1,0 +1,18 @@
+{
+    "pipelineColorBlendState": {
+        "logicOpEnable": false,
+        "logicOp": "eClear",
+        "pipelineColorBlendAttachmentStates": [
+            {
+                "blendEnable": true,
+                "srcColorBlendFactor": "eSrcAlpha",
+                "dstColorBlendFactor": "eOneMinusSrcAlpha",
+                "colorBlendOp": "eAdd",
+                "srcAlphaBlendFactor": "eOne",
+                "dstAlphaBlendFactor": "eZero",
+                "alphaBlendOp": "eAdd",
+                "colorWriteMask": "eR|eG|eB|eA"
+            }
+        ]
+    }
+}

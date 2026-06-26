@@ -10,7 +10,7 @@ pub const PATH_SAVED_DIR: &str = "Saved";
 #[allow(dead_code)]
 pub const PATH_BINARIES: &str = "bin";
 #[allow(dead_code)]
-pub const PATH_INTERMEDIATES: &str = "Temp/int";
+pub const PATH_INTERMEDIATES: &str = "jafg_intermediates";
 
 #[allow(dead_code)]
 pub const FILE_PCH_H: &str = "ModulePch.generated.h";
@@ -94,24 +94,16 @@ pub fn to_posix_path(path: &str) -> String
 #[allow(dead_code)]
 pub fn construct_relative_gh_path(args: &Cli) -> String
 {
-    return format!("{PATH_INTERMEDIATES}/{}-{}/{}-{}/{}/gh",
-        args.platform,
-        args.architecture,
-        args.target,
-        args.config,
-        args.module,
+    return format!("{}/gh",
+        args.binary_dir,
     );
 }
 
 #[allow(dead_code)]
 pub fn construct_relative_gt_path(args: &Cli) -> String
 {
-    return format!("{PATH_INTERMEDIATES}/{}-{}/{}-{}/{}/gt",
-       args.platform,
-       args.architecture,
-       args.target,
-       args.config,
-       args.module,
+    return format!("{}/gt",
+       args.binary_dir,
     );
 }
 

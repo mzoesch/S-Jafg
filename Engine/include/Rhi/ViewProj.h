@@ -2,15 +2,15 @@
 
 #pragma once
 
-#include "Rhi/UniformBufferObjects.h"
+#include "Rhi/Objects.h"
 
 namespace Jafg::UBO
 {
 
-struct ViewProj final : public TUbo<ViewProj, 0, vk::ShaderStageFlagBits::eVertex>
+struct ViewProj final: rhi::ubo_template<ViewProj, vk::ShaderStageFlagBits::eVertex>
 {
     LMat4F Mat;
 };
-static_assert(CUniformBufferObject<ViewProj>);
+static_assert(rhi::ubo<ViewProj>);
 
 } /* ~Namespace Jafg::UBO */

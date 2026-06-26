@@ -1,7 +1,6 @@
 {
-    "Shader": "Jafg.Pbr",
-    "Type": "Solid",
-    "Properties" : {
+    "inherits": "Jafg.Pbr",
+    "properties": {
         "baseColorMap": "Textures/Jafg.MetallicGold/Base",
         "metallicRoughnessMap": "Textures/Jafg.MetallicGold/Roughness",
         "normalMap": "Textures/Jafg.MetallicGold/Normal",
