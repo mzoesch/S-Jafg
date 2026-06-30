@@ -2,8 +2,7 @@
 
 #if JAFG_PLATFORM_WINDOWS
 
-#include "Core/Application.h"
-#include "Platform/PlatformMisc.h"
+#include "Core/App.h"
 
 #if JAFG_WITH_MSVC
     #if !JAFG_IN_SHIPPING
@@ -23,9 +22,9 @@ DECLARE_INLINE_LOG_CATEGORY(LogCRT, Trace)
 namespace
 {
 void InvalidParameterHandler(
-      const LChar* Expression
-    , const LChar* Function
-    , const LChar* File
+      LChar const* Expression
+    , LChar const* Function
+    , LChar const* File
     , u32 Line
     , u64 pReserved
     )
@@ -68,32 +67,29 @@ EPlatformExit::Type SehUnwinder()
 #if JAFG_IN_SHIPPING
 i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
 #else /* JAFG_IN_SHIPPING */
-i32 main(i32 ArgC, char* ArgV[])
+i32 main(i32 c, char* v[])
 #endif /* !JAFG_IN_SHIPPING */
 {
 #if JAFG_IN_SHIPPING
-    i32 ArgC{__argc};
-    char** ArgV{__argv};
+    i32 c{__argc};
+    char** v{__argv};
 #endif /* JAFG_IN_SHIPPING */
 
     i32 ErrorLevel{};
 
-    TArray<LString> Arguments;
-    for (auto Idx{0uz}; Idx < static_cast<std::size_t>(ArgC); ++Idx)
-    {
-        Arguments.emplace_back(ArgV[Idx]);
-    }
-    Application::Private::RawCommandLine = std::move(Arguments);
+    check(c > 0)
+    TArray<LString> Arguments; algo::for_each(v + 1, v + c, [&Arguments](auto* Arg){ Arguments.emplace_back(Arg); });
+    App::Detail::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(Application::GetRawCmdLine(), "-Jafg.WaitForDebugger"))
+    if (algo::contains(App::GetRawCommandLine(), "-Jafg.WaitForDebugger"sv))
     {
-        Application::Private::WaitForDebuggerGracefully(true);
+        App::Detail::WaitForDebuggerGracefully(true);
     }
 
     _set_invalid_parameter_handler(::InvalidParameterHandler);
 
 #if JAFG_WITH_MSVC
-    Application::Private::bAlwaysReportCrash = Application::HasCmdLineParameter("AlwaysReportCrash");
+    App::Detail::AlwaysReportCrash = algo::contains(App::GetRawCommandLine(), "-Jafg.AlwaysReportCrash");
 #endif /* JAFG_WITH_MSVC */
 
 #if !JAFG_IN_SHIPPING && JAFG_WITH_MSVC
@@ -102,7 +98,7 @@ i32 main(i32 ArgC, char* ArgV[])
 
 #if JAFG_WITH_MSVC
 #if !JAFG_IN_SHIPPING
-    if (Application::HasTracerPidNow() && (Application::IsAlwaysReportCrash() == false))
+    if (App::Detail::IsTracerPidValidVerySlow() && !App::IsAlwaysReportCrash())
     {
         LOG_VERBOSE(LogPlatform, "Suppressing crash dialog due to presence of tracer pid.")
         _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
@@ -121,7 +117,7 @@ i32 main(i32 ArgC, char* ArgV[])
     ErrorLevel = AgnosticLaunch();
 #endif /* !JAFG_WITH_MSVC */
 
-    if (Application::IsPauseBeforeExit())
+    if (App::IsPauseBeforeExit())
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")

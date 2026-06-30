@@ -19,8 +19,8 @@
     #pragma GCC diagnostic ignored "-Wint-in-bool-context"
     #pragma GCC diagnostic ignored "-Wunused-function"
 #endif /* JAFG_WITH_GCC */
-    #include <harfbuzz/hb.h>
-    #include <harfbuzz/hb-ft.h>
+    #include <hb.h>
+    #include <hb-ft.h>
     #include <ft2build.h>
     #include FT_FREETYPE_H
     #include <msdfgen.h>

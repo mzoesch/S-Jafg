@@ -3,147 +3,107 @@
 #if JAFG_PLATFORM_WINDOWS
 
 #include "Minimal.afx"
-#include "Core/Application.h"
+#include "Core/App.h"
 
 #include <dbghelp.h>
+#include <csignal>
 
-void Jafg::LOnPlatformBreakWindows::ExitQuietly()
+void Jafg::App::Detail::TrapMeFn::operator()() const noexcept
 {
     ::_Exit(EXIT_FAILURE);
 }
 
-void Jafg::LOnPlatformBreakWindows::OnProgramPanicImpl
-(
-    LPrimitivePlatformTypesGeneric::LJafgChar const* InMessage
-)
+void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noexcept
 {
     const auto Proc{::GetCurrentProcess()};
     const auto Pid{::GetCurrentProcessId()};
     const auto Tid{::GetCurrentThreadId()};
 
-    // TODO: Stop threads.
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Dump
-    const LPath DumpF{Finder::GetMostRecentMemDumpFile()};
-    auto hFile{::CreateFileW(
-          DumpF.c_str()
+    auto hFile{::CreateFileW(finder::detail::dump_file.c_str()
         , GENERIC_WRITE
         , 0
-        , NULL
+        , nullptr
         , CREATE_ALWAYS
         , FILE_ATTRIBUTE_NORMAL
-        , NULL
+        , nullptr
         )};
     if (hFile != INVALID_HANDLE_VALUE)
     {
-        if (MiniDumpWriteDump(Proc, Pid, hFile,
-            static_cast<MINIDUMP_TYPE>(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory), NULL, NULL, NULL)
-            == FALSE)
+        if (::MiniDumpWriteDump(
+            Proc, Pid, hFile,
+            static_cast<MINIDUMP_TYPE>(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory), nullptr, nullptr, nullptr
+            ) == FALSE)
         {
             LOG_ERROR(LogPlatform,
-                "Failed to create memory dump for our process [PID: [{}] with TID: [{}]]. Platform error: [{}].",
-                Pid, Tid, ::GetLastError()
-                )
-        }
-        else
-        {
-            LOG_VERBOSE(LogPlatform,
-                "Memory dump created at [{}] for our process [PID: [{}] with TID: [{}]].",
-                DumpF, Pid, Tid
+                "Failed to create memory dump for our process [PID: [{}] with TID: [{}]]. Platform error: [{}]."
+                , Pid, Tid, ::GetLastError()
                 )
         }
         ::CloseHandle(hFile);
     }
     else
     {
-        LOG_ERROR(LogPlatform, "Failed to create or open memory dump file at [{}] for our process [PID: [{}] with TID: [{}]]. Platform error: [{}].",
-            DumpF, Pid, Tid, ::GetLastError()
-            )
+        // Immediate elevation. Not our problem.
+        std::abort();
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Backtrace
-    void* Stack[JAFG_PLATFORM_MAX_FRAMES];
-    USHORT Frames{::CaptureStackBackTrace(0, JAFG_PLATFORM_MAX_FRAMES, Stack, NULL)};
+    LOG_ERROR(LogJafgInternal, "Fatal Error: [{}].", Message)
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Stdout
-    LOG_ERROR(LogJafgInternal, "Fatal Error: [{}].", InMessage)
-    if (SymInitialize(GetCurrentProcess(), NULL, TRUE))
+    if (App::Detail::bDumpStack)
     {
-        SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(
-            sizeof(SYMBOL_INFO) + 256 * sizeof(char),
-            1
-            );
-        symbol->MaxNameLen = 255;
-        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+        void* Stack[JAFG_PLATFORM_MAX_FRAMES];
+        USHORT Frames{::CaptureStackBackTrace(0, JAFG_PLATFORM_MAX_FRAMES, Stack, nullptr)};
 
-        IMAGEHLP_LINE64 line;
-        line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-
-        DWORD displacement;
-
-        for (USHORT i = 0; i < Frames; ++i)
+        if (::SymInitialize(::GetCurrentProcess(), nullptr, TRUE))
         {
-            DWORD64 address = (DWORD64)(Stack[i]);
+            SYMBOL_INFO* Symbol{static_cast<SYMBOL_INFO*>(calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1))};
+            Symbol->MaxNameLen = 255;
+            Symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-            if (SymFromAddr(Proc, address, 0, symbol))
+            IMAGEHLP_LINE64 Line;
+            Line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+            DWORD Displacement;
+            for (USHORT Idx{0uz}; Idx < Frames; ++Idx)
             {
-                if (SymGetLineFromAddr64(Proc, address, &displacement, &line))
+                DWORD64 Addr{reinterpret_cast<DWORD64>(Stack[Idx])};
+                if (::SymFromAddr(Proc, Addr, nullptr, Symbol))
                 {
-                    printf(
-                        "#%02u %s (%s:%lu)\n",
-                        i,
-                        symbol->Name,
-                        line.FileName,
-                        line.LineNumber
-                    );
+                    if (::SymGetLineFromAddr64(Proc, Addr, &Displacement, &Line))
+                    {
+                        printf("#%02u %s (%s:%lu)\n", Idx, Symbol->Name, Line.FileName, Line.LineNumber);
+                    }
+                    else
+                    {
+                        printf("#%02u %s (no line info)\n", Idx, Symbol->Name);
+                    }
                 }
                 else
                 {
-                    printf(
-                        "#%02u %s (no line info)\n",
-                        i,
-                        symbol->Name
-                    );
+                    printf("#%02u [unknown]\n", Idx);
                 }
             }
-            else
-            {
-                printf("#%02u [unknown]\n", i);
-            }
+            ::free(Symbol);
+            ::SymCleanup(Proc);
         }
-
-        free(symbol);
-        SymCleanup(Proc);
-    }
-    else
-    {
-        LOG_ERROR(LogJafgInternal, "Failed to retrieve human readable backtrace.")
-        std::ostringstream TraceStream;
-        for (USHORT Idx{0uz}; Idx < Frames; ++Idx)
+        else
         {
-            TraceStream << Stack[Idx] << '\n';
+            LOG_ERROR(LogJafgInternal, "Failed to retrieve human readable backtrace.")
+            std::ostringstream TraceStream;
+            for (USHORT Idx{0uz}; Idx < Frames; ++Idx)
+            {
+                TraceStream << Stack[Idx] << '\n';
+            }
+            LOG_ERROR(LogJafgInternal, "Stacktrace:\n{}.", TraceStream.str())
         }
-        LOG_ERROR(LogJafgInternal, "Stacktrace:\n{}.", TraceStream.str())
     }
+
     Jafg::FlushOutStreams();
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Dialog
 #if JAFG_WITH_LOCAL_LAYER
-    if (App::Private::bGSuppressCrashDialog == false && Hal::IsTracerPidValidVerySlow() == false)
+    if (!App::Detail::bSuppressCrashDialog && !IsTracerPidValidVerySlow())
     {
-        const LWString Caption{LITERAL_WIDE("Jafg panicked; We are fucked.")};
-        const auto Message{algo::utf8_to_utf16(InMessage, std::strlen(InMessage))};
-
-        MessageBox(
-            nullptr,
-            Message.c_str(),
-            Caption.c_str(),
-            MB_ICONERROR | MB_OK
-            );
+        MessageBox(nullptr, algo::utf8_to_utf16(Message).c_str(), LITERAL_WIDE("Jafg panicked; We are fucked."), MB_ICONERROR | MB_OK);
     }
     else
     {
@@ -151,43 +111,21 @@ void Jafg::LOnPlatformBreakWindows::OnProgramPanicImpl
     }
 #endif /* JAFG_WITH_LOCAL_LAYER */
 
-    // TODO: Stacktrace
-
     // Flush, because some streams may be buffered and missing while aborting.
     Jafg::FlushOutStreams();
 
     ///////////////////////////////////////////////////////////////////////////////
     // The final absolute end.
-    if (Hal::IsTracerPidValidVerySlow())
+    if (IsTracerPidValidVerySlow())
     {
         //# The last resort if the program is being debugged. This is the end.
         JAFG_PLATFORM_BREAK()
     }
 
-    LOnPlatformBreakWindows::ExitQuietly();
+    (*this)();
 }
 
-void Jafg::LOnPlatformBreakWindows::OnProgramPanic
-(
-    LPrimitivePlatformTypesGeneric::LJafgChar const* InBaseMessage,
-    LPrimitivePlatformTypesGeneric::LJafgChar const* InFile,
-    LPrimitivePlatformTypesGeneric::u64       const  InLine
-)
-{
-    std::ostringstream Stream;
-    Stream << "Fuck. Jafg entered an one-way enclosing block inside a critical control path and lost the war of being a good boy." << "\n\n"
-           << InBaseMessage << "\n\n"
-           << "~File: " << InFile << "\n"
-           << "~Line: " << InLine
-           ;
-
-    LOnPlatformBreakWindows::OnProgramPanicImpl(Stream.str().c_str());
-}
-
-namespace Jafg::Hal
-{
-
-void SleepNoStats(const f64 InSeconds)
+void Jafg::App::SleepNoStats(f64 InSeconds)
 {
     if (const DWORD Milli{ static_cast<DWORD>(InSeconds * maths::s2ms_d) }; Milli > 0)
     {
@@ -195,23 +133,13 @@ void SleepNoStats(const f64 InSeconds)
     }
     else
     {
-        YieldThread();
+        std::this_thread::yield();
     }
-
-    return;
 }
 
-void YieldThread()
-{
-    ::SwitchToThread();
-    return;
-}
-
-bool IsTracerPidValidVerySlow()
+bool Jafg::App::Detail::IsTracerPidValidVerySlow()
 {
     return ::IsDebuggerPresent();
 }
-
-} /* ~Namespace Jafg::Hal */
 
 #endif /* JAFG_PLATFORM_WINDOWS */

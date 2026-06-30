@@ -55,7 +55,7 @@ extern void __assert_fail(
     #if JAFG_WITH_GCC
         // #pragma clang diagnostic ignored "-Wformat-security"
         #include "Definitions/PushCommonGccDiagnostics.h"
-    #endif
+    #endif /* JAFG_WITH_GCC */
 #endif /* JAFG_DO_COMPILER_DIAGNOSTIC_SETUP */
 
 #ifndef JAFG_PLATFORM_DESKTOP
@@ -140,10 +140,6 @@ extern void __assert_fail(
 #ifndef JAFG_PLATFORM_MAX_PATH
     #define JAFG_PLATFORM_MAX_PATH                                      300
 #endif /* JAFG_PLATFORM_MAX_PATH */
-
-#ifndef JAFG_PLATFORM_USES_STD_FINDER
-    #define JAFG_PLATFORM_USES_STD_FINDER                               1
-#endif /* JAFG_PLATFORM_USES_STD_FINDER */
 
 #ifndef JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
     #define JAFG_PLATFORM_NO_DISCARD_CTRL_PATH                          { __asm__ __volatile__ ("nop"); }

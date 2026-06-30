@@ -8,34 +8,6 @@
     },
 
     {
-      "name": "visual-base",
-      "hidden": true,
-      "binaryDir": "${sourceDir}/out/vs/build/${presetName}",
-      "installDir": "${sourceDir}/out/vs/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe"
-      }
-    },
-    {
-      "name": "visual-2026",
-      "hidden": true,
-      "inherits": "visual-base",
-      "generator": "Visual Studio 18 2026"
-    },
-    {
-      "name": "visual-2022",
-      "hidden": true,
-      "inherits": "visual-base",
-      "generator": "Visual Studio 17 2022"
-    },
-    {
-      "name": "visual-latest",
-      "hidden": true,
-      "inherits": "visual-2026"
-    },
-
-    {
       "name": "linux",
       "hidden": true,
       "inherits": "ninja-base",
@@ -54,15 +26,7 @@
       }
     },
     {
-      "name": "windows-msvc",
-      "hidden": true,
-      "inherits": [
-        "ninja-base",
-        "windows-base"
-      ]
-    },
-    {
-      "name": "windows-msys",
+      "name": "windows-ucrt",
         "hidden": true,
         "inherits": [
             "ninja-base",
@@ -278,6 +242,158 @@
       "displayName": "Linux | Test-Sanitized",
       "inherits": [
         "linux",
+        "test",
+        "debug",
+        "sanitized"
+      ]
+    },
+
+    {
+      "name": "win-x86_64--editor-ship",
+      "displayName": "Windows | Editor-Shipping",
+      "inherits": [
+        "windows-ucrt",
+        "editor",
+        "shipping"
+      ]
+    },
+    {
+      "name": "win-x86_64--editor-dev",
+      "displayName": "Windows | Editor-Development",
+      "inherits": [
+        "windows-ucrt",
+        "editor",
+        "development"
+      ]
+    },
+    {
+      "name": "win-x86_64--editor-dbg",
+      "displayName": "Windows | Editor-Debug",
+      "inherits": [
+        "windows-ucrt",
+        "editor",
+        "debug"
+      ]
+    },
+    {
+      "name": "win-x86_64--editor-sanitized",
+      "displayName": "Windows | Editor-Sanitized",
+      "inherits": [
+        "windows-ucrt",
+        "editor",
+        "debug",
+        "sanitized"
+      ]
+    },
+
+    {
+      "name": "win-x86_64--cl-ship",
+      "displayName": "Windows | Client-Shipping",
+      "inherits": [
+        "windows-ucrt",
+        "client",
+        "shipping"
+      ]
+    },
+    {
+      "name": "win-x86_64--cl-dev",
+      "displayName": "Windows | Client-Development",
+      "inherits": [
+        "windows-ucrt",
+        "client",
+        "development"
+      ]
+    },
+    {
+      "name": "win-x86_64--cl-dbg",
+      "displayName": "Windows | Client-Debug",
+      "inherits": [
+        "windows-ucrt",
+        "client",
+        "debug"
+      ]
+    },
+    {
+      "name": "win-x86_64--cl-sanitized",
+      "displayName": "Windows | Client-Sanitized",
+      "inherits": [
+        "windows-ucrt",
+        "client",
+        "debug",
+        "sanitized"
+      ]
+    },
+
+    {
+      "name": "win-x86_64--daemon-ship",
+      "displayName": "Windows | Daemon-Shipping",
+      "inherits": [
+        "windows-ucrt",
+        "daemon",
+        "shipping"
+      ]
+    },
+    {
+      "name": "win-x86_64--daemon-dev",
+      "displayName": "Windows | Daemon-Development",
+      "inherits": [
+        "windows-ucrt",
+        "daemon",
+        "development"
+      ]
+    },
+    {
+      "name": "win-x86_64--daemon-dbg",
+      "displayName": "Windows | Daemon-Debug",
+      "inherits": [
+        "windows-ucrt",
+        "daemon",
+        "debug"
+      ]
+    },
+    {
+      "name": "win-x86_64--daemon-sanitized",
+      "displayName": "Windows | Daemon-Sanitized",
+      "inherits": [
+        "windows-ucrt",
+        "daemon",
+        "debug",
+        "sanitized"
+      ]
+    },
+
+    {
+      "name": "win-x86_64--test-ship",
+      "displayName": "Windows | Test-Shipping",
+      "inherits": [
+        "windows-ucrt",
+        "test",
+        "shipping"
+      ]
+    },
+    {
+      "name": "win-x86_64--test-dev",
+      "displayName": "Windows | Test-Development",
+      "inherits": [
+        "windows-ucrt",
+        "test",
+        "development"
+      ]
+    },
+    {
+      "name": "win-x86_64--test-dbg",
+      "displayName": "Windows | Test-Debug",
+      "inherits": [
+        "windows-ucrt",
+        "test",
+        "debug"
+      ]
+    },
+    {
+      "name": "win-x86_64--test-sanitized",
+      "displayName": "Windows | Test-Sanitized",
+      "inherits": [
+        "windows-ucrt",
         "test",
         "debug",
         "sanitized"

@@ -431,11 +431,6 @@ struct LPrimitivePlatformTypesGeneric
     #error "Platform is missing JAFG_PLATFORM_MAX_PATH definition."
 #endif /* !JAFG_PLATFORM_MAX_PATH */
 
-//# The finder implementation strategy.
-#ifndef JAFG_PLATFORM_USES_STD_FINDER
-    #error "Platform is missing JAFG_PLATFORM_USES_STD_FINDER definition."
-#endif /* JAFG_PLATFORM_USES_STD_FINDER */
-
 //# The maximal number of frames that can be stored when tracing.
 #ifndef JAFG_PLATFORM_MAX_FRAMES
     #define JAFG_PLATFORM_MAX_FRAMES                                    128

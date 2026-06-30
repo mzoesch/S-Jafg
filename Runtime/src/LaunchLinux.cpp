@@ -197,7 +197,7 @@ i32 main(i32 c, char const* v[])
     if (App::IsPauseBeforeExit())
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
-        LOG_INFO(LogPlatform, "Press any key to continue ...")
+        LOG_INFO(LogPlatform, "Press any key to continue...")
         Jafg::FlushOutStreams();
 
         std::cin.get();

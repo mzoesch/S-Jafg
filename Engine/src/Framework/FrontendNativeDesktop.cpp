@@ -17,7 +17,14 @@ void Jafg::LFrontendNativeDesktop::OpenDirectory(LPath const& Directory) const
     LOG_VERBOSE(LogSystem, "Executing: {}", Cmd)
     std::system(Cmd.c_str());
 #elif JAFG_PLATFORM_WINDOWS
-    #error Missing implementation.
+    LOG_VERBOSE(LogSystem, "Executing: open {}", absolute(Directory))
+    ShellExecute(nullptr
+        , LITERAL_TEXT("open")
+            , absolute(Directory).native().c_str()
+            , nullptr
+        , nullptr
+        , SW_SHOWDEFAULT
+        );
 #else /* JAFG_PLATFORM_WINDOWS */
     #error Missing implementation.
 #endif /* !JAFG_PLATFORM_WINDOWS */
@@ -38,7 +45,7 @@ void Jafg::LFrontendNativeDesktop::OpenTerminal(LPath const& Directory) const
         "wezterm",
         "xterm"
     };
-    for (auto* Term : Terms)
+    for (auto* Term: Terms)
     {
         auto Cmd{algo::sprintf("which {} > /dev/null 2>&1 && cd \"{}\" && {} &"
             , Term, absolute(Directory).native(), Term)};
@@ -49,7 +56,14 @@ void Jafg::LFrontendNativeDesktop::OpenTerminal(LPath const& Directory) const
         }
     }
 #elif JAFG_PLATFORM_WINDOWS
-    #error Missing implementation.
+    LOG_VERBOSE(LogSystem, "Executing: open cmd.exe /K cd /d \"{}\"", absolute(Directory))
+    ShellExecute(nullptr
+        , LITERAL_TEXT("open")
+            , LITERAL_TEXT("cmd.exe")
+            , (LITERAL_TEXT("/K cd /d \"") + absolute(Directory).native() + LITERAL_TEXT("\"")).c_str()
+        , nullptr
+        , SW_SHOWDEFAULT
+        );
 #else /* JAFG_PLATFORM_WINDOWS */
     #error Missing implementation.
 #endif /* !JAFG_PLATFORM_WINDOWS */
@@ -62,7 +76,14 @@ void Jafg::LFrontendNativeDesktop::OpenUrl(LStringView Url) const
     LOG_VERBOSE(LogSystem, "Executing: {}", Cmd)
     std::system(Cmd.c_str());
 #elif JAFG_PLATFORM_WINDOWS
-    #error Missing implementation.
+    LOG_VERBOSE(LogSystem, "Executing: open {}", Url)
+    ShellExecute(nullptr
+        , LITERAL_TEXT("open")
+            , algo::utf8_to_utf16(Url).c_str()
+            , nullptr
+        , nullptr
+        , SW_SHOWDEFAULT
+        );
 #else /* JAFG_PLATFORM_WINDOWS */
     #error Missing implementation.
 #endif /* !JAFG_PLATFORM_WINDOWS */

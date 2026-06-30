@@ -63,6 +63,8 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
         }
     }
 
+    Jafg::FlushOutStreams();
+
 #if JAFG_WITH_LOCAL_LAYER
     if (!App::Detail::bSuppressCrashDialog && !IsTracerPidValidVerySlow())
     {
@@ -117,7 +119,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
 
         Jafg::FlushOutStreams();
         (void)std::system(algo::sprintf(
-            "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\" --width=1920",
+            "zenity --error --title=\"Jafg panicked; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\" --width=1920",
             EscapeMessage(Message), EscapeMessage(Stream.str())).c_str());
     }
     else
@@ -125,6 +127,8 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
         LOG_VERBOSE(LogJafgInternal, "Suppressed jafg crash dialog window.")
     }
 #endif /* JAFG_WITH_LOCAL_LAYER */
+
+    Jafg::FlushOutStreams();
 
     ///////////////////////////////////////////////////////////////////////////////
     // The final absolute end.

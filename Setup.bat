@@ -6,7 +6,7 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 
 SET "MSYS2_ROOT=%~dp0msys64"
 SET "MSYS2_INSTALLER=%~dp0msys2-installer.exe"
-SET "MSYS2_URL=https://github.com/msys2/msys2-installer/releases/download/2025-08-30/msys2-base-x86_64-20250830.sfx.exe"
+SET "MSYS2_URL=https://github.com/msys2/msys2-installer/releases/download/2026-06-11/msys2-base-x86_64-20260611.sfx.exe"
 SET "MSYS2_SHELL=%MSYS2_ROOT%\ucrt64.exe"
 
 ECHO Generating MSYS2 environment...

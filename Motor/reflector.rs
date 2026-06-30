@@ -323,7 +323,8 @@ fn write_packet(args: &Cli, unit: JPacketUnit) -> i32
         .replace("~", "")
         .replace("/", "___")
         .replace(".", "__")
-        .replace("-", "_");
+        .replace("-", "_")
+        .replace(":", "_");
 
     h_builder.push_str(&format!(r##"
 // Copyright mzoesch. All rights reserved.

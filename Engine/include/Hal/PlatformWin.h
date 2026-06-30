@@ -45,203 +45,115 @@
     #endif /* !_MSVC_LANG */
 #endif /* JAFG_WITH_MSVC */
 
-namespace Jafg
+namespace Jafg::Detail
 {
 
-struct LPrimitivePlatformTypesGeneric;
-
-//# The platform types specification for Windows.
-struct LPrimitivePlatformTypesWindows final : public LPrimitivePlatformTypesGeneric
+struct LPrimitivePlatformTypesWindows: LPrimitivePlatformTypesGeneric
 {
     typedef wchar_t LChar;
 };
+typedef LPrimitivePlatformTypesWindows LPrimitivePlatformTypes;
 
-//# Make it public.
-#ifndef JAFG_PLATFORM_TYPES_STRUCT
-    #define JAFG_PLATFORM_TYPES_STRUCT                                  ::Jafg::LPrimitivePlatformTypesWindows
-#endif /* !JAFG_PLATFORM_TYPES_STRUCT */
+} /* ~Namespace Jafg::Detail */
 
-//# The platform break implementation details for break behavior on Windows.
-struct LOnPlatformBreakWindows;
+#if (!JAFG_WITH_CLANG) && (!JAFG_WITH_GCC) && (!JAFG_WITH_MSVC)
+    #error "Windows only supports clang, gcc, and msvc as a valid compiler for the moment."
+#endif /* !JAFG_WITH_CLANG */
 
-//# Make it public.
-typedef LOnPlatformBreakWindows                                         LOnPlatformBreak;
-
-} /* ~Namespace Jafg */
+#if JAFG_WITH_CLANG || JAFG_WITH_GCC
+    #if !defined(__GLIBCXX__)
+        #error "Wrong std library. We need libstdc++."
+    #endif /* !__GLIBCXX__ */
+    #if defined(_LIBCPP_VERSION)
+        #error "Wrong std library. No LLVM."
+    #endif /* _LIBCPP_VERSION */
+#endif /* JAFG_WITH_CLANG || JAFG_WITH_GCC */
 
 #if JAFG_DO_COMPILER_DIAGNOSTIC_SETUP
-///////////////////////////////////////////////////////////////////////////////
-// Compiler config
+    #if JAFG_WITH_CLANG
+        #include "Definitions/PushCommonClangDiagnostics.h"
+    #endif /* JAFG_WITH_CLANG */
+    #if JAFG_WITH_GCC
+        #include "Definitions/PushCommonGccDiagnostics.h"
+    #endif /* JAFG_WITH_GCC */
+    #if JAFG_WITH_MSVC
+        //#
+        //# Warning C4002 (compiler warning level 1)   ==>   Raise to error:
+        //# too many arguments for function-like macro invocation 'identifier'
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4002?view=msvc-170
+        //#
+        #pragma warning(error: 4002)
 
-//#
-//# Do not warn about misuses of pragmas, such as incorrect parameters, invalid syntax, or conflicts between pragmas.
-//# See also -Wunknown-pragmas.
-//#
-//# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpragmas
-//#
-#if JAFG_WITH_GCC
-    #pragma GCC diagnostic error "-Wpragmas"
-#endif /* JAFG_WITH_GCC */
+        //#
+        //# Warning C4003 (compiler warning level 1)   ===>   Raise to error:
+        //# not enough arguments for function-like macro invocation 'identifier'
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4003?view=msvc-170
+        //#
+        #pragma warning(error: 4003)
 
-//#
-//# Warn when a #pragma directive is encountered that is not understood by GCC.
-//# If this command-line option is used, warnings are even issued for unknown pragmas in system header files.
-//# This is not the case if the warnings are only enabled by the -Wall command-line option.
-//#
-//# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunknown-pragmas
-//#
-#if JAFG_WITH_GCC
-    #pragma GCC diagnostic error "-Wunknown-pragmas"
-#endif /* JAFG_WITH_GCC */
+        //#
+        //# Warning C4005 (compiler warning level 1)   ===>   Raise to error:
+        //# 'identifier' : macro redefinition
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4005?view=msvc-170
+        //#
+        #pragma warning(error: 4005)
 
-#if JAFG_WITH_MSVC
-    //#
-    //# Warning C4002 (compiler warning level 1)   ==>   Raise to error:
-    //# too many arguments for function-like macro invocation 'identifier'
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4002?view=msvc-170
-    //#
-    #pragma warning(error: 4002)
+        //#
+        //# Warning C4172 (compiler warning level 1)   ===>   Raise to error:
+        //# returning address of local variable or temporary: function.
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4172?view=msvc-170
+        //#
+        #pragma warning(error : 4172)
 
-    //#
-    //# Warning C4003 (compiler warning level 1)   ===>   Raise to error:
-    //# not enough arguments for function-like macro invocation 'identifier'
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4003?view=msvc-170
-    //#
-    #pragma warning(error: 4003)
+        //#
+        //# Warning C4251 (compiler warning level 2):
+        //# 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'.
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251?view=msvc-170
+        //#
+        #pragma warning(disable : 4251)
 
-    //#
-    //# Warning C4005 (compiler warning level 1)   ===>   Raise to error:
-    //# 'identifier' : macro redefinition
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4005?view=msvc-170
-    //#
-    #pragma warning(error: 4005)
+        //#
+        //# Warning C4275 (compiler warning level 1)   ===>   Raise to error:
+        //# 'modifier': used more than once
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4141?view=msvc-170
+        //#
+        #pragma warning(error : 4141)
 
-    //#
-    //# Warning C4172 (compiler warning level 1)   ===>   Raise to error:
-    //# returning address of local variable or temporary: function.
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4172?view=msvc-170
-    //#
-    #pragma warning(error : 4172)
+        //#
+        //# Warning C4553 (compiler warning level 1)   ===>   Raise to error:
+        //# 'operator' : operator has no effect; did you intend 'operator'?
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4553?view=msvc-170
+        //#
+        #pragma warning(error : 4553)
 
-    //#
-    //# Warning C4251 (compiler warning level 2):
-    //# 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'.
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251?view=msvc-170
-    //#
-    #pragma warning(disable : 4251)
+        //#
+        //# Warning C4700 (compiler warning level 1)   ===>   Raise to error:
+        //# uninitialized local variable 'name' used
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-and-level-4-c4700?view=msvc-170
+        //#
+        #pragma warning(error : 4700)
 
-    //#
-    //# Warning C4275 (compiler warning level 1)   ===>   Raise to error:
-    //# 'modifier': used more than once
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4141?view=msvc-170
-    //#
-    #pragma warning(error : 4141)
-
-    //#
-    //# Warning C4553 (compiler warning level 1)   ===>   Raise to error:
-    //# 'operator' : operator has no effect; did you intend 'operator'?
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4553?view=msvc-170
-    //#
-    #pragma warning(error : 4553)
-
-    //#
-    //# Warning C4700 (compiler warning level 1)   ===>   Raise to error:
-    //# uninitialized local variable 'name' used
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-and-level-4-c4700?view=msvc-170
-    //#
-    #pragma warning(error : 4700)
-
-    //#
-    //# Warning C4717 (compiler warning level 1)   ===>   Raise to error:
-    //# 'function' : recursive on all control paths, function will cause runtime stack overflow
-    //#
-    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4717?view=msvc-170
-    //#
-    #pragma warning(error : 4717)
-#endif /* JAFG_WITH_MSVC */
-
-#if JAFG_WITH_GCC
-    // #pragma GCC diagnostic ignored "-Wno-gnu-anonymous-struct" /* <--- Currently not using pedantic. Because that's just to pedantic. */
-
-    #pragma GCC diagnostic error "-Wbuiltin-macro-redefined"
-
-    //#
-    //# C++20 std change: A simple-template-id is no longer valid as the declarator-id of a constructor or destructor.
-    //# http://eel.is/c++draft/diff.cpp17.class#2
-    //#
-    #pragma GCC diagnostic error "-Wtemplate-id-cdtor"
-
-    //#
-    //# Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
-    //# This warning is enabled by -Wall.
-    //# To suppress this warning use the unused attribute (see Specifying Attributes of Variables).
-    //# This warning is also enabled by -Wunused, which is enabled by -Wall.
-    //#
-    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-but-set-variable
-    //#
-    #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-
-    //#
-    //# Warn whenever a static function is declared but not defined or a non-inline static function is unused.
-    //# This warning is enabled by -Wall.
-    //#
-    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-function
-    //#
-    #pragma GCC diagnostic ignored "-Wunused-function"
-
-    //#
-    //# Warn whenever a function parameter is unused aside from its declaration.
-    //# This option is not enabled by -Wunused unless -Wextra is also specified.
-    //#
-    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter
-    //#
-    #pragma GCC diagnostic ignored "-Wunused-parameter"
-
-    //#
-    //# Warn whenever a local or static variable is unused aside from its declaration. This option implies
-    //# -Wunused-const-variable=1 for C, but not for C++. This warning is enabled by -Wall.
-    //#
-    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable
-    //#
-    #pragma GCC diagnostic ignored "-Wunused-variable"
-
-    //#
-    //# Warn whenever a comment-start sequence '/ *' appears in a '/ *' comment, or whenever a backslash-newline
-    //# appears in a '//' comment. This warning is enabled by -Wall.
-    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wcomment
-    //#
-    #pragma GCC diagnostic ignored "-Wcomment"
-    #pragma GCC diagnostic ignored "-Wcomments"
-
-    //#
-    //# Warn if a structure’s initializer has some fields missing. In C this option does not warn about designated
-    //# initializers. In C++ this option does not warn about the empty { } initializer.
-    //# This warning is included in -Wextra. To get other -Wextra warnings without this one, use -Wextra
-    //# -Wno-missing-field-initializers.
-    //#
-    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wmissing-field-initializers
-    //#
-    #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif /* JAFG_WITH_GCC */
-
-#if JAFG_WITH_CLANG
-    #include "Definitions/PushCommonClangDiagnostics.h"
-#endif /* JAFG_WITH_CLANG */
-
-// ~Compiler config
-///////////////////////////////////////////////////////////////////////////////
+        //#
+        //# Warning C4717 (compiler warning level 1)   ===>   Raise to error:
+        //# 'function' : recursive on all control paths, function will cause runtime stack overflow
+        //#
+        //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4717?view=msvc-170
+        //#
+        #pragma warning(error : 4717)
+    #endif /* JAFG_WITH_MSVC */
 #endif /* JAFG_DO_COMPILER_DIAGNOSTIC_SETUP */
 
-///////////////////////////////////////////////////////////////////////////////
-// Compiler dependent features
+#ifndef JAFG_PLATFORM_DESKTOP
+    #define JAFG_PLATFORM_DESKTOP                                       1
+#endif /* !JAFG_PLATFORM_DESKTOP */
 
 #if JAFG_WITH_LOCAL_LAYER
     #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
@@ -314,10 +226,6 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
     #define JAFG_PLATFORM_MAX_PATH                                       MAX_PATH
 #endif /* JAFG_PLATFORM_MAX_PATH */
 
-#ifndef JAFG_PLATFORM_USES_STD_FINDER
-    #define JAFG_PLATFORM_USES_STD_FINDER                                1
-#endif /* JAFG_PLATFORM_USES_STD_FINDER */
-
 #ifndef JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
     #if JAFG_WITH_MSVC
         #include <intrin.h>
@@ -357,23 +265,20 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
 #endif /* !NOINLINE */
 
 #ifndef FORCEINLINE
-    #if JAFG_IN_DEBUG
-        //#
-        //# Inlining is disabled in debug builds as following the debugger through inlined code is a pain
-        //# in the ass.
-        //#
-        #define FORCEINLINE                                             inline
-    #else /* JAFG_IN_DEBUG */
+    #if !JAFG_IN_DEBUG
         #if JAFG_WITH_MSVC
-            #define FORCEINLINE                                         _forceinline
+            #if !defined(_MSC_VER) || (_MSC_VER >=1200)
+                #define FORCEINLINE                                     __forceinline
+            #else /* !defined(_MSC_VER) || (_MSC_VER >=1200) */
+                #define FORCEINLINE                                     __inline
+            #endif /* !(!defined(_MSC_VER) || (_MSC_VER >=1200)) */
         #else JAFG_WITH_GCC || JAFG_WITH_CLANG
             #define FORCEINLINE                                         __attribute__ ((always_inline))
         #endif /* JAFG_WITH_GCC || JAFG_WITH_CLANG */
-    #endif /* !JAFG_IN_DEBUG */
+    #else /* !JAFG_IN_DEBUG */
+        #define DETAIL_JAFG_FORCEINLINE_SKIPPED                         1
+    #endif /* JAFG_IN_DEBUG */
 #endif /* !FORCEINLINE */
-
-// ~Compiler dependent features
-///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 //# Windows Platform
@@ -416,34 +321,20 @@ typedef LOnPlatformBreakWindows                                         LOnPlatf
     #undef TEXT
 #endif /* TEXT */
 
+//# It is outrageous that Windows always defines this macro.
+#if defined(DETAIL_JAFG_FORCEINLINE_SKIPPED) && DETAIL_JAFG_FORCEINLINE_SKIPPED
+    #ifdef FORCEINLINE
+        #undef FORCEINLINE
+    #endif /* FORCEINLINE */
+#endif /* defined(DETAIL_JAFG_FORCEINLINE_SKIPPED) && DETAIL_JAFG_FORCEINLINE_SKIPPED */
+
+#ifdef GetCommandLine
+    #undef GetCommandLine
+#endif /* GetCommandLine */
+
 //# Windows Platform
 ///////////////////////////////////////////////////////////////////////////////
 
 #if JAFG_WITH_GCC
     #include <locale>
 #endif /* JAFG_WITH_GCC */
-
-namespace Jafg
-{
-
-struct LOnPlatformBreakWindows final
-{
-    [[noreturn]] NOINLINE
-    ENGINE_API static void ExitQuietly();
-
-    [[noreturn]] NOINLINE
-    ENGINE_API static void OnProgramPanicImpl
-    (
-        LPrimitivePlatformTypesGeneric::LJafgChar const* InMessage
-    );
-
-    [[noreturn]] NOINLINE
-    ENGINE_API static void OnProgramPanic
-    (
-        LPrimitivePlatformTypesGeneric::LJafgChar const* InBaseMessage,
-        LPrimitivePlatformTypesGeneric::LJafgChar const* InFile,
-        LPrimitivePlatformTypesGeneric::u64       const  InLine
-    );
-};
-
-} /* ~Namespace Jafg */

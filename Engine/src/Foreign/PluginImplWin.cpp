@@ -6,7 +6,7 @@
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"
-#include "Engine/ClassOuter.h"
+#include "Engine/Jxx.h"
 
 namespace Jafg
 {
@@ -42,7 +42,21 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
     const LString Symbol{ algo::sprintf("GetPluginLifetime_{}", this->GetIdentifier()) };
 
     typedef LPluginLifetime* (*LCreatePluginLifetime)();
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wcast-function-type-strict"
+#endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wcast-function-type-strict"
+#endif /* JAFG_WITH_GCC */
     const LCreatePluginLifetime CreatePluginLifetime{ reinterpret_cast<LCreatePluginLifetime>(::GetProcAddress(static_cast<HMODULE>(this->NativeHandle), Symbol.c_str())) };
+#if JAFG_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* JAFG_WITH_CLANG */
+#if JAFG_WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* JAFG_WITH_GCC */
     if (CreatePluginLifetime == nullptr)
     {
         const DWORD ErrorCode{ ::GetLastError() };

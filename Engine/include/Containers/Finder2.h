@@ -346,7 +346,7 @@ TArray<path> retrieve_files(path const& Base, LStringView Regex = ".*", std::reg
     }
 
     TArray<path> Result;
-    std::basic_regex Pattern{std::basic_regex{Regex.begin(), Regex.end(), Flags}};
+    std::basic_regex Pattern{std::basic_regex<LChar>{Regex.begin(), Regex.end(), Flags}};
 
     for (directory_entry const& Entry : TIter{Base, directory_options::skip_permission_denied})
     {

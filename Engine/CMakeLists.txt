@@ -146,6 +146,9 @@ if(_guard)
         )
     FetchContent_MakeAvailable(FetchContent_Freetype)
     target_link_libraries(${_scoped_module_name} PRIVATE freetype-interface)
+    if(NOT TARGET Freetype::Freetype)
+        add_library(Freetype::Freetype ALIAS freetype-interface)
+    endif()
 
     ###############################################################################
     # harfbuzz
@@ -166,6 +169,7 @@ if(_guard)
     set(MSDFGEN_USE_VCPKG OFF)
     set(MSDFGEN_USE_SKIA OFF)
     set(MSDFGEN_DISABLE_SVG ON)
+    set(MSDFGEN_DISABLE_PNG ON)
     message(STATUS "Fetching msdfgen...")
     FetchContent_Declare(
         FetchContent_MsdfGen

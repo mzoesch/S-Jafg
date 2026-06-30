@@ -607,7 +607,7 @@ struct add_spaces_to_camel_case_fn final
 #if JAFG_PLATFORM_USES_UTF16
 struct utf8_to_utf16_fn final
 {
-    template<contiguous_iterator TIt, std::unsigned_integral TSize>
+    template<std::contiguous_iterator TIt, std::unsigned_integral TSize>
     NODISCARD FORCEINLINE LWString operator()(TIt It, TSize Size) const noexcept
     {
         if (Size == 0)
@@ -628,7 +628,7 @@ struct utf8_to_utf16_fn final
 
 struct utf16_to_utf8_fn final
 {
-    template<contiguous_iterator TIt, std::unsigned_integral TSize>
+    template<std::contiguous_iterator TIt, std::unsigned_integral TSize>
     NODISCARD FORCEINLINE LString operator()(TIt It, TSize Size) const noexcept
     {
         if (Size == 0)

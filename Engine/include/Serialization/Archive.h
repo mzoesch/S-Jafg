@@ -1323,8 +1323,6 @@ inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
     {
         static_assert(algo::always_false_v<TArchive, U>);
     }
-
-    return;
 }
 
 template<typename TArchive, algo::input_range U> requires(bin_archive_for_v<TArchive, U>)
@@ -1353,8 +1351,6 @@ inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
     {
         static_assert(algo::always_false_v<TArchive, U>);
     }
-
-    return;
 }
 
 template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && ios_bin_archive_v<TArchive>)
@@ -1368,11 +1364,15 @@ inline void serde_non_intrusive(TArchive& Ar, LPath& Field) noexcept
     }
     else
     {
-        LString Dummy{Field};
+#if JAFG_PLATFORM_USES_UTF8
+        LStringView Dummy{Field};
+#elif JAFG_PLATFORM_USES_UTF16
+        LString Dummy{Field.string()};
+#else /* JAFG_PLATFORM_USES_UTF16 */
+    #error "Missing encoding implementation."
+#endif /* !JAFG_PLATFORM_USES_UTF16 */
         Ar(Dummy);
     }
-
-    return;
 }
 
 template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && is_bin_archive_v<TArchive>)
@@ -1381,15 +1381,19 @@ inline void serde_non_intrusive(TArchive& Ar, LPath& Field) noexcept
     LString Dummy;
     Ar(Dummy);
     Field = std::move(Dummy);
-    return;
 }
 
 template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && os_bin_archive_v<TArchive>)
 inline void serde_non_intrusive(TArchive& Ar, LPath const& Field) noexcept
 {
-    LString Dummy{Field};
+#if JAFG_PLATFORM_USES_UTF8
+    LStringView Dummy{Field};
+#elif JAFG_PLATFORM_USES_UTF16
+    LString Dummy{Field.string()};
+#else /* JAFG_PLATFORM_USES_UTF16 */
+    #error "Missing encoding implementation."
+#endif /* !JAFG_PLATFORM_USES_UTF16 */
     Ar(Dummy);
-    return;
 }
 
 template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && ios_bin_archive_v<TArchive>)
@@ -1416,8 +1420,6 @@ inline void serde_non_intrusive(TArchive& Ar, std::optional<U>& Field) noexcept
             Ar(*Field);
         }
     }
-
-    return;
 }
 
 template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && is_bin_archive_v<TArchive>)
@@ -1432,8 +1434,6 @@ inline void serde_non_intrusive(TArchive& Ar, std::optional<U>& Field) noexcept
         Field.emplace();
         Ar(*Field);
     }
-
-    return;
 }
 
 template<typename TArchive, typename U> requires(bin_archive_for_v<TArchive, U> && os_bin_archive_v<TArchive>)
@@ -1445,8 +1445,6 @@ inline void serde_non_intrusive(TArchive& Ar, std::optional<U> const& Field) noe
     {
         Ar(*Field);
     }
-
-    return;
 }
 
 } /* ~Namespace serde */
