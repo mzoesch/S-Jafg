@@ -68,7 +68,7 @@ Jafg::LTextureView Jafg::JAssetDiscoverer::PullAssetTextureView(LPath const& Pat
 
     LTextureView Result;
     Result.Path = Canonical;
-    Result.Name = relative(Result.Path, finder::content_dir()).replace_extension().string();
+    Result.Name = relative(Result.Path, finder::content_dir()).replace_extension().generic_string();
     Ar(Result.Texture); Result.Texture = finder::content_dir()/Result.Texture;
     Ar(Result.Format);
     Ar(Result.MipLevels);

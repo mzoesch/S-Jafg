@@ -97,7 +97,7 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         auto& Result{this->ReflectedShaders.emplace_back()};
         check(finder::descendant_of(Shader.Path, finder::content_dir()))
-        Result.Identifier = relative(weakly_canonical(Shader.Path), finder::content_dir()).replace_extension().replace_extension().string();
+        Result.Identifier = relative(weakly_canonical(Shader.Path), finder::content_dir()).replace_extension().replace_extension().generic_string();
         for (auto const& SourceFile: Shader.SourceFiles)
         {
             json::parse(finder::read_file(Shader2::GetReflectionFile(SourceFile)), nullptr, false).get_to(Result);

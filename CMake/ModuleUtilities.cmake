@@ -273,6 +273,7 @@ function(_jafg_add_module_impl
             target_compile_options(${module_name} PRIVATE
                 -g              # Debug symbols.
                 -O0             # Prevent optimizations.
+                -fno-omit-frame-pointer # Readability
                 )
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             target_compile_options(${module_name} PRIVATE
@@ -287,6 +288,7 @@ function(_jafg_add_module_impl
             target_compile_options(${module_name} PRIVATE
                 -g              # Debug symbols.
                 -O2             # Tsundere optimizations.
+                -fno-omit-frame-pointer # Readability
                 )
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             target_compile_options(${module_name} PRIVATE

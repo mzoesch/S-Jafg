@@ -50,7 +50,7 @@ void Jafg::WTextureInspector::Construct()
     LTexture2Ref Texture{Textures.FromTextureView(View)};
 
     this->Path = this->Asset.string();
-    this->Texture = View.Texture;
+    this->Texture = View.Texture.string();
     this->Format = vk::to_string(View.Format);
     this->MipLevels = View.MipLevels ? std::to_string(*View.MipLevels) : "<auto>";
     this->MaxSampleCount = View.MaxSampleCount ? vk::to_string(*View.MaxSampleCount) : "<auto>";

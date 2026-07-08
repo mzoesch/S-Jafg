@@ -421,7 +421,7 @@ if(_guard)
 
     ###############################################################################
     # Libs
-    if(JAFG_TARGET_PLATFORM STREQUAL "Windows")
+    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
         message(STATUS "Including Windows libs...")
         target_link_libraries(${_scoped_module_name} PRIVATE
             ws2_32
