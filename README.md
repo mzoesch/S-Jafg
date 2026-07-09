@@ -7,7 +7,9 @@ As of now, it runs natively on Linux and on Windows through the UCRT.
 
 ## 1.) Prerequisites
 ### Windows
-- Run `Setup.bat` to install msys2 and required packages (all downloaded content and installed packages will reside in the engine root directory and are not installed system-wide).
+- Msys2:
+  - Either run `Setup.bat` to install msys2 and required packages (all downloaded content and installed packages will reside in the engine root directory and are not installed system-wide). 
+  - Alternative you may use your own system-wide msys2 installation; but ensure to have the packages installed mentioned in the [installer](Programs/msys2_install_pkgs.sh).
 - Open the `msys64/ucrt64.exe` shell.
 - Follow the instructions for _Build and Run_.
 ### Linux

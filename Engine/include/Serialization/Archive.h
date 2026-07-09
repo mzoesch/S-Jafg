@@ -1365,7 +1365,7 @@ inline void serde_non_intrusive(TArchive& Ar, LPath& Field) noexcept
     else
     {
 #if JAFG_PLATFORM_USES_UTF8
-        LStringView Dummy{Field};
+        LStringView Dummy{Field.native()};
 #elif JAFG_PLATFORM_USES_UTF16
         LString Dummy{Field.string()};
 #else /* JAFG_PLATFORM_USES_UTF16 */
@@ -1387,7 +1387,7 @@ template<typename TArchive> requires(bin_archive_for_v<TArchive, LPath> && os_bi
 inline void serde_non_intrusive(TArchive& Ar, LPath const& Field) noexcept
 {
 #if JAFG_PLATFORM_USES_UTF8
-    LStringView Dummy{Field};
+    LStringView Dummy{Field.native()};
 #elif JAFG_PLATFORM_USES_UTF16
     LString Dummy{Field.string()};
 #else /* JAFG_PLATFORM_USES_UTF16 */

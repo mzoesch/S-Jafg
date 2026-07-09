@@ -1,0 +1,6 @@
+{
+    "pipelineInputAssemblyState": {
+        "topology": "eLineStrip",
+        "primitiveRestartEnable": false
+    }
+}
