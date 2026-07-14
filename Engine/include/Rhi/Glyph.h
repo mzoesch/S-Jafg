@@ -70,18 +70,18 @@ struct LGlyphCollection final
         for (;It != this->GlyphInfos.end(); ++It)
         {
             auto Rect{LRect1F{
-                .Offset = LVec1F{It->Rect.x},
-                .Extent = LVec1F{It->Rect.z},
+                .offset = LVec1F{It->Rect.x},
+                .extent = LVec1F{It->Rect.z},
                 }};
             if (maths::aabb_point(Rect, LVec1F{Location.x}))
             {
-                if (It != this->GlyphInfos.begin() && Location.x < Rect.Offset.x + Rect.Extent.x * 0.5f)
+                if (It != this->GlyphInfos.begin() && Location.x < Rect.offset.x + Rect.extent.x * 0.5f)
                 {
                     --It;
                 }
                 break;
             }
-            if (Location.x < Rect.Offset.x)
+            if (Location.x < Rect.offset.x)
             {
                 break;
             }

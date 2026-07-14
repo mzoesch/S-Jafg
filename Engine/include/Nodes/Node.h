@@ -808,8 +808,8 @@ public:
     NODISCARD FORCEINLINE constexpr bool AabbTest(LNodeSweepInfo const& Info, LVec2F const& Location) const noexcept
     {
         return this->TransformsWidgetLayout() && maths::aabb_point({
-            .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-            .Extent = this->GetAnchoredSize_v2()
+            .offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+            .extent = this->GetAnchoredSize_v2()
             }, Location);
     }
     //# Convenience overload for #AabbTest to reduce boilerplate.

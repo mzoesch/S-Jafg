@@ -135,19 +135,30 @@ public:
     FORCEINLINE auto const& Vk_GetDescriptorPool() const noexcept { check(*this->Vk_DescriptorPool) return this->Vk_DescriptorPool; }
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
-    ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
+    NODISCARD ENGINE_API vk::raii::CommandBuffer Vk_BeginSingleTimeCommands(vk::CommandPool Pool = nullptr) const;
     ENGINE_API void Vk_EndSingleTimeCommands(vk::raii::CommandBuffer CommandBuffer) const;
 
     //# Create any buffer through VMA.
-    ENGINE_API rhi::device_buffer Vk_CreateBuffer(
+    NODISCARD ENGINE_API rhi::device_buffer Vk_CreateBuffer(
           vk::BufferCreateInfo Info
         , vk::MemoryPropertyFlags Flags
         , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
-    ENGINE_API rhi::detailed_device_buffer Vk_CreateDetailedBuffer(
+    NODISCARD ENGINE_API rhi::detailed_device_buffer Vk_CreateDetailedBuffer(
           vk::BufferCreateInfo Info
         , vk::MemoryPropertyFlags Flags
         , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
-    ENGINE_API rhi::mapped_device_buffer Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const;
+    NODISCARD ENGINE_API rhi::mapped_device_buffer Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const;
+
+    NODISCARD rhi::frame_array<rhi::mapped_device_buffer> Vk_CreateFrequentMappedBuffer(vk::BufferCreateInfo Info) const
+    {
+        check(this->Vk_FramesInFlight > 0u)
+        rhi::frame_array<rhi::mapped_device_buffer> Result;
+        for (auto Idx{0uz}; Idx < this->Vk_FramesInFlight; ++Idx)
+        {
+            Result[Idx] = this->Vk_CreateMappedBuffer(Info);
+        }
+        return Result;
+    }
 
     //# By providing no pool this method will fall back to its internal transient command pool (recommended).
     ENGINE_API void Vk_CopyBuffer(vk::Buffer Src, vk::Buffer Dst, vk::BufferCopy BufferCopy, vk::CommandPool Pool = nullptr) const;

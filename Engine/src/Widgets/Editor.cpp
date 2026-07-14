@@ -140,42 +140,42 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
         .Space(1_spt)
     [
         MakeLabel(Translation, "Translation")
-        + MakeContent(Translation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.T}).SaveTo(&Translation->Vector)
+        + MakeContent(Translation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.t}).SaveTo(&Translation->Vector)
             .OnVectorChanged([Pointer=Translation, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
-                Field->T = Self.Get<f64>();
-                Pointer->Reset->SetEnabled(Field->T != maths::zero_vector<LVec3F>);
+                Field->t = Self.Get<f64>();
+                Pointer->Reset->SetEnabled(Field->t != maths::zero_vector<LVec3F>);
             }))
-        + MakeReset(Translation, maths::zero_vector<LVec3D>, Info.Field.T != maths::zero_vector<LVec3F>)
+        + MakeReset(Translation, maths::zero_vector<LVec3D>, Info.Field.t != maths::zero_vector<LVec3F>)
     ]
     + NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
         MakeLabel(Rotation, "Rotation")
-        + MakeContent(Rotation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{maths::euler_angles_deg(Info.Field.R)}).SaveTo(&Rotation->Vector)
+        + MakeContent(Rotation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{maths::euler_angles_deg(Info.Field.r)}).SaveTo(&Rotation->Vector)
             .OnVectorChanged([Pointer=Rotation, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
-                Field->R = maths::rotator_deg(Self.Get<f64>());
-                Pointer->Reset->SetEnabled(Field->R != maths::identity<LWorldQuat>);
+                Field->r = maths::rotator_deg(Self.Get<f64>());
+                Pointer->Reset->SetEnabled(Field->r != maths::identity<LWorldQuat>);
             }))
-        + MakeReset(Rotation, maths::zero_vector<LVec3D>, Info.Field.R != maths::identity<LWorldQuat>)
+        + MakeReset(Rotation, maths::zero_vector<LVec3D>, Info.Field.r != maths::identity<LWorldQuat>)
     ]
     + NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
         MakeLabel(Scale, "Scale")
-        + MakeContent(Scale, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.S}).SaveTo(&Scale->Vector)
+        + MakeContent(Scale, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.s}).SaveTo(&Scale->Vector)
             .OnVectorChanged([Pointer=Scale, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
-                Field->S = Self.Get<f64>();
-                Pointer->Reset->SetEnabled(Field->T != maths::zero_vector<LVec3F>);
+                Field->s = Self.Get<f64>();
+                Pointer->Reset->SetEnabled(Field->t != maths::zero_vector<LVec3F>);
             }))
-        + MakeReset(Scale, maths::one_vector<LVec3D>, Info.Field.S != maths::one_vector<LVec3F>)
+        + MakeReset(Scale, maths::one_vector<LVec3D>, Info.Field.s != maths::one_vector<LVec3F>)
     ];
 }
 
@@ -738,87 +738,98 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
     this->RayInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.DebugLine");
+    check(this->RayInstance->Material->Template.my_shader.get_descriptor_slot(ShaderSpace, DebugLinesIndex).CxxName == SSBO::Ray::name())
+    check(this->RayInstance->Material->Template.my_shader.get_descriptor_slot(ShaderSpace, ViewProjIndex).CxxName == UBO::ViewProj::name())
 
-    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    this->RayBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::Ray::buffer_create_info(MaxLineCount));
+    this->RayViewBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::ViewProj::buffer_create_info());
+}
+
+void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
+{
+    Super::ParentTick(Dt);
+
+    auto Reduce{[Dt](auto&& Range)
     {
-        this->RayBuffers[Idx] = Frontend.Vk_CreateMappedBuffer({
-            .size = sizeof(LTransientRay) * AEditorPersonaControllerComponent::MaxLineCount,
-            .usage = vk::BufferUsageFlagBits::eStorageBuffer,
-            .sharingMode = vk::SharingMode::eExclusive
-            });
-        this->RayViewBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::ViewProj::buffer_create_info());
-    }
+        for (auto It{Range.begin()}; It != Range.end();)
+        {
+            It->Duration -= Dt;
+            if (It->Duration <= 0.0f)
+            {
+                It = Range.erase(It);
+            }
+            else
+            {
+                ++It;
+            }
+        }
+    }};
+
+    Reduce(this->Rays);
+    Reduce(this->Aabbs);
+
+    this->Rays.append_range(this->NextRays);
+    this->NextRays.clear();
+    this->Aabbs.append_range(this->NextAabbs);
+    this->NextAabbs.clear();
 }
 
 void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Info) noexcept
 {
     Super::Render(Info);
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    check(this->RayInstance.get())
 
-    if (this->Rays.empty())
+    for (auto& E: this->GetWorld().GetEmployees() | algo::views::filter([](auto& E){ return E->template IsA<AActor>(); }))
+    {
+        auto& A{*StaticCastChecked<AActor>(&*E)};
+        for (auto& Comp: A.GetComponents() | algo::views::filter([](auto& C){ return C->template IsA<ASceneComponent>(); }))
+        {
+            auto& Sc{*StaticCastChecked<ASceneComponent>(&*Comp)};
+            if (Sc.ShouldRender())
+            {
+                this->AddAabb({
+                    .Tint = *Prefs.EditorAabbVisualizationTint,
+                    .Value = Sc.GetAabb().apply(Sc.GetTransform())
+                    });
+            }
+        }
+    }
+
+    if (this->Rays.empty() && this->Aabbs.empty())
     {
         return;
     }
 
-    check(this->RayInstance.get())
-    check(this->RayInstance->FrequentDescriptorSets[Info.Frame].size() == 1)
-    auto& Set = this->RayInstance->FrequentDescriptorSets[Info.Frame][0].second;
+    auto& Set{this->RayInstance->Vk_GetUniqueDescriptorSet(ShaderSpace, Info.Frame)};
 
+    rhi::object_range<SSBO::Ray> DeviceRays{this->Rays.size() + this->Aabbs.size() * 12, MaxLineCount};
+    algo::for_each(this->Rays, [&DeviceRays](auto const& Ray)
     {
-        auto& RayBuffer = this->RayBuffers[Info.Frame];
-        check(RayBuffer.data())
-        std::memcpy(RayBuffer.data(), this->Rays.data(), sizeof(LTransientRay) * this->Rays.size());
-        vk::DescriptorBufferInfo BufferInfo{
-            .buffer = *RayBuffer,
-            .offset = 0,
-            .range = sizeof(LTransientRay) * this->Rays.size(),
-            };
-        std::array Writes{vk::WriteDescriptorSet{
-            .dstSet = Set,
-            .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eStorageBuffer,
-            .pBufferInfo = &BufferInfo,
-            }};
-        Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-    }
+        DeviceRays->emplace_back(Ray->origin, Ray->direction * Ray->magnitude, Ray.Tint);
+    });
+    algo::for_each(this->Aabbs, [&DeviceRays](auto const& Aabb)
+    {
+        for (auto& edge: Aabb->edges())
+        {
+            DeviceRays->emplace_back(edge.origin, edge.delta, Aabb.Tint);
+        }
+    });
 
-    {
-        LMat4F View = Info.WorldData.view;
-        LMat4F Proj = Info.WorldData.proj;
-        UBO::ViewProj Vp;
-        Vp.Mat = Proj * View;
-        auto& ViewProjBuffer = this->RayViewBuffers[Info.Frame];
-        Vp.upload(ViewProjBuffer);
-        auto BufferInfo{Vp.write_info(*ViewProjBuffer)};
-        std::array Writes{vk::WriteDescriptorSet{
-            .dstSet = Set,
-            .dstBinding = 1, .dstArrayElement = 0, .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &BufferInfo,
-            }};
-        Info.Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-    }
+    DeviceRays.upload_and_update(Info.Frontend.Vk_GetDevice(), Set, DebugLinesIndex, this->RayBuffers[Info.Frame]);
+    UBO::ViewProj{Info.WorldData.proj * Info.WorldData.view}.upload_and_update(Info.Frontend.Vk_GetDevice(), Set, ViewProjIndex, this->RayViewBuffers[Info.Frame]);
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->RayInstance->Material->Pipeline);
-
-    {
-        vk::DescriptorSet RayBufferDs = Set;
-        Info.CommandBuffer.bindDescriptorSets2({
-            .stageFlags = vk::ShaderStageFlagBits::eVertex,
-            .layout = *this->RayInstance->Material->Pipeline.pipeline_layout,
-            .firstSet = 0,
-            .descriptorSetCount = 1,
-            .pDescriptorSets = &RayBufferDs,
-            .dynamicOffsetCount = 0,
-            .pDynamicOffsets = nullptr
-            });
-    }
-
-    Info.CommandBuffer.draw(2, static_cast<u32>(this->Rays.size()), 0, 0);
-}
-
-void Jafg::AEditorPersonaControllerComponent::AddRay(RayCreateInfo Ray)
-{
-    this->Rays.emplace_back(Ray.WorldRay.Origin, Ray.WorldRay.Origin + Ray.WorldRay.Direction * Ray.Length);
+    Info.CommandBuffer.bindDescriptorSets2({
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .layout = *this->RayInstance->Material->Pipeline.pipeline_layout,
+        .firstSet = 0,
+        .descriptorSetCount = 1,
+        .pDescriptorSets = &*Set,
+        .dynamicOffsetCount = 0,
+        .pDynamicOffsets = nullptr
+        });
+    Info.CommandBuffer.draw(2, static_cast<u32>(DeviceRays->size()), 0, 0);
 }
 
 bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
@@ -838,58 +849,53 @@ bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
 
 void Jafg::AEditorCameraComponent::OnTrace(rhi::extent2 Extent, LVec2F Location)
 {
-    LOG_WARNING(LogTemporal, "[{}] [{}]", Extent, maths::to_string(Location))
-
-    LVec2F ExtentF{static_cast<float>(Extent.width), static_cast<float>(Extent.height)};
-
+    auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Pawn{this->GetOwningPawn()};
     auto Eye{Pawn.GetEye()};
 
-    LMat4F view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up);
-    LMat4F proj = glm::perspectiveRH_ZO(
-        Eye.VertFov,
-        ExtentF.x / ExtentF.y,
+    LVec2F NormalLocation{
+        (2.0f * Location.x) / static_cast<f32>(Extent.width) - 1.0f,
+        1.0f - (2.0f * Location.y) / static_cast<f32>(Extent.height),
+        };
+
+    LMat4F InvProj{inverse(glm::perspectiveRH_ZO(Eye.VertFov,
+        static_cast<f32>(Extent.width) / static_cast<f32>(Extent.height),
         Eye.NearFrustum, Eye.FarFrustum
-        );
+        ))};
+    LMat4F InvView{inverse(glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up))};
 
-    float x = (2.0f * Location.x) / ExtentF.x - 1.0f;
-    float y = 1.0f - (2.0f * Location.y) / ExtentF.y;
+    LVec4F NearClip{NormalLocation.x, NormalLocation.y, 0.0f, 1.0f};
+    LVec4F FarClip{NormalLocation.x, NormalLocation.y, 1.0f, 1.0f};
 
-    LMat4F invProj = inverse(proj);
-    LMat4F invView = inverse(view);
+    LVec4F NearView{InvProj * NearClip}; NearView /= NearView.w;
+    LVec4F FarView{InvProj * FarClip};  FarView  /= FarView.w;
 
-    LVec4F nearClip = LVec4F(x, y, 0.0f, 1.0f);
-    LVec4F farClip  = LVec4F(x, y, 1.0f, 1.0f);
+    LVec3F NearWorld{LVec3F(InvView * NearView)};
+    LVec3F FarWorld{LVec3F(InvView * FarView)};
 
-    LVec4F nearView = invProj * nearClip; nearView /= nearView.w;
-    LVec4F farView  = invProj * farClip;  farView  /= farView.w;
+    LWorldMagRay3 Ray{.origin = NearWorld, .direction = normalize(FarWorld - NearWorld), .magnitude = *Prefs.EditorTraceLength,};
+    check(maths::normalized(Ray.direction))
 
-    LVec3F nearWorld = LVec3F(invView * nearView);
-    LVec3F farWorld  = LVec3F(invView * farView);
-
-    LWorldRay ray;
-    ray.Origin = nearWorld;
-    ray.Direction = normalize(farWorld - nearWorld);
-
-    LOG_WARNING(LogTemporal, "      Ray Origin: [{}], Ray Direction: [{}]",
-        maths::to_string(ray.Origin), maths::to_string(ray.Direction))
-
-    auto& Pc{*Pawn.GetOwningControllerChecked()};
-    if (auto* PcComp{Pc.GetComponent<AEditorPersonaControllerComponent>()})
+    if (auto* PcComp{Pawn.GetOwningController()->GetComponent<AEditorPersonaControllerComponent>()})
     {
-        PcComp->AddRay({
-            .Tint = Colors::Red,
-            .Duration = 100.0f,
-            .Length = 500.0f,
-            .WorldRay = ray,
-            });
+        PcComp->AddRay({.Tint = *Prefs.EditorTraceVisualizationTint, .Duration = *Prefs.EditorTraceVisualizationDuration, .Value = Ray,});
     }
 
-    // auto Hits = Pawn.GetWorld().LineTraceNonPhysical(ray, 10'000.0f);
-    // for (auto& Hit: Hits)
-    // {
-    //     LOG_WARNING(LogTemporal, "      Hit: [{}]", Hit.Actor.GetNameAsString())
-    // }
+    for (auto& Hit: Pawn.GetWorld().LineTraceNonPhysical(Ray, {.bSingleHit=true}))
+    {
+        if (auto* Comp{this->GetOwningActor().AsStatic<APawn>().GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
+        {
+            constexpr auto offset{0.01f};
+            Comp->AddAabb({
+                .Tint = *Prefs.EditorHitVisualizationTint,
+                .Duration = *Prefs.EditorTraceVisualizationDuration,
+                .Value = {
+                    .min = Hit.GlobalWorldLocation - LVec3F{offset},
+                    .max = Hit.GlobalWorldLocation + LVec3F{offset},
+                    }
+                });
+        }
+    }
 }
 
 void Jafg::AEditorCameraComponent::OnMove(LInputActionValue const& Value)

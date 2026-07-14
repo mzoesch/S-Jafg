@@ -101,6 +101,13 @@ void Jafg::LSurfaceBase::DecayInputs()
 
         check(Input.PhysicalKey != LPhysicalKey{})
         check(Input.State != ERawInputStateBits::Identity)
+#if !JAFG_DO_CHECKS
+        if (Input.State == ERawInputStateBits::Identity) // TODO: Currently this check sometimes triggers. We have to figure out why. Then we can remove this if statement.
+        {
+            It = this->RawInputs.erase(It);
+            continue;
+        }
+#endif /* !JAFG_DO_CHECKS */
 
         if (Input.PhysicalKey.IsAnyLogicalOf(
               ELogicalKey::MouseX, ELogicalKey::MouseY

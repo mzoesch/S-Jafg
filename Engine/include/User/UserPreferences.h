@@ -250,6 +250,17 @@ public:
     CLASS_FIELD(Config)
     TPreference<LPath> EditorLastLayout{ "Config/DefaultEditorLayout.json" };
 
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorTraceVisualizationTint{ Colors::Blue };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorHitVisualizationTint{ Colors::Red };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorAabbVisualizationTint{ Colors::Green };
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorTraceVisualizationDuration{ 30.0f };
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorTraceLength{ 500.0f };
+
     ///////////////////////////////////////////////////////////////////////////////
     // Factories
     ///////////////////////////////////////////////////////////////////////////////

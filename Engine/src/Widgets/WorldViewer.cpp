@@ -164,13 +164,13 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
         LRect2F Rect;
         if (this->IsManual())
         {
-            Rect = {.Offset=this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-                    .Extent=this->GetAnchoredSize_v2()};
+            Rect = {.offset=this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+                    .extent=this->GetAnchoredSize_v2()};
         }
         else
         {
-            Rect = {.Offset=maths::round(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)),
-                    .Extent=this->RenderTarget.GetExtent().ToVec<f32>()};
+            Rect = {.offset=maths::round(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)),
+                    .extent=this->RenderTarget.GetExtent().ToVec<f32>()};
         }
 
         Info.AddInstance({

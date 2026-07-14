@@ -21,7 +21,6 @@ struct reflected_shader final
     enum update_frequency: u8 { rarely, per_frame, }; /* Stable across slang. */
     enum binding_kind: u8 { resource, constant_buffer, };
     enum binding_type: u8 { push_constant_buffer, descriptor_table_slot, };
-    enum resource_base_shape: u8 { texture2D, structured_buffer, };
 
     NODISCARD static update_frequency from_string(LStringView Value) noexcept
     {
@@ -40,7 +39,14 @@ struct reflected_shader final
 
         struct resource final
         {
-            resource_base_shape base_shape;
+            struct texture2D{};
+            struct structured_buffer
+            {
+                LString Name;
+                std::optional<LString> CxxName;
+                user_attributes_t UserAttributes;
+            };
+            std::variant<texture2D, structured_buffer> base_shape;
         };
         struct sampler_state final
         {
@@ -95,43 +101,51 @@ struct reflected_shader final
 
         NODISCARD vk::DescriptorType as_descriptor_type() const noexcept
         {
-            if (std::holds_alternative<resource>(this->Type))
+            auto ResourceToDescriptorType{[](auto&& r) -> vk::DescriptorType
             {
-                switch (std::get<resource>(this->Type).base_shape)
+                auto& base_shape{std::get<resource>(r).base_shape};
+                if (std::holds_alternative<resource::texture2D>(base_shape))
                 {
-                case texture2D:         return vk::DescriptorType::eSampledImage;
-                case structured_buffer: return vk::DescriptorType::eStorageBuffer;
+                    return vk::DescriptorType::eSampledImage;
                 }
-            }
-            if (std::holds_alternative<sampler_state>(this->Type))
-            {
-                return vk::DescriptorType::eSampler;
-            }
-            if (std::holds_alternative<constant_buffer>(this->Type))
-            {
-                return vk::DescriptorType::eUniformBuffer;
-            }
-            if (std::holds_alternative<array>(this->Type))
-            {
-                auto& array_type{std::get<array>(this->Type)};
-                if (std::holds_alternative<resource>(array_type.Type))
+                if (std::holds_alternative<resource::structured_buffer>(base_shape))
                 {
-                    switch (std::get<resource>(array_type.Type).base_shape)
-                    {
-                    case texture2D:         return vk::DescriptorType::eSampledImage;
-                    case structured_buffer: return vk::DescriptorType::eStorageBuffer;
-                    }
+                    return vk::DescriptorType::eStorageBuffer;
                 }
-                else if (std::holds_alternative<sampler_state>(array_type.Type))
+                LOG_FATAL(LogSerialization, "Unsupported binding definition resource base shape kind [{}]."
+                    , base_shape.index())
+            }};
+
+            auto InnerToDescriptorType{[&](auto&& t) -> std::optional<vk::DescriptorType>
+            {
+                if (std::holds_alternative<resource>(t))
+                {
+                    return ResourceToDescriptorType(t);
+                }
+                if (std::holds_alternative<sampler_state>(t))
                 {
                     return vk::DescriptorType::eSampler;
                 }
-                else if (std::holds_alternative<constant_buffer>(array_type.Type))
+                if (std::holds_alternative<constant_buffer>(t))
                 {
                     return vk::DescriptorType::eUniformBuffer;
                 }
+                return {};
+            }};
+
+            if (auto Result{InnerToDescriptorType(this->Type)})
+            {
+                return *Result;
+            }
+            if (std::holds_alternative<array>(this->Type))
+            {
+                auto& arr{std::get<array>(this->Type)};
+                if (auto Result{InnerToDescriptorType(arr.Type)})
+                {
+                    return *Result;
+                }
                 LOG_FATAL(LogSerialization, "Unsupported binding definition array element type kind [{}]."
-                    , array_type.Type.index())
+                    , arr.Type.index())
             }
             LOG_FATAL(LogSerialization, "Unsupported binding definition type kind [{}]."
                 , this->Type.index())
@@ -271,10 +285,31 @@ struct reflected_shader final
         return Self.Parameters
             | algo::views::filter([](auto const& Param) { return Param.Kind == push_constant_buffer; });
     }
-    NODISCARD decltype(auto) descriptor_slot_iter(this auto&& Self)  noexcept
+    NODISCARD decltype(auto) descriptor_slot_iter(this auto&& Self) noexcept
     {
         return Self.Parameters
             | algo::views::filter([](auto const& Param) { return Param.Kind == descriptor_table_slot; });
+    }
+
+    NODISCARD binding_definition const* find_descriptor_slot(u32 Space, u32 Index) const noexcept
+    {
+        for (auto& Param: this->Parameters)
+        {
+            if (Param.Kind == descriptor_table_slot && Param.Space == Space && Param.Index == Index)
+            {
+                return &Param;
+            }
+        }
+        return nullptr;
+    }
+    NODISCARD binding_definition const& get_descriptor_slot(u32 Space, u32 Index) const noexcept
+    {
+        if (auto* Param{this->find_descriptor_slot(Space, Index)}; Param)
+        {
+            return *Param;
+        }
+        LOG_FATAL(LogSerialization, "[{}]: No descriptor table slot found for space [{}] and index [{}]."
+            , this->Identifier, Space, Index)
     }
 
     NODISCARD vk::ShaderStageFlags shader_stage_flags_for(auto&& Binding) const noexcept

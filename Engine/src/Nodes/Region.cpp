@@ -9,7 +9,7 @@
 
 void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) const noexcept
 {
-    if (this->bSkipBrushDraw || Rect.Extent.x <= 0.0f || Rect.Extent.y <= 0.0f)
+    if (this->bSkipBrushDraw || Rect.extent.x <= 0.0f || Rect.extent.y <= 0.0f)
     {
         return;
     }
@@ -28,12 +28,12 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
         Info.AddInstance({
             .Rect = Rect,
             .TexCoordRect = {Texture.get()
-                ? rhi::uv::pipe({0.0f, 0.0f, 1.0f, 1.0f}, Texture->GetExtentAsVec2F(), Rect.Extent
+                ? rhi::uv::pipe({0.0f, 0.0f, 1.0f, 1.0f}, Texture->GetExtentAsVec2F(), Rect.extent
                     , this->TexCoordBehavior, this->TexturePadding, std::get<LTexture>(this->Background).TextureScale)
                 : LVec4F{0.0f, 0.0f, 1.0f, 1.0f}
                 },
             .Radii = this->bClampRadii
-                ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+                ? maths::min(this->Radii, LVec4F{Rect.extent.x, Rect.extent.y, Rect.extent.x, Rect.extent.y} / 2.0f)
                 : this->Radii,
             .Tint = this->Tint,
             .BorderTint = this->BorderTint,
@@ -46,9 +46,9 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
     else if (std::holds_alternative<LIcon>(this->Background))
     {
         Info.AddInstance({
-            .Rect = {maths::round(Rect.Offset), maths::round(Rect.Extent)},
+            .Rect = {maths::round(Rect.offset), maths::round(Rect.extent)},
             .Radii = this->bClampRadii
-                ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+                ? maths::min(this->Radii, LVec4F{Rect.extent.x, Rect.extent.y, Rect.extent.x, Rect.extent.y} / 2.0f)
                 : this->Radii,
             .Tint = this->BorderTint,
             .BorderTint = this->BorderTint,
@@ -69,7 +69,7 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
             LVec2F IconExtent{static_cast<f32>(IconTexture->GetExtent().width * std::get<LIcon>(this->Background).Scale)
                     , static_cast<f32>(IconTexture->GetExtent().height * std::get<LIcon>(this->Background).Scale)};
             Info.AddInstance({
-                .Rect = {maths::round(Rect.Offset + Rect.Extent/2.0f - (IconExtent/2.0f)), IconExtent},
+                .Rect = {maths::round(Rect.offset + Rect.extent/2.0f - (IconExtent/2.0f)), IconExtent},
                 .Tint = this->Tint,
                 .BorderTint = this->BorderTint,
                 .TextureIndex = IconTexture->GetBindlessIndex(),
@@ -81,7 +81,7 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
         Info.AddInstance({
             .Rect = Rect,
             .Radii = this->bClampRadii
-                ? maths::min(this->Radii, LVec4F{Rect.Extent.x, Rect.Extent.y, Rect.Extent.x, Rect.Extent.y} / 2.0f)
+                ? maths::min(this->Radii, LVec4F{Rect.extent.x, Rect.extent.y, Rect.extent.x, Rect.extent.y} / 2.0f)
                 : this->Radii,
             .Tint = this->Tint,
             .BorderTint = this->BorderTint,
@@ -97,8 +97,8 @@ void Jafg::LRegionBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect) 
 void Jafg::WRegion::Draw(LNodeRenderInfo const& Info) const
 {
     this->Brush.Draw(Info, {
-        .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-        .Extent = this->GetAnchoredSize_v2(),
+        .offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+        .extent = this->GetAnchoredSize_v2(),
         });
     Super::Draw(Info);
     return;

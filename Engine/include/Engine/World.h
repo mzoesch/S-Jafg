@@ -229,7 +229,20 @@ public:
         , ECollisionChannels Channels
         , LCollisionQueryParams const& Params
     ) const;
-    NODISCARD TArray<LHitResult> LineTraceNonPhysical(LWorldRay const& Ray, LWorldReal Distance) const;
+    struct TraceConfig final
+    {
+        //#
+        //# Allows non-uniform direction for the trace. If false, it is expected that the direction is normalized.
+        //# This is asserted.
+        //#
+        bool bAllowNonUniformDirection:1{};
+        //#
+        //# If true, the trace will stop at the first blocking hit. If false, all hits will be returned.
+        //# Might be more performant.
+        //#
+        bool bSingleHit:1{};
+    };
+    NODISCARD TArray<LHitResult> LineTraceNonPhysical(LWorldMagRay3 const& Ray, TraceConfig const& Config) const;
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 

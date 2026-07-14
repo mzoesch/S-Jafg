@@ -23,7 +23,17 @@ protected:
 public:
 
     virtual void BeginLife() override;
-    virtual void Tick(f32 Dt) override { check(this->bLives && this->_IsGarbage() == false) }
+    virtual void Tick(f32 Dt) override
+    {
+        check(this->bLives && this->_IsGarbage() == false)
+        for (auto& Comp: this->Components)
+        {
+            if (Comp->bTick)
+            {
+                Comp->ParentTick(Dt);
+            }
+        }
+    }
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     //# Emplace a new actor component to this actor that is not a scene component.

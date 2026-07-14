@@ -124,11 +124,11 @@ template<typename TReal,maths::qual_t Q>
 struct TTrans final
 {
     //# Translation.
-    TVec3<TReal,Q> T;
+    TVec3<TReal,Q> t;
     //# Rotation.
-    TQua<TReal,Q>  R;
+    TQua<TReal,Q>  r;
     //# Scale.
-    TVec3<TReal,Q> S;
+    TVec3<TReal,Q> s;
 };
 using LTransformF = TTrans<maths::single_precision,maths::defaultp>;
 using LTransformD = TTrans<maths::double_precision,maths::defaultp>;
@@ -136,8 +136,8 @@ using LTransformD = TTrans<maths::double_precision,maths::defaultp>;
 template<maths::length_t L,typename TReal,maths::qual_t Q>
 struct TRect final
 {
-    TVec<L,TReal,Q> Offset;
-    TVec<L,TReal,Q> Extent;
+    TVec<L,TReal,Q> offset;
+    TVec<L,TReal,Q> extent;
 };
 template<typename TReal,maths::qual_t Q> using TRect1 = TRect<1,TReal,Q>;
 using LRect1F = TRect1<maths::single_precision,maths::defaultp>;
@@ -150,39 +150,139 @@ using LRect3F = TRect3<maths::single_precision,maths::defaultp>;
 using LRect3D = TRect3<maths::double_precision,maths::defaultp>;
 
 template<maths::length_t L,typename TReal,maths::qual_t Q>
+struct TRay final
+{
+    TVec<L,TReal,Q> origin;
+    TVec<L,TReal,Q> delta;
+};
+using LRay3F = TRay<3,maths::single_precision,maths::defaultp>;
+using LRay3D = TRay<3,maths::double_precision,maths::defaultp>;
+
+template<maths::length_t L,typename TReal,maths::qual_t Q>
+struct TMagRay final
+{
+    TVec<L,TReal,Q> origin;
+    TVec<L,TReal,Q> direction;
+    TReal magnitude;
+};
+using LMagRay3F = TMagRay<3,maths::single_precision,maths::defaultp>;
+using LMagRay3D = TMagRay<3,maths::double_precision,maths::defaultp>;
+
+template<maths::length_t L,typename TReal,maths::qual_t Q>
 struct TAabb final
 {
-    TVec<L,TReal,Q> Min;
-    TVec<L,TReal,Q> Max;
+    TVec<L,TReal,Q> min;
+    TVec<L,TReal,Q> max;
+
+    template<maths::length_t l>
+    struct edge_count final
+    {
+        static constexpr maths::length_t value{(l == 3) ? 12 : (l == 2) ? 4 : 0};
+    };
+    static constexpr maths::length_t edge_count_v{edge_count<L>::value};
+    NODISCARD std::array<TRay<L,TReal,Q>, edge_count_v> edges() const noexcept
+    {
+        if constexpr (L == 3)
+        {
+            const TVec3<TReal,Q> c000{this->min.x, this->min.y, this->min.z};
+            const TVec3<TReal,Q> c001{this->min.x, this->min.y, this->max.z};
+            const TVec3<TReal,Q> c010{this->min.x, this->max.y, this->min.z};
+            const TVec3<TReal,Q> c011{this->min.x, this->max.y, this->max.z};
+            const TVec3<TReal,Q> c100{this->max.x, this->min.y, this->min.z};
+            const TVec3<TReal,Q> c101{this->max.x, this->min.y, this->max.z};
+            const TVec3<TReal,Q> c110{this->max.x, this->max.y, this->min.z};
+            const TVec3<TReal,Q> c111{this->max.x, this->max.y, this->max.z};
+            return {{
+                {c000, c100},
+                {c100, c110},
+                {c110, c010},
+                {c010, c000},
+
+                {c001, c101},
+                {c101, c111},
+                {c111, c011},
+                {c011, c001},
+
+                {c000, c001},
+                {c100, c101},
+                {c110, c111},
+                {c010, c011},
+                }};
+        }
+        else if constexpr (L == 2)
+        {
+            const TVec2<TReal,Q> c00{this->min.x, this->min.y};
+            const TVec2<TReal,Q> c01{this->min.x, this->max.y};
+            const TVec2<TReal,Q> c10{this->max.x, this->min.y};
+            const TVec2<TReal,Q> c11{this->max.x, this->max.y};
+            return {{
+                {c00, c10},
+                {c10, c11},
+                {c11, c01},
+                {c01, c00},
+                }};
+        }
+        else
+        {
+            static_assert(L == 2 || L == 3);
+            return {};
+        }
+    }
+
+    NODISCARD TAabb apply(TTrans<TReal,Q> const& t) const noexcept
+    {
+        static_assert(L == 3);
+
+        glm::mat3 m{glm::mat3_cast(t.r)};
+        m[0] *= t.s.x;
+        m[1] *= t.s.y;
+        m[2] *= t.s.z;
+
+        TAabb result;
+        result.min = t.t;
+        result.max = t.t;
+        for (auto i{0uz}; i < 3; ++i)
+        {
+            for (auto j{0uz}; j < 3; ++j)
+            {
+                TReal e{m[j][i]};
+                TReal a{e * this->min[j]};
+                TReal b{e * this->max[j]};
+                if (a < b)
+                {
+                    result.min[i] += a;
+                    result.max[i] += b;
+                }
+                else
+                {
+                    result.min[i] += b;
+                    result.max[i] += a;
+                }
+            }
+        }
+        return result;
+    }
 };
 using LAabb2F = TAabb<2,maths::single_precision,maths::defaultp>;
 using LAabb2D = TAabb<2,maths::double_precision,maths::defaultp>;
 using LAabb3F = TAabb<3,maths::single_precision,maths::defaultp>;
 using LAabb3D = TAabb<3,maths::double_precision,maths::defaultp>;
 
-template<typename TReal,maths::qual_t Q>
-struct TRay final
-{
-    TVec3<TReal,Q> Origin;
-    TVec3<TReal,Q> Direction;
-};
-using LRayF = TRay<maths::single_precision,maths::defaultp>;
-using LRayD = TRay<maths::double_precision,maths::defaultp>;
-
 //#
 //# Types used for world coordinates.
 //#
 inline constexpr maths::qualifier world_qual{maths::highp};
-using LWorldReal  = maths::single_precision;
-using LWorldQuat  = TQua<LWorldReal,world_qual>;
-using LWorldVec1  = TVec1<LWorldReal,world_qual>;
-using LWorldVec2  = TVec2<LWorldReal,world_qual>;
-using LWorldVec3  = TVec3<LWorldReal,world_qual>;
-using LWorldVec4  = TVec4<LWorldReal,world_qual>;
-using LWorldTrans = TTrans<LWorldReal,world_qual>;
-using LWorldAabb2 = TAabb<2,LWorldReal,world_qual>;
-using LWorldAabb3 = TAabb<3,LWorldReal,world_qual>;
-using LWorldRay   = TRay<LWorldReal,world_qual>;
+using LWorldReal    = maths::single_precision;
+using LWorldQuat    = TQua<LWorldReal,world_qual>;
+using LWorldVec1    = TVec1<LWorldReal,world_qual>;
+using LWorldVec2    = TVec2<LWorldReal,world_qual>;
+using LWorldVec3    = TVec3<LWorldReal,world_qual>;
+using LWorldVec4    = TVec4<LWorldReal,world_qual>;
+using LWorldTrans   = TTrans<LWorldReal,world_qual>;
+using LWorldRay3    = TRay<3,LWorldReal,world_qual>;
+using LWorldMagRay3 = TMagRay<3,LWorldReal,world_qual>;
+using LWorldAabb2   = TAabb<2,LWorldReal,world_qual>;
+using LWorldAabb3   = TAabb<3,LWorldReal,world_qual>;
 
 #define MATHS_CONSTANT(Constant)                                                                            \
     namespace detail                                                                                        \
@@ -595,14 +695,31 @@ MATHS_CONSTANT_VALUE(identity, LMat4F, {1})
 MATHS_CONSTANT_VALUE(identity, LMat4D, {1})
 
 MATHS_CONSTANT_VALUE(identity, LTransformF, {
-    .T = maths::zero_vector<decltype(LTransformF::T)>,
-    .R = maths::identity<decltype(LTransformF::R)>,
-    .S = maths::one_vector<decltype(LTransformF::S)>
+    .t = maths::zero_vector<decltype(LTransformF::t)>,
+    .r = maths::identity<decltype(LTransformF::r)>,
+    .s = maths::one_vector<decltype(LTransformF::s)>
     })
 MATHS_CONSTANT_VALUE(identity, LTransformD, {
-    .T = maths::zero_vector<decltype(LTransformD::T)>,
-    .R = maths::identity<decltype(LTransformD::R)>,
-    .S = maths::one_vector<decltype(LTransformD::S)>
+    .t = maths::zero_vector<decltype(LTransformD::t)>,
+    .r = maths::identity<decltype(LTransformD::r)>,
+    .s = maths::one_vector<decltype(LTransformD::s)>
+    })
+
+MATHS_CONSTANT_VALUE(identity, LAabb2F, {
+    .min = maths::zero_vector<decltype(LAabb2F::min)>,
+    .max = maths::zero_vector<decltype(LAabb2F::max)>
+    })
+MATHS_CONSTANT_VALUE(identity, LAabb2D, {
+    .min = maths::zero_vector<decltype(LAabb2D::min)>,
+    .max = maths::zero_vector<decltype(LAabb2D::max)>
+    })
+MATHS_CONSTANT_VALUE(identity, LAabb3F, {
+    .min = maths::zero_vector<decltype(LAabb3F::min)>,
+    .max = maths::zero_vector<decltype(LAabb3F::max)>
+    })
+MATHS_CONSTANT_VALUE(identity, LAabb3D, {
+    .min = maths::zero_vector<decltype(LAabb3D::min)>,
+    .max = maths::zero_vector<decltype(LAabb3D::max)>
     })
 
 #undef MATHS_CONSTANT_VALUE
@@ -742,124 +859,138 @@ template<length_t L, typename T,qual_t Q>
 NODISCARD constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt(maths::squared_magnitude(v)); }
 
 using glm::normalize;
-template<length_t L, typename T,qual_t Q>
-NODISCARD constexpr bool normalized(TVec<L,T,Q> const& v) noexcept
+//#
+//# So by default we use these epsilons that have been roughly and crudely tested for each precision. But depending
+//# on the origin of the vector (origin meaning here how it was calculated not the vector-origin), one might want
+//# to adjust these. Because we have three imprecise numbers, we have to backoff a little bit more than we usually do.
+//#
+template<length_t L,qual_t Q>
+NODISCARD constexpr bool normalized(TVec<L,single_precision,Q> const& v, single_precision e = 1e-6f) noexcept
 {
     /* Compare against squared magnitude instead of magnitude to avoid sqrt-op. */
-    // return maths::eq_e(maths::magnitude(v), static_cast<T>(1.0));
-    return maths::eq_e(maths::squared_magnitude(v), static_cast<T>(1.0));
+    return maths::eq_e(maths::squared_magnitude(v), 1.0f, e);
+}
+template<length_t L,qual_t Q> requires(!std::is_same_v<single_precision,double_precision>)
+NODISCARD constexpr bool normalized(TVec<L,double_precision,Q> const& v, double_precision e = 1e-10) noexcept
+{
+    return maths::eq_e(maths::squared_magnitude(v), 1.0, e);
 }
 
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb(TRect1<T,Q> const& a, TRect1<T,Q> const& b) noexcept
 {
-    return !(a.Offset.x > b.Offset.x + b.Extent.x
-          || a.Offset.x + a.Extent.x < b.Offset.x
+    return !(a.offset.x > b.offset.x + b.extent.x
+          || a.offset.x + a.extent.x < b.offset.x
           );
 }
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb_point(TRect1<T,Q> const& a, TVec1<T,Q> const& p) noexcept
 {
-    return !(p.x < a.Offset.x
-          || p.x > a.Offset.x + a.Extent.x
+    return !(p.x < a.offset.x
+          || p.x > a.offset.x + a.extent.x
           );
 }
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb(TRect2<T,Q> const& a, TRect2<T,Q> const& b) noexcept
 {
-    return !(a.Offset.x > b.Offset.x + b.Extent.x
-          || a.Offset.x + a.Extent.x < b.Offset.x
-          || a.Offset.y > b.Offset.y + b.Extent.y
-          || a.Offset.y + a.Extent.y < b.Offset.y
+    return !(a.offset.x > b.offset.x + b.extent.x
+          || a.offset.x + a.extent.x < b.offset.x
+          || a.offset.y > b.offset.y + b.extent.y
+          || a.offset.y + a.extent.y < b.offset.y
           );
 }
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb_point(TRect2<T,Q> const& a, TVec2<T,Q> const& p) noexcept
 {
-    return !(p.x < a.Offset.x
-          || p.x > a.Offset.x + a.Extent.x
-          || p.y < a.Offset.y
-          || p.y > a.Offset.y + a.Extent.y
+    return !(p.x < a.offset.x
+          || p.x > a.offset.x + a.extent.x
+          || p.y < a.offset.y
+          || p.y > a.offset.y + a.extent.y
           );
 }
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb(TRect3<T,Q> const& a, TRect3<T,Q> const& b) noexcept
 {
-    return !(a.Offset.x > b.Offset.x + b.Extent.x
-          || a.Offset.x + a.Extent.x < b.Offset.x
-          || a.Offset.y > b.Offset.y + b.Extent.y
-          || a.Offset.y + a.Extent.y < b.Offset.y
-          || a.Offset.z > b.Offset.z + b.Extent.z
-          || a.Offset.z + a.Extent.z < b.Offset.z
+    return !(a.offset.x > b.offset.x + b.extent.x
+          || a.offset.x + a.extent.x < b.offset.x
+          || a.offset.y > b.offset.y + b.extent.y
+          || a.offset.y + a.extent.y < b.offset.y
+          || a.offset.z > b.offset.z + b.extent.z
+          || a.offset.z + a.extent.z < b.offset.z
           );
 }
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb_point(TRect3<T,Q> const& a, TVec3<T,Q> const& p) noexcept
 {
-    return !(p.x < a.Offset.x
-          || p.x > a.Offset.x + a.Extent.x
-          || p.y < a.Offset.y
-          || p.y > a.Offset.y + a.Extent.y
-          || p.z < a.Offset.z
-          || p.z > a.Offset.z + a.Extent.z
+    return !(p.x < a.offset.x
+          || p.x > a.offset.x + a.extent.x
+          || p.y < a.offset.y
+          || p.y > a.offset.y + a.extent.y
+          || p.z < a.offset.z
+          || p.z > a.offset.z + a.extent.z
           );
 }
 
-inline bool IntersectRayAABB(const LRayF& ray, const LAabb3F& box, float& tNear, float& tFar)
+template<typename TReal,qual_t Q>
+struct aabb_intersection_ray
 {
-    tNear = -INFINITY;
-    tFar  =  INFINITY;
+    bool bHit{};
+    //# Distance along the ray.
+    TReal Enter;
+    TReal Exit;
+    //# World-space positions.
+    TVec3<TReal,Q> EnterPoint;
+    TVec3<TReal,Q> ExitPoint;
+};
 
-    // vec3 invDir = 1.0f / ray.Dir;
-
-    // X slab
-    if (ray.Direction.x != 0.0f)
-    {
-        float t1 = (box.Min.x - ray.Origin.x) / ray.Direction.x;
-        float t2 = (box.Max.x - ray.Origin.x) / ray.Direction.x;
-
-        if (t1 > t2) std::swap(t1, t2);
-
-        tNear = std::max(tNear, t1);
-        tFar  = std::min(tFar, t2);
-    }
-    else if (ray.Origin.x < box.Min.x || ray.Origin.x > box.Max.x)
-        return false;
-
-    // Y slab
-    if (ray.Direction.y != 0.0f)
-    {
-        float t1 = (box.Min.y - ray.Origin.y) / ray.Direction.y;
-        float t2 = (box.Max.y - ray.Origin.y) / ray.Direction.y;
-
-        if (t1 > t2) std::swap(t1, t2);
-
-        tNear = std::max(tNear, t1);
-        tFar  = std::min(tFar, t2);
-    }
-    else if (ray.Origin.y < box.Min.y || ray.Origin.y > box.Max.y)
-        return false;
-
-    // Z slab
-    if (ray.Direction.z != 0.0f)
-    {
-        float t1 = (box.Min.z - ray.Origin.z) / ray.Direction.z;
-        float t2 = (box.Max.z - ray.Origin.z) / ray.Direction.z;
-
-        if (t1 > t2) std::swap(t1, t2);
-
-        tNear = std::max(tNear, t1);
-        tFar  = std::min(tFar, t2);
-    }
-    else if (ray.Origin.z < box.Min.z || ray.Origin.z > box.Max.z)
-        return false;
-
-    return tFar >= tNear && tFar >= 0.0f;
-}
-inline LVec3F IntersectRayAABBPoint(const LRayF& ray, const LAabb3F& box, float& tNear, float& tFar)
+template<typename TReal,qual_t Q>
+NODISCARD aabb_intersection_ray<TReal,Q> aabb_intersect_ray(
+    TMagRay<3,TReal,Q> const& ray, TAabb<3,TReal,Q> const& aabb,
+    TReal e = static_cast<TReal>(small_number_d)
+    ) noexcept
 {
-    check(IntersectRayAABB(ray, box, tNear, tFar))
-    return ray.Origin + ray.Direction * tNear;
+    TReal min{};
+    TReal max{ray.magnitude};
+
+    for (length_t idx{}; idx < 3; ++idx)
+    {
+        const TReal origin{ray.origin[idx]};
+        const TReal dir{ray.direction[idx]};
+
+        if (std::abs(dir) < e)
+        {
+            if (origin < aabb.min[idx] || origin > aabb.max[idx])
+            {
+                /* parallel */
+                return {};
+            }
+            continue;
+        }
+
+        const TReal inv_dir{TReal{1} / dir};
+        TReal t1{(aabb.min[idx] - origin) * inv_dir};
+        TReal t2{(aabb.max[idx] - origin) * inv_dir};
+        if (t1 > t2)
+        {
+            std::swap(t1, t2);
+        }
+
+        min = maths::max(min, t1);
+        max = maths::min(max, t2);
+
+        if (min > max)
+        {
+            return {};
+        }
+    }
+
+    return {
+        .bHit = true,
+        .Enter = min,
+        .Exit = max,
+        .EnterPoint = ray.origin + ray.direction * min,
+        .ExitPoint  = ray.origin + ray.direction * max,
+        };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -875,9 +1006,9 @@ using glm::inverse;
 template<typename T,qual_t Q>
 inline constexpr TMat4<T,Q> model(TTrans<T,Q> const& trans) noexcept
 {
-    return maths::translate(maths::identity<TMat4<T,Q>>, trans.T)
-        *  maths::mat4_cast(trans.R)
-        *  maths::scale(maths::identity<TMat4<T,Q>>, trans.S);
+    return maths::translate(maths::identity<TMat4<T,Q>>, trans.t)
+        *  maths::mat4_cast(trans.r)
+        *  maths::scale(maths::identity<TMat4<T,Q>>, trans.s);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

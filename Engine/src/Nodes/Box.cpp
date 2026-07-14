@@ -8,8 +8,8 @@ void Jafg::WBox::Draw(LNodeRenderInfo const& Info) const
 {
     Super::Draw(Info);
     this->Brush.Draw(Info, {
-        .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-        .Extent = this->GetAnchoredSize_v2(),
+        .offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+        .extent = this->GetAnchoredSize_v2(),
         });
     return;
 }

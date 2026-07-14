@@ -44,6 +44,14 @@ public:
         this->Owner = &InOwner;
     }
 
+    //#
+    //# Called from the parent iff the parent is ticked and this component is allowed to tick.
+    //# Generally speaking, if the parent is not ticked then one should *not* tick the components attached to it.
+    //# If you really need to assert that your component is ticked whenever the owning outer is ticked then you
+    //# can simply inherit from #LTickableObject.
+    //#
+    virtual void ParentTick(f32 Dt) { check(this->Owner && this->bTick) }
+
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
     constexpr bool ShouldRender() const noexcept { return this->bRender; }
     virtual void Render(LActorRenderInfo const& Info) noexcept {}
@@ -53,12 +61,19 @@ public:
 
 private:
 
-#if JAFG_DO_CHECKS
-    bool bHasExecutedOnAttach{};
-#endif /* JAFG_DO_CHECKS */
-
     AActor* Owner{};
+
+protected:
+
+    bool bTick:1{};
+
+private:
+
     bool bRender:1{};
+
+#if JAFG_DO_CHECKS
+    bool bHasExecutedOnAttach:1{};
+#endif /* JAFG_DO_CHECKS */
 };
 
 } /* ~Namespace Jafg */

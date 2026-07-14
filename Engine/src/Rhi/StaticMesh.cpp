@@ -384,6 +384,14 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
         return EResult::LoadingError;
     }
 
+    this->Aabb.min = this->Vertices[0].Position;
+    this->Aabb.max = this->Vertices[0].Position;
+    for (auto& V: this->Vertices)
+    {
+        this->Aabb.min = maths::min(this->Aabb.min, V.Position);
+        this->Aabb.max = maths::max(this->Aabb.max, V.Position);
+    }
+
     return EResult::Success;
 }
 

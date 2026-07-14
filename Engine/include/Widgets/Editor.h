@@ -221,15 +221,21 @@ public:
     virtual TJxxUnique<APawn> GetPawnForPersonaController(APersonaController const& Pc) override;
 };
 
-struct LTransientRay final // TODO: Move to own semi-reflected subclass
+namespace SSBO
 {
-    constexpr LTransientRay(LVec3F Origin, LVec3F End) noexcept : Origin{Origin}, End{End} {}
+
+struct Ray: rhi::ssbo_template<Ray>
+{
+    constexpr Ray(LVec3F Origin, LVec3F End, LColor Tint) noexcept: Origin{Origin}, End{End}, Tint{Tint} {}
 
     LVec3F Origin;
     f32 _pad0{1.0f};
     LVec3F End;
-    f32 _pad1{1.0f};
+    LColor Tint;
 };
+static_assert(rhi::ssbo<Ray>);
+
+} /* ~Namespace SSBO */
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API AEditorPersonaControllerComponent final : public APersonaControllerComponent
@@ -240,31 +246,57 @@ protected:
 
     DEFAULT_WORLD_CONSTRUCTORS_BODY(AEditorPersonaControllerComponent)
     {
+        this->bTick = true;
         this->SetShouldRender(true);
     }
 
 public:
 
-    static constexpr u64 MaxLineCount{128};
+    static constexpr u64 MaxLineCount{1024};
+    static constexpr f32 OneTimeDraw{0.0f};
+
+    static constexpr u64 ShaderSpace{0uz};
+    static constexpr u64 DebugLinesIndex{0uz};
+    static constexpr u64 ViewProjIndex{1uz};
 
     virtual void OnAttach(AActor& InOwner) override;
+    virtual void ParentTick(f32 Dt) override;
     virtual void Render(LActorRenderInfo const& Info) noexcept override;
 
     struct RayCreateInfo
     {
         LColor Tint;
-        f32 Duration;
-        f32 Length;
-        LWorldRay WorldRay;
+        f32 Duration{ OneTimeDraw };
+        LWorldMagRay3 Value;
+        LWorldMagRay3 const* operator->() const noexcept { return &this->Value; }
     };
-    void AddRay(RayCreateInfo Ray);
+    void AddRay(RayCreateInfo Ray) noexcept { this->Rays.emplace_back(std::move(Ray)); }
+    //# Useful for consistent one time draws when draw orders are not guaranteed.
+    void AddRayNextTick(RayCreateInfo Ray) noexcept { this->NextRays.emplace_back(std::move(Ray)); }
+
+    struct AabbCreateInfo
+    {
+        LColor Tint;
+        f32 Duration{ OneTimeDraw };
+        LWorldAabb3 Value;
+        LWorldAabb3 const* operator->() const noexcept { return &this->Value; }
+    };
+    void AddAabb(AabbCreateInfo Aabb) noexcept { this->Aabbs.emplace_back(std::move(Aabb)); }
+    //# Useful for consistent one time draws when draw orders are not guaranteed.
+    void AddAabbNextTick(AabbCreateInfo Aabb) noexcept { this->NextAabbs.emplace_back(std::move(Aabb)); }
 
 private:
+
+    TArray<RayCreateInfo> Rays;
+    TArray<RayCreateInfo> NextRays;
+
+    TArray<AabbCreateInfo> Aabbs;
+    TArray<AabbCreateInfo> NextAabbs;
 
     LMaterialInstanceRef RayInstance;
 
     // vk::raii::DescriptorSetLayout RayDescriptorSetLayout{ nullptr };
-    std::vector<LTransientRay> Rays;
+
     rhi::frame_array<rhi::mapped_device_buffer> RayBuffers;
 
     rhi::frame_array<rhi::mapped_device_buffer> RayViewBuffers;

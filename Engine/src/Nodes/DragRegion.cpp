@@ -188,7 +188,7 @@ namespace glm
 template<>
 GLM_FUNC_QUALIFIER std::string to_string<LRect2F>(LRect2F const& x)
 {
-    return "Offset: " + to_string(x.Offset) + ", Extent: " + to_string(x.Extent);
+    return "Offset: " + to_string(x.offset) + ", Extent: " + to_string(x.extent);
 }
 
 }
@@ -318,8 +318,8 @@ bool Jafg::WDragRegion::IsLocationOverDragRect(LVec2F Translation, LVec2F Locati
         for (auto It{++this->GetChildren().begin()}; It != this->GetChildren().end(); ++It)
         {
             if (maths::aabb_point({
-                .Offset = this->GetAnchoredTopLeftFromMostOuterForChild(**It) - this->ProjFlt(static_cast<f32>(*Prefs.PreferredDragOverlap)) - this->ProjFlt(SpaceSpt),
-                .Extent = this->ProjFlt(SpaceSpt) + this->ProjFlt(2.0f * static_cast<f32>(*Prefs.PreferredDragOverlap))
+                .offset = this->GetAnchoredTopLeftFromMostOuterForChild(**It) - this->ProjFlt(static_cast<f32>(*Prefs.PreferredDragOverlap)) - this->ProjFlt(SpaceSpt),
+                .extent = this->ProjFlt(SpaceSpt) + this->ProjFlt(2.0f * static_cast<f32>(*Prefs.PreferredDragOverlap))
                     + this->ProjFltInv(this->ProjVecInv(this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(this->GetViewport()))),
                 }, Location))
             {

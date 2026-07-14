@@ -25,7 +25,10 @@ class ENGINE_API APersonaController : public AActor
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS(APersonaController)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(APersonaController)
+    {
+        this->SetEverTickConstructorOnlyFlag();
+    }
 
 public:
 
@@ -51,7 +54,11 @@ public:
         return *Result;
     }
     template<ELackey Type>
-    FORCEINLINE constexpr bool IsOwningLackey() const noexcept { return this->IsOwningLackeyValid() && !!std::holds_alternative<std::conditional_t<Type == ELackey::Local, LLocalLackey*, LProxyLackey*>>(this->Lackey); }
+    FORCEINLINE constexpr bool IsOwningLackey() const noexcept
+    {
+        return this->IsOwningLackeyValid()
+            && !!std::holds_alternative<std::conditional_t<Type == ELackey::Local, LLocalLackey*, LProxyLackey*>>(this->Lackey);
+    }
     template<ELackey Type>
     FORCEINLINE auto GetOwningLackey(this auto&& Self) noexcept
         -> std::conditional_t<Type == ELackey::Local,

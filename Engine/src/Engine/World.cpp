@@ -448,34 +448,68 @@ bool Jafg::LWorld::LineTraceByChannel(
     return OutHits->empty() == false;
 }
 
-TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldRay const& Ray, LWorldReal Distance) const
+TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const& Ray, TraceConfig const& Config) const
 {
     STAT_CYCLE_FUNCTION()
 
-    check(maths::normalized(Ray.Direction)) // Do we want the user to allow this?
-    LWorldVec3 End{Ray.Origin + Ray.Direction * Distance};
-    check(maths::magnitude(Ray.Origin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
+    checkCode
+    (
+        if (!Config.bAllowNonUniformDirection)
+        {
+            check(maths::normalized(Ray.direction))
+        }
+    )
+    check(maths::magnitude(Ray.origin - (Ray.origin + Ray.direction * Ray.magnitude))
+        > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
 
     TArray<LHitResult> Results;
-    // for (auto& Obj: this->GetEmployees())
-    // {
-    //     if (auto* Actor{Obj->As<AActor>()})
-    //     {
-    //         for (auto& Comp: Actor->GetComponents())
-    //         {
-    //             if (auto* SComp{Comp->As<AStaticMeshComponent>()})
-    //             {
-    //                 // LWorldRect3 MeshBounds{
-    //                 //     .Offset = SComp->GetTranslation(),
-    //                 //     .Extent = LVec3F{5.0},
-    //                 //     };
-    //                 //
-    //                 // maths::aabb();
-    //
-    //             }
-    //         }
-    //     }
-    // }
+    for (auto& Obj: this->GetEmployees())
+    {
+        if (auto* Actor{Obj->As<AActor>()})
+        {
+            for (auto& Comp: Actor->GetComponents())
+            {
+                if (auto* Sc{Comp->As<AStaticMeshComponent>()})
+                {
+                    if (auto r{maths::aabb_intersect_ray(Ray, Sc->GetAabb().apply(Sc->GetTransform()))}; r.bHit)
+                    {
+                        Results.push_back({
+                            .Actor = *Actor,
+                            .Component = *Sc,
+                            .GlobalWorldLocation = r.EnterPoint,
+                            });
+                    }
+                }
+            }
+        }
+    }
+
+    checkCode
+    (
+        for (auto& Hit: Results)
+        {
+            check(&Hit.Actor)
+            check(&Hit.Component)
+            check(&Hit.Actor == &Hit.Component.GetOwningActor())
+        }
+    )
+
+    if (Config.bSingleHit && Results.size() > 1uz)
+    {
+        auto* ClosestHit{&Results.front()};
+        f32 ClosestDistance{maths::magnitude(Ray.origin - ClosestHit->GlobalWorldLocation)};
+        for (auto& Hit: Results)
+        {
+            if (f32 Distance{maths::magnitude(Ray.origin - Hit.GlobalWorldLocation)}; Distance < ClosestDistance)
+            {
+                ClosestDistance = Distance;
+                ClosestHit = &Hit;
+            }
+        }
+        LHitResult Dummy{*ClosestHit};
+        Results.clear();
+        Results.emplace_back(std::move(Dummy));
+    }
 
     return Results;
 }

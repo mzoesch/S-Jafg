@@ -9,8 +9,8 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
 {
     WNode::Draw(Info);
     this->Brush.Draw(Info, {
-        .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-        .Extent = this->GetAnchoredSize_v2(),
+        .offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+        .extent = this->GetAnchoredSize_v2(),
         });
 
     check(this->ScrollPosition.x >= 0.0f && this->ScrollPosition.x <= 1.0f)
@@ -81,8 +81,8 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
                     Info.MaterialSubsystem,
                     Info.FontSubsystem,
                     Translation, LRect2F{
-                        .Offset = AnchoredTopLeftFromMostOuter,
-                        .Extent = this->GetAnchoredSize_v2(),
+                        .offset = AnchoredTopLeftFromMostOuter,
+                        .extent = this->GetAnchoredSize_v2(),
                         },
                     Info.Batches, Info.VisualInstances,
                     });
@@ -326,8 +326,8 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorL
     LVec2F TopLeftMostOuter{this->GetAnchoredTopLeftFromMostOuter()};
 
     if (this->LastVisible.y < 1.0f && maths::aabb_point({
-        .Offset = TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
-        .Extent = this->GetVInteractiveAreaScrollSize()}, MouseLocation))
+        .offset = TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
+        .extent = this->GetVInteractiveAreaScrollSize()}, MouseLocation))
     {
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetVForegroundScrollPositionFromOuter()};
             maths::aabb_point({TopLeftForeground, this->GetVForegroundScrollSize()}, MouseLocation))
@@ -340,12 +340,12 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorL
     }
 
     if (this->LastVisible.x < 1.0f && maths::aabb_point({
-        .Offset = TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
-        .Extent = this->GetHInteractiveAreaScrollSize(),
+        .offset = TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
+        .extent = this->GetHInteractiveAreaScrollSize(),
         }, MouseLocation))
     {
         if (LVec2D TopLeftForeground{TopLeftMostOuter + this->GetHForegroundScrollPositionFromOuter()};
-            maths::aabb_point({.Offset = TopLeftForeground, .Extent = this->GetHForegroundScrollSize()}, MouseLocation))
+            maths::aabb_point({.offset = TopLeftForeground, .extent = this->GetHForegroundScrollSize()}, MouseLocation))
         {
             this->MbOffset.x = static_cast<f32>((MouseLocation.x - TopLeftForeground.x) * -1.0);
         }

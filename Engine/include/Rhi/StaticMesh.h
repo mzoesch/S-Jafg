@@ -131,11 +131,13 @@ struct LStaticMesh final
 
     ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
 
-    FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
+    NODISCARD FORCEINLINE constexpr LWorldAabb3 const& GetAabb() const noexcept { return this->Aabb; }
+    NODISCARD FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
 
     //# Host memory. Modify with care.
     TArray<Vertex> Vertices;
     TArray<u32> Indices;
+    LWorldAabb3 Aabb{ maths::identity<LWorldAabb3> };
 
     //# Device memory. Modify with care.
     u32 IndexCount{};

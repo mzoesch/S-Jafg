@@ -112,26 +112,26 @@ void Jafg::WTabOverlay::Draw(LNodeRenderInfo const& Info) const
     {
         check(this->Switcher)
         LRect2F Rect{
-            .Offset = this->Switcher->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-            .Extent = this->Switcher->GetAnchoredSize_v2(),
+            .offset = this->Switcher->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
+            .extent = this->Switcher->GetAnchoredSize_v2(),
             };
         if (*this->DrawOption == StepResult::L)
         {
-            Rect.Extent.x = StepResult::GetMaxDistanceFromEdge<StepResult::L>(Rect.Extent.x);
+            Rect.extent.x = StepResult::GetMaxDistanceFromEdge<StepResult::L>(Rect.extent.x);
         }
         else if (*this->DrawOption == StepResult::U)
         {
-            Rect.Extent.y = StepResult::GetMaxDistanceFromEdge<StepResult::U>(Rect.Extent.y);
+            Rect.extent.y = StepResult::GetMaxDistanceFromEdge<StepResult::U>(Rect.extent.y);
         }
         else if (*this->DrawOption == StepResult::R)
         {
-            Rect.Offset.x += StepResult::GetMaxDistanceFromEdge<StepResult::R>(Rect.Extent.x);
-            Rect.Extent.x = StepResult::GetMaxDistanceFromEdge<StepResult::R>(Rect.Extent.x);
+            Rect.offset.x += StepResult::GetMaxDistanceFromEdge<StepResult::R>(Rect.extent.x);
+            Rect.extent.x = StepResult::GetMaxDistanceFromEdge<StepResult::R>(Rect.extent.x);
         }
         else if (*this->DrawOption == StepResult::D)
         {
-            Rect.Offset.y += StepResult::GetMaxDistanceFromEdge<StepResult::D>(Rect.Extent.y);
-            Rect.Extent.y = StepResult::GetMaxDistanceFromEdge<StepResult::D>(Rect.Extent.y);
+            Rect.offset.y += StepResult::GetMaxDistanceFromEdge<StepResult::D>(Rect.extent.y);
+            Rect.extent.y = StepResult::GetMaxDistanceFromEdge<StepResult::D>(Rect.extent.y);
         }
         Info.AddInstance({
             .Rect = Rect,

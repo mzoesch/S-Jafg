@@ -38,8 +38,8 @@ void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
     {
         this->GetTextRenderData().Render(Info,
             {
-                .Offset = TopLeftMostOuter + this->GetRelativeTextTopLeft(),
-                .Extent = this->GetAnchoredSize_v2()
+                .offset = TopLeftMostOuter + this->GetRelativeTextTopLeft(),
+                .extent = this->GetAnchoredSize_v2()
                     - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
                     - this->TextDrawOffset
                     - this->TextPlayroomReduction

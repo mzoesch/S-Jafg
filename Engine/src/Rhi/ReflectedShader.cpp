@@ -115,19 +115,41 @@ void from_json(json const& j, reflected_shader::binding_definition& binding_defi
         if (kind == "resource")
         {
             auto& ref{Type.template emplace<reflected_shader::binding_definition::resource>()};
-            ref.base_shape = [&t]
+            [&t](auto&& variant)
             {
                 LString base_shape{t.at("baseShape").template get<LString>()};
                 if (base_shape == "texture2D")
                 {
-                    return reflected_shader::resource_base_shape::texture2D;
+                    variant = reflected_shader::binding_definition::resource::texture2D{};
+                    return;
                 }
                 if (base_shape == "structuredBuffer")
                 {
-                    return reflected_shader::resource_base_shape::structured_buffer;
+                    auto& result_type{t.at("resultType")};
+                    reflected_shader::binding_definition::resource::structured_buffer result{
+                        .Name = result_type.at("name").template get<LString>()
+                        };
+                    if (result_type.contains("userAttribs"))
+                    {
+                        for (auto& [Key, value]: from_json_user_attribs(result_type.at("userAttribs")))
+                        {
+                            if (Key == "CxxName")
+                            {
+                                if (value.size() != 1)
+                                {
+                                    LOG_FATAL(LogSerialization, "Expected exactly one argument for user attribute [{}]. But got [{}]."
+                                        , Key, value.size())
+                                }
+                                result.CxxName = value.front();
+                            }
+                            result.UserAttributes[std::move(Key)] = std::move(value);
+                        }
+                    }
+                    variant = std::move(result);
+                    return;
                 }
                 LOG_FATAL(LogSerialization, "Unsupported binding definition resource base shape [{}].", base_shape)
-            }();
+            }(ref.base_shape);
         }
         else if (kind == "samplerState")
         {
@@ -179,6 +201,22 @@ void from_json(json const& j, reflected_shader::binding_definition& binding_defi
                 binding_definition.CxxName = value.front();
             }
             binding_definition.UserAttributes[std::move(Key)] = std::move(value);
+        }
+    }
+
+    if (!binding_definition.CxxName)
+    {
+        if (std::holds_alternative<reflected_shader::binding_definition::resource>(binding_definition.Type))
+        {
+            auto& Resource{std::get<reflected_shader::binding_definition::resource>(binding_definition.Type)};
+            if (std::holds_alternative<reflected_shader::binding_definition::resource::structured_buffer>(Resource.base_shape))
+            {
+                auto& StructuredBuffer{std::get<reflected_shader::binding_definition::resource::structured_buffer>(Resource.base_shape)};
+                if (StructuredBuffer.CxxName)
+                {
+                    binding_definition.CxxName = StructuredBuffer.CxxName;
+                }
+            }
         }
     }
 }

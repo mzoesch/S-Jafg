@@ -15,12 +15,12 @@ void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
 {
     Super::OnAttach(InOwner);
     this->ShaderSubsystem = this->GetMutableLocalEgo().GetFrontend().GetSubsystemChecked<JShaderSubsystem>();
-    return;
 }
 
 void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
 {
     this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState);
+    this->SetAabb(this->Mesh->GetAabb());
 }
 
 void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef InMaterialInstance) noexcept

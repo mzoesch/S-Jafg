@@ -12,8 +12,8 @@ void Jafg::WText::Draw(LNodeRenderInfo const& Info) const
     if (!(this->GetContent().empty() || this->TextBrush.bSkipBrushDraw))
     {
         this->GetTextRenderData().Render(Info, {
-            .Offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + this->GetRelativeTextTopLeft(),
-            .Extent = this->GetAnchoredSize_v2()
+            .offset = this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + this->GetRelativeTextTopLeft(),
+            .extent = this->GetAnchoredSize_v2()
                 - this->TextBrush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
                 - this->TextDrawOffset
                 - this->TextPlayroomReduction,

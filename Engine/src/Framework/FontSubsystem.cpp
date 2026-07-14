@@ -178,8 +178,8 @@ void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect,
                 {
                     Info.AddInstance({
                         .Rect = {
-                            .Offset = {Rect.Offset.x + Glyph.Rect.x + (Glyph.Rect.z - Missed), Rect.Offset.y + Glyph.Rect.y},
-                            .Extent = {Missed, Glyph.Rect.w}
+                            .offset = {Rect.offset.x + Glyph.Rect.x + (Glyph.Rect.z - Missed), Rect.offset.y + Glyph.Rect.y},
+                            .extent = {Missed, Glyph.Rect.w}
                             },
                         .TexCoordRect = {
                             Glyph.TexCoordRect.x + ((Glyph.TexCoordRect.z - Glyph.TexCoordRect.x) * ((Glyph.Rect.z - Missed) / Glyph.Rect.z)),
@@ -200,7 +200,7 @@ void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect,
         }
 
         Info.AddInstance({
-            .Rect = {{Rect.Offset.x + Glyph.Rect.x, Rect.Offset.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
+            .Rect = {{Rect.offset.x + Glyph.Rect.x, Rect.offset.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
             .TexCoordRect = Glyph.TexCoordRect,
             .Tint = TextInfo.Tint,
             .OutlineTint = TextInfo.OutlineTint,
@@ -219,7 +219,7 @@ void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect,
     {
         for (LGlyphCollection::Info const& Glyph: this->Collection)
         {
-            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.Extent.x)
+            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.extent.x)
             {
                 break;
             }
@@ -231,7 +231,7 @@ void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect,
     {
         for (LGlyphCollection::Info const& Glyph: this->Collection)
         {
-            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.Extent.x)
+            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.extent.x)
             {
                 break;
             }
