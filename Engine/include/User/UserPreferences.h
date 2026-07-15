@@ -251,15 +251,24 @@ public:
     TPreference<LPath> EditorLastLayout{ "Config/DefaultEditorLayout.json" };
 
     CLASS_FIELD(Config)
+    TPreference<bool> EditorVisualizeMeshAabbs{ false };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorMeshAabbVisualizationTint{ Colors::Green };
+
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorTraceLength{ 500.0f };
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorVisualizeTraces{ false };
+    CLASS_FIELD(Config)
     TPreference<LColor> EditorTraceVisualizationTint{ Colors::Blue };
-    CLASS_FIELD(Config)
-    TPreference<LColor> EditorHitVisualizationTint{ Colors::Red };
-    CLASS_FIELD(Config)
-    TPreference<LColor> EditorAabbVisualizationTint{ Colors::Green };
     CLASS_FIELD(Config)
     TPreference<f32> EditorTraceVisualizationDuration{ 30.0f };
     CLASS_FIELD(Config)
-    TPreference<f32> EditorTraceLength{ 500.0f };
+    TPreference<bool> EditorVisualizeTraceHits{ false };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorTraceHitVisualizationTint{ Colors::Red };
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorTraceHitVisualizationDuration{ 30.0f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Factories

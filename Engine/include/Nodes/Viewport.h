@@ -93,11 +93,11 @@ public:
     ENGINE_API void _AddWidget(WUserWidget* Widget);
     ENGINE_API void _RemoveWidget(WUserWidget* Widget);
 
-    FORCEINLINE constexpr auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
+    NODISCARD FORCEINLINE constexpr auto const& GetTopLevelWidgets() const noexcept { return this->TopLevelWidgets; }
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetTopLevelWidgetByClass() noexcept
+    NODISCARD FORCEINLINE TNode* GetTopLevelWidgetByClass() noexcept
     {
-        for (auto* Widget : this->TopLevelWidgets)
+        for (auto* Widget: this->TopLevelWidgets)
         {
             if (auto* Result{DynamicCast<TNode>(Widget)})
             {
@@ -107,16 +107,16 @@ public:
         return nullptr;
     }
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode* GetTopLevelWidgetByClassChecked() noexcept
+    NODISCARD FORCEINLINE TNode* GetTopLevelWidgetByClassChecked() noexcept
     {
         auto* Result{this->GetTopLevelWidgetByClass<TNode>()};
         check(Result)
         return Result;
     }
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode const* GetTopLevelWidgetByClass() const noexcept
+    NODISCARD FORCEINLINE TNode const* GetTopLevelWidgetByClass() const noexcept
     {
-        for (auto* Widget : this->TopLevelWidgets)
+        for (auto* Widget: this->TopLevelWidgets)
         {
             if (auto* Result{DynamicCast<TNode>(Widget)})
             {
@@ -126,9 +126,33 @@ public:
         return nullptr;
     }
     template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-    FORCEINLINE TNode const* GetTopLevelWidgetByClassChecked() const noexcept
+    NODISCARD FORCEINLINE TNode const* GetTopLevelWidgetByClassChecked() const noexcept
     {
         auto* Result{this->GetTopLevelWidgetByClass<TNode>()};
+        check(Result)
+        return Result;
+    }
+
+    //#
+    //# Clients should query for derived classes of #WUserWidget instead of individual nodes.
+    //# If you find yourself quering for nodes, you are doing something wrong. This method is already
+    //# highly controversial and should only be used with care.
+    //#
+    template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+    NODISCARD FORCEINLINE TNode* FindVisibleWidgetByClass() noexcept;
+    template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+    NODISCARD FORCEINLINE TNode* FindVisibleWidgetByClassChecked() noexcept
+    {
+        auto* Result{this->FindVisibleWidgetByClass<TNode>()};
+        check(Result)
+        return Result;
+    }
+    template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+    NODISCARD FORCEINLINE TNode const* FindVisibleWidgetByClass() const noexcept;
+    template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+    FORCEINLINE TNode const* FindVisibleWidgetByClassChecked() const noexcept
+    {
+        auto* Result{this->FindVisibleWidgetByClass<TNode>()};
         check(Result)
         return Result;
     }

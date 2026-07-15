@@ -243,7 +243,7 @@ Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& 
                     }
                     else
                     {
-                        Comp->OnTrace(this->RenderTarget.GetExtent(), Location);
+                        Comp->OnTrace(*this, !!(Event.Mods & EModBits::Control), this->RenderTarget.GetExtent(), Location);
                     }
                     return LNodeReply::Handled();
                 }
@@ -777,85 +777,38 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
                     },});
                 return Result;
             },},},
-        LDropDownNodeCustom{
-            .OnCreate=[](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
-            {
-                auto& Prefs{GetSingleton<JUserPreferences>()};
-                return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
-                + NewNode(Viewport).Class<WCheckmarkButton>()
-                    .Anchor(EAnchor::CenterLeft)
-                    .Checked(*Prefs.EditorAutoLaunchLastWorld)
-                    .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-                    {
-                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
-                            && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
-                            )
-                        {
-                            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-                            MutablePrefs.EditorAutoLaunchLastWorld = !*MutablePrefs.EditorAutoLaunchLastWorld;
-                            Self.AsStatic<WCheckmarkButton>().SetChecked(*MutablePrefs.EditorAutoLaunchLastWorld);
-                            return LNodeReply::Handled();
-                        }
-                        return LNodeReply::Unhandled();
-                    })
-                + NewNode(Viewport).Class<WText>()
-                    .Anchor(EAnchor::HFill)
-                    .Visibility(ENodeVisibility::TransitiveHitTestInvisible)
-                    .Padding({6_spt, 0.0f, 0.0f, 0.0f})
-                    .Content("Auto-Launch Last World");
-                },
-            .OnAction=[](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-            {
-                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
-                {
-                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-                    MutablePrefs.EditorAutoLaunchLastWorld = !*MutablePrefs.EditorAutoLaunchLastWorld;
-                    return LDropDownNodeCustom::reply::handled(true);
-                }
-                return LDropDownNodeCustom::reply::unhandled();
-            },},
-        LDropDownNodeCustom{
-            .OnCreate=[this](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
-            {
-                auto& Prefs{GetSingleton<JUserPreferences>()};
-                return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
-                + NewNode(Viewport).Class<WCheckmarkButton>()
-                    .Anchor(EAnchor::CenterLeft)
-                    .Checked(*Prefs.EditorPerspectiveDepthTestHint)
-                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-                    {
-                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
-                            && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
-                            )
-                        {
-                            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-                            MutablePrefs.EditorPerspectiveDepthTestHint = !*MutablePrefs.EditorPerspectiveDepthTestHint;
-                            Self.AsStatic<WCheckmarkButton>().SetChecked(*MutablePrefs.EditorPerspectiveDepthTestHint);
-                            this->OnPerspectiveDepthTestChanged();
-                            return LNodeReply::Handled();
-                        }
-                        return LNodeReply::Unhandled();
-                    })
-                + NewNode(Viewport).Class<WText>()
-                    .Anchor(EAnchor::HFill)
-                    .Visibility(ENodeVisibility::TransitiveHitTestInvisible)
-                    .Padding({6_spt, 0.0f, 0.0f, 0.0f})
-                    .Content("Depth test");
-                },
-            .OnAction=[this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-            {
-                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
-                {
-                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-                    MutablePrefs.EditorPerspectiveDepthTestHint = !*MutablePrefs.EditorPerspectiveDepthTestHint;
-                    this->OnPerspectiveDepthTestChanged();
-                    return LDropDownNodeCustom::reply::handled(true);
-                }
-                return LDropDownNodeCustom::reply::unhandled();
-            },},
+        CreateDropDownCheckmark("Auto-Launch Last World", *GetSingleton<JUserPreferences>().EditorAutoLaunchLastWorld, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorAutoLaunchLastWorld = !*MutablePrefs.EditorAutoLaunchLastWorld;
+            return *MutablePrefs.EditorAutoLaunchLastWorld;
+        }),
+        CreateDropDownCheckmark("Depth test", *GetSingleton<JUserPreferences>().EditorPerspectiveDepthTestHint, [this]
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorPerspectiveDepthTestHint = !*MutablePrefs.EditorPerspectiveDepthTestHint;
+            this->OnPerspectiveDepthTestChanged();
+            return *MutablePrefs.EditorPerspectiveDepthTestHint;
+        }),
+        CreateDropDownCheckmark("Visualize mesh aabbs", *GetSingleton<JUserPreferences>().EditorVisualizeMeshAabbs, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorVisualizeMeshAabbs = !*MutablePrefs.EditorVisualizeMeshAabbs;
+            return *MutablePrefs.EditorVisualizeMeshAabbs;
+        }),
+        CreateDropDownCheckmark("Visualize traces", *GetSingleton<JUserPreferences>().EditorVisualizeTraces, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorVisualizeTraces = !*MutablePrefs.EditorVisualizeTraces;
+            return *MutablePrefs.EditorVisualizeTraces;
+        }),
+        CreateDropDownCheckmark("Visualize trace hits", *GetSingleton<JUserPreferences>().EditorVisualizeTraceHits, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorVisualizeTraceHits = !*MutablePrefs.EditorVisualizeTraceHits;
+            return *MutablePrefs.EditorVisualizeTraceHits;
+        }),
         });
-
-    return;
 }
 
 void Jafg::WWorldViewer::_ctor_SetBackgroundTint()

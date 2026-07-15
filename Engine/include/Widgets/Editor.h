@@ -19,6 +19,7 @@ class WTabOverlay;
 class WEditor;
 class WButton;
 class WTextButton;
+class WWorldViewer;
 class WEditorCategorySeparator;
 struct LFactoryEditorCategorySeparator;
 struct LEditorLayout;
@@ -328,7 +329,7 @@ public:
     //# @return Whether the context was activated successfully.
     bool ActivateUserInputContext() const noexcept;
 
-    void OnTrace(rhi::extent2 Extent, LVec2F Location);
+    void OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location);
     void OnMove(LInputActionValue const& Value);
     void OnRotate(LInputActionValue const& Value);
     void OnVelocityMultiplierChange(LInputActionValue const& Value);

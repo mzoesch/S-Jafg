@@ -780,18 +780,21 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
     auto& Prefs{GetSingleton<JUserPreferences>()};
     check(this->RayInstance.get())
 
-    for (auto& E: this->GetWorld().GetEmployees() | algo::views::filter([](auto& E){ return E->template IsA<AActor>(); }))
+    if (*Prefs.EditorVisualizeMeshAabbs)
     {
-        auto& A{*StaticCastChecked<AActor>(&*E)};
-        for (auto& Comp: A.GetComponents() | algo::views::filter([](auto& C){ return C->template IsA<ASceneComponent>(); }))
+        for (auto& E: this->GetWorld().GetEmployees() | algo::views::filter([](auto& E){ return E->template IsA<AActor>(); }))
         {
-            auto& Sc{*StaticCastChecked<ASceneComponent>(&*Comp)};
-            if (Sc.ShouldRender())
+            auto& A{*StaticCastChecked<AActor>(&*E)};
+            for (auto& Comp: A.GetComponents() | algo::views::filter([](auto& C){ return C->template IsA<ASceneComponent>(); }))
             {
-                this->AddAabb({
-                    .Tint = *Prefs.EditorAabbVisualizationTint,
-                    .Value = Sc.GetAabb().apply(Sc.GetTransform())
-                    });
+                auto& Sc{*StaticCastChecked<ASceneComponent>(&*Comp)};
+                if (Sc.ShouldRender())
+                {
+                    this->AddAabb({
+                        .Tint = *Prefs.EditorMeshAabbVisualizationTint,
+                        .Value = Sc.GetAabb().apply(Sc.GetTransform())
+                        });
+                }
             }
         }
     }
@@ -847,7 +850,7 @@ bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
     return false;
 }
 
-void Jafg::AEditorCameraComponent::OnTrace(rhi::extent2 Extent, LVec2F Location)
+void Jafg::AEditorCameraComponent::OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Pawn{this->GetOwningPawn()};
@@ -878,23 +881,55 @@ void Jafg::AEditorCameraComponent::OnTrace(rhi::extent2 Extent, LVec2F Location)
 
     if (auto* PcComp{Pawn.GetOwningController()->GetComponent<AEditorPersonaControllerComponent>()})
     {
-        PcComp->AddRay({.Tint = *Prefs.EditorTraceVisualizationTint, .Duration = *Prefs.EditorTraceVisualizationDuration, .Value = Ray,});
+        if (*Prefs.EditorVisualizeTraces)
+        {
+            PcComp->AddRay({.Tint = *Prefs.EditorTraceVisualizationTint, .Duration = *Prefs.EditorTraceVisualizationDuration, .Value = Ray,});
+        }
     }
 
+    bool bHit{};
     for (auto& Hit: Pawn.GetWorld().LineTraceNonPhysical(Ray, {.bSingleHit=true}))
     {
+        bHit = true;
         if (auto* Comp{this->GetOwningActor().AsStatic<APawn>().GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
         {
-            constexpr auto offset{0.01f};
-            Comp->AddAabb({
-                .Tint = *Prefs.EditorHitVisualizationTint,
-                .Duration = *Prefs.EditorTraceVisualizationDuration,
-                .Value = {
-                    .min = Hit.GlobalWorldLocation - LVec3F{offset},
-                    .max = Hit.GlobalWorldLocation + LVec3F{offset},
-                    }
-                });
+            if (*Prefs.EditorVisualizeTraceHits)
+            {
+                constexpr auto offset{0.01f};
+                Comp->AddAabb({
+                    .Tint = *Prefs.EditorTraceHitVisualizationTint,
+                    .Duration = *Prefs.EditorTraceHitVisualizationDuration,
+                    .Value = {
+                        .min = Hit.GlobalWorldLocation - LVec3F{offset},
+                        .max = Hit.GlobalWorldLocation + LVec3F{offset},
+                        }
+                    });
+            }
         }
+        if (bMultiselect)
+        {
+            if (algo::contains(Viewer.GetSelectedActors(), &Hit.Actor))
+            {
+                Viewer.SelectActors(Viewer.GetSelectedActors()
+                    | algo::views::filter([Actor=&Hit.Actor](auto* E){ return E != Actor; })
+                    | algo::to_array_fn{Viewer.GetSelectedActors().size()}
+                    );
+            }
+            else
+            {
+                auto Current{Viewer.GetSelectedActors()};
+                Current.emplace_back(&Hit.Actor);
+                Viewer.SelectActors(std::move(Current));
+            }
+        }
+        else
+        {
+            Viewer.SelectActors({&Hit.Actor});
+        }
+    }
+    if (!bHit && !bMultiselect)
+    {
+        Viewer.SelectActors({});
     }
 }
 

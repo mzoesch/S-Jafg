@@ -99,4 +99,30 @@ struct LFactoryUserWidget : NODE_FACTORY_PARENT(WUserWidget)
     NODE_FACTORY_BODY(WUserWidget)
 };
 
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+NODISCARD FORCEINLINE TNode* LViewport::FindVisibleWidgetByClass() noexcept
+{
+    for (auto* Widget: this->TopLevelWidgets)
+    {
+        if (auto* Result{Widget->FindNodeInVisiblePath<TNode>()})
+        {
+            return Result;
+        }
+    }
+    return nullptr;
+}
+
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+NODISCARD FORCEINLINE TNode const* LViewport::FindVisibleWidgetByClass() const noexcept
+{
+    for (auto* Widget: this->TopLevelWidgets)
+    {
+        if (auto* Result{Widget->FindNodeInVisiblePath<TNode>()})
+        {
+            return Result;
+        }
+    }
+    return nullptr;
+}
+
 } /* ~Namespace Jafg */

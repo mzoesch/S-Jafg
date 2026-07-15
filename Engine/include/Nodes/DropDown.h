@@ -136,4 +136,11 @@ struct LDropDownMenuCreateInfo final
 };
 ENGINE_API WDismissibleFloatingWidget& CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, TArray<LDropDownNode> const& Submenu);
 
+//#
+//# @param Text     Display text.
+//# @param bChecked Initial state of the checkmark.
+//# @param OnAction Checkmark should be toggled (if possible). The return value is the new toggled value.
+//#
+NODISCARD ENGINE_API LDropDownNodeCustom CreateDropDownCheckmark(LString Text, bool bChecked, TCopyableFunction<bool()> OnAction);
+
 } /* ~Namespace Jafg */

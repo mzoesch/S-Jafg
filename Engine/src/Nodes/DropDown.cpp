@@ -9,6 +9,8 @@
 #include "User/UserPreferences.h"
 #include "Nodes/TextIconizedSeparator.h"
 #include "Nodes/DismissibleFloatingWidget.h"
+#include "Nodes/Spacer.h"
+#include "Nodes/CheckmarkButton.h"
 
 Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, LVec2F Position, LDropDownMenuCreateInfo CreateInfo, TArray<LDropDownNode> const& Children)
 {
@@ -293,4 +295,41 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
         });
 
     return *Result;
+}
+
+Jafg::LDropDownNodeCustom Jafg::CreateDropDownCheckmark(LString Text, bool bChecked, TCopyableFunction<bool()> OnToggle)
+{
+    return LDropDownNodeCustom{
+            .OnCreate=[bChecked,OnToggle,Text=std::move(Text)](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+            {
+                return NewNode(Viewport).Class<WSpacer>().Width(2_spt)
+                + NewNode(Viewport).Class<WCheckmarkButton>()
+                    .Anchor(EAnchor::CenterLeft)
+                    .Checked(bChecked)
+                    .OnKeyEventFocused([OnToggle](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
+                            && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
+                            )
+                        {
+                            Self.AsStatic<WCheckmarkButton>().SetChecked(OnToggle());
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewNode(Viewport).Class<WText>()
+                    .Anchor(EAnchor::HFill)
+                    .Visibility(ENodeVisibility::TransitiveHitTestInvisible)
+                    .Padding({6_spt, 0.0f, 0.0f, 0.0f})
+                    .Content(std::move(Text));
+                },
+            .OnAction=[OnToggle](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+            {
+                if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                {
+                    (void)OnToggle();
+                    return LDropDownNodeCustom::reply::handled(true);
+                }
+                return LDropDownNodeCustom::reply::unhandled();
+            },};
 }
