@@ -18,7 +18,7 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #pragma clang diagnostic ignored "-Wmissing-noreturn" // Maybe active this if we get around PURE_VIRTUAL()?
-#pragma clang diagnostic ignored "-Wmissing-prototypes" // Only fo del llmm ops. can we get around this?
+#pragma clang diagnostic ignored "-Wmissing-prototypes" // Only for del llmm ops. can we get around this?
 #pragma clang diagnostic ignored "-Wnested-anon-types" // All our compilers support this.
 #pragma clang diagnostic ignored "-Wnrvo" // Very interesting. We might want this later. But very annoying to deal with.
 #pragma clang diagnostic ignored "-Wpadded" // Considering: -Wno-error=padded

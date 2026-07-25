@@ -64,17 +64,17 @@ void Jafg::APawn::OnGarbage(EJxxRecordTearDownReason Reason)
     return;
 }
 
-Jafg::LEye_v2 Jafg::APawn::GetEye() const noexcept
+LWorldEye Jafg::APawn::GetEye() const noexcept
 {
     check(this->HasRootComponent())
     return {
-        .VertFov = this->VertFov,
-        .NearFrustum = this->NearFrustum,
-        .FarFrustum = this->FarFrustum,
-        .Translation = this->GetRootComponent().GetTranslation(),
-        .Front = this->GetRootComponent().GetRotator() * maths::forward_vector<LWorldVec3>,
+        .vert_fov = this->VertFov,
+        .near_frustum = this->NearFrustum,
+        .far_frustum = this->FarFrustum,
+        .translation = this->GetRootComponent().GetTranslation(),
+        .front = this->GetRootComponent().GetRotator() * maths::forward_vector<LWorldVec3>,
         /* Maybe hard lock this to maths::up_vector? */
-        .Up = this->GetRootComponent().GetRotator() * maths::up_vector<LWorldVec3>,
+        .up = this->GetRootComponent().GetRotator() * maths::up_vector<LWorldVec3>,
         };
 }
 

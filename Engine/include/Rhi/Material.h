@@ -6,6 +6,8 @@
 #include "Rhi/ResourceReference.h"
 #include "Rhi/GraphicsPipeline.h"
 #include "Rhi/ReflectedShader.h"
+#include "Rhi/Texture2.h"
+#include "Rhi/Bindless.h"
 
 namespace rhi
 {
@@ -101,49 +103,82 @@ struct LMaterialInstance final
 {
     LMaterialRef Material;
 
-    TArray<std::pair<u32, vk::raii::DescriptorSet>> InfrequentDescriptorSets;
-    rhi::frame_array<TArray<std::pair<u32, vk::raii::DescriptorSet>>> FrequentDescriptorSets;
+    struct DescriptorSetInstance final
+    {
+        struct Resource final
+        {
+            typedef std::variant<std::monostate, rhi::mapped_device_buffer, UBO::Bindless::Sampler, LTexture2Ref>
+                value_type;
+
+            NODISCARD constexpr bool IsNone() const noexcept { return std::holds_alternative<std::monostate>(this->Value); }
+            NODISCARD constexpr bool IsBuffer() const noexcept { return std::holds_alternative<rhi::mapped_device_buffer>(this->Value); }
+            NODISCARD constexpr bool IsSampler() const noexcept { return std::holds_alternative<UBO::Bindless::Sampler>(this->Value); }
+            NODISCARD constexpr bool IsSampledImage() const noexcept { return std::holds_alternative<LTexture2Ref>(this->Value); }
+
+            NODISCARD constexpr rhi::mapped_device_buffer& AsBuffer() noexcept { return std::get<rhi::mapped_device_buffer>(this->Value); }
+            NODISCARD constexpr rhi::mapped_device_buffer const& AsBuffer() const noexcept { return std::get<rhi::mapped_device_buffer>(this->Value); }
+            NODISCARD constexpr UBO::Bindless::Sampler& AsSampler() noexcept { return std::get<UBO::Bindless::Sampler>(this->Value); }
+            NODISCARD constexpr UBO::Bindless::Sampler const& AsSampler() const noexcept { return std::get<UBO::Bindless::Sampler>(this->Value); }
+            NODISCARD constexpr LTexture2Ref& AsSampledImage() noexcept { return std::get<LTexture2Ref>(this->Value); }
+            NODISCARD constexpr LTexture2Ref const& AsSampledImage() const noexcept { return std::get<LTexture2Ref>(this->Value); }
+
+            value_type Value;
+            NODISCARD value_type& operator*() noexcept { return this->Value; }
+            NODISCARD value_type const& operator*() const noexcept { return this->Value; }
+        };
+
+        u32 Space{};
+        vk::raii::DescriptorSet DescriptorSet;
+        /* Index always corresponds to the index specified inside the shader. */
+        TArray<Resource> Resources;
+
+        NODISCARD constexpr vk::raii::DescriptorSet& operator*() noexcept { return this->DescriptorSet; }
+        NODISCARD constexpr vk::raii::DescriptorSet const& operator*() const noexcept { return this->DescriptorSet; }
+    };
+
+    TArray<DescriptorSetInstance> InfrequentDescriptorSets;
+    rhi::frame_array<TArray<DescriptorSetInstance>> FrequentDescriptorSets;
 
     //# @return The descriptor set for the given space or nullptr if not found.
-    NODISCARD vk::raii::DescriptorSet const* Vk_FindUniqueDescriptorSet(u32 Space, std::optional<u32> Frame = {}) const
+    NODISCARD auto* Vk_FindUniqueDescriptorSet(this auto&& Self, u32 Space, std::optional<u32> Frame = {})
     {
-        if (auto It{algo::find(this->InfrequentDescriptorSets, Space, algo::pair_first)}; It != this->InfrequentDescriptorSets.end())
+        if (auto It{algo::find(Self.InfrequentDescriptorSets, Space, &DescriptorSetInstance::Space)}; It != Self.InfrequentDescriptorSets.end())
         {
-            return &It->second;
+            return &*It;
         }
         if (Frame)
         {
-            check(algo::valid_index(this->FrequentDescriptorSets, *Frame))
-            auto const& FrequentSets{this->FrequentDescriptorSets[*Frame]};
-            if (auto It{algo::find(FrequentSets, Space, algo::pair_first)}; It != FrequentSets.end())
+            check(algo::valid_index(Self.FrequentDescriptorSets, *Frame))
+            auto& FrequentSets{Self.FrequentDescriptorSets[*Frame]};
+            if (auto It{algo::find(FrequentSets, Space, &DescriptorSetInstance::Space)}; It != FrequentSets.end())
             {
-                return &It->second;
+                return &*It;
             }
         }
-        return nullptr;
+        return static_cast<decltype(&*algo::find(Self.InfrequentDescriptorSets, Space, &DescriptorSetInstance::Space))>(nullptr);
     }
 
     //# Checked method of #Vk_FindUniqueDescriptorSet.
-    NODISCARD vk::raii::DescriptorSet const& Vk_GetUniqueDescriptorSet(u32 Space, std::optional<u32> Frame = {}) const
+    NODISCARD auto& Vk_GetUniqueDescriptorSet(this auto&& Self, u32 Space, std::optional<u32> Frame = {})
     {
-        if (auto* Set{this->Vk_FindUniqueDescriptorSet(Space, Frame)}; Set)
+        if (auto* Set{Self.Vk_FindUniqueDescriptorSet(Space, Frame)}; Set)
         {
             return *Set;
         }
         if (!Frame)
         {
-            check(!this->FrequentDescriptorSets.empty())
-            auto const& FrequentSets{this->FrequentDescriptorSets[0uz]};
-            if (auto It{algo::find(FrequentSets, Space, algo::pair_first)}; It != FrequentSets.end())
+            check(!Self.FrequentDescriptorSets.empty())
+            auto const& FrequentSets{Self.FrequentDescriptorSets[0uz]};
+            if (auto It{algo::find(FrequentSets, Space, &DescriptorSetInstance::Space)}; It != FrequentSets.end())
             {
                 LOG_FATAL(LogMaterialSubsystem
                     , "[{}]: Space [{}] is specified as a frequent descriptor set but frame was not specified."
-                    , this->Material->Template.my_shader.Identifier, Space)
+                    , Self.Material->Template.my_shader.Identifier, Space)
             }
         }
         LOG_FATAL(LogMaterialSubsystem
             , "[{}]: No descriptor set for space [{}] found."
-            , this->Material->Template.my_shader.Identifier, Space)
+            , Self.Material->Template.my_shader.Identifier, Space)
     }
 
     NODISCARD ENGINE_API rhi::vk_binding GetBinding(LStringView Key) const noexcept;

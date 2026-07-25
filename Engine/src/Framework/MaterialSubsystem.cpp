@@ -389,7 +389,7 @@ void Jafg::LMaterialInstance::Vk_SetSampler(LFrontend const& Frontend, rhi::vk_b
         };
     check(ImageInfo.imageView == nullptr && ImageInfo.imageLayout == vk::ImageLayout::eUndefined)
     std::array Writes{vk::WriteDescriptorSet{
-        .dstSet = this->Vk_GetUniqueDescriptorSet(Where.space),
+        .dstSet = *this->Vk_GetUniqueDescriptorSet(Where.space),
         .dstBinding = Where.index,
         .dstArrayElement = 0,
         .descriptorCount = 1,
@@ -408,7 +408,7 @@ void Jafg::LMaterialInstance::Vk_SetSampledImage(LFrontend const& Frontend, rhi:
         .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
         };
     std::array Writes{vk::WriteDescriptorSet{
-        .dstSet = this->Vk_GetUniqueDescriptorSet(Where.space),
+        .dstSet = *this->Vk_GetUniqueDescriptorSet(Where.space),
         .dstBinding = Where.index,
         .dstArrayElement = 0,
         .descriptorCount = 1,
@@ -699,6 +699,8 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Name) noexc
 
 Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Material)
 {
+    check(this->ShaderSubsystem)
+
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
@@ -737,7 +739,12 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         }
         else
         {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: No update frequency for space [{}].", Shader.Identifier, Parameter.Space)
+            /*
+             * Theoretically we could dervie the frequency from one of the bindings inside a set
+             * but we do not do that intentiionally. We ant to be explicit.
+             */
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: No update frequency for space [{}@{}::{}]."
+                , Shader.Identifier, Parameter.Name, Parameter.Space, Parameter.Index)
         }
     }
 
@@ -774,9 +781,9 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         {
             if (Frequency == rhi::reflected_shader::update_frequency::per_frame)
             {
-                for (auto FramesInFlight{0uz}; FramesInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FramesInFlight)
+                for (auto FrameInFlight{0uz}; FrameInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FrameInFlight)
                 {
-                    Instance->FrequentDescriptorSets[FramesInFlight].emplace_back(Space, std::move(UniqueSets[Idx++]));
+                    Instance->FrequentDescriptorSets[FrameInFlight].emplace_back(Space, std::move(UniqueSets[Idx++]));
                 }
             }
             else if (Frequency == rhi::reflected_shader::update_frequency::rarely)
@@ -791,33 +798,131 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         check(Idx == UniqueLayouts.size())
     }
 
+    if (!UniqueLayouts.empty())
+    {
+        for (auto& Parameter: Shader.Parameters)
+        {
+            if (Parameter.Kind != rhi::reflected_shader::binding_type::descriptor_table_slot)
+            {
+                continue;
+            }
+            if (Parameter.find_user_attribute("Shared"))
+            {
+                continue;
+            }
+
+            std::visit([&](auto&& Type)
+            {
+                auto SetBinding{[&]<typename T>(std::optional<LString> const& CxxName = {})
+                {
+                    auto SetResource{[&](std::optional<u32> Frame)
+                    {
+                        auto& DescriptorSetInstance{Instance->Vk_GetUniqueDescriptorSet(Parameter.Space, Frame)};
+                        if (DescriptorSetInstance.Resources.size() < Parameter.Index + 1)
+                        {
+                            DescriptorSetInstance.Resources.resize(static_cast<std::size_t>(Parameter.Index + 1));
+                        }
+                        *DescriptorSetInstance.Resources[Parameter.Index] = T{};
+
+                        if constexpr (std::same_as<T, rhi::mapped_device_buffer>)
+                        {
+                            rhi::mapped_device_buffer& Buffer{DescriptorSetInstance.Resources[Parameter.Index].AsBuffer()};
+                            if (!Parameter.CxxName)
+                            {
+                                LOG_FATAL(LogMaterialSubsystem, "[{}]: No CxxName for buffer set [{}::{}].", Shader.Identifier, Parameter.Space, Parameter.Index)
+                            }
+                            if (auto& CxxParameter{this->ShaderSubsystem->GetBufferObject(*CxxName)}; !CxxParameter.bSkipAutoAllocation)
+                            {
+                                check(CxxParameter.DefaultCount > 0)
+                                check(!!CxxParameter.BufferCreateInfo)
+                                check(!Buffer.data())
+                                LOG_TRACE(LogMaterialSubsystem, "[{}]: Auto-allocating buffer [{}@{}::{}] with elem count of [{}]."
+                                    , Shader.Identifier, *CxxName, Parameter.Space, Parameter.Index, CxxParameter.DefaultCount)
+                                Buffer = Frontend.Vk_CreateMappedBuffer(CxxParameter.BufferCreateInfo(CxxParameter.DefaultCount));
+                            }
+                        }
+                    }};
+
+                    if (auto Frequency{UpdateFrequencies.at(Parameter.Space)}; Frequency == rhi::reflected_shader::update_frequency::rarely)
+                    {
+                        SetResource(std::nullopt);
+                    }
+                    else if (Frequency == rhi::reflected_shader::update_frequency::per_frame)
+                    {
+                        check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
+                        for (auto FrameInFlight{0uz}; FrameInFlight < Frontend.Vk_GetNumberOfFramesInFlight(); ++FrameInFlight)
+                        {
+                            SetResource(FrameInFlight);
+                        }
+                    }
+                    else
+                    {
+                        LOG_FATAL(LogMaterialSubsystem, "[{}]: Unsupported update frequency for set [{}::{}]."
+                            , Shader.Identifier, Parameter.Space, Parameter.Index)
+                    }
+                }};
+
+                if constexpr (std::is_same_v<std::decay_t<decltype(Type)>, rhi::reflected_shader::binding_definition::resource>)
+                {
+                    std::visit([&](auto&& base_shape)
+                    {
+                        if constexpr (std::same_as<std::decay_t<decltype(base_shape)>, rhi::reflected_shader::binding_definition::resource::texture2D>)
+                        {
+                            SetBinding.template operator()<LTexture2Ref>();
+                        }
+                        else if constexpr (std::same_as<std::decay_t<decltype(base_shape)>, rhi::reflected_shader::binding_definition::resource::structured_buffer>)
+                        {
+                            SetBinding.template operator()<rhi::mapped_device_buffer>(base_shape.CxxName);
+                        }
+                        else
+                        {
+                            LOG_FATAL(LogMaterialSubsystem, "[{}]: Unsupported resource type for set [{}::{}].", Shader.Identifier, Parameter.Space, Parameter.Index)
+                        }
+                    }, Type.base_shape);
+                }
+                else if constexpr (std::is_same_v<std::decay_t<decltype(Type)>, rhi::reflected_shader::binding_definition::sampler_state>)
+                {
+                    SetBinding.template operator()<UBO::Bindless::Sampler>();
+                }
+                else if constexpr (std::is_same_v<std::decay_t<decltype(Type)>, rhi::reflected_shader::binding_definition::constant_buffer>)
+                {
+                    SetBinding.template operator()<rhi::mapped_device_buffer>(Parameter.CxxName);
+                }
+                else
+                {
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Unsupported Cxx parameter type for set [{}::{}].", Shader.Identifier, Parameter.Space, Parameter.Index)
+                }
+            }, Parameter.Type);
+        }
+    }
+
     checkCode
     (
         std::unordered_map<u32, u32> InfrequentSpaces;
-        for (auto Space: Instance->InfrequentDescriptorSets | algo::views::keys)
+        for (auto& Set: Instance->InfrequentDescriptorSets)
         {
-            if (InfrequentSpaces.contains(Space))
+            if (InfrequentSpaces.contains(Set.Space))
             {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: Duplicate space [{}] in infrequent descriptor sets.", Shader.Identifier, Space)
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Duplicate space [{}] in infrequent descriptor sets.", Shader.Identifier, Set.Space)
             }
-            InfrequentSpaces.emplace(Space, 1);
+            InfrequentSpaces.emplace(Set.Space, 1);
         }
         std::unordered_map<u32, u32> Frequent;
         for (auto& Array: Instance->FrequentDescriptorSets)
         {
-            for (auto const& Space: Array | algo::views::keys)
+            for (auto const& Set: Array)
             {
-                if (InfrequentSpaces.contains(Space))
+                if (InfrequentSpaces.contains(Set.Space))
                 {
-                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Space [{}] is both infrequent and frequent.", Shader.Identifier, Space)
+                    LOG_FATAL(LogMaterialSubsystem, "[{}]: Space [{}] is both infrequent and frequent.", Shader.Identifier, Set.Space)
                 }
-                if (auto It{Frequent.find(Space)}; It != Frequent.end())
+                if (auto It{Frequent.find(Set.Space)}; It != Frequent.end())
                 {
                     ++It->second;
                 }
                 else
                 {
-                    Frequent.emplace(Space, 1);
+                    Frequent.emplace(Set.Space, 1);
                 }
             }
         }

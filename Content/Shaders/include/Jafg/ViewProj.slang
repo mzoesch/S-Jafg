@@ -5,5 +5,5 @@
 [[CxxName("Jafg::UBO::ViewProj")]]
 struct ViewProj
 {
-    float4x4 Matrix;
+    float4x4 matrix;
 };

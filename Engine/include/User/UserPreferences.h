@@ -269,6 +269,14 @@ public:
     TPreference<LColor> EditorTraceHitVisualizationTint{ Colors::Red };
     CLASS_FIELD(Config)
     TPreference<f32> EditorTraceHitVisualizationDuration{ 30.0f };
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorVisualizeGizmoInteractions{ false };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorGizmoVisualizationTint{ Colors::Red };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorGizmoVisualizationHitTint{ Colors::Green };
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorGizmoVisualizationLength{ 500.0f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Factories

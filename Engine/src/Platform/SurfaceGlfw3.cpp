@@ -12,6 +12,11 @@
 #include "Components/SceneComponent.h"
 #include "Nodes/UserWidget.h"
 #include "Rhi/RendererCore.h"
+#include "Framework/TextureSubsystem.h"
+#include "Framework/MaterialSubsystem.h"
+#include "Framework/ShaderSubsystem.h"
+#include "Framework/MeshSubsystem.h"
+#include "Framework/FontSubsystem.h"
 
 #include <GLFW/glfw3.h>
 #if JAFG_PLATFORM_WINDOWS
@@ -391,6 +396,11 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .UserPreferences = GetSingleton<JUserPreferences>(),
         .Frontend = Frontend,
         .Surface = *this,
+        .TextureSubsystem = *Frontend.GetSubsystemChecked<JTextureSubsystem>(),
+        .MaterialSubsystem = *Frontend.GetSubsystemChecked<JMaterialSubsystem>(),
+        .ShaderSubsystem = *Frontend.GetSubsystemChecked<JShaderSubsystem>(),
+        .MeshSubsystem = *this->GetMutableEngine().GetSubsystemChecked<JMeshSubsystem>(),
+        .FontSubsystem = *Frontend.GetSubsystemChecked<JFontSubsystem>(),
         .CommandBuffer = *CommandBuffer,
         .DescriptorPool = *this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex],
         .Frame = *this->Vk_CurrentFrameInFlightIndex,

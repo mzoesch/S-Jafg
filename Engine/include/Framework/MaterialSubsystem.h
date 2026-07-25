@@ -87,6 +87,8 @@ public:
     //# or register you own.
     //#
     NODISCARD auto const& GetSharedDescriptorSetLayouts() const noexcept { return this->SharedDescriptorSetLayouts; }
+    template<rhi::detail::object T>
+    NODISCARD vk::raii::DescriptorSetLayout const& GetSharedDescriptorSetLayout() const noexcept { return this->SharedDescriptorSetLayouts.at(T::name()); }
     vk::DescriptorSetLayout EmplaceSharedDescriptorSetLayout(LString Identifier, vk::raii::DescriptorSetLayout Layout) noexcept
     {
         auto [It, Emplaced]{this->SharedDescriptorSetLayouts.emplace(std::move(Identifier), std::move(Layout))};

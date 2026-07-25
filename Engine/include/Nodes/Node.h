@@ -780,7 +780,7 @@ public:
     //# Called when this widget is being ticked.
     //# @see #EWidgetVisibility for more information about when to tick a widget.
     //#
-    inline virtual void Tick() {}
+    inline virtual void Tick();
 
     //#
     //# Called when this widget is being destructed. This method replaces the #EndLife super method.
@@ -1123,6 +1123,7 @@ public:
     void _SetParentDangerous(WParent* InParent) noexcept { this->Parent = InParent; }
 
 #if JAFG_DO_CHECKS
+    void _check_PrintIndentedTickTrace();
     void _check_StateInvariant();
     void _check_Destruct();
     FORCEINLINE bool& _check_MutableMouseEntered() noexcept { return this->_check_bMouseEntered; }
@@ -1303,6 +1304,16 @@ inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
     : Super{LCxxDynamicInit{.Outer=std::invoke(LNodeDynamicInit::Proj{}, Init.Outer),.Class=Init.Class}}
     , AttachedViewport{Init.Outer}
 {
+}
+
+inline void WNode::Tick()
+{
+#if JAFG_DO_CHECKS
+    if (this->GetViewport()._check_IsPrintTickTrace())
+    {
+        this->_check_PrintIndentedTickTrace();
+    }
+#endif /* JAFG_DO_CHECKS */
 }
 
 FORCEINLINE LNodeReply WNode::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)

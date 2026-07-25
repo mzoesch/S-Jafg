@@ -153,12 +153,6 @@ function(_jafg_add_module_impl
         "${CMAKE_CURRENT_BINARY_DIR}"
         )
 
-#    set_target_properties(${module_name} PROPERTIES
-#        ARCHIVE_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
-#        LIBRARY_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
-#        RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
-#        )
-
     set(pch_file "${module_dir}/src/module.pch")
     if(EXISTS "${pch_file}")
         target_precompile_headers(${module_name} PRIVATE
@@ -238,11 +232,15 @@ function(_jafg_add_module_impl
             -fvisibility=hidden         # Hides all symbols by default.
             -fvisibility-inlines-hidden # Fuck those inlines.
             -Wall -Wextra -Wpedantic    # Enable many warnings.
-            -Weverything
             -Wno-missing-include-dirs   # So unnecessary...
-            -fsafe-buffer-usage-suggestions
             -Werror                     # Warnings as errors
             )
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            target_compile_options(${module_name} PRIVATE
+                -Weverything
+                -fsafe-buffer-usage-suggestions
+                )
+        endif()
 #        target_link_options(${module_name} PRIVATE
 #            -rdynamic
 #            )
@@ -416,23 +414,6 @@ function(_jafg_add_module_impl
     endif()
     # ~Human readable plugin info file
     ###############################################################################
-
-    ###############################################################################
-    # Reflex
-#    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
-#        target_compile_options(${module_name} PRIVATE
-#            "SHELL:-Xclang -load"
-#            "SHELL:-Xclang ${JAFG_ENGINE_ROOT}/bin/Reflex/libReflexHook.so"
-#            "SHELL:-Xclang -add-plugin"
-#            "SHELL:-Xclang jafg_reflex"
-#            )
-#        message(STATUS "[${module_rel_dir}]: Added Reflex support. ${DCMAKE_CXX_FLAGS}")
-#    else()
-#        message(FATAL_ERROR "Compiler not supported for Reflex: [${CMAKE_CXX_COMPILER_ID}].")
-#    endif()
-    # ~Reflex
-    ###############################################################################
-
 endfunction()
 
 macro(_jafg_add_dependency

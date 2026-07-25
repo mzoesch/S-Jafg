@@ -6,12 +6,19 @@ As of now, it runs natively on Linux and on Windows through the UCRT.
 # Getting Up and Running
 
 ## 1.) Prerequisites
-### Windows
-- Msys2:
-  - Either run `Setup.bat` to install msys2 and required packages (all downloaded content and installed packages will reside in the engine root directory and are not installed system-wide). 
-  - Alternative you may use your own system-wide msys2 installation; but ensure to have the packages installed mentioned in the [installer](Programs/msys2_install_pkgs.sh).
-- Open the `msys64/ucrt64.exe` shell.
-- Follow the instructions for _Build and Run_.
+### Docker
+- Jafg supports partial cross-platform development through [Docker](https://www.docker.com/):
+  ```bash
+  docker build -t jafg-env .
+  ```
+  Then use it as a devcontainer, a toolchain for your IDE, or manually with:
+  ```bash
+  docker run -it --name jafg -v $(pwd)/.ccache:/root/.ccache -v $(pwd):/Jafg jafg-env
+  ```
+  and re-enter later with:
+  ```bash
+  docker start -ai jafg
+  ```
 ### Linux
 - Jafg targets [Wayland](https://wayland.freedesktop.org/) as its main backend. One should always prefer to use Wayland.
 - [X11](https://www.x.org/) is supported due to gfx debugging (e.g. w/ [RenderDoc](https://renderdoc.org/)) but Jafg intentionally does not take full advantage of the X11 API (as Wayland is the future).
@@ -19,18 +26,22 @@ As of now, it runs natively on Linux and on Windows through the UCRT.
   ```bash
   pacman -S clang cmake vulkan-icd-loader vulkan-tools
   ```
-- Follow the instructions for _Build and Run_.
+### Windows
+- Msys2:
+  - Either run `Setup.bat` to install msys2 and required packages (all downloaded content and installed packages will reside in the engine root directory and are not installed system-wide). 
+  - Alternative you may use your own system-wide msys2 installation; but ensure to have the packages installed mentioned in the [installer](Programs/msys2_install_pkgs.sh).
+- Open the `msys64/ucrt64.exe` shell.
 ### Common
 Only when making changes to the reflection system you will additionally need `>= Rust 1.85.x` installed otherwise prebuild binaries will be downloaded.
 
+> [!IMPORTANT]
+> Jafg uses for development builds [ccache](https://ccache.dev/) by default if installed. You may want to disable it with `JAFG_USE_CCACHE=Off`.
+> You might want to consider increasing your cache limit `ccache --set-config max_size=nG` to avoid misses.
+
 ## 2.) Build and Run
-1. To build for your hosting platform in release mode, run:
+1. To build, run the following:
   ```bash
-  mkdir build && cmake -B build 
-  ```
-  If you want to customize the build configuration, run the following instead:
-  ```bash
-  mkdir build && cmake -B build --preset "<PLATFORM>-x64_86--<TYPE>-<CONFIG>" 
+  cmake -B build --preset <PLATFORM>-x86_64--<TYPE>-<CONFIG>
   ```
   where:
   - `PLATFORM`: The target platform you want to build for [`lnx`, `win`]

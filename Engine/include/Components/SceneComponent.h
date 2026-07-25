@@ -32,7 +32,7 @@ public:
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
-    void SetTransform(const LWorldTrans& InTransform, const ESceneSweep SweepType = ESceneSweep::Teleport) noexcept { check(SweepType == ESceneSweep::Teleport) this->Trans = InTransform; }
+    void SetTransform(LWorldTrans const& Transform, ESceneSweep SweepType = ESceneSweep::Teleport) noexcept { check(SweepType == ESceneSweep::Teleport) this->Trans = Transform; }
 
     void AddTranslation(LWorldVec3 const& Location, ESceneSweep SweepType = ESceneSweep::Teleport) noexcept { check(SweepType == ESceneSweep::Teleport) this->Trans.t += Location; }
     void AddRotator(LWorldQuat const& Rotator, ESceneSweep SweepType = ESceneSweep::Teleport) noexcept { check(SweepType == ESceneSweep::Teleport) this->Trans.r = Rotator * this->Trans.r; }

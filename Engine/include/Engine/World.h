@@ -31,7 +31,6 @@ class LCommandLineInterface;
 class LWorld;
 class ASupremePolicies;
 class WWorldNode;
-struct LEye_v2;
 struct LLevel;
 struct LSubsystemCollection;
 struct LRenderInfo;
@@ -195,7 +194,7 @@ public:
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(f64 Dt);
 
-    void Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const;
+    void Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const;
 
     std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
 
@@ -207,8 +206,8 @@ public:
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
 
-     void RegisterTickableObject(LTickableObject* Tickable);
-     void UnregisterTickableObject(LTickableObject* Tickable);
+    void RegisterTickableObject(LTickableObject* Tickable);
+    void UnregisterTickableObject(LTickableObject* Tickable);
     FORCEINLINE bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     FORCEINLINE TArray<LTickableObject*> const& GetTickableObjects() const noexcept { return this->TickableObjects; }
     FORCEINLINE TArray<LTickableObject*>& GetMutableTickableObjects() noexcept { return this->TickableObjects; }
@@ -264,7 +263,7 @@ public:
     template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
     FORCEINLINE auto const& Vk_GetWorldDataBuffer(TRenderInfo const& Info) const noexcept { return this->Vk_WorldBuffers[Info.Frame]; }
 
-     static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
+    static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LStringView InHumanReadableName) noexcept
     {
         auto* Out{GetWorldFromHumanReadableName(InHumanReadableName)};

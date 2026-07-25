@@ -12,7 +12,9 @@ namespace Jafg
 struct LActorRenderInfo: LRenderInfo
 {
     //# The perspective eye.
-    LEye_v2 const& PerspectiveEye;
+    LWorldEye const& PerspectiveEye;
+
+    algo::transparent_unordered_string_map<vk::DescriptorSet> const& AdditionalSharedDescriptorSets;
 
     //#
     //# The default perspective polygon mode. If rendering does not require a specific polygon mode,

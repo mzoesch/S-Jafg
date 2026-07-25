@@ -50,7 +50,9 @@ void Jafg::WWorldViewer::Construct()
         ;
 
     BeginStyling(*this).StaticRoot<WHParent>()
+        .Anchor(EAnchor::HFill)
         .Padding(3_pt)
+        .Space(3_pt)
     [
         NewStaticNode(WButton)
             .MinDesiredSize(25_spt2)
@@ -67,6 +69,8 @@ void Jafg::WWorldViewer::Construct()
                 }
                 return LNodeReply::Unhandled();
             })
+        + NewStaticNode(WSpacer).Anchor(EAnchor::HFill)
+        + NewStaticNode(WText).SaveTo(&this->DebugLocationText)
     ];
 
     auto& MaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
@@ -140,6 +144,23 @@ void Jafg::WWorldViewer::Tick()
         {
             this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]{ this->DispatchInputDelegates(); return false; });
         }
+    }
+
+    check(this->DebugLocationText)
+    if (auto* Ctrl{this->GetOwnedPersonaController()})
+    {
+        if (auto* Pawn{Ctrl->GetOwnedPawn()})
+        {
+            this->DebugLocationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetTranslation()));
+        }
+        else
+        {
+            this->DebugLocationText->EmptyContent();
+        }
+    }
+    else
+    {
+        this->DebugLocationText->EmptyContent();
     }
 }
 
@@ -243,7 +264,13 @@ Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& 
                     }
                     else
                     {
-                        Comp->OnTrace(*this, !!(Event.Mods & EModBits::Control), this->RenderTarget.GetExtent(), Location);
+                        check(&this->GetViewport() == &Info.Viewport)
+                        Comp->OnTrace(*this
+                            , !!(Event.Mods & EModBits::Control)
+                            , this->RenderTarget.GetExtent()
+                            , Location
+                            , LEditorTraceOrigin{*this,Event}
+                            );
                     }
                     return LNodeReply::Handled();
                 }
@@ -393,6 +420,21 @@ void Jafg::WWorldViewer::SelectActors(TArray<AActor*> Actors, bool bForce /* = f
     auto Old{std::exchange(this->SelectedActors, std::move(Actors))};
     LOG_TRACE(LogWidgetFramework, "[{}]: Selected [{}] actors.", this->GetNameAsString(), this->SelectedActors.size())
     this->OnActorsSelected.Broadcast(Old, this->SelectedActors);
+
+    if (auto* Ctrl{this->GetOwnedPersonaController()})
+    {
+        if (auto* Comp{Ctrl->GetComponent<AEditorPersonaControllerComponent>()})
+        {
+            if (this->SelectedActors.size() == 1)
+            {
+                Comp->SetSelectedActor(this->SelectedActors.front());
+            }
+            else
+            {
+                Comp->SetSelectedActor(nullptr);
+            }
+        }
+    }
 }
 
 void Jafg::WWorldViewer::InitializeRenderTarget()
@@ -404,7 +446,7 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         .Extent = this->DesiredViewportExtent.has_value() ? *this->DesiredViewportExtent : rhi::extent2::from_vec(this->GetAnchoredSize_v2()),
         .SampleCount = this->GetViewport().GetSurface().GetFrontend().Vk_GetMaxMsaaSampleCount(),
         .ResolveMode = vk::ResolveModeFlagBits::eAverage,
-        .ClearColor = LinearColors::DeepSkyBlue,
+        .ClearColor = LinearColors::CornflowerBlue,
         .bDepthTest = *GetSingleton<JUserPreferences>().EditorPerspectiveDepthTestHint,
         .bAllowSelection = true,
         });
@@ -418,16 +460,16 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
     auto& Frontend{this->GetFrontend()};
 
     {
-        auto Binding = this->PostSelectionMaterialInstance->GetBinding("stencilTexture");
+        auto Binding = this->PostSelectionMaterialInstance->GetBinding("stencil_texture");
         vk::DescriptorImageInfo Info{
             .imageView = this->GetWorldRenderTarget().GetSelectedImageView(),
             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
             };
         check(Info.sampler == nullptr)
-        auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, algo::pair_first)};
+        auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, &LMaterialInstance::DescriptorSetInstance::Space)};
         check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
         std::array Writes{vk::WriteDescriptorSet{
-            .dstSet = *It->second,
+            .dstSet = **It,
             .dstBinding = Binding.index,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -441,10 +483,10 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         vk::DescriptorImageInfo Info{
             .sampler = Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToBorder(),
             };
-        auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, algo::pair_first)};
+        auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, &LMaterialInstance::DescriptorSetInstance::Space)};
         check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
         std::array Writes{vk::WriteDescriptorSet{
-            .dstSet = *It->second,
+            .dstSet = **It,
             .dstBinding = Binding.index,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -480,7 +522,7 @@ void Jafg::WWorldViewer::PreDrawSelected(LRenderInfo const& Info)
     auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
     auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
 
-    Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, this->SelectedActors);
+    Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, {}, this->SelectedActors);
 }
 
 void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
@@ -490,7 +532,8 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
         if (auto& Ctrl{*this->GetOwnedPersonaControllerChecked()}; Ctrl.IsOwnedPawnValid())
         {
             auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
-            Pawn.GetWorld().Draw(Info, Pawn.GetEye(), nullptr, {});
+            auto Eye{Pawn.GetEye()};
+            Pawn.GetWorld().Draw(Info, Eye, nullptr, {}, {});
 
             if (!this->SelectedActors.empty())
             {
@@ -503,13 +546,12 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 auto& Pipeline{this->PostSelectionMaterialInstance->Material->Pipeline};
                 algo::for_each(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, [&](auto& Set)
                 {
-                    auto const& [Idx, DescriptorSet] = Set;
                     Info.CommandBuffer.bindDescriptorSets2({
                         .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                         .layout = Pipeline.pipeline_layout,
                         .firstSet = 0,
                         .descriptorSetCount = 1,
-                        .pDescriptorSets = &*DescriptorSet,
+                        .pDescriptorSets = &**Set,
                         .dynamicOffsetCount = 0,
                         .pDynamicOffsets = nullptr
                         });
@@ -540,16 +582,6 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
 
 void Jafg::WWorldViewer::DispatchInputDelegates()
 {
-    check(this->IsOwnedPersonaControllerValid())
-
-    if (algo::any_of(this->Viewport.GetSurface().GetUnconsumedInputs(), [this](LRawInput const& Input)
-    {
-        return Input.PhysicalKey == *this->Viewport.GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::F1);
-    }))
-    {
-        JAFG_PLATFORM_NO_DISCARD_CTRL_PATH
-    }
-
     auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
     this->UserInput._DispatchInputDelegates(Ctrl);
 }
@@ -807,6 +839,12 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
             auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
             MutablePrefs.EditorVisualizeTraceHits = !*MutablePrefs.EditorVisualizeTraceHits;
             return *MutablePrefs.EditorVisualizeTraceHits;
+        }),
+        CreateDropDownCheckmark("Visualize gizmo interactions", *GetSingleton<JUserPreferences>().EditorVisualizeGizmoInteractions, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorVisualizeGizmoInteractions = !*MutablePrefs.EditorVisualizeGizmoInteractions;
+            return *MutablePrefs.EditorVisualizeGizmoInteractions;
         }),
         });
 }
@@ -1322,6 +1360,17 @@ void Jafg::WWorldViewerInspector::Construct()
     this->OnWorldViewerUpdate();
 }
 
+void Jafg::WWorldViewerInspector::Tick()
+{
+    for (auto& F: this->ComponentUpdateFunctions)
+    {
+        check(!!F)
+        F();
+    }
+
+    Super::Tick();
+}
+
 void Jafg::WWorldViewerInspector::Destruct()
 {
     Super::Destruct();
@@ -1489,6 +1538,7 @@ void Jafg::WWorldViewerInspector::UpdateObjectDetails()
 {
     check(this->Container && this->ContainerSearch)
 
+    this->ComponentUpdateFunctions.clear();
     this->SelectedComponent = nullptr;
     this->Container->RemoveChildren();
     this->ContainerSearch->SetEnabled(false);
@@ -1609,6 +1659,7 @@ void Jafg::WWorldViewerInspector::SelectComponent(AActorComponent* Component)
         return;
     }
 
+    this->ComponentUpdateFunctions.clear();
     this->ComponentContainer->RemoveChildren();
     this->SelectedComponent = Component;
 
@@ -1624,7 +1675,13 @@ void Jafg::WWorldViewerInspector::SelectComponent(AActorComponent* Component)
             {
                 auto& Array{Layout[It.GetClass().GetFullyQualifiedName()]};
                 TArray<TJxxUnique<WNode>> Xs;
-                Array.emplace_back(It->EditorFactory(this->GetViewport(), *this->SelectedComponent).UniqueXs(&Xs));
+                check(It->EditorFactory)
+                TFunction2<void()> UpdateValue;
+                Array.emplace_back(It->EditorFactory(this->GetViewport(), *this->SelectedComponent, UpdateValue).UniqueXs(&Xs));
+                if (UpdateValue)
+                {
+                    this->ComponentUpdateFunctions.emplace_back(std::move(UpdateValue));
+                }
                 for (auto& X: Xs)
                 {
                     Array.emplace_back(std::move(X));

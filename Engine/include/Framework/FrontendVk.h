@@ -180,6 +180,27 @@ public:
     //# Transitions an image layout. !!This is not for flight frame command buffers!!
     ENGINE_API void Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const& Barrier) const;
 
+    rhi::frame_array<vk::raii::DescriptorSet> Vk_CreateFrequentDescriptorSets(vk::raii::DescriptorSetLayout const& Layout) const
+    {
+        check(this->Vk_FramesInFlight > 0u)
+        rhi::frame_array<vk::DescriptorSetLayout> Layouts;
+        rhi::frame_array<vk::raii::DescriptorSet> Result JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+        for (auto Idx{0uz}; Idx < this->Vk_FramesInFlight; ++Idx)
+        {
+            Layouts[Idx] = *Layout;
+        }
+        auto Sets{rhi::vk_allocate(this->Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
+            .descriptorPool = this->Vk_GetDescriptorPool(),
+            .descriptorSetCount = static_cast<u32>(this->Vk_GetNumberOfFramesInFlight()),
+            .pSetLayouts = Layouts.data(),
+            })};
+        for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
+        {
+            Result[Idx] = std::move(Sets[Idx]);
+        }
+        return Result;
+    }
+
     ENGINE_API void Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format);
 
     //# Public private function!!! NEVER use. For internal stuff only!!!!!!!!

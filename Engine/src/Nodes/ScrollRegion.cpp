@@ -45,7 +45,7 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
     if (this->GetChildren().empty() == false)
     {
         vk::Rect2D Rect{Info.Batches[Info.Batches.size() - 1].first};
-        u64 Instances{Info.VisualInstances.size()};
+        u64 Instances{Info.VisualInstances->size()};
         Info.BeginNewBatch(vk::Rect2D{
             .offset = vk::Offset2D{
                 static_cast<decltype(vk::Offset2D::x)>(AnchoredTopLeftFromMostOuter.x),
@@ -89,7 +89,7 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
             }
             continue;
         }
-        if (Instances == Info.VisualInstances.size())
+        if (Instances == Info.VisualInstances->size())
         {
             Info.Batches.pop_back();
         }

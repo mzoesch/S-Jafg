@@ -5,6 +5,12 @@ if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_LAUNCH)
     jafg_add_dependency("Engine" "private")
 
+    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
+        set_target_properties(${_scoped_module_name} PROPERTIES
+            BUILD_RPATH "\$ORIGIN:\$ORIGIN/../Engine"
+            )
+    endif()
+
     if((JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS) AND (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")))
         # Runtime dependencies
         add_custom_command(TARGET ${_scoped_module_name} POST_BUILD

@@ -55,6 +55,8 @@ void Jafg::WTextureInspector::Construct()
     this->MipLevels = View.MipLevels ? std::to_string(*View.MipLevels) : "<auto>";
     this->MaxSampleCount = View.MaxSampleCount ? vk::to_string(*View.MaxSampleCount) : "<auto>";
 
+    TFunction2<void()> Dummy;
+
     BeginStyling(*this).StaticRoot<WRegion>()
         .Anchor(EAnchor::Fill)
         .Tint(*Prefs.ForegroundColor)
@@ -66,20 +68,20 @@ void Jafg::WTextureInspector::Construct()
                 .Texture(Texture)
             + NewStaticNode(WEditorCategorySeparator, "Properties")
             [
-                  GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Path, .Default=this->Path, .What="Path",})
+                  GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Path, .Default=this->Path, .UpdateValue=Dummy, .What="Path",})
                     // TODO: This is of course just temporary. Later on we have to enable editing.
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Texture, .Default=this->Texture, .What="Texture",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Texture, .Default=this->Texture, .UpdateValue=Dummy, .What="Texture",})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Format, .Default=this->Format, .What="Format",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Format, .Default=this->Format, .UpdateValue=Dummy, .What="Format",})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->MipLevels, .Default=this->MipLevels, .What="Mip Levels",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->MipLevels, .Default=this->MipLevels, .UpdateValue=Dummy, .What="Mip Levels",})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->MaxSampleCount, .Default=this->MaxSampleCount, .What="Samples",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->MaxSampleCount, .Default=this->MaxSampleCount, .UpdateValue=Dummy, .What="Samples",})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
             ]
         ]
     ];
 
-    return;
+    check(!Dummy)
 }

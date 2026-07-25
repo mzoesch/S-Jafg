@@ -377,21 +377,6 @@ if(_guard)
         "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/slang-${SLANG_VERSION}-linux-x86_64.zip"
         )
 
-    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
-        find_package(slang REQUIRED
-            PATHS "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-lnx-x86_64"
-            NO_DEFAULT_PATH
-            )
-    elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-        find_package(slang REQUIRED
-        PATHS "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-win-x86_64"
-        NO_DEFAULT_PATH
-        )
-    else()
-        message(FATAL_ERROR "Missing implementation for target platform [${JAFG_TARGET_PLATFORM}].")
-    endif()
-    target_link_libraries(${_scoped_module_name} PRIVATE slang::slang)
-
     ###############################################################################
     # Fonts
     message(STATUS "Including fonts...")

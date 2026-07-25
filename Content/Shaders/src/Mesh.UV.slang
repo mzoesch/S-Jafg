@@ -1,27 +1,28 @@
 // Copyright mzoesch. All rights reserved.
+
 #include "Jafg.slang"
 #include "Jafg/MVP.slang"
 #include "Jafg/VSDefaultInput.slang"
 
+[[vk::push_constant]] MVP mvp;
+
 struct FRInput 
 {
-    float4 Position : SV_POSITION;
-    float2 UV : TEXCOORD0;
+    float4 pos: SV_POSITION;
+    float2 uv: TEXCOORD0;
 };
-
-[[vk::push_constant]] MVP pcs;
 
 [[shader("vertex")]]
 FRInput vertMain(VSInput input)
 {
     FRInput result;
-    result.Position = mul(pcs.Proj, mul(pcs.View, mul(pcs.Model, float4(input.Position, 1.0))));
-    result.UV = input.UV;
+    result.pos = mul(mvp.proj, mul(mvp.view, mul(mvp.model, float4(input.pos, 1.0))));
+    result.uv = input.uv;
     return result;
 }
 
 [[shader("fragment")]]
-float4 fragMain(FRInput input) : SV_TARGET
+float4 fragMain(FRInput input): SV_TARGET
 {
-    return float4(input.UV, 0.0, 1.0);
+    return float4(input.uv, 0.0, 1.0);
 }

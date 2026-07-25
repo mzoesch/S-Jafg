@@ -35,6 +35,13 @@ TArray<Jafg::LPushConstantProvider>& GetStaticPushConstantProviders() noexcept
     return Providers;
 }
 
+TArray<Jafg::LBufferObjectProvider>& GetStaticBufferObjectProviders() noexcept
+{
+    check(Jafg::Tasks::IsOnMasterThread())
+    static TArray<Jafg::LBufferObjectProvider> Providers;
+    return Providers;
+}
+
 } /* ~Namespace <Anonymous> */
 
 void Jafg::Detail::RegisterVertexInputGlobally(LVertexInputProvider Provider) noexcept
@@ -50,6 +57,14 @@ void Jafg::Detail::RegisterPushConstantGlobally(LPushConstantProvider Provider) 
     LOG_TRACE(LogRhi, "[{}]: Adding push constant provider.", Provider.Identifier)
     auto& Providers{::GetStaticPushConstantProviders()};
     check(!algo::contains(Providers, Provider.Identifier, &LPushConstantProvider::Identifier))
+    Providers.emplace_back(std::move(Provider));
+}
+
+void Jafg::Detail::RegisterBufferObjectGlobally(LBufferObjectProvider Provider) noexcept
+{
+    LOG_TRACE(LogRhi, "[{}]: Buffer object provider.", Provider.Identifier)
+    auto& Providers{::GetStaticBufferObjectProviders()};
+    check(!algo::contains(Providers, Provider.Identifier, &LBufferObjectProvider::Identifier))
     Providers.emplace_back(std::move(Provider));
 }
 
@@ -155,6 +170,16 @@ Jafg::LPushConstantProvider const& Jafg::JShaderSubsystem::GetPushConstant(LStri
         return *It;
     }
     LOG_FATAL(LogShaderSubsystem, "[{}]: No such push constant provider.", Identifier)
+}
+
+Jafg::LBufferObjectProvider const& Jafg::JShaderSubsystem::GetBufferObject(LStringView Identifier) const noexcept
+{
+    auto& Providers{::GetStaticBufferObjectProviders()};
+    if (auto It{algo::find(Providers, Identifier, &LBufferObjectProvider::Identifier)}; It != Providers.end())
+    {
+        return *It;
+    }
+    LOG_FATAL(LogShaderSubsystem, "[{}]: No such buffer object provider.", Identifier)
 }
 
 std::size_t Jafg::JShaderSubsystem::RecompileShaderConditionally(Shader2 const& Shader, bool bForce /* = false */)

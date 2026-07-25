@@ -268,13 +268,14 @@ ConstructionHelper                                                    \
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY(ObjectType, Name) \
-    [](LViewport& Viewport, ::Jafg::JCxxClass& Object) -> ::Jafg::Detail::LNodeFactoryBase \
+    [](LViewport& Viewport, ::Jafg::JCxxClass& Object, TFunction2<void()>& UpdateValue) -> ::Jafg::Detail::LNodeFactoryBase \
     {\
         ObjectType& CastedObject{*StaticCastChecked< ObjectType >(&Object)}; \
         return ::Jafg::GetEditorNode(::Jafg::TEditorNodeCreateInfo<decltype(CastedObject.Name)>{ \
             .Viewport=Viewport, \
             .Owner=&Object, \
             .Field=CastedObject.Name, \
+            .UpdateValue=UpdateValue, \
             }); \
     }
 

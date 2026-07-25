@@ -1,40 +1,34 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Jafg.slang"
+#include "Jafg/Ray.slang"
 #include "Jafg/ViewProj.slang"
 
-[[CxxName("Jafg::SSBO::Ray")]]
-struct Line
-{
-    float4 Start; // expects w to be 1.0.
-    float4 End; // Actually a float3+LColor (combined to save space).
-};
+[[vk::binding(0, 0),UpdateFrequency(PerFrame)]] StructuredBuffer<Ray> rays;
+[[vk::binding(1, 0),UpdateFrequency(PerFrame)]] ConstantBuffer<ViewProj> view_proj;
 
 struct FRInput
 {
-    float4 Position: SV_POSITION;
-    LColor Color: COLOR;
+    float4 pos: SV_POSITION;
+    LColor color: COLOR;
 };
 
-[[vk::binding(0, 0),UpdateFrequency(PerFrame)]] StructuredBuffer<Line> Lines;
-[[vk::binding(1, 0),UpdateFrequency(PerFrame)]] ConstantBuffer<ViewProj> VP;
-
 [[shader("vertex")]]
-FRInput vertMain(uint VertexID: SV_VertexID, uint InstanceID: SV_InstanceID)
+FRInput vertMain(uint vertex_id: SV_VertexID, uint instance_id: SV_InstanceID)
 {
-    Line Instance = Lines[InstanceID];
+    Ray instance = rays[instance_id];
 
-    FRInput Result;
-    Result.Position = mul(VP.Matrix, (VertexID == 0) 
-        ? Instance.Start 
-        : float4(Instance.End.xyz, 1.0)
+    FRInput result;
+    result.pos = mul(view_proj.matrix, (vertex_id == 0) 
+        ? instance.start 
+        : float4(instance.end.xyz, 1.0)
         );
-    Result.Color = asuint(Instance.End.w);
-    return Result;
+    result.color = asuint(instance.end.w);
+    return result;
 }
 
 [[shader("fragment")]]
 float4 fragMain(FRInput input): SV_TARGET
 {
-    return maths::color_to_linear(input.Color, 2.2);
+    return maths::color_to_linear(input.color, 2.2);
 }

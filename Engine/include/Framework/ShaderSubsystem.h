@@ -62,6 +62,10 @@ public:
     inline void AddPushConstantProvider() noexcept { LPushConstantRegistrator<TPushConstant>{}; }
     LPushConstantProvider const& GetPushConstant(LStringView Identifier) const noexcept;
 
+    template<rhi::detail::object TBufferObject>
+    inline void AddBufferObjectProvider() noexcept { LBufferObjectRegistrator<TBufferObject>{}; }
+    LBufferObjectProvider const& GetBufferObject(LStringView Identifier) const noexcept;
+
 private:
 
     std::size_t RecompileShaderConditionally(Shader2 const& Shader, bool bForce = false);

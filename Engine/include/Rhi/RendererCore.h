@@ -57,6 +57,15 @@ namespace rhi
 {
 
 //#
+//# Invariant given from vulkan on the number of descriptor sets that can be bound at once.
+//# Jafg's rhi used this limit as its upper bound. We might want to adjust this in the future if the pipelines
+//# get more complex.
+//# TODO: What vendors do we loose if we increase this?
+//# @see https://docs.vulkan.org/spec/latest/chapters/limits.html
+//#
+inline constexpr auto bound_descriptor_set_limit{ 4uz };
+
+//#
 //# Wrapper function, because for some stupid reason vk without exceptions tries to be correct and does not give us
 //# very nice convenience ctors...
 //#

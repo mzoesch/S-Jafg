@@ -277,6 +277,19 @@ Jafg::LFrontend& Jafg::WNode::GetMutableFrontend() const noexcept
 }
 
 #if JAFG_DO_CHECKS
+void Jafg::WNode::_check_PrintIndentedTickTrace()
+{
+    auto Indent{0uz};
+    WParent* Parent{this->Parent};
+    while (Parent)
+    {
+        ++Indent;
+        Parent = Parent->GetParent();
+    }
+
+    LOG_VERBOSE(LogWidgetFramework, "{}[{}]", std::string(Indent * 2, ' '), this->GetNameAsString())
+}
+
 void Jafg::WNode::_check_StateInvariant()
 {
     AssertInvariant(*this);

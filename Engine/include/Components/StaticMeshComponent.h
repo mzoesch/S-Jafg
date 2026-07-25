@@ -30,16 +30,13 @@ public:
     virtual void OnAttach(AActor& InOwner) override;
 
     void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
-    void SetMaterialInstance(LMaterialInstanceRef MaterialInstance) noexcept;
+    void SetMaterialInstance(LMaterialInstanceRef Instance) noexcept;
 
-    virtual void Render(LActorRenderInfo const& Info) noexcept override;
+    virtual void Render(LActorRenderInfo const& Info) const override;
 
 private:
 
-    rhi::frame_array<rhi::mapped_device_buffer> uniformBuffers;
-
     LMaterialInstanceRef MaterialInstance;
-    LTexture2Ref Texture;
     CLASS_FIELD(EditorVisible)
     LStaticMeshRef Mesh;
 

@@ -82,22 +82,9 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     LOG_VERBOSE(LogWorld, "Initializing new world with [{}].", this->Parameters.ToString())
 
     LOG_TRACE(LogRhi, "Allocating world data descriptor sets.")
-    check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
-    TArray<vk::DescriptorSetLayout> LayoutsToAllocate; LayoutsToAllocate.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
-    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
-    {
-        LayoutsToAllocate.push_back(*Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetSharedDescriptorSetLayouts().at(UBO::WorldData::name()));
-    }
-    auto Sets = rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
-        .descriptorPool = Frontend.Vk_GetDescriptorPool(),
-        .descriptorSetCount = static_cast<u32>(Frontend.Vk_GetNumberOfFramesInFlight()),
-        .pSetLayouts = LayoutsToAllocate.data(),
-        });
-    for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
-    {
-        this->Vk_WorldDescriptorSets[Idx] = std::move(Sets[Idx]);
-        this->Vk_WorldBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::WorldData::buffer_create_info());
-    }
+    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
+    this->Vk_WorldDescriptorSets = Frontend.Vk_CreateFrequentDescriptorSets(MaterialSubsystem.GetSharedDescriptorSetLayout<UBO::WorldData>());
+    this->Vk_WorldBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::WorldData::buffer_create_info());
 
     this->UnderlyingLevel = Level;
 
@@ -169,7 +156,7 @@ void Jafg::LWorld::Tick(f64 Dt)
     this->DeletedTickableObjects.clear();
 }
 
-void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialInstance* Instance, std::optional<TArray<AActor*>> const& Filter) const
+void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const
 {
     STAT_CYCLE_FUNCTION()
 
@@ -217,7 +204,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialIn
     // };
     // const std::span CornersSpan{Corners};
 
-    LActorRenderInfo ActorInfo{Info, Eye};
+    LActorRenderInfo ActorInfo{Info, Eye, SharedSets};
     auto& Frontend{ActorInfo.Frontend};
     if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
     {
@@ -236,13 +223,13 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialIn
 
     auto& WorldData{ActorInfo.WorldData};
     // model...
-    WorldData.view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up);
+    WorldData.view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up);
     WorldData = {
-        .view = glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up),
+        .view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up),
         .proj = glm::perspectiveRH_ZO(
-            Eye.VertFov,
+            Eye.vert_fov,
             Info.VkViewport.width / Info.VkViewport.height,
-            Eye.NearFrustum, Eye.FarFrustum
+            Eye.near_frustum, Eye.far_frustum
             ),
         };
     WorldData.proj[1][1] *= -1.0f;
@@ -265,7 +252,10 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LEye_v2 const& Eye, LMaterialIn
     WorldData.lightColors[3] = glm::vec4(0.0f, 300.0f, 0.0f, 1.0f);
 
     // Set camera position for view-dependent effects
-    WorldData.camPos = LVec4F{Eye.Translation, 1.0f};
+    WorldData.CameraPosition = Eye.translation;
+
+    WorldData.ViewportHeight = Info.VkViewport.height;
+    WorldData.VerticalFov = Eye.vert_fov;
 
     // Set PBR parameters
     WorldData.exposure = 3.2f;//4.5f;

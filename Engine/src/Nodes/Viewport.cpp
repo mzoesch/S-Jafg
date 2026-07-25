@@ -2,7 +2,6 @@
 
 #include "Nodes/Viewport.h"
 #include "Engine/Engine.h"
-#include "Framework/Eye.h"
 #include "Platform/Surface.h"
 #include "Nodes/UserWidget.h"
 #include "Stats/Stats.h"
@@ -13,6 +12,14 @@
 #include "Rhi/NodeRenderInfo.h"
 #include "User/UserPreferences.h"
 
+namespace
+{
+
+Jafg::LBufferObjectRegistrator<Jafg::UBO::VisualShared> _0;
+Jafg::LBufferObjectRegistrator<Jafg::SSBO::VisualInstance> _1;
+
+} /* ~Namespace <Anonymous> */
+
 void Jafg::LViewport::Vk_OnLateInit()
 {
     LOG_VERBOSE(LogVulkan, "Allocating visual batch buffers.")
@@ -20,39 +27,13 @@ void Jafg::LViewport::Vk_OnLateInit()
     auto& Frontend{this->Surface.GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
-    LOG_TRACE(LogRhi, "Allocating visual batch buffers.")
-    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
-    {
-        this->VisualBatches[Idx] = Frontend.Vk_CreateMappedBuffer({
-            .size = sizeof(LVisualInstance) * LNodeRenderInfo::MaxInstanceCount,
-            .usage = vk::BufferUsageFlagBits::eStorageBuffer,
-            .sharingMode = vk::SharingMode::eExclusive
-            });
-    }
-
-    TArray<vk::DescriptorSetLayout> LayoutsToAllocate; LayoutsToAllocate.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
-    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
-    {
-        LayoutsToAllocate.push_back(*Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetSharedDescriptorSetLayouts().at(UBO::VisualShared::name()));
-    }
-    auto Sets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
-        .descriptorPool = Frontend.Vk_GetDescriptorPool(),
-        .descriptorSetCount = static_cast<u32>(Frontend.Vk_GetNumberOfFramesInFlight()),
-        .pSetLayouts = LayoutsToAllocate.data(),
-        })};
-    for (auto Idx{0uz}; Idx < Sets.size(); ++Idx)
-    {
-        this->Vk_VisualSharedDescriptorSets[Idx] = std::move(Sets[Idx]);
-        this->Vk_VisualSharedBuffers[Idx] = Frontend.Vk_CreateMappedBuffer(UBO::VisualShared::buffer_create_info());
-    }
-
     auto SetInstance{[this](JMaterialSubsystem* Subsystem)
     {
         if (!Subsystem)
         {
             Subsystem = this->GetSurface().GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>();
         }
-        this->VisualBatchMaterialInstance = Subsystem->GetInstanceFromMaterialName("Jafg.VisualBatch");
+        this->VisualBatchMaterialInstance = Subsystem->GetInstanceFromMaterialName("Jafg.VisualBatch"sv);
     }};
     if (auto* MaterialSubsystem{this->GetSurface().GetMutableFrontend().GetSubsystem<JMaterialSubsystem>()})
     {
@@ -93,7 +74,7 @@ void Jafg::LViewport::DispatchInputs()
 
                     ss << std::string(Indent * 2, ' ') << Node.GetNameAsString()
                         << " ("
-                            << LexToString(Node.GetVisibility()) << " anchor-" << Node.Anchor.ToString() << " "
+                            << LexToString(Node.GetVisibility()) << " bTick{" << Node.GetRawShouldTick() << "} anchor-" << Node.Anchor.ToString() << " "
                             << "aabb{" << static_cast<i64>(Offset.x) << "," << static_cast<i64>(Offset.y)
                                 << ", " << static_cast<i64>(Size.x) << "," << static_cast<i64>(Size.y) << "}"
                             << " desired{" << static_cast<i64>(Desired.x) << "," << static_cast<i64>(Desired.y) << "}"
@@ -116,6 +97,7 @@ void Jafg::LViewport::DispatchInputs()
                 AppendTree(ss, *Widget, 0);
             }
             LOG_VERBOSE(LogWidgetFramework, "Total number of top level widgets: {}. Tree:\n{}", this->TopLevelWidgets.size(), ss.str())
+            checkCode(this->_check_PrintTickTrace = true)
         }
     }
 
@@ -299,6 +281,8 @@ void Jafg::LViewport::Tick()
     }
 
     this->OnLateTick.Broadcast();
+
+    checkCode(this->_check_PrintTickTrace = false)
 }
 
 void Jafg::LViewport::Draw(LRenderInfo const& Info)
@@ -311,7 +295,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     this->RecalculateScaleFactor();
 
     TArray<std::pair<vk::Rect2D, u64>> _Dummy1;
-    TArray<LVisualInstance> _Dummy2;
+    rhi::object_range<SSBO::VisualInstance> _Dummy2{SSBO::VisualInstance::default_count,SSBO::VisualInstance::default_count};
     LNodeRenderInfo NodeInfo{Info, *this,
         *Frontend.GetSubsystemChecked<JTextureSubsystem>(),
         *Frontend.GetSubsystemChecked<JMaterialSubsystem>(),
@@ -320,10 +304,9 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         _Dummy1, _Dummy2,
         };
     NodeInfo.Batches.reserve(LNodeRenderInfo::MaxBatchCount);
-    NodeInfo.VisualInstances.reserve(LNodeRenderInfo::MaxInstanceCount);
     NodeInfo.BeginNewBatch(vk::Rect2D{.offset = vk::Offset2D{0, 0}, .extent = this->GetExtent(),});
 
-    for (auto const* Widget : this->TopLevelWidgets)
+    for (auto const* Widget: this->TopLevelWidgets)
     {
         check(Widget)
         check(IsValidFast(Widget->GetOuter(), Widget))
@@ -341,65 +324,51 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         {
             check(!Widget->ShouldNowDraw())
         }
-
-        continue;
     }
 
-    check(this->VisualBatches[NodeInfo.Frame].data())
-
-    if (!NodeInfo.VisualInstances.empty())
+    if (!NodeInfo.VisualInstances->empty())
     {
-        if (JAFG_UNLIKELY(NodeInfo.VisualInstances.size() > LNodeRenderInfo::MaxInstanceCount))
-        {
-            LOG_FATAL(LogWidgetFramework, "Number of visual instances [{}] exceeds the maximum instance count [{}]."
-                , NodeInfo.VisualInstances.size(), LNodeRenderInfo::MaxInstanceCount)
-        }
+        constexpr auto VisualSharedBinding{0uz};
+        constexpr auto InstanceBufferBinding{1uz};
 
         check(this->VisualBatchMaterialInstance.get())
+        auto& DsInstance{this->VisualBatchMaterialInstance->Vk_GetUniqueDescriptorSet(0, NodeInfo.Frame)};
+        check(DsInstance.Resources.size() == 2)
 
         auto Dimensions{this->GetExtent().ToVec<f32>()};
-        UBO::VisualShared Shared{
-            .Proj = glm::orthoRH_ZO(0.0f, Dimensions.x, 0.0f, Dimensions.y, 0.0f, 1.0f),
-            .Gamma = *GetSingleton<JUserPreferences>().InterfaceGamma,
+        auto VisualSharedWriteInfo{UBO::VisualShared{
+                .Proj = glm::orthoRH_ZO(0.0f, Dimensions.x, 0.0f, Dimensions.y, 0.0f, 1.0f),
+                .Gamma = *GetSingleton<JUserPreferences>().InterfaceGamma,
+                }
+            .upload(DsInstance.Resources[VisualSharedBinding].AsBuffer())
+            .write_info(*DsInstance.Resources[VisualSharedBinding].AsBuffer())
             };
-        Shared.upload(this->Vk_VisualSharedBuffers[NodeInfo.Frame]);
-        auto WorldDataWriteInfo{Shared.write_info(*this->Vk_VisualSharedBuffers[NodeInfo.Frame])};
 
-        std::memcpy(
-              this->VisualBatches[NodeInfo.Frame].data()
-            , NodeInfo.VisualInstances.data()
-            , sizeof(std::remove_cvref_t<decltype(NodeInfo.VisualInstances)>::value_type) * NodeInfo.VisualInstances.size()
-            );
-        vk::DescriptorBufferInfo BufferInfo{
-            .buffer = *this->VisualBatches[NodeInfo.Frame],
-            .offset = 0,
-            .range = sizeof(std::remove_cvref_t<decltype(NodeInfo.VisualInstances)>::value_type) * NodeInfo.VisualInstances.size()
-            };
+        auto InstanceBufferWriteInfo{NodeInfo.VisualInstances.upload(DsInstance.Resources[InstanceBufferBinding].AsBuffer())};
 
         std::array Writes{
             vk::WriteDescriptorSet{
-                .dstSet = this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame],
-                .dstBinding = 0,
+                .dstSet = *DsInstance,
+                .dstBinding = VisualSharedBinding,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eUniformBuffer,
-                .pBufferInfo = &WorldDataWriteInfo,
+                .descriptorType = UBO::VisualShared::descriptor_type(),
+                .pBufferInfo = &VisualSharedWriteInfo,
                 },
             vk::WriteDescriptorSet{
-                .dstSet = *this->VisualBatchMaterialInstance->FrequentDescriptorSets[NodeInfo.Frame].front().second,
-                .dstBinding = 0,
+                .dstSet = *DsInstance,
+                .dstBinding = InstanceBufferBinding,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eStorageBuffer,
-                .pBufferInfo = &BufferInfo
+                .descriptorType = SSBO::VisualInstance::descriptor_type(),
+                .pBufferInfo = &InstanceBufferWriteInfo
                 },
             };
         Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 
-        std::array<vk::DescriptorSet, 3> DescriptorSetsToBind;
-        DescriptorSetsToBind[0] = *this->Vk_VisualSharedDescriptorSets[NodeInfo.Frame];
+        std::array<vk::DescriptorSet, 2> DescriptorSetsToBind;
+        DescriptorSetsToBind[0] = *DsInstance;
         DescriptorSetsToBind[1] = *Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetBindlessTextureArrayDescriptorSet();
-        DescriptorSetsToBind[2] = *this->VisualBatchMaterialInstance->FrequentDescriptorSets[NodeInfo.Frame].front().second;
         NodeInfo.CommandBuffer.bindDescriptorSets2({
             .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
             .layout = *this->VisualBatchMaterialInstance->Material->Pipeline.pipeline_layout,
@@ -415,7 +384,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
 
         for (auto Idx{0uz}; Idx < NodeInfo.Batches.size(); ++Idx)
         {
-            u64 NextBegin{NodeInfo.VisualInstances.size()};
+            u64 NextBegin{NodeInfo.VisualInstances->size()};
             if (Idx + 1 < NodeInfo.Batches.size())
             {
                 NextBegin = NodeInfo.Batches[Idx + 1].second;

@@ -54,7 +54,7 @@ public:
 
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
     constexpr bool ShouldRender() const noexcept { return this->bRender; }
-    virtual void Render(LActorRenderInfo const& Info) noexcept {}
+    virtual void Render(LActorRenderInfo const& Info) const {}
 
     FORCEINLINE constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
     FORCEINLINE constexpr AActor& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }

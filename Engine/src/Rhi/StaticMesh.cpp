@@ -7,6 +7,7 @@
 #include "Widgets/EditorFactory.h"
 #include "User/UserPreferences.h"
 #include "Framework/MeshSubsystem.h"
+#include "Framework/ShaderSubsystem.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -418,6 +419,140 @@ void Jafg::LStaticMesh::LoadToDevice()
         }));
 
     this->IndexCount = static_cast<u32>(this->Indices.size());
+}
+
+void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const* FallbackInstance) const
+{
+    checkCode
+    (
+        if (FallbackInstance)
+        {
+            check(FallbackInstance->Material.get())
+        }
+    )
+
+#if JAFG_WITH_EDITOR
+    /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
+    if (!this->IsOnDevice())
+    {
+        return;
+    }
+#endif /* !JAFG_WITH_EDITOR */
+    check(this->IsOnDevice())
+
+    LMaterialInstance const* InstancePtr{};
+    if (Info.PreferredMaterial)
+    {
+        InstancePtr = &*Info.PreferredMaterial;
+    }
+    else if (Info.UserPreferences.EditorMeshMaterialPreference)
+    {
+        InstancePtr = &**Info.UserPreferences.EditorMeshMaterialPreference;
+    }
+    else if (FallbackInstance)
+    {
+        InstancePtr = FallbackInstance;
+    }
+    else
+    {
+        LOG_FATAL(LogRhi, "[{}]: No material given.", this->GetPath())
+    }
+    check(InstancePtr)
+    LMaterialInstance const& Instance{*InstancePtr};
+
+    auto& Material{*Instance.Material};
+    auto& Pipeline{Material.Pipeline};
+    auto& MaterialTemplate{Material.Template};
+    auto& Shader{MaterialTemplate.my_shader};
+
+    Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
+
+    {
+        /* Vulkan specs states at least 4. */
+        std::array<vk::DescriptorSet, rhi::bound_descriptor_set_limit> DescriptorSetsToBind;
+        u32 NumDescriptorSets{0};
+        for (auto It{Shader.begin_space()}; It != Shader.end_space(); ++It)
+        {
+            checkCode
+            (
+                if (*It >= 4)
+                {
+                    LOG_FATAL(LogRhi, "Expected at most 4 descriptor sets to bind. But got [{}].", *It)
+                }
+            )
+
+            if (auto* Set{Instance.Vk_FindUniqueDescriptorSet(*It, Info.Frame)}; Set)
+            {
+                DescriptorSetsToBind[*It] = **Set;
+            }
+            else
+            {
+                if (auto* Attribute{It->find_user_attribute("Shared", 1uz)}; Attribute != nullptr)
+                {
+                    if (Attribute->front() == "Jafg::UBO::WorldData"sv)
+                    {
+                        check(DescriptorSetsToBind[*It] == nullptr)
+                        DescriptorSetsToBind[*It] = Info.WorldDataDescriptorSet;
+                    }
+                    else if (auto It2{Info.AdditionalSharedDescriptorSets.find(Attribute->front())}; It2 != Info.AdditionalSharedDescriptorSets.end())
+                    {
+                        unimplemented()
+                    }
+                    else
+                    {
+                        LOG_FATAL(LogRhi, "[{}]: No descriptor set for space [{}@{}] found. Unexpected shared attribute [{}]."
+                            , Shader.Identifier, *It, Info.Frame, Attribute->front())
+                    }
+                }
+                else
+                {
+                    LOG_FATAL(LogRhi, "[{}]: No descriptor set for space [{}@{}] found."
+                        , Shader.Identifier, *It, Info.Frame)
+                }
+            }
+
+            NumDescriptorSets = maths::max(NumDescriptorSets, *It + 1);
+        }
+
+        checkCode
+        (
+            for (vk::DescriptorSet const& SetToBind: DescriptorSetsToBind | algo::views::take(NumDescriptorSets))
+            {
+                check(!!SetToBind)
+            }
+        )
+
+        if (NumDescriptorSets > 0)
+        {
+            Info.CommandBuffer.bindDescriptorSets2({
+                /* TODO: Is this correct? The sets are vertex && fragment respectively -- not vertex | fragment. */
+                .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                .layout = *Pipeline.pipeline_layout,
+                .firstSet = 0,
+                .descriptorSetCount = NumDescriptorSets,
+                .pDescriptorSets = DescriptorSetsToBind.data(),
+                .dynamicOffsetCount = 0,
+                .pDynamicOffsets = nullptr
+                });
+        }
+    }
+
+    for (auto const& PushConstant: Shader.push_constant_iter())
+    {
+        checkCode
+        (
+            if (!PushConstant.CxxName.has_value())
+            {
+                LOG_FATAL(LogRhi, "[{}]: Push constant at [{}@{}] has no CXX name."
+                    , Shader.Identifier, PushConstant.Space, PushConstant.Index)
+            }
+        )
+        auto& Pc{Info.ShaderSubsystem.GetPushConstant(*PushConstant.CxxName)};
+        check(Pc.PushForActor)
+        Pc.PushForActor(Info, Material, {Transform});
+    }
+
+    this->DrawIndexed(Info);
 }
 
 void Jafg::LStaticMesh::DrawIndexed(LRenderInfo const& Info) const

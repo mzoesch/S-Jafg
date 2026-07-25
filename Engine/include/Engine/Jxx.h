@@ -394,7 +394,7 @@ typedef TFunction2<void(JCxxClass* Object, LStringView Value)> LSetCxxClassField
 typedef TFunction2<LString(JCxxClass const& Object)> LGetCxxClassField;
 typedef TFunction2<bool(JCxxClass const& Object)> LIsModifiedCxxClassField;
 #if JAFG_WITH_EDITOR
-    typedef TFunction2<Detail::LNodeFactoryBase(LViewport& Viewport, JCxxClass& Object)> LEditorFieldFactory;
+    typedef TFunction2<Detail::LNodeFactoryBase(LViewport& Viewport, JCxxClass& Object, TFunction2<void()>& UpdateValue)> LEditorFieldFactory;
 #endif /* JAFG_WITH_EDITOR */
 //# A reflected field for a class.
 struct LJxxClassField final
@@ -426,6 +426,8 @@ struct TEditorNodeCreateInfo final
     T& Field;
     //# Optional default value.
     std::optional<T> Default;
+    //# Optional update function.
+    TFunction2<void()>& UpdateValue;
 };
 
 enum struct EJxxRecordTearDownReason
@@ -1942,6 +1944,8 @@ struct TEditorNodeCreateInfo<LString> final
     LString& Field;
     //# Optional default value.
     std::optional<LString> Default;
+    //# Optional update function.
+    TFunction2<void()>& UpdateValue;
     //# Optional human-readable name.
     LString What{"String"};
 };

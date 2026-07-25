@@ -10,6 +10,7 @@
 #include "Components/PawnComponent.h"
 #include "Components/PersonaControllerComponent.h"
 #include "Framework/SupremePolicies.h"
+#include "Rhi/StaticMeshRenderable.h"
 #include "Editor.generated.h"
 
 namespace Jafg
@@ -238,6 +239,12 @@ static_assert(rhi::ssbo<Ray>);
 
 } /* ~Namespace SSBO */
 
+struct LEditorTraceOrigin
+{
+    WWorldViewer& Node;
+    LKeyEvent Event;
+};
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API AEditorPersonaControllerComponent final : public APersonaControllerComponent
 {
@@ -262,7 +269,9 @@ public:
 
     virtual void OnAttach(AActor& InOwner) override;
     virtual void ParentTick(f32 Dt) override;
-    virtual void Render(LActorRenderInfo const& Info) noexcept override;
+    virtual void Render(LActorRenderInfo const& Info) const override;
+
+    AActor* SetSelectedActor(AActor* Actor) noexcept;
 
     struct RayCreateInfo
     {
@@ -286,22 +295,41 @@ public:
     //# Useful for consistent one time draws when draw orders are not guaranteed.
     void AddAabbNextTick(AabbCreateInfo Aabb) noexcept { this->NextAabbs.emplace_back(std::move(Aabb)); }
 
+    //# @return True, if handled.
+    bool TraceForGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin);
+
 private:
 
-    TArray<RayCreateInfo> Rays;
-    TArray<RayCreateInfo> NextRays;
+    void RenderRays(LActorRenderInfo const& Info) const;
+    void RenderGizmo(LActorRenderInfo const& Info) const;
 
-    TArray<AabbCreateInfo> Aabbs;
+    AActor* SelectedActor{};
+    NODISCARD constexpr bool IsSelectedActorValid() const noexcept { return this->SelectedActor && this->SelectedActor->HasRootComponent(); }
+
+    mutable TArray<RayCreateInfo> Rays;
+    TArray<RayCreateInfo> NextRays;
+    mutable TArray<AabbCreateInfo> Aabbs;
     TArray<AabbCreateInfo> NextAabbs;
 
     LMaterialInstanceRef RayInstance;
-
-    // vk::raii::DescriptorSetLayout RayDescriptorSetLayout{ nullptr };
-
     rhi::frame_array<rhi::mapped_device_buffer> RayBuffers;
-
     rhi::frame_array<rhi::mapped_device_buffer> RayViewBuffers;
-    // TFrameArray<vk::raii::DescriptorSet> RayDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+
+    enum EGizmoDir
+    {
+        X,
+        Y,
+        Z,
+        GizmoCount,
+    };
+    std::array<LStaticMeshRenderable, GizmoCount> Gizmo;
+    void SetTranslationForGizmos(LWorldVec3 Translation) noexcept
+    {
+        for (auto Idx{std::to_underlying(X)}; Idx < std::to_underlying(GizmoCount); ++Idx)
+        {
+            this->Gizmo[Idx].SetTranslation(Translation);
+        }
+    }
 };
 
 DECLARE_JAFG_CLASS()
@@ -329,7 +357,7 @@ public:
     //# @return Whether the context was activated successfully.
     bool ActivateUserInputContext() const noexcept;
 
-    void OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location);
+    void OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin = {});
     void OnMove(LInputActionValue const& Value);
     void OnRotate(LInputActionValue const& Value);
     void OnVelocityMultiplierChange(LInputActionValue const& Value);

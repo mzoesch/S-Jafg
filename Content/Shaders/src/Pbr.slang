@@ -1,5 +1,7 @@
 // Copyright mzoesch. All rights reserved.
+
 #include "Jafg.slang"
+#include "Jafg/WorldData.slang"
 
 // Input from vertex buffer - Data sent per vertex from CPU
 [[CxxName("Jafg::LStaticMesh::Vertex")]]
@@ -21,20 +23,6 @@ struct FRInput
     float4 Tangent : TANGENT;      // World space tangent (interpolated)
 };
 
-// Uniform buffer - Global data shared across all vertices/fragments
-struct UniformBufferObject 
-{
-    float4x4 view;                      // World-to-camera transformation matrix
-    float4x4 proj;                      // Camera-to-clip space projection matrix
-    float4 lightPositions[4];           // Light positions in world space
-    float4 lightColors[4];              // Light intensities and colors
-    float4 camPos;                      // Camera position for view-dependent effects
-    float exposure;                     // HDR exposure control
-    float gamma;                        // Gamma correction value (typically 2.2)
-    float prefilteredCubeMipLevels;     // IBL prefiltered environment map mip levels
-    float scaleIBLAmbient;              // IBL ambient contribution scale
-};
-
 // Push constants - Fast, small data updated frequently per material/object
 [[CxxName("Jafg::PC::Pbr")]]
 struct PushConstants 
@@ -53,7 +41,7 @@ struct PushConstants
 };
 
 // Resource bindings - Connect CPU resources to GPU shader registers
-[[vk::binding(0, 0),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<UniformBufferObject> ubo;
+[[vk::binding(0, 0),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<WorldData> ubo;
 [[vk::binding(0, 1),UpdateFrequency(Rarely)]] Texture2D baseColorMap;
 [[vk::binding(1, 1),UpdateFrequency(Rarely)]] Texture2D metallicRoughnessMap;
 [[vk::binding(2, 1),UpdateFrequency(Rarely)]] Texture2D normalMap;
@@ -167,9 +155,10 @@ float4 fragMain(FRInput input) : SV_TARGET
         N = normalize(mul(tangentNormal, TBN));
     }
 
+
     // === LIGHTING SETUP ===
     // Calculate view direction (fragment to camera)
-    float3 V = normalize(ubo.camPos.xyz - input.WorldPos);
+    float3 V = normalize(float3(ubo.cam_pos_x,ubo.cam_pos_y,ubo.cam_pos_z) - input.WorldPos);
 
     // Calculate reflection vector for environment mapping
     float3 R = reflect(-V, N);
@@ -226,6 +215,7 @@ float4 fragMain(FRInput input) : SV_TARGET
         // Multiply by incident radiance and cosine foreshortening
         Lo += (kD * baseColor.rgb / PI + specular) * radiance * NdotL;
     }
+
 
     // === AMBIENT AND EMISSIVE ===
     // Add simple ambient lighting (should be replaced with IBL in production)

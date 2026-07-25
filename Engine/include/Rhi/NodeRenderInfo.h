@@ -12,10 +12,9 @@ class JTextureSubsystem;
 class JMaterialSubsystem;
 class JFontSubsystem;
 
-struct LNodeRenderInfo : public LRenderInfo
+struct LNodeRenderInfo: LRenderInfo
 {
     static constexpr u64 MaxBatchCount{16};
-    static constexpr u64 MaxInstanceCount{ 16'384 };
 
     LViewport const& Viewport;
     JTextureSubsystem const& TextureSubsystem;
@@ -31,12 +30,12 @@ struct LNodeRenderInfo : public LRenderInfo
     const std::optional<LRect2F> Cull;
 
     TArray<std::pair<vk::Rect2D, u64>>& Batches;
-    TArray<LVisualInstance>& VisualInstances;
+    rhi::object_range<SSBO::VisualInstance>& VisualInstances;
     void BeginNewBatch(vk::Rect2D const& Scissor) const noexcept
     {
-        this->Batches.emplace_back(Scissor, this->VisualInstances.size());
+        this->Batches.emplace_back(Scissor, this->VisualInstances->size());
     }
-    bool AddInstance(LVisualInstance Instance) const noexcept
+    bool AddInstance(SSBO::VisualInstance Instance) const noexcept
     {
         if (this->Cull.has_value())
         {
@@ -45,7 +44,7 @@ struct LNodeRenderInfo : public LRenderInfo
                 return false;
             }
         }
-        this->VisualInstances.emplace_back(std::move(Instance));
+        this->VisualInstances->emplace_back(std::move(Instance));
         return true;
     }
 };

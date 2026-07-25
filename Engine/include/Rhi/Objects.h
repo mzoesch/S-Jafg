@@ -47,13 +47,16 @@ concept object = device_element<T> && requires
     };
     requires requires(T&& Obj, mapped_device_buffer const& Buffer)
     {
-        { Obj.upload(Buffer) } -> std::same_as<void>;
+        { Obj.upload(Buffer) };
     };
 };
 //# Convenience template for a device object. This template is meant to be overridden if you need custom behavior.
 template<typename T, vk::ShaderStageFlagBits... Flags>
 struct object_template: device_element_template<T>
 {
+    static constexpr auto skip_auto_allocation{ false };
+    static constexpr auto default_count{ 1uz };
+
     static constexpr vk::ShaderStageFlags shader_stage_flags() noexcept { return (Flags|...); }
     static std::array<vk::DescriptorBindingFlags, 1> const& descriptor_binding_flags() noexcept
     {
@@ -81,7 +84,7 @@ struct object_template: device_element_template<T>
     }
     static vk::DescriptorSetLayoutCreateFlags descriptor_set_layout_flags() noexcept { return {}; }
 
-    static constexpr vk::BufferCreateInfo buffer_create_info(std::size_t count = 1) noexcept
+    static constexpr vk::BufferCreateInfo buffer_create_info(std::size_t count = T::default_count) noexcept
     {
         return vk::BufferCreateInfo{
             .size = sizeof(T) * count,
@@ -110,10 +113,11 @@ struct object_template: device_element_template<T>
             };
     }
 
-    void upload(mapped_device_buffer const& buf) const noexcept
+    decltype(auto) upload(this auto&& Self, mapped_device_buffer const& buf) noexcept
     {
         check(buf.data())
-        std::memcpy(buf.data(), this, sizeof(T));
+        std::memcpy(buf.data(), &Self, sizeof(T));
+        return std::forward<decltype(Self)>(Self);
     }
     void upload_and_update(vk::raii::Device const& d, vk::raii::DescriptorSet const& s, u32 binding, mapped_device_buffer const& buf) const noexcept
     {
@@ -222,13 +226,10 @@ struct object_range
     NODISCARD TArray<value_type>& operator*() { return this->values; }
     NODISCARD TArray<value_type>* operator->() { return &this->values; }
 
-    NODISCARD vk::DescriptorBufferInfo upload(rhi::mapped_device_buffer const& buf, std::size_t offset = 0) const noexcept
+    NODISCARD vk::DescriptorBufferInfo upload(mapped_device_buffer const& buf, std::size_t offset = 0) const noexcept
     {
         check(buf.data())
-        if (this->values.empty())
-        {
-            LOG_FATAL(LogRhi, "Cannot upload empty object_range.")
-        }
+        check(!this->values.empty())
         if (this->max && this->values.size() > *this->max)
         {
             LOG_FATAL(LogRhi, "[{}]: Failed to upload due to overflow [{}>{}]."
@@ -283,11 +284,21 @@ struct LPushConstantProvider final
     mutable TFunction2<void(LActorRenderInfo const& Info, LMaterial const& Material, LActorInfo const& ActorInfo)> PushForActor;
 };
 
+struct LBufferObjectProvider final
+{
+    LString Identifier;
+
+    bool bSkipAutoAllocation;
+    std::size_t DefaultCount;
+    mutable TFunction2<vk::BufferCreateInfo(std::size_t Count)> BufferCreateInfo;
+};
+
 namespace Detail
 {
 
 ENGINE_API void RegisterVertexInputGlobally(LVertexInputProvider Provider) noexcept;
 ENGINE_API void RegisterPushConstantGlobally(LPushConstantProvider Provider) noexcept;
+ENGINE_API void RegisterBufferObjectGlobally(LBufferObjectProvider Provider) noexcept;
 
 } /* ~Namespace Detail */
 
@@ -323,6 +334,21 @@ struct LPushConstantRegistrator final
                 .Identifier = T::name_str(),
                 });
         }
+    }
+};
+
+//# Helper struct to automatically register a ubo or ssbo. Usually only used for static storage initialization.
+template<rhi::detail::object T>
+struct LBufferObjectRegistrator final
+{
+    LBufferObjectRegistrator()
+    {
+        Detail::RegisterBufferObjectGlobally({
+            .Identifier = T::name_str(),
+            .bSkipAutoAllocation = T::skip_auto_allocation,
+            .DefaultCount = T::default_count,
+            .BufferCreateInfo = &T::buffer_create_info,
+            });
     }
 };
 

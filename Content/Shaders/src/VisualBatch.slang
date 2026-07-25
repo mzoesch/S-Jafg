@@ -3,176 +3,175 @@
 #include "Jafg.slang"
 
 [[CxxName("Jafg::UBO::VisualShared")]]
-struct LVisualShared
+struct VisualShared
 {
-    float4x4 Proj;
-    float    Gamma;
+    float4x4 proj;
+    float gamma;
 };
-[[vk::binding(0, 0),Shared("Jafg::UBO::VisualShared")]] ConstantBuffer<LVisualShared> VisualShared;
+[[vk::binding(0,0),UpdateFrequency(PerFrame)]] ConstantBuffer<VisualShared> visual_shared;
 
-[[vk::binding(0, 1),Shared("Jafg::UBO::Bindless")]] SamplerState[] Samplers;
-[[vk::binding(1, 1),Shared("Jafg::UBO::Bindless")]] Texture2D[] BindlessTextures;
-
-[[CxxName("Jafg::LVisualInstance")]]
-struct InstanceData
+[[CxxName("Jafg::SSBO::VisualInstance")]]
+struct VisualInstance
 {
     /* (Position, Extent) in px. */
-    float4 Rect;
+    float4 rect;
     /* (Min, Max) */
-    float4 TexCoordRect;
-    float4 Radii;
+    float4 tex_coord_rect;
+    float4 radii;
 
-    LColor Tint;
-    LColor BorderTint;
-    LColor OutlineTint;
-    float OutlineThickness;
+    LColor tint;
+    LColor border_tint;
+    LColor outline_tint;
+    float outline_thickness;
     
-    uint TextureIndex;
-    uint SamplerIndex;
-    float MsdfPixelRange;
-    uint _pad1;
+    uint texture_index;
+    uint sampler_index;
+    float msdf_pixel_range;
+    uint _pad0;
 };
-[[vk::binding(0, 2),UpdateFrequency(PerFrame)]] StructuredBuffer<InstanceData> InstanceBuffer;
+[[vk::binding(1,0),UpdateFrequency(PerFrame)]] StructuredBuffer<VisualInstance> instances;
+
+[[vk::binding(0,1),Shared("Jafg::UBO::Bindless")]] SamplerState[] samplers;
+[[vk::binding(1,1),Shared("Jafg::UBO::Bindless")]] Texture2D[] bindless_textures;
 
 struct FRInput
 {
-    float4 Position: SV_POSITION;
-    float2 UV: TEXCOORD0;
-    float2 TexUV: TEXCOORD1;
-    uint InstanceID: SV_InstanceID;
+    float4 pos: SV_POSITION;
+    float2 uv: TEXCOORD0;
+    float2 tex_uv: TEXCOORD1;
+    uint instance_id: SV_InstanceID;
 };
 
 [shader("vertex")]
-FRInput vertMain(uint VertexID: SV_VertexID, uint InstanceID: SV_InstanceID, uint Offset: SV_StartInstanceLocation)
+FRInput vertMain(uint vertex_id: SV_VertexID, uint instance_id: SV_InstanceID, uint offset: SV_StartInstanceLocation)
 {
-    InstanceData Instance = InstanceBuffer[Offset + InstanceID];
-    float2 Corner = float2((VertexID >> 1), (VertexID & 1));
+    VisualInstance instance = instances[offset + instance_id];
+    float2 corner = float2((vertex_id >> 1), (vertex_id & 1));
 
-    FRInput Result;
-    Result.Position = mul(VisualShared.Proj, float4(Instance.Rect.xy + Corner * Instance.Rect.zw, 0.0, 1.0));
-    Result.UV = Corner;
-    Result.TexUV = lerp(Instance.TexCoordRect.xy, Instance.TexCoordRect.zw, Corner);
-    Result.InstanceID = Offset + InstanceID;
+    FRInput result;
+    result.pos = mul(visual_shared.proj, float4(instance.rect.xy + corner * instance.rect.zw, 0.0, 1.0));
+    result.uv = corner;
+    result.tex_uv = lerp(instance.tex_coord_rect.xy, instance.tex_coord_rect.zw, corner);
+    result.instance_id = offset + instance_id;
 
-    return Result;
+    return result;
 }
 
 [shader("fragment")]
-float4 fragMain(FRInput Input): SV_TARGET
+float4 fragMain(FRInput input): SV_TARGET
 {
-    InstanceData Instance = InstanceBuffer[Input.InstanceID];
+    VisualInstance instance = instances[input.instance_id];
 
-    float DistLeft   = (Input.UV.x - 0.0) * Instance.Rect.z;
-    float DistTop    = (Input.UV.y - 0.0) * Instance.Rect.w;
-    float DistRight  = (1.0 - Input.UV.x) * Instance.Rect.z;
-    float DistBottom = (1.0 - Input.UV.y) * Instance.Rect.w;
+    float dist_left   = (input.uv.x - 0.0) * instance.rect.z;
+    float dist_top    = (input.uv.y - 0.0) * instance.rect.w;
+    float dist_right  = (1.0 - input.uv.x) * instance.rect.z;
+    float dist_bottom = (1.0 - input.uv.y) * instance.rect.w;
 
-    bool bCorner  = false;
-    bool bOutline = false;
+    bool is_corner  = false;
+    bool is_outline = false;
 
-    float4 Result;
-    if (Instance.MsdfPixelRange != 0.0f)
+    float4 result;
+    if (instance.msdf_pixel_range != 0.0f)
     {
-        float4 Tint = maths::color_to_linear(Instance.Tint, VisualShared.Gamma);
-        float3 msdf = (BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV)).rgb;
-        Result = float4(Tint.rgb, Tint.w * clamp(Instance.MsdfPixelRange * (maths::median_of_three(msdf.r, msdf.g, msdf.b) - 0.5) + 0.5, 0.0, 1.0));
+        float4 tint = maths::color_to_linear(instance.tint, visual_shared.gamma);
+        float3 msdf = (bindless_textures[NonUniformResourceIndex(instance.texture_index)].Sample(samplers[instance.sampler_index], input.tex_uv)).rgb;
+        result = float4(tint.rgb, tint.w * clamp(instance.msdf_pixel_range * (maths::median_of_three(msdf.r, msdf.g, msdf.b) - 0.5) + 0.5, 0.0, 1.0));
     }
-    else if (Instance.SamplerIndex == JAFG_SAMPLER_LINEAR_CLAMP_TO_BORDER || Instance.SamplerIndex == JAFG_SAMPLER_NEAREST_CLAMP_TO_BORDER)
+    else if (instance.sampler_index == JAFG_SAMPLER_LINEAR_CLAMP_TO_BORDER || instance.sampler_index == JAFG_SAMPLER_NEAREST_CLAMP_TO_BORDER)
     {
         // This is prob. better, but produces sometimes wrong results...
-        // Result = lerp(
-        //     maths::color_to_linear(Instance.Tint) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV),
-        //     maths::color_to_linear(Instance.BorderTint),
-        //     saturate(step(1.0, Input.TexUV.x) + step(Input.TexUV.x, 0.0) + step(1.0, Input.TexUV.y) + step(Input.TexUV.y, 0.0))
+        // result = lerp(
+        //     maths::color_to_linear(instance.tint) * bindless_textures[NonUniformResourceIndex(instance.texture_index)].Sample(samplers[instance.sampler_index], input.tex_uv),
+        //     maths::color_to_linear(instance.border_tint),
+        //     saturate(step(1.0, input.tex_uv.x) + step(input.tex_uv.x, 0.0) + step(1.0, input.tex_uv.y) + step(input.tex_uv.y, 0.0))
         //     );
-        
-        if (Input.TexUV.x < 0.0 || Input.TexUV.x > 1.0 || Input.TexUV.y < 0.0 || Input.TexUV.y > 1.0)
+        if (input.tex_uv.x < 0.0 || input.tex_uv.x > 1.0 || input.tex_uv.y < 0.0 || input.tex_uv.y > 1.0)
         {
-            Result = maths::color_to_linear(Instance.BorderTint, VisualShared.Gamma);
+            result = maths::color_to_linear(instance.border_tint, visual_shared.gamma);
         }
         else
         {
-            Result = maths::color_to_linear(Instance.Tint, VisualShared.Gamma) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+            result = maths::color_to_linear(instance.tint, visual_shared.gamma) * bindless_textures[NonUniformResourceIndex(instance.texture_index)].Sample(samplers[instance.sampler_index], input.tex_uv);
         }
     }
     else
     {
-        Result = maths::color_to_linear(Instance.Tint, VisualShared.Gamma) * BindlessTextures[NonUniformResourceIndex(Instance.TextureIndex)].Sample(Samplers[Instance.SamplerIndex], Input.TexUV);
+        result = maths::color_to_linear(instance.tint, visual_shared.gamma) * bindless_textures[NonUniformResourceIndex(instance.texture_index)].Sample(samplers[instance.sampler_index], input.tex_uv);
     }
 
-    if (DistLeft < Instance.Radii.x && DistTop < Instance.Radii.x) /* TL */
+    if (dist_left < instance.radii.x && dist_top < instance.radii.x) /* TL */
     {
-        float dist = length(float2(Instance.Radii.x - DistLeft, Instance.Radii.x - DistTop));
-        if (dist > Instance.Radii.x)
+        float dist = length(float2(instance.radii.x - dist_left, instance.radii.x - dist_top));
+        if (dist > instance.radii.x)
         {
             discard;
         }
-        else if (dist > Instance.Radii.x - Instance.OutlineThickness)
+        else if (dist > instance.radii.x - instance.outline_thickness)
         {
-            bOutline = true;
+            is_outline = true;
         }
-        bCorner = true;
+        is_corner = true;
     }
-    if (DistRight < Instance.Radii.y && DistTop < Instance.Radii.y) /* TR */
+    if (dist_right < instance.radii.y && dist_top < instance.radii.y) /* TR */
     {
-        float dist = length(float2(Instance.Radii.y - DistRight, Instance.Radii.y - DistTop));
-        if (dist > Instance.Radii.y)
+        float dist = length(float2(instance.radii.y - dist_right, instance.radii.y - dist_top));
+        if (dist > instance.radii.y)
         {
             discard;
         }
-        else if (dist > Instance.Radii.y - Instance.OutlineThickness)
+        else if (dist > instance.radii.y - instance.outline_thickness)
         {
-            bOutline = true;
+            is_outline = true;
         }
-        bCorner = true;
+        is_corner = true;
     }
-    if (DistRight < Instance.Radii.z && DistBottom < Instance.Radii.z) /* BR */
+    if (dist_right < instance.radii.z && dist_bottom < instance.radii.z) /* BR */
     {
-        float dist = length(float2(Instance.Radii.z - DistRight, Instance.Radii.z - DistBottom));
-        if (dist > Instance.Radii.z)
+        float dist = length(float2(instance.radii.z - dist_right, instance.radii.z - dist_bottom));
+        if (dist > instance.radii.z)
         {
             discard;
         }
-        else if (dist > Instance.Radii.z - Instance.OutlineThickness)
+        else if (dist > instance.radii.z - instance.outline_thickness)
         {
-            bOutline = true;
+            is_outline = true;
         }
-        bCorner = true;
+        is_corner = true;
     }
-    if (DistLeft < Instance.Radii.w && DistBottom < Instance.Radii.w) /* BL */
+    if (dist_left < instance.radii.w && dist_bottom < instance.radii.w) /* BL */
     {
-        float dist = length(float2(Instance.Radii.w - DistLeft, Instance.Radii.w - DistBottom));
-        if (dist > Instance.Radii.w)
+        float dist = length(float2(instance.radii.w - dist_left, instance.radii.w - dist_bottom));
+        if (dist > instance.radii.w)
         {
             discard;
         }
-        else if (dist > Instance.Radii.w - Instance.OutlineThickness)
+        else if (dist > instance.radii.w - instance.outline_thickness)
         {
-            bOutline = true;
+            is_outline = true;
         }
-        bCorner = true;
+        is_corner = true;
     }
 
-    if (Instance.OutlineThickness > 0.0)
+    if (instance.outline_thickness > 0.0)
     {
-        if (!bCorner) 
+        if (!is_corner)
         {
             if 
             (
-                   DistLeft   < Instance.OutlineThickness 
-                || DistRight  < Instance.OutlineThickness 
-                || DistTop    < Instance.OutlineThickness 
-                || DistBottom < Instance.OutlineThickness
+                   dist_left   < instance.outline_thickness
+                || dist_right  < instance.outline_thickness
+                || dist_top    < instance.outline_thickness
+                || dist_bottom < instance.outline_thickness
             )
             {
-                bOutline = true;
+                is_outline = true;
             }
         }
-        if (bOutline)
+        if (is_outline)
         {
-            Result = maths::color_to_linear(Instance.OutlineTint, VisualShared.Gamma);
+            result = maths::color_to_linear(instance.outline_tint, visual_shared.gamma);
         }
     }
 
-    return Result;
+    return result;
 }

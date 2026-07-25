@@ -5,13 +5,17 @@
 #include "Minimal.afx"
 #include "Framework/FrontendForward.h"
 #include "Platform/SurfaceForward.h"
-#include "Framework/Eye.h"
 #include "Rhi/RendererCore.h"
 
 namespace Jafg
 {
 
 class JUserPreferences;
+class JTextureSubsystem;
+class JMaterialSubsystem;
+class JShaderSubsystem;
+class JMeshSubsystem;
+class JFontSubsystem;
 
 //# Global graphics rendering info for one frame to be probably sentenced to fly on a device in the near future.
 struct LRenderInfo
@@ -22,6 +26,12 @@ struct LRenderInfo
     LFrontend& Frontend;
     //# The surface to submit to.
     LSurface& Surface;
+
+    JTextureSubsystem& TextureSubsystem;
+    JMaterialSubsystem& MaterialSubsystem;
+    JShaderSubsystem& ShaderSubsystem;
+    JMeshSubsystem& MeshSubsystem;
+    JFontSubsystem& FontSubsystem;
 
     //# The command buffer to submit graphics stuff to.
     vk::CommandBuffer CommandBuffer;

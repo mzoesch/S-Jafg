@@ -1,0 +1,7 @@
+{
+    "inherits": [
+        "Jafg.DepthUntested",
+        "Jafg.Perspective"
+    ],
+    "shader": "Shaders/Jafg.Gizmo"
+}

@@ -32,6 +32,14 @@
 #include "Components/StaticMeshComponent.h"
 #include "User/LocalEgo.h"
 #include "Rhi/ViewProj.h"
+#include "Rhi/SolidColor.h"
+
+namespace
+{
+
+Jafg::LBufferObjectRegistrator<Jafg::SSBO::Ray> _;
+
+} /* ~Namespace <Anonymous> */
 
 #if JAFG_WITH_EDITOR
 
@@ -134,6 +142,25 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             })
             ;
     });
+
+    Info.UpdateValue = [T=Translation,R=Rotation,S=Scale,Field=&Info.Field]
+    {
+        auto Translation{WInput_Vector3::FloatingVector{Field->t}};
+        if (auto V{T->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Translation)
+        {
+            T->Vector->Set(Translation);
+        }
+        auto Rotation{WInput_Vector3::FloatingVector{maths::euler_angles_deg(Field->r)}};
+        if (auto V{T->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Rotation)
+        {
+            R->Vector->Set(Rotation);
+        }
+        auto Scale{WInput_Vector3::FloatingVector{Field->s}};
+        if (auto V{S->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V !=Scale)
+        {
+            S->Vector->Set(Scale);
+        }
+    };
 
     return NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill) // TODO: 1_spt vpadding?
@@ -733,6 +760,8 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
 {
     Super::OnAttach(InOwner);
 
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
     LOG_TRACE(LogRhi, "Allocating debug editor buffers.")
     auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
@@ -743,6 +772,25 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
 
     this->RayBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::Ray::buffer_create_info(MaxLineCount));
     this->RayViewBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::ViewProj::buffer_create_info());
+
+    auto SoldiX{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo")};
+    check(SoldiX->InfrequentDescriptorSets[0].Resources.size() == 1)
+    UBO::SolidColorInput{.Color=*Prefs.EditorAxisTintX}.upload_and_update(Frontend.Vk_GetDevice(), *SoldiX->InfrequentDescriptorSets[0], 0, SoldiX->InfrequentDescriptorSets[0].Resources[0].AsBuffer());
+
+    auto SolidY{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo")};
+    check(SolidY->InfrequentDescriptorSets[0].Resources.size() == 1)
+    UBO::SolidColorInput{.Color=*Prefs.EditorAxisTintY}.upload_and_update(Frontend.Vk_GetDevice(), *SolidY->InfrequentDescriptorSets[0], 0, SolidY->InfrequentDescriptorSets[0].Resources[0].AsBuffer());
+
+    auto SolidZ{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo")};
+    check(SolidZ->InfrequentDescriptorSets[0].Resources.size() == 1)
+    UBO::SolidColorInput{.Color=*Prefs.EditorAxisTintZ}.upload_and_update(Frontend.Vk_GetDevice(), *SolidZ->InfrequentDescriptorSets[0], 0, SolidZ->InfrequentDescriptorSets[0].Resources[0].AsBuffer());
+
+    this->Gizmo[X].SetMesh(LITERAL_TEXT("Content/Models/Editor/SelectionArrowX.glb"));
+    this->Gizmo[X].SetMaterialInstance(std::move(SoldiX));
+    this->Gizmo[Y].SetMesh(LITERAL_TEXT("Content/Models/Editor/SelectionArrowY.glb"));
+    this->Gizmo[Y].SetMaterialInstance(std::move(SolidY));
+    this->Gizmo[Z].SetMesh(LITERAL_TEXT("Content/Models/Editor/SelectionArrowZ.glb"));
+    this->Gizmo[Z].SetMaterialInstance(std::move(SolidZ));
 }
 
 void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
@@ -774,9 +822,134 @@ void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
     this->NextAabbs.clear();
 }
 
-void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Info) noexcept
+void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Info) const
 {
     Super::Render(Info);
+
+    this->RenderRays(Info);
+    this->RenderGizmo(Info);
+}
+
+Jafg::AActor* Jafg::AEditorPersonaControllerComponent::SetSelectedActor(AActor* Actor) noexcept
+{
+    auto* Result{std::exchange(this->SelectedActor, Actor)};
+
+    if (this->IsSelectedActorValid())
+    {
+        this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+    }
+
+    return Result;
+}
+
+bool Jafg::AEditorPersonaControllerComponent::TraceForGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin)
+{
+    if (!this->SelectedActor || !this->SelectedActor->HasRootComponent())
+    {
+        return false;
+    }
+    auto& Comp{this->SelectedActor->GetRootComponent()};
+
+    this->SetTranslationForGizmos(Comp.GetTranslation());
+
+    for (auto Idx{std::to_underlying(X)}; Idx < std::to_underlying(GizmoCount); ++Idx)
+    {
+        auto& Gizmo{this->Gizmo[Idx]};
+        if (auto r{maths::aabb_intersect_ray(Ray, Gizmo.GetAabb().apply(Gizmo.GetTransform()))}; r.bHit)
+        {
+            Origin.Node.GetViewport().EmplaceUntil<ERawInputStateBits::Release>(Origin.Event.PhysicalKey,
+            [this,Idx,Extent=Extent,N=&Origin.Node,Delta=std::optional<LWorldVec3>{}] mutable
+            {
+                check(N)
+
+                if (!N->IsPainted())
+                {
+                    return true;
+                }
+                if (!N->GetViewport().GetSurface().HasMouseLocationForOrtho())
+                {
+                    return true;
+                }
+                auto CursorLocation{N->GetViewport().GetSurface().GetMouseLocationValue()};
+
+                // TODO: Fix translation
+                if (LVec2F Location{CursorLocation - N->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+                    Location.x < 0.0f || Location.y < 0.0f || Location.x > N->GetAnchoredSize_v2().x || Location.y > N->GetAnchoredSize_v2().y)
+                {
+                    LOG_TRACE(LogWidgetFramework, "[{}]: Click location [{}] is outside of the world viewer size [.Offset={},.Extent={}]. Ignoring trace request."
+                        , N->GetNameAsString(), maths::to_string(Location)
+                        // TODO: Fix translation
+                        , maths::to_string(N->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)), maths::to_string(N->GetAnchoredSize_v2()))
+                }
+                else
+                {
+                    auto& Prefs{GetSingleton<JUserPreferences>()};
+                    if (!N->IsOwnedPersonaControllerValid())
+                    {
+                        return true;
+                    }
+                    auto& Ctrl{*N->GetOwnedPersonaControllerChecked()};
+                    if (!Ctrl.IsOwnedPawnValid())
+                    {
+                        return true;
+                    }
+
+                    auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
+                        {Extent.width,Extent.height}, Location, Ctrl.GetOwnedPawnChecked()->GetEye()), *Prefs.EditorTraceLength)
+                        };
+
+                    LWorldVec3 GizmoRay{[&]{ switch (Idx)
+                    {
+                        case EGizmoDir::X: return maths::right_vector<LWorldVec3>;
+                        case EGizmoDir::Y: return maths::up_vector<LWorldVec3>;
+                        case EGizmoDir::Z: return maths::backward_vector<LWorldVec3>;
+                        default: LOG_FATAL(LogEditor, "Invalid gizmo index [{}].", Idx)
+                    }}()};
+                    if (*Prefs.EditorVisualizeGizmoInteractions)
+                    {
+                        this->AddRayNextTick({
+                            .Tint = *Prefs.EditorGizmoVisualizationTint,
+                            .Duration = OneTimeDraw,
+                            .Value = LWorldMagRay3{this->Gizmo[Idx].GetTranslation(), GizmoRay, *Prefs.EditorGizmoVisualizationLength},
+                            });
+                    }
+
+                    LWorldVec3 Point{maths::closest_point_on_line(
+                        LWorldRay3{this->Gizmo[Idx].GetTranslation(), GizmoRay}, LWorldRay3{.origin=Trace.origin,.delta=Trace.direction}
+                        )};
+                    if (*Prefs.EditorVisualizeGizmoInteractions)
+                    {
+                        constexpr LWorldVec3 HitSize{0.2f};
+                        this->AddAabbNextTick({
+                            .Tint = *Prefs.EditorGizmoVisualizationHitTint,
+                            .Duration = OneTimeDraw,
+                            .Value = LWorldAabb3{Point - HitSize, Point + HitSize},
+                            });
+                    }
+
+                    if (!Delta)
+                    {
+                        Delta = Point - this->Gizmo[Idx].GetTranslation();
+                        return false;
+                    }
+
+                    Point -= *Delta;
+
+                    this->SelectedActor->GetRootComponent().SetTranslation(Point);
+                    this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+                }
+
+                return false;
+            });
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const& Info) const
+{
     auto& Prefs{GetSingleton<JUserPreferences>()};
     check(this->RayInstance.get())
 
@@ -790,10 +963,7 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
                 auto& Sc{*StaticCastChecked<ASceneComponent>(&*Comp)};
                 if (Sc.ShouldRender())
                 {
-                    this->AddAabb({
-                        .Tint = *Prefs.EditorMeshAabbVisualizationTint,
-                        .Value = Sc.GetAabb().apply(Sc.GetTransform())
-                        });
+                    this->Aabbs.emplace_back(*Prefs.EditorMeshAabbVisualizationTint, OneTimeDraw, Sc.GetAabb().apply(Sc.GetTransform()));
                 }
             }
         }
@@ -819,8 +989,8 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
         }
     });
 
-    DeviceRays.upload_and_update(Info.Frontend.Vk_GetDevice(), Set, DebugLinesIndex, this->RayBuffers[Info.Frame]);
-    UBO::ViewProj{Info.WorldData.proj * Info.WorldData.view}.upload_and_update(Info.Frontend.Vk_GetDevice(), Set, ViewProjIndex, this->RayViewBuffers[Info.Frame]);
+    DeviceRays.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, DebugLinesIndex, this->RayBuffers[Info.Frame]);
+    UBO::ViewProj{Info.WorldData.proj * Info.WorldData.view}.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, ViewProjIndex, this->RayViewBuffers[Info.Frame]);
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->RayInstance->Material->Pipeline);
     Info.CommandBuffer.bindDescriptorSets2({
@@ -828,11 +998,21 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
         .layout = *this->RayInstance->Material->Pipeline.pipeline_layout,
         .firstSet = 0,
         .descriptorSetCount = 1,
-        .pDescriptorSets = &*Set,
+        .pDescriptorSets = &**Set,
         .dynamicOffsetCount = 0,
         .pDynamicOffsets = nullptr
         });
     Info.CommandBuffer.draw(2, static_cast<u32>(DeviceRays->size()), 0, 0);
+}
+
+void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const& Info) const
+{
+    if (this->IsSelectedActorValid())
+    {
+        this->Gizmo[X].Render(Info);
+        this->Gizmo[Y].Render(Info);
+        this->Gizmo[Z].Render(Info);
+    }
 }
 
 bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
@@ -850,33 +1030,12 @@ bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
     return false;
 }
 
-void Jafg::AEditorCameraComponent::OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location)
+void Jafg::AEditorCameraComponent::OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin /* = {} */)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Pawn{this->GetOwningPawn()};
-    auto Eye{Pawn.GetEye()};
 
-    LVec2F NormalLocation{
-        (2.0f * Location.x) / static_cast<f32>(Extent.width) - 1.0f,
-        1.0f - (2.0f * Location.y) / static_cast<f32>(Extent.height),
-        };
-
-    LMat4F InvProj{inverse(glm::perspectiveRH_ZO(Eye.VertFov,
-        static_cast<f32>(Extent.width) / static_cast<f32>(Extent.height),
-        Eye.NearFrustum, Eye.FarFrustum
-        ))};
-    LMat4F InvView{inverse(glm::lookAtRH(Eye.Translation, Eye.Translation + Eye.Front, Eye.Up))};
-
-    LVec4F NearClip{NormalLocation.x, NormalLocation.y, 0.0f, 1.0f};
-    LVec4F FarClip{NormalLocation.x, NormalLocation.y, 1.0f, 1.0f};
-
-    LVec4F NearView{InvProj * NearClip}; NearView /= NearView.w;
-    LVec4F FarView{InvProj * FarClip};  FarView  /= FarView.w;
-
-    LVec3F NearWorld{LVec3F(InvView * NearView)};
-    LVec3F FarWorld{LVec3F(InvView * FarView)};
-
-    LWorldMagRay3 Ray{.origin = NearWorld, .direction = normalize(FarWorld - NearWorld), .magnitude = *Prefs.EditorTraceLength,};
+    auto Ray{LWorldMagRay3::from_ray(maths::screen_to_world_space({Extent.width,Extent.height}, Location, Pawn.GetEye()), *Prefs.EditorTraceLength)};
     check(maths::normalized(Ray.direction))
 
     if (auto* PcComp{Pawn.GetOwningController()->GetComponent<AEditorPersonaControllerComponent>()})
@@ -884,6 +1043,11 @@ void Jafg::AEditorCameraComponent::OnTrace(WWorldViewer& Viewer, bool bMultisele
         if (*Prefs.EditorVisualizeTraces)
         {
             PcComp->AddRay({.Tint = *Prefs.EditorTraceVisualizationTint, .Duration = *Prefs.EditorTraceVisualizationDuration, .Value = Ray,});
+        }
+
+        if (Origin && PcComp->TraceForGizmo(Ray, Extent, *Origin))
+        {
+            return;
         }
     }
 

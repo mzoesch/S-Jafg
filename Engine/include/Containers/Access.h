@@ -169,7 +169,7 @@ template<typename T>
     //# If this hits, we have to decide for another impl...
     //# Currently this is not needed anymore, yea :D
     //#
-    requires std::is_default_constructible_v<typename TContainer::value_type>
+    requires std::is_default_constructible_v<typename T::value_type>
 #endif /* !JAFG_WITH_CLANG */
 //#
 //# Allows one to add uninitialized elements to a std::vector<T> without calling the default constructor of T

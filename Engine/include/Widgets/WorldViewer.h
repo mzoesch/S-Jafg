@@ -122,6 +122,8 @@ private:
 
     WNode* Placeholder{};
 
+    WText* DebugLocationText{};
+
     algo::clock::time_point LastUnstableDiff;
     std::optional<rhi::extent2> LastUnstableExtent;
 
@@ -218,13 +220,17 @@ class ENGINE_API WWorldViewerInspector : public WUserWidget
 
 protected:
 
-    DEFAULT_NODE_CONSTRUCTORS(WWorldViewerInspector)
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WWorldViewerInspector)
+    {
+        this->SetShouldTick(true);
+    }
 
 public:
 
     JAFG_DEFAULT_TAB_CANDIDATE("Details", "Icons/Jafg.Information")
 
     virtual void Construct() override;
+    virtual void Tick() override;
     virtual void Destruct() override;
 
     void _OnWorldViewerDestruct();
@@ -251,6 +257,7 @@ private:
 
     WParent* ComponentContainerWrapper{};
     WParent* ComponentContainer{};
+    TArray<TFunction2<void()>> ComponentUpdateFunctions;
     AActorComponent* SelectedComponent{};
     void UpdateObjectDetails();
     void ReloadInnerComponents();

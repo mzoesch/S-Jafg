@@ -155,18 +155,37 @@ struct TRay final
     TVec<L,TReal,Q> origin;
     TVec<L,TReal,Q> delta;
 };
-using LRay3F = TRay<3,maths::single_precision,maths::defaultp>;
-using LRay3D = TRay<3,maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TRay2 = TRay<2,TReal,Q>;
+using LRay2F = TRay2<maths::single_precision,maths::defaultp>;
+using LRay2D = TRay2<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TRay3 = TRay<3,TReal,Q>;
+using LRay3F = TRay3<maths::single_precision,maths::defaultp>;
+using LRay3D = TRay3<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TRay4 = TRay<4,TReal,Q>;
+using LRay4F = TRay4<maths::single_precision,maths::defaultp>;
+using LRay4D = TRay4<maths::double_precision,maths::defaultp>;
 
 template<maths::length_t L,typename TReal,maths::qual_t Q>
 struct TMagRay final
 {
+    NODISCARD static TMagRay from_ray(TRay<L,TReal,Q> const& ray, TReal magnitude) noexcept
+    {
+        return TMagRay{.origin = ray.origin, .direction = glm::normalize(ray.delta), .magnitude = magnitude};
+    }
+
     TVec<L,TReal,Q> origin;
     TVec<L,TReal,Q> direction;
     TReal magnitude;
 };
-using LMagRay3F = TMagRay<3,maths::single_precision,maths::defaultp>;
-using LMagRay3D = TMagRay<3,maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TMagRay2 = TMagRay<2,TReal,Q>;
+using LMagRay2F = TMagRay2<maths::single_precision,maths::defaultp>;
+using LMagRay2D = TMagRay2<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TMagRay3 = TMagRay<3,TReal,Q>;
+using LMagRay3F = TMagRay3<maths::single_precision,maths::defaultp>;
+using LMagRay3D = TMagRay3<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TMagRay4 = TMagRay<4,TReal,Q>;
+using LMagRay4F = TMagRay4<maths::single_precision,maths::defaultp>;
+using LMagRay4D = TMagRay4<maths::double_precision,maths::defaultp>;
 
 template<maths::length_t L,typename TReal,maths::qual_t Q>
 struct TAabb final
@@ -263,26 +282,55 @@ struct TAabb final
         return result;
     }
 };
-using LAabb2F = TAabb<2,maths::single_precision,maths::defaultp>;
-using LAabb2D = TAabb<2,maths::double_precision,maths::defaultp>;
-using LAabb3F = TAabb<3,maths::single_precision,maths::defaultp>;
-using LAabb3D = TAabb<3,maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TAabb2 = TAabb<2,TReal,Q>;
+using LAabb2F = TAabb2<maths::single_precision,maths::defaultp>;
+using LAabb2D = TAabb2<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TAabb3 = TAabb<3,TReal,Q>;
+using LAabb3F = TAabb3<maths::single_precision,maths::defaultp>;
+using LAabb3D = TAabb3<maths::double_precision,maths::defaultp>;
+
+template<typename TReal,maths::qual_t Q>
+struct TEye final
+{
+    TReal vert_fov{ static_cast<TReal>(1.0) };
+    TReal near_frustum{ static_cast<TReal>(0.1) };
+    TReal far_frustum{ static_cast<TReal>(10.0) };
+    TVec3<TReal,Q> translation;
+    TVec3<TReal,Q> front;
+    TVec3<TReal,Q> up;
+};
 
 //#
 //# Types used for world coordinates.
 //#
 inline constexpr maths::qualifier world_qual{maths::highp};
-using LWorldReal    = maths::single_precision;
+#if !defined(JAFG_USE_SINGLE_WORLD_PRECISION) && !defined(JAFG_USE_DOUBLE_WORLD_PRECISION)
+    #define JAFG_USE_SINGLE_WORLD_PRECISION                             1
+#endif /* !defined(JAFG_USE_SINGLE_WORLD_PRECISION) && !defined(JAFG_USE_DOUBLE_WORLD_PRECISION) */
+#ifndef JAFG_USE_SINGLE_WORLD_PRECISION
+    #define JAFG_USE_SINGLE_WORLD_PRECISION                             0
+#endif /* !JAFG_USE_SINGLE_WORLD_PRECISION */
+#ifndef JAFG_USE_DOUBLE_WORLD_PRECISION
+    #define JAFG_USE_DOUBLE_WORLD_PRECISION                             0
+#endif /* !JAFG_USE_DOUBLE_WORLD_PRECISION */
+#if JAFG_USE_SINGLE_WORLD_PRECISION
+    using LWorldReal    = maths::single_precision;
+#elif JAFG_USE_DOUBLE_WORLD_PRECISION
+    using LWorldReal    = maths::double_precision;
+#else /* JAFG_USE_DOUBLE_WORLD_PRECISION */
+    #error "No world precision provided."
+#endif /* !JAFG_USE_DOUBLE_WORLD_PRECISION */
 using LWorldQuat    = TQua<LWorldReal,world_qual>;
 using LWorldVec1    = TVec1<LWorldReal,world_qual>;
 using LWorldVec2    = TVec2<LWorldReal,world_qual>;
 using LWorldVec3    = TVec3<LWorldReal,world_qual>;
 using LWorldVec4    = TVec4<LWorldReal,world_qual>;
 using LWorldTrans   = TTrans<LWorldReal,world_qual>;
-using LWorldRay3    = TRay<3,LWorldReal,world_qual>;
-using LWorldMagRay3 = TMagRay<3,LWorldReal,world_qual>;
-using LWorldAabb2   = TAabb<2,LWorldReal,world_qual>;
-using LWorldAabb3   = TAabb<3,LWorldReal,world_qual>;
+using LWorldRay3    = TRay3<LWorldReal,world_qual>;
+using LWorldMagRay3 = TMagRay3<LWorldReal,world_qual>;
+using LWorldAabb2   = TAabb2<LWorldReal,world_qual>;
+using LWorldAabb3   = TAabb3<LWorldReal,world_qual>;
+using LWorldEye     = TEye<LWorldReal,world_qual>;
 
 #define MATHS_CONSTANT(Constant)                                                                            \
     namespace detail                                                                                        \
@@ -876,6 +924,78 @@ NODISCARD constexpr bool normalized(TVec<L,double_precision,Q> const& v, double_
     return maths::eq_e(maths::squared_magnitude(v), 1.0, e);
 }
 
+//# Given two lines A and B, find the closest point on line A to line B.
+template<std::floating_point TReal, qual_t Q>
+NODISCARD constexpr TVec3<TReal,Q> closest_point_on_line(TRay3<TReal,Q> const& A, TRay3<TReal,Q> const& B, TReal epsilon = static_cast<TReal>(not_so_small_number_d)) noexcept
+{
+    TVec3<TReal,Q> u{A.delta};
+    TVec3<TReal,Q> v{B.delta};
+    TVec3<TReal,Q> w{A.origin - B.origin};
+
+    TReal a{dot(u, u)};
+    TReal b{dot(u, v)};
+    TReal c{dot(v, v)};
+    TReal d{dot(u, w)};
+    TReal e{dot(v, w)};
+
+    TReal denom{a * c - b * b};
+    TReal t;
+
+    /* Parallel or degenerate. */
+    if (denom < epsilon)
+    {
+        t = -d/a;
+    }
+    else
+    {
+        t = (b * e - c * d) / denom;
+    }
+
+    return A.origin + t * A.delta;
+}
+
+//#
+//# Given two rays A and B, find the closest point on A to B.
+//# Unlike lines, rays are semi-infinite, as they are clamped to [origin, inf). This
+//#
+template<std::floating_point TReal, qual_t Q>
+NODISCARD constexpr TVec3<TReal,Q> closest_point_on_ray(TRay3<TReal,Q> const& A, TRay3<TReal,Q> const& B, TReal epsilon = static_cast<TReal>(not_so_small_number_d)) noexcept
+{
+    TVec3<TReal,Q> u{A.delta};
+    TVec3<TReal,Q> v{B.delta};
+    TVec3<TReal,Q> w{A.origin - B.origin};
+
+    TReal a{dot(u, u)};
+    TReal b{dot(u, v)};
+    TReal c{dot(v, v)};
+    TReal d{dot(u, w)};
+    TReal e{dot(v, w)};
+
+    TReal denom{a * c - b * b};
+    TReal s;
+
+    /* Parallel or degenerate. */
+    if (denom < epsilon)
+    {
+        s = static_cast<TReal>(0.0);
+    }
+    else
+    {
+        s = (b * e - c * d) / denom;
+        TReal t{(a * e - b * d) / denom};
+        if (s < static_cast<TReal>(0.0))
+        {
+            s = static_cast<TReal>(0.0);
+        }
+        else if (t < static_cast<TReal>(0.0))
+        {
+            s = max(static_cast<TReal>(0.0), -d / a);
+        }
+    }
+
+    return A.origin + s * A.delta;
+}
+
 template<typename T,qual_t Q>
 NODISCARD constexpr bool aabb(TRect1<T,Q> const& a, TRect1<T,Q> const& b) noexcept
 {
@@ -1080,6 +1200,32 @@ NODISCARD constexpr TQua<T,Q> angle_axis(T a, TVec3<T,Q> const& v) noexcept { re
 ///////////////////////////////////////////////////////////////////////////////
 // Conversions
 using glm::to_string;
+
+template<std::floating_point TReal,qual_t Q>
+NODISCARD TRay<3,TReal,Q> screen_to_world_space(TVec2<TReal,Q> extent, TVec2<TReal,Q> location, TEye<TReal,Q> eye) noexcept
+{
+    TVec2<TReal,Q> NormalLocation{
+        (2.0 * location.x) / static_cast<TReal>(extent.x) - 1.0,
+        1.0 - (2.0 * location.y) / static_cast<TReal>(extent.y),
+        };
+
+    TMat4<TReal,Q> InvProj{inverse(glm::perspectiveRH_ZO(eye.vert_fov,
+        static_cast<TReal>(extent.x) / static_cast<TReal>(extent.y),
+        eye.near_frustum, eye.far_frustum
+        ))};
+    TMat4<TReal,Q> InvView{inverse(glm::lookAtRH(eye.translation, eye.translation + eye.front, eye.up))};
+    
+    TVec4<TReal,Q> NearClip{NormalLocation.x, NormalLocation.y, static_cast<TReal>(0.0), static_cast<TReal>(1.0)};
+    TVec4<TReal,Q> FarClip{NormalLocation.x, NormalLocation.y, static_cast<TReal>(1.0), static_cast<TReal>(1.0)};
+    
+    TVec4<TReal,Q> NearView{InvProj * NearClip}; NearView /= NearView.w;
+    TVec4<TReal,Q> FarView{InvProj * FarClip};  FarView  /= FarView.w;
+    
+    TVec3<TReal,Q> NearWorld{TVec3<TReal,Q>(InvView * NearView)};
+    TVec3<TReal,Q> FarWorld{TVec3<TReal,Q>(InvView * FarView)};
+
+    return TRay<3,TReal,Q>{.origin = NearWorld, .delta = normalize(FarWorld - NearWorld)};
+}
 
 inline constexpr std::array<f32,256> srgb_to_linear_table{
     0.00000000000000000000000000000000,

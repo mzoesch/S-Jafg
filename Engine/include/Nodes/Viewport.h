@@ -70,7 +70,7 @@ public:
     //#
     template<ERawInputStateFlags Flags>
     //#
-    FORCEINLINE void EmplaceUntil(LPhysicalKey Key, TFunction2<bool()> F, TFunction<void()> G) noexcept
+    FORCEINLINE void EmplaceUntil(LPhysicalKey Key, TFunction2<bool()> F, TFunction2<void()> G = {}) noexcept
     {
         this->KeyDelegates.emplace_back(Flags, Key, std::move(F), std::move(G));
     }
@@ -168,6 +168,10 @@ public:
         check(Vector) Vector->y = static_cast<f32>(this->Extent.height) - Vector->y;
     }
 
+#if JAFG_DO_CHECKS
+    NODISCARD FORCEINLINE constexpr bool _check_IsPrintTickTrace() const noexcept { return this->_check_PrintTickTrace; }
+#endif /* JAFG_DO_CHECKS */
+
 private:
 
     ENGINE_API void ChangeFocusImpl(TClassStorage<WNode> InNode);
@@ -204,10 +208,11 @@ private:
 
     LClassOuter Outer{ "SurfaceViewport" };
 
-    rhi::frame_array<rhi::mapped_device_buffer> VisualBatches;
-    rhi::frame_array<vk::raii::DescriptorSet> Vk_VisualSharedDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    rhi::frame_array<rhi::mapped_device_buffer> Vk_VisualSharedBuffers;
     LMaterialInstanceRef VisualBatchMaterialInstance;
+
+#if JAFG_DO_CHECKS
+    bool _check_PrintTickTrace{};
+#endif /* JAFG_DO_CHECKS */
 };
 
 } /* ~Namespace Jafg */

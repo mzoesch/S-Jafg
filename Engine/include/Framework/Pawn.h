@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Framework/Actor.h"
-#include "Framework/Eye.h"
 #include "Pawn.generated.h"
 
 namespace Jafg
@@ -35,7 +34,7 @@ public:
     virtual void Tick(f32 Dt) override;
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
-    LEye_v2 GetEye() const noexcept;
+    LWorldEye GetEye() const noexcept;
 
     bool IsPossessedLocally() const noexcept;
     LLocalEgo* GetLocalEgoIfPossessed() const noexcept;

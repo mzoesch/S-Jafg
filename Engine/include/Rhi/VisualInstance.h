@@ -8,9 +8,26 @@
 namespace Jafg
 {
 
-//# Device instance of a painted node.
-struct alignas(16) LVisualInstance final
+namespace UBO
 {
+
+struct VisualShared final: rhi::ubo_template<VisualShared, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+{
+    LMat4F Proj;
+    f32 Gamma;
+};
+static_assert(rhi::ubo<VisualShared>);
+
+} /* ~Namespace UBO */
+
+namespace SSBO
+{
+
+//# Device instance of a painted node.
+struct VisualInstance final: rhi::ssbo_template<VisualInstance, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
+{
+    static constexpr auto default_count{ 16'384uz };
+
     //# Required
     LRect2F Rect;
     LVec4F TexCoordRect{ 0.0f, 0.0f, 1.0f, 1.0f };
@@ -29,18 +46,9 @@ struct alignas(16) LVisualInstance final
     f32 MsdfPixelRange{};
     u32 _pad1;
 };
-static_assert(sizeof(LVisualInstance) % 16 == 0);
+static_assert(sizeof(VisualInstance) % 16 == 0);
+static_assert(rhi::ssbo<VisualInstance>);
 
-namespace UBO
-{
-
-struct VisualShared final : rhi::ubo_template<VisualShared, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
-{
-    LMat4F Proj;
-    f32 Gamma;
-};
-static_assert(rhi::ubo<VisualShared>);
-
-} /* ~Namespace UBO */
+} /* ~Namespace SSBO */
 
 } /* ~Namespace Jafg */
