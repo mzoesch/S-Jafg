@@ -156,7 +156,7 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Harfbuzz
         GIT_REPOSITORY      https://github.com/harfbuzz/harfbuzz.git
-        GIT_TAG             13.0.1
+        GIT_TAG             14.2.1
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/harfbuzz"
         )
     FetchContent_MakeAvailable(FetchContent_Harfbuzz)
