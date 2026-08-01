@@ -3,7 +3,7 @@
 #include "Cli/CommandLineInterface.h"
 #include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
-#include "Async/TaskUtility.h"
+#include "Core/TaskUtility.h"
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const noexcept
 {

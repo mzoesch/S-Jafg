@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/FrontendSubsystem.h"
+#include "Framework/FrontendSubsystem.h"
 #include "Rhi/Objects.h"
 #include "Rhi/ReflectedShader.h"
 #include "ShaderSubsystem.generated.h"

@@ -153,6 +153,17 @@ function(_jafg_add_module_impl
         "${CMAKE_CURRENT_BINARY_DIR}"
         )
 
+    set(test_file "${CMAKE_CURRENT_BINARY_DIR}/gt/_TestModule.generated.cpp")
+    if(EXISTS "${test_file}")
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+            set_source_files_properties(${test_file} PROPERTIES COMPILE_FLAGS "-I${module_dir}/tests")
+        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            set_source_files_properties(${test_file} PROPERTIES COMPILE_FLAGS "/I${module_dir}/tests")
+        else()
+            message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
+        endif()
+    endif()
+
     set(pch_file "${module_dir}/src/module.pch")
     if(EXISTS "${pch_file}")
         target_precompile_headers(${module_name} PRIVATE
@@ -192,11 +203,6 @@ function(_jafg_add_module_impl
     elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_DAEMON)
         target_compile_definitions(${module_name} PRIVATE
             JAFG_AS_DAEMON=1
-            )
-    elseif(JAFG_TARGET_TYPE STREQUAL JAFG_TARGET_TEST)
-        target_compile_definitions(${module_name} PRIVATE
-            JAFG_WITH_LOCAL_LAYER=1
-            JAFG_WITH_TESTS=1
             )
     else()
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_TYPE [${JAFG_TARGET_TYPE}].")

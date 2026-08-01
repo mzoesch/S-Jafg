@@ -2,13 +2,13 @@
 
 #pragma once
 
-#include "Runtime/Parameter.h"
+#include "Core/Parameter.h"
 
 #if !JAFG_WITH_REST_CLS
     #error "JAFG_WITH_REST_CLS is required to include this header."
 #endif /* !JAFG_WITH_REST_CLS */
 
-#include "Async/Runnable.h"
+#include "Framework/Runnable.h"
 
 namespace Jafg
 {

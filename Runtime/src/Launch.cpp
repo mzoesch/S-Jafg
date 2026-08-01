@@ -9,7 +9,7 @@
 #include "Engine/Jxx.h"
 
 #if JAFG_WITH_TESTS
-    #include "TestCore/TestRunner.h"
+    #include "Core/Test.h"
 #endif /* JAFG_WITH_TESTS */
 
 using namespace Jafg;
@@ -21,16 +21,6 @@ using namespace Jafg;
         #define JAFG_FORCE_LOG_FLUSH_INTERVAL                           0.2
     #endif /* !JAFG_IN_SHIPPING */
 #endif /* JAFG_FORCE_LOG_FLUSH_INTERVAL */
-
-namespace
-{
-
-#if WITH_STATS
-    //# The default tracer used in this program.
-    Stats::LTracer RuntimeTracer;
-#endif /* WITH_STATS */
-
-} /* ~Namespace <Anonymous> */
 
 /* Not a custom module. Place boilerplate manually. */
 JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS
@@ -138,7 +128,8 @@ void EngineExit()
     if (Stats::Private::GTracer)
     {
         Stats::Private::GTracer->EndSession();
-        Stats::Private::GTracer = nullptr;
+        auto Tracer{std::exchange(Stats::Private::GTracer, nullptr)};
+        delete Tracer;
     }
 #endif /* WITH_STATS */
 
@@ -148,62 +139,25 @@ void EngineExit()
 //# The launch function that is agnostic to all platforms. Each launch will eventually find its way here.
 EPlatformExit::Type AgnosticLaunch()
 {
-    {
-        check(App::Detail::ProcessedCommandLine.empty())
-        LProgramArgument* CurrentList{};
-        algo::for_each(App::Detail::RawCommandLine, [&CurrentList](LString const& Parameter)
-        {
-            if (Parameter.starts_with('-'))
-            {
-                CurrentList = nullptr;
-                if (auto Idx{Parameter.find('=')}; Idx != LString::npos)
-                {
-                    App::Detail::ProcessedCommandLine.emplace_back(algo::sub(Parameter, 1, Idx), algo::right_chop(Parameter, Idx + 1));
-                }
-                else
-                {
-                    App::Detail::ProcessedCommandLine.emplace_back(algo::right_chop(Parameter, 1));
-                    CurrentList = &App::Detail::ProcessedCommandLine.back();
-                }
-            }
-            else
-            {
-                if (CurrentList)
-                {
-                    check(!CurrentList->IsValue())
-                    if (CurrentList->IsStoreTrue())
-                    {
-                        CurrentList->Variant = TArray<LString>{};
-                    }
-                    std::get<TArray<LString>>(CurrentList->Variant).emplace_back(Parameter);
-                }
-                else
-                {
-                    LOG_WARNING(LogLaunch, "Command line argument [{}] is not associated with any parameter.", Parameter)
-                }
-            }
-        });
-    }
+    LOG_INFO(LogLaunch, "Finished static storage initialization after [{}] seconds.", App::GetElapsedTime())
 
+#if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
+    algo::raii_leave _{&EngineExit};
+#endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
+
+    App::Detail::ProcessedCommandLine = App::ReprocessCommandLine(App::GetRawCommandLine());
     if (App::GetCommandLineArgument(App::CoreHelp))
     {
         App::PrettyPrintApiUsage();
-        App::RequestEngineExit("Help shown");
+        App::RequestEngineExit("Help shown.");
         return ::GetMostSignificantExitReason();
     }
     if (App::GetCommandLineArgument(App::Version))
     {
         App::PrettyPrintVersion();
-        App::RequestEngineExit("Version shown");
+        App::RequestEngineExit("Version shown.");
         return ::GetMostSignificantExitReason();
     }
-
-#if !JAFG_WITH_TESTS
-#if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
-    algo::raii_leave _{&EngineExit};
-#endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
-
-    LOG_INFO(LogLaunch, "Finished static storage initialization after {} seconds.", App::GetElapsedTime())
 
     LOG_VERBOSE(LogInformation, "BuildTime={}", App::BuildTime())
     LOG_VERBOSE(LogInformation, "BuildDate={}", App::BuildDate())
@@ -231,7 +185,6 @@ EPlatformExit::Type AgnosticLaunch()
     App::Detail::AllowProfiling = App::CanEverProfile() && !!App::GetCommandLineArgument(App::AllowProfiling);
 #endif /* WITH_STATS */
     LOG_VERBOSE(LogInformation, "AllowProfiling={}", App::IsAllowProfiling())
-#endif /* !JAFG_WITH_TESTS */
 
     Tasks::RegisterThread(ENamedThreads::Master);
 
@@ -242,26 +195,34 @@ EPlatformExit::Type AgnosticLaunch()
     LOG_VERBOSE(LogInformation, "EngineDir={}", finder::detail::_engine_root_dir_slow())
     LOG_VERBOSE(LogInformation, "ProcDir={}", finder::detail::self_proc_dir_slow())
 
-    /* This is technically a race cond but who really cares. */
+    /* This is technically a data race but who really cares. */
     finder::detail::dump_file = absolute(finder::most_recent_mem_dump_file());
     finder::create_directories(finder::detail::dump_file.parent_path());
     LOG_VERBOSE(LogInformation, "DumpFile={}", finder::detail::dump_file)
-
-#if JAFG_WITH_TESTS
-    return Tester::LTestFramework{}.RunRegisteredTests();
-#else /* JAFG_WITH_TESTS  */
 
 #if WITH_STATS
     if (App::IsAllowProfiling())
     {
         LOG_VERBOSE(LogStats, "Profiling and stats gathering is enabled.")
-        if (Stats::Private::GTracer == nullptr)
+        if (!Stats::Private::GTracer)
         {
-            Stats::Private::GTracer = &::RuntimeTracer;
+            Stats::Private::GTracer = new Stats::LTracer{};
         }
         Stats::Private::GTracer->BeginSession("Program");
     }
 #endif /* WITH_STATS */
+
+#if JAFG_WITH_TESTS
+    if (!App::GetCommandLineArgument(App::SkipTrivialTests))
+    {
+        if (auto Reason{LTestRunInstance{ETestCategoryBits::Trivial}.ExitReason()})
+        {
+            App::RequestEngineExit(EPlatformExit::Error, *Reason);
+            return ::GetMostSignificantExitReason();
+        }
+    }
+#endif /* JAFG_WITH_TESTS */
+
     STAT_CYCLE_FUNCTION_START(GuardedMainCycle)
     STAT_BOOKMARK("GettingUp")
 
@@ -305,7 +266,7 @@ EPlatformExit::Type AgnosticLaunch()
     if (App::GetCommandLineArgument(App::Help))
     {
         App::PrettyPrintApiUsage();
-        App::RequestEngineExit("Verbose help shown");
+        App::RequestEngineExit("Verbose help shown.");
         return ::GetMostSignificantExitReason();
     }
 
@@ -346,5 +307,4 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
 
     return ::GetMostSignificantExitReason();
-#endif /* !JAFG_WITH_TESTS */
 }

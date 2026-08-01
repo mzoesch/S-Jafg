@@ -5,7 +5,7 @@
 #include "Framework/Frontend.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
-#include "Subsystems/LocalEgoSubsystem.h"
+#include "Framework/LocalEgoSubsystem.h"
 #include "Stats/Stats.h"
 
 void Jafg::LLocalEgo::Initialize()

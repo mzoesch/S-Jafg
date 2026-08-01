@@ -3,7 +3,7 @@
 #pragma once
 
 #include "JgcMinimal.afx"
-#include "Subsystems/FrontendSubsystem.h"
+#include "Framework/FrontendSubsystem.h"
 #include "JgcInputSubsystem.generated.h"
 
 namespace Jgc

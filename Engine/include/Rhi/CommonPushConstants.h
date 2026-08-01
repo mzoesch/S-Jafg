@@ -5,7 +5,7 @@
 #include "Material.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/Objects.h"
-#include "Components/ActorComponentForward.h"
+#include "Framework/ActorComponentForward.h"
 
 namespace Jafg::PC
 {

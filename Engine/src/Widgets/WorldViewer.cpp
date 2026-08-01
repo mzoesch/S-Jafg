@@ -28,6 +28,7 @@
 #include "Framework/ShaderSubsystem.h"
 #include "Framework/TextureSubsystem.h"
 #include "Rhi/OutlineRendering.h"
+#include "Widgets/Input_Vector1.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -37,6 +38,8 @@ Jafg::WWorldViewer::~WWorldViewer()
 void Jafg::WWorldViewer::Construct()
 {
     Super::Construct();
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
 
     this->RenderTargetViewport.Vk_OnLateInit();
 
@@ -49,39 +52,289 @@ void Jafg::WWorldViewer::Construct()
         .Content("No World Loaded")
         ;
 
-    BeginStyling(*this).StaticRoot<WHParent>()
+    constexpr auto MinSize{23_spt2};
+
+    BeginStyling(*this).StaticRoot<WVParent>()
         .Anchor(EAnchor::HFill)
-        .Padding(3_pt)
-        .Space(3_pt)
     [
-        NewStaticNode(WButton)
-            .MinDesiredSize(25_spt2)
-            .InAllBrushesChained<&LRegionBrush::Background, &LRegionBrush::Radii>(LRegionBrush::Icon("Icons/Jafg.Menu"), LVec4F{50.0f})
-            .InBrushChained<EStyleBits::ActiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(Colors::White, LColor{0x4c})
-            .InBrushChained<EStyleBits::InactiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(LColor{0xA0}, LColor{0x3c})
-            .InAllBrushesChained<&LRegionBrush::OutlineThickness, &LRegionBrush::OutlineTint>(1, Colors::Black)
-            .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-            {
-                if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+        NewStaticNode(WHParent)
+            .Anchor(EAnchor::HFill)
+            .Padding(3_pt)
+            .Space(3_pt)
+        [
+            NewStaticNode(WButton)
+                .MinDesiredSize(MinSize)
+                .InAllBrushesChained<&LRegionBrush::Background, &LRegionBrush::Radii>(LRegionBrush::Icon("Icons/Jafg.Menu"), LVec4F{50.0f})
+                .InBrushChained<EStyleBits::ActiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(Colors::White, LColor{0x4c})
+                .InBrushChained<EStyleBits::InactiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(LColor{0xA0}, LColor{0x3c})
+                .InAllBrushesChained<&LRegionBrush::OutlineThickness, &LRegionBrush::OutlineTint>(1, Colors::Black)
+                .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
-                    this->CreateMenuDropDown(Info.CursorLocation.value_or(maths::zero_vector<LVec2F>));
-                    return LNodeReply::Handled();
-                }
-                return LNodeReply::Unhandled();
-            })
-        + NewStaticNode(WSpacer).Anchor(EAnchor::HFill)
-        + NewStaticNode(WText).SaveTo(&this->DebugLocationText)
+                    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                    {
+                        this->CreateMenuDropDown(Info.CursorLocation.value_or(maths::zero_vector<LVec2F>));
+                        return LNodeReply::Handled();
+                    }
+                    return LNodeReply::Unhandled();
+                })
+            + NewStaticNode(WSpacer).Anchor(EAnchor::HFill)
+            + NewStaticNode(WHRegion)
+                .Tint(Colors::Black)
+                .Space(1_spt)
+                .Padding(1_spt)
+                .OutlineThickness(1)
+                .OutlineTint(Colors::Black)
+            [
+                NewStaticNode(WButton).SaveTo(&this->SelectButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.Cursor")))
+                    .Selected(true)
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                        {
+                            this->SelectGizmo(EGizmo::Select);
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WButton).SaveTo(&this->TranslateGizmoButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.TranslationGizmo")))
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                        {
+                            this->SelectGizmo(EGizmo::Translate);
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WButton).SaveTo(&this->RotateGizmoButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.RotationGizmo")))
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                        {
+                            this->SelectGizmo(EGizmo::Rotate);
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WButton).SaveTo(&this->ScaleGizmoButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.ScaleGizmo")))
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                        {
+                            this->SelectGizmo(EGizmo::Scale);
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WButton).SaveTo(&this->GizmoButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.Gizmo")))
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                        {
+                            this->SelectGizmo(EGizmo::Gizmo);
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+            ]
+            + NewStaticNode(WHRegion)
+                .Tint(Colors::Black)
+                .Space(1_spt)
+                .Padding(1_spt)
+                .OutlineThickness(1)
+                .OutlineTint(Colors::Black)
+            [
+                NewStaticNode(WButton).SaveTo(&this->ToggleGridSpace)
+                    .MinDesiredSize(MinSize)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.LocalGrid")))
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
+                        {
+                            if (auto& Btn{Self.AsStatic<WButton>()}; this->IsGridSpaceLocal())
+                            {
+                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.Sphere"));
+                                Btn.Brush.Background = LRegionBrush::Icon("Icons/Jafg.Sphere");
+                            }
+                            else
+                            {
+                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.LocalGrid"));
+                                Btn.Brush.Background = LRegionBrush::Icon("Icons/Jafg.LocalGrid");
+                            }
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+            ]
+            + NewStaticNode(WHRegion)
+                .Tint(Colors::Black)
+                .Space(1_spt)
+                .Padding(1_spt)
+                .OutlineThickness(1)
+                .OutlineTint(Colors::Black)
+            [
+                NewStaticNode(WButton).SaveTo(&this->ToggleTranslationGridSnapButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.Grid")))
+                    .Selected(true)
+                    .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
+                        {
+                            Self.AsStatic<WButton>().SetSelected(!Self.AsStatic<WButton>().IsSelected());
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WTextButton).SaveTo(&this->TranslationGridSnapButton)
+                    .MinDesiredSize(MinSize)
+                    .Style(Prefs.EditorSecondaryButton<LBoxBrush,JUserPreferences::Radii|JUserPreferences::Outline>())
+                    .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
+                    .Content(std::to_string(this->SnapTranslation))
+            ]
+            + NewStaticNode(WHRegion)
+                .Tint(Colors::Black)
+                .Space(1_spt)
+                .Padding(1_spt)
+                .OutlineThickness(1)
+                .OutlineTint(Colors::Black)
+            [
+                NewStaticNode(WButton).SaveTo(&this->ToggleRotationGridSnapButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.Angle")))
+                    .Selected(true)
+                    .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
+                        {
+                            Self.AsStatic<WButton>().SetSelected(!Self.AsStatic<WButton>().IsSelected());
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WTextButton).SaveTo(&this->RotationGridSnapButton)
+                    .MinDesiredSize(MinSize)
+                    .Style(Prefs.EditorSecondaryButton<LBoxBrush,JUserPreferences::Radii|JUserPreferences::Outline>())
+                    .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
+                    .Content(std::to_string(this->SnapRotation))
+                ]
+            + NewStaticNode(WHRegion)
+                .Tint(Colors::Black)
+                .Space(1_spt)
+                .Padding(1_spt)
+                .OutlineThickness(1)
+                .OutlineTint(Colors::Black)
+            [
+                NewStaticNode(WButton).SaveTo(&this->ToggleScaleGridSnapButton)
+                    .MinDesiredSize(MinSize)
+                    .Selectable(true)
+                    .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.ScaleGizmoLight")))
+                    .Selected(true)
+                    .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
+                        {
+                            Self.AsStatic<WButton>().SetSelected(!Self.AsStatic<WButton>().IsSelected());
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                + NewStaticNode(WTextButton).SaveTo(&this->ScaleGridSnapButton)
+                    .MinDesiredSize(MinSize)
+                    .Style(Prefs.EditorSecondaryButton<LBoxBrush,JUserPreferences::Radii|JUserPreferences::Outline>())
+                    .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
+                    .Content(std::to_string(this->SnapScale))
+            ]
+            + NewStaticNode(WHRegion)
+                    .Tint(Colors::Black)
+                    .Space(1_spt)
+                    .Padding(1_spt)
+                    .OutlineThickness(1)
+                    .OutlineTint(Colors::Black)
+                [
+                    NewStaticNode(WTextButtonIconizedDouble).SaveTo(&this->CameraButton)
+                        .MinDesiredSize(MinSize)
+                        .Style(Prefs.EditorSecondaryButton<LBoxBrush,JUserPreferences::Radii|JUserPreferences::Outline>())
+                        .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
+                        .Content(this->GetCameraSpeedString())
+                        .LeftIcon(LTexture2::FromAsset("Icons/Jafg.Camera"))
+                        .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                        {
+                            if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
+                            {
+                                CreateDropDownMenu(this->GetViewport(), Info.CursorLocation.value_or(maths::zero_vector<LVec2F>), {}, {
+                                    LDropDownNodeScratch{.OnCreate=[this](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+                                    {
+                                        return NewNode(Viewport).Class<WHParent>().Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0.0f})
+                                            .Anchor(EAnchor::HFill)
+                                        [
+                                            NewNode(Viewport).Class<WText>()
+                                                .MinDesiredSize({100_spt, 0.0f})
+                                                .Content("Speed")
+                                            + NewNode(Viewport).Class<WInput_Vector1>(static_cast<WInput_Vector1::FloatingVector>(this->CameraSpeed), 1.0f)
+                                                .Anchor(EAnchor::HFill)
+                                                .OnVectorChanged([this](WInput_Vector1& Self)
+                                                {
+                                                    this->RequestedCameraSpeed = static_cast<f32>(Self.Get<f64>());
+                                                })
+                                        ];
+                                    }},
+                                    LDropDownNodeScratch{.OnCreate=[this](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+                                    {
+                                        return NewNode(Viewport).Class<WHParent>().Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0.0f})
+                                            .Anchor(EAnchor::HFill)
+                                        [
+                                            NewNode(Viewport).Class<WText>()
+                                                .MinDesiredSize({100_spt, 0.0f})
+                                                .Content("Acceleration")
+                                            + NewNode(Viewport).Class<WInput_Vector1>(static_cast<WInput_Vector1::FloatingVector>(this->CameraAcceleration))
+                                                .Anchor(EAnchor::HFill)
+                                                .OnVectorChanged([this](WInput_Vector1& Self)
+                                                {
+                                                    this->CameraAcceleration = static_cast<f32>(Self.Get<f64>());
+                                                })
+                                        ];
+                                    }},
+                                });
+
+                                return LNodeReply::Handled();
+                            }
+                            return LNodeReply::Unhandled();
+                        })
+                ]
+        ]
+        + NewStaticNode(WSpacer).Height(16_pt)
+        + NewStaticNode(WHParent).Anchor(EAnchor::HFill)
+        [
+            NewStaticNode(WSpacer).Anchor(EAnchor::HFill)
+            + NewStaticNode(WText).SaveTo(&this->DebugLocationText)
+        ]
     ];
 
     auto& MaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
-
 
     this->SelectionMaterialInstance = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Mesh.Outline");
     check(this->SelectionMaterialInstance.get())
     this->PostSelectionMaterialInstance = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Mesh.OutlinePost");
     check(this->PostSelectionMaterialInstance.get())
 
-    auto& Prefs{GetSingleton<JUserPreferences>()};
     if (*Prefs.EditorAutoLaunchLastWorld && !Prefs.EditorLastWorldName->empty() && !Prefs.EditorLastWorldLevelName->empty())
     {
         auto World{this->GetMutableEngine().SummonWorld({.HumanReadableName=*Prefs.EditorLastWorldName})};
@@ -94,10 +347,13 @@ void Jafg::WWorldViewer::Tick()
 {
     Super::Tick();
 
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    auto& Surface{this->GetViewport().GetSurface()};
+
     if (this->bDatedRenderTarget)
     {
         LOG_VERBOSE(LogWidgets, "[{}]: Render target is dated. Recreating render target.", this->GetNameAsString())
-        this->GetViewport().GetSurface().GetMutableFrontend()._Vk_WaitIdle();
+        Surface.GetMutableFrontend()._Vk_WaitIdle();
         this->InitializeRenderTarget();
     }
     else if (this->DesiredViewportExtent)
@@ -105,7 +361,7 @@ void Jafg::WWorldViewer::Tick()
         if (*this->DesiredViewportExtent != this->RenderTarget.GetExtent())
         {
             LOG_TRACE(LogWidgets, "[{}]: Desired viewport extent changed to [{}]. Recreating render target.", this->GetNameAsString(), *this->DesiredViewportExtent)
-            this->GetViewport().GetSurface().GetMutableFrontend()._Vk_WaitIdle();
+            Surface.GetMutableFrontend()._Vk_WaitIdle();
             this->InitializeRenderTarget();
         }
         this->LastUnstableExtent.reset();
@@ -131,36 +387,99 @@ void Jafg::WWorldViewer::Tick()
             else if (algo::time_diff(this->LastUnstableDiff, algo::now()) > Threshold)
             {
                 LOG_TRACE(LogWidgets, "[{}]: Desired viewport extent changed to [{}]. Recreating render target.", this->GetNameAsString(), UnstableSize)
-                this->GetViewport().GetSurface().GetMutableFrontend()._Vk_WaitIdle();
+                Surface.GetMutableFrontend()._Vk_WaitIdle();
                 this->InitializeRenderTarget();
                 this->LastUnstableExtent.reset();
             }
         }
     }
 
-    if (!this->ConsumeHandle.IsValid())
+    if (this->UserInput._bCurrentlyConsuming && !this->ConsumeHandle.IsValid())
     {
-        if (this->UserInput._bCurrentlyConsuming)
-        {
-            this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]{ this->DispatchInputDelegates(); return false; });
-        }
+        this->BindConsumeHandle();
+        check(this->ConsumeHandle.IsValid())
     }
 
     check(this->DebugLocationText)
-    if (auto* Ctrl{this->GetOwnedPersonaController()})
+    bool bSet{};
+    if (Prefs.EditorShowEyeTranslation)
     {
-        if (auto* Pawn{Ctrl->GetOwnedPawn()})
+        if (auto* Ctrl{this->GetOwnedPersonaController()})
         {
-            this->DebugLocationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetTranslation()));
-        }
-        else
-        {
-            this->DebugLocationText->EmptyContent();
+            if (auto* Pawn{Ctrl->GetOwnedPawn()})
+            {
+                bSet = true;
+                this->DebugLocationText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
+                this->DebugLocationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetTranslation()));
+            }
         }
     }
-    else
+    if (!bSet)
     {
+        this->DebugLocationText->SetVisibility(ENodeVisibility::Collapsed);
         this->DebugLocationText->EmptyContent();
+    }
+
+    this->RenderTargetViewport.Tick();
+
+    /* Hardcoded escape sequence. To always be able to escape a potential compromised user input state. */
+    if (auto It{algo::find(Surface.GetRawInputs(), Surface.GetFrontend().GetPhysicalKey(ELogicalKey::F1).value(), &LRawInput::PhysicalKey)};
+        It != Surface.GetRawInputs().end())
+    {
+        if (It->Mods & EModBits::Shift)
+        {
+            if (this->ConsumeHandle.IsValid())
+            {
+                LOG_TRACE(LogWidgetFramework, "[{}]: Escaping user input capture.", this->GetNameAsString())
+                this->UserInput._bCurrentlyConsuming = false;
+                this->ConsumeHandle.Unbind();
+                this->GetViewport().GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
+            }
+        }
+    }
+
+    {
+        AEditorCameraComponent* Comp{};
+        if (auto* Ctrl{this->GetOwnedPersonaController()})
+        {
+            if (auto* Pawn{Ctrl->GetOwnedPawn()})
+            {
+                Comp = Pawn->GetComponent<AEditorCameraComponent>();
+            }
+        }
+
+        if (Comp)
+        {
+            if (this->CameraSpeed != Comp->GetVelocityMultiplier() && !this->RequestedCameraSpeed)
+            {
+                this->RequestedCameraSpeed = Comp->GetVelocityMultiplier();
+            }
+        }
+        if (this->RequestedCameraSpeed)
+        {
+            if (Comp)
+            {
+                this->RequestedCameraSpeed = Comp->SetVelocityMultiplier(*this->RequestedCameraSpeed);
+            }
+            this->CameraSpeed = *this->RequestedCameraSpeed;
+            this->RequestedCameraSpeed.reset();
+            this->CameraButton->SetContent(this->GetCameraSpeedString());
+        }
+
+        if (Comp)
+        {
+            Comp->SetVelocityMultiplierAcceleration(this->CameraAcceleration);
+        }
+
+        if (Comp && this->CurrentGizmo != EGizmo::Select && Surface.HasMouseLocationForOrtho())
+        {
+            // TODO: Fix translation
+            if (LVec2F Location{Surface.GetMouseLocationValue() - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+                !(Location.x < 0.0f || Location.y < 0.0f || Location.x > this->GetAnchoredSize_v2().x || Location.y > this->GetAnchoredSize_v2().y))
+            {
+                Comp->OnHighlightTrace(*this, this->RenderTarget.GetExtent(), Location);
+            }
+        }
     }
 }
 
@@ -236,11 +555,13 @@ void Jafg::WWorldViewer::OnFocusLost()
         check(this->UserInput._bCurrentlyConsuming)
         this->UserInput._bCurrentlyConsuming = false;
         this->ConsumeHandle.Unbind();
-        if (this->Viewport.GetSurface()._GetNativeHandleDangerous())
+        check(!this->ConsumeHandle.IsValid())
+        if (this->GetViewport().GetSurface()._GetNativeHandleDangerous())
         {
-            this->Viewport.GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
+            this->GetViewport().GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
         }
     }
+    check(!this->ConsumeHandle.IsValid())
 }
 
 Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
@@ -287,23 +608,26 @@ Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& 
                 LOG_TRACE(LogWidgetFramework, "[{}]: Entering user input capture.", this->GetNameAsString())
                 check(!this->UserInput._bCurrentlyConsuming)
                 this->UserInput._bCurrentlyConsuming = true;
-                this->Viewport.GetSurface().SetInputMode(this->UserInput.IsConsumingMouse()
+                this->GetViewport().GetSurface().SetInputMode(this->UserInput.IsConsumingMouse()
                     ? EInputModeBits::HideMouseCursor : EInputModeBits::ShowMouseCursor);
 
                 if (!this->ConsumeHandle.IsValid())
                 {
-                    if (this->UserInput._bCurrentlyConsuming)
-                    {
-                        this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnLateTick, [this]{ this->DispatchInputDelegates(); return false; });
-                    }
+                    this->BindConsumeHandle();
                 }
+
+                this->GetViewport().OnLateTick.Emplace([this]
+                {
+                    this->DispatchInputDelegates();
+                    return true;
+                });
 
                 return LNodeReply::Handled(false);
             }
         }
     }
 
-    if (Event.Is<ERawInputStateBits::Press>(this->Viewport.GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::F1)))
+    if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::F1)))
     {
         if (Event.Mods & EModBits::Shift)
         {
@@ -313,10 +637,36 @@ Jafg::LNodeReply Jafg::WWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& 
                 check(this->UserInput._bCurrentlyConsuming)
                 this->UserInput._bCurrentlyConsuming = false;
                 this->ConsumeHandle.Unbind();
-                this->Viewport.GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
+                this->GetViewport().GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
                 return LNodeReply::Handled();
             }
         }
+    }
+
+    if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::Q)))
+    {
+        this->SelectGizmo(EGizmo::Select);
+        return LNodeReply::Handled();
+    }
+    if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::W)))
+    {
+        this->SelectGizmo(EGizmo::Translate);
+        return LNodeReply::Handled();
+    }
+    if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::E)))
+    {
+        this->SelectGizmo(EGizmo::Rotate);
+        return LNodeReply::Handled();
+    }
+    if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::R)))
+    {
+        this->SelectGizmo(EGizmo::Scale);
+        return LNodeReply::Handled();
+    }
+    if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::T)))
+    {
+        this->SelectGizmo(EGizmo::Gizmo);
+        return LNodeReply::Handled();
     }
 
     return Super::OnKeyEventFocused(Info, Event);
@@ -427,14 +777,69 @@ void Jafg::WWorldViewer::SelectActors(TArray<AActor*> Actors, bool bForce /* = f
         {
             if (this->SelectedActors.size() == 1)
             {
-                Comp->SetSelectedActor(this->SelectedActors.front());
+                Comp->SetSelectedActor(this, this->SelectedActors.front());
             }
             else
             {
-                Comp->SetSelectedActor(nullptr);
+                Comp->SetSelectedActor(nullptr, nullptr);
             }
         }
     }
+}
+
+void Jafg::WWorldViewer::SelectGizmo(EGizmo Gizmo)
+{
+    check(this->SelectButton)
+    check(this->TranslateGizmoButton)
+    check(this->RotateGizmoButton)
+    check(this->ScaleGizmoButton)
+    check(this->GizmoButton)
+
+    if (this->CurrentGizmo == Gizmo)
+    {
+        return;
+    }
+
+    this->CurrentGizmo = Gizmo;
+    this->SelectButton->SetSelected(Gizmo == EGizmo::Select);
+    this->TranslateGizmoButton->SetSelected(Gizmo == EGizmo::Translate);
+    this->RotateGizmoButton->SetSelected(Gizmo == EGizmo::Rotate);
+    this->ScaleGizmoButton->SetSelected(Gizmo == EGizmo::Scale);
+    this->GizmoButton->SetSelected(Gizmo == EGizmo::Gizmo);
+
+    if (auto* Ctrl{this->GetOwnedPersonaController()})
+    {
+        if (auto* Comp{Ctrl->GetComponent<AEditorPersonaControllerComponent>()})
+        {
+            (void)Comp->SetSelectedGizmo(this->CurrentGizmo);
+        }
+    }
+}
+
+bool Jafg::WWorldViewer::IsGridSpaceLocal() const noexcept
+{
+    check(this->ToggleGridSpace)
+    auto& Bg{this->ToggleGridSpace->Style.NormalBrush.Background};
+    return std::holds_alternative<LRegionBrush::LIcon>(Bg)
+        && std::get<LRegionBrush::LIcon>(Bg).Texture->GetPath().generic_string().ends_with("Icons/Jafg.LocalGrid.png");
+}
+
+bool Jafg::WWorldViewer::IsTranslationGridSnapEnabled() const noexcept
+{
+    check(this->ToggleTranslationGridSnapButton)
+    return this->ToggleTranslationGridSnapButton->IsSelected();
+}
+
+bool Jafg::WWorldViewer::IsRotationGridSnapEnabled() const noexcept
+{
+    check(this->ToggleRotationGridSnapButton)
+    return this->ToggleRotationGridSnapButton->IsSelected();
+}
+
+bool Jafg::WWorldViewer::IsScaleGridSnapEnabled() const noexcept
+{
+    check(this->ToggleScaleGridSnapButton)
+    return this->ToggleScaleGridSnapButton->IsSelected();
 }
 
 void Jafg::WWorldViewer::InitializeRenderTarget()
@@ -822,6 +1227,13 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
             this->OnPerspectiveDepthTestChanged();
             return *MutablePrefs.EditorPerspectiveDepthTestHint;
         }),
+        CreateDropDownCheckmark("Show eye translation", *GetSingleton<JUserPreferences>().EditorShowEyeTranslation, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorShowEyeTranslation = !*MutablePrefs.EditorShowEyeTranslation;
+            return *MutablePrefs.EditorShowEyeTranslation;
+        }),
+        LDropDownNodeSeparator{.DisplayName="Visualization"},
         CreateDropDownCheckmark("Visualize mesh aabbs", *GetSingleton<JUserPreferences>().EditorVisualizeMeshAabbs, []
         {
             auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
@@ -852,6 +1264,15 @@ void Jafg::WWorldViewer::CreateMenuDropDown(LVec2F Where)
 void Jafg::WWorldViewer::_ctor_SetBackgroundTint()
 {
     this->BorderTint = *GetSingleton<JUserPreferences>().ViewportBackgroundTint;
+}
+
+void Jafg::WWorldViewer::BindConsumeHandle()
+{
+    this->ConsumeHandle = LRaiiViewportHandle::Make(this->GetViewport().OnEarlyTick, [this]
+    {
+        this->DispatchInputDelegates();
+        return false;
+    });
 }
 
 void Jafg::WWorldViewerHierarchy::Construct()

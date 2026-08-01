@@ -90,9 +90,9 @@
     #endif /* JAFG_WITH_EDITOR */
 #endif /* JAFG_AS_DAEMON */
 
-/* Default to no tests. */
+/* Default to tests in debug and dev builds. */
 #ifndef JAFG_WITH_TESTS
-    #define JAFG_WITH_TESTS                                                     0
+    #define JAFG_WITH_TESTS                                                     (JAFG_IN_DEBUG || JAFG_IN_DEVELOPMENT)
 #endif /* !JAFG_WITH_TESTS */
 
 //

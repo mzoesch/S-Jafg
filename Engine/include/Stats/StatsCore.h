@@ -9,7 +9,7 @@
 #endif /* WITH_STATS */
 
 #include "Core/App.h"
-#include "Async/TaskUtility.h"
+#include "Core/TaskUtility.h"
 
 namespace Jafg::Stats::Private
 {

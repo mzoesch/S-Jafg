@@ -3,8 +3,8 @@
 #include "Core/App.h"
 #include "Core/Uuid.h"
 #include "Stats/Stats.h"
-#include "Runtime/Parameter.h"
-#include "Async/TaskUtility.h"
+#include "Core/Parameter.h"
+#include "Core/TaskUtility.h"
 #include <unistd.h>
 
 namespace finder::detail
@@ -75,7 +75,7 @@ static LPath CachedSelfProcDir;
     return CachedSelfProcDir;
 }
 
-ENGINE_API path dump_file{ "unsettling.dump"};
+ENGINE_API path dump_file{ "unsettling.dump" };
 
 #if JAFG_PLATFORM_LINUX
     ENGINE_API std::optional<path> _lnx_gdb;
@@ -189,12 +189,10 @@ ENGINE_API LProgramParameter Version{{
     .Description = "Shows the version of the engine.",
     .Variations = {"v", "version"},
     }};
-
 ENGINE_API LProgramParameter Help{{
     .Identifier = "Jafg.VerboseHelp",
     .Description = "Shows help window for all default loaded plugins.",
     }};
-
 ENGINE_API LProgramParameter WaitForDebugger{{
     .Identifier = "Jafg.WaitForDebugger",
     .Description = "Whether to wait for a debugger to attach to this process before continuing execution.",
@@ -218,6 +216,10 @@ ENGINE_API LProgramParameter AllowProfiling{{
 ENGINE_API LProgramParameter PauseBeforeExit{{
     .Identifier = "Jafg.PauseBeforeExit",
     .Description = "Whether to pause before exiting the application.",
+    }};
+ENGINE_API LProgramParameter SkipTrivialTests{{
+    .Identifier = "Jafg.SkipTrivialTests",
+    .Description = "Whether to skip trivial tests that are run at startup in development builds.",
     }};
 
 } /* ~Namespace Jafg::App */
@@ -354,6 +356,47 @@ void Jafg::App::RequestEngineExit(i32 CustomExitStatus, LString Reason) noexcept
         Detail::CustomExitStatusOverride = CustomExitStatus;
         Detail::CustomExitReason = std::move(Reason);
     }
+}
+
+TArray<Jafg::LProgramArgument> Jafg::App::ReprocessCommandLine(TArray<LString> const& CommandLine) noexcept
+{
+    TArray<Jafg::LProgramArgument> Result;
+
+    Jafg::LProgramArgument* CurrentList{};
+    algo::for_each(CommandLine, [&](LString const& Parameter)
+    {
+        if (Parameter.starts_with('-'))
+        {
+            CurrentList = nullptr;
+            if (auto Idx{Parameter.find('=')}; Idx != LString::npos)
+            {
+                Result.emplace_back(algo::sub(Parameter, 1, Idx), algo::right_chop(Parameter, Idx + 1));
+            }
+            else
+            {
+                Result.emplace_back(algo::right_chop(Parameter, 1));
+                CurrentList = &Result.back();
+            }
+        }
+        else
+        {
+            if (CurrentList)
+            {
+                check(!CurrentList->IsValue())
+                if (CurrentList->IsStoreTrue())
+                {
+                    CurrentList->Variant = TArray<LString>{};
+                }
+                std::get<TArray<LString>>(CurrentList->Variant).emplace_back(Parameter);
+            }
+            else
+            {
+                LOG_WARNING(LogLaunch, "Command line argument [{}] is not associated with any parameter.", Parameter)
+            }
+        }
+    });
+
+    return Result;
 }
 
 void Jafg::App::Sleep(f64 InSeconds)

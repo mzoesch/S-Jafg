@@ -6,10 +6,10 @@
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Engine/Engine.h"
-#include "Async/TaskUtility.h"
+#include "Core/TaskUtility.h"
 #include "Nodes/Viewport.h"
 #include "Stats/Stats.h"
-#include "Components/SceneComponent.h"
+#include "Framework/SceneComponent.h"
 #include "Nodes/UserWidget.h"
 #include "Rhi/RendererCore.h"
 #include "Framework/TextureSubsystem.h"
@@ -555,6 +555,20 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     if (this->IsShowMouseCursor())
     {
         glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        /*
+         * This seems very wrong.
+         * Why do we have to actively query the cursor location and can't wait for the next pooling event?? Well,
+         * because the event is only fired when the location was changed. This seems like a bug on Wayland maybe...
+         * In the meantime the user would have the location of the disabled cursor which is useless and breaks a lot
+         * of UI / FP-Rotation logic.
+         */
+        if (this->MouseLocation)
+        {
+            LVec2D Query;
+            glfwGetCursorPos(this->Handle, &Query.x, &Query.y);
+            this->MouseLocation = LVec2F{static_cast<f32>(Query.x), static_cast<f32>(Query.y)};
+        }
     }
     else
     {
@@ -1095,8 +1109,8 @@ void Jafg::LSurfaceGlfw3::CharCallback(const u32 Codepoint)
 
 void Jafg::LSurfaceGlfw3::KeyCallback(i32 Key, i32 Scancode, i32 Action, i32 Mods)
 {
-    ERawInputStateBits State{ ERawInputStateBits::Identity };
-    if (Action == GLFW_PRESS) { State = ERawInputStateBits::Press; }
+    ERawInputStateFlags State{ ERawInputStateBits::Identity };
+    if (Action == GLFW_PRESS) { State = ERawInputStateBits::Press|ERawInputStateBits::Hold; }
     else if (Action == GLFW_REPEAT) { State = ERawInputStateBits::Repeat; }
     else if (Action == GLFW_RELEASE) { State = ERawInputStateBits::Release; }
     else { std::unreachable(); }

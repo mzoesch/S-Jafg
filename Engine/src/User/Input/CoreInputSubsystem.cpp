@@ -174,7 +174,6 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                     EInputActionTriggerBits::Ongoing,
                     LInputActionMappedTriggerModifiers{}
                         .reflexive_emplace_back(Jafg::MakeInputModifier<LInputActionMappedKeySwizzleXZModifier>())
-
                     })
                 .reflexive_emplace_back(LInputTrigger{
                     "Down",

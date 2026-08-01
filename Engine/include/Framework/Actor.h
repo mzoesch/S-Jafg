@@ -4,8 +4,8 @@
 
 #include "Engine/WorldObject.h"
 #include "Engine/TickableObject.h"
-#include "Components/ActorComponent.h"
-#include "Components/SceneComponent.h"
+#include "Framework/ActorComponent.h"
+#include "Framework/SceneComponent.h"
 #include "Actor.generated.h"
 
 namespace Jafg

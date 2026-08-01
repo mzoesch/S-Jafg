@@ -5,8 +5,8 @@
 #include "User/Input/InputActionValue.h"
 #include "Framework/PersonaController.h"
 #include "Engine/Engine.h"
-#include "Components/SceneComponent.h"
-#include "Components/PawnComponent.h"
+#include "Framework/SceneComponent.h"
+#include "Framework/PawnComponent.h"
 
 #if JAFG_DO_CHECKS
 void Jafg::APawnComponent::OnAttach(AActor& InOwner)

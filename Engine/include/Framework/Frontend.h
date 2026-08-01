@@ -5,8 +5,8 @@
 #include "Framework/FrontendForward.h"
 #include "Platform/Surface.h"
 #include "Nodes/Node.h"
-#include "Subsystems/SubsystemCollection.h"
-#include "Subsystems/FrontendSubsystem.h"
+#include "Framework/SubsystemCollection.h"
+#include "Framework/FrontendSubsystem.h"
 #include "Rhi/Texture2.h"
 
 namespace Jafg

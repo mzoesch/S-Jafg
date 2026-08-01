@@ -117,6 +117,27 @@ public:
         }
         return false;
     }
+    NODISCARD FORCEINLINE std::optional<LRawInput> GetConsumableKey(LPhysicalKey Key) const noexcept
+    {
+        check(Key != LPhysicalKey{})
+        if (auto It{algo::find(this->UnconsumedInputs, Key, &LRawInput::PhysicalKey)}; It != this->UnconsumedInputs.end())
+        {
+            return *It;
+        }
+        return {};
+    }
+    NODISCARD FORCEINLINE std::optional<LRawInput> GetConsumableKeyByState(LPhysicalKey Key, ERawInputStateFlags Flags) const noexcept
+    {
+        check(Key != LPhysicalKey{})
+        if (auto It{algo::find(this->UnconsumedInputs, Key, &LRawInput::PhysicalKey)}; It != this->UnconsumedInputs.end())
+        {
+            if ((It->State & Flags) != ERawInputStateBits::Identity)
+            {
+                return *It;
+            }
+        }
+        return {};
+    }
     FORCEINLINE void ConsumeKey(LPhysicalKey Key) noexcept
     {
         check(Key != LPhysicalKey{})

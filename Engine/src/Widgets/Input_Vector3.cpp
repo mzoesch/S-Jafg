@@ -37,7 +37,7 @@ void Jafg::WInput_Vector3::Construct()
                 if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)) && Info.CursorLocation)
                 {
                     Info.Viewport.EmplaceUntil<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton),
-                    [this, Part, LastLocation=Info.CursorLocation->x] mutable
+                    [this, Part, LastLocation=Info.CursorLocation->x](auto&&...) mutable
                     {
                         auto& Surface{this->GetViewport().GetSurface()};
 

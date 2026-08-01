@@ -351,7 +351,11 @@ void Jafg::Detail::LJxxRecordRegistry::TearDown()
 {
     check(Tasks::IsOnMasterThread())
 
-    check(this->SingletonOuter)
+    /* May happen if the engine terminates very early. */
+    if (!this->SingletonOuter)
+    {
+        return;
+    }
 
     this->RemoveSingletonsOf(std::nullopt);
     delete this->SingletonOuter;

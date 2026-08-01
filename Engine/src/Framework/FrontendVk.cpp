@@ -15,7 +15,7 @@
 #include "Rhi/RendererCore.h"
 #include "Rhi/VisualInstance.h"
 #include "Rhi/Bindless.h"
-#include "Runtime/Parameter.h"
+#include "Core/Parameter.h"
 
 #include <GLFW/glfw3.h>
 #if JAFG_PLATFORM_WINDOWS

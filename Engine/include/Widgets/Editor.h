@@ -7,8 +7,8 @@
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
 #include "Engine/Engine.h"
-#include "Components/PawnComponent.h"
-#include "Components/PersonaControllerComponent.h"
+#include "Framework/PawnComponent.h"
+#include "Framework/PersonaControllerComponent.h"
 #include "Framework/SupremePolicies.h"
 #include "Rhi/StaticMeshRenderable.h"
 #include "Editor.generated.h"
@@ -24,6 +24,8 @@ class WWorldViewer;
 class WEditorCategorySeparator;
 struct LFactoryEditorCategorySeparator;
 struct LEditorLayout;
+
+enum struct EGizmo: u32;
 
 struct LEditorLayout final
 {
@@ -267,11 +269,15 @@ public:
     static constexpr u64 DebugLinesIndex{0uz};
     static constexpr u64 ViewProjIndex{1uz};
 
+    static constexpr u64 GizmoSolidColorInputSpace{0uz};
+    static constexpr u64 GizmoSolidColorInputIndex{0uz};
+
     virtual void OnAttach(AActor& InOwner) override;
     virtual void ParentTick(f32 Dt) override;
     virtual void Render(LActorRenderInfo const& Info) const override;
 
-    AActor* SetSelectedActor(AActor* Actor) noexcept;
+    EGizmo SetSelectedGizmo(EGizmo Gizmo) noexcept;
+    AActor* SetSelectedActor(WWorldViewer* Origin, AActor* Actor) noexcept;
 
     struct RayCreateInfo
     {
@@ -295,16 +301,45 @@ public:
     //# Useful for consistent one time draws when draw orders are not guaranteed.
     void AddAabbNextTick(AabbCreateInfo Aabb) noexcept { this->NextAabbs.emplace_back(std::move(Aabb)); }
 
-    //# @return True, if handled.
-    bool TraceForGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin);
+    enum EGizmoMesh
+    {
+        TranslateX, TranslateY, TranslateZ,
+        TranslateX_Var, TranslateY_Var, TranslateZ_Var,
+        RotateR, RotateY, RotateP,
+        ScaleX, ScaleY, ScaleZ,
+        ScaleX_Var, ScaleY_Var, ScaleZ_Var,
+        PlaneYZ, PlaneXY , PlaneXZ,
+
+        GizmoCount, GizmoBegin = TranslateX,
+    };
+
+    void SetHighlightedGizmoMesh(EGizmoMesh Mesh) noexcept;
+    EGizmoMesh GetHighlightedGizmoMesh() const noexcept;
+
+    NODISCARD EGizmoMesh TraceGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LWorldEye const& Eye) noexcept;
+    void TraceForGizmo(EGizmoMesh Mesh, LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin);
 
 private:
 
     void RenderRays(LActorRenderInfo const& Info) const;
     void RenderGizmo(LActorRenderInfo const& Info) const;
 
-    AActor* SelectedActor{};
-    NODISCARD constexpr bool IsSelectedActorValid() const noexcept { return this->SelectedActor && this->SelectedActor->HasRootComponent(); }
+    EGizmo Gizmo{};
+    struct LSelectedActor final
+    {
+        WWorldViewer* Viewer{};
+        AActor* Actor{};
+        std::optional<LWorldQuat> Quaternion;
+        NODISCARD constexpr AActor* operator->() noexcept { return this->Actor; }
+        NODISCARD constexpr AActor const* operator->() const noexcept { return this->Actor; }
+    };
+    LSelectedActor SelectedActor;
+    NODISCARD constexpr bool IsSelectedActorValid() const noexcept
+    {
+        bool b{this->SelectedActor.Actor && this->SelectedActor->HasRootComponent()};
+        check(!b || this->SelectedActor.Viewer)
+        return b;
+    }
 
     mutable TArray<RayCreateInfo> Rays;
     TArray<RayCreateInfo> NextRays;
@@ -315,19 +350,20 @@ private:
     rhi::frame_array<rhi::mapped_device_buffer> RayBuffers;
     rhi::frame_array<rhi::mapped_device_buffer> RayViewBuffers;
 
-    enum EGizmoDir
+    struct LHighlightedGizmoMesh final
     {
-        X,
-        Y,
-        Z,
-        GizmoCount,
-    };
-    std::array<LStaticMeshRenderable, GizmoCount> Gizmo;
+        u64 Frame{};
+        mutable EGizmoMesh Mesh{GizmoCount};
+        EGizmoMesh& operator*() noexcept { return this->Mesh; }
+        EGizmoMesh const& operator*() const noexcept { return this->Mesh; }
+    } HighlightedGizmoMesh;
+    EGizmoMesh UsedGizmoMesh{GizmoCount};
+    mutable std::array<LStaticMeshRenderable, GizmoCount> GizmoMeshes;
     void SetTranslationForGizmos(LWorldVec3 Translation) noexcept
     {
-        for (auto Idx{std::to_underlying(X)}; Idx < std::to_underlying(GizmoCount); ++Idx)
+        for (auto Idx{std::to_underlying(GizmoBegin)}; Idx < std::to_underlying(GizmoCount); ++Idx)
         {
-            this->Gizmo[Idx].SetTranslation(Translation);
+            this->GizmoMeshes[Idx].SetTranslation(Translation);
         }
     }
 };
@@ -357,13 +393,28 @@ public:
     //# @return Whether the context was activated successfully.
     bool ActivateUserInputContext() const noexcept;
 
+    void OnHighlightTrace(WWorldViewer& Viewer, rhi::extent2 Extent, LVec2F Location);
     void OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin = {});
     void OnMove(LInputActionValue const& Value);
     void OnRotate(LInputActionValue const& Value);
     void OnVelocityMultiplierChange(LInputActionValue const& Value);
 
-    FORCEINLINE constexpr f32 GetSensitivity() const noexcept { return this->Sensitivity; }
-    FORCEINLINE void SetSensitivity(f32 NewSensitivity) noexcept { this->Sensitivity = NewSensitivity; }
+    NODISCARD FORCEINLINE f32 GetVelocityMultiplier() const noexcept { return this->VelocityMultiplier; }
+    FORCEINLINE f32 SetVelocityMultiplier(f32 NewVelocityMultiplier) noexcept
+    {
+        this->VelocityMultiplier = maths::clamp(NewVelocityMultiplier, MinVelocityMultiplier, MaxVelocityMultiplier);
+        return this->VelocityMultiplier;
+    }
+
+    NODISCARD  FORCEINLINE constexpr f32 GetSensitivity() const noexcept { return this->Sensitivity; }
+    FORCEINLINE void SetSensitivity(f32 Value) noexcept { this->Sensitivity = Value; }
+
+    NODISCARD FORCEINLINE constexpr f32 GetVelocityMultiplierAcceleration() const noexcept { return this->VelocityMultiplierAcceleration; }
+    FORCEINLINE void SetVelocityMultiplierAcceleration(f32 Value) noexcept
+    {
+        check(Value > 0.0f)
+        this->VelocityMultiplierAcceleration = Value;
+    }
 
 private:
 
@@ -372,6 +423,7 @@ private:
     static constexpr f32 MinVelocityMultiplier{0.0f};
     static constexpr f32 MaxVelocityMultiplier{1'000.0f};
     f32 VelocityMultiplier{10.0f};
+    f32 VelocityMultiplierAcceleration{1.0f};
     f32 CachedPitch{};
 };
 

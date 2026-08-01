@@ -3,5 +3,17 @@
         "Jafg.DepthUntested",
         "Jafg.Perspective"
     ],
+    "pipelineRasterizationState": {
+        "depthClampEnable": false,
+        "rasterizerDiscardEnable": false,
+        "polygonMode": "eFill",
+        "cullMode": "eNone",
+        "frontFace": "eCounterClockwise",
+        "depthBiasEnable": false,
+        "depthBiasConstantFactor": 0.0,
+        "depthBiasClamp": 0.0,
+        "depthBiasSlopeFactor": 0.0,
+        "lineWidth": 1.0
+    },
     "shader": "Shaders/Jafg.Gizmo"
 }

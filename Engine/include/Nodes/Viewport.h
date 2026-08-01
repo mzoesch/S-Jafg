@@ -22,6 +22,10 @@ struct LNodeReply;
 //# Represents a viewport that can contain widgets.
 //# A viewport has in most cases a handle to some sort of platform-specific window instance.
 //#
+//# Viewports may be nested inside each other.
+//# @warning Therefore, this will most likely *not* hold:
+//#     Viewport.GetExtent() == Viewport.GetSurface().GetSurfaceExtent()
+//#
 class LViewport final
 {
     friend WNode;
@@ -68,9 +72,11 @@ public:
     //# Both functors are optional.
     //# Both events will consume the key if available.
     //#
-    template<ERawInputStateFlags Flags>
+    //# The #Input parameter of F will always be the same key as the passed one. It is passed as an argument only
+    //# so that clients can keep track of additional modifier keys.
     //#
-    FORCEINLINE void EmplaceUntil(LPhysicalKey Key, TFunction2<bool()> F, TFunction2<void()> G = {}) noexcept
+    template<ERawInputStateFlags Flags>
+    FORCEINLINE void EmplaceUntil(LPhysicalKey Key, TFunction2<bool(LRawInput const& Input)> F, TFunction2<void()> G = {}) noexcept
     {
         this->KeyDelegates.emplace_back(Flags, Key, std::move(F), std::move(G));
     }
@@ -197,7 +203,7 @@ private:
     {
         ERawInputStateFlags Flags;
         LPhysicalKey Key;
-        TFunction2<bool()> F;
+        TFunction2<bool(LRawInput const& Input)> F;
         TFunction2<void()> G;
     };
     TArray<LKeyDelegate> KeyDelegates;

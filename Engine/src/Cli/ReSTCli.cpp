@@ -41,7 +41,7 @@ ENGINE_API LProgramParameter ReST_Port{{
 #if JAFG_WITH_REST_CLS
 
 #include "Cli/ReSTCli.h"
-#include "Async/TaskUtility.h"
+#include "Core/TaskUtility.h"
 #include "Cli/ReSTCliPreferences.h"
 
 #define CPPHTTPLIB_THREAD_POOL_COUNT                                    1

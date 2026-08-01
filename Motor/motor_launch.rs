@@ -174,7 +174,6 @@ fn main()
      * Search for a unit test file in the module's test source directory and supply the compiler
      * with their definitions.
      */
-    if args.target == "TestUnit"
     {
         /*
          * The file to the header that marks the module as a module that uses the default
@@ -206,16 +205,23 @@ fn main()
     Do not modify it manually.
 -----------------------------------------------------------------------------*/
 
+#include "Minimal.afx"
+
+#if JAFG_WITH_TESTS
+
 #ifdef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
     #undef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
 #endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
 #define PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION               1
 
-#include "{test_module_f}"
+#include "Core/Test.h"
+#include "TestModule.h"
 
 #ifdef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
     #undef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
 #endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
+
+#endif /* JAFG_WITH_TESTS */
 
 "##,
             ));

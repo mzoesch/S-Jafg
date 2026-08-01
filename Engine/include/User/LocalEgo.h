@@ -3,8 +3,8 @@
 #pragma once
 
 #include "Framework/Frontend.h"
-#include "Subsystems/SubsystemCollection.h"
-#include "Subsystems/LocalEgoSubsystem.h"
+#include "Framework/SubsystemCollection.h"
+#include "Framework/LocalEgoSubsystem.h"
 #include "Cli/CliHandles.h"
 #include "Cli/CommandLineInterface.h"
 #include "User/Input/UserInputRegistry.h"

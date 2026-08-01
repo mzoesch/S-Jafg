@@ -51,10 +51,7 @@ void Jafg::LSurfaceBase::BeginNewFrame()
 
 void Jafg::LSurfaceBase::Tick()
 {
-    this->GetViewport().DispatchInputs();
     this->SurfaceViewport.Tick();
-
-    return;
 }
 
 void Jafg::LSurfaceBase::UpdateKeyState(LRawInput const& InRawInput)

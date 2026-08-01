@@ -6,7 +6,7 @@
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"
-#include "Async/TaskUtility.h"
+#include "Core/TaskUtility.h"
 #include <dlfcn.h>
 
 namespace Jafg

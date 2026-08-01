@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/Asset.h"
-#include "Subsystems/EngineSubsystem.h"
+#include "Framework/EngineSubsystem.h"
 #include "Rhi/TextureView.h"
 #include "AssetDiscoverer.generated.h"
 

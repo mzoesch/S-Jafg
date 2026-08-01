@@ -3,7 +3,7 @@
 #pragma once
 
 #include "User/Input/InputActionCategory.h"
-#include "Misc/Tag.h"
+#include "Core/Tag.h"
 
 namespace Jafg
 {

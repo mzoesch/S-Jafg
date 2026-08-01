@@ -88,13 +88,6 @@
         "JAFG_TARGET_TYPE": "daemon"
       }
     },
-    {
-      "name": "test",
-      "hidden": true,
-      "cacheVariables": {
-        "JAFG_TARGET_TYPE": "test"
-      }
-    },
 
     {
       "name": "lnx-x86_64--editor-ship",
@@ -211,44 +204,6 @@
     },
 
     {
-      "name": "lnx-x86_64--test-ship",
-      "displayName": "Linux | Test-Shipping",
-      "inherits": [
-        "linux",
-        "test",
-        "shipping"
-      ]
-    },
-    {
-      "name": "lnx-x86_64--test-dev",
-      "displayName": "Linux | Test-Development",
-      "inherits": [
-        "linux",
-        "test",
-        "development"
-      ]
-    },
-    {
-      "name": "lnx-x86_64--test-dbg",
-      "displayName": "Linux | Test-Debug",
-      "inherits": [
-        "linux",
-        "test",
-        "debug"
-      ]
-    },
-    {
-      "name": "lnx-x86_64--test-sanitized",
-      "displayName": "Linux | Test-Sanitized",
-      "inherits": [
-        "linux",
-        "test",
-        "debug",
-        "sanitized"
-      ]
-    },
-
-    {
       "name": "win-x86_64--editor-ship",
       "displayName": "Windows | Editor-Shipping",
       "inherits": [
@@ -357,44 +312,6 @@
       "inherits": [
         "windows-ucrt",
         "daemon",
-        "debug",
-        "sanitized"
-      ]
-    },
-
-    {
-      "name": "win-x86_64--test-ship",
-      "displayName": "Windows | Test-Shipping",
-      "inherits": [
-        "windows-ucrt",
-        "test",
-        "shipping"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-dev",
-      "displayName": "Windows | Test-Development",
-      "inherits": [
-        "windows-ucrt",
-        "test",
-        "development"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-dbg",
-      "displayName": "Windows | Test-Debug",
-      "inherits": [
-        "windows-ucrt",
-        "test",
-        "debug"
-      ]
-    },
-    {
-      "name": "win-x86_64--test-sanitized",
-      "displayName": "Windows | Test-Sanitized",
-      "inherits": [
-        "windows-ucrt",
-        "test",
         "debug",
         "sanitized"
       ]

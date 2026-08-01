@@ -156,6 +156,13 @@ public:
         .Selected={.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
         .Disabled={.Tint=0x122B40FF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
         }};
+    TPreference<LStylePalette> SelectablePrimaryPalette{{
+        .Normal=  {.Tint=0x2F2F2FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Hover=   {.Tint=0x3F3F3FFF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
+        .Press=   {.Tint=0x4F4F4FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Selected={.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
+        .Disabled={.Tint=0x122B40FF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
+        }};
     TPreference<LStylePalette> SecondaryPalette{{
         .Normal=  {.Tint=0x2F2F2FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
         .Hover=   {.Tint=0x3F3F3FFF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
@@ -232,9 +239,11 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> EditorAxisTintX{ Colors::Crimson };
     CLASS_FIELD(Config)
-    TPreference<LColor> EditorAxisTintY{ Colors::LimeGreen };
+    TPreference<LColor> EditorAxisTintY{ Colors::DeepSkyBlue };
     CLASS_FIELD(Config)
-    TPreference<LColor> EditorAxisTintZ{ Colors::DeepSkyBlue };
+    TPreference<LColor> EditorAxisTintZ{ Colors::LimeGreen };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorAxisTintHighlighted{ Colors::Yellow };
 
     CLASS_FIELD(Config)
     TPreference<bool> EditorSortDirectoriesFirst{ true };
@@ -276,7 +285,12 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> EditorGizmoVisualizationHitTint{ Colors::Green };
     CLASS_FIELD(Config)
+    TPreference<LColor> EditorGizmoVisualizationAabbTint{ Colors::Crimson };
+    CLASS_FIELD(Config)
     TPreference<f32> EditorGizmoVisualizationLength{ 500.0f };
+
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorShowEyeTranslation{ false };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Factories
@@ -329,11 +343,20 @@ public:
         }
     }
 
-    template<typename TBrush> requires valid_brush_v<TBrush>
+    enum EDiscard{ Identity,Radii,Outline, };
+
+    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
     NODISCARD TButtonStyle<TBrush> EditorBaseButton() const noexcept
     {
         TButtonStyle<TBrush> Result;
-        Result.template ChainEverywhere<&TBrush::OutlineThickness, &TBrush::Radii>(1, LVec4F{5.0f});
+        if constexpr (!(Discard & Radii))
+        {
+            Result.template SetEverywhere<&TBrush::Radii>(LVec4F{5.0f});
+        }
+        if constexpr (!(Discard & Outline))
+        {
+            Result.template SetEverywhere<&TBrush::OutlineThickness>(1);
+        }
         this->PadStyle(Result, {5_spt, 0});
         return Result;
     }
@@ -353,10 +376,10 @@ public:
         Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
         return Result;
     }
-    template<typename TBrush> requires valid_brush_v<TBrush>
+    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
     NODISCARD TButtonStyle<TBrush> EditorSecondaryButton() const noexcept
     {
-        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
+        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush,Discard>()};
         this->ApplyPalette(Result, *this->SecondaryPalette);
         return Result;
     }
@@ -369,8 +392,20 @@ public:
         return Result;
     }
 
-
-
+    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorSelectablePrimaryButton() const noexcept
+    {
+        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush,Discard>()};
+        this->ApplyIconizedPalette(Result, *this->SelectablePrimaryPalette);
+        return Result;
+    }
+    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
+    NODISCARD TButtonStyle<TBrush> EditorSelectablePrimaryButton(LOptionalTexture2Ref Icon) const noexcept
+    {
+        TButtonStyle<TBrush> Result{this->EditorSelectablePrimaryButton<TBrush,Discard>()};
+        Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
+        return Result;
+    }
 
     template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
     NODISCARD TButtonStyle<TBrush> EditorPrimaryButtonStyle() const noexcept

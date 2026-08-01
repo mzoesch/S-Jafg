@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/LocalEgoSubsystem.h"
+#include "Framework/LocalEgoSubsystem.h"
 #include "Cli/CommandLineInterface.h"
 #include "CoreCommandSubsystem.generated.h"
 

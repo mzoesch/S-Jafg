@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/FrontendSubsystem.h"
+#include "Framework/FrontendSubsystem.h"
 #include "Rhi/TextureView.h"
 #include "Rhi/Texture2.h"
 #include "Rhi/Bindless.h"

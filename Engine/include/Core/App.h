@@ -3,8 +3,8 @@
 #pragma once
 
 #include "Core/Arguments.h"
-#include "Runtime/Parameter.h"
-#include "Runtime/Argument.h"
+#include "Core/Parameter.h"
+#include "Core/Argument.h"
 #include "Stats/StatsForward.h"
 
 namespace Jafg
@@ -72,6 +72,7 @@ ENGINE_API extern LProgramParameter AlwaysReportCrash;
 ENGINE_API extern LProgramParameter DumpStack;
 ENGINE_API extern LProgramParameter AllowProfiling;
 ENGINE_API extern LProgramParameter PauseBeforeExit;
+ENGINE_API extern LProgramParameter SkipTrivialTests;
 
 namespace Detail
 {
@@ -159,6 +160,7 @@ FORCEINLINE constexpr bool IsAllowProfiling() noexcept
 
 FORCEINLINE TArray<LString> const& GetRawCommandLine() noexcept { return Detail::RawCommandLine; }
 FORCEINLINE TArray<LProgramArgument> const& GetCommandLine() noexcept { return Detail::ProcessedCommandLine; }
+NODISCARD ENGINE_API TArray<LProgramArgument> ReprocessCommandLine(TArray<LString> const& CommandLine) noexcept;
 
 //#
 //# Whether the command line contains the given argument.

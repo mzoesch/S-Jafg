@@ -14,10 +14,12 @@ namespace Jafg
 {
 
 class WText;
+class WButton;
 class WTextBox;
 class WTextButton;
 class WHButton;
 class WVButton;
+class WTextButtonIconizedDouble;
 class WWorldViewer;
 class WWorldViewerHierarchy;
 class WWorldViewerInspector;
@@ -29,6 +31,8 @@ namespace Detail
 class WWorldViewerHierarchyObjectHButton;
 
 } /* ~Namespace Detail */
+
+enum struct EGizmo: u32{ Select,Translate,Rotate,Scale,Gizmo, };
 
 //# A widget to perspectively view a world in a primitive manner.
 DECLARE_JAFG_WIDGET()
@@ -107,6 +111,17 @@ public:
     MULTI_EVENT_DECL(OnActorsSelected, TArray<AActor*> const& Old, TArray<AActor*> const& New)
     NODISCARD FORCEINLINE constexpr auto const& GetSelectedActors() const noexcept { return this->SelectedActors; }
 
+    void SelectGizmo(EGizmo Gizmo);
+    NODISCARD constexpr EGizmo GetSelectedGizmo() const noexcept { return this->CurrentGizmo; }
+
+    NODISCARD bool IsGridSpaceLocal() const noexcept;
+    NODISCARD bool IsTranslationGridSnapEnabled() const noexcept;
+    NODISCARD bool IsRotationGridSnapEnabled() const noexcept;
+    NODISCARD bool IsScaleGridSnapEnabled() const noexcept;
+    NODISCARD constexpr f32 GetTranslationGridSnap() const noexcept { return this->SnapTranslation; }
+    NODISCARD constexpr f32 GetRotationGridSnap() const noexcept { return this->SnapRotation; }
+    NODISCARD constexpr f32 GetScaleGridSnap() const noexcept { return this->SnapScale; }
+
 private:
 
     void InitializeRenderTarget();
@@ -122,6 +137,42 @@ private:
 
     WNode* Placeholder{};
 
+    EGizmo CurrentGizmo{EGizmo::Select};
+
+    WButton* SelectButton{};
+    WButton* TranslateGizmoButton{};
+    WButton* RotateGizmoButton{};
+    WButton* ScaleGizmoButton{};
+    WButton* GizmoButton{};
+
+    //# Toggle between local and world grid space.
+    WButton* ToggleGridSpace{};
+
+    WButton* ToggleTranslationGridSnapButton{};
+    WTextButton* TranslationGridSnapButton{};
+    WButton* ToggleRotationGridSnapButton{};
+    WTextButton* RotationGridSnapButton{};
+    WButton* ToggleScaleGridSnapButton{};
+    WTextButton* ScaleGridSnapButton{};
+    f32 SnapTranslation{ 0.1f };
+    f32 SnapRotation{ 5.0f };
+    f32 SnapScale{ 0.1f };
+
+    WTextButtonIconizedDouble* CameraButton{};
+    std::optional<f32> RequestedCameraSpeed;
+    f32 CameraSpeed{ 10.0f };
+    f32 CameraAcceleration{ 1.0f };
+    NODISCARD LString GetCameraSpeedString() const noexcept
+    {
+        std::ostringstream ss; ss << std::fixed << std::setprecision(2) << this->CameraSpeed;
+        auto String{ss.str()};
+        if (!String.empty() && String.back() == '.')
+        {
+            String.push_back('0');
+        }
+        return String;
+    }
+
     WText* DebugLocationText{};
 
     algo::clock::time_point LastUnstableDiff;
@@ -135,11 +186,7 @@ private:
     LWorld* QueuedTravelWorld{};
     LRaiiViewportHandle QueueHandle{this->GetViewport().OnLateTick};
 
-    //
-    // Even though early it says. It is after viewport delegate input dispatching. This is intended.
-    // A viewport should always have priority for consumables so that a malicious input context cannot annoy
-    // the user.
-    //
+    void BindConsumeHandle();
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
 
     TArray<AActor*> SelectedActors;

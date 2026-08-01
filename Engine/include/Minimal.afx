@@ -44,6 +44,8 @@
 #include <bit>
 #include <cstdint>
 #include <inplace_vector>
+#include <print>
+#include <random>
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -52,65 +54,57 @@ using namespace std::chrono_literals;
 //#
 //# Core includes.
 //#
-#include "Runtime/AssertionForward.h"
-#include "Hal/Platform.h"
-#include "Memory/Llmm.h"
-#include "Runtime/Asan.h"
+#include "Core/AssertionForward.h"
+#include "Platform/Platform.h"
+#include "Core/Llmm.h"
+#include "Core/Asan.h"
 #include "Core/CoreMacros.h"
-#include "Core/CoreDefines.h"
-#include "Core/CoreConcepts.h"
 
 //#
 //# Forward Containers.
 //#
-#include "Containers/EnumCore.h"
-#include "Containers/IteratorTraits.h"
-#include "Containers/CoreContainers.h"
+#include "Core/EnumCore.h"
+#include "Core/CoreContainers.h"
 
 //#
 //# Runtime assertions
 //#
-#include "Runtime/AssertionMacros.h"
+#include "Core/AssertionMacros.h"
 
 //#
 //# Logging
 //#
-#include "Logging/LogVerbosity.h"
-#include "Logging/LogMacros.h"
-#include "Logging/LogPrivate.h"
-#include "Logging/CoreCategories.h"
-#include "Logging/LogUtility.h"
+#include "Core/LogVerbosity.h"
+#include "Core/LogMacros.h"
+#include "Core/LogPrivate.h"
+#include "Core/CoreCategories.h"
+#include "Core/LogUtility.h"
 
 //#
 //# Maths
 //#
-#include "Maths/Maths.h"
-#include "Maths/Color.h"
-
-//#
-//# Memory
-//#
-#include "Memory/Smart.h"
+#include "Core/Maths.h"
+#include "Core/Color.h"
 
 //#
 //# Containers
 //#
-#include "Containers/Access.h"
-#include "Containers/Finder2.h"
-#include "Containers/Reference.h"
+#include "Core/Access.h"
+#include "Core/Finder2.h"
+#include "Core/Reference.h"
 
 //#
 //# Functors
 //#
 #include "Core/Function.h"
-#include "Delegates/Delegate.h"
-#include "Delegates/Event.h"
-#include "Delegates/EventMacros.h"
+#include "Core/Delegate.h"
+#include "Core/Event.h"
+#include "Core/EventMacros.h"
 
 //#
 //# Impls
 //#
-#include "Runtime/AssertionForwardImpl.h"
+#include "Core/AssertionForwardImpl.h"
 
 //#
 //# Misc

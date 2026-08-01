@@ -9,14 +9,14 @@
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
 #include "Foreign/PluginForward.h"
-#include "Subsystems/EngineSubsystem.h"
+#include "Framework/EngineSubsystem.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
     #include "Foreign/Plugin.h"
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 #if JAFG_WITH_REST_CLS
     #include "Cli/ReSTCli.h"
 #endif /* JAFG_WITH_REST_CLS */
-#include "Storage/Config.h"
+#include "Serialization/Config.h"
 
 namespace Jafg
 {

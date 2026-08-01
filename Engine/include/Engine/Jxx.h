@@ -4,8 +4,8 @@
 
 #include "Minimal.afx"
 #include "Engine/EngineCompileTimeConstants.h"
-#include "Misc/Tag.h"
-#include "Misc/TagExt.h"
+#include "Core/Tag.h"
+#include "Core/TagExt.h"
 #include "Foreign/PluginForward.h"
 #include "Engine/JxxClassMacros.h"
 #include "Engine/EngineGetters.h"
@@ -881,7 +881,7 @@ struct NewDeferredObjectFn
 {
     //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new deferred jxx-object.
     template<typename TCxxClass>
-    static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+    static constexpr bool AllowedTreeNode{algo::allowed_tree_node<TCxxClass, TRootNode, TForbiddenNodes...>};
 
     TResult<TRootNode> operator()(TDynInit const& Init) const
     {
@@ -938,7 +938,7 @@ struct NewObjectFn
 {
     //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new jxx-object.
     template<typename TCxxClass>
-    static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+    static constexpr bool AllowedTreeNode{algo::allowed_tree_node<TCxxClass, TRootNode, TForbiddenNodes...>};
 
     TRootNode* operator()(TDynInit const& Init) const
     {
@@ -1895,7 +1895,7 @@ struct NewUniqueObjectFn
 {
     //# Whether the typename #TCxxClass is allowed to be used as a node in this struct to create a new jxx-object.
     template<typename TCxxClass>
-    static constexpr bool AllowedTreeNode{CAllowedTreeNode<TCxxClass, TRootNode, TForbiddenNodes...>};
+    static constexpr bool AllowedTreeNode{algo::allowed_tree_node<TCxxClass, TRootNode, TForbiddenNodes...>};
 
     FORCEINLINE TJxxUnique<TRootNode> operator()(TDynInit const& Init) const
     {

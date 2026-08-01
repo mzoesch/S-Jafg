@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/PersonaController.h"
-#include "Components/PersonaControllerComponent.h"
+#include "Framework/PersonaControllerComponent.h"
 #include "Engine/Engine.h"
 
 #if JAFG_DO_CHECKS

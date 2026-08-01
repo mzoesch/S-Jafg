@@ -29,14 +29,14 @@ struct LStaticMeshRenderable
     {
         this->Mesh = std::move(Mesh);
     }
-    NODISCARD FORCEINLINE constexpr LStaticMeshRef GetMesh() const noexcept { return this->Mesh; }
+    NODISCARD FORCEINLINE constexpr LStaticMeshRef const& GetMesh() const noexcept { return this->Mesh; }
 
     void SetMaterialInstance(LMaterialInstanceRef Instance) noexcept
     {
         this->MaterialInstance = std::move(Instance);
         check(!this->MaterialInstance || !!this->MaterialInstance->Material.get())
     }
-    NODISCARD FORCEINLINE constexpr LMaterialInstanceRef GetMaterialInstance() noexcept { return this->MaterialInstance; }
+    NODISCARD FORCEINLINE constexpr LMaterialInstanceRef const& GetMaterialInstance() const noexcept { return this->MaterialInstance; }
 
     void SetTransform(LWorldTrans const& Transform) noexcept { this->Trans = Transform; }
 
@@ -61,6 +61,14 @@ struct LStaticMeshRenderable
         }
         static constexpr LWorldAabb3 Dummy{ maths::identity<LWorldAabb3> };
         return Dummy;
+    }
+    NODISCARD FORCEINLINE constexpr LWorldAabb3 GetTransformedAabb() const noexcept
+    {
+        if (this->Mesh.get())
+        {
+            return this->Mesh->GetAabb().apply(this->Trans);
+        }
+        return maths::identity<LWorldAabb3>;
     }
 
 private:

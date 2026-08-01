@@ -5,7 +5,7 @@
 #if JAFG_WITH_FOREIGN_SUPPORT
 
 #include "Foreign/Plugin.h"
-#include "Async/TaskUtility.h"
+#include "Core/TaskUtility.h"
 
 namespace Jafg
 {

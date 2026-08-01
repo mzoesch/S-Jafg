@@ -21,7 +21,7 @@
 #include "Widgets/AssetInspectors.h"
 #include "Nodes/EditableTextButton.h"
 #include "Widgets/EditorFactory.h"
-#include "Components/SceneComponent.h"
+#include "Framework/SceneComponent.h"
 #include "Framework/LackeyForward.h"
 #include "Framework/PersonaController.h"
 #include "Platform/Surface.h"
@@ -29,7 +29,7 @@
 #include "User/Input/InputActionValue.h"
 #include "Framework/Actor.h"
 #include "Framework/MaterialSubsystem.h"
-#include "Components/StaticMeshComponent.h"
+#include "Framework/StaticMeshComponent.h"
 #include "User/LocalEgo.h"
 #include "Rhi/ViewProj.h"
 #include "Rhi/SolidColor.h"
@@ -150,8 +150,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
         {
             T->Vector->Set(Translation);
         }
-        auto Rotation{WInput_Vector3::FloatingVector{maths::euler_angles_deg(Field->r)}};
-        if (auto V{T->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Rotation)
+        auto Rotation{WInput_Vector3::FloatingVector{maths::editor_euler_angles_deg(Field->r)}};
+        if (auto V{R->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Rotation)
         {
             R->Vector->Set(Rotation);
         }
@@ -181,7 +181,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
         .Space(1_spt)
     [
         MakeLabel(Rotation, "Rotation")
-        + MakeContent(Rotation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{maths::euler_angles_deg(Info.Field.r)}).SaveTo(&Rotation->Vector)
+        // TODO: glm::mat3_cast(glm::normalize(q)); normalize before converting to editor?
+        + MakeContent(Rotation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{maths::editor_euler_angles_deg(Info.Field.r)}).SaveTo(&Rotation->Vector)
             .OnVectorChanged([Pointer=Rotation, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
@@ -673,7 +674,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZ.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{0,0,-10});
+        Comp.SetTranslation(LWorldVec3{0,0,10});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -681,7 +682,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{0,0,-4});
+        Comp.SetTranslation(LWorldVec3{0,0,4});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -689,7 +690,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{2,0,-4});
+        Comp.SetTranslation(LWorldVec3{2,0,4});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -697,7 +698,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{4,0,-4});
+        Comp.SetTranslation(LWorldVec3{4,0,4});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -705,7 +706,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Icosphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{6,0,-4});
+        Comp.SetTranslation(LWorldVec3{6,0,4});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -713,7 +714,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cylinder.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{8,0,-4});
+        Comp.SetTranslation(LWorldVec3{8,0,4});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -721,7 +722,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cone.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{10,0,-4});
+        Comp.SetTranslation(LWorldVec3{10,0,4});
     });
 
     SpawnObject(TWorldStaticInit<AActor>{this->GetWorld()})
@@ -729,7 +730,7 @@ void Jafg::AEditorSupremePolicies::OnWorldPreInit()
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Torus.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{12,0,-4});
+        Comp.SetTranslation(LWorldVec3{12,0,4});
     });
 }
 
@@ -760,8 +761,6 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
 {
     Super::OnAttach(InOwner);
 
-    auto& Prefs{GetSingleton<JUserPreferences>()};
-
     LOG_TRACE(LogRhi, "Allocating debug editor buffers.")
     auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
@@ -773,24 +772,47 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
     this->RayBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::Ray::buffer_create_info(MaxLineCount));
     this->RayViewBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::ViewProj::buffer_create_info());
 
-    auto SoldiX{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo")};
-    check(SoldiX->InfrequentDescriptorSets[0].Resources.size() == 1)
-    UBO::SolidColorInput{.Color=*Prefs.EditorAxisTintX}.upload_and_update(Frontend.Vk_GetDevice(), *SoldiX->InfrequentDescriptorSets[0], 0, SoldiX->InfrequentDescriptorSets[0].Resources[0].AsBuffer());
+    this->GizmoMeshes[TranslateX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX.glb"));
+    this->GizmoMeshes[TranslateX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateY.glb"));
+    this->GizmoMeshes[TranslateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateZ.glb"));
+    this->GizmoMeshes[TranslateZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
 
-    auto SolidY{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo")};
-    check(SolidY->InfrequentDescriptorSets[0].Resources.size() == 1)
-    UBO::SolidColorInput{.Color=*Prefs.EditorAxisTintY}.upload_and_update(Frontend.Vk_GetDevice(), *SolidY->InfrequentDescriptorSets[0], 0, SolidY->InfrequentDescriptorSets[0].Resources[0].AsBuffer());
+    this->GizmoMeshes[TranslateX_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX-var.glb"));
+    this->GizmoMeshes[TranslateX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateY_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateY-var.glb"));
+    this->GizmoMeshes[TranslateY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateZ_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateZ-var.glb"));
+    this->GizmoMeshes[TranslateZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
 
-    auto SolidZ{Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo")};
-    check(SolidZ->InfrequentDescriptorSets[0].Resources.size() == 1)
-    UBO::SolidColorInput{.Color=*Prefs.EditorAxisTintZ}.upload_and_update(Frontend.Vk_GetDevice(), *SolidZ->InfrequentDescriptorSets[0], 0, SolidZ->InfrequentDescriptorSets[0].Resources[0].AsBuffer());
+    this->GizmoMeshes[RotateR].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorR.glb"));
+    this->GizmoMeshes[RotateR].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[RotateY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorY.glb"));
+    this->GizmoMeshes[RotateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[RotateP].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorP.glb"));
+    this->GizmoMeshes[RotateP].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
 
-    this->Gizmo[X].SetMesh(LITERAL_TEXT("Content/Models/Editor/SelectionArrowX.glb"));
-    this->Gizmo[X].SetMaterialInstance(std::move(SoldiX));
-    this->Gizmo[Y].SetMesh(LITERAL_TEXT("Content/Models/Editor/SelectionArrowY.glb"));
-    this->Gizmo[Y].SetMaterialInstance(std::move(SolidY));
-    this->Gizmo[Z].SetMesh(LITERAL_TEXT("Content/Models/Editor/SelectionArrowZ.glb"));
-    this->Gizmo[Z].SetMaterialInstance(std::move(SolidZ));
+    this->GizmoMeshes[ScaleX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleX.glb"));
+    this->GizmoMeshes[ScaleX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleY.glb"));
+    this->GizmoMeshes[ScaleY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleZ.glb"));
+    this->GizmoMeshes[ScaleZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+
+    this->GizmoMeshes[ScaleX_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleX-var.glb"));
+    this->GizmoMeshes[ScaleX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleY_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleY-var.glb"));
+    this->GizmoMeshes[ScaleY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleZ_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleZ-var.glb"));
+    this->GizmoMeshes[ScaleZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+
+    this->GizmoMeshes[PlaneXY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXY.glb"));
+    this->GizmoMeshes[PlaneXY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[PlaneYZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneYZ.glb"));
+    this->GizmoMeshes[PlaneYZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[PlaneXZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXZ.glb"));
+    this->GizmoMeshes[PlaneXZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
 }
 
 void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
@@ -820,6 +842,11 @@ void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
     this->NextRays.clear();
     this->Aabbs.append_range(this->NextAabbs);
     this->NextAabbs.clear();
+
+    if (this->IsSelectedActorValid())
+    {
+        this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+    }
 }
 
 void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Info) const
@@ -830,9 +857,16 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
     this->RenderGizmo(Info);
 }
 
-Jafg::AActor* Jafg::AEditorPersonaControllerComponent::SetSelectedActor(AActor* Actor) noexcept
+Jafg::EGizmo Jafg::AEditorPersonaControllerComponent::SetSelectedGizmo(EGizmo Gizmo) noexcept
 {
-    auto* Result{std::exchange(this->SelectedActor, Actor)};
+    return std::exchange(this->Gizmo, Gizmo);
+}
+
+Jafg::AActor* Jafg::AEditorPersonaControllerComponent::SetSelectedActor(WWorldViewer* Origin, AActor* Actor) noexcept
+{
+    this->SelectedActor.Viewer = Origin;
+    this->SelectedActor.Quaternion.reset();
+    auto* Result{std::exchange(this->SelectedActor.Actor, Actor)};
 
     if (this->IsSelectedActorValid())
     {
@@ -842,110 +876,457 @@ Jafg::AActor* Jafg::AEditorPersonaControllerComponent::SetSelectedActor(AActor* 
     return Result;
 }
 
-bool Jafg::AEditorPersonaControllerComponent::TraceForGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin)
+void Jafg::AEditorPersonaControllerComponent::SetHighlightedGizmoMesh(EGizmoMesh Mesh) noexcept
 {
-    if (!this->SelectedActor || !this->SelectedActor->HasRootComponent())
-    {
-        return false;
-    }
-    auto& Comp{this->SelectedActor->GetRootComponent()};
+    check(GEngine)
+    this->HighlightedGizmoMesh = {GEngine->FrameCount, Mesh};
+}
 
+Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControllerComponent::GetHighlightedGizmoMesh() const noexcept
+{
+    check(GEngine)
+    if (this->HighlightedGizmoMesh.Frame != GEngine->FrameCount)
+    {
+        this->HighlightedGizmoMesh.Mesh = GizmoCount;
+    }
+    return this->HighlightedGizmoMesh.Mesh;
+}
+
+Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControllerComponent::TraceGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LWorldEye const& Eye) noexcept
+{
+    if (this->Gizmo == EGizmo::Select || !this->IsSelectedActorValid())
+    {
+        return GizmoCount;
+    }
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    auto& Comp{this->SelectedActor->GetRootComponent()};
     this->SetTranslationForGizmos(Comp.GetTranslation());
 
-    for (auto Idx{std::to_underlying(X)}; Idx < std::to_underlying(GizmoCount); ++Idx)
+    auto HandleGizmoRange{[&]<std::size_t S>(std::array<EGizmoMesh, S> Meshes)
     {
-        auto& Gizmo{this->Gizmo[Idx]};
-        if (auto r{maths::aabb_intersect_ray(Ray, Gizmo.GetAabb().apply(Gizmo.GetTransform()))}; r.bHit)
+        EGizmoMesh Result{GizmoCount};
+
+        typedef maths::aabb_intersection_ray<LWorldReal,world_qual> Hit;
+        std::vector<std::pair<EGizmoMesh,Hit>> Hits;
+
+        for (EGizmoMesh Mesh: Meshes)
         {
-            Origin.Node.GetViewport().EmplaceUntil<ERawInputStateBits::Release>(Origin.Event.PhysicalKey,
-            [this,Idx,Extent=Extent,N=&Origin.Node,Delta=std::optional<LWorldVec3>{}] mutable
+            auto& Gizmo{this->GizmoMeshes[std::to_underlying(Mesh)]};
+            LWorldAabb3 Aabb{Gizmo.GetAabb()};
+
+            // float distance = maths::magnitude(Eye.translation - Gizmo.GetTranslation());
+
+            glm::vec3 toGizmo = Gizmo.GetTranslation() - Eye.translation;
+            float distance = glm::dot(toGizmo, Eye.front);
+
+            float scale =
+                20.f/*GIZMO_PIXEL_SIZE*/ *
+                (2.0f * distance * std::tan(Eye.vert_fov * 0.5f)) /
+                static_cast<f32>(Extent.height);
+
+
+            Aabb.min *= scale;
+            Aabb.max *= scale;
+
+            Aabb = Aabb.apply(Gizmo.GetTransform());
+
+            if (*Prefs.EditorVisualizeGizmoInteractions)
             {
-                check(N)
+                this->AddAabbNextTick({
+                    .Tint = *Prefs.EditorGizmoVisualizationAabbTint,
+                    .Value = Aabb,
+                    });
+            }
 
-                if (!N->IsPainted())
-                {
-                    return true;
-                }
-                if (!N->GetViewport().GetSurface().HasMouseLocationForOrtho())
-                {
-                    return true;
-                }
-                auto CursorLocation{N->GetViewport().GetSurface().GetMouseLocationValue()};
+            if (auto r{maths::aabb_intersect_ray(Ray, Aabb)}; r.bHit)
+            {
+                Hits.emplace_back(Mesh, r);
+            }
+        }
 
-                // TODO: Fix translation
-                if (LVec2F Location{CursorLocation - N->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
-                    Location.x < 0.0f || Location.y < 0.0f || Location.x > N->GetAnchoredSize_v2().x || Location.y > N->GetAnchoredSize_v2().y)
+        algo::sort(Hits, [](std::pair<EGizmoMesh,Hit> const& A, std::pair<EGizmoMesh,Hit> const& B)
+        {
+            return A.second.Enter < B.second.Enter;
+        });
+        if (!Hits.empty())
+        {
+            Result = Hits.front().first;
+        }
+        return Result;
+    }};
+
+    switch (this->Gizmo)
+    {
+    case EGizmo::Translate: return HandleGizmoRange(std::array{TranslateX, TranslateY, TranslateZ, PlaneXY, PlaneXZ, PlaneYZ,});
+    case EGizmo::Rotate: return HandleGizmoRange(std::array{RotateR, RotateY, RotateP});
+    case EGizmo::Scale: return HandleGizmoRange(std::array{ScaleX, ScaleY, ScaleZ, PlaneXY, PlaneXZ, PlaneYZ,});
+    case EGizmo::Gizmo: return HandleGizmoRange(std::array{TranslateX_Var,TranslateY_Var,TranslateZ_Var,RotateR,RotateY,RotateP,ScaleX_Var,ScaleY_Var,ScaleZ_Var});
+    default: LOG_FATAL(LogEditor, "Invalid gizmo type [{}].", std::to_underlying(this->Gizmo))
+    }
+}
+
+void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin)
+{
+    check(!(this->Gizmo == EGizmo::Select || !this->IsSelectedActorValid()))
+
+    auto& Comp{this->SelectedActor->GetRootComponent()};
+    this->SetTranslationForGizmos(Comp.GetTranslation());
+
+    auto HandleGizmo{[&](EGizmoMesh Mesh, auto&& Handler)
+    {
+        this->UsedGizmoMesh = Mesh;
+        this->SelectedActor.Quaternion = Comp.GetRotator();
+
+        Origin.Node.GetViewport().EmplaceUntil<ERawInputStateBits::Release>(Origin.Event.PhysicalKey,
+        [this,Mesh,Extent=Extent,N=&Origin.Node,Handler,OriginTransform=this->SelectedActor->GetRootComponent().GetTransform()
+            ,MDelta=std::optional<LVec2F>{},LDelta=std::optional<LWorldReal>{},Delta=std::optional<LWorldVec3>{}
+            ,LastCursor=std::optional<LVec2F>{},DiscardedCursor=maths::zero_vector<LVec2F>](LRawInput const& Input) mutable
+        {
+            check(N)
+            if (!N->IsPainted())
+            {
+                return true;
+            }
+            if (!N->GetViewport().GetSurface().HasMouseLocation())
+            {
+                return true;
+            }
+            if (!N->IsOwnedPersonaControllerValid())
+            {
+                return true;
+            }
+            auto& Ctrl{*N->GetOwnedPersonaControllerChecked()};
+            if (!Ctrl.IsOwnedPawnValid())
+            {
+                return true;
+            }
+
+            auto& Prefs{GetSingleton<JUserPreferences>()};
+
+            // TODO: Fix translation
+            auto CursorLocation{N->GetViewport().GetSurface().GetMouseLocationValue()};
+            if (!LastCursor)
+            {
+                LastCursor = CursorLocation;
+            }
+            LVec2F Location{CursorLocation - DiscardedCursor - N->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+
+            if (algo::contains(std::array{RotateR,RotateY,RotateP}, Mesh))
+            {
+                if (!MDelta)
                 {
-                    LOG_TRACE(LogWidgetFramework, "[{}]: Click location [{}] is outside of the world viewer size [.Offset={},.Extent={}]. Ignoring trace request."
-                        , N->GetNameAsString(), maths::to_string(Location)
-                        // TODO: Fix translation
-                        , maths::to_string(N->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)), maths::to_string(N->GetAnchoredSize_v2()))
+                    MDelta = Location;
+                    return false;
+                }
+
+                auto D{Location - *MDelta};
+                Handler(Input, OriginTransform, Mesh, D.x - D.y, maths::zero_vector<LWorldVec3>);
+            }
+            else if (algo::contains(std::array{PlaneXY,PlaneXZ,PlaneYZ}, Mesh))
+            {
+                LWorldPlane3 GizmoPlane{[&]{ switch (Mesh)
+                {
+                    case PlaneYZ: return LWorldPlane3{.origin=this->GizmoMeshes[Mesh].GetTranslation(), .normal=maths::unit_vector_x<LWorldVec3>};
+                    case PlaneXZ: return LWorldPlane3{.origin=this->GizmoMeshes[Mesh].GetTranslation(), .normal=maths::unit_vector_y<LWorldVec3>};
+                    case PlaneXY: return LWorldPlane3{.origin=this->GizmoMeshes[Mesh].GetTranslation(), .normal=maths::unit_vector_z<LWorldVec3>};
+                    default: LOG_FATAL(LogEditor, "Invalid gizmo index [{}].", std::to_underlying(Mesh))
+                }}()};
+                if (N->IsGridSpaceLocal())
+                {
+                    GizmoPlane.normal = OriginTransform.r * GizmoPlane.normal;
+                }
+                if (*Prefs.EditorVisualizeGizmoInteractions)
+                {
+                    this->AddRayNextTick({
+                        .Tint = *Prefs.EditorGizmoVisualizationTint,
+                        .Duration = OneTimeDraw,
+                        .Value = LWorldMagRay3{GizmoPlane.origin, GizmoPlane.normal, *Prefs.EditorGizmoVisualizationLength},
+                        });
+                }
+
+                auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
+                    {Extent.width,Extent.height}, Location, Ctrl.GetOwnedPawnChecked()->GetEye()), *Prefs.EditorTraceLength
+                    )};
+                LWorldReal LineDelta{maths::intersection_delta_on_plane(LWorldRay3{.origin=Trace.origin,.direction=Trace.direction}, GizmoPlane)};
+                LWorldVec3 Point{Trace.origin + Trace.direction * LineDelta};
+                if (*Prefs.EditorVisualizeGizmoInteractions)
+                {
+                    constexpr LWorldVec3 HitSize{0.2f};
+                    this->AddAabbNextTick({
+                        .Tint = *Prefs.EditorGizmoVisualizationHitTint,
+                        .Duration = OneTimeDraw,
+                        .Value = LWorldAabb3{Point - HitSize, Point + HitSize},
+                        });
+                }
+
+                if (!LDelta)
+                {
+                    LDelta = LineDelta;
+                }
+                if (!Delta)
+                {
+                    Delta = Point - this->GizmoMeshes[Mesh].GetTranslation();
+                    return false;
+                }
+
+                Point -= *Delta;
+                if (Handler(Input, OriginTransform, Mesh, LineDelta - *LDelta, Point))
+                {
+                    DiscardedCursor += CursorLocation - *LastCursor;
                 }
                 else
                 {
-                    auto& Prefs{GetSingleton<JUserPreferences>()};
-                    if (!N->IsOwnedPersonaControllerValid())
-                    {
-                        return true;
-                    }
-                    auto& Ctrl{*N->GetOwnedPersonaControllerChecked()};
-                    if (!Ctrl.IsOwnedPawnValid())
-                    {
-                        return true;
-                    }
-
-                    auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
-                        {Extent.width,Extent.height}, Location, Ctrl.GetOwnedPawnChecked()->GetEye()), *Prefs.EditorTraceLength)
-                        };
-
-                    LWorldVec3 GizmoRay{[&]{ switch (Idx)
-                    {
-                        case EGizmoDir::X: return maths::right_vector<LWorldVec3>;
-                        case EGizmoDir::Y: return maths::up_vector<LWorldVec3>;
-                        case EGizmoDir::Z: return maths::backward_vector<LWorldVec3>;
-                        default: LOG_FATAL(LogEditor, "Invalid gizmo index [{}].", Idx)
-                    }}()};
-                    if (*Prefs.EditorVisualizeGizmoInteractions)
-                    {
-                        this->AddRayNextTick({
-                            .Tint = *Prefs.EditorGizmoVisualizationTint,
-                            .Duration = OneTimeDraw,
-                            .Value = LWorldMagRay3{this->Gizmo[Idx].GetTranslation(), GizmoRay, *Prefs.EditorGizmoVisualizationLength},
-                            });
-                    }
-
-                    LWorldVec3 Point{maths::closest_point_on_line(
-                        LWorldRay3{this->Gizmo[Idx].GetTranslation(), GizmoRay}, LWorldRay3{.origin=Trace.origin,.delta=Trace.direction}
-                        )};
-                    if (*Prefs.EditorVisualizeGizmoInteractions)
-                    {
-                        constexpr LWorldVec3 HitSize{0.2f};
-                        this->AddAabbNextTick({
-                            .Tint = *Prefs.EditorGizmoVisualizationHitTint,
-                            .Duration = OneTimeDraw,
-                            .Value = LWorldAabb3{Point - HitSize, Point + HitSize},
-                            });
-                    }
-
-                    if (!Delta)
-                    {
-                        Delta = Point - this->Gizmo[Idx].GetTranslation();
-                        return false;
-                    }
-
-                    Point -= *Delta;
-
-                    this->SelectedActor->GetRootComponent().SetTranslation(Point);
-                    this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+                    DiscardedCursor = maths::zero_vector<LVec2F>;
+                }
+            }
+            else
+            {
+                LWorldVec3 GizmoRay{[&]{ switch (Mesh)
+                {
+                    case TranslateX: case TranslateX_Var: case ScaleX: case ScaleX_Var: return maths::right_vector<LWorldVec3>;
+                    case TranslateY: case TranslateY_Var: case ScaleY: case ScaleY_Var: return maths::up_vector<LWorldVec3>;
+                    case TranslateZ: case TranslateZ_Var: case ScaleZ: case ScaleZ_Var: return maths::forward_vector<LWorldVec3>;
+                    default: LOG_FATAL(LogEditor, "Invalid gizmo index [{}].", std::to_underlying(Mesh))
+                }}()};
+                if (N->IsGridSpaceLocal())
+                {
+                    GizmoRay = OriginTransform.r * GizmoRay;
+                }
+                if (*Prefs.EditorVisualizeGizmoInteractions)
+                {
+                    this->AddRayNextTick({
+                        .Tint = *Prefs.EditorGizmoVisualizationTint,
+                        .Duration = OneTimeDraw,
+                        .Value = LWorldMagRay3{this->GizmoMeshes[Mesh].GetTranslation(), GizmoRay, *Prefs.EditorGizmoVisualizationLength},
+                        });
                 }
 
-                return false;
-            });
-            return true;
-        }
-    }
+                auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
+                    {Extent.width,Extent.height}, Location, Ctrl.GetOwnedPawnChecked()->GetEye()), *Prefs.EditorTraceLength
+                    )};
+                LWorldReal LineDelta{maths::closest_delta_on_line(
+                    LWorldRay3{this->GizmoMeshes[Mesh].GetTranslation(), GizmoRay}, LWorldRay3{.origin=Trace.origin,.direction=Trace.direction}
+                    )};
+                LWorldVec3 Point{this->GizmoMeshes[Mesh].GetTranslation() + GizmoRay * LineDelta};
+                if (*Prefs.EditorVisualizeGizmoInteractions)
+                {
+                    constexpr LWorldVec3 HitSize{0.2f};
+                    this->AddAabbNextTick({
+                        .Tint = *Prefs.EditorGizmoVisualizationHitTint,
+                        .Duration = OneTimeDraw,
+                        .Value = LWorldAabb3{Point - HitSize, Point + HitSize},
+                        });
+                }
 
-    return false;
+                if (!LDelta)
+                {
+                    LDelta = LineDelta;
+                }
+                if (!Delta)
+                {
+                    Delta = Point - this->GizmoMeshes[Mesh].GetTranslation();
+                    return false;
+                }
+
+                Point -= *Delta;
+                if (Handler(Input, OriginTransform, Mesh, LineDelta - *LDelta, Point))
+                {
+                    DiscardedCursor += CursorLocation - *LastCursor;
+                }
+                else
+                {
+                    DiscardedCursor = maths::zero_vector<LVec2F>;
+                }
+            }
+
+            LastCursor = CursorLocation;
+            return false;
+        }, [this,Viewer=&Origin.Node]
+        {
+            this->SelectedActor.Quaternion.reset();
+            this->UsedGizmoMesh = GizmoCount;
+            Viewer->GetViewport().GetSurface().SetInputMode(EInputModeBits::ShowMouseCursor);
+        });
+    }};
+
+    auto HandleTranslation{[this,Viewer=&Origin.Node]
+    (LRawInput const& Input, LWorldTrans const& T, EGizmoMesh Mesh, LWorldReal Delta, LWorldVec3 Point) mutable -> bool
+    {
+        bool Result{};
+
+        if (!maths::eq_zero_e(Delta))
+        {
+            if (Viewer->IsTranslationGridSnapEnabled())
+            {
+                f32 Snap{Viewer->GetTranslationGridSnap()};
+                check(Snap > 0.0f)
+                auto Dir{Point - this->GizmoMeshes[Mesh].GetTranslation()};
+                Dir = maths::normalize(Dir) * (maths::round(maths::magnitude(Dir) / Snap) * Snap);
+                Point = this->GizmoMeshes[Mesh].GetTranslation() + Dir;
+            }
+
+            auto& Surface{Viewer->GetViewport().GetSurface()};
+            if (Surface.HasPlatformKeyState(*Surface.GetFrontend().GetPhysicalKey(ELogicalKey::LeftShift), ERawInputStateBits::Hold))
+            {
+                Surface.SetInputMode(EInputModeBits::HideMouseCursor);
+                Viewer->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().AddTranslation(Point - this->GizmoMeshes[Mesh].GetTranslation());
+                Result = true;
+            }
+            else
+            {
+                Surface.SetInputMode(EInputModeBits::ShowMouseCursor);
+            }
+
+            this->SelectedActor->GetRootComponent().SetTranslation(Point);
+            this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+        }
+
+        return Result;
+    }};
+
+    auto HandleRotation{[this,Viewer=&Origin.Node]
+    (LRawInput const& Input, LWorldTrans const& T, EGizmoMesh Mesh, LWorldReal Delta, LWorldVec3 const& Point) -> bool
+    {
+        Delta *= static_cast<LWorldReal>(0.5);
+        if (!maths::eq_zero_e(Delta) && Viewer->IsRotationGridSnapEnabled())
+        {
+            f32 Snap{Viewer->GetRotationGridSnap()};
+            check(Snap > 0.0f)
+            Delta = maths::round(Delta / Snap) * Snap;
+        }
+
+        if (Mesh == RotateR)
+        {
+            if (Viewer->IsGridSpaceLocal())
+            {
+                this->SelectedActor->GetRootComponent().SetRotator(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>));
+            }
+            else
+            {
+                this->SelectedActor->GetRootComponent().SetRotator(maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>) * T.r);
+            }
+        }
+        else if (Mesh == RotateY)
+        {
+            if (Viewer->IsGridSpaceLocal())
+            {
+                this->SelectedActor->GetRootComponent().SetRotator(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>));
+            }
+            else
+            {
+                this->SelectedActor->GetRootComponent().SetRotator(maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>) * T.r);
+            }
+        }
+        else if (Mesh == RotateP)
+        {
+            if (Viewer->IsGridSpaceLocal())
+            {
+                this->SelectedActor->GetRootComponent().SetRotator(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>));
+            }
+            else
+            {
+                this->SelectedActor->GetRootComponent().SetRotator(maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>) * T.r);
+            }
+        }
+
+        return {};
+    }};
+
+    auto HandleScale{[this,Viewer=&Origin.Node]
+    (LRawInput const& Input, LWorldTrans const& T, EGizmoMesh Mesh, LWorldReal Delta, LWorldVec3 const& Point) -> bool
+    {
+        if (!maths::eq_zero_e(Delta))
+        {
+            Delta *= static_cast<LWorldReal>(2.0);
+
+            if (Viewer->IsScaleGridSnapEnabled())
+            {
+                f32 Snap{Viewer->GetScaleGridSnap()};
+                check(Snap > 0.0f)
+
+                Delta = maths::round(Delta / Snap) * Snap;
+            }
+
+            if (Mesh == ScaleX || Mesh == ScaleX_Var)
+            {
+                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{Delta,0,0});
+            }
+            else if (Mesh == ScaleY || Mesh == ScaleY_Var)
+            {
+                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{0,Delta,0});
+            }
+            else if (Mesh == ScaleZ || Mesh == ScaleZ_Var)
+            {
+                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{0,0,Delta});
+            }
+            else if (Mesh == PlaneXY)
+            {
+                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{Delta,Delta,0});
+            }
+            else if (Mesh == PlaneXZ)
+            {
+                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{Delta,0,Delta});
+            }
+            else if (Mesh == PlaneYZ)
+            {
+                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{0,Delta,Delta});
+            }
+            else
+            {
+                LOG_FATAL(LogEditor, "Invalid gizmo index [{}].", std::to_underlying(Mesh))
+            }
+        }
+
+        return {};
+    }};
+
+    switch (this->Gizmo)
+    {
+    case EGizmo::Translate:
+    {
+        check(algo::contains(std::array{TranslateX, TranslateY, TranslateZ, PlaneXY, PlaneXZ, PlaneYZ,}, Mesh))
+        HandleGizmo(Mesh, HandleTranslation);
+        break;
+    }
+    case EGizmo::Rotate:
+    {
+        check(algo::contains(std::array{RotateR, RotateY, RotateP}, Mesh))
+        HandleGizmo(Mesh, HandleRotation);
+        break;
+    }
+    case EGizmo::Scale:
+    {
+        check(algo::contains(std::array{ScaleX, ScaleY, ScaleZ, PlaneXY, PlaneXZ, PlaneYZ,}, Mesh))
+        HandleGizmo(Mesh, HandleScale);
+        break;
+    }
+    case EGizmo::Gizmo:
+    {
+        check(algo::contains(std::array{TranslateX_Var, TranslateY_Var, TranslateZ_Var, RotateR, RotateY, RotateP, ScaleX_Var, ScaleY_Var, ScaleZ_Var,}, Mesh))
+        return HandleGizmo(Mesh, [Mesh,HandleTranslation=std::move(HandleTranslation),HandleRotation,HandleScale]
+            (LRawInput const& Input, LWorldTrans const& T, u32 Dir, LWorldReal Delta, LWorldVec3 const& Point) mutable
+        {
+            if (algo::contains(std::array{TranslateX_Var, TranslateY_Var, TranslateZ_Var}, Mesh))
+            {
+                return HandleTranslation(Input, T, Mesh, Delta, Point);
+            }
+            if (algo::contains(std::array{RotateR, RotateY, RotateP}, Mesh))
+            {
+                return HandleRotation(Input, T, Mesh, Delta, Point);
+            }
+            if (algo::contains(std::array{ScaleX_Var, ScaleY_Var, ScaleZ_Var}, Mesh))
+            {
+                return HandleScale(Input, T, Mesh, Delta, Point);
+            }
+            std::unreachable();
+        });
+    }
+    default:
+    {
+        LOG_FATAL(LogEditor, "Invalid gizmo type [{}].", std::to_underlying(this->Gizmo))
+    }
+    }
 }
 
 void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const& Info) const
@@ -985,7 +1366,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const&
     {
         for (auto& edge: Aabb->edges())
         {
-            DeviceRays->emplace_back(edge.origin, edge.delta, Aabb.Tint);
+            DeviceRays->emplace_back(edge.origin, edge.direction, Aabb.Tint);
         }
     });
 
@@ -1005,13 +1386,256 @@ void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const&
     Info.CommandBuffer.draw(2, static_cast<u32>(DeviceRays->size()), 0, 0);
 }
 
+namespace
+{
+
+template<Jafg::AEditorPersonaControllerComponent::EGizmoMesh g, typename T, maths::qualifier Q>
+NODISCARD constexpr TQua<T,Q> GetGizmoRotation(maths::octant o) noexcept
+{
+    if constexpr (g == Jafg::AEditorPersonaControllerComponent::EGizmoMesh::RotateR)
+    {
+        switch(o)
+        {
+        case maths::octant::zero:  return TQua<T,Q>{TVec3<T,Q>{0, 0, 0}};
+        case maths::octant::one:   return TQua<T,Q>{TVec3<T,Q>{0, 0, 0}};
+        case maths::octant::two:   return TQua<T,Q>{TVec3<T,Q>{maths::half_pi_v<T>, 0, 0}};
+        case maths::octant::three: return TQua<T,Q>{TVec3<T,Q>{maths::half_pi_v<T>, 0, 0}};
+        case maths::octant::four:  return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, 0}};
+        case maths::octant::five:  return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, 0}};
+        case maths::octant::six:   return TQua<T,Q>{TVec3<T,Q>{maths::half_pi_v<T>, maths::pi_v<T>, 0}};
+        case maths::octant::seven: return TQua<T,Q>{TVec3<T,Q>{maths::half_pi_v<T>, maths::pi_v<T>, 0}};
+        }
+    }
+    else if constexpr (g == Jafg::AEditorPersonaControllerComponent::EGizmoMesh::RotateY)
+    {
+        switch(o)
+        {
+        case maths::octant::zero:  return TQua<T,Q>{TVec3<T,Q>{0, 0, 0}};
+        case maths::octant::one:   return TQua<T,Q>{TVec3<T,Q>{0, -maths::half_pi_v<T>, 0}};
+        case maths::octant::two:   return TQua<T,Q>{TVec3<T,Q>{0, 0, 0}};
+        case maths::octant::three: return TQua<T,Q>{TVec3<T,Q>{0, -maths::half_pi_v<T>, 0}};
+        case maths::octant::four:  return TQua<T,Q>{TVec3<T,Q>{0, maths::half_pi_v<T>, 0}};
+        case maths::octant::five:  return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, 0}};
+        case maths::octant::six:   return TQua<T,Q>{TVec3<T,Q>{0, maths::half_pi_v<T>, 0}};
+        case maths::octant::seven: return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, 0}};
+        }
+    }
+    else if constexpr (g == Jafg::AEditorPersonaControllerComponent::EGizmoMesh::RotateP)
+    {
+        switch(o)
+        {
+        case maths::octant::zero:  return TQua<T,Q>{TVec3<T,Q>{0, 0, 0}};
+        case maths::octant::one:   return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, 0}};
+        case maths::octant::two:   return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, maths::pi_v<T>}};
+        case maths::octant::three: return TQua<T,Q>{TVec3<T,Q>{0, 0, maths::pi_v<T>}};
+        case maths::octant::four:  return TQua<T,Q>{TVec3<T,Q>{0, 0, 0}};
+        case maths::octant::five:  return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, 0}};
+        case maths::octant::six:   return TQua<T,Q>{TVec3<T,Q>{0, maths::pi_v<T>, maths::pi_v<T>}};
+        case maths::octant::seven: return TQua<T,Q>{TVec3<T,Q>{0, 0, maths::pi_v<T>}};
+        }
+    }
+    else
+    {
+        static_assert(algo::always_false_v<T>);
+    }
+}
+
+} /* ~Namespace <Anonymous> */
+
 void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const& Info) const
 {
-    if (this->IsSelectedActorValid())
+    if (!this->IsSelectedActorValid())
     {
-        this->Gizmo[X].Render(Info);
-        this->Gizmo[Y].Render(Info);
-        this->Gizmo[Z].Render(Info);
+        return;
+    }
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    EGizmoMesh Highlight{this->GetHighlightedGizmoMesh()};
+    auto UpdateTint{[&](EGizmoMesh Mesh, LColor Tint)
+    {
+        if (this->UsedGizmoMesh != GizmoCount)
+        {
+            if (this->UsedGizmoMesh == Mesh)
+            {
+                Tint = *Prefs.EditorAxisTintHighlighted;
+            }
+        }
+        else if (Highlight == Mesh)
+        {
+            Tint = *Prefs.EditorAxisTintHighlighted;
+        }
+        auto& Instance{this->GizmoMeshes[Mesh].GetMaterialInstance()};
+        auto& DescriptorSetInstance{Instance->Vk_GetUniqueDescriptorSet(GizmoSolidColorInputSpace, Info.Frame)};
+        UBO::SolidColorInput{.Color=Tint}
+            .upload_and_update(Info.Frontend.Vk_GetDevice()
+                , *DescriptorSetInstance
+                , GizmoSolidColorInputIndex
+                , DescriptorSetInstance.Resources[GizmoSolidColorInputIndex].AsBuffer()
+                );
+    }};
+
+    auto RenderTranslation{[&](EGizmoMesh X, EGizmoMesh Y, EGizmoMesh Z)
+    {
+        UpdateTint(X, *Prefs.EditorAxisTintX);
+        UpdateTint(Y, *Prefs.EditorAxisTintY);
+        UpdateTint(Z, *Prefs.EditorAxisTintZ);
+
+        if (this->SelectedActor.Viewer->IsGridSpaceLocal())
+        {
+            for (auto& Mesh: std::array{X,Y,Z,})
+            {
+                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor->GetRootComponent().GetRotator());
+            }
+        }
+        else
+        {
+            for (auto& Mesh: std::array{X,Y,Z,})
+            {
+                this->GizmoMeshes[Mesh].SetRotator(maths::identity<LWorldQuat>);
+            }
+        }
+
+        this->GizmoMeshes[X].Render(Info);
+        this->GizmoMeshes[Y].Render(Info);
+        this->GizmoMeshes[Z].Render(Info);
+    }};
+    auto RenderRotator{[&]
+    {
+        maths::octant Octant;
+        if (this->SelectedActor.Viewer->IsGridSpaceLocal())
+        {
+            LWorldQuat Q;
+            if (this->SelectedActor.Quaternion)
+            {
+                Q = *this->SelectedActor.Quaternion;
+            }
+            else
+            {
+                Q = this->SelectedActor->GetRootComponent().GetRotator();
+            }
+            Octant = maths::get_angled_octant(
+                  this->SelectedActor->GetRootComponent().GetTranslation()
+                , Q
+                , Info.PerspectiveEye.translation
+                );
+        }
+        else
+        {
+            Octant = maths::get_octant(this->SelectedActor->GetRootComponent().GetTranslation(), Info.PerspectiveEye.translation);
+        }
+
+        auto R{GetGizmoRotation<RotateR,LWorldReal,world_qual>(Octant)};
+        auto Y{GetGizmoRotation<RotateY,LWorldReal,world_qual>(Octant)};
+        auto P{GetGizmoRotation<RotateP,LWorldReal,world_qual>(Octant)};
+
+        if (this->SelectedActor.Viewer->IsGridSpaceLocal())
+        {
+            if (this->SelectedActor.Quaternion)
+            {
+                R = *this->SelectedActor.Quaternion * R;
+                Y = *this->SelectedActor.Quaternion * Y;
+                P = *this->SelectedActor.Quaternion * P;
+            }
+            else
+            {
+                R = this->SelectedActor->GetRootComponent().GetRotator() * R;
+                Y = this->SelectedActor->GetRootComponent().GetRotator() * Y;
+                P = this->SelectedActor->GetRootComponent().GetRotator() * P;
+            }
+        }
+
+        UpdateTint(RotateR, *Prefs.EditorAxisTintX);
+        UpdateTint(RotateY, *Prefs.EditorAxisTintY);
+        UpdateTint(RotateP, *Prefs.EditorAxisTintZ);
+
+        this->GizmoMeshes[RotateR].SetRotator(R);
+        this->GizmoMeshes[RotateY].SetRotator(Y);
+        this->GizmoMeshes[RotateP].SetRotator(P);
+
+        this->GizmoMeshes[RotateR].Render(Info);
+        this->GizmoMeshes[RotateY].Render(Info);
+        this->GizmoMeshes[RotateP].Render(Info);
+    }};
+    auto RenderScale{[&](EGizmoMesh X, EGizmoMesh Y, EGizmoMesh Z)
+    {
+        UpdateTint(X, *Prefs.EditorAxisTintX);
+        UpdateTint(Y, *Prefs.EditorAxisTintY);
+        UpdateTint(Z, *Prefs.EditorAxisTintZ);
+
+        if (this->SelectedActor.Viewer->IsGridSpaceLocal())
+        {
+            for (auto& Mesh: std::array{X,Y,Z,})
+            {
+                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor->GetRootComponent().GetRotator());
+            }
+        }
+        else
+        {
+            for (auto& Mesh: std::array{X,Y,Z,})
+            {
+                this->GizmoMeshes[Mesh].SetRotator(maths::identity<LWorldQuat>);
+            }
+        }
+
+        this->GizmoMeshes[X].Render(Info);
+        this->GizmoMeshes[Y].Render(Info);
+        this->GizmoMeshes[Z].Render(Info);
+    }};
+
+    auto RenderPlanes{[&]
+    {
+        UpdateTint(PlaneXY, *Prefs.EditorAxisTintZ);
+        UpdateTint(PlaneXZ, *Prefs.EditorAxisTintY);
+        UpdateTint(PlaneYZ, *Prefs.EditorAxisTintX);
+
+        if (this->SelectedActor.Viewer->IsGridSpaceLocal())
+        {
+            for (auto& Mesh: std::array{PlaneXY,PlaneXZ,PlaneYZ,})
+            {
+                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor->GetRootComponent().GetRotator());
+            }
+        }
+        else
+        {
+            for (auto& Mesh: std::array{PlaneXY,PlaneXZ,PlaneYZ,})
+            {
+                this->GizmoMeshes[Mesh].SetRotator(maths::identity<LWorldQuat>);
+            }
+        }
+
+        this->GizmoMeshes[PlaneXY].Render(Info);
+        this->GizmoMeshes[PlaneXZ].Render(Info);
+        this->GizmoMeshes[PlaneYZ].Render(Info);
+    }};
+
+    switch (this->Gizmo)
+    {
+    case EGizmo::Translate:
+    {
+        RenderTranslation(TranslateX, TranslateY, TranslateZ);
+        RenderPlanes();
+        break;
+    }
+    case EGizmo::Rotate:
+    {
+        RenderRotator();
+        break;
+    }
+    case EGizmo::Scale:
+    {
+        RenderScale(ScaleX, ScaleY, ScaleZ);
+        RenderPlanes();
+        break;
+    }
+    case EGizmo::Gizmo:
+    {
+        RenderTranslation(TranslateX_Var, TranslateY_Var, TranslateZ_Var);
+        RenderRotator();
+        RenderScale(ScaleX_Var, ScaleY_Var, ScaleZ_Var);
+        break;
+    }
+    default: break;
     }
 }
 
@@ -1030,24 +1654,48 @@ bool Jafg::AEditorCameraComponent::ActivateUserInputContext() const noexcept
     return false;
 }
 
+void Jafg::AEditorCameraComponent::OnHighlightTrace(WWorldViewer& Viewer, rhi::extent2 Extent, LVec2F Location)
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    auto& Pawn{this->GetOwningPawn()};
+    auto Eye{Pawn.GetEye()};
+
+    auto Ray{LWorldMagRay3::from_ray(maths::screen_to_world_space({Extent.width,Extent.height}, Location, Eye), *Prefs.EditorTraceLength)};
+    check(maths::normalized(Ray.direction))
+
+    if (auto* PcComp{Pawn.GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
+    {
+        if (auto Mesh{PcComp->TraceGizmo(Ray, Extent, Eye)}; Mesh != AEditorPersonaControllerComponent::GizmoCount)
+        {
+            PcComp->SetHighlightedGizmoMesh(Mesh);
+        }
+    }
+}
+
 void Jafg::AEditorCameraComponent::OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin /* = {} */)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Pawn{this->GetOwningPawn()};
+    auto Eye{Pawn.GetEye()};
 
-    auto Ray{LWorldMagRay3::from_ray(maths::screen_to_world_space({Extent.width,Extent.height}, Location, Pawn.GetEye()), *Prefs.EditorTraceLength)};
+    auto Ray{LWorldMagRay3::from_ray(maths::screen_to_world_space({Extent.width,Extent.height}, Location, Eye), *Prefs.EditorTraceLength)};
     check(maths::normalized(Ray.direction))
 
-    if (auto* PcComp{Pawn.GetOwningController()->GetComponent<AEditorPersonaControllerComponent>()})
+    if (auto* PcComp{Pawn.GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
     {
         if (*Prefs.EditorVisualizeTraces)
         {
             PcComp->AddRay({.Tint = *Prefs.EditorTraceVisualizationTint, .Duration = *Prefs.EditorTraceVisualizationDuration, .Value = Ray,});
         }
 
-        if (Origin && PcComp->TraceForGizmo(Ray, Extent, *Origin))
+        if (Origin)
         {
-            return;
+            check(&Origin->Node == &Viewer)
+            if (auto Mesh{PcComp->TraceGizmo(Ray, Extent, Eye)}; Mesh != AEditorPersonaControllerComponent::GizmoCount)
+            {
+                PcComp->TraceForGizmo(Mesh, Ray, Extent, *Origin);
+                return;
+            }
         }
     }
 
@@ -1055,7 +1703,7 @@ void Jafg::AEditorCameraComponent::OnTrace(WWorldViewer& Viewer, bool bMultisele
     for (auto& Hit: Pawn.GetWorld().LineTraceNonPhysical(Ray, {.bSingleHit=true}))
     {
         bHit = true;
-        if (auto* Comp{this->GetOwningActor().AsStatic<APawn>().GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
+        if (auto* Comp{this->GetOwningPawn().GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
         {
             if (*Prefs.EditorVisualizeTraceHits)
             {
@@ -1134,7 +1782,7 @@ void Jafg::AEditorCameraComponent::OnRotate(LInputActionValue const& Value)
 
         /* Pitch */
         LWorldReal Pitch{maths::clamp(this->CachedPitch + glm::radians(Value2D.y), glm::radians(-89.9f), glm::radians(89.9f))};
-        Sc->AddRotator(maths::angle_axis(-(this->CachedPitch - Pitch), Sc->GetRotator() * maths::right_vector<LWorldVec3>), ESceneSweep::Teleport);
+        Sc->AddRotator(maths::angle_axis((this->CachedPitch - Pitch), Sc->GetRotator() * maths::right_vector<LWorldVec3>), ESceneSweep::Teleport);
 
         Sc->SetRotator(maths::normalize(Sc->GetRotator()), ESceneSweep::Teleport);
     }
@@ -1150,5 +1798,9 @@ void Jafg::AEditorCameraComponent::OnRotate(LInputActionValue const& Value)
 
 void Jafg::AEditorCameraComponent::OnVelocityMultiplierChange(LInputActionValue const& Value)
 {
-    this->VelocityMultiplier = maths::clamp(this->VelocityMultiplier + Value.GetAxis1DValue(), MinVelocityMultiplier, MaxVelocityMultiplier);
+    this->VelocityMultiplier = maths::clamp(
+          this->VelocityMultiplier + Value.GetAxis1DValue() * this->VelocityMultiplierAcceleration
+        , MinVelocityMultiplier
+        , MaxVelocityMultiplier
+        );
 }

@@ -95,8 +95,8 @@ struct LUserInputContext final
     FORCEINLINE const LUserInputTag& GetTag() const noexcept { return this->Tag; }
     FORCEINLINE const LString& GetDisplayName() const noexcept{ return this->DisplayName; }
 
-    FORCEINLINE LInputMappedAction* FindMappedAction(LUserInputTag Tag) noexcept { return algo::wfind_pointer(this->MappedActions, Tag, &LInputMappedAction::ActionTag); }
-    FORCEINLINE LInputMappedAction const* FindMappedAction(LUserInputTag Tag) const noexcept { return algo::wfind_pointer(this->MappedActions, Tag, &LInputMappedAction::ActionTag); }
+    FORCEINLINE LInputMappedAction* FindMappedAction(LUserInputTag Tag) noexcept { return algo::find_pointer(this->MappedActions, Tag, &LInputMappedAction::ActionTag); }
+    FORCEINLINE LInputMappedAction const* FindMappedAction(LUserInputTag Tag) const noexcept { return algo::find_pointer(this->MappedActions, Tag, &LInputMappedAction::ActionTag); }
     FORCEINLINE LInputMappedAction* FindMappedActionChecked(LUserInputTag Tag) noexcept { auto* Out{ this->FindMappedAction(Tag) }; check( Out ) return Out; }
     FORCEINLINE LInputMappedAction const* FindMappedActionChecked(LUserInputTag Tag) const noexcept { auto* Out{ this->FindMappedAction(Tag) }; check( Out ) return Out; }
     FORCEINLINE LInputMappedAction* FindMappedActionAsserted(LUserInputTag Tag) noexcept { auto* Out{ this->FindMappedAction(Tag) }; jassert( Out ) return Out; }

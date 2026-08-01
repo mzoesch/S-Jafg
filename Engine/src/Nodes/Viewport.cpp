@@ -109,7 +109,8 @@ void Jafg::LViewport::DispatchInputs()
 
     for (auto It{this->KeyDelegates.begin()}; It != this->KeyDelegates.end();)
     {
-        if (!this->Surface.HasConsumableKey(It->Key) || this->Surface.HasConsumableKeyState(It->Key, It->Flags))
+        auto Key{this->Surface.GetConsumableKey(It->Key)};
+        if (!Key || !!(Key->State & It->Flags))
         {
             if (It->G)
             {
@@ -120,7 +121,7 @@ void Jafg::LViewport::DispatchInputs()
             continue;
         }
 
-        if (It->F && It->F())
+        if (It->F && It->F(*Key))
         {
             if (It->G)
             {
@@ -158,8 +159,6 @@ void Jafg::LViewport::DispatchInputs()
             }
             if (!bHandled)
             {
-                this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton));
-                this->Surface.ConsumeWeakKey(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton));
                 this->HandleReply({TClassStorage<WNode>{}});
             }
         }
@@ -272,7 +271,9 @@ void Jafg::LViewport::Tick()
 
     this->OnEarlyTick.Broadcast();
 
-    for (WUserWidget* Widget : this->TopLevelWidgets)
+    this->DispatchInputs();
+
+    for (WUserWidget* Widget: this->TopLevelWidgets)
     {
         if (Widget->ShouldNowTick())
         {
@@ -405,7 +406,7 @@ void Jafg::LViewport::TearDown()
     {
         this->TopLevelWidgets.back()->MarkAsGarbage_v2();
     }
-    this->TopLevelWidgets.clear();
+    check(this->TopLevelWidgets.size() == 0)
 }
 
 void Jafg::LViewport::_AddWidget(WUserWidget* Widget)

@@ -4,7 +4,7 @@
 
 #include "Engine/Jxx.h"
 #include "Rhi/StaticMesh.h"
-#include "Subsystems/EngineSubsystem.h"
+#include "Framework/EngineSubsystem.h"
 #include "MeshSubsystem.generated.h"
 
 namespace Jafg

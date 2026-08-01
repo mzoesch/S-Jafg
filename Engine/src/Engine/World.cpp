@@ -8,13 +8,13 @@
 #include "Framework/PersonaController.h"
 #include "Physics/PhysicCompontent.h"
 #include "User/LocalEgo.h"
-#include "Subsystems/SubsystemCollection.h"
-#include "Subsystems/WorldSubsystem.h"
+#include "Framework/SubsystemCollection.h"
+#include "Framework/WorldSubsystem.h"
 #include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
 #include "User/UserPreferences.h"
-#include "Components/ActorComponentForward.h"
-#include "Components/StaticMeshComponent.h"
+#include "Framework/ActorComponentForward.h"
+#include "Framework/StaticMeshComponent.h"
 #include "Framework/MaterialSubsystem.h"
 
 LString Jafg::LWorldParameters::ToString() const
@@ -223,10 +223,12 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
 
     auto& WorldData{ActorInfo.WorldData};
     // model...
-    WorldData.view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up);
+    // WorldData.view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up);
+    WorldData.view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
     WorldData = {
-        .view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up),
-        .proj = glm::perspectiveRH_ZO(
+        // .view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up),
+        .view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up),
+        .proj = maths::perspective<LWorldReal,world_qual>(
             Eye.vert_fov,
             Info.VkViewport.width / Info.VkViewport.height,
             Eye.near_frustum, Eye.far_frustum

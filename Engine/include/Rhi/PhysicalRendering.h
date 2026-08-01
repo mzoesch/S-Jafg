@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Material.h"
-#include "Components/ActorComponentForward.h"
+#include "Framework/ActorComponentForward.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/Objects.h"
 
