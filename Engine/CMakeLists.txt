@@ -1,6 +1,26 @@
 # Copyright mzoesch. All rights reserved.
 
 include_guard(_guard)
+
+function(jafg_get_manifest_hash OUT_HASH FILE_PATH)
+    set(${OUT_HASH} "NONE" PARENT_SCOPE)
+
+    foreach(LINE IN LISTS JAFG_REMOTE_CONTENT_FILES)
+        # Split line into hash and path
+        string(REGEX MATCH "^([^ ]+)[ ]+(.+)$" MATCHED "${LINE}")
+
+        if(MATCHED)
+            set(HASH "${CMAKE_MATCH_1}")
+            set(PATH "${CMAKE_MATCH_2}")
+
+            if(PATH STREQUAL "${FILE_PATH}")
+                set(${OUT_HASH} "${HASH}" PARENT_SCOPE)
+                return()
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
@@ -376,6 +396,82 @@ if(_guard)
         "${JAFG_ENGINE_ROOT}/Vendor/slang-${SLANG_VERSION}-lnx-x86_64.zip"
         "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/slang-${SLANG_VERSION}-linux-x86_64.zip"
         )
+
+    ###############################################################################
+    # Content
+    message(STATUS "Including jafg content...")
+    set(JAFG_CONTENT_FILES "${JAFG_ENGINE_ROOT}/Content/lfs")
+    if(NOT DEFINED JAFG_CONTENT_VERSION)
+        set(JAFG_CONTENT_VERSION "v${_detail_jafg_version}")
+    endif()
+    message(STATUS "JAFG_CONTENT_VERSION: ${JAFG_CONTENT_VERSION}")
+    set(JAFG_REMOTE_CONTENT_SERVER "https://api.zoeschinger.com/get-jafg-content/${JAFG_CONTENT_VERSION}/" CACHE STRING "Remote content server URL for Jafg content files.")
+    file(STRINGS "${JAFG_ENGINE_ROOT}/Content/lfs" JAFG_CONTENT_FILES)
+
+    if(DEFINED ENV{JAFG_UPGRADE_CONTENT})
+        set(JAFG_MANIFEST_URL "${JAFG_REMOTE_CONTENT_SERVER}manifest")
+        set(JAFG_REMOTE_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/Content/manifest")
+        message(STATUS "Downloading content manifest from [${JAFG_MANIFEST_URL}] to [${JAFG_REMOTE_MANIFEST}] ...")
+        file(DOWNLOAD
+            "${JAFG_MANIFEST_URL}"
+            "${JAFG_REMOTE_MANIFEST}"
+            SHOW_PROGRESS
+            STATUS download_status
+            )
+        list(GET download_status 0 download_result)
+        if(NOT download_result EQUAL 0)
+            message(FATAL_ERROR "Failed to download content manifest from [${JAFG_MANIFEST_URL}].")
+        endif()
+        file(STRINGS "${JAFG_REMOTE_MANIFEST}" JAFG_REMOTE_CONTENT_FILES)
+        foreach(line IN LISTS JAFG_REMOTE_CONTENT_FILES)
+            message(VERBOSE "REMOTE: ${line}")
+        endforeach()
+    endif()
+
+    foreach(line IN LISTS JAFG_CONTENT_FILES)
+        set(_content_file "${JAFG_ENGINE_ROOT}/Content/${line}")
+        set(_content_url "${JAFG_REMOTE_CONTENT_SERVER}${line}")
+        if((NOT EXISTS "${_content_file}") OR DEFINED ENV{JAFG_FORCE_CONTENT_UPDATE})
+            message(STATUS "Downloading [${_content_url}] to [${_content_file}] ...")
+            file(DOWNLOAD
+                "${_content_url}"
+                "${_content_file}"
+                SHOW_PROGRESS
+                STATUS download_status
+                )
+            list(GET download_status 0 download_result)
+            if(NOT download_result EQUAL 0)
+                message(FATAL_ERROR "[${_content_file}]: Failed to download content file from [${_content_url}].")
+            endif()
+        elseif(DEFINED ENV{JAFG_UPGRADE_CONTENT})
+            if(NOT DEFINED JAFG_REMOTE_CONTENT_FILES)
+                message(FATAL_ERROR "JAFG_REMOTE_CONTENT_FILES is not defined.")
+            endif()
+            file(SHA256 "${_content_file}" _hash)
+            file(RELATIVE_PATH _relative_content_file "${JAFG_ENGINE_ROOT}/Content" "${_content_file}")
+            jafg_get_manifest_hash(_remote_hash "${_relative_content_file}")
+            if(_remote_hash STREQUAL "NONE")
+                message(STATUS "[${_relative_content_file}]: Not in the remote manifest. Deleting.")
+                file(REMOVE "${_content_file}")
+            elseif(_hash STREQUAL _remote_hash)
+                message(STATUS "[${_relative_content_file}]: Up to date.")
+            else()
+                message(STATUS "[${_relative_content_file}]: Outdated. Local(${_hash}) != Remote(${_remote_hash}). Downloading...")
+                file(DOWNLOAD
+                    "${_content_url}"
+                    "${_content_file}"
+                    SHOW_PROGRESS
+                    STATUS download_status
+                    )
+                list(GET download_status 0 download_result)
+                if(NOT download_result EQUAL 0)
+                    message(FATAL_ERROR "[${_relative_content_file}]: Failed to download content file from [${_content_url}].")
+                endif()
+            endif()
+        else()
+            message(STATUS "Skipping download of [${_content_file}].")
+        endif()
+    endforeach()
 
     ###############################################################################
     # Fonts
