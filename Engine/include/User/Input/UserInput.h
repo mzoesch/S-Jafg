@@ -44,7 +44,7 @@ public:
 
     //#
     //# Deactivate a context. Nullptr is ok to pass.
-    //# @return True if the context was activated.
+    //# @return True if the context / at least one context was deactivated.
     //#
     FORCEINLINE bool DeactivateContext(LUserInputContext const& Context) noexcept { return this->DeactivateContext(Context.GetTag()); }
     ENGINE_API  bool DeactivateContext(LUserInputTag Tag) noexcept;
@@ -52,6 +52,7 @@ public:
     ENGINE_API  bool DeactivateContexts(TArray<LUserInputContext const*> const& Contexts) noexcept;
     ENGINE_API  bool DeactivateContexts(TArray<LUserInputTag> const& Names) noexcept;
     ENGINE_API  bool DeactivateContexts(TArray<LStringView> const& Names) noexcept;
+    ENGINE_API  bool DeactivateAllContexts() noexcept;
 
     //#
     //# Push all current active contexts as a snapshot to a stack.

@@ -299,6 +299,12 @@ FORCEINLINE void LTabOverlayPossibilities::UnregisterOverlay(WTabOverlay& TabOve
     auto It{algo::find(this->Overlays, &TabOverlay, algo::universal_ptr_noop)};
     check(It != this->Overlays.end())
     this->Overlays.erase(It);
+
+    if (this->Selected == &TabOverlay)
+    {
+        this->Selected = nullptr;
+    }
+
     return;
 }
 

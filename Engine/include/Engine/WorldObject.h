@@ -66,6 +66,7 @@ public:
     //# DisplayName is for editor purposes only. Do not query for it, try to find objects with the name.
     //# A display name can change at any time and might be localized ect.
     //#
+    CLASS_FIELD(Identity)
     LString EditorName;
     NODISCARD FORCEINLINE LString const& GetEditorNameOrDefault() const noexcept
     {
@@ -76,6 +77,19 @@ public:
         return this->EditorName;
     }
 #endif /* JAFG_WITH_EDITOR */
+
+    NODISCARD AWorldObject& CloneEntry() const noexcept;
+    NODISCARD auto Clone(this auto&& Self) noexcept -> std::remove_cvref_t<decltype(Self)>&
+    {
+        auto& Result{*StaticCastChecked<std::remove_cvref_t<decltype(Self)>>(&Self.CloneEntry())};
+        MakeCxxObjectFinal(Result);
+        return Result;
+    }
+
+protected:
+
+    //# The result of this function must be deferred.
+    virtual AWorldObject& CloneImpl(AWorldObject* Object) const noexcept;
 };
 
 //# Do not use NewObject for AWorldObjects; instead use these.

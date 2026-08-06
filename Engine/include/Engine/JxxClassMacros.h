@@ -264,6 +264,18 @@ ConstructionHelper                                                    \
     }
 
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FC
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FC already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FC */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FC(ObjectType, Name) \
+    [](::Jafg::JCxxClass const& Origin, ::Jafg::JCxxClass* Target) -> void \
+    {\
+         return ObjectType ::\
+            JAFG_JOIN_OUTER_TWO(_FastClone_, Name)\
+            (*StaticCastChecked< ObjectType >(&Origin), StaticCastChecked< ObjectType >(Target)); \
+    }
+
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY */
@@ -414,10 +426,21 @@ public:                                                                        \
 private: /* Restore default visibility. */
 
 
-#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config
-    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."
-#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
-#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember) \
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_FC
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_FC already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_FC */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_FC(MyClassMember) \
+    inline static void JAFG_JOIN_OUTER_FOUR(_, FastClone, _, MyClassMember)(Derived const& Origin, Derived* Target) \
+    {                \
+        check( Target )                                                                         \
+        Target->MyClassMember = Origin.MyClassMember;                          \
+    }
+
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_RW
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_RW already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_RW */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_RW(MyClassMember) \
     inline static void JAFG_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(Derived* Class, ::LStringView _InValue) \
     {                \
         check( Class )                                                                         \
@@ -427,6 +450,12 @@ private: /* Restore default visibility. */
     {                                                                                      \
         return ::serde::ToString(Class.MyClassMember);                                \
     } \
+
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember) \
     inline static bool JAFG_JOIN_OUTER_FOUR(_, IsFieldModified, _, MyClassMember)(Derived const& Class)\
     {\
         return Class.MyClassMember.IsModified(); \
@@ -556,6 +585,27 @@ private: /* Restore default visibility. */
     void _CommonCtorLogic(auto const& Init)
 
 //#
+//# Default behavior for all memory allocations with an additional body to execute code.
+//#
+//# Use as follows:
+//#     /* The API is only required if you need external linkage and the class itself is not exported. */
+//#     DEFAULT_OBJECT_CONSTRUCTORS_EXTERNAL_BODY(CxxClass, <API>)
+//#
+//#     /* CxxClass.cpp */
+//#     void CxxClass::Ctor()
+//#     {
+//#        <...>
+//#     }
+//#
+#ifdef DEFAULT_OBJECT_CONSTRUCTORS_EXTERNAL_BODY
+    #error "DEFAULT_OBJECT_CONSTRUCTORS_EXTERNAL_BODY already defined."
+#endif /* DEFAULT_OBJECT_CONSTRUCTORS_EXTERNAL_BODY */
+#define DEFAULT_OBJECT_CONSTRUCTORS_EXTERNAL_BODY(MyClassName, ...) \
+    DEFAULT_OBJECT_DYNAMIC_CTOR_BODY(MyClassName) { this->Ctor(); }           \
+    DEFAULT_OBJECT_STATIC_CTOR_BODY(MyClassName) { this->Ctor(); } \
+    __VA_ARGS__ void Ctor();
+
+//#
 //# Default behavior for all memory allocations.
 //#
 #ifdef DEFAULT_WORLD_CONSTRUCTORS
@@ -583,6 +633,27 @@ private: /* Restore default visibility. */
     void _CommonCtorLogic(auto const& Init)
 
 //#
+//# Default behavior for all memory allocations with an additional body to execute code.
+//#
+//# Use as follows:
+//#     /* The API is only required if you need external linkage and the class itself is not exported. */
+//#     DEFAULT_WORLD_CONSTRUCTORS_EXTERNAL_BODY(CxxClass, <API>)
+//#
+//#     /* CxxClass.cpp */
+//#     void CxxClass::Ctor()
+//#     {
+//#        <...>
+//#     }
+//#
+#ifdef DEFAULT_WORLD_CONSTRUCTORS_EXTERNAL_BODY
+    #error "DEFAULT_WORLD_CONSTRUCTORS_EXTERNAL_BODY already defined."
+#endif /* DEFAULT_WORLD_CONSTRUCTORS_EXTERNAL_BODY */
+#define DEFAULT_WORLD_CONSTRUCTORS_EXTERNAL_BODY(MyClassName, ...) \
+    DEFAULT_WORLD_DYNAMIC_CTOR_BODY(MyClassName) { this->Ctor(); }           \
+    DEFAULT_WORLD_STATIC_CTOR_BODY(MyClassName) { this->Ctor(); } \
+    __VA_ARGS__ void Ctor();
+
+//#
 //# Default behavior for all memory allocations.
 //#
 #ifdef DEFAULT_NODE_CONSTRUCTORS
@@ -608,6 +679,27 @@ private: /* Restore default visibility. */
     DEFAULT_NODE_DYNAMIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); }           \
     DEFAULT_NODE_STATIC_CTOR_BODY(MyClassName) { this->_CommonCtorLogic(Init); } \
     void _CommonCtorLogic(auto const& Init)
+
+//#
+//# Default behavior for all memory allocations with an additional body to execute code.
+//#
+//# Use as follows:
+//#     /* The API is only required if you need external linkage and the class itself is not exported. */
+//#     DEFAULT_NODE_CONSTRUCTORS_EXTERNAL_BODY(CxxClass, <API>)
+//#
+//#     /* CxxClass.cpp */
+//#     void CxxClass::Ctor()
+//#     {
+//#        <...>
+//#     }
+//#
+#ifdef DEFAULT_NODE_CONSTRUCTORS_EXTERNAL_BODY
+    #error "DEFAULT_NODE_CONSTRUCTORS_EXTERNAL_BODY already defined."
+#endif /* DEFAULT_NODE_CONSTRUCTORS_EXTERNAL_BODY */
+#define DEFAULT_NODE_CONSTRUCTORS_EXTERNAL_BODY(MyClassName, ...) \
+    DEFAULT_NODE_DYNAMIC_CTOR_BODY(MyClassName) { this->Ctor(); }           \
+    DEFAULT_NODE_STATIC_CTOR_BODY(MyClassName) { this->Ctor(); } \
+    __VA_ARGS__ void Ctor();
 
 //#
 //# Default dynamic ctor for a JCxxClasses. Mandatory. It may be used to declare extra information for all

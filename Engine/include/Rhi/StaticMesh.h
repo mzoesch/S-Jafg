@@ -130,7 +130,7 @@ struct LStaticMesh final
         this->IndexBuffer.free();
     }
 
-    ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const* FallbackInstance = nullptr) const;
+    ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance) const;
     ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
 
     NODISCARD FORCEINLINE constexpr LWorldAabb3 const& GetAabb() const noexcept { return this->Aabb; }

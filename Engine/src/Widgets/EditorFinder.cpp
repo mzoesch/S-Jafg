@@ -19,7 +19,7 @@
 #include "Nodes/DropDown.h"
 #include "Nodes/EditableTextButton.h"
 #include "Widgets/AssetInspectors.h"
-#include "Widgets/Editor.h"
+#include "Framework/Editor.h"
 
 void Jafg::WFinder::Construct()
 {

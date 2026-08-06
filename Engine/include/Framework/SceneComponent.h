@@ -30,6 +30,17 @@ protected:
 
 public:
 
+    virtual void ParentTick(f32 Dt) override
+    {
+        Super::ParentTick(Dt);
+        for (auto& Child: this->Children)
+        {
+            if (Child->bTick)
+            {
+                Child->ParentTick(Dt);
+            }
+        }
+    }
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     void SetTransform(LWorldTrans const& Transform, ESceneSweep SweepType = ESceneSweep::Teleport) noexcept { check(SweepType == ESceneSweep::Teleport) this->Trans = Transform; }
@@ -47,16 +58,21 @@ public:
     NODISCARD FORCEINLINE constexpr LWorldQuat const& GetRotator() const noexcept { return this->Trans.r; }
     NODISCARD FORCEINLINE constexpr LWorldVec3 const& GetScale() const noexcept { return this->Trans.s; }
 
-    NODISCARD FORCEINLINE TArray<ASceneComponent*> const& GetChildren() const noexcept { return this->Children; }
+    NODISCARD FORCEINLINE TArray<TJxxUnique<ASceneComponent>> const& GetChildren() const noexcept { return this->Children; }
 
     void SetAabb(LWorldAabb3 const& InAabb) noexcept { this->Aabb = InAabb; }
     NODISCARD FORCEINLINE constexpr LWorldAabb3 const& GetAabb() const noexcept { return this->Aabb; }
+
+protected:
+
+    virtual AWorldObject& CloneImpl(AWorldObject* Object) const noexcept override;
 
 private:
 
     CLASS_FIELD(EditorVisible)
     LWorldTrans Trans{ maths::identity<LWorldTrans> };
-    TArray<ASceneComponent*> Children;
+    TArray<TJxxUnique<ASceneComponent>> Children;
+    CLASS_FIELD(Identity)
     LWorldAabb3 Aabb{ maths::identity<LWorldAabb3> };
 };
 

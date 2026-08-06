@@ -227,31 +227,31 @@ void Jafg::LEngine::Initialize()
             JAFG_GORGEOUS_BREAK_MSG("Broken through CLI command [_Break].")
         })});
 
-        this->GetCommandLineInterface().RegisterCommandChecked({"PrintWorldParams", "Prints the world parameters to the standard output.",
-        LCommandParams{}
-        .Token(LCliType::Type<LWorld>())
-        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
-        {
-            check(Args.GetArgCount() == 1)
-            LWorld* World{Args[0].GetAs<LWorld>()};
-            OutResponse.StdOut = algo::sprintf("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
-            OutResponse.Rc = ECommandReturnCode::Success;
-        })});
+        // this->GetCommandLineInterface().RegisterCommandChecked({"PrintWorldParams", "Prints the world parameters to the standard output.",
+        // LCommandParams{}
+        // .Token(LCliType::Type<LWorld>())
+        // .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
+        // {
+        //     check(Args.GetArgCount() == 1)
+        //     LWorld* World{Args[0].GetAs<LWorld>()};
+        //     OutResponse.StdOut = algo::sprintf("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
+        //     OutResponse.Rc = ECommandReturnCode::Success;
+        // })});
 
-        this->GetCommandLineInterface().RegisterCommandChecked({"Browse", "Browses to an URL.",
-        LCommandParams{}
-        .Token(LCliType::Type<LWorld>())
-        .Token(LCliType::Type<LString>())
-        .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
-        {
-            check(Args.GetArgCount() == 2)
-            check(Detail::GMutableEngine)
-            LWorld& World{*Args[0].GetAs<LWorld>()};
-            LString Url{Args[1].GetAs<LString>()};
-            Detail::GMutableEngine->Browse(World, Url);
-            OutResponse.Rc = ECommandReturnCode::Success;
-            OutResponse.StdOut = algo::sprintf("Browsing to URL [{}] in world [{}]", Url, World.GetHumanReadableName());
-        })});
+        // this->GetCommandLineInterface().RegisterCommandChecked({"Browse", "Browses to an URL.",
+        // LCommandParams{}
+        // .Token(LCliType::Type<LWorld>())
+        // .Token(LCliType::Type<LString>())
+        // .Exec([](LCommandExecutionInfo const&, LCommandArgs const& Args, LCommandExecutionResponse& OutResponse)
+        // {
+        //     check(Args.GetArgCount() == 2)
+        //     check(Detail::GMutableEngine)
+        //     LWorld& World{*Args[0].GetAs<LWorld>()};
+        //     LString Url{Args[1].GetAs<LString>()};
+        //     Detail::GMutableEngine->Browse(World, Url);
+        //     OutResponse.Rc = ECommandReturnCode::Success;
+        //     OutResponse.StdOut = algo::sprintf("Browsing to URL [{}] in world [{}]", Url, World.GetHumanReadableName());
+        // })});
 
         this->GetCommandLineInterface().RegisterCommandChecked({"_Trap", "Traps jafg.",
         LCommandParams{}
@@ -385,9 +385,6 @@ void Jafg::LEngine::TearDown()
     this->Outer.TearDown();
 
     Tasks::Private::StopAndJoinRemainingThreads();
-
-    LOG_VERBOSE(LogJafgInternal, "Deallocating  {} registered levels.", this->RegisteredLevels.size())
-    algo::orphan(&this->RegisteredLevels);
 
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 
@@ -581,7 +578,7 @@ void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
     }
 }
 
-Jafg::Detail::LWorldTrackInitializer Jafg::LEngine::SummonWorld(Detail::LWorldTrack::CreateInfo Info)
+void Jafg::LEngine::SummonWorld(LWorldCreateInfo Info, TFunction2<void(LWorld& World)> OnFinishedLoading /* = {} */)
 {
     check(Tasks::IsOnMasterThread())
     if constexpr (IS_COMPILED_LOG(LogEngine, Warning))
@@ -589,7 +586,8 @@ Jafg::Detail::LWorldTrackInitializer Jafg::LEngine::SummonWorld(Detail::LWorldTr
     {
         LOG_WARNING(LogEngine, "A world with the name [{}] is already summoned.", Info.HumanReadableName)
     }
-    return {LWorldStorage{&this->Tracks.emplace_back(std::move(Info)).GetWorld()}};
+
+    this->Tracks.emplace_back(std::move(Info), std::move(OnFinishedLoading));
 }
 
 bool Jafg::LEngine::IsWorldValid(LWorld const* World) const noexcept
@@ -604,104 +602,40 @@ bool Jafg::LEngine::IsWorldValid(LWorld const* World) const noexcept
     });
 }
 
-bool Jafg::LEngine::RegisterLevel(LLevel Level)
-{
-    if (this->IsLevelRegistered(Level.Identifier))
-    {
-        return false;
-    }
-
-    LOG_VERBOSE(LogEngine, "Registering level [{}].", Level.Identifier)
-    this->RegisteredLevels.emplace_back(std::move(Level));
-
-    return true;
-}
-
-Jafg::LWorld& Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LString Url, Detail::LWorldTrack::LCallbacks Callbacks)
+void Jafg::LEngine::Browse(Detail::LWorldTrack& Track, LWorldCreateInfo CreateInfo, TFunction2<void(LWorld& World)> OnFinishedLoading /* = {} */)
 {
     check(Track.IsValid())
     check(!Track.IsWaitingForTravel())
+    check(!Track.OnFinishedLoading)
 
-    LOG_VERBOSE(LogEngine, "[{}]: Browsing world to [{}].", Track.ChildWorld->GetHumanReadableName(), Url)
+    LOG_VERBOSE(LogEngine, "[{}]: Queued world browsing with [{}] policies."
+        , Track.ChildWorld->GetHumanReadableName(), CreateInfo.SupremePoliciesClass.GetClassOrDefault().GetFullyQualifiedName())
 
-    if (!this->IsTrackUrlInternal(Url))
-    {
-        // TODO: Not implemented.
-        std::unreachable();
-    }
-
-    if (auto Idx{Url.find('?')}; Idx != LString::npos)
-    {
-        if (const LString LevelUrl{ Url.substr(0, Idx) }; this->IsLevelRegistered(LevelUrl) == false)
-        {
-            LOG_FATAL(LogEngine, "Level [{}] is not registered. Retrieved from URL [{}].", LevelUrl, Url)
-        }
-    }
-    else
-    {
-        if (this->IsLevelRegistered(Url) == false)
-        {
-            LOG_FATAL(LogEngine, "Level [{}] is not registered.", Url)
-        }
-    }
-
-    Track.TravelUrl = std::move(Url);
-    Track.Callbacks = std::move(Callbacks);
-
-    return Track.GetWorld();
-}
-
-bool Jafg::LEngine::IsTrackUrlInternal(LString const& Url) const
-{
-    if (Url.empty())
-    {
-        return true;
-    }
-
-    /* We have to implement this in the future. If not internal, then connect to a remote server. */
-    return true;
+    Track.CreateInfo = std::move(CreateInfo);
+    Track.OnFinishedLoading = std::move(OnFinishedLoading);
 }
 
 bool Jafg::LEngine::TravelTrack(Detail::LWorldTrack& Track)
 {
-    check(Track.ChildWorld.get())
     check(Track.IsWaitingForTravel())
 
-    LOG_INFO(LogEngine, "Traveling [{}] to [{}].", Track.ChildWorld->GetHumanReadableName(), Track.TravelUrl)
+    LOG_INFO(LogEngine, "Traveling [{}] with [{}] policies."
+        , Track.CreateInfo->HumanReadableName, Track.CreateInfo->SupremePoliciesClass.GetClassOrDefault().GetFullyQualifiedName())
 
-    LLevel* Level{this->GetLevelByInternalUrl(Track.TravelUrl)};
-    if (Level == nullptr)
+    /* Extreemly dirty... But #LWorldTrack::ChildWorld has to be valid during the ctor of #LWorld. */
+    (void)new LWorld{std::move(*Track.CreateInfo), Track};
+    Track.CreateInfo.reset();
+    check(Track.ChildWorld.get())
+    check(Track.ChildWorld->GetWorldState() == EWorldState::Running)
+    check(!Track.ChildWorld->GetHumanReadableName().empty())
+
+    if (Track.OnFinishedLoading)
     {
-        LOG_ERROR(LogEngine, "Failed to resolve URL for any world [{}].", Track.TravelUrl)
-        algo::orphan(&Track.TravelUrl);
-        return false;
+        Track.OnFinishedLoading(*Track.ChildWorld);
+        Track.OnFinishedLoading = {};
     }
-
-    if (Track.ChildWorld->GetWorldState() == EWorldState::Running)
-    {
-        LString OldHumanReadableName{Track.ChildWorld->GetHumanReadableName()};
-        Track.ChildWorld = std::make_unique<LWorld>(std::move(OldHumanReadableName));
-    }
-
-    check(Track.ChildWorld->GetWorldState() == EWorldState::PreInitializing)
-    check(Track.ChildWorld->GetHumanReadableName().empty() == false)
-
-    Track.ChildWorld->InitializeWorld(*Level, std::move(Track.TravelUrl));
-    check(Track.TravelUrl.empty())
 
     return true;
-}
-
-Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(LString const& Url)
-{
-    if (const auto Barrier{ Url.find('?') }; Barrier == LString::npos)
-    {
-        return algo::find_pointer(this->RegisteredLevels, Url, &LLevel::Identifier);
-    }
-    else
-    {
-        return algo::find_pointer(this->RegisteredLevels, Url.substr(0, Barrier), &LLevel::Identifier);
-    }
 }
 
 #if JAFG_WITH_FOREIGN_SUPPORT

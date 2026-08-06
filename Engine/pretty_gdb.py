@@ -59,6 +59,30 @@ class GlmVec_Printer(JafgPrettyStringPrinter):
             return None
 
 
+class GlmQua_Printer(JafgPrettyStringPrinter):
+    def __init__(self, val, str_repr):
+        super().__init__(val, str_repr)
+        self.patterns = ['^glm::qua<[\w\s]+,\s\(glm::qualifier\)\d>$', ]
+        return
+
+    def to_string(self):
+        return 'qua({}, {}, {}, {})'.format(self.val['x'], self.val['y'], self.val['z'], self.val['w'])
+
+
+class MathsTrans_Printer(JafgPrettyStringPrinter):
+    def __init__(self, val, str_repr):
+        super().__init__(val, str_repr)
+        self.patterns = ['^TTrans<[\w\s]+,\s\(glm::qualifier\)\d>$', ]
+        return
+
+    def to_string(self):
+        return 't({}, {}, {}) r({}, {}, {}, {}) s({}, {}, {})'.format(
+            self.val['t']['x'], self.val['t']['y'], self.val['t']['z'],
+            self.val['r']['x'], self.val['r']['y'], self.val['r']['z'], self.val['r']['w'],
+            self.val['s']['x'], self.val['s']['y'], self.val['s']['z']
+            )
+
+
 class Color_Printer(JafgPrettyStringPrinter):
     def __init__(self, val, str_repr):
         super().__init__(val, str_repr)
@@ -159,6 +183,8 @@ def jafg_pretty_lookup(val: any) -> any:
     printers = [
         CXX11_Path,
         GlmVec_Printer,
+        GlmQua_Printer,
+        MathsTrans_Printer,
         Color_Printer,
         LinearColor_Printer,
         JafgWhitespace_Printer,

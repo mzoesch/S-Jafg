@@ -57,6 +57,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogGenPrevAssets,                JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogHyperlane,                    JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogInformation,                  JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogJafgInternal,                 JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogJxx,                          JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogLackey,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogLaunch,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogLowLevel,                     JAFG_LOG_DEFAULT_VERBOSITY                             )

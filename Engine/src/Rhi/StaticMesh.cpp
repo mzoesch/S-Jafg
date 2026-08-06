@@ -3,7 +3,7 @@
 #include "Rhi/StaticMesh.h"
 #include "Engine/Engine.h"
 #include "Rhi/RenderInfo.h"
-#include "Widgets/Editor.h"
+#include "Framework/Editor.h"
 #include "Widgets/EditorFactory.h"
 #include "User/UserPreferences.h"
 #include "Framework/MeshSubsystem.h"
@@ -421,16 +421,8 @@ void Jafg::LStaticMesh::LoadToDevice()
     this->IndexCount = static_cast<u32>(this->Indices.size());
 }
 
-void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const* FallbackInstance) const
+void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance) const
 {
-    checkCode
-    (
-        if (FallbackInstance)
-        {
-            check(FallbackInstance->Material.get())
-        }
-    )
-
 #if JAFG_WITH_EDITOR
     /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
     if (!this->IsOnDevice())
@@ -440,25 +432,7 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
 #endif /* !JAFG_WITH_EDITOR */
     check(this->IsOnDevice())
 
-    LMaterialInstance const* InstancePtr{};
-    if (Info.PreferredMaterial)
-    {
-        InstancePtr = &*Info.PreferredMaterial;
-    }
-    else if (Info.UserPreferences.EditorMeshMaterialPreference)
-    {
-        InstancePtr = &**Info.UserPreferences.EditorMeshMaterialPreference;
-    }
-    else if (FallbackInstance)
-    {
-        InstancePtr = FallbackInstance;
-    }
-    else
-    {
-        LOG_FATAL(LogRhi, "[{}]: No material given.", this->GetPath())
-    }
-    check(InstancePtr)
-    LMaterialInstance const& Instance{*InstancePtr};
+    check(Instance.Material.get())
 
     auto& Material{*Instance.Material};
     auto& Pipeline{Material.Pipeline};

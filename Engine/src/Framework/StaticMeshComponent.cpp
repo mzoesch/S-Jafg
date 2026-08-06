@@ -28,6 +28,35 @@ void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef Instan
     check(!this->MaterialInstance || !!this->MaterialInstance->Material.get())
 }
 
+namespace
+{
+
+NODISCARD Jafg::LMaterialInstance const& GetPreferredMaterialInstance(Jafg::LActorRenderInfo const& Info, Jafg::LMaterialInstance const* Owned) noexcept
+{
+    Jafg::LMaterialInstance const* InstancePtr{};
+    if (Info.PreferredMaterial)
+    {
+        InstancePtr = &*Info.PreferredMaterial;
+    }
+    else if (Info.UserPreferences.EditorMeshMaterialPreference)
+    {
+        InstancePtr = &**Info.UserPreferences.EditorMeshMaterialPreference;
+    }
+    else if (Owned)
+    {
+        InstancePtr = Owned;
+    }
+    else
+    {
+        LOG_FATAL(LogRhi, " No material given.")
+    }
+    check(InstancePtr)
+
+    return *InstancePtr;
+}
+
+} /* ~Namespace <Anonymous> */
+
 void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
 {
     checkCode
@@ -37,7 +66,34 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
             LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
         }
     )
-    this->Mesh->Render(Info, this->GetTransform(), this->MaterialInstance.get());
+    this->Mesh->Render(Info, this->GetTransform(), GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
+}
+
+void Jafg::LStaticMeshRenderable::Render(LActorRenderInfo const& Info) const
+{
+    checkCode
+    (
+        if (!this->Mesh.get())
+        {
+            LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
+        }
+    )
+    this->Mesh->Render(Info, this->GetTransform(), GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
+}
+
+void Jafg::LStaticMeshRenderable::ForceRenderWithOwnedMaterial(LActorRenderInfo const& Info) const
+{
+    checkCode
+    (
+        if (!this->Mesh.get())
+        {
+            LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
+        }
+    )
+
+    check(this->MaterialInstance.get())
+
+    this->Mesh->Render(Info, this->GetTransform(), *this->MaterialInstance);
 }
 
 void Jafg::LStaticMeshRenderable::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)

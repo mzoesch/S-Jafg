@@ -196,7 +196,25 @@ void Populate(UnresolvedMaterial* Material, UnresolvedMaterial const& From) noex
     DETAIL_ENGINE_POPULATE_MEMBER(PipelineColorBlendState)
 #undef DETAIL_ENGINE_POPULATE_MEMBER
 
-    Material->Properties.insert_range(Material->Properties.cbegin(), From.Properties);
+    for (auto& Property: From.Properties)
+    {
+        if (!algo::contains(Material->Properties, Property.key, &rhi::material_template::property::key))
+        {
+            Material->Properties.emplace_back(Property);
+        }
+    }
+    checkCode
+    (
+        std::unordered_set<LString> Set;
+        for (auto& Property: Material->Properties)
+        {
+            if (!Set.insert(Property.key).second)
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Duplicate property key [{}] after populating from [{}]."
+                    , Material->Path, Property.key, From.Path)
+            }
+        }
+    )
 }
 
 void TopDownPopulate(TArray<UnresolvedMaterial*> const& Unresolved) noexcept

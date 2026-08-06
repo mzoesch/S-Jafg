@@ -60,6 +60,7 @@ struct LRenderTarget
     {
         this->MsaaTarget.BindlessIndex = Value;
     }
+    //# Internal method. Do not use!!!
     FORCEINLINE constexpr void _SetResolvedBindlessIndex(i64 Value) const noexcept
     {
         check(this->ResolvedTarget.has_value())

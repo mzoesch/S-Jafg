@@ -197,7 +197,7 @@ void Jafg::Detail::WImporter::Construct()
                         Assets.PushAsset(Target, {
                             .Texture = this->Path,
                             .Format = serde::from_string<vk::Format>(this->Format->GetContent()),
-                            .MipLevels = serde::from_string<u32>(this->MipLevels->GetContent()),
+                            .MipLevels = this->MipLevels->GetContent().empty() ? std::optional<u32>{} : serde::from_string<u32>(this->MipLevels->GetContent()),
                             .MaxSampleCount = serde::from_string<vk::SampleCountFlagBits>(this->MaxSampleCount->GetContent()),
                             });
 

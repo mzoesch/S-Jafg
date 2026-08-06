@@ -1021,49 +1021,6 @@ struct sort_weak_fn
 //# Weak implementation of the std::ranges::sort that does not require mathematically perfect comparisons.
 inline constexpr detail::sort_weak_fn sort_weak{};
 
-// NODISCARD FORCEINLINE constexpr auto wfind(ITERATOR Begin, ITERATOR End, const auto& Value) noexcept
-// {
-//     return std::find(Begin, End, Value);
-// }
-// NODISCARD FORCEINLINE constexpr auto wfind(RANGE Container, const auto& Value) noexcept
-// {
-//     return algo::wfind(algo::begin(Container), algo::end(Container), Value);
-// }
-//
-// //# Get a pointer to the found element or nullptr.
-// template<typename TProj = identity>
-// NODISCARD FORCEINLINE constexpr auto wfind_pointer(ITERATOR Begin, ITERATOR End, const auto& Value, TProj Proj = {}) noexcept -> decltype(&*Begin)
-// {
-//     if constexpr (std::is_same_v<TProj, algo::identity>)
-//     {
-//         if (auto It{std::find(Begin, End, Value)}; It != End)
-//         {
-//             return &*It;
-//         }
-//         return static_cast<decltype(&*Begin)>(nullptr);
-//     }
-//
-// #if JAFG_WITH_GCC || JAFG_WITH_CLANG
-//     #pragma GCC unroll 4
-// #endif /* JAFG_WITH_GCC || JAFG_WITH_CLANG */
-//     while (Begin != End && !(std::invoke(Proj, *Begin) == Value))
-//     {
-//         ++Begin;
-//     }
-//
-//     if (Begin != End)
-//     {
-//         return &*Begin;
-//     }
-//
-//     return static_cast<decltype(&*Begin)>(nullptr);
-// }
-// template<typename TProj = identity>
-// NODISCARD FORCEINLINE constexpr auto wfind_pointer(RANGE Container, const auto& Value, TProj Proj = {}) noexcept
-// {
-//     return algo::wfind_pointer(algo::begin(Container), algo::end(Container), Value, std::move(Proj));
-// }
-
 ///////////////////////////////////////////////////////////////////////////////
 // Time stuff
 
@@ -1074,13 +1031,35 @@ inline constexpr detail::sort_weak_fn sort_weak{};
 //#
 typedef std::chrono::steady_clock clock;
 
-inline decltype(auto) now() noexcept
+NODISCARD inline decltype(auto) now() noexcept
 {
     return clock::now();
 }
 
-template<typename T = f64, typename TRatio = std::chrono::seconds::period>
-inline T time_diff(clock::time_point A, clock::time_point B) noexcept
+using nanoseconds = std::chrono::nanoseconds;
+using microseconds = std::chrono::microseconds;
+using milliseconds = std::chrono::milliseconds;
+using seconds = std::chrono::seconds;
+using minutes = std::chrono::minutes;
+using hours = std::chrono::hours;
+using days = std::chrono::days;
+using weeks = std::chrono::weeks;
+using months = std::chrono::months;
+using years = std::chrono::years;
+
+using nanoseconds_ratio = nanoseconds::period;
+using microseconds_ratio = microseconds::period;
+using milliseconds_ratio = milliseconds::period;
+using seconds_ratio = seconds::period;
+using minutes_ratio = minutes::period;
+using hours_ratio = hours::period;
+using days_ratio = days::period;
+using weeks_ratio = weeks::period;
+using months_ratio = months::period;
+using years_ratio = years::period;
+
+template<typename T = f64, typename TRatio = seconds_ratio>
+NODISCARD inline T time_diff(clock::time_point A, clock::time_point B) noexcept
 {
     return std::chrono::duration_cast<std::chrono::duration<T, TRatio>>(B - A).count();
 }
@@ -1379,6 +1358,14 @@ FORCEINLINE constexpr std::string_view type_name() noexcept
     #error "Missing compiler implementation."
 #endif /* !JAFG_WITH_GCC */
 }
+
+//#
+//# For highly templated meta branches, the compiler often abbreviates types (or even elides them completely!!) or
+//# limits its template backtrace too much. If you find yourself in an irreversible code block, you might want to
+//# use this function to pretty print your templated types.
+//#
+template<typename... TTypes>
+consteval void static_type_name() noexcept { static_assert(always_false_v<TTypes...>, JAFG_FUNCTION_SIG); }
 
 struct raii_leave final
 {

@@ -8,6 +8,7 @@
 #include "Nodes/ButtonBase.h"
 #include "Nodes/Box.h"
 #include "Nodes/TextBox.h"
+#include "Framework/SupremePolicies.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -251,9 +252,11 @@ public:
     CLASS_FIELD(Config)
     TPreference<LString> EditorLastWorldName{ "Editor World" };
     CLASS_FIELD(Config)
-    TPreference<LString> EditorLastWorldLevelName;
+    TPreference<TSubclassOf<ASupremePolicies>> EditorLastWorldSupremePolicies;
     CLASS_FIELD(Config)
-    TPreference<bool> EditorAutoLaunchLastWorld;
+    TPreference<bool> EditorAutoLaunchLastWorld{ false };
+    CLASS_FIELD(Config)
+    TPreference<LString> EditorLastObjectCollection{ "Gym" };
     CLASS_FIELD(Config)
     TPreference<bool> EditorShowRate{ true };
     CLASS_FIELD(Config)
@@ -290,7 +293,15 @@ public:
     TPreference<f32> EditorGizmoVisualizationLength{ 500.0f };
 
     CLASS_FIELD(Config)
+    TPreference<f32> EditorActorFocusProjectedForwardMultiplier{ 1.4f };
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorActorFocusTransitionDuration{ 0.08f };
+
+    CLASS_FIELD(Config)
     TPreference<bool> EditorShowEyeTranslation{ false };
+
+    CLASS_FIELD(Config)
+    TPreference<LVec2u32> EditorPieDimensions{ LVec2u32{855, 475} };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Factories

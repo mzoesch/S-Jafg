@@ -5,7 +5,7 @@
 #include "Framework/AssetDiscoverer.h"
 #include "Framework/TextureSubsystem.h"
 #include "User/UserPreferences.h"
-#include "Widgets/Editor.h"
+#include "Framework/Editor.h"
 #include "Nodes/Text.h"
 #include "Nodes/VParent.h"
 #include "Nodes/VRegion.h"

@@ -3,7 +3,7 @@
 #include "Foreign/ForeignInclude.h"
 #include "Core/Parameter.h"
 #include "Engine/Engine.h"
-#include "Widgets/Editor.h"
+#include "Framework/Editor.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
@@ -22,21 +22,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
     LPluginLifetime::OnFinishedLoading();
     LOG_VERBOSE(LogJgcLifetime, "Loading Jgc plugin.")
 
-    check(Jafg::Detail::GMutableEngine)
-
-    LOG_VERBOSE(LogJgcLifetime, "Creating jgc levels.")
-#if JAFG_WITH_LOCAL_LAYER
-    if (!Jafg::Detail::GMutableEngine->RegisterLevel
-    (
-        Jafg::LLevel{
-            .Identifier = "LevelFrontend",
-            .SupremePoliciesClass = nullptr,//Jgc::AFwSupremePolicies::StaticClass(),
-            }
-    ))
-    {
-        LOG_WARNING(LogJgcLifetime, "Level [LevelFrontend] is already registered.")
-    }
-#endif /* JAFG_WITH_LOCAL_LAYER */
+    check(GEngine)
 
     if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() != 1)
     {
@@ -47,8 +33,6 @@ void LJgcPluginLifetime::OnFinishedLoading()
         auto const& Surface{Frontend.GetSurfaces()[0]};
         Jafg::ConstructWidget(Jafg::TNodeStaticInit<Jafg::WEditor>{Surface->GetViewport()});
     }
-
-    return;
 }
 
 } /* ~Namespace <Anonymous> */

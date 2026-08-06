@@ -28,7 +28,8 @@ public:
 #endif /* JAFG_DO_CHECKS */
 
     FORCEINLINE constexpr bool IsOwningPawnValid() const noexcept { return this->IsOwningActorValid(); }
-    FORCEINLINE CONSTEXPR_CHECK APawn& GetOwningPawn() const noexcept { return *StaticCast<APawn>(&this->GetOwningActor()); }
+    FORCEINLINE CONSTEXPR_CHECK APawn& GetOwningPawn() noexcept { return *StaticCast<APawn>(&this->GetOwningActor()); }
+    FORCEINLINE CONSTEXPR_CHECK APawn const& GetOwningPawn() const noexcept { return *StaticCast<APawn>(&this->GetOwningActor()); }
 
     //#
     //# Called when the PC changed from the pawn owning this component.

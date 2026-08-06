@@ -20,14 +20,7 @@ class ENGINE_API APawn : public AActor
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(APawn)
-    {
-        this->DefaultInit();
-    }
-
-private:
-
-    void DefaultInit();
+    DEFAULT_WORLD_CONSTRUCTORS_EXTERNAL_BODY(APawn)
 
 public:
 

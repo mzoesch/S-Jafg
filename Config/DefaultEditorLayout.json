@@ -13,20 +13,20 @@
                     {
                         "Dist": 0.45,
                         "Children": [
-                            "::Jafg::WWorldViewer",
+                            "::Jafg::WEditorWorldViewer",
                             "::Jafg::WFinder"
                         ]
                     },
                     {
                         "Dist": 0.25,
                         "Children": [
-                            "::Jafg::WWorldViewerHierarchy"
+                            "::Jafg::WEditorWorldViewerHierarchy"
                         ]
                     },
                     {
                         "Dist": 0.30,
                         "Children": [
-                            "::Jafg::WWorldViewerInspector"
+                            "::Jafg::WEditorWorldViewerInspector"
                         ]
                     }
                 ]

@@ -28,7 +28,8 @@ public:
 #endif /* JAFG_DO_CHECKS */
 
     FORCEINLINE constexpr bool IsOwningPersonaControllerValid() const noexcept { return this->IsOwningActorValid(); }
-    FORCEINLINE constexpr APersonaController& GetOwningPersonaController() const noexcept { return *StaticCast<APersonaController>(&this->GetOwningActor()); }
+    FORCEINLINE constexpr APersonaController& GetOwningPersonaController() noexcept { return *StaticCast<APersonaController>(&this->GetOwningActor()); }
+    FORCEINLINE constexpr APersonaController const& GetOwningPersonaController() const noexcept { return *StaticCast<APersonaController>(&this->GetOwningActor()); }
 };
 
 } /* ~Namespace Jafg */

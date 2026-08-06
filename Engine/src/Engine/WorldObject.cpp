@@ -15,7 +15,6 @@ void Jafg::AWorldObject::BeginLife()
         bool bFound{};
         for (auto const& Track : GEngine->GetTracks())
         {
-            check(Track.ChildWorld.get())
             if (Track.ChildWorld.get() == &this->GetOuter())
             {
                 check(bFound == false)
@@ -29,3 +28,28 @@ void Jafg::AWorldObject::BeginLife()
     return;
 }
 #endif /* JAFG_DO_CHECKS */
+
+Jafg::AWorldObject& Jafg::AWorldObject::CloneEntry() const noexcept
+{
+    return this->CloneImpl(SpawnDeferredObject(LWorldDynamicInit{.Outer=this->GetMutableOuter().AsWorld(),.Class=this->GetVirtualTable()}).release());
+}
+
+Jafg::AWorldObject& Jafg::AWorldObject::CloneImpl(AWorldObject* Object) const noexcept
+{
+    LOG_VERBOSE(LogJxx, "[{}]: Cloning.", this->GetVirtualTable().GetFullyQualifiedName())
+
+    check(Object)
+    check(!Object->_HasBegunLife())
+    check(&this->GetVirtualTable() == &Object->GetVirtualTable())
+
+    for (auto& Field: Object->GetVirtualTable().FieldIter())
+    {
+        LOG_TRACE(LogJxx, "Cloning field [{}].", Field.Identifier)
+        if (!(Field.Flags & EJxxFieldBits::Transient))
+        {
+            Field.FastClone(*this, &*Object);
+        }
+    }
+
+    return *Object;
+}

@@ -4,7 +4,7 @@
 #include "Jafg/SolidColorInput.slang"
 #include "Jafg/WorldData.slang"
 #include "Jafg/MVP.slang"
-#include "Jafg/VSDefaultInput.slang"
+#include "Jafg/StaticMeshVertex.slang"
 
 static const float GIZMO_PIXEL_SIZE = 20.0;
 
@@ -20,7 +20,7 @@ struct FRInput
 };
 
 [[shader("vertex")]]
-FRInput vertMain(VSInput input)
+FRInput vertMain(Jafg::StaticMeshVertex input)
 {
     FRInput result;
 

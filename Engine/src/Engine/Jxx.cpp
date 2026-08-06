@@ -579,10 +579,12 @@ void Jafg::Detail::LCarnifex::KillAllGarbageChildren()
 
     while (this->GarbageChildren.empty() == false)
     {
-        auto& Child{this->GarbageChildren.back()};
-        check( Child->_IsGarbage() )
+        TUnique Child{std::move(this->GarbageChildren.back())};
+        check(!this->GarbageChildren.back().get())
         this->GarbageChildren.pop_back();
-        continue;
+
+        check(Child.get())
+        check(Child->_IsGarbage())
     }
 
     check(this->GarbageChildren.empty())
@@ -592,7 +594,7 @@ void Jafg::Detail::LCarnifex::KillAllGarbageChildren()
 
 void Jafg::Detail::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
 {
-    check(&*Child)
+    check(Child.get())
 
     if (auto It{algo::find(this->GarbageChildren, Child.get(), algo::unique_raw)}; It != this->GarbageChildren.end())
     {

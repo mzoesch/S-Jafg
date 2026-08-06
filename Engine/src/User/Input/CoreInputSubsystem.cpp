@@ -9,7 +9,7 @@
 #include "Engine/Engine.h"
 #include "Framework/PersonaController.h"
 #include "User/Input/UserInput.h"
-#include "Widgets/Editor.h"
+#include "Framework/Editor.h"
 
 void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {

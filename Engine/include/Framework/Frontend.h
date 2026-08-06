@@ -49,8 +49,9 @@ public:
     NODISCARD FORCEINLINE LFrontend const* AsFrontend() const;
 
     void Initialize(LClassOuter* Outer);
-
     void Tick();
+    //# For application wide events (platform specific).
+    void PollPlatformEvents() PURE_VIRTUAL()
     void TearDown();
 
     ENGINE_API LEngine const& GetEngine() const noexcept;
@@ -61,6 +62,7 @@ public:
     FORCEINLINE TArray<LPhysicalViewport> const& GetPhysicalViewports() const noexcept { return this->UsablePhysicalViewports; }
 
     ENGINE_API LSurface& AddSurface(TUnique<LSurface> Surface, ENewSurfaceBehavior Behavior = ENewSurfaceBehavior::NoAction) noexcept;
+    ENGINE_API void RemoveSurface(LSurface& Surface, bool bExitIfLastSurface = true) noexcept;
 
     FORCEINLINE std::size_t GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
     FORCEINLINE TArray<TUnique<LSurface>>& GetSurfaces() noexcept { return this->Surfaces; }

@@ -23,3 +23,13 @@ void Jafg::ASceneComponent::OnGarbage(EJxxRecordTearDownReason Reason)
 
     return;
 }
+
+Jafg::AWorldObject& Jafg::ASceneComponent::CloneImpl(AWorldObject* Object) const noexcept
+{
+    auto& Result{Super::CloneImpl(Object).AsStatic<AActor>()};
+    check(!Result._HasBegunLife())
+
+    check(this->Children.empty() && "Not yet implemented.")
+
+    return Result;
+}

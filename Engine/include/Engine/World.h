@@ -7,7 +7,6 @@
 #include "Physics/TraceUtility.h"
 #include "Framework/SubsystemCollection.h"
 #include "Framework/WorldSubsystem.h"
-#include "Engine/Level.h"
 #include "Cli/CliType.h"
 #include "Cli/CliCommand.h"
 #include "Platform/SurfaceForward.h"
@@ -31,11 +30,17 @@ class LCommandLineInterface;
 class LWorld;
 class ASupremePolicies;
 class WWorldNode;
-struct LLevel;
 struct LSubsystemCollection;
 struct LRenderInfo;
 struct LNodeRenderInfo;
 struct LMaterialInstance;
+
+namespace Detail
+{
+
+struct LWorldTrack;
+
+} /* ~Namespace Detail */
 
 enum struct EWorldState : u8
 {
@@ -96,6 +101,9 @@ struct LTransientPersona final
     struct Local
     {
         LLocalLackey& Lackey;
+#if JAFG_WITH_EDITOR
+        bool bPie{};
+#endif /* JAFG_WITH_EDITOR */
     };
     struct Proxy
     {
@@ -154,6 +162,14 @@ struct LCommandArgsTypeRet<const LWorld> final
 template<>
 FORCEINLINE LCommandArgsTypeRet_t<const LWorld> LCommandArgs::GetAs<const LWorld>() const;
 
+struct LWorldCreateInfo final
+{
+#if JAFG_WITH_EDITOR
+    LString HumanReadableName{ "Transient World" };
+#endif /* JAFG_WITH_EDITOR */
+    TSubclassOf<ASupremePolicies> SupremePoliciesClass;
+};
+
 //#
 //# A world.
 //#
@@ -161,7 +177,7 @@ FORCEINLINE LCommandArgsTypeRet_t<const LWorld> LCommandArgs::GetAs<const LWorld
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface, and a world
 //# may draw to multiple surfaces.
 //#
-class ENGINE_API LWorld final : public LClassOuter, public LEngineGetters
+class ENGINE_API LWorld final: public LClassOuter, public LEngineGetters
 {
     friend AActor;
 
@@ -169,27 +185,19 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    LWorld(LString HumanReadableName) noexcept : LClassOuter{std::move(HumanReadableName)} {}
+    LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track);
+
     ~LWorld() noexcept override { check(this->WorldState == EWorldState::WaitingForKill) }
 
     // LClassOuter implementation
     virtual bool IsWorld() const noexcept override { return true; }
     // ~LClassOuter implementation
 
-    void InitializeWorld(std::optional<LLevel> const& Level = {}, LString&& Url = {});
+    void TearDownWithTrack();
 
-    //#
-    //# The real URL that was used to launch this world. This might not be valid.
-    //# @note This URL is not sanitized, so for the most cases you should use the sanitized URL by
-    //#       calling #GetBrowsedUrl.
-    //#
-    FORCEINLINE LString const& GetUnsanitizedUrl() const noexcept { return this->UnsanitizedUrl; }
-    //# The URL that was used to launch this world. This might not be valid.
-    FORCEINLINE LString const& GetBrowsedUrl() const noexcept { return this->Url; }
-    //# The URL but parsed into a structured way. This might not be valid.
-    FORCEINLINE LWorldParameters const& GetParameters() const noexcept { return this->Parameters; }
+    NODISCARD LString GetDetailedHumanReadableName() const noexcept;
 
-    FORCEINLINE EWorldState GetWorldState() const noexcept { return this->WorldState; }
+    FORCEINLINE constexpr EWorldState GetWorldState() const noexcept { return this->WorldState; }
 
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(f64 Dt);
@@ -198,13 +206,9 @@ public:
 
     std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
 
-    FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
-    FORCEINLINE LLevel const& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
-    FORCEINLINE LLevel const& GetUnderlyingLevelChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
-    FORCEINLINE LLevel const& GetUnderlyingLevelAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
-    FORCEINLINE LStringView   GetUnderlyingLevelName() const noexcept { if (this->IsUnderlyingLevelValid()) { return LStringView{this->UnderlyingLevel->Identifier}; } return {}; }
-    FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
-    FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
+#if JAFG_WITH_EDITOR
+    NODISCARD constexpr LWorldCreateInfo const& GetCreateInfo() const noexcept { return this->CreateInfo; }
+#endif /* JAFG_WITH_EDITOR */
 
     void RegisterTickableObject(LTickableObject* Tickable);
     void UnregisterTickableObject(LTickableObject* Tickable);
@@ -285,12 +289,9 @@ protected:
 
 private:
 
-    LString UnsanitizedUrl;
-    LString Url;
-    LWorldParameters Parameters;
-    void UpdateUrlParams() noexcept;
-
-    std::optional<LLevel> UnderlyingLevel;
+#if JAFG_WITH_EDITOR
+    LWorldCreateInfo CreateInfo;
+#endif /* JAFG_WITH_EDITOR */
 
     //# Main thread only.
     FORCEINLINE void AcquireTickableObjectsLock() noexcept { this->TickableObjectsPutMutex = true; }
@@ -343,7 +344,7 @@ struct LWorldStorage final
     FORCEINLINE constexpr bool IsNull() const noexcept { return this->World == nullptr; }
     FORCEINLINE constexpr bool IsNotNull() const noexcept { return this->IsNull() == false; }
 
-    ENGINE_API  bool IsValid() const noexcept;
+    ENGINE_API bool IsValid() const noexcept;
 
     FORCEINLINE constexpr LWorld* Get() noexcept { return this->World; }
     FORCEINLINE constexpr LWorld const* Get() const noexcept { return this->World; }

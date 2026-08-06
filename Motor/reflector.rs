@@ -455,11 +455,22 @@ fn on_add_class__VA_ARGS__(packet: &JPacket) -> String
         let config: bool = arg.contains("@C");
         let default_only: bool = arg.contains("@D");
         let editor: bool = arg.contains("@E");
-        let member: String = arg.replace("@C", "").replace("@D", "").replace("@E", "");
+        let transient: bool = arg.contains("@T");
+        let member: String = arg.replace("@C", "").replace("@D", "").replace("@E", "").replace("@T", "");
 
         if default_only
         {
             panic!("Default only fields are no longer supported on: [{}::{}].", packet.name, member);
+        }
+
+        let fc;
+        if transient
+        {
+            fc = String::from("nullptr");
+        }
+        else
+        {
+            fc = format!(r##"PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FC(_JAFG_OHGCRCHD_TObj, {member})"##);
         }
 
         if config && default_only
@@ -482,6 +493,7 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
     /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
     /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
     /* Filed Modified */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(_JAFG_OHGCRCHD_TObj, {member}), \
+    /* Field FastClone */ {fc}, \
     /* Field Editor Factory */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY(_JAFG_OHGCRCHD_TObj, {member}) \
 }})                                                                                            \
 "##));
@@ -495,6 +507,7 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
     /* Field Setter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_SET(_JAFG_OHGCRCHD_TObj, {member}),\
     /* Field Getter */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_GET(_JAFG_OHGCRCHD_TObj,{member}), \
     /* Filed Modified */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_MOD(_JAFG_OHGCRCHD_TObj, {member}), \
+    /* Field FastClone */ {fc}, \
     /* Field Editor Factory */ nullptr \
 }})                                                                                            \
 "##));
@@ -508,6 +521,7 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
     /* Field Setter */ nullptr,\
     /* Field Getter */ nullptr, \
     /* Filed Modified */ nullptr, \
+    /* Field FastClone */ {fc}, \
     /* Field Editor Factory */ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION_FACTORY(_JAFG_OHGCRCHD_TObj, {member}) \
 }})                                                                                            \
 "##));
@@ -522,6 +536,20 @@ Ref->GetMutableClassFieldsDangerous().emplace_back(                             
     /* Field Getter */ nullptr,                                                                          \
     /* Field Malloc */ LCustomMallocClassField::CreateMemberFunction(Ref, &_TObj::_MallocField_{member}) \
 );                                                                                                       \
+"##));
+        }
+        else if !transient
+        {
+            out.push_str(&format!(r##"                                                        \
+.reflexive_emplace_back(::Jafg::LJxxClassField{{                                           \
+    /* Field Name   */ "{member}",                                                            \
+    /* Field Flags */ _JAFG_OHGCRCHD_TObj::_FieldFlags_{member}(), \
+    /* Field Setter */ nullptr,\
+    /* Field Getter */ nullptr, \
+    /* Filed Modified */ nullptr, \
+    /* Field FastClone */ {fc}, \
+    /* Field Editor Factory */ nullptr \
+}})                                                                                            \
 "##));
         }
     }
@@ -571,6 +599,10 @@ fn add_class(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPa
         if field.info.contains(&"EditorVisible".to_string()) || field.info.contains(&"EditorEditable".to_string())
         {
             arg.push_str("@E");
+        }
+        if field.info.contains(&"Transient".to_string())
+        {
+            arg.push_str("@T");
         }
         // if field.info.contains(&"DefaultOnly".to_string())
         // {
@@ -802,14 +834,36 @@ fn add_class_field(_file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Opt
 
                 let mut analyzed_count: usize = 0;
 
+                if self_packet.args.contains(&"Config".to_string()) && self_packet.args.contains(&"Transient".to_string())
+                {
+                    panic!("[{}]: Class field [{}] cannot be both Config and Transient.", h_file_id, self_packet.name);
+                }
+
+                if !self_packet.args.contains(&"Transient".to_string())
+                {
+                    h_builder.push_str(&format!(r##"                        \
+PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_FC(         \
+        /* My Class Member */ {}                                            \
+    )                                                                       \
+"##,
+                                                self_packet.name,
+                    ));
+                }
+                else {
+                    analyzed_count += 1;
+                }
+
                 if self_packet.args.contains(&"Config".to_string())
                 {
                     h_builder.push_str(&format!(r##"                        \
+PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_RW(         \
+        /* My Class Member */ {}                                            \
+    )                                                                       \
 PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(     \
         /* My Class Member */ {}                                            \
     )                                                                       \
 "##,
-                        self_packet.name,
+                        self_packet.name,self_packet.name,
                     ));
 
                     analyzed_count += 1;
@@ -839,8 +893,14 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Editor(     \
 //                     ));
 //                 }
 
+                if self_packet.args.contains(&"Identity".to_string())
+                {
+                    analyzed_count += 1;
+                }
+
                 if analyzed_count != self_packet.args.len()
                 {
+
                     panic!("[{}]: Could not analyze all class field args on [{}]. Analyzed [{}/{}] args: [{:?}].",
                         h_file_id, self_packet.name,
                         analyzed_count, self_packet.args.len(), self_packet.args

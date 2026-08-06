@@ -1,4 +1,10 @@
 {
     "inherits": "Jafg.Perspective",
-    "shader": "Shaders/Jafg.Pbr"
+    "shader": "Shaders/Jafg.Pbr",
+    "properties": {
+        "baseColorMap": "Textures/Jafg/Default",
+        "metallicRoughnessMap": "Textures/Jafg.IdentityMul",
+        "normalMap": "Textures/Jafg.IdentityNormal",
+        "sampler": "Jafg.NearestRepeatSampler"
+    }
 }

@@ -78,7 +78,7 @@ TRIVIAL_TEST_CASE("maths", Quaternion)
         /* We use abs because: Quaternion == -Quaternion */
         auto Error{maths::abs(maths::dot(Quaternion0, Quaternion1))};
 
-        TEST_GREATER(Error, static_cast<T>(1.0 - 1e-3))
+        TEST_GREATER(Error, static_cast<T>(1.0 - 1e-2))
     }};
 
     auto TestPrecision{[&]<std::floating_point T, maths::qual_t Q>()

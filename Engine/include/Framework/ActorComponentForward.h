@@ -33,6 +33,9 @@ struct LActorRenderInfo: LRenderInfo
     //  This should also be per world basis. The layout is maybe ok in the frontend?
     UBO::WorldData WorldData;
     vk::DescriptorSet WorldDataDescriptorSet;
+
+    //# Delegates called after all employed renderables have been rendered.
+    mutable TArray<TFunction2<void(LActorRenderInfo const& Info)>> PostRenderDelegates;
 };
 
 } /* ~Namespace Jafg */

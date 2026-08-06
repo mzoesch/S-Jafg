@@ -2,7 +2,7 @@
 
 #include "Jafg.slang"
 #include "Jafg/MVP.slang"
-#include "Jafg/VSDefaultInput.slang"
+#include "Jafg/StaticMeshVertex.slang"
 
 [[vk::push_constant]] MVP mvp;
 
@@ -13,7 +13,7 @@ struct FRInput
 };
 
 [[shader("vertex")]]
-FRInput vertMain(VSInput input)
+FRInput vertMain(Jafg::StaticMeshVertex input)
 {
     FRInput result;
     result.pos = mul(mvp.proj, mul(mvp.view, mul(mvp.model, float4(input.pos, 1.0))));

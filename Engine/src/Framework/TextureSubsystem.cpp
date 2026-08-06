@@ -53,14 +53,7 @@ void Jafg::JTextureSubsystem::RefetchTextureViews()
     {
         if constexpr (IS_COMPILED_LOG(LogTextureSubsystem, Trace))
         {
-            LTextureView TextureView = Assets.PullAssetTextureView(Path);
-            LOG_TRACE(LogTextureSubsystem,
-                "[{}@{}]: Format: [{}], MipLevels [{}], MSAA [{}]."
-                , TextureView.Name, TextureView.Path, vk::to_string(TextureView.Format)
-                , TextureView.MipLevels.has_value() ? std::to_string(*TextureView.MipLevels) : "AUTO"
-                , TextureView.MaxSampleCount.has_value() ? vk::to_string(*TextureView.MaxSampleCount) : "AUTO"
-                )
-            this->TextureViews.emplace_back(std::move(TextureView));
+            this->TextureViews.emplace_back(Assets.PullAssetTextureView(Path));
         }
         else
         {

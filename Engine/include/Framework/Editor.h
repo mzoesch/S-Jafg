@@ -6,6 +6,8 @@
 #include "Nodes/GenericTabInfos.h"
 #include "Nodes/TabOverlay.h"
 #include "Nodes/VRegion.h"
+#include "Nodes/HButton.h"
+#include "Widgets/WorldViewer.h"
 #include "Engine/Engine.h"
 #include "Framework/PawnComponent.h"
 #include "Framework/PersonaControllerComponent.h"
@@ -19,13 +21,22 @@ namespace Jafg
 class WTabOverlay;
 class WEditor;
 class WButton;
+class WText;
 class WTextButton;
-class WWorldViewer;
+class WEditorWorldViewer;
 class WEditorCategorySeparator;
+class WEditorWorldViewerHierarchy;
+class WEditorWorldViewerInspector;
+class WEditableTextButton;
 struct LFactoryEditorCategorySeparator;
 struct LEditorLayout;
 
-enum struct EGizmo: u32;
+namespace Detail
+{
+
+class WEditorWorldViewerHierarchyObjectHButton;
+
+} /* ~Namespace Detail */
 
 struct LEditorLayout final
 {
@@ -209,21 +220,362 @@ private:
     WTextBox* Rate{};
 };
 
-DECLARE_JAFG_CLASS()
-class ENGINE_API AEditorSupremePolicies final : public ASupremePolicies
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WSecondaryEditor final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS(AEditorSupremePolicies)
+    explicit WSecondaryEditor(LNodeDynamicInit const& Init) noexcept : Super{Init}
+    {
+        this->SetShouldTick(true);
+    }
+    template<typename TCxxClass> explicit WSecondaryEditor(TNodeStaticInit<TCxxClass> const& Init
+        , LTabOverlayPossibilities& Possibilities) noexcept
+        : Super{Init}, Possibilities{&Possibilities}
+    {
+        this->SetShouldTick(true);
+    }
 
 public:
 
-    virtual void OnWorldPreInit() override;
-    virtual void OnPersonaControllerCreated(APersonaController& Pc) override;
-    virtual TJxxUnique<APawn> GetPawnForPersonaController(APersonaController const& Pc) override;
+    virtual void Construct() override;
+
+    void SetPossibilitiesLate(LTabOverlayPossibilities& Possibilities) noexcept
+    {
+        check(!this->Possibilities)
+        this->Possibilities = &Possibilities;
+    }
+
+    NODISCARD LFactoryTabOverlay GetNewOverlay();
+    NODISCARD WTabOverlay& FindNewOverlay(f32 Dist = {});
+
+private:
+
+    LTabOverlayPossibilities* Possibilities{};
+    NODISCARD WTabOverlay* GetSelected() noexcept { check(this->Possibilities) return this->Possibilities->Selected; }
+    NODISCARD WTabOverlay const* GetSelected() const noexcept { check(this->Possibilities) return this->Possibilities->Selected; }
+    NODISCARD auto const& GetOverlays() const { check(this->Possibilities) return this->Possibilities->Overlays; }
 };
+
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WEditorWorldViewer : public WWorldViewer
+{
+    GENERATED_CLASS_BODY()
+
+    friend WEditorWorldViewerHierarchy;
+    friend WEditorWorldViewerInspector;
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WEditorWorldViewer)
+
+public:
+
+    enum struct EStartType: u8
+    {
+        Pie,
+        NewPie,
+        FollowPie,
+        Spectate,
+        Standalone,
+    };
+
+    enum struct EPawnSart: u8
+    {
+        Default,
+        EditorEye,
+    };
+
+    enum struct ENetMode: u8
+    {
+        Standalone,
+        Client,
+        Listen,
+    };
+
+    enum struct EGizmo: u32{ Select,Translate,Rotate,Scale,Gizmo, };
+
+    JAFG_DEFAULT_TAB_CANDIDATE("World Viewer", "Icons/Jafg.Sphere")
+
+    virtual void Construct() override;
+    virtual void Tick() override;
+    virtual void Destruct() override;
+
+    virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
+
+    NODISCARD FORCEINLINE constexpr bool HasHierarchy() const noexcept { return this->Hierarchy != nullptr; }
+    NODISCARD FORCEINLINE constexpr WEditorWorldViewerHierarchy* GetHierarchy() const noexcept { return this->Hierarchy; }
+    NODISCARD FORCEINLINE constexpr bool HasInspector() const noexcept { return this->Inspector != nullptr; }
+    NODISCARD FORCEINLINE constexpr WEditorWorldViewerInspector* GetInspector() const noexcept { return this->Inspector; }
+
+    //# Select new actors. All actors must be valid.
+    void SelectActors(TArray<AActor*> Actors, bool bForce = false);
+    //# Jafg guarantees that all listed actors are valid.
+    MULTI_EVENT_DECL(OnActorsSelected, TArray<AActor*> const& Old, TArray<AActor*> const& New)
+    NODISCARD FORCEINLINE constexpr auto const& GetSelectedActors() const noexcept { return this->SelectedActors; }
+
+    void SelectGizmo(EGizmo Gizmo);
+    void UpdateClientGizmo();
+    NODISCARD constexpr EGizmo GetSelectedGizmo() const noexcept { return this->CurrentGizmo; }
+
+    void FocusActors();
+
+    NODISCARD bool IsGridSpaceLocal() const noexcept;
+    NODISCARD bool IsTranslationGridSnapEnabled() const noexcept;
+    NODISCARD bool IsRotationGridSnapEnabled() const noexcept;
+    NODISCARD bool IsScaleGridSnapEnabled() const noexcept;
+    NODISCARD constexpr f32 GetTranslationGridSnap() const noexcept { return this->SnapTranslation; }
+    NODISCARD constexpr f32 GetRotationGridSnap() const noexcept { return this->SnapRotation; }
+    NODISCARD constexpr f32 GetScaleGridSnap() const noexcept { return this->SnapScale; }
+
+protected:
+
+    virtual void InitializeRenderTarget() override;
+    virtual bool OnPreDrawImpl(LRenderInfo const& Info) override;
+    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, APawn& Pawn, LWorldEye const& Eye) override;
+
+    virtual LTransientPersona::Local GetTransientPersona() noexcept override;
+    virtual void OnConnect() override;
+    virtual void OnDisconnect() override;
+
+private:
+
+    static constexpr rhi::extent2 DefaultExtent{640,480};
+
+    void PreDrawSelected(LRenderInfo const& Info);
+
+    void CreateMenuDropDown(LVec2F Where);
+    void CreateStartDropDown(LVec2F Where);
+
+    //# TODO: Not a good solution. We have to think of something more permanent maybe in the fufute??
+    void InitializeJustSummoned(LWorld& World);
+    void TravelToJustSummoned(LWorld& World);
+
+    EStartType StartType{EStartType::Pie};
+    EPawnSart PawnStart{EPawnSart::Default};
+    ENetMode NetMode{ENetMode::Standalone};
+
+    struct LEditorReconnectionData final
+    {
+        LWorld* World{};
+        LWorldTrans EyeTrans{ maths::identity<LWorldTrans> };
+    };
+    std::optional<LEditorReconnectionData> EditorReconnectionData;
+    WWorldViewer* RunningInstance{};
+    NODISCARD constexpr bool IsRunning() const noexcept { return !!this->RunningInstance; }
+
+    NODISCARD LTexture2Ref GetStartTexture() const;
+
+    WButton* StartButton{};
+    WButton* StepButton{};
+    WButton* StopButton{};
+    WButton* DetachButton{};
+    WButton* MoreButton{};
+    void UpdateStartStopButtons();
+    void OnLaunchAll();
+
+    EGizmo CurrentGizmo{EGizmo::Select};
+
+    WButton* SelectButton{};
+    WButton* TranslateGizmoButton{};
+    WButton* RotateGizmoButton{};
+    WButton* ScaleGizmoButton{};
+    WButton* GizmoButton{};
+
+    //# Toggle between local and world grid space.
+    WButton* ToggleGridSpace{};
+
+    WButton* ToggleTranslationGridSnapButton{};
+    WTextButton* TranslationGridSnapButton{};
+    WButton* ToggleRotationGridSnapButton{};
+    WTextButton* RotationGridSnapButton{};
+    WButton* ToggleScaleGridSnapButton{};
+    WTextButton* ScaleGridSnapButton{};
+    f32 SnapTranslation{ 0.1f };
+    f32 SnapRotation{ 5.0f };
+    f32 SnapScale{ 0.1f };
+
+    WTextButtonIconizedDouble* CameraButton{};
+    std::optional<f32> RequestedCameraSpeed;
+    f32 CameraSpeed{ 10.0f };
+    f32 CameraAcceleration{ 1.0f };
+    NODISCARD LString GetCameraSpeedString() const noexcept
+    {
+        std::ostringstream ss; ss << std::fixed << std::setprecision(2) << this->CameraSpeed;
+        auto String{ss.str()};
+        if (!String.empty() && String.back() == '.')
+        {
+            String.push_back('0');
+        }
+        return String;
+    }
+
+    struct LFocusTransition final
+    {
+        LWorldVec3 Origin;
+        LWorldVec3 Destination;
+        algo::clock::time_point Start;
+        f64 Duration;
+    };
+    std::optional<LFocusTransition> FocusTransition;
+
+    WText* DebugLocationText{};
+
+    TArray<AActor*> SelectedActors;
+    LMaterialInstanceRef SelectionMaterialInstance;
+    LMaterialInstanceRef PostSelectionMaterialInstance;
+
+    WEditorWorldViewerHierarchy* Hierarchy{};
+    WEditorWorldViewerInspector* Inspector{};
+};
+
+//#
+//# A widget to view a world in a hierarchical manner.
+//# Each viewer can have exact one hierarchy widget and each hierarchical widget can only connect to one world viewer.
+//#
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WEditorWorldViewerHierarchy : public WUserWidget
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WEditorWorldViewerHierarchy)
+
+public:
+
+    JAFG_DEFAULT_TAB_CANDIDATE("Hierarchy", "Icons/Jafg.Hierarchy")
+
+    virtual void Construct() override;
+    virtual void Destruct() override;
+
+    void _OnWorldViewerDestruct();
+    void OnWorldViewerUpdate();
+
+private:
+
+    WEditorWorldViewer* FindSmart() const noexcept;
+    WEditorWorldViewer* FindInViewport(LViewport const& Viewport) const noexcept;
+    WEditorWorldViewer* FindInNode(WNode& Node) const noexcept;
+
+    static constexpr LNodeSize2 TypeSize{128_spt, 0.0f};
+    static constexpr LWhitespace ListPadding{20_spt, 0.0f};
+
+    WEditorWorldViewer* WorldViewer{};
+    LDelegateHandle OnActorsSelectedHandle;
+    void DisconnectFromViewer();
+    bool OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+
+    WText* ConnectedText{};
+    void UpdateConnectedArea();
+
+    WParent* Container{};
+    void* LastContainerElemSelected{};
+    void UpdateWorldObjectList(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+    WTextBox* SelectedWorldObjectText{};
+    void UpdateSelectedWorldObjectText(std::size_t Count, std::size_t Shown, std::size_t Selected);
+
+    LNodeReply OnWorldObjectListKeyEventFocus(Detail::WEditorWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+    LNodeReply OnWorldObjectListKeyEventUnfocus(Detail::WEditorWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
+
+    LWorld* GetWorld() const noexcept
+    {
+        if (this->WorldViewer && this->WorldViewer->IsOwnedPersonaControllerValid())
+        {
+            return &this->WorldViewer->GetOwnedPersonaControllerChecked()->GetWorld();
+        }
+        return nullptr;
+    }
+};
+
+//#
+//# A widget that displays details about a selected object.
+//# Just like #WEditorWorldViewerHierarchy this widget thas a one-to-one relation to the world viewer.
+//#
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WEditorWorldViewerInspector : public WUserWidget
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS_BODY(WEditorWorldViewerInspector)
+    {
+        this->SetShouldTick(true);
+    }
+
+public:
+
+    JAFG_DEFAULT_TAB_CANDIDATE("Details", "Icons/Jafg.Information")
+
+    virtual void Construct() override;
+    virtual void Tick() override;
+    virtual void Destruct() override;
+
+    void _OnWorldViewerDestruct();
+    void OnWorldViewerUpdate();
+
+private:
+
+    WEditorWorldViewer* FindSmart() const noexcept;
+    WEditorWorldViewer* FindInViewport(LViewport const& Viewport) const noexcept;
+    WEditorWorldViewer* FindInNode(WNode& Node) const noexcept;
+
+    WEditorWorldViewer* WorldViewer{};
+    LDelegateHandle OnActorsSelectedHandle;
+    void DisconnectFromViewer();
+    bool OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+
+    WText* ConnectedText{};
+    void UpdateConnectedArea();
+
+    WEditableTextButton* EditableObjectDisplayName{};
+    WParent* Container{};
+    WEditableTextButton* ContainerSearch{};
+    void UpdateObjectDisplayName();
+
+    WParent* ComponentContainerWrapper{};
+    WParent* ComponentContainer{};
+    TArray<TFunction2<void()>> ComponentUpdateFunctions;
+    AActorComponent* SelectedComponent{};
+    void UpdateObjectDetails();
+    void ReloadInnerComponents();
+    void SelectComponent(AActorComponent* Component);
+};
+
+namespace Detail
+{
+
+struct LFactoryEditorWorldViewerHierarchyObjectHButton;
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryEditorWorldViewerHierarchyObjectHButton)
+class WEditorWorldViewerHierarchyObjectHButton : public WHButton
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WEditorWorldViewerHierarchyObjectHButton)
+
+public:
+
+    AActor* Actor{};
+};
+
+struct LFactoryEditorWorldViewerHierarchyObjectHButton: NODE_FACTORY_PARENT(WEditorWorldViewerHierarchyObjectHButton)
+{
+    NODE_FACTORY_BODY(WEditorWorldViewerHierarchyObjectHButton)
+
+    constexpr decltype(auto) Actor(this auto&& Self, AActor* Actor) noexcept
+    {
+        NODE_FACTORY_SELF().Actor = Actor;
+        return NODE_FACTORY_RESULT();
+    }
+};
+
+} /* ~Namespace Detail */
 
 namespace SSBO
 {
@@ -243,7 +595,7 @@ static_assert(rhi::ssbo<Ray>);
 
 struct LEditorTraceOrigin
 {
-    WWorldViewer& Node;
+    WEditorWorldViewer& Node;
     LKeyEvent Event;
 };
 
@@ -276,8 +628,8 @@ public:
     virtual void ParentTick(f32 Dt) override;
     virtual void Render(LActorRenderInfo const& Info) const override;
 
-    EGizmo SetSelectedGizmo(EGizmo Gizmo) noexcept;
-    AActor* SetSelectedActor(WWorldViewer* Origin, AActor* Actor) noexcept;
+    WEditorWorldViewer::EGizmo SetSelectedGizmo(WEditorWorldViewer::EGizmo Gizmo) noexcept;
+    AActor* SetSelectedActor(WEditorWorldViewer* Origin, AActor* Actor) noexcept;
 
     struct RayCreateInfo
     {
@@ -324,10 +676,10 @@ private:
     void RenderRays(LActorRenderInfo const& Info) const;
     void RenderGizmo(LActorRenderInfo const& Info) const;
 
-    EGizmo Gizmo{};
+    WEditorWorldViewer::EGizmo Gizmo{};
     struct LSelectedActor final
     {
-        WWorldViewer* Viewer{};
+        WEditorWorldViewer* Viewer{};
         AActor* Actor{};
         std::optional<LWorldQuat> Quaternion;
         NODISCARD constexpr AActor* operator->() noexcept { return this->Actor; }
@@ -391,10 +743,10 @@ public:
     }
 
     //# @return Whether the context was activated successfully.
-    bool ActivateUserInputContext() const noexcept;
+    bool ActivateUserInputContext() noexcept;
 
-    void OnHighlightTrace(WWorldViewer& Viewer, rhi::extent2 Extent, LVec2F Location);
-    void OnTrace(WWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin = {});
+    void OnHighlightTrace(WEditorWorldViewer& Viewer, rhi::extent2 Extent, LVec2F Location);
+    void OnTrace(WEditorWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin = {});
     void OnMove(LInputActionValue const& Value);
     void OnRotate(LInputActionValue const& Value);
     void OnVelocityMultiplierChange(LInputActionValue const& Value);

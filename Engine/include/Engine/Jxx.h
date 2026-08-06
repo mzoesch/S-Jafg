@@ -10,6 +10,7 @@
 #include "Engine/JxxClassMacros.h"
 #include "Engine/EngineGetters.h"
 #include "Jxx.generated.h"
+#include "Jxx.h"
 
 //# Pragmas for the Jafg Build Tool.
 #define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
@@ -67,6 +68,9 @@ struct TJxxDelete;
 //# Unique pointer for jcxx classes.
 template<typename TCxxClass, typename Deleter = Jafg::Detail::TJxxDelete<TCxxClass>>
 using TJxxUnique = TUnique<TCxxClass, Deleter>;
+
+template<typename TObj> requires algo::is_base_of_weak_v<Jafg::JCxxClass, TObj>
+class TSubclassOf;
 
 namespace Jafg
 {
@@ -356,6 +360,8 @@ enum struct EJxxFieldBits
     EditorVisible  = 1 << 1,
     //# This field is visible and editable in the editor. Implies #EditorVisible.
     EditorEditable = 1 << 2,
+    //# Skip serialization. #Config and #Transient are mutually exclusive.
+    Transient = 1 << 3,
 };
 ENUM_STRUCT_FLAGS(EJxxFieldBits, EJxxFieldFlags)
 
@@ -377,6 +383,11 @@ NODISCARD FORCEINLINE constexpr bool IsEditorEditable(EJxxFieldFlags Flags) noex
     return !!(Flags & EJxxFieldBits::EditorEditable);
 }
 
+NODISCARD FORCEINLINE constexpr bool IsFastCloneable(EJxxFieldFlags Flags) noexcept
+{
+    return !(Flags & EJxxFieldBits::Transient);
+}
+
 } /* ~Namespace JxxFieldBits */
 
 template<typename... TFlags>
@@ -393,6 +404,7 @@ FORCEINLINE constexpr EJxxFieldFlags CombineJxxFieldFlags(TFlags&&... Flags) noe
 typedef TFunction2<void(JCxxClass* Object, LStringView Value)> LSetCxxClassField;
 typedef TFunction2<LString(JCxxClass const& Object)> LGetCxxClassField;
 typedef TFunction2<bool(JCxxClass const& Object)> LIsModifiedCxxClassField;
+typedef TFunction2<void(JCxxClass const& Origin, JCxxClass* Target)> LFastCloneCxxClassField;
 #if JAFG_WITH_EDITOR
     typedef TFunction2<Detail::LNodeFactoryBase(LViewport& Viewport, JCxxClass& Object, TFunction2<void()>& UpdateValue)> LEditorFieldFactory;
 #endif /* JAFG_WITH_EDITOR */
@@ -409,6 +421,8 @@ struct LJxxClassField final
     mutable LGetCxxClassField Get;
     //# Valid if #JxxFieldBits::IsSerde else nullptr.
     mutable LIsModifiedCxxClassField IsModified;
+    //# Valid if #JxxFieldBits::IsFastCloneable else nullptr.
+    mutable LFastCloneCxxClassField FastClone;
 #if JAFG_WITH_EDITOR
     //# Valid if #JxxFieldBits::IsEditorVisible else nullptr.
     mutable LEditorFieldFactory EditorFactory;
@@ -595,9 +609,9 @@ public:
     NODISCARD FORCEINLINE auto const& GetBeginClassLifeFn() const noexcept { return this->BeginClassLife; }
     NODISCARD FORCEINLINE auto const& GetEndClassLifeFn() const noexcept { return this->EndClassLife; }
 
-    NODISCARD FORCEINLINE bool IsValid() const noexcept { return this->Parent != nullptr || this->GetFullyQualifiedName() == "::Jafg::JCxxClass"; }
+    NODISCARD FORCEINLINE bool IsValid() const noexcept { return this->Parent != nullptr || this->GetFullyQualifiedName() == "::Jafg::JCxxClass"sv; }
 
-    NODISCARD FORCEINLINE bool IsRoot() const noexcept { return this->Parent == nullptr && this->GetFullyQualifiedName() == "::Jafg::JCxxClass"; }
+    NODISCARD FORCEINLINE bool IsRoot() const noexcept { return this->Parent == nullptr && this->GetFullyQualifiedName() == "::Jafg::JCxxClass"sv; }
     NODISCARD FORCEINLINE bool IsParentValid() const noexcept { return this->Parent != nullptr; }
     NODISCARD FORCEINLINE auto GetParent()         noexcept -> LJxxClass*                { check( this->Parent ) return this->Parent; }
     NODISCARD FORCEINLINE auto GetParent()   const noexcept -> LJxxClass const*          { check( this->Parent ) return this->Parent; }
@@ -830,18 +844,12 @@ template<typename TCxxClass> requires algo::is_base_of_weak_v<JCxxClass, TCxxCla
 struct TDeferredObjectExec
 {
     constexpr TDeferredObjectExec() noexcept = delete;
-    constexpr TDeferredObjectExec(TCxxClass& InClass) noexcept : Class(InClass) {}
-    constexpr TDeferredObjectExec(TDeferredObjectExec&& O) noexcept : Class(O.Class), bReleased{O.bReleased}
-    {
-        O.bReleased = true;
-    }
+    constexpr explicit TDeferredObjectExec(TCxxClass& InClass) noexcept : Class{InClass} { check(!this->Class._HasBegunLife()) }
+    constexpr TDeferredObjectExec(TDeferredObjectExec&& O) noexcept : Class{O.Class}, bReleased{std::exchange(O.bReleased, true)} {}
     template<typename UCxxClass> requires std::is_base_of_v<JCxxClass, UCxxClass>
         && (std::is_base_of_v<TCxxClass, UCxxClass> || std::is_base_of_v<UCxxClass, TCxxClass>)
     constexpr TDeferredObjectExec(TDeferredObjectExec<UCxxClass>&& O) noexcept :
-        Class{static_cast<TCxxClass&>(O.Class)}, bReleased{O.bReleased}
-    {
-        O.bReleased = true;
-    }
+        Class{static_cast<TCxxClass&>(O.Class)}, bReleased{std::exchange(O.bReleased, true)} {}
 
     constexpr TDeferredObjectExec& operator=(TDeferredObjectExec&&) noexcept = delete;
     PROHIBIT_COPY(TDeferredObjectExec)
@@ -850,8 +858,16 @@ struct TDeferredObjectExec
     {
         if (!this->bReleased)
         {
-            MakeCxxObjectFinal(this->Class);
+            this->finalize();
         }
+    }
+
+    constexpr TCxxClass* finalize() noexcept
+    {
+        check(!this->bReleased)
+        this->bReleased = true;
+        MakeCxxObjectFinal(this->Class);
+        return &this->Class;
     }
 
     constexpr TCxxClass* release() noexcept
@@ -861,16 +877,19 @@ struct TDeferredObjectExec
         return &this->Class;
     }
 
-    TCxxClass& operator*() noexcept { return this->Class; }
-    TCxxClass const& operator*() const noexcept { return this->Class; }
-    TCxxClass* operator->() noexcept { return &this->Class; }
-    TCxxClass const* operator->() const noexcept { return &this->Class; }
+    NODISCARD constexpr TCxxClass& get() noexcept { return this->Class; }
+    NODISCARD constexpr TCxxClass const& get() const noexcept { return this->Class; }
 
-    explicit operator TCxxClass*() noexcept { return &this->Class; }
-    explicit operator TCxxClass const*() const noexcept { return &this->Class; }
+    NODISCARD constexpr TCxxClass& operator*() noexcept { return this->Class; }
+    NODISCARD constexpr TCxxClass const& operator*() const noexcept { return this->Class; }
+    NODISCARD constexpr TCxxClass* operator->() noexcept { return &this->Class; }
+    NODISCARD constexpr TCxxClass const* operator->() const noexcept { return &this->Class; }
 
-    TCxxClass* operator&() noexcept { return &this->Class; }
-    TCxxClass* operator&() const noexcept { return &this->Class; }
+    NODISCARD constexpr explicit operator TCxxClass*() noexcept { return &this->Class; }
+    NODISCARD constexpr explicit operator TCxxClass const*() const noexcept { return &this->Class; }
+
+    NODISCARD constexpr TCxxClass* operator&() noexcept { return &this->Class; }
+    NODISCARD constexpr TCxxClass* operator&() const noexcept { return &this->Class; }
 
     TCxxClass& Class;
     bool bReleased{};
@@ -1159,6 +1178,8 @@ public:
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
     FORCEINLINE bool IsA(TObj** CastedOut) noexcept;
     FORCEINLINE bool IsA(LJxxClass const& Class) const noexcept { return this->GetVirtualTable().DerivesFrom(Class); }
+    template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
+    FORCEINLINE bool IsA(TSubclassOf<TObj> Class) const noexcept;
 
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
     FORCEINLINE TObj* As() noexcept;
@@ -1201,6 +1222,10 @@ public:
     //# If you want a custom path, the override this and call super with your path.
     ENGINE_API virtual void PullConfig(LPath const& InPath = {}) noexcept;
     ENGINE_API virtual void PushConfig(LPath const& InPath = {}) const noexcept;
+
+protected:
+
+    NODISCARD FORCEINLINE LClassOuter& GetMutableOuter() const noexcept { return this->Outer; }
 
 private:
 
@@ -1350,7 +1375,11 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LCarnifex)
     ~LCarnifex() = default;
 
-    FORCEINLINE void AddGarbageChild(TUnique<JCxxClass> Child) noexcept { this->GarbageChildren.emplace_back(std::move(Child)); }
+    FORCEINLINE void AddGarbageChild(TUnique<JCxxClass> Child) noexcept
+    {
+        check(Child.get())
+        this->GarbageChildren.emplace_back(std::move(Child));
+    }
 
     ENGINE_API void KillAllGarbageChildren();
     ENGINE_API void DevourGarbageChildNow(TUnique<JCxxClass> Child);
@@ -1813,6 +1842,19 @@ private:
     Jafg::LJxxClass const* Class;
 };
 
+template<typename TObj> requires std::is_base_of_v<Jafg::JCxxClass, TObj>
+FORCEINLINE bool Jafg::JCxxClass::IsA(TSubclassOf<TObj> Class) const noexcept
+{
+    return this->IsA(Class.GetClassOrDefault());
+}
+
+template<typename T> requires algo::is_base_of_weak_v<Jafg::JCxxClass, T>
+struct TPreference<TSubclassOf<T>>: Jafg::TDefaultPreference<TSubclassOf<T>>
+{
+    using Jafg::TDefaultPreference<TSubclassOf<T>>::TDefaultPreference;
+    using Jafg::TDefaultPreference<TSubclassOf<T>>::operator=;
+};
+
 template<typename T>
 struct std::formatter<TSubclassOf<T>> : std::formatter<LString>
 {
@@ -1868,7 +1910,7 @@ struct serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
                 return {
                     .Errc = std::errc::invalid_argument,
                     .Error = algo::sprintf("Package [{}] is not a class. Found [{}].",
-                        Package->GetFullyQualifiedName(), Jafg::LexToString(Package->GetType())
+                        Package->GetFullyQualifiedName(), LexToString(Package->GetType())
                         )
                     };
             }

@@ -3,9 +3,7 @@
 #pragma once
 
 #include "Core/App.h"
-
 #include "User/UserPreferences.h"
-
 #include "Nodes/Node.h"
 #include "Nodes/Parent.h"
 #include "Nodes/VParent.h"
@@ -16,11 +14,9 @@
 #include "Nodes/Button.h"
 #include "Nodes/Text.h"
 #include "Nodes/EditableTextButton.h"
-
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
-
-#include "Widgets/Editor.h"
+#include "Framework/Editor.h"
 #include "Widgets/TagInspector.h"
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
@@ -28,7 +24,6 @@
 #include "Widgets/EditorFinder.h"
 #include "Widgets/Input_Vector3.h"
 #include "Widgets/AssetInspectors.h"
-
 #include "Engine/Engine.h"
 
 namespace Jafg

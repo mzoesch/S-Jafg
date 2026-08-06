@@ -12,17 +12,8 @@ struct LStaticMeshRenderable
 {
     explicit LStaticMeshRenderable() noexcept = default;
 
-    void Render(LActorRenderInfo const& Info) const
-    {
-        checkCode
-        (
-            if (!this->Mesh.get())
-            {
-                LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
-            }
-        )
-        this->Mesh->Render(Info, this->GetTransform(), this->MaterialInstance.get());
-    }
+    void Render(LActorRenderInfo const& Info) const;
+    void ForceRenderWithOwnedMaterial(LActorRenderInfo const& Info) const;
 
     ENGINE_API void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
     void SetMesh(LStaticMeshRef Mesh) noexcept

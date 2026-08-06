@@ -596,7 +596,13 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 panic!("[{}]: Excepted member variable after CLASS_FIELD declaration.", file);
             }
 
-            tokens.push(Token { ty: TokenType::ClassField, line: w.line, content: String::from(&words[member_idx].content), info: args });
+            let mut m = String::from(&words[member_idx].content);
+            if m.contains(':')
+            {
+                m = m.split(':').next().unwrap().to_string();
+            }
+
+            tokens.push(Token { ty: TokenType::ClassField, line: w.line, content: m, info: args });
         }
         else if w.content == "GENERATED_CLASS_BODY"
         {

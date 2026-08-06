@@ -501,6 +501,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 #endif /* !JAFG_IN_SHIPPING */
         .HumanReadableName = "Jafg - @mzoesch",
         })};
+    QuerySurface->bShutdownEngineOnClose = true;
 
     this->Vk_CreateLogicalDevice(*QuerySurface);
 
@@ -558,6 +559,14 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
     UnfinishedSurface.LateSetupVk();
 
     return;
+}
+
+void Jafg::LFrontendVk::PollPlatformEvents()
+{
+    STAT_CYCLE_FUNCTION()
+
+    check(Tasks::IsOnMasterThread())
+    glfwPollEvents();
 }
 
 void Jafg::LFrontendVk::TearDown()

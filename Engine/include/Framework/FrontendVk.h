@@ -57,6 +57,7 @@ public:
     };
 
     void Initialize(LClassOuter* Outer);
+    void PollPlatformEvents();
     void TearDown();
 
     //# TODO: Remove this... this has nothing to do with VK.

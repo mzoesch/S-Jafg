@@ -9,12 +9,16 @@ void Jafg::LSurfaceBase::BeginNewFrame()
     this->PlatformInput.clear();
     this->DecayInputs();
 
-    auto LastMouseLocation{this->MouseLocation};
+    this->TransientLastMouseLocation = this->MouseLocation;
+}
+
+void Jafg::LSurfaceBase::Poll()
+{
     this->AsSurface()->PollPlatformEvents();
 
-    if (!this->IsShowMouseCursor() && LastMouseLocation && this->MouseLocation)
+    if (!this->IsShowMouseCursor() && this->TransientLastMouseLocation && this->MouseLocation)
     {
-        LVec2D Offset{this->MouseLocation->x - LastMouseLocation->x, LastMouseLocation->y - this->MouseLocation->y};
+        LVec2D Offset{this->MouseLocation->x - this->TransientLastMouseLocation->x, this->TransientLastMouseLocation->y - this->MouseLocation->y};
         if (Offset.x != 0.0f)
         {
             check(!algo::contains(this->GetRawInputs(), LPhysicalKey::FromLogical(ELogicalKey::MouseX), &LRawInput::PhysicalKey))
@@ -35,7 +39,7 @@ void Jafg::LSurfaceBase::BeginNewFrame()
         }
     }
 
-    for (auto const& Input : this->VirtualInput)
+    for (auto const& Input: this->VirtualInput)
     {
         if (!algo::contains(this->RawInputs, Input.PhysicalKey, &LRawInput::PhysicalKey))
         {
@@ -46,7 +50,7 @@ void Jafg::LSurfaceBase::BeginNewFrame()
 
     this->UnconsumedInputs = this->RawInputs;
 
-    return;
+    this->TransientLastMouseLocation.reset();
 }
 
 void Jafg::LSurfaceBase::Tick()

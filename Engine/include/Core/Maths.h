@@ -232,24 +232,52 @@ struct TAabb final
     TVec<L,TReal,Q> min;
     TVec<L,TReal,Q> max;
 
+    NODISCARD constexpr TVec<L,TReal,Q> center() const noexcept
+    {
+        return (this->min + this->max) * TReal{0.5};
+    }
+
+    NODISCARD constexpr TReal diagonal_length() const noexcept
+    {
+        auto Vector{this->max - this->min};
+        return sqrt(dot(Vector, Vector));
+    }
+
+    NODISCARD constexpr TReal volume() const noexcept
+    {
+        if constexpr (L == 3)
+        {
+            return (this->max.x - this->min.x) * (this->max.y - this->min.y) * (this->max.z - this->min.z);
+        }
+        else if constexpr (L == 2)
+        {
+            return (this->max.x - this->min.x) * (this->max.y - this->min.y);
+        }
+        else
+        {
+            static_assert(L == 2 || L == 3);
+            return TReal{0};
+        }
+    }
+
     template<maths::length_t l>
     struct edge_count final
     {
         static constexpr maths::length_t value{(l == 3) ? 12 : (l == 2) ? 4 : 0};
     };
     static constexpr maths::length_t edge_count_v{edge_count<L>::value};
-    NODISCARD std::array<TRay<L,TReal,Q>, edge_count_v> edges() const noexcept
+    NODISCARD constexpr std::array<TRay<L,TReal,Q>, edge_count_v> edges() const noexcept
     {
         if constexpr (L == 3)
         {
-            const TVec3<TReal,Q> c000{this->min.x, this->min.y, this->min.z};
-            const TVec3<TReal,Q> c001{this->min.x, this->min.y, this->max.z};
-            const TVec3<TReal,Q> c010{this->min.x, this->max.y, this->min.z};
-            const TVec3<TReal,Q> c011{this->min.x, this->max.y, this->max.z};
-            const TVec3<TReal,Q> c100{this->max.x, this->min.y, this->min.z};
-            const TVec3<TReal,Q> c101{this->max.x, this->min.y, this->max.z};
-            const TVec3<TReal,Q> c110{this->max.x, this->max.y, this->min.z};
-            const TVec3<TReal,Q> c111{this->max.x, this->max.y, this->max.z};
+            const TVec<L,TReal,Q> c000{this->min.x, this->min.y, this->min.z};
+            const TVec<L,TReal,Q> c001{this->min.x, this->min.y, this->max.z};
+            const TVec<L,TReal,Q> c010{this->min.x, this->max.y, this->min.z};
+            const TVec<L,TReal,Q> c011{this->min.x, this->max.y, this->max.z};
+            const TVec<L,TReal,Q> c100{this->max.x, this->min.y, this->min.z};
+            const TVec<L,TReal,Q> c101{this->max.x, this->min.y, this->max.z};
+            const TVec<L,TReal,Q> c110{this->max.x, this->max.y, this->min.z};
+            const TVec<L,TReal,Q> c111{this->max.x, this->max.y, this->max.z};
             return {{
                 {c000, c100},
                 {c100, c110},
@@ -269,10 +297,10 @@ struct TAabb final
         }
         else if constexpr (L == 2)
         {
-            const TVec2<TReal,Q> c00{this->min.x, this->min.y};
-            const TVec2<TReal,Q> c01{this->min.x, this->max.y};
-            const TVec2<TReal,Q> c10{this->max.x, this->min.y};
-            const TVec2<TReal,Q> c11{this->max.x, this->max.y};
+            const TVec<L,TReal,Q> c00{this->min.x, this->min.y};
+            const TVec<L,TReal,Q> c01{this->min.x, this->max.y};
+            const TVec<L,TReal,Q> c10{this->max.x, this->min.y};
+            const TVec<L,TReal,Q> c11{this->max.x, this->max.y};
             return {{
                 {c00, c10},
                 {c10, c11},
@@ -287,7 +315,44 @@ struct TAabb final
         }
     }
 
-    NODISCARD TAabb apply(TTrans<TReal,Q> const& t) const noexcept
+    template<maths::length_t l>
+    struct corner_count final
+    {
+        static constexpr maths::length_t value{(l == 3) ? 8 : (l == 2) ? 4 : 0};
+    };
+    static constexpr maths::length_t corner_count_v{corner_count<L>::value};
+    NODISCARD constexpr std::array<TVec<L,TReal,Q>, corner_count_v> corners() const noexcept
+    {
+        if constexpr (L == 3)
+        {
+            return std::array<TVec<L,TReal,Q>, corner_count_v>{
+                TVec<L,TReal,Q>{this->min.x, this->min.y, this->min.z},
+                TVec<L,TReal,Q>{this->max.x, this->min.y, this->min.z},
+                TVec<L,TReal,Q>{this->min.x, this->max.y, this->min.z},
+                TVec<L,TReal,Q>{this->max.x, this->max.y, this->min.z},
+                TVec<L,TReal,Q>{this->min.x, this->min.y, this->max.z},
+                TVec<L,TReal,Q>{this->max.x, this->min.y, this->max.z},
+                TVec<L,TReal,Q>{this->min.x, this->max.y, this->max.z},
+                TVec<L,TReal,Q>{this->max.x, this->max.y, this->max.z},
+                };
+        }
+        else if constexpr (L == 2)
+        {
+            return std::array<TVec<L,TReal,Q>, corner_count_v>{
+                TVec<L,TReal,Q>{this->min.x, this->min.y},
+                TVec<L,TReal,Q>{this->max.x, this->min.y},
+                TVec<L,TReal,Q>{this->min.x, this->max.y},
+                TVec<L,TReal,Q>{this->max.x, this->max.y},
+                };
+        }
+        else
+        {
+            static_assert(L == 2 || L == 3);
+            return {};
+        }
+    }
+
+    NODISCARD constexpr TAabb apply(TTrans<TReal,Q> const& t) const noexcept
     {
         static_assert(L == 3);
 
@@ -331,9 +396,9 @@ using LAabb3D = TAabb3<maths::double_precision,maths::defaultp>;
 template<typename TReal,maths::qual_t Q>
 struct TEye final
 {
-    TReal vert_fov{ static_cast<TReal>(1.0) };
-    TReal near_frustum{ static_cast<TReal>(0.1) };
-    TReal far_frustum{ static_cast<TReal>(10.0) };
+    TReal vert_fov;
+    TReal near_frustum;
+    TReal far_frustum;
     TVec3<TReal,Q> translation;
     TVec3<TReal,Q> front;
     TVec3<TReal,Q> up;
@@ -989,6 +1054,9 @@ NODISCARD constexpr octant get_angled_octant(TVec3<TReal,Q> const& a, TQua<TReal
 }
 
 template<length_t L, typename T,qual_t Q>
+NODISCARD constexpr TVec<L,T,Q> linear_lerp(TVec<L,T,Q> const& a, TVec<L,T,Q> const& b, T t) noexcept { return a + t * (b - a); }
+
+template<length_t L, typename T,qual_t Q>
 NODISCARD constexpr T squared_magnitude(TVec<L,T,Q> const& v) noexcept { return maths::dot(v, v); }
 template<length_t L, typename T,qual_t Q>
 NODISCARD constexpr T magnitude(TVec<L,T,Q> const& v) noexcept { return maths::sqrt(maths::squared_magnitude(v)); }
@@ -1379,6 +1447,12 @@ NODISCARD constexpr TVec3<T,Q> editor_euler_angles_deg(TQua<T,Q> const& q) noexc
 }
 #endif /* JAFG_WITH_EDITOR */
 
+template<typename T, qualifier Q>
+NODISCARD constexpr TQua<T, Q> linear_lerp(TQua<T,Q> const& q0, TQua<T, Q> const& q1, T t)
+{
+    return glm::lerp(q0, q1, t);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Conversions
 using glm::to_string;
@@ -1400,11 +1474,11 @@ NODISCARD TRay<3,TReal,Q> screen_to_world_space(TVec2<TReal,Q> extent, TVec2<TRe
         1.0 - (2.0 * location.y) / static_cast<TReal>(extent.y),
         };
 
-    TMat4<TReal,Q> InvProj{inverse(glm::perspectiveRH_ZO(eye.vert_fov,
+    TMat4<TReal,Q> InvProj{inverse(perspective<TReal,Q>(eye.vert_fov,
         static_cast<TReal>(extent.x) / static_cast<TReal>(extent.y),
         eye.near_frustum, eye.far_frustum
         ))};
-    TMat4<TReal,Q> InvView{inverse(glm::lookAtRH(eye.translation, eye.translation + eye.front, eye.up))};
+    TMat4<TReal,Q> InvView{inverse(look_at(eye.translation, eye.translation + eye.front, eye.up))};
     
     TVec4<TReal,Q> NearClip{NormalLocation.x, NormalLocation.y, static_cast<TReal>(0.0), static_cast<TReal>(1.0)};
     TVec4<TReal,Q> FarClip{NormalLocation.x, NormalLocation.y, static_cast<TReal>(1.0), static_cast<TReal>(1.0)};

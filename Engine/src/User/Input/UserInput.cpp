@@ -175,6 +175,19 @@ bool Jafg::LUserInput::DeactivateContexts(TArray<LStringView> const& Contexts) n
     return bOut;
 }
 
+bool Jafg::LUserInput::DeactivateAllContexts() noexcept
+{
+    if (this->ActiveContexts.empty())
+    {
+        return false;
+    }
+
+    LOG_TRACE(LogUserInput, "Deactivating all [{}] active contexts.", this->ActiveContexts.size())
+    this->ActiveContexts.clear();
+
+    return true;
+}
+
 void Jafg::LUserInput::PushContexts(bool bEmpty /* = true */) noexcept
 {
     if (bEmpty)

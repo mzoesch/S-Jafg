@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Engine/EngineCompileTimeConstants.h"
-#include "Engine/Level.h"
 #include "Cli/CommandLineInterface.h"
 #include "Engine/Jxx.h"
 #include "Engine/World.h"
@@ -45,63 +44,22 @@ struct LWorldTrack final
     friend LWorld;
     friend AWorldObject;
 
-    //# One time callbacks for initialization.
-    struct LCallbacks
-    {
-        TFunction2<void(LWorld& World)> OnPreInit;
-        TFunction2<void(LWorld& World)> OnPostInit;
-    };
-
-    struct CreateInfo
-    {
-        LString HumanReadableName{ "Transient World" };
-    };
     LWorldTrack() noexcept = delete;
     LWorldTrack(LWorldTrack&&) noexcept = default;
-    LWorldTrack(CreateInfo Info)
-        : ChildWorld{std::make_unique<LWorld>(std::move(Info.HumanReadableName))}
-    {
-        check(this->ChildWorld.get() && this->ChildWorld->GetWorldState() == EWorldState::PreInitializing)
-    }
+    LWorldTrack& operator=(LWorldTrack&&) noexcept = default;
+    LWorldTrack(LWorldCreateInfo Info, TFunction2<void(LWorld& World)> OnFinishedLoading = {})
+        : CreateInfo{std::move(Info)}, OnFinishedLoading{std::move(OnFinishedLoading)} {}
     ~LWorldTrack() noexcept { check(!this->ChildWorld.get() || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill) }
 
-    NODISCARD FORCEINLINE constexpr bool IsWaitingForTravel() const noexcept { return !this->TravelUrl.empty(); }
+    NODISCARD FORCEINLINE constexpr bool IsWaitingForTravel() const noexcept { return !!this->CreateInfo; }
     FORCEINLINE bool IsValid() const noexcept { return !!this->ChildWorld.get(); }
     NODISCARD FORCEINLINE LWorld& GetWorld() const noexcept { check(this->IsValid()) return *this->ChildWorld; }
 
 private:
 
-    LString TravelUrl;
+    std::optional<LWorldCreateInfo> CreateInfo;
     TUnique<LWorld> ChildWorld;
-    LCallbacks Callbacks;
-};
-
-//#
-//# After a world has been summoned. They have to be initialized right after. Delaying initialization for even one
-//# tick is undefined behavior.
-//#
-struct LWorldTrackInitializer final
-{
-    LWorldTrackInitializer() noexcept = delete;
-    LWorldTrackInitializer(LWorldStorage Storage) noexcept : Storage{std::move(Storage)} { check(this->Storage.IsValid()) }
-    PROHIBIT_COPY(LWorldTrackInitializer)
-    DEFAULT_CONSTEXPR_MOVE(LWorldTrackInitializer)
-#if JAFG_DO_CHECKS
-    inline ~LWorldTrackInitializer() noexcept
-    {
-        /* Raii check to assert that you have initialized the world. */
-        check(this->Storage.IsNull())
-    }
-#endif /* JAFG_DO_CHECKS */
-
-    //#
-    //# Browse the world after initialization. This is required.
-    //#
-    inline LWorld& Browse(LString Url, LWorldTrack::LCallbacks Callbacks = {});
-
-private:
-
-    LWorldStorage Storage;
+    TFunction2<void(LWorld& World)> OnFinishedLoading;
 };
 
 } /* ~Namespace Detail */
@@ -209,34 +167,34 @@ public:
     //# Summon a completely new fresh world.
     //# @note Master thread of course only.
     //#
-    ENGINE_API Detail::LWorldTrackInitializer SummonWorld(Detail::LWorldTrack::CreateInfo Info);
+    ENGINE_API void SummonWorld(LWorldCreateInfo Info, TFunction2<void(LWorld& World)> OnFinishedLoading = {});
 
     //# Unlike worlds, track pointer may change location at any time. It is not safe to store them.
     NODISCARD FORCEINLINE Detail::LWorldTrack& GetTrackFromWorld(LWorld const& World)
     {
         return *algo::find_checked(this->Tracks, &World, [](auto const& E){ return E.ChildWorld.get(); });
     }
-
-    //#
-    //# Whether your world pointer is still valid.
-    //#
-    ENGINE_API bool IsWorldValid(LWorld const* World) const noexcept;
-
-    //#
-    //# Browse the provided world to a new url at the next opportunity.
-    //# The url format is defined as follows:
-    //#  Internal (browse the world to a url that is internal to the engine; no networking):
-    //#    <LevelName>
-    //#    <LevelName>?<option>?... (@see #LWorldParameters for how to format options.)
-    //#
-    FORCEINLINE LWorld& Browse(LWorld& World, LString Url, Detail::LWorldTrack::LCallbacks Callbacks = {})
+    FORCEINLINE void SilentlyRemoveTrack(Detail::LWorldTrack& Track) noexcept
     {
-        return this->Browse(this->GetTrackFromWorld(World), std::move(Url), std::move(Callbacks));
+        for (auto It{this->Tracks.begin()}; It != this->Tracks.end(); ++It)
+        {
+            if (&*It == &Track)
+            {
+                this->Tracks.erase(It);
+                return;
+            }
+        }
+        LOG_FATAL(LogEngine, "Failed to remove track [{}] from engine.", Track.ChildWorld->GetHumanReadableName())
     }
 
-    //# @return True if registered successfully.
-    ENGINE_API  bool RegisterLevel(LLevel Level);
-    FORCEINLINE bool IsLevelRegistered(LString const& Identifier) const { return algo::contains(this->RegisteredLevels, Identifier, &LLevel::Identifier); }
+    //# Whether your world pointer is still valid.
+    ENGINE_API bool IsWorldValid(LWorld const* World) const noexcept;
+
+    //# Browse the provided world at the next opportunity.
+    FORCEINLINE void Browse(LWorld& World, LWorldCreateInfo CreateInfo, TFunction2<void(LWorld& World)> OnFinishedLoading = {})
+    {
+        this->Browse(this->GetTrackFromWorld(World), std::move(CreateInfo), std::move(OnFinishedLoading));
+    }
 
     //#
     //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
@@ -245,16 +203,13 @@ public:
     TMulticastDelegate<bool(LWorld* InNewWorld)> OnWorldBeginLife;
 
     FORCEINLINE auto const& GetTracks() const noexcept { return this->Tracks; }
-    FORCEINLINE auto const& GetRegisteredLevels() const noexcept { return this->RegisteredLevels; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
 private:
 
-    ENGINE_API LWorld& Browse(Detail::LWorldTrack& Track, LString Url, Detail::LWorldTrack::LCallbacks Callbacks);
-    bool IsTrackUrlInternal(LString const& Url) const;
+    ENGINE_API void Browse(Detail::LWorldTrack& Track, LWorldCreateInfo CreateInfo, TFunction2<void(LWorld& World)> OnFinishedLoading = {});
     bool TravelTrack(Detail::LWorldTrack& Track);
-    LLevel* GetLevelByInternalUrl(LString const& Url);
 
     //#
     //# All current engine tracks.
@@ -262,8 +217,6 @@ private:
     //# lifetime of the index.
     //#
     TArray<Detail::LWorldTrack> Tracks;
-    //# The registered levels that this engine can load.
-    TArray<LLevel> RegisteredLevels;
 
     LClassOuter Outer{ "Engine" };
     LSubsystemCollection Collection{ "Engine" };
@@ -335,15 +288,5 @@ private:
     LReStCli ReSTCli;
 #endif /* JAFG_WITH_REST_CLS */
 };
-
-inline LWorld& Detail::LWorldTrackInitializer::Browse(LString Url, LWorldTrack::LCallbacks Callbacks /* = {}*/)
-{
-    check(this->Storage.IsValid())
-    check(GMutableEngine)
-    auto& Result{GMutableEngine->Browse(*this->Storage, std::move(Url), std::move(Callbacks))};
-    this->Storage.Reset();
-
-    return Result;
-}
 
 } /* ~Namespace Jafg */

@@ -59,6 +59,8 @@ namespace Detail
 template<typename TNode> requires algo::is_base_of_weak_v<WUserWidget, TNode>
 struct TDeferredUserWidgetExec : public TDeferredObjectExec<TNode>
 {
+    using TDeferredObjectExec<TNode>::TDeferredObjectExec;
+
     inline ~TDeferredUserWidgetExec()
     {
         if (this->bReleased == false)

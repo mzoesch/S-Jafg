@@ -47,7 +47,8 @@ void Jafg::LWorldParameters::Reset() noexcept
     return;
 }
 
-void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */, LString&& Url /* = {} */)
+Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
+    : LClassOuter{std::move(Info.HumanReadableName)}, CreateInfo{std::move(Info)}
 {
     STAT_CYCLE_FUNCTION()
 
@@ -57,55 +58,24 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     check(this->WorldState == EWorldState::PreInitializing)
     this->WorldState = EWorldState::Initializing;
 
+    check(this->CreateInfo.HumanReadableName.empty())
+
+    check(!Track.ChildWorld.get())
+    Track.ChildWorld = TUnique<LWorld>{this};
+
     auto& Frontend{this->GetEngine().GetLocalEgo().GetFrontend()};
-
-    this->UnsanitizedUrl = Url;
-
-    /* Remove level name from url. */
-    if (const auto Idx{Url.find('?')}; Idx != Url.npos)
-    {
-        if (algo::valid_index(Url, Idx + 1))
-        {
-            algo::inline_right_chop(&Url, Idx + 1);
-        }
-        else
-        {
-            algo::orphan(&Url);
-        }
-    }
-    else
-    {
-        algo::orphan(&Url);
-    }
-    this->Url = std::move(Url);
-    this->UpdateUrlParams();
-    LOG_VERBOSE(LogWorld, "Initializing new world with [{}].", this->Parameters.ToString())
 
     LOG_TRACE(LogRhi, "Allocating world data descriptor sets.")
     auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
     this->Vk_WorldDescriptorSets = Frontend.Vk_CreateFrequentDescriptorSets(MaterialSubsystem.GetSharedDescriptorSetLayout<UBO::WorldData>());
     this->Vk_WorldBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::WorldData::buffer_create_info());
 
-    this->UnderlyingLevel = Level;
-
-    if (this->UnderlyingLevel.has_value())
-    {
-        this->SupremePolicies = SpawnObject(CastTo<ASupremePolicies>{}, {*this, this->UnderlyingLevel->SupremePoliciesClass.GetClassOrDefault()});
-    }
-    else
-    {
-        this->SupremePolicies = SpawnObject(TWorldStaticInit<ASupremePolicies>{*this});
-    }
+    this->SupremePolicies = SpawnObject(CastTo<ASupremePolicies>{}, {*this, this->CreateInfo.SupremePoliciesClass.GetClassOrDefault()});
     check(this->SupremePolicies)
 
     this->RealTimeWhenWorldStarted = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
 
-    if (auto& Track{Detail::GMutableEngine->GetTrackFromWorld(*this)}; Track.Callbacks.OnPreInit)
-    {
-        Track.Callbacks.OnPreInit(*this);
-        algo::swap_default(&Track.Callbacks.OnPreInit);
-    }
     this->SupremePolicies->OnWorldPreInit();
 
     checkCode
@@ -127,14 +97,24 @@ void Jafg::LWorld::InitializeWorld(std::optional<LLevel> const& Level /* = {} */
     this->GetMutableEngine().OnWorldBeginLife.Broadcast(this);
     this->WorldState = EWorldState::Running;
 
-    if (auto& Track{Detail::GMutableEngine->GetTrackFromWorld(*this)}; Track.Callbacks.OnPostInit)
-    {
-        Track.Callbacks.OnPostInit(*this);
-        algo::swap_default(&Track.Callbacks.OnPostInit);
-    }
     this->SupremePolicies->OnWorldPostInit();
 
     return;
+}
+
+void Jafg::LWorld::TearDownWithTrack()
+{
+    this->TearDown();
+    auto& Engine{this->GetMutableEngine()};
+    Engine.SilentlyRemoveTrack(Engine.GetTrackFromWorld(*this));
+}
+
+LString Jafg::LWorld::GetDetailedHumanReadableName() const noexcept
+{
+    return algo::sprintf("{}@{}"
+        , this->GetHumanReadableName()
+        , this->CreateInfo.SupremePoliciesClass.GetClassOrDefault().GetFullyQualifiedName()
+        );
 }
 
 void Jafg::LWorld::Tick(f64 Dt)
@@ -243,15 +223,18 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
 
     // Light 2: Blue light from the left
     WorldData.lightPositions[1] = glm::vec4(-5.0f, 0.0f, 0.0f, 1.0f);
-    WorldData.lightColors[1] = glm::vec4(0.0f, 0.0f, 300.0f, 1.0f);
+    // WorldData.lightColors[1] = glm::vec4(0.0f, 0.0f, 300.0f, 1.0f);
+    WorldData.lightColors[1] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
 
     // Light 3: Red light from the right
     WorldData.lightPositions[2] = glm::vec4(5.0f, 0.0f, 0.0f, 1.0f);
-    WorldData.lightColors[2] = glm::vec4(300.0f, 0.0f, 0.0f, 1.0f);
+    // WorldData.lightColors[2] = glm::vec4(300.0f, 0.0f, 0.0f, 1.0f);
+    WorldData.lightColors[2] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
 
     // Light 4: Green light from behind
     WorldData.lightPositions[3] = glm::vec4(0.0f, -5.0f, 0.0f, 1.0f);
-    WorldData.lightColors[3] = glm::vec4(0.0f, 300.0f, 0.0f, 1.0f);
+    // WorldData.lightColors[3] = glm::vec4(0.0f, 300.0f, 0.0f, 1.0f);
+    WorldData.lightColors[3] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
 
     // Set camera position for view-dependent effects
     WorldData.CameraPosition = Eye.translation;
@@ -334,6 +317,10 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
         }
     }
 
+    for (auto& F: ActorInfo.PostRenderDelegates)
+    {
+        F(ActorInfo);
+    }
 
     return;
 }
@@ -355,8 +342,13 @@ std::expected<Jafg::APersonaController*,LString> Jafg::LWorld::Login(LTransientP
         }
     }
 
-    auto Pc{this->SupremePolicies->OnIncomingConnectionRequest(
-        std::holds_alternative<LTransientPersona::Proxy>(*Persona) ? ASupremePolicies::Proxy : ASupremePolicies::Local
+    auto Pc{this->SupremePolicies->OnIncomingConnectionRequest(std::holds_alternative<LTransientPersona::Proxy>(*Persona)
+        ? ASupremePolicies::Proxy
+#if JAFG_WITH_EDITOR
+        : std::get<LTransientPersona::Local>(*Persona).bPie
+            ? ASupremePolicies::Editor
+#endif /* JAFG_WITH_EDITOR */
+            : ASupremePolicies::Local
         )};
     if (!Pc)
     {
@@ -579,86 +571,6 @@ void Jafg::LWorld::OnTearDown()
     LClassOuter::OnTearDown();
 
     this->WorldState = EWorldState::WaitingForKill;
-
-    return;
-}
-
-void Jafg::LWorld::UpdateUrlParams() noexcept
-{
-    this->Parameters.Reset();
-
-    TArray<LString> Params;
-
-    LString Current;
-    char Last { 0 };
-    for (const char& C : this->Url)
-    {
-        if (C == '?' && Last != '\\')
-        {
-            Params.emplace_back(std::move(Current));
-        }
-
-        Current += C;
-        Last = C;
-        continue;
-    }
-
-    if (Current.empty() == false)
-    {
-        Params.emplace_back(std::move(Current));
-    }
-
-    for (const LString& P : Params)
-    {
-        bool bAddToKey { true };
-        LString K;
-        LString V;
-        Last = 0;
-
-        /* This is not quite right here. '\' can give wrong resuls. */
-        for (const char& C : P)
-        {
-            if (C == '\\')
-            {
-                if (bAddToKey)
-                {
-                    K += C;
-                }
-                else
-                {
-                    V += C;
-                }
-
-                Last = C;
-                continue;
-            }
-
-            if (C == '=' && Last != '\\')
-            {
-                check( bAddToKey )
-                bAddToKey = false;
-                Last = C;
-                continue;
-            }
-
-            if (bAddToKey)
-            {
-                K += C;
-            }
-            else
-            {
-                V += C;
-            }
-
-            continue;
-        }
-
-        check( K.empty() == false )
-
-        this->Parameters.Params.emplace_back(std::move(K), std::move(V));
-
-        continue;
-    }
 
     return;
 }

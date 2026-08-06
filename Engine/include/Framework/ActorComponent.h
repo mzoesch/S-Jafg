@@ -11,6 +11,13 @@ namespace Jafg
 
 class AActor;
 
+enum struct EActorComponentOrigin: u8
+{
+    Unknown,
+    Ctor,
+    Runtime,
+};
+
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API AActorComponent : public AWorldObject
 {
@@ -25,7 +32,7 @@ protected:
 public:
 
     //# Do not use. Use #OnAttach.
-    virtual void BeginLife() override final { Super::BeginLife(); }
+    virtual void BeginLife() override final { check(this->Origin == EActorComponentOrigin::Unknown) Super::BeginLife(); }
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     //#
@@ -36,6 +43,7 @@ public:
     //#
     virtual void OnAttach(AActor& InOwner)
     {
+        check(this->Origin != EActorComponentOrigin::Unknown)
 #if JAFG_DO_CHECKS
         check(this->bHasExecutedOnAttach == false)
         this->bHasExecutedOnAttach = true;
@@ -53,11 +61,16 @@ public:
     virtual void ParentTick(f32 Dt) { check(this->Owner && this->bTick) }
 
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
-    constexpr bool ShouldRender() const noexcept { return this->bRender; }
+    NODISCARD constexpr bool ShouldRender() const noexcept { return this->bRender; }
     virtual void Render(LActorRenderInfo const& Info) const {}
 
-    FORCEINLINE constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
-    FORCEINLINE constexpr AActor& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
+    NODISCARD constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
+    NODISCARD constexpr AActor& GetOwningActor() noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
+    NODISCARD constexpr AActor const& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
+
+    NODISCARD constexpr EActorComponentOrigin GetOrigin() const noexcept { return this->Origin; }
+    NODISCARD constexpr bool IsCtorComponent() const noexcept { return this->Origin == EActorComponentOrigin::Ctor; }
+    NODISCARD constexpr bool IsRuntimeComponent() const noexcept { return this->Origin == EActorComponentOrigin::Runtime; }
 
 private:
 
@@ -65,15 +78,19 @@ private:
 
 protected:
 
+    CLASS_FIELD(Identity)
     bool bTick:1{};
 
 private:
 
+    CLASS_FIELD(Identity)
     bool bRender:1{};
 
 #if JAFG_DO_CHECKS
     bool bHasExecutedOnAttach:1{};
 #endif /* JAFG_DO_CHECKS */
+
+    EActorComponentOrigin Origin{ EActorComponentOrigin::Unknown };
 };
 
 } /* ~Namespace Jafg */

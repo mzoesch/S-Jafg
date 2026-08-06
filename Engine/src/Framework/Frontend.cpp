@@ -14,22 +14,17 @@ void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
 {
     this->GetCollection()->InitializeDeferred(Outer);
     this->GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
-
-    return;
 }
 
 void Jafg::LFrontendBase::Tick()
 {
     STAT_CYCLE_FUNCTION()
 
-    for (auto const& Surface : this->Surfaces)
-    {
-        Surface->BeginNewFrame();
-    }
-    for (auto const& Surface : this->Surfaces)
-    {
-        Surface->Tick();
-    }
+    algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->BeginNewFrame(); });
+    this->AsFrontend()->PollPlatformEvents();
+    algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->Poll(); });
+    algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->Tick(); });
+
     this->ForEachMutableSubsystem([](JFrontendSubsystem* E)
     {
         if (E->ShouldTick())
@@ -37,8 +32,6 @@ void Jafg::LFrontendBase::Tick()
             E->Tick();
         }
     });
-
-    return;
 }
 
 void Jafg::LFrontendBase::TearDown()
@@ -49,8 +42,6 @@ void Jafg::LFrontendBase::TearDown()
 
     this->Collection.TearDownSubsystems();
     algo::orphan(&this->Surfaces);
-
-    return;
 }
 
 Jafg::LEngine const& Jafg::LFrontendBase::GetEngine() const noexcept
@@ -106,4 +97,26 @@ Jafg::LSurface& Jafg::LFrontendBase::AddSurface(TUnique<LSurface> Surface, ENewS
     }
 
     return Result;
+}
+
+void Jafg::LFrontendBase::RemoveSurface(LSurface& Surface, bool bExitIfLastSurface /* = true */) noexcept
+{
+    auto It{algo::find_if(this->Surfaces, [&Surface](auto const& Ptr){ return Ptr.get() == &Surface; })};
+    check(It != this->Surfaces.end())
+    std::size_t Idx{static_cast<std::size_t>(std::distance(this->Surfaces.begin(), It))};
+
+    this->Surfaces.erase(It);
+    if (this->FocusedSurface == static_cast<i32>(Idx))
+    {
+        this->FocusedSurface = INDEX_NONE;
+    }
+    else if (this->FocusedSurface > static_cast<i32>(Idx))
+    {
+        --this->FocusedSurface;
+    }
+
+    if (bExitIfLastSurface && this->Surfaces.empty())
+    {
+        App::RequestEngineExit("All surfaces ended.");
+    }
 }

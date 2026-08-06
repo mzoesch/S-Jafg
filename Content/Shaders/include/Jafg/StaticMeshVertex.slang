@@ -2,11 +2,16 @@
 
 #include "Jafg.slang"
 
+namespace Jafg
+{
+
 [[CxxName("Jafg::LStaticMesh::Vertex")]]
-struct VSInput
+struct StaticMeshVertex
 {
     float3 pos: POSITION;
     float3 normal: NORMAL;
     float2 uv: TEXCOORD0;
     float4 tangent: TANGENT;
 };
+
+} /* ~Namespace Jafg */

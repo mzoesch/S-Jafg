@@ -26,16 +26,10 @@ void Jafg::APawnComponent::OnAttach(AActor& InOwner)
 }
 #endif /* JAFG_DO_CHECKS */
 
-void Jafg::APawn::DefaultInit()
+void Jafg::APawn::Ctor()
 {
     this->SetEverTickConstructorOnlyFlag();
-
-    if (!this->HasRootComponent())
-    {
-        this->EmplaceRootComponent();
-    }
-
-    return;
+    this->EmplaceDefaultRootComponent<ASceneComponent>();
 }
 
 void Jafg::APawn::Tick(const f32 Dt)

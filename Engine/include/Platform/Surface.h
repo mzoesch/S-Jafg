@@ -36,7 +36,7 @@ struct LSurfaceCreateInfo
 };
 
 //# Interface for a generic surface that the RHI may use to draw on.
-class LSurfaceBase : public LEngineGetters
+class LSurfaceBase: public LEngineGetters
 {
 public:
 
@@ -60,6 +60,8 @@ public:
     FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
 
     void BeginNewFrame();
+    void Poll();
+    //# For surface wide events (platform specific).
     void PollPlatformEvents() PURE_VIRTUAL()
     void Tick();
     void OnRender() PURE_VIRTUAL()
@@ -168,6 +170,9 @@ public:
         return Result;
     }
 
+    //# Whether to shutdown the engine if this surface closes.
+    bool bShutdownEngineOnClose{};
+
 protected:
 
     FORCEINLINE void AddBufferedPlatformInput(LString InInput) noexcept { this->PlatformInput.emplace_back(std::move(InInput)); }
@@ -213,6 +218,8 @@ private:
     //# So if you need this for later reference, you have to copy it.
     //#
     TArray<LString> PlatformInput;
+
+    std::optional<LVec2F> TransientLastMouseLocation;
 };
 
 } /* ~Namespace Jafg */

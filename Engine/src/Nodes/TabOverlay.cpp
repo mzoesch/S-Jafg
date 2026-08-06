@@ -9,6 +9,8 @@
 #include "Nodes/HParent.h"
 #include "Nodes/VParent.h"
 #include "Rhi/NodeRenderInfo.h"
+#include "Widgets/ClassInspector.h"
+#include "Framework/Editor.h"
 
 namespace
 {
@@ -447,6 +449,25 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                     Selector.GetParentUntilChecked<WTabOverlayParent>()->MoveHere(
                         Selector, *Selector.GetParentUntilChecked<WTabOverlay>(), WTabOverlayParent::EDirection::Down, true
                         );
+                    return algo::reply::unhandled();
+                },},
+            LDropDownNodeOption{
+                .Selector = {
+                    .DisplayName = "Open in New Window",
+                    .Icon = "Icons/Jafg.Open",
+                    },
+                .OnAction = [Possibilities=this->Possibilities](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                {
+                    Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [Frontend=&Self.GetMutableFrontend(),Possibilities]
+                    {
+                        auto& Surface{Frontend->AddSurface(std::make_unique<LSurface>(LSurfaceCreateInfo{
+                            .DesiredDimensionsPx = {855, 475},
+                            .HumanReadableName = algo::sprintf("Jafg - @mzoesch ({})", Frontend->GetSurfaceCount()),
+                            }))};
+                        auto& Editor{*ConstructWidget(TNodeStaticInit<WSecondaryEditor>{Surface.GetViewport()}, *Possibilities)};
+                        Possibilities->Selected = &Editor.FindNewOverlay();
+                        Possibilities->AddWindow<WClassInspector>(true);
+                    });
                     return algo::reply::unhandled();
                 },},
         });

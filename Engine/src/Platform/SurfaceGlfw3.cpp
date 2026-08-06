@@ -251,6 +251,11 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     {
         Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]{ this->SetFullscreen(true); });
     }
+
+    if (this->GetFrontend().GetCollection()->GetClass().HasClass())
+    {
+        this->LateSetupVk();
+    }
 }
 
 Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
@@ -289,13 +294,20 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
     check(this->Handle)
     check(Tasks::IsOnMasterThread())
 
-    // TODO: this must not be here. but inside the frontend. This is not unique for every surface!!
     if (glfwWindowShouldClose(this->Handle))
     {
-        App::RequestEngineExit("Window closed by user.");
+        if (this->bShutdownEngineOnClose)
+        {
+            App::RequestEngineExit("Window closed by user.");
+        }
+        else
+        {
+            Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]
+            {
+                this->GetMutableFrontend().RemoveSurface(*this);
+            });
+        }
     }
-    // TODO: This also!1
-    glfwPollEvents();
 }
 
 void Jafg::LSurfaceGlfw3::OnRender()

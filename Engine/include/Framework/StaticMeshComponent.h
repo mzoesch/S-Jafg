@@ -36,6 +36,7 @@ public:
 
 private:
 
+    CLASS_FIELD(Identity)
     LMaterialInstanceRef MaterialInstance;
     CLASS_FIELD(EditorVisible)
     LStaticMeshRef Mesh;
