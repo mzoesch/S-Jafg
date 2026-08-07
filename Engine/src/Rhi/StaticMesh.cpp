@@ -28,9 +28,8 @@
 #endif /* JAFG_WITH_GCC */
     #define TINYOBJLOADER_IMPLEMENTATION
     #include <tiny_obj_loader.h>
-    #define TINYGLTF3_ENABLE_FS
-    #define TINYGLTF3_IMPLEMENTATION
-    #include <tiny_gltf_v3.h>
+    #define TINYGLTF_IMPLEMENTATION
+    #include <tiny_gltf.h>
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
@@ -47,140 +46,84 @@ namespace
 
 Jafg::LVertexInputRegistrator<Jafg::LStaticMesh::Vertex> _{};
 
-Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
+enum struct ETinyObjHint
+{
+    Binary,
+    Json,
+};
+
+Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHint Hint)
 {
     typedef Jafg::LStaticMesh::Vertex LVertex;
 
-    tg3_parse_options Options{};
-    Options.required_sections = TG3_REQUIRE_VERSION;
-    Options.strictness = TG3_PERMISSIVE;
-    Options.memory.memory_budget = TINYGLTF3_MAX_MEMORY_BYTES;
-    Options.memory.arena_block_size = TG3__ARENA_DEFAULT_BLOCK_SIZE;
-    Options.max_external_file_size = 0;
-#if JAFG_IN_SHIPPING
-    Options.validate_indices = 0;
-#else /* JAFG_IN_SHIPPING */
-    Options.validate_indices = 1;
-#endif /* !JAFG_IN_SHIPPING */
+    tinygltf::TinyGLTF Ldr;
+    tinygltf::Model Model;
+    LString Warning;
+    LString Error;
 
-    tg3_error_stack ErrorStack{};
-    ::tg3_error_stack_init(&ErrorStack);
-
-    tg3_model Model{};
-
-    algo::raii_leave{[&]
+    bool Result{};
+    if (Hint == ETinyObjHint::Binary)
     {
-        ::tg3_model_free(&Model);
-        ::tg3_error_stack_free(&ErrorStack);
-    }};
-
-#if !JAFG_PLATFORM_USES_UTF8
-    auto NativeString{Target.GetPath().string()};
-#endif /* !JAFG_PLATFORM_USES_UTF8 */
-    if (auto Error{
+        LOG_TRACE(LogRhi, "Loading static mesh [{}] via tinygltf as binary glTF.", Target.GetPath())
 #if JAFG_PLATFORM_USES_UTF8
-        ::tg3_parse_file(&Model, &ErrorStack, Target.GetPath().native().c_str(), static_cast<uint32_t>(Target.GetPath().native().size()), &Options)
+        Result = Ldr.LoadBinaryFromFile(&Model, &Warning, &Error, Target.GetPath().native().c_str());
 #else /* JAFG_PLATFORM_USES_UTF8 */
-        ::tg3_parse_file(&Model, &ErrorStack, NativeString.c_str(), static_cast<uint32_t>(NativeString.size()), &Options)
+        Result = Ldr.LoadBinaryFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
 #endif /* !JAFG_PLATFORM_USES_UTF8 */
-        }; Error != TG3_OK)
+    }
+    else
     {
-        for (decltype(tg3_error_stack::count) Idx{0uz}; Idx < ErrorStack.count; ++Idx)
-        {
-            switch (ErrorStack.entries[Idx].severity)
-            {
-            case TG3_SEVERITY_INFO:
-            {
-                LOG_INFO(LogRhi, "[{}]: {}"
-                    , Target.GetPath()
-                    , ErrorStack.entries[Idx].message ? ErrorStack.entries[Idx].message : "(null)"
-                    )
-                break;
-            }
-            case TG3_SEVERITY_WARNING:
-            {
-                LOG_WARNING(LogRhi, "[{}]: {}"
-                    , Target.GetPath()
-                    , ErrorStack.entries[Idx].message ? ErrorStack.entries[Idx].message : "(null)"
-                    )
-                break;
-            }
-            case TG3_SEVERITY_ERROR:
-            {
-                LOG_ERROR(LogRhi, "[{}]: {}"
-                    , Target.GetPath()
-                    , ErrorStack.entries[Idx].message ? ErrorStack.entries[Idx].message : "(null)"
-                    )
-                break;
-            }
-            }
-        }
-
-        if (Error == TG3_ERR_FILE_NOT_FOUND)
-        {
-            return Jafg::LStaticMesh::EResult::FileNotFound;
-        }
+        check(Hint == ETinyObjHint::Json)
+#if JAFG_PLATFORM_USES_UTF8
+        Result = Ldr.LoadASCIIFromFile(&Model, &Warning, &Error, Target.GetPath().native().c_str());
+#else /* JAFG_PLATFORM_USES_UTF8 */
+        Result = Ldr.LoadASCIIFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
+#endif /* !JAFG_PLATFORM_USES_UTF8 */
+    }
+    if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinygltf: {}", Warning) }
+    if (Error.empty() == false) { LOG_ERROR(LogRhi, "tinygltf: {}", Error) }
+    if (Result == false)
+    {
         return Jafg::LStaticMesh::EResult::LoadingError;
     }
 
     {
         auto& Asset{Model.asset};
         LOG_TRACE(LogRhi, "[{}]: Asset: v[{}>={}] g[{}]",
-            Target.GetPath()
-            , LStringView{Asset.version.data, Asset.version.len}
-            , LStringView{Asset.min_version.data, Asset.min_version.len}
-            , LStringView{Asset.generator.data, Asset.generator.len}
+            Target.GetPath(), Asset.version, Asset.minVersion, Asset.generator
             )
     }
 
     LOG_TRACE(LogRhi, "[{}]: {} meshes, {} materials, {} textures, {} samplers, {} animations, {} skins, {} nodes"
                         ", {} buffers, {} buffer views, {} accessors."
-        , Target.GetPath(), Model.meshes_count, Model.materials_count, Model.textures_count, Model.samplers_count
-        , Model.animations_count, Model.skins_count, Model.nodes_count, Model.buffers_count, Model.buffer_views_count, Model.accessors_count
+        , Target.GetPath(), Model.meshes.size(), Model.materials.size(), Model.textures.size(), Model.samplers.size()
+        , Model.animations.size(), Model.skins.size(), Model.nodes.size(), Model.buffers.size(), Model.bufferViews.size(), Model.accessors.size()
         )
 
-    auto FindAttribute{[](tg3_str_int_pair const* Attributes, decltype(tg3_primitive::attributes_count) Count, char const* Key)
-        -> std::optional<decltype(tg3_primitive::attributes_count)>
-    {
-        check(Count == 0 || Attributes)
-        for (decltype(Count) Idx{0uz}; Idx < Count; ++Idx)
-        {
-            if (tg3_str_equals_cstr(Attributes[Idx].key, Key))
-            {
-                return Idx;
-            }
-        }
-        return std::nullopt;
-    }};
-
     std::unordered_map<Jafg::LStaticMesh::Vertex, u32> uniqueVertices;
-    for (decltype(Model.meshes_count) MeshIdx{0uz}; MeshIdx < Model.meshes_count; ++MeshIdx)
+    for (const auto &Mesh : Model.meshes)
     {
-        tg3_mesh const& Mesh{Model.meshes[MeshIdx]};
-        for (decltype(Mesh.primitives_count) PrimitiveIdx{0uz}; PrimitiveIdx < Mesh.primitives_count; ++PrimitiveIdx)
+        for (const  auto &Primitive : Mesh.primitives)
         {
-            tg3_primitive const& Primitive{Mesh.primitives[PrimitiveIdx]};
+            tinygltf::Accessor const& IdxAccessor{Model.accessors[Primitive.indices]};
+            tinygltf::BufferView const& IdxBufferView{Model.bufferViews[IdxAccessor.bufferView]};
+            tinygltf::Buffer const& IdxBuffer{Model.buffers[IdxBufferView.buffer]};
 
-            tg3_accessor const& IdxAccessor{Model.accessors[Primitive.indices]};
-            tg3_buffer_view const& IdxBufferView{Model.buffer_views[IdxAccessor.buffer_view]};
-            tg3_buffer const& IdxBuffer{Model.buffers[IdxBufferView.buffer]};
-
-            auto PositionAttribute{FindAttribute(Primitive.attributes, Primitive.attributes_count, "POSITION")};
-            if (!PositionAttribute)
+            if (Primitive.attributes.contains("POSITION") == false)
             {
                 LOG_FATAL(LogRhi, "[{}]: Primitive [{}] has no POSITION attribute.", Target.GetPath(), Primitive.indices)
             }
-            tg3_accessor const& PosAccessor{Model.accessors[*PositionAttribute]};
-            tg3_buffer_view const& PosBufferView{Model.buffer_views[PosAccessor.buffer_view]};
-            tg3_buffer const& PosBuffer{Model.buffers[PosBufferView.buffer]};
+            tinygltf::Accessor const& PosAccessor{Model.accessors[Primitive.attributes.at("POSITION")]};
+            tinygltf::BufferView const& PosBufferView{Model.bufferViews[PosAccessor.bufferView]};
+            tinygltf::Buffer const& PosBuffer{Model.buffers[PosBufferView.buffer]};
 
-            tg3_accessor const* NormalAccessor{};
-            tg3_buffer_view const* NormalBufferView{};
-            tg3_buffer const* NormalBuffer{};
-            if (auto NormalAttribute{FindAttribute(Primitive.attributes, Primitive.attributes_count, "NORMAL")}; NormalAttribute)
+            tinygltf::Accessor const* NormalAccessor{};
+            tinygltf::BufferView const* NormalBufferView{};
+            tinygltf::Buffer const* NormalBuffer{};
+            if (auto It{Primitive.attributes.find("NORMAL")}; It != Primitive.attributes.end())
             {
-                NormalAccessor   = &Model.accessors[*NormalAttribute];
-                NormalBufferView = &Model.buffer_views[NormalAccessor->buffer_view];
+                NormalAccessor   = &Model.accessors[It->second];
+                NormalBufferView = &Model.bufferViews[NormalAccessor->bufferView];
                 NormalBuffer     = &Model.buffers[NormalBufferView->buffer];
             }
             else
@@ -188,13 +131,13 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
                 LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no NORMAL attribute.", Target.GetPath(), Primitive.indices)
             }
 
-            tg3_accessor const* TexCoordAccessor{};
-            tg3_buffer_view const* TexCoordBufferView{};
-            tg3_buffer const* TexCoordBuffer{};
-            if (auto TexCoordAttribute{FindAttribute(Primitive.attributes, Primitive.attributes_count, "TEXCOORD_0")}; TexCoordAttribute)
+            tinygltf::Accessor const* TexCoordAccessor{};
+            tinygltf::BufferView const* TexCoordBufferView{};
+            tinygltf::Buffer const* TexCoordBuffer{};
+            if (auto It{Primitive.attributes.find("TEXCOORD_0")}; It != Primitive.attributes.end())
             {
-                TexCoordAccessor   = &Model.accessors[*TexCoordAttribute];
-                TexCoordBufferView = &Model.buffer_views[TexCoordAccessor->buffer_view];
+                TexCoordAccessor   = &Model.accessors[It->second];
+                TexCoordBufferView = &Model.bufferViews[TexCoordAccessor->bufferView];
                 TexCoordBuffer     = &Model.buffers[TexCoordBufferView->buffer];
             }
             else
@@ -202,13 +145,13 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
                 LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no TEXCOORD_0 attribute.", Target.GetPath(), Primitive.indices)
             }
 
-            tg3_accessor const* TangentAccessor{};
-            tg3_buffer_view const* TangentBufferView{};
-            tg3_buffer const* TangentBuffer{};
-            if (auto TangentAttribute{FindAttribute(Primitive.attributes, Primitive.attributes_count, "TANGENT")}; TangentAttribute)
+            tinygltf::Accessor const* TangentAccessor{};
+            tinygltf::BufferView const* TangentBufferView{};
+            tinygltf::Buffer const* TangentBuffer{};
+            if (auto It{Primitive.attributes.find("TANGENT")}; It != Primitive.attributes.end())
             {
-                TangentAccessor   = &Model.accessors[*TangentAttribute];
-                TangentBufferView = &Model.buffer_views[TangentAccessor->buffer_view];
+                TangentAccessor   = &Model.accessors[It->second];
+                TangentBufferView = &Model.bufferViews[TangentAccessor->bufferView];
                 TangentBuffer     = &Model.buffers[TangentBufferView->buffer];
             }
             else
@@ -222,16 +165,16 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
             {
                 LVertex Vertex{};
 
-                auto* pPosition{reinterpret_cast<f32 const*>(&PosBuffer.data.data[
-                    PosBufferView.byte_offset + PosAccessor.byte_offset + Idx * sizeof(decltype(Vertex.Position))
+                auto* pPosition{reinterpret_cast<f32 const*>(&PosBuffer.data[
+                    PosBufferView.byteOffset + PosAccessor.byteOffset + Idx * sizeof(decltype(Vertex.Position))
                     ])};
                 Vertex.Position = {pPosition[0], pPosition[1], pPosition[2]};
 
                 if (NormalAccessor)
                 {
                     check(NormalBufferView && NormalBuffer)
-                    auto* pNormal{reinterpret_cast<f32 const*>(&NormalBuffer->data.data[
-                        NormalBufferView->byte_offset + NormalAccessor->byte_offset + Idx * sizeof(decltype(Vertex.Normal))
+                    auto* pNormal{reinterpret_cast<f32 const*>(&NormalBuffer->data[
+                        NormalBufferView->byteOffset + NormalAccessor->byteOffset + Idx * sizeof(decltype(Vertex.Normal))
                         ])};
                     Vertex.Normal = {pNormal[0], pNormal[1], pNormal[2]};
                 }
@@ -243,8 +186,8 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
                 if (TexCoordAccessor)
                 {
                     check(TexCoordBufferView && TexCoordBuffer)
-                    auto* pTexCoord{reinterpret_cast<f32 const*>(&TexCoordBuffer->data.data[
-                        TexCoordBufferView->byte_offset + TexCoordAccessor->byte_offset + Idx * sizeof(decltype(Vertex.TexCoord))
+                    auto* pTexCoord{reinterpret_cast<f32 const*>(&TexCoordBuffer->data[
+                        TexCoordBufferView->byteOffset + TexCoordAccessor->byteOffset + Idx * sizeof(decltype(Vertex.TexCoord))
                         ])};
                     Vertex.TexCoord = {pTexCoord[0], pTexCoord[1]};
                 }
@@ -256,8 +199,8 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
                 if (TangentAccessor)
                 {
                     check(TangentBufferView && TangentBuffer)
-                    auto* pTangent{reinterpret_cast<f32 const*>(&TangentBuffer->data.data[
-                        TangentBufferView->byte_offset + TangentAccessor->byte_offset + Idx * sizeof(decltype(Vertex.Tangent))
+                    auto* pTangent{reinterpret_cast<f32 const*>(&TangentBuffer->data[
+                        TangentBufferView->byteOffset + TangentAccessor->byteOffset + Idx * sizeof(decltype(Vertex.Tangent))
                         ])};
                     Vertex.Tangent = {pTangent[0], pTangent[1], pTangent[2], pTangent[3]};
                 }
@@ -269,34 +212,39 @@ Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target)
                 Target.Vertices.emplace_back(std::move(Vertex));
             }
 
-            auto const* pIdxData{&IdxBuffer.data.data[IdxBufferView.byte_offset + IdxAccessor.byte_offset]};
+            auto const* pIdxData{&IdxBuffer.data[IdxBufferView.byteOffset + IdxAccessor.byteOffset]};
             auto IdxCount{IdxAccessor.count};
-            auto IdxStride{tg3_component_size(IdxAccessor.component_type)};
-            if (IdxStride < static_cast<decltype(IdxStride)>(1))
+            auto IdxStride{
+                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT   ? sizeof(u32) :
+                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? sizeof(u16) :
+                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE  ? sizeof(u8) :
+                0uz
+                };
+            if (IdxStride == 0uz)
             {
                 LOG_FATAL(LogRhi, "[{}]: Could not infer index stride from component type [{}].",
-                    Target.GetPath(), IdxAccessor.component_type
+                    Target.GetPath(), IdxAccessor.componentType
                     )
             }
 
             Target.Indices.reserve(Target.Indices.size() + IdxCount);
             for (auto Idx{0uz}; Idx < IdxCount; ++Idx)
             {
-                if (IdxAccessor.component_type == TG3_COMPONENT_TYPE_UNSIGNED_SHORT)
+                if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
                 {
                     Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u16 const*>(pIdxData + Idx * IdxStride));
                 }
-                else if (IdxAccessor.component_type == TG3_COMPONENT_TYPE_UNSIGNED_INT)
+                else if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
                 {
                     Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u32 const*>(pIdxData + Idx * IdxStride));
                 }
-                else if (IdxAccessor.component_type == TG3_COMPONENT_TYPE_UNSIGNED_BYTE)
+                else if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
                 {
                     Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u8 const*>(pIdxData + Idx * IdxStride));
                 }
                 else
                 {
-                    LOG_FATAL(LogRhi, "[{}]: Unsupported index component type [{}].", Target.GetPath(), IdxAccessor.component_type)
+                    std::unreachable();
                 }
             }
         }
@@ -415,9 +363,16 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
     }
     check(this->Vertices.empty() && this->Indices.empty())
 
-    if (this->Path.native().ends_with(LITERAL_TEXT(".glb")) || this->Path.native().ends_with(LITERAL_TEXT(".gltf")))
+    if (this->Path.native().ends_with(LITERAL_TEXT(".glb")))
     {
-        if (auto Rc{::LoadViaTinyGltf(*this)}; Rc != EResult::Success)
+        if (auto Rc{::LoadViaTinyGltf(*this, ETinyObjHint::Binary)}; Rc != EResult::Success)
+        {
+            return Rc;
+        }
+    }
+    else if (this->Path.native().ends_with(LITERAL_TEXT(".gltf")))
+    {
+        if (auto Rc{::LoadViaTinyGltf(*this, ETinyObjHint::Json)}; Rc != EResult::Success)
         {
             return Rc;
         }

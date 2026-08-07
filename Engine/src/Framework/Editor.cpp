@@ -2066,7 +2066,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane.glb"));
+        Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_2M.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetTranslation(LWorldVec3{0,0,4});
     });

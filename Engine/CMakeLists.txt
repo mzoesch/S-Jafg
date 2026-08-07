@@ -307,7 +307,6 @@ if(_guard)
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nativefiledialog-extended"
         )
     FetchContent_MakeAvailable(FetchContent_nativefiledialog_extended)
-#    target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_nativefiledialog_extended_SOURCE_DIR}/include)
     target_link_libraries(${_scoped_module_name} PRIVATE nfd)
 
     ###############################################################################
@@ -333,7 +332,7 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_tinygltf
         GIT_REPOSITORY      https://github.com/syoyo/tinygltf.git
-        GIT_TAG             0d9ce1a9561688c6c6e7471430d15a50a0b15f1a # v3.0.1
+        GIT_TAG             488a70a3df62a4df1a736e9e56fb8836580c4888 # v2.9.7
         GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinygltf"
         )
