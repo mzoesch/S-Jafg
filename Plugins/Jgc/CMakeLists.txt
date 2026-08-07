@@ -11,4 +11,5 @@ if(_guard)
     jafg_add_dependency("Engine" "public")
 
     add_custom_target(JgcRuntime DEPENDS Runtime Jgc)
+    set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "JgcRuntime")
 endif()

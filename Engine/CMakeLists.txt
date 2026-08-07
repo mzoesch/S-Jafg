@@ -1,26 +1,6 @@
 # Copyright mzoesch. All rights reserved.
 
 include_guard(_guard)
-
-function(jafg_get_manifest_hash OUT_HASH FILE_PATH)
-    set(${OUT_HASH} "NONE" PARENT_SCOPE)
-
-    foreach(LINE IN LISTS JAFG_REMOTE_CONTENT_FILES)
-        # Split line into hash and path
-        string(REGEX MATCH "^([^ ]+)[ ]+(.+)$" MATCHED "${LINE}")
-
-        if(MATCHED)
-            set(HASH "${CMAKE_MATCH_1}")
-            set(PATH "${CMAKE_MATCH_2}")
-
-            if(PATH STREQUAL "${FILE_PATH}")
-                set(${OUT_HASH} "${HASH}" PARENT_SCOPE)
-                return()
-            endif()
-        endif()
-    endforeach()
-endfunction()
-
 if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
@@ -146,8 +126,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_FastNoise2
         GIT_REPOSITORY      https://github.com/Auburn/FastNoise2.git
-        GIT_TAG             v0.10.0-alpha
-        GIT_SHALLOW         TRUE
+        GIT_TAG             903c1f2d2f9d53ddce94cd223f32727d9ab3aeaa # v1.1.1
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/fastnoise2"
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
@@ -160,8 +140,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Freetype
         GIT_REPOSITORY      https://gitlab.freedesktop.org/freetype/freetype.git
-        GIT_TAG             VER-2-13-3
-        GIT_SHALLOW         TRUE
+        GIT_TAG             0a0221a1347e2f1e07c395263540026e9a0aa7c7 # VER-2-14-3
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/freetype"
         )
     FetchContent_MakeAvailable(FetchContent_Freetype)
@@ -176,7 +156,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Harfbuzz
         GIT_REPOSITORY      https://github.com/harfbuzz/harfbuzz.git
-        GIT_TAG             14.2.1
+        GIT_TAG             4c2aa804671d7276e8a0eb95da07202ead05c843 # 14.3.0
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/harfbuzz"
         )
     FetchContent_MakeAvailable(FetchContent_Harfbuzz)
@@ -194,8 +175,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_MsdfGen
         GIT_REPOSITORY      https://github.com/Chlumsky/msdfgen.git
-        GIT_TAG             v1.13
-        GIT_SHALLOW         TRUE
+        GIT_TAG             1874bcf7d9624ccc85b4bc9a85d78116f690f35b # v1.13
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdfgen"
         )
     FetchContent_MakeAvailable(FetchContent_MsdfGen)
@@ -212,8 +193,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_MsdfAtlasGen
         GIT_REPOSITORY      https://github.com/Chlumsky/msdf-atlas-gen.git
-        GIT_TAG             v1.4
-        GIT_SHALLOW         TRUE
+        GIT_TAG             2ede254314a2512252a225fa6c975948d6af559a # v1.4
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/msdf-atlas-gen"
         )
     FetchContent_MakeAvailable(FetchContent_MsdfAtlasGen)
@@ -225,8 +206,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Glfw3
         GIT_REPOSITORY      https://github.com/glfw/glfw.git
-        GIT_TAG             master
-        GIT_SHALLOW         TRUE
+        GIT_TAG             d9d6f0f1f967807ffade6598ea9a631ebaf37a56 # 3.5.1
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/glfw3"
         )
     FetchContent_MakeAvailable(FetchContent_Glfw3)
@@ -242,9 +223,9 @@ if(_guard)
     message(STATUS "Fetching Sqlite3...")
     FetchContent_Declare(
         FetchContent_Sqlite3
-        GIT_REPOSITORY      https://github.com/mzoesch/S-Jafg-Sqlite3-Amalgamation.git
-        GIT_TAG             trunk
-        GIT_SHALLOW         TRUE
+        GIT_REPOSITORY      https://github.com/mzoesch/S-Jafg-Sqlite3-Amalgamation
+        GIT_TAG             0a254b4a7324babba447618edb67b10e6fd2be4f # Latest as of 2026-08-07
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/sqlite3"
         )
     FetchContent_MakeAvailable(FetchContent_Sqlite3)
@@ -256,8 +237,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Vma
         GIT_REPOSITORY      https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
-        GIT_TAG             master
-        GIT_SHALLOW         TRUE
+        GIT_TAG             3aa921224c154a0d2c43912bc88e1c42ce1f7607 # v3.4.0
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/vma"
         )
     FetchContent_MakeAvailable(FetchContent_Vma)
@@ -269,8 +250,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Glm
         GIT_REPOSITORY      https://github.com/g-truc/glm
-        GIT_TAG             master
-        GIT_SHALLOW         TRUE
+        GIT_TAG             8d1fd52e5ab5590e2c81768ace50c72bae28f2ed # 1.0.3
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/glm"
         )
     FetchContent_MakeAvailable(FetchContent_Glm)
@@ -282,8 +263,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_NlohmannJson
         GIT_REPOSITORY      https://github.com/nlohmann/json
-        GIT_TAG             master
-        GIT_SHALLOW         TRUE
+        GIT_TAG             55f93686c01528224f448c19128836e7df245f72 # v3.12.0
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nlohmannjson"
         )
     FetchContent_MakeAvailable(FetchContent_NlohmannJson)
@@ -295,8 +276,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_Stb
         GIT_REPOSITORY      https://github.com/nothings/stb
-        GIT_TAG             master
-        GIT_SHALLOW         TRUE
+        GIT_TAG             2c980bb59875b0d32144a71867fbdebb2f77cd20 # Latest as of 2026-08-07
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/stb"
         )
     FetchContent_MakeAvailable(FetchContent_Stb)
@@ -308,8 +289,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_httplib
         GIT_REPOSITORY      https://github.com/yhirose/cpp-httplib
-        GIT_TAG             v0.28.0
-        GIT_SHALLOW         TRUE
+        GIT_TAG             095a5c1caf9e467ff840ee2ffd19be1a7852203b # v0.52.0
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/httplib"
         )
     FetchContent_MakeAvailable(FetchContent_httplib)
@@ -321,8 +302,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_nativefiledialog_extended
         GIT_REPOSITORY      https://github.com/btzy/nativefiledialog-extended.git
-        GIT_TAG             v1.3.0
-        GIT_SHALLOW         TRUE
+        GIT_TAG             fc168e8605bfa51aaec22ab0c4e46b9de665a437 # v1.3.0
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/nativefiledialog-extended"
         )
     FetchContent_MakeAvailable(FetchContent_nativefiledialog_extended)
@@ -335,8 +316,8 @@ if(_guard)
     FetchContent_Declare(
         FetchContent_tinyobjloader
         GIT_REPOSITORY      https://github.com/tinyobjloader/tinyobjloader
-        GIT_TAG             release
-        GIT_SHALLOW         TRUE
+        GIT_TAG             2945a967c5303b2c8c14174117c45f3302591150 # v2.0.0rc13
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinyobjloader"
         )
     FetchContent_MakeAvailable(FetchContent_tinyobjloader)
@@ -345,11 +326,15 @@ if(_guard)
     ###############################################################################
     # tinygltf
     message(STATUS "Fetching tinygltf...")
+    set(TINYGLTF3_BUILD_TESTS OFF)
+    set(TINYGLTF3_INSTALL OFF)
+    message(STATUS "TINYGLTF3_BUILD_TESTS: ${TINYGLTF3_BUILD_TESTS}")
+    message(STATUS "TINYGLTF3_INSTALL: ${TINYGLTF3_INSTALL}")
     FetchContent_Declare(
         FetchContent_tinygltf
         GIT_REPOSITORY      https://github.com/syoyo/tinygltf.git
-        GIT_TAG             release
-        GIT_SHALLOW         TRUE
+        GIT_TAG             0d9ce1a9561688c6c6e7471430d15a50a0b15f1a # v3.0.1
+        GIT_PROGRESS        TRUE
         SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/tinygltf"
         )
     FetchContent_MakeAvailable(FetchContent_tinygltf)
@@ -427,6 +412,21 @@ if(_guard)
             message(VERBOSE "REMOTE: ${line}")
         endforeach()
     endif()
+
+    function(jafg_get_manifest_hash OUT_HASH FILE_PATH)
+        set(${OUT_HASH} "NONE" PARENT_SCOPE)
+        foreach(LINE IN LISTS JAFG_REMOTE_CONTENT_FILES)
+            string(REGEX MATCH "^([^ ]+)[ ]+(.+)$" MATCHED "${LINE}")
+            if(MATCHED)
+                set(MANIFEST_HASH "${CMAKE_MATCH_1}")
+                set(MANIFEST_PATH "${CMAKE_MATCH_2}")
+                if(MANIFEST_PATH STREQUAL "${FILE_PATH}")
+                    set(${OUT_HASH} "${MANIFEST_HASH}" PARENT_SCOPE)
+                    return()
+                endif()
+            endif()
+        endforeach()
+    endfunction()
 
     foreach(line IN LISTS JAFG_CONTENT_FILES)
         set(_content_file "${JAFG_ENGINE_ROOT}/Content/${line}")
