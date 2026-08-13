@@ -67,10 +67,37 @@ struct LStaticMesh final
     };
     static_assert(rhi::vertex_input<Vertex>);
 
+    struct HostPrimitive final
+    {
+        TArray<Vertex> Vertices;
+        TArray<u32> Indices;
+    };
+
+    struct HostMesh final
+    {
+        LString Name;
+        TArray<HostPrimitive> Primitives;
+    };
+
+    struct DevicePrimitive final
+    {
+        rhi::device_buffer Vertices;
+        rhi::device_buffer Indices;
+        u32 IndexCount;
+    };
+
+    struct DeviceMesh final
+    {
+        LString Name;
+        TArray<DevicePrimitive> Primitives;
+    };
+
     enum struct EResult
     {
         Success,
         FileNotFound,
+        FailedToOpen,
+        FailedToRead,
         LoadingError,
     };
 
@@ -113,22 +140,13 @@ struct LStaticMesh final
     }
 #endif /* JAFG_WITH_EDITOR */
 
-    FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->Vertices.size() > 0; }
+    FORCEINLINE constexpr bool IsOnHost() const noexcept { return !this->HostMeshes.empty(); }
     ENGINE_API EResult LoadToHost();
-    inline void FreeFromHost() noexcept
-    {
-        algo::orphan(&this->Vertices);
-        algo::orphan(&this->Indices);
-    }
+    inline void FreeFromHost() noexcept { algo::orphan(&this->HostMeshes); }
 
-    FORCEINLINE constexpr bool IsOnDevice() const noexcept { return this->IndexCount > 0; }
+    FORCEINLINE constexpr bool IsOnDevice() const noexcept { return !this->DeviceMeshes.empty(); }
     ENGINE_API void LoadToDevice();
-    inline void FreeFromDevice() noexcept
-    {
-        this->IndexCount = 0;
-        this->VertexBuffer.free();
-        this->IndexBuffer.free();
-    }
+    inline void FreeFromDevice() noexcept { this->DeviceMeshes.clear(); }
 
     ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance) const;
     ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
@@ -137,17 +155,14 @@ struct LStaticMesh final
     NODISCARD FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
 
     //# Host memory. Modify with care.
-    TArray<Vertex> Vertices;
-    TArray<u32> Indices;
-    LWorldAabb3 Aabb{ maths::identity<LWorldAabb3> };
-
+    TArray<HostMesh> HostMeshes;
     //# Device memory. Modify with care.
-    u32 IndexCount{};
-    rhi::device_buffer VertexBuffer;
-    rhi::device_buffer IndexBuffer;
+    /* TODO: This sucks. I am sure we can squish this into a single device buffer. */
+    TArray<DeviceMesh> DeviceMeshes;
 
 private:
 
+    LWorldAabb3 Aabb{ maths::identity<LWorldAabb3> };
     LPath Path;
 };
 

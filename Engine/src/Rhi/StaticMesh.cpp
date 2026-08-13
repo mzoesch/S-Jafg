@@ -8,6 +8,7 @@
 #include "User/UserPreferences.h"
 #include "Framework/MeshSubsystem.h"
 #include "Framework/ShaderSubsystem.h"
+#include "Stats/Stats.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -28,8 +29,8 @@
 #endif /* JAFG_WITH_GCC */
     #define TINYOBJLOADER_IMPLEMENTATION
     #include <tiny_obj_loader.h>
-    #define TINYGLTF_IMPLEMENTATION
-    #include <tiny_gltf.h>
+    #define TINYGLTF3_IMPLEMENTATION
+    #include "tiny_gltf_v3.h"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
@@ -46,209 +47,396 @@ namespace
 
 Jafg::LVertexInputRegistrator<Jafg::LStaticMesh::Vertex> _{};
 
-enum struct ETinyObjHint
+NODISCARD inline f32 ReadComponentAsFloat(uint8_t const* Data, i32 ComponentType, bool Normalized) noexcept
 {
-    Binary,
-    Json,
-};
-
-Jafg::LStaticMesh::EResult LoadViaTinyGltf(Jafg::LStaticMesh& Target, ETinyObjHint Hint)
-{
-    typedef Jafg::LStaticMesh::Vertex LVertex;
-
-    tinygltf::TinyGLTF Ldr;
-    tinygltf::Model Model;
-    LString Warning;
-    LString Error;
-
-    bool Result{};
-    if (Hint == ETinyObjHint::Binary)
+    switch (ComponentType)
     {
-        LOG_TRACE(LogRhi, "Loading static mesh [{}] via tinygltf as binary glTF.", Target.GetPath())
-#if JAFG_PLATFORM_USES_UTF8
-        Result = Ldr.LoadBinaryFromFile(&Model, &Warning, &Error, Target.GetPath().native().c_str());
-#else /* JAFG_PLATFORM_USES_UTF8 */
-        Result = Ldr.LoadBinaryFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
-#endif /* !JAFG_PLATFORM_USES_UTF8 */
-    }
-    else
-    {
-        check(Hint == ETinyObjHint::Json)
-#if JAFG_PLATFORM_USES_UTF8
-        Result = Ldr.LoadASCIIFromFile(&Model, &Warning, &Error, Target.GetPath().native().c_str());
-#else /* JAFG_PLATFORM_USES_UTF8 */
-        Result = Ldr.LoadASCIIFromFile(&Model, &Error, &Warning, Target.GetPath().string().c_str());
-#endif /* !JAFG_PLATFORM_USES_UTF8 */
-    }
-    if (Warning.empty() == false) { LOG_WARNING(LogRhi, "tinygltf: {}", Warning) }
-    if (Error.empty() == false) { LOG_ERROR(LogRhi, "tinygltf: {}", Error) }
-    if (Result == false)
-    {
-        return Jafg::LStaticMesh::EResult::LoadingError;
-    }
-
-    {
-        auto& Asset{Model.asset};
-        LOG_TRACE(LogRhi, "[{}]: Asset: v[{}>={}] g[{}]",
-            Target.GetPath(), Asset.version, Asset.minVersion, Asset.generator
-            )
-    }
-
-    LOG_TRACE(LogRhi, "[{}]: {} meshes, {} materials, {} textures, {} samplers, {} animations, {} skins, {} nodes"
-                        ", {} buffers, {} buffer views, {} accessors."
-        , Target.GetPath(), Model.meshes.size(), Model.materials.size(), Model.textures.size(), Model.samplers.size()
-        , Model.animations.size(), Model.skins.size(), Model.nodes.size(), Model.buffers.size(), Model.bufferViews.size(), Model.accessors.size()
-        )
-
-    std::unordered_map<Jafg::LStaticMesh::Vertex, u32> uniqueVertices;
-    for (const auto &Mesh : Model.meshes)
-    {
-        for (const  auto &Primitive : Mesh.primitives)
+        case TG3_COMPONENT_TYPE_BYTE:
         {
-            tinygltf::Accessor const& IdxAccessor{Model.accessors[Primitive.indices]};
-            tinygltf::BufferView const& IdxBufferView{Model.bufferViews[IdxAccessor.bufferView]};
-            tinygltf::Buffer const& IdxBuffer{Model.buffers[IdxBufferView.buffer]};
+            i8 Component; std::memcpy(&Component, Data, sizeof(Component));
+            return Normalized
+                ? (Component / 127.0f < -1.0f
+                    ? -1.0f
+                    : Component / 127.0f)
+                : static_cast<f32>(Component);
+        }
+        case TG3_COMPONENT_TYPE_UNSIGNED_BYTE:
+        {
+            u8 Component; std::memcpy(&Component, Data, sizeof(Component));
+            return Normalized
+                ? Component / 255.0f
+                : static_cast<f32>(Component);
+        }
+        case TG3_COMPONENT_TYPE_SHORT:
+        {
+            i16 Component; std::memcpy(&Component, Data, sizeof(Component));
+            return Normalized
+                ? (Component / 32767.0f < -1.0f
+                    ? -1.0f
+                    : Component / 32767.0f)
+                : static_cast<f32>(Component);
+        }
+        case TG3_COMPONENT_TYPE_UNSIGNED_SHORT:
+        {
+            u16 Component; std::memcpy(&Component, Data, sizeof(Component));
+            return Normalized
+                ? Component / 65535.0f
+                : static_cast<f32>(Component);
+        }
+        case TG3_COMPONENT_TYPE_UNSIGNED_INT:
+        {
+            u32 Component; std::memcpy(&Component, Data, sizeof(Component));
+            return static_cast<f32>(Component);
+        }
+        case TG3_COMPONENT_TYPE_FLOAT:
+        {
+            float Component; std::memcpy(&Component, Data, sizeof(f32));
+            return Component;
+        }
+        default:
+        {
+            LOG_FATAL(LogRhi, "Unsupported gltf component type [{}].", ComponentType)
+        }
+    }
+}
 
-            if (Primitive.attributes.contains("POSITION") == false)
+NODISCARD inline bool ReadAccessorFloats(
+      tg3_model const& Model, i32 AccessorIdx
+    , i32 TargetComponentCount
+    , TArray<f32>* Result
+    )
+{
+    check(Result)
+
+    if (AccessorIdx < 0 || static_cast<decltype(Model.accessors_count)>(AccessorIdx) >= Model.accessors_count)
+    {
+        return false;
+    }
+
+    tg3_accessor const& Accessor{Model.accessors[AccessorIdx]};
+
+    /* Sparse-only / bufferView-less accessors are not handled here; zero-fill instead
+       of failing so that a mesh with e.g. sparse morph-only data is still allowed to loads. */
+    if (Accessor.buffer_view < 0)
+    {
+        Result->assign(static_cast<size_t>(Accessor.count) * TargetComponentCount, 0.0f);
+        return true;
+    }
+
+    tg3_buffer_view const& BufferView{Model.buffer_views[Accessor.buffer_view]};
+    tg3_buffer const& Buffer{Model.buffers[BufferView.buffer]};
+    if (!Buffer.data.data)
+    {
+        /* Unresolved external buffer. */
+        return false;
+    }
+
+    auto ComponentNumber{tg3_num_components(Accessor.type)};
+    auto ComponentSize{tg3_component_size(Accessor.component_type)};
+    auto Stride{tg3_accessor_byte_stride(&Accessor, &BufferView)};
+    if (ComponentNumber <= 0 || ComponentSize <= 0 || Stride <= 0)
+    {
+        return false;
+    }
+
+    uint8_t const* Base{Buffer.data.data + BufferView.byte_offset + Accessor.byte_offset};
+
+    Result->resize(static_cast<size_t>(Accessor.count) * TargetComponentCount);
+    for (decltype(Accessor.count) Idx{}; Idx < Accessor.count; ++Idx)
+    {
+        uint8_t const* Element{Base + Idx * static_cast<uint64_t>(Stride)};
+        for (i32 ComponentIdx{}; ComponentIdx < TargetComponentCount; ++ComponentIdx)
+        {
+            f32 Value{};
+            if (ComponentIdx < ComponentNumber)
             {
-                LOG_FATAL(LogRhi, "[{}]: Primitive [{}] has no POSITION attribute.", Target.GetPath(), Primitive.indices)
+                Value = ::ReadComponentAsFloat(Element + ComponentIdx * ComponentSize, Accessor.component_type, Accessor.normalized != 0);
             }
-            tinygltf::Accessor const& PosAccessor{Model.accessors[Primitive.attributes.at("POSITION")]};
-            tinygltf::BufferView const& PosBufferView{Model.bufferViews[PosAccessor.bufferView]};
-            tinygltf::Buffer const& PosBuffer{Model.buffers[PosBufferView.buffer]};
-
-            tinygltf::Accessor const* NormalAccessor{};
-            tinygltf::BufferView const* NormalBufferView{};
-            tinygltf::Buffer const* NormalBuffer{};
-            if (auto It{Primitive.attributes.find("NORMAL")}; It != Primitive.attributes.end())
+            else if (ComponentIdx == 3)
             {
-                NormalAccessor   = &Model.accessors[It->second];
-                NormalBufferView = &Model.bufferViews[NormalAccessor->bufferView];
-                NormalBuffer     = &Model.buffers[NormalBufferView->buffer];
+                /* Sane default alpha/w for accessors read as a LVec4F. */
+                Value = 1.0f;
             }
-            else
+            (*Result)[Idx * TargetComponentCount + ComponentIdx] = Value;
+        }
+    }
+    return true;
+}
+
+NODISCARD inline bool ReadIndices(tg3_model const& Model, i32 AccessorIndex, TArray<u32>* Result)
+{
+    check(Result)
+
+    if (AccessorIndex < 0 || static_cast<uint32_t>(AccessorIndex) >= Model.accessors_count)
+    {
+        return false;
+    }
+
+    tg3_accessor const& Accessor{Model.accessors[AccessorIndex]};
+    if (Accessor.buffer_view < 0)
+    {
+        return false;
+    }
+
+    tg3_buffer_view const& BufferView{Model.buffer_views[Accessor.buffer_view]};
+    tg3_buffer const& Buffer{Model.buffers[BufferView.buffer]};
+    if (!Buffer.data.data)
+    {
+        return false;
+    }
+
+    auto Stride{tg3_accessor_byte_stride(&Accessor, &BufferView)};
+    if (Stride <= 0)
+    {
+        return false;
+    }
+
+    uint8_t const* Base{Buffer.data.data + BufferView.byte_offset + Accessor.byte_offset};
+
+    Result->resize(Accessor.count);
+    for (auto Idx{0uz}; Idx < Accessor.count; ++Idx)
+    {
+        uint8_t const* Element{Base + Idx * static_cast<uint64_t>(Stride)};
+        switch (Accessor.component_type)
+        {
+            case TG3_COMPONENT_TYPE_UNSIGNED_BYTE:
             {
-                LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no NORMAL attribute.", Target.GetPath(), Primitive.indices)
+                u8 v; std::memcpy(&v, Element, sizeof(v));
+                (*Result)[Idx] = v;
+                break;
             }
-
-            tinygltf::Accessor const* TexCoordAccessor{};
-            tinygltf::BufferView const* TexCoordBufferView{};
-            tinygltf::Buffer const* TexCoordBuffer{};
-            if (auto It{Primitive.attributes.find("TEXCOORD_0")}; It != Primitive.attributes.end())
+            case TG3_COMPONENT_TYPE_UNSIGNED_SHORT:
             {
-                TexCoordAccessor   = &Model.accessors[It->second];
-                TexCoordBufferView = &Model.bufferViews[TexCoordAccessor->bufferView];
-                TexCoordBuffer     = &Model.buffers[TexCoordBufferView->buffer];
+                u16 v; std::memcpy(&v, Element, sizeof(v));
+                (*Result)[Idx] = v;
+                break;
             }
-            else
+            case TG3_COMPONENT_TYPE_UNSIGNED_INT:
             {
-                LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no TEXCOORD_0 attribute.", Target.GetPath(), Primitive.indices)
+                u32 v; std::memcpy(&v, Element, sizeof(v));
+                (*Result)[Idx] = v;
+                break;
             }
-
-            tinygltf::Accessor const* TangentAccessor{};
-            tinygltf::BufferView const* TangentBufferView{};
-            tinygltf::Buffer const* TangentBuffer{};
-            if (auto It{Primitive.attributes.find("TANGENT")}; It != Primitive.attributes.end())
+            default:
             {
-                TangentAccessor   = &Model.accessors[It->second];
-                TangentBufferView = &Model.bufferViews[TangentAccessor->bufferView];
-                TangentBuffer     = &Model.buffers[TangentBufferView->buffer];
-            }
-            else
-            {
-                LOG_WARNING(LogRhi, "[{}]: Primitive [{}] has no TANGENT attribute.", Target.GetPath(), Primitive.indices)
-            }
-
-            uint32_t baseVertex = static_cast<uint32_t>(Target.Vertices.size());
-
-            for (auto Idx{0uz}; Idx < PosAccessor.count; ++Idx)
-            {
-                LVertex Vertex{};
-
-                auto* pPosition{reinterpret_cast<f32 const*>(&PosBuffer.data[
-                    PosBufferView.byteOffset + PosAccessor.byteOffset + Idx * sizeof(decltype(Vertex.Position))
-                    ])};
-                Vertex.Position = {pPosition[0], pPosition[1], pPosition[2]};
-
-                if (NormalAccessor)
-                {
-                    check(NormalBufferView && NormalBuffer)
-                    auto* pNormal{reinterpret_cast<f32 const*>(&NormalBuffer->data[
-                        NormalBufferView->byteOffset + NormalAccessor->byteOffset + Idx * sizeof(decltype(Vertex.Normal))
-                        ])};
-                    Vertex.Normal = {pNormal[0], pNormal[1], pNormal[2]};
-                }
-                else
-                {
-                    Vertex.Normal = {0.0f, 0.0f, 0.0f};
-                }
-
-                if (TexCoordAccessor)
-                {
-                    check(TexCoordBufferView && TexCoordBuffer)
-                    auto* pTexCoord{reinterpret_cast<f32 const*>(&TexCoordBuffer->data[
-                        TexCoordBufferView->byteOffset + TexCoordAccessor->byteOffset + Idx * sizeof(decltype(Vertex.TexCoord))
-                        ])};
-                    Vertex.TexCoord = {pTexCoord[0], pTexCoord[1]};
-                }
-                else
-                {
-                    Vertex.TexCoord = {0.0f, 0.0f};
-                }
-
-                if (TangentAccessor)
-                {
-                    check(TangentBufferView && TangentBuffer)
-                    auto* pTangent{reinterpret_cast<f32 const*>(&TangentBuffer->data[
-                        TangentBufferView->byteOffset + TangentAccessor->byteOffset + Idx * sizeof(decltype(Vertex.Tangent))
-                        ])};
-                    Vertex.Tangent = {pTangent[0], pTangent[1], pTangent[2], pTangent[3]};
-                }
-                else
-                {
-                    Vertex.Tangent = {0.0f, 0.0f, 0.0f, 1.0f};
-                }
-
-                Target.Vertices.emplace_back(std::move(Vertex));
-            }
-
-            auto const* pIdxData{&IdxBuffer.data[IdxBufferView.byteOffset + IdxAccessor.byteOffset]};
-            auto IdxCount{IdxAccessor.count};
-            auto IdxStride{
-                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT   ? sizeof(u32) :
-                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? sizeof(u16) :
-                IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE  ? sizeof(u8) :
-                0uz
-                };
-            if (IdxStride == 0uz)
-            {
-                LOG_FATAL(LogRhi, "[{}]: Could not infer index stride from component type [{}].",
-                    Target.GetPath(), IdxAccessor.componentType
-                    )
-            }
-
-            Target.Indices.reserve(Target.Indices.size() + IdxCount);
-            for (auto Idx{0uz}; Idx < IdxCount; ++Idx)
-            {
-                if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
-                {
-                    Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u16 const*>(pIdxData + Idx * IdxStride));
-                }
-                else if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
-                {
-                    Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u32 const*>(pIdxData + Idx * IdxStride));
-                }
-                else if (IdxAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE)
-                {
-                    Target.Indices.emplace_back(baseVertex + *reinterpret_cast<u8 const*>(pIdxData + Idx * IdxStride));
-                }
-                else
-                {
-                    std::unreachable();
-                }
+                /* The gltf spec disallows singed/float component types for indices. */
+                (*Result)[Idx] = 0;
+                break;
             }
         }
     }
+    return true;
+}
+
+inline Jafg::LStaticMesh::EResult PullGltfMesh(LPath const& Path, TArray<Jafg::LStaticMesh::HostMesh>& Result)
+{
+    STAT_CYCLE_FUNCTION()
+    check(Result.empty())
+
+    std::ifstream F{Path, std::ios::binary|std::ios::ate};
+    if (!F)
+    {
+        return Jafg::LStaticMesh::EResult::FailedToOpen;
+    }
+    auto FSize{F.tellg()};
+    F.seekg(0, std::ios::beg);
+
+    std::vector<std::byte> Data(static_cast<size_t>(FSize));
+    if (FSize > 0 && !F.read(reinterpret_cast<char*>(Data.data()), FSize))
+    {
+        return Jafg::LStaticMesh::EResult::FailedToRead;
+    }
+
+    tg3_parse_options Options;
+    tg3_parse_options_init(&Options);
+    //# Skip image decoding.
+    Options.images_as_is = 1;
+    //# Parse only what we know.
+    Options.skip_extras_values = 1;
+    //# Only parse valid trees. Maybe disable in shipping?
+    Options.validate_indices = 1;
+
+    tg3_error_stack Errors;
+    tg3_error_stack_init(&Errors);
+
+    tg3_model Model{};
+    Model.default_scene = -1;
+
+    if (tg3_error_code Error{tg3_parse_glb(
+          &Model, &Errors
+        , reinterpret_cast<uint8_t*>(Data.data()), Data.size(),
+        /* base_dir */ "", 0
+        , &Options
+        )};
+        Error != TG3_OK || tg3_errors_has_error(&Errors))
+    {
+        decltype(tg3_errors_count(&Errors)) ErrorCount{tg3_errors_count(&Errors)};
+        for (decltype(tg3_errors_count(&Errors)) Idx{}; Idx < ErrorCount; ++Idx)
+        {
+            const tg3_error_entry* Entry{tg3_errors_get(&Errors, Idx)};
+            if (Entry)
+            {
+                switch (Entry->severity)
+                {
+                case TG3_SEVERITY_INFO:
+                {
+                    LOG_VERBOSE(LogRhi, "[gltf] [{}]: {}", std::to_underlying(Entry->code), Entry->message ? Entry->message  : "Unknown message.")
+                    break;
+                }
+                case TG3_SEVERITY_WARNING:
+                {
+                    LOG_WARNING(LogRhi, "[gltf] [{}]: {}", std::to_underlying(Entry->code), Entry->message ? Entry->message : "Unknown message." )
+                    break;
+                }
+                case TG3_SEVERITY_ERROR:
+                {
+                    LOG_ERROR(LogRhi, "[gltf] [{}]: {}", std::to_underlying(Entry->code), Entry->message ? Entry->message : "Unknown message." )
+                    break;
+                }
+                }
+            }
+            else
+            {
+                LOG_TRACE(LogRhi, "[gltf] unknown error.")
+            }
+        }
+        tg3_error_stack_free(&Errors);
+        tg3_model_free(&Model);
+        return Jafg::LStaticMesh::EResult::LoadingError;
+    }
+
+    Result.reserve(Model.meshes_count);
+
+    for (decltype(Model.meshes_count) MeshIdx{}; MeshIdx < Model.meshes_count; ++MeshIdx)
+    {
+        tg3_mesh const& SrcMesh{Model.meshes[MeshIdx]};
+
+        Jafg::LStaticMesh::HostMesh DstMesh;
+        DstMesh.Name.assign(SrcMesh.name.data, SrcMesh.name.len);
+        DstMesh.Primitives.reserve(SrcMesh.primitives_count);
+
+        for (decltype(SrcMesh.primitives_count) PrimitiveIdx{}; PrimitiveIdx < SrcMesh.primitives_count; ++PrimitiveIdx)
+        {
+            tg3_primitive const& SrcPrimitive{SrcMesh.primitives[PrimitiveIdx]};
+
+            auto PrimitiveMode{SrcPrimitive.mode < 0 ? TG3_MODE_TRIANGLES : SrcPrimitive.mode};
+            if (PrimitiveMode != TG3_MODE_TRIANGLES)
+            {
+                LOG_WARNING(LogRhi, "[{}]: Skipping primitive [{}::{}] with unsupported mode [{}]."
+                    , Path, DstMesh.Name, PrimitiveIdx, PrimitiveMode)
+                continue;
+            }
+
+            static_assert(std::is_signed_v<decltype(SrcPrimitive.attributes[0].value)>);
+            decltype(SrcPrimitive.attributes[0].value) PositionAttributeIdx{-1};
+            decltype(SrcPrimitive.attributes[0].value) NormalAttributeIdx{-1};
+            decltype(SrcPrimitive.attributes[0].value) TexCoordAttributeIdx{-1};
+            decltype(SrcPrimitive.attributes[0].value) TangentAttributeIdx{-1};
+            for (decltype(SrcPrimitive.attributes_count) AttributeIdx{}; AttributeIdx < SrcPrimitive.attributes_count; ++AttributeIdx)
+            {
+                tg3_str_int_pair const& Attribute{SrcPrimitive.attributes[AttributeIdx]};
+                if (tg3_str_equals_cstr(Attribute.key, "POSITION"))
+                {
+                    PositionAttributeIdx  = Attribute.value;
+                }
+                else if (tg3_str_equals_cstr(Attribute.key, "NORMAL"))
+                {
+                    NormalAttributeIdx = Attribute.value;
+                }
+                else if (tg3_str_equals_cstr(Attribute.key, "TEXCOORD_0"))
+                {
+                    TexCoordAttributeIdx  = Attribute.value;
+                }
+                else if (tg3_str_equals_cstr(Attribute.key, "TANGENT"))
+                {
+                    TangentAttributeIdx  = Attribute.value;
+                }
+            }
+
+            if (PositionAttributeIdx < 0)
+            {
+                LOG_WARNING(LogRhi, "[{}]: Skipping primitive [{}::{}] with no POSITION attribute."
+                    , Path, DstMesh.Name, PrimitiveIdx)
+                continue;
+            }
+
+            TArray<f32> Positions;
+            TArray<f32> Normals;
+            TArray<f32> TexCoords;
+            TArray<f32> Tangents;
+            if (!::ReadAccessorFloats(Model, PositionAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::Position)::length(), &Positions))
+            {
+                continue;
+            }
+
+            const bool bValidNormals{NormalAttributeIdx >= 0 &&
+                ::ReadAccessorFloats(Model, NormalAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::Normal)::length(), &Normals)};
+            const bool bValidTexCoords{TexCoordAttributeIdx >= 0 &&
+                ::ReadAccessorFloats(Model, TexCoordAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::TexCoord)::length(), &TexCoords)};
+            const bool bValidTangents{TangentAttributeIdx >= 0 &&
+                ::ReadAccessorFloats(Model, TangentAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::Tangent)::length(), &Tangents)};
+
+            const size_t VertexCount{Positions.size() / 3uz};
+
+            Jafg::LStaticMesh::HostPrimitive Primitive;
+            Primitive.Vertices.resize(VertexCount);
+            for (auto Vertex{0uz}; Vertex < VertexCount; ++Vertex)
+            {
+                Jafg::LStaticMesh::Vertex& DstVertex{Primitive.Vertices[Vertex]};
+                DstVertex.Position = LVec3F{Positions[Vertex * 3 + 0], Positions[Vertex * 3 + 1], Positions[Vertex * 3 + 2]};
+                if (bValidNormals)
+                {
+                    DstVertex.Normal = LVec3F{Normals[Vertex * 3 + 0], Normals[Vertex * 3 + 1], Normals[Vertex * 3 + 2]};
+                }
+                else
+                {
+                    DstVertex.Normal = maths::zero_vector<LVec3F>;
+                }
+                if (bValidTexCoords)
+                {
+                    DstVertex.TexCoord = LVec2F{TexCoords[Vertex * 2 + 0], TexCoords[Vertex * 2 + 1]};
+                }
+                else
+                {
+                    DstVertex.TexCoord = maths::zero_vector<LVec2F>;
+                }
+                if (bValidTangents)
+                {
+                    DstVertex.Tangent = LVec4F{Tangents[Vertex * 4 + 0], Tangents[Vertex * 4 + 1], Tangents[Vertex * 4 + 2], Tangents[Vertex * 4 + 3]};
+                }
+                else
+                {
+                    DstVertex.Tangent = maths::zero_vector<LVec4F>;
+                }
+            }
+
+            if (SrcPrimitive.indices >= 0)
+            {
+                if (!::ReadIndices(Model, SrcPrimitive.indices, &Primitive.Indices))
+                {
+                    Primitive.Indices.clear();
+                }
+            }
+            else
+            {
+                /* TODO: Not optimal. Can we merge verticies maybe? */
+                Primitive.Indices.resize(VertexCount);
+                for (auto VertexIdx{0uz}; VertexIdx < VertexCount; ++VertexIdx)
+                {
+                    Primitive.Indices[VertexIdx] = static_cast<uint32_t>(VertexIdx);
+                }
+            }
+
+            DstMesh.Primitives.push_back(std::move(Primitive));
+        }
+
+        Result.push_back(std::move(DstMesh));
+    }
+
+    tg3_error_stack_free(&Errors);
+    tg3_model_free(&Model);
+
+    Result.shrink_to_fit();
 
     return Jafg::LStaticMesh::EResult::Success;
 }
@@ -348,80 +536,91 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
 
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
 {
-    check(this->Path.empty() == false)
-    LOG_VERBOSE(LogRhi, "Loading static mesh from path [{}].", this->Path)
+    STAT_CYCLE_FUNCTION()
 
-    if (is_regular_file(this->Path) == false)
+    check(!this->Path.empty())
+    LOG_VERBOSE(LogRhi, "[{}]: Loading static mesh.", this->Path)
+
+    if (!is_regular_file(this->Path))
     {
         return EResult::FileNotFound;
     }
 
     if (this->IsOnHost())
     {
-        LOG_VERBOSE(LogRhi, "Static mesh [{}] already loaded to host memory. Freeing previous host memory and reloading.", this->Path)
-        this->FreeFromHost();
+        LOG_VERBOSE(LogRhi, "[{}]: Already loaded to host. Reloading.", this->Path)
+        this->HostMeshes.clear();
     }
-    check(this->Vertices.empty() && this->Indices.empty())
+    check(this->HostMeshes.empty())
 
-    if (this->Path.native().ends_with(LITERAL_TEXT(".glb")))
+    if (auto Result{::PullGltfMesh(this->Path, this->HostMeshes)}; Result != EResult::Success)
     {
-        if (auto Rc{::LoadViaTinyGltf(*this, ETinyObjHint::Binary)}; Rc != EResult::Success)
+        return Result;
+    }
+    check(this->IsOnHost())
+    if constexpr (IS_COMPILED_LOG(LogRhi, Trace))
+    {
+        std::stringstream SS;
+        SS << "Meshes: " << this->HostMeshes.size() << "\n";
+        for (auto const& Mesh: this->HostMeshes)
         {
-            return Rc;
+            SS << "  Mesh: " << Mesh.Name << ", Primitives: " << Mesh.Primitives.size() << "\n";
+            for (auto const& Primitive: Mesh.Primitives)
+            {
+                SS << "    Primitive: Vertices: " << Primitive.Vertices.size() << ", Indices: " << Primitive.Indices.size() << "\n";
+            }
+        }
+        LOG_TRACE(LogRhi, "[{}]: {}", this->Path, SS.str())
+    }
+
+    STAT_CYCLE_START(CalculateAabb, "Jafg::LStaticMesh::LoadToHost::CalculatingAabb")
+    this->Aabb.min = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
+    this->Aabb.max = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
+    for (auto& Mesh: this->HostMeshes)
+    {
+        for (auto const& Primitive: Mesh.Primitives)
+        {
+            for (auto const& Vertex: Primitive.Vertices)
+            {
+                this->Aabb.min = maths::min(this->Aabb.min, Vertex.Position);
+                this->Aabb.max = maths::max(this->Aabb.max, Vertex.Position);
+            }
         }
     }
-    else if (this->Path.native().ends_with(LITERAL_TEXT(".gltf")))
-    {
-        if (auto Rc{::LoadViaTinyGltf(*this, ETinyObjHint::Json)}; Rc != EResult::Success)
-        {
-            return Rc;
-        }
-    }
-    else
-    {
-        LOG_FATAL(LogRhi, "Unsupported static mesh file format: [{}].", this->Path)
-    }
-
-    if (this->Vertices.empty() || this->Indices.empty())
-    {
-        LOG_ERROR(LogRhi, "[{}]: No vertices or indices were loaded.", this->GetPath())
-        return EResult::LoadingError;
-    }
-
-    this->Aabb.min = this->Vertices[0].Position;
-    this->Aabb.max = this->Vertices[0].Position;
-    for (auto& V: this->Vertices)
-    {
-        this->Aabb.min = maths::min(this->Aabb.min, V.Position);
-        this->Aabb.max = maths::max(this->Aabb.max, V.Position);
-    }
+    STAT_CYCLE_END(CalculateAabb)
 
     return EResult::Success;
 }
 
 void Jafg::LStaticMesh::LoadToDevice()
 {
+    LOG_TRACE(LogRhi, "[{}]: Loading to device.", this->Path)
     check(this->IsOnHost())
-    LOG_TRACE(LogRhi, "Loading static mesh [{}] to device.", this->Path)
 
     if (this->IsOnDevice())
     {
-        LOG_TRACE(LogRhi, "Static mesh [{}] already loaded to device memory. Freeing previous device memory and reloading.", this->Path)
+        LOG_TRACE(LogRhi, "[{}]: Already loaded to device. Reloading.", this->Path)
         this->FreeFromDevice();
     }
-    check(this->IndexCount == 0 && this->VertexBuffer.get_allocation() == nullptr && this->IndexBuffer.get_allocation() == nullptr)
+    check(this->DeviceMeshes.empty())
 
-    this->VertexBuffer = Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
-        .BufferCopy = vk::BufferCopy{0, 0, sizeof(this->Vertices[0]) * this->Vertices.size()},
-        .Data = this->Vertices.data(),
-        }));
-
-    this->IndexBuffer = Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Index({
-        .BufferCopy = vk::BufferCopy{0, 0, sizeof(this->Indices[0]) * this->Indices.size()},
-        .Data = this->Indices.data(),
-        }));
-
-    this->IndexCount = static_cast<u32>(this->Indices.size());
+    for (auto const& HostMesh: this->HostMeshes)
+    {
+        auto& DeviceMesh{this->DeviceMeshes.emplace_back(HostMesh.Name)};
+        for (auto const& HostPrimitive: HostMesh.Primitives)
+        {
+            auto& DevicePrimitive{DeviceMesh.Primitives.emplace_back()};
+            DevicePrimitive.Vertices = Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Vertex({
+                .BufferCopy = vk::BufferCopy{0, 0, sizeof(decltype(HostPrimitive.Vertices)::value_type) * HostPrimitive.Vertices.size()},
+                .Data = HostPrimitive.Vertices.data(),
+                }));
+            DevicePrimitive.Indices = Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_StageBuffer(LStageBufferCreateInfo::Index({
+                .BufferCopy = vk::BufferCopy{0, 0, sizeof(decltype(HostPrimitive.Indices)::value_type) * HostPrimitive.Indices.size()},
+                .Data = HostPrimitive.Indices.data(),
+                }));
+            DevicePrimitive.IndexCount = static_cast<u32>(HostPrimitive.Indices.size());
+        }
+    }
 }
 
 void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance) const
@@ -534,11 +733,19 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
 
 void Jafg::LStaticMesh::DrawIndexed(LRenderInfo const& Info) const
 {
-    check(this->IndexCount > 0)
-    check(*this->VertexBuffer && *this->IndexBuffer)
+    check(this->IsOnDevice())
 
-    Info.CommandBuffer.bindVertexBuffers(0, *this->VertexBuffer, {0});
-    Info.CommandBuffer.bindIndexBuffer(*this->IndexBuffer, 0, vk::IndexTypeValue<decltype(this->Indices)::value_type>::value);
+    for (auto& Mesh: this->DeviceMeshes)
+    {
+        for (auto& Primitive: Mesh.Primitives)
+        {
+            check(Primitive.IndexCount > 0)
+            check(*Primitive.Vertices && *Primitive.Indices)
 
-    Info.CommandBuffer.drawIndexed(static_cast<u32>(this->IndexCount), 1, 0, 0, 0);
+            Info.CommandBuffer.bindVertexBuffers(0, *Primitive.Vertices, {0});
+            Info.CommandBuffer.bindIndexBuffer(*Primitive.Indices, 0, vk::IndexTypeValue<decltype(this->HostMeshes[0].Primitives[0].Indices)::value_type>::value);
+
+            Info.CommandBuffer.drawIndexed(Primitive.IndexCount, 1, 0, 0, 0);
+        }
+    }
 }
