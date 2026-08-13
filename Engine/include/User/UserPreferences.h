@@ -9,6 +9,7 @@
 #include "Nodes/Box.h"
 #include "Nodes/TextBox.h"
 #include "Framework/SupremePolicies.h"
+#include "Framework/PhysicsCore.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -254,7 +255,7 @@ public:
     CLASS_FIELD(Config)
     TPreference<TSubclassOf<ASupremePolicies>> EditorLastWorldSupremePolicies;
     CLASS_FIELD(Config)
-    TPreference<bool> EditorAutoLaunchLastWorld{ false };
+    TPreference<bool> EditorAutoLaunchLastWorld;
     CLASS_FIELD(Config)
     TPreference<LString> EditorLastObjectCollection{ "Gym" };
     CLASS_FIELD(Config)
@@ -263,26 +264,53 @@ public:
     TPreference<LPath> EditorLastLayout{ "Config/DefaultEditorLayout.json" };
 
     CLASS_FIELD(Config)
-    TPreference<bool> EditorVisualizeMeshAabbs{ false };
+    TPreference<f32> EditorActorFocusProjectedForwardMultiplier{ 1.4f };
     CLASS_FIELD(Config)
-    TPreference<LColor> EditorMeshAabbVisualizationTint{ Colors::Green };
+    TPreference<f32> EditorActorFocusTransitionDuration{ 0.08f };
+
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorShowEyeTranslation;
+
+    CLASS_FIELD(Config)
+    TPreference<LVec2u32> EditorPieDimensions{ LVec2u32{855, 475} };
+    CLASS_FIELD(Config)
+    TPreference<std::byte> EditorPawnStart{ std::byte{} };
+    CLASS_FIELD(Config)
+    TPreference<std::byte> EditorStartType{ std::byte{} };
+
+    //# ---------- Core Visualization ----------
+
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorVisualizationMaxDebugTextRenderDistance{ 50.0f };
+    //# If the resulting font size is blow this limit it will be discarded.
+    CLASS_FIELD(Config)
+    TPreference<f32> EditorVisualizationDebugTextFontThreshold{ 2.5f };
+
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorVisualizeAabbs;
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorAabbVisualizationTint{ Colors::Green };
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorVisualizeTransitiveAabbs;
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorTransitiveAabbVisualizationTint{ Colors::Blue };
 
     CLASS_FIELD(Config)
     TPreference<f32> EditorTraceLength{ 500.0f };
     CLASS_FIELD(Config)
-    TPreference<bool> EditorVisualizeTraces{ false };
+    TPreference<bool> EditorVisualizeTraces;
     CLASS_FIELD(Config)
     TPreference<LColor> EditorTraceVisualizationTint{ Colors::Blue };
     CLASS_FIELD(Config)
     TPreference<f32> EditorTraceVisualizationDuration{ 30.0f };
     CLASS_FIELD(Config)
-    TPreference<bool> EditorVisualizeTraceHits{ false };
+    TPreference<bool> EditorVisualizeTraceHits;
     CLASS_FIELD(Config)
     TPreference<LColor> EditorTraceHitVisualizationTint{ Colors::Red };
     CLASS_FIELD(Config)
     TPreference<f32> EditorTraceHitVisualizationDuration{ 30.0f };
     CLASS_FIELD(Config)
-    TPreference<bool> EditorVisualizeGizmoInteractions{ false };
+    TPreference<bool> EditorVisualizeGizmoInteractions;
     CLASS_FIELD(Config)
     TPreference<LColor> EditorGizmoVisualizationTint{ Colors::Red };
     CLASS_FIELD(Config)
@@ -292,16 +320,80 @@ public:
     CLASS_FIELD(Config)
     TPreference<f32> EditorGizmoVisualizationLength{ 500.0f };
 
-    CLASS_FIELD(Config)
-    TPreference<f32> EditorActorFocusProjectedForwardMultiplier{ 1.4f };
-    CLASS_FIELD(Config)
-    TPreference<f32> EditorActorFocusTransitionDuration{ 0.08f };
+    //# ---------- Physics Visualization ----------
 
     CLASS_FIELD(Config)
-    TPreference<bool> EditorShowEyeTranslation{ false };
-
+    //# Draw the GetSupport() function, used for convex collision detection.
+    TPreference<bool> EditorVisualizeGetSupportFunction;
     CLASS_FIELD(Config)
-    TPreference<LVec2u32> EditorPieDimensions{ LVec2u32{855, 475} };
+    //# When drawing the support function, also draw which direction mapped to a specific support point.
+    TPreference<bool> EditorVisualizeSupportDirection;
+    CLASS_FIELD(Config)
+    //# Draw the faces that were found colliding during collision detection.
+    TPreference<bool> EditorVisualizeGetSupportingFace;
+    CLASS_FIELD(Config)
+    //# Draw the shapes of all bodies
+    TPreference<bool> EditorVisualizeShape;
+    CLASS_FIELD(Config)
+    //# When #EditorVisualizeShape is true and this is true, the shapes will be drawn in wireframe instead of solid.
+    TPreference<bool> EditorVisualizeShapeWireframe;
+    //# Coloring scheme to use for shapes.
+    CLASS_FIELD(Config)
+    TPreference<Physx::EShapeColor> EditorVisualizeShapeColor{Physx::EShapeColor::MotionType};
+    //# Draw a bounding box per body.
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorVisualizeBoundingBox;
+    CLASS_FIELD(Config)
+    //# Draw the center of mass for each body.
+    TPreference<bool> EditorVisualizeCenterOfMassTransform;
+    CLASS_FIELD(Config)
+    //# Draw the world transform (which can be different than the center of mass) for each body.
+    TPreference<bool> EditorVisualizeWorldTransform;
+    CLASS_FIELD(Config)
+    //# Draw the velocity vector for each body.
+    TPreference<bool> EditorVisualizeVelocity;
+    CLASS_FIELD(Config)
+    //# Draw the mass and inertia (as the box equivalent) for each body.
+    TPreference<bool> EditorVisualizeMassAndInertia;
+    CLASS_FIELD(Config)
+    //# Draw stats regarding the sleeping algorithm of each body.
+    TPreference<bool> EditorVisualizeSleepStats;
+    CLASS_FIELD(Config)
+    //# Draw the vertices of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyVertices;
+    CLASS_FIELD(Config)
+    //# Draw the velocities of the vertices of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyVertexVelocities;
+    CLASS_FIELD(Config)
+    //# Draw the edge constraints of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyEdgeConstraints;
+    CLASS_FIELD(Config)
+    //# Draw the bend constraints of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyBendConstraints;
+    CLASS_FIELD(Config)
+    //# Draw the volume constraints of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyVolumeConstraints;
+    CLASS_FIELD(Config)
+    //# Draw the skin constraints of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodySkinConstraints;
+    CLASS_FIELD(Config)
+    //# Draw the LRA constraints of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyLRAConstraints;
+    CLASS_FIELD(Config)
+    //# Draw the rods of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyRods;
+    CLASS_FIELD(Config)
+    //# Draw the rod states (orientation and angular velocity) of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyRodStates;
+    CLASS_FIELD(Config)
+    //# Draw the rod bend twist constraints of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyRodBendTwistConstraints;
+    CLASS_FIELD(Config)
+    //# Draw the predicted bounds of soft bodies.
+    TPreference<bool> EditorVisualizeSoftBodyPredictedBounds;
+    //# Coloring scheme to use for soft body constraints.
+    CLASS_FIELD(Config)
+    TPreference<Physx::ESoftBodyConstraintColor> EditorVisualizeSoftBodyConstraintColor{ Physx::ESoftBodyConstraintColor::ConstraintType };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Factories

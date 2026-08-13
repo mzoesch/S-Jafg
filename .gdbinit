@@ -9,7 +9,7 @@ import importlib.util
 from pathlib import Path
 
 def jafg_load_master_gdb_init() -> None:
-    master_path = Path('Debug/GdbMasterEntry.py').resolve()
+    master_path = Path('Programs/GdbMasterEntry.py').resolve()
     module_name = f'PRIVATE_JAFG_{master_path.stem}'
 
     spec = importlib.util.spec_from_file_location(module_name, master_path)

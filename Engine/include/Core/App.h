@@ -116,6 +116,14 @@ ENGINE_API extern TArray<LProgramArgument> ProcessedCommandLine;
 //# Init time of Jafg. The engine will always use this as the most earliest relative time point.
 ENGINE_API extern algo::clock::time_point StaticContainerInitializationTime;
 
+enum struct EAppLockResult
+{
+    Unique,
+    Shared,
+    Unknown,
+};
+NODISCARD ENGINE_API EAppLockResult TryAcquireAppLock();
+
 } /* ~Namespace Detail */
 
 FORCEINLINE constexpr bool IsEngineExitRequested() noexcept { return Detail::bShouldRequestExit; }

@@ -32,21 +32,21 @@ void Jafg::APawn::Ctor()
     this->EmplaceDefaultRootComponent<ASceneComponent>();
 }
 
-void Jafg::APawn::Tick(const f32 Dt)
-{
-    Super::Tick(Dt);
-    // algo::orphan(&this->CurrentGenericTraceResults);
-
-    // const LVector TraceStart = this->GetTranslation();
-    // const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
-    // this->GetWorld()->LineTraceByChannel
-    // (
-    //     this->CurrentGenericTraceResults, TraceStart, TraceEnd,
-    //     ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
-    // );
-
-    return;
-}
+// void Jafg::APawn::Tick(const f32 Dt)
+// {
+//     Super::Tick(Dt);
+//     // algo::orphan(&this->CurrentGenericTraceResults);
+//
+//     // const LVector TraceStart = this->GetTranslation();
+//     // const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
+//     // this->GetWorld()->LineTraceByChannel
+//     // (
+//     //     this->CurrentGenericTraceResults, TraceStart, TraceEnd,
+//     //     ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
+//     // );
+//
+//     return;
+// }
 
 void Jafg::APawn::OnGarbage(EJxxRecordTearDownReason Reason)
 {
@@ -65,10 +65,10 @@ LWorldEye Jafg::APawn::GetEye() const noexcept
         .vert_fov = this->VertFov,
         .near_frustum = this->NearFrustum,
         .far_frustum = this->FarFrustum,
-        .translation = this->GetRootComponent().GetTranslation(),
-        .front = this->GetRootComponent().GetRotator() * maths::forward_vector<LWorldVec3>,
+        .translation = this->GetRootComponent().GetLocalTranslation(),
+        .front = this->GetRootComponent().GetLocalRotator() * maths::forward_vector<LWorldVec3>,
         /* Maybe hard lock this to maths::up_vector? */
-        .up = this->GetRootComponent().GetRotator() * maths::up_vector<LWorldVec3>,
+        .up = this->GetRootComponent().GetLocalRotator() * maths::up_vector<LWorldVec3>,
         };
 }
 

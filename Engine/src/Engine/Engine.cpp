@@ -15,6 +15,7 @@
 #include "EngineRunnable.h"
 #include "Cli/ReSTCliPreferences.h"
 #include "User/UserPreferences.h"
+#include "../Framework/PhysicsForeignCore.h"
 
 #ifndef JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES
     #if JAFG_IN_SHIPPING
@@ -29,6 +30,42 @@ namespace Jafg::Detail
 {
 ENGINE_API LEngine* GMutableEngine{};
 } /* ~Namespace Jafg::Detail */
+
+namespace
+{
+
+#ifdef JPH_ENABLE_ASSERTS
+NODISCARD bool JoltSink(char const* Expr, char const* Msg, char const* File, uint Line) noexcept
+{
+    if (Msg)
+    {
+        LOG_ERROR(LogPhysics, "[{}::{}]: {} ({})", File, Line, Expr, Msg)
+    }
+    else
+    {
+        LOG_ERROR(LogPhysics, "[{}::{}]: ({})", File, Line, Expr)
+    }
+
+    return true;
+}
+#endif /* JPH_ENABLE_ASSERTS */
+
+void JoltTrace(char const* Fmt, ...) noexcept
+#if JAFG_WITH_CLANG || JAFG_WITH_GCC
+    __attribute__((format(printf, 1, 2)));
+#endif /* JAFG_WITH_CLANG || JAFG_WITH_GCC */
+void JoltTrace(char const* Fmt, ...) noexcept
+{
+    va_list list;
+    va_start(list, Fmt);
+    char buffer[1024];
+    ::vsnprintf(buffer, sizeof(buffer), Fmt, list);
+    va_end(list);
+
+    LOG_WARNING(LogPhysics, "{}", buffer)
+}
+
+} /* ~Namespace <Anonymous> */
 
 bool Jafg::LWorldStorage::IsValid() const noexcept
 {
@@ -295,6 +332,14 @@ void Jafg::LEngine::Initialize()
         })});
     }
 
+    LOG_VERBOSE(LogPhysics, "Initializing physics system globals.")
+    JPH::RegisterDefaultAllocator();
+    JPH::Trace = ::JoltTrace;
+    JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed=::JoltSink);
+    JPH::Factory::sInstance = new JPH::Factory{};
+    JPH::RegisterTypes();
+    (void)new physx::debug_renderer;
+
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JEngineSubsystem>();
 
@@ -385,6 +430,15 @@ void Jafg::LEngine::TearDown()
     this->Outer.TearDown();
 
     Tasks::Private::StopAndJoinRemainingThreads();
+
+    LOG_VERBOSE(LogPhysics, "Tearing down physics system globals.")
+    JPH::UnregisterTypes();
+    delete std::exchange(JPH::Factory::sInstance, nullptr);
+    if (physx::debug_renderer::get())
+    {
+        delete physx::debug_renderer::get();
+        check(!physx::debug_renderer::get())
+    }
 
     Detail::GetGlobalCarnifex().KillAllGarbageChildren();
 

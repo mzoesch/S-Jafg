@@ -23,7 +23,7 @@ protected:
 public:
 
     virtual void BeginLife() override;
-    virtual void Tick(f32 Dt) override
+    virtual void WorldTick(f32 Dt)
     {
         check(this->bLives && this->_IsGarbage() == false)
         for (auto& Comp: this->Components)
@@ -77,6 +77,7 @@ public:
         static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TSceneComponent&>);
         check(this->_check_IsComponentAttachedTransitive(Parent))
         auto& Result{*StaticCastChecked<TSceneComponent>(&*Parent.Children.emplace_back(SpawnObject(TWorldStaticInit<TSceneComponent>{.Outer=this->GetWorld()})))};
+        Result.Parent = &Parent;
         Result.Origin = EActorComponentOrigin::Ctor;
         if constexpr (requires { Callback(Result); })
         {
@@ -93,6 +94,7 @@ public:
         check(Class.GetClass())
         check(this->_check_IsComponentAttachedTransitive(Parent))
         auto& Result{*StaticCastChecked<TSceneComponent>(&*Parent.Children.emplace_back(SpawnObject(CastTo<ASceneComponent>{}, {this->GetWorld(), *Class.GetClass()})))};
+        Result.Parent = &Parent;
         Result.Origin = EActorComponentOrigin::Ctor;
         if constexpr (requires { Callback(Result); })
         {
@@ -184,6 +186,7 @@ public:
         static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TSceneComponent&>);
         check(this->_check_IsComponentAttachedTransitive(Parent))
         auto& Result{*StaticCastChecked<TSceneComponent>(&*Parent.Children.emplace_back(SpawnObject(TWorldStaticInit<TSceneComponent>{.Outer=this->GetWorld()})))};
+        Result.Parent = &Parent;
         Result.Origin = EActorComponentOrigin::Runtime;
         if constexpr (requires { Callback(Result); })
         {
@@ -203,6 +206,7 @@ public:
         check(Class.GetClass())
         check(this->_check_IsComponentAttachedTransitive(Parent))
         auto& Result{*StaticCastChecked<TSceneComponent>(&*Parent.Children.emplace_back(SpawnObject(CastTo<ASceneComponent>{}, {this->GetWorld(), *Class.GetClass()})))};
+        Result.Parent = &Parent;
         Result.Origin = EActorComponentOrigin::Runtime;
         if constexpr (requires { Callback(Result); })
         {
@@ -325,7 +329,8 @@ public:
     NODISCARD FORCEINLINE constexpr ASceneComponent& GetRootComponent() const noexcept { check(this->RootComponent) return *this->RootComponent; }
     NODISCARD FORCEINLINE TArray<TJxxUnique<AActorComponent>> const& GetComponents() const noexcept { return this->Components; }
 
-    NODISCARD FORCEINLINE bool CanEverTick() const noexcept { return this->bCanEverTick; }
+    NODISCARD FORCEINLINE constexpr bool CanEverTick() const noexcept { return this->bCanEverTick; }
+    NODISCARD FORCEINLINE constexpr bool CanEverTickInDormantTimes() const noexcept { return this->bCanEverTickInDesistedTime; }
     NODISCARD FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(bool bInShouldTick) noexcept { this->bShouldTick = bInShouldTick; }
 
@@ -333,6 +338,20 @@ public:
     NODISCARD FORCEINLINE constexpr bool IsEditorHitTestable() const noexcept { return this->bEditorHitTestable; }
     FORCEINLINE constexpr void SetEditorHitTestable(bool b) noexcept { this->bEditorHitTestable = b; }
 #endif /* JAFG_WITH_EDITOR */
+
+    NODISCARD LWorldAabb3 GetTransformedActorAabb() const noexcept
+    {
+        LWorldAabb3 Result;
+        if (this->HasRootComponent())
+        {
+            Result = this->GetRootComponent().GetTransitiveComponentAabb();
+        }
+        else
+        {
+            Result = maths::identity<LWorldAabb3>;
+        }
+        return Result;
+    }
 
 #if JAFG_DO_CHECKS
     //# For checks only. Do not use elsewhere.
@@ -343,10 +362,40 @@ protected:
 
     FORCEINLINE void SetEverTickConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTick = true; }
     FORCEINLINE void CancelEverTickConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTick = false; }
+    FORCEINLINE void SetEverTickInDormantTimesConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTickInDesistedTime = true; }
+    FORCEINLINE void CancelEverTickInDormantTimesConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTickInDesistedTime = false; }
 
     virtual AWorldObject& CloneImpl(AWorldObject* Object) const noexcept override;
 
 private:
+
+    virtual void Tick(f32 Dt) final override
+    {
+        if (auto const& World{this->GetWorld()}; this->ShouldTick())
+        {
+            if (World.IsTimeLinear())
+            {
+                check(this->CanEverTick())
+                if (World.IsLinearWorldDormant())
+                {
+                    if (this->CanEverTickInDormantTimes())
+                    {
+                        this->WorldTick(Dt);
+                    }
+                }
+                else
+                {
+                    this->WorldTick(Dt);
+                }
+            }
+            else
+            {
+                check(World.IsTimeDesisted())
+                check(this->CanEverTickInDormantTimes())
+                this->WorldTick(Dt);
+            }
+        }
+    }
 
 #if JAFG_DO_CHECKS
     NODISCARD bool _check_IsComponentAttachedTransitive(AActorComponent const& Who) const noexcept
@@ -411,7 +460,15 @@ private:
     bool bCanEverTick:1{};
 
     //#
+    //# Whether this actor should ever be able to tick or not in a time desisted or dormant world.
+    //# This bool flag can only be set in the constructor of the actor - new objects of this class
+    //# will not be registered in the context tickable registry.
+    //#
+    bool bCanEverTickInDesistedTime:1{};
+
+    //#
     //# Whether this actor should tick now or not. This flag does nothing if #bCanEverTick is false.
+    //# Or in desisted worlds if #bCanEverTickInDesistedTime is false.
     //#
     bool bShouldTick:1{true};
 

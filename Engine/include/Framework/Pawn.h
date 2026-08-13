@@ -24,7 +24,6 @@ protected:
 
 public:
 
-    virtual void Tick(f32 Dt) override;
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     LWorldEye GetEye() const noexcept;

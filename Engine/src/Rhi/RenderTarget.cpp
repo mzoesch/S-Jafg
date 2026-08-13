@@ -343,6 +343,13 @@ void Jafg::LRenderTarget::Render(LRenderInfo const& Info, TFunction2<void(LRende
     RenderInfo.CommandBuffer.setViewport(0, RenderInfo.VkViewport);
     RenderInfo.CommandBuffer.setScissor(0, RenderInfo.VkScissor);
     What(RenderInfo);
+
+    /*
+     * TODO: Allow an option to discard the alpha channel, e.g. by rendering a full-sized quad setting the 4th channel
+     *       to one - preserving the rgb-ones. But this is expensive as it requires an additional new render pass.
+     *       There has to be better solutions...
+     */
+
     RenderInfo.CommandBuffer.endRendering();
 
     Surface.Vk_TransitionImageLayout({

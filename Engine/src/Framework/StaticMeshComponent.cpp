@@ -19,7 +19,7 @@ void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
 void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
 {
     this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState);
-    this->SetAabb(this->Mesh->GetAabb());
+    this->Aabb = this->Mesh->GetAabb();
 }
 
 void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef Instance) noexcept
@@ -66,7 +66,11 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
             LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
         }
     )
-    this->Mesh->Render(Info, this->GetTransform(), GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
+
+    //# Todo: Instead of this. We want to pass the parent transform to the children. This way we avoid the recursive calls up the chain here -- to recalculate many times the same thing.
+    //#       E.g. Render(LActorRenderInfo const&, LWorldTrans* World); Then check
+    //#             if (World) World apply with local trans else use local trans.
+    this->Mesh->Render(Info, this->GetWorldTransformSlow(), GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
 }
 
 void Jafg::LStaticMeshRenderable::Render(LActorRenderInfo const& Info) const

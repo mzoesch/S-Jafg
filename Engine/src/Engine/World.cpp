@@ -6,7 +6,6 @@
 #include "Core/App.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
-#include "Physics/PhysicCompontent.h"
 #include "User/LocalEgo.h"
 #include "Framework/SubsystemCollection.h"
 #include "Framework/WorldSubsystem.h"
@@ -16,36 +15,10 @@
 #include "Framework/ActorComponentForward.h"
 #include "Framework/StaticMeshComponent.h"
 #include "Framework/MaterialSubsystem.h"
-
-LString Jafg::LWorldParameters::ToString() const
-{
-    LString Out { '[' };
-
-    bool bFirst { true };
-    for (const LWorldParam& Param : this->Params)
-    {
-        if (bFirst)
-        {
-            bFirst = false;
-        }
-        else
-        {
-            Out.append(", ");
-        }
-
-        Out.append(algo::sprintf("{}={}", Param.Key, Param.Value));
-        continue;
-    }
-
-    Out += ']';
-    return Out;
-}
-
-void Jafg::LWorldParameters::Reset() noexcept
-{
-    algo::orphan(&this->Params);
-    return;
-}
+#include "Framework/PhysicsSystem.h"
+#include "Framework/PhysicsSystemActor.h"
+#include "Framework/RigidComponent.h"
+#include "../Framework/PhysicsForeignCore.h"
 
 Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
     : LClassOuter{std::move(Info.HumanReadableName)}, CreateInfo{std::move(Info)}
@@ -54,6 +27,8 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
 
     this->RealTimeWhenWorldWasLaunched = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldWasLaunched > 0.0f)
+
+    this->TimeBehavior = this->CreateInfo.TimeBehavior;
 
     check(this->WorldState == EWorldState::PreInitializing)
     this->WorldState = EWorldState::Initializing;
@@ -72,6 +47,37 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
 
     this->SupremePolicies = SpawnObject(CastTo<ASupremePolicies>{}, {*this, this->CreateInfo.SupremePoliciesClass.GetClassOrDefault()});
     check(this->SupremePolicies)
+
+    LOG_TRACE(LogPhysics, "Initializing physics system.")
+    check(!this->PhysicsSystem.IsValid())
+    this->PhysicsSystem = LPhysicsSystemCreateInfo{
+        .RigidBodyLimit = this->SupremePolicies->PreferredRigidBodyLimit
+            ? *this->SupremePolicies->PreferredRigidBodyLimit : this->SupremePolicies->GetPreferredRigidBodyLimit(),
+        .BodyMutexNumber = this->SupremePolicies->PreferredBodyMutexNumber
+            ? *this->SupremePolicies->PreferredBodyMutexNumber : this->SupremePolicies->GetPreferredBodyMutexNumber(),
+        .BodyPairLimit = this->SupremePolicies->PreferredBodyPairLimit
+            ? *this->SupremePolicies->PreferredBodyPairLimit : this->SupremePolicies->GetPreferredBodyPairLimit(),
+        .ContactConstraintLimit = this->SupremePolicies->PreferredContactConstraintLimit
+            ? *this->SupremePolicies->PreferredContactConstraintLimit : this->SupremePolicies->GetPreferredContactConstraintLimit(),
+
+        .TemporalUpdateStackSizeLimit = this->SupremePolicies->PreferredTemporalUpdateStackSizeLimit
+            ? *this->SupremePolicies->PreferredTemporalUpdateStackSizeLimit : this->SupremePolicies->GetPreferredTemporalUpdateStackSizeLimit(),
+
+        .JobLimit = this->SupremePolicies->PreferredJobLimit
+            ? *this->SupremePolicies->PreferredJobLimit : this->SupremePolicies->GetPreferredJobLimit(),
+        .BarrierLimit = this->SupremePolicies->PreferredBarrierLimit
+            ? *this->SupremePolicies->PreferredBarrierLimit : this->SupremePolicies->GetPreferredBarrierLimit(),
+        .ThreadLimit = this->SupremePolicies->PreferredThreadLimit
+            ? *this->SupremePolicies->PreferredThreadLimit : this->SupremePolicies->GetPreferredThreadLimit(),
+
+        .PhysicsStep = this->SupremePolicies->PreferredPhysicsStep
+            ? *this->SupremePolicies->PreferredPhysicsStep : this->SupremePolicies->GetPreferredPhysicsStep(),
+        .AccumulatorLimit = this->SupremePolicies->PreferredAccumulatorLimit
+            ? *this->SupremePolicies->PreferredAccumulatorLimit : this->SupremePolicies->GetPreferredAccumulatorLimit(),
+        .PhysicsSteps = this->SupremePolicies->PreferredPhysicsSteps
+            ? *this->SupremePolicies->PreferredPhysicsSteps : this->SupremePolicies->GetPreferredPhysicsSteps(),
+        };
+    check(this->PhysicsSystem.IsValid())
 
     this->RealTimeWhenWorldStarted = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched)
@@ -99,6 +105,8 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
 
     this->SupremePolicies->OnWorldPostInit();
 
+    this->PhysicsSystem->OptimizeBroadPhase();
+
     return;
 }
 
@@ -122,18 +130,57 @@ void Jafg::LWorld::Tick(f64 Dt)
     STAT_CYCLE_FUNCTION()
 
     this->DeltaTime = Dt;
+    if (this->ShouldTickPhysics())
+    {
+        check(this->PhysicsSystem.IsValid())
+        this->PhysicsSystem.Advance(Dt);
+    }
 
     this->AcquireTickableObjectsLock();
-    for (LTickableObject* Tickable : this->TickableObjects)
+    for (LTickableObject* Tickable: this->TickableObjects)
     {
         Tickable->Tick(static_cast<f32>(this->DeltaTime));
     }
     this->ReleaseTickableObjectsLock();
-    for (LTickableObject* Tickable : this->DeletedTickableObjects)
+    for (LTickableObject* Tickable: this->DeletedTickableObjects)
     {
         algo::erase_once_checked(&this->TickableObjects, Tickable);
     }
     this->DeletedTickableObjects.clear();
+
+    auto PollPhysicsState{[&]
+    {
+        auto& Interface{this->PhysicsSystem->GetBodyInterfaceNoLock()};
+
+        JPH::RVec3 Position;
+        JPH::Quat Rotation;
+        for (auto* Comp: this->RigidComponents)
+        {
+            check(IsValidFast(*this, Comp))
+            check(Comp->GetRigidObject().IsValid())
+            check(&Comp->GetOwningActor().GetRootComponent() == Comp && "Currently only supported as root component.")
+
+            Interface.GetPositionAndRotation(Comp->GetRigidObject()->GetID(), Position, Rotation);
+
+            Comp->LocalTransform.t = {Position.GetX(), Position.GetY(), Position.GetZ()};
+            Comp->LocalTransform.r = {Rotation.GetX(), Rotation.GetY(), Rotation.GetZ(), Rotation.GetW()};
+            Comp->_detail_OnPhysicsPoll(ETransformChangeBits::Translation|ETransformChangeBits::Rotator);
+        }
+    }};
+    if (this->ShouldTickPhysics())
+    {
+        if (this->PhysicsSystem.TryUpdate())
+        {
+            PollPhysicsState();
+        }
+    }
+    else if (this->DormantTicks > 0)
+    {
+        check(this->IsLinearWorldDormant())
+        this->PhysicsSystem.Update(this->DormantTicks);
+        this->DormantTicks = 0;
+        PollPhysicsState();
+    }
 }
 
 void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const
@@ -345,7 +392,7 @@ std::expected<Jafg::APersonaController*,LString> Jafg::LWorld::Login(LTransientP
     auto Pc{this->SupremePolicies->OnIncomingConnectionRequest(std::holds_alternative<LTransientPersona::Proxy>(*Persona)
         ? ASupremePolicies::Proxy
 #if JAFG_WITH_EDITOR
-        : std::get<LTransientPersona::Local>(*Persona).bPie
+        : std::get<LTransientPersona::Local>(*Persona).bEditor
             ? ASupremePolicies::Editor
 #endif /* JAFG_WITH_EDITOR */
             : ASupremePolicies::Local
@@ -451,18 +498,27 @@ TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const&
     {
         if (auto* Actor{Obj->As<AActor>()})
         {
-            for (auto& Comp: Actor->GetComponents())
+            if (LWorldAabb3 Aabb{Actor->GetTransformedActorAabb()}; !Aabb.empty())
             {
-                if (auto* Sc{Comp->As<AStaticMeshComponent>()})
+                if (maths::aabb_intersect_ray(Ray, Aabb).bHit)
                 {
-                    if (auto r{maths::aabb_intersect_ray(Ray, Sc->GetAabb().apply(Sc->GetTransform()))}; r.bHit)
+                    check(Actor->HasRootComponent())
+                    auto TraverseActor{[&](this auto&& Self, ASceneComponent& Comp) -> void
                     {
-                        Results.push_back({
-                            .Actor = *Actor,
-                            .Component = *Sc,
-                            .GlobalWorldLocation = r.EnterPoint,
-                            });
-                    }
+                        if (auto Intersection{maths::aabb_intersect_ray(Ray, Comp.GetAabbForThisComponentOnly().apply(Comp.GetWorldTransformSlow()))}; Intersection.bHit)
+                        {
+                            Results.push_back({
+                                .Actor = *Actor,
+                                .Component = Comp,
+                                .GlobalWorldLocation = Intersection.EnterPoint,
+                                });
+                        }
+                        for (auto& Child: Comp.GetChildren())
+                        {
+                            Self(*Child);
+                        }
+                    }};
+                    TraverseActor(Actor->GetRootComponent());
                 }
             }
         }
@@ -567,6 +623,9 @@ void Jafg::LWorld::OnTearDown()
 
     check(this->Collection.IsOuterValid() == false && this->Collection.IsClassValid() == false)
     check(this->TickableObjectsPutMutex == false)
+
+    LOG_VERBOSE(LogPhysics, "Tearing down physics system for world [{}].", this->GetHumanReadableName())
+    this->PhysicsSystem.TearDown();
 
     LClassOuter::OnTearDown();
 

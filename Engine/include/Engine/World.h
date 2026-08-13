@@ -4,7 +4,7 @@
 
 #include "Engine/Jxx.h"
 #include "Core/Arguments.h"
-#include "Physics/TraceUtility.h"
+#include "Framework/TraceUtility.h"
 #include "Framework/SubsystemCollection.h"
 #include "Framework/WorldSubsystem.h"
 #include "Cli/CliType.h"
@@ -13,6 +13,7 @@
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Framework/LackeyForward.h"
+#include "Framework/PhysicsSystem.h"
 
 namespace Jafg
 {
@@ -30,6 +31,7 @@ class LCommandLineInterface;
 class LWorld;
 class ASupremePolicies;
 class WWorldNode;
+class ARigidComponent;
 struct LSubsystemCollection;
 struct LRenderInfo;
 struct LNodeRenderInfo;
@@ -63,24 +65,16 @@ inline LStringView LexToString(EWorldState Type) noexcept
     std::unreachable();
 }
 
-enum struct EWorldTimeBehavior : u8
+//# The time behaviro of a world is constant and cannot change during the entire lifetime of a world.
+enum struct EWorldTimeBehavior: u8
 {
     //#
     //# Time behaves linearly. This is the default behavior.
+    //# The world can transition into a dormant state, but can never be truly desisted.
     //#
     Linear,
-
-    //#
-    //# Time is desisted for this world.
-    //# Time will not be forwarded to employees of the world context.
-    //#
+    //# Time is desisted for this world. It may never behave like a linear world. It is always dormant.
     Desist,
-
-    //#
-    //# Time is simulated and private to world core subsystems.
-    //# Time will not be forwarded to employees of the world context.
-    //#
-    Simulate,
 };
 inline LStringView LexToString(EWorldTimeBehavior Type) noexcept
 {
@@ -88,7 +82,6 @@ inline LStringView LexToString(EWorldTimeBehavior Type) noexcept
     {
         case EWorldTimeBehavior::Linear:   return "Linear";
         case EWorldTimeBehavior::Desist:   return "Desist";
-        case EWorldTimeBehavior::Simulate: return "Simulate";
     }
     std::unreachable();
 }
@@ -102,7 +95,7 @@ struct LTransientPersona final
     {
         LLocalLackey& Lackey;
 #if JAFG_WITH_EDITOR
-        bool bPie{};
+        bool bEditor{};
 #endif /* JAFG_WITH_EDITOR */
     };
     struct Proxy
@@ -112,35 +105,6 @@ struct LTransientPersona final
     std::variant<Spec, Local, Proxy> Variant;
 
     NODISCARD constexpr auto& operator*() noexcept { return this->Variant; }
-};
-
-//#
-//# The parameters for a world.
-//# Parameters are split by a '?'. A special character can be escaped with '\'.
-//# A parameter may have the following formats:
-//#   <Key>
-//#   <Key>=
-//#   <Key>=<Value>
-//#
-//# E.g.: MyCoolLevel?MyFirstParam?MySecondParam=?MyThirdParam=HeyThereIsAValue?Another\=Key\?StillTheFourthKey=ThisIsTheValue\?\=StillTheSameValue
-//#
-struct LWorldParameters final
-{
-    friend LWorld;
-
-    struct LWorldParam final
-    {
-        LString Key;
-        LString Value;
-    };
-
-    TArray<LWorldParam> Params;
-
-    ENGINE_API LString ToString() const;
-
-private:
-
-    void Reset() noexcept;
 };
 
 typedef LGenericArgument LWorldArgument;
@@ -168,6 +132,7 @@ struct LWorldCreateInfo final
     LString HumanReadableName{ "Transient World" };
 #endif /* JAFG_WITH_EDITOR */
     TSubclassOf<ASupremePolicies> SupremePoliciesClass;
+    EWorldTimeBehavior TimeBehavior{ EWorldTimeBehavior::Linear };
 };
 
 //#
@@ -180,6 +145,7 @@ struct LWorldCreateInfo final
 class ENGINE_API LWorld final: public LClassOuter, public LEngineGetters
 {
     friend AActor;
+    friend ARigidComponent;
 
 public:
 
@@ -199,7 +165,7 @@ public:
 
     FORCEINLINE constexpr EWorldState GetWorldState() const noexcept { return this->WorldState; }
 
-    FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
+    FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running && !this->bPaused; }
     void Tick(f64 Dt);
 
     void Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const;
@@ -253,7 +219,39 @@ public:
     //# The delta time of this world. This value should be used instead of the LEngine::DeltaTime as this
     //# value is dilated according to world physics.
     //#
-    FORCEINLINE constexpr f64 GetDeltaTime() const noexcept { return this->DeltaTime; }
+    NODISCARD FORCEINLINE constexpr f64 GetDeltaTime() const noexcept { return this->DeltaTime; }
+
+    NODISCARD FORCEINLINE constexpr EWorldTimeBehavior GetTimeBehavior() const noexcept { return this->TimeBehavior; }
+    NODISCARD FORCEINLINE constexpr bool IsTimeLinear() const noexcept { return this->TimeBehavior == EWorldTimeBehavior::Linear; }
+    NODISCARD FORCEINLINE constexpr bool IsTimeDesisted() const noexcept { return this->TimeBehavior == EWorldTimeBehavior::Desist; }
+    FORCEINLINE constexpr void SetDormantStateOfLinearWorld(bool b) noexcept
+    {
+        LOG_TRACE(LogWorld, "[{}]: Setting dormant state of linear world to [{}].", this->GetHumanReadableName(), b)
+        check(this->IsTimeLinear())
+        this->bDormant = b;
+    }
+    NODISCARD FORCEINLINE constexpr bool IsLinearWorldDormant() const noexcept { check(this->IsTimeLinear()) return this->bDormant; }
+    FORCEINLINE constexpr void SetDormantTicks(u32 Ticks) noexcept { check(this->IsLinearWorldDormant()) this->DormantTicks = Ticks; }
+    FORCEINLINE constexpr void AddDormantTicks(u32 Ticks = 1) noexcept { check(this->IsLinearWorldDormant()) this->DormantTicks += Ticks; }
+    NODISCARD FORCEINLINE constexpr u32 GetDormantTicks() const noexcept { check(this->IsLinearWorldDormant()) return this->DormantTicks; }
+
+    //#
+    //# If a world is paused. It will no longer be used by any employee. It is completely ignored by the engine.
+    //# Even for desisted actors this world will be unreachable.
+    //#
+    //# @note A paused world might still travel.
+    //#
+    NODISCARD FORCEINLINE constexpr bool IsPaused() const noexcept { return this->bPaused; }
+    FORCEINLINE constexpr void Pause() noexcept
+    {
+        LOG_TRACE(LogWorld, "[{}]: Pausing world.", this->GetHumanReadableName())
+        this->bPaused = true;
+    }
+    FORCEINLINE constexpr void Unpause() noexcept
+    {
+        LOG_TRACE(LogWorld, "[{}]: Unpausing world.", this->GetHumanReadableName())
+        this->bPaused = false;
+    }
 
     FORCEINLINE ASupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
@@ -261,6 +259,10 @@ public:
     FORCEINLINE ASupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies* GetSupremePoliciesAsserted() { jassert(this->SupremePolicies) return this->SupremePolicies; }
     FORCEINLINE ASupremePolicies const* GetSupremePoliciesAsserted() const { jassert(this->SupremePolicies) return this->SupremePolicies; }
+
+    NODISCARD FORCEINLINE constexpr bool ShouldTickPhysics() const noexcept { return !this->IsTimeDesisted() && !this->IsLinearWorldDormant(); }
+    NODISCARD LPhysicsSystem& GetWorldGlobalPhysicsSystem() noexcept { return this->PhysicsSystem; }
+    NODISCARD LPhysicsSystem const& GetWorldGlobalPhysicsSystem() const noexcept { return this->PhysicsSystem; }
 
     template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
     FORCEINLINE auto const& Vk_GetWorldDataDescriptorSet(TRenderInfo const& Info) const noexcept { return this->Vk_WorldDescriptorSets[Info.Frame]; }
@@ -301,6 +303,10 @@ private:
     TArray<LTickableObject*> DeletedTickableObjects;
 
     EWorldState WorldState{ EWorldState::PreInitializing };
+    EWorldTimeBehavior TimeBehavior;
+    bool bDormant:1{};
+    bool bPaused:1{};
+    u32 DormantTicks{};
 
     LSubsystemCollection Collection{ "World" };
 
@@ -317,6 +323,9 @@ private:
     //# Only valid on authorities.
     //#
     ASupremePolicies* SupremePolicies{};
+
+    LPhysicsSystem PhysicsSystem{ ESkipInit::Here };
+    TArray<ARigidComponent*> RigidComponents;
 
     rhi::frame_array<vk::raii::DescriptorSet> Vk_WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<rhi::mapped_device_buffer> Vk_WorldBuffers;

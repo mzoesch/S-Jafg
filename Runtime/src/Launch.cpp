@@ -51,29 +51,6 @@ EPlatformExit::Type GetMostSignificantExitReason()
 #if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
 #endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
-void EngineTick()
-{
-    STAT_CYCLE_FUNCTION()
-    check(GEngine)
-    check(Tasks::IsOnMasterThread())
-
-    App::Detail::BeginExitIfRequested();
-    Detail::GMutableEngine->DefaultTimeAdvance();
-
-    if (algo::time_diff(GEngine->LastStdOutFlush, GEngine->FrameStartTimePoint) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
-    {
-        ::FlushLogs();
-    }
-
-    Detail::GMutableEngine->Tick();
-    Detail::GetGlobalCarnifex().KillAllGarbageChildren();
-
-    return;
-}
-
-#if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
-FORCEINLINE
-#endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineExit()
 {
     STAT_BOOKMARK("TearingDown")
@@ -186,10 +163,22 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* WITH_STATS */
     LOG_VERBOSE(LogInformation, "AllowProfiling={}", App::IsAllowProfiling())
 
-    Tasks::RegisterThread(ENamedThreads::Master);
-
     std::filesystem::current_path(finder::detail::_engine_root_dir_slow());
     finder::create_directories(finder::temp_dir());
+
+    LOG_VERBOSE(LogLaunch, "Acquiring app lock.")
+    if (auto Result{App::Detail::TryAcquireAppLock()}; Result == App::Detail::EAppLockResult::Unknown)
+    {
+        LOG_FATAL(LogLaunch, "Failed to acquire app lock.")
+    }
+    else if (Result == App::Detail::EAppLockResult::Shared)
+    {
+        // TODO: Allow this if we e.g. passed the owning process and enter quite mode. But for now we do not allow this.
+        App::RequestEngineExit(1, "An instance of Jafg is already running.");
+        return ::GetMostSignificantExitReason();
+    }
+
+    Tasks::RegisterThread(ENamedThreads::Master);
     finder::create_directories(finder::dumps_dir());
     finder::create_directories(finder::saved_dir());
     LOG_VERBOSE(LogInformation, "EngineDir={}", finder::detail::_engine_root_dir_slow())
@@ -302,7 +291,21 @@ EPlatformExit::Type AgnosticLaunch()
 #else /* JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
     while (!App::IsTearingDown())
     {
-        ::EngineTick();
+        STAT_QUICK_CYCLE_START("TickWrapper")
+
+        check(GEngine)
+        check(Tasks::IsOnMasterThread())
+
+        App::Detail::BeginExitIfRequested();
+        Detail::GMutableEngine->DefaultTimeAdvance();
+
+        if (algo::time_diff(GEngine->LastStdOutFlush, GEngine->FrameStartTimePoint) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
+        {
+            ::FlushLogs();
+        }
+
+        Detail::GMutableEngine->Tick();
+        Detail::GetGlobalCarnifex().KillAllGarbageChildren();
     }
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_LOOP */
 

@@ -28,6 +28,7 @@ protected:
     DEFAULT_WORLD_CONSTRUCTORS_BODY(APersonaController)
     {
         this->SetEverTickConstructorOnlyFlag();
+        this->SetEverTickInDormantTimesConstructorOnlyFlag();
     }
 
 public:

@@ -125,6 +125,7 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
             .BorderTint = this->BorderTint,
             .TextureIndex = this->RenderTarget.GetResolvedBindlessIndex(),
             .SamplerIndex = UBO::Bindless::LinearClampToBorderSamplerIdx,
+            .bIgnoreAlpha = true,
             });
     }
 
@@ -242,7 +243,7 @@ Jafg::LTransientPersona::Local Jafg::WWorldViewer::GetTransientPersona() noexcep
 {
     return LTransientPersona::Local{
         .Lackey=*this,
-        .bPie= false,
+        .bEditor=false,
         };
 }
 

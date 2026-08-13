@@ -311,9 +311,9 @@ public:
     NODISCARD FORCEINLINE constexpr WEditorWorldViewerInspector* GetInspector() const noexcept { return this->Inspector; }
 
     //# Select new actors. All actors must be valid.
-    void SelectActors(TArray<AActor*> Actors, bool bForce = false);
+    void SelectActors(TArray<std::pair<AActor*,AActorComponent*>> Actors, bool bForce = false);
     //# Jafg guarantees that all listed actors are valid.
-    MULTI_EVENT_DECL(OnActorsSelected, TArray<AActor*> const& Old, TArray<AActor*> const& New)
+    MULTI_EVENT_DECL(OnActorsSelected, TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New)
     NODISCARD FORCEINLINE constexpr auto const& GetSelectedActors() const noexcept { return this->SelectedActors; }
 
     void SelectGizmo(EGizmo Gizmo);
@@ -364,6 +364,7 @@ private:
     };
     std::optional<LEditorReconnectionData> EditorReconnectionData;
     WWorldViewer* RunningInstance{};
+    bool bIsNextPersonaEditorControlled{};
     NODISCARD constexpr bool IsRunning() const noexcept { return !!this->RunningInstance; }
 
     NODISCARD LTexture2Ref GetStartTexture() const;
@@ -423,7 +424,7 @@ private:
 
     WText* DebugLocationText{};
 
-    TArray<AActor*> SelectedActors;
+    TArray<std::pair<AActor*,AActorComponent*>> SelectedActors;
     LMaterialInstanceRef SelectionMaterialInstance;
     LMaterialInstanceRef PostSelectionMaterialInstance;
 
@@ -466,14 +467,14 @@ private:
     WEditorWorldViewer* WorldViewer{};
     LDelegateHandle OnActorsSelectedHandle;
     void DisconnectFromViewer();
-    bool OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+    bool OnActorsSelected(TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New);
 
     WText* ConnectedText{};
     void UpdateConnectedArea();
 
     WParent* Container{};
     void* LastContainerElemSelected{};
-    void UpdateWorldObjectList(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+    void UpdateWorldObjectList(TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New);
     WTextBox* SelectedWorldObjectText{};
     void UpdateSelectedWorldObjectText(std::size_t Count, std::size_t Shown, std::size_t Selected);
 
@@ -526,7 +527,7 @@ private:
     WEditorWorldViewer* WorldViewer{};
     LDelegateHandle OnActorsSelectedHandle;
     void DisconnectFromViewer();
-    bool OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New);
+    bool OnActorsSelected(TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New);
 
     WText* ConnectedText{};
     void UpdateConnectedArea();
@@ -602,7 +603,7 @@ struct LEditorTraceOrigin
 DECLARE_JAFG_CLASS()
 class ENGINE_API AEditorPersonaControllerComponent final : public APersonaControllerComponent
 {
-GENERATED_CLASS_BODY()
+    GENERATED_CLASS_BODY()
 
 protected:
 
@@ -614,7 +615,7 @@ protected:
 
 public:
 
-    static constexpr u64 MaxLineCount{1024};
+    static constexpr u64 MaxLineCount{16'384};
     static constexpr f32 OneTimeDraw{0.0f};
 
     static constexpr u64 ShaderSpace{0uz};
@@ -629,9 +630,20 @@ public:
     virtual void Render(LActorRenderInfo const& Info) const override;
 
     WEditorWorldViewer::EGizmo SetSelectedGizmo(WEditorWorldViewer::EGizmo Gizmo) noexcept;
-    AActor* SetSelectedActor(WEditorWorldViewer* Origin, AActor* Actor) noexcept;
+    std::pair<AActor*,AActorComponent*> SetSelectedActor(WEditorWorldViewer* Origin, std::pair<AActor*,AActorComponent*> Actor) noexcept;
 
-    struct RayCreateInfo
+    struct LineCreateInfo final
+    {
+        LColor Tint;
+        f32 Duration{ OneTimeDraw };
+        LWorldLine3 Value;
+        LWorldLine3 const* operator->() const noexcept { return &this->Value; }
+    };
+    void AddLine(LineCreateInfo Line) noexcept { this->Lines.emplace_back(std::move(Line)); }
+    //# Useful for consistent one time draws when draw orders are not guaranteed.
+    void AddLineNextTick(LineCreateInfo Line) noexcept { this->NextLines.emplace_back(std::move(Line)); }
+
+    struct RayCreateInfo final
     {
         LColor Tint;
         f32 Duration{ OneTimeDraw };
@@ -642,7 +654,7 @@ public:
     //# Useful for consistent one time draws when draw orders are not guaranteed.
     void AddRayNextTick(RayCreateInfo Ray) noexcept { this->NextRays.emplace_back(std::move(Ray)); }
 
-    struct AabbCreateInfo
+    struct AabbCreateInfo final
     {
         LColor Tint;
         f32 Duration{ OneTimeDraw };
@@ -652,6 +664,19 @@ public:
     void AddAabb(AabbCreateInfo Aabb) noexcept { this->Aabbs.emplace_back(std::move(Aabb)); }
     //# Useful for consistent one time draws when draw orders are not guaranteed.
     void AddAabbNextTick(AabbCreateInfo Aabb) noexcept { this->NextAabbs.emplace_back(std::move(Aabb)); }
+
+    struct TextCreateInfo final
+    {
+        LColor Tint;
+        f32 Duration{ OneTimeDraw };
+        f32 Height;
+        LWorldVec3 Location;
+        LString Text;
+        LWorldVec3 const* operator->() const noexcept { return &this->Location; }
+    };
+    void AddText(TextCreateInfo Text) noexcept { this->Texts.emplace_back(std::move(Text)); }
+    //# Useful for consistent one time draws when draw orders are not guaranteed.
+    void AddTextNextTick(TextCreateInfo Text) noexcept { this->NextTexts.emplace_back(std::move(Text)); }
 
     enum EGizmoMesh
     {
@@ -675,32 +700,37 @@ private:
 
     void RenderRays(LActorRenderInfo const& Info) const;
     void RenderGizmo(LActorRenderInfo const& Info) const;
+    void RenderTexts(LActorRenderInfo const& Info) const;
 
     WEditorWorldViewer::EGizmo Gizmo{};
     struct LSelectedActor final
     {
         WEditorWorldViewer* Viewer{};
-        AActor* Actor{};
+        std::pair<AActor*,AActorComponent*> Actor{nullptr,nullptr};
         std::optional<LWorldQuat> Quaternion;
-        NODISCARD constexpr AActor* operator->() noexcept { return this->Actor; }
-        NODISCARD constexpr AActor const* operator->() const noexcept { return this->Actor; }
     };
     LSelectedActor SelectedActor;
     NODISCARD constexpr bool IsSelectedActorValid() const noexcept
     {
-        bool b{this->SelectedActor.Actor && this->SelectedActor->HasRootComponent()};
+        bool b{this->SelectedActor.Actor.first && this->SelectedActor.Actor.second};
         check(!b || this->SelectedActor.Viewer)
         return b;
     }
 
+    mutable TArray<LineCreateInfo> Lines;
+    TArray<LineCreateInfo> NextLines;
     mutable TArray<RayCreateInfo> Rays;
     TArray<RayCreateInfo> NextRays;
     mutable TArray<AabbCreateInfo> Aabbs;
     TArray<AabbCreateInfo> NextAabbs;
+    mutable TArray<TextCreateInfo> Texts;
+    TArray<TextCreateInfo> NextTexts;
 
     LMaterialInstanceRef RayInstance;
     rhi::frame_array<rhi::mapped_device_buffer> RayBuffers;
     rhi::frame_array<rhi::mapped_device_buffer> RayViewBuffers;
+
+    LMaterialInstanceRef TextMaterialInstance;
 
     struct LHighlightedGizmoMesh final
     {

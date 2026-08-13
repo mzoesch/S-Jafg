@@ -24,6 +24,22 @@ void Jafg::ASceneComponent::OnGarbage(EJxxRecordTearDownReason Reason)
     return;
 }
 
+#if JAFG_DO_CHECKS
+void Jafg::ASceneComponent::OnAttach(AActor& InOwner)
+{
+    Super::OnAttach(InOwner);
+
+    if (this->Parent)
+    {
+        check(algo::contains(this->Parent->GetChildren(), this, algo::unique_raw))
+    }
+    else
+    {
+        check(&this->GetOwningActor().GetRootComponent() == this)
+    }
+}
+#endif /* JAFG_DO_CHECKS */
+
 Jafg::AWorldObject& Jafg::ASceneComponent::CloneImpl(AWorldObject* Object) const noexcept
 {
     auto& Result{Super::CloneImpl(Object).AsStatic<AActor>()};

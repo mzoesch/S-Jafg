@@ -27,7 +27,10 @@ struct VisualInstance
     uint texture_index;
     uint sampler_index;
     float msdf_pixel_range;
-    uint _pad0;
+    uint8_t bool_ignore_alpha;
+    uint8_t _pad0;
+    uint8_t _pad1;
+    uint8_t _pad2;
 };
 [[vk::binding(1,0),UpdateFrequency(PerFrame)]] StructuredBuffer<VisualInstance> instances;
 
@@ -97,6 +100,11 @@ float4 fragMain(FRInput input): SV_TARGET
     else
     {
         result = maths::color_to_linear(instance.tint, visual_shared.gamma) * bindless_textures[NonUniformResourceIndex(instance.texture_index)].Sample(samplers[instance.sampler_index], input.tex_uv);
+    }
+
+    if (instance.bool_ignore_alpha != 0)
+    {
+        result = float4(result.rgb, 1.0);
     }
 
     if (dist_left < instance.radii.x && dist_top < instance.radii.x) /* TL */

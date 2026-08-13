@@ -629,11 +629,11 @@ inline constexpr TrapMeFn TrapMe{};
 
 enum : i8 { INDEX_NONE = -1 };
 
-enum ELazyInit    : i8 { LazyInit    };
-enum EForceInit   : i8 { ForceInit   };
-enum EZeroInit    : i8 { ZeroInit    };
-enum ESkipInit    : i8 { SkipInit    }; // Dangerous.
-enum EDefaultInit : i8 { DefaultInit };
+enum struct ELazyInit    : i8 { Here };
+enum struct EForceInit   : i8 { Here };
+enum struct EZeroInit    : i8 { Here };
+enum struct ESkipInit    : i8 { Here }; // Dangerous.
+enum struct EDefaultInit : i8 { Here };
 
 namespace EPlatformExit
 {

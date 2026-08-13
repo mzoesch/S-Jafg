@@ -36,15 +36,18 @@ struct VisualInstance final: rhi::ssbo_template<VisualInstance, vk::ShaderStageF
     //# Required
     LColor Tint;
     //# Only required if sampling to border is enabled.
-    LColor BorderTint{ SkipInit };
+    LColor BorderTint{ ESkipInit::Here };
     //# Only required if #OutlineThickness > 0.
-    LColor OutlineTint{ SkipInit };
+    LColor OutlineTint{ ESkipInit::Here };
     f32 OutlineThickness{};
 
     u32 TextureIndex{ UBO::Bindless::IdentityMulIdx };
     u32 SamplerIndex{ UBO::Bindless::LinearClampToEdgeSamplerIdx };
     f32 MsdfPixelRange{};
-    u32 _pad1;
+    bool bIgnoreAlpha{};
+    u8 _pad0;
+    u8 _pad1;
+    u8 _pad2;
 };
 static_assert(sizeof(VisualInstance) % 16 == 0);
 static_assert(rhi::ssbo<VisualInstance>);

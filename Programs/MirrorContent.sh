@@ -9,7 +9,7 @@ fi
 SRC="$1"
 MIRROR="$2"
 
-LFs="$SRC/lfs"
+LFs="$SRC/.lfs"
 
 if [ ! -d "$SRC" ]; then
     echo "$SRC: No such directory."

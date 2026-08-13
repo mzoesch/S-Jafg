@@ -5,7 +5,11 @@
 #include "Stats/Stats.h"
 #include "Core/Parameter.h"
 #include "Core/TaskUtility.h"
-#include <unistd.h>
+#if JAFG_PLATFORM_LINUX
+    #include <unistd.h>
+    #include <sys/file.h>
+    #include <fcntl.h>
+#endif /* JAFG_PLATFORM_LINUX */
 
 namespace finder::detail
 {
@@ -47,10 +51,10 @@ static LPath CachedSelfProcDir;
     {
         check(Jafg::Tasks::IsOnMasterThread())
 #if JAFG_PLATFORM_LINUX
-#if JAFG_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
-#endif /* JAFG_WITH_CLANG */
+    #if JAFG_WITH_CLANG
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    #endif /* JAFG_WITH_CLANG */
         char Buffer[JAFG_PLATFORM_MAX_PATH] = { 0 };
         auto Ret{ readlink("/proc/self/exe", Buffer, JAFG_PLATFORM_MAX_PATH) };
         if (Ret == -1)
@@ -58,9 +62,9 @@ static LPath CachedSelfProcDir;
             panic("Failed to read the symbolic link.")
         }
         Buffer[Ret] = '\0';
-#if JAFG_WITH_CLANG
-#pragma clang diagnostic pop
-#endif /* JAFG_WITH_CLANG */
+    #if JAFG_WITH_CLANG
+        #pragma clang diagnostic pop
+    #endif /* JAFG_WITH_CLANG */
         CachedSelfProcDir = LString{Buffer};
 #elif JAFG_PLATFORM_WINDOWS
         TCHAR Buffer[JAFG_PLATFORM_MAX_PATH]{ 0 };
@@ -68,7 +72,7 @@ static LPath CachedSelfProcDir;
         CachedSelfProcDir = LPath{Buffer};
         CachedSelfProcDir = CachedSelfProcDir.lexically_normal();
 #else /* JAFG_PLATFORM_WINDOWS */
-#error "Missing implementation for this platform."
+    #error "Missing implementation for this platform."
 #endif /* !JAFG_PLATFORM_WINDOWS */
     }
 
@@ -316,6 +320,39 @@ void Jafg::App::Detail::BeginExitIfRequested() noexcept
        bEngineRequestingExit = true;
     }
     return;
+}
+
+Jafg::App::Detail::EAppLockResult Jafg::App::Detail::TryAcquireAppLock()
+{
+#if JAFG_PLATFORM_LINUX
+    auto Fd{::open(LITERAL_TEXT("Temp/.Jafg.AppLock"), O_CREAT|O_RDWR, 0666)};
+    if (Fd == -1)
+    {
+        return EAppLockResult::Unknown;
+    }
+    if (::flock(Fd, LOCK_EX|LOCK_NB) == -1)
+    {
+        ::close(Fd);
+        return EAppLockResult::Shared;
+    }
+    /* Intentionally leaking Fd. */
+    return EAppLockResult::Unique;
+#elif JAFG_PLATFORM_WINDOWS
+    HANDLE Mutex{::CreateMutexW(nullptr, TRUE, LITERAL_TEXT("Jafg::AppLock"))};
+    if (!Mutex)
+    {
+        return EAppLockResult::Unknown;
+    }
+    if (::GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        ::CloseHandle(Mutex);
+        return EAppLockResult::Shared;
+    }
+    /* Intentionally leaking Mutex. */
+    return EAppLockResult::Unique;
+#else /* JAFG_PLATFORM_WINDOWS */
+    #error "Missing implementation for platform."
+#endif /* !JAFG_PLATFORM_WINDOWS */
 }
 
 void Jafg::App::RequestEngineExit() noexcept

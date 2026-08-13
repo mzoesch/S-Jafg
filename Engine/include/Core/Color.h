@@ -162,17 +162,24 @@ struct LColor final
 #endif /* !JAFG_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
-    FORCEINLINE constexpr LColor(value_type InColor) noexcept
+    FORCEINLINE constexpr LColor(value_type Color) noexcept
 #if JAFG_PLATFORM_USES_LITTLE_ENDIAN
-        : r(InColor), g(InColor), b(InColor), a(0xFF)
+        : r(Color), g(Color), b(Color), a(0xFF)
 #else /* JAFG_PLATFORM_USES_LITTLE_ENDIAN */
-        : a(0xFF), b(InColor), g(InColor), r(InColor)
+        : a(0xFF), b(Color), g(Color), r(Color)
 #endif /* !JAFG_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
-    FORCEINLINE constexpr LColor(LColor const& InColor) noexcept : Bits(InColor.Bits) {}
+    FORCEINLINE constexpr LColor(LColor const& Color) noexcept : Bits(Color.Bits) {}
     FORCEINLINE constexpr LColor& operator=(LColor const& Rhs) noexcept { this->Bits = Rhs.Bits; return *this; }
     FORCEINLINE constexpr ~LColor() noexcept = default;
+
+    NODISCARD static FORCEINLINE constexpr LColor FromU32(u32 Color) noexcept
+    {
+        LColor Result{ESkipInit::Here};
+        Result.Bits = Color;
+        return Result;
+    }
 
     FORCEINLINE constexpr bool operator==(LColor const& Other) const noexcept { return this->Bits == Other.Bits; }
 

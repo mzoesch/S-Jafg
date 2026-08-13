@@ -22,9 +22,23 @@ void Jafg::AActor::BeginLife()
         Comp->OnAttach(*this);
     }
 
-    if (this->CanEverTick())
+    if (this->GetWorld().IsTimeLinear())
     {
-        this->GetWorld().RegisterTickableObject(this);
+        if (this->CanEverTick())
+        {
+            this->GetWorld().RegisterTickableObject(this);
+        }
+    }
+    else if (this->GetWorld().IsTimeDesisted())
+    {
+        if (this->CanEverTickInDormantTimes())
+        {
+            this->GetWorld().RegisterTickableObject(this);
+        }
+    }
+    else
+    {
+        std::unreachable();
     }
 
     return;
@@ -36,7 +50,7 @@ void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
 
     algo::orphan(&this->Components);
 
-    if (this->CanEverTick())
+    if ((this->CanEverTick() && this->GetWorld().IsTimeLinear()) || (this->CanEverTickInDormantTimes() && this->GetWorld().IsTimeDesisted()))
     {
         auto& World{this->GetWorld()};
         if (World.IsTickableObjectsPutMutexLocked())

@@ -340,6 +340,208 @@ if(_guard)
     target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_tinygltf_SOURCE_DIR})
 
     ###############################################################################
+    # jolt
+    message(STATUS "Fetching jolt...")
+    jafg_hint_debug_symbols(JoltPhysics_GENERATE_DEBUG_SYMBOLS)
+    message(STATUS "JoltPhysics_GENERATE_DEBUG_SYMBOLS: ${JoltPhysics_GENERATE_DEBUG_SYMBOLS}")
+    option(JoltPhysics_USE_ASSERTIONS_IN_DISTRIBUTION "Enable assertions in distribution builds for the physics engine." OFF)
+    message(STATUS "JoltPhysics_USE_ASSERTIONS_IN_DISTRIBUTION: ${JoltPhysics_USE_ASSERTIONS_IN_DISTRIBUTION}")
+    if(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_SHIPPING)
+        if(JoltPhysics_USE_ASSERTIONS_IN_DISTRIBUTION)
+            set(JoltPhysics_USE_ASSERTS ON)
+        else()
+            set(JoltPhysics_USE_ASSERTS OFF)
+        endif()
+    else()
+        set(JoltPhysics_USE_ASSERTS ON)
+    endif()
+    message(STATUS "JoltPhysics_USE_ASSERTS: ${JoltPhysics_USE_ASSERTS}")
+    option(JoltPhysics_DOUBLE_PRECISION "Enable double precision for the physics engine." OFF)
+    message(STATUS "JoltPhysics_DOUBLE_PRECISION: ${JoltPhysics_DOUBLE_PRECISION}")
+    option(JoltPhysics_CROSS_PLATFORM_DETERMINISTIC "Enable cross-platform deterministic mode for the physics engine." OFF)
+    message(STATUS "JoltPhysics_CROSS_PLATFORM_DETERMINISTIC: ${JoltPhysics_CROSS_PLATFORM_DETERMINISTIC}")
+    if((JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG) OR (JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEVELOPMENT))
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            # When turning this on, in Debug and Release mode, the library will emit extra code to ensure that the 4th component of a 3-vector is kept the same as the 3rd component
+            # and will enable floating point exceptions during simulation to detect divisions by zero.
+            # Note that this currently only works using MSVC. Clang turns Float2 into a SIMD vector sometimes causing floating point exceptions (the option is ignored).
+            set(JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED ON)
+        else()
+            set(JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED OFF)
+        endif()
+    else()
+        set(JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED OFF)
+    endif()
+    message(STATUS "JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED: ${JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED}")
+    option(JoltPhysics_USE_32_OBJECT_LAYER_BITS "Use 32 object layer bits instead of 16 for the physics engine." OFF)
+    message(STATUS "JoltPhysics_USE_32_OBJECT_LAYER_BITS: ${JoltPhysics_USE_32_OBJECT_LAYER_BITS}")
+    if(JoltPhysics_USE_32_OBJECT_LAYER_BITS)
+        set(JoltPhysics_OBJECT_LAYER_BITS 32)
+    else()
+        set(JoltPhysics_OBJECT_LAYER_BITS 16)
+    endif()
+    message(STATUS "JoltPhysics_OBJECT_LAYER_BITS: ${JoltPhysics_OBJECT_LAYER_BITS}")
+
+    option(JoltPhysics_TRACK_BROADPHASE_STATS "Enable tracking of broadphase statistics for the physics engine." OFF)
+    message(STATUS "JoltPhysics_TRACK_BROADPHASE_STATS: ${JoltPhysics_TRACK_BROADPHASE_STATS}")
+    option(JoltPhysics_TRACK_NARROWPHASE_STATS "Enable tracking of narrowphase statistics for the physics engine." OFF)
+    message(STATUS "JoltPhysics_TRACK_NARROWPHASE_STATS: ${JoltPhysics_TRACK_NARROWPHASE_STATS}")
+    option(JoltPhysics_TRACK_SIMULATION_STATS "Enable tracking of simulation statistics for the physics engine." OFF)
+    message(STATUS "JoltPhysics_TRACK_SIMULATION_STATS: ${JoltPhysics_TRACK_SIMULATION_STATS}")
+
+    option(JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION "Enable debug renderer in distribution builds for the physics engine." OFF)
+    message(STATUS "JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION: ${JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION}")
+    option(JoltPhysics_PROFILER_IN_DISTRIBUTION "Enable profiler in distribution builds for the physics engine." OFF)
+    message(STATUS "JoltPhysics_PROFILER_IN_DISTRIBUTION: ${JoltPhysics_PROFILER_IN_DISTRIBUTION}")
+
+    if(JoltPhysics_USE_ASSERTS)
+        set(JoltPhysics_USE_ASSERTS_v 1)
+    else()
+        set(JoltPhysics_USE_ASSERTS_v 0)
+    endif()
+    if(JoltPhysics_DOUBLE_PRECISION)
+        set(JoltPhysics_DOUBLE_PRECISION_v 1)
+    else()
+        set(JoltPhysics_DOUBLE_PRECISION_v 0)
+    endif()
+    if(JoltPhysics_CROSS_PLATFORM_DETERMINISTIC)
+        set(JoltPhysics_CROSS_PLATFORM_DETERMINISTIC_v 1)
+    else()
+        set(JoltPhysics_CROSS_PLATFORM_DETERMINISTIC_v 0)
+    endif()
+    if(JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED)
+        set(JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED_v 1)
+    else()
+        set(JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED_v 0)
+    endif()
+    if(JoltPhysics_TRACK_BROADPHASE_STATS)
+        set(JoltPhysics_TRACK_BROADPHASE_STATS_v 1)
+    else()
+        set(JoltPhysics_TRACK_BROADPHASE_STATS_v 0)
+    endif()
+    if(JoltPhysics_TRACK_NARROWPHASE_STATS)
+        set(JoltPhysics_TRACK_NARROWPHASE_STATS_v 1)
+    else()
+        set(JoltPhysics_TRACK_NARROWPHASE_STATS_v 0)
+    endif()
+    if(JoltPhysics_TRACK_SIMULATION_STATS)
+        set(JoltPhysics_TRACK_SIMULATION_STATS_v 1)
+    else()
+        set(JoltPhysics_TRACK_SIMULATION_STATS_v 0)
+    endif()
+    if(JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION)
+        set(JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION_v 1)
+    else()
+        set(JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION_v 0)
+    endif()
+    if(JoltPhysics_PROFILER_IN_DISTRIBUTION)
+        set(JoltPhysics_PROFILER_IN_DISTRIBUTION_v 1)
+    else()
+        set(JoltPhysics_PROFILER_IN_DISTRIBUTION_v 0)
+    endif()
+    target_compile_definitions(${_scoped_module_name} PRIVATE
+        JoltPhysics_USE_ASSERTS=${JoltPhysics_USE_ASSERTS_v}
+        JoltPhysics_DOUBLE_PRECISION=${JoltPhysics_DOUBLE_PRECISION_v}
+        JoltPhysics_CROSS_PLATFORM_DETERMINISTIC=${JoltPhysics_CROSS_PLATFORM_DETERMINISTIC_v}
+        JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED=${JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED_v}
+        JoltPhysics_OBJECT_LAYER_BITS=${JoltPhysics_OBJECT_LAYER_BITS}
+        JoltPhysics_TRACK_BROADPHASE_STATS=${JoltPhysics_TRACK_BROADPHASE_STATS_v}
+        JoltPhysics_TRACK_NARROWPHASE_STATS=${JoltPhysics_TRACK_NARROWPHASE_STATS_v}
+        JoltPhysics_TRACK_SIMULATION_STATS=${JoltPhysics_TRACK_SIMULATION_STATS_v}
+        JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION=${JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION_v}
+        JoltPhysics_PROFILER_IN_DISTRIBUTION=${JoltPhysics_PROFILER_IN_DISTRIBUTION_v}
+        )
+    target_compile_definitions(${_scoped_module_name} PUBLIC
+        JAFG_PHYSICS_LAYER_BITS=${JoltPhysics_OBJECT_LAYER_BITS}
+        )
+
+    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
+        set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/libJolt.a")
+    else()
+        message(FATAL_ERROR "Missing implementation for platform [${JAFG_TARGET_PLATFORM}].")
+    endif()
+    message(STATUS "JoltPhysics_LIB: ${JoltPhysics_LIB}")
+
+    ExternalProject_Add(
+        joltPhysics
+        GIT_REPOSITORY      https://github.com/jrouwe/JoltPhysics
+        GIT_TAG             e77f175595e64cb44218cc9d9d56fc365ad0e36a # v5.6.0
+        GIT_PROGRESS        TRUE
+        SOURCE_DIR          "${JAFG_ENGINE_ROOT}/Vendor/joltPhysics"
+        SOURCE_SUBDIR       "Build"
+
+        PREFIX              "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics"
+
+        CMAKE_ARGS
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_EXTENSIONS=OFF
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DUSE_ASSERTS=${JoltPhysics_USE_ASSERTS}
+            -DDOUBLE_PRECISION=${JoltPhysics_DOUBLE_PRECISION}
+            -DGENERATE_DEBUG_SYMBOLS=${JoltPhysics_GENERATE_DEBUG_SYMBOLS}
+            -DOVERRIDE_CXX_FLAGS=ON
+            -DCROSS_PLATFORM_DETERMINISTIC=${JoltPhysics_CROSS_PLATFORM_DETERMINISTIC}
+            -DINTERPROCEDURAL_OPTIMIZATION=ON
+            -DFLOATING_POINT_EXCEPTIONS_ENABLED=${JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED}
+            -DCPP_EXCEPTIONS_ENABLED=OFF
+            -DCPP_RTTI_ENABLED=OFF
+            -DOBJECT_LAYER_BITS=${JoltPhysics_OBJECT_LAYER_BITS}
+
+            -DUSE_SSE4_1=ON
+            -DUSE_SSE4_2=ON
+            -DUSE_AVX=ON
+            -DUSE_AVX2=ON
+            -DUSE_AVX512=OFF
+            -DUSE_LZCNT=ON
+            -DUSE_TZCNT=ON
+            -DUSE_F16C=ON
+            -DUSE_FMADD=ON
+
+            -DUSE_WASM_SIMD=OFF
+            -DJPH_USE_WASM64=OFF
+
+            -DENABLE_ALL_WARNINGS=ON
+
+            -DTRACK_BROADPHASE_STATS=${JoltPhysics_TRACK_BROADPHASE_STATS}
+            -DTRACK_NARROWPHASE_STATS=${JoltPhysics_TRACK_NARROWPHASE_STATS}
+            -DJPH_TRACK_SIMULATION_STATS=${JoltPhysics_TRACK_SIMULATION_STATS}
+
+            -DDEBUG_RENDERER_IN_DEBUG_AND_RELEASE=ON
+            -DDEBUG_RENDERER_IN_DISTRIBUTION=${JoltPhysics_DEBUG_RENDERER_IN_DISTRIBUTION}
+            -DPROFILER_IN_DEBUG_AND_RELEASE=ON
+            -DPROFILER_IN_DISTRIBUTION=${JoltPhysics_PROFILER_IN_DISTRIBUTION}
+
+            -DJPH_USE_EXTERNAL_PROFILE=OFF
+            -DDISABLE_CUSTOM_ALLOCATOR=OFF
+            -DUSE_STD_VECTOR=OFF
+
+            -DENABLE_OBJECT_STREAM=OFF
+            -DENABLE_INSTALL=OFF
+
+            -DJPH_USE_DX12=OFF
+            -DJPH_USE_VK=OFF
+            -DJPH_USE_MTL=OFF
+            -DJPH_USE_CPU_COMPUTE=OFF
+            -DJPH_SHADER_DEBUG_SYMBOLS=OFF
+            -DJPH_SHADER_OPTIMIZATION=ON
+
+        BUILD_BYPRODUCTS
+            "${JoltPhysics_LIB}"
+
+        INSTALL_COMMAND ""
+        )
+    add_library(Jolt STATIC IMPORTED GLOBAL)
+    set_target_properties(Jolt PROPERTIES
+        IMPORTED_LOCATION "${JoltPhysics_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${JAFG_ENGINE_ROOT}/Vendor/joltPhysics"
+        )
+    add_dependencies(Jolt joltPhysics)
+    target_link_libraries(${_scoped_module_name} PRIVATE Jolt)
+
+    ###############################################################################
     # slang
     message(STATUS "Fetching slang...")
     set(SLANG_VERSION "2026.11")
@@ -384,13 +586,13 @@ if(_guard)
     ###############################################################################
     # Content
     message(STATUS "Including jafg content...")
-    set(JAFG_CONTENT_FILES "${JAFG_ENGINE_ROOT}/Content/lfs")
     if(NOT DEFINED JAFG_CONTENT_VERSION)
         set(JAFG_CONTENT_VERSION "v${_detail_jafg_version}")
     endif()
     message(STATUS "JAFG_CONTENT_VERSION: ${JAFG_CONTENT_VERSION}")
     set(JAFG_REMOTE_CONTENT_SERVER "https://api.zoeschinger.com/get-jafg-content/${JAFG_CONTENT_VERSION}/" CACHE STRING "Remote content server URL for Jafg content files.")
-    file(STRINGS "${JAFG_ENGINE_ROOT}/Content/lfs" JAFG_CONTENT_FILES)
+    set(JAFG_CONTENT_FILE "${JAFG_ENGINE_ROOT}/Content/.lfs")
+    file(STRINGS "${JAFG_CONTENT_FILE}" JAFG_CONTENT_FILES)
 
     if(DEFINED ENV{JAFG_UPGRADE_CONTENT})
         set(JAFG_MANIFEST_URL "${JAFG_REMOTE_CONTENT_SERVER}manifest")

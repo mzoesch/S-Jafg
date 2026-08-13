@@ -66,6 +66,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogNames,                        JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogNetwork,                      JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogObjectInternal,               JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogPackager,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogPhysics,                      JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogPlatform,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogPlatformMisc,                 JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogPreferences,                  JAFG_LOG_DEFAULT_VERBOSITY                             )

@@ -418,6 +418,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         .Frame = *this->Vk_CurrentFrameInFlightIndex,
         .Image = ImageIndex,
         .VkViewport = {
+            .x = 0.0f, .y = 0.0f,
             .width = static_cast<f32>(this->SurfaceExtent.width), .height = static_cast<f32>(this->SurfaceExtent.height),
             .minDepth = 0.0f, .maxDepth = 1.0f
             },

@@ -7,6 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RIGHT_HANDED
 #define GLM_FORCE_XYZW_ONLY
+#define GLM_FORCE_QUAT_DATA_XYZW /* Holy shit. This is dangerous as hell haha */
 #include <glm/glm.hpp>
 
 #include <glm/vec2.hpp>
@@ -189,6 +190,22 @@ using LPlane4F = TPlane4<maths::single_precision,maths::defaultp>;
 using LPlane4D = TPlane4<maths::double_precision,maths::defaultp>;
 
 template<maths::length_t L,typename TReal,maths::qual_t Q>
+struct TLine final
+{
+    TVec<L,TReal,Q> begin;
+    TVec<L,TReal,Q> end;
+};
+template<typename TReal,maths::qual_t Q> using TLine2 = TLine<2,TReal,Q>;
+using LLine2F = TLine2<maths::single_precision,maths::defaultp>;
+using LLine2D = TLine2<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TLine3 = TLine<3,TReal,Q>;
+using LLine3F = TLine3<maths::single_precision,maths::defaultp>;
+using LLine3D = TLine3<maths::double_precision,maths::defaultp>;
+template<typename TReal,maths::qual_t Q> using TLine4 = TLine<4,TReal,Q>;
+using LLine4F = TLine4<maths::single_precision,maths::defaultp>;
+using LLine4D = TLine4<maths::double_precision,maths::defaultp>;
+
+template<maths::length_t L,typename TReal,maths::qual_t Q>
 struct TRay final
 {
     TVec<L,TReal,Q> origin;
@@ -209,7 +226,7 @@ struct TMagRay final
 {
     NODISCARD static TMagRay from_ray(TRay<L,TReal,Q> const& ray, TReal magnitude) noexcept
     {
-        return TMagRay{.origin = ray.origin, .direction = glm::normalize(ray.direction), .magnitude = magnitude};
+        return TMagRay{.origin=ray.origin, .direction=glm::normalize(ray.direction), .magnitude=magnitude};
     }
 
     TVec<L,TReal,Q> origin;
@@ -232,11 +249,46 @@ struct TAabb final
     TVec<L,TReal,Q> min;
     TVec<L,TReal,Q> max;
 
+    //# Gets an empty aabb.
+    NODISCARD static constexpr TAabb get_empty() noexcept
+    {
+        return TAabb{.min=TVec<L,TReal,Q>{std::numeric_limits<TReal>::max()}, .max=TVec<L,TReal,Q>{std::numeric_limits<TReal>::lowest()}};
+    }
+
+    //#
+    //# Whether this aabb is empty.
+    //# An aabb is considered empty if at least at one axis the minimal value is greater than the maximal value.
+    //#
+    NODISCARD constexpr bool empty() const noexcept
+    {
+        if constexpr (L == 3)
+        {
+            return (this->min.x > this->max.x)
+                || (this->min.y > this->max.y)
+                || (this->min.z > this->max.z);
+        }
+        else if constexpr (L == 2)
+        {
+            return (this->min.x > this->max.x)
+                || (this->min.y > this->max.y);
+        }
+        static_assert(L == 2 || L == 3);
+        return true;
+    }
+
+    //# The center of this aabb. Requires a non-empty aabb state.
     NODISCARD constexpr TVec<L,TReal,Q> center() const noexcept
     {
+        check(!this->empty())
         return (this->min + this->max) * TReal{0.5};
     }
 
+    //# If possible prefer this over #diagonal_length because sqrt is expensive.
+    NODISCARD constexpr TReal squared_diagonal_length() const noexcept
+    {
+        auto Vector{this->max - this->min};
+        return dot(Vector, Vector);
+    }
     NODISCARD constexpr TReal diagonal_length() const noexcept
     {
         auto Vector{this->max - this->min};
@@ -245,19 +297,27 @@ struct TAabb final
 
     NODISCARD constexpr TReal volume() const noexcept
     {
-        if constexpr (L == 3)
+        TReal Result;
+        if (this->empty())
         {
-            return (this->max.x - this->min.x) * (this->max.y - this->min.y) * (this->max.z - this->min.z);
-        }
-        else if constexpr (L == 2)
-        {
-            return (this->max.x - this->min.x) * (this->max.y - this->min.y);
+            Result = 0;
         }
         else
         {
-            static_assert(L == 2 || L == 3);
-            return TReal{0};
+            if constexpr (L == 3)
+            {
+                Result = (this->max.x - this->min.x) * (this->max.y - this->min.y) * (this->max.z - this->min.z);
+            }
+            else if constexpr (L == 2)
+            {
+                Result = (this->max.x - this->min.x) * (this->max.y - this->min.y);
+            }
+            else
+            {
+                static_assert(L == 2 || L == 3);
+            }
         }
+        return Result;
     }
 
     template<maths::length_t l>
@@ -268,6 +328,7 @@ struct TAabb final
     static constexpr maths::length_t edge_count_v{edge_count<L>::value};
     NODISCARD constexpr std::array<TRay<L,TReal,Q>, edge_count_v> edges() const noexcept
     {
+        check(!this->empty())
         if constexpr (L == 3)
         {
             const TVec<L,TReal,Q> c000{this->min.x, this->min.y, this->min.z};
@@ -323,6 +384,7 @@ struct TAabb final
     static constexpr maths::length_t corner_count_v{corner_count<L>::value};
     NODISCARD constexpr std::array<TVec<L,TReal,Q>, corner_count_v> corners() const noexcept
     {
+        check(!this->empty())
         if constexpr (L == 3)
         {
             return std::array<TVec<L,TReal,Q>, corner_count_v>{
@@ -352,9 +414,45 @@ struct TAabb final
         }
     }
 
+    constexpr void inline_merge(TAabb const& o) noexcept
+    {
+        if (o.empty())
+        {
+            return;
+        }
+        if (this->empty())
+        {
+            *this = o;
+        }
+        else
+        {
+            this->min = glm::min(this->min, o.min);
+            this->max = glm::max(this->max, o.max);
+        }
+    }
+    NODISCARD constexpr TAabb merge(TAabb const& o) const noexcept
+    {
+        TAabb Result;
+        if (this->empty())
+        {
+            Result = o;
+        }
+        else if (o.empty())
+        {
+            Result = *this;
+        }
+        else
+        {
+            Result.min = glm::min(this->min, o.min);
+            Result.max = glm::max(this->max, o.max);
+        }
+        return Result;
+    }
+
     NODISCARD constexpr TAabb apply(TTrans<TReal,Q> const& t) const noexcept
     {
         static_assert(L == 3);
+        check(!this->empty())
 
         glm::mat3 m{glm::mat3_cast(t.r)};
         m[0] *= t.s.x;
@@ -437,11 +535,28 @@ using LWorldPlane1  = TPlane1<LWorldReal,world_qual>;
 using LWorldPlane2  = TPlane2<LWorldReal,world_qual>;
 using LWorldPlane3  = TPlane3<LWorldReal,world_qual>;
 using LWorldPlane4  = TPlane4<LWorldReal,world_qual>;
+using LWorldLine2   = TLine2<LWorldReal,world_qual>;
+using LWorldLine3   = TLine3<LWorldReal,world_qual>;
+using LWorldLine4   = TLine4<LWorldReal,world_qual>;
+using LWorldRay2    = TRay2<LWorldReal,world_qual>;
 using LWorldRay3    = TRay3<LWorldReal,world_qual>;
+using LWorldRay3    = TRay3<LWorldReal,world_qual>;
+using LWorldMagRay2 = TMagRay2<LWorldReal,world_qual>;
 using LWorldMagRay3 = TMagRay3<LWorldReal,world_qual>;
+using LWorldMagRay4 = TMagRay4<LWorldReal,world_qual>;
 using LWorldAabb2   = TAabb2<LWorldReal,world_qual>;
 using LWorldAabb3   = TAabb3<LWorldReal,world_qual>;
 using LWorldEye     = TEye<LWorldReal,world_qual>;
+
+//# Literal operators that always compile with the world precision.
+NODISCARD FORCEINLINE constexpr LWorldReal operator ""_r(unsigned long long Value) noexcept
+{
+    return static_cast<LWorldReal>(Value);
+}
+NODISCARD FORCEINLINE constexpr LWorldReal operator ""_r(long double Value) noexcept
+{
+    return static_cast<LWorldReal>(Value);
+}
 
 #define MATHS_CONSTANT(Constant)                                                                            \
     namespace detail                                                                                        \
@@ -848,8 +963,8 @@ MATHS_CONSTANT_VALUE(unit_vector_z, LVec4D, {0, 0, 1, 0})
 MATHS_CONSTANT_VALUE(unit_vector_w, LVec4F, {0, 0, 0, 1})
 MATHS_CONSTANT_VALUE(unit_vector_w, LVec4D, {0, 0, 0, 1})
 
-MATHS_CONSTANT_VALUE(identity, LQuatF, {1, 0, 0, 0})
-MATHS_CONSTANT_VALUE(identity, LQuatD, {1, 0, 0, 0})
+MATHS_CONSTANT_VALUE(identity, LQuatF, {0, 0, 0, 1})
+MATHS_CONSTANT_VALUE(identity, LQuatD, {0, 0, 0, 1})
 
 MATHS_CONSTANT_VALUE(identity, LMat4F, {1})
 MATHS_CONSTANT_VALUE(identity, LMat4D, {1})
@@ -865,22 +980,10 @@ MATHS_CONSTANT_VALUE(identity, LTransformD, {
     .s = maths::one_vector<decltype(LTransformD::s)>
     })
 
-MATHS_CONSTANT_VALUE(identity, LAabb2F, {
-    .min = maths::zero_vector<decltype(LAabb2F::min)>,
-    .max = maths::zero_vector<decltype(LAabb2F::max)>
-    })
-MATHS_CONSTANT_VALUE(identity, LAabb2D, {
-    .min = maths::zero_vector<decltype(LAabb2D::min)>,
-    .max = maths::zero_vector<decltype(LAabb2D::max)>
-    })
-MATHS_CONSTANT_VALUE(identity, LAabb3F, {
-    .min = maths::zero_vector<decltype(LAabb3F::min)>,
-    .max = maths::zero_vector<decltype(LAabb3F::max)>
-    })
-MATHS_CONSTANT_VALUE(identity, LAabb3D, {
-    .min = maths::zero_vector<decltype(LAabb3D::min)>,
-    .max = maths::zero_vector<decltype(LAabb3D::max)>
-    })
+MATHS_CONSTANT_VALUE(identity, LAabb2F, {LAabb2F::get_empty()})
+MATHS_CONSTANT_VALUE(identity, LAabb2D, {LAabb2D::get_empty()})
+MATHS_CONSTANT_VALUE(identity, LAabb3F, {LAabb3F::get_empty()})
+MATHS_CONSTANT_VALUE(identity, LAabb3D, {LAabb3D::get_empty()})
 
 #undef MATHS_CONSTANT_VALUE
 
@@ -1269,12 +1372,15 @@ struct aabb_intersection_ray
     TVec3<TReal,Q> ExitPoint;
 };
 
+//# @param aabb A non-empty aabb.
 template<typename TReal,qual_t Q>
 NODISCARD aabb_intersection_ray<TReal,Q> aabb_intersect_ray(
     TMagRay<3,TReal,Q> const& ray, TAabb<3,TReal,Q> const& aabb,
     TReal e = static_cast<TReal>(small_number_d)
     ) noexcept
 {
+    check(!aabb.empty())
+
     TReal min{};
     TReal max{ray.magnitude};
 
@@ -1464,6 +1570,27 @@ NODISCARD inline decltype(auto) to_string(octant o) noexcept
         , std::to_underlying(o) & 2 ? "-" : "+"
         , std::to_underlying(o) & 4 ? "-" : "+"
         ));
+}
+
+template<length_t L,typename TReal,qual_t Q>
+NODISCARD inline decltype(auto) to_string(TAabb<L,TReal,Q> aabb) noexcept
+{
+    if constexpr (L == 3)
+    {
+        return std::vformat("aabb3{{min({},{},{}) max({},{},{})}}", std::make_format_args(
+              aabb.min.x, aabb.min.y, aabb.min.z
+            , aabb.max.x, aabb.max.y, aabb.max.z
+            ));
+    }
+    if (L == 2)
+    {
+        return std::vformat("aabb2{{min({},{}) max({},{})}}", std::make_format_args(
+              aabb.min.x, aabb.min.y
+            , aabb.max.x, aabb.max.y
+            ));
+    }
+    static_assert(L == 3 || L == 2);
+    std::unreachable();
 }
 
 template<std::floating_point TReal,qual_t Q>

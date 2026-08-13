@@ -52,7 +52,7 @@ TJxxUnique<Jafg::APawn> Jafg::ASupremePolicies::GetPawnForPersonaController(APer
         {
             if (APawnStart const* Start{this->GetPawnStartForPawn(*Exec)}) // TODO: Instead of that we should store the last editor location and load it.
             {
-                Exec->GetRootComponent().SetTransform(Start->GetRootComponent().GetTransform());
+                Exec->GetRootComponent().SetLocalTransformByTeleport(Start->GetRootComponent().GetLocalTransform());
             }
         }
         TJxxUnique<APawn> Result{&*Exec};
@@ -67,7 +67,7 @@ TJxxUnique<Jafg::APawn> Jafg::ASupremePolicies::GetPawnForPersonaController(APer
     {
         if (APawnStart const* Start{this->GetPawnStartForPawn(*Result)})
         {
-            Result->GetRootComponent().SetTransform(Start->GetRootComponent().GetTransform());
+            Result->GetRootComponent().SetLocalTranslationByTeleport(Start->GetRootComponent().GetLocalTranslation());
         }
     }
     return TJxxUnique<APawn>{&*Result};

@@ -50,6 +50,10 @@
 #include "Rhi/OutlineRendering.h"
 #include "Widgets/Input_Vector1.h"
 #include "Framework/PawnStart.h"
+#include "Framework/RigidComponent.h"
+#include "Nodes/Separator.h"
+#include "../Framework/PhysicsForeignCore.h"
+#include "Framework/FontSubsystem.h"
 
 namespace
 {
@@ -721,6 +725,8 @@ void Jafg::WEditorWorldViewer::Construct()
     Super::Construct();
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
+    this->StartType = EStartType{static_cast<u8>(*Prefs.EditorStartType)};
+    this->PawnStart = EPawnSart{static_cast<u8>(*Prefs.EditorPawnStart)};
 
     constexpr auto MinSize{23_spt2};
 
@@ -759,14 +765,13 @@ void Jafg::WEditorWorldViewer::Construct()
                     .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.Start")))
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
-                        // TODO: Make the world we are leaving dormant. So it will not be ticked (performance).
-
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                         {
                             if (this->IsRunning())
                             {
-                                checkNoEntry()
-                                // this->UpdateStartStopButtons();
+                                auto& Ctrl{*this->RunningInstance->GetOwnedPersonaControllerChecked()};
+                                Ctrl.GetWorld().SetDormantStateOfLinearWorld(!Ctrl.GetWorld().IsLinearWorldDormant());
+                                this->UpdateStartStopButtons();
                             }
                             else
                             {
@@ -779,10 +784,12 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->StepButton)
                     .MinDesiredSize(MinSize)
                     .Style(Prefs.EditorSelectablePrimaryButton<LRegionBrush,JUserPreferences::Radii|JUserPreferences::Outline>(LTexture2::FromAsset("Icons/Jafg.Step")))
-                    .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                         {
+                            check(this->IsRunning())
+                            this->RunningInstance->GetOwnedPersonaControllerChecked()->GetWorld().AddDormantTicks();
                             return LNodeReply::Handled();
                         }
                         return LNodeReply::Unhandled();
@@ -811,7 +818,9 @@ void Jafg::WEditorWorldViewer::Construct()
                                 this->TravelTo(*this->EditorReconnectionData->World);
                                 check(&this->GetOwnedPersonaControllerChecked()->GetWorld() != &PieWorld)
                                 PieWorld.TearDownWithTrack();
-                                this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().SetTransform(this->EditorReconnectionData->EyeTrans);
+                                this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
+
+                                this->EditorReconnectionData->World->Unpause();
                             }
                             else
                             {
@@ -1114,6 +1123,7 @@ void Jafg::WEditorWorldViewer::Construct()
         this->GetMutableEngine().SummonWorld({
             .HumanReadableName = *Prefs.EditorLastWorldName,
             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
+            .TimeBehavior = EWorldTimeBehavior::Desist,
             }, std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
     }
 }
@@ -1135,7 +1145,7 @@ void Jafg::WEditorWorldViewer::Tick()
             {
                 bSet = true;
                 this->DebugLocationText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
-                this->DebugLocationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetTranslation()));
+                this->DebugLocationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetLocalTranslation()));
             }
         }
     }
@@ -1212,7 +1222,7 @@ void Jafg::WEditorWorldViewer::Tick()
             if (auto* Pawn{Ctrl->GetOwnedPawn()})
             {
                 auto Diff{algo::time_diff(this->FocusTransition->Start, this->GetEngine().FrameStartTimePoint) / this->FocusTransition->Duration};
-                Pawn->GetRootComponent().SetTranslation(maths::linear_lerp(
+                Pawn->GetRootComponent().SetLocalTranslationByTeleport(maths::linear_lerp(
                       this->FocusTransition->Origin
                     , this->FocusTransition->Destination
                     , static_cast<LWorldReal>(maths::clamp(Diff, 0.0, 1.0))
@@ -1350,9 +1360,17 @@ Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo c
     return Super::OnKeyEventFocused(Info, Event);
 }
 
-void Jafg::WEditorWorldViewer::SelectActors(TArray<AActor*> Actors, bool bForce /* = false */)
+void Jafg::WEditorWorldViewer::SelectActors(TArray<std::pair<AActor*, AActorComponent*>> Actors, bool bForce /* = false */)
 {
-    check(algo::all_of(Actors, [](auto* Actor){ return !!Actor; }))
+    check(algo::all_of(Actors, [](auto& Elem){ return Elem.first; }))
+    checkCode
+    (
+        std::unordered_set<AActor*> ActorSet;
+        for (auto* Actor: Actors | std::views::keys)
+        {
+            check(ActorSet.insert(Actor).second)
+        }
+    )
 
     if (!bForce && this->SelectedActors == Actors)
     {
@@ -1373,7 +1391,7 @@ void Jafg::WEditorWorldViewer::SelectActors(TArray<AActor*> Actors, bool bForce 
             }
             else
             {
-                Comp->SetSelectedActor(nullptr, nullptr);
+                Comp->SetSelectedActor(nullptr, {nullptr,nullptr});
             }
         }
     }
@@ -1424,23 +1442,24 @@ void Jafg::WEditorWorldViewer::FocusActors()
 
     auto GetAabb{[](AActor& Actor) noexcept -> std::optional<LWorldAabb3>
     {
-        if (!Actor.HasRootComponent())
+        LWorldAabb3 Aabb{Actor.GetTransformedActorAabb()};
+        if (Aabb.empty())
         {
             return {};
         }
-        if (Actor.GetRootComponent().GetAabb().diagonal_length() < static_cast<LWorldReal>(0.1))
+        if (Aabb.squared_diagonal_length() < static_cast<LWorldReal>(0.01))
         {
             return LWorldAabb3{
                 .min=LWorldVec3{static_cast<LWorldReal>(-0.1)},
                 .max=LWorldVec3{static_cast<LWorldReal>(0.1)}
-                }.apply(Actor.GetRootComponent().GetTransform());
+                }.apply(Actor.GetRootComponent().GetLocalTransform());
         }
-        return Actor.GetRootComponent().GetAabb().apply(Actor.GetRootComponent().GetTransform());
+        return Aabb;
     }};
-    auto Aabb{GetAabb(*this->SelectedActors.front())};
+    auto Aabb{GetAabb(*this->SelectedActors.front().first)};
     for (auto Idx{1uz}; Idx < this->SelectedActors.size(); ++Idx)
     {
-        auto Aabb2{GetAabb(*this->SelectedActors[Idx])};
+        auto Aabb2{GetAabb(*this->SelectedActors[Idx].first)};
         if (!Aabb)
         {
             Aabb = Aabb2;
@@ -1460,8 +1479,8 @@ void Jafg::WEditorWorldViewer::FocusActors()
     auto Corners{Aabb->corners()};
 
     auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
-    auto Origin{Pawn.GetRootComponent().GetTranslation()};
-    Pawn.GetRootComponent().SetTranslation(Aabb->center());
+    auto Origin{Pawn.GetRootComponent().GetLocalTranslation()};
+    Pawn.GetRootComponent().SetLocalTranslationByTeleport(Aabb->center());
     auto Eye{Pawn.GetEye()};
     auto EyeRight{cross(Eye.front, Eye.up)};
 
@@ -1480,15 +1499,15 @@ void Jafg::WEditorWorldViewer::FocusActors()
             };
         BackwardsMagnitude = maths::max(BackwardsMagnitude, RequiredZ - Vec.z);
     }
-    Pawn.GetRootComponent().AddTranslation(Eye.front * -BackwardsMagnitude);
+    Pawn.GetRootComponent().AddLocalTranslationByTeleport(Eye.front * -BackwardsMagnitude);
 
     this->FocusTransition = LFocusTransition{
         .Origin = Origin,
-        .Destination = Pawn.GetRootComponent().GetTranslation(),
+        .Destination = Pawn.GetRootComponent().GetLocalTranslation(),
         .Start = GetEngine().FrameStartTimePoint,
         .Duration = *Prefs.EditorActorFocusTransitionDuration,
         };
-    Pawn.GetRootComponent().SetTranslation(this->FocusTransition->Origin);
+    Pawn.GetRootComponent().SetLocalTranslationByTeleport(this->FocusTransition->Origin);
 }
 
 bool Jafg::WEditorWorldViewer::IsGridSpaceLocal() const noexcept
@@ -1528,12 +1547,81 @@ bool Jafg::WEditorWorldViewer::OnPreDrawImpl(LRenderInfo const& Info)
         this->GetWorldRenderTarget().RenderSelected(Info, std::bind(&WEditorWorldViewer::PreDrawSelected, this, std::placeholders::_1));
     }
 
-    return Super::OnPreDrawImpl(Info);
+    bool Result{Super::OnPreDrawImpl(Info)};
+
+    if (physx::debug_renderer::get())
+    {
+        physx::debug_renderer::get()->AdvanceFrameIfUsed();
+    }
+
+    return Result;
 }
 
 void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, APawn& Pawn, LWorldEye const& Eye)
 {
     Super::OnPostWorldDrawImpl(Info, Ctrl, Pawn, Eye);
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    if (physx::debug_renderer::get())
+    {
+        if (auto* Comp{Ctrl.GetComponent<AEditorPersonaControllerComponent>()})
+        {
+            JPH::BodyManager::DrawSettings DrawSettings{
+                .mDrawGetSupportFunction = *Prefs.EditorVisualizeGetSupportFunction,
+                .mDrawSupportDirection = *Prefs.EditorVisualizeSupportDirection,
+                .mDrawGetSupportingFace = *Prefs.EditorVisualizeGetSupportingFace,
+                .mDrawShape = *Prefs.EditorVisualizeShape,
+                .mDrawShapeWireframe = *Prefs.EditorVisualizeShapeWireframe,
+                .mDrawShapeColor = JPH::BodyManager::EShapeColor{std::to_underlying(*Prefs.EditorVisualizeShapeColor)},
+                .mDrawBoundingBox = *Prefs.EditorVisualizeBoundingBox,
+                .mDrawCenterOfMassTransform = *Prefs.EditorVisualizeCenterOfMassTransform,
+                .mDrawWorldTransform = *Prefs.EditorVisualizeWorldTransform,
+                .mDrawVelocity = *Prefs.EditorVisualizeVelocity,
+                .mDrawMassAndInertia = *Prefs.EditorVisualizeMassAndInertia,
+                .mDrawSleepStats = *Prefs.EditorVisualizeSleepStats,
+                .mDrawSoftBodyVertices = *Prefs.EditorVisualizeSoftBodyVertices,
+                .mDrawSoftBodyVertexVelocities = *Prefs.EditorVisualizeSoftBodyVertexVelocities,
+                .mDrawSoftBodyEdgeConstraints = *Prefs.EditorVisualizeSoftBodyEdgeConstraints,
+                .mDrawSoftBodyBendConstraints = *Prefs.EditorVisualizeSoftBodyBendConstraints,
+                .mDrawSoftBodyVolumeConstraints = *Prefs.EditorVisualizeSoftBodyVolumeConstraints,
+                .mDrawSoftBodySkinConstraints = *Prefs.EditorVisualizeSoftBodySkinConstraints,
+                .mDrawSoftBodyLRAConstraints = *Prefs.EditorVisualizeSoftBodyLRAConstraints,
+                .mDrawSoftBodyRods = *Prefs.EditorVisualizeSoftBodyRods,
+                .mDrawSoftBodyRodStates = *Prefs.EditorVisualizeSoftBodyRodStates,
+                .mDrawSoftBodyRodBendTwistConstraints = *Prefs.EditorVisualizeSoftBodyRodBendTwistConstraints,
+                .mDrawSoftBodyPredictedBounds = *Prefs.EditorVisualizeSoftBodyPredictedBounds,
+                .mDrawSoftBodyConstraintColor = JPH::ESoftBodyConstraintColor{std::to_underlying(*Prefs.EditorVisualizeSoftBodyConstraintColor)},
+                };
+
+            if (
+                   DrawSettings.mDrawGetSupportFunction
+                || DrawSettings.mDrawGetSupportingFace
+                || DrawSettings.mDrawShape
+                || DrawSettings.mDrawBoundingBox
+                || DrawSettings.mDrawCenterOfMassTransform
+                || DrawSettings.mDrawWorldTransform
+                || DrawSettings.mDrawVelocity
+                || DrawSettings.mDrawMassAndInertia
+                || DrawSettings.mDrawSleepStats
+                || DrawSettings.mDrawSoftBodyVertices
+                || DrawSettings.mDrawSoftBodyVertexVelocities
+                || DrawSettings.mDrawSoftBodyEdgeConstraints
+                || DrawSettings.mDrawSoftBodyBendConstraints
+                || DrawSettings.mDrawSoftBodyVolumeConstraints
+                || DrawSettings.mDrawSoftBodySkinConstraints
+                || DrawSettings.mDrawSoftBodyLRAConstraints
+                || DrawSettings.mDrawSoftBodyRods
+                || DrawSettings.mDrawSoftBodyRodStates
+                || DrawSettings.mDrawSoftBodyRodBendTwistConstraints
+                || DrawSettings.mDrawSoftBodyPredictedBounds
+                )
+            {
+                physx::debug_renderer::get()->PrepareFrame(Eye, Comp);
+                Ctrl.GetWorld().GetWorldGlobalPhysicsSystem()->DrawBodies(DrawSettings, physx::debug_renderer::get(), {});
+            }
+        }
+    }
 
     if (!this->SelectedActors.empty())
     {
@@ -1578,9 +1666,11 @@ void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APer
 
 Jafg::LTransientPersona::Local Jafg::WEditorWorldViewer::GetTransientPersona() noexcept
 {
-    if (this->RunningInstance != this)
+    bool bEditor{this->RunningInstance != this || std::exchange(this->bIsNextPersonaEditorControlled, false)};
+
+    if (bEditor)
     {
-        LOG_TRACE(LogEditor, "[{}]: Transient persona requested is a PIE.", this->GetNameAsString())
+        LOG_TRACE(LogEditor, "[{}]: Transient persona requested is an editor instance.", this->GetNameAsString())
     }
     else
     {
@@ -1588,14 +1678,38 @@ Jafg::LTransientPersona::Local Jafg::WEditorWorldViewer::GetTransientPersona() n
     }
 
     return LTransientPersona::Local{
-        .Lackey = *this,
-        .bPie = this->RunningInstance != this,
+        .Lackey=*this,
+        .bEditor=bEditor,
         };
 }
 
 void Jafg::WEditorWorldViewer::OnConnect()
 {
     Super::OnConnect();
+
+    if (this->EditorReconnectionData)
+    {
+        if (auto* Ctrl{this->GetOwnedPersonaController()})
+        {
+            if (Ctrl->GetComponent<AEditorPersonaControllerComponent>())
+            {
+                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                {
+                    if (Pawn->GetComponent<AEditorCameraComponent>())
+                    {
+                        Pawn->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
+                    }
+                }
+            }
+            else if (this->PawnStart == EPawnSart::EditorEye)
+            {
+                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                {
+                    Pawn->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
+                }
+            }
+        }
+    }
 
     this->UpdateClientGizmo();
 
@@ -1629,8 +1743,20 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
 {
     check(!this->SelectedActors.empty())
 
-    auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
-    Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, {}, this->SelectedActors);
+    TArray<AActor*> ValidActors; ValidActors.reserve(this->SelectedActors.size());
+    for (auto& Actor: this->SelectedActors)
+    {
+        if (!Actor.first->IsA<APersonaController>())
+        {
+            ValidActors.push_back(Actor.first);
+        }
+    }
+
+    if (!ValidActors.empty())
+    {
+        auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
+        Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, {}, ValidActors);
+    }
 }
 
 void Jafg::WEditorWorldViewer::InitializeRenderTarget()
@@ -1901,6 +2027,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                         this->GetMutableEngine().SummonWorld({
                             .HumanReadableName = *Prefs.EditorLastWorldName,
                             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
+                            .TimeBehavior = EWorldTimeBehavior::Desist,
                             }, std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
                         return algo::reply::unhandled();
                     },});
@@ -1951,11 +2078,17 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
             return *MutablePrefs.EditorShowEyeTranslation;
         }),
         LDropDownNodeSeparator{.DisplayName="Visualization"},
-        CreateDropDownCheckmark("Visualize mesh aabbs", *GetSingleton<JUserPreferences>().EditorVisualizeMeshAabbs, []
+        CreateDropDownCheckmark("Visualize actor aabbs", *GetSingleton<JUserPreferences>().EditorVisualizeAabbs, []
         {
             auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
-            MutablePrefs.EditorVisualizeMeshAabbs = !*MutablePrefs.EditorVisualizeMeshAabbs;
-            return *MutablePrefs.EditorVisualizeMeshAabbs;
+            MutablePrefs.EditorVisualizeAabbs = !*MutablePrefs.EditorVisualizeAabbs;
+            return *MutablePrefs.EditorVisualizeAabbs;
+        }),
+        CreateDropDownCheckmark("Visualize transitive actor aabbs", *GetSingleton<JUserPreferences>().EditorVisualizeTransitiveAabbs, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorVisualizeTransitiveAabbs = !*MutablePrefs.EditorVisualizeTransitiveAabbs;
+            return *MutablePrefs.EditorVisualizeTransitiveAabbs;
         }),
         CreateDropDownCheckmark("Visualize traces", *GetSingleton<JUserPreferences>().EditorVisualizeTraces, []
         {
@@ -1975,6 +2108,155 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
             MutablePrefs.EditorVisualizeGizmoInteractions = !*MutablePrefs.EditorVisualizeGizmoInteractions;
             return *MutablePrefs.EditorVisualizeGizmoInteractions;
         }),
+        LDropDownNodeDeferredSubMenu{
+            .Selector = {.DisplayName = "Visualize physics",},
+            .OnChildren = [] -> TArray<LDropDownNode> { return {
+                CreateDropDownCheckmark("GetSupportFunction", *GetSingleton<JUserPreferences>().EditorVisualizeGetSupportFunction, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeGetSupportFunction = !*MutablePrefs.EditorVisualizeGetSupportFunction;
+                    return *MutablePrefs.EditorVisualizeGetSupportFunction;
+                }),
+                CreateDropDownCheckmark("SupportDirection", *GetSingleton<JUserPreferences>().EditorVisualizeSupportDirection, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSupportDirection = !*MutablePrefs.EditorVisualizeSupportDirection;
+                    return *MutablePrefs.EditorVisualizeSupportDirection;
+                }),
+                CreateDropDownCheckmark("GetSupportingFace", *GetSingleton<JUserPreferences>().EditorVisualizeGetSupportingFace, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeGetSupportingFace = !*MutablePrefs.EditorVisualizeGetSupportingFace;
+                    return *MutablePrefs.EditorVisualizeGetSupportingFace;
+                }),
+                CreateDropDownCheckmark("Shape", *GetSingleton<JUserPreferences>().EditorVisualizeShape, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeShape = !*MutablePrefs.EditorVisualizeShape;
+                    return *MutablePrefs.EditorVisualizeShape;
+                }),
+                CreateDropDownCheckmark("ShapeWireframe", *GetSingleton<JUserPreferences>().EditorVisualizeShapeWireframe, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeShapeWireframe = !*MutablePrefs.EditorVisualizeShapeWireframe;
+                    return *MutablePrefs.EditorVisualizeShapeWireframe;
+                }),
+                // CreateDropDownCheckmark("ShapeColor", *GetSingleton<JUserPreferences>().EditorVisualizeShapeColor, []
+                // {
+                //     auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                //     MutablePrefs.EditorVisualizeShapeColor = !*MutablePrefs.EditorVisualizeShapeColor;
+                //     return *MutablePrefs.EditorVisualizeShapeColor;
+                // }),
+                CreateDropDownCheckmark("BoundingBox", *GetSingleton<JUserPreferences>().EditorVisualizeBoundingBox, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeBoundingBox = !*MutablePrefs.EditorVisualizeBoundingBox;
+                    return *MutablePrefs.EditorVisualizeBoundingBox;
+                }),
+                CreateDropDownCheckmark("CenterOfMassTransform", *GetSingleton<JUserPreferences>().EditorVisualizeCenterOfMassTransform, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeCenterOfMassTransform = !*MutablePrefs.EditorVisualizeCenterOfMassTransform;
+                    return *MutablePrefs.EditorVisualizeCenterOfMassTransform;
+                }),
+                CreateDropDownCheckmark("WorldTransform", *GetSingleton<JUserPreferences>().EditorVisualizeWorldTransform, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeWorldTransform = !*MutablePrefs.EditorVisualizeWorldTransform;
+                    return *MutablePrefs.EditorVisualizeWorldTransform;
+                }),
+                CreateDropDownCheckmark("Velocity", *GetSingleton<JUserPreferences>().EditorVisualizeVelocity, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeVelocity = !*MutablePrefs.EditorVisualizeVelocity;
+                    return *MutablePrefs.EditorVisualizeVelocity;
+                }),
+                CreateDropDownCheckmark("MassAndInertia", *GetSingleton<JUserPreferences>().EditorVisualizeMassAndInertia, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeMassAndInertia = !*MutablePrefs.EditorVisualizeMassAndInertia;
+                    return *MutablePrefs.EditorVisualizeMassAndInertia;
+                }),
+                CreateDropDownCheckmark("SleepStats", *GetSingleton<JUserPreferences>().EditorVisualizeSleepStats, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSleepStats = !*MutablePrefs.EditorVisualizeSleepStats;
+                    return *MutablePrefs.EditorVisualizeSleepStats;
+                }),
+                CreateDropDownCheckmark("SoftBodyVertices", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyVertices, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyVertices = !*MutablePrefs.EditorVisualizeSoftBodyVertices;
+                    return *MutablePrefs.EditorVisualizeSoftBodyVertices;
+                }),
+                CreateDropDownCheckmark("SoftBodyVertexVelocities", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyVertexVelocities, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyVertexVelocities = !*MutablePrefs.EditorVisualizeSoftBodyVertexVelocities;
+                    return *MutablePrefs.EditorVisualizeSoftBodyVertexVelocities;
+                }),
+                CreateDropDownCheckmark("SoftBodyEdgeConstraints", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyEdgeConstraints, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyEdgeConstraints = !*MutablePrefs.EditorVisualizeSoftBodyEdgeConstraints;
+                    return *MutablePrefs.EditorVisualizeSoftBodyEdgeConstraints;
+                }),
+                CreateDropDownCheckmark("SoftBodyBendConstraints", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyBendConstraints, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyBendConstraints = !*MutablePrefs.EditorVisualizeSoftBodyBendConstraints;
+                    return *MutablePrefs.EditorVisualizeSoftBodyBendConstraints;
+                }),
+                CreateDropDownCheckmark("SoftBodyVolumeConstraints", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyVolumeConstraints, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyVolumeConstraints = !*MutablePrefs.EditorVisualizeSoftBodyVolumeConstraints;
+                    return *MutablePrefs.EditorVisualizeSoftBodyVolumeConstraints;
+                }),
+                CreateDropDownCheckmark("SoftBodySkinConstraints", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodySkinConstraints, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodySkinConstraints = !*MutablePrefs.EditorVisualizeSoftBodySkinConstraints;
+                    return *MutablePrefs.EditorVisualizeSoftBodySkinConstraints;
+                }),
+                CreateDropDownCheckmark("SoftBodyLRAConstraints", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyLRAConstraints, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyLRAConstraints = !*MutablePrefs.EditorVisualizeSoftBodyLRAConstraints;
+                    return *MutablePrefs.EditorVisualizeSoftBodyLRAConstraints;
+                }),
+                CreateDropDownCheckmark("SoftBodyRods", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyRods, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyRods = !*MutablePrefs.EditorVisualizeSoftBodyRods;
+                    return *MutablePrefs.EditorVisualizeSoftBodyRods;
+                }),
+                CreateDropDownCheckmark("SoftBodyRodStates", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyRodStates, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyRodStates = !*MutablePrefs.EditorVisualizeSoftBodyRodStates;
+                    return *MutablePrefs.EditorVisualizeSoftBodyRodStates;
+                }),
+                CreateDropDownCheckmark("SoftBodyRodBendTwistConstraints", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyRodBendTwistConstraints, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyRodBendTwistConstraints = !*MutablePrefs.EditorVisualizeSoftBodyRodBendTwistConstraints;
+                    return *MutablePrefs.EditorVisualizeSoftBodyRodBendTwistConstraints;
+                }),
+                CreateDropDownCheckmark("SoftBodyPredictedBounds", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyPredictedBounds, []
+                {
+                    auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                    MutablePrefs.EditorVisualizeSoftBodyPredictedBounds = !*MutablePrefs.EditorVisualizeSoftBodyPredictedBounds;
+                    return *MutablePrefs.EditorVisualizeSoftBodyPredictedBounds;
+                }),
+                // CreateDropDownCheckmark("SoftBodyConstraintColor", *GetSingleton<JUserPreferences>().EditorVisualizeSoftBodyConstraintColor, []
+                // {
+                //     auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+                //     MutablePrefs.EditorVisualizeSoftBodyConstraintColor = !*MutablePrefs.EditorVisualizeSoftBodyConstraintColor;
+                //     return *MutablePrefs.EditorVisualizeSoftBodyConstraintColor;
+                // }),
+                };},
+            },
         });
 }
 
@@ -2060,7 +2342,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZ.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{0,0,10});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{0,0,10});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2068,7 +2350,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_2M.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{0,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{0,0,4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2076,7 +2358,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{2,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{2,0,4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2084,7 +2366,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{4,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{4,0,4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2092,7 +2374,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Icosphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{6,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{6,0,4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2100,7 +2382,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cylinder.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{8,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{8,0,4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2108,7 +2390,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cone.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{10,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{10,0,4});
     });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
@@ -2116,7 +2398,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Torus.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{12,0,4});
+        Comp.SetLocalTranslationByTeleport(LWorldVec3{12,0,4});
     });
 }
 
@@ -2133,20 +2415,26 @@ void LoadGymCollection(Jafg::LWorld& World)
     {
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
         Comp.SetMaterialInstance(std::move(GroundMaterialInstance));
-        Comp.SetScale(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
+        Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
     });
 
-    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})->GetRootComponent().SetTranslation(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})->GetRootComponent().SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
 
-    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
-    ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([World=&World](Jafg::AStaticMeshComponent& Comp)
+    auto& Cube{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+    auto& Rigid{Cube.EmplaceRootComponent<Jafg::ARigidComponent>()};
+    Rigid.SetShouldRender(true);
+    Rigid.SetLocalTranslationByTeleport({0,0.5,8});
+    // Rigid.MakeSphere(0.5f);
+    Rigid.MakeBox(LWorldVec3{0.5});
+    Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Activate);
+    Rigid.SetLinearVelocity({0,20,5});
+    Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
     {
         auto& Frontend{World->GetMutableFrontend()};
         auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.UniformTriplanar")};
         MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/ObjectGrid_1M");
         Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube_1M.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
-        Comp.SetTranslation(LWorldVec3{3.5,0,3.5});
     });
 }
 
@@ -2175,7 +2463,11 @@ Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetStartTexture() const
 {
     if (this->IsRunning())
     {
-        //# TODO: Check if paused? Then resume is just start but white (not green)
+        auto& World{this->RunningInstance->GetOwnedPersonaControllerChecked()->GetWorld()};
+        if (World.IsTimeLinear() && World.IsLinearWorldDormant())
+        {
+            return LTexture2::FromAsset("Icons/Jafg.Start");
+        }
         return LTexture2::FromAsset("Icons/Jafg.Pause");
     }
 
@@ -2194,14 +2486,29 @@ void Jafg::WEditorWorldViewer::UpdateStartStopButtons()
 {
     check(this->StartButton && this->StepButton && this->StopButton && this->DetachButton && this->MoreButton)
 
-    auto& Prefs{GetSingleton<JUserPreferences>()};
-
     auto StartIcon{LRegionBrush::Icon(this->GetStartTexture())};
     this->StartButton->Brush.Background = StartIcon;
     this->StartButton->Style.SetEverywhere<&LRegionBrush::Background>(StartIcon);
 
+    LWorld* World{};
     if (this->IsRunning())
     {
+        World = &this->RunningInstance->GetOwnedPersonaControllerChecked()->GetWorld();
+    }
+    if (World && World->IsTimeLinear() && World->IsLinearWorldDormant())
+    {
+        this->StartButton->Style.SetEverywhere<&LRegionBrush::Tint>(Colors::Green);
+        this->StartButton->Brush.Tint = Colors::Green;
+    }
+    else
+    {
+        this->StartButton->Style.SetEverywhere<&LRegionBrush::Tint>(Colors::White);
+        this->StartButton->Brush.Tint = Colors::White;
+    }
+
+    if (this->IsRunning())
+    {
+
         this->StepButton->SetEnabled(true);
         this->StopButton->SetEnabled(true);
         this->DetachButton->SetEnabled(true);
@@ -2220,6 +2527,10 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
 {
     check(!this->IsRunning())
 
+    auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+    Prefs.EditorStartType = std::byte{std::to_underlying(this->StartType)};
+    Prefs.EditorPawnStart = std::byte{std::to_underlying(this->PawnStart)};
+
     switch (this->StartType)
     {
     case EStartType::Pie:
@@ -2231,13 +2542,16 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
         check(!this->EditorReconnectionData)
         this->EditorReconnectionData = LEditorReconnectionData{
             .World = &Ctrl.GetWorld(),
-            .EyeTrans = Pawn.GetRootComponent().GetTransform(),
+            .EyeTrans = Pawn.GetRootComponent().GetLocalTransform(),
             };
         this->UserInput.DeactivateAllContexts();
         this->UserInput.SetConsumeMouse(false);
 
+        Ctrl.GetWorld().Pause();
+
         LWorldCreateInfo CreateInfo{Ctrl.GetWorld().GetCreateInfo()};
         CreateInfo.HumanReadableName = algo::sprintf("{}-pie", Ctrl.GetWorld().GetHumanReadableName());
+        CreateInfo.TimeBehavior = EWorldTimeBehavior::Linear;
         Engine.SummonWorld(std::move(CreateInfo), std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
 
         break;
@@ -2247,6 +2561,7 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
         auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
         LWorldCreateInfo CreateInfo{Ctrl.GetWorld().GetCreateInfo()};
         CreateInfo.HumanReadableName = algo::sprintf("{}-pie", Ctrl.GetWorld().GetHumanReadableName());
+        CreateInfo.TimeBehavior = EWorldTimeBehavior::Linear;
         Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [CreateInfo=std::move(CreateInfo),this]
         {
             check(Detail::GMutableEngine)
@@ -2266,6 +2581,31 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
                 Viewer->TravelTo(World);
             });
         });
+
+        break;
+    }
+    case EStartType::Spectate:
+    {
+        this->RunningInstance = this;
+        check(!this->bIsNextPersonaEditorControlled)
+        this->bIsNextPersonaEditorControlled = true;
+        auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+        auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
+        auto& Engine{Ctrl.GetMutableEngine()};
+        check(!this->EditorReconnectionData)
+        this->EditorReconnectionData = LEditorReconnectionData{
+            .World = &Ctrl.GetWorld(),
+            .EyeTrans = Pawn.GetRootComponent().GetLocalTransform(),
+            };
+        this->UserInput.DeactivateAllContexts();
+        this->UserInput.SetConsumeMouse(false);
+
+        Ctrl.GetWorld().Pause();
+
+        LWorldCreateInfo CreateInfo{Ctrl.GetWorld().GetCreateInfo()};
+        CreateInfo.HumanReadableName = algo::sprintf("{}-simulate", Ctrl.GetWorld().GetHumanReadableName());
+        CreateInfo.TimeBehavior = EWorldTimeBehavior::Linear;
+        Engine.SummonWorld(std::move(CreateInfo), std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
 
         break;
     }
@@ -2396,7 +2736,7 @@ void Jafg::WEditorWorldViewerHierarchy::_OnWorldViewerDestruct()
 void Jafg::WEditorWorldViewerHierarchy::OnWorldViewerUpdate()
 {
     this->UpdateConnectedArea();
-    this->UpdateWorldObjectList({}, this->WorldViewer ? this->WorldViewer->GetSelectedActors() : TArray<AActor*>{});
+    this->UpdateWorldObjectList({}, this->WorldViewer ? this->WorldViewer->GetSelectedActors() : TArray<std::pair<AActor*,AActorComponent*>>{});
     if (auto* World{this->GetWorld()})
     {
         check(this->WorldViewer)
@@ -2490,7 +2830,7 @@ void Jafg::WEditorWorldViewerHierarchy::DisconnectFromViewer()
     return;
 }
 
-bool Jafg::WEditorWorldViewerHierarchy::OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New)
+bool Jafg::WEditorWorldViewerHierarchy::OnActorsSelected(TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New)
 {
     this->UpdateWorldObjectList(Old, New);
 
@@ -2534,7 +2874,7 @@ void Jafg::WEditorWorldViewerHierarchy::UpdateConnectedArea()
     return;
 }
 
-void Jafg::WEditorWorldViewerHierarchy::UpdateWorldObjectList(TArray<AActor*> const& Old, TArray<AActor*> const& New)
+void Jafg::WEditorWorldViewerHierarchy::UpdateWorldObjectList(TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New)
 {
     check(this->Container)
     this->Container->RemoveChildren();
@@ -2557,7 +2897,7 @@ void Jafg::WEditorWorldViewerHierarchy::UpdateWorldObjectList(TArray<AActor*> co
                 .Style(Prefs.EditorProximityBoxStyle2<LRegionBrush>(Counter++))
                 .Padding(ListPadding)
                 .Selectable(true)
-                .Selected(algo::contains(New, Actor))
+                .Selected(algo::contains(New, Actor, algo::pair_first))
                 .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
                     return this->OnWorldObjectListKeyEventFocus(Self.AsStatic<Detail::WEditorWorldViewerHierarchyObjectHButton>(), Info, Event);
@@ -2633,9 +2973,9 @@ Jafg::LNodeReply Jafg::WEditorWorldViewerHierarchy::OnWorldObjectListKeyEventFoc
                     auto Current{this->WorldViewer->GetSelectedActors()};
                     for (auto* Actor : ToSelect)
                     {
-                        if (!algo::contains(Current, Actor))
+                        if (!algo::contains(Current, Actor, algo::pair_first))
                         {
-                            Current.emplace_back(Actor);
+                            Current.emplace_back(Actor, &Actor->GetRootComponent());
                         }
                     }
                     this->WorldViewer->SelectActors(std::move(Current));
@@ -2643,24 +2983,31 @@ Jafg::LNodeReply Jafg::WEditorWorldViewerHierarchy::OnWorldObjectListKeyEventFoc
             }
             else if (Event.Mods & EModBits::Control)
             {
-                if (algo::contains(this->WorldViewer->GetSelectedActors(), Self.Actor))
+                if (algo::contains(this->WorldViewer->GetSelectedActors(), Self.Actor, algo::pair_first))
                 {
                     this->WorldViewer->SelectActors(this->WorldViewer->GetSelectedActors()
-                        | algo::views::filter([Actor = Self.Actor](auto* E){ return E != Actor; })
+                        | algo::views::filter([Actor = Self.Actor](auto& E){ return E.first != Actor; })
                         | algo::to_array_fn{this->WorldViewer->GetSelectedActors().size()}
                         );
                 }
                 else
                 {
                     auto Current{this->WorldViewer->GetSelectedActors()};
-                    Current.emplace_back(Self.Actor);
+                    Current.emplace_back(Self.Actor, &Self.Actor->GetRootComponent());
                     this->WorldViewer->SelectActors(std::move(Current));
                 }
                 this->LastContainerElemSelected = Self.Actor;
             }
             else
             {
-                this->WorldViewer->SelectActors({Self.Actor});
+                if (Self.Actor->HasRootComponent())
+                {
+                    this->WorldViewer->SelectActors({{Self.Actor, &Self.Actor->GetRootComponent()}});
+                }
+                else
+                {
+                    this->WorldViewer->SelectActors({{Self.Actor, nullptr}});
+                }
                 this->LastContainerElemSelected = Self.Actor;
             }
 
@@ -2680,17 +3027,17 @@ Jafg::LNodeReply Jafg::WEditorWorldViewerHierarchy::OnWorldObjectListKeyEventUnf
         if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
         {
             check(this->WorldViewer)
-            if (algo::contains(this->WorldViewer->GetSelectedActors(), Self.Actor))
+            if (algo::contains(this->WorldViewer->GetSelectedActors(), Self.Actor, algo::pair_first))
             {
                 this->WorldViewer->SelectActors(this->WorldViewer->GetSelectedActors()
-                    | algo::views::filter([Actor = Self.Actor](auto* E){ return E != Actor; })
+                    | algo::views::filter([Actor = Self.Actor](auto& E){ return E.first != Actor; })
                     | algo::to_array_fn{this->WorldViewer->GetSelectedActors().size()}
                     );
             }
             else
             {
                 auto Current{this->WorldViewer->GetSelectedActors()};
-                Current.emplace_back(Self.Actor);
+                Current.emplace_back(Self.Actor, &Self.Actor->GetRootComponent());
                 this->WorldViewer->SelectActors(std::move(Current));
             }
 
@@ -2735,7 +3082,7 @@ void Jafg::WEditorWorldViewerInspector::Construct()
                         auto& Actors{this->WorldViewer->GetSelectedActors()};
                         if (Actors.size() == 1)
                         {
-                            auto& Actor{*Actors.front()};
+                            auto& Actor{*Actors.front().first};
                             if (Commit == ETextCommit::OnCleared)
                             {
                                 Self.SetContent(Actor.GetEditorNameOrDefault());
@@ -2892,7 +3239,7 @@ void Jafg::WEditorWorldViewerInspector::DisconnectFromViewer()
     this->WorldViewer = nullptr;
 }
 
-bool Jafg::WEditorWorldViewerInspector::OnActorsSelected(TArray<AActor*> const& Old, TArray<AActor*> const& New)
+bool Jafg::WEditorWorldViewerInspector::OnActorsSelected(TArray<std::pair<AActor*,AActorComponent*>> const& Old, TArray<std::pair<AActor*,AActorComponent*>> const& New)
 {
     this->UpdateObjectDisplayName();
     this->UpdateObjectDetails();
@@ -2936,7 +3283,7 @@ void Jafg::WEditorWorldViewerInspector::UpdateObjectDisplayName()
         }
         else if (Actors.size() == 1)
         {
-            auto& Actor{*Actors.front()};
+            auto& Actor{*Actors.front().first};
             this->EditableObjectDisplayName->SetEnabled(true);
             this->EditableObjectDisplayName->SetContent(Actor.GetEditorNameOrDefault());
         }
@@ -2985,7 +3332,7 @@ void Jafg::WEditorWorldViewerInspector::UpdateObjectDetails()
     }
     else if (this->WorldViewer->GetSelectedActors().size() == 1)
     {
-        auto& Actor{*this->WorldViewer->GetSelectedActors().front()};
+        auto& Actor{this->WorldViewer->GetSelectedActors().front()};
 
         this->ContainerSearch->SetEnabled(true);
         this->Container->AddChild(NewStaticNode(WVRegion).SaveTo(&this->ComponentContainerWrapper)
@@ -3012,15 +3359,7 @@ void Jafg::WEditorWorldViewerInspector::UpdateObjectDetails()
             );
         this->Container->AddChild(NewStaticNode(WEditorBackground).SaveTo(&this->ComponentContainer).Unique());
 
-        if (Actor.HasRootComponent())
-        {
-            this->SelectComponent(&Actor.GetRootComponent());
-        }
-        else
-        {
-            check(this->SelectedComponent == nullptr)
-            this->ReloadInnerComponents();
-        }
+        this->SelectComponent(Actor.second);
     }
     else
     {
@@ -3039,28 +3378,30 @@ void Jafg::WEditorWorldViewerInspector::ReloadInnerComponents()
     check(IsValidFast(this->GetOuter(), this->ComponentContainerWrapper))
     check(this->WorldViewer)
     check(this->WorldViewer->GetSelectedActors().size() == 1)
-    auto& Actor{*this->WorldViewer->GetSelectedActors().front()};
+    auto& Actor{*this->WorldViewer->GetSelectedActors().front().first};
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
     this->ComponentContainerWrapper->RemoveChildren();
 
     auto Counter{0uz};
-    for (auto& Component: Actor.GetComponents())
+
+    auto AddComponent{[&](AActorComponent& Comp, std::size_t Indent)
     {
         this->ComponentContainerWrapper->AddChild(NewStaticNode(WTextButtonIconizedDouble)
             .Anchor(EAnchor::HFill)
             .LeftIcon("Icons/Jafg.Box")
             .Style(Prefs.EditorProximityBoxStyle2<LBoxBrush>(Counter++))
+            .InAllBrushes<&LBoxBrush::Padding>({ENodeSize::StaticPoints, static_cast<f32>(Indent) * 20.0f, 0.0f, 0.0f, 0.0f})
             .Selectable(true)
-            .Selected(&*Component == this->SelectedComponent)
-            .Content(Component->GetEditorNameOrDefault())
-            .OnKeyEventFocused([this, Component = &*Component](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+            .Selected(&Comp == this->SelectedComponent)
+            .Content(Comp.GetEditorNameOrDefault())
+            .OnKeyEventFocused([this, Comp=&Comp](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
                 if (Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
                 {
                     if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                     {
-                        this->SelectComponent(Component);
+                        this->WorldViewer->SelectActors({{&Comp->GetOwningActor(),Comp}});
                         return LNodeReply::Handled();
                     }
                 }
@@ -3068,6 +3409,32 @@ void Jafg::WEditorWorldViewerInspector::ReloadInnerComponents()
             })
             .Unique()
             );
+    }};
+
+    if (Actor.HasRootComponent())
+    {
+        auto AddSceneComponent{[&](this auto&& Self, ASceneComponent& SceneComp, std::size_t Indent) -> void
+        {
+            AddComponent(SceneComp, Indent);
+            for (auto& Child: SceneComp.GetChildren())
+            {
+                Self(*Child, Indent + 1);
+            }
+        }};
+        AddSceneComponent(Actor.GetRootComponent(), 0uz);
+
+        if (Actor.GetComponents().size() > 1uz)
+        {
+            this->ComponentContainerWrapper->AddChild(NewStaticNode(WHSeparator).Unique());
+        }
+    }
+
+    for (auto& Component: Actor.GetComponents())
+    {
+        if (!Actor.HasRootComponent() || &Actor.GetRootComponent() != Component.get())
+        {
+            AddComponent(*Component, 0uz);
+        }
     }
 }
 
@@ -3224,13 +3591,16 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
     this->GizmoMeshes[PlaneYZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
     this->GizmoMeshes[PlaneXZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXZ.glb"));
     this->GizmoMeshes[PlaneXZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+
+    this->TextMaterialInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()
+        ->GetInstanceFromMaterialName("Jafg.VisualBatch"sv);
 }
 
 void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
-    auto Reduce{[Dt](auto&& Range)
+    auto Reduce{[Dt=static_cast<f32>(this->GetEngine().DeltaTime)](auto&& Range)
     {
         for (auto It{Range.begin()}; It != Range.end();)
         {
@@ -3246,17 +3616,26 @@ void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
         }
     }};
 
+    Reduce(this->Lines);
     Reduce(this->Rays);
     Reduce(this->Aabbs);
+    Reduce(this->Texts);
 
+    this->Lines.append_range(this->NextLines);
+    this->NextLines.clear();
     this->Rays.append_range(this->NextRays);
     this->NextRays.clear();
     this->Aabbs.append_range(this->NextAabbs);
     this->NextAabbs.clear();
+    this->Texts.append_range(this->NextTexts);
+    this->NextTexts.clear();
 
     if (this->IsSelectedActorValid())
     {
-        this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+        if (auto* SceneComp{this->SelectedActor.Actor.second->As<ASceneComponent>()})
+        {
+            this->SetTranslationForGizmos(SceneComp->GetWorldTranslationSlow());
+        }
     }
 }
 
@@ -3264,8 +3643,11 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
 {
     Super::Render(Info);
 
+    STAT_CYCLE_FUNCTION()
+
     this->RenderRays(Info);
     this->RenderGizmo(Info);
+    this->RenderTexts(Info);
 }
 
 Jafg::WEditorWorldViewer::EGizmo Jafg::AEditorPersonaControllerComponent::SetSelectedGizmo(WEditorWorldViewer::EGizmo Gizmo) noexcept
@@ -3273,15 +3655,18 @@ Jafg::WEditorWorldViewer::EGizmo Jafg::AEditorPersonaControllerComponent::SetSel
     return std::exchange(this->Gizmo, Gizmo);
 }
 
-Jafg::AActor* Jafg::AEditorPersonaControllerComponent::SetSelectedActor(WEditorWorldViewer* Origin, AActor* Actor) noexcept
+std::pair<Jafg::AActor*,Jafg::AActorComponent*> Jafg::AEditorPersonaControllerComponent::SetSelectedActor(WEditorWorldViewer* Origin, std::pair<AActor*,AActorComponent*> Actor) noexcept
 {
     this->SelectedActor.Viewer = Origin;
     this->SelectedActor.Quaternion.reset();
-    auto* Result{std::exchange(this->SelectedActor.Actor, Actor)};
+    auto Result{std::exchange(this->SelectedActor.Actor, Actor)};
 
     if (this->IsSelectedActorValid())
     {
-        this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+        if (auto* SceneComp{this->SelectedActor.Actor.second->As<ASceneComponent>()})
+        {
+            this->SetTranslationForGizmos(SceneComp->GetWorldTranslationSlow());
+        }
     }
 
     return Result;
@@ -3305,14 +3690,14 @@ Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControll
 
 Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControllerComponent::TraceGizmo(LWorldMagRay3 const& Ray, rhi::extent2 Extent, LWorldEye const& Eye) noexcept
 {
-    if (this->Gizmo == WEditorWorldViewer::EGizmo::Select || !this->IsSelectedActorValid())
+    if (this->Gizmo == WEditorWorldViewer::EGizmo::Select || !this->IsSelectedActorValid() || !this->SelectedActor.Actor.second->IsA<ASceneComponent>())
     {
         return GizmoCount;
     }
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
-    auto& Comp{this->SelectedActor->GetRootComponent()};
-    this->SetTranslationForGizmos(Comp.GetTranslation());
+    auto& Comp{*this->SelectedActor.Actor.second};
+    this->SetTranslationForGizmos(Comp.AsStatic<ASceneComponent>().GetWorldTranslationSlow());
 
     auto HandleGizmoRange{[&]<std::size_t S>(std::array<EGizmoMesh, S> Meshes)
     {
@@ -3380,25 +3765,27 @@ Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControll
 void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWorldMagRay3 const& Ray, rhi::extent2 Extent, LEditorTraceOrigin const& Origin)
 {
     check(!(this->Gizmo == WEditorWorldViewer::EGizmo::Select || !this->IsSelectedActorValid()))
+    check(this->SelectedActor.Actor.second->IsA<ASceneComponent>())
 
     if (Origin.Event.Mods & EModBits::Alt)
     {
-        AActor& ClonedActor{this->SelectedActor.Actor->Clone()};
-        Origin.Node.SelectActors({&ClonedActor});
-        check(this->SelectedActor.Actor == &ClonedActor)
+        /* TODO: Maybe allow to clone sub-components if seleted? */
+        AActor& ClonedActor{this->SelectedActor.Actor.first->Clone()};
+        Origin.Node.SelectActors({{&ClonedActor, &ClonedActor.GetRootComponent()}});
+        check(this->SelectedActor.Actor.first == &ClonedActor && this->SelectedActor.Actor.second == &ClonedActor.GetRootComponent())
         check(this->IsSelectedActorValid())
     }
 
-    auto& Comp{this->SelectedActor->GetRootComponent()};
-    this->SetTranslationForGizmos(Comp.GetTranslation());
+    auto& Comp{this->SelectedActor.Actor.second->AsStatic<ASceneComponent>()};
+    this->SetTranslationForGizmos(Comp.GetWorldTranslationSlow());
 
     auto HandleGizmo{[&](EGizmoMesh Mesh, auto&& Handler)
     {
         this->UsedGizmoMesh = Mesh;
-        this->SelectedActor.Quaternion = Comp.GetRotator();
+        this->SelectedActor.Quaternion = Comp.GetLocalRotator();
 
         Origin.Node.GetViewport().EmplaceUntil<ERawInputStateBits::Release>(Origin.Event.PhysicalKey,
-        [this,Mesh,Extent=Extent,N=&Origin.Node,Handler,OriginTransform=this->SelectedActor->GetRootComponent().GetTransform()
+        [this,Mesh,Extent=Extent,N=&Origin.Node,Handler,OriginTransform=this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetLocalTransform()
             ,MDelta=std::optional<LVec2F>{},LDelta=std::optional<LWorldReal>{},Delta=std::optional<LWorldVec3>{}
             ,LastCursor=std::optional<LVec2F>{},DiscardedCursor=maths::zero_vector<LVec2F>](LRawInput const& Input) mutable
         {
@@ -3589,7 +3976,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
             if (Surface.HasPlatformKeyState(*Surface.GetFrontend().GetPhysicalKey(ELogicalKey::LeftShift), ERawInputStateBits::Hold))
             {
                 Surface.SetInputMode(EInputModeBits::HideMouseCursor);
-                Viewer->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().AddTranslation(Point - this->GizmoMeshes[Mesh].GetTranslation());
+                Viewer->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().AddLocalTranslationByTeleport(Point - this->GizmoMeshes[Mesh].GetTranslation());
                 Result = true;
             }
             else
@@ -3597,8 +3984,17 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 Surface.SetInputMode(EInputModeBits::ShowMouseCursor);
             }
 
-            this->SelectedActor->GetRootComponent().SetTranslation(Point);
-            this->SetTranslationForGizmos(this->SelectedActor->GetRootComponent().GetTranslation());
+            if (auto* Parent{this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetParent()})
+            {
+                auto ParentTranslation{Parent->GetWorldTranslationSlow()};
+                auto RelativePoint{Point - ParentTranslation};
+                this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().SetLocalTranslationByTeleport(RelativePoint);
+            }
+            else
+            {
+                this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().SetLocalTranslationByTeleport(Point);
+            }
+            this->SetTranslationForGizmos(this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetWorldTranslationSlow());
         }
 
         return Result;
@@ -3619,33 +4015,33 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
         {
             if (Viewer->IsGridSpaceLocal())
             {
-                this->SelectedActor->GetRootComponent().SetRotator(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>));
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>));
             }
             else
             {
-                this->SelectedActor->GetRootComponent().SetRotator(maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>) * T.r);
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>) * T.r);
             }
         }
         else if (Mesh == RotateY)
         {
             if (Viewer->IsGridSpaceLocal())
             {
-                this->SelectedActor->GetRootComponent().SetRotator(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>));
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>));
             }
             else
             {
-                this->SelectedActor->GetRootComponent().SetRotator(maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>) * T.r);
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>) * T.r);
             }
         }
         else if (Mesh == RotateP)
         {
             if (Viewer->IsGridSpaceLocal())
             {
-                this->SelectedActor->GetRootComponent().SetRotator(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>));
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>));
             }
             else
             {
-                this->SelectedActor->GetRootComponent().SetRotator(maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>) * T.r);
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>) * T.r);
             }
         }
 
@@ -3669,27 +4065,27 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
 
             if (Mesh == ScaleX || Mesh == ScaleX_Var)
             {
-                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{Delta,0,0});
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,0,0});
             }
             else if (Mesh == ScaleY || Mesh == ScaleY_Var)
             {
-                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{0,Delta,0});
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{0,Delta,0});
             }
             else if (Mesh == ScaleZ || Mesh == ScaleZ_Var)
             {
-                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{0,0,Delta});
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{0,0,Delta});
             }
             else if (Mesh == PlaneXY)
             {
-                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{Delta,Delta,0});
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,Delta,0});
             }
             else if (Mesh == PlaneXZ)
             {
-                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{Delta,0,Delta});
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,0,Delta});
             }
             else if (Mesh == PlaneYZ)
             {
-                this->SelectedActor->GetRootComponent().SetScale(T.s + LWorldVec3{0,Delta,Delta});
+                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{0,Delta,Delta});
             }
             else
             {
@@ -3750,33 +4146,54 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
 
 void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const& Info) const
 {
+    STAT_CYCLE_FUNCTION()
+
     auto& Prefs{GetSingleton<JUserPreferences>()};
     check(this->RayInstance.get())
 
-    if (*Prefs.EditorVisualizeMeshAabbs)
+    if (*Prefs.EditorVisualizeAabbs)
     {
         for (auto& E: this->GetWorld().GetEmployees() | algo::views::filter([](auto& E){ return E->template IsA<AActor>(); }))
         {
             auto& A{*StaticCastChecked<AActor>(&*E)};
-            for (auto& Comp: A.GetComponents() | algo::views::filter([](auto& C){ return C->template IsA<ASceneComponent>(); }))
+            LWorldAabb3 Aabb{A.GetTransformedActorAabb()};
+            if (Aabb.empty())
             {
-                auto& Sc{*StaticCastChecked<ASceneComponent>(&*Comp)};
-                if (Sc.ShouldRender())
+                continue;
+            }
+            this->Aabbs.emplace_back(*Prefs.EditorAabbVisualizationTint, OneTimeDraw, Aabb);
+
+            if (*Prefs.EditorVisualizeTransitiveAabbs)
+            {
+                auto VisualizeComponentTransitive{[this,Prefs=&Prefs](this auto&& Self, ASceneComponent& Comp) -> void
                 {
-                    this->Aabbs.emplace_back(*Prefs.EditorMeshAabbVisualizationTint, OneTimeDraw, Sc.GetAabb().apply(Sc.GetTransform()));
-                }
+                    LWorldAabb3 Aabb{Comp.GetAabbForThisComponentOnly()};
+                    if (!Aabb.empty())
+                    {
+                        this->Aabbs.emplace_back(*Prefs->EditorTransitiveAabbVisualizationTint, OneTimeDraw, Aabb.apply(Comp.GetWorldTransformSlow()));
+                    }
+                    for (auto& Child: Comp.GetChildren())
+                    {
+                        Self(*Child);
+                    }
+                }};
+                VisualizeComponentTransitive(A.GetRootComponent());
             }
         }
     }
 
-    if (this->Rays.empty() && this->Aabbs.empty())
+    if (this->Lines.empty() && this->Rays.empty() && this->Aabbs.empty())
     {
         return;
     }
 
     auto& Set{this->RayInstance->Vk_GetUniqueDescriptorSet(ShaderSpace, Info.Frame)};
 
-    rhi::object_range<SSBO::Ray> DeviceRays{this->Rays.size() + this->Aabbs.size() * 12, MaxLineCount};
+    rhi::object_range<SSBO::Ray> DeviceRays{this->Lines.size() + this->Rays.size() + this->Aabbs.size() * 12, MaxLineCount};
+    algo::for_each(this->Lines, [&DeviceRays](auto const& Line)
+    {
+        DeviceRays->emplace_back(Line->begin, Line->end, Line.Tint);
+    });
     algo::for_each(this->Rays, [&DeviceRays](auto const& Ray)
     {
         DeviceRays->emplace_back(Ray->origin, Ray->direction * Ray->magnitude, Ray.Tint);
@@ -3863,10 +4280,11 @@ NODISCARD constexpr TQua<T,Q> GetGizmoRotation(maths::octant o) noexcept
 
 void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const& Info) const
 {
-    if (!this->IsSelectedActorValid())
+    if (!this->IsSelectedActorValid() || !this->SelectedActor.Actor.second->IsA<ASceneComponent>())
     {
         return;
     }
+    STAT_CYCLE_FUNCTION()
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -3904,7 +4322,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         {
             for (auto& Mesh: std::array{X,Y,Z,})
             {
-                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor->GetRootComponent().GetRotator());
+                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator());
             }
         }
         else
@@ -3934,17 +4352,17 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
             }
             else
             {
-                Q = this->SelectedActor->GetRootComponent().GetRotator();
+                Q = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator();
             }
             Octant = maths::get_angled_octant(
-                  this->SelectedActor->GetRootComponent().GetTranslation()
+                  this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetWorldTranslationSlow()
                 , Q
                 , Info.PerspectiveEye.translation
                 );
         }
         else
         {
-            Octant = maths::get_octant(this->SelectedActor->GetRootComponent().GetTranslation(), Info.PerspectiveEye.translation);
+            Octant = maths::get_octant(this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetWorldTranslationSlow(), Info.PerspectiveEye.translation);
         }
 
         auto R{GetGizmoRotation<RotateR,LWorldReal,world_qual>(Octant)};
@@ -3961,9 +4379,9 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
             }
             else
             {
-                R = this->SelectedActor->GetRootComponent().GetRotator() * R;
-                Y = this->SelectedActor->GetRootComponent().GetRotator() * Y;
-                P = this->SelectedActor->GetRootComponent().GetRotator() * P;
+                R = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator() * R;
+                Y = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator() * Y;
+                P = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator() * P;
             }
         }
 
@@ -3992,7 +4410,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         {
             for (auto& Mesh: std::array{X,Y,Z,})
             {
-                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor->GetRootComponent().GetRotator());
+                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator());
             }
         }
         else
@@ -4021,7 +4439,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         {
             for (auto& Mesh: std::array{PlaneXY,PlaneXZ,PlaneYZ,})
             {
-                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor->GetRootComponent().GetRotator());
+                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator());
             }
         }
         else
@@ -4067,6 +4485,137 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         break;
     }
     default: break;
+    }
+}
+
+void Jafg::AEditorPersonaControllerComponent::RenderTexts(LActorRenderInfo const& Info) const
+{
+    if (this->Texts.empty())
+    {
+        return;
+    }
+
+    STAT_CYCLE_FUNCTION()
+    check(this->TextMaterialInstance.get())
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    auto& Frontend{this->GetFrontend()};
+    auto& Subsystem{*Frontend.GetSubsystemChecked<JFontSubsystem>()};
+    rhi::object_range<SSBO::VisualInstance> Range{SSBO::VisualInstance::default_count,SSBO::VisualInstance::default_count};
+
+    auto ViewProjection{Info.WorldData.proj * Info.WorldData.view};
+    for (auto& Text: this->Texts)
+    {
+        LWorldReal Distance{maths::magnitude(Info.PerspectiveEye.translation - Text.Location)};
+        if (Distance > *Prefs.EditorVisualizationMaxDebugTextRenderDistance)
+        {
+            continue;
+        }
+
+        LVec4F Clip{ViewProjection * LVec4F{Text.Location, 1.0f}};
+        if (Clip.w <= 0.0f)
+        {
+            continue;
+        }
+
+        auto FontSize{Text.Height * ((Info.VkViewport.height - Info.VkViewport.y) / (2 * maths::tan(Info.PerspectiveEye.vert_fov / 2) * Distance))};
+        if (FontSize < *Prefs.EditorVisualizationDebugTextFontThreshold)
+        {
+            continue;
+        }
+
+        /* TODO: Most definitely cache this result. This line will become most probably a bottleneck later...
+         *       But can it be cached with variadic font size (based of eye translation)? */
+        LVec2F Pencil{maths::zero_vector<LVec2F>};
+        auto Infos{Subsystem.GetGlyphInfos(Text.Text, FontSize, &Pencil, 0)};
+
+        LVec3F Ndc{maths::xyz(Clip) / Clip.w};
+        if (Ndc.z < 0.0f  || Ndc.z > 1.0f)
+        {
+            continue;
+        }
+        LVec2F Offset{
+            Info.VkViewport.x + (Ndc.x * 0.5f + 0.5f) * Info.VkViewport.width,
+            Info.VkViewport.y + (1.0f - (-Ndc.y * 0.5f + 0.5f)) * Info.VkViewport.height
+            };
+        for (auto& Glyph: Infos.GlyphInfos)
+        {
+            LRect2F Rect{{Offset.x + Glyph.Rect.x, Offset.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}};
+            if (maths::aabb(LRect2F{
+                .offset = {Info.VkViewport.x, Info.VkViewport.y},
+                .extent = {Info.VkViewport.width, Info.VkViewport.height},
+                }, Rect))
+            {
+                Range->push_back({
+                    .Rect = Rect,
+                    .TexCoordRect = Glyph.TexCoordRect,
+                    .Tint = Text.Tint,
+                    .OutlineTint = Colors::White,
+                    .OutlineThickness = 0,
+                    .TextureIndex = Glyph.BindlessTextureIndex,
+                    .SamplerIndex = Glyph.SamplerIndex,
+                    .MsdfPixelRange = Glyph.MsdfPixelRange,
+                    });
+            }
+        }
+    }
+
+    if (!Range->empty())
+    {
+        constexpr auto VisualSharedBinding{0uz};
+        constexpr auto InstanceBufferBinding{1uz};
+
+        auto& DsInstance{this->TextMaterialInstance->Vk_GetUniqueDescriptorSet(0, Info.Frame)};
+        check(DsInstance.Resources.size() == 2)
+
+        LVec2F Dimensions{Info.VkViewport.width, Info.VkViewport.height};
+        auto VisualSharedWriteInfo{UBO::VisualShared{
+                .Proj = glm::orthoRH_ZO(0.0f, Dimensions.x, 0.0f, Dimensions.y, 0.0f, 1.0f),
+                .Gamma = *GetSingleton<JUserPreferences>().InterfaceGamma,
+                }
+            .upload(DsInstance.Resources[VisualSharedBinding].AsBuffer())
+            .write_info(*DsInstance.Resources[VisualSharedBinding].AsBuffer())
+            };
+
+        auto InstanceBufferWriteInfo{Range.upload(DsInstance.Resources[InstanceBufferBinding].AsBuffer())};
+
+        std::array Writes{
+            vk::WriteDescriptorSet{
+                .dstSet = *DsInstance,
+                .dstBinding = VisualSharedBinding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = UBO::VisualShared::descriptor_type(),
+                .pBufferInfo = &VisualSharedWriteInfo,
+                },
+            vk::WriteDescriptorSet{
+                .dstSet = *DsInstance,
+                .dstBinding = InstanceBufferBinding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = SSBO::VisualInstance::descriptor_type(),
+                .pBufferInfo = &InstanceBufferWriteInfo
+                },
+            };
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+
+        std::array<vk::DescriptorSet, 2> DescriptorSetsToBind;
+        DescriptorSetsToBind[0] = *DsInstance;
+        DescriptorSetsToBind[1] = *Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetBindlessTextureArrayDescriptorSet();
+        Info.CommandBuffer.bindDescriptorSets2({
+            .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+            .layout = *this->TextMaterialInstance->Material->Pipeline.pipeline_layout,
+            .firstSet = 0,
+            .descriptorSetCount = DescriptorSetsToBind.size(),
+            .pDescriptorSets = DescriptorSetsToBind.data(),
+            .dynamicOffsetCount = 0,
+            .pDynamicOffsets = nullptr
+            });
+
+        Info.CommandBuffer.setPolygonModeEXT(vk::PolygonMode::eFill);
+        Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->TextMaterialInstance->Material->Pipeline);
+        Info.CommandBuffer.draw(4, static_cast<u32>(Range->size()), 0, 0);
     }
 }
 
@@ -4156,23 +4705,29 @@ void Jafg::AEditorCameraComponent::OnTrace(WEditorWorldViewer& Viewer, bool bMul
         }
         if (bMultiselect)
         {
-            if (algo::contains(Viewer.GetSelectedActors(), &Hit.Actor))
+            if (algo::contains(Viewer.GetSelectedActors(), &Hit.Actor, algo::pair_first))
             {
                 Viewer.SelectActors(Viewer.GetSelectedActors()
-                    | algo::views::filter([Actor=&Hit.Actor](auto* E){ return E != Actor; })
+                    | algo::views::filter([Actor=&Hit.Actor](auto& E){ return E.first != Actor; })
                     | algo::to_array_fn{Viewer.GetSelectedActors().size()}
                     );
             }
             else
             {
                 auto Current{Viewer.GetSelectedActors()};
-                Current.emplace_back(&Hit.Actor);
+                /* When multi selecting, one can only select the root component of an actor. */
+                Current.emplace_back(&Hit.Actor, &Hit.Actor.GetRootComponent());
                 Viewer.SelectActors(std::move(Current));
             }
         }
         else
         {
-            Viewer.SelectActors({&Hit.Actor});
+            /*
+             * TODO: When hitting an actor. We want to always select said actor, not a subcomponent.
+             *       Only maybe when double clicking a specific sub-component select it.
+             */
+            // if double_click: Viewer.SelectActors({{&Hit.Actor, &Hit.Component.AsStatic<ASceneComponent>()}}); else:
+            Viewer.SelectActors({{&Hit.Actor, &Hit.Actor.GetRootComponent()}});
         }
     }
     if (!bHit && !bMultiselect)
@@ -4183,9 +4738,10 @@ void Jafg::AEditorCameraComponent::OnTrace(WEditorWorldViewer& Viewer, bool bMul
 
 void Jafg::AEditorCameraComponent::OnMove(LInputActionValue const& Value)
 {
-    if (auto* Sc{this->GetOwningActor().GetComponent<ASceneComponent>()})
+    if (this->GetOwningActor().HasRootComponent())
     {
-        LWorldVec3 Front{Sc->GetRotator() * maths::forward_vector<LVec3F>};
+        auto& Sc{this->GetOwningActor().GetRootComponent()};
+        LWorldVec3 Front{Sc.GetLocalRotator() * maths::forward_vector<LVec3F>};
 
         auto Value3D{Value.GetAxis3DValue() * this->VelocityMultiplier};
 
@@ -4195,7 +4751,7 @@ void Jafg::AEditorCameraComponent::OnMove(LInputActionValue const& Value)
         Delta += Front * Value3D.x;
         Delta += glm::normalize(glm::cross(Front, maths::up_vector<LWorldVec3>)) * Value3D.y;
         Delta += maths::up_vector<LWorldVec3> * Value3D.z;
-        Sc->AddTranslation(Delta);
+        Sc.AddLocalTranslationByTeleport(Delta);
     }
     else
     {
@@ -4209,18 +4765,19 @@ void Jafg::AEditorCameraComponent::OnMove(LInputActionValue const& Value)
 
 void Jafg::AEditorCameraComponent::OnRotate(LInputActionValue const& Value)
 {
-    if (auto* Sc{this->GetOwningActor().GetComponent<ASceneComponent>()})
+    if (this->GetOwningActor().HasRootComponent())
     {
+        auto& Sc{this->GetOwningActor().GetRootComponent()};
         auto Value2D{Value.GetAxis2DValue() * this->Sensitivity};
 
         /* Yaw */
-        Sc->AddRotator(maths::angle_axis(-glm::radians(Value2D.x), maths::up_vector<LWorldVec3>), ESceneSweep::Teleport);
+        Sc.AddLocalRotatorByTeleport(maths::angle_axis(-glm::radians(Value2D.x), maths::up_vector<LWorldVec3>));
 
         /* Pitch */
         LWorldReal Pitch{maths::clamp(this->CachedPitch + glm::radians(Value2D.y), glm::radians(-89.9f), glm::radians(89.9f))};
-        Sc->AddRotator(maths::angle_axis((this->CachedPitch - Pitch), Sc->GetRotator() * maths::right_vector<LWorldVec3>), ESceneSweep::Teleport);
+        Sc.AddLocalRotatorByTeleport(maths::angle_axis((this->CachedPitch - Pitch), Sc.GetLocalRotator() * maths::right_vector<LWorldVec3>));
 
-        Sc->SetRotator(maths::normalize(Sc->GetRotator()), ESceneSweep::Teleport);
+        Sc.SetLocalRotatorByTeleport(maths::normalize(Sc.GetLocalRotator()));
     }
     else
     {
