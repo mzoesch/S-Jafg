@@ -111,7 +111,7 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     }
     check(Data && StbiExtent.x > 0 && StbiExtent.y > 0)
 
-    if constexpr (IS_COMPILED_LOG(LogRhi, Verbose))
+    if constexpr (LogRhi.CompilesFor<ELogVerbosity::Verbose>)
     if (NrChannels != static_cast<i32>(rhi::vk_channels_per_pixel(this->Meta.Format)))
     {
         LOG_TRACE(LogRhi,

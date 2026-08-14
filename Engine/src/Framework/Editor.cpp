@@ -1900,7 +1900,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                     {
                         if (this->IsManual())
                         {
-                            if constexpr (IS_COMPILED_LOG(LogWidgets, Verbose))
+                            if constexpr (LogWidgets.CompilesFor<ELogVerbosity::Verbose>)
                             if (Res->x < WWorldViewer::MinViewportExtent.width || Res->y < WWorldViewer::MinViewportExtent.height)
                             {
                                 LOG_VERBOSE(LogWidgets

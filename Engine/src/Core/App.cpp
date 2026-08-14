@@ -186,20 +186,59 @@ LStringView GetTargetConfiguration() noexcept { return LStringView{DETAIL_ENGINE
 ENGINE_API LProgramParameter CoreHelp{{
     .Identifier = "Help",
     .Description = "Shows this help window for core systems only.",
-    .Variations = {"h", "help"},
+    .ShortIdentifier = "h",
+    .Variations = {"help"},
     }};
 ENGINE_API LProgramParameter Version{{
     .Identifier = "Version",
     .Description = "Shows the version of the engine.",
-    .Variations = {"v", "version"},
+    .ShortIdentifier = "v",
+    .Variations = {"version"},
     }};
 ENGINE_API LProgramParameter Help{{
     .Identifier = "Jafg.VerboseHelp",
     .Description = "Shows help window for all default loaded plugins.",
+    .ShortIdentifier = "H",
+    }};
+ENGINE_API LProgramParameter Daemon{{
+    .Identifier = "Jafg.Daemon",
+    .Description = "Run jafg as a daemon.",
+    .ShortIdentifier = "d",
+    }};
+ENGINE_API LProgramParameter Headless{{
+    .Identifier = "Jafg.Headless",
+    .Description = "Run jafg headlessly; Skip default surface. Frontend will not be initialized and set to headless.",
+    .ShortIdentifier = "s",
+    }};
+ENGINE_API LProgramParameter Quiet{{
+    .Identifier = "Jafg.Quiet",
+    .Description = "Makes jafg shut up by not emitting to stdout. Might not be respected by everyone.",
+    .ShortIdentifier = "q",
+    }};
+ENGINE_API LProgramParameter SkipForeignInit{{
+    .Identifier = "Jafg.SkipForeignInit",
+    .Description = "Only load jafg and its core. Skip all plugins. In units builds this of course includes everything inside said unity.",
+    .ShortIdentifier = "f",
+    }};
+ENGINE_API LProgramParameter SkipLoop{{
+    .Identifier = "Jafg.SkipLoop",
+    .Description = "Jafg fully initializes everything. But immediately tears down before executing the main loop.",
+    .ShortIdentifier = "l",
+    }};
+ENGINE_API LProgramParameter DisallowAnsi{{
+    .Identifier = "Jafg.DisallowAnsi",
+    .Description = "Jafg will not print ansi characters to stdout or stderr (but vendors still might).",
+    .ShortIdentifier = "a",
+    }};
+ENGINE_API LProgramParameter EmitInformation{{
+    .Identifier = "Jafg.EmitInformation",
+    .Description = "Allows jafg to always emit messages from the LogInformation category even if Jafg.Quiet is set.",
+    .ShortIdentifier = "i",
     }};
 ENGINE_API LProgramParameter WaitForDebugger{{
     .Identifier = "Jafg.WaitForDebugger",
     .Description = "Whether to wait for a debugger to attach to this process before continuing execution.",
+    .ShortIdentifier = "D",
     }};
 ENGINE_API LProgramParameter IgnoreInstantDebuggerBreak{{
     .Identifier = "Jafg.IgnoreInstantDebuggerBreak",
@@ -216,6 +255,7 @@ ENGINE_API LProgramParameter DumpStack{{
 ENGINE_API LProgramParameter AllowProfiling{{
     .Identifier = "Jafg.AllowProfiling",
     .Description = "Whether to allow profiling and stats gathering.",
+    .ShortIdentifier = "p",
     }};
 ENGINE_API LProgramParameter PauseBeforeExit{{
     .Identifier = "Jafg.PauseBeforeExit",
@@ -245,6 +285,8 @@ ENGINE_API bool PauseBeforeExit{};
 ENGINE_API bool IsTracerPidValid{};
 ENGINE_API bool AlwaysReportCrash{};
 
+ENGINE_API bool DisallowAnsi{};
+
 #if WITH_STATS
     ENGINE_API bool AllowProfiling{};
 #endif /* WITH_STATS */
@@ -266,10 +308,81 @@ ENGINE_API TArray<LProgramParameter*> RegisteredProgramParameters;
 namespace Jafg::Detail
 {
 
-ENGINE_API std::mutex GLongLiquidLogsMutex;
-/* This still exists even if LAL_SAVE_LOGS_IN_MEMORY but how would we access that macro here?? */
-ENGINE_API std::vector<std::tuple<std::string, std::string>> GLongLiquidLogs;
+ENGINE_API std::size_t GLogMessagesLimit{ 2048 };
+ENGINE_API std::list<LLogMessage> GUnprocessedLogMessages;
+ENGINE_API std::list<LLogMessage> GLogMessages;
+ENGINE_API algo::tas_lock GLogMessagesLock;
 
+ENGINE_API bool GIsQuiet{};
+ENGINE_API bool GAllowHelp{};
+ENGINE_API bool GAllowInformation{};
+
+void EmitLogsToStdout() noexcept
+{
+    STAT_CYCLE_FUNCTION()
+
+    std::scoped_lock Lock{GLogMessagesLock};
+    auto It{GUnprocessedLogMessages.begin()};
+    while (It != GUnprocessedLogMessages.end())
+    {
+        if (   GIsQuiet
+            && !(GAllowHelp && (It->Category == "LogHelp"sv))
+            && !(GAllowInformation && (It->Category == "LogInformation"sv))
+        )
+        {
+            GUnprocessedLogMessages.pop_front();
+            It = GUnprocessedLogMessages.begin();
+            continue;
+        }
+
+#if JAFG_PLATFORM_WASM
+        if (It->Verbosity == ELogVerbosity::Warning)
+        {
+            ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_WARN, It->Message);
+        }
+        else if (It->Verbosity == ELogVerbosity::Error || It->Verbosity == ELogVerbosity::Fatal)
+        {
+            ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR, It->Message);
+        }
+        else
+        {
+            ::emscripten_log(EM_LOG_CONSOLE, It->Message);
+        }
+#else /* JAFG_PLATFORM_WASM */
+        if (App::Detail::DisallowAnsi)
+        {
+            std::cout << It->Message << '\n';
+        }
+        else
+        {
+            std::cout << GetColorForVerbosity(It->Verbosity) << It->Message << JAFG_LOG_COLOR_END << '\n';
+        }
+#endif /* !JAFG_PLATFORM_WASM */
+
+        GLogMessages.emplace_back(std::move(*It));
+        GUnprocessedLogMessages.pop_front();
+        It = GUnprocessedLogMessages.begin();
+    }
+
+    while (GLogMessages.size() > GLogMessagesLimit)
+    {
+        GLogMessages.pop_front();
+    }
+}
+
+void TryFlushStdout() noexcept
+{
+#if JAFG_PLATFORM_SUPPORTS_STD_FLUSH
+    std::cout.flush();
+    std::cerr.flush();
+#endif /* !JAFG_PLATFORM_SUPPORTS_STD_FLUSH */
+}
+
+void EmitAndFlushLogs() noexcept
+{
+    EmitLogsToStdout();
+    TryFlushStdout();
+}
 
 } /* ~Namespace Jafg::Detail */
 
@@ -288,10 +401,31 @@ Jafg::LProgramParameter::~LProgramParameter()
     }
 }
 
+bool Jafg::App::Detail::HasArgumentToWaitForDebuggerVeryEarlyOnly()
+{
+    for (auto& Arg: App::GetRawCommandLine())
+    {
+        if (Arg == App::WaitForDebugger.Identifier)
+        {
+            return true;
+        }
+        check(App::WaitForDebugger.Variations.empty())
+        if (Arg.starts_with("-") && !Arg.starts_with("--"))
+        {
+            check(App::WaitForDebugger.ShortIdentifier.has_value())
+            if (Arg.contains(*App::WaitForDebugger.ShortIdentifier))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Jafg::App::Detail::WaitForDebuggerGracefully(bool bAllowInstantBreak)
 {
     LOG_INFO(LogJafgInternal, "Waiting for debugger ...")
-    Jafg::FlushOutStreams();
+    Jafg::Detail::EmitAndFlushLogs();
 
     while (!App::IsTracerPidValidNow())
     {
@@ -299,11 +433,11 @@ void Jafg::App::Detail::WaitForDebuggerGracefully(bool bAllowInstantBreak)
     }
 
     LOG_INFO(LogJafgInternal, "Debugger attached - continuing.")
-    Jafg::FlushOutStreams();
+    Jafg::Detail::EmitAndFlushLogs();
 
     if (bAllowInstantBreak)
     {
-        if (!algo::contains(App::GetRawCommandLine(), std::string_view{"-Jafg.IgnoreInstantDebuggerBreak"}))
+        if (!algo::contains(App::GetRawCommandLine(), std::string_view{"--Jafg.IgnoreInstantDebuggerBreak"}))
         {
             JAFG_PLATFORM_BREAK()
         }
@@ -397,22 +531,39 @@ void Jafg::App::RequestEngineExit(i32 CustomExitStatus, LString Reason) noexcept
 
 TArray<Jafg::LProgramArgument> Jafg::App::ReprocessCommandLine(TArray<LString> const& CommandLine) noexcept
 {
-    TArray<Jafg::LProgramArgument> Result;
+    TArray<LProgramArgument> Result;
 
-    Jafg::LProgramArgument* CurrentList{};
+    LProgramArgument* CurrentList{};
     algo::for_each(CommandLine, [&](LString const& Parameter)
     {
-        if (Parameter.starts_with('-'))
+        if (Parameter.starts_with("--"))
         {
             CurrentList = nullptr;
             if (auto Idx{Parameter.find('=')}; Idx != LString::npos)
             {
-                Result.emplace_back(algo::sub(Parameter, 1, Idx), algo::right_chop(Parameter, Idx + 1));
+                Result.emplace_back(algo::sub(Parameter, 2, Idx), algo::right_chop(Parameter, Idx + 1));
             }
             else
             {
-                Result.emplace_back(algo::right_chop(Parameter, 1));
+                Result.emplace_back(algo::right_chop(Parameter, 2));
                 CurrentList = &Result.back();
+            }
+        }
+        else if (Parameter.starts_with('-'))
+        {
+            CurrentList = nullptr;
+            auto Regex{"^-[a-zA-Z]+$"s};
+            if (std::regex_match(Parameter, std::regex{Regex}))
+            {
+                for (auto const& C: algo::right_chop(Parameter, 1))
+                {
+                    Result.push_back({.Identifier={C}});
+                }
+            }
+            else
+            {
+                LOG_WARNING(LogLaunch, "Invalid Syntax for [{}]; does not match [{}].", Parameter, Regex)
+                Result.emplace_back(Parameter);
             }
         }
         else
@@ -434,6 +585,103 @@ TArray<Jafg::LProgramArgument> Jafg::App::ReprocessCommandLine(TArray<LString> c
     });
 
     return Result;
+}
+
+Jafg::LProgramArgument const* Jafg::App::GetCommandLineArgument(LStringView Parameter) noexcept
+{
+    return algo::find_pointer(Detail::ProcessedCommandLine, Parameter, &LProgramArgument::Identifier);
+}
+
+Jafg::LProgramArgument const* Jafg::App::GetCommandLineArgument(LProgramParameter const& Parameter) noexcept
+{
+    LProgramArgument const* Argument{algo::find_pointer(Detail::ProcessedCommandLine, Parameter.Identifier, &LProgramArgument::Identifier)};
+    if (!Argument)
+    {
+        if (Parameter.ShortIdentifier)
+        {
+            /*
+             * A parameter that accepts short identifier must have the StoreTrue flag set, as with short
+             * identifiers passing any kind of additional value is not possible.
+             */
+            check(!!(Parameter.Flags & EProgramParameterBits::StoreTrue))
+            Argument = algo::find_pointer(Detail::ProcessedCommandLine, *Parameter.ShortIdentifier, &LProgramArgument::Identifier);
+        }
+    }
+    if (!Argument)
+    {
+        for (LString const& Variation: Parameter.Variations)
+        {
+            Argument = algo::find_pointer(Detail::ProcessedCommandLine, Variation, &LProgramArgument::Identifier);
+            if (Argument)
+            {
+                break;
+            }
+        }
+    }
+    if (Argument)
+    {
+        if ((Parameter.Flags & EProgramParameterBits::StoreTrue) && Argument->IsStoreTrue())
+        {
+            return Argument;
+        }
+        if ((Parameter.Flags & EProgramParameterBits::Value) && Argument->IsValue())
+        {
+            return Argument;
+        }
+        if ((Parameter.Flags & EProgramParameterBits::List) && Argument->IsList())
+        {
+            return Argument;
+        }
+        LOG_FATAL(LogProgramArguments, "Program argument [{}] does not match the expected type for parameter [{}]."
+            , Argument->Identifier, Parameter.Identifier)
+    }
+    return nullptr;
+}
+
+void Jafg::App::PrettyPrintVersion() noexcept
+{
+    LOG_INFO(LogHelp, "Engine version [{}] @mzoesch at [{} - {}] on {} in {}.",
+        EngineVersion().ToString(),
+        BuildTime(), BuildDate(), BuildVcsBranch(), BuildVcsRevision()
+        )
+}
+
+void Jafg::App::PrettyPrintApiUsage() noexcept
+{
+    u64 MaxSize{};
+    algo::for_each(Detail::RegisteredProgramParameters, [&MaxSize](LProgramParameter* Param)
+    {
+        MaxSize = maths::max(MaxSize, static_cast<u64>(Param->Identifier.size()));
+    });
+    LOG_INFO(LogHelp, "Available command line parameters:")
+    for (auto& Param: Detail::RegisteredProgramParameters)
+    {
+        std::stringstream SS;
+        if (Param->ShortIdentifier)
+        {
+            SS << "-" << *Param->ShortIdentifier;
+        }
+        bool bFirst{ true };
+        for (auto& Variations: Param->Variations)
+        {
+            if (bFirst && !Param->ShortIdentifier)
+            {
+                SS << "--" << Variations;
+            }
+            else
+            {
+                SS << ", --" << Variations;
+            }
+            bFirst = false;
+        }
+
+        LOG_INFO(LogHelp, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description)
+        if (auto Str{SS.str()}; !Str.empty())
+        {
+            LOG_INFO(LogHelp, "   {:<{}}   Variations: {}", "", MaxSize, Str)
+        }
+        LOG_INFO(LogHelp, "   {:<{}}   Flags: {}", "", MaxSize, LexToString(Param->Flags))
+    }
 }
 
 void Jafg::App::Sleep(f64 InSeconds)

@@ -320,7 +320,7 @@ void rhi::detail::free_device_allocation(vk::Buffer Handle, device_allocation Al
         check(Vma)
         ::vmaDestroyBuffer(Vma, Handle, Allocation);
     }
-    else if constexpr (IS_COMPILED_LOG(LogVulkan, Warning))
+    else if constexpr (LogVulkan.CompilesFor<ELogVerbosity::Warning>)
     {
         if (Handle || Allocation)
         {
@@ -346,7 +346,7 @@ void rhi::detail::free_device_allocation(vk::Image Handle, device_allocation All
         checkSlow( Vma )
         vmaDestroyImage(Vma, Handle, Allocation);
     }
-    else if constexpr (IS_COMPILED_LOG(LogVulkan, Warning))
+    else if constexpr (LogVulkan.CompilesFor<ELogVerbosity::Warning>)
     {
         if (Handle || Allocation)
         {
@@ -573,19 +573,31 @@ void Jafg::LFrontendVk::TearDown()
 {
     LFrontendBase::TearDown();
 
-    this->GetMutableEngine().GetSubsystemChecked<JMeshSubsystem>()->PurgeUnused();
+    if (auto* Subsystem{this->GetMutableEngine().GetSubsystem<JMeshSubsystem>()})
+    {
+        Subsystem->PurgeUnused();
+    }
 
-    LOG_VERBOSE(LogVulkan, "Destroying transient command pool.")
-    (void)this->Vk_DescriptorPool.reset();
+    if (!!*this->Vk_DescriptorPool)
+    {
+        LOG_VERBOSE(LogVulkan, "Destroying transient command pool.")
+        (void)this->Vk_DescriptorPool.reset();
+    }
 
     LOG_VERBOSE(LogFrontend, "Terminating native file dialog extended.")
     NFD::Quit();
 
-    LOG_VERBOSE(LogVulkan, "Destroying VMA.")
-    vmaDestroyAllocator(this->Vk_VmaAllocator);
+    if (this->Vk_VmaAllocator)
+    {
+        LOG_VERBOSE(LogVulkan, "Destroying VMA.")
+        vmaDestroyAllocator(this->Vk_VmaAllocator);
+    }
 
-    LOG_VERBOSE(LogSurface, "Terminating glfw.")
-    glfwTerminate();
+    if (!this->IsHeadless())
+    {
+        LOG_VERBOSE(LogSurface, "Terminating glfw.")
+        glfwTerminate();
+    }
 
     return;
 }
@@ -1423,7 +1435,7 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
     }
 
     this->Vk_PhysicalDeviceMemoryProperties = this->Vk_PhysicalDevice.getMemoryProperties();
-    if constexpr (IS_COMPILED_LOG(LogVulkan, Trace))
+    if constexpr (LogVulkan.CompilesFor<ELogVerbosity::Trace>)
     {
         LOG_TRACE(LogVulkan, "Physical device memory properties:")
         for (auto Idx{0uz}; Idx < this->Vk_PhysicalDeviceMemoryProperties.memoryTypeCount; ++Idx)

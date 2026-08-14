@@ -51,7 +51,7 @@ void Jafg::JTextureSubsystem::RefetchTextureViews()
             | algo::views::filter([](auto const& Pair){ return Pair.second.Type == Detail::EAsset::Texture; })
             | algo::views::keys)
     {
-        if constexpr (IS_COMPILED_LOG(LogTextureSubsystem, Trace))
+        if constexpr (LogTextureSubsystem.CompilesFor<ELogVerbosity::Trace>)
         {
             this->TextureViews.emplace_back(Assets.PullAssetTextureView(Path));
         }

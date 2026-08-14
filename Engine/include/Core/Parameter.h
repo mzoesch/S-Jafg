@@ -38,6 +38,7 @@ struct LProgramParameterCreateInfo
     LString Identifier;
     LString Description;
     EProgramParameterFlags Flags{ EProgramParameterBits::StoreTrue };
+    std::optional<LString> ShortIdentifier;
     TArray<LString> Variations;
 };
 
@@ -47,6 +48,7 @@ struct LProgramParameter
          : Identifier{std::move(CreateInfo.Identifier)}
          , Description{std::move(CreateInfo.Description)}
          , Flags{CreateInfo.Flags}
+         , ShortIdentifier{std::move(CreateInfo.ShortIdentifier)}
          , Variations{std::move(CreateInfo.Variations)}
     {
         if (auto It{algo::find(App::Detail::RegisteredProgramParameters, this)}; It != App::Detail::RegisteredProgramParameters.end())
@@ -69,6 +71,7 @@ struct LProgramParameter
     LString Identifier;
     LString Description;
     EProgramParameterFlags Flags;
+    std::optional<LString> ShortIdentifier;
     TArray<LString> Variations;
 };
 

@@ -28,19 +28,6 @@ JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS
 #if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
 #endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
-void FlushLogs()
-{
-    Jafg::FlushOutStreams();
-    if (GEngine)
-    {
-        Detail::GMutableEngine->LastStdOutFlush = algo::now();
-    }
-    return;
-}
-
-#if !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT)
-FORCEINLINE
-#endif /* !(JAFG_PLATFORM_USES_NON_GENERIC_LOOP || JAFG_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
     return App::HasCustomExitStatus()
@@ -110,6 +97,8 @@ void EngineExit()
     }
 #endif /* WITH_STATS */
 
+    Detail::EmitAndFlushLogs();
+
     return;
 }
 
@@ -123,17 +112,37 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* !JAFG_PLATFORM_USES_NON_GENERIC_EXIT */
 
     App::Detail::ProcessedCommandLine = App::ReprocessCommandLine(App::GetRawCommandLine());
+    if (App::GetCommandLineArgument(App::DisallowAnsi))
+    {
+        App::Detail::DisallowAnsi = true;
+    }
+    if (App::GetCommandLineArgument(App::Quiet))
+    {
+        Detail::GIsQuiet = true;
+    }
+    if (App::GetCommandLineArgument(App::EmitInformation))
+    {
+        Detail::GAllowInformation = true;
+    }
     if (App::GetCommandLineArgument(App::CoreHelp))
     {
+        Detail::GIsQuiet = true;
+        Detail::GAllowHelp = true;
         App::PrettyPrintApiUsage();
         App::RequestEngineExit("Help shown.");
         return ::GetMostSignificantExitReason();
     }
     if (App::GetCommandLineArgument(App::Version))
     {
+        Detail::GIsQuiet = true;
+        Detail::GAllowHelp = true;
         App::PrettyPrintVersion();
         App::RequestEngineExit("Version shown.");
         return ::GetMostSignificantExitReason();
+    }
+    if (App::GetCommandLineArgument(App::Help))
+    {
+        Detail::GIsQuiet = true;
     }
 
     LOG_VERBOSE(LogInformation, "BuildTime={}", App::BuildTime())
@@ -173,7 +182,8 @@ EPlatformExit::Type AgnosticLaunch()
     }
     else if (Result == App::Detail::EAppLockResult::Shared)
     {
-        // TODO: Allow this if we e.g. passed the owning process and enter quite mode. But for now we do not allow this.
+        // TODO: Allow this if we e.g. passed the owning process and enter a quiet mode where this
+        //       instance makes it fs-requests to the parent. But for now we do not allow this.
         App::RequestEngineExit(1, "An instance of Jafg is already running.");
         return ::GetMostSignificantExitReason();
     }
@@ -241,19 +251,24 @@ EPlatformExit::Type AgnosticLaunch()
     STAT_CYCLE_END(AlEngineInit)
 
 #if JAFG_WITH_FOREIGN_SUPPORT
-    STAT_CYCLE_START(AlEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
-    JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
-    Detail::GMutableEngine->RefetchPlugins(*Prefs.AdditionalPluginsSearchPaths);
-    for (LString const& Plugin : *Prefs.EnabledEnginePlugins)
+    if (!App::GetCommandLineArgument(App::SkipForeignInit))
     {
-        Detail::GMutableEngine->LoadPluginNoFailure(Plugin);
+        STAT_CYCLE_START(AlEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
+        JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
+        Detail::GMutableEngine->RefetchPlugins(*Prefs.AdditionalPluginsSearchPaths);
+        for (LString const& Plugin: *Prefs.EnabledEnginePlugins)
+        {
+            Detail::GMutableEngine->LoadPluginNoFailure(Plugin);
+        }
+        if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
+        STAT_CYCLE_END(AlEnabledEnginePluginsLoad)
     }
-    if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-    STAT_CYCLE_END(AlEnabledEnginePluginsLoad)
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
     if (App::GetCommandLineArgument(App::Help))
     {
+        check(Detail::GIsQuiet)
+        Detail::GAllowHelp = true;
         App::PrettyPrintApiUsage();
         App::RequestEngineExit("Verbose help shown.");
         return ::GetMostSignificantExitReason();
@@ -274,14 +289,17 @@ EPlatformExit::Type AgnosticLaunch()
     STAT_CYCLE_END(AlReSTCliLoad)
 #endif /* JAFG_WITH_REST_CLS */
 
-    FlushOutStreams();
+    Detail::EmitAndFlushLogs();
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     LaunchProgress::FinishAndGiveUpMemory();
 
-    Detail::GMutableEngine->FrameStartTimePoint = algo::now();
-    std::this_thread::yield();
-    Detail::GMutableEngine->FrameStartElapsedTime = App::GetElapsedTime(Detail::GMutableEngine->FrameStartTimePoint);
-    Detail::GMutableEngine->DefaultTimeAdvance();
+    if (App::GetCommandLineArgument(App::SkipLoop))
+    {
+        App::RequestEngineExit("SkipLoop requested.");
+        return ::GetMostSignificantExitReason();
+    }
+
+    Detail::GMutableEngine->DefaultJumpStart();
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")
@@ -299,9 +317,10 @@ EPlatformExit::Type AgnosticLaunch()
         App::Detail::BeginExitIfRequested();
         Detail::GMutableEngine->DefaultTimeAdvance();
 
-        if (algo::time_diff(GEngine->LastStdOutFlush, GEngine->FrameStartTimePoint) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
+        if (algo::time_diff(GEngine->LastStdoutFlush, GEngine->FrameStartTimePoint) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
         {
-            ::FlushLogs();
+            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever, &Detail::EmitAndFlushLogs);
+            Detail::GMutableEngine->LastStdoutFlush = algo::now();
         }
 
         Detail::GMutableEngine->Tick();

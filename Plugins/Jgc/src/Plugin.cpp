@@ -24,14 +24,15 @@ void LJgcPluginLifetime::OnFinishedLoading()
 
     check(GEngine)
 
-    if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() != 1)
-    {
-        LOG_WARNING(LogJgcLifetime, "Expected exactly one surface at engine startup. Jgc does not support multiple surfaces in this stage of the application.")
-    }
-    else
+    /* No surface is ok. Maybe daemon or headless. */
+    if (auto& Frontend{GEngine->GetLocalEgo().GetFrontend()}; Frontend.GetSurfaceCount() == 1)
     {
         auto const& Surface{Frontend.GetSurfaces()[0]};
         Jafg::ConstructWidget(Jafg::TNodeStaticInit<Jafg::WEditor>{Surface->GetViewport()});
+    }
+    else if (Frontend.GetSurfaceCount() > 1)
+    {
+        LOG_WARNING(LogJgcLifetime, "Expected exactly one surface at engine startup. Jgc does not support multiple surfaces in this stage of the application.")
     }
 }
 

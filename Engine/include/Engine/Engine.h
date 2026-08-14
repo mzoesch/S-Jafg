@@ -33,6 +33,7 @@ ENGINE_API extern Jafg::LEngine const* GEngine;
 
 namespace Jafg
 {
+
 namespace Detail
 {
 
@@ -78,9 +79,10 @@ public:
     // Time Related Stuff.
     ///////////////////////////////////////////////////////////////////////////////
 
+    ENGINE_API void DefaultJumpStart();
     ENGINE_API void DefaultTimeAdvance();
 
-    algo::clock::time_point LastStdOutFlush;
+    algo::clock::time_point LastStdoutFlush;
 
     //#
     //# The maximum delta time allowed between frames.

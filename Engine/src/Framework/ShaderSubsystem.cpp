@@ -96,7 +96,7 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         Recompiled += this->RecompileShaderConditionally(Shader);
     }
-    if constexpr (IS_COMPILED_LOG(LogShaderSubsystem, Verbose))
+    if constexpr (LogShaderSubsystem.CompilesFor<ELogVerbosity::Verbose>)
     {
         if (Recompiled > 0)
         {

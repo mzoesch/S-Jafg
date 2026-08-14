@@ -66,6 +66,13 @@ ENGINE_API LStringView GetTargetConfiguration() noexcept;
 ENGINE_API extern LProgramParameter CoreHelp;
 ENGINE_API extern LProgramParameter Version;
 ENGINE_API extern LProgramParameter Help;
+ENGINE_API extern LProgramParameter Daemon;
+ENGINE_API extern LProgramParameter Headless;
+ENGINE_API extern LProgramParameter Quiet;
+ENGINE_API extern LProgramParameter SkipForeignInit;
+ENGINE_API extern LProgramParameter SkipLoop;
+ENGINE_API extern LProgramParameter DisallowAnsi;
+ENGINE_API extern LProgramParameter EmitInformation;
 ENGINE_API extern LProgramParameter WaitForDebugger;
 ENGINE_API extern LProgramParameter IgnoreInstantDebuggerBreak;
 ENGINE_API extern LProgramParameter AlwaysReportCrash;
@@ -82,6 +89,7 @@ ENGINE_API extern bool bAlreadyCrashed;
 ENGINE_API extern bool bSuppressCrashDialog;
 //# Not supported in all configurations.
 ENGINE_API extern bool bDumpStack;
+ENGINE_API bool HasArgumentToWaitForDebuggerVeryEarlyOnly();
 ENGINE_API void WaitForDebuggerGracefully(bool bAllowInstantBreak);
 
 //# Whether the engine should exit at the next opportunity.
@@ -99,16 +107,28 @@ ENGINE_API extern bool PauseBeforeExit;
 ENGINE_API extern bool IsTracerPidValid;
 ENGINE_API extern bool AlwaysReportCrash;
 
+ENGINE_API extern bool DisallowAnsi;
+
 #if WITH_STATS
     ENGINE_API extern bool AllowProfiling;
 #endif /* WITH_STATS */
 
 //#
 //# The command line. A parameter is defined as the following:
-//#   -parameter
-//#   -parameter=value                  (no spaces allowed)
-//#   -parameter="string value"         (escape " with \)
-//#   -parameter item item item         (no - allowed on items)
+//#   --parameter                                                       StoreTrue
+//#   --parameter=value                  (no spaces allowed)            Value
+//#   --parameter="string value"         (escape " with \)              Value
+//#   --parameter item item item         (no -/-- allowed on items)     List
+//#
+//# A parameter must accept at least one of these above categories (StoreTrue,Value,List).
+//#
+//# Or some parameters have short identifiers (for StoreTrue only) that can be chained.
+//# E.g. if there a two parameters that also allow for a and b. Then the following are also valid -- in addition
+//# to the full ones mentioned above:
+//#     -a -b
+//#     -ab
+//#     -ba
+//#     For any number of short identifiers parameters, any combination is valid.
 //#
 ENGINE_API extern TArray<LString> RawCommandLine;
 ENGINE_API extern TArray<LProgramArgument> ProcessedCommandLine;
@@ -174,65 +194,11 @@ NODISCARD ENGINE_API TArray<LProgramArgument> ReprocessCommandLine(TArray<LStrin
 //# Whether the command line contains the given argument.
 //# @note This function will not work during static storage initialization or early program startup.
 //#
-inline LProgramArgument const* GetCommandLineArgument(LStringView Parameter) noexcept
-{
-    return algo::find_pointer(Detail::ProcessedCommandLine, Parameter, &LProgramArgument::Identifier);
-}
-inline LProgramArgument const* GetCommandLineArgument(LProgramParameter const& Parameter) noexcept
-{
-    LProgramArgument const* Argument{algo::find_pointer(Detail::ProcessedCommandLine, Parameter.Identifier, &LProgramArgument::Identifier)};
-    if (!Argument)
-    {
-        for (LString const& Variation : Parameter.Variations)
-        {
-            Argument = algo::find_pointer(Detail::ProcessedCommandLine, Variation, &LProgramArgument::Identifier);
-            if (Argument)
-            {
-                break;
-            }
-        }
-    }
-    if (Argument)
-    {
-        if ((Parameter.Flags & EProgramParameterBits::StoreTrue) && Argument->IsStoreTrue())
-        {
-            return Argument;
-        }
-        if ((Parameter.Flags & EProgramParameterBits::Value) && Argument->IsValue())
-        {
-            return Argument;
-        }
-        if ((Parameter.Flags & EProgramParameterBits::List) && Argument->IsList())
-        {
-            return Argument;
-        }
-        LOG_FATAL(LogProgramArguments, "Program argument [{}] does not match the expected type for parameter [{}]."
-            , Argument->Identifier, Parameter.Identifier)
-    }
-    return nullptr;
-}
+ENGINE_API LProgramArgument const* GetCommandLineArgument(LStringView Parameter) noexcept;
+ENGINE_API LProgramArgument const* GetCommandLineArgument(LProgramParameter const& Parameter) noexcept;
 
-inline void PrettyPrintVersion() noexcept
-{
-    LOG_INFO(LogCli, "Engine version [{}] @mzoesch at [{} - {}] on {} in {}.",
-        EngineVersion().ToString(),
-        BuildTime(), BuildDate(), BuildVcsBranch(), BuildVcsRevision()
-        )
-}
-inline void PrettyPrintApiUsage() noexcept
-{
-    u64 MaxSize{};
-    algo::for_each(Detail::RegisteredProgramParameters, [&MaxSize](LProgramParameter* Param)
-    {
-        MaxSize = maths::max(MaxSize, static_cast<u64>(Param->Identifier.size()));
-    });
-    LOG_INFO(LogCli, "Available command line parameters:")
-    for (auto& Param: Detail::RegisteredProgramParameters)
-    {
-        LOG_INFO(LogCli, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description)
-        LOG_INFO(LogCli, "   {:<{}}   Flags: {}", "", MaxSize, LexToString(Param->Flags))
-    }
-}
+ENGINE_API void PrettyPrintVersion() noexcept;
+ENGINE_API void PrettyPrintApiUsage() noexcept;
 
 inline algo::clock::time_point GetStaticStorageInitializationTime() noexcept
 {

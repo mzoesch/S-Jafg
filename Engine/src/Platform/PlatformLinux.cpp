@@ -63,7 +63,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
         }
     }
 
-    Jafg::FlushOutStreams();
+    Jafg::Detail::EmitAndFlushLogs();
 
 #if JAFG_WITH_LOCAL_LAYER
     if (!App::Detail::bSuppressCrashDialog && !IsTracerPidValidVerySlow())
@@ -117,7 +117,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
             ::free(Symbols);
         }
 
-        Jafg::FlushOutStreams();
+        Jafg::Detail::EmitAndFlushLogs();
         (void)std::system(algo::sprintf(
             "zenity --error --title=\"Jafg panicked; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\" --width=1920",
             EscapeMessage(Message), EscapeMessage(Stream.str())).c_str());
@@ -128,7 +128,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
     }
 #endif /* JAFG_WITH_LOCAL_LAYER */
 
-    Jafg::FlushOutStreams();
+    Jafg::Detail::EmitAndFlushLogs();
 
     ///////////////////////////////////////////////////////////////////////////////
     // The final absolute end.

@@ -229,6 +229,12 @@ Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(TSubclassOf<JSubsyste
 
 void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 {
+    if (!this->Outer) /* Not initialized */
+    {
+        check(this->SubsystemInstances.empty())
+        return;
+    }
+
     STAT_CYCLE_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
@@ -263,6 +269,12 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 
 void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
 {
+    if (!this->Outer) /* Not initialized */
+    {
+        check(this->SubsystemInstances.empty())
+        return;
+    }
+
     STAT_CYCLE_FUNCTION()
 
     check(Tasks::IsOnMasterThread())

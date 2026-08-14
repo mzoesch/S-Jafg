@@ -34,7 +34,13 @@ public:
     ~LLocalEgo() noexcept = default;
 
     void Initialize();
-    void Tick(f32 Dt) { this->Frontend.Tick(); }
+    void Tick(f32 Dt)
+    {
+        if (!this->Frontend.IsHeadless())
+        {
+            this->Frontend.Tick();
+        }
+    }
     void TearDown();
 
     FORCEINLINE LFrontend& GetFrontend() noexcept { return this->Frontend; }

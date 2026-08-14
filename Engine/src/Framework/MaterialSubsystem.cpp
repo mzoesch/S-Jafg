@@ -437,6 +437,15 @@ void Jafg::LMaterialInstance::Vk_SetSampledImage(LFrontend const& Frontend, rhi:
     Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 }
 
+bool Jafg::JMaterialSubsystem::ShouldCreateSubsystem() const noexcept
+{
+    if (this->GetFrontend().IsHeadless())
+    {
+        return false;
+    }
+    return Super::ShouldCreateSubsystem();
+}
+
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);

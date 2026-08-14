@@ -74,7 +74,14 @@ void Jafg::LLocalEgo::Initialize()
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JLocalEgoSubsystem>();
 
-    this->Frontend.Initialize(&this->Outer);
+    if (App::GetCommandLineArgument(App::Headless))
+    {
+        this->Frontend.bHeadless = true;
+    }
+    else
+    {
+        this->Frontend.Initialize(&this->Outer);
+    }
 
     return;
 }

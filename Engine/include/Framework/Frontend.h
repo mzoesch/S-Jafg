@@ -25,6 +25,8 @@ class LFrontendBase
 {
 public:
 
+    friend LLocalEgo;
+
     enum ENewSurfaceBehavior : u8
     {
         //# Just add the new surface.
@@ -53,6 +55,8 @@ public:
     //# For application wide events (platform specific).
     void PollPlatformEvents() PURE_VIRTUAL()
     void TearDown();
+
+    NODISCARD FORCEINLINE constexpr bool IsHeadless() const noexcept { return this->bHeadless; }
 
     ENGINE_API LEngine const& GetEngine() const noexcept;
     ENGINE_API LEngine& GetMutableEngine() noexcept;
@@ -94,6 +98,7 @@ protected:
 
 private:
 
+    bool bHeadless{};
     i32 FocusedSurface{ INDEX_NONE };
     TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };

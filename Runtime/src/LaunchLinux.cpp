@@ -100,7 +100,7 @@ i32 main(i32 c, char const* v[])
     TArray<LString> Arguments; algo::for_each(v + 1, v + c, [&Arguments](auto* Arg){ Arguments.emplace_back(Arg); });
     App::Detail::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(App::GetRawCommandLine(), "-Jafg.WaitForDebugger"sv))
+    if (App::Detail::HasArgumentToWaitForDebuggerVeryEarlyOnly())
     {
         App::Detail::WaitForDebuggerGracefully(true);
     }
@@ -198,7 +198,7 @@ i32 main(i32 c, char const* v[])
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")
-        Jafg::FlushOutStreams();
+        Detail::EmitAndFlushLogs();
 
         std::cin.get();
     }

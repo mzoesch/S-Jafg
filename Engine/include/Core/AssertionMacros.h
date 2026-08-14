@@ -236,7 +236,7 @@
         }                                           \
         else                                        \
         {                                           \
-            ::Jafg::FlushOutStreams();               \
+            ::Jafg::Detail::EmitAndFlushLogs();               \
             ::Jafg::LOnPlatformBreak::OnProgramPanic \
             (                                       \
                 JAFG_NO_ENTRY_ASSERT_TEXT,           \
@@ -264,7 +264,7 @@
     }
 
 #define PRIVATE_JAFG_GORGEOUS_BREAK_IMPL() \
-        ::Jafg::FlushOutStreams();    \
+        ::Jafg::Detail::EmitAndFlushLogs();    \
         JAFG_PLATFORM_BREAK()
 
 #define PRIVATE_JAFG_GORGEOUS_TRAP_IMPL() \
@@ -274,7 +274,7 @@
     )
 
 #define PRIVATE_JAFG_GORGEOUS_TRAP_IMPL_MSG(Msg) \
-    ::Jafg::FlushOutStreams();              \
+    ::Jafg::Detail::EmitAndFlushLogs();              \
     PRIVATE_JAFG_TRY_BREAK_NO_FACADE();           \
     ::Jafg::App::Detail::TrapMe     \
     (                                           \
@@ -349,21 +349,23 @@
 
 //# Log an expression that failed to assert.
 #define PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR(Expr)              \
-    ::Jafg::LogMessage<                                        \
-        ::Jafg::ELogVerbosity::Fatal,                          \
-        ::Jafg::ELogVerbosity::Fatal                           \
+    ::Jafg::EmitLog<                                        \
+        decltype(::LogJafgInternal),                          \
+        ::ELogVerbosity::Fatal                           \
     >                                                         \
-    (                                                         \
+    (   \
+        "LogJafgInternal", \
         PRIVATE_JAFG_ASSERT_STRONG_LOG_EXPR_GET_MSG_ANSI(Expr) \
     );
 
 //# Log an expression that failed to assert but is not critical.
 #define PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR(Expr)              \
-    ::Jafg::LogMessage<                                      \
-        ::Jafg::ELogVerbosity::Error,                        \
-        ::Jafg::ELogVerbosity::Error                         \
+    ::Jafg::EmitLog<                                      \
+        decltype(::LogJafgInternal),                        \
+        ::ELogVerbosity::Error                         \
     >                                                       \
     (                                                       \
+        "LogJafgInternal", \
         PRIVATE_JAFG_ASSERT_WEAK_LOG_EXPR_GET_MSG_ANSI(Expr) \
     );
 

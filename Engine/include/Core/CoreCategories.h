@@ -2,39 +2,24 @@
 
 #pragma once
 
-#ifndef JAFG_DEBUG_DEFAULT_LOG_VERBOSITY
-    #define JAFG_DEBUG_DEFAULT_LOG_VERBOSITY             Trace
-#endif /* JAFG_DEBUG_DEFAULT_LOG_VERBOSITY */
-#ifndef JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY
-    #define JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY       Verbose
-#endif /* JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY */
-#ifndef JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #define JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY          Info
-#endif /* JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY */
-
-#ifndef JAFG_LOG_DEFAULT_VERBOSITY
-    #if JAFG_IN_DEBUG
-        #define JAFG_LOG_DEFAULT_VERBOSITY               JAFG_DEBUG_DEFAULT_LOG_VERBOSITY
-    #elif JAFG_IN_DEVELOPMENT
-        #define JAFG_LOG_DEFAULT_VERBOSITY               JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY
-    #elif JAFG_IN_SHIPPING
-        #define JAFG_LOG_DEFAULT_VERBOSITY               JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #else /* JAFG_IN_SHIPPING */
-        #error "Could not resolve build configuration."
-    #endif  /* !JAFG_IN_SHIPPING */
-#endif /* !JAFG_LOG_DEFAULT_VERBOSITY */
-
-#ifndef JAFG_LOG_DEFAULT_VERBOSITY_TASKS
-    #if JAFG_IN_DEBUG
-        #define JAFG_LOG_DEFAULT_VERBOSITY_TASKS         JAFG_DEVELOPMENT_DEFAULT_LOG_VERBOSITY
-    #elif JAFG_IN_DEVELOPMENT
-        #define JAFG_LOG_DEFAULT_VERBOSITY_TASKS         JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #elif JAFG_IN_SHIPPING
-        #define JAFG_LOG_DEFAULT_VERBOSITY_TASKS         JAFG_SHIPPING_DEFAULT_LOG_VERBOSITY
-    #else /* JAFG_IN_SHIPPING */
-        #error "Could not resolve build configuration."
-    #endif  /* !JAFG_IN_SHIPPING */
-#endif /* JAFG_LOG_DEFAULT_VERBOSITY_TASKS */
+//#
+//# The information category is a special category designed to emit in an easy to parse format, which is:
+//#     key=value,
+//# therefore a primitive regex might look something like this:
+//#     ^\[LogInformation\]\s-\s([\w]+):\s([\w]+)=(.+)$
+//#     where
+//#         group 1 is the function,
+//#         group 2 is the key,
+//#         group 3 is the value.
+//#
+//# It may be used to query information about a jafg executable (and is also the recommended way).
+//# E.g.:
+//# - Strip annoying boilerplate (only print key=value):
+//#      ./Runtime -qilfas | sed -n 's/^\[LogInformation\]\s-\s\([[:alnum:]_]*\):\s\(.*\)=\(.*\)$/\2=\3/p'
+//# - Only print the value of MY_KEY if exists:
+//#      ./Runtime -qilfas | sed -n 's/^\[LogInformation\]\s-\s\([[:alnum:]_]*\):\sMY_KEY=\(.*\)$/\2/p'
+//#
+DECLARE_INLINE_LOG_CATEGORY( LogInformation,                  JAFG_LOG_DEFAULT_VERBOSITY                             )
 
 DECLARE_INLINE_LOG_CATEGORY( LogAssetSubsystem,               JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogCarnifex,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
@@ -54,8 +39,8 @@ DECLARE_INLINE_LOG_CATEGORY( LogFontSubsystem,                JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogForeign,                      JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogFrontend,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogGenPrevAssets,                JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogHelp,                         JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogHyperlane,                    JAFG_LOG_DEFAULT_VERBOSITY                             )
-DECLARE_INLINE_LOG_CATEGORY( LogInformation,                  JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogJafgInternal,                 JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogJxx,                          JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogLackey,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
@@ -70,7 +55,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogPhysics,                      JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogPlatform,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogPlatformMisc,                 JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogPreferences,                  JAFG_LOG_DEFAULT_VERBOSITY                             )
-DECLARE_INLINE_LOG_CATEGORY( LogProgramArguments,             Warning                                                )
+DECLARE_INLINE_LOG_CATEGORY( LogProgramArguments,             JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogRecipeSystem,                 JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogReST,                         JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogRhi,                          JAFG_LOG_DEFAULT_VERBOSITY                             )
@@ -84,7 +69,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogSubsystemCollection,          JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogSurface,                      JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogSystem,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogTags,                         JAFG_LOG_DEFAULT_VERBOSITY                             )
-DECLARE_INLINE_LOG_CATEGORY( LogTasks,                        JAFG_LOG_DEFAULT_VERBOSITY_TASKS                       )
+DECLARE_INLINE_LOG_CATEGORY( LogTasks,                        JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogTaskSystem,                   JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogTaskUtility,                  JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogTemporal,                     JAFG_LOG_DEFAULT_VERBOSITY                             )

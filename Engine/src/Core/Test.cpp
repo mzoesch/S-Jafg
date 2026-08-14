@@ -16,35 +16,47 @@ Jafg::LTestRunInstance::LTestRunInstance(ETestCategoryFlags Flags)
     if (Flags & ETestCategoryBits::Trivial)
     {
         LOG_INFO(LogTestingFramework, "Running [{}] trivial tests...", Detail::TrivialTestCases.size())
+        Detail::EmitAndFlushLogs();
 
-        for (TReference<LTrivialTestCase>& Test: Detail::TrivialTestCases)
+        if (!Detail::TrivialTestCases.empty())
         {
-            std::print("Launching [{}]...", Test->FullName());
-            Test->Run();
-
-            if (Test->Errors())
+            std::stringstream SS;
+            for (TReference<LTrivialTestCase>& Test: Detail::TrivialTestCases)
             {
-                std::println(" FAILED ({} tests)", Test->Total());
-                for (LString const& Error: Test->HumanReadableErrors())
+                SS << algo::sprintf("Launching [{}]...", Test->FullName());
+                Test->Run();
+
+                if (Test->Errors())
                 {
-                    std::println("  {}", Error);
+                    SS << algo::sprintf(" FAILED ({} tests)\n", Test->Total());
+                    for (LString const& Error: Test->HumanReadableErrors())
+                    {
+                        SS << algo::sprintf("  {}\n", Error);
+                    }
                 }
-            }
-            else
-            {
-                std::println(" PASSED ({} tests)", Test->Total());
-            }
+                else
+                {
+                    SS << algo::sprintf(" PASSED ({} tests)\n", Test->Total());
+                }
 
-            this->m_Total += Test->Total();
-            this->m_Passed += Test->Passed();
+                this->m_Total += Test->Total();
+                this->m_Passed += Test->Passed();
+            }
+            auto Str{SS.str()};
+            if (!Str.empty())
+            {
+                Str.pop_back();
+            }
+            LOG_INFO(LogTestingFramework, "\n{}", Str)
         }
     }
 
-    std::println("Finished running [{}] trivial tests ({} tests, {} passed) in {}ms."
+    LOG_INFO(LogTestingFramework, "Finished running [{}] trivial tests ({} tests, {} passed) in {}ms."
         , Detail::TrivialTestCases.size()
         , this->Total()
         , this->Passed()
-        , std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - this->Start).count());
+        , std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - this->Start).count()
+        )
 }
 
 #endif /* JAFG_WITH_TESTS */

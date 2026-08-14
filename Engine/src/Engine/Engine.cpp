@@ -408,15 +408,24 @@ void Jafg::LEngine::TearDown()
 #endif /* JAFG_WITH_REST_CLS */
 
 #if JAFG_WITH_LOCAL_LAYER
-    this->LocalEgo.GetFrontend()._Vk_WaitIdle();
+    if (!!*this->LocalEgo.GetFrontend().Vk_GetDevice())
+    {
+        this->LocalEgo.GetFrontend()._Vk_WaitIdle();
+    }
 #endif /* JAFG_WITH_LOCAL_LAYER */
 
     LOG_VERBOSE(LogEngine, "Deallocating {} registered tracks.", this->Tracks.size())
     for (auto const& Track : this->Tracks)
     {
-        check( Track.IsValid() )
-        Track.ChildWorld->TearDown();
-        check( Track.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
+        if (Track.IsValid())
+        {
+            Track.ChildWorld->TearDown();
+            check(Track.ChildWorld->GetWorldState() == EWorldState::WaitingForKill)
+        }
+        else
+        {
+            check(Track.IsWaitingForTravel())
+        }
         continue;
     }
     algo::orphan(&this->Tracks);
@@ -491,6 +500,18 @@ void Jafg::LEngine::TearDown()
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
     return;
+}
+
+void Jafg::LEngine::DefaultJumpStart()
+{
+    LOG_VERBOSE(LogEngine, "Jump starting.")
+
+    check(this->FrameCount == 0uz)
+
+    this->FrameStartTimePoint = algo::now();
+    std::this_thread::yield();
+    this->FrameStartElapsedTime = App::GetElapsedTime(this->FrameStartTimePoint);
+    this->DefaultTimeAdvance();
 }
 
 void Jafg::LEngine::DefaultTimeAdvance()
@@ -568,7 +589,7 @@ void Jafg::LEngine::DefaultTimeAdvance()
 
     if (this->DeltaTime > LEngine::MaxDeltaTime)
     {
-        if constexpr (IS_COMPILED_LOG(LogLaunch, Warning))
+        if constexpr (LogLaunch.CompilesFor<ELogVerbosity::Warning>)
         {
             if (this->DeltaTime > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
             {
@@ -635,7 +656,7 @@ void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
 void Jafg::LEngine::SummonWorld(LWorldCreateInfo Info, TFunction2<void(LWorld& World)> OnFinishedLoading /* = {} */)
 {
     check(Tasks::IsOnMasterThread())
-    if constexpr (IS_COMPILED_LOG(LogEngine, Warning))
+    if constexpr (LogEngine.CompilesFor<ELogVerbosity::Warning>)
     if (algo::contains(this->Tracks, Info.HumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }))
     {
         LOG_WARNING(LogEngine, "A world with the name [{}] is already summoned.", Info.HumanReadableName)
@@ -1080,61 +1101,56 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         return;
     });
 
-    this->ReSTCli.Get("/logs", [](ReST::LRequest const& Request, ReST::LResponse* OutResponse) -> void
-    {
-        check(OutResponse)
-
-#if JAFG_SAVE_LOGS_IN_MEMORY
-        if (Request.HasParameter("id"))
-        {
-            LString Id{ Request.GetParameter("id") };
-
-            if (Id.empty())
-            {
-                OutResponse->SetStatusCode(ReST::BadRequest_400);
-                OutResponse->SetContent(R"({"error":"Empty 'id' parameter."})", "application/json");
-                return;
-            }
-
-            u64 ConvertedId;
-            if (serde::FromStringRelaxed(&ConvertedId, Id) == false)
-            {
-                OutResponse->SetStatusCode(ReST::BadRequest_400);
-                OutResponse->SetContent(R"({"error":"Invalid 'id' parameter."})", "application/json");
-                return;
-            }
-
-            json Res;
-            auto& Logs = Res["logs"] = json::array();
-            std::unique_lock Lock{ Detail::GLongLiquidLogsMutex };
-            while (ConvertedId < Detail::GLongLiquidLogs.size())
-            {
-                auto const& Entry{ Detail::GLongLiquidLogs.at(ConvertedId) };
-
-                json E;
-                E["id"] = ConvertedId;
-                E["level"] = std::get<0>(Entry);
-                E["message"] = std::get<1>(Entry);
-                Logs.emplace_back(std::move(E));
-
-                ++ConvertedId;
-                continue;
-            }
-
-            OutResponse->SetContent(Res.dump(), "application/json");
-        }
-        else
-        {
-            OutResponse->SetStatusCode(ReST::BadRequest_400);
-            OutResponse->SetContent(R"({"error":"Missing 'id' parameter."})", "application/json");
-        }
-#else /* JAFG_SAVE_LOGS_IN_MEMORY */
-        OutResponse->SetStatusCode(ReST::BadRequest_400);
-        OutResponse->SetContent(R"({"error":"Logs are not permitted in this engine build."})", "application/json");
-#endif /* !JAFG_SAVE_LOGS_IN_MEMORY */
-
-        return;
-    });
+    // this->ReSTCli.Get("/logs", [](ReST::LRequest const& Request, ReST::LResponse* OutResponse) -> void
+    // {
+    //     check(OutResponse)
+    //
+    //     if (Request.HasParameter("id"))
+    //     {
+    //         LString Id{ Request.GetParameter("id") };
+    //
+    //         if (Id.empty())
+    //         {
+    //             OutResponse->SetStatusCode(ReST::BadRequest_400);
+    //             OutResponse->SetContent(R"({"error":"Empty 'id' parameter."})", "application/json");
+    //             return;
+    //         }
+    //
+    //         u64 ConvertedId;
+    //         if (serde::FromStringRelaxed(&ConvertedId, Id) == false)
+    //         {
+    //             OutResponse->SetStatusCode(ReST::BadRequest_400);
+    //             OutResponse->SetContent(R"({"error":"Invalid 'id' parameter."})", "application/json");
+    //             return;
+    //         }
+    //
+    //         json Res;
+    //         auto& Logs = Res["logs"] = json::array();
+    //         std::unique_lock Lock{ Detail::GLongLiquidLogsMutex };
+    //         while (ConvertedId < Detail::GLongLiquidLogs.size())
+    //         {
+    //             auto const& Entry{ Detail::GLongLiquidLogs.at(ConvertedId) };
+    //
+    //             json E;
+    //             E["id"] = ConvertedId;
+    //             E["level"] = std::get<0>(Entry);
+    //             E["message"] = std::get<1>(Entry);
+    //             Logs.emplace_back(std::move(E));
+    //
+    //             ++ConvertedId;
+    //             continue;
+    //         }
+    //
+    //         OutResponse->SetContent(Res.dump(), "application/json");
+    //     }
+    //     else
+    //     {
+    //         OutResponse->SetStatusCode(ReST::BadRequest_400);
+    //         OutResponse->SetContent(R"({"error":"Missing 'id' parameter."})", "application/json");
+    //     }
+    //
+    //     return;
+    // });
 }
 
 void Jafg::LEngine::StartReSTCliServer()

@@ -5,6 +5,14 @@
 namespace Jafg
 {
 
+namespace Detail
+{
+
+//# Use sparingly.
+ENGINE_API void EmitAndFlushLogs() noexcept;
+
+} /* ~Namespace Detail */
+
 template<typename TPredicate>
 inline void FwdCheck(TPredicate&& Predicate, char const* Str, char const* File, int Line)
 {
@@ -12,7 +20,7 @@ inline void FwdCheck(TPredicate&& Predicate, char const* Str, char const* File, 
 
     if (JAFG_UNLIKELY(!Predicate()))
     {
-        Jafg::FlushOutStreams();
+        Detail::EmitAndFlushLogs();
         PRIVATE_JAFG_TRY_BREAK_NO_FACADE()
         App::Detail::TrapMe(Str, File, Line);
     }

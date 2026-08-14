@@ -1069,6 +1069,20 @@ NODISCARD inline T time_diff(clock::time_point A, clock::time_point B) noexcept
 template<typename T> concept bool_testable = requires(T&& t) { static_cast<bool>(t); };
 
 //#
+//# Primitive unfair tas lock.
+//# Only use in control paths where it is known that all owning threads always
+//# progress and finish in a finite number of steps AND contention is not high.
+//# If you are unsure whether to use this, use a std::mutex instead.
+//#
+struct tas_lock final
+{
+    FORCEINLINE void lock() noexcept { while (this->flag.test_and_set(std::memory_order_acquire)); }
+    FORCEINLINE void unlock() noexcept { this->flag.clear(std::memory_order_release); }
+private:
+    std::atomic_flag flag;
+};
+
+//#
 //# In a tree with:
 //#
 //#          TRoot

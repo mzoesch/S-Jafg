@@ -24,6 +24,7 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JMaterialSubsystem)
 
+    virtual bool ShouldCreateSubsystem() const noexcept override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void TearDown() override
     {

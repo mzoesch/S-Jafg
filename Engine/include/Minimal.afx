@@ -46,6 +46,7 @@
 #include <inplace_vector>
 #include <print>
 #include <random>
+#include <list>
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -74,11 +75,8 @@ using namespace std::chrono_literals;
 //#
 //# Logging
 //#
-#include "Core/LogVerbosity.h"
-#include "Core/LogMacros.h"
-#include "Core/LogPrivate.h"
-#include "Core/CoreCategories.h"
 #include "Core/LogUtility.h"
+#include "Core/CoreCategories.h"
 
 //#
 //# Maths
@@ -104,6 +102,7 @@ using namespace std::chrono_literals;
 //#
 //# Impls
 //#
+#include "Core/LogUtilityImpl.h"
 #include "Core/AssertionForwardImpl.h"
 
 //#

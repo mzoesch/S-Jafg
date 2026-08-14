@@ -81,7 +81,7 @@ i32 main(i32 c, char* v[])
     TArray<LString> Arguments; algo::for_each(v + 1, v + c, [&Arguments](auto* Arg){ Arguments.emplace_back(Arg); });
     App::Detail::RawCommandLine = std::move(Arguments);
 
-    if (algo::contains(App::GetRawCommandLine(), "-Jafg.WaitForDebugger"sv))
+    if (App::Detail::HasArgumentToWaitForDebuggerVeryEarlyOnly())
     {
         App::Detail::WaitForDebuggerGracefully(true);
     }
@@ -89,7 +89,7 @@ i32 main(i32 c, char* v[])
     _set_invalid_parameter_handler(::InvalidParameterHandler);
 
 #if JAFG_WITH_MSVC
-    App::Detail::AlwaysReportCrash = algo::contains(App::GetRawCommandLine(), "-Jafg.AlwaysReportCrash");
+    App::Detail::AlwaysReportCrash = algo::contains(App::GetRawCommandLine(), "--Jafg.AlwaysReportCrash");
 #endif /* JAFG_WITH_MSVC */
 
 #if !JAFG_IN_SHIPPING && JAFG_WITH_MSVC

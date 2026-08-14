@@ -1392,7 +1392,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     check(Result2.has_value())
     this->Vk_AvailableSurfaceFormats = std::move(*Result2);
     LOG_VERBOSE(LogVulkan, "Available surface formats:")
-    if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose)) for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
+    if constexpr (LogVulkan.CompilesFor<ELogVerbosity::Verbose>) for (auto const& SurfaceFormat : this->Vk_AvailableSurfaceFormats)
     {
         LOG_VERBOSE(LogVulkan, "    Format [{}], Color Space [{}]",
             vk::to_string(SurfaceFormat.format),
@@ -1403,7 +1403,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     auto Result3{Frontend.Vk_GetPhysicalDevice().getSurfacePresentModesKHR(this->Vk_Surface)};
     this->Vk_AvailablePresentModes = std::move(*Result3);
     LOG_VERBOSE(LogVulkan, "Available present modes:")
-    if constexpr (IS_COMPILED_LOG(LogVulkan, Verbose)) for (auto const& PresentMode: this->Vk_AvailablePresentModes)
+    if constexpr (LogVulkan.CompilesFor<ELogVerbosity::Verbose>) for (auto const& PresentMode: this->Vk_AvailablePresentModes)
     {
         LOG_VERBOSE(LogVulkan, "    Present Mode [{}]", vk::to_string(PresentMode))
     }

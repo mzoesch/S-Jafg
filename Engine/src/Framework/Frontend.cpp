@@ -12,6 +12,8 @@
 
 void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
 {
+    this->bHeadless = !!App::GetCommandLineArgument(App::Headless);
+
     this->GetCollection()->InitializeDeferred(Outer);
     this->GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
 }

@@ -275,11 +275,6 @@ struct LPrimitivePlatformTypesGeneric
     #define JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES                         0
 #endif /* !JAFG_PLATFORM_SUPPORTS_ANSI_ESCAPES */
 
-//# Whether logs are saved in memory for later retrieval.
-#ifndef JAFG_SAVE_LOGS_IN_MEMORY
-    #define JAFG_SAVE_LOGS_IN_MEMORY                                    JAFG_WITH_REST_CLS
-#endif /* !JAFG_SAVE_LOGS_IN_MEMORY */
-
 //# Whether the platform supports Single-Instruction-Multiple-Data intrinsics.
 #ifndef JAFG_PLATFORM_SUPPORTS_SIMD
     #define JAFG_PLATFORM_SUPPORTS_SIMD                                 0

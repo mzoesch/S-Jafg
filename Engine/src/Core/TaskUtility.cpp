@@ -456,14 +456,6 @@ i32 Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::T
         continue;
     }
 
-    if constexpr (IS_COMPILED_LOG(LogTasks, Trace))
-    {
-        if (RunTasks > 0)
-        {
-            LOG_TRACE(LogTasks, "Run {} tasks on thread [{}] during [{}].", RunTasks, LexToString(Which), LexToString(Time))
-        }
-    }
-
 #if WITH_STATS
     if (RunTasks < 1)
     {
@@ -810,7 +802,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     if (::EngineThreadsMutex.try_lock() == false)
     {
         LOG_ERROR(LogTaskSystem, "Failed to lock engine threads mutex. But in this state there should not be any other threads running.")
-        ::Jafg::FlushOutStreams();
+        Jafg::Detail::EmitAndFlushLogs();
         ::EngineThreadsMutex.lock(); // Hang this. Probably a deadlock. Let it idle forever. Highly unlikely.
     }
     algo::orphan(&::EngineThreads);

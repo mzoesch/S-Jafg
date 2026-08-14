@@ -558,7 +558,7 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
         return Result;
     }
     check(this->IsOnHost())
-    if constexpr (IS_COMPILED_LOG(LogRhi, Trace))
+    if constexpr (LogRhi.CompilesFor<ELogVerbosity::Trace>)
     {
         std::stringstream SS;
         SS << "Meshes: " << this->HostMeshes.size() << "\n";

@@ -31,7 +31,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
             BeginStyling(Container).StaticRoot<WVRegion>().SaveTo(&Region)
                 .Tint(*GetSingleton<JUserPreferences>().OverlayColor)
                 .Padding({0, LDropDownMenuCreateInfo::RecommendedPadding});
-            if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Warning)) if (Children.empty())
+            if constexpr (LogWidgetFramework.CompilesFor<ELogVerbosity::Warning>) if (Children.empty())
             {
                 LOG_WARNING(LogWidgetFramework, "SubMenu has no nodes.")
             }

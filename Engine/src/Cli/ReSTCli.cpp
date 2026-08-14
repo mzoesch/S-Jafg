@@ -121,7 +121,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
     ::Server = std::make_unique<httplib::Server>();
     check( ::Server.get() )
 
-    if constexpr (IS_COMPILED_LOG(LogReST, Verbose))
+    if constexpr (LogReST.CompilesFor<ELogVerbosity::Verbose>)
     {
         ::Server->set_logger([](httplib::Request const& Req, httplib::Response const& Res)
         {
@@ -156,7 +156,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
         });
     }
 
-    if constexpr (IS_COMPILED_LOG(LogReST, Trace))
+    if constexpr (LogReST.CompilesFor<ELogVerbosity::Trace>)
     {
         ::Server->set_pre_compression_logger([](httplib::Request const& Req, httplib::Response const& Res)
         {
@@ -174,7 +174,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
         });
     }
 
-    if constexpr (IS_COMPILED_LOG(LogReST, Error))
+    if constexpr (LogReST.CompilesFor<ELogVerbosity::Error>)
     {
         ::Server->set_error_logger([](httplib::Error const& Err, httplib::Request const* Req)
         {

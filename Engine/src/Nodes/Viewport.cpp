@@ -49,7 +49,7 @@ void Jafg::LViewport::DispatchInputs()
 {
     STAT_CYCLE_FUNCTION()
 
-    if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
+    if constexpr (LogWidgetFramework.CompilesFor<ELogVerbosity::Verbose>)
     if (auto Key{this->Surface.GetFrontend().GetPhysicalKey(ELogicalKey::P)})
     {
         if (this->Surface.HasConsumableKeyState(*Key, ERawInputStateBits::Press))
