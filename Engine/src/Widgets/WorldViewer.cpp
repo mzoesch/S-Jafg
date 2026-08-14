@@ -125,7 +125,7 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
             .BorderTint = this->BorderTint,
             .TextureIndex = this->RenderTarget.GetResolvedBindlessIndex(),
             .SamplerIndex = UBO::Bindless::LinearClampToBorderSamplerIdx,
-            .bIgnoreAlpha = true,
+            .Flags = SSBO::EVisualInstanceFlagBits::IgnoreAlpha,
             });
     }
 

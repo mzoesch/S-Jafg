@@ -22,6 +22,23 @@ class FontHandle;
 namespace Jafg
 {
 
+enum EFontTypeBits: u16
+{
+    Identity    = 0x0,
+    Thin        = 0x1 << 0,
+    ExtraLight  = 0x1 << 1,
+    Light       = 0x1 << 2,
+    Regular     = 0x1 << 3,
+    Medium      = 0x1 << 4,
+    Semibold    = 0x1 << 5,
+    Bold        = 0x1 << 6,
+    ExtraBold   = 0x1 << 7,
+    Black       = 0x1 << 8,
+    Italic      = 0x1 << 9,
+};
+ENUM_STRUCT_FLAGS(EFontTypeBits, EFontType)
+SERDE_ENUM_MAP(EFontTypeBits, Identity, Thin, ExtraLight, Light, Regular, Medium, Semibold, Bold, ExtraBold, Black, Italic)
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API JFontSubsystem : public JFrontendSubsystem
 {
@@ -76,6 +93,11 @@ public:
         LVec2F Padding{ maths::zero_vector<LVec2F> };
         //# The base glyphes to add. Has to be non-empty.
         LString BaseSet{ AsciiSet() };
+        //#
+        //# Optional tags to set.
+        //# If at least one tag was specified, all other tags that a font provides also have to be provided.
+        //#
+        TArray<std::pair<LString, signed long>> Tags;
     };
     inline static constexpr LString AsciiSet() noexcept
     {

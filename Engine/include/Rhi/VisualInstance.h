@@ -23,6 +23,13 @@ static_assert(rhi::ubo<VisualShared>);
 namespace SSBO
 {
 
+enum struct EVisualInstanceFlagBits: u32
+{
+    Identity = 0x0,
+    IgnoreAlpha = 0x1 << 0,
+};
+ENUM_STRUCT_FLAGS(EVisualInstanceFlagBits, EVisualInstanceFlags)
+
 //# Device instance of a painted node.
 struct VisualInstance final: rhi::ssbo_template<VisualInstance, vk::ShaderStageFlagBits::eVertex, vk::ShaderStageFlagBits::eFragment>
 {
@@ -44,10 +51,7 @@ struct VisualInstance final: rhi::ssbo_template<VisualInstance, vk::ShaderStageF
     u32 TextureIndex{ UBO::Bindless::IdentityMulIdx };
     u32 SamplerIndex{ UBO::Bindless::LinearClampToEdgeSamplerIdx };
     f32 MsdfPixelRange{};
-    bool bIgnoreAlpha{};
-    u8 _pad0;
-    u8 _pad1;
-    u8 _pad2;
+    EVisualInstanceFlags Flags;
 };
 static_assert(sizeof(VisualInstance) % 16 == 0);
 static_assert(rhi::ssbo<VisualInstance>);

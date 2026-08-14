@@ -10,6 +10,7 @@ struct VisualShared
 };
 [[vk::binding(0,0),UpdateFrequency(PerFrame)]] ConstantBuffer<VisualShared> visual_shared;
 
+static const uint32_t VisualInstanceFlag_ignore_alpha = 1u << 0;
 [[CxxName("Jafg::SSBO::VisualInstance")]]
 struct VisualInstance
 {
@@ -27,10 +28,7 @@ struct VisualInstance
     uint texture_index;
     uint sampler_index;
     float msdf_pixel_range;
-    uint8_t bool_ignore_alpha;
-    uint8_t _pad0;
-    uint8_t _pad1;
-    uint8_t _pad2;
+    uint32_t flags;
 };
 [[vk::binding(1,0),UpdateFrequency(PerFrame)]] StructuredBuffer<VisualInstance> instances;
 
@@ -102,7 +100,7 @@ float4 fragMain(FRInput input): SV_TARGET
         result = maths::color_to_linear(instance.tint, visual_shared.gamma) * bindless_textures[NonUniformResourceIndex(instance.texture_index)].Sample(samplers[instance.sampler_index], input.tex_uv);
     }
 
-    if (instance.bool_ignore_alpha != 0)
+    if ((instance.flags & VisualInstanceFlag_ignore_alpha) != 0)
     {
         result = float4(result.rgb, 1.0);
     }

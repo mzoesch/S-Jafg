@@ -23,6 +23,7 @@
     #include <hb-ft.h>
     #include <ft2build.h>
     #include FT_FREETYPE_H
+    #include FT_MULTIPLE_MASTERS_H
     #include <msdfgen.h>
     #include <msdf-atlas-gen/msdf-atlas-gen.h>
     #include <stb_image_write.h>
@@ -32,6 +33,10 @@
 #if JAFG_WITH_GCC
     #pragma GCC diagnostic pop
 #endif /* JAFG_WITH_GCC */
+
+static_assert(sizeof(signed long) == sizeof(FT_Fixed));
+static_assert(std::numeric_limits<signed long>::max() == std::numeric_limits<FT_Fixed>::max());
+static_assert(std::numeric_limits<signed long>::lowest() == std::numeric_limits<FT_Fixed>::lowest());
 
 namespace
 {
@@ -275,7 +280,13 @@ void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
     check(this->My_FT_Library)
 
     check(this->My_Fonts.empty())
-    (void)this->ReloadFont({"Content/Fonts/Noto_Sans/static/NotoSans-Bold.ttf"});
+    (void)this->ReloadFont({
+        .Source="Content/Fonts/NotoSans-VariableFont_wdth,wght.ttf",
+        .Tags={
+            {"Weight", 700},
+            {"Width", 100},
+            },
+        });
     check(this->My_Fonts.size() == 1)
 
     return;
@@ -315,10 +326,12 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
             )
     }
 
+    LOG_TRACE(LogFontSubsystem, "[{}]: Loading font.", Info.Source)
+
     if (is_regular_file(Info.Source) == false)
     {
         LOG_FATAL(LogFontSubsystem
-            , "No such font [{}]."
+            , "[{}]: No such file."
             , Info.Source
             )
     }
@@ -337,6 +350,69 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
     FT_New_Face(this->My_FT_Library, Result.Source.string().c_str(), 0, &Result.My_FT_Face);
 #endif /* !JAFG_PLATFORM_USES_UTF8 */
     check(Result.My_FT_Face)
+
+    if (!Info.Tags.empty())
+    {
+        TArray<std::size_t> UsedTags;
+        UsedTags.reserve(Info.Tags.size());
+
+        FT_MM_Var* Variations{};
+        FT_Get_MM_Var(Result.My_FT_Face, &Variations);
+        check(Variations)
+        FT_Fixed Coords[2];
+        for (FT_UInt Idx{}; Idx < Variations->num_axis; ++Idx)
+        {
+            FT_Var_Axis const& Axis{Variations->axis[Idx]};
+            LOG_TRACE(LogFontSubsystem, "[{}]: {}: min({}), max({}); value: {}",
+                Info.Source, Axis.name
+                , static_cast<f32>(Axis.minimum) / 65536.0f, static_cast<f32>(Axis.maximum) / 65536.0f
+                , static_cast<f32>(Axis.def) / 65536.0f
+                )
+
+            if (auto It{algo::find(Info.Tags, LStringView{Axis.name}, algo::pair_first)}; It != Info.Tags.end())
+            {
+                signed long Value{Info.Tags[UsedTags.emplace_back(static_cast<std::size_t>(algo::distance(Info.Tags, It)))].second};
+                if (   static_cast<f32>(Value) < (static_cast<f32>(Axis.minimum) / 65536.0f)
+                    || static_cast<f32>(Value) > (static_cast<f32>(Axis.maximum) / 65536.0f))
+                {
+                    LOG_FATAL(LogFontSubsystem
+                        , "[{}]: Tag [{}] value [{}] is out of range [{},{}]."
+                        , Info.Source, Axis.name
+                        , Value
+                        , static_cast<f32>(Axis.minimum) / 65536.0f, static_cast<f32>(Axis.maximum) / 65536.0f
+                        )
+                }
+                Coords[Idx] = Value * 65536;
+            }
+            else
+            {
+                LOG_WARNING(LogFontSubsystem
+                    , "[{}]: Tag [{}] was not provided. Using default value [{}]."
+                    , Info.Source, Axis.name, static_cast<f32>(Axis.def) / 65536.0f
+                    )
+                Coords[Idx] = Axis.def;
+            }
+        }
+
+        for (auto Idx{0uz}; Idx < Info.Tags.size(); ++Idx)
+        {
+            if (!algo::contains(UsedTags, Idx))
+            {
+                LOG_WARNING(LogFontSubsystem
+                    , "[{}]: Tag [{}] was not consumed."
+                    , Info.Source, Info.Tags[Idx].first
+                    )
+            }
+        }
+
+        if (auto Error{FT_Set_Var_Design_Coordinates(Result.My_FT_Face, 2, Coords)}; Error)
+        {
+            LOG_FATAL(LogFontSubsystem
+                , "[{}]: Failed to set font variation desgin coordinates [{}]."
+                , Info.Source, Error
+                )
+        }
+    }
 
     Result.Font = msdfgen::adoptFreetypeFont(Result.My_FT_Face);
 

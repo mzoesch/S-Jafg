@@ -6,6 +6,41 @@ namespace serde
 {
 
 //#
+//# A generic enum map macro. For easy transformation.
+//# Usage example:
+//#     enum struct EExample: u8 { A, B, C };
+//#     SERDE_ENUM_MAP(EExample, A, B, C)
+//#
+#define DETAIL_SERDE_ENUM_MAP_TRANSFORM(X) {_serde_local_enum_t::X, #X},
+#define SERDE_ENUM_MAP(T, ...)                                                        \
+    inline void get_enum_map(std::unordered_map<T, LStringView> const** Map) noexcept \
+    {                                                                                 \
+        check(Map)                                                                    \
+        static_assert(std::is_enum_v<T>);                                             \
+        typedef T _serde_local_enum_t;                                                \
+        static std::unordered_map<T, LStringView> Members                             \
+        {                                                                             \
+            JAFG_MAP(DETAIL_SERDE_ENUM_MAP_TRANSFORM, __VA_ARGS__)                    \
+        };                                                                            \
+        *Map = &Members;                                                              \
+    }
+//#
+//# Then retrieve the map with this function.
+//#     E.g. auto& Map{serde::enum_map<EExample>()};
+//# The JSON and archive systems will use these templates. Therefore, this is the most trivial way to hook
+//# yourself into the jafg serialization ecosystem with string <=> enum conversions.
+//#
+//# @see Below for bin <=> enum conversions.
+//#
+template<typename T> requires std::is_enum_v<T>
+NODISCARD std::unordered_map<T, LStringView> const& enum_map() noexcept
+{
+    std::unordered_map<T, LStringView> const* Map;
+    get_enum_map(&Map);
+    return *Map;
+}
+
+//#
 //# Whether this enum is marked as stable.
 //# Changes to values of the enum or changing its size will break backwards compatibility.
 //# Appending new values is ok. Modifying existing values is not. Changed the std::underlying_t is not ok.
