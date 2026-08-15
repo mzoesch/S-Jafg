@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Nodes/EditorView.h"
-#include "Platform/SurfaceGlfw3.h"
+#include "Framework/SurfaceGlfw3.h"
 #include "User/LocalEgo.h"
 #include "Nodes/Viewport.h"
 

@@ -5,7 +5,7 @@
 #include "Nodes/UserWidget.h"
 #include "Framework/Lackey.h"
 #include "Rhi/RenderTarget.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "WorldViewer.generated.h"
 
 namespace Jafg

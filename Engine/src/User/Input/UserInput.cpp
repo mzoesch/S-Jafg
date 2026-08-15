@@ -2,8 +2,8 @@
 
 #include "User/Input/UserInput.h"
 #include "Engine/Engine.h"
-#include "Platform/Surface.h"
-#include "Platform/Cursor.h"
+#include "Framework/Surface.h"
+#include "Framework/Cursor.h"
 #include "User/LocalEgo.h"
 #include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"

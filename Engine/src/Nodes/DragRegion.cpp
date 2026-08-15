@@ -2,7 +2,7 @@
 
 #include "Nodes/DragRegion.h"
 #include "Engine/Engine.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "User/UserPreferences.h"
 
 void Jafg::WDragRegion::OnSurfaceResize()

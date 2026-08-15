@@ -13,7 +13,7 @@
 #include "Nodes/Text.h"
 #include "Nodes/TextIconized.h"
 #include "Nodes/VRegion.h"
-#include "Platform/SurfaceGlfw3.h"
+#include "Framework/SurfaceGlfw3.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Importer.h"
 #include "Nodes/DropDown.h"

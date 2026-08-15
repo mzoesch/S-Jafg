@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Nodes/DismissibleFloatingWidget.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 
 Jafg::LNodeReply Jafg::WDismissibleFloatingWidget::SweepFocus(LNodeSweepInfo const& Info, LVec2F const& Location)
 {

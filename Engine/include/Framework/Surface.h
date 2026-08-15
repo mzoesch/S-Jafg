@@ -10,7 +10,7 @@
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 #include "User/Input/InputMode.h"
 #include "Framework/FrontendForward.h"
@@ -225,9 +225,9 @@ private:
 } /* ~Namespace Jafg */
 
 #if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
-    #include "Platform/SurfaceGlfw3.h"
+    #include "Framework/SurfaceGlfw3.h"
 #elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
-    #include "Platform/SurfaceWasm.h"
+    #include "Framework/SurfaceWasm.h"
 #else /* PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */

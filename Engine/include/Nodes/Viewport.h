@@ -5,7 +5,7 @@
 #include "User/UserPreferencesForward.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Rhi/Material.h"
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 #include "Engine/Jxx.h"
 #include "User/Input/RawInput.h"
 

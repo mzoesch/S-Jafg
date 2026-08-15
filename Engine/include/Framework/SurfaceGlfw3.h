@@ -3,14 +3,14 @@
 #pragma once
 
 #include "Framework/Frontend.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "Rhi/RenderInfo.h"
 
 #if !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
     #error "Tried to include glfw3 specific code on a platform that does not support glfw3."
 #endif /* !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
 
-#include "Platform/Cursor.h"
+#include "Framework/Cursor.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
 

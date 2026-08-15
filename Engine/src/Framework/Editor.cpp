@@ -24,7 +24,7 @@
 #include "Framework/SceneComponent.h"
 #include "Framework/LackeyForward.h"
 #include "Framework/PersonaController.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "User/Input/InputTypes.h"
 #include "User/Input/InputActionValue.h"
 #include "Framework/Actor.h"

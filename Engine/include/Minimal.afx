@@ -56,7 +56,7 @@ using namespace std::chrono_literals;
 //# Core includes.
 //#
 #include "Core/AssertionForward.h"
-#include "Platform/Platform.h"
+#include "Core/Platform.h"
 #include "Core/Llmm.h"
 #include "Core/Asan.h"
 #include "Core/CoreMacros.h"

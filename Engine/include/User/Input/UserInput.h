@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 #include "User/Input/InputContext.h"
 #include "User/Input/InputMode.h"

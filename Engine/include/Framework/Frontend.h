@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/FrontendForward.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "Nodes/Node.h"
 #include "Framework/SubsystemCollection.h"
 #include "Framework/FrontendSubsystem.h"

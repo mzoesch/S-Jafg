@@ -2,7 +2,7 @@
 
 #include "Framework/Frontend.h"
 #include "Framework/TextureSubsystem.h"
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "Framework/FrontendSubsystem.h"
 #include "Framework/SubsystemCollection.h"
 #include "Core/LaunchProgress.h"

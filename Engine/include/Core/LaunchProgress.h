@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 
 namespace Jafg::LaunchProgress
 {

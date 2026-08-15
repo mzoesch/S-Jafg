@@ -4,10 +4,10 @@
 
 #include "Engine/Jxx.h"
 #include "User/Input/Events.h"
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 #include "User/UserPreferencesForward.h"
 #include "Framework/FrontendForward.h"
-#include "Platform/Cursor.h"
+#include "Framework/Cursor.h"
 #include "Node.generated.h"
 
 namespace Jafg

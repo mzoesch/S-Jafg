@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 
 #if !JAFG_PLATFORM_WASM
     #error "Tried to include wasm specific platform code on a non-wasm platform."

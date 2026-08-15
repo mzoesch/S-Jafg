@@ -9,7 +9,7 @@
 #include "Framework/WorldSubsystem.h"
 #include "Cli/CliType.h"
 #include "Cli/CliCommand.h"
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Framework/LackeyForward.h"

@@ -93,11 +93,11 @@ struct LPrimitivePlatformTypesGeneric
 #endif /* JAFG_DO_COMPILER_DIAGNOSTIC_SETUP */
 
 #if JAFG_PLATFORM_LINUX
-    #include "Platform/PlatformLinux.h"
+    #include "Core/PlatformLinux.h"
 #elif JAFG_PLATFORM_WASM
-    #include "Platform/PlatformWasm.h"
+    #include "Core/PlatformWasm.h"
 #elif JAFG_PLATFORM_WINDOWS
-    #include "Platform/PlatformWin.h"
+    #include "Core/PlatformWin.h"
 #else /* JAFG_PLATFORM_WINDOWS */
     #error "Failed to resolve platform."
 #endif /* !JAFG_PLATFORM_WINDOWS */

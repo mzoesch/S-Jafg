@@ -4,7 +4,7 @@
 
 #include "Minimal.afx"
 #include "Framework/FrontendForward.h"
-#include "Platform/SurfaceForward.h"
+#include "Framework/SurfaceForward.h"
 #include "Rhi/RendererCore.h"
 
 namespace Jafg

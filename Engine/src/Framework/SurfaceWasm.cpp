@@ -2,7 +2,7 @@
 
 #if JAFG_PLATFORM_WASM
 
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 #include "Nodes/Viewport.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Async/TaskUtility.h"

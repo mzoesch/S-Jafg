@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Platform/Surface.h"
+#include "Framework/Surface.h"
 
 namespace Jafg
 {
