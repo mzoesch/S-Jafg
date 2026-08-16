@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/WorldObject.h"
+#include "Framework/WorldObject.h"
 #include "Framework/ActorComponentForward.h"
 #include "ActorComponent.generated.h"
 

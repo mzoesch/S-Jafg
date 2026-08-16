@@ -9,6 +9,7 @@
 #include "Rhi/GraphicsPipelineFactory.h"
 #include "Rhi/Objects.h"
 #include "Rhi/VisualInstance.h"
+#include "Rhi/TextureCube.h"
 #include "Engine/WorldData.h"
 
 namespace
@@ -419,6 +420,25 @@ void Jafg::LMaterialInstance::Vk_SetSampler(LFrontend const& Frontend, rhi::vk_b
 }
 
 void Jafg::LMaterialInstance::Vk_SetSampledImage(LFrontend const& Frontend, rhi::vk_binding Where, LTexture2 const& Texture)
+{
+    vk::DescriptorImageInfo ImageInfo{
+        .sampler = nullptr,
+        .imageView = Texture.GetImageView(),
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+    std::array Writes{vk::WriteDescriptorSet{
+        .dstSet = *this->Vk_GetUniqueDescriptorSet(Where.space),
+        .dstBinding = Where.index,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = vk::DescriptorType::eSampledImage,
+        .pImageInfo = &ImageInfo,
+        },};
+    /* TODO: Same as above. */
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+}
+
+void Jafg::LMaterialInstance::Vk_SetSampledTextureCube(LFrontend const& Frontend, rhi::vk_binding Where, LTextureCube2 const& Texture)
 {
     vk::DescriptorImageInfo ImageInfo{
         .sampler = nullptr,
@@ -896,6 +916,10 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
                         if constexpr (std::same_as<std::decay_t<decltype(base_shape)>, rhi::reflected_shader::binding_definition::resource::texture2D>)
                         {
                             SetBinding.template operator()<LTexture2Ref>();
+                        }
+                        else if constexpr (std::same_as<std::decay_t<decltype(base_shape)>, rhi::reflected_shader::binding_definition::resource::textureCube2D>)
+                        {
+                            SetBinding.template operator()<LTextureCube2>();
                         }
                         else if constexpr (std::same_as<std::decay_t<decltype(base_shape)>, rhi::reflected_shader::binding_definition::resource::structured_buffer>)
                         {

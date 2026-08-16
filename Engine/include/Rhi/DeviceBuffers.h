@@ -37,6 +37,8 @@ struct generic_device_buffer
     ~generic_device_buffer() noexcept { detail::free_device_allocation(this->buffer, this->allocation); }
 
     NODISCARD FORCEINLINE constexpr T operator*() const noexcept { return this->buffer; }
+    NODISCARD FORCEINLINE constexpr T* operator->() noexcept { return &this->buffer; }
+    NODISCARD FORCEINLINE constexpr T const* operator->() const noexcept { return &this->buffer; }
     NODISCARD FORCEINLINE constexpr T get_buffer() const noexcept { return this->buffer; }
     NODISCARD FORCEINLINE constexpr device_allocation get_allocation() const noexcept { return this->allocation; }
 

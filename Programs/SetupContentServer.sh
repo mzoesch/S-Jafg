@@ -7,7 +7,7 @@
 
 set -eo pipefail
 
-if [ -z "site" ]; then
+if [ -z "$site" ]; then
     site="jafg-content"
 fi
 
@@ -16,23 +16,23 @@ if [ -z "$server_name" ]; then
     exit 1
 fi
 
-if [ -z "port" ]; then
+if [ -z "$port" ]; then
     port="80"
 fi
 
 # Should include trailing slash.
-if [ -z "jafg_content_root" ]; then
+if [ -z "$jafg_content_root" ]; then
     echo "Not defined: <jafg_content_root>"
     exit 1
 fi
 
 # Should include trailing slash.
-if [ ! -d "jafg_content_location" ]; then
+if [ ! -d "$jafg_content_location" ]; then
     echo "Not found: <jafg_content_location>"
     exit 1
 fi
 
-if [ -z "certbot_email" ]; then
+if [ -z "$certbot_email" ]; then
     echo "Not defined: <certbot_email>"
     exit 1
 fi

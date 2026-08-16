@@ -128,22 +128,6 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)
     return EResult::Success;
 }
 
-// void Jafg::LTexture2::AllocateEmpty(LTexture2Extent const& Extent, bool bZeroed)
-// {
-//     this->Extent = Extent;
-//
-//     if (bZeroed)
-//     {
-//         this->MipMap0.AllocateZeroed(this->Extent.Width * this->Extent.Height * this->GetBytesPerPixel());
-//     }
-//     else
-//     {
-//         this->MipMap0.Allocate(this->Extent.Width * this->Extent.Height * this->GetBytesPerPixel());
-//     }
-//
-//     return;
-// }
-
 void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
 {
     check(this->IsOnHost())
@@ -198,7 +182,7 @@ void Jafg::LTexture2::LoadToDevice(DeviceInfo const& Info)
     this->Handle = Frontend.Vk_StageLinearImage({
         .Data = this->MipMap0.data(),
         .Info = {
-            .flags ={},
+            .flags = {},
             .imageType = vk::ImageType::e2D,
             .format = this->GetFormat(),
             .extent = vk::Extent3D{this->GetWidth(), this->GetHeight(), 1},

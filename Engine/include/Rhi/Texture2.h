@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Texture2.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/ResourceReference.h"
 #include "Rhi/DeviceBuffers.h"
@@ -19,11 +18,11 @@ typedef rhi::shared_ref<LTexture2> LTexture2Ref;
 //# Represents a generic two-dimensional texture that can be uploaded to a device.
 struct LTexture2 final
 {
-    struct HostInfo
+    struct HostInfo final
     {
         vk::Format Format{ vk::Format::eUndefined };
     };
-    struct DeviceInfo
+    struct DeviceInfo final
     {
         //# The desired number of mip levels. If not available, the optimal number will be used.
         std::optional<u32> DesiredMipLevels;
@@ -50,7 +49,7 @@ struct LTexture2 final
 
     LTexture2() noexcept = default;
     explicit LTexture2(LPath Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::None) noexcept
-        : Path(std::move(Path))
+        : Path{std::move(Path)}
     {
         if (State & ETexture2StateBits::Host || State & ETexture2StateBits::Device)
         {
@@ -124,7 +123,7 @@ struct LTexture2 final
 
 private:
 
-    struct Metadata
+    struct Metadata final
     {
         rhi::extent2 Extent;
         vk::Format Format{ vk::Format::eUndefined };

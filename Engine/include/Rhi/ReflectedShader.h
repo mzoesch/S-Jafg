@@ -40,13 +40,14 @@ struct reflected_shader final
         struct resource final
         {
             struct texture2D{};
+            struct textureCube2D{};
             struct structured_buffer
             {
                 LString Name;
                 std::optional<LString> CxxName;
                 user_attributes_t UserAttributes;
             };
-            std::variant<texture2D, structured_buffer> base_shape;
+            std::variant<texture2D, textureCube2D, structured_buffer> base_shape;
         };
         struct sampler_state final
         {
@@ -105,6 +106,10 @@ struct reflected_shader final
             {
                 auto& base_shape{std::get<resource>(r).base_shape};
                 if (std::holds_alternative<resource::texture2D>(base_shape))
+                {
+                    return vk::DescriptorType::eSampledImage;
+                }
+                if (std::holds_alternative<resource::textureCube2D>(base_shape))
                 {
                     return vk::DescriptorType::eSampledImage;
                 }

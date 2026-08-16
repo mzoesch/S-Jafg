@@ -1,0 +1,35 @@
+{
+    "inherits": [
+        "Jafg.TriangleList",
+        "Jafg.SolidColorAttachment",
+        "Jafg.Rasterization"
+    ],
+    "pipelineDepthStencilState": {
+        "depthTestEnable": true,
+        "depthWriteEnable": false,
+        "depthCompareOp": "eLessOrEqual",
+        "depthBoundsTestEnable": false,
+        "stencilTestEnable": false,
+        "front": {
+            "failOp": "eKeep",
+            "passOp": "eKeep",
+            "depthFailOp": "eKeep",
+            "compareOp": "eAlways",
+            "compareMask": 0,
+            "writeMask": 0,
+            "reference": 0
+        },
+        "back": {
+            "failOp": "eKeep",
+            "passOp": "eKeep",
+            "depthFailOp": "eKeep",
+            "compareOp": "eAlways",
+            "compareMask": 0,
+            "writeMask": 0,
+            "reference": 0
+        },
+        "minDepthBounds": 0.0,
+        "maxDepthBounds": 0.0
+    },
+    "shader": "Shaders/Jafg.Skybox"
+}

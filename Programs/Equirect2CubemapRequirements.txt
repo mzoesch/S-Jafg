@@ -1,0 +1,7 @@
+# python3 -m venv ./.venv && source .venv/bin/activate && pip install -r Equirect2CubemapRequirements.txt
+#
+# pip freeze > Equirect2CubemapRequirements.txt
+# deactivate
+
+pandas
+pillow

@@ -123,6 +123,11 @@ void from_json(json const& j, reflected_shader::binding_definition& binding_defi
                     variant = reflected_shader::binding_definition::resource::texture2D{};
                     return;
                 }
+                if (base_shape == "textureCube")
+                {
+                    variant = reflected_shader::binding_definition::resource::textureCube2D{};
+                    return;
+                }
                 if (base_shape == "structuredBuffer")
                 {
                     auto& result_type{t.at("resultType")};

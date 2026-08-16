@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/WorldObject.h"
+#include "Framework/WorldObject.h"
 #include "Engine/TickableObject.h"
 #include "Framework/ActorComponent.h"
 #include "Framework/SceneComponent.h"
@@ -334,6 +334,10 @@ public:
     NODISCARD FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(bool bInShouldTick) noexcept { this->bShouldTick = bInShouldTick; }
 
+    //# Whether to allow that components of this actor render. An actor itself does not have rendering capabilities.
+    NODISCARD FORCEINLINE constexpr bool AllowsRendering() const noexcept { return this->bAllowRender; }
+    FORCEINLINE constexpr void SetAllowRendering(bool b) noexcept { this->bAllowRender = b; }
+
 #if JAFG_WITH_EDITOR
     NODISCARD FORCEINLINE constexpr bool IsEditorHitTestable() const noexcept { return this->bEditorHitTestable; }
     FORCEINLINE constexpr void SetEditorHitTestable(bool b) noexcept { this->bEditorHitTestable = b; }
@@ -471,6 +475,9 @@ private:
     //# Or in desisted worlds if #bCanEverTickInDesistedTime is false.
     //#
     bool bShouldTick:1{true};
+
+    //# Whether to allow that components render.
+    bool bAllowRender:1{true};
 
 #if JAFG_WITH_EDITOR
     //# Whether this actor is hit testable by the editor world viewer.

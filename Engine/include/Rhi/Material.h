@@ -7,6 +7,7 @@
 #include "Rhi/GraphicsPipeline.h"
 #include "Rhi/ReflectedShader.h"
 #include "Rhi/Texture2.h"
+#include "Rhi/TextureCube.h"
 #include "Rhi/Bindless.h"
 
 namespace rhi
@@ -88,6 +89,7 @@ namespace Jafg
 {
 
 struct LTexture2;
+struct LTextureCube2;
 struct LMaterial;
 typedef rhi::shared_ref<LMaterial> LMaterialRef;
 struct LMaterialInstance;
@@ -107,13 +109,14 @@ struct LMaterialInstance final
     {
         struct Resource final
         {
-            typedef std::variant<std::monostate, rhi::mapped_device_buffer, UBO::Bindless::Sampler, LTexture2Ref>
+            typedef std::variant<std::monostate, rhi::mapped_device_buffer, UBO::Bindless::Sampler, LTexture2Ref, LTextureCube2>
                 value_type;
 
             NODISCARD constexpr bool IsNone() const noexcept { return std::holds_alternative<std::monostate>(this->Value); }
             NODISCARD constexpr bool IsBuffer() const noexcept { return std::holds_alternative<rhi::mapped_device_buffer>(this->Value); }
             NODISCARD constexpr bool IsSampler() const noexcept { return std::holds_alternative<UBO::Bindless::Sampler>(this->Value); }
             NODISCARD constexpr bool IsSampledImage() const noexcept { return std::holds_alternative<LTexture2Ref>(this->Value); }
+            NODISCARD constexpr bool IsSampledTextureCube() const noexcept { return std::holds_alternative<LTextureCube2>(this->Value); }
 
             NODISCARD constexpr rhi::mapped_device_buffer& AsBuffer() noexcept { return std::get<rhi::mapped_device_buffer>(this->Value); }
             NODISCARD constexpr rhi::mapped_device_buffer const& AsBuffer() const noexcept { return std::get<rhi::mapped_device_buffer>(this->Value); }
@@ -185,6 +188,7 @@ struct LMaterialInstance final
     ENGINE_API void Vk_SetField(LFrontend& Frontend, rhi::vk_binding Where, LStringView Value);
     ENGINE_API void Vk_SetSampler(LFrontend const& Frontend, rhi::vk_binding Where, vk::Sampler const& Sampler);
     ENGINE_API void Vk_SetSampledImage(LFrontend const& Frontend, rhi::vk_binding Where, LTexture2 const& Texture);
+    ENGINE_API void Vk_SetSampledTextureCube(LFrontend const& Frontend, rhi::vk_binding Where, LTextureCube2 const& Texture);
 };
 
 } /* ~Namespace rhi */

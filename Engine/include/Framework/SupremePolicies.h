@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/WorldObject.h"
+#include "Framework/WorldObject.h"
 #include "Framework/Lackey.h"
 #include "SupremePolicies.generated.h"
 

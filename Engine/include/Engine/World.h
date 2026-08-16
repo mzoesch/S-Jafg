@@ -12,6 +12,7 @@
 #include "Framework/SurfaceForward.h"
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
+#include "Rhi/TextureCube.h"
 #include "Framework/LackeyForward.h"
 #include "Framework/PhysicsSystem.h"
 
@@ -20,6 +21,7 @@ namespace Jafg
 
 class LLocalEgo;
 class AActor;
+class ASkybox;
 class LViewport;
 class LEngine;
 class LShader;
@@ -36,6 +38,7 @@ struct LSubsystemCollection;
 struct LRenderInfo;
 struct LNodeRenderInfo;
 struct LMaterialInstance;
+struct LTextureCube2;
 
 namespace Detail
 {
@@ -133,6 +136,8 @@ struct LWorldCreateInfo final
 #endif /* JAFG_WITH_EDITOR */
     TSubclassOf<ASupremePolicies> SupremePoliciesClass;
     EWorldTimeBehavior TimeBehavior{ EWorldTimeBehavior::Linear };
+    //# If set, will create a skybox with this cube-map.
+    std::shared_ptr<LTextureCube2> TextureCube;
 };
 
 //#
@@ -253,12 +258,20 @@ public:
         this->bPaused = false;
     }
 
-    FORCEINLINE ASupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
-    FORCEINLINE ASupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
-    FORCEINLINE ASupremePolicies* GetSupremePoliciesChecked() noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
-    FORCEINLINE ASupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
-    FORCEINLINE ASupremePolicies* GetSupremePoliciesAsserted() { jassert(this->SupremePolicies) return this->SupremePolicies; }
-    FORCEINLINE ASupremePolicies const* GetSupremePoliciesAsserted() const { jassert(this->SupremePolicies) return this->SupremePolicies; }
+    NODISCARD FORCEINLINE constexpr ASupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
+    NODISCARD FORCEINLINE constexpr ASupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
+    NODISCARD FORCEINLINE constexpr ASupremePolicies* GetSupremePoliciesChecked() noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
+    NODISCARD FORCEINLINE constexpr ASupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check(this->SupremePolicies) return this->SupremePolicies; }
+    NODISCARD FORCEINLINE constexpr ASupremePolicies* GetSupremePoliciesAsserted() { jassert(this->SupremePolicies) return this->SupremePolicies; }
+    NODISCARD FORCEINLINE constexpr ASupremePolicies const* GetSupremePoliciesAsserted() const { jassert(this->SupremePolicies) return this->SupremePolicies; }
+
+    ENGINE_API ASkybox& MakeSkybox(std::shared_ptr<LTextureCube2> Texture);
+    NODISCARD FORCEINLINE constexpr ASkybox* GetSkybox() noexcept { return this->Skybox; }
+    NODISCARD FORCEINLINE constexpr ASkybox const* GetSkybox() const noexcept { return this->Skybox; }
+    NODISCARD FORCEINLINE constexpr ASkybox* GetSkyboxChecked() noexceptcheck { check(this->Skybox) return this->Skybox; }
+    NODISCARD FORCEINLINE constexpr ASkybox const* GetSkyboxChecked() const noexceptcheck { check(this->Skybox) return this->Skybox; }
+    NODISCARD FORCEINLINE constexpr ASkybox* GetSkyboxAsserted() { jassert(this->Skybox) return this->Skybox; }
+    NODISCARD FORCEINLINE constexpr ASkybox const* GetSkyboxAsserted() const { jassert(this->Skybox) return this->Skybox; }
 
     NODISCARD FORCEINLINE constexpr bool ShouldTickPhysics() const noexcept { return !this->IsTimeDesisted() && !this->IsLinearWorldDormant(); }
     NODISCARD LPhysicsSystem& GetWorldGlobalPhysicsSystem() noexcept { return this->PhysicsSystem; }
@@ -323,6 +336,9 @@ private:
     //# Only valid on authorities.
     //#
     ASupremePolicies* SupremePolicies{};
+
+    //# A skybox is optional.
+    ASkybox* Skybox{};
 
     LPhysicsSystem PhysicsSystem{ ESkipInit::Here };
     TArray<ARigidComponent*> RigidComponents;

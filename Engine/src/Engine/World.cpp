@@ -18,6 +18,8 @@
 #include "Framework/PhysicsSystem.h"
 #include "Framework/PhysicsSystemActor.h"
 #include "Framework/RigidComponent.h"
+#include "Framework/TextureSubsystem.h"
+#include "Framework/Skybox.h"
 #include "../Framework/PhysicsForeignCore.h"
 
 Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
@@ -99,6 +101,11 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
 
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
+
+    if (this->CreateInfo.TextureCube)
+    {
+        this->MakeSkybox(this->CreateInfo.TextureCube);
+    }
 
     this->GetMutableEngine().OnWorldBeginLife.Broadcast(this);
     this->WorldState = EWorldState::Running;
@@ -187,50 +194,6 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
 {
     STAT_CYCLE_FUNCTION()
 
-    // LMatrix P{SkipInit};
-    // LMatrix V{SkipInit};
-    // if (auto Cache{this->EyeToMatrices.find(&Eye)}; this->GetLocalEgo().GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
-    // {
-    //     P = Maths::MakePerspectiveProjectionMatrix(
-    //         Maths::ToRadians(Eye.GetDegYFov()),
-    //         static_cast<f32>(Info.Surface.GetDimensions().X) / static_cast<f32>(Info.Surface.GetDimensions().X),
-    //         Eye.GetNearFrustum(), Eye.GetFarFrustum()
-    //     );
-    //     V = Eye.GetViewMatrix();
-    //     this->EyeToMatrices[&Eye] = { P, V };
-    // }
-    // else
-    // {
-    //     P = Cache->second.P;
-    //     V = Cache->second.V;
-    // }
-
-    // const LMatrix4 InversePV = (P * V).GetInverse();
-
-    // LVector Corners[8];
-    // constexpr LVector4 NdcCorners[8]
-    // {
-    //     {-1, -1, -1,  1}, /* Near Bottom Left */
-    //     { 1, -1, -1,  1}, /* Near Bottom Right */
-    //     {-1,  1, -1,  1}, /* Near Top Left */
-    //     { 1,  1, -1,  1}, /* Near Top Right */
-    //     {-1, -1,  1,  1}, /* Far Bottom Left */
-    //     { 1, -1,  1,  1}, /* Far Bottom Right */
-    //     {-1,  1,  1,  1}, /* Far Top Left */
-    //     { 1,  1,  1,  1}  /* Far Top Right */
-    // };
-    // for (int i = 0; i < 8; i++)
-    // {
-    //     LVector4 WorldLocation = InversePV * NdcCorners[i];
-    //     Corners[i] = WorldLocation.XYZ() / WorldLocation.W; /* Perspective divide */
-    // }
-    // std::vector<std::pair<int, int>> frustumEdges = {
-    //     {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near Plane Edges
-    //     {4, 5}, {5, 7}, {7, 6}, {6, 4}, // Far Plane Edges
-    //     {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting Near and Far Planes
-    // };
-    // const std::span CornersSpan{Corners};
-
     LActorRenderInfo ActorInfo{Info, Eye, SharedSets};
     auto& Frontend{ActorInfo.Frontend};
     if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
@@ -249,11 +212,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
     ActorInfo.PreferredMaterial = Instance;
 
     auto& WorldData{ActorInfo.WorldData};
-    // model...
-    // WorldData.view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up);
-    WorldData.view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
     WorldData = {
-        // .view = glm::lookAtRH(Eye.translation, Eye.translation + Eye.front, Eye.up),
         .view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up),
         .proj = maths::perspective<LWorldReal,world_qual>(
             Eye.vert_fov,
@@ -340,15 +299,17 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
 
             AActor const* Actor{StaticCastChecked<AActor>(&*Obj)};
             check(!Actor->_IsGarbage())
-
-            for (auto const& Comp: Actor->GetComponents())
+            if (Actor->AllowsRendering())
             {
-                if (Comp->ShouldRender())
+                for (auto const& Comp: Actor->GetComponents())
                 {
-                    Comp->Render(ActorInfo);
-                }
+                    if (Comp->ShouldRender())
+                    {
+                        Comp->Render(ActorInfo);
+                    }
 
-                continue;
+                    continue;
+                }
             }
 
             // if
@@ -362,6 +323,11 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
 
             continue;
         }
+    }
+
+    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !Filter)
+    {
+        this->Skybox->RenderSkybox(ActorInfo);
     }
 
     for (auto& F: ActorInfo.PostRenderDelegates)
@@ -552,6 +518,30 @@ TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const&
     }
 
     return Results;
+}
+
+Jafg::ASkybox& Jafg::LWorld::MakeSkybox(std::shared_ptr<LTextureCube2> Texture)
+{
+#if !JAFG_IN_SHIPPING
+    if (Texture)
+    {
+        LOG_TRACE(LogWorld, "[{}]: Making skybox with [{}].", this->GetHumanReadableName(), Texture->GetDebugName())
+    }
+    else
+    {
+        LOG_TRACE(LogWorld, "[{}]: Making skybox with [nullptr].", this->GetHumanReadableName())
+    }
+#endif /* !JAFG_IN_SHIPPING */
+    if (!this->Skybox)
+    {
+        this->Skybox = SpawnObject(TWorldStaticInit<ASkybox>{*this});
+        check(this->Skybox)
+    }
+
+    check(IsValidFast(*this, this->Skybox))
+    this->Skybox->SetSkyboxTexture(std::move(Texture));
+
+    return *this->Skybox;
 }
 
 Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept

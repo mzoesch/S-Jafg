@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/WorldObject.h"
+#include "Framework/WorldObject.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 

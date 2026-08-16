@@ -1124,6 +1124,7 @@ void Jafg::WEditorWorldViewer::Construct()
             .HumanReadableName = *Prefs.EditorLastWorldName,
             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
             .TimeBehavior = EWorldTimeBehavior::Desist,
+            .TextureCube = LTextureCube2::MakeSharedTextureCube2(LTextureCube2::CubeMap{"Content/Textures/LearnOpenGlSkybox"}),
             }, std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
     }
 }
@@ -2028,6 +2029,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                             .HumanReadableName = *Prefs.EditorLastWorldName,
                             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
                             .TimeBehavior = EWorldTimeBehavior::Desist,
+                            .TextureCube = LTextureCube2::MakeSharedTextureCube2(LTextureCube2::CubeMap{"Content/Textures/LearnOpenGlSkybox"}),
                             }, std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
                         return algo::reply::unhandled();
                     },});
@@ -2406,17 +2408,17 @@ void LoadGymCollection(Jafg::LWorld& World)
 {
     auto& Frontend{World.GetMutableFrontend()};
 
-    auto GroundMaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Triplanar")};
-    GroundMaterialInstance->Vk_SetField(Frontend, GroundMaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/GroundGrid_8M");
-    auto* Actor{Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-    Actor->SetEditorHitTestable(false);
-    Actor->EditorName = "Ground";
-    Actor->EmplaceRootComponent<Jafg::AStaticMeshComponent>([GroundMaterialInstance](Jafg::AStaticMeshComponent& Comp)
-    {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
-        Comp.SetMaterialInstance(std::move(GroundMaterialInstance));
-        Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
-    });
+    // auto GroundMaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Triplanar")};
+    // GroundMaterialInstance->Vk_SetField(Frontend, GroundMaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/GroundGrid_8M");
+    // auto* Actor{Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+    // Actor->SetEditorHitTestable(false);
+    // Actor->EditorName = "Ground";
+    // Actor->EmplaceRootComponent<Jafg::AStaticMeshComponent>([GroundMaterialInstance](Jafg::AStaticMeshComponent& Comp)
+    // {
+    //     Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
+    //     Comp.SetMaterialInstance(std::move(GroundMaterialInstance));
+    //     Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
+    // });
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})->GetRootComponent().SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
 
