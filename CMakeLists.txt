@@ -133,7 +133,7 @@ string(STRIP "${_version_content}" _detail_jafg_version)
 if(NOT _detail_jafg_version)
     message(FATAL_ERROR "[${JAFG_ENGINE_ROOT}/Config/.ver]: Failed to retrieve version number.")
 endif()
-message(STATUS "JAFG_VERSION: ${_detail_jafg_version}")
+message(STATUS "_detail_jafg_version: ${_detail_jafg_version}")
 
 # Cpp version.
 if(NOT EXISTS "${JAFG_ENGINE_ROOT}/Config/.__cplusplus")
