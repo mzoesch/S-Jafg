@@ -79,7 +79,7 @@ enum struct EMotion: u8
 };
 
 //# Determines the behavior of a rigid body when added to a simulation.
-enum struct ESimulationAddingBehavior: u8
+enum struct ESimulationAddingBehavior: i32
 {
     //# Will always active the new body.
     Activate,

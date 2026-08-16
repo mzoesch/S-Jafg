@@ -614,9 +614,6 @@ void Jafg::LWorld::OnTearDown()
     check(this->Collection.IsOuterValid() == false && this->Collection.IsClassValid() == false)
     check(this->TickableObjectsPutMutex == false)
 
-    LOG_VERBOSE(LogPhysics, "Tearing down physics system for world [{}].", this->GetHumanReadableName())
-    this->PhysicsSystem.TearDown();
-
     LClassOuter::OnTearDown();
 
     this->WorldState = EWorldState::WaitingForKill;

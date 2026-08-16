@@ -47,8 +47,6 @@ public:
     //# If this returns false. All interactions with this class are UB.
     NODISCARD constexpr bool IsValid() const noexcept { return !!this->SubSystem; }
 
-    void TearDown() const noexcept;
-
     NODISCARD ENGINE_API JPH::PhysicsSystem* operator->() noexcept;
     NODISCARD ENGINE_API JPH::PhysicsSystem const* operator->() const noexcept;
     NODISCARD ENGINE_API JPH::PhysicsSystem& operator*() noexcept;

@@ -2405,38 +2405,48 @@ void LoadFirstCollection(Jafg::LWorld& World)
 
 void LoadGymCollection(Jafg::LWorld& World)
 {
-    auto& Frontend{World.GetMutableFrontend()};
-
-    // auto GroundMaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Triplanar")};
-    // GroundMaterialInstance->Vk_SetField(Frontend, GroundMaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/GroundGrid_8M");
-    // auto* Actor{Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-    // Actor->SetEditorHitTestable(false);
-    // Actor->EditorName = "Ground";
-    // Actor->EmplaceRootComponent<Jafg::AStaticMeshComponent>([GroundMaterialInstance](Jafg::AStaticMeshComponent& Comp)
-    // {
-    //     Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
-    //     Comp.SetMaterialInstance(std::move(GroundMaterialInstance));
-    //     Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
-    // });
-
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})->GetRootComponent().SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
 
-    auto& Cube{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-    auto& Rigid{Cube.EmplaceRootComponent<Jafg::ARigidComponent>()};
-    Rigid.SetShouldRender(true);
-    Rigid.SetLocalTranslationByTeleport({0,0.5,8});
-    // Rigid.MakeSphere(0.5f);
-    Rigid.MakeBox(LWorldVec3{0.5});
-    Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Activate);
-    Rigid.SetLinearVelocity({0,20,5});
-    Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
     {
-        auto& Frontend{World->GetMutableFrontend()};
-        auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.UniformTriplanar")};
-        MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/ObjectGrid_1M");
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube_1M.glb"));
-        Comp.SetMaterialInstance(std::move(MaterialInstance));
-    });
+        auto& Plane{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Plane.EditorName = "Ground"sv;
+        Plane.SetEditorHitTestable(false);
+        auto& Rigid{Plane.EmplaceRootComponent<Jafg::ARigidComponent>()};
+        Rigid.SetLocalTranslationByTeleport({0,-1,0});
+        Rigid.MakeBox(LWorldVec3{400.0,0.0,400.0});
+        Rigid.SetShouldRender(true);
+        Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Preserve);
+        Plane.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
+        {
+            auto& Frontend{World->GetMutableFrontend()};
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Triplanar")};
+            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/GroundGrid_8M");
+            Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
+            Comp.SetMaterialInstance(std::move(MaterialInstance));
+            Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
+        });
+    }
+
+    {
+        auto& Cube{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Cube.EditorName = "Cube"sv;
+        auto& Rigid{Cube.EmplaceRootComponent<Jafg::ARigidComponent>()};
+        Rigid.SetShouldRender(true);
+        Rigid.SetLocalTranslationByTeleport({0,0.5,8});
+        Rigid.SetPhysicsMotion(Jafg::EPhysicsMotion::Dynamic);
+        Rigid.SetPhysicsLayer(Jafg::EPhysicsLayer::Dynamic);
+        Rigid.MakeBox(LWorldVec3{0.5});
+        Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Activate);
+        Rigid.SetLinearVelocity({0,20,5});
+        Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
+        {
+            auto& Frontend{World->GetMutableFrontend()};
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.UniformTriplanar")};
+            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/ObjectGrid_1M");
+            Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube_1M.glb"));
+            Comp.SetMaterialInstance(std::move(MaterialInstance));
+        });
+    }
 }
 
 } /* ~Namespace <Anonymous> */

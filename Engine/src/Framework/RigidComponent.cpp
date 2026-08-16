@@ -31,6 +31,18 @@ void Jafg::ARigidComponent::OnGarbage(EJxxRecordTearDownReason Reason)
 }
 #endif /* JAFG_DO_CHECKS */
 
+void Jafg::ARigidComponent::SetPhysicsLayer(EPhysicsLayer::value_type Layer)
+{
+    check(!this->RigidObject.IsValid() && "Not implemented yet.")
+    this->Layer = Layer;
+}
+
+void Jafg::ARigidComponent::SetPhysicsMotion(EPhysicsMotion Motion)
+{
+    check(!this->RigidObject.IsValid() && "Not implemented yet.")
+    this->Motion = Motion;
+}
+
 void Jafg::ARigidComponent::MakeSphere(f32 Radius)
 {
     check(Tasks::IsOnMasterThread())
@@ -55,8 +67,8 @@ void Jafg::ARigidComponent::MakeSphere(f32 Radius)
         new JPH::SphereShape{Radius * WorldTransform.s.x},
         JPH::RVec3{WorldTransform.t.x, WorldTransform.t.y, WorldTransform.t.z},
         {WorldTransform.r.x, WorldTransform.r.y, WorldTransform.r.z, WorldTransform.r.w},
-        JPH::EMotionType::Dynamic,
-        EPhysicsLayer::Dynamic,
+        JPH::EMotionType{std::to_underlying(this->Motion)},
+        this->Layer,
         };
     this->RigidObject = LRigidObject::FromNative(Interface.CreateBody(CreateSettings));
     check(this->RigidObject.IsValid())
@@ -86,15 +98,14 @@ void Jafg::ARigidComponent::MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius /* =
     }
     check(!this->RigidObject.IsValid())
 
-
     LWorldTrans WorldTransform{this->GetWorldTransformSlow()};
     check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
     JPH::BodyCreationSettings CreateSettings{
         new JPH::BoxShape{{HalfExtent.x * WorldTransform.s.x, HalfExtent.y * WorldTransform.s.y, HalfExtent.z * WorldTransform.s.z}, ConvexRadius},
         JPH::RVec3{WorldTransform.t.x, WorldTransform.t.y, WorldTransform.t.z},
         {WorldTransform.r.x, WorldTransform.r.y, WorldTransform.r.z, WorldTransform.r.w},
-        JPH::EMotionType::Dynamic,
-        EPhysicsLayer::Dynamic,
+        JPH::EMotionType{std::to_underlying(this->Motion)},
+        this->Layer,
         };
     this->RigidObject = LRigidObject::FromNative(Interface.CreateBody(CreateSettings));
     check(this->RigidObject.IsValid())

@@ -141,10 +141,17 @@ static_assert(std::same_as<Jafg::EPhysicsLayer::value_type, JPH::ObjectLayer>);
 static_assert(std::same_as<Jafg::EPhysicsBroadPhase::value_type, JPH::BroadPhaseLayer::Type>);
 static_assert(std::same_as<LWorldReal, JPH::Real>);
 
+static_assert(std::same_as<std::underlying_type_t<Jafg::EPhysicsMotion>, std::underlying_type_t<JPH::EMotionType>>);
+static_assert(std::to_underlying(Jafg::EPhysicsMotion::Static) == std::to_underlying(JPH::EMotionType::Static));
+static_assert(std::to_underlying(Jafg::EPhysicsMotion::Kinematic) == std::to_underlying(JPH::EMotionType::Kinematic));
+static_assert(std::to_underlying(Jafg::EPhysicsMotion::Dynamic) == std::to_underlying(JPH::EMotionType::Dynamic));
+
+static_assert(std::same_as<std::underlying_type_t<Jafg::Physx::ESoftBodyConstraintColor>, std::underlying_type_t<JPH::ESoftBodyConstraintColor>>);
 static_assert(std::to_underlying(Jafg::Physx::ESoftBodyConstraintColor::ConstraintType) == std::to_underlying(JPH::ESoftBodyConstraintColor::ConstraintType));
 static_assert(std::to_underlying(Jafg::Physx::ESoftBodyConstraintColor::ConstraintGroup) == std::to_underlying(JPH::ESoftBodyConstraintColor::ConstraintGroup));
 static_assert(std::to_underlying(Jafg::Physx::ESoftBodyConstraintColor::ConstraintOrder) == std::to_underlying(JPH::ESoftBodyConstraintColor::ConstraintOrder));
 
+static_assert(std::same_as<std::underlying_type_t<Jafg::Physx::EShapeColor>, std::underlying_type_t<JPH::BodyManager::EShapeColor>>);
 static_assert(std::to_underlying(Jafg::Physx::EShapeColor::Instance) == std::to_underlying(JPH::BodyManager::EShapeColor::InstanceColor));
 static_assert(std::to_underlying(Jafg::Physx::EShapeColor::ShapeType) == std::to_underlying(JPH::BodyManager::EShapeColor::ShapeTypeColor));
 static_assert(std::to_underlying(Jafg::Physx::EShapeColor::MotionType) == std::to_underlying(JPH::BodyManager::EShapeColor::MotionTypeColor));
@@ -152,6 +159,7 @@ static_assert(std::to_underlying(Jafg::Physx::EShapeColor::Sleep) == std::to_und
 static_assert(std::to_underlying(Jafg::Physx::EShapeColor::Island) == std::to_underlying(JPH::BodyManager::EShapeColor::IslandColor));
 static_assert(std::to_underlying(Jafg::Physx::EShapeColor::Material) == std::to_underlying(JPH::BodyManager::EShapeColor::MaterialColor));
 
+static_assert(std::same_as<std::underlying_type_t<Jafg::ESimulationAddingBehavior>, std::underlying_type_t<JPH::EActivation>>);
 static_assert(std::to_underlying(Jafg::ESimulationAddingBehavior::Activate) == std::to_underlying(JPH::EActivation::Activate));
 static_assert(std::to_underlying(Jafg::ESimulationAddingBehavior::Preserve) == std::to_underlying(JPH::EActivation::DontActivate));
 
@@ -376,8 +384,6 @@ struct LPhysicsSubsystem final
     NODISCARD constexpr JPH::PhysicsSystem const* operator->() const noexcept { return &this->PhysicsSystem; }
     NODISCARD constexpr JPH::PhysicsSystem& operator*() noexcept { return this->PhysicsSystem; }
     NODISCARD constexpr JPH::PhysicsSystem const& operator*() const noexcept { return this->PhysicsSystem; }
-
-    LRigidObject Floor;
 
 private:
 

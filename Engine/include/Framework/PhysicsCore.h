@@ -12,6 +12,16 @@ struct LPhysicsSubsystem;
 
 } /* ~Namespace Detail */
 
+enum struct EPhysicsMotion: u8
+{
+    //# Non movable.
+    Static,
+    //# Movable using velocities only, does not respond to forces.
+    Kinematic,
+    //# Responds to forces as a normal physics object.
+    Dynamic,
+};
+
 namespace EPhysicsLayer
 {
 

@@ -6,6 +6,8 @@
 #include "Framework/RigidObject.h"
 #include "PhysicsForeignCore.h"
 
+#include "Jolt/Physics/Collision/Shape/BoxShape.h"
+
 void physx::debug_renderer::DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor)
 {
     check(this->Comp)
@@ -33,7 +35,7 @@ void physx::debug_renderer::DrawText3D(JPH::RVec3Arg inPosition, std::string_vie
         });
 }
 
-Jafg::LPhysicsSystem& Jafg::LPhysicsSystem::operator=(LPhysicsSystemCreateInfo  Info)
+Jafg::LPhysicsSystem& Jafg::LPhysicsSystem::operator=(LPhysicsSystemCreateInfo Info)
 {
     if (this->IsValid())
     {
@@ -82,41 +84,12 @@ Jafg::LPhysicsSystem& Jafg::LPhysicsSystem::operator=(LPhysicsSystemCreateInfo  
     this->PhysicsSteps = Info.PhysicsSteps;
     this->SubSystem = Detail::LPhysicsSubsystem::FromCreateInfo(std::move(Info)).release();
 
-    auto& System{*this->SubSystem};
-    {
-        auto& Interface{System->GetBodyInterfaceNoLock()};
-
-        JPH::ShapeSettings::ShapeResult FloorShapeSettingsResult = JPH::BoxShapeSettings{JPH::Vec3(100.0f, 1.0f, 100.0f)}.Create();
-        check(!FloorShapeSettingsResult.HasError())
-        JPH::ShapeRefC const& FloorShape = FloorShapeSettingsResult.Get();
-        JPH::BodyCreationSettings floor_settings (FloorShape, JPH::RVec3(0.0_r, -1.0_r, 0.0_r), JPH::Quat::sIdentity(), JPH::EMotionType::Static, EPhysicsLayer::Static);
-
-        LRigidObjectCreateInfo CreateInfo{
-            .Translation = {0.0, -1.0, 0.0},
-            .Rotation = maths::identity<LWorldQuat>,
-            .Motion = EMotion::Static,
-            .Layer = EPhysicsLayer::Static,
-            };
-
-
-        System.Floor = LRigidObject::FromNative(Interface.CreateBody(floor_settings));
-        check(System.Floor.IsValid())
-        Interface.AddBody(System.Floor->GetID(), JPH::EActivation::DontActivate);
-    }
-
     return *this;
 }
 
 Jafg::LPhysicsSystem::~LPhysicsSystem()
 {
     delete this->SubSystem;
-}
-
-void Jafg::LPhysicsSystem::TearDown() const noexcept // temp only remove later.
-{
-    auto& Interface{this->SubSystem->PhysicsSystem.GetBodyInterfaceNoLock()};
-    Interface.RemoveBody(this->SubSystem->Floor->GetID());
-    Interface.DestroyBody(this->SubSystem->Floor->GetID());
 }
 
 JPH::PhysicsSystem* Jafg::LPhysicsSystem::operator->() noexcept

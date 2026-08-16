@@ -26,6 +26,11 @@ public:
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
+    void SetPhysicsLayer(EPhysicsLayer::value_type Layer);
+    NODISCARD FORCEINLINE constexpr EPhysicsLayer::value_type GetPhysicsLayer() const noexcept { return this->Layer; }
+    void SetPhysicsMotion(EPhysicsMotion Motion);
+    NODISCARD FORCEINLINE constexpr EPhysicsMotion GetPhysicsMotion() const noexcept { return this->Motion; }
+
     void MakeSphere(f32 Radius);
     void MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius = Physx::DefaultConvexRadius);
 
@@ -47,6 +52,9 @@ private:
     void UpdateComponentAabb() noexcept;
     void AddToWorldRigidComponents() noexcept;
     void RemoveFromWorldRigidComponents() noexcept;
+
+    EPhysicsLayer::value_type Layer{ EPhysicsLayer::Static };
+    EPhysicsMotion Motion{ EPhysicsMotion::Static };
 
     LRigidObject RigidObject;
     void DestroyRigidObject() noexcept;
