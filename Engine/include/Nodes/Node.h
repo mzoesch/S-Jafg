@@ -1090,8 +1090,8 @@ public:
     void SetDesiredSizeInSpt(LVec2F Size) const noexcept;
     //# Internal usage only. Do not use unless you are a really smart person.
     FORCEINLINE void SetDesiredSizeUnsanitized(LVec2F Size) const { this->DesiredSize_v2 = Size; }
-    FORCEINLINE LVec2F const& GetDesiredSize_v2() const { return this->DesiredSize_v2; }
-    FORCEINLINE LVec2F const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : maths::zero_vector<LVec2F>; }
+    FORCEINLINE LVec2F const& GetDesiredSize_v2() const { return this->DesiredSize_v2; } // TODO: Make check that asserts if this node does not transform, always returns zero-vec.
+    FORCEINLINE LVec2F const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : maths::zero_vector<LVec2F>; } // TODO: Remove.
     //# The min desired size. A widget will always be at least this size.
     LNodeSize2 MinDesiredSize;
     //# The max desired size. A widget will have at maximum this size. Zero means unbound. This includes max size of anchored nodes.
@@ -1107,6 +1107,7 @@ public:
     FORCEINLINE LVec2F CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
     virtual LVec2F GetAnchoredTopLeftFromMostOuter() const;
+    NODISCARD LVec2F GetTranslationFromMostOuter() const noexcept;
     LVec2F GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const;
 
     std::optional<LMargin> GetMargin() const noexcept;

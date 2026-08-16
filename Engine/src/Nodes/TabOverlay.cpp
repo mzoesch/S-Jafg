@@ -591,19 +591,18 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
     }
 
     auto Location{this->GetViewport().GetSurface().GetMouseLocationValue()};
+    LVec2F Translation{this->GetTranslationFromMostOuter()};
 
-    //# TODO: Again: Translation...
     // Identity op; just discard.
-    if (Selector.AabbTest({.Translation=maths::zero_vector<LVec2F>}, Location))
+    if (Selector.AabbTest({.Translation=Translation}, Location))
     {
         ResetDrawOption();
         return {};
     }
 
     check(Selector.GetParentChecked() == this->Selectors)
-    //# TODO: Again: Translation...
     // Inline tab reorder.
-    if (this->Selectors->AabbTest({.Translation=maths::zero_vector<LVec2F>}, Location))
+    if (this->Selectors->AabbTest({.Translation=Translation}, Location))
     {
         if (!this->TempBox)
         {
@@ -671,10 +670,10 @@ Jafg::WTabOverlay::StepResult Jafg::WTabOverlay::StepThrough(WParent& Node, LVec
                 check(Candidate.Switcher)
                 auto& CandidateSwitcher{*Candidate.Switcher};
 
-                //# TODO: Wrong translation. Fix.
-                if (CandidateSwitcher.AabbTest({.Translation=maths::zero_vector<LVec2F>}, Location))
+                LVec2F CandidateSwitcherTranslation{CandidateSwitcher.GetTranslationFromMostOuter()};
+                if (CandidateSwitcher.AabbTest({.Translation=CandidateSwitcherTranslation}, Location))
                 {
-                    auto Offset{CandidateSwitcher.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)}; // TODO: Wrong translation. Fix.
+                    auto Offset{CandidateSwitcher.GetAnchoredAndTranslatedTopLeftFromMostOuter(CandidateSwitcherTranslation)};
                     auto Size{CandidateSwitcher.GetAnchoredSize_v2()};
                     auto RelativeLocation{Location - Offset};
                     if (RelativeLocation.x < 0.0f || RelativeLocation.y < 0.0f || RelativeLocation.x > Size.x || RelativeLocation.y > Size.y)

@@ -250,6 +250,20 @@ LVec2F Jafg::WNode::GetAnchoredTopLeftFromMostOuter() const
         };
 }
 
+LVec2F Jafg::WNode::GetTranslationFromMostOuter() const noexcept
+{
+    LVec2F Result;
+    if (this->Parent)
+    {
+        Result = this->Parent->GetTranslationForChildFromMostOuter(*this);
+    }
+    else
+    {
+        Result = maths::zero_vector<LVec2F>;
+    }
+    return Result;
+}
+
 LVec2F Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(LVec2F const& Translation) const
 {
     return this->GetAnchoredTopLeftFromMostOuter() + Translation;

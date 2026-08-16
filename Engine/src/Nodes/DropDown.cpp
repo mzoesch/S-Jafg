@@ -195,8 +195,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                     SubmenuWindow->first = Id;
                                     auto Window{TClassStorage<WDismissibleFloatingWidget>{&CreateDropDownMenu(
                                           Self.GetViewport()
-                                        // TODO: Fix translation.
-                                        , Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                                        , Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(Self.GetTranslationFromMostOuter())
                                             + LVec2F{Self.GetAnchoredSize_v2().x, 0.0f}
                                             - LVec2F{0.0f, LDropDownMenuCreateInfo::RecommendedPadding.InStaticPoints(Self.GetViewport())}
                                         , {}
@@ -251,8 +250,7 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                                     SubmenuWindow->first = Id;
                                     auto Window{TClassStorage<WDismissibleFloatingWidget>{&CreateDropDownMenu(
                                           Self.GetViewport()
-                                        // TODO: Fix translation.
-                                        , Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                                        , Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(Self.GetTranslationFromMostOuter())
                                             + LVec2F{Self.GetAnchoredSize_v2().x, 0.0f}
                                             - LVec2F{0.0f, LDropDownMenuCreateInfo::RecommendedPadding.InStaticPoints(Self.GetViewport())}
                                         , {}

@@ -1207,8 +1207,7 @@ void Jafg::WEditorWorldViewer::Tick()
 
         if (Comp && this->CurrentGizmo != EGizmo::Select && Surface.HasMouseLocationForOrtho())
         {
-            // TODO: Fix translation
-            if (LVec2F Location{Surface.GetMouseLocationValue() - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+            if (LVec2F Location{Surface.GetMouseLocationValue() - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetTranslationFromMostOuter())};
                 !(Location.x < 0.0f || Location.y < 0.0f || Location.x > this->GetAnchoredSize_v2().x || Location.y > this->GetAnchoredSize_v2().y))
             {
                 Comp->OnHighlightTrace(*this, this->GetWorldRenderTarget().GetExtent(), Location);
@@ -3812,13 +3811,12 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
 
             auto& Prefs{GetSingleton<JUserPreferences>()};
 
-            // TODO: Fix translation
             auto CursorLocation{N->GetViewport().GetSurface().GetMouseLocationValue()};
             if (!LastCursor)
             {
                 LastCursor = CursorLocation;
             }
-            LVec2F Location{CursorLocation - DiscardedCursor - N->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+            LVec2F Location{CursorLocation - DiscardedCursor - N->GetAnchoredAndTranslatedTopLeftFromMostOuter(N->GetTranslationFromMostOuter())};
 
             if (algo::contains(std::array{RotateR,RotateY,RotateP}, Mesh))
             {

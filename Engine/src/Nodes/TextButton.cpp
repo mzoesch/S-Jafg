@@ -86,8 +86,7 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& In
     if (this->bUpdateBrushOnStateChange && this->bEnabled && this->TransformsWidgetLayout())
     {
         if (this->DecoupledLeftKeyEvent.IsValid() && maths::aabb_point({
-            // TODO: Fix translation.
-            .offset = this->GetLeftIconTopLeft(maths::zero_vector<LVec2F>),
+            .offset = this->GetLeftIconTopLeft(this->GetTranslationFromMostOuter()),
             .extent = {
                 static_cast<f32>(this->LeftIcon->GetExtent().width * this->LeftIconBrush.Scale),
                 static_cast<f32>(this->LeftIcon->GetExtent().height * this->LeftIconBrush.Scale)
@@ -126,8 +125,7 @@ Jafg::LNodeReply Jafg::WTextButtonIconizedDouble::OnCursorMoved(LVec2F const& In
             }
         }
         if (this->DecoupledRightKeyEvent.IsValid() && maths::aabb_point({
-            // TODO: Fix translation.
-            .offset = this->GetRightIconTopLeft(maths::zero_vector<LVec2F>),
+            .offset = this->GetRightIconTopLeft(this->GetTranslationFromMostOuter()),
             .extent = {
                 static_cast<f32>(this->RightIcon->GetExtent().width * this->RightIconBrush.Scale),
                 static_cast<f32>(this->RightIcon->GetExtent().height * this->RightIconBrush.Scale)

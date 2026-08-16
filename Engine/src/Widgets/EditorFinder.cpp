@@ -377,8 +377,7 @@ void Jafg::WFinder::Repaint()
         }
         else if (bMouse)
         {
-            // TODO: translation
-            if (Button.AabbTest({.Translation=maths::zero_vector<LVec2F>}, *Loc))
+            if (Button.AabbTest({.Translation=this->GetTranslationFromMostOuter()}, *Loc))
             {
                 Button._ButtonBase_SetBrush(EStyleBits::Hover);
             }

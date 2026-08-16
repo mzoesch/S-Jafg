@@ -74,6 +74,20 @@ public:
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
     virtual LVec2F GetAnchoredTopLeftFromMostOuterForChild(WNode const& DirectChild) const PURE_VIRTUAL()
 
+    NODISCARD virtual LVec2F GetTranslationForChildFromMostOuter(WNode const& DirectChild) const noexcept
+    {
+        LVec2F Result;
+        if (this->GetParent())
+        {
+            Result = this->GetParent()->GetTranslationForChildFromMostOuter(*this);
+        }
+        else
+        {
+            Result = maths::zero_vector<LVec2F>;
+        }
+        return Result;
+    }
+
     FORCEINLINE
     virtual TArray<TJxxUnique<WNode>> const& GetChildren() const noexcept { return this->Children; }
     virtual void RemoveChildren() { algo::orphan(&this->Children); }

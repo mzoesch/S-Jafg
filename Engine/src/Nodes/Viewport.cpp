@@ -65,8 +65,7 @@ void Jafg::LViewport::DispatchInputs()
                         return;
                     }
 
-                    // TODO: Again, translation is wrong...
-                    auto Offset{Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)};
+                    auto Offset{Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(Node.GetTranslationFromMostOuter())};
                     auto Size{Node.GetAnchoredSize_v2()};
                     auto Desired{Node.GetDesiredSize_v2()};
                     auto Min{Node.MinDesiredSize.InStaticPoints(Node.GetViewport())};

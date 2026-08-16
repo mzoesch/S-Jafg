@@ -110,8 +110,7 @@ Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDow
     {
         FloatingWidget = &CreateDropDownMenu(
                 this->GetViewport(),
-                // TODO: Fix the translation...
-                Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(Node.GetTranslationFromMostOuter())
                 + LVec2F{0.0, Node.GetAnchoredSize_v2().y},
                 {
                     .OnOptionCloseResult = [this](auto&&...)
@@ -129,8 +128,7 @@ Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDow
         check(std::get<LDropDownNodeDeferredSubMenu>(Submenu).OnChildren)
         FloatingWidget = &CreateDropDownMenu(
                 this->GetViewport(),
-                // TODO: Fix the translation...
-                Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)
+                Node.GetAnchoredAndTranslatedTopLeftFromMostOuter(Node.GetTranslationFromMostOuter())
                 + LVec2F{0.0, Node.GetAnchoredSize_v2().y},
                 {
                     .OnOptionCloseResult = [this](auto&&...)

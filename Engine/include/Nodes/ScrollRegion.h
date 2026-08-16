@@ -82,6 +82,7 @@ public:
     virtual LNodeReply OnKeyEventUnfocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     virtual void UpdateDesiredSize() const override;
+    virtual LVec2F GetTranslationForChildFromMostOuter(WNode const& DirectChild) const noexcept override;
 
     //# The size to use for the whole scroll region if it was not anchored.
     LNodeSize2 ScrollRegionSize;

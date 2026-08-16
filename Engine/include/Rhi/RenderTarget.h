@@ -85,7 +85,7 @@ protected:
 
     struct BindlessTarget : public Target
     {
-        //# TODO: !!!This index is leaked. Add dctor somewhere.
+        //# TODO: BUG: !!!This index is leaked. Add dctor somewhere.
         mutable i64 BindlessIndex{ INDEX_NONE };
     };
     BindlessTarget MsaaTarget;

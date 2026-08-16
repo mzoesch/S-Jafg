@@ -313,6 +313,19 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     return;
 }
 
+LVec2F Jafg::WScrollRegion::GetTranslationForChildFromMostOuter(WNode const& DirectChild) const noexcept
+{
+    auto Result{Super::GetTranslationForChildFromMostOuter(DirectChild)};
+
+    check(this->ScrollPosition.y >= 0.0f && this->ScrollPosition.y <= 1.0f)
+    Result += LVec2F{
+        -(this->ScrollPosition.x * (maths::max(static_cast<f32>(this->DesiredSizeOfChildren.x) - static_cast<f32>(this->GetAnchoredSize_v2().x), 0.0f))),
+        -(this->ScrollPosition.y * (maths::max(static_cast<f32>(this->DesiredSizeOfChildren.y) - static_cast<f32>(this->GetAnchoredSize_v2().y), 0.0f))),
+        };
+
+    return Result;
+}
+
 bool Jafg::WScrollRegion::MBDownOnScrollbar(std::optional<LVec2F> const& CursorLocation)
 {
     check(!this->UserInterfaceTickDelegateHandle.IsValid())

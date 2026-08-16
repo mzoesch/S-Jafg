@@ -317,7 +317,7 @@ bool Jafg::WDragRegion::IsLocationOverDragRect(LVec2F Translation, LVec2F Locati
 
         for (auto It{++this->GetChildren().begin()}; It != this->GetChildren().end(); ++It)
         {
-            if (maths::aabb_point({
+            if (maths::aabb_point({  // TODO: Should that not be GetAnchoredAndTranslatedTopLeftFromMostOuter for child? Or is translation auto calculated?
                 .offset = this->GetAnchoredTopLeftFromMostOuterForChild(**It) - this->ProjFlt(static_cast<f32>(*Prefs.PreferredDragOverlap)) - this->ProjFlt(SpaceSpt),
                 .extent = this->ProjFlt(SpaceSpt) + this->ProjFlt(2.0f * static_cast<f32>(*Prefs.PreferredDragOverlap))
                     + this->ProjFltInv(this->ProjVecInv(this->GetAnchoredSize_v2() - this->Padding.GetDesiredSize().InStaticPoints(this->GetViewport()))),
@@ -558,10 +558,10 @@ bool Jafg::WDragRegion::UiTickMove()
         return {};
     }
 
-    // TODO: This is wrong. How do we get the translation here?
+    LVec2F Translation{maths::zero_vector<LVec2F>};
     if (!this->DragHint)
     {
-        (void)this->IsLocationOverDragRect(maths::zero_vector<LVec2F>, *this->InitialDragLocation);
+        (void)this->IsLocationOverDragRect(Translation, *this->InitialDragLocation);
     }
     if (!this->DragHint)
     {
@@ -569,7 +569,7 @@ bool Jafg::WDragRegion::UiTickMove()
         {
             return {};
         }
-        (void)this->IsLocationOverDragRect(maths::zero_vector<LVec2F>, this->GetViewport().GetSurface().GetMouseLocationValue());
+        (void)this->IsLocationOverDragRect(Translation, this->GetViewport().GetSurface().GetMouseLocationValue());
     }
     if (!this->DragHint)
     {
