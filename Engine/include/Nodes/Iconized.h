@@ -143,8 +143,8 @@ struct IconLocationFn final
         }
 
         return LVec2F{Who.GetAnchoredSize_v2().x, 0.0f}
-            - LVec2F{Padding.GetRightOffset().InStaticPoints(Who.GetViewport())
-                , Padding.GetTopOffset().InStaticPoints(Who.GetViewport())}
+            - LVec2F{Padding.GetRightOffset().InStaticPoints(Who.GetViewport()), 0.0f}
+            + LVec2F{0.0f, Padding.GetTopOffset().InStaticPoints(Who.GetViewport())}
             - LVec2F{maths::max(
                 static_cast<f32>((Who.*IconProj)->GetExtent().width * (Who.*IconBrushProj).Scale)
                 , (Who.*IconBrushProj).MinIconSize.InStaticPoints(Who.GetViewport())

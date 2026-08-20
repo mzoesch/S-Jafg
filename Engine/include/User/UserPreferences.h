@@ -10,6 +10,7 @@
 #include "Nodes/TextBox.h"
 #include "Framework/SupremePolicies.h"
 #include "Framework/PhysicsCore.h"
+#include "User/PreferenceCollection.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -27,6 +28,17 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTORS(JUserPreferences)
 
 public:
+
+    virtual void BeginLife() override;
+
+#if JAFG_WITH_LOCAL_LAYER
+    //#
+    //# The default collection of user preferences.
+    //# Jafg will add its preferences here. A plugin should add their own preferences to this collection.
+    //# They will then be easily editable by the user from centralized user preferences widgets.
+    //#
+    TArray<LPreferenceCollection> TopLevelCollections;
+#endif /* JAFG_WITH_LOCAL_LAYER */
 
     enum { UnlimitedTps = 0 };
 

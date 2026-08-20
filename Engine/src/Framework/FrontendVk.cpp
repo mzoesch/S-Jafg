@@ -1421,9 +1421,12 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
             continue;
         }
 
-        LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Falling back to best rated device.",
-            Prefs.PreferredPhysicalDevice
-            )
+        if (!*this->Vk_PhysicalDevice)
+        {
+            LOG_WARNING(LogVulkan, "Preferred physical device [{}] not found among available devices. Falling back to best rated device.",
+                Prefs.PreferredPhysicalDevice
+                )
+        }
     }
 
     if (!*this->Vk_PhysicalDevice)

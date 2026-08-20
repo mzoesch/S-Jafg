@@ -16,8 +16,9 @@
 #include "Widgets/ColorInspector.h"
 #include "Widgets/ClassInspector.h"
 #include "Widgets/WorldViewer.h"
-#include "Widgets/EditorFinder.h"
 #include "Widgets/Input_Vector3.h"
+#include "Widgets/EditorFinder.h"
+#include "User/UserPreferencesWidget.h"
 #include "Widgets/AssetInspectors.h"
 #include "Nodes/EditableTextButton.h"
 #include "Widgets/EditorFactory.h"
@@ -438,6 +439,10 @@ void Jafg::WEditor::Construct()
                                 }
                                 },
                             LDropDownNodeSeparator{.DisplayName="WIDGETS"},
+                            LDropDownNodeOption{
+                                .Selector = WUserPreferencesWidget::TabSelectorCreateInfo(),
+                                .OnAction = [this](auto&&...){ this->AddWindow<WUserPreferencesWidget>(true); return algo::reply::unhandled(); },
+                                },
                             LDropDownNodeOption{
                                 .Selector = WFinder::TabSelectorCreateInfo(),
                                 .OnAction = [this](auto&&...){ this->AddWindow<WFinder>(true); return algo::reply::unhandled(); },

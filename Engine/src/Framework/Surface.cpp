@@ -112,7 +112,7 @@ void Jafg::LSurfaceBase::DecayInputs()
 
         if (Input.PhysicalKey.IsAnyLogicalOf(
               ELogicalKey::MouseX, ELogicalKey::MouseY
-            , ELogicalKey::MouseWheelUp, ELogicalKey::MouseWheelDown
+            , ELogicalKey::MouseWheelLeft, ELogicalKey::MouseWheelUp, ELogicalKey::MouseWheelRight, ELogicalKey::MouseWheelDown
             ))
         {
             It = this->RawInputs.erase(It);
