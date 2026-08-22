@@ -1,5 +1,5 @@
 #!/bin/bash
-#  Copyright mzoesch. All rights reserved.
+# Copyright mzoesch. All rights reserved.
 
 #
 # An automated script to generate a manifest file for Jafg content to speedup download checks.

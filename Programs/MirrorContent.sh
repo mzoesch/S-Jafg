@@ -1,5 +1,5 @@
 #!/bin/bash
-#  Copyright mzoesch. All rights reserved.
+# Copyright mzoesch. All rights reserved.
 
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <src> <mirror>"

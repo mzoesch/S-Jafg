@@ -1,5 +1,5 @@
 #!/bin/bash
-#  Copyright mzoesch. All rights reserved.
+# Copyright mzoesch. All rights reserved.
 
 #
 # An automated script to setup the content server for Jafg serving large files.

@@ -1,5 +1,5 @@
 #!/bin/bash
-#  Copyright mzoesch. All rights reserved.
+# Copyright mzoesch. All rights reserved.
 
 set -eo pipefail
 
