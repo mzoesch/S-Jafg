@@ -163,51 +163,87 @@ public:
     CLASS_FIELD(Config)
     TPreference<LColor> TextColor               { 0xFF };
 
-    TPreference<LStylePalette> PrimaryPalette{{
-        .Normal=  {.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Hover=   {.Tint=0x286090FF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
-        .Press=   {.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Selected={.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Disabled={.Tint=0x122B40FF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
+    CLASS_FIELD(Config)
+    TPreference<LStylePalette> PrimaryPaletteSolid{{
+        .Normal=  {.Tint=0x3C97D3FF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xE0E0E0FF_color},
+        .Hover=   {.Tint=0x2980BAFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Press=   {.Tint=0x2D6C97FF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Selected={.Tint=0x337AB7FF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Disabled={.Tint=0x8F8F8FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0x404040FF_color},
         }};
-    TPreference<LStylePalette> SelectablePrimaryPalette{{
-        .Normal=  {.Tint=0x2F2F2FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Hover=   {.Tint=0x3F3F3FFF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
-        .Press=   {.Tint=0x4F4F4FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Selected={.Tint=0x337AB7FF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Disabled={.Tint=0x122B40FF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
+    CLASS_FIELD(Config)
+    TPreference<LStylePalette> PrimaryPaletteLine{{
+        .Normal=  {.Tint=Colors::Transparent, .Outline=0x3C97D3FF_color, .OutlineThickness=1u, .TextTint=0x3C97D3FF_color},
+        .Hover=   {.Tint=0x2980BA30_color,    .Outline=0x2980BAFF_color, .OutlineThickness=1u, .TextTint=0x2980BAFF_color},
+        .Press=   {.Tint=0x2D6C9730_color,    .Outline=0x2D6C97FF_color, .OutlineThickness=1u, .TextTint=0x2D6C97FF_color},
+        .Selected={.Tint=0x337AB760_color,    .Outline=0x337AB7FF_color, .OutlineThickness=1u, .TextTint=0x337AB7FF_color},
+        .Disabled={.Tint=0x14141460_color,    .Outline=0x141414FF_color, .OutlineThickness=1u, .TextTint=0x303030FF_color},
         }};
-    TPreference<LStylePalette> SecondaryPalette{{
-        .Normal=  {.Tint=0x2F2F2FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Hover=   {.Tint=0x3F3F3FFF_color,.Outline=0x204D74FF_color,.TextTint=0xF0F0F0FF_color},
-        .Press=   {.Tint=0x4F4F4FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Selected={.Tint=0x5F5F5FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0xF0F0F0FF_color},
-        .Disabled={.Tint=0x1F1F1FFF_color,.Outline=0x2E6D43FF_color,.TextTint=0x808080FF_color},
+    CLASS_FIELD(Config)
+    TPreference<LStylePalette> PalePrimaryPaletteSolid{{
+        .Normal=  {.Tint=0x40576FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xE0E0E0FF_color},
+        .Hover=   {.Tint=0x2C3234FF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Press=   {.Tint=0x2D6C97FF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Selected={.Tint=0x335c88FF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Disabled={.Tint=0x8F8F8FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0x404040FF_color},
+        }};
+    CLASS_FIELD(Config)
+    TPreference<LStylePalette> PalePrimaryPaletteLine{{
+        .Normal=  {.Tint=Colors::Transparent, .Outline=0x40576FFF_color, .OutlineThickness=1u, .TextTint=0x40576FFF_color},
+        .Hover=   {.Tint=0x2C323430_color,    .Outline=0x464E51FF_color, .OutlineThickness=1u, .TextTint=0x2C3234FF_color},
+        .Press=   {.Tint=0x2D6C9730_color,    .Outline=0x2D6C97FF_color, .OutlineThickness=1u, .TextTint=0x2D6C97FF_color},
+        .Selected={.Tint=0x337AB760_color,    .Outline=0x335c88FF_color, .OutlineThickness=1u, .TextTint=0x335c88FF_color},
+        .Disabled={.Tint=0x14141460_color,    .Outline=0x141414FF_color, .OutlineThickness=1u, .TextTint=0x303030FF_color},
+        }};
+    CLASS_FIELD(Config)
+    TPreference<LStylePalette> SecondaryPaletteSolid{{
+        .Normal=  {.Tint=0x2F2F2FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xC0C0C0FF_color},
+        .Hover=   {.Tint=0x3F3F3FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Press=   {.Tint=0x4F4F4FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Selected={.Tint=0x4F4F4FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0xFFFFFFFF_color},
+        .Disabled={.Tint=0x0F0F0FFF_color, .Outline=Colors::Black, .OutlineThickness=0u, .TextTint=0x808080FF_color},
+        }};
+    CLASS_FIELD(Config)
+    TPreference<LStylePalette> SecondaryPaletteLine{{
+        .Normal=  {.Tint=Colors::Transparent, .Outline=0x3E3E3EFF_color, .OutlineThickness=1u, .TextTint=0x3E3E3EFF_color},
+        .Hover=   {.Tint=0x3F3F3F30_color,    .Outline=0x3F3F3FFF_color, .OutlineThickness=1u, .TextTint=0x3F3F3FFF_color},
+        .Press=   {.Tint=0x4F4F4F30_color,    .Outline=0x4F4F4FFF_color, .OutlineThickness=1u, .TextTint=0x4F4F4FFF_color},
+        .Selected={.Tint=0x4F4F4F60_color,    .Outline=0x4F4F4FFF_color, .OutlineThickness=1u, .TextTint=0x4F4F4FFF_color},
+        .Disabled={.Tint=0x0F0F0F60_color,    .Outline=0x0F0F0FFF_color, .OutlineThickness=1u, .TextTint=0xE0E0E0FF_color},
         }};
 
+    static constexpr LVec4F InputRadii{ 5.0f };
+    static constexpr LPadding InputPadding{ 5_spt, 0};
     CLASS_FIELD(Config)
-    TPreference<LColor> PrimaryColor            { LColor{0x1D, 0x78, 0xD6} };
-    CLASS_FIELD(Config)
-    TPreference<LColor> PrimaryColorVariant     { LColor{0x02, 0x1B, 0x35} };
-    CLASS_FIELD(Config)
-    TPreference<LColor> PrimaryColor2           { LColor{0x40, 0x57, 0x6F} };
-    CLASS_FIELD(Config)
-    TPreference<LColor> PrimaryColorVariant2    { LColor{0x2C, 0x32, 0x3A} };
+    TPreference<LStylePalette> InputPaletteSolid{{
+        .Normal=  {.Tint=0x0F0F0FFF_color, .Outline=0x5F5F5FFF_color, .OutlineThickness=1u, .TextTint=0xFFFFFFFF_color},
+        .Hover=   {.Tint=0x0F0F0FFF_color, .Outline=0x8F8F8FFF_color, .OutlineThickness=1u, .TextTint=0xFFFFFFFF_color},
+        .Press=   {.Tint=0x0F0F0FFF_color, .Outline=0x8F8F8FFF_color, .OutlineThickness=1u, .TextTint=0xFFFFFFFF_color},
+        .Selected={.Tint=0x0F0F0FFF_color, .Outline=0x8F8F8FFF_color, .OutlineThickness=1u, .TextTint=0xFFFFFFFF_color},
+        .Disabled={.Tint=0x0F0F0FFF_color, .Outline=0x5F5F5FFF_color, .OutlineThickness=1u, .TextTint=0x808080FF_color},
+        }};
+
     CLASS_FIELD(Config)
     TPreference<LColor> ProximityColorA         { 0x1A };
     CLASS_FIELD(Config)
     TPreference<LColor> ProximityColorB         { 0x15 };
-    CLASS_FIELD(Config)
-    TPreference<LColor> DangerColor             { LColor{0x94, 0x33, 0x33} };
-
-    NODISCARD FORCEINLINE LColor const& GetProximityColor(std::integral auto Idx) const noexcept
+    NODISCARD FORCEINLINE constexpr LColor GetProximityColor(std::integral auto Index) const noexcept
     {
-        if (Idx % 2)
+        if (Index % 2)
         {
             return *this->ProximityColorA;
         }
         return *this->ProximityColorB;
     }
+    NODISCARD LStylePalette ProximityPaletteSolid(std::integral auto Index, LStylePalette const& Template) const noexcept
+    {
+        LStylePalette Result{Template};
+        Result.Normal.Tint = this->GetProximityColor(Index);
+        return Result;
+    }
+
+    CLASS_FIELD(Config)
+    TPreference<LColor> DangerColor             { LColor{0x94, 0x33, 0x33} };
 
     CLASS_FIELD(Config)
     TPreference<std::size_t> PreferredDragPadding{ 3 };
@@ -406,202 +442,6 @@ public:
     //# Coloring scheme to use for soft body constraints.
     CLASS_FIELD(Config)
     TPreference<Physx::ESoftBodyConstraintColor> EditorVisualizeSoftBodyConstraintColor{ Physx::ESoftBodyConstraintColor::ConstraintType };
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Factories
-    ///////////////////////////////////////////////////////////////////////////////
-
-    template<typename TBrush>
-    inline static constexpr bool valid_brush_v{std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>};
-    template<typename TBrush>
-    inline static constexpr bool paddable_brush_v{valid_brush_v<TBrush> && std::is_base_of_v<LBoxBrush, TBrush>};
-
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    void ApplyPaletteForState(TBrush& Brush, LStylePalette::State const& State) const noexcept
-    {
-        Brush.Tint = State.Tint;
-        Brush.BorderTint = State.Tint;
-        Brush.OutlineTint = State.Outline;
-    }
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    void ApplyIconsizedPaletteForState(TBrush& Brush, LStylePalette::State const& State) const noexcept
-    {
-        Brush.Tint = State.TextTint;
-        Brush.BorderTint = State.Tint;
-        Brush.OutlineTint = State.Outline;
-    }
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    void ApplyPalette(TButtonStyle<TBrush>& Style, LStylePalette const& Palette) const noexcept
-    {
-        this->ApplyPaletteForState(Style.NormalBrush, Palette.Normal);
-        this->ApplyPaletteForState(Style.HoverBrush, Palette.Hover);
-        this->ApplyPaletteForState(Style.PressBrush, Palette.Press);
-        this->ApplyPaletteForState(Style.SelectedBrush, Palette.Selected);
-        this->ApplyPaletteForState(Style.DisabledBrush, Palette.Disabled);
-    }
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    void ApplyIconizedPalette(TButtonStyle<TBrush>& Style, LStylePalette const& Palette) const noexcept
-    {
-        this->ApplyIconsizedPaletteForState(Style.NormalBrush, Palette.Normal);
-        this->ApplyIconsizedPaletteForState(Style.HoverBrush, Palette.Hover);
-        this->ApplyIconsizedPaletteForState(Style.PressBrush, Palette.Press);
-        this->ApplyIconsizedPaletteForState(Style.SelectedBrush, Palette.Selected);
-        this->ApplyIconsizedPaletteForState(Style.DisabledBrush, Palette.Disabled);
-    }
-
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    void PadStyle(TButtonStyle<TBrush>& Brush, LPadding Padding) const noexcept
-    {
-        if constexpr (std::is_base_of_v<LBoxBrush, TBrush>)
-        {
-            Brush.template SetEverywhere<&LBoxBrush::Padding>(Padding);
-        }
-    }
-
-    enum EDiscard{ Identity,Radii,Outline, };
-
-    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorBaseButton() const noexcept
-    {
-        TButtonStyle<TBrush> Result;
-        if constexpr (!(Discard & Radii))
-        {
-            Result.template SetEverywhere<&TBrush::Radii>(LVec4F{5.0f});
-        }
-        if constexpr (!(Discard & Outline))
-        {
-            Result.template SetEverywhere<&TBrush::OutlineThickness>(1);
-        }
-        this->PadStyle(Result, {5_spt, 0});
-        return Result;
-    }
-
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorPrimaryButton() const noexcept
-    {
-        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
-        this->ApplyPalette(Result, *this->PrimaryPalette);
-        return Result;
-    }
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorPrimaryButton(LOptionalTexture2Ref Icon) const noexcept
-    {
-        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
-        this->ApplyIconizedPalette(Result, *this->PrimaryPalette);
-        Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
-        return Result;
-    }
-    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorSecondaryButton() const noexcept
-    {
-        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush,Discard>()};
-        this->ApplyPalette(Result, *this->SecondaryPalette);
-        return Result;
-    }
-    template<typename TBrush> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorSecondaryButton(LOptionalTexture2Ref Icon) const noexcept
-    {
-        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush>()};
-        this->ApplyIconizedPalette(Result, *this->SecondaryPalette);
-        Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
-        return Result;
-    }
-
-    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorSelectablePrimaryButton() const noexcept
-    {
-        TButtonStyle<TBrush> Result{this->EditorBaseButton<TBrush,Discard>()};
-        this->ApplyIconizedPalette(Result, *this->SelectablePrimaryPalette);
-        return Result;
-    }
-    template<typename TBrush, u32 Discard = Identity> requires valid_brush_v<TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorSelectablePrimaryButton(LOptionalTexture2Ref Icon) const noexcept
-    {
-        TButtonStyle<TBrush> Result{this->EditorSelectablePrimaryButton<TBrush,Discard>()};
-        Result.template SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon(std::move(Icon)));
-        return Result;
-    }
-
-    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorPrimaryButtonStyle() const noexcept
-    {
-        auto& Prefs{GetSingleton<JUserPreferences>()};
-
-        TButtonStyle<TBrush> Result;
-        Result.template ChainEverywhere
-            <&TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii>
-            (*Prefs.PrimaryColor, {0x8F}, 1, LVec4F{5.0f});
-            this->PadStyle(Result, {5_spt, 0});
-        Result.template Chain<EStyleBits::Hover, &TBrush::Tint>(*Prefs.PrimaryColorVariant);
-        Result.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*Prefs.PrimaryColorVariant);
-        Result.template Chain<EStyleBits::Disabled, &TBrush::Tint>(*this->DisabledColor);
-        return Result;
-    }
-    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorSecondaryButtonStyle() const noexcept
-    {
-        TButtonStyle<TBrush> Result;
-        Result.template ChainEverywhere<
-            &TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii>
-            (*this->AccentColor, {0x8F}, 1, LVec4F{5.0f});
-        if constexpr (std::same_as<TBrush, LTextBoxBrush>)
-        {
-            Result.template SetEverywhere<&TBrush::Padding>({5_spt, 0});
-        }
-        Result.template Chain<EStyleBits::Hover, &TBrush::Tint>(*this->PrimaryColor);
-        Result.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*this->PrimaryColorVariant);
-        Result.template Chain<EStyleBits::Disabled, &TBrush::Tint>(*this->DisabledColor);
-        return Result;
-    }
-
-    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorEditableTextButtonStyle() const noexcept
-    {
-        TButtonStyle<TBrush> Result;
-        Result.template ChainEverywhere<
-            &TBrush::Tint, &TBrush::OutlineTint, &TBrush::OutlineThickness, &TBrush::Radii, &TBrush::Padding
-            >(*this->InputColor, {0x8F}, 1, LVec4F{5.0f}, {5_spt, 0});
-        Result.template Chain<EStyleBits::Normal|EStyleBits::Disabled, &TBrush::OutlineTint>({0x5F});
-        return Result;
-    }
-    NODISCARD TButtonStyle<LTextBoxBrush> EditorEditableTextButtonTextStyle() const noexcept
-    {
-        TButtonStyle<LTextBoxBrush> Result;
-        Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
-        return Result;
-    }
-
-    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorProximityBoxStyle(std::integral auto Idx) const noexcept
-    {
-        TButtonStyle<TBrush> Style;
-        Style.template Set<EStyleBits::Normal, &TBrush::Tint>(this->GetProximityColor(Idx));
-        Style.template Chain<EStyleBits::Hover, &TBrush::Tint>(*this->PrimaryColor);
-        Style.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*this->PrimaryColorVariant);
-        return Style;
-    }
-    NODISCARD TButtonStyle<LTextBoxBrush> EditorProximityBoxTextStyle() const noexcept
-    {
-        TButtonStyle<LTextBoxBrush> Result;
-        Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
-        return Result;
-    }
-
-    template<typename TBrush> requires std::is_base_of_v<LRegionBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>
-    NODISCARD TButtonStyle<TBrush> EditorProximityBoxStyle2(std::integral auto Idx) const noexcept
-    {
-        TButtonStyle<TBrush> Style;
-        Style.template Set<EStyleBits::Normal, &TBrush::Tint>(this->GetProximityColor(Idx));
-        Style.template Chain<EStyleBits::Hover, &TBrush::Tint>(*this->PrimaryColor2);
-        Style.template Chain<EStyleBits::Press | EStyleBits::Selected, &TBrush::Tint>(*this->PrimaryColorVariant2);
-        return Style;
-    }
-    NODISCARD TButtonStyle<LTextBoxBrush> EditorProximityBoxTextStyle2() const noexcept
-    {
-        TButtonStyle<LTextBoxBrush> Result;
-        Result.Chain<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray);
-        return Result;
-    }
 };
 
 } /* ~Namespace Jafg */

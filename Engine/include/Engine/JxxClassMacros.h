@@ -444,11 +444,11 @@ private: /* Restore default visibility. */
     inline static void JAFG_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(Derived* Class, ::LStringView _InValue) \
     {                \
         check( Class )                                                                         \
-        ::serde::FromString(&Class->MyClassMember, _InValue);                          \
+        ::serde::from_string(&Class->MyClassMember, _InValue);                          \
     }                                                                                         \
     inline static ::LString JAFG_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)(Derived const& Class)                       \
     {                                                                                      \
-        return ::serde::ToString(Class.MyClassMember);                                \
+        return ::serde::to_string(Class.MyClassMember);                                \
     } \
 
 

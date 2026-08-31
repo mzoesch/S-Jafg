@@ -19,16 +19,14 @@ void Jafg::WInput_Vector2::Construct()
         .MinDesiredSize({64_spt, 0})
         .MaxDesiredSize({64_spt, 0})
         .Padding({2_spt, 0})
-        .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
-        .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+        .Palette(*Prefs.InputPaletteSolid)
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::X, Content); })
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
     BeginStyling(*this).StaticRoot<WEditableTextButton>().SaveTo(&ButtonY)
         .MinDesiredSize({64_spt, 0})
         .MaxDesiredSize({64_spt, 0})
         .Padding({2_spt, 0})
-        .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
-        .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+        .Palette(*Prefs.InputPaletteSolid)
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::Y, Content); })
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
 
@@ -97,11 +95,11 @@ void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<LVec2i64>(this->Vector)};
             if (Part == EPart::X)
             {
-                serde::FromString(&Vec.x, NewValue);
+                serde::from_string(&Vec.x, NewValue);
             }
             else
             {
-                serde::FromString(&Vec.y, NewValue);
+                serde::from_string(&Vec.y, NewValue);
             }
             this->Vector.emplace<LVec2i64>(Vec);
         }
@@ -110,11 +108,11 @@ void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<LVec2u64>(this->Vector)};
             if (Part == EPart::X)
             {
-                serde::FromString(&Vec.x, NewValue);
+                serde::from_string(&Vec.x, NewValue);
             }
             else
             {
-                serde::FromString(&Vec.y, NewValue);
+                serde::from_string(&Vec.y, NewValue);
             }
             this->Vector.emplace<LVec2u64>(Vec);
         }
@@ -123,11 +121,11 @@ void Jafg::WInput_Vector2::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<LVec2D>(this->Vector)};
             if (Part == EPart::X)
             {
-                serde::FromString(&Vec.x, NewValue);
+                serde::from_string(&Vec.x, NewValue);
             }
             else
             {
-                serde::FromString(&Vec.y, NewValue);
+                serde::from_string(&Vec.y, NewValue);
             }
             this->Vector.emplace<LVec2D>(Vec);
         }

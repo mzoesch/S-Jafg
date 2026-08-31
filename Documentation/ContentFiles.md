@@ -18,7 +18,7 @@ endif()
 ```
 
 If a file does not exist but is specified in the `.lfs` file, it will be downloaded from the remote content server.
-If a client specifies `JAFG_UPGRADE_CONTENT` as an environment variable, all missing or outdated content files will be downloaded.
+If a client specifies `JAFG_UPGRADE_CONTENT` as an environment variable, all outdated content files will be downloaded.
 
 By using the helper script `Programs/GenerateManifest.sh` on the server, the manifest/sha256's will automatically be generated. 
 

@@ -55,7 +55,7 @@ public:
     FORCEINLINE auto GetValue() const -> const LString& { return this->Value; }
 
     template<typename TField>
-    FORCEINLINE void GetValue(TField* Destination) const { serde::FromString(Destination, this->Value); }
+    FORCEINLINE void GetValue(TField* Destination) const { serde::from_string(Destination, this->Value); }
     template<typename TField> requires std::is_default_constructible_v<TField>
         && (std::is_move_constructible_v<TField> || std::is_move_assignable_v<TField>)
     FORCEINLINE TField GetValue() const

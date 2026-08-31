@@ -16,6 +16,8 @@ namespace Jafg
 template<typename T>
 struct TDefaultPreference
 {
+    typedef T value_type;
+
     static_assert(std::is_copy_constructible_v<T>);
     static_assert(algo::is_weak_eq_v<T,T>);
 
@@ -61,6 +63,8 @@ struct TDefaultPreference
 template<typename T>
 struct TDefaultClampedPreference
 {
+    typedef T value_type;
+
     static_assert(std::is_copy_constructible_v<T>);
     static_assert(algo::is_weak_eq_v<T,T>);
 
@@ -90,7 +94,7 @@ struct TDefaultClampedPreference
             if constexpr (bLog)
             {
                 LOG_WARNING(LogPreferences, "[{}]: Value is smaller then their allowed min value: [{} < {}]"
-                    , algo::type_name<TDefaultClampedPreference>(), serde::ToString(NewValue), serde::ToString(this->GetMin())
+                    , algo::type_name<TDefaultClampedPreference>(), serde::to_string(NewValue), serde::to_string(this->GetMin())
                     )
             }
             this->Value = this->GetMin();
@@ -100,7 +104,7 @@ struct TDefaultClampedPreference
             if constexpr (bLog)
             {
                 LOG_WARNING(LogPreferences, "[{}]: Value is bigger then their allowed max value: [{} > {}]"
-                    , algo::type_name<TDefaultClampedPreference>(), serde::ToString(NewValue), serde::ToString(this->GetMax())
+                    , algo::type_name<TDefaultClampedPreference>(), serde::to_string(NewValue), serde::to_string(this->GetMax())
                     )
             }
             this->Value = this->GetMax();
@@ -146,6 +150,34 @@ private:
     std::optional<T> MinValue;
     std::optional<T> MaxValue;
 };
+
+template<typename TArchive, typename U> requires(
+    std::is_same_v<std::remove_const_t<U>, TPreference<typename U::value_type>>
+    && serde::string_archive_for_v<TArchive, U>)
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
+{
+    Ar(Field.Value);
+}
+template<typename TArchive, typename U> requires(
+    std::is_same_v<std::remove_const_t<U>, TClampedPreference<typename U::value_type>>
+    && serde::string_archive_for_v<TArchive, U>)
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
+{
+    if constexpr (serde::is_string_archive_v<TArchive>)
+    {
+        typename std::remove_cvref_t<U>::value_type Dummy;
+        Ar(Dummy);
+        Field.SetValueSafe(std::move(Dummy));
+    }
+    else if constexpr (serde::os_string_archive_v<TArchive>)
+    {
+        Ar(Field.Value);
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+}
 
 } /* ~Namespace Jafg */
 
@@ -197,7 +229,7 @@ JAFG_PREF_OF(LPath)
 JAFG_PREF_OF(LColor)
 
 template<typename T>
-struct TPreference<TArray<T>> : public Jafg::TDefaultPreference<TArray<T>>
+struct TPreference<TArray<T>>: Jafg::TDefaultPreference<TArray<T>>
 {
     static_assert(std::is_copy_constructible_v<T>);
     static_assert(algo::is_weak_eq_v<T,T>);
@@ -206,54 +238,8 @@ struct TPreference<TArray<T>> : public Jafg::TDefaultPreference<TArray<T>>
     using Super::Super;
 };
 
-template<typename T, typename TArchive> requires serde::CSerializable<T, TArchive>
-    && serde::os_string_archive_v<TArchive>
-struct serde::TSerializer<TPreference<T>, TArchive>
-{
-    void operator()(TArchive& Ar, TPreference<T> const& Field) const noexcept
-    {
-        TSerializer<T, TArchive>{}(Ar, Field.Value);
-    }
-};
-template<typename T, typename TArchive> requires serde::CSerializable<T, TArchive>
-    && serde::os_string_archive_v<TArchive>
-struct serde::TSerializer<TClampedPreference<T>, TArchive>
-{
-    void operator()(TArchive& Ar, TClampedPreference<T> const& Field) const noexcept
-    {
-        TSerializer<T, TArchive>{}(Ar, Field.Value);
-    }
-};
-
-template<typename T, typename TArchive> requires serde::CDeserializable<T, TArchive>
-    && serde::is_string_archive_v<TArchive>
-struct serde::TDeserializer<TPreference<T>, TArchive>
-{
-    LDeserializationResult operator()(TArchive const& Ar, TPreference<T>& Field) const noexcept
-    {
-        return TDeserializer<T, TArchive>{}(Ar, Field.Value);
-    }
-};
-
-template<typename T, typename TArchive> requires serde::CDeserializable<T, TArchive>
-    && std::is_default_constructible_v<T> && std::is_move_assignable_v<T>
-    && serde::is_string_archive_v<TArchive>
-struct serde::TDeserializer<TClampedPreference<T>, TArchive>
-{
-    LDeserializationResult operator()(TArchive const& Ar, TClampedPreference<T>& Field) const noexcept
-    {
-        T Dummy{};
-        auto R{TDeserializer<T, TArchive>{}(Ar, Dummy)};
-        if (R.Errc == decltype(R.Errc){})
-        {
-            Field.SetValueSafe(std::move(Dummy));
-        }
-        return R;
-    }
-};
-
 template<typename T>
-struct std::formatter<TPreference<T>> : std::formatter<T>
+struct std::formatter<TPreference<T>>: std::formatter<T>
 {
     FORCEINLINE std::format_context::iterator format(TPreference<T> const& Preference, std::format_context& Context) const
     {
@@ -262,7 +248,7 @@ struct std::formatter<TPreference<T>> : std::formatter<T>
 };
 
 template<typename T>
-struct std::formatter<TClampedPreference<T>> : std::formatter<T>
+struct std::formatter<TClampedPreference<T>>: std::formatter<T>
 {
     FORCEINLINE std::format_context::iterator format(TClampedPreference<T> const& Preference, std::format_context& Context) const
     {

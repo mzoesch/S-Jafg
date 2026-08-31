@@ -119,11 +119,7 @@ struct LCommandArgs
     template<typename TField>
     FORCEINLINE LCommandArgsTypeRet_t<TField> GetAs() const
     {
-        typedef LCommandArgsTypeRet_t<TField> return_type;
-        static_assert(std::is_default_constructible_v<return_type>);
-        return_type Field{};
-        serde::FromString<return_type>(&Field, this->GetCatRepresentation());
-        return Field;
+        return serde::from_string<LCommandArgsTypeRet_t<TField>>(this->GetCatRepresentation());
     }
 
     //#

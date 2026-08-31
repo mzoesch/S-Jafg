@@ -68,10 +68,10 @@ struct LEditorLayout final
     LPath Path;
     TArray<LSurface> Surfaces;
 };
-SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout::LNodes, Dist, Children)
-SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout::LFlow, Controlflow, Children)
-SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout::LSurface, bFullscreen, bBorderless, Dimensions, Layout)
-SERDE_JSON_TYPE_NON_INTRUSIVE(LEditorLayout, Surfaces)
+SERDE_JSON_TYPE(LEditorLayout::LNodes, Dist, Children)
+SERDE_JSON_TYPE(LEditorLayout::LFlow, Controlflow, Children)
+SERDE_JSON_TYPE(LEditorLayout::LSurface, bFullscreen, bBorderless, Dimensions, Layout)
+SERDE_JSON_TYPE(LEditorLayout, Surfaces)
 inline void to_json(json& j, LEditorLayout::LChild const& C){ std::visit([&j](auto&& Arg){ j = Arg; }, C); }
 inline void from_json(json const& j, LEditorLayout::LChild& C)
 {

@@ -2,8 +2,23 @@
 
 #include "Nodes/Node.h"
 #include "Engine/Engine.h"
+#include "Nodes/ButtonBase.h"
 #include "Nodes/Viewport.h"
 #include "Nodes/Parent.h"
+#include "Nodes/Region.h"
+#include "Nodes/Text.h"
+#include "Nodes/TextBox.h"
+
+static_assert(Jafg::LStylePalette::valid_brush_v<Jafg::LRegionBrush>);
+static_assert(Jafg::LStylePalette::valid_brush_v<Jafg::LBoxBrush>);
+static_assert(!Jafg::LStylePalette::valid_brush_v<Jafg::LTextBrush>);
+static_assert(!Jafg::LStylePalette::valid_brush_v<Jafg::LTextBoxBrush>);
+static_assert(!Jafg::LStylePalette::paddable_brush_v<Jafg::LRegionBrush>);
+static_assert(Jafg::LStylePalette::paddable_brush_v<Jafg::LBoxBrush>);
+static_assert(!Jafg::LStylePalette::valid_text_brush_v<Jafg::LRegionBrush>);
+static_assert(!Jafg::LStylePalette::valid_text_brush_v<Jafg::LBoxBrush>);
+static_assert(Jafg::LStylePalette::valid_text_brush_v<Jafg::LTextBrush>);
+static_assert(Jafg::LStylePalette::valid_text_brush_v<Jafg::LTextBoxBrush>);
 
 namespace
 {

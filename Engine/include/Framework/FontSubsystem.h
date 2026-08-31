@@ -37,7 +37,7 @@ enum EFontTypeBits: u16
     Italic      = 0x1 << 9,
 };
 ENUM_STRUCT_FLAGS(EFontTypeBits, EFontType)
-SERDE_ENUM_MAP(EFontTypeBits, Identity, Thin, ExtraLight, Light, Regular, Medium, Semibold, Bold, ExtraBold, Black, Italic)
+SERDE_ENUM(EFontTypeBits, Identity, Thin, ExtraLight, Light, Regular, Medium, Semibold, Bold, ExtraBold, Black, Italic)
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JFontSubsystem : public JFrontendSubsystem

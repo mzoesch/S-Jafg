@@ -78,7 +78,7 @@ private:
     TArray<rhi::reflected_shader> ReflectedShaders;
 };
 
-SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(JShaderSubsystem::Shader2::CompileTimeDefinition, Identifier, Value)
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(JShaderSubsystem::Shader2::CompileTimeDefinition, Identifier, Value)
 inline void from_json(json const& j, JShaderSubsystem::Shader2& Shader) noexcept
 {
     j.at("IncludeDirs").get_to(Shader.IncludeDirs);

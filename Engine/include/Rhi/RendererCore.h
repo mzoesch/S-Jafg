@@ -160,7 +160,7 @@ namespace vk
 #pragma region SerdeEnums
 
 #pragma region SerdeEnumFormat
-SERDE_STRING_AND_JSON_ENUM(Format,
+SERDE_JSON_ENUM(Format,
     eUndefined,
     eR4G4UnormPack8,
     eR4G4B4A4UnormPack16,
@@ -519,7 +519,7 @@ SERDE_STRING_AND_JSON_ENUM(Format,
     )
 #pragma endregion /* SerdeEnumFormat */
 
-SERDE_STRING_AND_JSON_ENUM(SampleCountFlagBits,
+SERDE_JSON_ENUM(SampleCountFlagBits,
     e1,
     e2,
     e4,
@@ -529,7 +529,7 @@ SERDE_STRING_AND_JSON_ENUM(SampleCountFlagBits,
     e64
     )
 
-SERDE_STRING_AND_JSON_ENUM(vk::ShaderStageFlagBits,
+SERDE_JSON_ENUM(vk::ShaderStageFlagBits,
     eVertex,
     eTessellationControl,
     eTessellationEvaluation,
@@ -558,7 +558,7 @@ SERDE_STRING_AND_JSON_ENUM(vk::ShaderStageFlagBits,
     eClusterCullingHUAWEI
     )
 
-SERDE_STRING_AND_JSON_ENUM(CompareOp,
+SERDE_JSON_ENUM(CompareOp,
     eNever,
     eLess,
     eEqual,
@@ -569,7 +569,7 @@ SERDE_STRING_AND_JSON_ENUM(CompareOp,
     eAlways
     )
 
-SERDE_STRING_AND_JSON_ENUM(BlendFactor,
+SERDE_JSON_ENUM(BlendFactor,
     eZero,
     eOne,
     eSrcColor,
@@ -591,7 +591,7 @@ SERDE_STRING_AND_JSON_ENUM(BlendFactor,
     eOneMinusSrc1Alpha
     )
 
-SERDE_STRING_AND_JSON_ENUM(BlendOp,
+SERDE_JSON_ENUM(BlendOp,
     eAdd,
     eSubtract,
     eReverseSubtract,
@@ -645,26 +645,26 @@ SERDE_STRING_AND_JSON_ENUM(BlendOp,
     eBlueEXT
     )
 
-SERDE_STRING_AND_JSON_ENUM(ColorComponentFlagBits,
+SERDE_JSON_ENUM(ColorComponentFlagBits,
     eR,
     eG,
     eB,
     eA
     )
 
-SERDE_STRING_AND_JSON_ENUM(CullModeFlagBits,
+SERDE_JSON_ENUM(CullModeFlagBits,
     eNone,
     eFront,
     eBack,
     eFrontAndBack
     )
 
-SERDE_STRING_AND_JSON_ENUM(FrontFace,
+SERDE_JSON_ENUM(FrontFace,
     eCounterClockwise,
     eClockwise
     )
 
-SERDE_STRING_AND_JSON_ENUM(LogicOp,
+SERDE_JSON_ENUM(LogicOp,
     eClear,
     eAnd,
     eAndReverse,
@@ -683,7 +683,7 @@ SERDE_STRING_AND_JSON_ENUM(LogicOp,
     eSet
     )
 
-SERDE_STRING_AND_JSON_ENUM(StencilOp,
+SERDE_JSON_ENUM(StencilOp,
     eKeep,
     eZero,
     eReplace,
@@ -694,19 +694,19 @@ SERDE_STRING_AND_JSON_ENUM(StencilOp,
     eDecrementAndWrap
     )
 
-SERDE_STRING_AND_JSON_ENUM(VertexInputRate,
+SERDE_JSON_ENUM(VertexInputRate,
     eVertex,
     eInstance
     )
 
-SERDE_STRING_AND_JSON_ENUM(PolygonMode,
+SERDE_JSON_ENUM(PolygonMode,
     eFill,
     eLine,
     ePoint,
     eFillRectangleNV
     )
 
-SERDE_STRING_AND_JSON_ENUM(PrimitiveTopology,
+SERDE_JSON_ENUM(PrimitiveTopology,
     ePointList,
     eLineList,
     eLineStrip,
@@ -721,25 +721,25 @@ SERDE_STRING_AND_JSON_ENUM(PrimitiveTopology,
     )
 #pragma endregion /* SerdeEnums */
 
-SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineInputAssemblyStateCreateInfo
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(PipelineInputAssemblyStateCreateInfo
     , topology, primitiveRestartEnable
     )
-SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineRasterizationStateCreateInfo
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(PipelineRasterizationStateCreateInfo
     , depthClampEnable, rasterizerDiscardEnable, polygonMode, cullMode, frontFace
     , depthBiasEnable, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor
     , lineWidth
     )
-// SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineMultisampleStateCreateInfo // ?
+// SERDE_JSON_TYPE_ONLY_DESERIALIZE(PipelineMultisampleStateCreateInfo // ?
 //     , rasterizationSamples, sampleShadingEnable, minSampleShading, pSampleMask/*ptr*/, alphaToCoverageEnable, alphaToOneEnable
 //     )
-SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(StencilOpState
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(StencilOpState
     , failOp, passOp, depthFailOp, compareOp, compareMask, writeMask, reference
     )
-SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineDepthStencilStateCreateInfo
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(PipelineDepthStencilStateCreateInfo
     , depthTestEnable, depthWriteEnable, depthCompareOp, depthBoundsTestEnable, stencilTestEnable
     , front, back, minDepthBounds, maxDepthBounds
     )
-SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(PipelineColorBlendAttachmentState
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(PipelineColorBlendAttachmentState
     , blendEnable, srcColorBlendFactor, dstColorBlendFactor, colorBlendOp
     , srcAlphaBlendFactor, dstAlphaBlendFactor, alphaBlendOp, colorWriteMask
     )
@@ -847,7 +847,7 @@ enum struct present_mode
     //#
     FifoLatestReady,
 };
-SERDE_STRING_ENUM_NON_INTRUSIVE(present_mode, Immediate, Mailbox, Fifo, FifoRelaxed, FifoLatestReady)
+SERDE_ENUM(present_mode, Immediate, Mailbox, Fifo, FifoRelaxed, FifoLatestReady)
 NODISCARD constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mode mode) noexcept
 {
     switch (mode)

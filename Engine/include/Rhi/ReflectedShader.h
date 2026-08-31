@@ -335,14 +335,14 @@ struct reflected_shader final
     }
 };
 
-SERDE_JSON_ENUM_PAIR_ONLY_DESERIALIZE(reflected_shader::binding_kind,
+SERDE_JSON_ENUM_PAIR(reflected_shader::binding_kind, {
     {reflected_shader::binding_kind::resource, "resource"},
     {reflected_shader::binding_kind::constant_buffer, "constant_buffer"},
-    )
-SERDE_JSON_ENUM_PAIR_ONLY_DESERIALIZE(reflected_shader::binding_type,
+    })
+SERDE_JSON_ENUM_PAIR(reflected_shader::binding_type, {
     {reflected_shader::binding_type::push_constant_buffer, "pushConstantBuffer"},
     {reflected_shader::binding_type::descriptor_table_slot, "descriptorTableSlot"},
-    )
+    })
 
 ENGINE_API void from_json(json const& j, reflected_shader::binding_definition& binding_definition);
 ENGINE_API void from_json(json const& j, reflected_shader::binding& type);

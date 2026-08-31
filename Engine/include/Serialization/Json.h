@@ -34,24 +34,27 @@ using json = nlohmann::json;
 #undef NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE
 
 //#
-//# Serializes an enum
+//# Same as SERDE_ENUM, but comes also with JSON support.
 //# Usage example:
-//#     enum struct EExample : u8 { A, B, C };
+//#     enum struct EExample: u8 { A, B, C };
 //#     SERDE_JSON_ENUM(EExample, A, B, C)
 //#
-#define SERDE_JSON_ENUM(T, ...) \
-    SERDE_JSON_ENUM_ONLY_SERIALIZE(T, __VA_ARGS__) \
-    SERDE_JSON_ENUM_ONLY_DESERIALIZE(T, __VA_ARGS__)
-#define DETAIL_SERDE_JSON_ENUM_TRANSFORM(X) {_serde_local_enum_t::X, #X},
-#define SERDE_JSON_ENUM_ONLY_SERIALIZE(T, ...) \
+#define SERDE_JSON_ENUM(T, ...) SERDE_ENUM(T, __VA_ARGS__) SERDE_JSON_ENUM_IMPL(T)
+//#
+//# Same as SERDE_ENUM_PAIR, but comes also with JSON support.
+//# Usage example:
+//#     enum struct EExample: u8 { A, B, C };
+//#     SERDE_JSON_ENUM(EExample, {
+//#         {EExample::A, "a"}, {EExample::B, "b"}, {EExample::C, "c"}
+//#         })
+#define SERDE_JSON_ENUM_PAIR(T, ...) SERDE_ENUM_PAIR(T, __VA_ARGS__) SERDE_JSON_ENUM_IMPL(T)
+#define SERDE_JSON_ENUM_IMPL(T) SERDE_JSON_ENUM_ONLY_SERIALIZE(T) SERDE_JSON_ENUM_ONLY_DESERIALIZE(T)
+#define SERDE_JSON_ENUM_ONLY_SERIALIZE(T) \
     template<typename BasicJsonType>                                                            \
     inline void to_json(BasicJsonType& j, const T& e)                                   \
     {                                                                                           \
         static_assert(std::is_enum_v<T>);          \
-        typedef T _serde_local_enum_t; \
-        static constexpr std::pair<T, LStringView> const Members[]{ \
-            JAFG_MAP(DETAIL_SERDE_JSON_ENUM_TRANSFORM, __VA_ARGS__) \
-                }; \
+        std::unordered_map<T, LStringView> const& Members{::serde::enum_map<T>()}; \
         auto it = std::find_if(std::begin(Members), std::end(Members),                                      \
                                [e](const std::pair<T, BasicJsonType>& ej_pair) -> bool  \
         {                                                                                       \
@@ -67,15 +70,12 @@ using json = nlohmann::json;
             j = it->second; \
         } \
     }
-#define SERDE_JSON_ENUM_ONLY_DESERIALIZE(T, ...) \
+#define SERDE_JSON_ENUM_ONLY_DESERIALIZE(T) \
     template<typename BasicJsonType>                                                            \
-    inline void from_json(const BasicJsonType& j, T& e)                                 \
+    inline void from_json(const BasicJsonType& j, T& e)                                \
     {                                                                                           \
         static_assert(std::is_enum_v<T>);          \
-        typedef T _serde_local_enum_t; \
-        static constexpr std::pair<T, LStringView> const Members[]{ \
-        JAFG_MAP(DETAIL_SERDE_JSON_ENUM_TRANSFORM, __VA_ARGS__) \
-        }; \
+        std::unordered_map<T, LStringView> const& Members{::serde::enum_map<T>()}; \
         auto it = std::find_if(std::begin(Members), std::end(Members),                                      \
                                [&j](const std::pair<T, BasicJsonType>& ej_pair) -> bool \
         {                                                                                       \
@@ -91,6 +91,15 @@ using json = nlohmann::json;
             e = it->first; \
         } \
     }
+
+//#
+//# Serializes an enum where its string counterpart is different from the C++ record name.
+//# Usage example:
+//#     enum struct EExample: u8 { A, B, C };
+//#     SERDE_JSON_ENUM(EExample, {
+//#         {EExample::A, "a"}, {EExample::B, "b"}, {EExample::C, "c"}
+//#         })
+//#
 #define SERDE_JSON_ENUM_PAIR_ONLY_DESERIALIZE(T, ...) \
     template<typename BasicJsonType>                                                            \
     inline void from_json(const BasicJsonType& j, T& e)                                 \
@@ -118,18 +127,42 @@ using json = nlohmann::json;
 //#
 //# Serializes a type to/from JSON.
 //# Usage example:
-//#    struct LExample { LString Name; i32 Value; };
-//#    SERDE_JSON_TYPE_NON_INTRUSIVE(LExample, Name, Value)
+//#    struct LExample{ LString Name; i32 Value; };
+//#    SERDE_JSON_TYPE(LExample, Name, Value)
 //#
-#define SERDE_JSON_TYPE_NON_INTRUSIVE(Type, ...)  \
-    SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, __VA_ARGS__) \
-    SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, __VA_ARGS__)
-#define SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
+#define SERDE_JSON_TYPE(Type, ...)  \
+    SERDE_JSON_TYPE_ONLY_SERIALIZE(Type, __VA_ARGS__) \
+    SERDE_JSON_TYPE_ONLY_DESERIALIZE(Type, __VA_ARGS__)
+#define SERDE_JSON_TYPE_ONLY_SERIALIZE(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { JAFG_MAP(NLOHMANN_JSON_TO, __VA_ARGS__) }
-#define SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, ...)  \
+    void to_json(BasicJsonType& nlohmann_json_j, Type const& nlohmann_json_t) { JAFG_MAP(NLOHMANN_JSON_TO, __VA_ARGS__) }
+#define SERDE_JSON_TYPE_ONLY_DESERIALIZE(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { JAFG_MAP(NLOHMANN_JSON_FROM, __VA_ARGS__) }
+    void from_json(BasicJsonType const& nlohmann_json_j, Type& nlohmann_json_t) { JAFG_MAP(NLOHMANN_JSON_FROM, __VA_ARGS__) }
+//#
+//# Serialize a type to JSON which has unique logic.
+//# Usage example:
+//#     struct LExample{ ... };
+//#     SERDE_JSON_TYPE_ONLY_SERIALIZE_BODY(LExample)
+//#     {
+//#         j = ...; /* Your logic here. */
+//#     }
+//#
+#define SERDE_JSON_TYPE_ONLY_SERIALIZE_BODY(Type) \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& j, Type const& field)
+//#
+//# Serialize a type from JSON to a unique data layout.
+//# Usage example:
+//#     struct LExample{ ... };
+//#     SERDE_JSON_TYPE_ONLY_DESERIALIZE_BODY(LExample)
+//#     {
+//#         field = ...; /* Your logic here. */
+//#     }
+//#
+#define SERDE_JSON_TYPE_ONLY_DESERIALIZE_BODY(Type)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(BasicJsonType const& j, Type& field)
 
 //#
 //# Serializes a type to/from JSON but if the fields are missing, the filed will be skipped and the current value will
@@ -139,22 +172,42 @@ using json = nlohmann::json;
 //#          fields.
 //#
 //# Usage example:
-//#    struct LExample { LString Name; i32 Value; };
-//#    SERDE_STRING_NON_INTRUSIVE(LExample, Name, Value)
+//#    struct LExample{ LString Name; i32 Value; };
+//#    SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE(LExample, Name, Value)
 //#
 #define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE(Type, ...)  \
     SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_SERIALIZE(Type, __VA_ARGS__) \
     SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, __VA_ARGS__)
-#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...) \
-    SERDE_JSON_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, __VA_ARGS__)
-#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, ...)  \
-    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; JAFG_MAP(DETAIL_SERDE_JSON_TYPE_RELAXED, __VA_ARGS__) }
 #define DETAIL_SERDE_JSON_TYPE_RELAXED(v1) \
     if (nlohmann_json_j.contains(#v1)) \
     { \
         NLOHMANN_JSON_FROM(v1) \
     }
+#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...) \
+    SERDE_JSON_TYPE_ONLY_SERIALIZE(Type, __VA_ARGS__)
+#define SERDE_JSON_TYPE_RELAXED_NON_INTRUSIVE_ONLY_DESERIALIZE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; JAFG_MAP(DETAIL_SERDE_JSON_TYPE_RELAXED, __VA_ARGS__) }
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+SERDE_ENUM_PAIR(value_t, {
+    {json::value_t::null, "null"},
+    {json::value_t::object, "object"},
+    {json::value_t::array, "array"},
+    {json::value_t::string, "string"},
+    {json::value_t::boolean, "boolean"},
+    {json::value_t::binary, "binary"},
+    {json::value_t::discarded, "discarded"},
+    {json::value_t::number_integer, "number"},
+    {json::value_t::number_unsigned, "number"},
+    {json::value_t::number_float, "number"},
+    })
+
+} /* ~Namespace nlohmann */
+NLOHMANN_JSON_NAMESPACE_END
 
 namespace serde
 {
@@ -164,24 +217,6 @@ template<typename T>
 inline void NlohmannSink(T const& Error) noexcept
 {
     LOG_FATAL(LogSerialization, "{}", Error.what())
-}
-
-inline constexpr LStringView LexToString(json::value_t Value) noexcept
-{
-    switch (Value)
-    {
-    case json::value_t::null: return "null";
-    case json::value_t::object: return "object";
-    case json::value_t::array: return "array";
-    case json::value_t::string: return "string";
-    case json::value_t::boolean: return "boolean";
-    case json::value_t::binary: return "binary";
-    case json::value_t::discarded: return "discarded";
-    case json::value_t::number_integer:
-    case json::value_t::number_unsigned:
-    case json::value_t::number_float:
-    default: return "number";
-    }
 }
 
 template<typename T, typename... TArgs>
@@ -204,10 +239,8 @@ inline void JsonExpectType(json const& j, json::value_t Type) noexcept
 {
     if (j.type() != Type)
     {
-        JsonSink<T>(j, "Expected [{}] got [{}]", LexToString(Type), j.type_name());
+        JsonSink<T>(j, "Expected [{}] got [{}]", serde::to_string(Type), j.type_name());
     }
-
-    return;
 }
 template<typename T>
 inline void JsonExpectSize(json const& j, std::size_t Size) noexcept
@@ -216,8 +249,6 @@ inline void JsonExpectSize(json const& j, std::size_t Size) noexcept
     {
         JsonSink<T>(j, "Expected size [{}] got [{}]", Size, j.size());
     }
-
-    return;
 }
 
 template<typename T>
@@ -335,196 +366,11 @@ void from_json(json const& j, vec<N,T,Q>& p)
 
 } /* ~Namespace glm */
 
-namespace Json
+SERDE_JSON_TYPE_ONLY_SERIALIZE_BODY(LColor)
 {
-
-inline constexpr serde::LJsonKey Object(LStringView Key) noexcept { return {Key, json::value_t::object}; }
-inline constexpr serde::LJsonKey Bool(LStringView Key) noexcept { return {Key, json::value_t::boolean}; }
-inline constexpr serde::LJsonKey String(LStringView Key) noexcept { return {Key, json::value_t::string}; }
-inline constexpr serde::LJsonKey Array(LStringView Key) noexcept { return {Key, json::value_t::array}; }
-inline constexpr serde::LJsonKey Integer(LStringView Key) noexcept { return {Key, json::value_t::number_integer}; }
-inline constexpr serde::LJsonKey UInteger(LStringView Key) noexcept { return {Key, json::value_t::number_unsigned}; }
-inline constexpr serde::LJsonKey Float(LStringView Key) noexcept { return {Key, json::value_t::number_float}; }
-
-inline bool DoesObjectContainKeys(json const& Object, TArray<LStringView> Keys, LString* OutMissingKey = nullptr) noexcept
-{
-    if (Object.is_object() == false)
-    {
-        LOG_ERROR(LogSerialization, "Provided json is not an object. Failed to check for keys.")
-        return false;
-    }
-
-    for (auto const& Key : Keys)
-    {
-        if (Object.contains(Key) == false)
-        {
-            return false;
-        }
-    }
-
-    return true;
+    j = json::string_t{serde::to_string(field)};
 }
-
-struct LKeyType
+SERDE_JSON_TYPE_ONLY_DESERIALIZE_BODY(LColor)
 {
-    enum Type
-    {
-        Object,
-        Bool,
-        String,
-        Array,
-        Integer,
-        UInteger,
-        Float,
-    };
-
-    LStringView Key;
-    Type ExpectedType;
-};
-
-enum struct EError
-{
-    MissingKey,
-    InvalidType,
-};
-inline LStringView LexToString(EError Error) noexcept
-{
-    switch (Error)
-    {
-    case EError::MissingKey:  { return "MissingKey"; }
-    case EError::InvalidType: { return "InvalidType"; }
-    default: { std::unreachable(); }
-    }
+    serde::from_string(&field, j.template get<LString>());
 }
-
-inline bool DoesObjectContainTypeCheckedKeys(json const& Object, TArray<LKeyType> Keys, LString* OutKeyError = nullptr, EError* OutError = nullptr) noexcept
-{
-    LString DummyKey;
-    EError DummyError;
-    if (OutKeyError == nullptr)
-    {
-        OutKeyError = &DummyKey;
-    }
-    if (OutError == nullptr)
-    {
-        OutError = &DummyError;
-    }
-
-    auto& KeyError{*OutKeyError};
-    auto& Error{*OutError};
-
-    if (Object.is_object() == false)
-    {
-        LOG_ERROR(LogSerialization, "Provided json is not an object. Failed to check for keys.")
-        return false;
-    }
-
-    for (auto const& Key : Keys)
-    {
-        if (Object.contains(Key.Key) == false)
-        {
-            KeyError = Key.Key;
-            Error = EError::MissingKey;
-            return false;
-        }
-
-        switch (Key.ExpectedType)
-        {
-        case LKeyType::Object:
-        {
-            if (Object[Key.Key].is_object() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        case LKeyType::Bool:
-        {
-            if (Object[Key.Key].is_boolean() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        case LKeyType::String:
-        {
-            if (Object[Key.Key].is_string() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        case LKeyType::Array:
-        {
-            if (Object[Key.Key].is_array() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        case LKeyType::Integer:
-        {
-            if (Object[Key.Key].is_number_integer() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        case LKeyType::UInteger:
-        {
-            if (Object[Key.Key].is_number_integer() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        case LKeyType::Float:
-        {
-            if (Object[Key.Key].is_number_float() == false)
-            {
-                KeyError = Key.Key;
-                Error = EError::InvalidType;
-                return false;
-            }
-            break;
-        }
-        default:
-        {
-            std::unreachable();
-        }
-        }
-
-        continue;
-    }
-
-    return true;
-}
-
-[[noreturn]]
-inline void DefaultFail(auto const& Category, auto const& Key, EError Error)
-{
-    if (Error == EError::InvalidType)
-    {
-        LOG_FATAL(LogSerialization, "[{}]: Key [{}] is of invalid type. Failed to load.", Category, Key)
-    }
-    if (Error == EError::MissingKey)
-    {
-        LOG_FATAL(LogSerialization, "[{}]: Key [{}] is missing. Failed to load.", Category, Key)
-    }
-
-    std::unreachable();
-}
-
-} /* ~Namespace Json */

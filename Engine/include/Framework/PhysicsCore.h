@@ -78,6 +78,7 @@ enum struct ESoftBodyConstraintColor
     //# Draw constraints in the same group in the same color, non-parallel group will be red, and order within each group will be indicated with gradient.
     ConstraintOrder,
 };
+SERDE_ENUM(ESoftBodyConstraintColor, ConstraintType, ConstraintGroup, ConstraintOrder)
 
 enum struct EShapeColor
 {
@@ -94,6 +95,7 @@ enum struct EShapeColor
     //# Color as defined by the PhysicsMaterial of the shape.
     Material,
 };
+SERDE_ENUM(EShapeColor, Instance, ShapeType, MotionType, Sleep, Island, Material)
 #endif /* !JAFG_IN_SHIPPING */
 
 } /* ~Namespace Physx */

@@ -47,9 +47,9 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
                 {
                     Target->AddChild(NewNode(Target->GetViewport()).Class<WTextButton>()
                         .Anchor(EAnchor::HFill)
+
+                        .Palette(*Prefs.PrimaryPaletteSolid)
                         .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
-                        .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
-                        .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColorVariant)
                         .InAllBrushes<&LBoxBrush::Padding>({5_spt, 0})
                         .Content(Item)
                         .OnKeyEventFocused([this,Item,FloatingWidget=&FloatingWidget](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)

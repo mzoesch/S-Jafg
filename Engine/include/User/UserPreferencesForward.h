@@ -12,6 +12,7 @@ enum struct EPolygonMode : u8
     Fill,
     Wireframe,
 };
+SERDE_ENUM(EPolygonMode, Fill, Wireframe)
 
 enum struct EApplicationScale : u8
 {
@@ -20,6 +21,7 @@ enum struct EApplicationScale : u8
     Double,
     Triple
 };
+SERDE_ENUM(EApplicationScale, Auto, Single, Double, Triple)
 
 inline constexpr f32 LexToFloat(EApplicationScale Scale) noexcept
 {

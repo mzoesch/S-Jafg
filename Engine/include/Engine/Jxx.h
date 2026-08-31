@@ -10,7 +10,6 @@
 #include "Engine/JxxClassMacros.h"
 #include "Engine/EngineGetters.h"
 #include "Jxx.generated.h"
-#include "Jxx.h"
 
 //# Pragmas for the Jafg Build Tool.
 #define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
@@ -192,6 +191,11 @@ struct LRegistryPackage
     EType PackageType;
     LLoadedPluginHandle Origin;
 };
+SERDE_ENUM_PAIR(LRegistryPackage::EType, {
+    {LRegistryPackage::EType::None, "<error>"},
+    {LRegistryPackage::EType::Class, "Class"},
+    })
+
 inline constexpr LStringView LexToString(LRegistryPackage::EType Type) noexcept
 {
     switch (Type)
@@ -1753,6 +1757,8 @@ class TSubclassOf final
 
 public:
 
+    typedef TObj value_type;
+
     constexpr TSubclassOf() noexcept : Class{nullptr} { }
     constexpr TSubclassOf(std::nullptr_t) noexcept : Class{nullptr} { }
 
@@ -1877,29 +1883,14 @@ struct std::formatter<Jafg::Detail::LReflectedTag> : std::formatter<LString>
     }
 };
 
-template<typename TCxxClass, typename TArchive> requires std::is_base_of_v<Jafg::JCxxClass, TCxxClass>
-    && serde::os_string_archive_v<TArchive>
-struct serde::TSerializer<TSubclassOf<TCxxClass>, TArchive>
+template<typename TArchive, typename U> requires serde::string_archive_impl_for_v<TArchive, U, TSubclassOf<typename U::value_type>>
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
 {
-    void operator()(TArchive& Ar, TSubclassOf<TCxxClass> const& Field) const
+    typedef typename U::value_type TJxxClass;
+    static_assert(std::is_base_of_v<Jafg::JCxxClass, TJxxClass>);
+    if constexpr (serde::is_string_archive_v<TArchive>)
     {
-        if (Field.HasClass())
-        {
-            Ar.Stream << Field->GetFullyQualifiedName();
-        }
-        else
-        {
-            Ar.Stream << TCxxClass::StaticClass().GetFullyQualifiedName();
-        }
-    }
-};
-template<typename TCxxClass, typename TArchive> requires std::is_base_of_v<Jafg::JCxxClass, TCxxClass>
-    && serde::is_string_archive_v<TArchive>
-struct serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
-{
-    LDeserializationResult operator()(TArchive const& Ar, TSubclassOf<TCxxClass>& Field) const
-    {
-        if (auto* Package{Jafg::Detail::GetGlobalCxxRecordRegistry().GetPackageByName(Ar.Stream)})
+        if (auto* Package{Jafg::Detail::GetGlobalCxxRecordRegistry().GetPackageByName(Ar.get_stream())})
         {
             if (Package->IsClass())
             {
@@ -1907,24 +1898,32 @@ struct serde::TDeserializer<TSubclassOf<TCxxClass>, TArchive>
             }
             else
             {
-                return {
-                    .Errc = std::errc::invalid_argument,
-                    .Error = algo::sprintf("Package [{}] is not a class. Found [{}].",
-                        Package->GetFullyQualifiedName(), LexToString(Package->GetType())
-                        )
-                    };
+                LOG_FATAL(LogObjectInternal, "Package [{}] is not a class. Found [{}]."
+                    , Package->GetFullyQualifiedName(), serde::to_string(Package->GetType())
+                    )
             }
         }
         else
         {
-            return {
-                .Errc = std::errc::invalid_argument,
-                .Error = algo::sprintf("No such package: [{}].", Ar.Stream)
-                };
+            LOG_FATAL(LogObjectInternal, "[{}]: No such package.", Ar.get_stream())
         }
-        return {};
     }
-};
+    else if constexpr (serde::os_string_archive_v<TArchive>)
+    {
+        if (Field.HasClass())
+        {
+            Ar.m_stream << Field->GetFullyQualifiedName();
+        }
+        else
+        {
+            Ar.m_stream << TJxxClass::StaticClass().GetFullyQualifiedName();
+        }
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+}
 
 namespace Jafg
 {

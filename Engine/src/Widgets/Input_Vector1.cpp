@@ -20,8 +20,7 @@ void Jafg::WInput_Vector1::Construct()
         return NewNode(this->GetViewport()).Class<WEditableTextButton>().SaveTo(Button)
             .Anchor(EAnchor::HFill)
             .MinDesiredSize({70_spt, 0})
-            .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
-            .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+            .Palette(*Prefs.InputPaletteSolid)
             .TextCutoff(ETextCutoff::Cutoff)
             .OnContentCommitted([this](WEditableTextButton&, LString const&, ETextCommit){ this->OnVectorDataChanged(false); })
             .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(Content); })
@@ -141,13 +140,13 @@ void Jafg::WInput_Vector1::OnTextButtonContentChanged(LString const& NewValue)
             }
 
             auto& Vec{std::get<SignedVector>(this->Vector)};
-            serde::FromString(&Vec, NewValue);
+            serde::from_string(&Vec, NewValue);
             this->Vector.emplace<SignedVector>(Vec);
         }
         else if (std::holds_alternative<UnsignedVector>(this->Vector))
         {
             auto& Vec{std::get<UnsignedVector>(this->Vector)};
-            serde::FromString(&Vec, NewValue);
+            serde::from_string(&Vec, NewValue);
             this->Vector.emplace<UnsignedVector>(Vec);
         }
         else if (std::holds_alternative<FloatingVector>(this->Vector))
@@ -158,7 +157,7 @@ void Jafg::WInput_Vector1::OnTextButtonContentChanged(LString const& NewValue)
             }
 
             auto& Vec{std::get<FloatingVector>(this->Vector)};
-            serde::FromString(&Vec, NewValue);
+            serde::from_string(&Vec, NewValue);
             this->Vector.emplace<FloatingVector>(Vec);
         }
         else

@@ -46,11 +46,9 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                         auto& Prefs{GetSingleton<JUserPreferences>()};
                         Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButtonIconizedDouble>()
                             .Anchor(EAnchor::HFill)
+                            .Palette(*Prefs.PrimaryPaletteSolid)
                             .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
-                            .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
-                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColorVariant)
                             .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
-                            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
                             .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
                             .OnCursorEnter([SubmenuWindow](auto&&...)
                             {
@@ -111,10 +109,9 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                         Region->AddChild(NewNode(Region->GetViewport()).Class<LDropDownNodeCustom::Parent>()
                             .Anchor(EAnchor::HFill)
                             .Visibility(ENodeVisibility::Visible) /* Allow custom nodes to be swept. */
+                            .Palette(*Prefs.PrimaryPaletteSolid)
+                            .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LRegionBrush::bSkipBrushDraw>(true)
                             .Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0})
-                            .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
-                            .InBrush<EStyleBits::Hover, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
-                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColorVariant)
                             .OnCursorEnter([SubmenuWindow](auto&&...)
                             {
                                 check(SubmenuWindow.get())
@@ -179,11 +176,9 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                         auto& Prefs{GetSingleton<JUserPreferences>()};
                         Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButtonIconizedDouble>()
                             .Anchor(EAnchor::HFill)
+                            .Palette(*Prefs.PrimaryPaletteSolid)
                             .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
-                            .InBrush<EStyleBits::Hover|EStyleBits::Selected, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
-                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColorVariant)
                             .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
-                            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
                             .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
                             .Selectable(true)
                             .OnCursorEnter([NodeCopy=Node, SubmenuWindow, Id](WNode& Self)
@@ -233,11 +228,9 @@ Jafg::WDismissibleFloatingWidget& Jafg::CreateDropDownMenu(LViewport& Viewport, 
                         auto& Prefs{GetSingleton<JUserPreferences>()};
                         Region->AddChild(NewNode(Region->GetViewport()).Class<WTextButtonIconizedDouble>()
                             .Anchor(EAnchor::HFill)
+                            .Palette(*Prefs.PrimaryPaletteSolid)
                             .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
-                            .InBrush<EStyleBits::Hover|EStyleBits::Selected, &LBoxBrush::Tint>(*Prefs.PrimaryColor)
-                            .InBrush<EStyleBits::Press, &LBoxBrush::Tint>(*Prefs.PrimaryColorVariant)
                             .InAllBrushes<&LBoxBrush::Padding>({LDropDownMenuCreateInfo::RecommendedPadding, 0})
-                            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
                             .InAllLeftIconBrushes<&LIconBrush::bAlwaysPad>(true)
                             .Selectable(true)
                             .OnCursorEnter([NodeCopy=Node, SubmenuWindow, Id](WNode& Self)

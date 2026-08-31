@@ -121,6 +121,13 @@ struct LFactoryTextButton : TFactoryButtonBase<WTextButton>
     NODE_FACTORY_BODY(WTextButton)
 
     JAFG_NODE_FACTORY_STYLE_BOILERPLATE(Text, TextStyle)
+
+    decltype(auto) Palette(this auto&& Self, LStylePalette const& Style) noexcept
+    {
+        static_cast<TFactoryButtonBase<WTextButton>*>(&Self)->Palette(Style);
+        Style.ApplyOn(DETAIL_JAFG_NODE_FACTORY_SELF().TextStyle);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 struct LFactoryTextButtonIconizedDouble : NODE_FACTORY_PARENT(WTextButtonIconizedDouble)

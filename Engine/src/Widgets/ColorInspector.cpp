@@ -28,10 +28,6 @@ void Jafg::WColorInspector::Construct()
     Targets.emplace_back(algo::find_pointer_checked(Fields, "OverlayColor"sv, &LJxxClassField::Identifier));
     Targets.emplace_back(algo::find_pointer_checked(Fields, "DisabledColor"sv, &LJxxClassField::Identifier));
     Targets.emplace_back(algo::find_pointer_checked(Fields, "TextColor"sv, &LJxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColor"sv, &LJxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColorVariant"sv, &LJxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColor2"sv, &LJxxClassField::Identifier));
-    Targets.emplace_back(algo::find_pointer_checked(Fields, "PrimaryColorVariant2"sv, &LJxxClassField::Identifier));
     Targets.emplace_back(algo::find_pointer_checked(Fields, "ProximityColorA"sv, &LJxxClassField::Identifier));
     Targets.emplace_back(algo::find_pointer_checked(Fields, "ProximityColorB"sv, &LJxxClassField::Identifier));
     Targets.emplace_back(algo::find_pointer_checked(Fields, "DangerColor"sv, &LJxxClassField::Identifier));
@@ -40,7 +36,7 @@ void Jafg::WColorInspector::Construct()
     {
         if (!Target) { continue; }
         LColor Color{ Colors::Black };
-        serde::FromString(&Color, Target->Get(Prefs));
+        serde::from_string(&Color, Target->Get(Prefs));
         Container->AddChild(NewStaticNode(WTextBox)
             .Anchor(EAnchor::HFill)
             .Tint(Color)

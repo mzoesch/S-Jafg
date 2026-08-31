@@ -36,7 +36,7 @@ void Jafg::WDropDownTabBar::Construct()
         this->RootSubmenuContainer->AddChild(NewStaticNode(WTextBox).SkipBrushDraw(true)
             .Visibility(ENodeVisibility::Visible)
             .Content(std::move(DisplayName))
-            .Tint(*GetSingleton<JUserPreferences>().PrimaryColor)
+            .Tint(GetSingleton<JUserPreferences>().PrimaryPaletteSolid->Normal.Tint)
             .OnCursorEnter([this, &SubMenu](WNode& Node){ return this->OnMouseEnterInRoot(Node, SubMenu); })
             .Unique()
             );

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Region.h"
 #include "Nodes/Node.h"
 
 #define JAFG_NODE_BUTTON_BOILERPLATE_Construct() \
@@ -74,7 +75,10 @@
 namespace Jafg
 {
 
+struct LTextBrush;
+struct LTextBoxBrush;
 struct LRegionBrush;
+struct LStylePalette;
 
 enum struct EStyleBits : u8
 {
@@ -276,6 +280,7 @@ struct LStylePalette final
     {
         LColor Tint;
         LColor Outline;
+        u32 OutlineThickness;
         LColor TextTint;
 
         NODISCARD bool operator==(State const& Rhs) const noexcept = default;
@@ -288,9 +293,85 @@ struct LStylePalette final
     State Disabled;
 
     NODISCARD bool operator==(LStylePalette const& Rhs) const noexcept = default;
+
+    template<typename TBrush>
+    inline static constexpr bool valid_brush_v{std::is_base_of_v<LRegionBrush, TBrush>};
+    template<typename TBrush>
+    inline static constexpr bool paddable_brush_v{requires (TBrush& Brush) { { Brush.Padding } -> std::same_as<LPadding&>; }};
+    template<typename TBrush>
+    inline static constexpr bool valid_text_brush_v{std::is_base_of_v<LTextBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>};
+
+    template<typename TBrush>
+        requires valid_brush_v<TBrush> || valid_text_brush_v<TBrush>
+    void ApplyOn(TButtonStyle<TBrush>& Style) const noexcept
+    {
+        if constexpr (valid_brush_v<TBrush>)
+        {
+            static_assert(!valid_text_brush_v<TBrush>);
+
+            auto ApplyState{[](TBrush& Brush, State const& State) noexcept
+            {
+                if (Brush.IsBackgroundValid())
+                {
+                    Brush.Tint = State.TextTint;
+                }
+                else
+                {
+                    Brush.Tint = State.Tint;
+                }
+                Brush.BorderTint = State.Tint;
+                Brush.OutlineTint = State.Outline;
+                Brush.OutlineThickness = static_cast<f32>(State.OutlineThickness);
+            }};
+            ApplyState(Style.NormalBrush, this->Normal);
+            ApplyState(Style.HoverBrush, this->Hover);
+            ApplyState(Style.PressBrush, this->Press);
+            ApplyState(Style.SelectedBrush, this->Selected);
+            ApplyState(Style.DisabledBrush, this->Disabled);
+        }
+        else if constexpr (valid_text_brush_v<TBrush>)
+        {
+            static_assert(!valid_brush_v<TBrush>);
+
+            auto ApplyState{[](TBrush& Brush, State const& State) noexcept
+            {
+                Brush.Tint = State.TextTint;
+            }};
+            ApplyState(Style.NormalBrush, this->Normal);
+            ApplyState(Style.HoverBrush, this->Hover);
+            ApplyState(Style.PressBrush, this->Press);
+            ApplyState(Style.SelectedBrush, this->Selected);
+            ApplyState(Style.DisabledBrush, this->Disabled);
+        }
+        else
+        {
+            static_assert(algo::always_false_v<TBrush>);
+        }
+    }
+
 };
-SERDE_JSON_TYPE_NON_INTRUSIVE(LStylePalette::State, Tint, Outline, TextTint)
-SERDE_JSON_TYPE_NON_INTRUSIVE(LStylePalette, Normal, Hover, Press, Selected, Disabled)
+SERDE_JSON_TYPE(LStylePalette::State, Tint, Outline, TextTint)
+SERDE_JSON_TYPE(LStylePalette, Normal, Hover, Press, Selected, Disabled)
+
+template<typename TArchive, typename U> requires serde::string_archive_impl_for_v<TArchive, U, LStylePalette>
+inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
+{
+    if constexpr (serde::is_string_archive_v<TArchive>)
+    {
+        static_assert(serde::fail_archive_v<TArchive>);
+        json::parse(Ar.get_stream(), nullptr, false).get_to(Field);
+    }
+    else if constexpr (serde::os_string_archive_v<TArchive>)
+    {
+        json j = Field;
+        Ar.m_stream << j.dump();
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+    return std::forward<decltype(Ar)>(Ar);
+}
 
 //# Inherit from this to access common button logic.
 template<typename TNode, typename TBrush, auto BrushProj> requires std::is_base_of_v<LRegionBrush, TBrush>
@@ -529,49 +610,34 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
     }
 
     JAFG_NODE_FACTORY_STYLE_BOILERPLATE(, Style)
+
+    decltype(auto) Palette(this auto&& Self, LStylePalette const& Style) noexcept
+    {
+        check(!Self._IsDecommissioned())
+        Style.ApplyOn(DETAIL_JAFG_NODE_FACTORY_SELF().Style);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) Palette(this auto&& Self, LStylePalette const& Style, auto&& Background) noexcept
+    {
+        DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(std::move(Background));
+        Self.Palette(Style);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) TexturePalette(this auto&& Self, LStylePalette const& Style, LOptionalTexture2Ref Texture) noexcept
+    {
+        DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(TNode::_ButtonBaseBrush::Texture(std::move(Texture)));
+        Self.Palette(Style);
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) IconPalette(this auto&& Self, LStylePalette const& Style, LOptionalTexture2Ref Icon) noexcept
+    {
+        DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(TNode::_ButtonBaseBrush::Icon(std::move(Icon)));
+        Self.Palette(Style);
+        return NODE_FACTORY_RESULT();
+    }
 };
 
 } /* ~Namespace Jafg */
 
 JAFG_PREF_OF(Jafg::LStylePalette::State)
 JAFG_PREF_OF(Jafg::LStylePalette)
-
-namespace serde
-{
-
-template<typename TArchive> requires os_string_archive_v<TArchive>
-struct TSerializer<Jafg::LStylePalette::State, TArchive>
-{
-    void operator()(TArchive& Ar, Jafg::LStylePalette::State const& Field) const noexcept
-    {
-        json j; to_json(j, Field);
-        Ar << j.dump();
-    }
-};
-template<typename TArchive> requires os_string_archive_v<TArchive>
-struct TDeserializer<Jafg::LStylePalette::State, TArchive>
-{
-    void operator()(TArchive const& Ar, Jafg::LStylePalette::State& Field) const noexcept
-    {
-        json::parse(Ar, Field);
-    }
-};
-template<typename TArchive> requires os_string_archive_v<TArchive>
-struct TSerializer<Jafg::LStylePalette, TArchive>
-{
-    void operator()(TArchive& Ar, Jafg::LStylePalette const& Field) const noexcept
-    {
-        json j; to_json(j, Field);
-        Ar << j.dump();
-    }
-};
-template<typename TArchive> requires is_string_archive_v<TArchive>
-struct TDeserializer<Jafg::LStylePalette, TArchive>
-{
-    void operator()(TArchive const& Ar, Jafg::LStylePalette& Field) const noexcept
-    {
-        json::parse(Ar, Field);
-    }
-};
-
-} /* ~Namespace serde */

@@ -1,0 +1,213 @@
+/* Copyright mzoesch. All rights reserved. */
+
+.jafg-text-button {
+    border-radius: 3px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 5px 10px;
+}
+
+/* Primary Button Styles */
+.jafg-button-primary,
+.jafg-button-primary-normal {
+    background-color: #3C97D3FF;
+    border: none;
+    color: #F0F0F0FF;
+}
+
+.jafg-button-primary:hover,
+.jafg-button-primary-hover {
+    background-color: #2980BAFF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-primary:active,
+.jafg-button-primary-pressed {
+    background-color: #2D6C97FF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-primary-selected {
+    background-color: #337AB7FF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-primary-disabled {
+    background-color: #8F8F8FFF;
+    border: none;
+    color: #404040FF;
+}
+
+/* Primary Outline Button Styles */
+.jafg-button-outline-primary,
+.jafg-button-outline-primary-normal {
+    background-color: #00000000;
+    border: solid 1px #3C97D3FF;
+    color: #3C97D3FF;
+}
+
+.jafg-button-outline-primary:hover,
+.jafg-button-outline-primary-hover {
+    background-color: #2980BA30;
+    border: solid 1px #2980BAFF;
+    color: #2980BAFF;
+}
+
+.jafg-button-outline-primary:active,
+.jafg-button-outline-primary-pressed {
+    background-color: #2D6C9730;
+    border: solid 1px #2D6C97FF;
+    color: #2D6C97FF;
+}
+
+.jafg-button-outline-primary-selected {
+    background-color: #337AB760;
+    border: solid 1px #337AB7FF;
+    color: #337AB7FF;
+}
+
+.jafg-button-outline-primary-disabled {
+    background-color: #8F8F8F60;
+    border: solid 1px #101010FF;
+    color: #808080FF;
+}
+
+/* Pale Primary Button Styles */
+.jafg-button-pale-primary,
+.jafg-button-pale-primary-normal {
+    background-color: #40576FFF;
+    border: none;
+    color: #F0F0F0FF;
+}
+
+.jafg-button-pale-primary:hover,
+.jafg-button-pale-primary-hover {
+    background-color: #2C3234FF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-pale-primary:active,
+.jafg-button-pale-primary-pressed {
+    background-color: #2D6C97FF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-pale-primary-selected {
+    background-color: #335c88FF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-pale-primary-disabled {
+    background-color: #8F8F8FFF;
+    border: none;
+    color: #404040FF;
+}
+
+/* Pale Primary Outline Button Styles */
+.jafg-button-outline-pale-primary,
+.jafg-button-outline-pale-primary-normal {
+    background-color: #00000000;
+    border: solid 1px #40576FFF;
+    color: #40576FFF;
+}
+
+.jafg-button-outline-pale-primary:hover,
+.jafg-button-outline-pale-primary-hover {
+    background-color: #2C323430;
+    border: solid 1px #2C3234FF;
+    color: #464E51FF;
+}
+
+.jafg-button-outline-pale-primary:active,
+.jafg-button-outline-pale-primary-pressed {
+    background-color: #2D6C9730;
+    border: solid 1px #2D6C97FF;
+    color: #2D6C97FF;
+}
+
+.jafg-button-outline-pale-primary-selected {
+    background-color: #335c8860;
+    border: solid 1px #335c88FF;
+    color: #335c88FF;
+}
+
+.jafg-button-outline-pale-primary-disabled {
+    background-color: #8F8F8F60;
+    border: solid 1px #101010FF;
+    color: #808080FF;
+}
+
+/* Secondary Button Styles */
+.jafg-button-secondary,
+.jafg-button-secondary-normal {
+    background-color: #2F2F2FFF;
+    border: none;
+    color: #C0C0C0FF;
+}
+
+.jafg-button-secondary:hover,
+.jafg-button-secondary-hover {
+    background-color: #3F3F3FFF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-secondary:active,
+.jafg-button-secondary-pressed {
+    background-color: #4F4F4FFF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-secondary-selected {
+    background-color: #4F4F4FFF;
+    border: none;
+    color: #FFFFFFFF;
+}
+
+.jafg-button-secondary-disabled {
+    background-color: #0F0F0FFF;
+    border: none;
+    color: #808080FF;
+}
+
+/* Secondary Outline Button Styles */
+.jafg-button-outline-secondary,
+.jafg-button-outline-secondary-normal {
+    background-color: #00000000;
+    border: solid 1px #3E3E3EFF;
+    color: #3E3E3EFF;
+}
+
+.jafg-button-outline-secondary:hover,
+.jafg-button-outline-secondary-hover {
+    background-color: #3F3F3F30;
+    border: solid 1px #3F3F3FFF;
+    color: #3F3F3FFF;
+}
+
+.jafg-button-outline-secondary:active,
+.jafg-button-outline-secondary-pressed {
+    background-color: #4F4F4F30;
+    border: solid 1px #4F4F4FFF;
+    color: #4F4F4FFF;
+}
+
+.jafg-button-outline-secondary-selected {
+    background-color: #4F4F4F60;
+    border: solid 1px #4F4F4FFF;
+    color: #4F4F4FFF;
+}
+
+.jafg-button-outline-secondary-disabled {
+    background-color: #0F0F0F60;
+    border: solid 1px #0F0F0FFF;
+    color: #E0E0E0FF;
+}

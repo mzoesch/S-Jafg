@@ -45,7 +45,7 @@ void Jafg::WFinder::Construct()
                     (0_spt, 10_spt, LIconBrush::Align::Center)
                 .LeftIcon("Icons/Jafg.Filter")
                 .RightIcon("Icons/Jafg.ExtendDown")
-                .Style(Prefs.EditorSecondaryButton<LBoxBrush>())
+                .Palette(*Prefs.SecondaryPaletteSolid)
                 .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                 .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
@@ -66,7 +66,7 @@ void Jafg::WFinder::Construct()
             + NewStaticNode(WTextButtonIconizedDouble)
                 .Anchor(EAnchor::VCenter)
                 .Content("Refresh")
-                .Style(Prefs.EditorSecondaryButton<LBoxBrush>())
+                .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
                 .LeftIcon("Icons/Jafg.Refresh")
                 .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
@@ -89,17 +89,17 @@ void Jafg::WFinder::Construct()
                 .Anchor(EAnchor::HFill)
                 .MinDesiredSize(this->NameSize)
                 .Content("Name")
-                .Style(Prefs.EditorSecondaryButton<LBoxBrush>())
+                .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
             + NewStaticNode(WTextButton)
                 .MinMaxDesiredSize(this->SizeSize)
                 .Content("Size")
-                .Style(Prefs.EditorSecondaryButton<LBoxBrush>())
+                .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
             + NewStaticNode(WTextButton)
                 .MinMaxDesiredSize(this->ModifiedSize)
                 .Content("Modified")
-                .Style(Prefs.EditorSecondaryButton<LBoxBrush>())
+                .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
         ]
         + NewStaticNode(WScrollRegion)
@@ -201,12 +201,13 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
 
     if (Entry.is_directory())
     {
+        auto& Prefs{GetSingleton<JUserPreferences>()};
         auto& EntryMeta{this->Meta[Entry.path()]};
         EntryMeta.Node = &this->Container->AddChildAt(Where++, NewStaticNode(WHButton)
             .Visibility(ENodeVisibility::Visible)
             .Anchor(EAnchor::HFill)
             .Padding(this->Indent2Padding(Indent))
-            .Style(GetSingleton<JUserPreferences>().EditorProximityBoxStyle2<LRegionBrush>(Counter++))
+            .Palette(Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid))
             .OnKeyEventFocused([this, SelfPath=Entry.path()](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
                     if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -250,10 +251,11 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
     }
     else
     {
+        auto& Prefs{GetSingleton<JUserPreferences>()};
         this->Container->AddChildAt(Where++, NewStaticNode(WHButton)
             .Anchor(EAnchor::HFill)
             .Padding(this->Indent2Padding(Indent))
-            .Style(GetSingleton<JUserPreferences>().EditorProximityBoxStyle2<LRegionBrush>(Counter++))
+            .Palette(Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid))
             .OnKeyEventFocused([this, SelfPath=Entry.path()](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
                 if (Info.CursorLocation && Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
@@ -365,7 +367,7 @@ void Jafg::WFinder::Repaint()
     for (auto& Child: this->Container->GetChildren())
     {
         auto& Button{Child->AsStatic<WHButton>()};
-        Button.Style = Prefs.EditorProximityBoxStyle2<LRegionBrush>(Counter++);
+        Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid).ApplyOn(Button.Style);
 
         if (!Button.IsEnabled())
         {

@@ -39,6 +39,10 @@ struct LRegionBrush
         u32 Scale{ 1 };
     };
     std::variant<std::monostate, LTexture, LIcon> Background;
+    NODISCARD constexpr bool IsBackgroundValid() const noexcept { return !std::holds_alternative<std::monostate>(this->Background); }
+    NODISCARD constexpr bool IsBackgroundTexture() const noexcept { return std::holds_alternative<LTexture>(this->Background); }
+    NODISCARD constexpr bool IsBackgroundIcon() const noexcept { return std::holds_alternative<LIcon>(this->Background); }
+
     //# How much padding to apply to the texture.
     f32 TexturePadding{};
     //# How the texture's UV should behave.

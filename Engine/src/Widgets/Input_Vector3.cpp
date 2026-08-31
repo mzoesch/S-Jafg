@@ -20,8 +20,7 @@ void Jafg::WInput_Vector3::Construct()
         return NewNode(this->GetViewport()).Class<WEditableTextButtonIconizedLeft>().SaveTo(Button)
             .Anchor(EAnchor::HFill)
             .MinDesiredSize({70_spt, 0})
-            .Style(Prefs.EditorEditableTextButtonStyle<LBoxBrush>())
-            .TextStyle(Prefs.EditorEditableTextButtonTextStyle())
+            .Palette(*Prefs.InputPaletteSolid)
             .TextCutoff(ETextCutoff::Cutoff)
             .InAllBrushes<&LBoxBrush::Padding>(LPadding{2_spt, 0, 4, 0})
             .Icon("Icons/Jafg.AxisHint")
@@ -164,15 +163,15 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<SignedVector>(this->Vector)};
             if (Part == EPart::X)
             {
-                serde::FromString(&Vec.x, NewValue);
+                serde::from_string(&Vec.x, NewValue);
             }
             else if (Part == EPart::Y)
             {
-                serde::FromString(&Vec.y, NewValue);
+                serde::from_string(&Vec.y, NewValue);
             }
             else
             {
-                serde::FromString(&Vec.z, NewValue);
+                serde::from_string(&Vec.z, NewValue);
             }
             this->Vector.emplace<SignedVector>(Vec);
         }
@@ -181,15 +180,15 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<UnsignedVector>(this->Vector)};
             if (Part == EPart::X)
             {
-                serde::FromString(&Vec.x, NewValue);
+                serde::from_string(&Vec.x, NewValue);
             }
             else if (Part == EPart::Y)
             {
-                serde::FromString(&Vec.y, NewValue);
+                serde::from_string(&Vec.y, NewValue);
             }
             else
             {
-                serde::FromString(&Vec.z, NewValue);
+                serde::from_string(&Vec.z, NewValue);
             }
             this->Vector.emplace<UnsignedVector>(Vec);
         }
@@ -203,15 +202,15 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             auto& Vec{std::get<FloatingVector>(this->Vector)};
             if (Part == EPart::X)
             {
-                serde::FromString(&Vec.x, NewValue);
+                serde::from_string(&Vec.x, NewValue);
             }
             else if (Part == EPart::Y)
             {
-                serde::FromString(&Vec.y, NewValue);
+                serde::from_string(&Vec.y, NewValue);
             }
             else
             {
-                serde::FromString(&Vec.z, NewValue);
+                serde::from_string(&Vec.z, NewValue);
             }
             this->Vector.emplace<FloatingVector>(Vec);
         }
