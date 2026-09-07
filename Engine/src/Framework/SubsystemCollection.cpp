@@ -2,7 +2,6 @@
 
 #include "Framework/SubsystemCollection.h"
 #include "Framework/Subsystem.h"
-#include "Stats/Stats.h"
 #include "Engine/Engine.h"
 
 Jafg::JSubsystem::~JSubsystem()
@@ -11,7 +10,7 @@ Jafg::JSubsystem::~JSubsystem()
 
 void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Class, bool bRegisterDeferredDelegate /* = true */)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     check(this->Outer)
@@ -80,7 +79,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
 
 void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     check(this->Outer)
@@ -235,7 +234,7 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
         return;
     }
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     check(this->Outer)
@@ -275,7 +274,7 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
         return;
     }
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     check(this->Outer)

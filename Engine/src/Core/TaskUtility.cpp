@@ -4,7 +4,6 @@
 #include "Core/TaskUtility.h"
 #include "Core/ComplexQueue.h"
 #include "Core/App.h"
-#include "Stats/Stats.h"
 #if JAFG_WITH_GCC || JAFG_PLATFORM_LINUX
     #include <thread>
 #endif /* WITH_GCC */
@@ -247,15 +246,9 @@ void Jafg::Tasks::RegisterThread(ENamedThreads::Type InThreadName)
 
     ::EngineThreads.emplace_back(Me, InThreadName);
 
-#if WITH_STATS
-    if (Stats::Private::GTracer)
-    {
-        Stats::Private::GTracer->AddNamedThread({
-            LexToString(InThreadName),
-            Me
-        });
-    }
-#endif /* WITH_STATS */
+#if JAFG_WITH_STATS
+    tracy::SetThreadName(LexToString(InThreadName).c_str());
+#endif /* JAFG_WITH_STATS */
 
     return;
 }
@@ -418,7 +411,7 @@ bool Jafg::Tasks::IsThreadRunning(const ENamedThreads::Type InThreadName)
 
 i32 Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
 {
-    STAT_CYCLE_FUNCTION_START(Trt)
+    STAT_FUNCTION()
 
     i32 RunTasks = 0;
     while (true)
@@ -456,19 +449,12 @@ i32 Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::T
         continue;
     }
 
-#if WITH_STATS
-    if (RunTasks < 1)
-    {
-        STAT_DISCARD(Trt)
-    }
-#endif /* WITH_STATS */
-
     return RunTasks;
 }
 
 void Jafg::Tasks::StopThread(const ENamedThreads::Type ThreadName)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     std::shared_lock Lock(::EngineThreadsMutex);
     LEngineThread* Thread = algo::find_pointer(::EngineThreads, ThreadName, &LEngineThread::ThreadName);
@@ -493,7 +479,7 @@ void Jafg::Tasks::StopThread(const ENamedThreads::Type ThreadName)
 
 void Jafg::Tasks::JoinThread(const ENamedThreads::Type ThreadName)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     std::shared_lock Lock(::EngineThreadsMutex);
     LEngineThread* Thread = algo::find_pointer(::EngineThreads, ThreadName, &LEngineThread::ThreadName);
@@ -519,7 +505,7 @@ void Jafg::Tasks::JoinThread(const ENamedThreads::Type ThreadName)
 
 Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThreads::Type ThreadName, LRunnable* Runnable, const bool bKillRunnableWhenFinished /* = true */)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     checkSlow( Runnable )
 
@@ -631,18 +617,12 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
                 const LString DisplayName = Ref->GetDisplayName();
                 ::RenameMe(DisplayName);
-#if WITH_STATS
-                if (Stats::Private::GTracer)
-                {
-                    Stats::Private::GTracer->AddNamedThread({
-                        DisplayName,
-                        Ref->Id,
-                    });
-                }
-#endif /* WITH_STATS */
+#if JAFG_WITH_STATS
+                tracy::SetThreadName(DisplayName.c_str());
+#endif /* JAFG_WITH_STATS */
             }
 
-            STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::LaunchNamedThread::std::thread")
+            STAT_ZONE("LaunchNamedThread")
 
             LRunnable* MyRunnable{ nullptr };
             {
@@ -699,9 +679,10 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 }
             }
 
-            STAT_CYCLE_START(Re, "Runnable::Exit")
-            MyRunnable->Exit();
-            STAT_CYCLE_END(Re)
+            {
+                STAT_ZONE("Runnable::Exit")
+                MyRunnable->Exit();
+            }
 
             if (::bTearingDown)
             {
@@ -711,7 +692,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever,
                 [ThreadName](void) -> void
                 {
-                    STAT_CYCLE_FUNCTION()
+                    STAT_FUNCTION()
 
                     std::unique_lock RemoveLock(::EngineThreadsMutex);
                     if (::bTearingDown)
@@ -753,7 +734,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
 void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* = true */)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check( IsOnMasterThread() )
 
@@ -813,30 +794,6 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
         )
 
     return;
-}
-
-bool Jafg::Tasks::Private::AddThreadsToCurrentTracerSession()
-{
-    if (Stats::Private::GTracer)
-    {
-        std::shared_lock Lock(::EngineThreadsMutex);
-        for (const LEngineThread& Thread : ::EngineThreads)
-        {
-            if (Thread.Id == 0)
-            {
-                continue;
-            }
-
-            Stats::Private::GTracer->AddNamedThread({
-                LexToString(Thread.ThreadName),
-                Thread.Id
-            });
-        }
-
-        return true;
-    }
-
-    return false;
 }
 
 #undef PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID

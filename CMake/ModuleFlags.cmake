@@ -92,6 +92,15 @@ endif()
 # Jafg flags.
 ###############################################################################
 
+unspecified_flag(JAFG_WITH_STATS "Whether to enable stats. Disabled in shipping. @see Core/Stats.h")
+unspecified_flag(JAFG_STATS_ON_DEMAND "Whether to enable stats on demand. Usually always enabled. @see Core/Stats.h")
+unspecified_flag(JAFG_STATS_NO_EXIT
+    "Whether to enable that jafg does not exit until all profile data is sent to a server.
+    If JAFG_STATS_ON_DEMAND and JAFG_STATS_NO_EXIT is enabled then the application will be in a deadlock at the end
+    its lifetime. This is a current limitation of the vendor stats system.
+    @see Core/Stats.h"
+    )
+
 if(NOT DEFINED CACHE{JAFG_MAX_FRAMES_IN_FLIGHT})
     set(
         JAFG_MAX_FRAMES_IN_FLIGHT

@@ -2,7 +2,6 @@
 
 #include "Engine/Jxx.h"
 #include "Engine/Engine.h"
-#include "Stats/Stats.h"
 
 Jafg::LEngine const& Jafg::LEngineGetters::GetEngine() const noexcept
 {
@@ -573,7 +572,7 @@ void Jafg::Detail::LCarnifex::KillAllGarbageChildren()
         return;
     }
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_TRACE(LogCarnifex, "Found {} garbage children. Begin to kill them.", this->GarbageChildren.size())
 
@@ -657,7 +656,7 @@ void Jafg::LClassOuter::TearDown() noexcept
         return;
     }
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_TRACE(LogClassOuter, "Tearing down class outer [{}].", this->HumanReadableName)
 
@@ -722,7 +721,7 @@ std::size_t Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
         return 0;
     }
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     std::size_t KillCount{};
     bool bTouched{};
@@ -789,7 +788,7 @@ void Jafg::LClassOuter::UnregisterFromEngine()
 
 bool Jafg::IsValidSlow(LClassOuter const* Outer, JCxxClass const* Obj)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     if (Outer == nullptr || Obj == nullptr)
     {

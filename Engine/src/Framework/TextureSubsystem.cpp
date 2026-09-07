@@ -5,7 +5,6 @@
 #include "Engine/Engine.h"
 #include "Framework/AssetDiscoverer.h"
 #include "Framework/MaterialSubsystem.h"
-#include "Stats/Stats.h"
 #include "Rhi/FromString.h"
 
 void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -42,7 +41,7 @@ Jafg::LTextureView const& Jafg::JTextureSubsystem::GetTextureView(LStringView As
 
 void Jafg::JTextureSubsystem::RefetchTextureViews()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     algo::orphan(&this->TextureViews);
     LOG_VERBOSE(LogTextureSubsystem, "Refetching texture views.")
 

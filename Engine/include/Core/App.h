@@ -5,7 +5,6 @@
 #include "Core/Arguments.h"
 #include "Core/Parameter.h"
 #include "Core/Argument.h"
-#include "Stats/StatsForward.h"
 
 namespace Jafg
 {
@@ -77,7 +76,7 @@ ENGINE_API extern LProgramParameter WaitForDebugger;
 ENGINE_API extern LProgramParameter IgnoreInstantDebuggerBreak;
 ENGINE_API extern LProgramParameter AlwaysReportCrash;
 ENGINE_API extern LProgramParameter DumpStack;
-ENGINE_API extern LProgramParameter AllowProfiling;
+ENGINE_API extern LProgramParameter WaitForProfiler;
 ENGINE_API extern LProgramParameter PauseBeforeExit;
 ENGINE_API extern LProgramParameter SkipTrivialTests;
 
@@ -108,10 +107,6 @@ ENGINE_API extern bool IsTracerPidValid;
 ENGINE_API extern bool AlwaysReportCrash;
 
 ENGINE_API extern bool DisallowAnsi;
-
-#if WITH_STATS
-    ENGINE_API extern bool AllowProfiling;
-#endif /* WITH_STATS */
 
 //#
 //# The command line. A parameter is defined as the following:
@@ -144,6 +139,10 @@ enum struct EAppLockResult
 };
 NODISCARD ENGINE_API EAppLockResult TryAcquireAppLock();
 
+#if JAFG_WITH_STATS && JAFG_WITH_LOCAL_LAYER
+NODISCARD ENGINE_API LPath const& GetProfilerExecutable() noexcept;
+#endif /* JAFG_WITH_STATS && JAFG_WITH_LOCAL_LAYER */
+
 } /* ~Namespace Detail */
 
 FORCEINLINE constexpr bool IsEngineExitRequested() noexcept { return Detail::bShouldRequestExit; }
@@ -171,19 +170,11 @@ FORCEINLINE constexpr bool IsAlwaysReportCrash() noexcept { return Detail::Alway
 
 FORCEINLINE constexpr bool CanEverProfile() noexcept
 {
-#if WITH_STATS
+#if JAFG_WITH_STATS
     return true;
-#else /* WITH_STATS */
+#else /* JAFG_WITH_STATS */
     return false;
-#endif /* !WITH_STATS */
-}
-FORCEINLINE constexpr bool IsAllowProfiling() noexcept
-{
-#if WITH_STATS
-    return Detail::AllowProfiling;
-#else /* WITH_STATS */
-    return false;
-#endif /* !WITH_STATS */
+#endif /* !JAFG_WITH_STATS */
 }
 
 FORCEINLINE TArray<LString> const& GetRawCommandLine() noexcept { return Detail::RawCommandLine; }
@@ -216,6 +207,8 @@ inline f64 GetElapsedTime(algo::clock::time_point Since = algo::now()) noexcept
 //#
 ENGINE_API void Sleep(f64 InSeconds);
 ENGINE_API void SleepNoStats(f64 InSeconds);
+
+ENGINE_API void LaunchStandalone(LPath Path, TArray<LString> Args = {});
 
 } /* ~Namespace App */
 

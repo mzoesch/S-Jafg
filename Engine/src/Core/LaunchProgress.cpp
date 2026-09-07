@@ -3,7 +3,6 @@
 #include "Framework/Surface.h"
 #include "Core/LaunchProgress.h"
 #include "Framework/Frontend.h"
-#include "Stats/Stats.h"
 
 namespace Jafg::LaunchProgress
 {
@@ -17,7 +16,7 @@ ENGINE_API LString   Private::GProgressDescription = "Intermediate";
 
 void Jafg::LaunchProgress::PrepareBeginProgress()
 {
-    // STAT_CYCLE_FUNCTION() [[deprecated]]
+    // STAT_FUNCTION() [[deprecated]]
 }
 
 void Jafg::LaunchProgress::BeginProgress(

@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/ShaderSubsystem.h"
-#include "Stats/Stats.h"
 #include "Rhi/FromString.h"
 #include "Core/App.h"
 #include "Rhi/Objects.h"
@@ -70,7 +69,7 @@ void Jafg::Detail::RegisterBufferObjectGlobally(LBufferObjectProvider Provider) 
 
 void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     Super::Initialize(Collection);
 
     if (!is_regular_file(Slangc))
@@ -78,7 +77,6 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
         LOG_FATAL(LogShaderSubsystem, "No such file: [{}].", Slangc)
     }
 
-    STAT_QUICK_CYCLE_START("Fetching shaders")
     LOG_VERBOSE(LogShaderSubsystem, "Fetching shaders.")
     check(this->ReflectedShaders.empty())
 

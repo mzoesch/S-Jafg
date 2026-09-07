@@ -11,7 +11,6 @@
 #include "User/LocalEgo.h"
 #include "Framework/EngineSubsystem.h"
 #include "Cli/CommandLineInterface.h"
-#include "Stats/Stats.h"
 #include "EngineRunnable.h"
 #include "Cli/ReSTCliPreferences.h"
 #include "User/UserPreferences.h"
@@ -79,7 +78,7 @@ bool Jafg::LWorldStorage::IsValid() const noexcept
 
 Jafg::LEngine::LEngine()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     if (ETaskExit::Type const Rc{Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread")};
         Rc != ETaskExit::Success
         )
@@ -90,7 +89,7 @@ Jafg::LEngine::LEngine()
 
 void Jafg::LEngine::Initialize()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     Private::AddPrimitivesToCli(&this->GetCommandLineInterface());
     Private::AddExtendedPrimitivesToCli(&this->GetCommandLineInterface());
@@ -353,7 +352,7 @@ void Jafg::LEngine::Initialize()
 
 void Jafg::LEngine::Tick()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
@@ -396,7 +395,7 @@ void Jafg::LEngine::Tick()
 
 void Jafg::LEngine::TearDown()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
@@ -516,7 +515,7 @@ void Jafg::LEngine::DefaultJumpStart()
 
 void Jafg::LEngine::DefaultTimeAdvance()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     JUserPreferences const& Prefs{GetSingleton<JUserPreferences>()};
 
     this->LostDeltaTime = 0.0;
@@ -549,6 +548,7 @@ void Jafg::LEngine::DefaultTimeAdvance()
             if (auto ElapsedTime{algo::time_diff(App::GetStaticStorageInitializationTime(), algo::now()) - GEngine->FrameStartElapsedTime};
                 ElapsedTime < 1.0 / *Prefs.MaxTps)
             {
+                STAT_ZONE("IdleSleep")
                 auto SleepStart{algo::now()};
                 f64 IdleTime{maths::max((1.0 / *Prefs.MaxTps) - ElapsedTime, 0.0)};
                 if (constexpr auto Spin{0.001}; IdleTime > Spin)
@@ -790,7 +790,7 @@ void Jafg::LEngine::UnLoadPluginNoFailure(const LString& InName, const EPluginSh
 
 Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plugin, const EPluginShutdownReason::Type Reason)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     check(Plugin)
@@ -839,7 +839,7 @@ void Jafg::LEngine::UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPlugin
 
 void Jafg::LEngine::FetchPlugins(LPath const& Path)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_VERBOSE(LogForeign, "[{}]: Fetching.", Path)
 
@@ -990,7 +990,7 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
 
 Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin const& FetchedPlugin)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check( FetchedPlugin.Identifier.empty() == false )
 
@@ -1083,7 +1083,6 @@ void Jafg::LEngine::SetReSTCliCorePaths()
         Info["HighestIdleTime"] = GEngine->PreviousStat.HighestIdle;
         Info["bTracerPid"] = App::IsTracerPidValid();
         Info["bEverProfile"] = App::CanEverProfile();
-        Info["bProfiling"] = App::IsAllowProfiling();
 
         OutResponse->SetContent(Info.dump(), "application/json");
 

@@ -157,9 +157,6 @@ ENGINE_API extern i32 CustomThreadCounter;
 ENGINE_API auto LaunchNamedThread(ENamedThreads::Type ThreadName, LRunnable* Runnable, bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
 ENGINE_API void StopAndJoinRemainingThreads(bool bJoinTasks = true);
 
-//# @return True if added.
-ENGINE_API bool AddThreadsToCurrentTracerSession();
-
 FORCEINLINE ENamedThreads::Type MakeNewCustomNamedThreadId();
 
 } /* ~Namespace Private */

@@ -4,11 +4,10 @@
 #include "Cli/CliExtended.h"
 #include "Cli/CommandLineInterface.h"
 #include "Engine/Engine.h"
-#include "Stats/Stats.h"
 
 void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check( Cli )
 
@@ -262,7 +261,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
 void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check( Cli )
 

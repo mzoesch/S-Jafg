@@ -2,11 +2,10 @@
 
 #include "Framework/ThreadedWorldSubsystem.h"
 #include "Engine/World.h"
-#include "Stats/Stats.h"
 
 void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     Super::Initialize(Collection);
     this->SetPriorityTearDown(true);
@@ -28,7 +27,7 @@ void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 
 void Jafg::JThreadedWorldSubsystem::TearDown()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     Super::TearDown();
 

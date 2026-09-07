@@ -5,7 +5,6 @@
 #include "Minimal.afx"
 #include "Framework/PhysicsCore.h"
 #include "Framework/RigidObject.h"
-#include "Stats/Stats.h"
 
 #ifndef JoltPhysics_USE_ASSERTS
     #error "JoltPhysics_USE_ASSERTS is not defined."
@@ -319,7 +318,7 @@ struct LPhysicsSubsystem final
 
     NODISCARD static TUnique<LPhysicsSubsystem> FromCreateInfo(LPhysicsSystemCreateInfo&& Info)
     {
-        STAT_CYCLE_FUNCTION()
+        STAT_FUNCTION()
 
         if (Info.RigidBodyLimit > std::numeric_limits<JPH::uint>::max())
         {

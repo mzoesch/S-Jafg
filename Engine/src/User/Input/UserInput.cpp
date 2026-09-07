@@ -7,7 +7,6 @@
 #include "User/LocalEgo.h"
 #include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
-#include "Stats/Stats.h"
 
 LString Jafg::LexToString(EInputActionCategory::Type InType)
 {
@@ -244,7 +243,7 @@ void Jafg::LUserInput::SetConsumeMouse(bool bConsume) noexcept
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& ActingController, TArray<LRawInput>* Inputs, EInputActionTriggerBits TriggerMask)
 {
-    STAT_QUICK_CYCLE_START(algo::sprintf("{}{}", JAFG_PRETTY_FUNCTION_NAME, LexToString(TriggerMask)))
+    STAT_CUSTOM_ZONE_FMT("DispatchInputDelegatesForKeyCategory-{}", LexToString(TriggerMask))
 
     check(Inputs)
     check(TriggerMask != EInputActionTriggerBits::Identity)

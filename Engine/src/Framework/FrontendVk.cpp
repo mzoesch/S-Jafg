@@ -8,7 +8,6 @@
 
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"
-#include "Stats/Stats.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
 #include "Engine/WorldData.h"
@@ -359,7 +358,7 @@ void rhi::detail::free_device_allocation(vk::Image Handle, device_allocation All
 
 void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_VERBOSE(LogSurface, "Initializing glfw.")
 
@@ -563,7 +562,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
 void Jafg::LFrontendVk::PollPlatformEvents()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     glfwPollEvents();
@@ -1120,7 +1119,7 @@ void Jafg::LFrontendVk::Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format)
 
 void Jafg::LFrontendVk::_Vk_WaitIdle()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     this->Vk_Device.waitIdle();
 }
 
@@ -1128,7 +1127,7 @@ void Jafg::LFrontendVk::_Vk_WaitIdle()
 void Jafg::LFrontendVk::Vk_EditorWaitIdle()
 {
     // TODO: Some mutex checks for rendering??
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     this->Vk_Device.waitIdle();
 }
 #endif /* JAFG_WITH_EDITOR */

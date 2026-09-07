@@ -111,3 +111,4 @@ using namespace std::chrono_literals;
 #include "Serialization/Archive.h"
 #include "User/PreferenceTypes.h"
 #include "Serialization/Json.h"
+#include "Core/Stats.h"

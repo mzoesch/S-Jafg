@@ -115,7 +115,7 @@ i32 main(i32 c, char const* v[])
     struct sigaction Action_Error {}; // Not so fatal.
     struct sigaction Action_Exit  {}; // Exit.
 
-    // "On some architectures a union is involved: do not assign to both sa_handler and sa_sigaction." <-- Lol, idiots
+    // "On some architectures a union is involved: do not assign to both sa_handler and sa_sigaction."
     Action_Fatal.sa_sigaction = SignumPosixAction_JafgHandler_Fatal;
     Action_Fatal.sa_flags =
 

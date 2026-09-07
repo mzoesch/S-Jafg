@@ -8,7 +8,6 @@
 #include "User/UserPreferences.h"
 #include "Framework/MeshSubsystem.h"
 #include "Framework/ShaderSubsystem.h"
-#include "Stats/Stats.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -230,7 +229,7 @@ NODISCARD inline bool ReadIndices(tg3_model const& Model, i32 AccessorIndex, TAr
 
 inline Jafg::LStaticMesh::EResult PullGltfMesh(LPath const& Path, TArray<Jafg::LStaticMesh::HostMesh>& Result)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     check(Result.empty())
 
     std::ifstream F{Path, std::ios::binary|std::ios::ate};
@@ -534,7 +533,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
 
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(!this->Path.empty())
     LOG_VERBOSE(LogRhi, "[{}]: Loading static mesh.", this->Path)
@@ -571,7 +570,7 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
         LOG_TRACE(LogRhi, "[{}]: {}", this->Path, SS.str())
     }
 
-    STAT_CYCLE_START(CalculateAabb, "Jafg::LStaticMesh::LoadToHost::CalculatingAabb")
+    STAT_NAMED_ZONE(__CalculatingAabb, "LoadToHost::CalculatingAabb")
     this->Aabb.min = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
     this->Aabb.max = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
     for (auto& Mesh: this->HostMeshes)
@@ -585,7 +584,6 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
             }
         }
     }
-    STAT_CYCLE_END(CalculateAabb)
 
     return EResult::Success;
 }

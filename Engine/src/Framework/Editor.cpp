@@ -410,6 +410,13 @@ void Jafg::WEditor::Construct()
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenTerminal(finder::current_path()); return algo::reply::unhandled(); }
                                 },
+                            LDropDownNodeOption{
+                                .Selector = {
+                                    .DisplayName = "Launch Profiler",
+                                    .Icon = "Icons/Jafg.Open",
+                                    },
+                                .OnAction = [](auto&&...){ App::LaunchStandalone(App::Detail::GetProfilerExecutable()); return algo::reply::unhandled(); }
+                                },
                             LDropDownNodeSeparator{.DisplayName="EXIT",},
                             LDropDownNodeOption{
                                 .Selector = {
@@ -3655,7 +3662,7 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
 {
     Super::Render(Info);
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     this->RenderRays(Info);
     this->RenderGizmo(Info);
@@ -4157,7 +4164,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
 
 void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const& Info) const
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
     check(this->RayInstance.get())
@@ -4295,7 +4302,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
     {
         return;
     }
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -4506,7 +4513,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderTexts(LActorRenderInfo const
         return;
     }
 
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     check(this->TextMaterialInstance.get())
 
     auto& Prefs{GetSingleton<JUserPreferences>()};

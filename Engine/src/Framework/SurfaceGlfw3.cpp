@@ -8,7 +8,6 @@
 #include "Engine/Engine.h"
 #include "Core/TaskUtility.h"
 #include "Nodes/Viewport.h"
-#include "Stats/Stats.h"
 #include "Framework/SceneComponent.h"
 #include "Nodes/UserWidget.h"
 #include "Rhi/RendererCore.h"
@@ -157,7 +156,7 @@ LString Glfw3CodePoint2Utf8(auto CodePoint)
 
 Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
@@ -191,7 +190,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
     // across display frameworks, therefore, we create a normal window and then make it fullscreen later.
     //
     {
-        STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
+        STAT_ZONE("Glfw3WindowCreation")
         this->Handle = glfwCreateWindow(
             Info.DesiredDimensionsPx.width, Info.DesiredDimensionsPx.height,
             this->GetHumanReadableName().c_str(),
@@ -289,7 +288,7 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
 
 void Jafg::LSurfaceGlfw3::PollPlatformEvents()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(this->Handle)
     check(Tasks::IsOnMasterThread())
@@ -312,7 +311,7 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
 
 void Jafg::LSurfaceGlfw3::OnRender()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(this->Handle)
     check(Tasks::IsOnRendererThread())
@@ -1333,7 +1332,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateCommandPool()
 
 void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
 
@@ -1346,7 +1345,7 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         if (_FramebufferSize.x == 0 || _FramebufferSize.y == 0)
         {
             LOG_VERBOSE(LogSurface, "Waiting for non-zero dimensions to recreate swapchain.")
-            STAT_QUICK_CYCLE_START("GlfwWaitEventsForNonZeroFramebufferSize")
+            STAT_ZONE("GlfwWaitEventsForNonZeroFramebufferSize")
             while (_FramebufferSize.x == 0 || _FramebufferSize.y == 0)
             {
                 glfwWaitEvents();

@@ -8,7 +8,6 @@
 #include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
 #include "User/Input/UserInput.h"
-#include "Stats/Stats.h"
 
 void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
 {
@@ -20,7 +19,7 @@ void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
 
 void Jafg::LFrontendBase::Tick()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->BeginNewFrame(); });
     this->AsFrontend()->PollPlatformEvents();
@@ -38,7 +37,7 @@ void Jafg::LFrontendBase::Tick()
 
 void Jafg::LFrontendBase::TearDown()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_VERBOSE(LogFrontend, "Tearing down frontend and all its surfaces.")
 

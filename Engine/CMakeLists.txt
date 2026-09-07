@@ -584,6 +584,61 @@ if(_guard)
         )
 
     ###############################################################################
+    # tracy
+    message(STATUS "Fetching tracy...")
+    FetchContent_Declare(
+        FetchContent_Tracy
+        GIT_REPOSITORY          https://github.com/wolfpld/tracy.git
+        GIT_TAG                 30997d5ca6bb632cc10807a1da8a6d3de0aeeb3c # v0.14.1
+        GIT_PROGRESS            TRUE
+        SOURCE_DIR              "${JAFG_ENGINE_ROOT}/Vendor/tracy"
+        )
+    FetchContent_MakeAvailable(FetchContent_Tracy)
+    target_include_directories(${_scoped_module_name} PUBLIC "${fetchcontent_tracy_SOURCE_DIR}/public")
+    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+        set(tracy_compiled_profiler "${JAFG_ENGINE_ROOT}/Temp/tracy/tracy-profiler")
+    else()
+        message(FATAL_ERROR "Missing implementation for platform [${CMAKE_HOST_SYSTEM_NAME}].")
+    endif()
+    if(NOT EXISTS "${tracy_compiled_profiler}")
+        message(STATUS "Compiling tracy profiler...")
+        execute_process(
+            COMMAND             ${CMAKE_COMMAND} -B Temp/tracy -S Vendor/tracy/profiler --preset release
+            WORKING_DIRECTORY   "${JAFG_ENGINE_ROOT}"
+            RESULT_VARIABLE     error_code
+            OUTPUT_VARIABLE     output
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+        if(output)
+            message(STATUS "Tracy:\n${output}")
+        endif()
+        if(error_code)
+            message(FATAL_ERROR "Failed to configure tracy profiler.")
+        endif()
+        set(output "")
+        execute_process(
+            COMMAND             "${CMAKE_COMMAND}" --build Temp/tracy
+            WORKING_DIRECTORY   "${JAFG_ENGINE_ROOT}"
+            RESULT_VARIABLE     error_code
+            OUTPUT_VARIABLE     output
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+        if(output)
+            message(STATUS "Tracy:\n${output}")
+        endif()
+        if(error_code)
+            message(FATAL_ERROR "Failed to build tracy profiler.")
+        endif()
+        if(NOT EXISTS "${tracy_compiled_profiler}")
+            message(FATAL_ERROR "Failed to compile tracy profiler.")
+        endif()
+    else()
+        message(STATUS "[${tracy_compiled_profiler}]: Nothing to do.")
+    endif()
+    unspecified_preference(DETAIL_JAFG_STATS_PROFILER "The profiler for jafg. Default is [Temp/tracy/tracy-profiler].")
+    add_preference_if_specified_or(DETAIL_JAFG_STATS_PROFILER "Temp/tracy/tracy-profiler")
+
+    ###############################################################################
     # Content
     message(STATUS "Including jafg content...")
 

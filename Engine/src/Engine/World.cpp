@@ -9,7 +9,6 @@
 #include "User/LocalEgo.h"
 #include "Framework/SubsystemCollection.h"
 #include "Framework/WorldSubsystem.h"
-#include "Stats/Stats.h"
 #include "Framework/SupremePolicies.h"
 #include "User/UserPreferences.h"
 #include "Framework/ActorComponentForward.h"
@@ -25,7 +24,7 @@
 Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
     : LClassOuter{std::move(Info.HumanReadableName)}, CreateInfo{std::move(Info)}
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     this->RealTimeWhenWorldWasLaunched = static_cast<f32>(App::GetElapsedTime());
     check(this->RealTimeWhenWorldWasLaunched > 0.0f)
@@ -134,7 +133,7 @@ LString Jafg::LWorld::GetDetailedHumanReadableName() const noexcept
 
 void Jafg::LWorld::Tick(f64 Dt)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     this->DeltaTime = Dt;
     if (this->ShouldTickPhysics())
@@ -192,7 +191,7 @@ void Jafg::LWorld::Tick(f64 Dt)
 
 void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LActorRenderInfo ActorInfo{Info, Eye, SharedSets};
     auto& Frontend{ActorInfo.Frontend};
@@ -419,11 +418,10 @@ bool Jafg::LWorld::LineTraceByChannel(
     LCollisionQueryParams const& Params
 ) const
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     check(OutHits )
     check(maths::magnitude(Begin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
 
-    STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
     /* TODO: Save (as the tickables) the physics in a separate cached vector. */
     // LHitResult Dummy;
     // for (auto& Obj : this->GetEmployees())
@@ -447,7 +445,7 @@ bool Jafg::LWorld::LineTraceByChannel(
 
 TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const& Ray, TraceConfig const& Config) const
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     checkCode
     (
@@ -561,7 +559,7 @@ Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(LStringView InHumanRea
 
 void Jafg::LWorld::OnTearDown()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(this->WorldState == EWorldState::Running)
     this->WorldState = EWorldState::TearingDown;

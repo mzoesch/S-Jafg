@@ -6,11 +6,10 @@
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
 #include "Framework/LocalEgoSubsystem.h"
-#include "Stats/Stats.h"
 
 void Jafg::LLocalEgo::Initialize()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(Tasks::IsOnMasterThread())
     check(this->bDecommissioned == false)

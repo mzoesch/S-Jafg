@@ -128,6 +128,16 @@ macro(unspecified_flag
     endif()
     set_property(CACHE ${flag_name} PROPERTY STRINGS "Unspecified" "1" "0")
 endmacro()
+macro(unspecified_preference var_name var_description)
+    if(NOT DEFINED CACHE{${var_name}})
+        set(
+            ${var_name}
+            "Unspecified"
+            CACHE STRING
+            "${var_description}"
+            )
+    endif()
+endmacro()
 
 function(jafg_hint_debug_symbols p_debug_symbols)
     set(${p_debug_symbols} FALSE PARENT_SCOPE)

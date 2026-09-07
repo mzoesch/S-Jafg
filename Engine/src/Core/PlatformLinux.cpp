@@ -154,6 +154,27 @@ void Jafg::App::SleepNoStats(f64 InSeconds)
     return;
 }
 
+void Jafg::App::LaunchStandalone(LPath Path, TArray<LString> Args /* = {} */)
+{
+    if (pid_t pid{::fork()}; pid == -1)
+    {
+        LOG_FATAL(LogPlatform, "Failed to fork process for standalone launch of [{}].", Path)
+    }
+    else if (pid == 0)
+    {
+        ::setsid();
+
+        std::vector<char*> ArgV;
+        ArgV.reserve(Args.size() + 2);
+        ArgV.push_back(const_cast<char*>(Path.native().c_str()));
+        algo::for_each(Args, [&](auto& Arg){ ArgV.push_back(const_cast<char*>(Arg.c_str())); });
+        ArgV.push_back(nullptr);
+        ::execv(Path.c_str(), ArgV.data());
+
+        std::_Exit(127);
+    }
+}
+
 //
 // Note that this function only currently works with GDB.
 //

@@ -2,7 +2,6 @@
 
 #include "Core/App.h"
 #include "Core/Uuid.h"
-#include "Stats/Stats.h"
 #include "Core/Parameter.h"
 #include "Core/TaskUtility.h"
 #if JAFG_PLATFORM_LINUX
@@ -252,9 +251,9 @@ ENGINE_API LProgramParameter DumpStack{{
     .Identifier = "Jafg.DumpStack",
     .Description = "Whether to also dump the stack instead of only a core dump if supported.",
     }};
-ENGINE_API LProgramParameter AllowProfiling{{
-    .Identifier = "Jafg.AllowProfiling",
-    .Description = "Whether to allow profiling and stats gathering.",
+ENGINE_API LProgramParameter WaitForProfiler{{
+    .Identifier = "Jafg.WaitForProfiler",
+    .Description = "Whether to wait for the profiler if on-demand profiling is enabled.",
     .ShortIdentifier = "p",
     }};
 ENGINE_API LProgramParameter PauseBeforeExit{{
@@ -287,10 +286,6 @@ ENGINE_API bool AlwaysReportCrash{};
 
 ENGINE_API bool DisallowAnsi{};
 
-#if WITH_STATS
-    ENGINE_API bool AllowProfiling{};
-#endif /* WITH_STATS */
-
 ENGINE_API TArray<LString> RawCommandLine;
 ENGINE_API TArray<LProgramArgument> ProcessedCommandLine;
 
@@ -319,7 +314,7 @@ ENGINE_API bool GAllowInformation{};
 
 void EmitLogsToStdout() noexcept
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     std::scoped_lock Lock{GLogMessagesLock};
     auto It{GUnprocessedLogMessages.begin()};
@@ -686,6 +681,6 @@ void Jafg::App::PrettyPrintApiUsage() noexcept
 
 void Jafg::App::Sleep(f64 InSeconds)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
     SleepNoStats(InSeconds);
 }

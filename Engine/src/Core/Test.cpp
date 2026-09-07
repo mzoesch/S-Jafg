@@ -5,19 +5,16 @@
 #if JAFG_WITH_TESTS
 
 #include "Core/Test.h"
-#include "Stats/Stats.h"
 
 ENGINE_API TArray<TReference<Jafg::LTrivialTestCase>> Jafg::Detail::TrivialTestCases;
 
 Jafg::LTestRunInstance::LTestRunInstance(ETestCategoryFlags Flags)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     if (Flags & ETestCategoryBits::Trivial)
     {
         LOG_INFO(LogTestingFramework, "Running [{}] trivial tests...", Detail::TrivialTestCases.size())
-        Detail::EmitAndFlushLogs();
-
         if (!Detail::TrivialTestCases.empty())
         {
             std::stringstream SS;

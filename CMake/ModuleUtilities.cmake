@@ -28,13 +28,26 @@ macro(_jafg_add_option_if_true option)
     message(STATUS "${option}: ${${option}}")
 endmacro()
 
-macro(_jafg_add_flag_if_specified flag)
-    if(NOT ${flag} STREQUAL "Unspecified")
+macro(add_preference_if_specified preference)
+    if(NOT ${preference} STREQUAL "Unspecified")
         target_compile_definitions(${module_name} PRIVATE
-            ${flag}=${${flag}}
+            ${preference}=${${preference}}
             )
     endif()
-    message(STATUS "${flag}: ${${flag}}")
+    message(STATUS "${preference}: ${${preference}}")
+endmacro()
+macro(add_preference_if_specified_or preference default)
+    if(NOT ${preference} STREQUAL "Unspecified")
+        target_compile_definitions(${module_name} PRIVATE
+            ${preference}=${${preference}}
+            )
+        message(STATUS "${preference}: ${${preference}}")
+    else()
+        target_compile_definitions(${module_name} PRIVATE
+            ${preference}=${default}
+            )
+        message(STATUS "${preference}: ${default}")
+    endif()
 endmacro()
 
 function(_jafg_add_module_impl
@@ -342,21 +355,24 @@ function(_jafg_add_module_impl
     _jafg_add_option_if_true(JAFG_DO_HARDEN_BUILD)
 
     # Misc flags.
-    _jafg_add_flag_if_specified(JAFG_DO_COMPILER_DIAGNOSTIC_SETUP)
-    _jafg_add_flag_if_specified(JAFG_DO_ENABLE_SHIPPING_WARNINGS)
+    add_preference_if_specified(JAFG_DO_COMPILER_DIAGNOSTIC_SETUP)
+    add_preference_if_specified(JAFG_DO_ENABLE_SHIPPING_WARNINGS)
 
     # Log flags.
-    _jafg_add_flag_if_specified(JAFG_LOG_DEFAULT_VERBOSITY)
-    _jafg_add_flag_if_specified(JAFG_LOG_ENABLE_TRACE)
-    _jafg_add_flag_if_specified(JAFG_LOG_ENABLE_VERBOSE)
-    _jafg_add_flag_if_specified(JAFG_LOG_ENABLE_INFO)
-    _jafg_add_flag_if_specified(JAFG_LOG_ENABLE_WARNING)
-    _jafg_add_flag_if_specified(JAFG_LOG_ENABLE_ERROR)
-    _jafg_add_flag_if_specified(JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER)
-    _jafg_add_flag_if_specified(JAFG_FORCE_LOG_FLUSH_INTERVAL)
-    _jafg_add_flag_if_specified(JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
+    add_preference_if_specified(JAFG_LOG_DEFAULT_VERBOSITY)
+    add_preference_if_specified(JAFG_LOG_ENABLE_TRACE)
+    add_preference_if_specified(JAFG_LOG_ENABLE_VERBOSE)
+    add_preference_if_specified(JAFG_LOG_ENABLE_INFO)
+    add_preference_if_specified(JAFG_LOG_ENABLE_WARNING)
+    add_preference_if_specified(JAFG_LOG_ENABLE_ERROR)
+    add_preference_if_specified(JAFG_LOG_DO_SCOPED_TIME_TASK_MEASURER)
+    add_preference_if_specified(JAFG_FORCE_LOG_FLUSH_INTERVAL)
+    add_preference_if_specified(JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
 
-    _jafg_add_flag_if_specified(JAFG_MAX_FRAMES_IN_FLIGHT)
+    add_preference_if_specified(JAFG_WITH_STATS)
+    add_preference_if_specified(JAFG_STATS_ON_DEMAND)
+    add_preference_if_specified(JAFG_STATS_NO_EXIT)
+    add_preference_if_specified(JAFG_MAX_FRAMES_IN_FLIGHT)
     # ~Compiler flags
     ###############################################################################
 

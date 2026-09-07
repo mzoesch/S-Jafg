@@ -4,7 +4,6 @@
 #include "Engine/Engine.h"
 #include "Framework/Surface.h"
 #include "Nodes/UserWidget.h"
-#include "Stats/Stats.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/FontSubsystem.h"
@@ -47,7 +46,7 @@ void Jafg::LViewport::Vk_OnLateInit()
 
 void Jafg::LViewport::DispatchInputs()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     if constexpr (LogWidgetFramework.CompilesFor<ELogVerbosity::Verbose>)
     if (auto Key{this->Surface.GetFrontend().GetPhysicalKey(ELogicalKey::P)})
@@ -266,7 +265,7 @@ void Jafg::LViewport::DispatchInputs()
 
 void Jafg::LViewport::Tick()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     this->OnEarlyTick.Broadcast();
 
@@ -287,7 +286,7 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw(LRenderInfo const& Info)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     check(GEngine)
     auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};
@@ -312,7 +311,7 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
         check(IsValidFast(Widget->GetOuter(), Widget))
         if (Widget->TransformsWidgetLayout())
         {
-            STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
+            STAT_CUSTOM_ZONE_STR(Widget->GetNameAsString())
             Widget->UpdateDesiredSize();
             Widget->UpdateAnchoredSize();
             if (Widget->ShouldNowDraw())

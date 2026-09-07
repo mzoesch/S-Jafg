@@ -5,7 +5,6 @@
 #include "Engine/Engine.h"
 #include "Framework/ShaderSubsystem.h"
 #include "User/LocalEgo.h"
-#include "Stats/Stats.h"
 #include "Rhi/GraphicsPipelineFactory.h"
 #include "Rhi/Objects.h"
 #include "Rhi/VisualInstance.h"
@@ -475,6 +474,8 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     Collection.InitializeDependency<JTextureSubsystem>(this);
     Collection.InitializeDependency<JShaderSubsystem>(this);
 
+    STAT_FUNCTION()
+
     this->TextureSubsystem = Collection.GetSubsystemChecked<JTextureSubsystem>();
     this->ShaderSubsystem = Collection.GetSubsystemChecked<JShaderSubsystem>();
 
@@ -485,7 +486,6 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout", UBO::VisualShared::name())
     this->SharedDescriptorSetLayouts.emplace(UBO::VisualShared::name(), UBO::VisualShared::build(Frontend.Vk_GetDevice()));
 
-    STAT_QUICK_CYCLE_START("Fetching materials")
     LOG_VERBOSE(LogMaterialSubsystem, "Fetching materials.")
 
     check(this->MaterialTemplates.empty())

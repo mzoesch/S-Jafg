@@ -1,11 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "EngineRunnable.h"
-#include "Stats/Stats.h"
+#include "Core/App.h"
+#include "Core/TaskUtility.h"
 
 Jafg::ETaskExit::Type Jafg::LEngineRunnable::Run()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     while (!this->IsStopped())
     {

@@ -2,11 +2,10 @@
 
 #include "Framework/TickedRunnable.h"
 #include "Core/App.h"
-#include "Stats/Stats.h"
 
 Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     f64 LastTickTime{App::GetElapsedTime()};
     while (this->bShouldTick)
@@ -38,7 +37,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 
 void Jafg::LTickedRunnable::OnStop(const ERunnableStopReason::Type InType)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_FUNCTION()
 
     LOG_TRACE(LogTasks, "Stopping ticked runnable.")
 
