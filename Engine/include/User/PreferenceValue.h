@@ -30,10 +30,14 @@ struct LPreferenceValue: LPreference
     LPreferenceValue(
           LString Identifier
         , LString DisplayName
+        , LString Tooltip
         , LCreateEditNode CreateEditNode
         )
-        : LPreference{EPreference::Value, std::move(Identifier), std::move(DisplayName), {}}
-        , CreateEditNode{std::move(CreateEditNode)} {}
+        : LPreference{EPreference::Value, std::move(Identifier), std::move(DisplayName), std::move(Tooltip), {}}
+        , CreateEditNode{std::move(CreateEditNode)}
+    {
+        check(!!this->CreateEditNode)
+    }
 
     //# Create a node, to allow seeing/editing the preference.
     NODISCARD LFactoryNode CreateNode(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes)
@@ -68,13 +72,18 @@ struct LCommonPreferenceValue: LPreferenceValue
     LCommonPreferenceValue(
           LString Identifier
         , LString DisplayName
+        , LString Tooltip
         , LGetter Getter
         , LSetter Setter
         , LCreateEditNode CreateEditNode
         ) noexcept
-        : LPreferenceValue{std::move(Identifier), std::move(DisplayName), std::move(CreateEditNode)}
+        : LPreferenceValue{std::move(Identifier), std::move(DisplayName), std::move(Tooltip), std::move(CreateEditNode)}
         , Getter{std::move(Getter)}
-        , Setter{std::move(Setter)} {}
+        , Setter{std::move(Setter)}
+    {
+        check(!!this->Getter)
+        check(!!this->Setter)
+    }
 
     NODISCARD virtual LString GetValue() const override
     {
@@ -105,11 +114,50 @@ FORCEINLINE constexpr LPreferenceValue const& LPreference::AsValue() const noexc
     return *static_cast<LPreferenceValue const*>(this);
 }
 
+struct LPreferenceValue_Boolean;
+struct LPreferenceValue_BooleanCreateInfo final
+{
+    LString Identifier;
+    LString DisplayName;
+    LString Tooltip;
+
+    LCommonPreferenceValue::LGetter Getter;
+    LCommonPreferenceValue::LSetter Setter;
+    TFunction2<LFactoryNode(LViewport& Viewport
+        , TArray<LPreferenceValueChangeRequest>& Changes
+        , LPreferenceValue_Boolean& Preference
+        )> CreateEditNode;
+};
+
+//# A preference that stores a boolean.
+struct LPreferenceValue_Boolean: LCommonPreferenceValue
+{
+    typedef bool value_type;
+
+    LPreferenceValue_Boolean(LPreferenceValue_BooleanCreateInfo Info) noexcept
+        : LCommonPreferenceValue{
+              std::move(Info.Identifier)
+            , std::move(Info.DisplayName)
+            , std::move(Info.Tooltip)
+            , std::move(Info.Getter)
+            , std::move(Info.Setter)
+            , [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
+                , TArray<LPreferenceValueChangeRequest>& Changes
+                , LPreferenceValue& Preference
+                ) mutable
+                {
+                    return std::invoke(CreateEditNode, Viewport, Changes, static_cast<LPreferenceValue_Boolean&>(Preference));
+                }
+            }
+        {}
+};
+
 struct LPreferenceValue_Scalar;
 struct LPreferenceValue_ScalarCreateInfo final
 {
     LString Identifier;
     LString DisplayName;
+    LString Tooltip;
 
     f64 Step;
     std::optional<f64> Minimum;
@@ -132,6 +180,7 @@ struct LPreferenceValue_Scalar: LCommonPreferenceValue
         : LCommonPreferenceValue{
               std::move(Info.Identifier)
             , std::move(Info.DisplayName)
+            , std::move(Info.Tooltip)
             , std::move(Info.Getter)
             , std::move(Info.Setter)
             , [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
@@ -149,9 +198,11 @@ struct LPreferenceValue_Scalar: LCommonPreferenceValue
 
     NODISCARD FORCEINLINE constexpr f64 GetStep() const noexcept { return this->Step; }
     NODISCARD FORCEINLINE constexpr bool HasMinimum() const noexcept { return this->Minimum.has_value(); }
-    NODISCARD FORCEINLINE constexpr f64 GetMinimum() const noexcept { return this->Minimum.value_or(std::numeric_limits<f64>::lowest()); }
+    NODISCARD FORCEINLINE constexpr f64 GetMinimum() const noexcept { check(this->HasMinimum()) return *this->Minimum; }
+    NODISCARD FORCEINLINE constexpr f64 GetSafeMinimum() const noexcept { return this->Minimum.value_or(std::numeric_limits<f64>::lowest()); }
     NODISCARD FORCEINLINE constexpr bool HasMaximum() const noexcept { return this->Maximum.has_value(); }
-    NODISCARD FORCEINLINE constexpr f64 GetMaximum() const noexcept { return this->Maximum.value_or(std::numeric_limits<f64>::max()); }
+    NODISCARD FORCEINLINE constexpr f64 GetMaximum() const noexcept { check(this->HasMaximum()) return *this->Maximum; }
+    NODISCARD FORCEINLINE constexpr f64 GetSafeMaximum() const noexcept { return this->Maximum.value_or(std::numeric_limits<f64>::max()); }
 
 private:
 
@@ -166,6 +217,7 @@ struct LPreferenceValue_ListCreateInfo final
 {
     LString Identifier;
     LString DisplayName;
+    LString Tooltip;
 
     TFunction2<TArray<LString>()> Items;
 
@@ -185,6 +237,7 @@ struct LPreferenceValue_List: LCommonPreferenceValue
         : LCommonPreferenceValue{
               std::move(Info.Identifier)
             , std::move(Info.DisplayName)
+            , std::move(Info.Tooltip)
             , std::move(Info.Getter)
             , std::move(Info.Setter)
             , [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport

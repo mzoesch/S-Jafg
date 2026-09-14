@@ -662,6 +662,18 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
         return NODE_FACTORY_RESULT();
     }
 
+    decltype(auto) Tooltip(this auto&& Self, LString Tooltip) noexcept
+    {
+        NODE_FACTORY_SELF().SetTooltipText(std::move(Tooltip));
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) TooltipDelay(this auto&& Self, f32 Delay) noexcept
+    {
+        NODE_FACTORY_SELF().TooltipDelay = Delay;
+        return NODE_FACTORY_RESULT();
+    }
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(TooltipDelegate, GetTooltipNodeDelegate)
+
     decltype(auto) Anchor(this auto&& Self, LAnchor const& Anchor) noexcept
     {
         NODE_FACTORY_SELF().Anchor = Anchor;
@@ -780,18 +792,12 @@ public:
     //# Called when this widget is being ticked.
     //# @see #EWidgetVisibility for more information about when to tick a widget.
     //#
-    inline virtual void Tick();
+    inline virtual void Tick(f32 Dt);
 
     //#
     //# Called when this widget is being destructed. This method replaces the #EndLife super method.
     //#
-    inline virtual void Destruct()
-    {
-        check(Tasks::IsOnMasterThread())
-        checkCode(_check_Destruct())
-        this->_ResetFocusState();
-        this->Parent = nullptr;
-    }
+    virtual void Destruct();
 
     //#
     //# The paint function for a widget. Only called if the widget is visible and paintable.
@@ -887,16 +893,7 @@ public:
     TFunction2<LNodeReply(WNode& Node)> OnCursorEnterEvent;
     TFunction2<LNodeReply(WNode& Node)> OnCursorMovedEvent;
     TFunction2<void(WNode& Node)> OnCursorLeaveEvent;
-    virtual LNodeReply OnCursorEnter()
-    {
-        check(!this->_check_bMouseEntered)
-        checkCode(this->_check_bMouseEntered = true)
-        if (this->OnCursorEnterEvent) if (auto Reply{this->OnCursorEnterEvent(*this)}; Reply.IsHandled())
-        {
-            return Reply;
-        }
-        return LNodeReply::Handled();
-    }
+    virtual LNodeReply OnCursorEnter();
     virtual LNodeReply OnCursorMoved(LVec2F const& Location)
     {
         check(this->_check_bMouseEntered)
@@ -906,16 +903,7 @@ public:
         }
         return LNodeReply::Handled();
     }
-    virtual void OnCursorLeave()
-    {
-        check(this->_check_bMouseEntered)
-        checkCode(this->_check_bMouseEntered = false)
-        if (this->OnCursorLeaveEvent)
-        {
-            this->OnCursorLeaveEvent(*this);
-        }
-        return;
-    }
+    virtual void OnCursorLeave();
 
     //#
     //# Only called if focused. Should not be bubbled.
@@ -973,6 +961,23 @@ public:
 
     //# Only if old and new are different.
     virtual void OnVisibilityChanged(ENodeVisibility OldVisibility, ENodeVisibility NewVisibility) {}
+
+    //# The tooltip text to show.
+    FORCEINLINE void SetTooltipText(LString Text) noexcept { this->TooltipText = std::move(Text); }
+    NODISCARD FORCEINLINE constexpr LString const& GetTooltipText() const noexcept { return this->TooltipText; }
+    //#
+    //# A created tooltip. which is automatically destroyed if the tooltip should no longer be shown.
+    //# If this is not bound the default tooltip will be used for this node.
+    //# If this function returns a nullptr, then no tooltip will be shown.
+    //#
+    TFunction2<TJxxUnique<WUserWidget>(WNode const& Self)> GetTooltipNodeDelegate;
+    //# How many seconds need to pass before the tooltip is shown.
+    f32 TooltipDelay{ 0.5f };
+    WUserWidget* RequestTooltipNow(LVec2F Position);
+    NODISCARD FORCEINLINE bool constexpr IsTooltipValid() const noexcept { return !this->TooltipNode; }
+    NODISCARD FORCEINLINE constexpr WUserWidget* GetTooltipNode() noexcept;
+    NODISCARD constexpr WUserWidget const* GetTooltipNode() const noexcept;
+
     //# Called if the surface was resized.
     virtual void OnSurfaceResize() {}
 
@@ -1147,6 +1152,10 @@ private:
 
     LViewport& AttachedViewport;
 
+    LString TooltipText;
+    TJxxUnique<WNode> TooltipNode;
+    std::shared_ptr<bool> TooltipAbort;
+
     //# The desired size of this widget in pt.
     mutable LVec2F DesiredSize_v2{ maths::zero_vector<LVec2F> };
 
@@ -1307,7 +1316,7 @@ inline WNode::WNode(LNodeDynamicInit const& Init) noexcept
 {
 }
 
-inline void WNode::Tick()
+inline void WNode::Tick(f32 Dt)
 {
 #if JAFG_DO_CHECKS
     if (this->GetViewport()._check_IsPrintTickTrace())

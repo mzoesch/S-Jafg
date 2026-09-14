@@ -51,7 +51,7 @@ public:
     NODISCARD FORCEINLINE LFrontend const* AsFrontend() const;
 
     void Initialize(LClassOuter* Outer);
-    void Tick();
+    void Tick(f32 Dt);
     //# For application wide events (platform specific).
     void PollPlatformEvents() PURE_VIRTUAL()
     void TearDown();

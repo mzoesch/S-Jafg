@@ -202,7 +202,7 @@ public:
     // ~LTabOverlayPossibilities implementation
 
     virtual void Construct() override;
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
 
     FORCEINLINE TArray<LPath> const& GetDiscoveredLayouts() const noexcept { return this->DiscoveredLayouts; }
     TArray<LPath> const& DiscoverLayouts();
@@ -300,7 +300,7 @@ public:
     JAFG_DEFAULT_TAB_CANDIDATE("World Viewer", "Icons/Jafg.Sphere")
 
     virtual void Construct() override;
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
     virtual void Destruct() override;
 
     virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
@@ -512,7 +512,7 @@ public:
     JAFG_DEFAULT_TAB_CANDIDATE("Details", "Icons/Jafg.Information")
 
     virtual void Construct() override;
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
     virtual void Destruct() override;
 
     void _OnWorldViewerDestruct();

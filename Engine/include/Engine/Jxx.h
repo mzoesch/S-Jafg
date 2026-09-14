@@ -45,6 +45,7 @@ class LClassOuter;
 class NextIsBaseJxxClass;
 class AActor;
 class WNode;
+class WUserWidget;
 class LWorld;
 class LViewport;
 struct LEditorNodeCreateInfo;

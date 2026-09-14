@@ -719,6 +719,18 @@ SERDE_JSON_ENUM(PrimitiveTopology,
     eTriangleStripWithAdjacency,
     ePatchList
     )
+
+SERDE_JSON_ENUM(PresentModeKHR,
+    eImmediate,
+    eMailbox,
+    eFifo,
+    eFifoRelaxed,
+    eSharedDemandRefresh,
+    eSharedContinuousRefresh,
+    eFifoLatestReady,
+    eFifoLatestReadyEXT
+    )
+
 #pragma endregion /* SerdeEnums */
 
 SERDE_JSON_TYPE_ONLY_DESERIALIZE(PipelineInputAssemblyStateCreateInfo

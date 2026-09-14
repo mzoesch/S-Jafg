@@ -63,7 +63,7 @@ public:
     void Poll();
     //# For surface wide events (platform specific).
     void PollPlatformEvents() PURE_VIRTUAL()
-    void Tick();
+    void Tick(f32 Dt);
     void OnRender() PURE_VIRTUAL()
 
     FORCEINLINE void SetInputMode(EInputMode InMode) noexcept PURE_VIRTUAL()

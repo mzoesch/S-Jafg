@@ -704,11 +704,11 @@ inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
 {
     if constexpr (serde::is_string_archive_v<TArchive>)
     {
-        if (Ar.get_stream() == "1")
+        if (Ar.get_stream() == "true")
         {
             Field = true;
         }
-        else if (Ar.get_stream() == "0")
+        else if (Ar.get_stream() == "false")
         {
             Field = false;
         }
@@ -737,11 +737,11 @@ inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
     {
         if (Field)
         {
-            Ar.m_stream << "1";
+            Ar.m_stream << "true";
         }
         else
         {
-            Ar.m_stream << "0";
+            Ar.m_stream << "false";
         }
     }
     else

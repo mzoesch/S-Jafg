@@ -25,7 +25,7 @@ protected:
 
 public:
 
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
     virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
 private:

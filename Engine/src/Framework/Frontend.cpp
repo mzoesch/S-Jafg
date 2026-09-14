@@ -17,20 +17,20 @@ void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
     this->GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
 }
 
-void Jafg::LFrontendBase::Tick()
+void Jafg::LFrontendBase::Tick(f32 Dt)
 {
     STAT_FUNCTION()
 
     algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->BeginNewFrame(); });
     this->AsFrontend()->PollPlatformEvents();
     algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->Poll(); });
-    algo::for_each(this->Surfaces, [](auto&& Surface){ Surface->Tick(); });
+    algo::for_each(this->Surfaces, [Dt](auto&& Surface){ Surface->Tick(Dt); });
 
-    this->ForEachMutableSubsystem([](JFrontendSubsystem* E)
+    this->ForEachMutableSubsystem([Dt](JFrontendSubsystem* E)
     {
         if (E->ShouldTick())
         {
-            E->Tick();
+            E->Tick(Dt);
         }
     });
 }

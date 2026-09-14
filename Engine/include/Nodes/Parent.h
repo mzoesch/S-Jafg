@@ -39,7 +39,7 @@ public:
 #endif /* JAFG_DO_CHECKS */
 
     virtual void Construct() override;
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
     virtual void Destruct() override { Super::Destruct(); this->RemoveChildren(); }
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 

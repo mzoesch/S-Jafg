@@ -53,9 +53,9 @@ void Jafg::LSurfaceBase::Poll()
     this->TransientLastMouseLocation.reset();
 }
 
-void Jafg::LSurfaceBase::Tick()
+void Jafg::LSurfaceBase::Tick(f32 Dt)
 {
-    this->SurfaceViewport.Tick();
+    this->SurfaceViewport.Tick(Dt);
 }
 
 void Jafg::LSurfaceBase::UpdateKeyState(LRawInput const& InRawInput)

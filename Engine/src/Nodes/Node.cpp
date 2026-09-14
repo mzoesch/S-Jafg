@@ -3,11 +3,13 @@
 #include "Nodes/Node.h"
 #include "Engine/Engine.h"
 #include "Nodes/ButtonBase.h"
+#include "Nodes/DismissibleFloatingWidget.h"
 #include "Nodes/Viewport.h"
 #include "Nodes/Parent.h"
 #include "Nodes/Region.h"
 #include "Nodes/Text.h"
 #include "Nodes/TextBox.h"
+#include "Nodes/UserWidget.h"
 
 static_assert(Jafg::LStylePalette::valid_brush_v<Jafg::LRegionBrush>);
 static_assert(Jafg::LStylePalette::valid_brush_v<Jafg::LBoxBrush>);
@@ -77,6 +79,26 @@ void RemoveFallthroughTransitively(Jafg::WNode& Node) noexcept
 
 } /* ~Namespace <Anonymous> */
 
+void Jafg::WNode::Destruct()
+{
+    check(Tasks::IsOnMasterThread())
+    checkCode(_check_Destruct())
+    this->_ResetFocusState();
+
+    if (this->TooltipAbort)
+    {
+        *this->TooltipAbort = true;
+        this->TooltipAbort.reset();
+    }
+
+    if (this->TooltipNode)
+    {
+        this->TooltipNode.reset();
+    }
+
+    this->Parent = nullptr;
+}
+
 Jafg::LNodeReply Jafg::WNode::Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location)
 {
     if (Location.has_value())
@@ -117,6 +139,61 @@ Jafg::LNodeReply Jafg::WNode::Sweep(LNodeSweepInfo const& Info, std::optional<LV
     return {};
 }
 
+Jafg::LNodeReply Jafg::WNode::OnCursorEnter()
+{
+    check(!this->_check_bMouseEntered)
+    checkCode(this->_check_bMouseEntered = true)
+
+    check(!this->TooltipNode)
+    check(!this->TooltipAbort)
+    this->TooltipAbort = std::make_shared<bool>(bool{});
+    this->AttachedViewport.EmplaceGenericUntil([this, TooltipAbort=this->TooltipAbort, TooltipTimer=f32{}](f32 Dt) mutable
+    {
+        check(!!TooltipAbort)
+        if (*TooltipAbort)
+        {
+            return LViewport::EGenericResult::Fail;
+        }
+
+        TooltipTimer += Dt;
+        if (this->TooltipDelay <= TooltipTimer)
+        {
+            return LViewport::EGenericResult::Success;
+        }
+        return LViewport::EGenericResult::Continue;
+    }, [this]
+    {
+        this->RequestTooltipNow(this->GetViewport().GetSurface().GetMouseLocation().value_or(maths::zero_vector<LVec2F>));
+    });
+
+    if (this->OnCursorEnterEvent) if (auto Reply{this->OnCursorEnterEvent(*this)}; Reply.IsHandled())
+    {
+        return Reply;
+    }
+    return LNodeReply::Handled();
+}
+
+void Jafg::WNode::OnCursorLeave()
+{
+    check(this->_check_bMouseEntered)
+    checkCode(this->_check_bMouseEntered = false)
+    if (this->OnCursorLeaveEvent)
+    {
+        this->OnCursorLeaveEvent(*this);
+    }
+
+    if (this->TooltipAbort)
+    {
+        *this->TooltipAbort = true;
+        this->TooltipAbort.reset();
+    }
+
+    if (this->TooltipNode)
+    {
+        this->TooltipNode.reset();
+    }
+}
+
 void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
 {
     check(!this->_IsGarbage())
@@ -130,6 +207,43 @@ void Jafg::WNode::SetVisibility(const ENodeVisibility InVisibility)
     this->OnVisibilityChanged(OldVisibility, InVisibility);
 
     return;
+}
+
+Jafg::WUserWidget* Jafg::WNode::RequestTooltipNow(LVec2F Position)
+{
+    check(!this->TooltipNode)
+
+    if (this->GetTooltipNodeDelegate)
+    {
+        this->TooltipNode = this->GetTooltipNodeDelegate(*this);
+    }
+    else
+    {
+        if (!this->TooltipText.empty())
+        {
+            TJxxUnique<WUserWidget> Temp;
+            ConstructDeferredWidget(TNodeStaticInit<WDismissibleFloatingWidget>{this->GetViewport()}).Style().SaveToUnique(&Temp)
+                .Decorate(false)
+                .CreateResizeUi(false)
+                .InitialWindowSize({100_pt, 0})
+                .InitialWindowPosition(Position)
+                .Content([this](WFloatingWidget& FloatingWidget, WParent& Container)
+                {
+                    Container.AddChild(NewNode(Container.GetViewport()).Class<WTextBox>()
+                        .Tint(Colors::Black)
+                        .Content(this->TooltipText)
+                        .Unique());
+                })
+            .OnWindowClosed([this](WFloatingWidget& Window)
+            {
+                this->TooltipNode.release();
+                return false;
+            });
+            this->TooltipNode = std::move(Temp);
+        }
+    }
+
+    return StaticCast<WUserWidget>(this->TooltipNode.get());
 }
 
 void Jafg::WNode::RemoveFromParent2()

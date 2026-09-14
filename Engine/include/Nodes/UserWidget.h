@@ -92,14 +92,23 @@ struct TDeferredUserWidgetExec : public TDeferredObjectExec<TNode>
 inline constexpr Detail::NewDeferredObjectFn<LNodeDynamicInit, TNodeStaticInit, Detail::TDeferredUserWidgetExec, WUserWidget> ConstructDeferredWidget{};
 inline constexpr Detail::NewObjectFn<decltype(ConstructDeferredWidget), LNodeDynamicInit, TNodeStaticInit, WUserWidget> ConstructWidget{ConstructDeferredWidget};
 
-//#
-//# The only purpose of this factory is to distinguish user widgets factories from node factories to enable a type-
-//# safe to pass them around.
-//#
-struct LFactoryUserWidget : NODE_FACTORY_PARENT(WUserWidget)
+struct LFactoryUserWidget: NODE_FACTORY_PARENT(WUserWidget)
 {
     NODE_FACTORY_BODY(WUserWidget)
+
+    template<typename T> requires std::is_base_of_v<WUserWidget, T>
+    decltype(auto) SaveToUnique(this auto&& Self, TJxxUnique<T>* Out) noexcept;
 };
+
+NODISCARD FORCEINLINE constexpr WUserWidget* WNode::GetTooltipNode() noexcept
+{
+    return StaticCast<WUserWidget>(this->TooltipNode.get());
+}
+
+NODISCARD FORCEINLINE constexpr WUserWidget const* WNode::GetTooltipNode() const noexcept
+{
+    return StaticCast<WUserWidget>(this->TooltipNode.get());
+}
 
 template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
 NODISCARD FORCEINLINE TNode* LViewport::FindVisibleWidgetByClass() noexcept
@@ -125,6 +134,14 @@ NODISCARD FORCEINLINE TNode const* LViewport::FindVisibleWidgetByClass() const n
         }
     }
     return nullptr;
+}
+
+template<typename T> requires std::is_base_of_v<WUserWidget, T>
+inline decltype(auto) LFactoryUserWidget::SaveToUnique(this auto&& Self, TJxxUnique<T>* Out) noexcept
+{
+    check(Out)
+    *Out = TJxxUnique<T>{StaticCastChecked<T>(&Self.GetRawNode())};
+    return std::forward<decltype(Self)>(Self);
 }
 
 } /* ~Namespace Jafg */

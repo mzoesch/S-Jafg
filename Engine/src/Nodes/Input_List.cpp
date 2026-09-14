@@ -37,7 +37,7 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
 
                 WParent* Target;
                 Container.AddChild(NewNode(Container.GetViewport()).Class<WVRegion>().SaveTo(&Target)
-                    .Padding({5_pt, 2})
+                    .Padding(1_spt)
                     .Tint(*Prefs.ForegroundColor)
                     .OutlineThickness(1)
                     .OutlineTint(Colors::White)
@@ -47,9 +47,8 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
                 {
                     Target->AddChild(NewNode(Target->GetViewport()).Class<WTextButton>()
                         .Anchor(EAnchor::HFill)
-
                         .Palette(*Prefs.PrimaryPaletteSolid)
-                        .InBrush<EStyleBits::Normal|EStyleBits::Disabled, &LBoxBrush::bSkipBrushDraw>(true)
+                        .InBrush<EStyleBits::InactiveCombi, &LBoxBrush::bSkipBrushDraw>(true)
                         .InAllBrushes<&LBoxBrush::Padding>({5_spt, 0})
                         .Content(Item)
                         .OnKeyEventFocused([this,Item,FloatingWidget=&FloatingWidget](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)

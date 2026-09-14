@@ -27,9 +27,9 @@ void Jafg::WWorldViewer::Construct()
         ;
 }
 
-void Jafg::WWorldViewer::Tick()
+void Jafg::WWorldViewer::Tick(f32 Dt)
 {
-    Super::Tick();
+    Super::Tick(Dt);
 
     auto& Surface{this->GetViewport().GetSurface()};
 
@@ -83,7 +83,7 @@ void Jafg::WWorldViewer::Tick()
         check(this->ConsumeHandle.IsValid())
     }
 
-    this->RenderTargetViewport.Tick();
+    this->RenderTargetViewport.Tick(Dt);
 }
 
 void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const

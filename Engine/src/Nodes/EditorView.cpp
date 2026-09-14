@@ -5,9 +5,9 @@
 #include "User/LocalEgo.h"
 #include "Nodes/Viewport.h"
 
-void Jafg::WEditorView::Tick()
+void Jafg::WEditorView::Tick(f32 Dt)
 {
-    Super::Tick();
+    Super::Tick(Dt);
 
     if (this->GetViewport().GetSurface()
         .HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton), ERawInputStateBits::Release))

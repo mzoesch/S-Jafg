@@ -38,7 +38,7 @@ public:
     {
         if (!this->Frontend.IsHeadless())
         {
-            this->Frontend.Tick();
+            this->Frontend.Tick(Dt);
         }
     }
     void TearDown();

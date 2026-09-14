@@ -35,14 +35,16 @@ struct LPreference
     LPreference(EPreference Type
         , LString Identifier
         , LString DisplayName
+        , LString Tooltip
         , Detail::LPreferenceSealer) noexcept
-        : Identifier{std::move(Identifier)}, DisplayName{std::move(DisplayName)}, Type{Type} {}
+        : Identifier{std::move(Identifier)}, DisplayName{std::move(DisplayName)}, Tooltip{std::move(Tooltip)}, Type{Type} {}
     PROHIBIT_COPY(LPreference)
     DEFAULT_MOVE(LPreference)
     virtual ~LPreference() noexcept = default;
 
     LString Identifier;
     LString DisplayName;
+    LString Tooltip;
 
     NODISCARD FORCEINLINE bool IsValue() const noexcept { return this->Type == EPreference::Value; }
     NODISCARD FORCEINLINE bool IsCollection() const noexcept { return this->Type == EPreference::Collection; }
@@ -63,7 +65,8 @@ struct LPreferenceCollection: LPreference
     LPreferenceCollection(
           LString Identifier
         , LString DisplayName
-        ) noexcept: LPreference{EPreference::Collection, std::move(Identifier), std::move(DisplayName), {}} {}
+        , LString Tooltip = {}
+        ) noexcept: LPreference{EPreference::Collection, std::move(Identifier), std::move(DisplayName), std::move(Tooltip), {}} {}
 
     NODISCARD decltype(auto) begin(this auto&& Self) noexcept { return Self.Children.begin(); }
     NODISCARD decltype(auto) end(this auto&& Self) noexcept { return Self.Children.end(); }

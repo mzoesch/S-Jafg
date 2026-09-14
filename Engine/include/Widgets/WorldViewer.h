@@ -44,7 +44,7 @@ public:
     virtual ~WWorldViewer() override;
 
     virtual void Construct() override;
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
     virtual void Draw(LNodeRenderInfo const& Info) const override;
 
     virtual void OnFocusLost() override;

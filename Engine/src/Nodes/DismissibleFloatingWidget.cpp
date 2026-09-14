@@ -16,7 +16,7 @@ Jafg::LNodeReply Jafg::WDismissibleFloatingWidget::SweepFocus(LNodeSweepInfo con
                 {
                     this->OnDismissEvent(*this);
                 }
-                Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]{ this->MarkAsGarbage_v2(); });
+                Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]{ this->DestroyFloatingWidgetControlled(); });
                 return LNodeReply::Unhandled();
             }
         }

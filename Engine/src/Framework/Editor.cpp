@@ -529,7 +529,7 @@ void Jafg::WEditor::Construct()
     this->ApplyEditorLayout(this->LoadEditorLayout(*Prefs.EditorLastLayout));
 }
 
-void Jafg::WEditor::Tick()
+void Jafg::WEditor::Tick(f32 Dt)
 {
     if (auto &Prefs{GetSingleton<JUserPreferences>()}; *Prefs.EditorShowRate)
     {
@@ -550,9 +550,11 @@ void Jafg::WEditor::Tick()
         {
             this->LastRatePoint = Engine.PreviousStat.Start;
             auto Diff{algo::time_diff(Engine.PreviousStat.Start, Engine.CurrentStat.Start)};
-            this->Rate->SetContent(algo::sprintf("{:.3f}ms {}ts"
+            this->Rate->SetContent(algo::sprintf("{:.3f}ms {}ts ({})"
                 , (Diff / static_cast<f64>(Engine.PreviousStat.FrameCount)) * maths::s2ms_f
-                , static_cast<u64>(static_cast<f64>(Engine.PreviousStat.FrameCount) / Diff)));
+                , static_cast<u64>(static_cast<f64>(Engine.PreviousStat.FrameCount) / Diff)
+                , serde::to_string(this->GetViewport().GetSurface().Vk_GetPresentMode())
+                ));
         }
     }
     else
@@ -563,7 +565,7 @@ void Jafg::WEditor::Tick()
         }
     }
 
-    Super::Tick();
+    Super::Tick(Dt);
 }
 
 TArray<LPath> const& Jafg::WEditor::DiscoverLayouts()
@@ -1141,9 +1143,9 @@ void Jafg::WEditorWorldViewer::Construct()
     }
 }
 
-void Jafg::WEditorWorldViewer::Tick()
+void Jafg::WEditorWorldViewer::Tick(f32 Dt)
 {
-    Super::Tick();
+    Super::Tick(Dt);
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Surface{this->GetViewport().GetSurface()};
@@ -3147,7 +3149,7 @@ void Jafg::WEditorWorldViewerInspector::Construct()
     this->OnWorldViewerUpdate();
 }
 
-void Jafg::WEditorWorldViewerInspector::Tick()
+void Jafg::WEditorWorldViewerInspector::Tick(f32 Dt)
 {
     for (auto& F: this->ComponentUpdateFunctions)
     {
@@ -3155,7 +3157,7 @@ void Jafg::WEditorWorldViewerInspector::Tick()
         F();
     }
 
-    Super::Tick();
+    Super::Tick(Dt);
 }
 
 void Jafg::WEditorWorldViewerInspector::Destruct()

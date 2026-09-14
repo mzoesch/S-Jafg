@@ -85,6 +85,17 @@ public:
     CLASS_FIELD(Config)
     TPreference<i32> MaxTps{ UnlimitedTps };
 
+    bool bLoadBalancing{};
+    //# Whether to allow load balancing.
+    CLASS_FIELD(Config)
+    TPreference<bool> AllowLoadBalancing{ true };
+    //#
+    //# The time threshold to wait for newly polled events before processing a tick.
+    //# Events can be from the frontend, a network wakeup, heartbeat, etc.
+    //#
+    CLASS_FIELD(Config)
+    TPreference<f32> LoadBalancingProcessThreshold{ 1.0f };
+
     CLASS_FIELD(Config)
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
 

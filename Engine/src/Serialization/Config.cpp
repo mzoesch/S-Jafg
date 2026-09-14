@@ -162,7 +162,7 @@ void Jafg::LConfig::ForcePullConfigFile(LPath const& Path)
         auto EqualSignIdx{LineStrView.find('=')};
         if (EqualSignIdx == std::string_view::npos)
         {
-            if (LineStrView == "\n")
+            if (LineStrView == "")
             {
                 continue;
             }

@@ -23,16 +23,16 @@ void Jafg::WParent::Construct()
     return;
 }
 
-void Jafg::WParent::Tick()
+void Jafg::WParent::Tick(f32 Dt)
 {
-    Super::Tick();
+    Super::Tick(Dt);
 
     for (auto& Child : this->GetChildren())
     {
         check(Child.get())
         if (Child->ShouldNowTick())
         {
-            Child->Tick();
+            Child->Tick(Dt);
         }
         continue;
     }

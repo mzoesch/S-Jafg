@@ -39,8 +39,8 @@ public:
 
     void Vk_OnLateInit();
 
-    void DispatchInputs();
-    void Tick();
+    void DispatchInputs(f32 Dt);
+    void Tick(f32 Dt);
     void Draw(LRenderInfo const& Info);
     void TearDown();
 
@@ -79,6 +79,22 @@ public:
     FORCEINLINE void EmplaceUntil(LPhysicalKey Key, TFunction2<bool(LRawInput const& Input)> F, TFunction2<void()> G = {}) noexcept
     {
         this->KeyDelegates.emplace_back(Flags, Key, std::move(F), std::move(G));
+    }
+
+    //#
+    //# Emplace two delegates until the given functor F returns #Success or #Fail.
+    //# If G is bound, it will be called at the moment F returns #Success; if #Fail is returned it will not be called.
+    //# It is guaranteed that F will never be called after G.
+    //# F is not optional and must be bound. G is optional.
+    //#
+    enum struct EGenericResult
+    {
+        Continue,Success,Fail,
+    };
+    FORCEINLINE void EmplaceGenericUntil(TFunction2<EGenericResult(f32 Dt)> F, TFunction2<void()> G = {}) noexcept
+    {
+        check(!!F)
+        this->GenericDelegates.emplace_back(std::move(F), std::move(G));
     }
 
     //#
@@ -207,6 +223,13 @@ private:
         TFunction2<void()> G;
     };
     TArray<LKeyDelegate> KeyDelegates;
+
+    struct LGenericDelegate final
+    {
+        TFunction2<EGenericResult(f32 Dt)> F;
+        TFunction2<void()> G;
+    };
+    TArray<LGenericDelegate> GenericDelegates;
 
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;

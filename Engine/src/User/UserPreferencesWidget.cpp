@@ -22,9 +22,9 @@ void Jafg::WUserPreferencesWidget::Construct()
     this->Rebuild(0uz);
 }
 
-void Jafg::WUserPreferencesWidget::Tick()
+void Jafg::WUserPreferencesWidget::Tick(f32 Dt)
 {
-    Super::Tick();
+    Super::Tick(Dt);
 
     this->DiscardButton->SetEnabled(!this->Changes.empty());
     this->ApplyButton->SetEnabled(!this->Changes.empty());
@@ -119,6 +119,7 @@ void Jafg::WUserPreferencesWidget::Rebuild(std::size_t Index)
             Target.AddChild(NewNode(Target.GetViewport()).Class<WText>()
                 .TextScale(ETextScale::SubHeader)
                 .Content(Preference.DisplayName)
+                .Tooltip(Preference.Tooltip)
                 .Unique());
             for (auto& SubPreference: Preference.AsCollection())
             {
@@ -141,6 +142,7 @@ void Jafg::WUserPreferencesWidget::Rebuild(std::size_t Index)
                     +
                     Preference.AsValue().CreateNode(Target.GetViewport(), Changes)
                 ]
+                .Tooltip(Preference.Tooltip)
                 .Unique()
                 );
         }

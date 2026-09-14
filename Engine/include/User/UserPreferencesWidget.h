@@ -30,7 +30,7 @@ public:
     JAFG_DEFAULT_TAB_CANDIDATE("Preferences", "Icons/Jafg.Preferences")
 
     virtual void Construct() override;
-    virtual void Tick() override;
+    virtual void Tick(f32 Dt) override;
 
     TArray<LPreferenceValueChangeRequest> Changes;
 

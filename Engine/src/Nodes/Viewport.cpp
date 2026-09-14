@@ -44,7 +44,7 @@ void Jafg::LViewport::Vk_OnLateInit()
     }
 }
 
-void Jafg::LViewport::DispatchInputs()
+void Jafg::LViewport::DispatchInputs(f32 Dt)
 {
     STAT_FUNCTION()
 
@@ -131,6 +131,23 @@ void Jafg::LViewport::DispatchInputs()
         }
 
         this->Surface.ConsumeWeakKey(It->Key);
+        ++It;
+        continue;
+    }
+
+    for (auto It{this->GenericDelegates.begin()}; It != this->GenericDelegates.end();)
+    {
+        check(It->F)
+        if (auto Result{It->F(Dt)}; Result != EGenericResult::Continue)
+        {
+            if (Result == EGenericResult::Success && It->G)
+            {
+                It->G();
+            }
+            It = this->GenericDelegates.erase(It);
+            continue;
+        }
+
         ++It;
         continue;
     }
@@ -263,19 +280,19 @@ void Jafg::LViewport::DispatchInputs()
     HandleEventType(ERawInputStateBits::Press|ERawInputStateBits::Repeat);
 }
 
-void Jafg::LViewport::Tick()
+void Jafg::LViewport::Tick(f32 Dt)
 {
     STAT_FUNCTION()
 
     this->OnEarlyTick.Broadcast();
 
-    this->DispatchInputs();
+    this->DispatchInputs(Dt);
 
     for (WUserWidget* Widget: this->TopLevelWidgets)
     {
         if (Widget->ShouldNowTick())
         {
-            Widget->Tick();
+            Widget->Tick(Dt);
         }
     }
 
