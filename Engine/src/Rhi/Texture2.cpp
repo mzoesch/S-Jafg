@@ -56,6 +56,17 @@ Jafg::LTexture2Ref Jafg::LTexture2::FromMemory(LStringView HumanReadableName, al
             Tex.MipMap0[i * 4 + 3] = std::byte{std::numeric_limits<std::underlying_type_t<std::byte>>::max()};
         }
     }
+    else if (SrcFormat == vk::Format::eR8G8B8Unorm && Info.Format == vk::Format::eR8G8B8A8Unorm)
+    {
+        Tex.MipMap0.allocate(rhi::vk_bytes_per_pixel(Info.Format) * Tex.GetWidth() * Tex.GetHeight());
+        for (u32 i{0}; i < Tex.GetWidth() * Tex.GetHeight(); ++i)
+        {
+            Tex.MipMap0[i * 4 + 0] = Data[i * 3 + 0];
+            Tex.MipMap0[i * 4 + 1] = Data[i * 3 + 1];
+            Tex.MipMap0[i * 4 + 2] = Data[i * 3 + 2];
+            Tex.MipMap0[i * 4 + 3] = std::byte{std::numeric_limits<std::underlying_type_t<std::byte>>::max()};
+        }
+    }
     else
     {
         LOG_FATAL(LogTextureSubsystem, "[{}]: Unsupported format conversion from [{}] to [{}] when loading texture from memory."

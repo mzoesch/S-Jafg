@@ -40,6 +40,9 @@ FORCEINLINE constexpr void swap_default(T* Element)
 template<typename T> FORCEINLINE constexpr void orphan(T const* Container) noexcept = delete;
 template<typename T> FORCEINLINE constexpr void orphan(T* Container) noexcept { swap_default(Container); }
 
+typedef u32 codepoint_t;
+template<typename T>
+concept utf8_char_candidate = std::is_same_v<T, char> || std::is_same_v<T, char8_t>;
 inline constexpr decltype(LString::npos) npos{ LString::npos };
 
 using std::to_address;
@@ -676,10 +679,18 @@ struct utf8_to_native_fn final
     }
 };
 
+struct utf8_begin_of_sequence final
+{
+    template<utf8_char_candidate T>
+    NODISCARD FORCEINLINE constexpr bool operator()(T Char) const noexcept
+    {
+        return (Char & 0xC0) != 0x80 && Char <= 0xF4;
+    }
+};
+
 struct utf8_char_length_fn final
 {
-    template<typename T> requires(std::is_same_v<T, char> || std::is_same_v<T, char8_t>
-        || std::is_same_v<T, char16_t> || std::is_same_v<T, char32_t> || std::is_same_v<T, wchar_t>)
+    template<utf8_char_candidate T>
     NODISCARD FORCEINLINE constexpr std::size_t operator()(T Char) const noexcept
     {
         if ((Char & 0x80) == 0) { return 1; } /* ASCII byte. */
@@ -741,6 +752,9 @@ inline constexpr detail::add_spaces_to_camel_case_fn add_spaces_to_camel_case{};
 //# If the native string type is already provided, then this results in a noop.
 //#
 inline constexpr detail::utf8_to_native_fn utf8_to_native{};
+//# Whether this char is the beginning of a UTF-8 sequence.
+inline constexpr detail::utf8_begin_of_sequence utf8_begin_of_sequence{};
+//# How long is the UTF-8 sequence starting with this char. Must point to a valid beginning of a sequence.
 inline constexpr detail::utf8_char_length_fn utf8_char_length{};
 
 struct case_insensitive_hash final

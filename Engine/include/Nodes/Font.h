@@ -84,7 +84,7 @@ struct LTextBrushBase
     constexpr bool IsTextBottomAligned() const noexcept { return this->TextVAlign == ETextVAlign::Bottom; }
 };
 
-struct LRenderData final
+struct LFontRenderData final
 {
     constexpr void Dirty() noexcept { bDirty = true; }
 
@@ -135,7 +135,7 @@ struct TMutableTextContainer
 
 protected:
 
-    NODISCARD FORCEINLINE LRenderData& GetTextRenderData() const noexcept { return this->RenderData; }
+    NODISCARD FORCEINLINE LFontRenderData& GetTextRenderData() const noexcept { return this->RenderData; }
 
     template<auto Proj>
     NODISCARD FORCEINLINE bool IsTextRenderDataDirty() const noexcept
@@ -164,7 +164,7 @@ protected:
     TNode& Owner;
     LString Content;
     mutable std::optional<LTextScale> LastTextScale;
-    mutable LRenderData RenderData;
+    mutable LFontRenderData RenderData;
 };
 
 template<typename TNode, auto BrushProj>

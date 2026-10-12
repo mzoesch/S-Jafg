@@ -4548,7 +4548,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderTexts(LActorRenderInfo const
         /* TODO: Most definitely cache this result. This line will become most probably a bottleneck later...
          *       But can it be cached with variadic font size (based of eye translation)? */
         LVec2F Pencil{maths::zero_vector<LVec2F>};
-        auto Infos{Subsystem.GetGlyphInfos(Text.Text, FontSize, &Pencil, 0)};
+        auto Infos{Subsystem.GetGlyphInfos(0, Text.Text, FontSize, &Pencil)};
 
         LVec3F Ndc{maths::xyz(Clip) / Clip.w};
         if (Ndc.z < 0.0f  || Ndc.z > 1.0f)

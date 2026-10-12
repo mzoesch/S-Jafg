@@ -245,16 +245,22 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
     {
         if (!this->GetContent().empty() && this->CaretCursor > 0)
         {
-            auto RemoveNum{algo::utf8_char_length(this->GetContent()[this->CaretCursor - 1]) };
+            auto Cursor{this->CaretCursor - 1};
+            while (Cursor > 0uz)
+            {
+                if (algo::utf8_begin_of_sequence(this->GetContent()[Cursor]))
+                {
+                    break;
+                }
+                --Cursor;
+            }
+
             auto Writer{this->GetMutableTextContent()};
             Writer.first.erase(
-                Writer.first.begin() + (this->CaretCursor - 1),
-                Writer.first.begin() + (this->CaretCursor - 1 + RemoveNum)
+                Writer.first.begin() + Cursor,
+                Writer.first.begin() + this->CaretCursor
                 );
-            for (auto Idx{0uz}; Idx < RemoveNum; ++Idx)
-            {
-                this->ReduceCaretCursor();
-            }
+            this->SetCaretCursor(Cursor);
             this->OnContentChanged.InvokeIfBound(*this, this->GetContent());
         }
 

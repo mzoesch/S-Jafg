@@ -9,6 +9,7 @@
 #include "User/UserPreferences.h"
 #include "Nodes/Font.h"
 #include "Rhi/NodeRenderInfo.h"
+#include "Engine/Engine.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -37,6 +38,12 @@
 static_assert(sizeof(signed long) == sizeof(FT_Fixed));
 static_assert(std::numeric_limits<signed long>::max() == std::numeric_limits<FT_Fixed>::max());
 static_assert(std::numeric_limits<signed long>::lowest() == std::numeric_limits<FT_Fixed>::lowest());
+
+static_assert(std::same_as<Jafg::Detail::MyDynamicAtlasChangeFlags, Jafg::Detail::MyDynamicAtlas::ChangeFlags>);
+
+static_assert(std::to_underlying(Jafg::EFontAtlasChangeFlags::Identity) == std::to_underlying(Jafg::Detail::MyDynamicAtlas::NO_CHANGE));
+static_assert(std::to_underlying(Jafg::EFontAtlasChangeFlags::Resized) == std::to_underlying(Jafg::Detail::MyDynamicAtlas::RESIZED));
+static_assert(std::to_underlying(Jafg::EFontAtlasChangeFlags::Rearranged) == std::to_underlying(Jafg::Detail::MyDynamicAtlas::REARRANGED));
 
 namespace
 {
@@ -89,60 +96,8 @@ f32 TextBoxInStaticPointsImpl(Jafg::ETextScale TextScale, Jafg::EApplicationScal
     std::unreachable();
 }
 
-inline constexpr u32 AtlasColorChannels{ 3 };
 /* Positions are in 26.6 fixed-point (1/64px) scale to pixels. */
 inline constexpr f32 HarfBuzzScale{ 1.0f / 64.0f };
-
-Lu32String utf8_to_utf32(LString const& Utf8)
-{
-    Lu32String Result;
-
-    auto Idx{0uz};
-    while (Idx < Utf8.size())
-    {
-        uint8_t C{static_cast<uint8_t>(Utf8[Idx])};
-        uint32_t CP{0};
-        auto Bytes{0uz};
-
-        if      (C < 0x80)           { CP = C & 0x7F; Bytes = 1; }
-        else if ((C & 0xE0) == 0xC0) { CP = C & 0x1F; Bytes = 2; }
-        else if ((C & 0xF0) == 0xE0) { CP = C & 0x0F; Bytes = 3; }
-        else if ((C & 0xF8) == 0xF0) { CP = C & 0x07; Bytes = 4; }
-        else
-        {
-            /* Invalid lead byte => skip. */
-            ++Idx;
-            continue;
-        }
-
-        /* Validate that enough bytes exist. */
-        if (Idx + Bytes > Utf8.size())
-        {
-            break;
-        }
-
-        for (auto SubIdx{1uz}; SubIdx < Bytes; ++SubIdx)
-        {
-            uint8_t Cont{static_cast<uint8_t>(Utf8[Idx + SubIdx])};
-            if ((Cont & 0xC0) != 0x80)
-            {
-                /* Invalid continuation. */
-                Bytes = 0;
-                break;
-            }
-
-            CP = (CP << 6) | (Cont & 0x3F);
-        }
-
-        if (Bytes > 0)
-        {
-            Result.push_back(static_cast<char32_t>(CP));
-        }
-        Idx += Bytes > 0 ? Bytes : 1;
-    }
-
-    return Result;
-}
 
 } /* ~Namespace <Anonymous> */
 
@@ -156,21 +111,19 @@ f32 Jafg::LTextScale::InStaticPointsImpl(LViewport const& Viewport, ETextScale T
     return ::TextBoxInStaticPointsImpl(TextScale, Scale);
 }
 
-void Jafg::LRenderData::Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text)
+void Jafg::LFontRenderData::Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text)
 {
     this->FontSize = Brush.TextScale.InStaticPoints(Viewport);
     this->bDirty = false;
 
     LVec2F Pencil{maths::zero_vector<LVec2F>};
-    this->Collection = Subsystem.GetGlyphInfos(Text, this->FontSize, &Pencil, 0);
+    this->Collection = Subsystem.GetGlyphInfos(0, Text, this->FontSize, &Pencil);
 
     //# TODO: This for line gaps. LineHeight + line_gap
     this->DesiredSize = {Pencil.x, this->Collection.LineHeight * Brush.Tightening};
-
-    return;
 }
 
-void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect, LTextInfo const& TextInfo) const
+void Jafg::LFontRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect, LTextInfo const& TextInfo) const
 {
     auto AddGlyph{[&](LGlyphCollection::Info const& Glyph)
     {
@@ -269,87 +222,46 @@ void Jafg::LRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect,
     return;
 }
 
-void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
+Jafg::JFontSubsystem::MyFont::MyFont(FT_Library Library, FontCreateInfo const& Info) noexcept
 {
-    Super::Initialize(Collection);
-    Collection.InitializeDependency<JTextureSubsystem>(this);
-    Collection.InitializeDependency<JMaterialSubsystem>(this);
+    this->Source = Info.Source;
+    check(!this->Source.empty())
 
-    check(this->My_FT_Library == nullptr)
-    FT_Init_FreeType(&this->My_FT_Library);
-    check(this->My_FT_Library)
-
-    check(this->My_Fonts.empty())
-    (void)this->ReloadFont({
-        .Source="Content/Fonts/NotoSans-VariableFont_wdth,wght.ttf",
-        .Tags={
-            {"Weight", 700},
-            {"Width", 100},
-            },
-        });
-    check(this->My_Fonts.size() == 1)
-
-    return;
-}
-
-void Jafg::JFontSubsystem::TearDown()
-{
-    Super::TearDown();
-
-    for (auto const& Font : this->My_Fonts)
+    if (!is_regular_file(this->Source))
     {
-        if (Font.Font)
-        {
-            msdfgen::destroyFont(Font.Font);
-        }
-        if (Font.My_FT_Face)
-        {
-            FT_Done_Face(Font.My_FT_Face);
-        }
+        LOG_FATAL(LogFontSubsystem, "[{}]: No such file.", this->Source)
     }
 
-    if (this->My_FT_Library)
-    {
-        FT_Done_FreeType(this->My_FT_Library);
-    }
-
-    return;
-}
-
-u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
-{
-    if (this->My_Fonts.size() >= JFontSubsystem::MaxAllowedFonts)
-    {
-        LOG_FATAL(LogFontSubsystem
-            , "Cannot load [{}] because the maximum allowed font count [{}] has been reached."
-            , Info.Source, JFontSubsystem::MaxAllowedFonts
-            )
-    }
-
-    LOG_TRACE(LogFontSubsystem, "[{}]: Loading font.", Info.Source)
-
-    if (is_regular_file(Info.Source) == false)
-    {
-        LOG_FATAL(LogFontSubsystem
-            , "[{}]: No such file."
-            , Info.Source
-            )
-    }
-
-    //# TODO: Fix existing font and update it instead.
-    //#       Also msdf-gen supports on the fly atlas updates. We need to support this as well.
-    MyFont Result; Result.Source = Info.Source;
+    /*
+     * TODO: Depending on the language the user specified we might want to give this control to the create info.
+     *      E.g. in en-us 2048 is enough but if the pack is e.g. ja we might already want to increase this to 4096 or even 8192.
+     *      But of course only for core fonts. If this font is used e.g. for italic, world specified immersive fonts.
+     *      Then having this to allow for only ASCII is totally reasonable.
+     */
+    // this->DynamicAtlas = new Detail::MyDynamicAtlas{2'048};
+    this->DynamicAtlas = new Detail::MyDynamicAtlas;
+    this->DynamicAtlas.Value->atlasGenerator().setThreadCount(4); /* TODO: This is just an arbitrary limit. What is good here for us? */
 
     // TODO: Ask user preferences to clamp this.
-    Result.AtlasGlyphSize = Info.MaxAtlasGlyphSize;
-    Result.PixelRange = Info.MaxPixelRange;
+    this->AtlasGlyphSize = Info.MaxAtlasGlyphSize;
+    this->PixelRange = Info.MaxPixelRange;
 
+    if (auto Error{FT_New_Face(Library
 #if JAFG_PLATFORM_USES_UTF8
-    FT_New_Face(this->My_FT_Library, Result.Source.native().c_str(), 0, &Result.My_FT_Face);
+        , this->Source.native().c_str()
 #else /* JAFG_PLATFORM_USES_UTF8 */
-    FT_New_Face(this->My_FT_Library, Result.Source.string().c_str(), 0, &Result.My_FT_Face);
+        , this->Source.string().c_str()
 #endif /* !JAFG_PLATFORM_USES_UTF8 */
-    check(Result.My_FT_Face)
+        , 0, &this->My_FT_Face)})
+    {
+        LOG_FATAL(LogFontSubsystem, "[{}]: Failed to load font face [{}].", Info.Source, Error)
+    }
+    check(this->My_FT_Face)
+
+    if (auto Error{FT_Set_Pixel_Sizes(this->My_FT_Face, 0, static_cast<FT_UInt>(this->AtlasGlyphSize))})
+    {
+        LOG_FATAL(LogFontSubsystem, "[{}]: Failed to set pixel size [{}].", Info.Source, Error)
+    }
 
     if (!Info.Tags.empty())
     {
@@ -357,7 +269,7 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
         UsedTags.reserve(Info.Tags.size());
 
         FT_MM_Var* Variations{};
-        FT_Get_MM_Var(Result.My_FT_Face, &Variations);
+        FT_Get_MM_Var(this->My_FT_Face, &Variations);
         check(Variations)
         FT_Fixed Coords[2];
         for (FT_UInt Idx{}; Idx < Variations->num_axis; ++Idx)
@@ -398,183 +310,367 @@ u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
         {
             if (!algo::contains(UsedTags, Idx))
             {
-                LOG_WARNING(LogFontSubsystem
-                    , "[{}]: Tag [{}] was not consumed."
-                    , Info.Source, Info.Tags[Idx].first
-                    )
+                LOG_WARNING(LogFontSubsystem, "[{}]: Tag [{}] was not consumed.", Info.Source, Info.Tags[Idx].first)
             }
         }
 
-        if (auto Error{FT_Set_Var_Design_Coordinates(Result.My_FT_Face, 2, Coords)}; Error)
+        if (auto Error{FT_Set_Var_Design_Coordinates(this->My_FT_Face, 2, Coords)}; Error)
         {
-            LOG_FATAL(LogFontSubsystem
-                , "[{}]: Failed to set font variation desgin coordinates [{}]."
-                , Info.Source, Error
-                )
+            LOG_FATAL(LogFontSubsystem, "[{}]: Failed to set font variation design coordinates [{}].", Info.Source, Error)
         }
     }
 
-    Result.Font = msdfgen::adoptFreetypeFont(Result.My_FT_Face);
-
-    std::vector<msdf_atlas::GlyphGeometry> Glyphes;
-    msdf_atlas::FontGeometry FontGeometry(&Glyphes);
-    msdf_atlas::Charset Charset;
-    for (char32_t Codepoint : utf8_to_utf32(Info.BaseSet))
+    if (this->My_FT_Face->family_name)
     {
-        Charset.add(Codepoint);
+        this->FamilyName = LString{this->My_FT_Face->family_name};
     }
-    FontGeometry.loadCharset(Result.Font, 1.0, Charset);
-    for (msdf_atlas::GlyphGeometry &Glyph : Glyphes)
+    else
     {
-        Glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, /* @see edge-coloring.h */3.0, 0);
+        check(!this->FamilyName)
     }
-
-    msdf_atlas::TightAtlasPacker Packer;
-    Packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE); /* Also consider #setDimensions to find the best value. */
-    Packer.setMinimumScale(Result.AtlasGlyphSize);
-    Packer.setPixelRange(Result.PixelRange); /* Also consider setUnitRange. */
-    Packer.setMiterLimit(1.0);
-    Packer.setInnerPixelPadding(Info.Padding.x);
-    Packer.setOuterPixelPadding(Info.Padding.y);
-    Packer.pack(Glyphes.data(), static_cast<int>(Glyphes.size()));
-    LVec2i32 AtlasDimensions; Packer.getDimensions(AtlasDimensions.x, AtlasDimensions.y);
-
-    msdf_atlas::GeneratorAttributes Attributes;
-    msdf_atlas::ImmediateAtlasGenerator<
-        f32, AtlasColorChannels, msdf_atlas::msdfGenerator, msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, AtlasColorChannels>>
-        Generator(AtlasDimensions.x, AtlasDimensions.y);
-    Generator.setAttributes(Attributes);
-    Generator.setThreadCount(4);
-    Generator.generate(Glyphes.data(), static_cast<int>(Glyphes.size()));
-
-    auto Bitmap{static_cast<msdfgen::BitmapConstRef<msdf_atlas::byte, 3>>(Generator.atlasStorage())};
-    static_assert(sizeof(algo::byte_bulk::value_type) == sizeof(msdf_atlas::byte));
-    algo::byte_bulk Bulk; Bulk.serialize(reinterpret_cast<algo::byte_bulk::value_type const*>(Bitmap.pixels), static_cast<std::size_t>(Bitmap.width * Bitmap.height * 3));
-    Result.Atlas = LTexture2::FromMemory(
-        "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm,
-        {static_cast<rhi::extent2::domain_type>(Bitmap.width), static_cast<rhi::extent2::domain_type>(Bitmap.height)},
-        LTexture2::HostInfo{.Format = vk::Format::eR8G8B8A8Srgb,}
-        );
-    Result.Atlas->LoadToDevice(LTexture2::DeviceInfo{.DesiredMipLevels = 1,.Samples = vk::SampleCountFlagBits::e1,});
-    Result.Atlas->FreeFromHost();
-    this->GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*Result.Atlas);
-    check(Result.Atlas->IsBindless())
-
-    for (auto const& Glyph : Glyphes)
+    if (this->My_FT_Face->style_name)
     {
-        GlyphUVs UVs;
-        Glyph.getQuadPlaneBounds(UVs.PlaneBounds[0], UVs.PlaneBounds[1], UVs.PlaneBounds[2], UVs.PlaneBounds[3]);
-        Glyph.getQuadAtlasBounds(UVs.AtlasBounds[0], UVs.AtlasBounds[1], UVs.AtlasBounds[2], UVs.AtlasBounds[3]);
-        Result.GlyphUVsMap[Glyph.getGlyphIndex().getIndex()] = UVs;
+        this->StyleName = LString{this->My_FT_Face->style_name};
+    }
+    else
+    {
+        check(!this->StyleName)
     }
 
-    Result.Ascender = FontGeometry.getMetrics().ascenderY;
-    Result.Descender = FontGeometry.getMetrics().descenderY;
-    Result.LineHeight = FontGeometry.getMetrics().lineHeight;
+    this->Font = msdfgen::adoptFreetypeFont(this->My_FT_Face);
+    this->HbFont = hb_ft_font_create(this->My_FT_Face, nullptr);
 
-    //# TODO: Make this a program arg.
-    // stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, AtlasColorChannels, Bitmap.pixels, Bitmap.width * AtlasColorChannels);
+    msdfgen::FontMetrics Metrics;
+    if (!msdfgen::getFontMetrics(Metrics, this->Font, msdfgen::FONT_SCALING_NONE))
+    {
+        LOG_FATAL(LogFontSubsystem, "[{}]: Failed to get font metrics.", Info.Source)
+    }
+    if (Metrics.emSize <= 0.0)
+    {
+        /* 2048 are the default font units per em. */
+        Metrics.emSize = 2048.;
+    }
 
-    check(Result.Atlas->GetExtent().width == static_cast<u32>(AtlasDimensions.x) && Result.Atlas->GetExtent().height == static_cast<u32>(AtlasDimensions.y))
-    check(Result.Atlas->IsOnHost() == false && Result.Atlas->IsOnDevice())
-    this->My_Fonts.push_back(std::move(Result));
-    check(Result.Atlas.get() == nullptr)
+    this->EmSize = static_cast<f32>(Metrics.emSize);
+    this->Ascender = static_cast<f32>(Metrics.ascenderY);
+    this->Descender = static_cast<f32>(Metrics.descenderY);
+    this->Height = static_cast<f32>(Metrics.lineHeight);
+    this->MaxAdvanceWidth = static_cast<f32>(this->My_FT_Face->max_advance_width) * HarfBuzzScale * this->AtlasGlyphSize; // TODO: Correct scaling?
+    this->MaxAdvanceHeight = static_cast<f32>(this->My_FT_Face->max_advance_height) * HarfBuzzScale * this->AtlasGlyphSize;
+    this->UnderlinePosition = static_cast<f32>(Metrics.underlineY);
+    this->UnderlineThickness = static_cast<f32>(Metrics.underlineThickness);
 
-    return static_cast<u32>(static_cast<i64>(this->My_Fonts.size()) - 1);
+    auto Pencil{maths::zero_vector<LVec2F>};
+    (void)this->Shape(Info.BaseSet, 12.0f, &Pencil);
+
+    LOG_TRACE(LogFontSubsystem
+        , "[{}]: Font loaded. "
+          "FamilyName: {}, StyleName: {}, "
+          "Ascender: {}, Descender: {}, Height: {}, MaxAdvanceWidth: {}, MaxAdvanceHeight: {}, UnderlinePosition: {}, UnderlineThickness: {}"
+        , Info.Source
+        , this->FamilyName ? *this->FamilyName : "<null>", this->StyleName ? *this->StyleName : "<null>"
+        , this->Ascender, this->Descender, this->Height, this->MaxAdvanceWidth, this->MaxAdvanceHeight, this->UnderlinePosition, this->UnderlineThickness
+        )
 }
 
-Jafg::LGlyphCollection Jafg::JFontSubsystem::GetGlyphInfos(LStringView Text, f32 FontSize, LVec2F* Pencil, u32 FontIndex) const noexcept
+Jafg::JFontSubsystem::MyFont& Jafg::JFontSubsystem::MyFont::operator=(MyFont&& Rhs) noexcept
 {
+    this->Orphan();
+
+    this->Source = std::move(Rhs.Source);
+
+    this->AtlasGlyphSize = std::exchange(Rhs.AtlasGlyphSize, 0.0f);
+    this->PixelRange = std::exchange(Rhs.PixelRange, 0.0f);
+    this->AngleThreshold = std::exchange(Rhs.AngleThreshold, 3.0f);
+
+    this->FamilyName = std::exchange(Rhs.FamilyName, std::nullopt);
+    this->StyleName = std::exchange(Rhs.StyleName, std::nullopt);
+
+    this->EmSize = std::exchange(Rhs.EmSize, 0.0f);
+    this->Ascender = std::exchange(Rhs.Ascender, 0.0f);
+    this->Descender = std::exchange(Rhs.Descender, 0.0f);
+    this->Height = std::exchange(Rhs.Height, 0.0f);
+    this->MaxAdvanceWidth = std::exchange(Rhs.MaxAdvanceWidth, 0.0f);
+    this->MaxAdvanceHeight = std::exchange(Rhs.MaxAdvanceHeight, 0.0f);
+    this->UnderlinePosition = std::exchange(Rhs.UnderlinePosition, 0.0f);
+    this->UnderlineThickness = std::exchange(Rhs.UnderlineThickness, 0.0f);
+
+    this->Glyphs = std::move(Rhs.Glyphs);
+
+    this->AtlasTexture = std::move(Rhs.AtlasTexture);
+    this->DynamicAtlas = std::move(Rhs.DynamicAtlas);
+
+    this->My_FT_Face = std::exchange(Rhs.My_FT_Face, nullptr);
+    this->Font = std::exchange(Rhs.Font, nullptr);
+    this->HbFont = std::exchange(Rhs.HbFont, nullptr);
+
+    return *this;
+}
+
+Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32 FontSize, LVec2F* Pencil)
+{
+    check(Tasks::IsOnMasterThread())
+
     check(Pencil)
 
-    auto& Font{this->My_Fonts[FontIndex]};
-    check(Font.Source.empty() == false)
-    check(Font.My_FT_Face && Font.Font)
-    check(Font.Atlas.get())
-    check(Font.GlyphUVsMap.empty() == false)
+    check(!this->Source.empty())
+    check(this->My_FT_Face && this->Font)
 
-    FT_Set_Pixel_Sizes(Font.My_FT_Face, 0, static_cast<FT_UInt>(FontSize));
+    f32 GeometryScale{this->GeometryScaleFor(FontSize)};
+    f32 FreetypeScale{this->FreetypeScaleFor(FontSize)};
 
     LGlyphCollection Result{
-        .Ascender = Font.My_FT_Face->size->metrics.ascender * HarfBuzzScale,
-        .Descender = Font.My_FT_Face->size->metrics.descender * HarfBuzzScale,
+        .Ascender = this->My_FT_Face->size->metrics.ascender * HarfBuzzScale * FreetypeScale,
+        .Descender = this->My_FT_Face->size->metrics.descender * HarfBuzzScale * FreetypeScale,
         .PencilBegin = *Pencil,
+#if JAFG_DO_CHECKS
         ._check_UsedString = LString{Text},
+#endif /* JAFG_DO_CHECKS */
         };
     // TODO: Is this correct? Or should we use the absolute descender value?
     Result.LineHeight = Result.Ascender - Result.Descender;
 
-    hb_font_t* HBFont{hb_ft_font_create(Font.My_FT_Face, nullptr)};
-    hb_buffer_t* HBBuffer{hb_buffer_create()};
+    hb_buffer_t* Buffer{hb_buffer_create()};
+    algo::raii_leave _{[Buffer] noexcept { hb_buffer_destroy(Buffer); }};
 
-    hb_buffer_add_utf8(HBBuffer, Text.data(), static_cast<int>(Text.size()), 0, static_cast<int>(Text.size()));
-    hb_buffer_set_direction(HBBuffer, HB_DIRECTION_LTR);
-    hb_buffer_set_script(HBBuffer, HB_SCRIPT_LATIN);
-    hb_buffer_set_language(HBBuffer, hb_language_from_string("en", -1));
+    hb_buffer_add_utf8(Buffer, Text.data(), static_cast<int>(Text.size()), 0, static_cast<int>(Text.size()));
+    hb_buffer_set_direction(Buffer, HB_DIRECTION_LTR); // TODO: Make option
+    hb_buffer_set_script(Buffer, HB_SCRIPT_LATIN); // TODO: Make option
+    hb_buffer_set_language(Buffer, hb_language_from_string("en", -1)); // TODO: Make option
+    // hb_feature_t HbFeatures[1]; hb_feature_from_string("liga=0", -1, &HbFeatures[0]); // TODO: Allows for complex basic charset characters. This should be an option
+    // hb_shape(this->HbFont, Buffer, HbFeatures, 1);
+    hb_shape(this->HbFont, Buffer, nullptr, 0);
 
-    // TODO: When we can dynamically update our atlas disable this / make it an user option.
-    hb_feature_t HBFeatures[1];
-    hb_feature_from_string("liga=0", -1, &HBFeatures[0]);
+    u32 GlyphCount;
+    hb_glyph_info_t* Infos{hb_buffer_get_glyph_infos(Buffer, &GlyphCount)};
+    hb_glyph_position_t* Positions{hb_buffer_get_glyph_positions(Buffer, &GlyphCount)};
 
-    hb_shape(HBFont, HBBuffer, HBFeatures, 1);
-
-    uint32_t GlyphCount;
-    hb_glyph_info_t* GlyphInfos{hb_buffer_get_glyph_infos(HBBuffer, &GlyphCount)};
-    hb_glyph_position_t* GlyphPositions{hb_buffer_get_glyph_positions(HBBuffer, &GlyphCount)};
+    std::unordered_set<LGlyphIndex> GlyphIndices; GlyphIndices.reserve(GlyphCount);
+    for (auto Idx{0uz}; Idx < GlyphCount; ++Idx)
+    {
+        GlyphIndices.insert(Infos[Idx].codepoint); /* After shaping this is the glyph id inside the font. */
+    }
+    auto ChangeFlags{this->AddGlyphsByIndex(GlyphIndices)};
+    if (ChangeFlags != EFontAtlasChangeFlags::Identity)
+    {
+        if (ChangeFlags & (EFontAtlasChangeFlags::Resized |EFontAtlasChangeFlags::Rearranged))
+        {
+            // We need to update everything this includes, the unordered set with its values.
+        }
+        if constexpr (LogFontSubsystem.CompilesFor<ELogVerbosity::Trace>)
+        {
+            LVec2i32 Extent{this->GetDynamicAtlasDimensions()};
+            LOG_TRACE(LogFontSubsystem, "[{}]: Font atlas changed to [{}x{}]. Uploading to device.", this->Source, Extent.x, Extent.y)
+        }
+        this->UploadToDevice();
+        ++this->Generation;
+    }
 
     /* Move to baseline. */
-    Pencil->y += FontSize * static_cast<f32>(Font.Ascender);
+    Pencil->y += this->Ascender * GeometryScale;
 
-    auto AtlasExtend{Font.Atlas->GetExtentAsVec2F()};
+    check(this->AtlasTexture.get())
+    check(!this->Glyphs.empty())
+    auto AtlasExtend{this->AtlasTexture->GetExtentAsVec2F()};
     Result.GlyphInfos.reserve(GlyphCount);
     for (auto Idx{0uz}; Idx < GlyphCount; ++Idx)
     {
-        uint32_t GlyphIndex{GlyphInfos[Idx].codepoint}; /* After shaping, this is the Glyph-ID. */
-        LVec2F Advance{ static_cast<f32>(GlyphPositions[Idx].x_advance) * HarfBuzzScale, static_cast<f32>(GlyphPositions[Idx].y_advance) * HarfBuzzScale};
+        LGlyphIndex GlyphIndex{Infos[Idx].codepoint}; /* After shaping, this is the Glyph-ID. */
 
-        auto It{Font.GlyphUVsMap.find(GlyphIndex)};
-        if (It == Font.GlyphUVsMap.end()) /* Non-printable or missing. */
+        auto It{this->Glyphs.find(GlyphIndex)};
+        if (It == this->Glyphs.end()) /* Non-printable or missing. */
         {
-            *Pencil += Advance;
-            continue;
+            checkNoEntry()
+            // TODO: Add like a question mark?
+            // *Pencil += Advance;
+            // continue;
         }
 
         GlyphUVs const& GlyphUV{It->second};
-        LVec2F Offset{ static_cast<f32>(GlyphPositions[Idx].x_offset) * HarfBuzzScale, static_cast<f32>(GlyphPositions[Idx].y_offset) * HarfBuzzScale};
-        LVec2F LeftTop{
-            Pencil->x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[0]) * FontSize,
-            Pencil->y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[3]) * FontSize,
-            };
-        Result.GlyphInfos.emplace_back(
-            LVec4F{
-                LeftTop.x,
-                LeftTop.y,
-                // (Pencil->x + Offset.x + static_cast<f32>(GlyphUV.PlaneBounds[2]) * FontSize) - LeftTop.x,
-                // (Pencil->y - Offset.y - static_cast<f32>(GlyphUV.PlaneBounds[1]) * FontSize) - LeftTop.y,
+        Result.GlyphInfos.push_back({
+            .Rect = {
+                Pencil->x
+                    + static_cast<f32>(Positions[Idx].x_offset) * HarfBuzzScale * FreetypeScale
+                    + static_cast<f32>(GlyphUV.PlaneBounds[0]) * FontSize,
+                Pencil->y
+                    - static_cast<f32>(Positions[Idx].y_offset) * HarfBuzzScale * FreetypeScale
+                    - static_cast<f32>(GlyphUV.PlaneBounds[3]) * FontSize,
                 static_cast<f32>(GlyphUV.PlaneBounds[2] - GlyphUV.PlaneBounds[0]) * FontSize,
                 static_cast<f32>(GlyphUV.PlaneBounds[3] - GlyphUV.PlaneBounds[1]) * FontSize,
                 },
-            LVec4F{
+            .TexCoordRect = {
                 static_cast<f32>(GlyphUV.AtlasBounds[0]) / AtlasExtend.x,
                 static_cast<f32>(GlyphUV.AtlasBounds[3]) / AtlasExtend.y,
                 static_cast<f32>(GlyphUV.AtlasBounds[2]) / AtlasExtend.x,
                 static_cast<f32>(GlyphUV.AtlasBounds[1]) / AtlasExtend.y,
                 },
-            Font.Atlas->GetBindlessIndex(),
-            std::to_underlying(UBO::Bindless::Sampler::NearestClampToEdgeSamplerIdx),
-            (Font.PixelRange / Font.AtlasGlyphSize) * FontSize,
-            GlyphInfos[Idx].cluster,
-            *Pencil
-            );
+            .BindlessTextureIndex = this->AtlasTexture->GetBindlessIndex(),
+            .SamplerIndex = std::to_underlying(UBO::Bindless::Sampler::NearestClampToEdgeSamplerIdx),
+            /* TODO: Scale with Retina/HighDPI. */
+            .MsdfPixelRange = algo::max(this->PixelRange * (FontSize / this->AtlasGlyphSize), 1.0f),
+            .Cluster = Infos[Idx].cluster,
+            .Pencil = *Pencil,
+            });
 
-        *Pencil += Advance;
-        continue;
+        *Pencil += LVec2F{
+            static_cast<f32>(Positions[Idx].x_advance) * HarfBuzzScale * FreetypeScale,
+            static_cast<f32>(Positions[Idx].y_advance) * HarfBuzzScale * FreetypeScale,
+            };
     }
-
-    hb_buffer_destroy(HBBuffer);
-    hb_font_destroy(HBFont);
 
     Result.PencilEnd = *Pencil;
 
     return Result;
+}
+
+Jafg::EFontAtlasChange Jafg::JFontSubsystem::MyFont::AddGlyphsByIndex(std::unordered_set<LGlyphIndex> const& Glyphs)
+{
+    check(*this->DynamicAtlas)
+
+    TArray<msdf_atlas::GlyphGeometry> Geometries;
+    Geometries.reserve(Glyphs.size());
+    for (LGlyphIndex Glyph: Glyphs)
+    {
+        if (!this->Glyphs.contains(Glyph))
+        {
+            auto& Geometry{Geometries.emplace_back()};
+            if (!Geometry.load(this->Font, 1.0 / this->EmSize, msdfgen::GlyphIndex{Glyph}, true))
+            {
+                LOG_FATAL(LogFontSubsystem, "[{}]: Failed to load glyph geometry [{}].", this->Source, Glyph)
+            }
+            Geometry.edgeColoring(/* TODO: make option */ &msdfgen::edgeColoringInkTrap, static_cast<f64>(this->AngleThreshold), 0);
+            Geometry.wrapBox(this->AtlasGlyphSize, this->PixelRange / this->AtlasGlyphSize, 1.0 /* TODO: make option */);
+        }
+    }
+
+    EFontAtlasChange Result{};
+    if (!Geometries.empty())
+    {
+        if constexpr (LogFontSubsystem.CompilesFor<ELogVerbosity::Trace>) for (auto& Geometry: Geometries)
+        {
+            int x, y; Geometry.getBoxSize(x, y);
+            LOG_TRACE(LogFontSubsystem, "[{}]: Adding glyph [{}]: {}x{}"
+                , this->Source, Geometry.getGlyphIndex().getIndex(), x, y
+                )
+        }
+
+        Result |= EFontAtlasChangeFlags::Outdated
+               |  static_cast<EFontAtlasChangeFlags>(this->DynamicAtlas.get()->add(Geometries.data(), static_cast<int>(Geometries.size())));
+
+        for (auto& Geometry: Geometries)
+        {
+            GlyphUVs UVs;
+            Geometry.getQuadPlaneBounds(UVs.PlaneBounds[0], UVs.PlaneBounds[1], UVs.PlaneBounds[2], UVs.PlaneBounds[3]);
+            Geometry.getQuadAtlasBounds(UVs.AtlasBounds[0], UVs.AtlasBounds[1], UVs.AtlasBounds[2], UVs.AtlasBounds[3]);
+            this->Glyphs[Geometry.getGlyphIndex().getIndex()] = UVs;
+        }
+    }
+    return Result;
+}
+
+void Jafg::JFontSubsystem::MyFont::UploadToDevice()
+{
+    check(*this->DynamicAtlas)
+
+    static_assert(sizeof(algo::byte_bulk::value_type) == sizeof(msdf_atlas::byte));
+    auto Bitmap{static_cast<msdfgen::BitmapConstRef<msdf_atlas::byte, 3>>(this->DynamicAtlas.Value->atlasGenerator().atlasStorage())};
+    algo::byte_bulk Bulk;
+    Bulk.serialize(reinterpret_cast<algo::byte_bulk::value_type const*>(Bitmap.pixels), static_cast<std::size_t>(Bitmap.width * Bitmap.height * 3));
+
+    //# TODO: Make this a program arg.
+    auto AtlasDimensions{this->GetDynamicAtlasDimensions()};
+    stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, Detail::FontAtlasColorChannels, Bitmap.pixels, Bitmap.width * Detail::FontAtlasColorChannels);
+
+    this->AtlasTexture = LTexture2::FromMemory(
+        "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm,
+        {static_cast<rhi::extent2::domain_type>(Bitmap.width), static_cast<rhi::extent2::domain_type>(Bitmap.height)},
+        LTexture2::HostInfo{.Format = vk::Format::eR8G8B8A8Unorm/* TODO: is this correct? eR8G8B8A8Srgb looks very different */,}
+        );
+    this->AtlasTexture->LoadToDevice(LTexture2::DeviceInfo{.DesiredMipLevels = 1,.Samples = vk::SampleCountFlagBits::e1,});
+    this->AtlasTexture->FreeFromHost();
+    Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*this->AtlasTexture);
+    check(this->AtlasTexture->IsBindless())
+    check(!this->AtlasTexture->IsOnHost() && this->AtlasTexture->IsOnDevice())
+    checkCode
+    (
+
+        check(this->AtlasTexture->GetExtent().width  == static_cast<u32>(AtlasDimensions.x))
+        check(this->AtlasTexture->GetExtent().height == static_cast<u32>(AtlasDimensions.y))
+    )
+}
+
+LVec2i32 Jafg::JFontSubsystem::MyFont::GetDynamicAtlasDimensions() const noexcept
+{
+    msdfgen::BitmapConstRef<msdf_atlas::byte, 3> Bitmap{this->DynamicAtlas.Value->atlasGenerator().atlasStorage()};
+    return {Bitmap.width, Bitmap.height};
+}
+
+void Jafg::JFontSubsystem::MyFont::Orphan() noexcept
+{
+    delete *this->DynamicAtlas;
+    hb_font_destroy(this->HbFont);
+    msdfgen::destroyFont(this->Font);
+    FT_Done_Face(this->My_FT_Face);
+}
+
+void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
+{
+    Super::Initialize(Collection);
+    Collection.InitializeDependency<JTextureSubsystem>(this);
+    Collection.InitializeDependency<JMaterialSubsystem>(this);
+
+    check(this->My_FT_Library == nullptr)
+    if (FT_Init_FreeType(&this->My_FT_Library))
+    {
+        LOG_FATAL(LogFontSubsystem, "Failed to initialize FreeType.")
+    }
+    check(this->My_FT_Library)
+
+    check(this->My_Fonts.empty())
+    (void)this->ReloadFont({
+        .Source="Content/Fonts/NotoSans-VariableFont_wdth,wght.ttf",
+        .Tags={
+            {"Weight", 700},
+            {"Width", 100},
+            },
+        });
+    check(this->My_Fonts.size() == 1)
+}
+
+void Jafg::JFontSubsystem::TearDown()
+{
+    Super::TearDown();
+
+    this->My_Fonts.clear();
+
+    if (this->My_FT_Library)
+    {
+        FT_Done_FreeType(this->My_FT_Library);
+    }
+}
+
+u32 Jafg::JFontSubsystem::ReloadFont(FontCreateInfo const& Info) noexcept
+{
+    LOG_TRACE(LogFontSubsystem, "[{}]: Loading font.", Info.Source)
+    check(Tasks::IsOnMasterThread()) //# TODO: Allow offloading.
+
+    auto It{algo::find(this->My_Fonts, Info.Source, &MyFont::Source)};
+    if (It == this->My_Fonts.end())
+    {
+        if (this->My_Fonts.size() >= JFontSubsystem::MaxAllowedFonts)
+        {
+            LOG_FATAL(LogFontSubsystem
+                , "Cannot load [{}] because the maximum allowed font count [{}] has been reached."
+                , Info.Source, JFontSubsystem::MaxAllowedFonts
+                )
+        }
+        this->My_Fonts.emplace_back(this->My_FT_Library, Info);
+        It = algo::prev(this->My_Fonts.end());
+    }
+    else
+    {
+        *It = MyFont{this->My_FT_Library, Info};
+    }
+
+    return static_cast<u32>(algo::distance(this->My_Fonts, It));
 }
