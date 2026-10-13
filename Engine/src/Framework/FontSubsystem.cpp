@@ -361,7 +361,7 @@ Jafg::JFontSubsystem::MyFont::MyFont(FT_Library Library, FontCreateInfo const& I
     this->UnderlineThickness = static_cast<f32>(Metrics.underlineThickness);
 
     auto Pencil{maths::zero_vector<LVec2F>};
-    (void)this->Shape(Info.BaseSet, 12.0f, &Pencil);
+    (void)this->Shape(Info.BaseSet, 12.0f, &Pencil, EFontFeatureFlags::Identity, EFontFeatureFlags::liga);
 
     LOG_TRACE(LogFontSubsystem
         , "[{}]: Font loaded. "
@@ -407,7 +407,10 @@ Jafg::JFontSubsystem::MyFont& Jafg::JFontSubsystem::MyFont::operator=(MyFont&& R
     return *this;
 }
 
-Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32 FontSize, LVec2F* Pencil)
+Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32 FontSize, LVec2F* Pencil
+    , EFontFeatures EnabledFeatures /* = EFontFeatureFlags::Identity */
+    , EFontFeatures DisabledFeatures /* = EFontFeatureFlags::Identity */
+    )
 {
     check(Tasks::IsOnMasterThread())
 
@@ -437,9 +440,24 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32
     hb_buffer_set_direction(Buffer, HB_DIRECTION_LTR); // TODO: Make option
     hb_buffer_set_script(Buffer, HB_SCRIPT_LATIN); // TODO: Make option
     hb_buffer_set_language(Buffer, hb_language_from_string("en", -1)); // TODO: Make option
-    // hb_feature_t HbFeatures[1]; hb_feature_from_string("liga=0", -1, &HbFeatures[0]); // TODO: Allows for complex basic charset characters. This should be an option
-    // hb_shape(this->HbFont, Buffer, HbFeatures, 1);
-    hb_shape(this->HbFont, Buffer, nullptr, 0);
+
+    TArray<hb_feature_t> Features;
+    EFontFeatureFlags Cursor{ EFontFeatureFlags::begin };
+    while (Cursor != EFontFeatureFlags::end)
+    {
+        check(!(EnabledFeatures & Cursor && DisabledFeatures & Cursor))
+        if (EnabledFeatures & Cursor || DisabledFeatures & Cursor)
+        {
+            hb_feature_from_string(
+                  algo::sprintf("{}={}", serde::to_string(Cursor), (EnabledFeatures & Cursor) ? "1" : "0").c_str()
+                , -1
+                , &Features.emplace_back()
+                );
+        }
+
+        Cursor = static_cast<EFontFeatureFlags>(std::to_underlying(Cursor) * 2);
+    }
+    hb_shape(this->HbFont, Buffer, Features.data(), static_cast<int>(Features.size()));
 
     u32 GlyphCount;
     hb_glyph_info_t* Infos{hb_buffer_get_glyph_infos(Buffer, &GlyphCount)};
@@ -579,7 +597,7 @@ void Jafg::JFontSubsystem::MyFont::UploadToDevice()
 
     //# TODO: Make this a program arg.
     auto AtlasDimensions{this->GetDynamicAtlasDimensions()};
-    stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, Detail::FontAtlasColorChannels, Bitmap.pixels, Bitmap.width * Detail::FontAtlasColorChannels);
+    // stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, Detail::FontAtlasColorChannels, Bitmap.pixels, Bitmap.width * Detail::FontAtlasColorChannels);
 
     this->AtlasTexture = LTexture2::FromMemory(
         "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm,

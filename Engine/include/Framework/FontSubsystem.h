@@ -87,11 +87,54 @@ SERDE_ENUM(EFontTypeBits, Identity, Thin, ExtraLight, Light, Regular, Medium, Se
 enum struct EFontAtlasChangeFlags: u16
 {
     Identity    = 0x0,
+    //# Atlas has been resized. UVs are outdated.
     Resized     = 0x1 << 0,
+    //# Glyphs have benn rearranged. Some UVs are outdated.
     Rearranged  = 0x1 << 1,
+    //# Atlas is outdated. Existing UVs remain the same.
     Outdated    = 0x1 << 2,
 };
 ENUM_STRUCT_FLAGS(EFontAtlasChangeFlags, EFontAtlasChange)
+
+enum struct EFontFeatureFlags: u32
+{
+    Identity    = 0x0,
+
+    //# Engine specific.
+    ccmp        = 0x1 << 0,
+    locl        = 0x1 << 1,
+    rlig        = 0x1 << 2,
+    abvm        = 0x1 << 3,
+    blwm        = 0x1 << 4,
+    mark        = 0x1 << 5,
+    mkmk        = 0x1 << 6,
+
+    //# Horizontal.
+    kern        = 0x1 << 7,
+    liga        = 0x1 << 8,
+    clig        = 0x1 << 9,
+    calt        = 0x1 << 10,
+    curs        = 0x1 << 11,
+    dist        = 0x1 << 12,
+    rclt        = 0x1 << 13,
+
+    //# Vertical.
+    vert        = 0x1 << 14,
+
+    //# U+2044
+    frac        = 0x1 << 15,
+    numr        = 0x1 << 16,
+    dnom        = 0x1 << 17,
+
+    //# Optional.
+    dlig        = 0x1 << 18,
+
+    //# Ranges.
+    begin = ccmp,
+    end = dlig,
+};
+ENUM_STRUCT_FLAGS(EFontFeatureFlags, EFontFeatures)
+SERDE_ENUM(EFontFeatureFlags, Identity, ccmp, locl, rlig, abvm, blwm, mark, mkmk, kern, liga, clig, calt, curs, dist, vert, frac, numr, dnom)
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JFontSubsystem : public JFrontendSubsystem
@@ -151,8 +194,17 @@ private:
         ENGINE_API MyFont& operator=(MyFont&& Rhs) noexcept;
         ENGINE_API ~MyFont() noexcept { this->Orphan(); }
 
-        NODISCARD ENGINE_API LGlyphCollection Shape(LStringView Text, f32 FontSize, LVec2F* Pencil);
+        //# Features that are not set, will be defaulted.
+        NODISCARD ENGINE_API LGlyphCollection Shape(LStringView Text, f32 FontSize, LVec2F* Pencil
+            , EFontFeatures EnabledFeatures = EFontFeatureFlags::Identity
+            , EFontFeatures DisabledFeatures = EFontFeatureFlags::Identity
+            );
+        //#
+        //# When shaping unknown UTF-8 this will be automatically called.
+        //# Therefore, only use this when batching e.g. off thread.
+        //#
         NODISCARD ENGINE_API EFontAtlasChange AddGlyphsByIndex(std::unordered_set<LGlyphIndex> const& Glyphs);
+        //# Call manually after e.g. batching. Based of the result of #AddGlyphsByIndex.
         ENGINE_API void UploadToDevice();
 
         NODISCARD FORCEINLINE constexpr f32 GeometryScaleFor(f32 FontScale) const noexcept
