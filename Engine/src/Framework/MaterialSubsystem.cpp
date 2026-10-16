@@ -787,8 +787,8 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         else
         {
             /*
-             * Theoretically we could dervie the frequency from one of the bindings inside a set
-             * but we do not do that intentiionally. We ant to be explicit.
+             * Theoretically we could derive the frequency from one of the bindings inside a set,
+             * but we do not do that intentionally. We want to be explicit.
              */
             LOG_FATAL(LogMaterialSubsystem, "[{}]: No update frequency for space [{}@{}::{}]."
                 , Shader.Identifier, Parameter.Name, Parameter.Space, Parameter.Index)
