@@ -21,12 +21,9 @@ if [ ! -f "$LFs" ]; then
     exit 1
 fi
 
-if [ -d "$MIRROR" ]; then
-    echo "$MIRROR: Directory already exists."
-    exit 1
+if [ ! -d "$MIRROR" ]; then
+    mkdir -p "$MIRROR"
 fi
-
-mkdir -p "$MIRROR"
 
 while IFS= read -r file; do
     [[ -z "$file" ]] && continue
@@ -40,6 +37,11 @@ while IFS= read -r file; do
     fi
 
     mkdir -p "$(dirname "$dst")"
+
+    # Check if files are different before copying
+    if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
+        continue
+    fi
     echo "$src -> $dst"
     cp "$src" "$dst"
 done < "$LFs"
