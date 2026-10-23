@@ -9,6 +9,10 @@
 namespace Jafg
 {
 
+struct LTextureCube2;
+
+typedef rhi::shared_ref<LTextureCube2> LTextureCube2Ref;
+
 //#
 //# Represents a generic six-layered two-dimensional texture that is directly uploaded to a device.
 //#
@@ -52,10 +56,6 @@ struct LTextureCube2 final
     }
 
     LTextureCube2() noexcept = default;
-    NODISCARD static std::shared_ptr<LTextureCube2> MakeSharedTextureCube2(LSource Source) noexcept
-    {
-        return std::make_shared<LTextureCube2>(std::move(Source));
-    }
     explicit LTextureCube2(LSource Source) noexcept: Source{std::move(Source)}
     {
         this->LoadToDevice();
@@ -73,13 +73,13 @@ struct LTextureCube2 final
     }
 
 #if !JAFG_IN_SHIPPING
-    NODISCARD FORCEINLINE constexpr LPath const& GetDebugName() const noexcept
+    NODISCARD FORCEINLINE constexpr LPath GetDebugName() const noexcept
     {
         if (std::holds_alternative<CubeMap>(this->Source))
         {
             return std::get<CubeMap>(this->Source).Path;
         }
-        return std::get<Custom>(this->Source).Paths.front();
+        return std::get<Custom>(this->Source).Paths.front().parent_path();
     }
 #endif /* !JAFG_IN_SHIPPING */
 

@@ -28,6 +28,10 @@ void Jafg::AActor::BeginLife()
         {
             this->GetWorld().RegisterTickableObject(this);
         }
+        if (this->CanEverPhysicsTick())
+        {
+            this->GetWorld().RegisterPhysicsTickableObject(this);
+        }
     }
     else if (this->GetWorld().IsTimeDesisted())
     {
@@ -52,19 +56,20 @@ void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
 
     if ((this->CanEverTick() && this->GetWorld().IsTimeLinear()) || (this->CanEverTickInDormantTimes() && this->GetWorld().IsTimeDesisted()))
     {
-        auto& World{this->GetWorld()};
-        if (World.IsTickableObjectsPutMutexLocked())
-        {
-            World.DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
-        }
-        else
-        {
-            algo::erase_exactly_once_checked(&World.TickableObjects, static_cast<LTickableObject*>(this));
-        }
+        this->GetWorld().UnregisterTickableObject(this);
     }
     else
     {
         check(!algo::contains(this->GetWorld().TickableObjects, static_cast<LTickableObject*>(this)))
+    }
+
+    if (this->CanEverPhysicsTick() && this->GetWorld().IsTimeLinear())
+    {
+        this->GetWorld().UnregisterPhysicsTickableObject(this);
+    }
+    else
+    {
+        check(!algo::contains(this->GetWorld().PhysicsTickableObjects, static_cast<LFixedTickableObject*>(this)))
     }
 
     return;
@@ -133,3 +138,85 @@ Jafg::AWorldObject& Jafg::AActor::CloneImpl(AWorldObject* Object) const noexcept
 
     return Result;
 }
+
+void Jafg::AActor::Tick(f32 Dt)
+{
+    if (auto const& World{this->GetWorld()}; this->ShouldTick())
+    {
+        if (World.IsTimeLinear())
+        {
+            check(this->CanEverTick())
+            if (World.IsLinearWorldDormant())
+            {
+                if (this->CanEverTickInDormantTimes())
+                {
+                    this->WorldTick(Dt);
+                }
+            }
+            else
+            {
+                this->WorldTick(Dt);
+            }
+        }
+        else
+        {
+            check(World.IsTimeDesisted())
+            check(this->CanEverTickInDormantTimes())
+            this->WorldTick(Dt);
+        }
+    }
+}
+
+void Jafg::AActor::FixedTick(f32 Dt, bool bFollowup)
+{
+    this->PhysicsTick(Dt, bFollowup);
+}
+
+#if JAFG_DO_CHECKS
+bool Jafg::AActor::_check_IsComponentAttachedTransitive(AActorComponent const& Who) const noexcept
+{
+    bool bSceneComp{Who.IsA<ASceneComponent>()};
+    for (auto& Comp: this->Components)
+    {
+        check(Comp.get())
+        check(!Comp->IsOwningActorValid() || &Comp->GetOwningActor() == this)
+
+        if (&*Comp == &Who)
+        {
+            return true;
+        }
+
+        if (bSceneComp)
+        {
+            if (auto* SceneComp{Comp->As<ASceneComponent>()})
+            {
+                auto IsAttachedInChild{[this](this auto&& Self, ASceneComponent const& Comp, ASceneComponent const& Who) noexcept -> bool
+                {
+                    check(!Comp.IsOwningActorValid() || &Comp.GetOwningActor() == this)
+                    check(&Comp != &Who)
+                    for (auto& Child: Comp.GetChildren())
+                    {
+                        check(Child.get())
+                        check(!Comp.IsOwningActorValid() || &Child->GetOwningActor() == this)
+                        if (&*Child == &Who)
+                        {
+                            return true;
+                        }
+                        if (Self(*Child, Who))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }};
+                if (IsAttachedInChild(*SceneComp, Who.AsStatic<ASceneComponent>()))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+#endif /* JAFG_DO_CHECKS */

@@ -35,6 +35,7 @@ struct LActorRenderInfo: LRenderInfo
     vk::DescriptorSet WorldDataDescriptorSet;
 
     //# Delegates called after all employed renderables have been rendered.
+    //# You may even add delegates here while already being in a post render delegate.
     mutable TArray<TFunction2<void(LActorRenderInfo const& Info)>> PostRenderDelegates;
 };
 

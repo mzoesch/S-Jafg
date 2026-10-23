@@ -7,30 +7,30 @@
 
 set -eo pipefail
 
-if [ -z "$jafg_manifest_update_dir" ]; then
-    if [ -z "$jafg_content_root" ]; then
-        echo "Not defined: <jafg_content_root>"
+if [ -z "$lfs_dst" ]; then
+    if [ -z "$lfs_root" ]; then
+        echo "Not defined: <$lfs_root>"
         exit 1
     fi
-    if [ -z "$jafg_content_version" ]; then
-        echo "Not defined: <jafg_content_version>"
+    if [ -z "$lfs_version" ]; then
+        echo "Not defined: <$lfs_version>"
         exit 1
     fi
-    jafg_manifest_update_dir="$jafg_content_root/$jafg_content_version"
+    lfs_dst="$lfs_root/$lfs_version"
 fi
 
-if [ ! -d "$jafg_manifest_update_dir" ]; then
-    echo "Directory does not exist: $jafg_manifest_update_dir"
+if [ ! -d "$lfs_dst" ]; then
+    echo "Directory does not exist: $lfs_dst"
     exit 1
 fi
 
-OUTPUT="$jafg_manifest_update_dir/manifest"
+OUTPUT="$lfs_dst/manifest"
 if [ -f "$OUTPUT" ]; then
     rm "$OUTPUT"
 fi
 
-find "$jafg_manifest_update_dir" -type f | while read -r file; do
-    relative_path="${file#$jafg_manifest_update_dir/}"
+find "$lfs_dst" -type f | while read -r file; do
+    relative_path="${file#$lfs_dst/}"
     hash=$(sha256sum "$file" | awk '{print $1}')
     echo ${hash} ${relative_path} >> "$OUTPUT"
 done

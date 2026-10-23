@@ -43,7 +43,7 @@ void Jafg::LLocalEgo::Initialize()
 
         return;
     })});
-    this->VariableHandle_FrustumFarPlane = Cli.RegisterVariable({"FarFrustumPlane", LCliType::Type("Float"), "2000.0f",
+    this->VariableHandle_FrustumFarPlane = Cli.RegisterVariable({"FarFrustumPlane", LCliType::Type("Float"), "500000.0f", /* TODO: Reversed Z plane? */
     LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
         if (GEngine)

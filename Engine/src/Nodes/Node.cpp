@@ -145,26 +145,28 @@ Jafg::LNodeReply Jafg::WNode::OnCursorEnter()
     checkCode(this->_check_bMouseEntered = true)
 
     check(!this->TooltipNode)
-    check(!this->TooltipAbort)
-    this->TooltipAbort = std::make_shared<bool>(bool{});
-    this->AttachedViewport.EmplaceGenericUntil([this, TooltipAbort=this->TooltipAbort, TooltipTimer=f32{}](f32 Dt) mutable
+    if (!this->TooltipAbort)
     {
-        check(!!TooltipAbort)
-        if (*TooltipAbort)
+        this->TooltipAbort = std::make_shared<bool>(bool{});
+        this->AttachedViewport.EmplaceGenericUntil([this, TooltipAbort=this->TooltipAbort, TooltipTimer=f32{}](f32 Dt) mutable
         {
-            return LViewport::EGenericResult::Fail;
-        }
+            check(!!TooltipAbort)
+            if (*TooltipAbort)
+            {
+                return LViewport::EGenericResult::Fail;
+            }
 
-        TooltipTimer += Dt;
-        if (this->TooltipDelay <= TooltipTimer)
+            TooltipTimer += Dt;
+            if (this->TooltipDelay <= TooltipTimer)
+            {
+                return LViewport::EGenericResult::Success;
+            }
+            return LViewport::EGenericResult::Continue;
+        }, [this]
         {
-            return LViewport::EGenericResult::Success;
-        }
-        return LViewport::EGenericResult::Continue;
-    }, [this]
-    {
-        this->RequestTooltipNow(this->GetViewport().GetSurface().GetMouseLocation().value_or(maths::zero_vector<LVec2F>));
-    });
+            this->RequestTooltipNow(this->GetViewport().GetSurface().GetMouseLocation().value_or(maths::zero_vector<LVec2F>));
+        });
+    }
 
     if (this->OnCursorEnterEvent) if (auto Reply{this->OnCursorEnterEvent(*this)}; Reply.IsHandled())
     {

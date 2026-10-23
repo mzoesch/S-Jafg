@@ -27,8 +27,19 @@ void Jafg::ASceneComponent::OnGarbage(EJxxRecordTearDownReason Reason)
 #if JAFG_DO_CHECKS
 void Jafg::ASceneComponent::OnAttach(AActor& InOwner)
 {
+    /*
+     * Components that do not live.
+     * But these components may emplace other components on their #OnAttach method that then will live.
+     */
+    TArray<ASceneComponent*> PreChildren; PreChildren.reserve(this->Children.size());
+    for (auto& Child: this->Children)
+    {
+        PreChildren.emplace_back(&*Child);
+    }
+
     Super::OnAttach(InOwner);
 
+#if JAFG_DO_CHECKS
     if (this->Parent)
     {
         check(algo::contains(this->Parent->GetChildren(), this, algo::unique_raw))
@@ -36,6 +47,12 @@ void Jafg::ASceneComponent::OnAttach(AActor& InOwner)
     else
     {
         check(&this->GetOwningActor().GetRootComponent() == this)
+    }
+#endif /* JAFG_DO_CHECKS */
+
+    for (auto* Child: PreChildren)
+    {
+        Child->OnAttach(InOwner);
     }
 }
 #endif /* JAFG_DO_CHECKS */

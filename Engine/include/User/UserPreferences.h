@@ -312,7 +312,7 @@ public:
     CLASS_FIELD(Config)
     TPreference<LString> EditorLastWorldName{ "Editor World" };
     CLASS_FIELD(Config)
-    TPreference<TSubclassOf<ASupremePolicies>> EditorLastWorldSupremePolicies;
+    TPreference<TLazySubclass<ASupremePolicies>> EditorLastWorldSupremePolicies;
     CLASS_FIELD(Config)
     TPreference<bool> EditorAutoLaunchLastWorld;
     CLASS_FIELD(Config)
@@ -329,6 +329,10 @@ public:
 
     CLASS_FIELD(Config)
     TPreference<bool> EditorShowEyeTranslation;
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorShowEyeVelocity;
+    CLASS_FIELD(Config)
+    TPreference<bool> EditorShowUserInputContexts;
 
     CLASS_FIELD(Config)
     TPreference<LVec2u32> EditorPieDimensions{ LVec2u32{855, 475} };

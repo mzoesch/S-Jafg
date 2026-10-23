@@ -115,6 +115,18 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LTextureView const& 
         );
 }
 
+Jafg::LTextureCube2Ref Jafg::JTextureSubsystem::CubeFromFile(LPath const& Path)
+{
+    if (auto const& It{this->CubeTextures.find(Path)}; It != this->CubeTextures.end())
+    {
+        check(!!It->second->GetDeviceHandle().get_allocation())
+        return It->second;
+    }
+
+    this->CubeTextures[Path] = std::make_shared<LTextureCube2>(LTextureCube2::CubeMap{std::move(Path)});
+    return this->CubeTextures[Path];
+}
+
 void Jafg::JTextureSubsystem::_Vk_UpdateSamplers()
 {
     LOG_VERBOSE(LogVulkan, "Updating Vulkan samplers.")

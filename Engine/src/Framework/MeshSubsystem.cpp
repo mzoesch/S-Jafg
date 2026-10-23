@@ -20,7 +20,7 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 
 Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */) const
 {
-    check(Path.is_relative() && finder::descendant_of(Path, finder::content_dir()))
+    check(Path.is_relative() && finder::descendant_of(Path, finder::current_path()))
 
     if (auto const& It{this->Meshes.find(Path)}; It != this->Meshes.end())
     {

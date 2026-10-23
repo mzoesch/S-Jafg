@@ -7,6 +7,8 @@
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
+JGC_API Jafg::LPluginInfo JgcInfo;
+
 namespace
 {
 
@@ -14,8 +16,16 @@ class LJgcPluginLifetime final : public Jafg::LPluginLifetime
 {
 public:
 
+    virtual void OnStartup(Jafg::LFetchedPlugin const& Plugin) override;
     virtual void OnFinishedLoading() override;
 };
+
+void LJgcPluginLifetime::OnStartup(Jafg::LFetchedPlugin const& Plugin)
+{
+    LPluginLifetime::OnStartup(Plugin);
+    LOG_VERBOSE(LogJgcLifetime, "Starting Jgc plugin.")
+    JgcInfo.Content = Plugin.Content;
+}
 
 void LJgcPluginLifetime::OnFinishedLoading()
 {

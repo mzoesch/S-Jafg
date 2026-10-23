@@ -20,9 +20,13 @@ std::expected<TJxxUnique<Jafg::APersonaController>, LString> Jafg::ASupremePolic
     }
 #endif /* JAFG_WITH_EDITOR */
 
-    return TJxxUnique<APersonaController>{
+    auto Result{TJxxUnique<APersonaController>{
         SpawnObject(CastTo<APersonaController>{}, {this->GetWorld(), this->PersonaControllerClass.GetClassOrDefault()})
-        };
+        }};
+#if JAFG_WITH_EDITOR
+    Result->EmplaceComponent<ADebugDrawerComponent>();
+#endif /* JAFG_WITH_EDITOR */
+    return Result;
 }
 
 void Jafg::ASupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)

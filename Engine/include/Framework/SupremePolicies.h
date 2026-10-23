@@ -158,6 +158,9 @@ public:
     //# How many steps to take for each step; so substeps.
     std::optional<std::size_t> PreferredPhysicsSteps;
     NODISCARD virtual std::size_t GetPreferredPhysicsSteps() const noexcept { return 1; }
+
+    std::optional<LVec3F> PreferredGravity;
+    NODISCARD virtual LVec3F GetPreferredGravity() const noexcept { return LVec3F{0.0, -9.81, 0.0}; }
 };
 
 } /* ~Namespace Jafg */

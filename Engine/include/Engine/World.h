@@ -27,6 +27,7 @@ class LEngine;
 class LShader;
 class JWorldSubsystem;
 class LTickableObject;
+class LFixedTickableObject;
 class APersonaController;
 class APawn;
 class LCommandLineInterface;
@@ -138,6 +139,8 @@ struct LWorldCreateInfo final
     EWorldTimeBehavior TimeBehavior{ EWorldTimeBehavior::Linear };
     //# If set, will create a skybox with this cube-map.
     std::shared_ptr<LTextureCube2> TextureCube;
+    //# If set, this vector will likely be used.
+    std::optional<LVec3F> Gravity;
 };
 
 //#
@@ -183,6 +186,8 @@ public:
 
     void RegisterTickableObject(LTickableObject* Tickable);
     void UnregisterTickableObject(LTickableObject* Tickable);
+    void RegisterPhysicsTickableObject(LFixedTickableObject* Tickable);
+    void UnregisterPhysicsTickableObject(LFixedTickableObject* Tickable);
     FORCEINLINE bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     FORCEINLINE TArray<LTickableObject*> const& GetTickableObjects() const noexcept { return this->TickableObjects; }
     FORCEINLINE TArray<LTickableObject*>& GetMutableTickableObjects() noexcept { return this->TickableObjects; }
@@ -236,8 +241,8 @@ public:
         this->bDormant = b;
     }
     NODISCARD FORCEINLINE constexpr bool IsLinearWorldDormant() const noexcept { check(this->IsTimeLinear()) return this->bDormant; }
-    FORCEINLINE constexpr void SetDormantTicks(u32 Ticks) noexcept { check(this->IsLinearWorldDormant()) this->DormantTicks = Ticks; }
-    FORCEINLINE constexpr void AddDormantTicks(u32 Ticks = 1) noexcept { check(this->IsLinearWorldDormant()) this->DormantTicks += Ticks; }
+    FORCEINLINE constexpr void SetDormantTicks(u32 Ticks) noexcept { check(this->IsLinearWorldDormant()) check(!this->ShouldTickPhysics()) this->DormantTicks = Ticks; }
+    FORCEINLINE constexpr void AddDormantTicks(u32 Ticks = 1) noexcept { check(this->IsLinearWorldDormant()) check(!this->ShouldTickPhysics()) this->DormantTicks += Ticks; }
     NODISCARD FORCEINLINE constexpr u32 GetDormantTicks() const noexcept { check(this->IsLinearWorldDormant()) return this->DormantTicks; }
 
     //#
@@ -314,6 +319,10 @@ private:
     bool TickableObjectsPutMutex = false;
     TArray<LTickableObject*> TickableObjects;
     TArray<LTickableObject*> DeletedTickableObjects;
+#if JAFG_DO_CHECKS
+    bool _check_bUpdatingPhysics{};
+#endif /* JAFG_DO_CHECKS */
+    TArray<LFixedTickableObject*> PhysicsTickableObjects;
 
     EWorldState WorldState{ EWorldState::PreInitializing };
     EWorldTimeBehavior TimeBehavior;
@@ -352,6 +361,8 @@ private:
 //# You may check if the world pointer is still valid with #IsValid.
 //# It is *not* meant for quick storing (e.g., inside a function) and is also not meant to be passed as an argument
 //# to a function.
+//#
+//# @warning This class might be a victim of an aba state. Unlikely but possible...
 //#
 struct LWorldStorage final
 {

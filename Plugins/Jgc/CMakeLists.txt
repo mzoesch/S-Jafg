@@ -6,6 +6,7 @@ if(_guard)
     set(this_plugin_friendly_name "Jafg Gameplay Core")
     set(this_plugin_author "mzoesch")
     set(this_plugin_supports_dyn_unload false)
+    set(this_plugin_has_content true)
 
     jafg_add_module(JAFG_MODULE_TYPE_PLUGIN)
     jafg_add_dependency("Engine" "public")

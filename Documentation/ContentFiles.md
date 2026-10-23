@@ -23,3 +23,5 @@ If a client specifies `JAFG_UPGRADE_CONTENT` as an environment variable, all out
 By using the helper script `Programs/GenerateManifest.sh` on the server, the manifest/sha256's will automatically be generated. 
 
 An `.lfs` file can have empty lines, or comments starting with `#`. Each line should contain a relative path to a file in the Content dir. See `~/Content/.lfs`. Each relative line must fully match `^[a-zA-Z\d\/\.\,\-\_]+$`.
+
+You can extract your local lfs files by running `Programs/MirrorContent.sh`.

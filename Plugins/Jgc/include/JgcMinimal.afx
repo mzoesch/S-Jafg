@@ -10,4 +10,7 @@
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
 #include "Minimal.afx"
-#include "Logging/JgcCoreCategories.h"
+#include "Jgc/Core/CoreCategories.h"
+
+#include "Foreign/PluginInfo.h"
+JGC_API extern Jafg::LPluginInfo JgcInfo;

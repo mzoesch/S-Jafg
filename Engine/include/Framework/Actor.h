@@ -3,7 +3,8 @@
 #pragma once
 
 #include "Framework/WorldObject.h"
-#include "Engine/TickableObject.h"
+#include "Framework/TickableObject.h"
+#include "Framework/FixedTickableObject.h"
 #include "Framework/ActorComponent.h"
 #include "Framework/SceneComponent.h"
 #include "Actor.generated.h"
@@ -12,7 +13,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API AActor : public AWorldObject, private LTickableObject
+class ENGINE_API AActor : public AWorldObject, private LTickableObject, private LFixedTickableObject
 {
     GENERATED_CLASS_BODY()
 
@@ -31,6 +32,17 @@ public:
             if (Comp->bTick)
             {
                 Comp->ParentTick(Dt);
+            }
+        }
+    }
+    virtual void PhysicsTick(f32 Dt, bool bFollowup)
+    {
+        check(this->bLives && this->_IsGarbage() == false)
+        for (auto& Comp: this->Components)
+        {
+            if (Comp->bPhysicsTick)
+            {
+                Comp->ParentPhysicsTick(Dt, bFollowup);
             }
         }
     }
@@ -144,7 +156,7 @@ public:
         requires(std::is_base_of_v<AActorComponent, TActorComponent> && !std::is_base_of_v<ASceneComponent, TActorComponent>)
     FORCEINLINE TActorComponent& EmplaceComponent(TCallback&& Callback = {})
     {
-        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), ASceneComponent&>);
+        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TActorComponent&>);
         auto& Result{*StaticCastChecked<TActorComponent>(&*this->Components.emplace_back(SpawnObject(TWorldStaticInit<TActorComponent>{.Outer=this->GetWorld()})))};
         Result.Origin = EActorComponentOrigin::Runtime;
         check(!Result.template IsA<ASceneComponent>())
@@ -162,7 +174,7 @@ public:
         requires(std::is_base_of_v<AActorComponent, TActorComponent> && !std::is_base_of_v<ASceneComponent, TActorComponent>)
     FORCEINLINE TActorComponent& EmplaceComponent(TSubclassOf<TActorComponent> Class, TCallback&& Callback = {})
     {
-        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), ASceneComponent&>);
+        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TActorComponent&>);
         check(Class.GetClass())
         auto& Result{*StaticCastChecked<TActorComponent>(&*this->Components.emplace_back(SpawnObject(CastTo<AActorComponent>{}, {this->GetWorld(), *Class.GetClass()})))};
         Result.Origin = EActorComponentOrigin::Runtime;
@@ -327,12 +339,24 @@ public:
 
     NODISCARD FORCEINLINE constexpr bool HasRootComponent() const noexcept { return !!this->RootComponent; }
     NODISCARD FORCEINLINE constexpr ASceneComponent& GetRootComponent() const noexcept { check(this->RootComponent) return *this->RootComponent; }
+    template<typename T> requires std::is_base_of_v<ASceneComponent, T>
+    NODISCARD FORCEINLINE constexpr T& GetRootComponent() const noexcept { return *StaticCastChecked<T>(this->RootComponent); }
     NODISCARD FORCEINLINE TArray<TJxxUnique<AActorComponent>> const& GetComponents() const noexcept { return this->Components; }
 
     NODISCARD FORCEINLINE constexpr bool CanEverTick() const noexcept { return this->bCanEverTick; }
+    //# Ctor only.
+    FORCEINLINE constexpr void SetCanEverTick(bool bCanEverTick) noexcept { check(this->bLives == false) this->bCanEverTick = bCanEverTick; }
     NODISCARD FORCEINLINE constexpr bool CanEverTickInDormantTimes() const noexcept { return this->bCanEverTickInDesistedTime; }
+    //# Ctor only.
+    FORCEINLINE constexpr void SetCanEverTickInDormantTimes(bool bCanEverTick) noexcept { check(this->bLives == false) this->bCanEverTickInDesistedTime = bCanEverTick; }
     NODISCARD FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(bool bInShouldTick) noexcept { this->bShouldTick = bInShouldTick; }
+
+    NODISCARD FORCEINLINE constexpr bool CanEverPhysicsTick() const noexcept { return this->bCanEverPhysicsTick; }
+    //# Ctor only.
+    FORCEINLINE constexpr void SetCanEverPhysicsTick(bool bTick) noexcept { check(!this->bLives) this->bCanEverPhysicsTick = bTick; }
+    NODISCARD FORCEINLINE bool ShouldPhysicsTick() const noexcept { return this->bShouldPhysicsTick; }
+    FORCEINLINE void SetShouldPhysicsTick(bool bTick) noexcept { this->bShouldPhysicsTick = bTick; }
 
     //# Whether to allow that components of this actor render. An actor itself does not have rendering capabilities.
     NODISCARD FORCEINLINE constexpr bool AllowsRendering() const noexcept { return this->bAllowRender; }
@@ -364,94 +388,20 @@ public:
 
 protected:
 
-    FORCEINLINE void SetEverTickConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTick = true; }
-    FORCEINLINE void CancelEverTickConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTick = false; }
-    FORCEINLINE void SetEverTickInDormantTimesConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTickInDesistedTime = true; }
-    FORCEINLINE void CancelEverTickInDormantTimesConstructorOnlyFlag() noexcept { check(this->bLives == false) this->bCanEverTickInDesistedTime = false; }
-
     virtual AWorldObject& CloneImpl(AWorldObject* Object) const noexcept override;
 
 private:
 
-    virtual void Tick(f32 Dt) final override
-    {
-        if (auto const& World{this->GetWorld()}; this->ShouldTick())
-        {
-            if (World.IsTimeLinear())
-            {
-                check(this->CanEverTick())
-                if (World.IsLinearWorldDormant())
-                {
-                    if (this->CanEverTickInDormantTimes())
-                    {
-                        this->WorldTick(Dt);
-                    }
-                }
-                else
-                {
-                    this->WorldTick(Dt);
-                }
-            }
-            else
-            {
-                check(World.IsTimeDesisted())
-                check(this->CanEverTickInDormantTimes())
-                this->WorldTick(Dt);
-            }
-        }
-    }
+    virtual void Tick(f32 Dt) final override;
+    virtual void FixedTick(f32 Dt, bool bFollowup) final override;
 
 #if JAFG_DO_CHECKS
-    NODISCARD bool _check_IsComponentAttachedTransitive(AActorComponent const& Who) const noexcept
-    {
-        bool bSceneComp{Who.IsA<ASceneComponent>()};
-        for (auto& Comp: this->Components)
-        {
-            check(Comp.get())
-            check(&Comp->GetOwningActor() == this)
-
-            if (&*Comp == &Who)
-            {
-                return true;
-            }
-
-            if (bSceneComp)
-            {
-                if (auto* SceneComp{Comp->As<ASceneComponent>()})
-                {
-                    auto IsAttachedInChild{[this](this auto&& Self, ASceneComponent const& Comp, ASceneComponent const& Who) noexcept -> bool
-                    {
-                        check(&Comp.GetOwningActor() == this)
-                        check(&Comp != &Who)
-                        for (auto& Child: Comp.GetChildren())
-                        {
-                            check(Child.get())
-                            check(&Child->GetOwningActor() == this)
-                            if (&*Child == &Who)
-                            {
-                                return true;
-                            }
-                            if (Self(*Child, Who))
-                            {
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    }};
-                    if (IsAttachedInChild(*SceneComp, Who.AsStatic<ASceneComponent>()))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
+    NODISCARD bool _check_IsComponentAttachedTransitive(AActorComponent const& Who) const noexcept;
 #endif /* JAFG_DO_CHECKS */
 
     //# Make this virtual private to not confuse it with #ShouldTick.
     FORCEINLINE virtual bool ShouldTickableObjectTick() const override final { return this->ShouldTick(); }
+    FORCEINLINE virtual bool ShouldFixedTickableObjectTick() const override final { return this->ShouldPhysicsTick(); }
 
     //# Whether this actor lives.
     bool bLives:1{};
@@ -475,6 +425,25 @@ private:
     //# Or in desisted worlds if #bCanEverTickInDesistedTime is false.
     //#
     bool bShouldTick:1{true};
+
+    //#
+    //# Whether this Actor should ever be able to tick before the fixed tick of the physics system.
+    //# This is called every time the physics system ticks. This might be called multiple times per frame.
+    //#
+    //# Not that is flag does not prohibit the physics tick of subcomponents which register themselves
+    //# directly to the physics system. This is only for manual callbacks. Rarely useful.
+    //#
+    //# It is prohibited to delete any Jxx class during fixed updates.
+    //#
+    //# This bool flag can only be set in the constructor of the actor - new objects of this class
+    //# will not be registered in the context tickable registry.
+    //#
+    bool bCanEverPhysicsTick:1{};
+
+    //#
+    //# Whether this actor should physics tick now or not. This flag does nothing if #bCanEverTickFixed is false.
+    //#
+    bool bShouldPhysicsTick:1{true};
 
     //# Whether to allow that components render.
     bool bAllowRender:1{true};

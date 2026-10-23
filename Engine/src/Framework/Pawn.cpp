@@ -28,7 +28,7 @@ void Jafg::APawnComponent::OnAttach(AActor& InOwner)
 
 void Jafg::APawn::Ctor()
 {
-    this->SetEverTickConstructorOnlyFlag();
+    this->SetCanEverTick(true);
     this->EmplaceDefaultRootComponent<ASceneComponent>();
 }
 

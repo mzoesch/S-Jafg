@@ -11,6 +11,8 @@
 
 void Jafg::LTextureCube2::LoadToDevice()
 {
+    STAT_CUSTOM_ZONE_FMT("LoadToDevice::{}", this->GetDebugName())
+
 #if !JAFG_IN_SHIPPING
     LOG_TRACE(LogRhi, "[{}]: Loading TextureCube to device.", this->GetDebugName())
 #endif /* !JAFG_IN_SHIPPING */

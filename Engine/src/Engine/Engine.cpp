@@ -904,14 +904,14 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
     P.Version = PluginJson["Version"].get<std::string>();
     if (P.Version.empty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}]. No version.", P.AbsolutePath)
+        LOG_ERROR(LogForeign, "[{}]: Failed to fetch plugin. No version.", P.AbsolutePath)
         return false;
     }
 
     P.Identifier = PluginJson["Identifier"].get<std::string>();
     if (P.Identifier.empty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}]. No identifier.", P.AbsolutePath)
+        LOG_ERROR(LogForeign, "[{}]: Failed to fetch plugin. No identifier.", P.AbsolutePath)
         return false;
     }
 
@@ -971,6 +971,27 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
         return false;
     }
 
+    P.bHasContent = PluginJson.contains("bHasContent") && PluginJson["bHasContent"].get<bool>();
+    if (P.bHasContent)
+    {
+        if (!PluginJson.contains("Content"))
+        {
+            LOG_ERROR(LogForeign, "[{}]: Plugin is missing its Content filed.", P.AbsolutePath)
+            return false;
+        }
+        P.Content = PluginJson["Content"].get<LPath>();
+        if (P.Content.empty())
+        {
+            LOG_ERROR(LogForeign, "[{}]: Content field is empty.", P.AbsolutePath)
+            return false;
+        }
+        if (!is_directory(P.Content))
+        {
+            LOG_ERROR(LogForeign, "[{}]: No such directory [{}].", P.AbsolutePath, P.Content)
+            return false;
+        }
+    }
+
     if (algo::contains(this->FetchedPlugins, P.AbsolutePath, &LFetchedPlugin::AbsolutePath))
     {
         LOG_ERROR(LogForeign, "Plugin [{}] already fetched.", P.AbsolutePath)
@@ -996,7 +1017,15 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
 
     check( Tasks::IsOnMasterThread() )
 
-    const LPath Bin{ FetchedPlugin.AbsolutePath.parent_path() / FetchedPlugin.Bin };
+    LPath Bin;
+    if (FetchedPlugin.Bin.is_absolute())
+    {
+        Bin = FetchedPlugin.Bin;
+    }
+    else
+    {
+        Bin = FetchedPlugin.AbsolutePath.parent_path() / FetchedPlugin.Bin;
+    }
     check( Bin.is_absolute() )
 
     if (is_regular_file(Bin) == false)

@@ -71,6 +71,8 @@ using TJxxUnique = TUnique<TCxxClass, Deleter>;
 
 template<typename TObj> requires algo::is_base_of_weak_v<Jafg::JCxxClass, TObj>
 class TSubclassOf;
+template<typename TObj> requires algo::is_base_of_weak_v<Jafg::JCxxClass, TObj>
+class TLazySubclass;
 
 namespace Jafg
 {
@@ -896,6 +898,15 @@ struct TDeferredObjectExec
     NODISCARD constexpr TCxxClass* operator&() noexcept { return &this->Class; }
     NODISCARD constexpr TCxxClass* operator&() const noexcept { return &this->Class; }
 
+    template<typename TCallback>
+    TDeferredObjectExec& operator()(TCallback&& Callback)
+        noexcept(std::is_nothrow_invocable_r_v<void, TCallback, TCxxClass&>)
+        requires std::is_invocable_r_v<void, TCallback, TCxxClass&>
+    {
+        Callback(this->Class);
+        return *this;
+    }
+
     TCxxClass& Class;
     bool bReleased{};
 };
@@ -1031,8 +1042,8 @@ protected:
     //#
     //# Static ctors are called if the client knows at compile time which class to instantiate. Comparable to "new Class()".
     //# While dyn ctors are called by the jxx record system of Jafg; this allows for dynamic hot-swapping of newly
-    //# created classes at runtime through TSubclassOf<T>, user configs or plugin injections. A client knows only the
-    //# interface to the class but does not know the actual underlying class.
+    //# created classes at runtime through TSubclassOf<T>/TLazySubclassOf<T>, user configs or plugin injections.
+    //# A client knows only the interface to the class but does not know the actual underlying class.
     //#
     //# To create a new object see Jafg::NewDeferredObject and Jafg::NewObject below.
     //#
@@ -1185,6 +1196,8 @@ public:
     FORCEINLINE bool IsA(LJxxClass const& Class) const noexcept { return this->GetVirtualTable().DerivesFrom(Class); }
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
     FORCEINLINE bool IsA(TSubclassOf<TObj> Class) const noexcept;
+    template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
+    FORCEINLINE bool IsA(TLazySubclass<TObj> Class) const noexcept;
 
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
     FORCEINLINE TObj* As() noexcept;
@@ -1790,6 +1803,12 @@ public:
     FORCEINLINE void SetClass() noexcept { this->Assign(UObj::StaticClass()); }
     FORCEINLINE void SetClass(std::nullptr_t) noexcept { this->Assign(nullptr); }
 
+    FORCEINLINE TSubclassOf& Assign(std::nullptr_t) noexcept
+    {
+        this->Class = nullptr;
+        check(this->IsValidType())
+        return *this;
+    }
     FORCEINLINE TSubclassOf& Assign(Jafg::LJxxClass const* InClass) noexcept
     {
         this->Class = InClass;
@@ -1818,7 +1837,7 @@ public:
     FORCEINLINE operator Jafg::LJxxClass const&() const noexcept { check(this->HasClass()) return *this->Class; }
 
     FORCEINLINE Jafg::LJxxClass const* operator->() const noexcept { check(this->HasClass()) return this->Class; }
-    FORCEINLINE Jafg::LJxxClass const* operator*() const noexcept { if (this->HasClass()) { return this->Class; } return nullptr; }
+    FORCEINLINE Jafg::LJxxClass const* operator*() const noexcept { return this->Class; }
 
     FORCEINLINE bool IsValidType() const noexcept
     {
@@ -1863,24 +1882,11 @@ struct TPreference<TSubclassOf<T>>: Jafg::TDefaultPreference<TSubclassOf<T>>
 };
 
 template<typename T>
-struct std::formatter<TSubclassOf<T>> : std::formatter<LString>
+struct std::formatter<TSubclassOf<T>>: std::formatter<LString>
 {
-    FORCEINLINE std::format_context::iterator format(const TSubclassOf<T>& InClass, std::format_context&  InContext) const
+    FORCEINLINE std::format_context::iterator format(TSubclassOf<T> const& Class, std::format_context&  Context) const
     {
-        if (InClass)
-        {
-            return std::formatter<LString>::format(InClass->GetNameAsString(), InContext);
-        }
-        return std::formatter<LString>::format(algo::sprintf("{}?", T::StaticClass().GetNameAsString()), InContext);
-    }
-};
-
-template<>
-struct std::formatter<Jafg::Detail::LReflectedTag> : std::formatter<LString>
-{
-    FORCEINLINE std::format_context::iterator format(Jafg::Detail::LReflectedTag Tag, std::format_context& Context) const
-    {
-        return std::formatter<LString>::format(Jafg::Detail::GetJxxTagRegistry().GetReprSafe(Tag), Context);
+        return std::formatter<LString>::format(Class.GetClassOrDefault().GetNameAsString(), Context);
     }
 };
 
@@ -1911,20 +1917,285 @@ inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
     }
     else if constexpr (serde::os_string_archive_v<TArchive>)
     {
-        if (Field.HasClass())
-        {
-            Ar.m_stream << Field->GetFullyQualifiedName();
-        }
-        else
-        {
-            Ar.m_stream << TJxxClass::StaticClass().GetFullyQualifiedName();
-        }
+        Ar.m_stream << Field.GetClassOrDefault().GetFullyQualifiedName();
     }
     else
     {
         static_assert(algo::always_false_v<TArchive, U>);
     }
 }
+
+//#
+//# A lazy subclass is a subclass that is evaluated the first time it is being accessed.
+//#
+template<typename TObj> requires algo::is_base_of_weak_v<Jafg::JCxxClass, TObj>
+class TLazySubclass final
+{
+    template<typename UObj> requires algo::is_base_of_weak_v<Jafg::JCxxClass, UObj>
+    friend class TLazySubclass;
+
+    static constexpr std::size_t ClassIndex{0};
+    static constexpr std::size_t NameIndex{1};
+
+public:
+
+    typedef TObj value_type;
+
+    constexpr TLazySubclass() noexcept : Variant{} {}
+    constexpr TLazySubclass(std::nullptr_t) noexcept : Variant{} {}
+
+    TLazySubclass(EDefaultInit) noexcept : Variant{&TObj::StaticClass()} { check(this->HasClass() && this->IsValidType()) }
+    TLazySubclass(LString ClassName) noexcept : Variant{std::move(ClassName)} { check(this->IsEvaluatable()) }
+
+    TLazySubclass(TLazySubclass const& Other) noexcept = default;
+    TLazySubclass& operator=(TLazySubclass const& Rhs) noexcept = default;
+
+    TLazySubclass(Jafg::LJxxClass const* InClass) noexcept : Variant{InClass} { check(this->IsValidType()) }
+    TLazySubclass(Jafg::LJxxClass const& InClass) noexcept : Variant{&InClass} { check(this->IsValidType()) }
+    TLazySubclass& operator=(Jafg::LJxxClass const* InClass) noexcept { return this->Assign(InClass); }
+    TLazySubclass& operator=(Jafg::LJxxClass const& InClass) noexcept { return this->Assign(InClass); }
+
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TLazySubclass(TLazySubclass<UObj> const& Other) noexcept : Variant{Other.Variant} { check(this->IsValidType()) }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TLazySubclass& operator=(TLazySubclass<UObj> const& Other) noexcept { return this->Assign(Other.Variant); }
+
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TLazySubclass(UObj const* What) noexcept : Variant{What->GetVirtualTable()} { check(this->IsValidType()) }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TLazySubclass& operator=(UObj const* What) noexcept { return this->Assign(What->GetVirtualTable()); }
+
+    constexpr ~TLazySubclass() = default;
+
+    FORCEINLINE bool IsEvaluated() const noexcept { return this->Variant.index() == ClassIndex; }
+    FORCEINLINE bool IsEvaluatable() const noexcept { return this->Variant.index() == NameIndex; }
+    void Evaluate() const
+    {
+        check(this->IsEvaluatable())
+        if (std::get<NameIndex>(this->Variant).empty())
+        {
+            (void)this->Assign_(nullptr);
+        }
+        else if (auto* Package{Jafg::Detail::GetGlobalCxxRecordRegistry().GetPackageByName(std::get<NameIndex>(this->Variant))})
+        {
+            if (Package->IsClass())
+            {
+                this->Assign_(&Package->AsClass().StaticClass);
+            }
+            else
+            {
+                LOG_FATAL(LogObjectInternal, "Package [{}] is not a class. Found [{}]."
+                    , Package->GetFullyQualifiedName(), serde::to_string(Package->GetType())
+                    )
+            }
+        }
+        else
+        {
+            LOG_FATAL(LogObjectInternal, "[{}]: No such package.", std::get<NameIndex>(this->Variant))
+        }
+    }
+    FORCEINLINE void TryEvaluate() const
+    {
+        if (this->IsEvaluatable())
+        {
+            this->Evaluate();
+        }
+    }
+
+    FORCEINLINE bool HasClass() const noexcept
+    {
+        this->TryEvaluate();
+        return std::get<ClassIndex>(this->Variant) != nullptr;
+    }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    FORCEINLINE void SetClass() noexcept { this->Assign(UObj::StaticClass()); }
+    FORCEINLINE void SetClass(std::nullptr_t) noexcept { this->Assign(nullptr); }
+
+    FORCEINLINE TLazySubclass& Assign(std::nullptr_t) noexcept
+    {
+        this->Variant = nullptr;
+        check(this->IsValidType())
+        return *this;
+    }
+    FORCEINLINE TLazySubclass& Assign(Jafg::LJxxClass const* Class) noexcept
+    {
+        this->Variant = Class;
+        check(this->IsValidType())
+        return *this;
+    }
+    FORCEINLINE TLazySubclass& Assign(Jafg::LJxxClass const& Class) noexcept
+    {
+        this->Variant = &Class;
+        check(this->IsValidType())
+        return *this;
+    }
+    FORCEINLINE TLazySubclass& Assign(LString ClassName) noexcept
+    {
+        this->Variant = std::move(ClassName);
+        return *this;
+    }
+
+    FORCEINLINE Jafg::LJxxClass const& GetClassOrDefault() const noexcept
+    {
+        if (this->HasClass())
+        {
+            return *std::get<ClassIndex>(this->Variant);
+        }
+        return TObj::StaticClass();
+    }
+
+    FORCEINLINE Jafg::LJxxClass const* GetClass() const noexcept
+    {
+        this->TryEvaluate();
+        return std::get<ClassIndex>(this->Variant);
+    }
+    FORCEINLINE operator Jafg::LJxxClass const*() const noexcept
+    {
+        this->TryEvaluate();
+        return std::get<ClassIndex>(this->Variant);
+    }
+
+    FORCEINLINE operator Jafg::LJxxClass const&() const noexcept
+    {
+        this->TryEvaluate();
+        check(this->HasClass())
+        return *std::get<ClassIndex>(this->Variant);
+    }
+
+    FORCEINLINE Jafg::LJxxClass const* operator->() const noexcept
+    {
+        this->TryEvaluate();
+        check(this->HasClass())
+        return std::get<ClassIndex>(this->Variant);
+    }
+    FORCEINLINE Jafg::LJxxClass const* operator*() const noexcept
+    {
+        this->TryEvaluate();
+        return std::get<ClassIndex>(this->Variant);
+    }
+
+    FORCEINLINE bool IsValidType() const noexcept
+    {
+        if (this->HasClass())
+        {
+            if (std::get<ClassIndex>(this->Variant)->template DerivesFrom<TObj>())
+            {
+                return true;
+            }
+            if (std::get<ClassIndex>(this->Variant)->IsRoot() || std::get<ClassIndex>(this->Variant)->IsParentValid())
+            {
+                return false;
+            }
+            LOG_WARNING(LogObjectInternal,
+                "[{}] is used in TLazySubclass<{}> but not yet initialized. Assuming valid parent.",
+                std::get<ClassIndex>(this->Variant)->GetFullyQualifiedName(),
+                TObj::StaticClass().GetFullyQualifiedName()
+                )
+            return true;
+        }
+        return true;
+    }
+
+    FORCEINLINE constexpr bool operator==(std::nullptr_t) const noexcept
+    {
+        if (this->Variant.index() == NameIndex)
+        {
+            return std::get<NameIndex>(this->Variant).empty();
+        }
+        check(this->Variant.index() == ClassIndex)
+        return std::get<ClassIndex>(this->Variant) == nullptr;
+    }
+
+    NODISCARD TSubclassOf<TObj> ToSubclassOf() const noexcept
+    {
+        this->TryEvaluate();
+        return TSubclassOf<TObj>{std::get<ClassIndex>(this->Variant)};
+    }
+    NODISCARD operator TSubclassOf<TObj>() const noexcept { return this->ToSubclassOf(); }
+
+private:
+
+    FORCEINLINE TLazySubclass const& Assign_(std::nullptr_t) const noexcept
+    {
+        this->Variant = nullptr;
+        check(this->IsValidType())
+        return *this;
+    }
+    FORCEINLINE TLazySubclass const& Assign_(Jafg::LJxxClass const* Class) const noexcept
+    {
+        this->Variant = Class;
+        check(this->IsValidType())
+        return *this;
+    }
+
+    mutable std::variant<Jafg::LJxxClass const*,LString> Variant;
+};
+
+template<typename TObj> requires std::is_base_of_v<Jafg::JCxxClass, TObj>
+FORCEINLINE bool Jafg::JCxxClass::IsA(TLazySubclass<TObj> Class) const noexcept
+{
+    return this->IsA(Class.GetClassOrDefault());
+}
+
+template<typename T> requires algo::is_base_of_weak_v<Jafg::JCxxClass, T>
+struct TPreference<TLazySubclass<T>>: Jafg::TDefaultPreference<TLazySubclass<T>>
+{
+    using Jafg::TDefaultPreference<TLazySubclass<T>>::TDefaultPreference;
+    using Jafg::TDefaultPreference<TLazySubclass<T>>::operator=;
+};
+
+template<typename T>
+struct std::formatter<TLazySubclass<T>>: std::formatter<LString>
+{
+    FORCEINLINE std::format_context::iterator format(TLazySubclass<T> const& Class, std::format_context& Context) const
+    {
+        return std::formatter<LString>::format(Class.GetClassOrDefault().GetNameAsString(), Context);
+    }
+};
+
+template<typename TArchive, typename U> requires serde::string_archive_impl_for_v<TArchive, U, TLazySubclass<typename U::value_type>>
+inline void serde_non_intrusive(TArchive& Ar, U& Field) noexcept
+{
+    typedef typename U::value_type TJxxClass;
+    static_assert(std::is_base_of_v<Jafg::JCxxClass, TJxxClass>);
+    if constexpr (serde::is_string_archive_v<TArchive>)
+    {
+        if (auto* Package{Jafg::Detail::GetGlobalCxxRecordRegistry().GetPackageByName(Ar.get_stream())})
+        {
+            if (Package->IsClass())
+            {
+                Field.Assign(Package->AsClass().StaticClass);
+            }
+            else
+            {
+                LOG_FATAL(LogObjectInternal, "Package [{}] is not a class. Found [{}]."
+                    , Package->GetFullyQualifiedName(), serde::to_string(Package->GetType())
+                    )
+            }
+        }
+        else
+        {
+            Field.Assign(LString{Ar.get_stream()});
+        }
+    }
+    else if constexpr (serde::os_string_archive_v<TArchive>)
+    {
+        Ar.m_stream << Field.GetClassOrDefault().GetFullyQualifiedName();
+    }
+    else
+    {
+        static_assert(algo::always_false_v<TArchive, U>);
+    }
+}
+
+template<>
+struct std::formatter<Jafg::Detail::LReflectedTag>: std::formatter<LString>
+{
+    FORCEINLINE std::format_context::iterator format(Jafg::Detail::LReflectedTag Tag, std::format_context& Context) const
+    {
+        return std::formatter<LString>::format(Jafg::Detail::GetJxxTagRegistry().GetReprSafe(Tag), Context);
+    }
+};
 
 namespace Jafg
 {

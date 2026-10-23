@@ -7,6 +7,8 @@
 namespace Jafg
 {
 
+struct LFetchedPlugin;
+
 //#
 //# This the main class that defines a foreign plugin.
 //# Inherit from this and make it engine public by adding it to the #DEFINE_PLUGIN macro.
@@ -23,7 +25,7 @@ public:
     //# This function is called when the engine loads your plugin.
     //# Do your initialization here.
     //#
-    virtual void OnStartup() { }
+    virtual void OnStartup(LFetchedPlugin const& Plugin) { }
 
     //#
     //# This function is called when the engine has finished loading your plugin.

@@ -102,6 +102,11 @@ struct LFetchedPlugin final
 
     //# Relative (to the config file) or absolute path to the binary implementing this plugin.
     LPath Bin;
+
+    //# Whether this plugin has content.
+    bool bHasContent{ false };
+    //# If #bHasContent is set this will point a the valid content dir of this plugin.
+    LPath Content;
 };
 
 struct LLoadedPlugin final

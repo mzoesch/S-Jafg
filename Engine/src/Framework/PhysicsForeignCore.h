@@ -4,7 +4,7 @@
 
 #include "Minimal.afx"
 #include "Framework/PhysicsCore.h"
-#include "Framework/RigidObject.h"
+#include "Framework/PhysicsBody.h"
 
 #ifndef JoltPhysics_USE_ASSERTS
     #error "JoltPhysics_USE_ASSERTS is not defined."
@@ -116,7 +116,9 @@
 namespace Jafg
 {
 
-class AEditorPersonaControllerComponent;
+#if JAFG_WITH_EDITOR
+    class ADebugDrawerComponent;
+#endif /* JAFG_WITH_EDITOR */
 
 } /* ~Namespace Jafg */
 
@@ -144,6 +146,10 @@ static_assert(std::same_as<std::underlying_type_t<Jafg::EPhysicsMotion>, std::un
 static_assert(std::to_underlying(Jafg::EPhysicsMotion::Static) == std::to_underlying(JPH::EMotionType::Static));
 static_assert(std::to_underlying(Jafg::EPhysicsMotion::Kinematic) == std::to_underlying(JPH::EMotionType::Kinematic));
 static_assert(std::to_underlying(Jafg::EPhysicsMotion::Dynamic) == std::to_underlying(JPH::EMotionType::Dynamic));
+
+static_assert(std::same_as<std::underlying_type_t<Jafg::EPhysicsMotionQuality>, std::underlying_type_t<JPH::EMotionQuality>>);
+static_assert(std::to_underlying(Jafg::EPhysicsMotionQuality::Discrete) == std::to_underlying(JPH::EMotionQuality::Discrete));
+static_assert(std::to_underlying(Jafg::EPhysicsMotionQuality::LinearCast) == std::to_underlying(JPH::EMotionQuality::LinearCast));
 
 static_assert(std::same_as<std::underlying_type_t<Jafg::Physx::ESoftBodyConstraintColor>, std::underlying_type_t<JPH::ESoftBodyConstraintColor>>);
 static_assert(std::to_underlying(Jafg::Physx::ESoftBodyConstraintColor::ConstraintType) == std::to_underlying(JPH::ESoftBodyConstraintColor::ConstraintType));
@@ -281,7 +287,7 @@ class debug_renderer: public JPH::DebugRendererSimple
 {
 public:
 
-    void PrepareFrame(LWorldEye const& Eye, Jafg::AEditorPersonaControllerComponent* Comp) noexcept
+    void PrepareFrame(LWorldEye const& Eye, Jafg::ADebugDrawerComponent* Comp) noexcept
     {
         check(!this->Comp)
         this->Comp = Comp;
@@ -304,7 +310,7 @@ public:
 
 private:
 
-    Jafg::AEditorPersonaControllerComponent* Comp{};
+    Jafg::ADebugDrawerComponent* Comp{};
 };
 
 } /* ~Namespace physx */
@@ -401,6 +407,7 @@ private:
             );
         this->PhysicsSystem.SetBodyActivationListener(&this->BodyActivationListener);
         this->PhysicsSystem.SetContactListener(&this->ContactListener);
+        this->PhysicsSystem.SetGravity(JPH::Vec3{Info.Gravity.x, Info.Gravity.y, Info.Gravity.z});
     }
 };
 

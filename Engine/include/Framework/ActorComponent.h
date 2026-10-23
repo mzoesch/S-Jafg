@@ -41,7 +41,7 @@ public:
     //#
     //# Once spawned in, the component cannot change its owner anymore.
     //#
-    virtual void OnAttach(AActor& InOwner)
+    virtual void OnAttach(AActor& Owner)
     {
         check(this->Origin != EActorComponentOrigin::Unknown)
 #if JAFG_DO_CHECKS
@@ -49,7 +49,7 @@ public:
         this->bHasExecutedOnAttach = true;
         check(this->Owner == nullptr)
 #endif /* JAFG_DO_CHECKS */
-        this->Owner = &InOwner;
+        this->Owner = &Owner;
     }
 
     //#
@@ -59,6 +59,14 @@ public:
     //# can simply inherit from #LTickableObject.
     //#
     virtual void ParentTick(f32 Dt) { check(this->Owner && this->bTick) }
+
+    //#
+    //# Called from the parent iff the parent is physics ticked and this component is allowed to physics tick.
+    //# Generally speaking, if the parent is not ticked then one should *not* tick the components attached to it.
+    //# If you really need to assert that your component is ticked whenever the owning outer is ticked then you
+    //# can simply inherit from #LFixedTickableObject.
+    //#
+    virtual void ParentPhysicsTick(f32 Dt, bool bFollowup) { check(this->Owner && this->bPhysicsTick) }
 
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
     NODISCARD constexpr bool ShouldRender() const noexcept { return this->bRender; }
@@ -80,6 +88,8 @@ protected:
 
     CLASS_FIELD(Identity)
     bool bTick:1{};
+    CLASS_FIELD(Identity)
+    bool bPhysicsTick:1{};
 
 private:
 

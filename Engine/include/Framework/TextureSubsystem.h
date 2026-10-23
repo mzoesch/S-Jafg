@@ -5,6 +5,7 @@
 #include "Framework/FrontendSubsystem.h"
 #include "Rhi/TextureView.h"
 #include "Rhi/Texture2.h"
+#include "Rhi/TextureCube.h"
 #include "Rhi/Bindless.h"
 #include "TextureSubsystem.generated.h"
 
@@ -45,6 +46,8 @@ public:
     LTexture2Ref FromAsset(LStringView Asset, ETexture2State State = ETexture2StateBits::Device);
     LTexture2Ref FromTextureView(LTextureView const& View, ETexture2State State = ETexture2StateBits::Device);
 
+    LTextureCube2Ref CubeFromFile(LPath const& Path);
+
     NODISCARD FORCEINLINE u32 GetBindlessTextureArrayCapacity() const noexcept { return this->BindlessTextureArrayCapacity; }
     FORCEINLINE auto const& Vk_GetDefaultSamplers() const noexcept { return this->Vk_DefaultSamplers; }
     FORCEINLINE auto const& Vk_GetLinearSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx]; }
@@ -78,6 +81,7 @@ private:
     TArray<LTextureView> TextureViews;
     TArray<LTexture2Ref> GuaranteedTextures;
     std::unordered_map<LPath, std::shared_ptr<LTexture2>> Textures;
+    std::unordered_map<LPath, std::shared_ptr<LTextureCube2>> CubeTextures;
 };
 
 } /* ~Namespace Jafg */

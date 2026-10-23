@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/SceneComponent.h"
-#include "Framework/RigidObject.h"
+#include "Framework/PhysicsBody.h"
 #include "RigidComponent.generated.h"
 
 namespace Jafg
@@ -40,8 +40,8 @@ public:
 
     void SetLinearVelocity(LWorldVec3 const& Velocity);
 
-    void SetRigidObject(LRigidObject RigidObject) noexcept { this->RigidObject = std::move(RigidObject); }
-    NODISCARD FORCEINLINE constexpr LRigidObject GetRigidObject() const noexcept { return this->RigidObject; }
+    void SetRigidObject(LPhysicsBody RigidObject) noexcept { this->RigidObject = std::move(RigidObject); }
+    NODISCARD FORCEINLINE constexpr LPhysicsBody GetRigidObject() const noexcept { return this->RigidObject; }
 
 protected:
 
@@ -56,7 +56,7 @@ private:
     EPhysicsLayer::value_type Layer{ EPhysicsLayer::Static };
     EPhysicsMotion Motion{ EPhysicsMotion::Static };
 
-    LRigidObject RigidObject;
+    LPhysicsBody RigidObject;
     void DestroyRigidObject() noexcept;
     void DestroyRigidObjectImpl() noexcept;
 };

@@ -53,8 +53,8 @@
 #include "Framework/PawnStart.h"
 #include "Framework/RigidComponent.h"
 #include "Nodes/Separator.h"
-#include "../Framework/PhysicsForeignCore.h"
 #include "Framework/FontSubsystem.h"
+#include "../Framework/PhysicsForeignCore.h"
 
 namespace
 {
@@ -1120,7 +1120,18 @@ void Jafg::WEditorWorldViewer::Construct()
         + NewStaticNode(WHParent).Anchor(EAnchor::HFill)
         [
             NewStaticNode(WSpacer).Anchor(EAnchor::HFill)
-            + NewStaticNode(WText).SaveTo(&this->DebugLocationText)
+            + NewStaticNode(WVParent)
+            [
+                NewStaticNode(WText).SaveTo(&this->DebugTranslationText)
+                    .Anchor(EAnchor::HFill)
+                    .TextAlign(ETextHAlign::Right)
+                + NewStaticNode(WText).SaveTo(&this->DebugVelocityText)
+                    .Anchor(EAnchor::HFill)
+                    .TextAlign(ETextHAlign::Right)
+                + NewStaticNode(WText).SaveTo(&this->UserInputContextsText)
+                    .Anchor(EAnchor::HFill)
+                    .TextAlign(ETextHAlign::Right)
+            ]
         ]
     ];
 
@@ -1138,7 +1149,6 @@ void Jafg::WEditorWorldViewer::Construct()
             .HumanReadableName = *Prefs.EditorLastWorldName,
             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
             .TimeBehavior = EWorldTimeBehavior::Desist,
-            .TextureCube = LTextureCube2::MakeSharedTextureCube2(LTextureCube2::CubeMap{"Content/Textures/LearnOpenGlSkybox"}),
             }, std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
     }
 }
@@ -1150,24 +1160,106 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Surface{this->GetViewport().GetSurface()};
 
-    check(this->DebugLocationText)
-    bool bSet{};
-    if (Prefs.EditorShowEyeTranslation)
     {
-        if (auto* Ctrl{this->GetOwnedPersonaController()})
+        check(this->DebugTranslationText)
+        bool bSet{};
+        if (Prefs.EditorShowEyeTranslation)
         {
-            if (auto* Pawn{Ctrl->GetOwnedPawn()})
+            if (auto* Ctrl{this->GetOwnedPersonaController()})
             {
-                bSet = true;
-                this->DebugLocationText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
-                this->DebugLocationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetLocalTranslation()));
+                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                {
+                    bSet = true;
+                    this->DebugTranslationText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
+                    this->DebugTranslationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetLocalTranslation()));
+                }
             }
         }
+        if (!bSet)
+        {
+            this->DebugTranslationText->SetVisibility(ENodeVisibility::Collapsed);
+            this->DebugTranslationText->EmptyContent();
+        }
     }
-    if (!bSet)
+
     {
-        this->DebugLocationText->SetVisibility(ENodeVisibility::Collapsed);
-        this->DebugLocationText->EmptyContent();
+        check(this->DebugVelocityText)
+        bool bSet{};
+        if (Prefs.EditorShowEyeVelocity)
+        {
+            if (auto* Ctrl{this->GetOwnedPersonaController()})
+            {
+                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                {
+                    bSet = true;
+                    if (this->LastTranslation)
+                    {
+                        this->DebugVelocityText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
+                        LWorldVec3 RelativeVector{(Pawn->GetRootComponent().GetLocalTranslation() - *this->LastTranslation) / Dt};
+                        this->DebugVelocityText->SetContent(algo::sprintf("{} ({})"
+                            , maths::to_string(RelativeVector)
+                            , maths::magnitude(RelativeVector)
+                            ));
+                        this->LastTranslation = Pawn->GetRootComponent().GetLocalTranslation();
+                    }
+                    else
+                    {
+                        this->LastTranslation = Pawn->GetRootComponent().GetLocalTranslation();
+                    }
+                }
+            }
+        }
+        if (!bSet)
+        {
+            this->DebugVelocityText->SetVisibility(ENodeVisibility::Collapsed);
+            this->DebugVelocityText->EmptyContent();
+            this->LastTranslation.reset();
+        }
+    }
+
+    {
+        check(this->UserInputContextsText)
+        if (Prefs.EditorShowUserInputContexts)
+        {
+            TArray<LUserInputTag> const* Active;
+            if (this->IsRunning())
+            {
+                Active = &this->RunningInstance->GetUserInput().GetActiveContexts();
+            }
+            else
+            {
+                Active = &this->GetUserInput().GetActiveContexts();
+            }
+
+            this->UserInputContextsText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
+            if (Active->empty())
+            {
+                this->UserInputContextsText->SetContent("<empty>");
+            }
+            else
+            {
+                LString Content;
+                bool bFirst{ true };
+                for (LUserInputTag Tag: *Active)
+                {
+                    if (bFirst)
+                    {
+                        bFirst = false;
+                    }
+                    else
+                    {
+                        Content += ", ";
+                    }
+                    Content += Tag.ToString();
+                }
+                this->UserInputContextsText->SetContent(std::move(Content));
+            }
+        }
+        else
+        {
+            this->UserInputContextsText->SetVisibility(ENodeVisibility::Collapsed);
+            this->UserInputContextsText->EmptyContent();
+        }
     }
 
     /* Hardcoded escape sequence. To always be able to escape a potential compromised user input state. */
@@ -1310,9 +1402,12 @@ Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo c
         }
     }
 
-    if (Event.Is<ERawInputStateBits::Press>(ELogicalKey::RightMouseButton))
+    if (Event.Is<ERawInputStateBits::Press>(ELogicalKey::LeftMouseButton, ELogicalKey::RightMouseButton))
     {
-        if (this->IsOwnedPersonaControllerValid())
+        if (this->IsOwnedPersonaControllerValid() &&
+               (!Event.Is<ERawInputStateBits::Press>(ELogicalKey::LeftMouseButton)
+            || (this->IsRunning() && this->RunningInstance == this))
+            )
         {
             if (!this->GetConsumeHandle().IsValid())
             {
@@ -1579,7 +1674,7 @@ void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APer
 
     if (physx::debug_renderer::get())
     {
-        if (auto* Comp{Ctrl.GetComponent<AEditorPersonaControllerComponent>()})
+        if (auto* Comp{Ctrl.GetComponent<ADebugDrawerComponent>()})
         {
             JPH::BodyManager::DrawSettings DrawSettings{
                 .mDrawGetSupportFunction = *Prefs.EditorVisualizeGetSupportFunction,
@@ -1978,6 +2073,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                 {
                     WEditableTextButton* Name{};
                     WEditableTextButton* SupremePolicies{};
+                    WEditableTextButton* ObjectCollection{};
                 };
                 auto NewWorldNodes{std::make_shared<LNewWorldNodes>()};
                 Result.emplace_back(LDropDownNodeSeparator{.DisplayName="NEW WORLD"});
@@ -2024,23 +2120,43 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                                 )
                             .PlaceholderContent("Supreme policies class")
                     ];},});
+                Result.emplace_back(LDropDownNodeScratch{.OnCreate=[NewWorldNodes]
+                (LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
+                {
+                    auto& Prefs{GetSingleton<JUserPreferences>()};
+                    return NewNode(Viewport).Class<WHParent>()
+                        .Anchor(EAnchor::HFill)
+                        .Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0})
+                    [
+                        NewNode(Viewport).Class<WText>()
+                            .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
+                            .MinDesiredSize({128_spt, 0})
+                            .TextTint(Colors::White)
+                            .Content("Object Collection")
+                        + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->ObjectCollection)
+                            .MinDesiredSize({128_spt, 0})
+                            .Padding(Prefs.InputPadding)
+                            .Palette(*Prefs.InputPaletteSolid)
+                            .Content(*Prefs.EditorLastObjectCollection)
+                            .PlaceholderContent("Collection")
+                    ];},});
                 Result.emplace_back(LDropDownNodeOption{
                     .Selector = {
                         .DisplayName = "Create New World",
                         },
                     .OnAction = [this, NewWorldNodes](auto&&...)
                     {
-                        check(NewWorldNodes.get() && NewWorldNodes->Name && NewWorldNodes->SupremePolicies)
+                        check(NewWorldNodes.get() && NewWorldNodes->Name && NewWorldNodes->SupremePolicies && NewWorldNodes->ObjectCollection)
                         auto& Prefs{GetMutableSingleton<JUserPreferences>()};
                         Prefs.EditorLastWorldName = NewWorldNodes->Name->GetContent();
                         Prefs.EditorLastWorldSupremePolicies =
                             Detail::GetGlobalCxxRecordRegistry().GetClassByNameAsserted(NewWorldNodes->SupremePolicies->GetContent())
                                 ->StaticClass;
+                        Prefs.EditorLastObjectCollection = NewWorldNodes->ObjectCollection->GetContent();
                         this->GetMutableEngine().SummonWorld({
                             .HumanReadableName = *Prefs.EditorLastWorldName,
                             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
                             .TimeBehavior = EWorldTimeBehavior::Desist,
-                            .TextureCube = LTextureCube2::MakeSharedTextureCube2(LTextureCube2::CubeMap{"Content/Textures/LearnOpenGlSkybox"}),
                             }, std::bind(&WEditorWorldViewer::TravelToJustSummoned, this, std::placeholders::_1));
                         return algo::reply::unhandled();
                     },});
@@ -2089,6 +2205,18 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
             auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
             MutablePrefs.EditorShowEyeTranslation = !*MutablePrefs.EditorShowEyeTranslation;
             return *MutablePrefs.EditorShowEyeTranslation;
+        }),
+        CreateDropDownCheckmark("Show eye velocity", *GetSingleton<JUserPreferences>().EditorShowEyeVelocity, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorShowEyeVelocity = !*MutablePrefs.EditorShowEyeVelocity;
+            return *MutablePrefs.EditorShowEyeVelocity;
+        }),
+        CreateDropDownCheckmark("Show input contexts", *GetSingleton<JUserPreferences>().EditorShowUserInputContexts, []
+        {
+            auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
+            MutablePrefs.EditorShowUserInputContexts = !*MutablePrefs.EditorShowUserInputContexts;
+            return *MutablePrefs.EditorShowUserInputContexts;
         }),
         LDropDownNodeSeparator{.DisplayName="Visualization"},
         CreateDropDownCheckmark("Visualize actor aabbs", *GetSingleton<JUserPreferences>().EditorVisualizeAabbs, []
@@ -2466,13 +2594,21 @@ void LoadGymCollection(Jafg::LWorld& World)
 void Jafg::WEditorWorldViewer::InitializeJustSummoned(LWorld& World)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
-    if (*Prefs.EditorLastObjectCollection == "FirstCollection")
+    if (Prefs.EditorLastObjectCollection->empty())
+    {
+    }
+    else if (*Prefs.EditorLastObjectCollection == "FirstCollection")
     {
         ::LoadFirstCollection(World);
     }
     else if (*Prefs.EditorLastObjectCollection == "Gym")
     {
         ::LoadGymCollection(World);
+    }
+    //# TODO: Add custom object collections with callbacks.
+    else
+    {
+        LOG_FATAL(LogEditor, "Cannot find object collection [{}].", *Prefs.EditorLastObjectCollection)
     }
 }
 
@@ -3560,16 +3696,8 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
 {
     Super::OnAttach(InOwner);
 
-    LOG_TRACE(LogRhi, "Allocating debug editor buffers.")
     auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
-
-    this->RayInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.DebugLine");
-    check(this->RayInstance->Material->Template.my_shader.get_descriptor_slot(ShaderSpace, DebugLinesIndex).CxxName == SSBO::Ray::name())
-    check(this->RayInstance->Material->Template.my_shader.get_descriptor_slot(ShaderSpace, ViewProjIndex).CxxName == UBO::ViewProj::name())
-
-    this->RayBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::Ray::buffer_create_info(MaxLineCount));
-    this->RayViewBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::ViewProj::buffer_create_info());
 
     this->GizmoMeshes[TranslateX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX.glb"));
     this->GizmoMeshes[TranslateX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
@@ -3612,44 +3740,11 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
     this->GizmoMeshes[PlaneYZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
     this->GizmoMeshes[PlaneXZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXZ.glb"));
     this->GizmoMeshes[PlaneXZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
-
-    this->TextMaterialInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()
-        ->GetInstanceFromMaterialName("Jafg.VisualBatch"sv);
 }
 
 void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
-
-    auto Reduce{[Dt=static_cast<f32>(this->GetEngine().DeltaTime)](auto&& Range)
-    {
-        for (auto It{Range.begin()}; It != Range.end();)
-        {
-            It->Duration -= Dt;
-            if (It->Duration <= 0.0f)
-            {
-                It = Range.erase(It);
-            }
-            else
-            {
-                ++It;
-            }
-        }
-    }};
-
-    Reduce(this->Lines);
-    Reduce(this->Rays);
-    Reduce(this->Aabbs);
-    Reduce(this->Texts);
-
-    this->Lines.append_range(this->NextLines);
-    this->NextLines.clear();
-    this->Rays.append_range(this->NextRays);
-    this->NextRays.clear();
-    this->Aabbs.append_range(this->NextAabbs);
-    this->NextAabbs.clear();
-    this->Texts.append_range(this->NextTexts);
-    this->NextTexts.clear();
 
     if (this->IsSelectedActorValid())
     {
@@ -3662,13 +3757,9 @@ void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)
 
 void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Info) const
 {
-    Super::Render(Info);
-
     STAT_FUNCTION()
-
-    this->RenderRays(Info);
+    Super::Render(Info);
     this->RenderGizmo(Info);
-    this->RenderTexts(Info);
 }
 
 Jafg::WEditorWorldViewer::EGizmo Jafg::AEditorPersonaControllerComponent::SetSelectedGizmo(WEditorWorldViewer::EGizmo Gizmo) noexcept
@@ -4164,84 +4255,6 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
     }
 }
 
-void Jafg::AEditorPersonaControllerComponent::RenderRays(LActorRenderInfo const& Info) const
-{
-    STAT_FUNCTION()
-
-    auto& Prefs{GetSingleton<JUserPreferences>()};
-    check(this->RayInstance.get())
-
-    if (*Prefs.EditorVisualizeAabbs)
-    {
-        for (auto& E: this->GetWorld().GetEmployees() | algo::views::filter([](auto& E){ return E->template IsA<AActor>(); }))
-        {
-            auto& A{*StaticCastChecked<AActor>(&*E)};
-            LWorldAabb3 Aabb{A.GetTransformedActorAabb()};
-            if (Aabb.empty())
-            {
-                continue;
-            }
-            this->Aabbs.emplace_back(*Prefs.EditorAabbVisualizationTint, OneTimeDraw, Aabb);
-
-            if (*Prefs.EditorVisualizeTransitiveAabbs)
-            {
-                auto VisualizeComponentTransitive{[this,Prefs=&Prefs](this auto&& Self, ASceneComponent& Comp) -> void
-                {
-                    LWorldAabb3 Aabb{Comp.GetAabbForThisComponentOnly()};
-                    if (!Aabb.empty())
-                    {
-                        this->Aabbs.emplace_back(*Prefs->EditorTransitiveAabbVisualizationTint, OneTimeDraw, Aabb.apply(Comp.GetWorldTransformSlow()));
-                    }
-                    for (auto& Child: Comp.GetChildren())
-                    {
-                        Self(*Child);
-                    }
-                }};
-                VisualizeComponentTransitive(A.GetRootComponent());
-            }
-        }
-    }
-
-    if (this->Lines.empty() && this->Rays.empty() && this->Aabbs.empty())
-    {
-        return;
-    }
-
-    auto& Set{this->RayInstance->Vk_GetUniqueDescriptorSet(ShaderSpace, Info.Frame)};
-
-    rhi::object_range<SSBO::Ray> DeviceRays{this->Lines.size() + this->Rays.size() + this->Aabbs.size() * 12, MaxLineCount};
-    algo::for_each(this->Lines, [&DeviceRays](auto const& Line)
-    {
-        DeviceRays->emplace_back(Line->begin, Line->end, Line.Tint);
-    });
-    algo::for_each(this->Rays, [&DeviceRays](auto const& Ray)
-    {
-        DeviceRays->emplace_back(Ray->origin, Ray->direction * Ray->magnitude, Ray.Tint);
-    });
-    algo::for_each(this->Aabbs, [&DeviceRays](auto const& Aabb)
-    {
-        for (auto& edge: Aabb->edges())
-        {
-            DeviceRays->emplace_back(edge.origin, edge.direction, Aabb.Tint);
-        }
-    });
-
-    DeviceRays.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, DebugLinesIndex, this->RayBuffers[Info.Frame]);
-    UBO::ViewProj{Info.WorldData.proj * Info.WorldData.view}.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, ViewProjIndex, this->RayViewBuffers[Info.Frame]);
-
-    Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->RayInstance->Material->Pipeline);
-    Info.CommandBuffer.bindDescriptorSets2({
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .layout = *this->RayInstance->Material->Pipeline.pipeline_layout,
-        .firstSet = 0,
-        .descriptorSetCount = 1,
-        .pDescriptorSets = &**Set,
-        .dynamicOffsetCount = 0,
-        .pDynamicOffsets = nullptr
-        });
-    Info.CommandBuffer.draw(2, static_cast<u32>(DeviceRays->size()), 0, 0);
-}
-
 namespace
 {
 
@@ -4508,146 +4521,17 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
     }
 }
 
-void Jafg::AEditorPersonaControllerComponent::RenderTexts(LActorRenderInfo const& Info) const
-{
-    if (this->Texts.empty())
-    {
-        return;
-    }
-
-    STAT_FUNCTION()
-    check(this->TextMaterialInstance.get())
-
-    auto& Prefs{GetSingleton<JUserPreferences>()};
-
-    auto& Frontend{this->GetFrontend()};
-    auto& Subsystem{*Frontend.GetSubsystemChecked<JFontSubsystem>()};
-    rhi::object_range<SSBO::VisualInstance> Range{SSBO::VisualInstance::default_count,SSBO::VisualInstance::default_count};
-
-    auto ViewProjection{Info.WorldData.proj * Info.WorldData.view};
-    for (auto& Text: this->Texts)
-    {
-        LWorldReal Distance{maths::magnitude(Info.PerspectiveEye.translation - Text.Location)};
-        if (Distance > *Prefs.EditorVisualizationMaxDebugTextRenderDistance)
-        {
-            continue;
-        }
-
-        LVec4F Clip{ViewProjection * LVec4F{Text.Location, 1.0f}};
-        if (Clip.w <= 0.0f)
-        {
-            continue;
-        }
-
-        auto FontSize{Text.Height * ((Info.VkViewport.height - Info.VkViewport.y) / (2 * maths::tan(Info.PerspectiveEye.vert_fov / 2) * Distance))};
-        if (FontSize < *Prefs.EditorVisualizationDebugTextFontThreshold)
-        {
-            continue;
-        }
-
-        /* TODO: Most definitely cache this result. This line will become most probably a bottleneck later...
-         *       But can it be cached with variadic font size (based of eye translation)? */
-        LVec2F Pencil{maths::zero_vector<LVec2F>};
-        auto Infos{Subsystem.GetGlyphInfos(0, Text.Text, FontSize, &Pencil)};
-
-        LVec3F Ndc{maths::xyz(Clip) / Clip.w};
-        if (Ndc.z < 0.0f  || Ndc.z > 1.0f)
-        {
-            continue;
-        }
-        LVec2F Offset{
-            Info.VkViewport.x + (Ndc.x * 0.5f + 0.5f) * Info.VkViewport.width,
-            Info.VkViewport.y + (1.0f - (-Ndc.y * 0.5f + 0.5f)) * Info.VkViewport.height
-            };
-        for (auto& Glyph: Infos.GlyphInfos)
-        {
-            LRect2F Rect{{Offset.x + Glyph.Rect.x, Offset.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}};
-            if (maths::aabb(LRect2F{
-                .offset = {Info.VkViewport.x, Info.VkViewport.y},
-                .extent = {Info.VkViewport.width, Info.VkViewport.height},
-                }, Rect))
-            {
-                Range->push_back({
-                    .Rect = Rect,
-                    .TexCoordRect = Glyph.TexCoordRect,
-                    .Tint = Text.Tint,
-                    .OutlineTint = Colors::White,
-                    .OutlineThickness = 0,
-                    .TextureIndex = Glyph.BindlessTextureIndex,
-                    .SamplerIndex = Glyph.SamplerIndex,
-                    .MsdfPixelRange = Glyph.MsdfPixelRange,
-                    });
-            }
-        }
-    }
-
-    if (!Range->empty())
-    {
-        constexpr auto VisualSharedBinding{0uz};
-        constexpr auto InstanceBufferBinding{1uz};
-
-        auto& DsInstance{this->TextMaterialInstance->Vk_GetUniqueDescriptorSet(0, Info.Frame)};
-        check(DsInstance.Resources.size() == 2)
-
-        LVec2F Dimensions{Info.VkViewport.width, Info.VkViewport.height};
-        auto VisualSharedWriteInfo{UBO::VisualShared{
-                .Proj = glm::orthoRH_ZO(0.0f, Dimensions.x, 0.0f, Dimensions.y, 0.0f, 1.0f),
-                .Gamma = *GetSingleton<JUserPreferences>().InterfaceGamma,
-                }
-            .upload(DsInstance.Resources[VisualSharedBinding].AsBuffer())
-            .write_info(*DsInstance.Resources[VisualSharedBinding].AsBuffer())
-            };
-
-        auto InstanceBufferWriteInfo{Range.upload(DsInstance.Resources[InstanceBufferBinding].AsBuffer())};
-
-        std::array Writes{
-            vk::WriteDescriptorSet{
-                .dstSet = *DsInstance,
-                .dstBinding = VisualSharedBinding,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = UBO::VisualShared::descriptor_type(),
-                .pBufferInfo = &VisualSharedWriteInfo,
-                },
-            vk::WriteDescriptorSet{
-                .dstSet = *DsInstance,
-                .dstBinding = InstanceBufferBinding,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = SSBO::VisualInstance::descriptor_type(),
-                .pBufferInfo = &InstanceBufferWriteInfo
-                },
-            };
-        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
-
-        std::array<vk::DescriptorSet, 2> DescriptorSetsToBind;
-        DescriptorSetsToBind[0] = *DsInstance;
-        DescriptorSetsToBind[1] = *Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetBindlessTextureArrayDescriptorSet();
-        Info.CommandBuffer.bindDescriptorSets2({
-            .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-            .layout = *this->TextMaterialInstance->Material->Pipeline.pipeline_layout,
-            .firstSet = 0,
-            .descriptorSetCount = DescriptorSetsToBind.size(),
-            .pDescriptorSets = DescriptorSetsToBind.data(),
-            .dynamicOffsetCount = 0,
-            .pDynamicOffsets = nullptr
-            });
-
-        Info.CommandBuffer.setPolygonModeEXT(vk::PolygonMode::eFill);
-        Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->TextMaterialInstance->Material->Pipeline);
-        Info.CommandBuffer.draw(4, static_cast<u32>(Range->size()), 0, 0);
-    }
-}
-
 bool Jafg::AEditorCameraComponent::ActivateUserInputContext() noexcept
 {
     if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
     {
         if (auto* Lackey{Ctrl->TryGetOwningLackey<ELackey::Local>()})
         {
-            bool b1{Lackey->GetUserInput().ActivateContext(LUserInputTag::AsTagChecked("RhiDebug"))};
-            bool b2{Lackey->GetUserInput().ActivateContext(LUserInputTag::AsTagChecked("EditorCameraCapturer"))};
-            Lackey->GetUserInput().SetConsumeMouse(false);
+            auto& UserInput{Lackey->GetUserInput()};
+            UserInput.DeactivateAllContexts();
+            bool b1{UserInput.ActivateContext(LUserInputTag::AsTagChecked("RhiDebug"))};
+            bool b2{UserInput.ActivateContext(LUserInputTag::AsTagChecked("EditorCameraCapturer"))};
+            UserInput.SetConsumeMouse(false);
             return b1 && b2;
         }
     }

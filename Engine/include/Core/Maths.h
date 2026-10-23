@@ -141,18 +141,18 @@ using LMat4F = TMat4<maths::single_precision,maths::defaultp>;
 using LMat4D = TMat4<maths::double_precision,maths::defaultp>;
 
 //# Transformation object.
-template<typename TReal,maths::qual_t Q>
+template<typename TRealT,typename TRealR, typename TRealS,  maths::qual_t Q>
 struct TTrans final
 {
     //# Translation.
-    TVec3<TReal,Q> t;
+    TVec3<TRealT,Q> t;
     //# Rotation.
-    TQua<TReal,Q>  r;
+    TQua<TRealR,Q>  r;
     //# Scale.
-    TVec3<TReal,Q> s;
+    TVec3<TRealS,Q> s;
 };
-using LTransformF = TTrans<maths::single_precision,maths::defaultp>;
-using LTransformD = TTrans<maths::double_precision,maths::defaultp>;
+using LTransformF = TTrans<maths::single_precision,maths::single_precision,maths::single_precision,maths::defaultp>;
+using LTransformD = TTrans<maths::double_precision,maths::single_precision,maths::single_precision,maths::defaultp>;
 
 template<maths::length_t L,typename TReal,maths::qual_t Q>
 struct TRect final
@@ -449,15 +449,16 @@ struct TAabb final
         return Result;
     }
 
-    NODISCARD constexpr TAabb apply(TTrans<TReal,Q> const& t) const noexcept
+    template<typename TRealR, typename TRealS>
+    NODISCARD constexpr TAabb apply(TTrans<TReal,TRealR,TRealS,Q> const& t) const noexcept
     {
         static_assert(L == 3);
         check(!this->empty())
 
-        glm::mat3 m{glm::mat3_cast(t.r)};
-        m[0] *= t.s.x;
-        m[1] *= t.s.y;
-        m[2] *= t.s.z;
+        TMat3<TReal,Q> m{glm::mat3_cast<TReal,Q>(t.r)};
+        m[0] *= static_cast<TReal>(t.s.x);
+        m[1] *= static_cast<TReal>(t.s.y);
+        m[2] *= static_cast<TReal>(t.s.z);
 
         TAabb result;
         result.min = t.t;
@@ -522,12 +523,15 @@ inline constexpr maths::qualifier world_qual{maths::highp};
 #else /* JAFG_USE_DOUBLE_WORLD_PRECISION */
     #error "No world precision provided."
 #endif /* !JAFG_USE_DOUBLE_WORLD_PRECISION */
-using LWorldQuat    = TQua<LWorldReal,world_qual>;
+using LWorldQuat    = TQua<maths::single_precision,world_qual>;
 using LWorldVec1    = TVec1<LWorldReal,world_qual>;
 using LWorldVec2    = TVec2<LWorldReal,world_qual>;
 using LWorldVec3    = TVec3<LWorldReal,world_qual>;
 using LWorldVec4    = TVec4<LWorldReal,world_qual>;
-using LWorldTrans   = TTrans<LWorldReal,world_qual>;
+using LWorldMat2    = TMat2<LWorldReal,world_qual>;
+using LWorldMat3    = TMat3<LWorldReal,world_qual>;
+using LWorldMat4    = TMat4<LWorldReal,world_qual>;
+using LWorldTrans   = TTrans<LWorldReal,maths::single_precision,maths::single_precision,world_qual>;
 using LWorldRect1   = TRect1<LWorldReal,world_qual>;
 using LWorldRect2   = TRect2<LWorldReal,world_qual>;
 using LWorldRect3   = TRect3<LWorldReal,world_qual>;
@@ -991,6 +995,78 @@ MATHS_CONSTANT_VALUE(identity, LAabb3D, {LAabb3D::get_empty()})
 
 ///////////////////////////////////////////////////////////////////////////////
 // Common
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TVec3<TReal,Q> forward_components(TVec3<TReal,Q> const& v)
+{
+    return forward_vector<TVec3<TReal,Q>>() * v;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TVec3<TReal,Q> backward_components(TVec3<TReal,Q> const& v)
+{
+    return backward_vector<TVec3<TReal,Q>>() * v;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TVec3<TReal,Q> right_components(TVec3<TReal,Q> const& v)
+{
+    return right_vector<TVec3<TReal,Q>>() * v;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TVec3<TReal,Q> left_components(TVec3<TReal,Q> const& v)
+{
+    return left_vector<TVec3<TReal,Q>>() * v;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TVec3<TReal,Q> up_components(TVec3<TReal,Q> const& v)
+{
+    return up_vector<TVec3<TReal,Q>>() * v;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TVec3<TReal,Q> down_components(TVec3<TReal,Q> const& v)
+{
+    return down_vector<TVec3<TReal,Q>>() * v;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TReal forward_component(TVec3<TReal,Q> const& v)
+{
+    return v.z;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TReal backward_component(TVec3<TReal,Q> const& v)
+{
+    return -v.z;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TReal right_component(TVec3<TReal,Q> const& v)
+{
+    return v.x;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TReal left_component(TVec3<TReal,Q> const& v)
+{
+    return -v.x;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TReal up_component(TVec3<TReal,Q> const& v)
+{
+    return v.y;
+}
+
+template<typename TReal, qualifier Q>
+NODISCARD FORCEINLINE constexpr TReal down_component(TVec3<TReal,Q> const& v)
+{
+    return -v.y;
+}
+
 using glm::abs;
 using glm::sign;
 // TODO: sing_no_zero
@@ -1435,8 +1511,8 @@ using glm::shear;
 using glm::transpose;
 using glm::determinant;
 using glm::inverse;
-template<typename T,qual_t Q>
-inline constexpr TMat4<T,Q> model(TTrans<T,Q> const& trans) noexcept
+template<typename T, qual_t Q>
+inline constexpr TMat4<T,Q> model(TTrans<T,T,T,Q> const& trans) noexcept
 {
     return translate(maths::identity<TMat4<T,Q>>, trans.t)
         *  mat4_cast(trans.r)

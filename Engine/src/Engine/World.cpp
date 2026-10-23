@@ -48,6 +48,10 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
 
     this->SupremePolicies = SpawnObject(CastTo<ASupremePolicies>{}, {*this, this->CreateInfo.SupremePoliciesClass.GetClassOrDefault()});
     check(this->SupremePolicies)
+    if (Info.Gravity)
+    {
+        this->SupremePolicies->PreferredGravity = *Info.Gravity;
+    }
 
     LOG_TRACE(LogPhysics, "Initializing physics system.")
     check(!this->PhysicsSystem.IsValid())
@@ -77,6 +81,9 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
             ? *this->SupremePolicies->PreferredAccumulatorLimit : this->SupremePolicies->GetPreferredAccumulatorLimit(),
         .PhysicsSteps = this->SupremePolicies->PreferredPhysicsSteps
             ? *this->SupremePolicies->PreferredPhysicsSteps : this->SupremePolicies->GetPreferredPhysicsSteps(),
+
+        .Gravity = this->SupremePolicies->PreferredGravity
+            ? *this->SupremePolicies->PreferredGravity : this->SupremePolicies->GetPreferredGravity()
         };
     check(this->PhysicsSystem.IsValid())
 
@@ -154,6 +161,15 @@ void Jafg::LWorld::Tick(f64 Dt)
     }
     this->DeletedTickableObjects.clear();
 
+    bool bFollowup{};
+    auto PhysicsUpdate{[&](f32 PhysicsStep)
+    {
+        for (auto* Tickable: this->PhysicsTickableObjects)
+        {
+            Tickable->FixedTick(PhysicsStep, bFollowup);
+        }
+        bFollowup = true;
+    }};
     auto PollPhysicsState{[&]
     {
         auto& Interface{this->PhysicsSystem->GetBodyInterfaceNoLock()};
@@ -175,17 +191,22 @@ void Jafg::LWorld::Tick(f64 Dt)
     }};
     if (this->ShouldTickPhysics())
     {
-        if (this->PhysicsSystem.TryUpdate())
+        checkCode(this->_check_bUpdatingPhysics = true)
+        if (this->PhysicsSystem.TryUpdate(PhysicsUpdate))
         {
             PollPhysicsState();
         }
+        check(this->DormantTicks == 0)
+        checkCode(this->_check_bUpdatingPhysics = false)
     }
     else if (this->DormantTicks > 0)
     {
         check(this->IsLinearWorldDormant())
-        this->PhysicsSystem.Update(this->DormantTicks);
+        checkCode(this->_check_bUpdatingPhysics = true)
+        this->PhysicsSystem.Update(this->DormantTicks, PhysicsUpdate);
         this->DormantTicks = 0;
         PollPhysicsState();
+        checkCode(this->_check_bUpdatingPhysics = false)
     }
 }
 
@@ -329,12 +350,14 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
         this->Skybox->RenderSkybox(ActorInfo);
     }
 
-    for (auto& F: ActorInfo.PostRenderDelegates)
+    while (!ActorInfo.PostRenderDelegates.empty())
     {
-        F(ActorInfo);
+        TArray Now{std::move(ActorInfo.PostRenderDelegates)};
+        for (auto& F: Now)
+        {
+            F(ActorInfo);
+        }
     }
-
-    return;
 }
 
 std::expected<Jafg::APersonaController*,LString> Jafg::LWorld::Login(LTransientPersona Persona)
@@ -386,23 +409,50 @@ std::expected<Jafg::APersonaController*,LString> Jafg::LWorld::Login(LTransientP
 
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
 {
+    check(!this->IsTickableObjectsPutMutexLocked())
+
     if (algo::contains(this->TickableObjects, Tickable))
     {
-        panic("Found duplicate tickable object")
+        LOG_FATAL(LogWorld, "[{}]: Found duplicate tickable object.", this->GetHumanReadableName())
     }
 
     this->TickableObjects.push_back(Tickable);
-
-    return;
 }
 
 void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
 {
-    if (algo::erase_once(&this->TickableObjects, Tickable))
+    if (this->IsTickableObjectsPutMutexLocked())
+    {
+        this->DeletedTickableObjects.push_back(Tickable);
+    }
+    else
+    {
+        if (algo::erase_once(&this->TickableObjects, Tickable))
+        {
+            return;
+        }
+        LOG_FATAL(LogWorld, "[{}]: Failed to find tickable object.", this->GetHumanReadableName())
+    }
+}
+
+void Jafg::LWorld::RegisterPhysicsTickableObject(LFixedTickableObject* Tickable)
+{
+    check(!this->_check_bUpdatingPhysics)
+    if (algo::contains(this->PhysicsTickableObjects, Tickable))
+    {
+        LOG_FATAL(LogWorld, "[{}: Found duplicate fixed tickable object.", this->GetHumanReadableName())
+    }
+    this->PhysicsTickableObjects.push_back(Tickable);
+}
+
+void Jafg::LWorld::UnregisterPhysicsTickableObject(LFixedTickableObject* Tickable)
+{
+    check(!this->_check_bUpdatingPhysics)
+    if (algo::erase_once(&this->PhysicsTickableObjects, Tickable))
     {
         return;
     }
-    panic("Failed to find tickable object")
+    LOG_FATAL(LogWorld, "[{}]: Failed to find fixed tickable object.", this->GetHumanReadableName())
 }
 
 f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const noexcept

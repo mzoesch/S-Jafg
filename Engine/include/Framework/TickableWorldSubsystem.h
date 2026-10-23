@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/WorldSubsystem.h"
-#include "Engine/TickableObject.h"
+#include "Framework/TickableObject.h"
 #include "TickableWorldSubsystem.generated.h"
 
 namespace Jafg

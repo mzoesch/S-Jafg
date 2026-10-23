@@ -45,6 +45,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
 
         if ((*It)->ShouldCreateSubsystem())
         {
+            STAT_CUSTOM_NAMED_ZONE_FMT(_, "InitializeSubsystems{}", (*It)->GetNameAsString())
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", (*It)->GetNameAsString())
             (*It)->Initialize(*this);
             It = algo::next(It);

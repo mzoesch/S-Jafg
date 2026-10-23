@@ -413,6 +413,8 @@ function(_jafg_add_module_impl
             _jafg_meta_plugin_flag(this_plugin_description "")
             _jafg_meta_plugin_flag(this_plugin_author "Anonymous")
             _jafg_meta_plugin_flag(this_plugin_supports_dyn_unload "true")
+            _jafg_meta_plugin_flag(this_plugin_has_content "false")
+            _jafg_meta_plugin_flag(this_plugin_content "${module_rel_dir}/Content")
 
             set(_target_root_plugin_jafg_content
 "{
@@ -424,7 +426,9 @@ function(_jafg_add_module_impl
     \"Description\": \"${_this_plugin_description}\",
     \"Author\": \"${_this_plugin_author}\",
     \"bDynUnloadable\": ${_this_plugin_supports_dyn_unload},
-    \"Bin\": \"${prefix}${module_name}${suffix}\"
+    \"Bin\": \"${prefix}${module_name}${suffix}\",
+    \"bHasContent\": ${_this_plugin_has_content},
+    \"Content\": \"${_this_plugin_content}\"
 }
 ")
 #    \"Bin\": \"bin/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/${prefix}${module_name}${suffix}\"
