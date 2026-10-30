@@ -376,17 +376,27 @@ function(_jafg_add_module_impl
     # ~Compiler flags
     ###############################################################################
 
+    set(motor_command
+        "${JAFG_MOTOR_EXECUTABLE}"
+        --BinaryDir "${CMAKE_CURRENT_BINARY_DIR}"
+        --Module "${module_rel_dir}"
+        --Platform "${JAFG_TARGET_PLATFORM}"
+        --Architecture "${JAFG_TARGET_ARCHITECTURE}"
+        --Target "${JAFG_TARGET_TYPE}"
+        --Configuration "${JAFG_TARGET_CONFIG}"
+        --Kind "${motor_module_type}"
+        )
+
     add_custom_target(zzz_${module_name}_PRE_BUILD
-        COMMAND ${JAFG_MOTOR_EXECUTABLE}
-            --BinaryDir ${CMAKE_CURRENT_BINARY_DIR}
-            --Module ${module_rel_dir}
-            --Platform ${JAFG_TARGET_PLATFORM}
-            --Architecture ${JAFG_TARGET_ARCHITECTURE}
-            --Target ${JAFG_TARGET_TYPE}
-            --Configuration ${JAFG_TARGET_CONFIG}
-            --Kind ${motor_module_type}
+        COMMAND ${motor_command}
+        VERBATIM
         )
     add_dependencies(${module_name} zzz_${module_name}_PRE_BUILD)
+
+    execute_process(
+        COMMAND ${motor_command}
+        COMMAND_ERROR_IS_FATAL ANY
+        )
 
     ###############################################################################
     # Human readable plugin info file
