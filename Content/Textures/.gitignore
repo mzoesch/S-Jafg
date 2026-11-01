@@ -3,9 +3,16 @@
 !/Editor/
 !/Skies/
 
-!/Jafg.IdentityAdd.jasset
-!/Jafg.IdentityAdd.png
-!/Jafg.IdentityMul.jasset
-!/Jafg.IdentityMul.png
-!/Jafg.IdentityNormal.jasset
-!/Jafg.IdentityNormal.png
+
+!/B.jasset
+!/B.png
+!/G.jasset
+!/G.png
+!/IdentityAdd.jasset
+!/IdentityAdd.png
+!/IdentityMul.jasset
+!/IdentityMul.png
+!/IdentityNormal.jasset
+!/IdentityNormal.png
+!/R.jasset
+!/R.png
