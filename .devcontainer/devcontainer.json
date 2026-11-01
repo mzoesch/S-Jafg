@@ -1,0 +1,33 @@
+{
+    "name": "Jafg",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "USERNAME": "developer",
+            "USER_UID": "1000",
+            "USER_GID": "1000"
+        }
+    },
+    "containerUser": "developer",
+    "remoteUser": "developer",
+    "updateRemoteUserUID": true,
+
+    "mounts": [
+        "source=${localWorkspaceFolder}/Temp/.ccache,target=/home/developer/.ccache,type=bind"
+    ],
+
+    "workspaceMount": "source=${localWorkspaceFolder},target=/Jafg,type=bind",
+    "workspaceFolder": "/Jafg",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack",
+                "twxs.cmake"
+            ]
+        },
+        "jetbrains" : {
+            "backend" : "CLion"
+        }
+    }
+}

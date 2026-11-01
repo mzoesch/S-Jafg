@@ -256,7 +256,11 @@ function(_jafg_add_module_impl
             )
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             target_compile_options(${module_name} PRIVATE
-                -Weverything
+                -Wall
+                -Wextra
+                -Wpedantic
+                # -Weverything # Clangs new version (23.1) causes compiler crashes. Disable for now.
+                # -Wno-lifetime-safety    # Just too unstable now.
                 -fsafe-buffer-usage-suggestions
                 )
         endif()
@@ -276,12 +280,14 @@ function(_jafg_add_module_impl
         message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
     endif()
 
-    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-        find_library(DBGHELP_LIBRARY dbghelp)
-        if(DBGHELP_LIBRARY)
-            target_link_libraries(${module_name} PRIVATE ${DBGHELP_LIBRARY})
-        else()
-            message(FATAL_ERROR "No such library: dbghelp.")
+    if((NOT DEFINED ENV{JAFG_IS_DOCKER_CONTAINER}) OR (NOT $ENV{JAFG_IS_DOCKER_CONTAINER} STREQUAL "1"))
+        if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+             find_library(DBGHELP_LIBRARY dbghelp)
+             if(DBGHELP_LIBRARY)
+                 target_link_libraries(${module_name} PRIVATE ${DBGHELP_LIBRARY})
+             else()
+                 message(FATAL_ERROR "No such library: dbghelp.")
+            endif()
         endif()
     endif()
 

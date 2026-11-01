@@ -4,8 +4,8 @@ REM Copyright mzoesch. All rights reserved.
 
 SETLOCAL ENABLEDELAYEDEXPANSION
 
-SET "MSYS2_ROOT=%~dp0msys64"
-SET "MSYS2_INSTALLER=%~dp0msys2-installer.exe"
+SET "MSYS2_ROOT=%~dp0..\msys64"
+SET "MSYS2_INSTALLER=%~dp0..\msys2-installer.exe"
 SET "MSYS2_URL=https://github.com/msys2/msys2-installer/releases/download/2026-06-11/msys2-base-x86_64-20260611.sfx.exe"
 SET "MSYS2_SHELL=%MSYS2_ROOT%\ucrt64.exe"
 
@@ -29,7 +29,7 @@ IF NOT EXIST "%MSYS2_ROOT%" (
     )
 
 ECHO Initializing MSYS2 environment...
-"%MSYS2_SHELL%" bash Programs\msys2_install_pkgs.sh
+"%MSYS2_SHELL%" bash %~dp0..\Programs\msys2_install_pkgs.sh
 
 IF ERRORLEVEL 1 (
     ECHO MSYS2 setup failed!

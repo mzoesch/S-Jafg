@@ -13,29 +13,19 @@
       "inherits": "ninja-base",
       "cacheVariables": {
         "JAFG_TARGET_PLATFORM": "lnx",
-        "JAFG_TARGET_ARCHITECTURE": "x86_64"
-      }
-    },
-
-    {
-      "name": "windows-base",
-      "hidden": true,
-      "cacheVariables": {
-        "JAFG_TARGET_PLATFORM": "win",
-        "JAFG_TARGET_ARCHITECTURE": "x86_64"
+        "JAFG_TARGET_ARCHITECTURE": "x86_64",
+          "CMAKE_C_COMPILER": "/usr/bin/clang",
+          "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
       }
     },
     {
       "name": "windows-ucrt",
-        "hidden": true,
-        "inherits": [
-            "ninja-base",
-            "windows-base"
-        ],
-        "cacheVariables": {
-            "CMAKE_C_COMPILER": "clang.exe",
-            "CMAKE_CXX_COMPILER": "clang++.exe"
-        }
+      "hidden": true,
+      "inherits": "ninja-base",
+      "cacheVariables": {
+        "JAFG_TARGET_PLATFORM": "win",
+        "JAFG_TARGET_ARCHITECTURE": "x86_64"
+      }
     },
 
     {
