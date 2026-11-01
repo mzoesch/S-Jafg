@@ -80,7 +80,7 @@ void Jafg::WFloatingWidget::Construct()
                 NewStaticNode(WButton)
                     .Anchor(EAnchor::CenterRight)
                     .MinDesiredSize(24_spt2)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.X")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/X")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Data, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>())

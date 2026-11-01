@@ -152,12 +152,12 @@ struct LLoadedPlugin final
 
     FORCEINLINE constexpr bool IsLoaded() const noexcept { return this->NativeHandle != nullptr; }
 
-    FORCEINLINE bool           IsValid() const noexcept { return this->Fetched.AbsolutePath.empty() == false; }
-    FORCEINLINE const LPath&   GetAbsolutePath() const noexcept { return this->Fetched.AbsolutePath; }
-    FORCEINLINE const LString& GetIdentifier() const noexcept { return this->Fetched.Identifier; }
-    FORCEINLINE const LString& GetFriendlyName() const noexcept { return this->Fetched.FriendlyName; }
-    FORCEINLINE const LPath&   GetBin() const noexcept { return this->Fetched.Bin; }
-    FORCEINLINE const LPath&   GetPathToBin() const noexcept { return this->BinPath; }
+    NODISCARD FORCEINLINE constexpr bool           IsValid() const noexcept { return this->Fetched.AbsolutePath.empty() == false; }
+    NODISCARD FORCEINLINE constexpr const LPath&   GetAbsolutePath() const noexcept { return this->Fetched.AbsolutePath; }
+    NODISCARD FORCEINLINE constexpr const LString& GetIdentifier() const noexcept { return this->Fetched.Identifier; }
+    NODISCARD FORCEINLINE constexpr const LString& GetFriendlyName() const noexcept { return this->Fetched.FriendlyName; }
+    NODISCARD FORCEINLINE constexpr const LPath&   GetAbsoluteBin() const noexcept { return this->BinPath; }
+    NODISCARD FORCEINLINE constexpr LFetchedPlugin const& GetFetched() const noexcept { return this->Fetched; }
 
     FORCEINLINE constexpr LLoadedPluginHandle GetHandle() const noexcept { return { this->Uuid }; }
 

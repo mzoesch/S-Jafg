@@ -10,6 +10,8 @@
     #include <fcntl.h>
 #endif /* JAFG_PLATFORM_LINUX */
 
+ENGINE_API Jafg::LPluginInfo JafgInfo;
+
 namespace finder::detail
 {
 

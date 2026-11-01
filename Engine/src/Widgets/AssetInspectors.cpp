@@ -17,7 +17,7 @@ void Jafg::CreateTextureInspector(LTabOverlayPossibilities& Where, finder::path 
     LTabCreateInfo Info{
         .Selector = LTabSelectorCreateInfo{
             .DisplayName = Path.filename().replace_extension("").string(),
-            .Icon = "Icons/Jafg.Information",
+            .Icon = "Icons/Information",
             },
         .Panel = NewNode(Where.Owner.GetViewport()).Class<WTextureInspector>(Path)
         };

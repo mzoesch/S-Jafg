@@ -4,6 +4,21 @@
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
+bool Jafg::JFrontendSubsystem::ShouldCreateSubsystem() const noexcept
+{
+    if (!JSubsystem::ShouldCreateSubsystem())
+    {
+        return false;
+    }
+
+    if (this->GetFrontend().IsHeadless())
+    {
+        return false;
+    }
+
+    return true;
+}
+
 Jafg::LFrontend& Jafg::JFrontendSubsystem::GetFrontend() noexcept
 {
     check(Detail::GMutableEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid.")

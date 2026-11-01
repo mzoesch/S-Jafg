@@ -1,7 +1,0 @@
-{
-    "inherits": [
-        "Jafg.LineStrip",
-        "Jafg.Perspective"
-    ],
-    "shader": "Shaders/Jafg.DebugLine"
-}

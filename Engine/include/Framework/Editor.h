@@ -299,7 +299,7 @@ public:
 
     enum struct EGizmo: u32{ Select,Translate,Rotate,Scale,Gizmo, };
 
-    JAFG_DEFAULT_TAB_CANDIDATE("World Viewer", "Icons/Jafg.Sphere")
+    JAFG_DEFAULT_TAB_CANDIDATE("World Viewer", "Icons/Sphere")
 
     virtual void Construct() override;
     virtual void Tick(f32 Dt) override;
@@ -344,8 +344,6 @@ protected:
 
 private:
 
-    static constexpr rhi::extent2 DefaultExtent{640,480};
-
     void PreDrawSelected(LRenderInfo const& Info);
 
     void CreateMenuDropDown(LVec2F Where);
@@ -366,10 +364,12 @@ private:
     };
     std::optional<LEditorReconnectionData> EditorReconnectionData;
     WWorldViewer* RunningInstance{};
+    APawn* RunningPawnIfDetached{};
     bool bIsNextPersonaEditorControlled{};
     NODISCARD constexpr bool IsRunning() const noexcept { return !!this->RunningInstance; }
 
     NODISCARD LTexture2Ref GetStartTexture() const;
+    NODISCARD LTexture2Ref GetDetachTexture() const;
 
     WButton* StartButton{};
     WButton* StepButton{};
@@ -452,7 +452,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Hierarchy", "Icons/Jafg.Hierarchy")
+    JAFG_DEFAULT_TAB_CANDIDATE("Hierarchy", "Icons/Hierarchy")
 
     virtual void Construct() override;
     virtual void Destruct() override;
@@ -514,7 +514,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Details", "Icons/Jafg.Information")
+    JAFG_DEFAULT_TAB_CANDIDATE("Details", "Icons/Information")
 
     virtual void Construct() override;
     virtual void Tick(f32 Dt) override;

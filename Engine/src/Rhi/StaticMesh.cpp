@@ -466,7 +466,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                 + NewNode(Info.Viewport).Class<WTextButtonIconizedDouble>()
                     .Palette(*Prefs.SecondaryPaletteSolid)
                     .Content("Browse")
-                    .LeftIcon("Icons/Jafg.DirectorySearch")
+                    .LeftIcon("Icons/DirectorySearch")
                     .OnKeyEventFocused([FieldPtr=&Info.Field](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) && Self.AabbTest(Info))
@@ -723,6 +723,8 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
         check(Pc.PushForActor)
         Pc.PushForActor(Info, Material, {Transform});
     }
+
+    Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
 
     this->DrawIndexed(Info);
 }

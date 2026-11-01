@@ -310,6 +310,11 @@ public:
     TPreference<bool> EditorSortDirectoriesFirst{ true };
 
     CLASS_FIELD(Config)
+    TPreference<bool> EditorAutoResolveResolution{ true };
+    CLASS_FIELD(Config)
+    TPreference<LVec2u32> EditorLastViewportExtent{ {640, 480} };
+
+    CLASS_FIELD(Config)
     TPreference<LString> EditorLastWorldName{ "Editor World" };
     CLASS_FIELD(Config)
     TPreference<TLazySubclass<ASupremePolicies>> EditorLastWorldSupremePolicies;
@@ -359,7 +364,7 @@ public:
     TPreference<LColor> EditorTransitiveAabbVisualizationTint{ Colors::Blue };
 
     CLASS_FIELD(Config)
-    TPreference<f32> EditorTraceLength{ 500.0f };
+    TPreference<f32> EditorTraceLength{ 10'000.0f };
     CLASS_FIELD(Config)
     TPreference<bool> EditorVisualizeTraces;
     CLASS_FIELD(Config)

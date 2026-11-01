@@ -1392,11 +1392,8 @@ inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
         Ar.m_stream << "vec" << std::remove_const_t<U>::length() << "(";
         for (maths::length_t Idx{0}; Idx < std::remove_const_t<U>::length(); ++Idx)
         {
-            if (Idx > 0)
-            {
-                Ar.m_stream << ',';
-            }
             Ar.m_stream << Field[Idx];
+            Ar.m_stream << ',';
         }
         Ar.m_stream << ")";
     }

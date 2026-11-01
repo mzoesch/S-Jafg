@@ -1,0 +1,4 @@
+{
+    "inherits": "Materials/Base/Perspective",
+    "shader": "Shaders/Jafg.Mesh.UV"
+}

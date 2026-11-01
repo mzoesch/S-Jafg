@@ -12,5 +12,4 @@
 #include "Minimal.afx"
 #include "Jgc/Core/CoreCategories.h"
 
-#include "Foreign/PluginInfo.h"
 JGC_API extern Jafg::LPluginInfo JgcInfo;

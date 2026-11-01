@@ -82,7 +82,7 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
 
     TArray<Shader2> Shaders;
 
-    for (LPath& Shader: finder::retrieve_files<finder::recursive_directory_iterator>(finder::content_dir(), ".*\\.shader.json"))
+    for (LPath& Shader: finder::retrieve_files<finder::recursive_directory_iterator>(finder::content_dir(), ".*\\.shader\\.json"))
     {
         Shader2& Result{Shaders.emplace_back()};
         json::parse(finder::read_file(Shader), nullptr, false).get_to(Result);

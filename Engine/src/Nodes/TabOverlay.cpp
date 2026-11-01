@@ -406,7 +406,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Move Right",
-                    .Icon = "Icons/Jafg.ArrowRight",
+                    .Icon = "Icons/ArrowRight",
                     },
                 .OnAction = [&Selector](auto&&...)
                 {
@@ -418,7 +418,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Move Down",
-                    .Icon = "Icons/Jafg.ArrowDown",
+                    .Icon = "Icons/ArrowDown",
                     },
                 .OnAction = [&Selector](auto&&...)
                 {
@@ -430,7 +430,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Split Right",
-                    .Icon = "Icons/Jafg.SplitX",
+                    .Icon = "Icons/SplitX",
                     },
                 .OnAction = [&Selector](auto&&...)
                 {
@@ -442,7 +442,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Split Down",
-                    .Icon = "Icons/Jafg.SplitY",
+                    .Icon = "Icons/SplitY",
                     },
                 .OnAction = [&Selector](auto&&...)
                 {
@@ -454,7 +454,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
             LDropDownNodeOption{
                 .Selector = {
                     .DisplayName = "Open in New Window",
-                    .Icon = "Icons/Jafg.Open",
+                    .Icon = "Icons/Open",
                     },
                 .OnAction = [Possibilities=this->Possibilities](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
@@ -727,7 +727,7 @@ void Jafg::WTabOverlaySelector::CtorLogic() noexcept
 
 void Jafg::WTabOverlaySelector::LoadRightIcon()
 {
-    this->RightIcon = this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromAsset("Icons/Jafg.SmallX");
+    this->RightIcon = this->GetMutableFrontend().GetSubsystemChecked<JTextureSubsystem>()->FromAsset("Icons/SmallX");
     this->RightIconStyle.SetEverywhere<&LIconBrush::InwardsPadding>(16_spt);
     this->RightIconStyle.SetEverywhere<&LIconBrush::MinIconSize>(16_spt);
     this->RightIconStyle.SetEverywhere<&LIconBrush::Alignment>(LIconBrush::Align::Center);

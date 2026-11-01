@@ -19,15 +19,16 @@ void Jafg::ADebugDrawerComponent::OnAttach(AActor& InOwner)
     auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
-    this->RayInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.DebugLine");
+    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
+
+    this->RayInstance = MaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/DebugLine"sv);
     check(this->RayInstance->Material->Template.my_shader.get_descriptor_slot(ShaderSpace, DebugLinesIndex).CxxName == SSBO::Ray::name())
     check(this->RayInstance->Material->Template.my_shader.get_descriptor_slot(ShaderSpace, ViewProjIndex).CxxName == UBO::ViewProj::name())
 
     this->RayBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::Ray::buffer_create_info(MaxLineCount));
     this->RayViewBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::ViewProj::buffer_create_info());
 
-    this->TextMaterialInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()
-        ->GetInstanceFromMaterialName("Jafg.VisualBatch"sv);
+    this->TextMaterialInstance = MaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/VisualBatch"sv);
 }
 
 void Jafg::ADebugDrawerComponent::ParentTick(f32 Dt)

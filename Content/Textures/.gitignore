@@ -1,6 +1,7 @@
 *
 !/.gitignore
-!/Jafg/
+!/Editor/
+!/Skies/
 
 !/Jafg.IdentityAdd.jasset
 !/Jafg.IdentityAdd.png

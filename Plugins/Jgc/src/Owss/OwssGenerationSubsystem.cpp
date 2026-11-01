@@ -10,6 +10,7 @@
 #include "Framework/Actor.h"
 #include "Framework/RigidComponent.h"
 #include "Jgc/Framework/Vehicle.h"
+#include "Jgc/Owss/OwssSupremePolicies.h"
 #include "Rhi/TextureCube.h"
 
 void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
@@ -21,11 +22,11 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     if (!World.GetSkybox())
     {
         World.MakeSkybox(this->GetMutableEngine().GetLocalEgo().GetFrontend().GetSubsystemChecked<Jafg::JTextureSubsystem>()
-            ->CubeFromFile(JgcInfo/"Textures/Jgc/Skies/hiptyc_2020_16k_gal"));
+            ->CubeFromFile(JgcInfo/"Textures/Skies/hiptyc_2020_16k_gal"));
     }
 
     this->MaterialInstance = World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
-        ->GetInstanceFromMaterialName("Jafg.MetallicGold");
+        ->FindOrAllocateSharedInstance(JgcInfo,"Materials/Metal-053C-2k");
 }
 
 void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 Where)
@@ -81,7 +82,7 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 Wher
             .SetShouldRender(true);
         Actor.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Actor.GetRootComponent(), [&](Jafg::AStaticMeshComponent& Comp)
         {
-            Comp.SetMesh(JgcInfo/"Models/SF-28a.glb");
+            Comp.SetMesh(JgcInfo/"Models/Ships/MyShip.glb");
             Comp.SetMaterialInstance(this->MaterialInstance);
             Comp.SetLocalTranslationByTeleport(Where);
         });

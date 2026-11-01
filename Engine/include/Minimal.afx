@@ -43,7 +43,6 @@
 #include <expected>
 #include <bit>
 #include <cstdint>
-#include <inplace_vector>
 #include <print>
 #include <random>
 #include <list>
@@ -60,6 +59,10 @@ using namespace std::chrono_literals;
 #include "Core/Llmm.h"
 #include "Core/Asan.h"
 #include "Core/CoreMacros.h"
+
+//# Highly unstable. Put here for now. 
+//# Move up to the std includes if it is not using deprecated features anymore.
+#include <inplace_vector>
 
 //#
 //# Forward Containers.
@@ -112,3 +115,6 @@ using namespace std::chrono_literals;
 #include "User/PreferenceTypes.h"
 #include "Serialization/Json.h"
 #include "Core/Stats.h"
+
+#include "Foreign/PluginInfo.h"
+ENGINE_API extern Jafg::LPluginInfo JafgInfo;

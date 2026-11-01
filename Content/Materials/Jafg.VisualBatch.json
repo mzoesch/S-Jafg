@@ -1,6 +1,0 @@
-{
-    "inherits": [
-        "Jafg.TriangleStrip", "Jafg.DepthUntested", "Jafg.Rasterization", "Jafg.TranslucentColorAttachment"
-    ],
-    "shader": "Shaders/Jafg.VisualBatch"
-}

@@ -146,7 +146,7 @@ struct LSccFinder final
                 auto It{algo::find(this->Materials, Parent, &UnresolvedMaterial::Identifier)};
                 if (It == this->Materials.end())
                 {
-                    LOG_FATAL(LogShaderSubsystem, "[{}]: No such shader.", Parent)
+                    LOG_FATAL(LogShaderSubsystem, "[{}]: Inherits from [{}]. No such material.", Material.Path, Parent)
                 }
                 this->Connect(*It);
                 this->LowLink[Material.Identifier] = std::min(this->LowLink[Material.Identifier], this->LowLink[Parent]);
@@ -155,7 +155,7 @@ struct LSccFinder final
             {
                 if (auto It{algo::find(this->Materials, Parent, &UnresolvedMaterial::Identifier)}; It == this->Materials.end())
                 {
-                    LOG_FATAL(LogShaderSubsystem, "[{}]: No such shader.", Parent)
+                    LOG_FATAL(LogShaderSubsystem, "[{}]: Inherits from [{}]. No such material.", Material.Path, Parent)
                 }
                 this->LowLink[Material.Identifier] = std::min(this->LowLink[Material.Identifier], this->Indices[Parent]);
             }
@@ -268,7 +268,7 @@ void TopDownPopulate(TArray<UnresolvedMaterial*> const& Unresolved) noexcept
     }
 }
 
-TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& ShaderSubsystem, TArray<UnresolvedMaterial> Materials) noexcept
+TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& ShaderSubsystem, LPath const& Key, TArray<UnresolvedMaterial> Materials) noexcept
 {
     if (Materials.empty())
     {
@@ -284,12 +284,12 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
     ::TopDownPopulate(Unresolved);
 
     TArray<rhi::material_template> Result; Result.reserve(Unresolved.size());
-    algo::for_each(Unresolved, [&ShaderSubsystem, &Result](UnresolvedMaterial* Material)
+    algo::for_each(Unresolved, [&Key, &ShaderSubsystem, &Result](UnresolvedMaterial* Material)
     {
         check(Material)
         if (Material->IsFullyResolved())
         {
-            LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Successfully resolved material.", Material->Path)
+            LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Successfully resolved material.", Key, Material->Identifier)
             Result.push_back({
                 .my_shader = ShaderSubsystem.GetShader(*Material->Shader),
                 .identifier = std::move(Material->Identifier),
@@ -303,7 +303,7 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
         }
         else
         {
-            LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Material is not fully resolved. Skipping.", Material->Path)
+            LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Material is not fully resolved. Skipping.", Key, Material->Identifier)
         }
     });
 
@@ -311,6 +311,43 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
 }
 
 } /* ~Namespace <Anonymous> */
+
+namespace Jafg
+{
+
+template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
+static void from_json(BasicJsonType const& j, Jafg::LPbrMaterial& Material)
+{
+    const Jafg::LPbrMaterial nlohmann_json_default_obj{};
+
+    if (j.contains("material"))
+    {
+        // j.at("material").get_to(Material.Material);
+    }
+
+    if (j.contains("albedo"))
+    {
+        j.at("albedo").get_to(Material.Albedo);
+    }
+    if (j.contains("normal"))
+    {
+        j.at("normal").get_to(Material.Normal);
+    }
+    if (j.contains("arm"))
+    {
+        j.at("arm").get_to(Material.Arm);
+    }
+    // if (j.contains("displacement"))
+    // {
+    //     j.at("displacement").get_to(Material.Displacement);
+    // }
+    // if (j.contains("ambientOcclusion"))
+    // {
+    //     j.at("ambientOcclusion").get_to(Material.AmbientOcclusion);
+    // }
+}
+
+} /* ~Namespace Jafg */
 
 rhi::vk_binding Jafg::LMaterialInstance::GetBinding(LStringView Key) const noexcept
 {
@@ -456,15 +493,6 @@ void Jafg::LMaterialInstance::Vk_SetSampledTextureCube(LFrontend const& Frontend
     Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 }
 
-bool Jafg::JMaterialSubsystem::ShouldCreateSubsystem() const noexcept
-{
-    if (this->GetFrontend().IsHeadless())
-    {
-        return false;
-    }
-    return Super::ShouldCreateSubsystem();
-}
-
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
@@ -475,6 +503,16 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     Collection.InitializeDependency<JShaderSubsystem>(this);
 
     STAT_FUNCTION()
+
+    this->GetMutableEngine().OnForeignPluginLoaded.EmplaceStrong([this](LLoadedPlugin& Plugin)
+    {
+        if (Plugin.GetFetched().bHasContent)
+        {
+            this->RetrieveMaterialsFrom(Plugin.GetFetched().Content);
+        }
+
+        return false;
+    });
 
     this->TextureSubsystem = Collection.GetSubsystemChecked<JTextureSubsystem>();
     this->ShaderSubsystem = Collection.GetSubsystemChecked<JShaderSubsystem>();
@@ -487,46 +525,17 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     this->SharedDescriptorSetLayouts.emplace(UBO::VisualShared::name(), UBO::VisualShared::build(Frontend.Vk_GetDevice()));
 
     LOG_VERBOSE(LogMaterialSubsystem, "Fetching materials.")
+    this->RetrieveMaterialsFrom(*JafgInfo);
 
-    check(this->MaterialTemplates.empty())
-    TArray<UnresolvedMaterial> Materials; // Of course this is just temp. We want to replace this with jasset.
-    for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>("Content/Materials", ".*\\.json"))
-    {
-        UnresolvedMaterial& Result{Materials.emplace_back()};
-        json::parse(finder::read_file(Material), nullptr, false).get_to(Result);
-        Result.Identifier = Material.stem().string(); // Also do not use stem but rel to content.
-        Result.Path = std::move(Material);
-
-        check(algo::count(Materials, Result.Identifier, &UnresolvedMaterial::Identifier) == 1)
-    }
-    for (LSccFinder Finder{Materials}; auto& Scc: Finder.Sccs)
-    {
-        if (Scc.size() > 1)
-        {
-            LOG_FATAL(LogMaterialSubsystem, "Found inheritance cycle in shaders: [{}].", algo::join(Scc))
-        }
-    }
-    for (auto& Material: Materials)
-    {
-        if (algo::contains(Material.Inherits, Material.Identifier))
-        {
-            LOG_FATAL(LogMaterialSubsystem
-                , "[{}]: Reflexive inheritance is not allowed. [{}] inherits from [{}]."
-                , Material.Path, Material.Identifier, algo::join(Material.Inherits)
-                )
-        }
-    }
-    this->MaterialTemplates = ::ResolveInheritance(*this->ShaderSubsystem, std::move(Materials));
-    LOG_VERBOSE(LogMaterialSubsystem, "Fetched [{}] materials.", this->MaterialTemplates.size())
-
-    // Kinda awkward here. Is there a way around?
+    // TODO: Kinda awkward here. Is there a way around?
     this->TextureSubsystem->_Vk_AllocateBindlessPool();
     this->TextureSubsystem->_Vk_UpdateSamplers();
 }
 
 void Jafg::JMaterialSubsystem::PurgeUnused()
 {
-    std::erase_if(this->MaterialInstances, [](auto& E) -> bool
+    LOG_TRACE(LogMaterialSubsystem, "Purging unreferenced material instances and materials.")
+    std::erase_if(this->Instances, [](auto& E) -> bool
     {
         if (E.second.use_count() == 1)
         {
@@ -546,11 +555,22 @@ void Jafg::JMaterialSubsystem::PurgeUnused()
     });
 }
 
-Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Name) noexcept
+Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, LStringView Name) noexcept
 {
-    if (auto It{this->Materials.find(Name)}; It != this->Materials.end())
+    LString Key{this->GetKey(Namespace, Name)};
+
+    if (auto It{this->Materials.find(Key)}; It != this->Materials.end())
     {
         return It->second;
+    }
+
+    if (auto It{this->PbrMaterials.find(Namespace)}; It != this->PbrMaterials.end())
+    {
+        if (auto Pbr{algo::find(It->second, Name, &LPbrMaterial::Identifier)}; Pbr != It->second.end())
+        {
+            check(!Pbr->Material)
+            return this->GetMaterial(JafgInfo, "Materials/Pbr");
+        }
     }
 
     check(this->ShaderSubsystem && this->TextureSubsystem)
@@ -558,7 +578,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Name) noexc
 
     rhi::graphics_pipeline_factory Factory;
 
-    auto Result{std::make_shared<LMaterial>(this->GetMaterialTemplate(Name))};
+    auto Result{std::make_shared<LMaterial>(this->GetMaterialTemplate(Namespace, Name))};
     auto& Material{*Result};
     auto& Template{Material.Template};
     auto& Shader{Template.my_shader};
@@ -740,11 +760,11 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Name) noexc
     Factory.stencil_attachment_format = vk::Format::eUndefined;
 
     Material.Pipeline = Factory.build(Frontend.Vk_GetDevice());
-    this->Materials.emplace(Name, Result);
+    this->Materials.emplace(Key, Result);
     return Result;
 }
 
-Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Material)
+Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LStringView Namespace, LStringView Name, LMaterialRef Material)
 {
     check(this->ShaderSubsystem)
 
@@ -992,5 +1012,113 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Ma
         Instance->Vk_SetField(this->GetFrontend(), Instance->GetBinding(Key), Value);
     }
 
+    if (auto It{this->PbrMaterials.find(Namespace)}; It != this->PbrMaterials.end())
+    {
+        if (auto Pbr{algo::find(It->second, Name, &LPbrMaterial::Identifier)}; Pbr != It->second.end())
+        {
+            //# TODO: Optimize later on:
+            //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
+            //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
+            //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
+            Instance->Vk_SetSampledImage(Frontend, Instance->GetBinding("baseColorMap")
+                , *this->TextureSubsystem->FromFile(Pbr->Albedo, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}, ETexture2StateBits::Device));
+            Instance->Vk_SetSampledImage(Frontend, Instance->GetBinding("normalMap")
+                , *this->TextureSubsystem->FromFile(Pbr->Normal, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}, ETexture2StateBits::Device));
+            Instance->Vk_SetSampledImage(Frontend, Instance->GetBinding("metallicRoughnessMap")
+                , *this->TextureSubsystem->FromFile(Pbr->Arm, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}, ETexture2StateBits::Device));
+        }
+    }
+
     return Instance;
+}
+
+Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstanceFromName(LStringView Namespace, LStringView Name)
+{
+    return this->GetInstance(Namespace, Name, this->GetMaterial(Namespace, Name));
+}
+
+void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
+{
+    LString Key{canonical(Path).string()};
+
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Retrieving materials.", Key)
+
+    TArray<UnresolvedMaterial> Materials;
+    for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^.*\\.material\\.json$"))
+    {
+        UnresolvedMaterial& Result{Materials.emplace_back()};
+        json json = json::parse(finder::read_file(Material), nullptr, false);
+        if (json.is_discarded())
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: Invalid JSON.", Material)
+        }
+        json.get_to(Result);
+        Result.Identifier = finder::relative(canonical(Material), Path).replace_extension().replace_extension().string();
+        Result.Path = std::move(Material);
+        check(algo::count(Materials, Result.Identifier, &UnresolvedMaterial::Identifier) == 1)
+    }
+
+    for (LSccFinder Finder{Materials}; auto& Scc: Finder.Sccs)
+    {
+        if (Scc.size() > 1)
+        {
+            LOG_FATAL(LogMaterialSubsystem, "Found inheritance cycle in shaders: [{}].", algo::join(Scc))
+        }
+    }
+    for (auto& Material: Materials)
+    {
+        if (algo::contains(Material.Inherits, Material.Identifier))
+        {
+            LOG_FATAL(LogMaterialSubsystem
+                , "[{}]: Reflexive inheritance is not allowed. [{}] inherits from [{}]."
+                , Material.Path, Material.Identifier, algo::join(Material.Inherits)
+                )
+        }
+    }
+
+    if (this->Templates.contains(Key))
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}]: Material template already exists. Duplicate path [{}].", Key, Path)
+    }
+    check(!this->PbrMaterials.contains(Key))
+
+    TArray Resolved{::ResolveInheritance(*this->ShaderSubsystem, Key, std::move(Materials))};
+    TArray<LPbrMaterial> PbrMaterials;
+
+    for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^(?:.*/)?(?:[^/]+\\.)?pbr\\.json$")) // TODO: Make this for windows...
+    {
+        LPbrMaterial& Result{PbrMaterials.emplace_back()};
+        json json = json::parse(finder::read_file(Material), nullptr, false);
+        if (json.is_discarded())
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: Invalid JSON.", Material)
+        }
+        json.get_to(Result);
+
+        check(Material.has_parent_path())
+        LPath Parent{Material.parent_path()};
+        Result.Albedo = finder::weakly_canonical(Parent/Result.Albedo);
+        Result.Normal = finder::weakly_canonical(Parent/Result.Normal);
+        Result.Arm = finder::weakly_canonical(Parent/Result.Arm);
+
+        if (LPath Temp{finder::relative(canonical(Material), Path).replace_extension()};
+            Temp.native().ends_with(LITERAL_TEXT("/pbr")))
+        {
+            Result.Identifier = Temp.parent_path().string();
+        }
+        else
+        {
+            Result.Identifier = Temp.replace_extension().string();
+        }
+
+        check(algo::count(PbrMaterials, Result.Identifier, &LPbrMaterial::Identifier) == 1)
+
+        LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Fetched PBR material.", Key, Result.Identifier)
+    }
+
+    this->Templates[Key] = std::move(Resolved);
+    this->PbrMaterials[Key] = std::move(PbrMaterials);
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Fetched [{}] materials.", Key
+        , this->Templates.at(Key).size() + this->PbrMaterials.at(Key).size()
+        )
 }

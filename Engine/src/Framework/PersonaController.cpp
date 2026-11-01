@@ -45,16 +45,17 @@ void Jafg::APersonaController::OnGarbage(EJxxRecordTearDownReason Reason)
     return;
 }
 
-void Jafg::APersonaController::PossessPawn(TJxxUnique<APawn> New, const bool bReleaseOld /* = true */)
+TJxxUnique<Jafg::APawn> Jafg::APersonaController::PossessPawn(TJxxUnique<APawn> New, const bool bOrphanOld /* = true */)
 {
     check(this->_Lives())
 
+    TJxxUnique<APawn> Result;
     if (this->Pawn)
     {
         this->Pawn->_SetOwningController(nullptr);
-        if (!bReleaseOld)
+        if (!bOrphanOld)
         {
-            this->Pawn->MarkAsGarbage_v2();
+            Result = std::move(this->Pawn);
         }
     }
 
@@ -64,5 +65,5 @@ void Jafg::APersonaController::PossessPawn(TJxxUnique<APawn> New, const bool bRe
         this->Pawn->_SetOwningController(this);
     }
 
-    return;
+    return Result;
 }

@@ -1,0 +1,8 @@
+{
+    "inherits": [
+        "Materials/Base/TriangleList",
+        "Materials/Base/DepthTested",
+        "Materials/Base/Rasterization",
+        "Materials/Base/SolidColorAttachment"
+    ]
+}

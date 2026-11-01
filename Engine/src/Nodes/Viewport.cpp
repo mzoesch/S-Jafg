@@ -32,7 +32,7 @@ void Jafg::LViewport::Vk_OnLateInit()
         {
             Subsystem = this->GetSurface().GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>();
         }
-        this->VisualBatchMaterialInstance = Subsystem->GetInstanceFromMaterialName("Jafg.VisualBatch"sv);
+        this->VisualBatchMaterialInstance = Subsystem->GetInstanceFromName(JafgInfo, "Materials/VisualBatch"sv);
     }};
     if (auto* MaterialSubsystem{this->GetSurface().GetMutableFrontend().GetSubsystem<JMaterialSubsystem>()})
     {

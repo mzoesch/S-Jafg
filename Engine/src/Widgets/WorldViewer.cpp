@@ -104,17 +104,7 @@ void Jafg::WWorldViewer::Draw(LNodeRenderInfo const& Info) const
             }
         }
 
-        LRect2F Rect;
-        if (this->IsManual())
-        {
-            Rect = {.offset=this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation),
-                    .extent=this->GetAnchoredSize_v2()};
-        }
-        else
-        {
-            Rect = {.offset=maths::round(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)),
-                    .extent=this->RenderTarget.GetExtent().ToVec<f32>()};
-        }
+        LRect2F Rect{this->GetWorldTargetRectFromMostOuter(Info.Translation)};
 
         Info.AddInstance({
             .Rect = Rect,
@@ -149,6 +139,27 @@ void Jafg::WWorldViewer::OnFocusLost()
         }
     }
     check(!this->ConsumeHandle.IsValid())
+}
+
+LRect2F Jafg::WWorldViewer::GetWorldTargetRectFromMostOuter() const noexcept
+{
+    return this->GetWorldTargetRectFromMostOuter(this->GetTranslationFromMostOuter());
+}
+
+LRect2F Jafg::WWorldViewer::GetWorldTargetRectFromMostOuter(LVec2F Translation) const noexcept
+{
+    LRect2F Rect;
+    if (this->IsManual())
+    {
+        Rect = {.offset=this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation),
+                .extent=this->GetAnchoredSize_v2()};
+    }
+    else
+    {
+        Rect = {.offset=maths::round(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Translation)),
+                .extent=this->RenderTarget.GetExtent().ToVec<f32>()};
+    }
+    return Rect;
 }
 
 void Jafg::WWorldViewer::TravelTo(LWorld& World)

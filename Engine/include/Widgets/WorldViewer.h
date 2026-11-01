@@ -53,6 +53,9 @@ public:
     NODISCARD FORCEINLINE constexpr LViewport& GetWorldRenderTargetViewport() noexcept { return this->RenderTargetViewport; }
     NODISCARD FORCEINLINE constexpr LViewport const& GetWorldRenderTargetViewport() const noexcept { return this->RenderTargetViewport; }
 
+    NODISCARD ENGINE_API LRect2F GetWorldTargetRectFromMostOuter() const noexcept;
+    NODISCARD ENGINE_API LRect2F GetWorldTargetRectFromMostOuter(LVec2F Translation) const noexcept;
+
     LColor BorderTint{ Colors::Black };
 
     //#

@@ -12,7 +12,7 @@ namespace Jgc
 class AVehicleComponent;
 
 DECLARE_JAFG_CLASS()
-class JGC_API JOwssGenerationSubsystem : public Jafg::JWorldSubsystem
+class JGC_API JOwssGenerationSubsystem : public JOwssSubsystem
 {
     GENERATED_CLASS_BODY()
 

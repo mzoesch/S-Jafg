@@ -72,6 +72,7 @@ struct LTexture2 final
     }
     static LTexture2Ref FromMemory(LStringView HumanReadableName, algo::byte_bulk&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
     static LTexture2Ref FromAsset(LStringView View);
+    static LTexture2Ref FromFile(LPath const& Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::Device);
     PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
     ~LTexture2() = default;
 

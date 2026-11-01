@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Worlds Inspector", "Icons/Jafg.Sphere")
+    JAFG_DEFAULT_TAB_CANDIDATE("Worlds Inspector", "Icons/Sphere")
 
     virtual void Construct() override;
 };

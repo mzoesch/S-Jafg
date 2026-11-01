@@ -70,7 +70,7 @@ void Jafg::ASkybox::BeginLife()
         .Data = SkyboxIndices.data(),
         }));
 
-    this->MaterialInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Skybox");
+    this->MaterialInstance = Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Skybox");
     this->MaterialInstance->Vk_SetSampler(this->GetMutableFrontend(), MaterialInstance->GetBinding("sampler")
         , Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerClampToEdge());
 }

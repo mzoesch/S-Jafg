@@ -23,7 +23,7 @@ protected:
         this->MinDesiredSize = 16_spt2;
         this->MaxDesiredSize = 16_spt2;
         this->Style.ChainEverywhere<&LRegionBrush::Tint, &LRegionBrush::OutlineTint, &LRegionBrush::OutlineThickness, &LRegionBrush::Background>
-            (Colors::White, LColor{0x52}, 1, LRegionBrush::LIcon{.Texture=LOptionalTexture2Ref{"Icons/Jafg.Checkmark"}.GetResolved(), .Scale=0u,});
+            (Colors::White, LColor{0x52}, 1, LRegionBrush::LIcon{.Texture=LOptionalTexture2Ref{"Icons/Checkmark"}.GetResolved(), .Scale=0u,});
         this->Style.Set<EStyleBits::Normal, &LRegionBrush::BorderTint>(LColor{0x14});
         this->Style.Set<EStyleBits::Hover, &LRegionBrush::BorderTint>(LColor{0x1C});
         this->Style.Set<EStyleBits::Press, &LRegionBrush::BorderTint>(LColor{0x24});

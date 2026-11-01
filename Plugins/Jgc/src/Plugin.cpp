@@ -24,7 +24,7 @@ void LJgcPluginLifetime::OnStartup(Jafg::LFetchedPlugin const& Plugin)
 {
     LPluginLifetime::OnStartup(Plugin);
     LOG_VERBOSE(LogJgcLifetime, "Starting Jgc plugin.")
-    JgcInfo.Content = Plugin.Content;
+    JgcInfo.Initialize(Plugin.Content);
 }
 
 void LJgcPluginLifetime::OnFinishedLoading()

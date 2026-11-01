@@ -69,6 +69,9 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPath const& Path
     , ETexture2State State /* = ETexture2StateBits::Device */
     )
 {
+    //# TODO: Do the same with materials namespaces+names. Also add the host-,device-state to the key. We might load
+    //#       the same texture multiple times with different params.
+
     if (auto const& It{this->Textures.find(Path)}; It != this->Textures.end())
     {
         LTexture2& Texture{*It->second};
@@ -144,7 +147,7 @@ void Jafg::JTextureSubsystem::_Vk_UpdateSamplers()
         .compareEnable = vk::False, .compareOp = vk::CompareOp::eAlways,
         .minLod = 0.0f, // Increase for worse texture quality.
         .maxLod = VK_LOD_CLAMP_NONE,
-        .borderColor = vk::BorderColor::eFloatOpaqueWhite,
+        .borderColor = vk::BorderColor::eFloatTransparentBlack, /* TODO: Chagned this from eFloatOpaqueWhite. Was this ok? */
         };
     this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx] = rhi::vk_build(Frontend.Vk_GetDevice(), CreateInfo);
     DescriptorImageInfos[UBO::Bindless::LinearRepeatSamplerIdx] = vk::DescriptorImageInfo{

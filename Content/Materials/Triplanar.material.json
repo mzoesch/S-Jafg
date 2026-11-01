@@ -1,0 +1,7 @@
+{
+    "inherits": "Materials/Base/Perspective",
+    "shader": "Shaders/Jafg.Triplanar",
+    "properties": {
+        "sampler": "Jafg.NearestRepeatSampler"
+    }
+}

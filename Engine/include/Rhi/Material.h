@@ -191,4 +191,25 @@ struct LMaterialInstance final
     ENGINE_API void Vk_SetSampledTextureCube(LFrontend const& Frontend, rhi::vk_binding Where, LTextureCube2 const& Texture);
 };
 
+//#
+//# Pbr materials are just syntax sugar over the base pbr material and are optional.
+//#
+struct LPbrMaterial final
+{
+    std::optional<std::pair<LString,LString>> Material;
+
+    LString Identifier;
+
+    //# The base color map.
+    LPath Albedo{"Albedo.png"};
+    //# We use the OpenGl standard.
+    LPath Normal{"Normal.png"};
+    //# The arm map.
+    //# - R channel: AO
+    //# - G channel: Roughness
+    //# - B channel: Metallic
+    //# - A channel: Alpha (currently not used!)
+    LPath Arm{"Arm.png"};
+};
+
 } /* ~Namespace rhi */

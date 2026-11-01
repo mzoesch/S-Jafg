@@ -519,13 +519,19 @@ TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const&
                     check(Actor->HasRootComponent())
                     auto TraverseActor{[&](this auto&& Self, ASceneComponent& Comp) -> void
                     {
-                        if (auto Intersection{maths::aabb_intersect_ray(Ray, Comp.GetAabbForThisComponentOnly().apply(Comp.GetWorldTransformSlow()))}; Intersection.bHit)
+                        if (!Comp.GetAabbForThisComponentOnly().empty())
                         {
-                            Results.push_back({
-                                .Actor = *Actor,
-                                .Component = Comp,
-                                .GlobalWorldLocation = Intersection.EnterPoint,
-                                });
+                            if (auto Intersection{maths::aabb_intersect_ray(
+                                Ray,
+                                Comp.GetAabbForThisComponentOnly().apply(Comp.GetWorldTransformSlow())
+                                )}; Intersection.bHit)
+                            {
+                                Results.push_back({
+                                    .Actor = *Actor,
+                                    .Component = Comp,
+                                    .GlobalWorldLocation = Intersection.EnterPoint,
+                                    });
+                            }
                         }
                         for (auto& Child: Comp.GetChildren())
                         {

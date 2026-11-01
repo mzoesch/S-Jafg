@@ -1044,6 +1044,7 @@ NODISCARD inline constexpr std::size_t vk_channels_per_pixel(vk::Format Format) 
 {
     switch (Format)
     {
+    case vk::Format::eR8G8B8A8Unorm:
     case vk::Format::eR8G8B8A8Srgb:
     {
         return 4;

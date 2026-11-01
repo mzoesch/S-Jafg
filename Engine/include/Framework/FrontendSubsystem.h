@@ -28,6 +28,7 @@ protected:
 
     virtual void Tick(f32 Dt) {}
 
+    virtual bool ShouldCreateSubsystem() const noexcept override;
     FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(bool bShouldTick) noexcept { this->bShouldTick = bShouldTick; }
 

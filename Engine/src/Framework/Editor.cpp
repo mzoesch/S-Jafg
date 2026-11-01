@@ -54,6 +54,7 @@
 #include "Framework/RigidComponent.h"
 #include "Nodes/Separator.h"
 #include "Framework/FontSubsystem.h"
+#include "Framework/PointLightComponent.h"
 #include "../Framework/PhysicsForeignCore.h"
 
 namespace
@@ -150,7 +151,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColor)
             .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
             .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
-            .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.Reset"))
+            .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Reset"))
             .Enabled(bEnabled)
             .OnKeyEventFocused([Pointer, Identity](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
@@ -325,11 +326,11 @@ Jafg::LNodeReply Jafg::WEditorCategorySeparator::OnKeyEventFocused(LNodeKeyEvent
 
         if (this->IsSelected())
         {
-            this->LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendDown");
+            this->LeftIcon = LTexture2::FromAsset("Icons/ExtendDown");
         }
         else
         {
-            this->LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendRight");
+            this->LeftIcon = LTexture2::FromAsset("Icons/ExtendRight");
         }
 
         for (auto const& [Visibility, Node]: this->Nodes)
@@ -354,7 +355,7 @@ void Jafg::WEditorCategorySeparator::_ctor_Logic()
 
     this->Anchor = EAnchor::HFill;
     this->Style.SetEverywhere<&LBoxBrush::Tint>(*Prefs.ForegroundColorVariant);
-    this->LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendDown");
+    this->LeftIcon = LTexture2::FromAsset("Icons/ExtendDown");
     this->SetSelectable(true);
     this->SetSelected(true);
 }
@@ -399,21 +400,21 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Open Engine in Explorer",
-                                    .Icon = "Icons/Jafg.Directory",
+                                    .Icon = "Icons/Directory",
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenDirectory(finder::current_path()); return algo::reply::unhandled(); }
                                 },
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Open Engine in Terminal",
-                                    .Icon = "Icons/Jafg.Terminal",
+                                    .Icon = "Icons/Terminal",
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenTerminal(finder::current_path()); return algo::reply::unhandled(); }
                                 },
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Launch Profiler",
-                                    .Icon = "Icons/Jafg.Open",
+                                    .Icon = "Icons/Open",
                                     },
                                 .OnAction = [](auto&&...){ App::LaunchStandalone(App::Detail::GetProfilerExecutable()); return algo::reply::unhandled(); }
                                 },
@@ -421,7 +422,7 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Exit",
-                                    .Icon = "Icons/Jafg.Leave",
+                                    .Icon = "Icons/Leave",
                                     },
                                 .OnAction = [](auto&&...){ App::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
                                 },
@@ -437,7 +438,7 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Toggle Fullscreen",
-                                    .Icon = "Icons/Jafg.Fullscreen",
+                                    .Icon = "Icons/Fullscreen",
                                     },
                                 .OnAction = [this](auto&&...)
                                 {
@@ -508,7 +509,7 @@ void Jafg::WEditor::Construct()
                             Result.emplace_back(LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Visit Homepage",
-                                    .Icon = "Icons/Jafg.Open",
+                                    .Icon = "Icons/Open",
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenUrl(App::Homepage()); return algo::reply::unhandled(); },
                                 });
@@ -742,6 +743,11 @@ void Jafg::WEditorWorldViewer::Construct()
     this->StartType = EStartType{static_cast<u8>(*Prefs.EditorStartType)};
     this->PawnStart = EPawnSart{static_cast<u8>(*Prefs.EditorPawnStart)};
 
+    if (!*Prefs.EditorAutoResolveResolution)
+    {
+        this->DesiredViewportExtent = rhi::extent2::from_vec(*Prefs.EditorLastViewportExtent);
+    }
+
     constexpr auto MinSize{23_spt2};
 
     BeginStyling(*this).StaticRoot<WVParent>()
@@ -754,7 +760,7 @@ void Jafg::WEditorWorldViewer::Construct()
         [
             NewStaticNode(WButton)
                 .MinDesiredSize(MinSize)
-                .InAllBrushesChained<&LRegionBrush::Background, &LRegionBrush::Radii>(LRegionBrush::Icon("Icons/Jafg.Menu"), LVec4F{50.0f})
+                .InAllBrushesChained<&LRegionBrush::Background, &LRegionBrush::Radii>(LRegionBrush::Icon("Icons/Menu"), LVec4F{50.0f})
                 .InBrushChained<EStyleBits::ActiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(Colors::White, LColor{0x4c})
                 .InBrushChained<EStyleBits::InactiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(LColor{0xA0}, LColor{0x3c})
                 .InAllBrushesChained<&LRegionBrush::OutlineThickness, &LRegionBrush::OutlineTint>(1, Colors::Black)
@@ -776,7 +782,7 @@ void Jafg::WEditorWorldViewer::Construct()
             [
                 NewStaticNode(WButton).SaveTo(&this->StartButton)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Start")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Start")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -797,7 +803,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     })
                 + NewStaticNode(WButton).SaveTo(&this->StepButton)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Step")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Step")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -810,7 +816,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     })
                 + NewStaticNode(WButton).SaveTo(&this->StopButton)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Stop")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Stop")
                     .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(*Prefs.DangerColor)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -820,6 +826,8 @@ void Jafg::WEditorWorldViewer::Construct()
                             if (this == this->RunningInstance)
                             {
                                 check(!!this->EditorReconnectionData)
+
+                                this->RunningPawnIfDetached = nullptr;
 
                                 auto& Engine{this->GetEngine()};
                                 if (!Engine.IsWorldValid(this->EditorReconnectionData->World))
@@ -843,6 +851,8 @@ void Jafg::WEditorWorldViewer::Construct()
                                 Surface.GetMutableFrontend().RemoveSurface(Surface);
                             }
 
+                            check(!this->RunningPawnIfDetached)
+
                             this->EditorReconnectionData.reset();
                             this->UpdateStartStopButtons();
                             return LNodeReply::Handled();
@@ -851,18 +861,56 @@ void Jafg::WEditorWorldViewer::Construct()
                     })
                     + NewStaticNode(WButton).SaveTo(&this->DetachButton)
                         .MinDesiredSize(MinSize)
-                        .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Detach")
-                        .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                        .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Detach")
+                        .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                             {
+                                check(this->IsRunning())
+
+                                APersonaController& Pc{*this->RunningInstance->GetOwnedPersonaControllerChecked()};
+                                LWorld& World{Pc.GetWorld()};
+
+                                if (this->RunningInstance != this)
+                                {
+                                    LOG_FATAL(LogEditor, "Cannot detach or reattach from a running instance that is not the editor.")
+                                }
+
+                                if (this->RunningPawnIfDetached)
+                                {
+                                    Pc.RemoveComponent(Pc.GetComponentChecked<AEditorPersonaControllerComponent>());
+                                    if (!IsValidFast(World, this->RunningPawnIfDetached))
+                                    {
+                                        LOG_FATAL(LogEditor, "Cannot reattach because old pawn is invalid.")
+                                    }
+                                    Pc.PossessPawn(TJxxUnique<APawn>{std::exchange(this->RunningPawnIfDetached, {})}, true);
+                                }
+                                else
+                                {
+                                    check(!Pc.GetComponent<AEditorPersonaControllerComponent>())
+                                    Pc.EmplaceComponent<AEditorPersonaControllerComponent>();
+
+                                    auto Pawn{World.GetSupremePoliciesChecked()->GetPawnForPersonaController(Pc)};
+                                    check(Pawn)
+
+                                    Pawn->GetRootComponent().SetLocalTransformByTeleport(Pc.GetOwnedPawnChecked()->GetRootComponent().GetLocalTransform());
+
+                                    this->RunningPawnIfDetached = Pc.PossessPawn(std::move(Pawn), false).release();
+                                    if (!this->RunningPawnIfDetached)
+                                    {
+                                        LOG_FATAL(LogEditor, "Detached. But old pawn is invalid.")
+                                    }
+                                }
+
+                                this->UpdateStartStopButtons();
+
                                 return LNodeReply::Handled();
                             }
                             return LNodeReply::Unhandled();
                         })
                     + NewStaticNode(WButton).SaveTo(&this->MoreButton)
                         .MinDesiredSize(MinSize)
-                        .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.VMore")
+                        .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/VMore")
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -884,7 +932,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->SelectButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Cursor")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Cursor")
                     .Selected(true)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -898,7 +946,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->TranslateGizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.TranslationGizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/TranslationGizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -911,7 +959,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->RotateGizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.RotationGizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/RotationGizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -924,7 +972,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->ScaleGizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.ScaleGizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/ScaleGizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -937,7 +985,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->GizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Gizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Gizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -957,20 +1005,20 @@ void Jafg::WEditorWorldViewer::Construct()
             [
                 NewStaticNode(WButton).SaveTo(&this->ToggleGridSpace)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.LocalGrid")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/LocalGrid")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
                         {
                             if (auto& Btn{Self.AsStatic<WButton>()}; this->IsGridSpaceLocal())
                             {
-                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.Sphere"));
-                                Btn.Brush.Background = LRegionBrush::Icon("Icons/Jafg.Sphere");
+                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Sphere"));
+                                Btn.Brush.Background = LRegionBrush::Icon("Icons/Sphere");
                             }
                             else
                             {
-                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.LocalGrid"));
-                                Btn.Brush.Background = LRegionBrush::Icon("Icons/Jafg.LocalGrid");
+                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/LocalGrid"));
+                                Btn.Brush.Background = LRegionBrush::Icon("Icons/LocalGrid");
                             }
                             return LNodeReply::Handled();
                         }
@@ -987,7 +1035,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->ToggleTranslationGridSnapButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Grid")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Grid")
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1014,7 +1062,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->ToggleRotationGridSnapButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.Angle")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Angle")
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1041,7 +1089,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->ToggleScaleGridSnapButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Jafg.ScaleGizmoLight")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/ScaleGizmoLight")
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1070,7 +1118,7 @@ void Jafg::WEditorWorldViewer::Construct()
                         .Palette(*Prefs.SecondaryPaletteSolid)
                         .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
                         .Content(this->GetCameraSpeedString())
-                        .LeftIcon(LTexture2::FromAsset("Icons/Jafg.Camera"))
+                        .LeftIcon(LTexture2::FromAsset("Icons/Camera"))
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
@@ -1136,9 +1184,9 @@ void Jafg::WEditorWorldViewer::Construct()
     ];
 
     auto& MaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
-    this->SelectionMaterialInstance = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Mesh.Outline");
+    this->SelectionMaterialInstance = MaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Mesh.Outline");
     check(this->SelectionMaterialInstance.get())
-    this->PostSelectionMaterialInstance = MaterialSubsystem.GetInstanceFromMaterialName("Jafg.Mesh.OutlinePost");
+    this->PostSelectionMaterialInstance = MaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Mesh.OutlinePost");
     check(this->PostSelectionMaterialInstance.get())
 
     this->UpdateStartStopButtons();
@@ -1379,20 +1427,32 @@ Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo c
                 auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
                 if (auto* Comp{Pawn.GetComponent<AEditorCameraComponent>()})
                 {
-                    if (LVec2F Location{*Info.CursorLocation - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)};
-                        Location.x < 0.0f || Location.y < 0.0f || Location.x > this->GetAnchoredSize_v2().x || Location.y > this->GetAnchoredSize_v2().y)
-                    {
-                        LOG_WARNING(LogWidgetFramework, "[{}]: Click location [{}] is outside of the world viewer size [.Offset={},.Extent={}]. Ignoring trace request."
-                            , this->GetNameAsString(), maths::to_string(Location)
-                            , maths::to_string(this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)), maths::to_string(this->GetAnchoredSize_v2()))
-                    }
-                    else
+                    LRect2F Rect{this->GetWorldTargetRectFromMostOuter(Info.Translation)};
+                    LVec2F Location{*Info.CursorLocation - Rect.offset};
+                    rhi::extent2 Extent{this->GetWorldRenderTarget().GetExtent()};
+                    LVec4F UVs{rhi::uv::fit(rhi::uv::identity
+                        , Extent.ToVec<f32>(), this->GetAnchoredSize_v2()
+                        , rhi::tex_coord_behavior::FitAspect
+                        )};
+                    LVec2F CursorUVs{
+                        Location.x / Rect.extent.x,
+                        Location.y / Rect.extent.y
+                        };
+                    LVec2F CursorTextureUVs{
+                        UVs.x + CursorUVs.x * (UVs.z - UVs.x),
+                        UVs.y + CursorUVs.y * (UVs.w - UVs.y)
+                        };
+                    LVec2F TextureLocation{
+                        CursorTextureUVs.x * static_cast<f32>(Extent.width),
+                        CursorTextureUVs.y * static_cast<f32>(Extent.height)
+                        };
+                    if (!(TextureLocation.x < 0.0f || TextureLocation.y < 0.0f || TextureLocation.x > Rect.extent.x || TextureLocation.y > Rect.extent.y))
                     {
                         check(&this->GetViewport() == &Info.Viewport)
                         Comp->OnTrace(*this
                             , !!(Event.Mods & EModBits::Control)
                             , this->GetWorldRenderTarget().GetExtent()
-                            , Location
+                            , TextureLocation
                             , LEditorTraceOrigin{*this,Event}
                             );
                     }
@@ -1624,7 +1684,7 @@ bool Jafg::WEditorWorldViewer::IsGridSpaceLocal() const noexcept
     check(this->ToggleGridSpace)
     auto& Bg{this->ToggleGridSpace->Style.NormalBrush.Background};
     return std::holds_alternative<LRegionBrush::LIcon>(Bg)
-        && std::get<LRegionBrush::LIcon>(Bg).Texture->GetPath().generic_string().ends_with("Icons/Jafg.LocalGrid.png");
+        && std::get<LRegionBrush::LIcon>(Bg).Texture->GetPath().generic_string().ends_with("Icons/LocalGrid.png");
 }
 
 bool Jafg::WEditorWorldViewer::IsTranslationGridSnapEnabled() const noexcept
@@ -1796,6 +1856,8 @@ void Jafg::WEditorWorldViewer::OnConnect()
 {
     Super::OnConnect();
 
+    check(!this->RunningPawnIfDetached)
+
     if (this->EditorReconnectionData)
     {
         if (auto* Ctrl{this->GetOwnedPersonaController()})
@@ -1835,6 +1897,8 @@ void Jafg::WEditorWorldViewer::OnConnect()
 void Jafg::WEditorWorldViewer::OnDisconnect()
 {
     this->SelectActors({});
+
+    check(!this->RunningPawnIfDetached)
 
     Super::OnDisconnect();
 
@@ -1896,7 +1960,7 @@ void Jafg::WEditorWorldViewer::InitializeRenderTarget()
     {
         auto Binding{this->PostSelectionMaterialInstance->GetBinding("sampler")};
         vk::DescriptorImageInfo Info{
-            .sampler = Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToBorder(),
+            .sampler = Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerClampToBorder(),
             };
         auto It{algo::find(this->PostSelectionMaterialInstance->InfrequentDescriptorSets, Binding.space, &LMaterialInstance::DescriptorSetInstance::Space)};
         check(It != this->PostSelectionMaterialInstance->InfrequentDescriptorSets.end())
@@ -1936,13 +2000,17 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                             && Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation)
                             )
                         {
+                            auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+
                             if (this->DesiredViewportExtent)
                             {
                                 this->DesiredViewportExtent.reset();
+                                Prefs.EditorAutoResolveResolution = true;
                             }
                             else
                             {
-                                this->DesiredViewportExtent = WEditorWorldViewer::DefaultExtent;
+                                this->DesiredViewportExtent = rhi::extent2::from_vec(*Prefs.EditorLastViewportExtent);
+                                Prefs.EditorAutoResolveResolution = false;
                             }
 
                             auto& Btn{Self.AsStatic<WCheckmarkButton>()};
@@ -1976,14 +2044,19 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
             {
                 if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                 {
+                    auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+
                     if (this->DesiredViewportExtent)
                     {
                         this->DesiredViewportExtent.reset();
+                        Prefs.EditorAutoResolveResolution = true;
                     }
                     else
                     {
-                        this->DesiredViewportExtent = WEditorWorldViewer::DefaultExtent;
+                        this->DesiredViewportExtent = rhi::extent2::from_vec(*Prefs.EditorLastViewportExtent);
+                        Prefs.EditorAutoResolveResolution = false;
                     }
+
                     return LDropDownNodeCustom::reply::handled(true);
                 }
                 return LDropDownNodeCustom::reply::unhandled();
@@ -2003,6 +2076,8 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                     .OnVectorChanged([Res](WInput_Vector2& Self)
                     {
                         *Res = Self.Get<u64>();
+                        auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+                        Prefs.EditorLastViewportExtent = *Res;
                     })
                     .Enabled(this->IsManual())
                     .OnDestruct([this, Res](auto&&...)
@@ -2031,7 +2106,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeDeferredSubMenu{
             .Selector = {
                 .DisplayName = "Connect to",
-                .Icon = "Icons/Jafg.Sphere",
+                .Icon = "Icons/Sphere",
                 },
             .OnChildren = {[this]
             {
@@ -2052,7 +2127,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                             Result.emplace_back(LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = World.GetHumanReadableName(),
-                                    .Icon = "Icons/Jafg.Sphere",
+                                    .Icon = "Icons/Sphere",
                                     },
                                 .OnAction = [this, &World](auto&&...)
                                 {
@@ -2165,7 +2240,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Disconnect",
-                .Icon = "Icons/Jafg.Leave",
+                .Icon = "Icons/Leave",
                 },
             .IsEnabled = !!this->IsOwnedPersonaControllerValid(),
             .OnAction = [this](auto&&...)
@@ -2176,7 +2251,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Shutdown",
-                .Icon = "Icons/Jafg.Leave",
+                .Icon = "Icons/Leave",
                 },
             .IsEnabled = !!this->IsOwnedPersonaControllerValid(),
             .OnAction = [this](auto&&...)
@@ -2408,7 +2483,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Current Viewer",
-                .Icon = "Icons/Jafg.Start",
+                .Icon = "Icons/Start",
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2419,7 +2494,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Detached Viewer",
-                .Icon = "Icons/Jafg.StartDetached",
+                .Icon = "Icons/StartDetached",
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2430,7 +2505,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Spectate (e.g. for Physics)",
-                .Icon = "Icons/Jafg.Spectate",
+                .Icon = "Icons/Spectate",
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2441,7 +2516,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Standalone",
-                .Icon = "Icons/Jafg.Open",
+                .Icon = "Icons/Open",
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2476,7 +2551,7 @@ namespace
 void LoadFirstCollection(Jafg::LWorld& World)
 {
     auto MaterialInstance{World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
-        ->GetInstanceFromMaterialName("Jafg.MetallicGold")};
+        ->GetInstanceFromName(JafgInfo, "Materials/MetallicGold")};
 
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
@@ -2559,11 +2634,20 @@ void LoadGymCollection(Jafg::LWorld& World)
         Plane.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Triplanar")};
-            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/GroundGrid_8M");
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Triplanar")};
+            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Editor/GroundGrid_8M");
             Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
             Comp.SetMaterialInstance(std::move(MaterialInstance));
             Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
+        });
+    }
+
+    {
+        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Light.EditorName = "White Point Light"sv;
+        Light.EmplaceRootComponent<Jafg::APointLightComponent>([](Jafg::APointLightComponent& Comp)
+        {
+            Comp.SetLocalTranslationByTeleport({3,0,4});
         });
     }
 
@@ -2581,10 +2665,24 @@ void LoadGymCollection(Jafg::LWorld& World)
         Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.UniformTriplanar")};
-            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Jafg/Editor/ObjectGrid_1M");
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/UniformTriplanar")};
+            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Editor/ObjectGrid_1M");
             Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube_1M.glb"));
             Comp.SetMaterialInstance(std::move(MaterialInstance));
+        });
+    }
+
+    {
+        auto& Sphere{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Sphere.EditorName = "Sphere"sv;
+        Sphere.EmplaceRootComponent<Jafg::AStaticMeshComponent>([World=&World](Jafg::AStaticMeshComponent& Comp)
+        {
+            auto& Frontend{World->GetMutableFrontend()};
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->FindOrAllocateSharedInstance(JafgInfo, "Materials/Examples/CastleBrick02Red")};
+            Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
+            Comp.SetMaterialInstance(std::move(MaterialInstance));
+
+            Comp.SetLocalTranslationByTeleport({0,0,4});
         });
     }
 }
@@ -2625,20 +2723,29 @@ Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetStartTexture() const
         auto& World{this->RunningInstance->GetOwnedPersonaControllerChecked()->GetWorld()};
         if (World.IsTimeLinear() && World.IsLinearWorldDormant())
         {
-            return LTexture2::FromAsset("Icons/Jafg.Start");
+            return LTexture2::FromAsset("Icons/Start");
         }
-        return LTexture2::FromAsset("Icons/Jafg.Pause");
+        return LTexture2::FromAsset("Icons/Pause");
     }
 
     switch (this->StartType)
     {
-    case EStartType::Pie: return LTexture2::FromAsset("Icons/Jafg.Start");
-    case EStartType::NewPie: return LTexture2::FromAsset("Icons/Jafg.StartDetached");
-    case EStartType::FollowPie: return LTexture2::FromAsset("Icons/Jafg.StartFollow");
-    case EStartType::Spectate: return LTexture2::FromAsset("Icons/Jafg.Spectate");
-    case EStartType::Standalone: return LTexture2::FromAsset("Icons/Jafg.Open");
+    case EStartType::Pie: return LTexture2::FromAsset("Icons/Start");
+    case EStartType::NewPie: return LTexture2::FromAsset("Icons/StartDetached");
+    case EStartType::FollowPie: return LTexture2::FromAsset("Icons/StartFollow");
+    case EStartType::Spectate: return LTexture2::FromAsset("Icons/Spectate");
+    case EStartType::Standalone: return LTexture2::FromAsset("Icons/Open");
     }
     std::unreachable();
+}
+
+Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetDetachTexture() const
+{
+    if (this->RunningPawnIfDetached)
+    {
+        return LTexture2::FromAsset("Icons/Reattach");
+    }
+    return LTexture2::FromAsset("Icons/Detach");
 }
 
 void Jafg::WEditorWorldViewer::UpdateStartStopButtons()
@@ -2664,6 +2771,10 @@ void Jafg::WEditorWorldViewer::UpdateStartStopButtons()
         this->StartButton->Style.SetEverywhere<&LRegionBrush::Tint>(Colors::White);
         this->StartButton->Brush.Tint = Colors::White;
     }
+
+    auto DetachIcon{LRegionBrush::Icon(this->GetDetachTexture())};
+    this->DetachButton->Brush.Background = DetachIcon;
+    this->DetachButton->Style.SetEverywhere<&LRegionBrush::Background>(DetachIcon);
 
     if (this->IsRunning())
     {
@@ -2801,8 +2912,8 @@ void Jafg::WEditorWorldViewerHierarchy::Construct()
                     (0_spt, 14_spt, LIconBrush::Align::Center)
                 .InAllRightIconBrushesChained<&LIconBrush::InwardsPadding, &LIconBrush::MinIconSize, &LIconBrush::Alignment>
                     (0_spt, 10_spt, LIconBrush::Align::Center)
-                .LeftIcon("Icons/Jafg.Filter")
-                .RightIcon("Icons/Jafg.ExtendDown")
+                .LeftIcon("Icons/Filter")
+                .RightIcon("Icons/ExtendDown")
                 .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                 .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
             +
@@ -2810,7 +2921,7 @@ void Jafg::WEditorWorldViewerHierarchy::Construct()
                 .Anchor(EAnchor::Fill)
                 .Padding(Prefs.InputPadding)
                 .Palette(*Prefs.InputPaletteSolid)
-                .Icon("Icons/Jafg.Search")
+                .Icon("Icons/Search")
                 .PlaceholderContent("Search...")
             +
             NewStaticNode(WText).SaveTo(&this->ConnectedText)
@@ -3270,7 +3381,7 @@ void Jafg::WEditorWorldViewerInspector::Construct()
             NewStaticNode(WEditableTextButtonIconizedLeft).SaveTo(&this->ContainerSearch)
                 .Anchor(EAnchor::Fill)
                 .Palette(*Prefs.InputPaletteSolid)
-                .Icon("Icons/Jafg.Search")
+                .Icon("Icons/Search")
                 .PlaceholderContent("Search...")
         ]
         +
@@ -3546,7 +3657,7 @@ void Jafg::WEditorWorldViewerInspector::ReloadInnerComponents()
     {
         this->ComponentContainerWrapper->AddChild(NewStaticNode(WTextButtonIconizedDouble)
             .Anchor(EAnchor::HFill)
-            .LeftIcon("Icons/Jafg.Box")
+            .LeftIcon("Icons/Box")
             .Palette(Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid))
             .InAllBrushes<&LBoxBrush::Padding>({ENodeSize::StaticPoints, static_cast<f32>(Indent) * 20.0f, 0.0f, 0.0f, 0.0f})
             .Selectable(true)
@@ -3647,7 +3758,7 @@ void Jafg::WEditorWorldViewerInspector::SelectComponent(AActorComponent* Compone
             this->ComponentContainer->AddChild(NewStaticNode(WTextButtonIconizedDouble)
                 .Anchor(EAnchor::HFill)
                 .InAllBrushes<&LBoxBrush::Tint>(*Prefs.ForegroundColorVariant)
-                .LeftIcon("Icons/Jafg.ExtendDown")
+                .LeftIcon("Icons/ExtendDown")
                 .Content(Category)
                 .Selectable(true)
                 .Selected(true)
@@ -3662,11 +3773,11 @@ void Jafg::WEditorWorldViewerInspector::SelectComponent(AActorComponent* Compone
 
                         if (Casted.IsSelected())
                         {
-                            Casted.LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendDown");
+                            Casted.LeftIcon = LTexture2::FromAsset("Icons/ExtendDown");
                         }
                         else
                         {
-                            Casted.LeftIcon = LTexture2::FromAsset("Icons/Jafg.ExtendRight");
+                            Casted.LeftIcon = LTexture2::FromAsset("Icons/ExtendRight");
                         }
 
                         for (auto* Node: *CategoryNodes)
@@ -3700,46 +3811,46 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
     this->GizmoMeshes[TranslateX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX.glb"));
-    this->GizmoMeshes[TranslateX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[TranslateY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateY.glb"));
-    this->GizmoMeshes[TranslateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[TranslateZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateZ.glb"));
-    this->GizmoMeshes[TranslateZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
     this->GizmoMeshes[TranslateX_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX-var.glb"));
-    this->GizmoMeshes[TranslateX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[TranslateY_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateY-var.glb"));
-    this->GizmoMeshes[TranslateY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[TranslateZ_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateZ-var.glb"));
-    this->GizmoMeshes[TranslateZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[TranslateZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
     this->GizmoMeshes[RotateR].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorR.glb"));
-    this->GizmoMeshes[RotateR].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[RotateR].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[RotateY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorY.glb"));
-    this->GizmoMeshes[RotateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[RotateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[RotateP].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorP.glb"));
-    this->GizmoMeshes[RotateP].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[RotateP].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
     this->GizmoMeshes[ScaleX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleX.glb"));
-    this->GizmoMeshes[ScaleX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[ScaleY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleY.glb"));
-    this->GizmoMeshes[ScaleY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[ScaleZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleZ.glb"));
-    this->GizmoMeshes[ScaleZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
     this->GizmoMeshes[ScaleX_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleX-var.glb"));
-    this->GizmoMeshes[ScaleX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[ScaleY_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleY-var.glb"));
-    this->GizmoMeshes[ScaleY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[ScaleZ_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleZ-var.glb"));
-    this->GizmoMeshes[ScaleZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[ScaleZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
     this->GizmoMeshes[PlaneXY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXY.glb"));
-    this->GizmoMeshes[PlaneXY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[PlaneXY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[PlaneYZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneYZ.glb"));
-    this->GizmoMeshes[PlaneYZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[PlaneYZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
     this->GizmoMeshes[PlaneXZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXZ.glb"));
-    this->GizmoMeshes[PlaneXZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromMaterialName("Jafg.Gizmo"));
+    this->GizmoMeshes[PlaneXZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 }
 
 void Jafg::AEditorPersonaControllerComponent::ParentTick(f32 Dt)

@@ -457,6 +457,8 @@ if(_guard)
 
     if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
         set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/libJolt.a")
+    elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+        set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/Debug/Jolt.lib")
     else()
         message(FATAL_ERROR "Missing implementation for platform [${JAFG_TARGET_PLATFORM}].")
     endif()

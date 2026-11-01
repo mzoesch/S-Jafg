@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Finder", "Icons/Jafg.File")
+    JAFG_DEFAULT_TAB_CANDIDATE("Finder", "Icons/File")
 
     virtual void Construct() override;
 

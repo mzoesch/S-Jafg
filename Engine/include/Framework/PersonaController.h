@@ -102,7 +102,8 @@ public:
     FORCEINLINE APawn const* GetOwnedPawnChecked() const noexcept { check(this->IsOwnedPawnValid()) return this->Pawn.get(); }
     FORCEINLINE APawn* GetOwnedPawnAsserted() noexcept { jassert(this->IsOwnedPawnValid()) return this->Pawn.get(); }
     FORCEINLINE APawn const* GetOwnedPawnAsserted() const noexcept { jassert(this->IsOwnedPawnValid()) return this->Pawn.get(); }
-    void PossessPawn(TJxxUnique<APawn> New, bool bReleaseOld = true);
+    //# @return The old pawn. If bOrphanOld is true then this will always return nullptr as the pawn is no longer valid.
+    TJxxUnique<APawn> PossessPawn(TJxxUnique<APawn> New, bool bOrphanOld = true);
 
 private:
 

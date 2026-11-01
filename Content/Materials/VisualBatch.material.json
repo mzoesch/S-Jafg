@@ -1,0 +1,9 @@
+{
+    "inherits": [
+        "Materials/Base/TriangleStrip",
+        "Materials/Base/DepthUntested",
+        "Materials/Base/Rasterization",
+        "Materials/Base/TranslucentColorAttachment"
+    ],
+    "shader": "Shaders/Jafg.VisualBatch"
+}

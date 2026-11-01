@@ -42,25 +42,27 @@ float4 fragMain(FRInput input): SV_TARGET
 {
     float center = stencil_texture.Sample(sampler, input.uv);
 
-    // Early out: only care about background pixels.
     if (center > 0.5)
     {
         discard;
     }
 
-    // Convert pixel thickness to UV space.
     float2 texel = outline.inverse_viewport_size;
-    float r = outline.thickness;
-    
-    float edge = 0.0;
-    for (float y = -r; y <= r; y++)
-    {
-        for (float x = -r; x <= r; x++)
-        {
-            float2 offset = float2(x, y) * texel;
-            float sample = stencil_texture.Sample(sampler, input.uv + offset);
+    int r = int(outline.thickness);
 
-            edge = max(edge, sample);
+    float edge = 0.0;
+    for (int y = -r; y <= r; y++)
+    {
+        for (int x = -r; x <= r; x++)
+        {
+            float2 uv = input.uv + float2(x, y) * texel;
+
+            if (any(uv < 0.0) || any(uv > 1.0))
+            {
+                continue;
+            }
+
+            edge = max(edge, stencil_texture.SampleLevel(sampler, uv, 0));
         }
     }
 

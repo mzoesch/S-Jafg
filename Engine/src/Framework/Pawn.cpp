@@ -53,7 +53,7 @@ void Jafg::APawn::OnGarbage(EJxxRecordTearDownReason Reason)
     Super::OnGarbage(Reason);
     if (this->IsOwningControllerValid())
     {
-        this->GetOwningControllerChecked()->PossessPawn(nullptr, true);
+        this->GetOwningControllerChecked()->PossessPawn(nullptr);
     }
     return;
 }

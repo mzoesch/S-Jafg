@@ -2,16 +2,7 @@
 
 #include "Jafg.slang"
 #include "Jafg/WorldData.slang"
-
-// Input from vertex buffer - Data sent per vertex from CPU
-[[CxxName("Jafg::LStaticMesh::Vertex")]]
-struct VSInput
-{
-    float3 Position : POSITION; // 3D position in model space
-    float3 Normal : NORMAL;     // Surface normal for lighting calculations
-    float2 UV : TEXCOORD0;      // Texture coordinates for material sampling
-    float4 Tangent : TANGENT;   // Tangent vector for normal mapping (w component = handedness)
-};
+#include "Jafg/StaticMeshVertex.slang"
 
 // Output from vertex shader / Input to fragment shader - Interpolated data
 struct FRInput 
@@ -89,13 +80,13 @@ float3 FresnelSchlick(float cosTheta, float3 F0)
 }
 
 [[shader("vertex")]]
-FRInput vertMain(VSInput input)
+FRInput vertMain(Jafg::StaticMeshVertex input)
 {
     FRInput result;
 
     // Transform vertex position through the rendering pipeline
     // Model -> World -> Camera -> Clip space transformation chain
-    float4 worldPos = mul(material.model, float4(input.Position, 1.0));
+    float4 worldPos = mul(material.model, float4(input.pos, 1.0));
     result.Position = mul(ubo.proj, mul(ubo.view, worldPos));
 
     // Pass world position for fragment lighting calculations
@@ -105,15 +96,15 @@ FRInput vertMain(VSInput input)
     // Transform normal from model space to world space
     // Use only rotation/scale part of model matrix (upper-left 3x3)
     // Normalize to ensure unit length after transformation
-    result.Normal = normalize(mul((float3x3)material.model, input.Normal));
+    result.Normal = normalize(mul((float3x3)material.model, input.normal));
 
     // Pass through texture coordinates unchanged
     // UV coordinates are typically in [0,1] range and don't need transformation
-    result.UV = input.UV;
+    result.UV = input.uv;
 
     // Pass tangent vector for normal mapping
     // Will be used in fragment shader to construct tangent-space basis
-    result.Tangent = input.Tangent;
+    result.Tangent = input.tangent;
 
     return result;
 }

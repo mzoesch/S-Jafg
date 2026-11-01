@@ -1,0 +1,8 @@
+{
+    "inherits": [
+        "Materials/Base/DepthTested",
+        "Materials/Base/LineStrip",
+        "Materials/Base/Perspective"
+    ],
+    "shader": "Shaders/Jafg.DebugLine"
+}

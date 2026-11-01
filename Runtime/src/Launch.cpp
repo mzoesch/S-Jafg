@@ -160,6 +160,8 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* JAFG_WITH_STATS && JAFG_WITH_LOCAL_LAYER */
 
     std::filesystem::current_path(finder::detail::_engine_root_dir_slow());
+    JafgInfo.Initialize(LITERAL_TEXT("Content")); // TODO: Make this an argument of some sort.
+
     finder::create_directories(finder::temp_dir());
 
     LOG_VERBOSE(LogLaunch, "Acquiring app lock.")

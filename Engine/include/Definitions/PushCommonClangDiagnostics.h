@@ -8,6 +8,7 @@
 #pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
 #pragma clang diagnostic ignored "-Wc2y-extensions"
 #pragma clang diagnostic ignored "-Wctad-maybe-unsupported"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations" // Std uses currently.
 #pragma clang diagnostic ignored "-Wdocumentation"
 #pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
 #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
@@ -16,6 +17,9 @@
 #pragma clang diagnostic ignored "-Wfloat-equal"
 #pragma clang diagnostic ignored "-Wglobal-constructors" // We currently require this. but with c++26 reflection maybe not anymore??
 #pragma clang diagnostic ignored "-Wgnu-anonymous-struct" // All our compilers support this.
+#pragma clang diagnostic ignored "-Wlifetime-safety-cross-tu-suggestions" // Investigate.
+#pragma clang diagnostic ignored "-Wlifetime-safety-intra-tu-suggestions"
+#pragma clang diagnostic ignored "-Wlifetime-safety-invalidation"
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #pragma clang diagnostic ignored "-Wmissing-noreturn" // Maybe active this if we get around PURE_VIRTUAL()?

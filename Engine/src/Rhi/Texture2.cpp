@@ -80,12 +80,16 @@ Jafg::LTexture2Ref Jafg::LTexture2::FromMemory(LStringView HumanReadableName, al
 
 Jafg::LTexture2Ref Jafg::LTexture2::FromAsset(LStringView View)
 {
-    if (Detail::GMutableEngine)
-    {
-        return Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
-            ->FromAsset(View);
-    }
-    LOG_FATAL(LogRhi, "GMutableEngine is invalid.")
+    check(Detail::GMutableEngine)
+    return Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
+        ->FromAsset(View);
+}
+
+Jafg::LTexture2Ref Jafg::LTexture2::FromFile(LPath const& Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State)
+{
+    check(Detail::GMutableEngine)
+    return Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
+        ->FromFile(Path, HostCreateInfo, DeviceCreateInfo, State);
 }
 
 Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost(HostInfo const& Info)

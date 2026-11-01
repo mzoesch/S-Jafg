@@ -990,6 +990,7 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
             LOG_ERROR(LogForeign, "[{}]: No such directory [{}].", P.AbsolutePath, P.Content)
             return false;
         }
+        P.Content = finder::canonical(P.Content);
     }
 
     if (algo::contains(this->FetchedPlugins, P.AbsolutePath, &LFetchedPlugin::AbsolutePath))
@@ -998,9 +999,17 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
         return false;
     }
 
-    if (auto It{ algo::find(this->FetchedPlugins, P.Identifier, &LFetchedPlugin::Identifier) }; It != this->FetchedPlugins.end())
+    if (auto It{algo::find(this->FetchedPlugins, P.Identifier, &LFetchedPlugin::Identifier)}; It != this->FetchedPlugins.end())
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] already fetched from [{}]. Cannot fetch from [{}].", It->Identifier, It->AbsolutePath, P.AbsolutePath)
+        LOG_ERROR(LogForeign, "[{}]: Duplicate identifier [{}] used by [{}]."
+            , P.AbsolutePath, P.Identifier, It->AbsolutePath)
+        return false;
+    }
+
+    if (auto It{algo::find(this->FetchedPlugins, P.Content, &LFetchedPlugin::Content)}; It != this->FetchedPlugins.end())
+    {
+        LOG_ERROR(LogForeign, "[{}]: Plugin points to an already loaded content directory: [{}] loaded by [{}]."
+            , P.AbsolutePath, It->Content, It->AbsolutePath)
         return false;
     }
 
@@ -1034,7 +1043,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
         return EPluginLoadReturnCode::NoBin;
     }
 
-    if (algo::contains(this->LoadedPlugins, Bin, &LLoadedPlugin::GetPathToBin))
+    if (algo::contains(this->LoadedPlugins, Bin, &LLoadedPlugin::GetAbsoluteBin))
     {
         return EPluginLoadReturnCode::AlreadyLoaded;
     }
@@ -1056,7 +1065,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
         return Rc;
     }
 
-    LOG_VERBOSE(LogForeign, "Loaded plugin [{}] from [{}]. Now loading contents.", Plugin.GetIdentifier(), Plugin.GetPathToBin())
+    LOG_VERBOSE(LogForeign, "Loaded plugin [{}] from [{}]. Now loading contents.", Plugin.GetIdentifier(), Plugin.GetAbsoluteBin())
 
     Plugin.Uuid = this->GetNextPluginUuid();
 
@@ -1068,7 +1077,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     auto& Ref{ this->LoadedPlugins.back() };
     this->OnForeignPluginLoaded.Broadcast(Ref);
 
-    LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Ref.GetIdentifier(), Ref.GetPathToBin())
+    LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Ref.GetIdentifier(), Ref.GetAbsoluteBin())
 
     return EPluginLoadReturnCode::Success;
 }

@@ -11,7 +11,7 @@ void Jafg::WInput_List::Construct()
 
     if (!this->Icon.get())
     {
-        this->Icon = LTexture2::FromAsset("Icons/Jafg.ArrowDown");
+        this->Icon = LTexture2::FromAsset("Icons/ArrowDown");
         this->IconBrush.bAlwaysPad = true;
         this->IconBrush.Alignment = LIconBrush::Align::Right;
     }

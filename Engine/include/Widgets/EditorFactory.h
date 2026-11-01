@@ -137,7 +137,7 @@ inline LFactoryButton EditorResetButton(LViewport& Viewport, bool bEnabled, TFun
         .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColor)
         .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
         .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
-        .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Jafg.Reset"))
+        .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Reset"))
         .Enabled(bEnabled)
         .Delegate(Delegate)
         .OnKeyEventFocused([OnAction=std::move(OnAction)](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event) mutable

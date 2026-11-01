@@ -181,7 +181,7 @@ public:
         this->GetTransitiveComponentAabbImpl(Result);
         return Result;
     }
-    NODISCARD constexpr LWorldAabb3 GetAabbForThisComponentOnly() const noexcept { return this->Aabb; }
+    NODISCARD constexpr LWorldAabb3 const& GetAabbForThisComponentOnly() const noexcept { return this->Aabb; }
 
     NODISCARD FORCEINLINE TArray<TJxxUnique<ASceneComponent>> const& GetChildren() const noexcept { return this->Children; }
 

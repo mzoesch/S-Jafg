@@ -43,8 +43,8 @@ void Jafg::WFinder::Construct()
                     (0_spt, 14_spt, LIconBrush::Align::Center)
                 .InAllRightIconBrushesChained<&LIconBrush::InwardsPadding, &LIconBrush::MinIconSize, &LIconBrush::Alignment>
                     (0_spt, 10_spt, LIconBrush::Align::Center)
-                .LeftIcon("Icons/Jafg.Filter")
-                .RightIcon("Icons/Jafg.ExtendDown")
+                .LeftIcon("Icons/Filter")
+                .RightIcon("Icons/ExtendDown")
                 .Palette(*Prefs.SecondaryPaletteSolid)
                 .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                 .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
@@ -68,7 +68,7 @@ void Jafg::WFinder::Construct()
                 .Content("Refresh")
                 .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
-                .LeftIcon("Icons/Jafg.Refresh")
+                .LeftIcon("Icons/Refresh")
                 .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
                     if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
@@ -234,7 +234,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
             NewStaticNode(WTextIconizedLeft)
                 .Anchor(EAnchor::HFill)
                 .MinDesiredSize(this->NameSize)
-                .Icon(EntryMeta.bExtended ? LString{"Icons/Jafg.ExtendDown"} : LString{"Icons/Jafg.ExtendRight"})
+                .Icon(EntryMeta.bExtended ? LString{"Icons/ExtendDown"} : LString{"Icons/ExtendRight"})
                 .Content(Entry.path().filename().string())
             + NewStaticNode(WText)
                 .MinMaxDesiredSize(this->SizeSize)
@@ -269,7 +269,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = algo::sprintf("Inspect {}", LexToString(Asset.Type)),
-                                    .Icon = "Icons/Jafg.Information"
+                                    .Icon = "Icons/Information"
                                     },
                                 .OnAction = [SelfPath](auto&&...)
                                 {
@@ -286,7 +286,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Import as Texture",
-                                    .Icon = "Icons/Jafg.Import"
+                                    .Icon = "Icons/Import"
                                     },
                                 .OnAction = [this, SelfPath](auto&&...)
                                 {
@@ -305,7 +305,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
                 .Padding({})
                 .MinDesiredSize(this->NameSize)
                 .SkipBrushDraw(true)
-                .Icon("Icons/Jafg.File")
+                .Icon("Icons/File")
                 .Content(Entry.path().filename().string())
             + NewStaticNode(WText)
                 .MinMaxDesiredSize(this->SizeSize)
@@ -326,7 +326,7 @@ void Jafg::WFinder::OnExtendUpdate(finder::path const& Path, LEntry& Entry)
     check(Entry.Node.IsValidFast())
     auto& Parent{Entry.Node->AsStatic<WParent>()};
     Parent.GetChildren()[0]->AsStatic<WTextIconizedLeft>().Icon =
-        Entry.bExtended ? LTexture2::FromAsset("Icons/Jafg.ExtendDown") : LTexture2::FromAsset("Icons/Jafg.ExtendRight");
+        Entry.bExtended ? LTexture2::FromAsset("Icons/ExtendDown") : LTexture2::FromAsset("Icons/ExtendRight");
 
     auto Idx{algo::distance(this->Container->GetChildren(), algo::find_checked(this->Container->GetChildren(), &Parent, algo::unique_raw))};
     auto Indent{static_cast<std::size_t>(this->Padding2Indent(Parent.Padding))};
