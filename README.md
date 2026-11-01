@@ -6,14 +6,14 @@ As of now, it runs natively on Linux and on Windows through the UCRT.
 # Getting Up and Running
 
 ## 1.) Prerequisites
-### Docker
-- Jafg supports partial cross-platform development through [Docker](https://www.docker.com/):
+### Docker (recommended) -- all platforms
+- Jafg supports partial cross-platform development through [Docker](https://www.docker.com/) (tough it is recommended to then launch the `Runtime` on the host after compiling):
   ```bash
   docker build -t jafg-env .
   ```
-  Then use it as a devcontainer, a toolchain for your IDE, or manually with:
+  Then use the image as a devcontainer, a toolchain for your IDE, or manually with:
   ```bash
-  docker run -it --name jafg -v $(pwd)/.ccache:/root/.ccache -v $(pwd):/Jafg jafg-env
+  docker run -it --name jafg -v $(pwd)/.ccache:/home/developer/.ccache -v $(pwd):/Jafg jafg-env
   ```
   and re-enter later with:
   ```bash
@@ -28,15 +28,16 @@ As of now, it runs natively on Linux and on Windows through the UCRT.
   ```
 ### Windows
 - Msys2:
-  - Either run `Setup.bat` to install msys2 and required packages (all downloaded content and installed packages will reside in the engine root directory and are not installed system-wide). 
+  - Either run `Programs/Setup.bat` to install msys2 and required packages (all downloaded content and installed packages will reside in the engine root directory and are not installed system-wide). 
   - Alternative you may use your own system-wide msys2 installation; but ensure to have the packages installed mentioned in the [installer](Programs/msys2_install_pkgs.sh).
 - Open the `msys64/ucrt64.exe` shell.
 ### Common
-Only when making changes to the reflection system you will additionally need `>= Rust 1.85.x` installed otherwise prebuild binaries will be downloaded.
+For non docker builds, the reflection system additionally requires `>= Rust 1.85.x`.
 
 > [!IMPORTANT]
-> Jafg uses for development builds [ccache](https://ccache.dev/) by default if installed. You may want to disable it with `JAFG_USE_CCACHE=Off`.
-> You might want to consider increasing your cache limit `ccache --set-config max_size=nG` to avoid misses.
+> Jafg uses for development builds [ccache](https://ccache.dev/) by default if installed. In docker builds a local `.ccache` folder is mounted and not your system-wide cache.
+>
+> For native builds, you may want to disable it with `JAFG_USE_CCACHE=Off`. You might want to consider increasing your cache limit `ccache --set-config max_size=nG` to avoid misses.
 
 ## 2.) Build and Run
 1. To build, run the following:
