@@ -9,7 +9,7 @@ As of now, it runs natively on Linux and on Windows through the UCRT.
 ### Docker (recommended) -- all platforms
 - Jafg supports partial cross-platform development through [Docker](https://www.docker.com/) (tough it is recommended to then launch the `Runtime` on the host after compiling):
   ```bash
-  docker build -t jafg-env .
+  docker build -t jafg-env .devcontainer
   ```
   Then use the image as a devcontainer, a toolchain for your IDE, or manually with:
   ```bash
