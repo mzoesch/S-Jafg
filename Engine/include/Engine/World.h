@@ -176,7 +176,31 @@ public:
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running && !this->bPaused; }
     void Tick(f64 Dt);
 
-    void Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const;
+    struct DrawInfo
+    {
+        //# The eye to draw from.
+        LWorldEye const& Eye;
+        //# The instance to prefer for all supported drawables.
+        LMaterialInstance* Instance{};
+        //# Shared named sets free to use for this draw call. Might get modified.
+        //# TODO: Do we need a second set with ro rights only?
+        algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets;
+        //# Shared named buffers free to use for this draw call. Might get modified.
+        //# Ptrs must be valid.
+        //# TODO: Replace this with a non-owning buffer object. Ptr here is so annoying.
+        //# TODO: Do we need a second set with ro rights only?
+        algo::transparent_unordered_string_map<rhi::mapped_device_buffer*> SharedBuffers;
+        //# An optional filter to only draw a subset of actors.
+        std::optional<TArray<AActor*>> const& Filter;
+
+        //# Whether to update world device data for this draw call.
+        bool bUpdateWorldDataSet{ true };
+
+        //# When using the pbr pipeline. This is the limit.
+        std::size_t PbrMaterialLimit{};
+        std::size_t PbrLightLimit{};
+    };
+    void Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const;
 
     std::expected<APersonaController*,LString> Login(LTransientPersona Persona);
 
@@ -282,11 +306,6 @@ public:
     NODISCARD LPhysicsSystem& GetWorldGlobalPhysicsSystem() noexcept { return this->PhysicsSystem; }
     NODISCARD LPhysicsSystem const& GetWorldGlobalPhysicsSystem() const noexcept { return this->PhysicsSystem; }
 
-    template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
-    FORCEINLINE auto const& Vk_GetWorldDataDescriptorSet(TRenderInfo const& Info) const noexcept { return this->Vk_WorldDescriptorSets[Info.Frame]; }
-    template<typename TRenderInfo> requires std::is_base_of_v<LRenderInfo, TRenderInfo>
-    FORCEINLINE auto const& Vk_GetWorldDataBuffer(TRenderInfo const& Info) const noexcept { return this->Vk_WorldBuffers[Info.Frame]; }
-
     static LWorld* GetWorldFromHumanReadableName(LStringView InHumanReadableName) noexcept;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LStringView InHumanReadableName) noexcept
     {
@@ -351,9 +370,6 @@ private:
 
     LPhysicsSystem PhysicsSystem{ ESkipInit::Here };
     TArray<ARigidComponent*> RigidComponents;
-
-    rhi::frame_array<vk::raii::DescriptorSet> Vk_WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    rhi::frame_array<rhi::mapped_device_buffer> Vk_WorldBuffers;
 };
 
 //#

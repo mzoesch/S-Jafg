@@ -19,7 +19,7 @@ void Jafg::LSliderBrush::Draw(LNodeRenderInfo const& Info, LRect2F const& Rect, 
         .BorderTint = Colors::Black,
         .OutlineTint = Colors::Black,
         .OutlineThickness = 0,
-        .SamplerIndex = std::to_underlying(UBO::Bindless::Sampler::LinearClampToEdgeSamplerIdx),
+        .SamplerIndex = std::to_underlying(UBO::Bindless::Sampler::LinearClampToEdge),
         });
 }
 

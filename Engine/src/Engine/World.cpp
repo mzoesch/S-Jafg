@@ -20,6 +20,7 @@
 #include "Framework/TextureSubsystem.h"
 #include "Framework/Skybox.h"
 #include "../Framework/PhysicsForeignCore.h"
+#include "Framework/LightSubsystem.h"
 
 Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
     : LClassOuter{std::move(Info.HumanReadableName)}, CreateInfo{std::move(Info)}
@@ -39,13 +40,10 @@ Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
     check(!Track.ChildWorld.get())
     Track.ChildWorld = TUnique<LWorld>{this};
 
-    auto& Frontend{this->GetEngine().GetLocalEgo().GetFrontend()};
-
-    LOG_TRACE(LogRhi, "Allocating world data descriptor sets.")
-    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
-    this->Vk_WorldDescriptorSets = Frontend.Vk_CreateFrequentDescriptorSets(MaterialSubsystem.GetSharedDescriptorSetLayout<UBO::WorldData>());
-    this->Vk_WorldBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::WorldData::buffer_create_info());
-
+    LOG_VERBOSE(LogWorld, "[{}]: Initializing world with supreme policies [{}]."
+        , this->GetHumanReadableName()
+        , this->CreateInfo.SupremePoliciesClass.GetClassOrDefault().GetFullyQualifiedName()
+        )
     this->SupremePolicies = SpawnObject(CastTo<ASupremePolicies>{}, {*this, this->CreateInfo.SupremePoliciesClass.GetClassOrDefault()});
     check(this->SupremePolicies)
     if (Info.Gravity)
@@ -210,12 +208,18 @@ void Jafg::LWorld::Tick(f64 Dt)
     }
 }
 
-void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterialInstance* Instance, algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets, std::optional<TArray<AActor*>> const& Filter) const
+void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
 {
     STAT_FUNCTION()
 
-    LActorRenderInfo ActorInfo{Info, Eye, SharedSets};
+    check(!DrawInfo.SharedSets.contains(SSBO::BindlessPbrMaterial::name()))
+    DrawInfo.SharedSets.emplace(UBO::Bindless::name(), Info.TextureSubsystem.Vk_GetBindlessTextureArrayDescriptorSet());
+    DrawInfo.SharedSets.emplace(SSBO::BindlessPbrMaterial::name(), Info.MaterialSubsystem.GetBindlessPbrInstanceDescriptorSet(Info.Frame));
+
+    LActorRenderInfo ActorInfo{Info, DrawInfo.Eye, DrawInfo.SharedSets, DrawInfo.SharedBuffers};
     auto& Frontend{ActorInfo.Frontend};
+    auto& Eye{ActorInfo.PerspectiveEye};
+
     if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
     {
         ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
@@ -229,83 +233,81 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
         std::unreachable();
     }
 
-    ActorInfo.PreferredMaterial = Instance;
+    ActorInfo.PreferredMaterial = DrawInfo.Instance;
 
-    auto& WorldData{ActorInfo.WorldData};
-    WorldData = {
-        .view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up),
-        .proj = maths::perspective<LWorldReal,world_qual>(
+    {
+        auto& WorldData{ActorInfo.WorldData};
+
+        WorldData.view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
+        WorldData.proj = maths::perspective<LWorldReal,world_qual>(
             Eye.vert_fov,
             Info.VkViewport.width / Info.VkViewport.height,
             Eye.near_frustum, Eye.far_frustum
-            ),
-        };
-    WorldData.proj[1][1] *= -1.0f;
+            );
+        WorldData.proj[1][1] *= -1.0f;
 
-    // Set up lights
-    // Light 1: White light from above
-    WorldData.lightPositions[0] = glm::vec4(0.0f, 5.0f, 5.0f, 1.0f);
-    WorldData.lightColors[0] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
+        //# TODO: Is that not inside the view?
+        WorldData.CameraPosition = Eye.translation;
+        WorldData.ViewportHeight = Info.VkViewport.height;
+        WorldData.VerticalFov = Eye.vert_fov;
 
-    // Light 2: Blue light from the left
-    WorldData.lightPositions[1] = glm::vec4(-5.0f, 0.0f, 0.0f, 1.0f);
-    // WorldData.lightColors[1] = glm::vec4(0.0f, 0.0f, 300.0f, 1.0f);
-    WorldData.lightColors[1] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
+        WorldData.exposure = 1.0f;
+        WorldData.gamma = 2.2f;
+        WorldData.prefilteredCubeMipLevels = 1.0f;
+        WorldData.scaleIBLAmbient = 1.0f;
 
-    // Light 3: Red light from the right
-    WorldData.lightPositions[2] = glm::vec4(5.0f, 0.0f, 0.0f, 1.0f);
-    // WorldData.lightColors[2] = glm::vec4(300.0f, 0.0f, 0.0f, 1.0f);
-    WorldData.lightColors[2] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
+        if (DrawInfo.bUpdateWorldDataSet)
+        {
+            ActorInfo.WorldData.upload_and_update(Frontend.Vk_GetDevice()
+                , DrawInfo.SharedSets.at(UBO::WorldData::name())
+                , 0
+                , *DrawInfo.SharedBuffers.at(UBO::WorldData::name())
+                );
+        }
+    }
 
-    // Light 4: Green light from behind
-    WorldData.lightPositions[3] = glm::vec4(0.0f, -5.0f, 0.0f, 1.0f);
-    // WorldData.lightColors[3] = glm::vec4(0.0f, 300.0f, 0.0f, 1.0f);
-    WorldData.lightColors[3] = glm::vec4(300.0f, 300.0f, 300.0f, 1.0f);
+    if (DrawInfo.PbrLightLimit > 0)
+    {
+        auto& LightSubsystem{*this->GetSubsystemChecked<JLightSubsystem>()};
 
-    // Set camera position for view-dependent effects
-    WorldData.CameraPosition = Eye.translation;
-
-    WorldData.ViewportHeight = Info.VkViewport.height;
-    WorldData.VerticalFov = Eye.vert_fov;
-
-    // Set PBR parameters
-    WorldData.exposure = 3.2f;//4.5f;
-    WorldData.gamma = 1.3f;//2.2f;
-    WorldData.prefilteredCubeMipLevels = 1.0f;
-    WorldData.scaleIBLAmbient = 1.0f;
-
-    ActorInfo.WorldDataDescriptorSet = this->Vk_GetWorldDataDescriptorSet(ActorInfo);
-
-    auto& WorldDataBuffer{this->Vk_GetWorldDataBuffer(ActorInfo)};
-    WorldData.upload(WorldDataBuffer);
-    auto WorldDataWriteInfo{WorldData.write_info(*WorldDataBuffer)};
-    std::array Writes{vk::WriteDescriptorSet{
-        .dstSet = ActorInfo.WorldDataDescriptorSet,
-        .dstBinding = 0, .dstArrayElement = 0, .descriptorCount = 1,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .pBufferInfo = &WorldDataWriteInfo,
-        }};
-    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+        rhi::object_range<SSBO::BindlessPbrLight> Lights{16, DrawInfo.PbrLightLimit};
+        for (auto* Light: LightSubsystem.GetLights())
+        {
+            check(Light->bCanEverAffectWorld)
+            if (Light->bEnabled)
+            {
+                Lights->push_back({
+                    .Translation = Light->Translation,
+                    .Range = 32.0f,
+                    .Type = ELight::Point,
+                    .Tint = Light->Tint.ToDeviceReadyVector3(),
+                    .Intensity = 1.0f,
+                    });
+            }
+        }
+        Lights.upload_and_update(Info.Frontend.Vk_GetDevice()
+            , DrawInfo.SharedSets.at(SSBO::BindlessPbrLight::name())
+            , 0
+            , *DrawInfo.SharedBuffers.at(SSBO::BindlessPbrLight::name())
+            );
+    }
 
     ActorInfo.CommandBuffer.setPolygonModeEXT(ActorInfo.DefaultPerspectivePolygonMode);
 
-    if (Filter)
+    if (DrawInfo.Filter)
     {
-        check(!Filter->empty())
-        for (auto* Actor: *Filter)
+        check(!DrawInfo.Filter->empty())
+        for (auto* Actor: *DrawInfo.Filter)
         {
             check(!Actor->_IsGarbage())
+            check(&Actor->GetOuter() == this)
             for (auto const& Comp: Actor->GetComponents())
             {
                 if (Comp->ShouldRender())
                 {
                     Comp->Render(ActorInfo);
                 }
-
-                continue;
             }
-
-            continue;
         }
     }
     else
@@ -345,7 +347,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, LWorldEye const& Eye, LMaterial
         }
     }
 
-    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !Filter)
+    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !DrawInfo.Filter)
     {
         this->Skybox->RenderSkybox(ActorInfo);
     }

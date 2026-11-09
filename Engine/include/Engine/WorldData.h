@@ -13,8 +13,8 @@ struct WorldData final : rhi::ubo_template<WorldData, vk::ShaderStageFlagBits::e
     LMat4F view;                      // World-to-camera transformation matrix
     LMat4F proj;                      // Camera-to-clip space projection matrix
 
-    std::array<LVec4F,4> lightPositions;           // Light positions in world space
-    std::array<LVec4F,4> lightColors;              // Light intensities and colors
+    // std::array<LVec4F,4> lightPositions;           // Light positions in world space
+    // std::array<LVec4F,4> lightColors;              // Light intensities and colors
 
     f32 exposure;                     // HDR exposure control
     f32 gamma;                        // Gamma correction value (typically 2.2)

@@ -51,7 +51,7 @@ struct LRegionBrush
     //# Whether to skip drawing this region.
     bool bSkipBrushDraw{};
     //# Texture UV out-of-bounds behavior.
-    UBO::Bindless::Sampler SamplerAddressMode{ UBO::Bindless::Sampler::LinearClampToEdgeSamplerIdx };
+    UBO::Bindless::Sampler SamplerAddressMode{ UBO::Bindless::Sampler::LinearClampToEdge };
 
     //# Whether to clamp radii based on their size.
     bool bClampRadii{ true };

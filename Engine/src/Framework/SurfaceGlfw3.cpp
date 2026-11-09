@@ -316,17 +316,39 @@ void Jafg::LSurfaceGlfw3::OnRender()
     check(this->Handle)
     check(Tasks::IsOnRendererThread())
 
-    check(this->Vk_LastFrameInFlightIndex < rhi::max_frames_in_flight)
+    check(this->Vk_LastFrameInFlightIndex < rhi::max_frames_in_flight || this->Vk_LastFrameInFlightIndex == NoLastFrameInFlight)
 
     check(this->Vk_CommandBuffers.size() == this->Vk_GetNumberOfFramesInFlightInternal())
 
     auto& Frontend{this->GetMutableFrontend()};
 
     check(this->Vk_GetNumberOfFramesInFlightInternal() == Frontend.Vk_GetNumberOfFramesInFlight())
-    this->Vk_CurrentFrameInFlightIndex = static_cast<u32>((this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlightInternal());
 
-    while (vk::Result::eTimeout == Frontend.Vk_GetDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX))
-        ;
+    if (this->Vk_HasLastFrameInFlight())
+    {
+        this->Vk_CurrentFrameInFlightIndex = static_cast<u32>((this->Vk_LastFrameInFlightIndex + 1) % this->Vk_GetNumberOfFramesInFlightInternal());
+        if (this->Vk_CurrentFrameInFlightIndex != Frontend.GetSync())
+        {
+            LOG_VERBOSE(LogSurface
+                , "[{}]: Out of sync with frontend on frame in flight [{}!={}] resulting in suboptimal resource utilization."
+                , this->GetHumanReadableName(), *this->Vk_CurrentFrameInFlightIndex, Frontend.GetSync()
+                )
+            this->Vk_LastFrameInFlightIndex = NoLastFrameInFlight;
+            this->Vk_CurrentFrameInFlightIndex = Frontend.GetSync();
+        }
+    }
+    else
+    {
+        this->Vk_CurrentFrameInFlightIndex = Frontend.GetSync();
+    }
+    check(!!this->Vk_CurrentFrameInFlightIndex)
+    check(*this->Vk_CurrentFrameInFlightIndex == Frontend.GetSync())
+
+    {
+        STAT_ZONE("Jafg::LSurfaceGlfw3::OnRender::waitForFences")
+        while (Frontend.Vk_GetDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX) == vk::Result::eTimeout)
+            ;
+    }
 
     auto [Result, ImageIndex] = this->Vk_VkMySwapchain.acquireNextImage(
         std::numeric_limits<u64>::max(), this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex], nullptr
@@ -351,6 +373,7 @@ void Jafg::LSurfaceGlfw3::OnRender()
         LOG_VERBOSE(LogSurface, "Swapchain is out of date. Recreating swapchain.")
         this->Vk_CurrentFrameInFlightIndex.reset();
         this->Vk_CreateSwapchain();
+        check(!this->bPendingResize)
         return;
     }
 
@@ -373,10 +396,6 @@ void Jafg::LSurfaceGlfw3::OnRender()
             this->Vk_CurrentFrameInFlightIndex.reset();
             this->Vk_CreateSwapchain();
             check(this->bPendingResize == false)
-            for (auto& Widget : this->GetViewport().GetTopLevelWidgets())
-            {
-                Widget->OnSurfaceResize();
-            }
             return;
         }
     }
@@ -392,16 +411,34 @@ void Jafg::LSurfaceGlfw3::OnRender()
         Result != vk::Result::eSuboptimalKHR /* Not an error. Just ignore. */
         )
     {
-        panicMsgf("Failed to acquire swapchain image. vk::Result: [{}].", vk::to_string(Result))
+        LOG_FATAL(LogSurface, "Failed to acquire swapchain image. vk::Result: [{}].", vk::to_string(Result))
     }
 
     Frontend.Vk_GetDevice().resetFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex]);
 
     auto& CommandBuffer{ this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex] };
-    CommandBuffer.reset();
-    CommandBuffer.begin({});
+    if (auto Result{CommandBuffer.reset()}; Result != vk::Result::eSuccess)
+    {
+        LOG_FATAL(LogSurface
+            , "Failed to reset command buffer for frame [{}]."
+            , *this->Vk_CurrentFrameInFlightIndex, vk::to_string(Result)
+            )
+    }
+    if (auto Result{CommandBuffer.begin({})}; Result != vk::Result::eSuccess)
+    {
+        LOG_FATAL(LogSurface
+            , "Failed to begin command buffer for frame [{}]. vk::Result: [{}]."
+            , *this->Vk_CurrentFrameInFlightIndex, vk::to_string(Result)
+            )
+    }
 
-    this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex].reset({});
+    if (auto Result{this->Vk_DescriptorPools[*this->Vk_CurrentFrameInFlightIndex].reset({})}; Result != vk::Result::eSuccess)
+    {
+        LOG_FATAL(LogSurface
+            , "Failed to reset descriptor pool for frame [{}]. vk::Result: [{}]."
+            , *this->Vk_CurrentFrameInFlightIndex, vk::to_string(Result)
+            )
+    }
 
     LRenderInfo Info{
         .UserPreferences = GetSingleton<JUserPreferences>(),
@@ -513,7 +550,13 @@ void Jafg::LSurfaceGlfw3::OnRender()
             },
         });
 
-    (void)Info.CommandBuffer.end();
+    if (auto Result{Info.CommandBuffer.end()}; Result != vk::Result::eSuccess)
+    {
+        LOG_FATAL(LogSurface
+            , "Failed to end command buffer for frame [{}]. vk::Result: [{}]."
+            , *this->Vk_CurrentFrameInFlightIndex, vk::to_string(Result)
+            )
+    }
 
     vk::PipelineStageFlags DstStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
     Info.Frontend.Vk_GetGraphicsQueue().submit(vk::SubmitInfo{
@@ -1336,6 +1379,10 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
 
     LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
 
+    const bool bPendedResize{this->bPendingResize};
+
+    check(!this->Vk_CurrentFrameInFlightIndex)
+
     auto& Frontend{this->GetMutableFrontend()};
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -1540,6 +1587,14 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     this->__Vk_CreateImageViews();
     this->__Vk_CreateColorResources();
     this->__Vk_CreateSynchObjects();
+
+    if (bPendedResize)
+    {
+        for (auto& Widget: this->GetViewport().GetTopLevelWidgets())
+        {
+            Widget->OnSurfaceResize();
+        }
+    }
 }
 
 std::optional<vk::SurfaceFormatKHR> Jafg::LSurfaceGlfw3::Vk_GetSwapchainSurfaceFormatKHR(vk::SurfaceFormatKHR DesiredSurfaceFormat)
@@ -1668,7 +1723,7 @@ void Jafg::LSurfaceGlfw3::__Vk_CreateSynchObjects()
         continue;
     }
 
-    this->Vk_LastFrameInFlightIndex = 0;
+    this->Vk_LastFrameInFlightIndex = NoLastFrameInFlight;
     check( this->Vk_CurrentFrameInFlightIndex.has_value() == false )
 }
 

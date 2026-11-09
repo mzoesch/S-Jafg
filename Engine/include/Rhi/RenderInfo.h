@@ -38,7 +38,7 @@ struct LRenderInfo
     //# The pool to allocate descriptors from for this frame only.
     vk::DescriptorPool DescriptorPool;
 
-    //# The frame in question.
+    //# The frame in question which is going to be in flight.
     u32 Frame;
     //# The image in question.
     u32 Image;

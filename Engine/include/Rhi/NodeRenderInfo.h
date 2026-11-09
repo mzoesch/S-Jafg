@@ -17,9 +17,6 @@ struct LNodeRenderInfo: LRenderInfo
     static constexpr u64 MaxBatchCount{16};
 
     LViewport const& Viewport;
-    JTextureSubsystem const& TextureSubsystem;
-    JMaterialSubsystem const& MaterialSubsystem;
-    JFontSubsystem const& FontSubsystem;
 
     //#
     //# The translation that is recommended for children of a #WNode to use while drawing.

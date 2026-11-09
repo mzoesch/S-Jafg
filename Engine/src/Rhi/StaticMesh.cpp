@@ -8,6 +8,8 @@
 #include "User/UserPreferences.h"
 #include "Framework/MeshSubsystem.h"
 #include "Framework/ShaderSubsystem.h"
+#include "Framework/TextureSubsystem.h"
+#include "Framework/MaterialSubsystem.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -619,7 +621,7 @@ void Jafg::LStaticMesh::LoadToDevice()
     }
 }
 
-void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance) const
+void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant) const
 {
 #if JAFG_WITH_EDITOR
     /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
@@ -630,9 +632,19 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
 #endif /* !JAFG_WITH_EDITOR */
     check(this->IsOnDevice())
 
-    check(Instance.Material.get())
+    LMaterialInstance const* Instance{};
+    if (std::holds_alternative<LMaterialInstance const*>(InstanceVariant))
+    {
+        Instance = std::get<LMaterialInstance const*>(InstanceVariant);
+    }
+    else if (std::holds_alternative<LPbrMaterialInstance const*>(InstanceVariant))
+    {
+        Instance = std::get<LPbrMaterialInstance const*>(InstanceVariant)->Instance.get();
+    }
+    check(Instance)
+    check(Instance->Material.get())
 
-    auto& Material{*Instance.Material};
+    auto& Material{*Instance->Material};
     auto& Pipeline{Material.Pipeline};
     auto& MaterialTemplate{Material.Template};
     auto& Shader{MaterialTemplate.my_shader};
@@ -640,20 +652,19 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
 
     {
-        /* Vulkan specs states at least 4. */
         std::array<vk::DescriptorSet, rhi::bound_descriptor_set_limit> DescriptorSetsToBind;
         u32 NumDescriptorSets{0};
         for (auto It{Shader.begin_space()}; It != Shader.end_space(); ++It)
         {
             checkCode
             (
-                if (*It >= 4)
+                if (*It >= rhi::bound_descriptor_set_limit)
                 {
-                    LOG_FATAL(LogRhi, "Expected at most 4 descriptor sets to bind. But got [{}].", *It)
+                    LOG_FATAL(LogRhi, "Expected at most [{}] descriptor sets to bind. But got [{}].", rhi::bound_descriptor_set_limit, *It)
                 }
             )
 
-            if (auto* Set{Instance.Vk_FindUniqueDescriptorSet(*It, Info.Frame)}; Set)
+            if (auto* Set{Instance->Vk_FindUniqueDescriptorSet(*It, Info.Frame)}; Set)
             {
                 DescriptorSetsToBind[*It] = **Set;
             }
@@ -661,14 +672,10 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
             {
                 if (auto* Attribute{It->find_user_attribute("Shared", 1uz)}; Attribute != nullptr)
                 {
-                    if (Attribute->front() == "Jafg::UBO::WorldData"sv)
+                    if (auto Set{Info.Sets.find(Attribute->front())}; Set != Info.Sets.end())
                     {
                         check(DescriptorSetsToBind[*It] == nullptr)
-                        DescriptorSetsToBind[*It] = Info.WorldDataDescriptorSet;
-                    }
-                    else if (auto It2{Info.AdditionalSharedDescriptorSets.find(Attribute->front())}; It2 != Info.AdditionalSharedDescriptorSets.end())
-                    {
-                        unimplemented()
+                        DescriptorSetsToBind[*It] = Set->second;
                     }
                     else
                     {
@@ -721,7 +728,12 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
         )
         auto& Pc{Info.ShaderSubsystem.GetPushConstant(*PushConstant.CxxName)};
         check(Pc.PushForActor)
-        Pc.PushForActor(Info, Material, {Transform});
+        Pc.PushForActor(Info, Material, {
+            .Transform=Transform,
+            .PbrMaterial=std::holds_alternative<LPbrMaterialInstance const*>(InstanceVariant)
+                ? std::get<LPbrMaterialInstance const*>(InstanceVariant)->GetBindlessIndex()
+                : rhi::invalid_resource_index
+            });
     }
 
     Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);

@@ -374,3 +374,30 @@ SERDE_JSON_TYPE_ONLY_DESERIALIZE_BODY(LColor)
 {
     serde::from_string(&field, j.template get<LString>());
 }
+
+namespace Jafg::Detail
+{
+
+template<typename T> requires std::is_enum_v<T> && serde::serde_for_v<serde::is_string_archive<serde::behavior::panic>, T>
+void FlagsFromJson(json const& Json, TFlags<T> Field)
+{
+    LStringView JsonStr{Json.get<LStringView>()};
+
+    Field = TFlags<T>{};
+    while (true)
+    {
+        auto Position{JsonStr.find('|')};
+        LStringView const& FlagStr{(Position == LStringView::npos) ? JsonStr : JsonStr.substr(0, Position)};
+        if (FlagStr.empty())
+        {
+            break;
+        }
+
+        T Flag{};
+        serde::from_string(&Flag, FlagStr);
+        Field |= Flag;
+        JsonStr = (Position == LStringView::npos) ? LStringView{} : JsonStr.substr(Position + 1);
+    }
+}
+
+} /* ~Namespace Jafg::Detail */

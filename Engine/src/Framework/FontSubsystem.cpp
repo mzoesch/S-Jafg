@@ -523,7 +523,7 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32
                 static_cast<f32>(GlyphUV.AtlasBounds[1]) / AtlasExtend.y,
                 },
             .BindlessTextureIndex = this->AtlasTexture->GetBindlessIndex(),
-            .SamplerIndex = std::to_underlying(UBO::Bindless::Sampler::NearestClampToEdgeSamplerIdx),
+            .SamplerIndex = std::to_underlying(UBO::Bindless::Sampler::NearestClampToEdge),
             /* TODO: Scale with Retina/HighDPI. */
             .MsdfPixelRange = algo::max(this->PixelRange * (FontSize / this->AtlasGlyphSize), 1.0f),
             .Cluster = Infos[Idx].cluster,

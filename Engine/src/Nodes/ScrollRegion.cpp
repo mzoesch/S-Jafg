@@ -77,9 +77,6 @@ void Jafg::WScrollRegion::Draw(LNodeRenderInfo const& Info) const
                     }
                 }
                 Child->Draw(LNodeRenderInfo{static_cast<LRenderInfo const&>(Info), Info.Viewport,
-                    Info.TextureSubsystem,
-                    Info.MaterialSubsystem,
-                    Info.FontSubsystem,
                     Translation, LRect2F{
                         .offset = AnchoredTopLeftFromMostOuter,
                         .extent = this->GetAnchoredSize_v2(),

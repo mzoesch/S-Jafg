@@ -6,6 +6,7 @@
 #include "Rhi/Texture2.h"
 #include "Rhi/StaticMesh.h"
 #include "Rhi/Material.h"
+#include "Rhi/PhysicalRendering.h"
 #include "StaticMeshComponent.generated.h"
 
 namespace Jafg
@@ -31,6 +32,7 @@ public:
 
     void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
     void SetMaterialInstance(LMaterialInstanceRef Instance) noexcept;
+    void SetPbrMaterialInstance(LPbrMaterialInstanceRef Instance) noexcept;
 
     virtual void Render(LActorRenderInfo const& Info) const override;
 
@@ -38,6 +40,8 @@ private:
 
     CLASS_FIELD(Identity)
     LMaterialInstanceRef MaterialInstance;
+    CLASS_FIELD(Identity)
+    LPbrMaterialInstanceRef PbrMaterialInstance;
     CLASS_FIELD(EditorVisible)
     LStaticMeshRef Mesh;
 

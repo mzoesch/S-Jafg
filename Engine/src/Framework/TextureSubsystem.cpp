@@ -143,6 +143,7 @@ void Jafg::JTextureSubsystem::_Vk_UpdateSamplers()
         .mipmapMode = vk::SamplerMipmapMode::eLinear,
         .addressModeU = vk::SamplerAddressMode::eRepeat, .addressModeV = vk::SamplerAddressMode::eRepeat, .addressModeW = vk::SamplerAddressMode::eRepeat,
         .mipLodBias = 0.0f,
+        //# TODO: Make user pref.
         .anisotropyEnable = vk::True, .maxAnisotropy = Frontend.Vk_GetPhysicalDevice().getProperties().limits.maxSamplerAnisotropy,
         .compareEnable = vk::False, .compareOp = vk::CompareOp::eAlways,
         .minLod = 0.0f, // Increase for worse texture quality.
@@ -251,7 +252,7 @@ void Jafg::JTextureSubsystem::AddTextureToGlobalBindlessArray(LTexture2* Texture
 
     if (auto R{this->_Vk_AddTransientImageToGlobalBindlessArray(Texture->GetImageView())})
     {
-        Texture->_SetBindlessIndex(static_cast<i64>(*R));
+        Texture->_SetBindlessIndex(*R);
     }
     else
     {
@@ -264,7 +265,7 @@ void Jafg::JTextureSubsystem::AddTextureToGlobalBindlessArray(LTexture2* Texture
     LOG_VERBOSE(LogVulkan, "[{}]: Binding resource to global bindless texture array slot [{}].", Texture->GetPath(), Texture->GetBindlessIndex())
 }
 
-std::optional<std::size_t> Jafg::JTextureSubsystem::_Vk_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView)
+std::optional<rhi::resource_index_t> Jafg::JTextureSubsystem::_Vk_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView)
 {
     check(!!ImageView)
 
@@ -273,7 +274,7 @@ std::optional<std::size_t> Jafg::JTextureSubsystem::_Vk_AddTransientImageToGloba
     {
         return {};
     }
-    check(Idx < this->BindlessTextureArrayCapacity)
+    check(Idx < BindlessTextureArrayCapacity) // Unlikely.
 
     vk::DescriptorImageInfo ImageInfo{
         .imageView = ImageView,
@@ -289,14 +290,15 @@ std::optional<std::size_t> Jafg::JTextureSubsystem::_Vk_AddTransientImageToGloba
         }};
     this->GetFrontend().Vk_GetDevice().updateDescriptorSets(Writes, {});
 
-    return Idx;
+    return static_cast<rhi::resource_index_t>(Idx);
 }
 
 void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
 {
     auto& Frontend{this->GetFrontend()};
 
-    LOG_VERBOSE(LogTextureSubsystem, "Allocating bindless texture array descriptor pool and descriptor set.")
+    LOG_VERBOSE(LogTextureSubsystem, "Allocating bindless texture array descriptor pool and descriptor set with capacity [{}].", BindlessTextureArrayCapacity)
+    check(BindlessTextureArrayCapacity > 0)
 
     std::array Sizes{
         vk::DescriptorPoolSize{
@@ -305,7 +307,7 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
             },
         vk::DescriptorPoolSize{
             .type = vk::DescriptorType::eSampledImage,
-            .descriptorCount = this->BindlessTextureArrayCapacity,
+            .descriptorCount = BindlessTextureArrayCapacity,
             },
         };
     this->BindlessTextureArrayDescriptorPool = rhi::vk_build(Frontend.Vk_GetDevice(), vk::DescriptorPoolCreateInfo{
@@ -315,9 +317,10 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
         .pPoolSizes = Sizes.data(),
         });
 
+    u32 Count{BindlessTextureArrayCapacity};
     vk::DescriptorSetVariableDescriptorCountAllocateInfo CountInfo{
         .descriptorSetCount = 1,
-        .pDescriptorCounts = &this->BindlessTextureArrayCapacity,
+        .pDescriptorCounts = &Count,
         };
     std::vector Sets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
         .pNext = &CountInfo,
@@ -329,10 +332,10 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
     this->BindlessTextureArrayDescriptorSet = std::move(Sets[0]);
 
     check(this->FreeBindlessTextureArraySlots.words().empty())
-    this->FreeBindlessTextureArraySlots = algo::dynamic_bit_set{this->BindlessTextureArrayCapacity};
-    check(this->FreeBindlessTextureArraySlots.bit_count() == this->BindlessTextureArrayCapacity)
+    this->FreeBindlessTextureArraySlots = algo::dynamic_bit_set{BindlessTextureArrayCapacity};
+    check(this->FreeBindlessTextureArraySlots.bit_count() == BindlessTextureArrayCapacity)
 
-    TArray<LString> GuaranteedTextureIdentifiers{ "Textures/Jafg.IdentityMul" };
+    TArray<LString> GuaranteedTextureIdentifiers{ "Textures/IdentityMul" };
     if (!this->GuaranteedTextures.empty())
     {
         panic("Expected GuaranteedTextures to be empty.")

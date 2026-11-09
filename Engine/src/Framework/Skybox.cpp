@@ -90,16 +90,15 @@ void Jafg::ASkybox::RenderSkybox(LActorRenderInfo const& Info)
 
     // TODO: We want to make this prob. into a function because now it is duplicate code. @see StaticMesh.
     {
-        /* Vulkan specs states at least 4. */
         std::array<vk::DescriptorSet, rhi::bound_descriptor_set_limit> DescriptorSetsToBind;
         u32 NumDescriptorSets{0};
         for (auto It{Shader.begin_space()}; It != Shader.end_space(); ++It)
         {
             checkCode
             (
-                if (*It >= 4)
+                if (*It >= rhi::bound_descriptor_set_limit)
                 {
-                    LOG_FATAL(LogRhi, "Expected at most 4 descriptor sets to bind. But got [{}].", *It)
+                    LOG_FATAL(LogRhi, "Expected at most [{}] descriptor sets to bind. But got [{}].", rhi::bound_descriptor_set_limit, *It)
                 }
             )
 
@@ -111,14 +110,10 @@ void Jafg::ASkybox::RenderSkybox(LActorRenderInfo const& Info)
             {
                 if (auto* Attribute{It->find_user_attribute("Shared", 1uz)}; Attribute != nullptr)
                 {
-                    if (Attribute->front() == "Jafg::UBO::WorldData"sv)
+                    if (auto Set{Info.Sets.find(Attribute->front())}; Set != Info.Sets.end())
                     {
                         check(DescriptorSetsToBind[*It] == nullptr)
-                        DescriptorSetsToBind[*It] = Info.WorldDataDescriptorSet;
-                    }
-                    else if (auto It2{Info.AdditionalSharedDescriptorSets.find(Attribute->front())}; It2 != Info.AdditionalSharedDescriptorSets.end())
-                    {
-                        unimplemented()
+                        DescriptorSetsToBind[*It] = Set->second;
                     }
                     else
                     {

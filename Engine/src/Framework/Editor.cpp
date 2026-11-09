@@ -1928,7 +1928,17 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
     if (!ValidActors.empty())
     {
         auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
-        Pawn.GetWorld().Draw(Info, Pawn.GetEye(), &*this->SelectionMaterialInstance, {}, ValidActors);
+
+        algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets;
+        SharedSets.emplace(UBO::WorldData::name(), this->Vk_GetWorldDescriptorSet(Info.Frame));
+
+        Pawn.GetWorld().Draw(Info, {
+            .Eye = Pawn.GetEye(),
+            .Instance = &*this->SelectionMaterialInstance,
+            .SharedSets = std::move(SharedSets),
+            .Filter = ValidActors,
+            .bUpdateWorldDataSet = false,
+            });
     }
 }
 
@@ -2634,10 +2644,8 @@ void LoadGymCollection(Jafg::LWorld& World)
         Plane.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Triplanar")};
-            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Editor/GroundGrid_8M");
             Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
-            Comp.SetMaterialInstance(std::move(MaterialInstance));
+            Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo,"Textures/Editor/GroundGrid_8M"));
             Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
         });
     }
@@ -2665,10 +2673,8 @@ void LoadGymCollection(Jafg::LWorld& World)
         Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/UniformTriplanar")};
-            MaterialInstance->Vk_SetField(Frontend, MaterialInstance->GetBinding("base_color_map"), "Textures/Editor/ObjectGrid_1M");
             Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube_1M.glb"));
-            Comp.SetMaterialInstance(std::move(MaterialInstance));
+            Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, "Textures/Editor/ObjectGrid_1M"));
         });
     }
 
@@ -2678,9 +2684,9 @@ void LoadGymCollection(Jafg::LWorld& World)
         Sphere.EmplaceRootComponent<Jafg::AStaticMeshComponent>([World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->FindOrAllocateSharedInstance(JafgInfo, "Materials/Examples/CastleBrick02Red")};
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, "Materials/Examples/CastleBrick02Red")};
             Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
-            Comp.SetMaterialInstance(std::move(MaterialInstance));
+            Comp.SetPbrMaterialInstance(std::move(MaterialInstance));
 
             Comp.SetLocalTranslationByTeleport({0,0,4});
         });

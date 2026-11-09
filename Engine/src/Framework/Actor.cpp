@@ -52,7 +52,12 @@ void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
 
-    algo::orphan(&this->Components);
+    for (auto Components{std::exchange(this->Components, {})}; auto& Comp: Components)
+    {
+        check(Comp.get())
+        check(&Comp->GetOwningActor() == this)
+        Comp.release()->MarkAsGarbage_v2(Reason);
+    }
 
     if ((this->CanEverTick() && this->GetWorld().IsTimeLinear()) || (this->CanEverTickInDormantTimes() && this->GetWorld().IsTimeDesisted()))
     {

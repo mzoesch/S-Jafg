@@ -13,6 +13,7 @@ namespace Jafg
 
 struct LRenderInfo;
 struct LMaterialInstance;
+struct LPbrMaterialInstance;
 
 struct LStaticMesh;
 typedef rhi::shared_ref<LStaticMesh> LStaticMeshRef;
@@ -54,7 +55,7 @@ struct LStaticMesh final
                     .location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(LStaticMesh::Vertex, TexCoord)
                     },
                 vk::VertexInputAttributeDescription{
-                    .location = 3, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Tangent)
+                    .location = 3, .binding = 0, .format = vk::Format::eR32G32B32A32Sfloat, .offset = offsetof(LStaticMesh::Vertex, Tangent)
                     },
                 };
             return Desc;
@@ -148,7 +149,7 @@ struct LStaticMesh final
     ENGINE_API void LoadToDevice();
     inline void FreeFromDevice() noexcept { this->DeviceMeshes.clear(); }
 
-    ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance) const;
+    ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant) const;
     ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
 
     NODISCARD FORCEINLINE constexpr LWorldAabb3 const& GetAabb() const noexcept { return this->Aabb; }

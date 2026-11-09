@@ -7,6 +7,8 @@
 
 #include "Core.slang"
 
+static const uint INVALID_INDEX = 0xFFFFFFFFu;
+
 static const float PI = 3.14159265359;
 
 #define JAFG_SAMPLER_LINEAR_REPEAT                                      0

@@ -14,25 +14,22 @@ struct LActorRenderInfo: LRenderInfo
     //# The perspective eye.
     LWorldEye const& PerspectiveEye;
 
-    algo::transparent_unordered_string_map<vk::DescriptorSet> const& AdditionalSharedDescriptorSets;
+    //# RO buffers you should try to use. Do not modify.
+    algo::transparent_unordered_string_map<vk::DescriptorSet> const& Sets;
+    algo::transparent_unordered_string_map<rhi::mapped_device_buffer*> const& Buffers;
 
     //#
     //# The default perspective polygon mode. If rendering does not require a specific polygon mode,
     //# this one should be used.
-    //# If your draw call requires something else. Then reset the command buffer to this polygon mode after your
-    //# buffer submission.
+    //# When it is your turn to draw. The rendering pipeline will be in this state. So do not set it explicitly.
+    //# If your draw call requires something else; change it and then reset the command buffer to this polygon
+    //# mode after your buffer submission.
     //#
     vk::PolygonMode DefaultPerspectivePolygonMode;
 
-    LMaterialInstance* PreferredMaterial;
+    LMaterialInstance* PreferredMaterial{};
 
-    // TODO:
-    //  Remove world data from this render ino.
-    //  Each world should have their own RenderInfo. Where this lives.
-    //  Also the frontend should not own the world data buffer and descriptor set.
-    //  This should also be per world basis. The layout is maybe ok in the frontend?
     UBO::WorldData WorldData;
-    vk::DescriptorSet WorldDataDescriptorSet;
 
     //# Delegates called after all employed renderables have been rendered.
     //# You may even add delegates here while already being in a post render delegate.

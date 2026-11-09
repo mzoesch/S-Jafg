@@ -55,7 +55,6 @@ namespace
 
 constexpr i32 GlfwContextVersionMajor{ 3 };
 constexpr i32 GlfwContextVersionMinor{ 3 };
-constexpr u32 Vk_ApiVersion{ vk::ApiVersion14 };
 
 } /* ~Namespace <Anonymous> */
 
@@ -1264,13 +1263,13 @@ void Jafg::LFrontendVk::Vk_CreateInstance()
 
     auto Result{vk::enumerateInstanceVersion()};
     check(Result.has_value())
-    if (auto SupportedVersion{*Result}; SupportedVersion < ::Vk_ApiVersion)
+    if (auto SupportedVersion{*Result}; SupportedVersion < rhi::vk_version)
     {
         panicMsgf(
             "Vulkan API version [{}.{}.{}] is not supported. Supported version is [{}.{}.{}].",
-            VK_VERSION_MAJOR(::Vk_ApiVersion),
-            VK_VERSION_MINOR(::Vk_ApiVersion),
-            VK_VERSION_PATCH(::Vk_ApiVersion),
+            VK_VERSION_MAJOR(rhi::vk_version),
+            VK_VERSION_MINOR(rhi::vk_version),
+            VK_VERSION_PATCH(rhi::vk_version),
             VK_VERSION_MAJOR(SupportedVersion),
             VK_VERSION_MINOR(SupportedVersion),
             VK_VERSION_PATCH(SupportedVersion)
@@ -1290,7 +1289,7 @@ void Jafg::LFrontendVk::Vk_CreateInstance()
         .applicationVersion = VK_MAKE_VERSION(DETAIL_ENGINE_VERSION_MAJOR, DETAIL_ENGINE_VERSION_MINOR, DETAIL_ENGINE_VERSION_PATCH),
         .pEngineName = "Jafg Engine",
         .engineVersion = VK_MAKE_VERSION(DETAIL_ENGINE_VERSION_MAJOR, DETAIL_ENGINE_VERSION_MINOR, DETAIL_ENGINE_VERSION_PATCH),
-        .apiVersion = ::Vk_ApiVersion
+        .apiVersion = rhi::vk_version
         };
 
     TArray<char const*> RequiredInstanceExtensions_c_str; RequiredInstanceExtensions_c_str.reserve(this->Vk_RequiredInstanceExtensions.size());
@@ -1850,6 +1849,8 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
         // bool bSupportsPresentQueue{}; // TODO: How can we check this? Or is this obsolete?
         bool bSupportsRequiredExtensions{};
         bool bSupportsRequiredFeatures{};
+        bool bSupportsMinPushConstantSize{};
+        bool bSupportsMinDescriptorSetBindings{};
 
         auto Properties = PhysicalDevice.getProperties();
         auto Features = PhysicalDevice.template getFeatures2<
@@ -1878,9 +1879,19 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
             bSupportsGeometryShaders = true;
         }
 
-        if (Properties.apiVersion >= VK_API_VERSION_1_4)
+        if (Properties.apiVersion >= rhi::vk_version)
         {
             bSupportsVulkan14 = true;
+        }
+
+        if (Properties.limits.maxPushConstantsSize >= rhi::push_constant_limit)
+        {
+            bSupportsMinPushConstantSize = true;
+        }
+
+        if (Properties.limits.maxBoundDescriptorSets >= rhi::bound_descriptor_set_limit)
+        {
+            bSupportsMinDescriptorSetBindings = true;
         }
 
         bSupportsGraphicsQueue = algo::any_of(Families, [](auto const& Qfp)
@@ -1907,6 +1918,8 @@ std::multimap<u64, vk::raii::PhysicalDevice> Jafg::LFrontendVk::Vk_RankPhysicalD
             // || !bSupportsPresentQueue
             || !bSupportsRequiredExtensions
             || !bSupportsRequiredFeatures
+            || !bSupportsMinPushConstantSize
+            || !bSupportsMinDescriptorSetBindings
         )
         {
             Rating = 0;

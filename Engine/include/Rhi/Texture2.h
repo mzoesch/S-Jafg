@@ -113,14 +113,14 @@ struct LTexture2 final
     FORCEINLINE bool HasImageView() const noexcept { return static_cast<bool>(*this->View); }
     FORCEINLINE constexpr auto const& GetImageView() const noexcept { return this->View; }
 
-    FORCEINLINE constexpr bool IsBindless() const noexcept { return this->BindlessIndex != INDEX_NONE; }
-    FORCEINLINE constexpr u32 GetBindlessIndex() const noexcept
+    NODISCARD FORCEINLINE constexpr bool IsBindless() const noexcept { return this->BindlessIndex != rhi::invalid_resource_index; }
+    NODISCARD FORCEINLINE constexpr rhi::resource_index_t GetBindlessIndex() const noexcept
     {
-        check(this->BindlessIndex >= std::numeric_limits<u32>::min() && this->BindlessIndex <= std::numeric_limits<u32>::max())
-        return static_cast<u32>(this->BindlessIndex);
+        check(this->BindlessIndex != rhi::invalid_resource_index)
+        return this->BindlessIndex;
     }
     //# Internal method. Do not use!!!
-    FORCEINLINE constexpr void _SetBindlessIndex(i64 Value) noexcept { this->BindlessIndex = Value; }
+    FORCEINLINE constexpr void _SetBindlessIndex(u32 Value) noexcept { this->BindlessIndex = Value; }
 
 private:
 
@@ -134,10 +134,10 @@ private:
 
     LPath Path;
     Metadata Meta;
+    rhi::resource_index_t BindlessIndex{ rhi::invalid_resource_index };
     algo::byte_bulk MipMap0;
     rhi::device_image Handle;
     vk::raii::ImageView View{ nullptr };
-    i64 BindlessIndex{ INDEX_NONE };
 };
 
 //#

@@ -173,7 +173,8 @@ public:
     FORCEINLINE auto const& Vk_GetPresentSemaphores() const noexcept { return this->Vk_ImageAvailableSemaphores; }
     FORCEINLINE auto const& Vk_GetRenderSemaphores() const noexcept { return this->Vk_RenderSemaphores; }
     FORCEINLINE auto const& Vk_GetFlightFences() const noexcept { return this->Vk_FlightFences; }
-    FORCEINLINE auto Vk_GetLastFrameInFlightIndex() const noexcept { return this->Vk_LastFrameInFlightIndex; }
+    FORCEINLINE bool Vk_HasLastFrameInFlight() const noexcept { return this->Vk_LastFrameInFlightIndex != NoLastFrameInFlight; }
+    FORCEINLINE auto Vk_GetLastFrameInFlightIndex() const noexcept { check(this->Vk_HasLastFrameInFlight()) return this->Vk_LastFrameInFlightIndex; }
     FORCEINLINE auto Vk_GetCurrentFrameInFlightIndex() const noexcept { check( this->Vk_CurrentFrameInFlightIndex.has_value() ) return this->Vk_CurrentFrameInFlightIndex.value(); }
 
     FORCEINLINE auto const& Vk_GetCommandBuffers() const noexcept { return this->Vk_CommandBuffers; }
@@ -254,7 +255,8 @@ private:
     rhi::frame_array<vk::raii::Semaphore> Vk_ImageAvailableSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<vk::raii::Semaphore> Vk_RenderSemaphores JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<vk::raii::Fence> Vk_FlightFences JAFG_VK_FRAME_ARRAY_INIT(nullptr);
-    u32 Vk_LastFrameInFlightIndex{};
+    static constexpr u32 NoLastFrameInFlight{ std::numeric_limits<u32>::max() };
+    u32 Vk_LastFrameInFlightIndex{ NoLastFrameInFlight };
     std::optional<u32> Vk_CurrentFrameInFlightIndex;
 
     rhi::frame_array<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);

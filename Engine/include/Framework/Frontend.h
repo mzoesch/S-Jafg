@@ -7,7 +7,6 @@
 #include "Nodes/Node.h"
 #include "Framework/SubsystemCollection.h"
 #include "Framework/FrontendSubsystem.h"
-#include "Rhi/Texture2.h"
 
 namespace Jafg
 {
@@ -54,6 +53,10 @@ public:
     void Tick(f32 Dt);
     //# For application wide events (platform specific).
     void PollPlatformEvents() PURE_VIRTUAL()
+    void OnRender();
+    //# The sync index that indicates the current progress for all surfaces in a future flight frame.
+    NODISCARD FORCEINLINE constexpr u32 HasSync() const noexcept { return this->Sync != NoSync; }
+    NODISCARD FORCEINLINE constexpr u32 GetSync() const noexcept { check(this->HasSync()) return this->Sync; }
     void TearDown();
 
     NODISCARD FORCEINLINE constexpr bool IsHeadless() const noexcept { return this->bHeadless; }
@@ -100,6 +103,8 @@ private:
 
     bool bHeadless{};
     i32 FocusedSurface{ INDEX_NONE };
+    static constexpr u32 NoSync{ std::numeric_limits<u32>::max() };
+    u32 Sync{ NoSync };
     TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };
 };

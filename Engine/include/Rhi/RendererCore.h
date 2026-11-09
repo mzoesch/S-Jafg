@@ -56,14 +56,33 @@
 namespace rhi
 {
 
+//# The minimal version that Jafg supports.
+inline constexpr auto vk_version{ vk::ApiVersion14 };
+
 //#
 //# Invariant given from vulkan on the number of descriptor sets that can be bound at once.
 //# Jafg's rhi used this limit as its upper bound. We might want to adjust this in the future if the pipelines
 //# get more complex.
 //# TODO: What vendors do we loose if we increase this?
-//# @see https://docs.vulkan.org/spec/latest/chapters/limits.html
+//# @see https://docs.vulkan.org/spec/latest/chapters/limits.html (maxBoundDescriptorSets)
 //#
-inline constexpr auto bound_descriptor_set_limit{ 4uz };
+inline constexpr auto bound_descriptor_set_limit{ 7uz }; // Bumped (1.4)
+//# Limit for the core spec. We might also want to support this later on.
+inline constexpr auto bound_descriptor_set_limit_core{ 4uz };
+
+//#
+//# Invariant given from vulkan on the number of push constant ranges that can be bound at once.
+//# Jafg's rhi used this limit as its upper bound.
+//# @see https://docs.vulkan.org/spec/latest/chapters/limits.html (maxPushConstantsSize)
+//#
+inline constexpr auto push_constant_limit{ 256uz }; // Bumped (1.4)
+//# Limit for the core spec. We might also want to support this later on.
+inline constexpr auto push_constant_limit_core{ 128uz };
+
+//# Type to use for resource indices in shaders.
+typedef u32 resource_index_t;
+//# Marks an invalid index.
+inline constexpr resource_index_t invalid_resource_index{ std::numeric_limits<resource_index_t>::max() };
 
 //#
 //# Wrapper function, because for some stupid reason vk without exceptions tries to be correct and does not give us

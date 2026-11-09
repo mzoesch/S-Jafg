@@ -11,6 +11,7 @@
 #include "Framework/SupremePolicies.h"
 #include "Framework/PhysicsCore.h"
 #include "User/PreferenceCollection.h"
+#include "Rhi/Quality.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -84,6 +85,13 @@ public:
     //#
     CLASS_FIELD(Config)
     TPreference<i32> MaxTps{ UnlimitedTps };
+
+    //# The texture quality hint. May not be respected by all clients.
+    CLASS_FIELD(Config)
+    TPreference<ETextureQualityBits> TextureQuality{ ETextureQualityBits::Standard };
+    //# The texture lod hint. May not be respected by all clients.
+    CLASS_FIELD(Config)
+    TPreference<ETextureLodBits> TextureLod{ ETextureLodBits::Auto };
 
     bool bLoadBalancing{};
     //# Whether to allow load balancing.

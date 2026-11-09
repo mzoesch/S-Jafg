@@ -48,7 +48,7 @@ public:
 
     LTextureCube2Ref CubeFromFile(LPath const& Path);
 
-    NODISCARD FORCEINLINE u32 GetBindlessTextureArrayCapacity() const noexcept { return this->BindlessTextureArrayCapacity; }
+    NODISCARD FORCEINLINE std::size_t GetBindlessTextureArrayCapacity() const noexcept { return BindlessTextureArrayCapacity; }
     FORCEINLINE auto const& Vk_GetDefaultSamplers() const noexcept { return this->Vk_DefaultSamplers; }
     FORCEINLINE auto const& Vk_GetLinearSamplerRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearRepeatSamplerIdx]; }
     FORCEINLINE auto const& Vk_GetLinearSamplerMirroredRepeat() const noexcept { return this->Vk_DefaultSamplers[UBO::Bindless::LinearMirroredRepeatSamplerIdx]; }
@@ -64,7 +64,7 @@ public:
     void _Vk_UpdateSamplers();
     void AddTextureToGlobalBindlessArray(LTexture2* Texture);
     //# Public private function of jafg. Do not use.
-    std::optional<std::size_t> _Vk_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView);
+    NODISCARD std::optional<rhi::resource_index_t> _Vk_AddTransientImageToGlobalBindlessArray(vk::ImageView const& ImageView);
     //# Public private function of jafg. Do not use.
     void _Vk_AllocateBindlessPool();
     NODISCARD FORCEINLINE auto const& Vk_GetBindlessTextureArrayDescriptorPool() const noexcept { return this->BindlessTextureArrayDescriptorPool; }
@@ -72,7 +72,7 @@ public:
 
 private:
 
-    u32 BindlessTextureArrayCapacity{ 128u };
+    inline constexpr static auto BindlessTextureArrayCapacity{ 128uz };
     std::array<vk::raii::Sampler, UBO::Bindless::SamplerCount> Vk_DefaultSamplers JAFG_INIT_EIGHT(nullptr);
     vk::raii::DescriptorPool BindlessTextureArrayDescriptorPool{ nullptr };
     vk::raii::DescriptorSet BindlessTextureArrayDescriptorSet{ nullptr };

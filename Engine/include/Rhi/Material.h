@@ -2,13 +2,14 @@
 
 #pragma once
 
-#include "Minimal.afx"
+#include "Rhi/RendererCore.h"
 #include "Rhi/ResourceReference.h"
 #include "Rhi/GraphicsPipeline.h"
 #include "Rhi/ReflectedShader.h"
 #include "Rhi/Texture2.h"
 #include "Rhi/TextureCube.h"
 #include "Rhi/Bindless.h"
+#include "Rhi/Quality.h"
 
 namespace rhi
 {
@@ -94,6 +95,7 @@ struct LMaterial;
 typedef rhi::shared_ref<LMaterial> LMaterialRef;
 struct LMaterialInstance;
 typedef rhi::shared_ref<LMaterialInstance> LMaterialInstanceRef;
+class JMaterialSubsystem;
 
 struct LMaterial final
 {
@@ -103,6 +105,8 @@ struct LMaterial final
 
 struct LMaterialInstance final
 {
+    FORCEINLINE explicit LMaterialInstance(LMaterialRef Material) noexcept : Material{std::move(Material)} {}
+
     LMaterialRef Material;
 
     struct DescriptorSetInstance final
@@ -189,27 +193,28 @@ struct LMaterialInstance final
     ENGINE_API void Vk_SetSampler(LFrontend const& Frontend, rhi::vk_binding Where, vk::Sampler const& Sampler);
     ENGINE_API void Vk_SetSampledImage(LFrontend const& Frontend, rhi::vk_binding Where, LTexture2 const& Texture);
     ENGINE_API void Vk_SetSampledTextureCube(LFrontend const& Frontend, rhi::vk_binding Where, LTextureCube2 const& Texture);
+
+    NODISCARD FORCEINLINE constexpr TArray<LTexture2Ref> const& GetOwnedTextures() const noexcept { return this->LoadedTextures; }
+    void AddOwnedTexture(LTexture2Ref Texture)
+    {
+        check(!algo::contains(this->LoadedTextures, Texture.get(), algo::universal_ptr_noop))
+        this->LoadedTextures.emplace_back(std::move(Texture));
+    }
+    void RemoveOwnedTexture(LTexture2 const& Texture)
+    {
+        auto It{algo::find(this->LoadedTextures, &Texture, algo::universal_ptr_noop)};
+        check(It != this->LoadedTextures.end())
+        this->RemoveOwnedTexture(It);
+    }
+    void RemoveOwnedTexture(auto&& It)
+    {
+        this->LoadedTextures.erase(It);
+    }
+
+private:
+
+    //# Owned textures for this instance.
+    TArray<LTexture2Ref> LoadedTextures;
 };
 
-//#
-//# Pbr materials are just syntax sugar over the base pbr material and are optional.
-//#
-struct LPbrMaterial final
-{
-    std::optional<std::pair<LString,LString>> Material;
-
-    LString Identifier;
-
-    //# The base color map.
-    LPath Albedo{"Albedo.png"};
-    //# We use the OpenGl standard.
-    LPath Normal{"Normal.png"};
-    //# The arm map.
-    //# - R channel: AO
-    //# - G channel: Roughness
-    //# - B channel: Metallic
-    //# - A channel: Alpha (currently not used!)
-    LPath Arm{"Arm.png"};
-};
-
-} /* ~Namespace rhi */
+} /* ~Namespace Jafg */

@@ -4,6 +4,7 @@
 
 #include "Framework/FrontendSubsystem.h"
 #include "Rhi/Material.h"
+#include "Rhi/PhysicalRendering.h"
 #include "MaterialSubsystem.generated.h"
 
 namespace Jafg
@@ -127,6 +128,10 @@ public:
     NODISCARD LMaterialInstanceRef GetInstance(LStringView Namespace, LStringView Name, LMaterialRef Material);
     NODISCARD LMaterialInstanceRef GetInstanceFromName(LStringView Namespace, LStringView Name);
 
+    //# Get a bindless instance to a pbr material.
+    NODISCARD LPbrMaterialInstanceRef GetPbrInstance(LStringView Namespace, LStringView Name);
+    // NODISCARD std::pair<LPbrMaterialInstanceRef, LPbrMaterialTemplate const*> GetOnTheFlyPbrInstance(LPbrMaterialTemplate Template);
+
     //#
     //# Usually layouts are unique per pipeline. But some layouts are used across many shaders. You can find the here
     //# or register you own.
@@ -141,6 +146,19 @@ public:
         return *It->second;
     }
 
+    void AddInstanceToGlobalBindlessArray(LPbrMaterialInstance* Instance);
+    NODISCARD std::optional<rhi::resource_index_t> _Vk_AddInstanceToGlobalBindlessArray(LPbrMaterialInstance* Instance);
+    void RemoveInstanceFromGlobalBindlessArray(LPbrMaterialInstance* Instance);
+
+    NODISCARD FORCEINLINE TArray<LPbrMaterialInstanceRef> const& GetBindlessPbrInstances() const noexcept { return this->PbrInstances; }
+
+    ENGINE_API void UpdateMaterialsFor(std::size_t Sync);
+    NODISCARD FORCEINLINE constexpr std::size_t GetBindlessPbrInstanceLimit() const noexcept { return this->PbrInstanceLimit; }
+    NODISCARD FORCEINLINE constexpr rhi::mapped_device_buffer const& GetBindlessPbrInstanceBuffer(std::size_t Frame) const noexcept { return this->PbrInstanceBuffers[Frame]; }
+    NODISCARD FORCEINLINE constexpr rhi::frame_array<rhi::mapped_device_buffer> const& GetBindlessPbrInstanceBuffers() const noexcept { return this->PbrInstanceBuffers; }
+    NODISCARD FORCEINLINE constexpr vk::raii::DescriptorSet const& GetBindlessPbrInstanceDescriptorSet(std::size_t Frame) const noexcept { return this->PbrInstanceDescriptorSets[Frame]; }
+    NODISCARD FORCEINLINE constexpr rhi::frame_array<vk::raii::DescriptorSet> const& GetBindlessPbrInstanceDescriptorSets() const noexcept { return this->PbrInstanceDescriptorSets; }
+
 private:
 
     void RetrieveMaterialsFrom(LPath const& Path);
@@ -148,9 +166,9 @@ private:
     JTextureSubsystem* TextureSubsystem{};
     JShaderSubsystem* ShaderSubsystem{};
 
-    //# Once populated, materials will never change their address again. This is guaranteed by jafg.
+    //# Once populated, templates will never change their address again. This is guaranteed by jafg.
     algo::transparent_unordered_string_map<TArray<rhi::material_template>> Templates;
-    algo::transparent_unordered_string_map<TArray<LPbrMaterial>> PbrMaterials;
+    algo::transparent_unordered_string_map<TArray<LPbrMaterialTemplate>> PbrTemplates;
 
     algo::transparent_unordered_string_map<LMaterialRef> Materials;
     algo::transparent_unordered_string_map<LMaterialInstanceRef> Instances;
@@ -171,6 +189,14 @@ private:
     }
 
     algo::transparent_unordered_string_map<vk::raii::DescriptorSetLayout> SharedDescriptorSetLayouts;
+
+    void PrepareBindless();
+    TArray<LPbrMaterialInstanceRef> PbrInstances;
+    algo::dynamic_bit_set FreeBindlessPbrMaterialArraySlots;
+
+    std::size_t PbrInstanceLimit{ 256uz }; // TODO: Make dynamic.
+    rhi::frame_array<rhi::mapped_device_buffer> PbrInstanceBuffers;
+    rhi::frame_array<vk::raii::DescriptorSet> PbrInstanceDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
 };
 
 } /* ~Namespace Jafg */

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Framework/SceneComponent.h"
+#include "Rhi/Light.h"
 #include "PointLightComponent.generated.h"
 
 namespace Jafg
@@ -24,9 +25,23 @@ protected:
 
 public:
 
-#if JAFG_WITH_EDITOR
     virtual void OnAttach(AActor& Owner) override;
-#endif /* JAFG_WITH_EDITOR */
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
+
+    ENGINE_API bool IsRegistered() const noexcept;
+
+protected:
+
+    virtual void OnTransformChanged(ETransformChangeFlags Change) override
+    {
+        auto Transform{this->GetWorldTransformSlow()};
+        this->Light.Translation = Transform.t;
+        this->Light.Rotation = Transform.r;
+    }
+
+private:
+
+    LLight Light;
 };
 
 } /* ~Namespace Jafg */

@@ -5,6 +5,7 @@
 #include "Nodes/UserWidget.h"
 #include "Framework/Lackey.h"
 #include "Rhi/RenderTarget.h"
+#include "Rhi/Light.h"
 #include "Framework/Surface.h"
 #include "WorldViewer.generated.h"
 
@@ -70,6 +71,11 @@ public:
 
     void OnPerspectiveDepthTestChanged();
 
+    NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSet(std::size_t Frame) const noexcept { return this->WorldDescriptorSets[Frame]; }
+    NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSets() const noexcept { return this->WorldDescriptorSets; }
+    NODISCARD FORCEINLINE constexpr auto const& Vk_GetPbrLightDescriptorSet(std::size_t Frame) const noexcept { return this->PbrLightDescriptorSets[Frame]; }
+    NODISCARD FORCEINLINE constexpr auto const& Vk_GetPbrLightDescriptorSets() const noexcept { return this->PbrLightDescriptorSets; }
+
 protected:
 
     virtual void InitializeRenderTarget();
@@ -104,6 +110,14 @@ private:
     LRaiiPreDrawHandle OnPreDrawHandle{this->GetViewport().GetSurface().OnPreRender};
 
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
+
+    rhi::frame_array<vk::raii::DescriptorSet> WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+    rhi::frame_array<rhi::mapped_device_buffer> WorldBuffers;
+    // TODO: Is this correct here, or move to the light subsystem? I think later on we might cull lights
+    //       based of eye translation. Therefore having one per eye is correct and not one at the frontend level?
+    std::size_t PbrLightLimit{ 256uz }; // TODO: Make dynamic.
+    rhi::frame_array<rhi::mapped_device_buffer> PbrLightBuffers;
+    rhi::frame_array<vk::raii::DescriptorSet> PbrLightDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
 };
 
 } /* ~Namespace Jafg */

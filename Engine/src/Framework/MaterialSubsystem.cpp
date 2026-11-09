@@ -10,6 +10,7 @@
 #include "Rhi/VisualInstance.h"
 #include "Rhi/TextureCube.h"
 #include "Engine/WorldData.h"
+#include "User/UserPreferences.h"
 
 namespace
 {
@@ -316,35 +317,78 @@ namespace Jafg
 {
 
 template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
-static void from_json(BasicJsonType const& j, Jafg::LPbrMaterial& Material)
+static void from_json(BasicJsonType const& j, LPbrMaterialTemplate& Material)
 {
-    const Jafg::LPbrMaterial nlohmann_json_default_obj{};
+    const LPbrMaterialTemplate nlohmann_json_default_obj{};
 
     if (j.contains("material"))
     {
-        // j.at("material").get_to(Material.Material);
+        if (j.at("material").is_string())
+        {
+            check(Material.Material.first.empty())
+            j.at("material").get_to(Material.Material.second);
+        }
+        else
+        {
+            j.at("material").get_to(Material.Material);
+        }
     }
 
-    if (j.contains("albedo"))
+    if (j.contains("albedo_factor"))
     {
-        j.at("albedo").get_to(Material.Albedo);
+        LVec4F AlbedoFactor;
+        j.at("albedo_factor").get_to(AlbedoFactor);
+        Material.AlbedoFactor = LLinearColor{AlbedoFactor.x, AlbedoFactor.y, AlbedoFactor.z, AlbedoFactor.w};
     }
-    if (j.contains("normal"))
+    if (j.contains("occlusion_factor"))
     {
-        j.at("normal").get_to(Material.Normal);
+        j.at("occlusion_factor").get_to(Material.OcclusionFactor);
     }
-    if (j.contains("arm"))
+    if (j.contains("roughness_factor"))
     {
-        j.at("arm").get_to(Material.Arm);
+        j.at("roughness_factor").get_to(Material.RoughnessFactor);
     }
-    // if (j.contains("displacement"))
-    // {
-    //     j.at("displacement").get_to(Material.Displacement);
-    // }
-    // if (j.contains("ambientOcclusion"))
-    // {
-    //     j.at("ambientOcclusion").get_to(Material.AmbientOcclusion);
-    // }
+    if (j.contains("metallic_factor"))
+    {
+        j.at("metallic_factor").get_to(Material.MetallicFactor);
+    }
+    if (j.contains("emissive_factor"))
+    {
+        j.at("emissive_factor").get_to(Material.EmissiveFactor);
+    }
+
+    if (j.contains("alpha_cutoff"))
+    {
+        j.at("alpha_cutoff").get_to(Material.AlphaCutoff);
+    }
+    if (j.contains("normal_scale"))
+    {
+        j.at("normal_scale").get_to(Material.NormalScale);
+    }
+
+    if (j.contains("textures"))
+    {
+        j.at("textures").get_to(Material.Textures);
+    }
+
+    if (j.contains("sampler"))
+    {
+        j.at("sampler").get_to(Material.Sampler);
+    }
+
+    if (j.contains("flags"))
+    {
+        j.at("flags").get_to(Material.Flags);
+    }
+
+    if (j.contains("uv_scale"))
+    {
+        j.at("uv_scale").get_to(Material.UVScale);
+    }
+    if (j.contains("uv_offset"))
+    {
+        j.at("uv_offset").get_to(Material.UVOffset);
+    }
 }
 
 } /* ~Namespace Jafg */
@@ -380,35 +424,35 @@ void Jafg::LMaterialInstance::Vk_SetField(LFrontend& Frontend, rhi::vk_binding W
     {
     case vk::DescriptorType::eSampler:
     {
-        if (Value == "Jafg.LinearRepeatSampler")
+        if (Value == "Jafg.LinearRepeat")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerRepeat());
         }
-        else if (Value == "Jafg.LinearMirroredRepeatSampler")
+        else if (Value == "Jafg.LinearMirroredRepeat")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerMirroredRepeat());
         }
-        else if (Value == "Jafg.LinearClampToEdgeSampler")
+        else if (Value == "Jafg.LinearClampToEdge")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerClampToEdge());
         }
-        else if (Value == "Jafg.LinearClampToBorderSampler")
+        else if (Value == "Jafg.LinearClampToBorder")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetLinearSamplerClampToBorder());
         }
-        else if (Value == "Jafg.NearestRepeatSampler")
+        else if (Value == "Jafg.NearestRepeat")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerRepeat());
         }
-        else if (Value == "Jafg.NearestMirroredRepeatSampler")
+        else if (Value == "Jafg.NearestMirroredRepeat")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerMirroredRepeat());
         }
-        else if (Value == "Jafg.NearestClampToEdgeSampler")
+        else if (Value == "Jafg.NearestClampToEdge")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToEdge());
         }
-        else if (Value == "Jafg.NearestClampToBorderSampler")
+        else if (Value == "Jafg.NearestClampToBorder")
         {
             this->Vk_SetSampler(Frontend, Where, Frontend.GetSubsystemChecked<JTextureSubsystem>()->Vk_GetNearestSamplerClampToBorder());
         }
@@ -493,6 +537,120 @@ void Jafg::LMaterialInstance::Vk_SetSampledTextureCube(LFrontend const& Frontend
     Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 }
 
+LPath const& Jafg::LPbrMaterialTemplate::GetTexture(ETextureType Type, ETextureQualityBits Quality) const noexcept
+{
+    auto GetQualityBelow{[](ETextureQualityBits Q) -> std::optional<ETextureQualityBits>
+    {
+        switch (Q)
+        {
+        case ETextureQualityBits::Potato:    return std::nullopt;
+        case ETextureQualityBits::Toaster:   return ETextureQualityBits::Potato;
+        case ETextureQualityBits::Mobile:    return ETextureQualityBits::Toaster;
+        case ETextureQualityBits::Standard:  return ETextureQualityBits::Mobile;
+        case ETextureQualityBits::Ultra:     return ETextureQualityBits::Standard;
+        case ETextureQualityBits::Cinematic: return ETextureQualityBits::Ultra;
+        }
+        LOG_FATAL(LogMaterialSubsystem, "Unsupported quality [{}].", static_cast<u32>(Q))
+    }};
+    auto GetQualityAbove{[](ETextureQualityBits Q) -> std::optional<ETextureQualityBits>
+    {
+        switch (Q)
+        {
+        case ETextureQualityBits::Potato:    return ETextureQualityBits::Toaster;
+        case ETextureQualityBits::Toaster:   return ETextureQualityBits::Mobile;
+        case ETextureQualityBits::Mobile:    return ETextureQualityBits::Standard;
+        case ETextureQualityBits::Standard:  return ETextureQualityBits::Ultra;
+        case ETextureQualityBits::Ultra:     return ETextureQualityBits::Cinematic;
+        case ETextureQualityBits::Cinematic: return std::nullopt;
+        }
+        LOG_FATAL(LogMaterialSubsystem, "Unsupported quality [{}].", static_cast<u32>(Q))
+    }};
+
+    auto GetForQuality{[&](ETextureQualityBits Q) -> std::optional<LPath const*>
+    {
+        for (auto const& [CandidateQuality, Bindings]: this->Textures)
+        {
+            if (!!(CandidateQuality & Q))
+            {
+                switch (Type)
+                {
+                case ETextureType::Albedo:   return &Bindings.Albedo;
+                case ETextureType::Normal:   return &Bindings.Normal;
+                case ETextureType::Arm:      return &Bindings.Arm;
+                case ETextureType::Emissive: return &Bindings.Emissive;
+                }
+            }
+        }
+        return std::nullopt;
+    }};
+
+    ETextureQualityBits Cursor{Quality};
+    while (true)
+    {
+        if (auto Path{GetForQuality(Cursor)}; Path && !(*Path)->empty())
+        {
+            return **Path;
+        }
+        if (auto Next{GetQualityBelow(Cursor)}; Next)
+        {
+            Cursor = *Next;
+        }
+        else
+        {
+            break;
+        }
+    }
+    Cursor = Quality;
+    while (true)
+    {
+        if (auto Next{GetQualityAbove(Cursor)}; Next)
+        {
+            Cursor = *Next;
+        }
+        else
+        {
+            break;
+        }
+        if (auto Path{GetForQuality(Cursor)}; Path && !(*Path)->empty())
+        {
+            return **Path;
+        }
+    }
+
+    static LPath Empty{};
+    return Empty;
+}
+
+bool Jafg::LPbrMaterialTemplate::IsEmptyAtTexture(ETextureType Type) const noexcept
+{
+    for (auto const& Bindings: this->Textures | std::views::values)
+    {
+        switch (Type)
+        {
+        case ETextureType::Albedo:   if (!Bindings.Albedo.empty())   { return false; } break;
+        case ETextureType::Normal:   if (!Bindings.Normal.empty())   { return false; } break;
+        case ETextureType::Arm:      if (!Bindings.Arm.empty())      { return false; } break;
+        case ETextureType::Emissive: if (!Bindings.Emissive.empty()) { return false; } break;
+        }
+    }
+
+    return true;
+}
+
+void Jafg::LPbrMaterialInstance::FreeFromBindlessArray(JMaterialSubsystem* CachedSubsystem)
+{
+    check(this->IsBindless())
+
+    if (!CachedSubsystem)
+    {
+        CachedSubsystem = Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystem<JMaterialSubsystem>();
+    }
+    if (CachedSubsystem)
+    {
+        CachedSubsystem->RemoveInstanceFromGlobalBindlessArray(this);
+    }
+}
+
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
@@ -517,16 +675,21 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     this->TextureSubsystem = Collection.GetSubsystemChecked<JTextureSubsystem>();
     this->ShaderSubsystem = Collection.GetSubsystemChecked<JShaderSubsystem>();
 
-    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout with capacity [{}].", UBO::Bindless::name(), this->TextureSubsystem->GetBindlessTextureArrayCapacity())
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared descriptor set layout with capacity [{}].", UBO::Bindless::name(), this->TextureSubsystem->GetBindlessTextureArrayCapacity())
     this->SharedDescriptorSetLayouts.emplace(UBO::Bindless::name(), UBO::Bindless::build(Frontend.Vk_GetDevice(), this->TextureSubsystem->GetBindlessTextureArrayCapacity()));
-    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout", UBO::WorldData::name())
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared descriptor set layout", UBO::WorldData::name())
     this->SharedDescriptorSetLayouts.emplace(UBO::WorldData::name(), UBO::WorldData::build(Frontend.Vk_GetDevice()));
-    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared bindless descriptor set layout", UBO::VisualShared::name())
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared descriptor set layout", UBO::VisualShared::name())
     this->SharedDescriptorSetLayouts.emplace(UBO::VisualShared::name(), UBO::VisualShared::build(Frontend.Vk_GetDevice()));
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared descriptor set layout.", SSBO::BindlessPbrMaterial::name())
+    this->SharedDescriptorSetLayouts.emplace(SSBO::BindlessPbrMaterial::name(), SSBO::BindlessPbrMaterial::build(Frontend.Vk_GetDevice()));
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Registering shared descriptor set layout.", SSBO::BindlessPbrLight::name())
+    this->SharedDescriptorSetLayouts.emplace(SSBO::BindlessPbrLight::name(), SSBO::BindlessPbrLight::build(Frontend.Vk_GetDevice()));
 
     LOG_VERBOSE(LogMaterialSubsystem, "Fetching materials.")
     this->RetrieveMaterialsFrom(*JafgInfo);
 
+    Tasks::Make(ENamedThreads::Master, ETaskTime::Early, [this]{ this->PrepareBindless(); });
     // TODO: Kinda awkward here. Is there a way around?
     this->TextureSubsystem->_Vk_AllocateBindlessPool();
     this->TextureSubsystem->_Vk_UpdateSamplers();
@@ -564,14 +727,16 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
         return It->second;
     }
 
-    if (auto It{this->PbrMaterials.find(Namespace)}; It != this->PbrMaterials.end())
-    {
-        if (auto Pbr{algo::find(It->second, Name, &LPbrMaterial::Identifier)}; Pbr != It->second.end())
+    checkCode
+    (
+        if (auto It{this->PbrTemplates.find(Namespace)}; It != this->PbrTemplates.end())
         {
-            check(!Pbr->Material)
-            return this->GetMaterial(JafgInfo, "Materials/Pbr");
+            if (auto Pbr{algo::find(It->second, Name, &LPbrMaterialTemplate::Identifier)}; Pbr != It->second.end())
+            {
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: Material is a pbr material. Use JMaterialSubsystem::GetPbrInstance instead.", Key)
+            }
         }
-    }
+    )
 
     check(this->ShaderSubsystem && this->TextureSubsystem)
     auto& Frontend{this->GetLocalEgo().GetFrontend()};
@@ -719,7 +884,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
         (
             if (!this->SharedDescriptorSetLayouts.contains(Name)) /* #at throws always. This is just for a more human-readable error message during development. */
             {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such shared descriptor set layout at space [{}].", Name, Space)
+                LOG_FATAL(LogMaterialSubsystem, "[{}]: No such shared descriptor set layout found at space [{}].", Name, Space)
             }
         )
         Factory.shared_descriptor_set_layouts.emplace_back(Space, this->SharedDescriptorSetLayouts.at(Name));
@@ -774,7 +939,7 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LStringView Nam
     auto& MaterialTemplate{Material->Template};
     auto& Shader{MaterialTemplate.my_shader};
 
-    auto Instance{std::make_shared<LMaterialInstance>(LMaterialInstance{.Material=Material})};
+    auto Instance{std::make_shared<LMaterialInstance>(Material)};
 
     std::unordered_map<u32, rhi::reflected_shader::update_frequency> UpdateFrequencies;
     for (auto& Parameter: Shader.Parameters)
@@ -1012,29 +1177,180 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LStringView Nam
         Instance->Vk_SetField(this->GetFrontend(), Instance->GetBinding(Key), Value);
     }
 
-    if (auto It{this->PbrMaterials.find(Namespace)}; It != this->PbrMaterials.end())
-    {
-        if (auto Pbr{algo::find(It->second, Name, &LPbrMaterial::Identifier)}; Pbr != It->second.end())
-        {
-            //# TODO: Optimize later on:
-            //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
-            //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
-            //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
-            Instance->Vk_SetSampledImage(Frontend, Instance->GetBinding("baseColorMap")
-                , *this->TextureSubsystem->FromFile(Pbr->Albedo, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}, ETexture2StateBits::Device));
-            Instance->Vk_SetSampledImage(Frontend, Instance->GetBinding("normalMap")
-                , *this->TextureSubsystem->FromFile(Pbr->Normal, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}, ETexture2StateBits::Device));
-            Instance->Vk_SetSampledImage(Frontend, Instance->GetBinding("metallicRoughnessMap")
-                , *this->TextureSubsystem->FromFile(Pbr->Arm, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}, ETexture2StateBits::Device));
-        }
-    }
-
     return Instance;
 }
 
 Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstanceFromName(LStringView Namespace, LStringView Name)
 {
     return this->GetInstance(Namespace, Name, this->GetMaterial(Namespace, Name));
+}
+
+Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringView Namespace, LStringView Name)
+{
+    if (auto It{this->PbrTemplates.find(Namespace)}; It != this->PbrTemplates.end())
+    {
+        if (auto Pbr{algo::find(It->second, Name, &LPbrMaterialTemplate::Identifier)}; Pbr != It->second.end())
+        {
+            if (auto It{algo::find(this->PbrInstances, &*Pbr, [](LPbrMaterialInstanceRef const& Element)
+            {
+                check(Element)
+                return &Element->Template;
+            })}; It != this->PbrInstances.end())
+            {
+                return *It;
+            }
+
+            auto& Prefs{GetSingleton<JUserPreferences>()};
+
+            LPbrMaterialInstanceRef Result;
+            if (Pbr->Material.first.empty())
+            {
+                check(Pbr->Material.second.empty())
+                Result = this->PbrInstances.emplace_back(std::make_shared<LPbrMaterialInstance>(
+                    this->FindOrAllocateSharedInstance(JafgInfo, "Materials/Pbr"), *Pbr));
+            }
+            else
+            {
+                Result = this->PbrInstances.emplace_back(std::make_shared<LPbrMaterialInstance>(
+                    this->FindOrAllocateSharedInstance(Pbr->Material.first, Pbr->Material.second), *Pbr));
+            }
+            check(!Result->IsBindless())
+
+            Result->Data.AlbedoFactor = Pbr->AlbedoFactor.ToDeviceReadyVector4();
+            Result->Data.OcclusionFactor = Pbr->OcclusionFactor;
+            Result->Data.RoughnessFactor = Pbr->RoughnessFactor;
+            Result->Data.MetallicFactor = Pbr->MetallicFactor;
+            Result->Data.EmissiveFactor = Pbr->EmissiveFactor;
+
+            Result->Data.AlphaCutoff = Pbr->AlphaCutoff;
+            Result->Data.NormalScale = Pbr->NormalScale;
+
+            //# TODO: Optimize later on:
+            //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
+            //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
+            //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
+            LPath FallbackAlbedo{(LPath{Namespace}/Name).concat(".png")};
+            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Albedo, *Prefs.TextureQuality)}; !Texture.empty())
+            {
+                // Wrong! Do not load the texture but Namespace/Texture instead. Therefore, we also need the namespace for On the fly.
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}));
+                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
+                Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
+            }
+            else if (Pbr->IsEmptyAtTexture(LPbrMaterialTemplate::ETextureType::Albedo) && finder::is_regular_file(FallbackAlbedo))
+            {
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(FallbackAlbedo, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}));
+                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
+                Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
+            }
+            else
+            {
+                Result->Data.Albedo = rhi::invalid_resource_index;
+            }
+
+            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Normal, *Prefs.TextureQuality)}; !Texture.empty())
+            {
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}));
+                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
+                Result->Data.Normal = Result->LoadedTextures.back()->GetBindlessIndex();
+            }
+            else
+            {
+                Result->Data.Normal = rhi::invalid_resource_index;
+            }
+
+            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Arm, *Prefs.TextureQuality)}; !Texture.empty())
+            {
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}));
+                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
+                Result->Data.Arm = Result->LoadedTextures.back()->GetBindlessIndex();
+            }
+            else
+            {
+                Result->Data.Arm = rhi::invalid_resource_index;
+            }
+
+            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Emissive, *Prefs.TextureQuality)}; !Texture.empty())
+            {
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}));
+                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
+                Result->Data.Emissive = Result->LoadedTextures.back()->GetBindlessIndex();
+            }
+            else
+            {
+                Result->Data.Emissive = rhi::invalid_resource_index;
+            }
+
+            Result->Data.Sampler = Pbr->Sampler;
+            Result->Data.Flags = Pbr->Flags;
+
+            Result->Data.UVScale = Pbr->UVScale;
+            Result->Data.UVOffset = Pbr->UVOffset;
+
+            this->AddInstanceToGlobalBindlessArray(Result.get());
+            return Result;
+        }
+    }
+    LOG_FATAL(LogMaterialSubsystem, "[{}]: No such PBR material.", this->GetKey(Namespace, Name))
+}
+
+void Jafg::JMaterialSubsystem::AddInstanceToGlobalBindlessArray(LPbrMaterialInstance* Instance)
+{
+    check(Instance)
+    check(Instance->Instance)
+    check(!Instance->IsBindless())
+
+    if (auto R{this->_Vk_AddInstanceToGlobalBindlessArray(Instance)})
+    {
+        Instance->Index = *R;
+    }
+    else
+    {
+        Instance->Index = rhi::invalid_resource_index;
+    }
+    if (!Instance->IsBindless())
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}]: Failed to make instance bindless. Out of binding points.", Instance->Instance->Material->Template.identifier)
+    }
+
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Binding resource to global bindless material array slot [{}].", Instance->Instance->Material->Template.identifier, Instance->GetBindlessIndex())
+}
+
+std::optional<rhi::resource_index_t> Jafg::JMaterialSubsystem::_Vk_AddInstanceToGlobalBindlessArray(LPbrMaterialInstance* Instance)
+{
+    check(Instance)
+
+    u64 Idx{this->FreeBindlessPbrMaterialArraySlots.allocate()};
+    if (Idx == algo::dynamic_bit_set::npos)
+    {
+        return {};
+    }
+    check(Idx < this->PbrInstanceLimit) // Unlikely. Here then reallocate or mark to reallocate on draw?
+
+    return static_cast<rhi::resource_index_t>(Idx);
+}
+
+void Jafg::JMaterialSubsystem::RemoveInstanceFromGlobalBindlessArray(LPbrMaterialInstance* Instance)
+{
+    checkNoEntry()
+}
+
+void Jafg::JMaterialSubsystem::UpdateMaterialsFor(std::size_t Sync)
+{
+    auto& Buffer{this->PbrInstanceBuffers[Sync]};
+    check(Buffer.data())
+
+    u8 const Bit{static_cast<u8>(1uz << Sync)};
+
+    for (auto& Instance: this->PbrInstances)
+    {
+        if (Instance->Dirty & Bit)
+        {
+            check(Instance->IsBindless())
+            Instance->Data.upload_at(Buffer, Instance->GetBindlessIndex());
+            Instance->Dirty &= static_cast<u8>(~Bit);
+        }
+    }
 }
 
 void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
@@ -1080,14 +1396,15 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
     {
         LOG_FATAL(LogMaterialSubsystem, "[{}]: Material template already exists. Duplicate path [{}].", Key, Path)
     }
-    check(!this->PbrMaterials.contains(Key))
+    check(!this->PbrTemplates.contains(Key))
 
     TArray Resolved{::ResolveInheritance(*this->ShaderSubsystem, Key, std::move(Materials))};
-    TArray<LPbrMaterial> PbrMaterials;
+    TArray<LPbrMaterialTemplate> PbrMaterials;
 
     for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^(?:.*/)?(?:[^/]+\\.)?pbr\\.json$")) // TODO: Make this for windows...
     {
-        LPbrMaterial& Result{PbrMaterials.emplace_back()};
+        LPbrMaterialTemplate& Result{PbrMaterials.emplace_back()};
+
         json json = json::parse(finder::read_file(Material), nullptr, false);
         if (json.is_discarded())
         {
@@ -1097,9 +1414,86 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
 
         check(Material.has_parent_path())
         LPath Parent{Material.parent_path()};
-        Result.Albedo = finder::weakly_canonical(Parent/Result.Albedo);
-        Result.Normal = finder::weakly_canonical(Parent/Result.Normal);
-        Result.Arm = finder::weakly_canonical(Parent/Result.Arm);
+
+        if (!Result.Material.second.empty() && Result.Material.first.empty())
+        {
+            Result.Material.first = Path;
+        }
+        check(Result.Material.first.empty() || !Result.Material.second.empty())
+
+        if (Result.Textures.empty())
+        {
+            auto TextureSizeToQuality{[](auto Q)
+            {
+                switch (Q)
+                {
+                case 8: return ETextureQualityBits::Cinematic;
+                case 4: return ETextureQualityBits::Ultra;
+                case 2: return ETextureQualityBits::Standard;
+                case 1: return ETextureQualityBits::Mobile;
+                default: break;
+                }
+                LOG_FATAL(LogMaterialSubsystem, "Unsupported texture quality [{}].", Q)
+            }};
+
+            std::array<std::size_t, 4> Qualities{ 8,4,2,1 };
+            for (std::size_t Quality: Qualities)
+            {
+                LPath TargetAlbedo{finder::weakly_canonical(Parent/algo::sprintf("Albedo_{}k.png", Quality))};
+                LPath TargetNormal{finder::weakly_canonical(Parent/algo::sprintf("Normal_{}k.png", Quality))};
+                LPath TargetArm{finder::weakly_canonical(Parent/algo::sprintf("Arm_{}k.png", Quality))};
+                LPath TargetEmissive{finder::weakly_canonical(Parent/algo::sprintf("Emissive_{}k.png", Quality))};
+
+                if (!is_regular_file(TargetAlbedo))
+                {
+                    TargetAlbedo = LPath{};
+                }
+                if (!is_regular_file(TargetNormal))
+                {
+                    TargetNormal = LPath{};
+                }
+                if (!is_regular_file(TargetArm))
+                {
+                    TargetArm = LPath{};
+                }
+                if (!is_regular_file(TargetEmissive))
+                {
+                    TargetEmissive = LPath{};
+                }
+
+                if (!(TargetAlbedo.empty() && TargetNormal.empty() && TargetArm.empty() && TargetEmissive.empty()))
+                {
+                    Result.Textures.emplace_back(TextureSizeToQuality(Quality), LPbrMaterialTemplate::TextureBindings{
+                        .Albedo = std::move(TargetAlbedo),
+                        .Normal = std::move(TargetNormal),
+                        .Arm = std::move(TargetArm),
+                        .Emissive = std::move(TargetEmissive),
+                        });
+                }
+            }
+        }
+        else
+        {
+            for (auto& TextureQuality: Result.Textures | std::views::values)
+            {
+                if (!TextureQuality.Albedo.native().empty())
+                {
+                    TextureQuality.Albedo = finder::weakly_canonical(Parent/TextureQuality.Albedo);
+                }
+                if (!TextureQuality.Normal.native().empty())
+                {
+                    TextureQuality.Normal = finder::weakly_canonical(Parent/TextureQuality.Normal);
+                }
+                if (!TextureQuality.Arm.native().empty())
+                {
+                    TextureQuality.Arm = finder::weakly_canonical(Parent/TextureQuality.Arm);
+                }
+                if (!TextureQuality.Emissive.native().empty())
+                {
+                    TextureQuality.Emissive = finder::weakly_canonical(Parent/TextureQuality.Emissive);
+                }
+            }
+        }
 
         if (LPath Temp{finder::relative(canonical(Material), Path).replace_extension()};
             Temp.native().ends_with(LITERAL_TEXT("/pbr")))
@@ -1111,14 +1505,77 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
             Result.Identifier = Temp.replace_extension().string();
         }
 
-        check(algo::count(PbrMaterials, Result.Identifier, &LPbrMaterial::Identifier) == 1)
+        check(algo::count(PbrMaterials, Result.Identifier, &LPbrMaterialTemplate::Identifier) == 1)
 
         LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Fetched PBR material.", Key, Result.Identifier)
     }
 
     this->Templates[Key] = std::move(Resolved);
-    this->PbrMaterials[Key] = std::move(PbrMaterials);
-    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Fetched [{}] materials.", Key
-        , this->Templates.at(Key).size() + this->PbrMaterials.at(Key).size()
+    this->PbrTemplates[Key] = std::move(PbrMaterials);
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Fetched [{}+{}] materials.", Key
+        , this->Templates.at(Key).size(), this->PbrTemplates.at(Key).size()
         )
+}
+
+void Jafg::JMaterialSubsystem::PrepareBindless()
+{
+    auto& Frontend{this->GetFrontend()};
+
+    check(this->FreeBindlessPbrMaterialArraySlots.words().empty())
+    this->FreeBindlessPbrMaterialArraySlots = algo::dynamic_bit_set{this->PbrInstanceLimit};
+    check(this->FreeBindlessPbrMaterialArraySlots.bit_count() == this->PbrInstanceLimit)
+
+    this->PbrInstanceBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::BindlessPbrMaterial::buffer_create_info(this->PbrInstanceLimit));
+    check(algo::all_of(this->PbrInstanceBuffers, [](auto const& Buffer)
+    {
+        return !!Buffer.data();
+    }))
+
+    TArray<vk::DescriptorSetLayout> FrequentLayouts;
+    auto AppendFrequentLayout{[&](vk::DescriptorSetLayout Layout)
+    {
+        for (auto Frame{0uz}; Frame < Frontend.Vk_GetNumberOfFramesInFlight(); ++Frame)
+        {
+            FrequentLayouts.emplace_back(Layout);
+        }
+    }};
+    AppendFrequentLayout(this->GetSharedDescriptorSetLayout<SSBO::BindlessPbrMaterial>());
+
+    std::vector Sets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
+        .descriptorPool = Frontend.Vk_GetDescriptorPool(),
+        .descriptorSetCount = static_cast<u32>(FrequentLayouts.size()),
+        .pSetLayouts = FrequentLayouts.data(),
+        })};
+
+    auto Idx{0uz};
+    auto RetrieveFrequentSet{[&](auto&& Target)
+    {
+        for (auto Frame{0uz}; Frame < Frontend.Vk_GetNumberOfFramesInFlight(); ++Frame)
+        {
+            check(Idx < Sets.size())
+            Target[Frame] = std::move(Sets[Idx++]);
+        }
+    }};
+    RetrieveFrequentSet(this->PbrInstanceDescriptorSets);
+
+    check(algo::all_of(Sets, [](auto const& Set)
+    {
+        return !*Set;
+    }))
+
+    std::vector<vk::WriteDescriptorSet> Writes;
+    Writes.reserve(Frontend.Vk_GetNumberOfFramesInFlight());
+    for (auto Idx{0uz}; Idx < Frontend.Vk_GetNumberOfFramesInFlight(); ++Idx)
+    {
+        vk::DescriptorBufferInfo BufferInfo{SSBO::BindlessPbrMaterial::write_info(*this->PbrInstanceBuffers[Idx], 0, this->PbrInstanceLimit)};
+        Writes.emplace_back(vk::WriteDescriptorSet{
+            .dstSet = *this->PbrInstanceDescriptorSets[Idx],
+            .dstBinding = SSBO::BindlessPbrMaterial::MaterialBinding,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = SSBO::BindlessPbrMaterial::descriptor_type(),
+            .pBufferInfo = &BufferInfo,
+            });
+    }
+    Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 }

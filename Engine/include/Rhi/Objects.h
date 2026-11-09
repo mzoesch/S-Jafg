@@ -104,12 +104,12 @@ struct object_template: device_element_template<T>
             });
     }
 
-    static constexpr vk::DescriptorBufferInfo write_info(vk::Buffer Buffer, vk::DeviceSize Offset = 0) noexcept
+    static constexpr vk::DescriptorBufferInfo write_info(vk::Buffer Buffer, vk::DeviceSize Offset = 0, std::size_t count = T::default_count) noexcept
     {
         return {
             .buffer = Buffer,
             .offset = Offset,
-            .range = sizeof(T)
+            .range = sizeof(T) * count,
             };
     }
 
@@ -119,7 +119,13 @@ struct object_template: device_element_template<T>
         std::memcpy(buf.data(), &Self, sizeof(T));
         return std::forward<decltype(Self)>(Self);
     }
-    void upload_and_update(vk::raii::Device const& d, vk::raii::DescriptorSet const& s, u32 binding, mapped_device_buffer const& buf) const noexcept
+    decltype(auto) upload_at(this auto&& Self, mapped_device_buffer const& buf, std::size_t Index) noexcept
+    {
+        check(buf.data())
+        std::memcpy(static_cast<std::byte*>(buf.data()) + Index * sizeof(T), &Self, sizeof(T));
+        return std::forward<decltype(Self)>(Self);
+    }
+    void upload_and_update(vk::raii::Device const& d, vk::DescriptorSet const& s, u32 binding, mapped_device_buffer const& buf) const noexcept
     {
         this->upload(buf);
         auto info{T::write_info(*buf)};
@@ -246,7 +252,7 @@ struct object_range
             };
     }
 
-    void upload_and_update(vk::raii::Device const& d, vk::raii::DescriptorSet const& s, u32 binding, rhi::mapped_device_buffer const& buf, std::size_t offset = 0) const noexcept
+    void upload_and_update(vk::raii::Device const& d, vk::DescriptorSet const& s, u32 binding, mapped_device_buffer const& buf, std::size_t offset = 0) const noexcept
     {
         vk::DescriptorBufferInfo info{this->upload(buf, offset)};
         std::array Writes{vk::WriteDescriptorSet{
@@ -278,6 +284,7 @@ struct LPushConstantProvider final
     struct LActorInfo final
     {
         LTransformF Transform;
+        rhi::resource_index_t PbrMaterial;
     };
 
     LString Identifier;

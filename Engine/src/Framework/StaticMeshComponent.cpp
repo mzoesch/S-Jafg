@@ -28,6 +28,16 @@ void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef Instan
     check(!this->MaterialInstance || !!this->MaterialInstance->Material.get())
 }
 
+void Jafg::AStaticMeshComponent::SetPbrMaterialInstance(LPbrMaterialInstanceRef Instance) noexcept
+{
+    this->PbrMaterialInstance = std::move(Instance);
+    check(!this->PbrMaterialInstance || !!this->PbrMaterialInstance->Instance.get())
+    if (this->PbrMaterialInstance)
+    {
+        this->SetMaterialInstance(this->PbrMaterialInstance->Instance);
+    }
+}
+
 namespace
 {
 
@@ -70,7 +80,16 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
     //# Todo: Instead of this. We want to pass the parent transform to the children. This way we avoid the recursive calls up the chain here -- to recalculate many times the same thing.
     //#       E.g. Render(LActorRenderInfo const&, LWorldTrans* World); Then check
     //#             if (World) World apply with local trans else use local trans.
-    this->Mesh->Render(Info, this->GetWorldTransformSlow(), GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
+    auto& Preferred{GetPreferredMaterialInstance(Info, this->MaterialInstance.get())};
+    if (this->PbrMaterialInstance.get() && this->MaterialInstance.get() == &Preferred)
+    {
+        check(this->PbrMaterialInstance->Instance.get() == this->MaterialInstance.get())
+        this->Mesh->Render(Info, this->GetWorldTransformSlow(), &*this->PbrMaterialInstance);
+    }
+    else
+    {
+        this->Mesh->Render(Info, this->GetWorldTransformSlow(), &Preferred);
+    }
 }
 
 void Jafg::LStaticMeshRenderable::Render(LActorRenderInfo const& Info) const
@@ -82,7 +101,7 @@ void Jafg::LStaticMeshRenderable::Render(LActorRenderInfo const& Info) const
             LOG_FATAL(LogRhi, "No mesh set for this static mesh component. Failed to render.")
         }
     )
-    this->Mesh->Render(Info, this->GetTransform(), GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
+    this->Mesh->Render(Info, this->GetTransform(), &GetPreferredMaterialInstance(Info, this->MaterialInstance.get()));
 }
 
 void Jafg::LStaticMeshRenderable::ForceRenderWithOwnedMaterial(LActorRenderInfo const& Info) const
@@ -97,7 +116,7 @@ void Jafg::LStaticMeshRenderable::ForceRenderWithOwnedMaterial(LActorRenderInfo 
 
     check(this->MaterialInstance.get())
 
-    this->Mesh->Render(Info, this->GetTransform(), *this->MaterialInstance);
+    this->Mesh->Render(Info, this->GetTransform(), &*this->MaterialInstance);
 }
 
 void Jafg::LStaticMeshRenderable::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)

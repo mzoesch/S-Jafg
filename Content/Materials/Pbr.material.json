@@ -1,7 +1,4 @@
 {
     "inherits": "Materials/Base/Perspective",
-    "shader": "Shaders/Jafg.Pbr",
-    "properties": {
-        "sampler": "Jafg.LinearRepeatSampler"
-    }
+    "shader": "Shaders/Jafg.Pbr"
 }

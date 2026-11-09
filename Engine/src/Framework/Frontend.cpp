@@ -5,6 +5,7 @@
 #include "Framework/Surface.h"
 #include "Framework/FrontendSubsystem.h"
 #include "Framework/SubsystemCollection.h"
+#include "Framework/MaterialSubsystem.h"
 #include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
 #include "User/Input/UserInput.h"
@@ -33,6 +34,20 @@ void Jafg::LFrontendBase::Tick(f32 Dt)
             E->Tick(Dt);
         }
     });
+}
+
+void Jafg::LFrontendBase::OnRender()
+{
+    STAT_FUNCTION()
+
+    check(this->Sync == NoSync)
+    this->Sync = this->GetEngine().FrameCount % static_cast<LFrontend*>(this)->Vk_GetNumberOfFramesInFlight();
+    this->GetSubsystemChecked<JMaterialSubsystem>()->UpdateMaterialsFor(this->Sync);
+    for (auto const& Surface: this->GetSurfaces())
+    {
+        Surface->OnRender();
+    }
+    this->Sync = NoSync;
 }
 
 void Jafg::LFrontendBase::TearDown()

@@ -25,6 +25,56 @@ void Jafg::WWorldViewer::Construct()
         .TextAlign(ETextVAlign::Center)
         .Content("No World Loaded")
         ;
+
+    LOG_VERBOSE(LogWidgets, "[{}]: Allocating world descriptor sets and buffers.", this->GetNameAsString())
+
+    auto& Frontend{this->GetFrontend()};
+    auto& MaterialSubsystem{*Frontend.GetSubsystemChecked<JMaterialSubsystem>()};
+
+    this->WorldBuffers = Frontend.Vk_CreateFrequentMappedBuffer(UBO::WorldData::buffer_create_info());
+    check(algo::all_of(this->WorldBuffers, [](auto const& Buffer)
+    {
+        return !!Buffer.data();
+    }))
+    this->PbrLightBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::BindlessPbrLight::buffer_create_info(this->PbrLightLimit));
+    check(algo::all_of(this->PbrLightBuffers, [](auto const& Buffer)
+    {
+        return !!Buffer.data();
+    }))
+
+    TArray<vk::DescriptorSetLayout> FrequentLayouts;
+    auto AppendFrequentLayout{[&](vk::DescriptorSetLayout Layout)
+    {
+        for (auto Frame{0uz}; Frame < Frontend.Vk_GetNumberOfFramesInFlight(); ++Frame)
+        {
+            FrequentLayouts.emplace_back(Layout);
+        }
+    }};
+    AppendFrequentLayout(MaterialSubsystem.GetSharedDescriptorSetLayout<UBO::WorldData>());
+    AppendFrequentLayout(MaterialSubsystem.GetSharedDescriptorSetLayout<SSBO::BindlessPbrLight>());
+
+    std::vector Sets{rhi::vk_allocate(Frontend.Vk_GetDevice(), vk::DescriptorSetAllocateInfo{
+        .descriptorPool = Frontend.Vk_GetDescriptorPool(),
+        .descriptorSetCount = static_cast<u32>(FrequentLayouts.size()),
+        .pSetLayouts = FrequentLayouts.data(),
+        })};
+
+    auto Idx{0uz};
+    auto RetrieveFrequentSet{[&](auto&& Target)
+    {
+        for (auto Frame{0uz}; Frame < Frontend.Vk_GetNumberOfFramesInFlight(); ++Frame)
+        {
+            check(Idx < Sets.size())
+            Target[Frame] = std::move(Sets[Idx++]);
+        }
+    }};
+    RetrieveFrequentSet(this->WorldDescriptorSets);
+    RetrieveFrequentSet(this->PbrLightDescriptorSets);
+
+    check(algo::all_of(Sets, [](auto const& Set)
+    {
+        return !*Set;
+    }))
 }
 
 void Jafg::WWorldViewer::Tick(f32 Dt)
@@ -295,7 +345,24 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
         {
             auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
             auto Eye{Pawn.GetEye()};
-            Pawn.GetWorld().Draw(Info, Eye, nullptr, {}, {});
+            std::optional<TArray<AActor*>> Filter;
+
+            algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets;
+            SharedSets.emplace(UBO::WorldData::name(), this->WorldDescriptorSets[Info.Frame]);
+            SharedSets.emplace(SSBO::BindlessPbrLight::name(), this->PbrLightDescriptorSets[Info.Frame]);
+
+            algo::transparent_unordered_string_map<rhi::mapped_device_buffer*> SharedBuffers;
+            SharedBuffers.emplace(UBO::WorldData::name(), &this->WorldBuffers[Info.Frame]);
+            SharedBuffers.emplace(SSBO::BindlessPbrLight::name(), &this->PbrLightBuffers[Info.Frame]);
+
+            Pawn.GetWorld().Draw(Info, {
+                .Eye = Eye,
+                .Instance = nullptr,
+                .SharedSets = std::move(SharedSets),
+                .SharedBuffers = std::move(SharedBuffers),
+                .Filter = Filter,
+                .PbrLightLimit = this->PbrLightLimit,
+                });
 
             this->OnPostWorldDrawImpl(Info, Ctrl, Pawn, Eye);
         }

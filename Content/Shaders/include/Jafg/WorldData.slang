@@ -8,8 +8,6 @@ struct WorldData
 {
     float4x4 view;
     float4x4 proj;
-    float4 lightPositions[4];           // Light positions in world space
-    float4 lightColors[4];              // Light intensities and colors
 
     float exposure;                     // HDR exposure control
     float gamma;                        // Gamma correction value (typically 2.2)

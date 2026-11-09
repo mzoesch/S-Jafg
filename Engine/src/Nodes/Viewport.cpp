@@ -313,9 +313,6 @@ void Jafg::LViewport::Draw(LRenderInfo const& Info)
     TArray<std::pair<vk::Rect2D, u64>> _Dummy1;
     rhi::object_range<SSBO::VisualInstance> _Dummy2{SSBO::VisualInstance::default_count,SSBO::VisualInstance::default_count};
     LNodeRenderInfo NodeInfo{Info, *this,
-        *Frontend.GetSubsystemChecked<JTextureSubsystem>(),
-        *Frontend.GetSubsystemChecked<JMaterialSubsystem>(),
-        *Frontend.GetSubsystemChecked<JFontSubsystem>(),
         maths::zero_vector<LVec2F>, {},
         _Dummy1, _Dummy2,
         };

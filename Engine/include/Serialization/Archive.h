@@ -46,6 +46,31 @@ template<typename T> inline void get_enum_map(std::unordered_map<T, LStringView>
     }
 
 //#
+//# Declares a trivial enum that is automatically ready for serialization and deserialization.
+//# Usage example:
+//#     DECLARE_TRIVIAL_SERDE_ENUM(EExample, u8, A, B, C)
+//#
+#define DECLARE_TRIVIAL_SERDE_ENUM(T, U, ...) \
+    enum struct T: U \
+    { \
+        __VA_ARGS__ \
+    }; \
+    SERDE_ENUM(T, __VA_ARGS__)
+
+//#
+//# Same as #ENUM_STRUCT_FLAGS but allows also for serde operations on the flag type.
+//# @note This of course requires that the underlying enum is inside the serde ecosystem.
+//#
+#define SERDE_ENUM_STRUCT_FLAGS(Enum, Flags)                                               \
+    ENUM_STRUCT_FLAGS(Enum, Flags) \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+        requires std::is_enum_v<Enum> && serde::serde_for_v<serde::is_string_archive<serde::behavior::panic>, Enum> \
+    void from_json(BasicJsonType const& j, ::Jafg::TFlags<Enum>& field) \
+    { \
+        ::Jafg::Detail::FlagsFromJson(j, field); \
+    } \
+
+//#
 //# Then retrieve the map with this function.
 //#     E.g. auto& Map{serde::enum_map<EExample>()};
 //# The JSON and archive systems will use these templates. Therefore, this is the most trivial way to hook
