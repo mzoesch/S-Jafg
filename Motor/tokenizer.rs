@@ -323,21 +323,31 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 panic!("[{}]: Excepted class declaration after DECLARE_JAFG_CLASS.", file);
             }
             let classname_idx: usize = inner_idx;
+            let mut classname_content = String::from(&words[classname_idx].content);
 
             if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseJxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseJxxClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(classname_content), info: vec!["NextIsBaseJxxClass".to_string()] });
             }
             else
             {
-                for inner_w in words.iter().skip(classname_idx)
+                if classname_content.ends_with(':')
                 {
-                    inner_idx += 1;
-                    if inner_w.content == ":"
+                    inner_idx = classname_idx + 1;
+                    classname_content.pop();
+                }
+                else
+                {
+                    for inner_w in words.iter().skip(classname_idx)
                     {
-                        break
+                        inner_idx += 1;
+                        if inner_w.content == ":"
+                        {
+                            break
+                        }
                     }
                 }
+
                 if inner_idx >= words.len()
                 {
                     panic!("[{}]: Excepted j-object super class after class declaration.", file);
@@ -352,16 +362,16 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                     panic!("[{}]: Excepted j-object super class after class declaration.", file);
                 }
 
-                if words[classname_idx].content.starts_with('J')
+                if classname_content.starts_with('J')
                 {
                     if remove_all_namespaces(&words[inner_idx].content).starts_with('J') == false
                     {
                         panic!("[{}]: Excepted j-object super class after class declaration.", file);
                     }
                 }
-                else if words[classname_idx].content.starts_with('A')
+                else if classname_content.starts_with('A')
                 {
-                    if remove_all_namespaces(&words[inner_idx].content).starts_with('A') == false && words[classname_idx].content != "AWorldObject"
+                    if remove_all_namespaces(&words[inner_idx].content).starts_with('A') == false && classname_content != "AWorldObject"
                     {
                         panic!("[{}]: Excepted a-object super class after a-class declaration.", file);
                     }
@@ -371,13 +381,13 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                     panic!("[{}]: Excepted j-object or a-object super class after j-class declaration.", file);
                 }
 
-                if words[classname_idx].content.starts_with('A')
+                if classname_content.starts_with('A')
                 {
-                    tokens.push(Token { ty: TokenType::WorldObjectDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                    tokens.push(Token { ty: TokenType::WorldObjectDeclaration, line: w.line, content: String::from(&classname_content), info: vec![String::from(&words[inner_idx].content)] });
                 }
                 else
                 {
-                    tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                    tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&classname_content), info: vec![String::from(&words[inner_idx].content)] });
                 }
             }
         }
@@ -405,19 +415,28 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 panic!("[{}]: Excepted class declaration after DECLARE_JAFG_CLASS.", file);
             }
             let classname_idx: usize = inner_idx;
+            let mut classname_content = String::from(&words[classname_idx].content);
 
             if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseJxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseJxxClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(classname_content), info: vec!["NextIsBaseJxxClass".to_string()] });
             }
             else
             {
-                for inner_w in words.iter().skip(classname_idx)
+                if classname_content.ends_with(':')
                 {
-                    inner_idx += 1;
-                    if inner_w.content == ":"
+                    inner_idx = classname_idx + 1;
+                    classname_content.pop();
+                }
+                else
+                {
+                    for inner_w in words.iter().skip(classname_idx)
                     {
-                        break
+                        inner_idx += 1;
+                        if inner_w.content == ":"
+                        {
+                            break
+                        }
                     }
                 }
                 if inner_idx >= words.len()
@@ -434,19 +453,19 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                     panic!("[{}]: Excepted j-object super class after j-class declaration.", file);
                 }
 
-                if words[classname_idx].content.starts_with('W') == false
+                if classname_content.starts_with('W') == false
                 {
                     panic!("[{}]: Excepted w-object class declaration.", file);
                 }
                 else
                 {
-                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && words[classname_idx].content != "WNode"
+                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && classname_content!= "WNode"
                     {
                         panic!("[{}]: Excepted w-object super class after class declaration.", file);
                     }
                 }
 
-                tokens.push(Token { ty: TokenType::WidgetDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                tokens.push(Token { ty: TokenType::WidgetDeclaration, line: w.line, content: String::from(classname_content), info: vec![String::from(&words[inner_idx].content)] });
             }
         }
         else if w.content == "DECLARE_JAFG_WIDGET_WITH_FACTORY"
@@ -473,19 +492,28 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 panic!("[{}]: Excepted class declaration after DECLARE_JAFG_CLASS.", file);
             }
             let classname_idx: usize = inner_idx;
+            let mut classname_content = String::from(&words[classname_idx].content);
 
             if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseJxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseJxxClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(classname_content), info: vec!["NextIsBaseJxxClass".to_string()] });
             }
             else
             {
-                for inner_w in words.iter().skip(classname_idx)
+                if classname_content.ends_with(':')
                 {
-                    inner_idx += 1;
-                    if inner_w.content == ":"
+                    inner_idx = classname_idx + 1;
+                    classname_content.pop();
+                }
+                else
+                {
+                    for inner_w in words.iter().skip(classname_idx)
                     {
-                        break
+                        inner_idx += 1;
+                        if inner_w.content == ":"
+                        {
+                            break
+                        }
                     }
                 }
                 if inner_idx >= words.len()
@@ -502,19 +530,19 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                     panic!("[{}]: Excepted j-object super class after j-class declaration.", file);
                 }
 
-                if words[classname_idx].content.starts_with('W') == false
+                if classname_content.starts_with('W') == false
                 {
                     panic!("[{}]: Excepted w-object class declaration.", file);
                 }
                 else
                 {
-                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && words[classname_idx].content != "WNode"
+                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && classname_content != "WNode"
                     {
                         panic!("[{}]: Excepted w-object super class after class declaration.", file);
                     }
                 }
 
-                tokens.push(Token { ty: TokenType::WidgetDeclarationWithFactory, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
+                tokens.push(Token { ty: TokenType::WidgetDeclarationWithFactory, line: w.line, content: String::from(classname_content), info: vec![String::from(&words[inner_idx].content)] });
             }
         }
         else if w.content == "CLASS_FIELD"
