@@ -43,7 +43,7 @@ while IFS= read -r file; do
         continue
     fi
     echo "$src -> $dst"
-    cp "$src" "$dst"
+    cp -p "$src" "$dst"
 done < "$LFs"
 
 echo "$MIRROR"
