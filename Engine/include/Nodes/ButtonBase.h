@@ -92,6 +92,7 @@ enum struct EStyleBits : u8
     count = 5,
     ActiveCombi = Hover | Press | Selected,
     InactiveCombi = Normal | Disabled,
+    All = Normal | Hover | Press | Selected | Disabled,
 };
 ENUM_STRUCT_FLAGS(EStyleBits, EStyleFlags)
 
@@ -112,7 +113,7 @@ inline constexpr LStringView LexToString(EStyleBits Bit) noexcept
 }
 
 //# To use your flags here you have to declare the #count member as done in #EStyleBits.
-template<typename UFlags, auto... BrushProj> requires std::is_base_of_v<Detail::LFlags, UFlags>
+template<typename UFlags, typename TBrush, auto... BrushProj> requires std::is_base_of_v<Detail::LFlags, UFlags>
 struct LStyleBase
 {
     typedef typename UFlags::enum_type flag_type;
@@ -120,6 +121,28 @@ struct LStyleBase
     constexpr void ForEachEverywhere(this auto&& Self, auto&& F) noexcept
     {
         ([&](auto&& Brush) -> void{ (F(Self.*Brush));}(BrushProj), ...);
+    }
+
+    template<UFlags Flags>
+    constexpr void AssignBrush(this auto&& Self, TBrush const& Value) noexcept
+    {
+        [&]<std::size_t... Seq>(std::index_sequence<Seq...>)
+        {
+            auto Apply{[&]<std::size_t Idx>(auto&& Brush)
+            {
+                for (auto FlagIdx{0uz}; FlagIdx < std::to_underlying(flag_type::count); ++FlagIdx)
+                {
+                    if (!!(Flags & UFlags{static_cast<typename UFlags::mask>(0x01 << FlagIdx)}))
+                    {
+                        if (Idx == FlagIdx)
+                        {
+                            (Self.*Brush) = Value;
+                        }
+                    }
+                }
+            }};
+            (Apply.template operator()<Seq>(BrushProj), ...);
+        }(std::make_index_sequence<sizeof...(BrushProj)>{});
     }
 
     template<auto Proj>
@@ -213,6 +236,8 @@ namespace Detail
 template<typename TBrush>
 struct TButtonBaseStyle
 {
+    typedef TBrush value_type;
+
     TBrush NormalBrush;
     TBrush HoverBrush;
     TBrush PressBrush;
@@ -225,6 +250,7 @@ struct TButtonBaseStyle
 template<typename TBrush>
 struct TButtonStyle : Detail::TButtonBaseStyle<TBrush>
     , LStyleBase<EStyleFlags,
+        TBrush,
         &Detail::TButtonBaseStyle<TBrush>::NormalBrush,
         &Detail::TButtonBaseStyle<TBrush>::HoverBrush,
         &Detail::TButtonBaseStyle<TBrush>::PressBrush,
@@ -301,7 +327,7 @@ struct LStylePalette final
     template<typename TBrush>
     inline static constexpr bool valid_text_brush_v{std::is_base_of_v<LTextBrush, TBrush> || std::is_base_of_v<LTextBoxBrush, TBrush>};
 
-    template<typename TBrush>
+    template<typename TBrush, EStyleFlags Flags = EStyleBits::All>
         requires valid_brush_v<TBrush> || valid_text_brush_v<TBrush>
     void ApplyOn(TButtonStyle<TBrush>& Style) const noexcept
     {
@@ -323,11 +349,26 @@ struct LStylePalette final
                 Brush.OutlineTint = State.Outline;
                 Brush.OutlineThickness = static_cast<f32>(State.OutlineThickness);
             }};
-            ApplyState(Style.NormalBrush, this->Normal);
-            ApplyState(Style.HoverBrush, this->Hover);
-            ApplyState(Style.PressBrush, this->Press);
-            ApplyState(Style.SelectedBrush, this->Selected);
-            ApplyState(Style.DisabledBrush, this->Disabled);
+            if constexpr (Flags & EStyleBits::Normal)
+            {
+                ApplyState(Style.NormalBrush, this->Normal);
+            }
+            if constexpr (Flags & EStyleBits::Hover)
+            {
+                ApplyState(Style.HoverBrush, this->Hover);
+            }
+            if constexpr (Flags & EStyleBits::Press)
+            {
+                ApplyState(Style.PressBrush, this->Press);
+            }
+            if constexpr (Flags & EStyleBits::Selected)
+            {
+                ApplyState(Style.SelectedBrush, this->Selected);
+            }
+            if constexpr (Flags & EStyleBits::Disabled)
+            {
+                ApplyState(Style.DisabledBrush, this->Disabled);
+            }
         }
         else if constexpr (valid_text_brush_v<TBrush>)
         {
@@ -337,18 +378,32 @@ struct LStylePalette final
             {
                 Brush.Tint = State.TextTint;
             }};
-            ApplyState(Style.NormalBrush, this->Normal);
-            ApplyState(Style.HoverBrush, this->Hover);
-            ApplyState(Style.PressBrush, this->Press);
-            ApplyState(Style.SelectedBrush, this->Selected);
-            ApplyState(Style.DisabledBrush, this->Disabled);
+            if constexpr (Flags & EStyleBits::Normal)
+            {
+                ApplyState(Style.NormalBrush, this->Normal);
+            }
+            if constexpr (Flags & EStyleBits::Hover)
+            {
+                ApplyState(Style.HoverBrush, this->Hover);
+            }
+            if constexpr (Flags & EStyleBits::Press)
+            {
+                ApplyState(Style.PressBrush, this->Press);
+            }
+            if constexpr (Flags & EStyleBits::Selected)
+            {
+                ApplyState(Style.SelectedBrush, this->Selected);
+            }
+            if constexpr (Flags & EStyleBits::Disabled)
+            {
+                ApplyState(Style.DisabledBrush, this->Disabled);
+            }
         }
         else
         {
             static_assert(algo::always_false_v<TBrush>);
         }
     }
-
 };
 SERDE_JSON_TYPE(LStylePalette::State, Tint, Outline, TextTint)
 SERDE_JSON_TYPE(LStylePalette, Normal, Hover, Press, Selected, Disabled)
@@ -549,11 +604,12 @@ protected:
 };
 
 template<typename TNode>
-struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
+struct TFactoryButtonBase: NODE_FACTORY_PARENT(TNode)
 {
     NODE_FACTORY_BODY(TNode)
 
     typedef typename TNode::_ButtonBaseBrush Brush;
+    typedef TButtonStyle<Brush>::flag_type _Flags;
 
     decltype(auto) Enabled(this auto&& Self, bool bEnabled) noexcept
     {
@@ -607,6 +663,12 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
     { \
         NODE_FACTORY_SELF().Member.template Chain<Flags, Proj...>(Values...); \
         return NODE_FACTORY_RESULT(); \
+    } \
+    template<typename decltype(TFactoredNode::Member)::flag_type Flags> \
+    decltype(auto) JAFG_JOIN_OUTER_THREE(Assign, Stem, BrushFor)(this auto&& Self, decltype(std::remove_cvref_t<decltype(Self)>::TFactoredNode::Member)::value_type const& Brush) noexcept \
+    { \
+        NODE_FACTORY_SELF().Member.template AssignBrush<Flags>(Brush); \
+        return NODE_FACTORY_RESULT(); \
     }
 
     JAFG_NODE_FACTORY_STYLE_BOILERPLATE(, Style)
@@ -617,10 +679,24 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
         Style.ApplyOn(DETAIL_JAFG_NODE_FACTORY_SELF().Style);
         return NODE_FACTORY_RESULT();
     }
+    template<_Flags Flags>
+    decltype(auto) PaletteFor(this auto&& Self, LStylePalette const& Style) noexcept
+    {
+        check(!Self._IsDecommissioned())
+        Style.ApplyOn<Brush, Flags>(DETAIL_JAFG_NODE_FACTORY_SELF().Style);
+        return NODE_FACTORY_RESULT();
+    }
     decltype(auto) Palette(this auto&& Self, LStylePalette const& Style, auto&& Background) noexcept
     {
         DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(std::move(Background));
         Self.Palette(Style);
+        return NODE_FACTORY_RESULT();
+    }
+    template<_Flags Flags>
+    decltype(auto) PaletteFor(this auto&& Self, LStylePalette const& Style, auto&& Background) noexcept
+    {
+        DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(std::move(Background));
+        Self.template PaletteFor<Flags>(Style);
         return NODE_FACTORY_RESULT();
     }
     decltype(auto) TexturePalette(this auto&& Self, LStylePalette const& Style, LOptionalTexture2Ref Texture) noexcept
@@ -629,10 +705,24 @@ struct TFactoryButtonBase : NODE_FACTORY_PARENT(TNode)
         Self.Palette(Style);
         return NODE_FACTORY_RESULT();
     }
+    template<_Flags Flags>
+    decltype(auto) TexturePaletteFor(this auto&& Self, LStylePalette const& Style, LOptionalTexture2Ref Texture) noexcept
+    {
+        DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(TNode::_ButtonBaseBrush::Texture(std::move(Texture)));
+        Self.template PaletteFor<Flags>(Style);
+        return NODE_FACTORY_RESULT();
+    }
     decltype(auto) IconPalette(this auto&& Self, LStylePalette const& Style, LOptionalTexture2Ref Icon) noexcept
     {
         DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(TNode::_ButtonBaseBrush::Icon(std::move(Icon)));
         Self.Palette(Style);
+        return NODE_FACTORY_RESULT();
+    }
+    template<_Flags Flags>
+    decltype(auto) IconPaletteFor(this auto&& Self, LStylePalette const& Style, LOptionalTexture2Ref Icon) noexcept
+    {
+        DETAIL_JAFG_NODE_FACTORY_SELF().Style.template SetEverywhere<&TNode::_ButtonBaseBrush::Background>(TNode::_ButtonBaseBrush::Icon(std::move(Icon)));
+        Self.template PaletteFor<Flags>(Style);
         return NODE_FACTORY_RESULT();
     }
 };

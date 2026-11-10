@@ -42,15 +42,15 @@ void Jafg::LBillboard::Render(LActorRenderInfo const& Info, RenderInfo const& Re
         return;
     }
 
-    auto ViewProjection{Info.WorldData.proj * Info.WorldData.view};
+    auto ViewProjection{Info.WorldData.Proj * Info.WorldData.View};
     LVec4F Clip{ViewProjection * LVec4F{RenderInfo.Translation, 1.0f}};
     if (Clip.w <= 0.0f)
     {
         return;
     }
 
-    LVec4F ViewPos{Info.WorldData.view * LVec4F(RenderInfo.Translation, 1.0f)};
-    LVec2F Size{this->Size * (maths::abs(Info.WorldData.proj[1][1]) * Info.VkViewport.height / (2.0f * -ViewPos.z))};
+    LVec4F ViewPos{Info.WorldData.View * LVec4F(RenderInfo.Translation, 1.0f)};
+    LVec2F Size{this->Size * (maths::abs(Info.WorldData.Proj[1][1]) * Info.VkViewport.height / (2.0f * -ViewPos.z))};
     if (Size.x < this->m_Config.MinSize.x || Size.y < this->m_Config.MinSize.y)
     {
         return;

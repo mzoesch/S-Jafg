@@ -13,8 +13,10 @@
 #include "Rhi/RendererCore.h"
 #include "Rhi/DeviceBuffers.h"
 #include "Rhi/TextureCube.h"
+#include "Framework/EditorForward.h"
 #include "Framework/LackeyForward.h"
 #include "Framework/PhysicsSystem.h"
+#include "User/UserPreferencesForward.h"
 
 namespace Jafg
 {
@@ -192,6 +194,9 @@ public:
         algo::transparent_unordered_string_map<rhi::mapped_device_buffer*> SharedBuffers;
         //# An optional filter to only draw a subset of actors.
         std::optional<TArray<AActor*>> const& Filter;
+
+        EWorldRenderFlags Preferences{ EWorldRenderBits::All };
+        EPolygonMode PolygonMode{ EPolygonMode::Fill };
 
         //# Whether to update world device data for this draw call.
         bool bUpdateWorldDataSet{ true };

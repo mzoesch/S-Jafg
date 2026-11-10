@@ -185,6 +185,122 @@ public:
 
     NODISCARD FORCEINLINE TArray<TJxxUnique<ASceneComponent>> const& GetChildren() const noexcept { return this->Children; }
 
+    //# Emplace a new default scene component to this component.
+    template<typename TSceneComponent = ASceneComponent, typename TCallback = std::monostate>
+        requires(std::is_base_of_v<ASceneComponent, TSceneComponent>)
+    FORCEINLINE TSceneComponent& EmplaceDefaultSceneComponent(TCallback&& Callback = {})
+    {
+        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TSceneComponent&>);
+        auto& Result{*StaticCastChecked<TSceneComponent>(&*this->Children.emplace_back(SpawnObject(TWorldStaticInit<TSceneComponent>{.Outer=this->GetWorld()})))};
+        Result.Parent = this;
+        Result.Origin = EActorComponentOrigin::Ctor;
+        if constexpr (requires { Callback(Result); })
+        {
+            Callback(Result);
+        }
+        check(!this->_check_HasExecutedOnAttach())
+        check(!this->IsOwningActorValid())
+        return Result;
+    }
+    template<typename TSceneComponent = ASceneComponent, typename TCallback = std::monostate>
+        requires(std::is_base_of_v<ASceneComponent, TSceneComponent>)
+    FORCEINLINE TSceneComponent& EmplaceDefaultSceneComponent(TSubclassOf<ASceneComponent> Class, TCallback&& Callback = {})
+    {
+        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TSceneComponent&>);
+        check(Class.GetClass())
+        auto& Result{*StaticCastChecked<TSceneComponent>(&*this->Children.emplace_back(SpawnObject(CastTo<ASceneComponent>{}, {this->GetWorld(), *Class.GetClass()})))};
+        Result.Parent = this;
+        Result.Origin = EActorComponentOrigin::Ctor;
+        if constexpr (requires { Callback(Result); })
+        {
+            Callback(Result);
+        }
+        check(!this->_check_HasExecutedOnAttach())
+        check(!this->IsOwningActorValid())
+        return Result;
+    }
+
+    //# Emplace a new scene component to this component.
+    template<typename TSceneComponent = ASceneComponent, typename TCallback = std::monostate>
+        requires(std::is_base_of_v<ASceneComponent, TSceneComponent>)
+    FORCEINLINE TSceneComponent& EmplaceSceneComponent(TCallback&& Callback = {})
+    {
+        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TSceneComponent&>);
+        auto& Result{*StaticCastChecked<TSceneComponent>(&*this->Children.emplace_back(SpawnObject(TWorldStaticInit<TSceneComponent>{.Outer=this->GetWorld()})))};
+        Result.Parent = this;
+        Result.Origin = EActorComponentOrigin::Runtime;
+        if constexpr (requires { Callback(Result); })
+        {
+            Callback(Result);
+        }
+        if (this->IsOwningActorValid())
+        {
+            checkCode(this->_check_EmplaceRuntimeComponentPreCondition())
+            Result.OnAttach(*this);
+        }
+        return Result;
+    }
+    template<typename TSceneComponent = ASceneComponent, typename TCallback = std::monostate>
+        requires(std::is_base_of_v<ASceneComponent, TSceneComponent>)
+    FORCEINLINE TSceneComponent& EmplaceSceneComponent(TSubclassOf<ASceneComponent> Class, TCallback&& Callback = {})
+    {
+        static_assert(std::is_same_v<std::remove_cvref_t<decltype(Callback)>, std::monostate> || std::is_invocable_v<decltype(Callback), TSceneComponent&>);
+        check(Class.GetClass())
+        auto& Result{*StaticCastChecked<TSceneComponent>(&*this->Children.emplace_back(SpawnObject(CastTo<ASceneComponent>{}, {this->GetWorld(), *Class.GetClass()})))};
+        Result.Parent = this;
+        Result.Origin = EActorComponentOrigin::Runtime;
+        if constexpr (requires { Callback(Result); })
+        {
+            Callback(Result);
+        }
+        if (this->IsOwningActorValid())
+        {
+            checkCode(this->_check_EmplaceRuntimeComponentPreCondition())
+            Result.OnAttach(*this);
+        }
+        return Result;
+    }
+
+    template<typename T> requires std::is_base_of_v<AActorComponent, T>
+    NODISCARD FORCEINLINE T* GetComponent() const noexcept
+    {
+        for (auto const& Comp: this->Children)
+        {
+            if (Comp->IsA<T>())
+            {
+                return StaticCastChecked<T>(&*Comp);
+            }
+        }
+        return {};
+    }
+    template<typename T> requires std::is_base_of_v<ASceneComponent, T>
+    NODISCARD FORCEINLINE T& GetComponentChecked() const noexcept
+    {
+        auto* Result{this->GetComponent<T>()};
+        check(Result)
+        return *Result;
+    }
+
+    template<typename T = ASceneComponent> requires std::is_base_of_v<ASceneComponent, T>
+    NODISCARD FORCEINLINE T* GetComponent(TSubclassOf<T> Class) const noexcept
+    {
+        for (auto const& Comp: this->Children)
+        {
+            if (Comp->IsA(Class))
+            {
+                return StaticCastChecked<T>(&*Comp);
+            }
+        }
+        return {};
+    }
+    template<typename T = ASceneComponent> requires std::is_base_of_v<ASceneComponent, T>
+    NODISCARD FORCEINLINE T& GetComponentChecked(TSubclassOf<T> Class) const noexcept
+    {
+        auto* Result{this->GetComponent<T>(Class)};
+        check(Result)
+        return *Result;
+    }
+
     NODISCARD LPhysicsSystem& GetParentPhysicsSystem() noexcept { return this->GetWorld().GetWorldGlobalPhysicsSystem(); }
     NODISCARD LPhysicsSystem const& GetParentPhysicsSystem() const noexcept { return this->GetWorld().GetWorldGlobalPhysicsSystem(); }
 
@@ -202,6 +318,10 @@ protected:
     LWorldAabb3 Aabb{ maths::identity<LWorldAabb3> };
 
 private:
+
+#if JAFG_DO_CHECKS
+    void _check_EmplaceRuntimeComponentPreCondition();
+#endif /* JAFG_DO_CHECKS */
 
     FORCEINLINE constexpr void GetTransitiveComponentAabbImpl(LWorldAabb3& Result) const noexcept
     {

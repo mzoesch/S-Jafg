@@ -16,6 +16,9 @@ Jafg::WWorldViewer::~WWorldViewer()
 void Jafg::WWorldViewer::Construct()
 {
     Super::Construct();
+
+    this->PolygonMode = *GetSingleton<JUserPreferences>().PolygonMode;
+
     this->RenderTargetViewport.Vk_OnLateInit();
     BeginStyling(*this).StaticRoot<WText>().SaveTo(&this->Placeholder)
         .Visibility(ENodeVisibility::Visible)
@@ -361,6 +364,8 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 .SharedSets = std::move(SharedSets),
                 .SharedBuffers = std::move(SharedBuffers),
                 .Filter = Filter,
+                .Preferences = this->WorldRenderPreferences,
+                .PolygonMode = this->PolygonMode,
                 .PbrLightLimit = this->PbrLightLimit,
                 });
 

@@ -66,3 +66,11 @@ Jafg::AWorldObject& Jafg::ASceneComponent::CloneImpl(AWorldObject* Object) const
 
     return Result;
 }
+
+#if JAFG_DO_CHECKS
+void Jafg::ASceneComponent::_check_EmplaceRuntimeComponentPreCondition()
+{
+    check(this->IsOwningActorValid())
+    check(this->GetOwningActor()._Lives())
+}
+#endif /* JAFG_DO_CHECKS */

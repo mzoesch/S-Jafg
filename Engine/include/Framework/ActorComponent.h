@@ -10,6 +10,7 @@ namespace Jafg
 {
 
 class AActor;
+class ASceneComponent;
 
 enum struct EActorComponentOrigin: u8
 {
@@ -24,6 +25,7 @@ class ENGINE_API AActorComponent : public AWorldObject
     GENERATED_CLASS_BODY()
 
     friend AActor;
+    friend ASceneComponent;
 
 protected:
 
@@ -75,6 +77,10 @@ public:
     NODISCARD constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
     NODISCARD constexpr AActor& GetOwningActor() noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
     NODISCARD constexpr AActor const& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
+
+#if JAFG_DO_CHECKS
+    NODISCARD FORCEINLINE constexpr bool _check_HasExecutedOnAttach() const noexcept { return this->bHasExecutedOnAttach; }
+#endif /* JAFG_DO_CHECKS */
 
     NODISCARD constexpr EActorComponentOrigin GetOrigin() const noexcept { return this->Origin; }
     NODISCARD constexpr bool IsCtorComponent() const noexcept { return this->Origin == EActorComponentOrigin::Ctor; }

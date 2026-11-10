@@ -43,6 +43,7 @@ ENUM_STRUCT_FLAGS(ETextButtonIconStyleBits, ETextButtonIconStyleFlags)
 struct LTextButtonIconStyle : Detail::LTextButtonIconStyleBase
     , LStyleBase<
         ETextButtonIconStyleFlags,
+        LIconBrush,
         &Detail::LTextButtonIconStyleBase::NormalBrush,
         &Detail::LTextButtonIconStyleBase::HoverBrush,
         &Detail::LTextButtonIconStyleBase::PressBrush,

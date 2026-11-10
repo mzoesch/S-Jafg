@@ -77,9 +77,9 @@ struct LLight final
     //# Whether this light is allowed to cast any shadows.
     bool bCastShadows:1{};
     //# Whether this light can cast shadows for static objects. Requires #bCastShadows.
-    bool bCastStaticShadows:1{};
+    bool bCastStaticShadows:1{ true }; // TODO: Does this matter?? Is not everything dynamic...
     //# Whether this light can cast shadows for dynamic objects. Requires #bCastShadows.
-    bool bCastDynamicShadows:1{};
+    bool bCastDynamicShadows:1{ true };
 
     //#
     //# - Directional: Direction the light travels

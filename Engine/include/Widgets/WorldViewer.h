@@ -7,6 +7,8 @@
 #include "Rhi/RenderTarget.h"
 #include "Rhi/Light.h"
 #include "Framework/Surface.h"
+#include "Framework/EditorForward.h"
+#include "User/UserPreferencesForward.h"
 #include "WorldViewer.generated.h"
 
 namespace Jafg
@@ -71,6 +73,11 @@ public:
 
     void OnPerspectiveDepthTestChanged();
 
+    NODISCARD FORCEINLINE constexpr EWorldRenderFlags GetWorldRenderPreferences() const noexcept { return this->WorldRenderPreferences; }
+    FORCEINLINE void SetWorldRenderPreferences(EWorldRenderFlags New) noexcept { this->WorldRenderPreferences = New; }
+    NODISCARD FORCEINLINE constexpr EPolygonMode GetPolygonMode() const noexcept { return this->PolygonMode; }
+    FORCEINLINE void SetPolygonMode(EPolygonMode New) noexcept { this->PolygonMode = New; }
+
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSet(std::size_t Frame) const noexcept { return this->WorldDescriptorSets[Frame]; }
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSets() const noexcept { return this->WorldDescriptorSets; }
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetPbrLightDescriptorSet(std::size_t Frame) const noexcept { return this->PbrLightDescriptorSets[Frame]; }
@@ -110,6 +117,9 @@ private:
     LRaiiPreDrawHandle OnPreDrawHandle{this->GetViewport().GetSurface().OnPreRender};
 
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
+
+    EWorldRenderFlags WorldRenderPreferences{ EWorldRenderBits::All };
+    EPolygonMode PolygonMode{ EPolygonMode::Fill };
 
     rhi::frame_array<vk::raii::DescriptorSet> WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<rhi::mapped_device_buffer> WorldBuffers;

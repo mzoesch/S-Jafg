@@ -311,14 +311,14 @@ public:
         }
         return {};
     }
-    template<typename T> requires std::is_base_of_v<AActorComponent, T>
+    template<typename T = AActorComponent> requires std::is_base_of_v<AActorComponent, T>
     NODISCARD FORCEINLINE T& GetComponentChecked(TSubclassOf<T> Class) const noexcept
     {
         auto* Result{this->GetComponent<T>(Class)};
         check(Result)
         return *Result;
     }
-    template<typename T> requires std::is_base_of_v<AActorComponent, T>
+    template<typename T = AActorComponent> requires std::is_base_of_v<AActorComponent, T>
     NODISCARD FORCEINLINE T& GetComponentAsserted(TSubclassOf<T> Class) const noexcept
     {
         auto* Result{this->GetComponent<T>(Class)};

@@ -54,7 +54,7 @@
 #include "Framework/RigidComponent.h"
 #include "Nodes/Separator.h"
 #include "Framework/FontSubsystem.h"
-#include "Framework/PointLightComponent.h"
+#include "Framework/LightComponent.h"
 #include "../Framework/PhysicsForeignCore.h"
 
 namespace
@@ -740,6 +740,16 @@ void Jafg::WEditorWorldViewer::Construct()
     Super::Construct();
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    this->OnPolygonModeChangedHandle = GetMutableSingleton<JUserPreferences>().OnPolygonModeChanged.Add([this](APersonaController const* Ctrl, EPolygonMode PolygonMode)
+    {
+        if (!Ctrl || this->GetOwnedPersonaController() == Ctrl)
+        {
+            this->SetPolygonMode(PolygonMode);
+        }
+        return false;
+    });
+
     this->StartType = EStartType{static_cast<u8>(*Prefs.EditorStartType)};
     this->PawnStart = EPawnSart{static_cast<u8>(*Prefs.EditorPawnStart)};
 
@@ -747,6 +757,8 @@ void Jafg::WEditorWorldViewer::Construct()
     {
         this->DesiredViewportExtent = rhi::extent2::from_vec(*Prefs.EditorLastViewportExtent);
     }
+
+    this->OnPresetSelected(*Prefs.EditorVisualization);
 
     constexpr auto MinSize{23_spt2};
 
@@ -768,7 +780,27 @@ void Jafg::WEditorWorldViewer::Construct()
                 {
                     if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                     {
-                        this->CreateMenuDropDown(Info.CursorLocation.value_or(maths::zero_vector<LVec2F>));
+                        auto TopLeft{Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(Self.GetTranslationFromMostOuter())};
+                        TopLeft.y += Self.GetAnchoredSize_v2().y;
+                        this->CreateMenuDropDown(TopLeft);
+                        return LNodeReply::Handled();
+                    }
+                    return LNodeReply::Unhandled();
+                })
+            + NewStaticNode(WTextButtonIconizedDouble)
+                .MinDesiredSize(MinSize)
+                .Palette(*Prefs.SecondaryPaletteSolid)
+                .InAllBrushes<&LBoxBrush::Padding>({4_spt, 2})
+                .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
+                .Content("Visualisation")
+                .LeftIcon(LTexture2::FromAsset("Icons/PointLight"))
+                .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                {
+                    if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                    {
+                        auto TopLeft{Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(Self.GetTranslationFromMostOuter())};
+                        TopLeft.y += Self.GetAnchoredSize_v2().y;
+                        this->CreateRenderFlagsDropDown(TopLeft);
                         return LNodeReply::Handled();
                     }
                     return LNodeReply::Unhandled();
@@ -783,6 +815,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->StartButton)
                     .MinDesiredSize(MinSize)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Start")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Start")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -804,6 +837,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->StepButton)
                     .MinDesiredSize(MinSize)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Step")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Step")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -817,6 +851,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->StopButton)
                     .MinDesiredSize(MinSize)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Stop")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Stop")
                     .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(*Prefs.DangerColor)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -862,6 +897,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     + NewStaticNode(WButton).SaveTo(&this->DetachButton)
                         .MinDesiredSize(MinSize)
                         .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Detach")
+                        .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Detach")
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -910,12 +946,14 @@ void Jafg::WEditorWorldViewer::Construct()
                         })
                     + NewStaticNode(WButton).SaveTo(&this->MoreButton)
                         .MinDesiredSize(MinSize)
-                        .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/VMore")
+                        .IconPalette(*Prefs.SecondaryPaletteSolid, "Icons/VMore")
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                             {
-                                this->CreateStartDropDown(Info.CursorLocation.value_or(maths::zero_vector<LVec2F>));
+                                auto TopLeft{Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(Self.GetTranslationFromMostOuter())};
+                                TopLeft.y += Self.GetAnchoredSize_v2().y;
+                                this->CreateStartDropDown(TopLeft);
                                 return LNodeReply::Handled();
                             }
                             return LNodeReply::Unhandled();
@@ -933,6 +971,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Cursor")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Cursor")
                     .Selected(true)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -947,6 +986,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/TranslationGizmo")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/TranslationGizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -960,6 +1000,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/RotationGizmo")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/RotationGizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -973,6 +1014,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/ScaleGizmo")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/ScaleGizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -986,6 +1028,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Gizmo")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Gizmo")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1005,7 +1048,7 @@ void Jafg::WEditorWorldViewer::Construct()
             [
                 NewStaticNode(WButton).SaveTo(&this->ToggleGridSpace)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/LocalGrid")
+                    .IconPalette(*Prefs.SecondaryPaletteSolid, "Icons/LocalGrid")
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
@@ -1036,6 +1079,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Grid")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Grid")
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1063,6 +1107,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Angle")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Angle")
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1090,6 +1135,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
                     .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/ScaleGizmoLight")
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/ScaleGizmoLight")
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1116,6 +1162,7 @@ void Jafg::WEditorWorldViewer::Construct()
                     NewStaticNode(WTextButtonIconizedDouble).SaveTo(&this->CameraButton)
                         .MinDesiredSize(MinSize)
                         .Palette(*Prefs.SecondaryPaletteSolid)
+                        .InAllBrushes<&LBoxBrush::Padding>({4_spt, 2})
                         .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
                         .Content(this->GetCameraSpeedString())
                         .LeftIcon(LTexture2::FromAsset("Icons/Camera"))
@@ -1123,7 +1170,9 @@ void Jafg::WEditorWorldViewer::Construct()
                         {
                             if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
                             {
-                                CreateDropDownMenu(this->GetViewport(), Info.CursorLocation.value_or(maths::zero_vector<LVec2F>), {}, {
+                                auto TopLeft{Self.GetAnchoredAndTranslatedTopLeftFromMostOuter(Self.GetTranslationFromMostOuter())};
+                                TopLeft.y += Self.GetAnchoredSize_v2().y;
+                                CreateDropDownMenu(this->GetViewport(), TopLeft, {}, {
                                     LDropDownNodeScratch{.OnCreate=[this](LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
                                     {
                                         return NewNode(Viewport).Class<WHParent>().Padding({LDropDownMenuCreateInfo::RecommendedPadding, 0.0f})
@@ -1401,6 +1450,11 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
 void Jafg::WEditorWorldViewer::Destruct()
 {
     Super::Destruct();
+
+    if (!GetMutableSingleton<JUserPreferences>().OnPolygonModeChanged.Remove(&this->OnPolygonModeChangedHandle))
+    {
+        LOG_WARNING(LogWidgetFramework, "[{}]: Failed to remove OnPolygonModeChanged delegate handle.", this->GetNameAsString())
+    }
 
     if (this->HasHierarchy())
     {
@@ -1937,6 +1991,8 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
             .Instance = &*this->SelectionMaterialInstance,
             .SharedSets = std::move(SharedSets),
             .Filter = ValidActors,
+            .Preferences = this->GetWorldRenderPreferences(),
+            .PolygonMode = this->GetPolygonMode(),
             .bUpdateWorldDataSet = false,
             });
     }
@@ -2555,6 +2611,140 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         });
 }
 
+void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
+{
+    CreateDropDownMenu(this->GetViewport(), Where, {}, {
+        LDropDownNodeSeparator{.DisplayName="PRESETS"},
+        LDropDownNodeOption{
+            .Selector = {
+                .DisplayName = "Rendered",
+                .Icon = "Icons/PointLight",
+                },
+            .OnAction = [this](auto&&...)
+            {
+                this->OnPresetSelected(EEditorVisualization::Rendered);
+                return algo::reply::unhandled();
+            },},
+        LDropDownNodeOption{
+            .Selector = {
+                .DisplayName = "Preview",
+                .Icon = "Icons/PointLight",
+                },
+            .OnAction = [this](auto&&...)
+            {
+                this->OnPresetSelected(EEditorVisualization::Preview);
+                return algo::reply::unhandled();
+            },},
+        LDropDownNodeOption{
+            .Selector = {
+                .DisplayName = "Unlit",
+                .Icon = "Icons/PointLight",
+                },
+            .OnAction = [this](auto&&...)
+            {
+                this->OnPresetSelected(EEditorVisualization::Unlit);
+                return algo::reply::unhandled();
+            },},
+        LDropDownNodeOption{
+            .Selector = {
+                .DisplayName = "Lighting Only",
+                .Icon = "Icons/PointLight",
+                },
+            .OnAction = [this](auto&&...)
+            {
+                this->OnPresetSelected(EEditorVisualization::LightingOnly);
+                return algo::reply::unhandled();
+            },},
+        LDropDownNodeOption{
+            .Selector = {
+                .DisplayName = "Wireframe",
+                .Icon = "Icons/PointLight",
+                },
+            .OnAction = [this](auto&&...)
+            {
+                this->OnPresetSelected(EEditorVisualization::Wireframe);
+                return algo::reply::unhandled();
+            },},
+        LDropDownNodeSeparator{.DisplayName="FLAGS"},
+        CreateDropDownCheckmark("Show Directional Lights", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowDirectionLights), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowDirectionLights);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowDirectionLights);
+        }),
+        CreateDropDownCheckmark("Show Point Lights", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowPointLights), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowPointLights);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowPointLights);
+        }),
+        CreateDropDownCheckmark("Show Spot Lights", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowSpotLights), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowSpotLights);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowSpotLights);
+        }),
+        CreateDropDownCheckmark("Show Rect Lights", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowRectLights), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowRectLights);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowRectLights);
+        }),
+        CreateDropDownCheckmark("Show Albedo", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowAlbedo), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowAlbedo);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowAlbedo);
+        }),
+        CreateDropDownCheckmark("Show Normal", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowNormal), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowNormal);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowNormal);
+        }),
+        CreateDropDownCheckmark("Show Occlusion", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowOcclusion), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowOcclusion);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowOcclusion);
+        }),
+        CreateDropDownCheckmark("Show Roughness", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowRoughness), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowRoughness);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowRoughness);
+        }),
+        CreateDropDownCheckmark("Show Metallic", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowMetallic), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowMetallic);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowMetallic);
+        }),
+        CreateDropDownCheckmark("Show Emissive", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowEmissive), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowEmissive);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowEmissive);
+        }),
+        });
+}
+
+void Jafg::WEditorWorldViewer::OnPresetSelected(EEditorVisualization Preset)
+{
+    auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+    Prefs.EditorVisualization = Preset;
+
+    this->SetWorldRenderPreferences(EditorVisualizationPresetToWorldRenderPreferences(Preset));
+
+    EPolygonMode DesiredPolygonMode{ EPolygonMode::Fill };
+    if (Preset == EEditorVisualization::Wireframe)
+    {
+        DesiredPolygonMode = EPolygonMode::Wireframe;
+    }
+    this->SetPolygonMode(DesiredPolygonMode);
+
+    if (Prefs.PolygonMode != DesiredPolygonMode)
+    {
+        Prefs.PolygonMode = DesiredPolygonMode;
+        Prefs.OnPolygonModeChanged.Broadcast(this->GetOwnedPersonaController(), *Prefs.PolygonMode);
+    }
+}
+
+void Jafg::WEditorWorldViewer::OnWorldRenderBitSelected(EWorldRenderBits Preset)
+{
+    this->SetWorldRenderPreferences(this->GetWorldRenderPreferences() ^ Preset);
+}
+
 namespace
 {
 
@@ -2652,10 +2842,55 @@ void LoadGymCollection(Jafg::LWorld& World)
 
     {
         auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Light.EditorName = "White Point Light"sv;
-        Light.EmplaceRootComponent<Jafg::APointLightComponent>([](Jafg::APointLightComponent& Comp)
+        Light.EditorName = "Directional Light"sv;
+        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
         {
-            Comp.SetLocalTranslationByTeleport({3,0,4});
+            Comp.SetType(Jafg::ELight::Directional);
+            Comp.SetTint(LLinearColor{1.0,0.83,0.66});
+            Comp.SetLocalTranslationByTeleport({5,0,0});
+        });
+    }
+
+    {
+        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Light.EditorName = "White Point Light"sv;
+        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Point);
+            Comp.SetTint(LinearColors::White);
+            Comp.SetLocalTranslationByTeleport({-2,1,3});
+        });
+    }
+    {
+        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Light.EditorName = "Red Point Light"sv;
+        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Point);
+            Comp.SetTint(LinearColors::Red);
+            Comp.SetLocalTranslationByTeleport({-2,1,-3});
+        });
+    }
+
+    {
+        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Light.EditorName = "White Rect Light"sv;
+        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Rect);
+            Comp.SetTint(LinearColors::White);
+            Comp.SetLocalTranslationByTeleport({-5,1,-3});
+        });
+    }
+
+    {
+        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Light.EditorName = "White Spot Light"sv;
+        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Spot);
+            Comp.SetTint(LinearColors::White);
+            Comp.SetLocalTranslationByTeleport({-8,1,-3});
         });
     }
 
@@ -2678,19 +2913,33 @@ void LoadGymCollection(Jafg::LWorld& World)
         });
     }
 
+    auto SpawnSphere{[&](LWorldVec3 Offset, LWorldVec3 Gap, std::size_t Index, LStringView Material)
     {
+        LWorldVec3 Translation{Offset + Gap * static_cast<LWorldReal>(Index)};
         auto& Sphere{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Sphere.EditorName = "Sphere"sv;
-        Sphere.EmplaceRootComponent<Jafg::AStaticMeshComponent>([World=&World](Jafg::AStaticMeshComponent& Comp)
+        Sphere.EditorName = algo::sprintf("Sphere {}", Index);
+        Sphere.EmplaceRootComponent<Jafg::AStaticMeshComponent>([&](Jafg::AStaticMeshComponent& Comp)
         {
-            auto& Frontend{World->GetMutableFrontend()};
-            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, "Materials/Examples/CastleBrick02Red")};
+            auto& Frontend{World.GetMutableFrontend()};
+            auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, Material)};
             Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
             Comp.SetPbrMaterialInstance(std::move(MaterialInstance));
 
-            Comp.SetLocalTranslationByTeleport({0,0,4});
+            Comp.SetLocalTranslationByTeleport(Translation);
         });
-    }
+    }};
+    auto SpawnSpheres{[&](LWorldVec3 Offset, LWorldVec3 Gap, std::vector<LStringView> Materials)
+    {
+        for (std::size_t Idx{}; Idx < Materials.size(); ++Idx)
+        {
+            SpawnSphere(Offset, Gap, Idx, Materials[Idx]);
+        }
+    }};
+    SpawnSpheres(maths::zero_vector<LWorldVec3>, LWorldVec3{-2,0,0}, {
+        "Materials/Examples/CastleBrick02Red",
+        "Materials/Examples/MetalPlate",
+        "Materials/Examples/Scifi",
+        });
 }
 
 } /* ~Namespace <Anonymous> */
@@ -2784,7 +3033,6 @@ void Jafg::WEditorWorldViewer::UpdateStartStopButtons()
 
     if (this->IsRunning())
     {
-
         this->StepButton->SetEnabled(true);
         this->StopButton->SetEnabled(true);
         this->DetachButton->SetEnabled(true);

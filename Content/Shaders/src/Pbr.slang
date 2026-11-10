@@ -1,19 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Jafg.slang"
-#include "Jafg/WorldData.slang"
 #include "Jafg/StaticMeshVertex.slang"
 #include "Jafg/Pbr.slang"
-
-[[vk::binding(0, 0),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<WorldData> world_data;
-
-[[vk::binding(0, 1),Shared("Jafg::UBO::Bindless")]] SamplerState[] samplers;
-[[vk::binding(1, 1),Shared("Jafg::UBO::Bindless")]] Texture2D[] bindless_textures;
-
-[[vk::binding(0, 2),Shared("Jafg::SSBO::PbrMaterials")]] StructuredBuffer<Jafg::PbrMaterial> materials;
-[[vk::binding(0, 3),Shared("Jafg::SSBO::PbrLights")]] StructuredBuffer<Jafg::PbrLight> lights;
-
-[[vk::push_constant]] Jafg::PbrPushConstants request;
 
 struct FRInput 
 {
@@ -27,8 +16,6 @@ struct FRInput
 [[shader("vertex")]]
 FRInput vertMain(Jafg::StaticMeshVertex input)
 {
-    static_assert(sizeof(Jafg::PbrMaterial) == 96, "Unexpected struct size");
-
     float4 world_pos = mul(request.model, float4(input.pos, 1.0));
 
     FRInput result;
@@ -46,6 +33,6 @@ FRInput vertMain(Jafg::StaticMeshVertex input)
 float4 fragMain(FRInput input): SV_TARGET
 {
     Jafg::PbrMaterial material = materials[request.material];
-    return bindless_textures[NonUniformResourceIndex(material.albedo)]
-        .Sample(samplers[material.sampler], input.uv);
+    return Jafg::evaluate_pbr_sv_target(material, samplers[material.sampler]
+        , input.translation, input.normal, input.uv, input.tangent);
 }

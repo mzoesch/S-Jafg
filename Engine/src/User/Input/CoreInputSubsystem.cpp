@@ -23,9 +23,10 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {"ToggleRhiPolygonMode", EInputActionCategory::Boolean},
             Frontend.GetPhysicalKey(ELogicalKey::F1).value(), EInputActionTriggerBits::Triggered,
             {},
-            [](LInputCallback const&, LInputActionValue&) -> LOnUserInputActionResult
+            [](LInputCallback const& Callback, LInputActionValue&) -> LOnUserInputActionResult
             {
-                if (auto& Prefs{GetMutableSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
+                auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+                if (Prefs.PolygonMode == EPolygonMode::Fill)
                 {
                     LOG_VERBOSE(LogUserInput, "Switching polygon mode to wireframe.")
                     Prefs.PolygonMode = EPolygonMode::Wireframe;
@@ -35,6 +36,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                     LOG_VERBOSE(LogUserInput, "Switching polygon mode to fill.")
                     Prefs.PolygonMode = EPolygonMode::Fill;
                 }
+                Prefs.OnPolygonModeChanged.Broadcast(&Callback.Controller, *Prefs.PolygonMode);
                 return {};
             });
 

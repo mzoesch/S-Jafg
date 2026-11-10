@@ -220,11 +220,11 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
     auto& Frontend{ActorInfo.Frontend};
     auto& Eye{ActorInfo.PerspectiveEye};
 
-    if (auto& Prefs{GetSingleton<JUserPreferences>()}; Prefs.PolygonMode == EPolygonMode::Fill)
+    if (DrawInfo.PolygonMode == EPolygonMode::Fill)
     {
         ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eFill;
     }
-    else if (Prefs.PolygonMode == EPolygonMode::Wireframe)
+    else if (DrawInfo.PolygonMode == EPolygonMode::Wireframe)
     {
         ActorInfo.DefaultPerspectivePolygonMode = vk::PolygonMode::eLine;
     }
@@ -238,23 +238,28 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
     {
         auto& WorldData{ActorInfo.WorldData};
 
-        WorldData.view = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
-        WorldData.proj = maths::perspective<LWorldReal,world_qual>(
+        WorldData.View = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
+        WorldData.Proj = maths::perspective<LWorldReal,world_qual>(
             Eye.vert_fov,
             Info.VkViewport.width / Info.VkViewport.height,
             Eye.near_frustum, Eye.far_frustum
             );
-        WorldData.proj[1][1] *= -1.0f;
+        WorldData.Proj[1][1] *= -1.0f;
+
+        WorldData.Ambient = LVec3F{0.003f};
+        WorldData.Exposure = 1.0f;
+        WorldData.Gamma = 2.2f;
+        WorldData.IblSpecularMaxLod = 4.0f;
+        WorldData.IblDiffuseIntensity = 1.0f;
+        WorldData.IblSpecularIntensity = 1.0f;
+
+        WorldData.Flags = DrawInfo.Preferences;
 
         //# TODO: Is that not inside the view?
         WorldData.CameraPosition = Eye.translation;
+
         WorldData.ViewportHeight = Info.VkViewport.height;
         WorldData.VerticalFov = Eye.vert_fov;
-
-        WorldData.exposure = 1.0f;
-        WorldData.gamma = 2.2f;
-        WorldData.prefilteredCubeMipLevels = 1.0f;
-        WorldData.scaleIBLAmbient = 1.0f;
 
         if (DrawInfo.bUpdateWorldDataSet)
         {
@@ -282,6 +287,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
                     .Type = ELight::Point,
                     .Tint = Light->Tint.ToDeviceReadyVector3(),
                     .Intensity = 1.0f,
+                    .SpecularScale = 1.0f,
                     });
             }
         }

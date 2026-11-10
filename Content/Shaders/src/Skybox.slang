@@ -4,7 +4,7 @@
 #include "Jafg/WorldData.slang"
 #include "Jafg/StaticMeshVertex.slang"
 
-[[vk::binding(0, 0),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<WorldData> ubo;
+[[vk::binding(0, 0),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<Jafg::WorldData> ubo;
 [[vk::binding(0, 1),UpdateFrequency(Rarely)]] TextureCube texture_cube;
 [[vk::binding(1, 1),UpdateFrequency(Rarely)]] SamplerState sampler;
 

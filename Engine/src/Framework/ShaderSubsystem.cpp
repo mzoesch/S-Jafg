@@ -208,6 +208,9 @@ std::size_t Jafg::JShaderSubsystem::RecompileShaderConditionally(Shader2 const& 
             jassert(!algo::contains(CompileTimeDefinition.Value, LITERAL_TEXT(' ')) && "Slangc does not permit spaces in compile time definition values.")
             SS << " -D" << CompileTimeDefinition.Identifier << "=" << CompileTimeDefinition.Value;
         }
+#if JAFG_WITH_EDITOR
+        SS << " -DJAFG_WITH_EDITOR=1";
+#endif /* JAFG_WITH_EDITOR */
 
         SS << " -reflection-json " << Shader2::GetReflectionFile(Src).string();
 

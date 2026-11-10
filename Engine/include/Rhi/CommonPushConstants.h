@@ -22,8 +22,8 @@ struct MVP final: rhi::pc_template<MVP, vk::ShaderStageFlagBits::eVertex,
     {
         MVP{
             .M = maths::model(DrawInfo.Transform),
-            .V = Info.WorldData.view,
-            .P = Info.WorldData.proj,
+            .V = Info.WorldData.View,
+            .P = Info.WorldData.Proj,
             }.upload(Info.CommandBuffer, Material.Pipeline);
     }
 };

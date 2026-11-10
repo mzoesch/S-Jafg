@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Framework/EditorForward.h"
 #include "Nodes/UserWidget.h"
 #include "Nodes/GenericTabInfos.h"
 #include "Nodes/TabOverlay.h"
@@ -348,10 +349,15 @@ private:
 
     void CreateMenuDropDown(LVec2F Where);
     void CreateStartDropDown(LVec2F Where);
+    void CreateRenderFlagsDropDown(LVec2F Where);
+    void OnPresetSelected(EEditorVisualization Preset);
+    void OnWorldRenderBitSelected(EWorldRenderBits Preset);
 
     //# TODO: Not a good solution. We have to think of something more permanent maybe in the fufute??
     void InitializeJustSummoned(LWorld& World);
     void TravelToJustSummoned(LWorld& World);
+
+    LDelegateHandle OnPolygonModeChangedHandle;
 
     EStartType StartType{EStartType::Pie};
     EPawnSart PawnStart{EPawnSart::Default};

@@ -145,7 +145,7 @@ void Jafg::ADebugDrawerComponent::RenderRays(LActorRenderInfo const& Info) const
     });
 
     DeviceRays.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, DebugLinesIndex, this->RayBuffers[Info.Frame]);
-    UBO::ViewProj{Info.WorldData.proj * Info.WorldData.view}.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, ViewProjIndex, this->RayViewBuffers[Info.Frame]);
+    UBO::ViewProj{Info.WorldData.Proj * Info.WorldData.View}.upload_and_update(Info.Frontend.Vk_GetDevice(), *Set, ViewProjIndex, this->RayViewBuffers[Info.Frame]);
 
     Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->RayInstance->Material->Pipeline);
     Info.CommandBuffer.bindDescriptorSets2({
@@ -176,7 +176,7 @@ void Jafg::ADebugDrawerComponent::RenderTexts(LActorRenderInfo const& Info) cons
     auto& Subsystem{*Frontend.GetSubsystemChecked<JFontSubsystem>()};
     rhi::object_range<SSBO::VisualInstance> Range{SSBO::VisualInstance::default_count,SSBO::VisualInstance::default_count};
 
-    auto ViewProjection{Info.WorldData.proj * Info.WorldData.view};
+    auto ViewProjection{Info.WorldData.Proj * Info.WorldData.View};
     for (auto& Text: this->Texts)
     {
         LWorldReal Distance{maths::magnitude(Info.PerspectiveEye.translation - Text.Location)};

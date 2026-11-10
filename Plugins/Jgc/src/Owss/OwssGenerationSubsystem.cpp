@@ -26,7 +26,7 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     }
 
     this->MaterialInstance = World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
-        ->FindOrAllocateSharedInstance(JgcInfo,"Materials/Metal-053C-2k");
+        ->GetPbrInstance(JgcInfo,"Materials/Metal-053C-2k");
 }
 
 void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 Where)
@@ -48,7 +48,7 @@ void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 Where)
         Asteroid.EmplaceRootComponent<Jafg::AStaticMeshComponent>([&](Jafg::AStaticMeshComponent& Comp)
         {
             Comp.SetMesh(JgcInfo/"Models/Asteroids/Object_16.glb");
-            Comp.SetMaterialInstance(this->MaterialInstance);
+            Comp.SetPbrMaterialInstance(this->MaterialInstance);
         });
         Asteroid.GetRootComponent().SetLocalTransformByTeleport(Trans);
     }};
@@ -83,7 +83,7 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 Wher
         Actor.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Actor.GetRootComponent(), [&](Jafg::AStaticMeshComponent& Comp)
         {
             Comp.SetMesh(JgcInfo/"Models/Ships/MyShip.glb");
-            Comp.SetMaterialInstance(this->MaterialInstance);
+            Comp.SetPbrMaterialInstance(this->MaterialInstance);
             Comp.SetLocalTranslationByTeleport(Where);
         });
 

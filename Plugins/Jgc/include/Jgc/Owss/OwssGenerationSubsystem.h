@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Jgc/Owss/OwssSubsystem.h"
-#include "Rhi/Material.h"
+#include "Rhi/PhysicalRendering.h"
 #include "OwssGenerationSubsystem.generated.h"
 
 namespace Jgc
@@ -29,7 +29,7 @@ public:
 
 private:
 
-    Jafg::LMaterialInstanceRef MaterialInstance;
+    Jafg::LPbrMaterialInstanceRef MaterialInstance;
 
     bool bGeneratedAsteroids{};
 };

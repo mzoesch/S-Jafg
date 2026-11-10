@@ -12,6 +12,7 @@
 #include "Framework/PhysicsCore.h"
 #include "User/PreferenceCollection.h"
 #include "Rhi/Quality.h"
+#include "Framework/EditorForward.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -106,7 +107,11 @@ public:
 
     CLASS_FIELD(Config)
     TPreference<EPolygonMode> PolygonMode{ EPolygonMode::Fill };
+    //# Should be called if you desire to change the polygone mode systemwide.
+    TMulticastDelegate<bool(APersonaController const* Ctrl, EPolygonMode PolygonMode)> OnPolygonModeChanged;
 
+    CLASS_FIELD(Config)
+    TPreference<EEditorVisualization> EditorVisualization{ EEditorVisualization::Preview };
     CLASS_FIELD(Config)
     TPreference<bool> EditorPerspectiveDepthTestHint{ true };
     //# If set, this material should be preferred by mesh renders to use.

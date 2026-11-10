@@ -9,7 +9,7 @@
 static const float GIZMO_PIXEL_SIZE = 20.0;
 
 [[vk::binding(0,0),UpdateFrequency(PerFrame)]] ConstantBuffer<SolidColorInput> sci;
-[[vk::binding(0,1),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<WorldData> world_data;
+[[vk::binding(0,1),Shared("Jafg::UBO::WorldData")]] ConstantBuffer<Jafg::WorldData> world_data;
 
 [[vk::push_constant]] MVP mvp;
 
