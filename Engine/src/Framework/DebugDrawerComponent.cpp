@@ -69,6 +69,11 @@ void Jafg::ADebugDrawerComponent::ParentTick(f32 Dt)
 void Jafg::ADebugDrawerComponent::Render(LActorRenderInfo const& Info) const
 {
     Super::Render(Info);
+    if (Info.PreferredMaterial)
+    {
+        /* We are no perspective mesh. Therefore, we cannot use this material. */
+        return;
+    }
     Info.PostRenderDelegates.emplace_back([this](LActorRenderInfo const& Info)
     {
         this->OnDeferredRender(Info);

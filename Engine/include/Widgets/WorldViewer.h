@@ -78,6 +78,13 @@ public:
     NODISCARD FORCEINLINE constexpr EPolygonMode GetPolygonMode() const noexcept { return this->PolygonMode; }
     FORCEINLINE void SetPolygonMode(EPolygonMode New) noexcept { this->PolygonMode = New; }
 
+    //#
+    //# Screen space ambient occlusion. Requires a second (depth only) pass of the world.
+    //#
+    NODISCARD FORCEINLINE constexpr bool IsAmbientOcclusionEnabled() const noexcept { return this->bAmbientOcclusion; }
+    FORCEINLINE void SetAmbientOcclusionEnabled(bool bEnabled) noexcept { this->bAmbientOcclusion = bEnabled; }
+    LAmbientOcclusionSettings AmbientOcclusion;
+
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSet(std::size_t Frame) const noexcept { return this->WorldDescriptorSets[Frame]; }
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSets() const noexcept { return this->WorldDescriptorSets; }
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetPbrLightDescriptorSet(std::size_t Frame) const noexcept { return this->PbrLightDescriptorSets[Frame]; }
@@ -106,6 +113,11 @@ private:
 
     void _ctor_SetBackgroundTint();
 
+    //# Points the materials of the ambient occlusion to the (new) targets of the render target.
+    void InitializeAmbientOcclusion();
+    NODISCARD bool ShouldDrawAmbientOcclusion() const noexcept;
+    void DrawAmbientOcclusion(LRenderInfo const& Info);
+
     WNode* Placeholder{};
 
     algo::clock::time_point LastUnstableDiff;
@@ -120,6 +132,15 @@ private:
 
     EWorldRenderFlags WorldRenderPreferences{ EWorldRenderBits::All };
     EPolygonMode PolygonMode{ EPolygonMode::Fill };
+
+    bool bAmbientOcclusion{ true };
+    //# Whether the ambient occlusion has been drawn for the frame that is currently recorded.
+    bool bAmbientOcclusionDrawn{};
+    //# Stays the same for our whole lifetime, even if the render target gets recreated.
+    rhi::resource_index_t AmbientOcclusionBindlessIndex{ rhi::invalid_resource_index };
+    LMaterialInstanceRef SceneDepthMaterialInstance;
+    LMaterialInstanceRef AmbientOcclusionMaterialInstance;
+    LMaterialInstanceRef AmbientOcclusionBlurMaterialInstance;
 
     rhi::frame_array<vk::raii::DescriptorSet> WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<rhi::mapped_device_buffer> WorldBuffers;

@@ -439,10 +439,18 @@ struct LJxxClassField final
 template<typename T>
 struct TEditorNodeCreateInfo final
 {
+    typedef T value_type;
+
     //# The owning viewport of the new editor node.
     LViewport& Viewport;
     //# The owner that owns the data-field. This field is optional and may be null.
     JCxxClass* Owner{};
+    //# Flags of the field.
+    EJxxFieldFlags Flags{ EJxxFieldBits::Identity };
+    //# Record name.
+    LStringView RecordName;
+    //# Tooltip.
+    LStringView RecordTooltip;
     //# The field that is made accessible.
     T& Field;
     //# Optional default value.
@@ -2239,29 +2247,60 @@ inline constexpr Detail::NewUniqueObjectFn<decltype(NewObject), LCxxDynamicInit,
 
 #if JAFG_WITH_EDITOR
 
+//#
+//# Creates an potentially editable editor node for the given type.
+//#
+//# You will often probably find yourself in a situation where you have a custom member that you need to integrate
+//# with a specialization of #GetEditorNode. In that case you can use the following workflow to easily integrate
+//# your types into the editor system:
+//#
+//# template<>
+//# Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<MyType>(TEditorNodeCreateInfo<MyType> const& Info) noexcept
+//# {
+//#     TFunction2<void()> Dummy; /* Or use if you need of course. */
+//#     return
+//#           GetEditorNode<TypeOfA>(ProjectEditorNodeCreateInfo<&MyType::A>(Info, "A", Dummy, DefaultValue))
+//#         + GetEditorNode<TypeOfB>(ProjectEditorNodeCreateInfo<&MyType::B>(Info, "B", Dummy));
+//# }
+//#
+//# TODO: Also allow for something like DECLARE_JAFG_STRUCT to automatically generate this. But lets see first how
+//#       well we can integrate reflection first. Reflection would make this unnecessary.
+//#
+struct LProjectionEditorNodeInfo
+{
+    LStringView RecordName;
+    LStringView RecordTooltip;
+    TFunction2<void()>& UpdateValue;
+};
+template<auto Proj>
+NODISCARD auto ProjectEditorNodeCreateInfo(auto const& Info
+    , LProjectionEditorNodeInfo ProjectionInfo
+    , std::optional<std::remove_cvref_t<algo::proj_member_t<decltype(Proj)>>> Default = std::nullopt
+    ) noexcept
+    -> TEditorNodeCreateInfo<algo::proj_member_t<decltype(Proj)>>
+    requires std::is_same_v<std::remove_cvref_t<decltype(Info)>, TEditorNodeCreateInfo<algo::proj_record_t<decltype(Proj)>>>
+{
+    return TEditorNodeCreateInfo<algo::proj_member_t<decltype(Proj)>>
+    {
+        .Viewport = Info.Viewport,
+        .Owner = Info.Owner,
+        .Flags = Info.Flags,
+        .RecordName = ProjectionInfo.RecordName,
+        .RecordTooltip = ProjectionInfo.RecordTooltip,
+        .Field = Info.Field.*Proj,
+        .Default = std::move(Default),
+        .UpdateValue = ProjectionInfo.UpdateValue
+    };
+}
+
 //# If you have custom editor types that you want to present, you have to specialize this function.
 template<typename T> Detail::LNodeFactoryBase GetEditorNode(TEditorNodeCreateInfo<T> const& Info) noexcept = delete;
 //# These common specializations are provided by jafg.
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<f32>(TEditorNodeCreateInfo<f32> const& Info) noexcept;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<f64>(TEditorNodeCreateInfo<f64> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3F>(TEditorNodeCreateInfo<LVec3F> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3D>(TEditorNodeCreateInfo<LVec3D> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept;
-
-template<>
-struct TEditorNodeCreateInfo<LString> final
-{
-    //# The owning viewport of the new editor node.
-    LViewport& Viewport;
-    //# The owner that owns the data-field. This field is optional and may be null.
-    JCxxClass* Owner{};
-    //# The field that is made accessible.
-    LString& Field;
-    //# Optional default value.
-    std::optional<LString> Default;
-    //# Optional update function.
-    TFunction2<void()>& UpdateValue;
-    //# Optional human-readable name.
-    LString What{"String"};
-};
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LString>(TEditorNodeCreateInfo<LString> const& Info) noexcept;
 
 #endif /* JAFG_WITH_EDITOR */

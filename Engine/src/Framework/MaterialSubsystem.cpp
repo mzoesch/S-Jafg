@@ -9,6 +9,7 @@
 #include "Rhi/Objects.h"
 #include "Rhi/VisualInstance.h"
 #include "Rhi/TextureCube.h"
+#include "Rhi/RenderTarget.h"
 #include "Engine/WorldData.h"
 #include "User/UserPreferences.h"
 
@@ -802,7 +803,26 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
     Factory.pipeline_input_assembly_state = Template.pipeline_input_assembly_state;
     Factory.pipeline_rasterization_state = Template.pipeline_rasterization_state;
     // Factory.pipeline_multisample_state = Template.pipeline_multisample_state;
-    if (Template.my_shader.Identifier == "Shaders/Jafg.Mesh.Outline")
+    //# TODO: Make the attachments part of the material template instead of deriving them from the shader.
+    auto GetAuxiliaryColorFormat{[&]() -> std::optional<vk::Format>
+    {
+        LStringView Identifier{Template.my_shader.Identifier};
+        if (Identifier == "Shaders/Jafg.Mesh.Outline")
+        {
+            return vk::Format::eR8Unorm;
+        }
+        if (Identifier == "Shaders/Jafg.Mesh.Depth")
+        {
+            return LRenderTarget::SceneDepthFormat;
+        }
+        if (Identifier == "Shaders/Jafg.Ssao" || Identifier == "Shaders/Jafg.SsaoBlur")
+        {
+            return LRenderTarget::AmbientOcclusionFormat;
+        }
+        return {};
+    }};
+    //# Auxiliary targets are never multi sampled.
+    if (GetAuxiliaryColorFormat())
     {
         Factory.pipeline_multisample_state = vk::PipelineMultisampleStateCreateInfo{
             .rasterizationSamples = vk::SampleCountFlagBits::e1,
@@ -912,16 +932,18 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
     check(Template.depth_attachment_format == vk::Format::eUndefined)
     check(Template.stencil_attachment_format == vk::Format::eUndefined)
 
-    if (Template.my_shader.Identifier == "Shaders/Jafg.Mesh.Outline")
+    if (auto Format{GetAuxiliaryColorFormat()})
     {
-        Factory.color_attachment_formats = {vk::Format::eR8Unorm};
+        Factory.color_attachment_formats = {*Format};
     }
     else
     {
         Factory.color_attachment_formats = {Frontend.Vk_GetSurfaceFormat().format};
     }
 
-    Factory.depth_attachment_format = Frontend.Vk_GetPreferredDepthFormat();
+    //# The fullscreen passes of the ambient occlusion render without any depth attachment.
+    bool const bWithoutDepth{Template.my_shader.Identifier == "Shaders/Jafg.Ssao" || Template.my_shader.Identifier == "Shaders/Jafg.SsaoBlur"};
+    Factory.depth_attachment_format = bWithoutDepth ? vk::Format::eUndefined : Frontend.Vk_GetPreferredDepthFormat();
     Factory.stencil_attachment_format = vk::Format::eUndefined;
 
     Material.Pipeline = Factory.build(Frontend.Vk_GetDevice());

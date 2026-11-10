@@ -123,6 +123,9 @@ public:
     EVENT_DECL(OnVectorChanged, void(WInput_Vector1& Self))
     EVENT_DECL(OnDestruct, void(WInput_Vector1& Self))
 
+    FORCEINLINE constexpr void SetAcceleration(f32 InAcceleration) noexcept { check(InAcceleration > 0.0f) this->Acceleration = InAcceleration; }
+    NODISCARD FORCEINLINE constexpr f32 GetAcceleration() const noexcept { return this->Acceleration; }
+
 private:
 
     enum struct EType{Integer, UInteger, Float,};
@@ -180,6 +183,11 @@ struct LFactoryInput_Vector1: NODE_FACTORY_PARENT(WInput_Vector1)
     FORCEINLINE decltype(auto) Enabled(this auto&& Self, bool bEnabled) noexcept
     {
         NODE_FACTORY_SELF().bInitialEnabledState = bEnabled;
+        return Self;
+    }
+    FORCEINLINE decltype(auto) Acceleration(this auto&& Self, f32 InAcceleration) noexcept
+    {
+        NODE_FACTORY_SELF().Acceleration = InAcceleration;
         return Self;
     }
 };

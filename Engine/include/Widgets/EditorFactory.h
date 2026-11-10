@@ -99,6 +99,11 @@ struct LEditorRowState
     }
 };
 
+struct LEditorRowStateExt: LEditorRowState
+{
+    WButton* ResetButton{};
+};
+
 template<typename T = LEditorRowState>
 inline LFactoryTextButton EditorComponentLabel(LViewport& Viewport, LString Content, auto SharedState)
 {
@@ -110,7 +115,7 @@ inline LFactoryTextButton EditorComponentLabel(LViewport& Viewport, LString Cont
         .InBrushChained<EStyleBits::InactiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColor, {20_spt, 0, 0, 0})
         .InTextBrushChained<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
         .InAllTextBrushes<&LTextBoxBrush::TextVAlign>(ETextVAlign::Center)
-        .Content(Content)
+        .Content(std::move(Content))
         .Delegate(T::template Lambda<WTextButton>(std::move(SharedState)));
 }
 

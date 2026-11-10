@@ -164,7 +164,10 @@ Jafg::LNodeReply Jafg::WNode::OnCursorEnter()
             return LViewport::EGenericResult::Continue;
         }, [this]
         {
-            this->RequestTooltipNow(this->GetViewport().GetSurface().GetMouseLocation().value_or(maths::zero_vector<LVec2F>));
+            this->RequestTooltipNow(
+                this->GetViewport().GetSurface().GetMouseLocation().value_or(maths::zero_vector<LVec2F>)
+                + LVec2F{8} /* Slight offset so that the tooltip is not under the cursor. */
+                );
         });
     }
 
@@ -221,7 +224,15 @@ Jafg::WUserWidget* Jafg::WNode::RequestTooltipNow(LVec2F Position)
     }
     else
     {
-        if (!this->TooltipText.empty())
+        LString const* Tooltip{&this->TooltipText};
+        WNode* Parent{this->Parent};
+        while (Tooltip->empty() && Parent)
+        {
+            Tooltip = &Parent->GetTooltipText();
+            Parent = Parent->GetParent();
+        }
+
+        if (!Tooltip->empty())
         {
             TJxxUnique<WUserWidget> Temp;
             ConstructDeferredWidget(TNodeStaticInit<WDismissibleFloatingWidget>{this->GetViewport()}).Style().SaveToUnique(&Temp)
@@ -229,11 +240,14 @@ Jafg::WUserWidget* Jafg::WNode::RequestTooltipNow(LVec2F Position)
                 .CreateResizeUi(false)
                 .InitialWindowSize({100_pt, 0})
                 .InitialWindowPosition(Position)
-                .Content([this](WFloatingWidget& FloatingWidget, WParent& Container)
+                .Content([Tooltip](WFloatingWidget& FloatingWidget, WParent& Container)
                 {
                     Container.AddChild(NewNode(Container.GetViewport()).Class<WTextBox>()
                         .Tint(Colors::Black)
-                        .Content(this->TooltipText)
+                        .OutlineThickness(1)
+                        .OutlineTint(Colors::White)
+                        .Padding({4_spt, 2})
+                        .Content(*Tooltip)
                         .Unique());
                 })
             .OnWindowClosed([this](WFloatingWidget& Window)

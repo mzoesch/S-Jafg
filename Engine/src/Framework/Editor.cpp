@@ -67,12 +67,78 @@ Jafg::LBufferObjectRegistrator<Jafg::SSBO::Ray> _;
 #if JAFG_WITH_EDITOR
 
 template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f32>(TEditorNodeCreateInfo<f32> const& Info) noexcept
+{
+    auto SharedState{std::make_shared<LEditorRowStateExt>()};
+
+    WInput_Vector1* Input{};
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Info.RecordTooltip})
+    [
+        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WInput_Vector1>(static_cast<f64>(Info.Field)).SaveTo(&Input)
+                .Anchor(EAnchor::HFill)
+                .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
+                {
+                    check(SharedState)
+                    *Field = static_cast<f32>(Self.Get<f64>());
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
+                })
+        ]
+        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
+        {
+            check(Input)
+            check(Default)
+            Input->Set(static_cast<f64>(*Default));
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
+}
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f64>(TEditorNodeCreateInfo<f64> const& Info) noexcept
+{
+    auto SharedState{std::make_shared<LEditorRowStateExt>()};
+
+    WInput_Vector1* Input{};
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+    [
+        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WInput_Vector1>(Info.Field).SaveTo(&Input)
+                .Anchor(EAnchor::HFill)
+                .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
+                {
+                    check(SharedState)
+                    *Field = Self.Get<f64>();
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
+                })
+        ]
+        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
+        {
+            check(Input)
+            check(Default)
+            Input->Set(*Default);
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
+}
+
+template<>
 Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
     struct RowPair final
     {
+        JCxxClass* Owner{};
         std::size_t FrameCount{};
         EStyleBits Bit{EStyleBits::Identity};
         WTextButton* Label;
@@ -81,9 +147,9 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
         WButton* Reset;
     };
 
-    auto Translation{std::make_shared<RowPair>()};
-    auto Rotation{std::make_shared<RowPair>()};
-    auto Scale{std::make_shared<RowPair>()};
+    auto Translation{std::make_shared<RowPair>(Info.Owner)};
+    auto Rotation{std::make_shared<RowPair>(Info.Owner)};
+    auto Scale{std::make_shared<RowPair>(Info.Owner)};
 
     auto MakeLabel{[&Info, &Prefs](std::shared_ptr<RowPair> Pointer, LString Content)
     {
@@ -196,6 +262,10 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
                 Field->t = Self.Get<f64>();
                 Pointer->Reset->SetEnabled(Field->t != maths::zero_vector<LVec3F>);
+                if (ASceneComponent* Comp{DynamicCast<ASceneComponent>(Pointer->Owner)})
+                {
+                    Comp->_detail_OnTransformChanged(ETransformChangeBits::Translation);
+                }
             }))
         + MakeReset(Translation, maths::zero_vector<LVec3D>, Info.Field.t != maths::zero_vector<LVec3F>)
     ]
@@ -211,6 +281,10 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
                 Field->r = maths::rotator_deg(Self.Get<f64>());
                 Pointer->Reset->SetEnabled(Field->r != maths::identity<LWorldQuat>);
+                if (ASceneComponent* Comp{DynamicCast<ASceneComponent>(Pointer->Owner)})
+                {
+                    Comp->_detail_OnTransformChanged(ETransformChangeBits::Rotator);
+                }
             }))
         + MakeReset(Rotation, maths::zero_vector<LVec3D>, Info.Field.r != maths::identity<LWorldQuat>)
     ]
@@ -224,7 +298,11 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
                 Field->s = Self.Get<f64>();
-                Pointer->Reset->SetEnabled(Field->t != maths::zero_vector<LVec3F>);
+                Pointer->Reset->SetEnabled(Field->s != maths::one_vector<LVec3F>);
+                if (ASceneComponent* Comp{DynamicCast<ASceneComponent>(Pointer->Owner)})
+                {
+                    Comp->_detail_OnTransformChanged(ETransformChangeBits::Scale);
+                }
             }))
         + MakeReset(Scale, maths::one_vector<LVec3D>, Info.Field.s != maths::one_vector<LVec3F>)
     ];
@@ -235,7 +313,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    struct MyState : public LEditorRowState
+    struct MyState: LEditorRowState
     {
         WEditableTextButton* EditableTextButton{};
         WButton* ResetButton{};
@@ -248,7 +326,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
-        EditorComponentLabel(Info.Viewport, Info.What, SharedState)
+        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
         + EditorComponentContentWrapper(Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WEditableTextButton>().SaveTo(&SharedState->EditableTextButton)
@@ -2716,6 +2794,11 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
             this->OnWorldRenderBitSelected(EWorldRenderBits::ShowEmissive);
             return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowEmissive);
         }),
+        CreateDropDownCheckmark("Show SSAO", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowSsao), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowSsao);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowSsao);
+        }),
         });
 }
 
@@ -2847,6 +2930,8 @@ void LoadGymCollection(Jafg::LWorld& World)
         {
             Comp.SetType(Jafg::ELight::Directional);
             Comp.SetTint(LLinearColor{1.0,0.83,0.66});
+            Comp.SetIntensity(1.5f);
+            Comp.SetDirection({0.3f,-0.8f,0.5f});
             Comp.SetLocalTranslationByTeleport({5,0,0});
         });
     }
@@ -2858,6 +2943,7 @@ void LoadGymCollection(Jafg::LWorld& World)
         {
             Comp.SetType(Jafg::ELight::Point);
             Comp.SetTint(LinearColors::White);
+            Comp.SetIntensity(8.0f);
             Comp.SetLocalTranslationByTeleport({-2,1,3});
         });
     }
@@ -2868,6 +2954,7 @@ void LoadGymCollection(Jafg::LWorld& World)
         {
             Comp.SetType(Jafg::ELight::Point);
             Comp.SetTint(LinearColors::Red);
+            Comp.SetIntensity(8.0f);
             Comp.SetLocalTranslationByTeleport({-2,1,-3});
         });
     }
@@ -2879,6 +2966,8 @@ void LoadGymCollection(Jafg::LWorld& World)
         {
             Comp.SetType(Jafg::ELight::Rect);
             Comp.SetTint(LinearColors::White);
+            Comp.SetIntensity(8.0f);
+            Comp.SetSize({2.0f,1.0f});
             Comp.SetLocalTranslationByTeleport({-5,1,-3});
         });
     }
@@ -2890,6 +2979,9 @@ void LoadGymCollection(Jafg::LWorld& World)
         {
             Comp.SetType(Jafg::ELight::Spot);
             Comp.SetTint(LinearColors::White);
+            Comp.SetIntensity(8.0f);
+            Comp.SetConeAngles(maths::radians(20.0f), maths::radians(35.0f));
+            Comp.SetDirection(maths::down_vector<LVec3F>);
             Comp.SetLocalTranslationByTeleport({-8,1,-3});
         });
     }
@@ -3923,7 +4015,8 @@ void Jafg::WEditorWorldViewerInspector::ReloadInnerComponents()
                 {
                     if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
                     {
-                        this->WorldViewer->SelectActors({{&Comp->GetOwningActor(),Comp}});
+                        this->WorldViewer->SelectActors({{&Comp->GetOwningActor(),Comp}}
+                            , !Self.AsStatic<WTextButtonIconizedDouble>().IsSelected());
                         return LNodeReply::Handled();
                     }
                 }
@@ -4124,6 +4217,11 @@ void Jafg::AEditorPersonaControllerComponent::Render(LActorRenderInfo const& Inf
 {
     STAT_FUNCTION()
     Super::Render(Info);
+    if (Info.PreferredMaterial)
+    {
+        /* Gizmos are no part of the scene. Therefore, they cannot use this material. */
+        return;
+    }
     this->RenderGizmo(Info);
 }
 
@@ -4193,10 +4291,10 @@ Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControll
             glm::vec3 toGizmo = Gizmo.GetTranslation() - Eye.translation;
             float distance = glm::dot(toGizmo, Eye.front);
 
-            float scale =
+            float scale = maths::abs( /* TODO: Is this correct? */
                 20.f/*GIZMO_PIXEL_SIZE*/ *
                 (2.0f * distance * std::tan(Eye.vert_fov * 0.5f)) /
-                static_cast<f32>(Extent.height);
+                static_cast<f32>(Extent.height));
 
 
             Aabb.min *= scale;

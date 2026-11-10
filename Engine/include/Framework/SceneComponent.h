@@ -21,8 +21,14 @@ enum struct ETransformChangeBits: u8
 };
 ENUM_STRUCT_FLAGS(ETransformChangeBits, ETransformChangeFlags)
 
+//#
+//# A scene component is an actor component that has a transform in the world and is recursively attached
+//# to other actor components. The transforms are relative to the parent component.
+//#
+//# An actor may only have one scene component at its root.
+//#
 DECLARE_JAFG_CLASS()
-class ENGINE_API ASceneComponent : public AActorComponent
+class ENGINE_API ASceneComponent: public AActorComponent
 {
     GENERATED_CLASS_BODY()
 
@@ -304,8 +310,9 @@ public:
     NODISCARD LPhysicsSystem& GetParentPhysicsSystem() noexcept { return this->GetWorld().GetWorldGlobalPhysicsSystem(); }
     NODISCARD LPhysicsSystem const& GetParentPhysicsSystem() const noexcept { return this->GetWorld().GetWorldGlobalPhysicsSystem(); }
 
-    //# Public private function of jafg. Do not use.
+    //# Public private functions of jafg. Do not use.
     void _detail_OnPhysicsPoll(ETransformChangeFlags Change) { this->OnTransformChanged(Change|ETransformChangeBits::PhysicsPoll); }
+    void _detail_OnTransformChanged(ETransformChangeFlags Change) { this->OnTransformChanged(Change); }
 
 protected:
 

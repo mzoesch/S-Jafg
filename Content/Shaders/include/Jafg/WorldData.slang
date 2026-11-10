@@ -17,6 +17,7 @@ namespace Jafg
     static const uint WORLD_FLAG_SHOW_ROUGHNESS          = 0x1 <<  8;
     static const uint WORLD_FLAG_SHOW_METALLIC           = 0x1 <<  9;
     static const uint WORLD_FLAG_SHOW_EMISSIVE           = 0x1 << 10;
+    static const uint WORLD_FLAG_SHOW_SSAO               = 0x1 << 11;
 #endif /* JAFG_WITH_EDITOR */
 
 [[CxxName("Jafg::UBO::WorldData")]]
@@ -38,7 +39,8 @@ struct WorldData
     float    ibl_specular_intensity;
 
     uint _pad0; // float ibl_rotation;
-    uint _pad1; // uint brdf_lut;
+    /// Bindless index of the screen space ambient occlusion for this view or INVALID_INDEX.
+    uint ssao_texture;
 
 #if JAFG_WITH_EDITOR
     uint Flags;

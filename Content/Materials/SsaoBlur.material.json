@@ -1,0 +1,9 @@
+{
+    "inherits": [
+        "Materials/Base/TriangleList",
+        "Materials/Base/DepthUntested",
+        "Materials/Base/Rasterization",
+        "Materials/Base/SolidColorAttachment"
+    ],
+    "shader": "Shaders/Jafg.SsaoBlur"
+}

@@ -24,7 +24,8 @@ struct WorldData final : rhi::ubo_template<WorldData, vk::ShaderStageFlagBits::e
     f32 IblSpecularIntensity;
 
     f32 _pad0;
-    f32 _pad1;
+    //# Bindless index of the screen space ambient occlusion for the draw or #rhi::invalid_resource_index.
+    rhi::resource_index_t AmbientOcclusionTexture;
 
 #if JAFG_WITH_EDITOR
     EWorldRenderFlags Flags;

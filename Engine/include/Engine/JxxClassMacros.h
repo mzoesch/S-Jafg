@@ -286,6 +286,8 @@ ConstructionHelper                                                    \
         return ::Jafg::GetEditorNode(::Jafg::TEditorNodeCreateInfo<decltype(CastedObject.Name)>{ \
             .Viewport=Viewport, \
             .Owner=&Object, \
+            .Flags= ObjectType :: JAFG_JOIN_OUTER_TWO(_FieldFlags_, Name) (), \
+            .RecordName=#Name, \
             .Field=CastedObject.Name, \
             .UpdateValue=UpdateValue, \
             }); \

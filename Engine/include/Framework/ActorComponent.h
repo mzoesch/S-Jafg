@@ -12,13 +12,37 @@ namespace Jafg
 class AActor;
 class ASceneComponent;
 
+//#
+//# The origin of the actor.
+//#
 enum struct EActorComponentOrigin: u8
 {
+    //#
+    //# Before an origin could have been evaluated the component is in this state.
+    //# Only very early on in a duration of a component's life.
+    //#
     Unknown,
+
+    //#
+    //# The component is part of the ctor of its parent (other comp or actor).
+    //# It is safe to assume to always use this component without checking. It is guaranteed to always be
+    //# part of the actor or parent component.
+    //#
     Ctor,
+
+    //#
+    //# The component was created because of specific runtime conditions. Generally it is not (depending on
+    //# your context) safe to assume that this component is always attached to its parent or actor.
+    //#
+    //# During actor copying you generally in most cases should be held responsible for recursively coping
+    //# runtime components.
+    //#
     Runtime,
 };
 
+//#
+//# An actor component is a composition of an actor.
+//#
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
 class ENGINE_API AActorComponent : public AWorldObject
 {

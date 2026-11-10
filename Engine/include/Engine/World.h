@@ -204,6 +204,9 @@ public:
         //# When using the pbr pipeline. This is the limit.
         std::size_t PbrMaterialLimit{};
         std::size_t PbrLightLimit{};
+
+        //# Bindless index of the screen space ambient occlusion for this eye, if any.
+        rhi::resource_index_t AmbientOcclusionTexture{ rhi::invalid_resource_index };
     };
     void Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const;
 

@@ -28,6 +28,9 @@ enum struct EWorldRenderBits: u32 /* Stable across slang. */
     ShowMetallic        = 0x1 <<  9,
     ShowEmissive        = 0x1 << 10,
 
+    //# Screen space ambient occlusion.
+    ShowSsao            = 0x1 << 11,
+
     All = std::numeric_limits<u32>::max(),
 };
 ENUM_STRUCT_FLAGS(EWorldRenderBits, EWorldRenderFlags)
@@ -70,6 +73,7 @@ NODISCARD inline constexpr EWorldRenderFlags EditorVisualizationPresetToWorldRen
              | EWorldRenderBits::ShowPointLights
              | EWorldRenderBits::ShowSpotLights
              | EWorldRenderBits::ShowRectLights
+             | EWorldRenderBits::ShowSsao
              ;
     }
     case EEditorVisualization::Wireframe:

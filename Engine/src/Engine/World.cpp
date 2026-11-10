@@ -22,6 +22,62 @@
 #include "../Framework/PhysicsForeignCore.h"
 #include "Framework/LightSubsystem.h"
 
+namespace
+{
+
+//# The device representation of a light. @see Content/Shaders/include/Jafg/Pbr.slang
+NODISCARD Jafg::SSBO::BindlessPbrLight MakeDeviceLight(Jafg::LLight const& Light) noexcept
+{
+    using namespace Jafg;
+
+    SSBO::BindlessPbrLight Result{
+        .Translation = Light.Translation,
+        .Direction = Light.GetDirection(),
+        .Type = Light.Type,
+        .Tint = Light.Tint.ToDeviceReadyVector3(),
+        .Intensity = Light.Intensity,
+        .Right = Light.GetRight(),
+        .Flags = SSBO::ELightFlagBits::Identity,
+        .SpecularScale = maths::max(Light.SpecularScale, 0.0f),
+        };
+
+    switch (Light.Type)
+    {
+    case ELight::Directional:
+    {
+        //# The device expects the tangent of the angular radius of the source.
+        Result.SourceRadius = maths::tan(maths::clamp(Light.SourceAngle, 0.0f, maths::half_pi_f) * 0.5f);
+        break;
+    }
+    case ELight::Spot:
+    {
+        f32 const Outer{maths::clamp(Light.OuterConeAngle, 0.0f, maths::pi_f)};
+        f32 const Inner{maths::clamp(Light.InnerConeAngle, 0.0f, Outer)};
+        f32 const CosOuter{maths::cos(Outer)};
+        Result.SpotScale = 1.0f / maths::max(maths::cos(Inner) - CosOuter, 0.001f);
+        Result.SpotOffset = -CosOuter * Result.SpotScale;
+        [[fallthrough]];
+    }
+    case ELight::Point:
+    {
+        Result.Range = maths::max(Light.Range, 0.0f);
+        Result.SourceRadius = maths::max(Light.SourceRadius, 0.0f);
+        break;
+    }
+    case ELight::Rect:
+    {
+        Result.Range = maths::max(Light.Range, 0.0f);
+        Result.Width = maths::max(Light.Width, 0.0f);
+        Result.Height = maths::max(Light.Height, 0.0f);
+        break;
+    }
+    }
+
+    return Result;
+}
+
+} /* ~Namespace <Anonymous> */
+
 Jafg::LWorld::LWorld(LWorldCreateInfo Info, Detail::LWorldTrack& Track)
     : LClassOuter{std::move(Info.HumanReadableName)}, CreateInfo{std::move(Info)}
 {
@@ -246,12 +302,21 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
             );
         WorldData.Proj[1][1] *= -1.0f;
 
+        //#
+        //# TODO: Make some preset somewhere. Where in the editor can switch between different states.
+        //#             Ambient             Directional
+        //# Morning:    {0.06,0.07,0.10}    {1.0,0.75,0.5}
+        //# Day:        {0.12,0.15,0.20}    {1.0,0.96,0.9}
+        //# Night:      {0.004,0.006,0.012} {0.6,0.70,1.0}
+        //#
         WorldData.Ambient = LVec3F{0.003f};
         WorldData.Exposure = 1.0f;
         WorldData.Gamma = 2.2f;
         WorldData.IblSpecularMaxLod = 4.0f;
         WorldData.IblDiffuseIntensity = 1.0f;
         WorldData.IblSpecularIntensity = 1.0f;
+
+        WorldData.AmbientOcclusionTexture = DrawInfo.AmbientOcclusionTexture;
 
         WorldData.Flags = DrawInfo.Preferences;
 
@@ -279,17 +344,15 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
         for (auto* Light: LightSubsystem.GetLights())
         {
             check(Light->bCanEverAffectWorld)
-            if (Light->bEnabled)
+            if (Light->bEnabled && Light->Intensity > 0.0f)
             {
-                Lights->push_back({
-                    .Translation = Light->Translation,
-                    .Range = 32.0f,
-                    .Type = ELight::Point,
-                    .Tint = Light->Tint.ToDeviceReadyVector3(),
-                    .Intensity = 1.0f,
-                    .SpecularScale = 1.0f,
-                    });
+                Lights->push_back(::MakeDeviceLight(*Light));
             }
+        }
+        if (Lights->empty())
+        {
+            //# The descriptor range must never be empty. The shader skips lights without intensity.
+            Lights->push_back({});
         }
         Lights.upload_and_update(Info.Frontend.Vk_GetDevice()
             , DrawInfo.SharedSets.at(SSBO::BindlessPbrLight::name())
@@ -353,7 +416,8 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
         }
     }
 
-    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !DrawInfo.Filter)
+    //# The skybox cannot be rendered with any other material than its own.
+    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !DrawInfo.Filter && !DrawInfo.Instance)
     {
         this->Skybox->RenderSkybox(ActorInfo);
     }

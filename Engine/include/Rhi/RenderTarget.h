@@ -4,6 +4,7 @@
 
 #include "Rhi/RendererCore.h"
 #include "Rhi/Texture2.h"
+#include "Rhi/AmbientOcclusion.h"
 
 namespace Jafg
 {
@@ -22,6 +23,7 @@ struct LRenderTarget
         LLinearColor ClearColor{ LinearColors::Black };
         bool bDepthTest{};
         bool bAllowSelection{};
+        bool bAmbientOcclusion{};
     };
 
     NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
@@ -29,6 +31,16 @@ struct LRenderTarget
     ENGINE_API void Initialize(CreateInfo const& Info);
     ENGINE_API void RenderSelected(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
     ENGINE_API void Render(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
+
+    //#
+    //# The passes of the screen space ambient occlusion. They have to run in this order and before #Render:
+    //# 1. The linear view space depth of the scene (single sampled, depth tested).
+    //# 2. The noisy occlusion from that depth.
+    //# 3. The blurred occlusion, which is what the scene samples during #Render.
+    //#
+    ENGINE_API void RenderSceneDepth(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
+    ENGINE_API void RenderAmbientOcclusion(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
+    ENGINE_API void RenderAmbientOcclusionBlur(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
 
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
     NODISCARD FORCEINLINE constexpr rhi::extent2 const& GetExtentAsLValue() const noexcept { return this->Extent; }
@@ -70,6 +82,16 @@ struct LRenderTarget
     NODISCARD FORCEINLINE constexpr auto const& GetSelectedImage() const noexcept { return this->SelectedTarget.Image; }
     NODISCARD FORCEINLINE constexpr auto const& GetSelectedImageView() const noexcept { return this->SelectedTarget.ImageView; }
 
+    NODISCARD FORCEINLINE constexpr bool HasAmbientOcclusion() const noexcept { return !!*this->SceneDepthTarget.Image; }
+    NODISCARD FORCEINLINE constexpr auto const& GetSceneDepthImageView() const noexcept { return this->SceneDepthTarget.ImageView; }
+    NODISCARD FORCEINLINE constexpr auto const& GetAmbientOcclusionImageView() const noexcept { return this->AmbientOcclusionTarget.ImageView; }
+    NODISCARD FORCEINLINE constexpr auto const& GetAmbientOcclusionBlurImageView() const noexcept { return this->AmbientOcclusionBlurTarget.ImageView; }
+
+    //# The depth prepass is cleared to this depth. Has to be beyond what the shaders treat as background.
+    static constexpr f32 BackgroundSceneDepth{ 1e30f };
+    static constexpr vk::Format SceneDepthFormat{ vk::Format::eR32Sfloat };
+    static constexpr vk::Format AmbientOcclusionFormat{ vk::Format::eR8Unorm };
+
     vk::ClearValue ClearColor{vk::ClearColorValue{std::array<f32,4>{0.0f, 0.0f, 0.0f, 1.0f}}};
 
 protected:
@@ -91,6 +113,20 @@ protected:
     BindlessTarget MsaaTarget;
 
     Target SelectedTarget;
+
+    //# Linear view space depth of the scene as a color, so that it can be sampled.
+    Target SceneDepthTarget;
+    //# Single sampled depth buffer to depth test the scene depth prepass.
+    Target SceneDepthBufferTarget;
+    Target AmbientOcclusionTarget;
+    Target AmbientOcclusionBlurTarget;
+
+private:
+
+    void RenderAuxiliary(LRenderInfo const& Info, Target const& Color, Target const* Depth, vk::ClearValue const& Clear
+        , TFunction2<void(LRenderInfo const& Info)> What) const;
+
+protected:
 
     vk::ResolveModeFlagBits ResolveMode{ vk::ResolveModeFlagBits::eNone };
     vk::ResolveModeFlagBits ResolveFlags{ vk::ResolveModeFlagBits::eAverage };

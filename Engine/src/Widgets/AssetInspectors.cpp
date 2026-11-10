@@ -68,16 +68,16 @@ void Jafg::WTextureInspector::Construct()
                 .Texture(Texture)
             + NewStaticNode(WEditorCategorySeparator, "Properties")
             [
-                  GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Path, .Default=this->Path, .UpdateValue=Dummy, .What="Path",})
+                  GetEditorNode<LString>({.Viewport=this->GetViewport(), .RecordName="Path", .Field=this->Path, .Default=this->Path, .UpdateValue=Dummy,})
                     // TODO: This is of course just temporary. Later on we have to enable editing.
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Texture, .Default=this->Texture, .UpdateValue=Dummy, .What="Texture",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .RecordName="Texture", .Field=this->Texture, .Default=this->Texture, .UpdateValue=Dummy,})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->Format, .Default=this->Format, .UpdateValue=Dummy, .What="Format",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .RecordName="Format", .Field=this->Format, .Default=this->Format, .UpdateValue=Dummy,})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->MipLevels, .Default=this->MipLevels, .UpdateValue=Dummy, .What="Mip Levels",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .RecordName="Mip Levels", .Field=this->MipLevels, .Default=this->MipLevels, .UpdateValue=Dummy,})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
-                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .Field=this->MaxSampleCount, .Default=this->MaxSampleCount, .UpdateValue=Dummy, .What="Samples",})
+                + GetEditorNode<LString>({.Viewport=this->GetViewport(), .RecordName="Samples", .Field=this->MaxSampleCount, .Default=this->MaxSampleCount, .UpdateValue=Dummy,})
                     .Delegate([](auto& F){ ToggleEditorNodesTransitively(F.GetRawNode(), false); })
             ]
         ]

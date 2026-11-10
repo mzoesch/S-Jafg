@@ -78,6 +78,14 @@ void Jafg::WWorldViewer::Construct()
     {
         return !*Set;
     }))
+
+    auto& MutableMaterialSubsystem{*this->GetMutableFrontend().GetSubsystemChecked<JMaterialSubsystem>()};
+    this->SceneDepthMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Mesh.Depth");
+    check(this->SceneDepthMaterialInstance.get())
+    this->AmbientOcclusionMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Ssao");
+    check(this->AmbientOcclusionMaterialInstance.get())
+    this->AmbientOcclusionBlurMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/SsaoBlur");
+    check(this->AmbientOcclusionBlurMaterialInstance.get())
 }
 
 void Jafg::WWorldViewer::Tick(f32 Dt)
@@ -288,7 +296,9 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         .ClearColor = LinearColors::CornflowerBlue,
         .bDepthTest = *GetSingleton<JUserPreferences>().EditorPerspectiveDepthTestHint,
         .bAllowSelection = true,
+        .bAmbientOcclusion = true,
         });
+    this->InitializeAmbientOcclusion();
 
     if (!this->OnPreDrawHandle)
     {
@@ -297,8 +307,150 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
     }
 }
 
+void Jafg::WWorldViewer::InitializeAmbientOcclusion()
+{
+    check(this->RenderTarget.HasAmbientOcclusion())
+
+    auto& Frontend{this->GetViewport().GetSurface().GetMutableFrontend()};
+    auto& TextureSubsystem{*Frontend.GetSubsystemChecked<JTextureSubsystem>()};
+
+    auto WriteTexture{[&](LMaterialInstance& Instance, LStringView Name, vk::ImageView View)
+    {
+        auto Binding{Instance.GetBinding(Name)};
+        vk::DescriptorImageInfo Info{
+            .imageView = View,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            };
+        auto It{algo::find(Instance.InfrequentDescriptorSets, Binding.space, &LMaterialInstance::DescriptorSetInstance::Space)};
+        check(It != Instance.InfrequentDescriptorSets.end())
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = **It,
+            .dstBinding = Binding.index,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampledImage,
+            .pImageInfo = &Info,
+            },};
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }};
+    WriteTexture(*this->AmbientOcclusionMaterialInstance, "depth_texture", this->RenderTarget.GetSceneDepthImageView());
+    WriteTexture(*this->AmbientOcclusionBlurMaterialInstance, "occlusion_texture", this->RenderTarget.GetAmbientOcclusionImageView());
+    WriteTexture(*this->AmbientOcclusionBlurMaterialInstance, "depth_texture", this->RenderTarget.GetSceneDepthImageView());
+
+    //# The scene samples the blurred occlusion through the global bindless array.
+    if (this->AmbientOcclusionBindlessIndex == rhi::invalid_resource_index)
+    {
+        this->AmbientOcclusionBindlessIndex = TextureSubsystem
+            ._Vk_AddTransientImageToGlobalBindlessArray(this->RenderTarget.GetAmbientOcclusionBlurImageView())
+            .value_or(rhi::invalid_resource_index);
+        if (this->AmbientOcclusionBindlessIndex == rhi::invalid_resource_index)
+        {
+            LOG_WARNING(LogVulkan, "[{}]: Failed to make ambient occlusion bindless. Out of binding points. Disabling it."
+                , this->GetNameAsString())
+        }
+    }
+    else
+    {
+        //# Reuse our slot, as the old image view is gone.
+        vk::DescriptorImageInfo Info{
+            .imageView = this->RenderTarget.GetAmbientOcclusionBlurImageView(),
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            };
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = *TextureSubsystem.Vk_GetBindlessTextureArrayDescriptorSet(),
+            .dstBinding = UBO::Bindless::ArrayBinding,
+            .dstArrayElement = this->AmbientOcclusionBindlessIndex,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampledImage,
+            .pImageInfo = &Info,
+            },};
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }
+}
+
+bool Jafg::WWorldViewer::ShouldDrawAmbientOcclusion() const noexcept
+{
+    if (!this->bAmbientOcclusion || !this->RenderTarget.HasAmbientOcclusion()
+        || this->AmbientOcclusionBindlessIndex == rhi::invalid_resource_index)
+    {
+        return false;
+    }
+    //# The depth of a wireframe is of no use. And there is no point in drawing it if it is not shown.
+    if (this->PolygonMode != EPolygonMode::Fill || !(this->WorldRenderPreferences & EWorldRenderBits::ShowSsao))
+    {
+        return false;
+    }
+    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->IsOwnedPawnValid();
+}
+
+void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
+{
+    auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
+    auto Eye{Pawn.GetEye()};
+
+    auto DrawFullscreen{[](LRenderInfo const& Info, LMaterialInstance const& Instance, auto const& PushConstants)
+    {
+        auto& Pipeline{Instance.Material->Pipeline};
+        for (auto& Set: Instance.InfrequentDescriptorSets)
+        {
+            Info.CommandBuffer.bindDescriptorSets2({
+                .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                .layout = *Pipeline.pipeline_layout,
+                .firstSet = Set.Space,
+                .descriptorSetCount = 1,
+                .pDescriptorSets = &**Set,
+                .dynamicOffsetCount = 0,
+                .pDynamicOffsets = nullptr
+                });
+        }
+        Info.CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *Pipeline);
+        Info.CommandBuffer.setPolygonModeEXT(vk::PolygonMode::eFill);
+        PushConstants.upload(Info.CommandBuffer, Pipeline);
+        Info.CommandBuffer.draw(3, 1, 0, 0);
+    }};
+
+    this->RenderTarget.RenderSceneDepth(Info, [&](LRenderInfo const& Info)
+    {
+        std::optional<TArray<AActor*>> Filter;
+        Pawn.GetWorld().Draw(Info, {
+            .Eye = Eye,
+            .Instance = &*this->SceneDepthMaterialInstance,
+            .Filter = Filter,
+            .bUpdateWorldDataSet = false,
+            });
+    });
+
+    LVec2F Extent{this->RenderTarget.GetExtent().ToVec<f32>()};
+    f32 TanHalfFov{static_cast<f32>(maths::tan(Eye.vert_fov * 0.5f))};
+
+    this->RenderTarget.RenderAmbientOcclusion(Info, [&](LRenderInfo const& Info)
+    {
+        DrawFullscreen(Info, *this->AmbientOcclusionMaterialInstance, PC::Ssao{
+            .ViewportExtent = Extent,
+            .TanHalfFov = {TanHalfFov * Extent.x / Extent.y, TanHalfFov},
+            .Radius = this->AmbientOcclusion.Radius,
+            .Bias = this->AmbientOcclusion.Bias,
+            .Intensity = this->AmbientOcclusion.Intensity,
+            .Power = this->AmbientOcclusion.Power,
+            });
+    });
+    this->RenderTarget.RenderAmbientOcclusionBlur(Info, [&](LRenderInfo const& Info)
+    {
+        DrawFullscreen(Info, *this->AmbientOcclusionBlurMaterialInstance, PC::SsaoBlur{
+            .ViewportExtent = Extent,
+            .DepthThreshold = this->AmbientOcclusion.BlurDepthThreshold,
+            });
+    });
+}
+
 bool Jafg::WWorldViewer::OnPreDrawImpl(LRenderInfo const& Info)
 {
+    this->bAmbientOcclusionDrawn = this->ShouldDrawAmbientOcclusion();
+    if (this->bAmbientOcclusionDrawn)
+    {
+        this->DrawAmbientOcclusion(Info);
+    }
+
     this->RenderTarget.Render(Info, std::bind(&WWorldViewer::PreDraw, this, std::placeholders::_1));
     return {};
 }
@@ -367,6 +519,8 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 .Preferences = this->WorldRenderPreferences,
                 .PolygonMode = this->PolygonMode,
                 .PbrLightLimit = this->PbrLightLimit,
+                .AmbientOcclusionTexture = this->bAmbientOcclusionDrawn
+                    ? this->AmbientOcclusionBindlessIndex : rhi::invalid_resource_index,
                 });
 
             this->OnPostWorldDrawImpl(Info, Ctrl, Pawn, Eye);
