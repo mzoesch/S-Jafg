@@ -49,6 +49,7 @@
 #include "Nodes/ScrollRegion.h"
 #include "Framework/ShaderSubsystem.h"
 #include "Rhi/OutlineRendering.h"
+#include "Widgets/Input_Boolean.h"
 #include "Widgets/Input_Vector1.h"
 #include "Framework/PawnStart.h"
 #include "Framework/RigidComponent.h"
@@ -56,6 +57,7 @@
 #include "Framework/FontSubsystem.h"
 #include "Framework/LightComponent.h"
 #include "../Framework/PhysicsForeignCore.h"
+#include "Widgets/Input_List.h"
 
 namespace
 {
@@ -65,6 +67,40 @@ Jafg::LBufferObjectRegistrator<Jafg::SSBO::Ray> _;
 } /* ~Namespace <Anonymous> */
 
 #if JAFG_WITH_EDITOR
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<bool>(TEditorNodeCreateInfo<bool> const& Info) noexcept
+{
+    auto SharedState{std::make_shared<LEditorRowStateExt>()};
+
+    WInput_Boolean* Input{};
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Info.RecordTooltip})
+    [
+        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WInput_Boolean>().SaveTo(&Input)
+                .Anchor(EAnchor::HFill)
+                .Value(Info.Field)
+                .OnValueChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Boolean& Self)
+                {
+                    check(SharedState)
+                    *Field = Self.GetValue();
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
+                })
+        ]
+        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
+        {
+            check(Input)
+            check(Default)
+            Input->SetValue(*Default);
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
+}
 
 template<>
 Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f32>(TEditorNodeCreateInfo<f32> const& Info) noexcept
@@ -369,6 +405,55 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
             SharedState->EditableTextButton->SetContent(*Field);
             SharedState->ResetButton->SetEnabled(*Field != *SharedState->Default);
         }, MyState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
+}
+
+Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCreateInfo<std::monostate> const& Info, std::unordered_map<i64, LStringView> Map) noexcept
+{
+    check(Info.Getter)
+    check(Info.Setter)
+
+    auto SharedState{std::make_shared<LEditorRowStateExt>()};
+
+    TArray<LString> Items;
+    Items.reserve(Map.size());
+    for (auto const& Name: Map | std::views::values)
+    {
+        Items.emplace_back(Name);
+    }
+
+    WInput_List* Input{};
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+    [
+        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WInput_List>().SaveTo(&Input)
+                .Content(Info.Getter(Info.Owner))
+                .Items(std::move(Items))
+                .OnValueChanged([Setter=Info.Setter,Owner=Info.Owner](LString const& Value)
+                {
+                    Setter(Owner, Value);
+                    if (Owner)
+                    {
+                        if (ALightComponent* Comp{DynamicCast<ALightComponent>(Owner)})
+                        {
+                            Comp->_detail_OnTypeChanged();
+                        }
+                    }
+                })
+        ]
+        + EditorResetButton(Info.Viewport
+            , Info.Default
+            && !!Info.Default(Info.Owner)
+            && Info.Getter(Info.Owner) != Info.Default(Info.Owner)
+            , [Default=Info.Default, Owner=Info.Owner, Input](WButton& Self)
+        {
+            check(Input)
+            Input->SetContent(serde::to_string(Default(Owner).value()));
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
     ];
 }
 

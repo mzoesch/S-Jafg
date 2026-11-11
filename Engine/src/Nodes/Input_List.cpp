@@ -29,7 +29,10 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
         ConstructDeferredWidget(Jafg::TNodeStaticInit<WDismissibleFloatingWidget>{Info.Viewport}).Style()
             .Decorate(false)
             .CreateResizeUi(false)
-            .InitialWindowPosition(Info.CursorLocation ? *Info.CursorLocation : maths::zero_vector<LVec2F>)
+            .InitialWindowPosition(
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetTranslationFromMostOuter())
+                + LVec2F{0,this->GetAnchoredSize_v2().y}
+                )
             .InitialWindowSize({100_spt, 20})
             .Content([this](WFloatingWidget& FloatingWidget, WParent& Container)
             {

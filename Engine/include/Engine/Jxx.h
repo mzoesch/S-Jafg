@@ -459,6 +459,22 @@ struct TEditorNodeCreateInfo final
     TFunction2<void()>& UpdateValue;
 };
 
+template<>
+struct TEditorNodeCreateInfo<std::monostate> final
+{
+    LViewport& Viewport;
+    JCxxClass* Owner{};
+    EJxxFieldFlags Flags{ EJxxFieldBits::Identity };
+    LStringView RecordName;
+    LStringView RecordTooltip;
+    //# Owner might be nullptr. #Setter and #Getter are required. Default is optional.
+    std::function<void(JCxxClass* Owner, LStringView Value)> Setter;
+    std::function<LString(JCxxClass* Owner)> Getter;
+    //# If this function once evaluates to a non nullopt, it must always evaluate to a non nullopt.
+    std::function<std::optional<LString>(JCxxClass* Owner)> Default;
+    TFunction2<void()>& UpdateValue;
+};
+
 enum struct EJxxRecordTearDownReason
 {
     //# Any normal reason.
@@ -2295,13 +2311,59 @@ NODISCARD auto ProjectEditorNodeCreateInfo(auto const& Info
 
 //# If you have custom editor types that you want to present, you have to specialize this function.
 template<typename T> Detail::LNodeFactoryBase GetEditorNode(TEditorNodeCreateInfo<T> const& Info) noexcept = delete;
+
 //# These common specializations are provided by jafg.
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<bool>(TEditorNodeCreateInfo<bool> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<f32>(TEditorNodeCreateInfo<f32> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<f64>(TEditorNodeCreateInfo<f64> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3F>(TEditorNodeCreateInfo<LVec3F> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3D>(TEditorNodeCreateInfo<LVec3D> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LString>(TEditorNodeCreateInfo<LString> const& Info) noexcept;
+
+//# Enums that specify the get_enum_map adl function, can be used here without issue.
+namespace Detail
+{
+ENGINE_API Detail::LNodeFactoryBase GetEditorNodeForEnum(TEditorNodeCreateInfo<std::monostate> const& Info, std::unordered_map<i64, LStringView> Map) noexcept;
+} /* ~Namespace detail */
+template<typename T> requires std::is_enum_v<T>
+    && serde::string_archive_for_v<serde::is_string_archive<serde::behavior::panic>, T>
+    && serde::string_archive_for_v<serde::os_string_archive, T>
+Detail::LNodeFactoryBase GetEditorNode(TEditorNodeCreateInfo<T> const& Info) noexcept
+{
+    static_assert(std::in_range<i64>(std::numeric_limits<std::underlying_type_t<T>>::min()));
+    static_assert(std::in_range<i64>(std::numeric_limits<std::underlying_type_t<T>>::max()));
+
+    std::unordered_map<i64, LStringView> Map;
+    for (auto const& [Key, Value]: serde::enum_map<T>())
+    {
+        Map.emplace(static_cast<i64>(Key), Value);
+    }
+    return Detail::GetEditorNodeForEnum(TEditorNodeCreateInfo<std::monostate>{
+        .Viewport = Info.Viewport,
+        .Owner = Info.Owner,
+        .Flags = Info.Flags,
+        .RecordName = Info.RecordName,
+        .RecordTooltip = Info.RecordTooltip,
+        .Setter = [Field=&Info.Field](JCxxClass* Owner, LStringView Value)
+        {
+            (*Field) = serde::from_string<T>(Value);
+        },
+        .Getter = [Field=&Info.Field](JCxxClass* Owner) -> LString
+        {
+            return serde::to_string(*Field);
+        },
+        .Default = [Default=Info.Default](JCxxClass* Owner) -> std::optional<LString>
+        {
+            if (Default)
+            {
+                return serde::to_string(*Default);
+            }
+            return std::nullopt;
+        },
+        .UpdateValue = Info.UpdateValue
+        }, std::move(Map));
+}
 
 #endif /* JAFG_WITH_EDITOR */
 

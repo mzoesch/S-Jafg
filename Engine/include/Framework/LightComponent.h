@@ -108,6 +108,9 @@ public:
     FORCEINLINE constexpr void SetHeight(f32 Height) noexcept { check(Height >= 0.0f) this->Light.Height = Height; }
     NODISCARD FORCEINLINE constexpr f32 GetHeight() const noexcept { return this->Light.Height; }
 
+    //# Private public method. Do not use.
+    void _detail_OnTypeChanged() { this->OnTypeChanged(); }
+
 protected:
 
     virtual void OnTransformChanged(ETransformChangeFlags Change) override

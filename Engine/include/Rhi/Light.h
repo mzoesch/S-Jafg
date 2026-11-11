@@ -8,13 +8,12 @@ namespace Jafg
 {
 
 //# The type of lights Jafg supports (stable across slang).
-enum struct ELight: u32
-{
+DECLARE_TRIVIAL_SERDE_ENUM(ELight, u32,
     Directional,
     Point,
     Spot,
-    Rect,
-};
+    Rect
+    )
 
 //# Each light has a unit of measurement for its intensity.
 enum struct ELightUnits: u8
@@ -99,10 +98,10 @@ struct LLight final
     //# Whether this light can ever affect the world. If false, then this light is forever disabled (as it is not
     //# registered to the world's light subsystem) and any modifications to it result are voided.
     //#
-    bool bCanEverAffectWorld:1{ true };
+    bool bCanEverAffectWorld{ true };
 
     //# Whether this light is enabled.
-    bool bEnabled:1{ true };
+    bool bEnabled{ true };
 
     //# Whether this light is allowed to cast any shadows.
     bool bCastShadows:1{};
@@ -134,7 +133,7 @@ struct LLight final
     //#
     //# Used by: ELight::Point, ELight::Spot, ELight::Rect
     //#
-    f32 Range{ 32.0f };
+    f32 Range{ 8.0f };
 
     //#
     //# The radius in meters of the sphere that emits the light. Zero is an infinitely small (punctual) source.

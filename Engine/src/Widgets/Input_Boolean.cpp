@@ -28,13 +28,13 @@ void Jafg::WInput_Boolean::Construct()
                             NewValue != Self.AsStatic<WCheckmarkButton>().IsChecked())
                         {
                             Self.AsStatic<WCheckmarkButton>().SetChecked(NewValue);
-                            (void)this->OnValueChanged.InvokeIfBound(Self.AsStatic<WCheckmarkButton>().IsChecked());
+                            (void)this->OnValueChanged.InvokeIfBound(*this);
                         }
                     }
                     else
                     {
                         Self.AsStatic<WCheckmarkButton>().SetChecked(!Self.AsStatic<WCheckmarkButton>().IsChecked());
-                        (void)this->OnValueChanged.InvokeIfBound(Self.AsStatic<WCheckmarkButton>().IsChecked());
+                        (void)this->OnValueChanged.InvokeIfBound(*this);
                     }
 
                     return LNodeReply::Handled();
@@ -48,4 +48,14 @@ bool Jafg::WInput_Boolean::GetValue() const noexcept
 {
     check(this->CheckmarkButton)
     return this->CheckmarkButton->IsChecked();
+}
+
+void Jafg::WInput_Boolean::SetValue(bool bValue, bool bCallEvent /* = true */) noexcept
+{
+    check(this->CheckmarkButton)
+    this->CheckmarkButton->SetChecked(bValue);
+    if (bCallEvent)
+    {
+        (void)this->OnValueChanged.InvokeIfBound(*this);
+    }
 }

@@ -14,25 +14,25 @@ namespace Jafg
 
 constexpr LNodeSize2 MinSize{99_spt, 0};
 
-LFactoryNode CreateCheckmark(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue& Preference)
+static LFactoryNode CreateCheckmark(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue& Preference)
 {
     return NewNode(Viewport).Class<WInput_Boolean>()
         .Value(serde::from_string<bool>(Preference.GetValue()))
-        .OnValueChanged([Changes=&Changes,Preference=&Preference](bool Value)
+        .OnValueChanged([Changes=&Changes,Preference=&Preference](WInput_Boolean& Self)
         {
             if (auto It{algo::find(*Changes, Preference, [](LPreferenceValueChangeRequest const& Change){ return &Change.Preference; })};
                 It == Changes->end())
             {
-                Changes->emplace_back(*Preference, serde::to_string(Value));
+                Changes->emplace_back(*Preference, serde::to_string(Self.GetValue()));
             }
             else
             {
-                It->Value = serde::to_string(Value);
+                It->Value = serde::to_string(Self.GetValue());
             }
         });
 }
 
-LFactoryNode CreateSlider(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue_Scalar& Preference)
+static LFactoryNode CreateSlider(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue_Scalar& Preference)
 {
     check(Preference.HasMinimum())
     check(Preference.HasMaximum())
@@ -56,7 +56,7 @@ LFactoryNode CreateSlider(LViewport& Viewport, TArray<LPreferenceValueChangeRequ
         });
 }
 
-LFactoryNode CreateList(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue_List& Preference)
+static LFactoryNode CreateList(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue_List& Preference)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     LString Value{Preference.GetValue()};

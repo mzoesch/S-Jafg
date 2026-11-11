@@ -11,7 +11,15 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LLight>(TEditorNodeCrea
 {
     TFunction2<void()> Dummy;
     return
-          GetEditorNode<f32>(ProjectEditorNodeCreateInfo<&LLight::Intensity>(Info, {
+        GetEditorNode<ELight>(ProjectEditorNodeCreateInfo<&LLight::Type>(Info, {
+            .RecordName = "Type",
+            .UpdateValue = Dummy,
+            }))
+        + GetEditorNode<bool>(ProjectEditorNodeCreateInfo<&LLight::bEnabled>(Info, {
+            .RecordName = "Enabled",
+            .UpdateValue = Dummy,
+            }, true))
+        + GetEditorNode<f32>(ProjectEditorNodeCreateInfo<&LLight::Intensity>(Info, {
             .RecordName = "Intensity",
             .RecordTooltip = "Intensity of the light.",
             .UpdateValue = Dummy,
@@ -25,7 +33,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LLight>(TEditorNodeCrea
             .RecordName = "Range",
             .RecordTooltip = "Distance at which the light is smoothly cut off. Zero means that the light reaches infinitely far. Used by: ELight::Point, ELight::Spot, ELight::Rect",
             .UpdateValue = Dummy,
-            }, 32.0f))
+            }, 8.0f))
         + GetEditorNode<f32>(ProjectEditorNodeCreateInfo<&LLight::SourceRadius>(Info, {
             .RecordName = "Source Radius",
             .RecordTooltip = "Radius of the sphere that emits the light. Used by: ELight::Point, ELight::Spot",

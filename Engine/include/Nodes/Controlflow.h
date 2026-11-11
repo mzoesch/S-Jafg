@@ -25,9 +25,13 @@ struct StackedControlFlowFn
         LVec2F DesiredSize{maths::zero_vector<LVec2F>};
         for (auto& Child : Self.GetChildren())
         {
-            LVec2F ChildDesiredSize{Child->GetDesiredSize_v2()};
-            DesiredSize.x = maths::max(DesiredSize.x, ChildDesiredSize.x);
-            DesiredSize.y = maths::max(DesiredSize.y, ChildDesiredSize.y);
+            check(Child.get())
+            if (Child->TransformsWidgetLayout())
+            {
+                LVec2F ChildDesiredSize{Child->GetDesiredSize_v2()};
+                DesiredSize.x = maths::max(DesiredSize.x, ChildDesiredSize.x);
+                DesiredSize.y = maths::max(DesiredSize.y, ChildDesiredSize.y);
+            }
         }
         DesiredSize += Self.Padding.GetDesiredSize().InStaticPoints(Self.GetViewport());
         return DesiredSize;
@@ -112,18 +116,23 @@ struct HorizontalControlFlowFn
 
         f32 TotalDesiredSize{};
         f32 TotalFreeUsage{}; /* In percent */
+        auto TransformerChildCount{0uz};
 
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            TotalDesiredSize += Child->GetDesiredSize_v2().x;
-            TotalFreeUsage   += Child->Anchor.MaxX;
+            if (Child->TransformsWidgetLayout())
+            {
+                TotalDesiredSize += Child->GetDesiredSize_v2().x;
+                TotalFreeUsage   += Child->Anchor.MaxX;
+                ++TransformerChildCount;
+            }
         }
 
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f : static_cast<f32>(Self.GetChildren().size()) - 1.0f)
+            - Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount == 0 ? 0.0f : static_cast<f32>(TransformerChildCount) - 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -147,12 +156,16 @@ struct HorizontalControlFlowFn
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            if (&*Child == &Target)
+            if (Child->TransformsWidgetLayout())
             {
-                break;
+                if (&*Child == &Target)
+                {
+                    break;
+                }
+                Offset += Child->GetAnchoredSize_v2().x;
+                Offset += SpaceSpt;
             }
-            Offset += Child->GetAnchoredSize_v2().x;
-            Offset += SpaceSpt;
+            check(&*Child != &Target)
             continue;
         }
 
@@ -206,18 +219,23 @@ struct HorizontalInclusiveControlFlowFn
 
         f32 TotalDesiredSize{};
         f32 TotalFreeUsage{}; /* In percent */
+        auto TransformerChildCount{0uz};
 
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            TotalDesiredSize += Child->GetDesiredSize_v2().x;
-            TotalFreeUsage   += Child->Anchor.MaxX;
+            if (Child->TransformsWidgetLayout())
+            {
+                TotalDesiredSize += Child->GetDesiredSize_v2().x;
+                TotalFreeUsage   += Child->Anchor.MaxX;
+                ++TransformerChildCount;
+            }
         }
 
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().x - Self.Padding.GetDesiredSizeX().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f : static_cast<f32>(Self.GetChildren().size()) + 1.0f)
+            - Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount == 0 ? 0.0f : static_cast<f32>(TransformerChildCount) + 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -241,12 +259,16 @@ struct HorizontalInclusiveControlFlowFn
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            if (&*Child == &Target)
+            if (Child->TransformsWidgetLayout())
             {
-                break;
+                if (&*Child == &Target)
+                {
+                    break;
+                }
+                Offset += Child->GetAnchoredSize_v2().x;
+                Offset += SpaceSpt;
             }
-            Offset += Child->GetAnchoredSize_v2().x;
-            Offset += SpaceSpt;
+            check(&*Child != &Target)
             continue;
         }
 
@@ -300,18 +322,23 @@ struct VerticalControlFlowFn
 
         f32 TotalDesiredSize{};
         f32 TotalFreeUsage{}; /* In percent */
+        auto TransformerChildCount{0uz};
 
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            TotalDesiredSize += Child->GetDesiredSize_v2().y;
-            TotalFreeUsage   += Child->Anchor.MaxY;
+            if (Child->TransformsWidgetLayout())
+            {
+                TotalDesiredSize += Child->GetDesiredSize_v2().y;
+                TotalFreeUsage   += Child->Anchor.MaxY;
+                ++TransformerChildCount;
+            }
         }
 
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f :static_cast<f32>(Self.GetChildren().size()) - 1.0f)
+            - Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount == 0 ? 0.0f : static_cast<f32>(TransformerChildCount) - 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -335,12 +362,16 @@ struct VerticalControlFlowFn
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            if (&*Child == &Target)
+            if (Child->TransformsWidgetLayout())
             {
-                break;
+                if (&*Child == &Target)
+                {
+                    break;
+                }
+                Offset += Child->GetAnchoredSize_v2().y;
+                Offset += SpaceSpt;
             }
-            Offset += Child->GetAnchoredSize_v2().y;
-            Offset += SpaceSpt;
+            check(&*Child != &Target)
             continue;
         }
 
@@ -394,18 +425,23 @@ struct VerticalInclusiveControlFlowFn
 
         f32 TotalDesiredSize{};
         f32 TotalFreeUsage{}; /* In percent */
+        auto TransformerChildCount{0uz};
 
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            TotalDesiredSize += Child->GetDesiredSize_v2().y;
-            TotalFreeUsage   += Child->Anchor.MaxY;
+            if (Child->TransformsWidgetLayout())
+            {
+                TotalDesiredSize += Child->GetDesiredSize_v2().y;
+                TotalFreeUsage   += Child->Anchor.MaxY;
+                ++TransformerChildCount;
+            }
         }
 
         const f32 FreeSpace{
             (Self.GetAnchoredSize_v2().y - Self.Padding.GetDesiredSizeY().InStaticPoints(Self.GetViewport()))
             - TotalDesiredSize
-            - Space.InStaticPoints(Self.GetViewport()) * (Self.GetChildren().empty() ? 0.0f : static_cast<f32>(Self.GetChildren().size()) + 1.0f)
+            - Space.InStaticPoints(Self.GetViewport()) * (TransformerChildCount == 0 ? 0.0f : static_cast<f32>(TransformerChildCount) + 1.0f)
             };
         const f32 InverseFreeUsage{ 1.0f / TotalFreeUsage };
 
@@ -429,12 +465,16 @@ struct VerticalInclusiveControlFlowFn
         for (auto& Child : Self.GetChildren())
         {
             check(Child.get())
-            if (&*Child == &Target)
+            if (Child->TransformsWidgetLayout())
             {
-                break;
+                if (&*Child == &Target)
+                {
+                    break;
+                }
+                Offset += Child->GetAnchoredSize_v2().y;
+                Offset += SpaceSpt;
             }
-            Offset += Child->GetAnchoredSize_v2().y;
-            Offset += SpaceSpt;
+            check(&*Child != &Target)
             continue;
         }
 

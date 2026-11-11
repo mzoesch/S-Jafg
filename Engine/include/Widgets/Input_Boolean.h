@@ -25,7 +25,7 @@ protected:
     {
         this->Brush.Tint = Colors::Transparent;
         this->Brush.OutlineTint = Colors::White;
-        this->Brush.OutlineThickness = 1;
+        this->Brush.OutlineThickness = 0;
     }
 
 public:
@@ -45,7 +45,8 @@ public:
         }
         return Result;
     }
-    NODISCARD ENGINE_API bool GetValue() const noexcept;
+    NODISCARD bool GetValue() const noexcept;
+    void SetValue(bool bValue, bool bCallEvent = true) noexcept;
 
     //#
     //# Called if the value should be toggled.
@@ -56,7 +57,7 @@ public:
     TFunction2<bool(bool Current)> OnToggle;
 
     //# Called iff the value actually changed from on toggle.
-    EVENT_DECL(OnValueChanged, void(f64 Value))
+    EVENT_DECL(OnValueChanged, void(WInput_Boolean& Self))
 
 private:
 
