@@ -66,6 +66,9 @@ Jafg::LBufferObjectRegistrator<Jafg::SSBO::Ray> _;
 
 } /* ~Namespace <Anonymous> */
 
+static void LoadFirstCollection(Jafg::LWorld& World);
+static void LoadGymCollection(Jafg::LWorld& World);
+
 #if JAFG_WITH_EDITOR
 
 template<>
@@ -901,6 +904,22 @@ Jafg::WTabOverlay& Jafg::WSecondaryEditor::FindNewOverlay(f32 Dist /* = {} */)
 void Jafg::WEditorWorldViewer::Construct()
 {
     Super::Construct();
+
+    {
+        auto& Prefs{GetMutableSingleton<JUserPreferences>()};
+        if (!Prefs.EditorObjectCollectionsCallbacks.contains("None"))
+        {
+            Prefs.EditorObjectCollectionsCallbacks["None"] = [](LWorld& World){};
+        }
+        if (!Prefs.EditorObjectCollectionsCallbacks.contains("FirstCollection"))
+        {
+            Prefs.EditorObjectCollectionsCallbacks["FirstCollection"] = &::LoadFirstCollection;
+        }
+        if (!Prefs.EditorObjectCollectionsCallbacks.contains("Gym"))
+        {
+            Prefs.EditorObjectCollectionsCallbacks["Gym"] = &::LoadGymCollection;
+        }
+    }
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -2339,6 +2358,9 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                 },
             .OnChildren = {[this]
             {
+                static constexpr LNodeSize2 MinSizeA{192_spt, 0};
+                static constexpr LNodeSize2 MinSizeB{192_spt, 0};
+
                 TArray<LDropDownNode> Result;
 
                 Result.emplace_back(LDropDownNodeSeparator{.DisplayName="ENGINE WORLDS"});
@@ -2376,8 +2398,8 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                 struct LNewWorldNodes
                 {
                     WEditableTextButton* Name{};
-                    WEditableTextButton* SupremePolicies{};
-                    WEditableTextButton* ObjectCollection{};
+                    std::optional<LString> SupremePolicy;
+                    std::optional<LString> ObjectCollection;
                 };
                 auto NewWorldNodes{std::make_shared<LNewWorldNodes>()};
                 Result.emplace_back(LDropDownNodeSeparator{.DisplayName="NEW WORLD"});
@@ -2391,13 +2413,13 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                     [
                         NewNode(Viewport).Class<WText>()
                             .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
-                            .MinDesiredSize({128_spt, 0})
+                            .MinDesiredSize(MinSizeA)
                             .TextTint(Colors::White)
                             .Content("World Name")
                         + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->Name)
-                            .MinDesiredSize({128_spt, 0})
-                            .Padding(Prefs.InputPadding)
+                            .MinDesiredSize(MinSizeB)
                             .Palette(*Prefs.InputPaletteSolid)
+                            .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
                             .Content(*Prefs.EditorLastWorldName)
                             .PlaceholderContent("World Name")
                     ];},});
@@ -2411,18 +2433,38 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                     [
                         NewNode(Viewport).Class<WText>()
                             .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
-                            .MinDesiredSize({128_spt, 0})
+                            .MinDesiredSize(MinSizeA)
                             .TextTint(Colors::White)
                             .Content("Level Name")
-                        + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->SupremePolicies)
-                            .MinDesiredSize({128_spt, 0})
-                            .Padding(Prefs.InputPadding)
-                            .Palette(*Prefs.InputPaletteSolid)
+                        + NewNode(Viewport).Class<WInput_List>()
+                            .MinDesiredSize(MinSizeB)
                             .Content(Prefs.EditorLastWorldSupremePolicies.IsModified()
                                 ? Prefs.EditorLastWorldSupremePolicies->GetClassOrDefault().GetFullyQualifiedName()
                                 : Prefs.EditorLastWorldSupremePolicies.Default.GetClassOrDefault().GetFullyQualifiedName()
                                 )
-                            .PlaceholderContent("Supreme policies class")
+                            .Items([]() -> TArray<LString>
+                            {
+                                auto& Prefs{GetSingleton<JUserPreferences>()};
+                                TArray<LString> Result;
+                                auto& Subclass{Prefs.EditorLastWorldSupremePolicies.IsModified()
+                                    ? Prefs.EditorLastWorldSupremePolicies->GetClassOrDefault().GetFullyQualifiedName()
+                                    : Prefs.EditorLastWorldSupremePolicies.Default.GetClassOrDefault().GetFullyQualifiedName()
+                                    };
+                                auto& Registry{Detail::GetGlobalCxxRecordRegistry()};
+                                for (auto* Class: Registry.GetClassesByBase(Registry.GetClassByNameAsserted(Subclass)->AsClass().StaticClass))
+                                {
+                                    Result.emplace_back(Class->GetFullyQualifiedName());
+                                }
+
+                                algo::sort(Result, algo::lexicographical_string_compare);
+
+                                return Result;
+                            }())
+                            .OnValueChanged([NewWorldNodes](LString const& Selected)
+                            {
+                                check(!!NewWorldNodes)
+                                NewWorldNodes->SupremePolicy = Selected;
+                            })
                     ];},});
                 Result.emplace_back(LDropDownNodeScratch{.OnCreate=[NewWorldNodes]
                 (LViewport& Viewport, WDismissibleFloatingWidget& FloatingWidget)
@@ -2434,15 +2476,28 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                     [
                         NewNode(Viewport).Class<WText>()
                             .Padding({LDropDownMenuCreateInfo::RecommendedPaddedTextPadding, 0.0f, 0.0f, 0.0f})
-                            .MinDesiredSize({128_spt, 0})
+                            .MinDesiredSize(MinSizeA)
                             .TextTint(Colors::White)
                             .Content("Object Collection")
-                        + NewNode(Viewport).Class<WEditableTextButton>().SaveTo(&NewWorldNodes->ObjectCollection)
-                            .MinDesiredSize({128_spt, 0})
-                            .Padding(Prefs.InputPadding)
-                            .Palette(*Prefs.InputPaletteSolid)
+                        + NewNode(Viewport).Class<WInput_List>()
+                            .MinDesiredSize(MinSizeB)
+                            // .Padding(Prefs.InputPadding)
                             .Content(*Prefs.EditorLastObjectCollection)
-                            .PlaceholderContent("Collection")
+                            .Items([]() -> TArray<LString>
+                            {
+                                TArray<LString> Result;
+                                for (auto& Prefs{GetSingleton<JUserPreferences>()};
+                                    auto& Collection: Prefs.EditorObjectCollectionsCallbacks | std::views::keys)
+                                {
+                                    Result.emplace_back(Collection);
+                                }
+                                return Result;
+                            }())
+                            .OnValueChanged([NewWorldNodes](LString const& Selected)
+                            {
+                                check(!!NewWorldNodes)
+                                NewWorldNodes->ObjectCollection = Selected;
+                            })
                     ];},});
                 Result.emplace_back(LDropDownNodeOption{
                     .Selector = {
@@ -2450,13 +2505,21 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                         },
                     .OnAction = [this, NewWorldNodes](auto&&...)
                     {
-                        check(NewWorldNodes.get() && NewWorldNodes->Name && NewWorldNodes->SupremePolicies && NewWorldNodes->ObjectCollection)
+                        check(NewWorldNodes.get() && NewWorldNodes->Name)
                         auto& Prefs{GetMutableSingleton<JUserPreferences>()};
                         Prefs.EditorLastWorldName = NewWorldNodes->Name->GetContent();
                         Prefs.EditorLastWorldSupremePolicies =
-                            Detail::GetGlobalCxxRecordRegistry().GetClassByNameAsserted(NewWorldNodes->SupremePolicies->GetContent())
+                            Detail::GetGlobalCxxRecordRegistry().GetClassByNameAsserted(NewWorldNodes->SupremePolicy
+                                ? *NewWorldNodes->SupremePolicy
+                                : Prefs.EditorLastWorldSupremePolicies.IsModified()
+                                    ? Prefs.EditorLastWorldSupremePolicies->GetClassOrDefault().GetFullyQualifiedName()
+                                    : Prefs.EditorLastWorldSupremePolicies.Default.GetClassOrDefault().GetFullyQualifiedName()
+                                )
                                 ->StaticClass;
-                        Prefs.EditorLastObjectCollection = NewWorldNodes->ObjectCollection->GetContent();
+                        if (NewWorldNodes->ObjectCollection.has_value())
+                        {
+                            Prefs.EditorLastObjectCollection = *NewWorldNodes->ObjectCollection;
+                        }
                         this->GetMutableEngine().SummonWorld({
                             .HumanReadableName = *Prefs.EditorLastWorldName,
                             .SupremePoliciesClass = *Prefs.EditorLastWorldSupremePolicies,
@@ -2913,10 +2976,7 @@ void Jafg::WEditorWorldViewer::OnWorldRenderBitSelected(EWorldRenderBits Preset)
     this->SetWorldRenderPreferences(this->GetWorldRenderPreferences() ^ Preset);
 }
 
-namespace
-{
-
-void LoadFirstCollection(Jafg::LWorld& World)
+static void LoadFirstCollection(Jafg::LWorld& World)
 {
     auto MaterialInstance{World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
         ->GetInstanceFromName(JafgInfo, "Materials/MetallicGold")};
@@ -2986,7 +3046,7 @@ void LoadFirstCollection(Jafg::LWorld& World)
     });
 }
 
-void LoadGymCollection(Jafg::LWorld& World)
+static void LoadGymCollection(Jafg::LWorld& World)
 {
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})->GetRootComponent().SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
 
@@ -3119,23 +3179,17 @@ void LoadGymCollection(Jafg::LWorld& World)
         });
 }
 
-} /* ~Namespace <Anonymous> */
-
 void Jafg::WEditorWorldViewer::InitializeJustSummoned(LWorld& World)
 {
-    auto& Prefs{GetSingleton<JUserPreferences>()};
+    auto& Prefs{GetMutableSingleton<JUserPreferences>()};
     if (Prefs.EditorLastObjectCollection->empty())
     {
     }
-    else if (*Prefs.EditorLastObjectCollection == "FirstCollection")
+    else if (auto It{Prefs.EditorObjectCollectionsCallbacks.find(*Prefs.EditorLastObjectCollection)};
+        It != Prefs.EditorObjectCollectionsCallbacks.end())
     {
-        ::LoadFirstCollection(World);
+        It->second(World);
     }
-    else if (*Prefs.EditorLastObjectCollection == "Gym")
-    {
-        ::LoadGymCollection(World);
-    }
-    //# TODO: Add custom object collections with callbacks.
     else
     {
         LOG_FATAL(LogEditor, "Cannot find object collection [{}].", *Prefs.EditorLastObjectCollection)

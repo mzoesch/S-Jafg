@@ -237,7 +237,7 @@ public:
         }};
 
     static constexpr LVec4F InputRadii{ 5.0f };
-    static constexpr LPadding InputPadding{ 5_spt, 0};
+    static constexpr LPadding InputPadding{ 4_spt, 0 };
     CLASS_FIELD(Config)
     TPreference<LStylePalette> InputPaletteSolid{{
         .Normal=  {.Tint=0x0F0F0FFF_color, .Outline=0x5F5F5FFF_color, .OutlineThickness=1u, .TextTint=0xFFFFFFFF_color},
@@ -309,6 +309,9 @@ public:
 
     //# The editor if active.
     WEditor* Editor{};
+    //# Collection callbacks for the editor.
+    //# Register here your own to be easily loadable from the editor.
+    algo::transparent_unordered_string_map<std::copyable_function<void(LWorld&)>> EditorObjectCollectionsCallbacks;
 
     CLASS_FIELD(Config)
     TPreference<LColor> EditorAxisTintX{ Colors::Crimson };

@@ -128,6 +128,7 @@ void Jafg::LSurfaceBase::DecayInputs()
             check((Input.State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
             check((Input.State | ERawInputStateBits::Press) == OldState)
             Input.State |= ERawInputStateBits::Hold;
+            check(Input.State != ERawInputStateBits::Identity)
         }
 
         if (Input.State & ERawInputStateBits::Repeat)
@@ -138,6 +139,7 @@ void Jafg::LSurfaceBase::DecayInputs()
             Input.State &= ~ERawInputStateFlags{ERawInputStateBits::Repeat};
             check((Input.State & ERawInputStateBits::Repeat) == ERawInputStateBits::Identity)
             check((Input.State | ERawInputStateBits::Repeat) == OldState)
+            check(Input.State != ERawInputStateBits::Identity)
         }
 
         if (Input.State & ERawInputStateBits::Release)

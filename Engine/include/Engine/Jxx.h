@@ -65,6 +65,9 @@ struct TJxxDelete;
 
 } /* ~Namespace Jafg */
 
+template<typename TObj> requires algo::is_base_of_weak_v<Jafg::JCxxClass, TObj>
+struct TClassStorage;
+
 //# Unique pointer for jcxx classes.
 template<typename TCxxClass, typename Deleter = Jafg::Detail::TJxxDelete<TCxxClass>>
 using TJxxUnique = TUnique<TCxxClass, Deleter>;
@@ -146,6 +149,8 @@ struct LNodeFactoryBase
     NODISCARD inline decltype(auto) UniqueXs(this auto&& Self, TArray<TJxxUnique<WNode>>* Xs) noexcept;
     template<typename T> requires std::is_base_of_v<WNode, T>
     decltype(auto) SaveTo(this auto&& Self, T** Out) noexcept;
+    template<typename T> requires std::is_base_of_v<WNode, T>
+    decltype(auto) SaveTo(this auto&& Self, TClassStorage<T>* Out) noexcept;
     inline decltype(auto) operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept;
 
     template<typename TFunc>

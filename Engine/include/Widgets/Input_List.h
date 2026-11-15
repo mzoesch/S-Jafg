@@ -31,6 +31,10 @@ public:
 
     //# Called if the selected item changed.
     EVENT_DECL(OnValueChanged, void(LString const& Selected))
+
+private:
+
+    TClassStorage<WNode> DeferredWidget;
 };
 
 struct LFactoryInput_List: NODE_FACTORY_PARENT(WInput_List)

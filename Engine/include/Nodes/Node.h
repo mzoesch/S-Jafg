@@ -1196,6 +1196,14 @@ inline decltype(auto) Detail::LNodeFactoryBase::SaveTo(this auto&& Self, T** Out
     return std::forward<decltype(Self)>(Self);
 }
 
+template<typename T> requires std::is_base_of_v<WNode, T>
+inline decltype(auto) Detail::LNodeFactoryBase::SaveTo(this auto&& Self, TClassStorage<T>* Out) noexcept
+{
+    check(Out)
+    *Out = TClassStorage<T>{&Self.GetRawNode()};
+    return std::forward<decltype(Self)>(Self);
+}
+
 inline decltype(auto) Detail::LNodeFactoryBase::operator+(this auto&& Self, LNodeFactoryBase&& F) noexcept
 {
     Self.GetMutableSiblings().emplace_back(&F.GetRawNode());

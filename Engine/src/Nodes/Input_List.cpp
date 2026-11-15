@@ -26,52 +26,60 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
 
     if (Event.Is<ERawInputStateBits::Press>(ELogicalKey::LeftMouseButton))
     {
-        ConstructDeferredWidget(Jafg::TNodeStaticInit<WDismissibleFloatingWidget>{Info.Viewport}).Style()
-            .Decorate(false)
-            .CreateResizeUi(false)
-            .InitialWindowPosition(
-                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetTranslationFromMostOuter())
-                + LVec2F{0,this->GetAnchoredSize_v2().y}
-                )
-            .InitialWindowSize({100_spt, 20})
-            .Content([this](WFloatingWidget& FloatingWidget, WParent& Container)
-            {
-                auto& Prefs{GetSingleton<JUserPreferences>()};
-
-                WParent* Target;
-                Container.AddChild(NewNode(Container.GetViewport()).Class<WVRegion>().SaveTo(&Target)
-                    .Padding(1_spt)
-                    .Tint(*Prefs.ForegroundColor)
-                    .OutlineThickness(1)
-                    .OutlineTint(Colors::White)
-                    .Unique());
-
-                for (auto& Item: this->Items)
+        if (this->DeferredWidget.IsValidFast())
+        {
+            this->DeferredWidget->RemoveFromParent2();
+            this->DeferredWidget.Reset();
+        }
+        else
+        {
+            ConstructDeferredWidget(Jafg::TNodeStaticInit<WDismissibleFloatingWidget>{Info.Viewport}).Style().SaveTo(&this->DeferredWidget)
+                .Decorate(false)
+                .CreateResizeUi(false)
+                .InitialWindowPosition(
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetTranslationFromMostOuter())
+                    + LVec2F{0,this->GetAnchoredSize_v2().y}
+                    )
+                .InitialWindowSize({100_spt, 20})
+                .Content([this](WFloatingWidget& FloatingWidget, WParent& Container)
                 {
-                    Target->AddChild(NewNode(Target->GetViewport()).Class<WTextButton>()
-                        .Anchor(EAnchor::HFill)
-                        .Palette(*Prefs.PrimaryPaletteSolid)
-                        .InBrush<EStyleBits::InactiveCombi, &LBoxBrush::bSkipBrushDraw>(true)
-                        .InAllBrushes<&LBoxBrush::Padding>({5_spt, 0})
-                        .Content(Item)
-                        .OnKeyEventFocused([this,Item,FloatingWidget=&FloatingWidget](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
-                        {
-                            if (Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
-                            {
-                                if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
-                                {
-                                    this->SetContent(Item);
-                                    (void)this->OnValueChanged.InvokeIfBound(this->GetContent());
-                                    FloatingWidget->DestroyFloatingWidgetControlled();
-                                    return LNodeReply::Handled();
-                                }
-                            }
-                            return LNodeReply::Unhandled();
-                        })
-                        .Unique());
-                }
+                    auto& Prefs{GetSingleton<JUserPreferences>()};
 
-            });
+                    WParent* Target;
+                    Container.AddChild(NewNode(Container.GetViewport()).Class<WVRegion>().SaveTo(&Target)
+                        .Padding(1_spt)
+                        .Tint(*Prefs.ForegroundColor)
+                        .OutlineThickness(1)
+                        .OutlineTint(Colors::White)
+                        .Unique());
+
+                    for (auto& Item: this->Items)
+                    {
+                        Target->AddChild(NewNode(Target->GetViewport()).Class<WTextButton>()
+                            .Anchor(EAnchor::HFill)
+                            .Palette(*Prefs.PrimaryPaletteSolid)
+                            .InBrush<EStyleBits::InactiveCombi, &LBoxBrush::bSkipBrushDraw>(true)
+                            .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
+                            .Content(Item)
+                            .OnKeyEventFocused([this,Item,FloatingWidget=&FloatingWidget](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                            {
+                                if (Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
+                                {
+                                    if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
+                                    {
+                                        this->SetContent(Item);
+                                        (void)this->OnValueChanged.InvokeIfBound(this->GetContent());
+                                        FloatingWidget->DestroyFloatingWidgetControlled();
+                                        return LNodeReply::Handled();
+                                    }
+                                }
+                                return LNodeReply::Unhandled();
+                            })
+                            .Unique());
+                    }
+
+                });
+        }
 
         return LNodeReply::Handled();
     }
