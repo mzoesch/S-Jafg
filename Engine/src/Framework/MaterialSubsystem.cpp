@@ -821,8 +821,10 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
         }
         return {};
     }};
+    //# Depth only pipelines render without any color attachment. E.g. into the shadow atlas.
+    bool const bDepthOnly{Template.my_shader.Identifier == "Shaders/Jafg.Mesh.Shadow"};
     //# Auxiliary targets are never multi sampled.
-    if (GetAuxiliaryColorFormat())
+    if (GetAuxiliaryColorFormat() || bDepthOnly)
     {
         Factory.pipeline_multisample_state = vk::PipelineMultisampleStateCreateInfo{
             .rasterizationSamples = vk::SampleCountFlagBits::e1,
@@ -932,7 +934,16 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
     check(Template.depth_attachment_format == vk::Format::eUndefined)
     check(Template.stencil_attachment_format == vk::Format::eUndefined)
 
-    if (auto Format{GetAuxiliaryColorFormat()})
+    if (bDepthOnly)
+    {
+        Factory.color_attachment_formats = {};
+        if (!Factory.pipeline_color_blend_attachment_states.empty())
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: Depth only materials must not have any color blend attachments. Inherit from Materials/Base/NoColorAttachment."
+                , Name)
+        }
+    }
+    else if (auto Format{GetAuxiliaryColorFormat()})
     {
         Factory.color_attachment_formats = {*Format};
     }

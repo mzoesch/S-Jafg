@@ -7,6 +7,7 @@
 #include "Framework/TextureSubsystem.h"
 #include "Framework/StaticMeshComponent.h"
 #include "Framework/MaterialSubsystem.h"
+#include "Framework/LightSubsystem.h"
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -41,6 +42,15 @@ void Jafg::WWorldViewer::Construct()
     }))
     this->PbrLightBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::BindlessPbrLight::buffer_create_info(this->PbrLightLimit));
     check(algo::all_of(this->PbrLightBuffers, [](auto const& Buffer)
+    {
+        return !!Buffer.data();
+    }))
+    //# Enough for an atlas that is filled with cube faces only, the smallest tiles there are.
+    check(this->ShadowSettings.TileExtent > 0 && this->ShadowSettings.AtlasExtent >= this->ShadowSettings.TileExtent)
+    check(this->ShadowSettings.CubeFaceExtent > 0 && this->ShadowSettings.TileExtent >= this->ShadowSettings.CubeFaceExtent)
+    this->PbrShadowViewLimit = LShadowAtlas::GetMaxViews(this->ShadowSettings);
+    this->PbrShadowViewBuffers = Frontend.Vk_CreateFrequentMappedBuffer(SSBO::PbrShadowView::buffer_create_info(this->PbrShadowViewLimit));
+    check(algo::all_of(this->PbrShadowViewBuffers, [](auto const& Buffer)
     {
         return !!Buffer.data();
     }))
@@ -86,6 +96,8 @@ void Jafg::WWorldViewer::Construct()
     check(this->AmbientOcclusionMaterialInstance.get())
     this->AmbientOcclusionBlurMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/SsaoBlur");
     check(this->AmbientOcclusionBlurMaterialInstance.get())
+    this->ShadowMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Mesh.Shadow");
+    check(this->ShadowMaterialInstance.get())
 }
 
 void Jafg::WWorldViewer::Tick(f32 Dt)
@@ -443,8 +455,105 @@ void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
     });
 }
 
+bool Jafg::WWorldViewer::ShouldDrawShadows() const noexcept
+{
+    if (!this->bShadows || this->bShadowAtlasFailed)
+    {
+        return false;
+    }
+    //# Wireframes are unlit. And there is no point in drawing them if they are not shown.
+    if (this->PolygonMode != EPolygonMode::Fill || !(this->WorldRenderPreferences & EWorldRenderBits::ShowShadows))
+    {
+        return false;
+    }
+    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->IsOwnedPawnValid();
+}
+
+bool Jafg::WWorldViewer::InitializeShadowAtlas()
+{
+    check(!this->ShadowAtlas.IsInitialized())
+    check(!this->bShadowAtlasFailed)
+
+    auto& Frontend{this->GetViewport().GetSurface().GetMutableFrontend()};
+    auto& TextureSubsystem{*Frontend.GetSubsystemChecked<JTextureSubsystem>()};
+
+    LOG_VERBOSE(LogWidgets, "[{}]: Allocating shadow atlas of [{}x{}] texels.", this->GetNameAsString()
+        , this->ShadowSettings.AtlasExtent, this->ShadowSettings.AtlasExtent)
+
+    this->ShadowAtlas.Initialize({
+        .Frontend = Frontend,
+        .Settings = this->ShadowSettings,
+        });
+    //# The views are uploaded into buffers that were allocated for the settings during construction.
+    check(LShadowAtlas::GetMaxViews(this->ShadowSettings) <= this->PbrShadowViewLimit)
+
+    //# The scene samples the atlas through the global bindless array. The slot stays ours for our whole lifetime.
+    if (auto Index{TextureSubsystem._Vk_AddTransientImageToGlobalBindlessArray(*this->ShadowAtlas.GetImageView())}; Index)
+    {
+        this->ShadowAtlas.SetBindlessIndex(*Index);
+        return true;
+    }
+
+    LOG_WARNING(LogVulkan, "[{}]: Failed to make shadow atlas bindless. Out of binding points. Disabling shadows."
+        , this->GetNameAsString())
+    this->bShadowAtlasFailed = true;
+    return false;
+}
+
+bool Jafg::WWorldViewer::DrawShadows(LRenderInfo const& Info)
+{
+    auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
+    auto& World{Pawn.GetWorld()};
+    auto const& Lights{World.GetSubsystemChecked<JLightSubsystem>()->GetLights()};
+
+    //# Most worlds have no shadow casting light at all. Do not allocate the atlas for them.
+    if (!this->ShadowAtlas.IsInitialized())
+    {
+        bool const bAnyCaster{algo::any_of(Lights, [](LLight const* Light)
+        {
+            return Light->bCastShadows && LShadowAtlas::SupportsShadows(Light->Type);
+        })};
+        if (!bAnyCaster || !this->InitializeShadowAtlas())
+        {
+            return false;
+        }
+    }
+
+    //# The cascades of directional lights are fit around the camera of this viewer.
+    auto const Eye{Pawn.GetEye()};
+    auto const Extent{this->RenderTarget.GetExtent().ToVec<f32>()};
+    this->ShadowAtlas.Gather(Lights, this->ShadowSettings, {
+        .Eye = Eye,
+        .Aspect = Extent.y > 0.0f ? Extent.x / Extent.y : 1.0f,
+        });
+    if (!this->ShadowAtlas.HasViews())
+    {
+        return false;
+    }
+
+    this->ShadowAtlas.Render(Info, [&](LRenderInfo const& Info, LShadowAtlas::View const& View)
+    {
+        std::optional<TArray<AActor*>> Filter;
+        World.Draw(Info, {
+            .Eye = View.Eye,
+            .ViewOverride = LWorld::LViewOverride{
+                .View = View.ViewMatrix,
+                .Proj = View.ProjMatrix,
+                },
+            .Instance = &*this->ShadowMaterialInstance,
+            .Filter = Filter,
+            .bUpdateWorldDataSet = false,
+            });
+    });
+
+    return true;
+}
+
 bool Jafg::WWorldViewer::OnPreDrawImpl(LRenderInfo const& Info)
 {
+    //# Shadow maps first. They do not depend on any other pass.
+    this->bShadowsDrawn = this->ShouldDrawShadows() && this->DrawShadows(Info);
+
     this->bAmbientOcclusionDrawn = this->ShouldDrawAmbientOcclusion();
     if (this->bAmbientOcclusionDrawn)
     {
@@ -509,6 +618,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
             algo::transparent_unordered_string_map<rhi::mapped_device_buffer*> SharedBuffers;
             SharedBuffers.emplace(UBO::WorldData::name(), &this->WorldBuffers[Info.Frame]);
             SharedBuffers.emplace(SSBO::BindlessPbrLight::name(), &this->PbrLightBuffers[Info.Frame]);
+            SharedBuffers.emplace(SSBO::PbrShadowView::name(), &this->PbrShadowViewBuffers[Info.Frame]);
 
             Pawn.GetWorld().Draw(Info, {
                 .Eye = Eye,
@@ -519,6 +629,8 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 .Preferences = this->WorldRenderPreferences,
                 .PolygonMode = this->PolygonMode,
                 .PbrLightLimit = this->PbrLightLimit,
+                .PbrShadowViewLimit = this->PbrShadowViewLimit,
+                .Shadows = this->bShadowsDrawn ? &this->ShadowAtlas : nullptr,
                 .AmbientOcclusionTexture = this->bAmbientOcclusionDrawn
                     ? this->AmbientOcclusionBindlessIndex : rhi::invalid_resource_index,
                 });

@@ -38,6 +38,8 @@ public:
 
         static LPath GetDestination(LPath const& SourceFile) noexcept;
         static LPath GetReflectionFile(LPath const& SourceFile) noexcept;
+        //# The source file and everything it includes, written by slangc in make syntax. @see -depfile
+        static LPath GetDependencyFile(LPath const& SourceFile) noexcept;
     };
 
     NODISCARD bool HasShader(LStringView Name) const noexcept

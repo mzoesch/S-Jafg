@@ -271,7 +271,11 @@ void from_json(json const& j, reflected_shader::entry_point& entry)
         LOG_FATAL(LogSerialization, "Unsupported entry point stage [{}].", stage)
     }
 
-    if (j.at("parameters").is_array())
+    //# Slang omits the parameters of entry points that take none. E.g. fragment shaders of depth only passes.
+    if (!j.contains("parameters"))
+    {
+    }
+    else if (j.at("parameters").is_array())
     {
         for (auto& parameter: j.at("parameters"))
         {

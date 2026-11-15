@@ -18,6 +18,7 @@ namespace Jafg
     static const uint WORLD_FLAG_SHOW_METALLIC           = 0x1 <<  9;
     static const uint WORLD_FLAG_SHOW_EMISSIVE           = 0x1 << 10;
     static const uint WORLD_FLAG_SHOW_SSAO               = 0x1 << 11;
+    static const uint WORLD_FLAG_SHOW_SHADOWS            = 0x1 << 12;
 #endif /* JAFG_WITH_EDITOR */
 
 [[CxxName("Jafg::UBO::WorldData")]]

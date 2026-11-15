@@ -2947,6 +2947,11 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
             this->OnWorldRenderBitSelected(EWorldRenderBits::ShowSsao);
             return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowSsao);
         }),
+        CreateDropDownCheckmark("Show Shadows", !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowShadows), [this]
+        {
+            this->OnWorldRenderBitSelected(EWorldRenderBits::ShowShadows);
+            return !!(this->GetWorldRenderPreferences() & EWorldRenderBits::ShowShadows);
+        }),
         });
 }
 
@@ -3069,74 +3074,11 @@ static void LoadGymCollection(Jafg::LWorld& World)
     }
 
     {
-        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Light.EditorName = "Directional Light"sv;
-        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
-        {
-            Comp.SetType(Jafg::ELight::Directional);
-            Comp.SetTint(LLinearColor{1.0,0.83,0.66});
-            Comp.SetIntensity(1.5f);
-            Comp.SetDirection({0.3f,-0.8f,0.5f});
-            Comp.SetLocalTranslationByTeleport({5,0,0});
-        });
-    }
-
-    {
-        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Light.EditorName = "White Point Light"sv;
-        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
-        {
-            Comp.SetType(Jafg::ELight::Point);
-            Comp.SetTint(LinearColors::White);
-            Comp.SetIntensity(8.0f);
-            Comp.SetLocalTranslationByTeleport({-2,1,3});
-        });
-    }
-    {
-        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Light.EditorName = "Red Point Light"sv;
-        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
-        {
-            Comp.SetType(Jafg::ELight::Point);
-            Comp.SetTint(LinearColors::Red);
-            Comp.SetIntensity(8.0f);
-            Comp.SetLocalTranslationByTeleport({-2,1,-3});
-        });
-    }
-
-    {
-        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Light.EditorName = "White Rect Light"sv;
-        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
-        {
-            Comp.SetType(Jafg::ELight::Rect);
-            Comp.SetTint(LinearColors::White);
-            Comp.SetIntensity(8.0f);
-            Comp.SetSize({2.0f,1.0f});
-            Comp.SetLocalTranslationByTeleport({-5,1,-3});
-        });
-    }
-
-    {
-        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Light.EditorName = "White Spot Light"sv;
-        Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
-        {
-            Comp.SetType(Jafg::ELight::Spot);
-            Comp.SetTint(LinearColors::White);
-            Comp.SetIntensity(8.0f);
-            Comp.SetConeAngles(maths::radians(20.0f), maths::radians(35.0f));
-            Comp.SetDirection(maths::down_vector<LVec3F>);
-            Comp.SetLocalTranslationByTeleport({-8,1,-3});
-        });
-    }
-
-    {
         auto& Cube{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
         Cube.EditorName = "Cube"sv;
         auto& Rigid{Cube.EmplaceRootComponent<Jafg::ARigidComponent>()};
         Rigid.SetShouldRender(true);
-        Rigid.SetLocalTranslationByTeleport({0,0.5,8});
+        Rigid.SetLocalTranslationByTeleport({4, -0.5, 8.0});
         Rigid.SetPhysicsMotion(Jafg::EPhysicsMotion::Dynamic);
         Rigid.SetPhysicsLayer(Jafg::EPhysicsLayer::Dynamic);
         Rigid.MakeBox(LWorldVec3{0.5});
@@ -3149,6 +3091,54 @@ static void LoadGymCollection(Jafg::LWorld& World)
             Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, "Textures/Editor/ObjectGrid_1M"));
         });
     }
+
+    auto SpawnLight{[&](LWorldVec3 Offset, LWorldVec3 Gap, std::size_t Index, TFunction2<void(Jafg::ALightComponent& Comp)>& Callback)
+    {
+        LWorldVec3 Translation{Offset + Gap * static_cast<LWorldReal>(Index)};
+        auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Light.EditorName = algo::sprintf("Light {}", Index);
+        Light.EmplaceRootComponent<Jafg::ALightComponent>([&](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetLocalTranslationByTeleport(Translation);
+            Comp.SetCastShadows(true);
+            Callback(Comp);
+        });
+    }};
+    auto SpawnLights{[&](LWorldVec3 Offset, LWorldVec3 Gap, TArray<TFunction2<void(Jafg::ALightComponent& Comp)>> Lights)
+    {
+        for (std::size_t Idx{}; Idx < Lights.size(); ++Idx)
+        {
+            SpawnLight(Offset, Gap, Idx, Lights[Idx]);
+        }
+    }};
+    SpawnLights(LWorldVec3{0.0_r, 0.0_r, 7.0_r}, LWorldVec3{-3.0_r ,0.0_r , 0.0_r}, TArray<TFunction2<void(Jafg::ALightComponent& Comp)>>{}
+        .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Directional);
+            Comp.SetDirection({0.3f,-0.8f,0.5f});
+        })
+        .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Point);
+            Comp.SetTint(LinearColors::White);
+        })
+        .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Point);
+            Comp.SetTint(LinearColors::Red);
+        })
+        .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Rect);
+            Comp.SetTint(LinearColors::White);
+            Comp.SetLocalRotatorByTeleport(LWorldQuat{maths::radians(LWorldVec3{0.0, 180.0, 0.0})});
+        })
+        .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
+        {
+            Comp.SetType(Jafg::ELight::Spot);
+            Comp.SetTint(LinearColors::White);
+        })
+        );
 
     auto SpawnSphere{[&](LWorldVec3 Offset, LWorldVec3 Gap, std::size_t Index, LStringView Material)
     {
@@ -3172,7 +3162,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
             SpawnSphere(Offset, Gap, Idx, Materials[Idx]);
         }
     }};
-    SpawnSpheres(maths::zero_vector<LWorldVec3>, LWorldVec3{-2,0,0}, {
+    SpawnSpheres(LWorldVec3{0.0_r, 0.0_r, 4.5_r}, LWorldVec3{-1.5_r ,0.0_r , 0.0_r}, {
         "Materials/Examples/CastleBrick02Red",
         "Materials/Examples/MetalPlate",
         "Materials/Examples/Scifi",

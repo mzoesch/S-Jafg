@@ -5,6 +5,7 @@
 #include "Nodes/UserWidget.h"
 #include "Framework/Lackey.h"
 #include "Rhi/RenderTarget.h"
+#include "Rhi/Shadow.h"
 #include "Rhi/Light.h"
 #include "Framework/Surface.h"
 #include "Framework/EditorForward.h"
@@ -85,6 +86,15 @@ public:
     FORCEINLINE void SetAmbientOcclusionEnabled(bool bEnabled) noexcept { this->bAmbientOcclusion = bEnabled; }
     LAmbientOcclusionSettings AmbientOcclusion;
 
+    //#
+    //# Shadows of the lights that cast them. Requires one depth only pass of the world per shadow casting light.
+    //# The atlas is only allocated once the first light wants to cast shadows.
+    //#
+    NODISCARD FORCEINLINE constexpr bool IsShadowsEnabled() const noexcept { return this->bShadows; }
+    FORCEINLINE void SetShadowsEnabled(bool bEnabled) noexcept { this->bShadows = bEnabled; }
+    //# Changes to the extents only apply before #Construct. All other settings apply immediately.
+    LShadowSettings ShadowSettings;
+
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSet(std::size_t Frame) const noexcept { return this->WorldDescriptorSets[Frame]; }
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetWorldDescriptorSets() const noexcept { return this->WorldDescriptorSets; }
     NODISCARD FORCEINLINE constexpr auto const& Vk_GetPbrLightDescriptorSet(std::size_t Frame) const noexcept { return this->PbrLightDescriptorSets[Frame]; }
@@ -118,6 +128,15 @@ private:
     NODISCARD bool ShouldDrawAmbientOcclusion() const noexcept;
     void DrawAmbientOcclusion(LRenderInfo const& Info);
 
+    NODISCARD bool ShouldDrawShadows() const noexcept;
+    //# Allocates the atlas and puts it into the global bindless array. False if that failed.
+    NODISCARD bool InitializeShadowAtlas();
+    //#
+    //# Assigns the shadow casting lights of the world to the atlas and renders their shadow maps.
+    //# False if nothing has been drawn, e.g. because no light casts shadows.
+    //#
+    NODISCARD bool DrawShadows(LRenderInfo const& Info);
+
     WNode* Placeholder{};
 
     algo::clock::time_point LastUnstableDiff;
@@ -142,12 +161,23 @@ private:
     LMaterialInstanceRef AmbientOcclusionMaterialInstance;
     LMaterialInstanceRef AmbientOcclusionBlurMaterialInstance;
 
+    bool bShadows{ true };
+    //# Whether the shadows have been drawn for the frame that is currently recorded.
+    bool bShadowsDrawn{};
+    //# Set if the atlas could not be made bindless. Shadows stay disabled for our whole lifetime then.
+    bool bShadowAtlasFailed{};
+    LShadowAtlas ShadowAtlas;
+    LMaterialInstanceRef ShadowMaterialInstance;
+
     rhi::frame_array<vk::raii::DescriptorSet> WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<rhi::mapped_device_buffer> WorldBuffers;
     // TODO: Is this correct here, or move to the light subsystem? I think later on we might cull lights
     //       based of eye translation. Therefore having one per eye is correct and not one at the frontend level?
     std::size_t PbrLightLimit{ 256uz }; // TODO: Make dynamic.
     rhi::frame_array<rhi::mapped_device_buffer> PbrLightBuffers;
+    //# Allocated for the capacity of the atlas. They are bound to the second binding of #PbrLightDescriptorSets.
+    std::size_t PbrShadowViewLimit{};
+    rhi::frame_array<rhi::mapped_device_buffer> PbrShadowViewBuffers;
     rhi::frame_array<vk::raii::DescriptorSet> PbrLightDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
 };
 

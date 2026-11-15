@@ -49,7 +49,9 @@ rhi::graphics_pipeline rhi::graphics_pipeline_factory::build(vk::raii::Device co
         .dynamicStateCount = static_cast<u32>(this->dynamic_states.size()),
         .pDynamicStates = this->dynamic_states.data(),
         };
-    check(!this->color_attachment_formats.empty())
+    //# Depth only pipelines have no color attachments.
+    check(!this->color_attachment_formats.empty() || this->depth_attachment_format != vk::Format::eUndefined)
+    check(this->color_attachment_formats.size() == this->pipeline_color_blend_attachment_states.size())
     vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> StructureChain{
         {
             .stageCount          = static_cast<u32>(this->shaders.size()),

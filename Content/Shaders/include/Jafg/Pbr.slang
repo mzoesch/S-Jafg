@@ -54,7 +54,7 @@ struct PbrLight
 
     /// Always normalized.
     /// directional: direction the light travels
-    /// point:       unused
+    /// point:       forward axis of the light. Only orients the cube faces of the shadows.
     /// spot:        direction the cone points
     /// rect:        emitting normal (front face)
     float3 direction;
@@ -70,7 +70,8 @@ struct PbrLight
     /// rect:        luminance (cd/m^2) of the emitting face
     float intensity;
 
-    /// rect: unit vector along the width axis (perp. to direction)
+    /// rect:  unit vector along the width axis (perp. to direction)
+    /// point: right axis of the light. Only orients the cube faces of the shadows.
     float3 right;
     /// rect: full width  (m)
     float width;
@@ -88,9 +89,42 @@ struct PbrLight
     /// Multiplier for the specular highlights of this light.
     float specular_scale;
 
-    uint _pad0;
-    uint _pad1;
+    /// Index of the first of the shadow_views of this light or INVALID_INDEX if it casts no shadows.
+    uint shadow;
+    /// Number of shadow_views starting at shadow. What they are depends on the type, see PbrShadowView.
+    uint shadow_count;
 };
+
+///
+/// How a tile of the shadow atlas was rendered. A light references a contiguous range of these:
+/// directional: One per cascade, from the closest (sharpest) to the farthest.
+/// spot:        Exactly one.
+/// point:       Six cube faces along +right, -right, +up, -up, +direction, -direction of the light,
+///              with up = cross(right, direction).
+/// rect:        The first five cube faces of a point light. Nothing is emitted towards -direction.
+/// @see Engine/include/Rhi/Shadow.h
+///
+[[CxxName("Jafg::SSBO::PbrShadowView")]]
+struct PbrShadowView
+{
+    /// World space to clip space of the tile.
+    float4x4 view_proj;
+    /// xy: Offset and zw: Size of the tile inside the atlas, in uv space.
+    float4 atlas_rect;
+    /// Bindless index of the shadow atlas.
+    uint atlas_texture;
+    /// One over the extent of the atlas in texels.
+    float atlas_texel_size;
+    /// World space normal offset: normal_bias + normal_bias_per_meter * (distance to the light).
+    float normal_bias;
+    float normal_bias_per_meter;
+};
+
+/// Upper limit of the cascades of a directional light. @see LShadowAtlas::MaxCascades
+static const uint MAX_SHADOW_CASCADES = 4u;
+
+/// How far the filter kernel reaches from the looked up point, in texels. @see KernelMarginTexels in Shadow.cpp
+static const float SHADOW_KERNEL_MARGIN_TEXELS = 2.5;
 
 ///
 /// Note, that this struct exceeds the minimum size of a push constant block (128 bytes)
@@ -116,6 +150,7 @@ struct PbrPushConstants
 [[vk::binding(0, 2),Shared("Jafg::SSBO::PbrMaterials")]] StructuredBuffer<Jafg::PbrMaterial> materials;
 
 [[vk::binding(0, 3),Shared("Jafg::SSBO::PbrLights")]] StructuredBuffer<Jafg::PbrLight> lights;
+[[vk::binding(1, 3),Shared("Jafg::SSBO::PbrLights")]] StructuredBuffer<Jafg::PbrShadowView> shadow_views;
 
 /*
  * Bind your own in your shader source files if any.
@@ -200,6 +235,7 @@ float4 evaluate_pbr_sv_target(PbrMaterial material, SamplerState sampler
 {
     static_assert(sizeof(Jafg::PbrMaterial) == 96, "Unexpected struct size");
     static_assert(sizeof(Jafg::PbrLight) == 96, "Unexpected struct size");
+    static_assert(sizeof(Jafg::PbrShadowView) == 96, "Unexpected struct size");
     static_assert(sizeof(Jafg::WorldData) == 192, "Unexpected struct size");
 
     PbrSurface surface = _evaluate_surface(material, sampler, uv);
@@ -210,6 +246,8 @@ float4 evaluate_pbr_sv_target(PbrMaterial material, SamplerState sampler
     }
 
     PbrShadingContext ctx = _make_shading_context(surface, translation, normal);
+    // The shadow lookup is offset along the interpolated vertex normal, never along a perturbed one.
+    float3 geometric_normal = _safe_normalize(normal);
 
     // The descriptor range is set to exactly the number of uploaded lights.
     uint light_count;
@@ -226,18 +264,26 @@ float4 evaluate_pbr_sv_target(PbrMaterial material, SamplerState sampler
             continue;
         }
 
+        float3 contribution = float3(0.0, 0.0, 0.0);
         switch (light.type)
         {
-        case LIGHT_DIRECTIONAL: direct += _evaluate_directional_light(light, ctx); break;
-        case LIGHT_POINT:       direct += _evaluate_point_light(light, ctx);       break;
-        case LIGHT_SPOT:        direct += _evaluate_spot_light(light, ctx);        break;
-        case LIGHT_RECT:        direct += _evaluate_rect_light(light, ctx);        break;
+        case LIGHT_DIRECTIONAL: contribution = _evaluate_directional_light(light, ctx); break;
+        case LIGHT_POINT:       contribution = _evaluate_point_light(light, ctx);       break;
+        case LIGHT_SPOT:        contribution = _evaluate_spot_light(light, ctx);        break;
+        case LIGHT_RECT:        contribution = _evaluate_rect_light(light, ctx);        break;
         default:                break;
         }
+
+        // Only look up the shadow where the light arrives at all. Saves the samples outside of cones and ranges.
+        if (light.shadow != INVALID_INDEX && any(contribution > 0.0))
+        {
+            contribution *= _sample_shadow(light, ctx.world_pos, geometric_normal);
+        }
+        direct += contribution;
     }
 
     // Ambient, so that unlit surfaces are not pitch-black. Treated as a uniform environment radiance until
-    // we have IBL. Occlusion only affects indirect light, direct light would need proper shadows.
+    // we have IBL. Occlusion only affects indirect light, direct light is occluded by the shadows above.
     // The screen space occlusion and the one of the material describe the same thing at different scales. Taking
     // the stronger one avoids darkening creases twice.
     float occlusion = min(surface.occlusion, _sample_screen_space_occlusion(translation));
@@ -315,6 +361,163 @@ float _sample_screen_space_occlusion(float3 world_pos)
 
     return bindless_textures[NonUniformResourceIndex(world_data.ssao_texture)]
         .SampleLevel(samplers[JAFG_SAMPLER_LINEAR_CLAMP_TO_EDGE], uv, 0.0).r;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Shadows.
+//////////////////////////////////////////////////////////////////////////
+
+///
+/// Bilinearly filtered depth comparison (2x2 PCF) at the given uv of the atlas. One gather instead of four samples.
+/// Range [0,1] with 0 = fully in shadow and 1 = fully lit.
+///
+float _shadow_compare_bilinear(Texture2D atlas, float2 uv, float receiver_depth, float atlas_extent, float texel_size)
+{
+    // Texel space with the texel centers at whole numbers.
+    float2 texel = uv * atlas_extent - 0.5;
+    float2 base = floor(texel);
+    float2 f = texel - base;
+
+    // Gathers the four texels around the shared corner at base + 1, in the order:
+    // x = (0,1), y = (1,1), z = (1,0), w = (0,0) relative to base.
+    float4 occluder_depth = atlas.GatherRed(samplers[JAFG_SAMPLER_NEAREST_CLAMP_TO_EDGE], (base + 1.0) * texel_size);
+    float4 lit = step(receiver_depth, occluder_depth);
+
+    return lerp(lerp(lit.w, lit.z, f.x), lerp(lit.x, lit.y, f.x), f.y);
+}
+
+///
+/// Projects the world position into the shadow view. False if it is not covered by the view, with the given margin
+/// in texels of the tile kept free at its borders.
+///
+bool _project_shadow(PbrShadowView view, float3 world_pos, float margin_texels, out float3 ndc)
+{
+    ndc = float3(0.0, 0.0, 0.0);
+
+    float4 clip = mul(view.view_proj, float4(world_pos, 1.0));
+    if (clip.w <= 0.0)
+    {
+        return false;
+    }
+    ndc = clip.xyz / clip.w;
+
+    float tile_texels = view.atlas_rect.z / view.atlas_texel_size;
+    float limit = 1.0 - 2.0 * margin_texels / tile_texels;
+    return all(abs(ndc.xy) <= limit) && ndc.z >= 0.0 && ndc.z <= 1.0;
+}
+
+///
+/// The visibility from a single shadow view (3x3 PCF). Range [0,1] with 0 = fully in shadow and 1 = fully lit,
+/// which is also returned outside of the volume covered by the view.
+/// dist_to_light scales the normal offset of perspective views.
+///
+float _sample_shadow_view(PbrShadowView view, float3 world_pos, float3 geometric_normal, float dist_to_light)
+{
+    // Normal offset: Move the receiver away from the surface by about a texel of the shadow map. Fights acne without
+    // detaching the shadows. The texels of perspective views grow with the distance to the light.
+    float3 receiver = world_pos + geometric_normal * (view.normal_bias + view.normal_bias_per_meter * dist_to_light);
+
+    float3 ndc;
+    if (!_project_shadow(view, receiver, 0.0, ndc))
+    {
+        return 1.0;
+    }
+
+    float2 tile_min = view.atlas_rect.xy;
+    float2 tile_max = view.atlas_rect.xy + view.atlas_rect.zw;
+    float2 uv = tile_min + (ndc.xy * 0.5 + 0.5) * view.atlas_rect.zw;
+
+    // The 3x3 kernel reaches two texels away from its center (one tap plus the bilinear footprint). Keep the
+    // whole kernel inside of the tile, else it would read the depth of the neighboring tiles.
+    float texel_size = view.atlas_texel_size;
+    float atlas_extent = 1.0 / texel_size;
+    uv = clamp(uv, tile_min + 2.0 * texel_size, tile_max - 2.0 * texel_size);
+
+    Texture2D atlas = bindless_textures[NonUniformResourceIndex(view.atlas_texture)];
+
+    float visibility = 0.0;
+    [unroll]
+    for (int y = -1; y <= 1; ++y)
+    {
+        [unroll]
+        for (int x = -1; x <= 1; ++x)
+        {
+            visibility += _shadow_compare_bilinear(atlas, uv + float2(x, y) * texel_size, ndc.z
+                , atlas_extent, texel_size);
+        }
+    }
+
+    return visibility / 9.0;
+}
+
+///
+/// The visibility of the light from the given world position. Range [0,1] with 0 = fully in shadow and
+/// 1 = fully lit, which is also returned where the light has no shadow map, e.g. beyond the last cascade.
+///
+float _sample_shadow(PbrLight light, float3 world_pos, float3 geometric_normal)
+{
+#if JAFG_WITH_EDITOR
+    if (!_should_show(WORLD_FLAG_SHOW_SHADOWS))
+    {
+        return 1.0;
+    }
+#endif /* JAFG_WITH_EDITOR */
+
+    switch (light.type)
+    {
+    case LIGHT_DIRECTIONAL:
+    {
+        // The first (sharpest) cascade that covers the point, including the reach of the filter kernel.
+        uint count = min(light.shadow_count, MAX_SHADOW_CASCADES);
+        for (uint i = 0; i < count; ++i)
+        {
+            PbrShadowView view = shadow_views[light.shadow + i];
+            float3 ndc;
+            if (_project_shadow(view, world_pos, SHADOW_KERNEL_MARGIN_TEXELS, ndc))
+            {
+                return _sample_shadow_view(view, world_pos, geometric_normal, 0.0);
+            }
+        }
+        return 1.0;
+    }
+    case LIGHT_SPOT:
+    {
+        return _sample_shadow_view(shadow_views[light.shadow], world_pos, geometric_normal
+            , length(light.pos - world_pos));
+    }
+    case LIGHT_POINT:
+    case LIGHT_RECT:
+    {
+        // The cube face along the dominant axis of the direction from the light, in the basis of the light.
+        float3 to_surface = world_pos - light.pos;
+        float3 up = cross(light.right, light.direction);
+        float3 local = float3(dot(to_surface, light.right), dot(to_surface, up), dot(to_surface, light.direction));
+        float3 a = abs(local);
+
+        uint face;
+        if (a.x >= a.y && a.x >= a.z)
+        {
+            face = local.x >= 0.0 ? 0u : 1u;
+        }
+        else if (a.y >= a.z)
+        {
+            face = local.y >= 0.0 ? 2u : 3u;
+        }
+        else
+        {
+            face = local.z >= 0.0 ? 4u : 5u;
+        }
+
+        // Rect lights have no face behind them. Nothing that is lit lies there.
+        if (face >= light.shadow_count)
+        {
+            return 1.0;
+        }
+        return _sample_shadow_view(shadow_views[light.shadow + face], world_pos, geometric_normal, length(to_surface));
+    }
+    default:
+        return 1.0;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -150,6 +150,79 @@ LPath Jafg::JShaderSubsystem::Shader2::GetReflectionFile(LPath const& SourceFile
     return Shader2::GetDestination(SourceFile).concat(".json");
 }
 
+LPath Jafg::JShaderSubsystem::Shader2::GetDependencyFile(LPath const& SourceFile) noexcept
+{
+    return Shader2::GetDestination(SourceFile).concat(".d");
+}
+
+namespace
+{
+
+//#
+//# The newest write time of all files the compiled shader depends on (its source file and all of its includes).
+//# Nothing if the dependency file is missing or malformed, or if any dependency does not exist anymore. In that case
+//# the shader has to be recompiled, as we cannot tell whether it is up to date.
+//#
+NODISCARD std::optional<std::filesystem::file_time_type> GetNewestDependencyWriteTime(LPath const& DependencyFile)
+{
+    if (!is_regular_file(DependencyFile))
+    {
+        return {};
+    }
+    auto Content{finder::try_read_file(DependencyFile)};
+    if (!Content)
+    {
+        return {};
+    }
+
+    //#
+    //# Make syntax: "<target>: <dep> <dep> ...". The separator is the first colon followed by whitespace, so that
+    //# drive letters of windows paths ("C:/...") are not mistaken for it. Paths never contain spaces, as slangc
+    //# does not permit them anyway.
+    //#
+    LStringView Rest{*Content};
+    std::size_t Separator{LStringView::npos};
+    for (std::size_t Idx{0}; Idx + 1 < Rest.size(); ++Idx)
+    {
+        if (Rest[Idx] == ':' && std::isspace(static_cast<unsigned char>(Rest[Idx + 1])))
+        {
+            Separator = Idx;
+            break;
+        }
+    }
+    if (Separator == LStringView::npos)
+    {
+        return {};
+    }
+    Rest.remove_prefix(Separator + 1);
+
+    std::optional<std::filesystem::file_time_type> Newest;
+    while (!Rest.empty())
+    {
+        auto const Begin{Rest.find_first_not_of(" \t\r\n\\")};
+        if (Begin == LStringView::npos)
+        {
+            break;
+        }
+        Rest.remove_prefix(Begin);
+        auto const End{std::min(Rest.find_first_of(" \t\r\n"), Rest.size())};
+        LPath Dependency{LString{Rest.substr(0, End)}};
+        Rest.remove_prefix(End);
+
+        std::error_code Error;
+        auto const WriteTime{std::filesystem::last_write_time(Dependency, Error)};
+        if (Error)
+        {
+            return {};
+        }
+        Newest = Newest ? std::max(*Newest, WriteTime) : WriteTime;
+    }
+
+    return Newest;
+}
+
+} /* ~Namespace <Anonymous> */
+
 Jafg::LVertexInputProvider const& Jafg::JShaderSubsystem::GetVertexInput(LStringView Identifier) const noexcept
 {
     auto& Providers{::GetStaticVertexInputProviders()};
@@ -213,6 +286,7 @@ std::size_t Jafg::JShaderSubsystem::RecompileShaderConditionally(Shader2 const& 
 #endif /* JAFG_WITH_EDITOR */
 
         SS << " -reflection-json " << Shader2::GetReflectionFile(Src).string();
+        SS << " -depfile " << Shader2::GetDependencyFile(Src).string();
 
         auto SSStr{SS.str()};
         LOG_VERBOSE(LogSystem, "Executing: [{}].", SSStr)
@@ -265,9 +339,18 @@ std::size_t Jafg::JShaderSubsystem::RecompileShaderConditionally(Shader2 const& 
         }
         else
         {
-            auto SourceLwt{last_write_time(SourceFile)};
+            //# Includes count as well. A shader is outdated as soon as any file it was compiled from changed.
+            auto const NewestDependencyLwt{::GetNewestDependencyWriteTime(Shader2::GetDependencyFile(SourceFile))};
+            auto SourceLwt{NewestDependencyLwt.value_or(last_write_time(SourceFile))};
             auto DestinationLwt{last_write_time(Destination)};
-            if (SourceLwt > DestinationLwt)
+            if (!NewestDependencyLwt)
+            {
+                LOG_VERBOSE(LogShaderSubsystem, "[{}]: Dependencies of shader are unknown. Compiling from [{}] to [{}]."
+                    , Shader.Path, SourceFile, Destination
+                    )
+                Recompile(SourceFile, Destination);
+            }
+            else if (SourceLwt > DestinationLwt)
             {
                 LOG_VERBOSE(LogShaderSubsystem, "[{}]: Shader is outdated. Compiling from [{}] to [{}]; Because [{:%c} > {:%c}]."
                     , Shader.Path, SourceFile, Destination, SourceLwt, DestinationLwt

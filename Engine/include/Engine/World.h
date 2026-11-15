@@ -37,6 +37,7 @@ class LWorld;
 class ASupremePolicies;
 class WWorldNode;
 class ARigidComponent;
+class LShadowAtlas;
 struct LSubsystemCollection;
 struct LRenderInfo;
 struct LNodeRenderInfo;
@@ -178,10 +179,23 @@ public:
     FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running && !this->bPaused; }
     void Tick(f64 Dt);
 
+    //# Explicit device matrices that replace the ones derived from the eye of a draw call.
+    struct LViewOverride
+    {
+        LMat4F View;
+        //# Already in the device convention (y down).
+        LMat4F Proj;
+    };
+
     struct DrawInfo
     {
         //# The eye to draw from.
         LWorldEye const& Eye;
+        //#
+        //# If set, used instead of the matrices derived from #Eye and the aspect of the viewport. E.g. to draw from
+        //# the view of a light. #Eye should still roughly match, as some drawables read it.
+        //#
+        std::optional<LViewOverride> ViewOverride;
         //# The instance to prefer for all supported drawables.
         LMaterialInstance* Instance{};
         //# Shared named sets free to use for this draw call. Might get modified.
@@ -204,6 +218,11 @@ public:
         //# When using the pbr pipeline. This is the limit.
         std::size_t PbrMaterialLimit{};
         std::size_t PbrLightLimit{};
+        //# When using the pbr pipeline. Requires a shared buffer for SSBO::PbrShadowView.
+        std::size_t PbrShadowViewLimit{};
+
+        //# The shadows of the lights for this draw call, if any. Lights without a view are not shadowed.
+        LShadowAtlas const* Shadows{};
 
         //# Bindless index of the screen space ambient occlusion for this eye, if any.
         rhi::resource_index_t AmbientOcclusionTexture{ rhi::invalid_resource_index };

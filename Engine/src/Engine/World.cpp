@@ -21,6 +21,7 @@
 #include "Framework/Skybox.h"
 #include "../Framework/PhysicsForeignCore.h"
 #include "Framework/LightSubsystem.h"
+#include "Rhi/Shadow.h"
 
 namespace
 {
@@ -294,13 +295,21 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
     {
         auto& WorldData{ActorInfo.WorldData};
 
-        WorldData.View = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
-        WorldData.Proj = maths::perspective<LWorldReal,world_qual>(
-            Eye.vert_fov,
-            Info.VkViewport.width / Info.VkViewport.height,
-            Eye.near_frustum, Eye.far_frustum
-            );
-        WorldData.Proj[1][1] *= -1.0f;
+        if (DrawInfo.ViewOverride)
+        {
+            WorldData.View = DrawInfo.ViewOverride->View;
+            WorldData.Proj = DrawInfo.ViewOverride->Proj;
+        }
+        else
+        {
+            WorldData.View = maths::look_at(Eye.translation, Eye.translation + Eye.front, Eye.up);
+            WorldData.Proj = maths::perspective<LWorldReal,world_qual>(
+                Eye.vert_fov,
+                Info.VkViewport.width / Info.VkViewport.height,
+                Eye.near_frustum, Eye.far_frustum
+                );
+            WorldData.Proj[1][1] *= -1.0f;
+        }
 
         //#
         //# TODO: Make some preset somewhere. Where in the editor can switch between different states.
@@ -346,7 +355,13 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
             check(Light->bCanEverAffectWorld)
             if (Light->bEnabled && Light->Intensity > 0.0f)
             {
-                Lights->push_back(::MakeDeviceLight(*Light));
+                auto& DeviceLight{Lights->emplace_back(::MakeDeviceLight(*Light))};
+                if (DrawInfo.Shadows)
+                {
+                    auto const Views{DrawInfo.Shadows->FindViews(*Light)};
+                    DeviceLight.Shadow = Views.First;
+                    DeviceLight.ShadowCount = Views.Count;
+                }
             }
         }
         if (Lights->empty())
@@ -356,8 +371,27 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
         }
         Lights.upload_and_update(Info.Frontend.Vk_GetDevice()
             , DrawInfo.SharedSets.at(SSBO::BindlessPbrLight::name())
-            , 0
+            , SSBO::BindlessPbrLight::LightBinding
             , *DrawInfo.SharedBuffers.at(SSBO::BindlessPbrLight::name())
+            );
+
+        //# The shadow views share the set of the lights. Every binding of it has to be valid.
+        check(DrawInfo.PbrShadowViewLimit > 0)
+        rhi::object_range<SSBO::PbrShadowView> ShadowViews{4, DrawInfo.PbrShadowViewLimit};
+        if (DrawInfo.Shadows)
+        {
+            auto const& Views{DrawInfo.Shadows->GetDeviceViews()};
+            ShadowViews->insert(ShadowViews->end(), Views.begin(), Views.end());
+        }
+        if (ShadowViews->empty())
+        {
+            //# The descriptor range must never be empty. No light references this view.
+            ShadowViews->push_back({});
+        }
+        ShadowViews.upload_and_update(Info.Frontend.Vk_GetDevice()
+            , DrawInfo.SharedSets.at(SSBO::BindlessPbrLight::name())
+            , SSBO::BindlessPbrLight::ShadowViewBinding
+            , *DrawInfo.SharedBuffers.at(SSBO::PbrShadowView::name())
             );
     }
 

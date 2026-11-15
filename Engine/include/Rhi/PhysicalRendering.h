@@ -205,14 +205,31 @@ struct BindlessPbrLight: rhi::ssbo_template<BindlessPbrLight, vk::ShaderStageFla
 
     f32 SourceRadius;
     f32 SpecularScale;
-    u32 _pad0;
-    u32 _pad1;
+    //# Index of the first shadow view (see SSBO::PbrShadowView) or #rhi::invalid_resource_index if unshadowed.
+    rhi::resource_index_t Shadow{ rhi::invalid_resource_index };
+    //# Number of shadow views starting at #Shadow. Their meaning depends on the type, see SSBO::PbrShadowView.
+    u32 ShadowCount{};
 
-    static std::array<vk::DescriptorSetLayoutBinding, 1> bindings() noexcept
+    //# The shadow views of the lights share the set of the lights. @see Rhi/Shadow.h
+    static constexpr u32 ShadowViewBinding{ 1 };
+
+    static std::array<vk::DescriptorBindingFlags, 2> const& descriptor_binding_flags() noexcept
+    {
+        static std::array Flags{vk::DescriptorBindingFlags{}, vk::DescriptorBindingFlags{},};
+        return Flags;
+    }
+    static std::array<vk::DescriptorSetLayoutBinding, 2> bindings() noexcept
     {
         return std::array{
             vk::DescriptorSetLayoutBinding{
                 .binding = LightBinding,
+                .descriptorType = vk::DescriptorType::eStorageBuffer,
+                .descriptorCount = 1,
+                .stageFlags = shader_stage_flags(),
+                .pImmutableSamplers = nullptr
+                },
+            vk::DescriptorSetLayoutBinding{
+                .binding = ShadowViewBinding,
                 .descriptorType = vk::DescriptorType::eStorageBuffer,
                 .descriptorCount = 1,
                 .stageFlags = shader_stage_flags(),

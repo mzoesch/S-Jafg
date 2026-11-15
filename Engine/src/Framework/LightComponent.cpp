@@ -19,6 +19,11 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LLight>(TEditorNodeCrea
             .RecordName = "Enabled",
             .UpdateValue = Dummy,
             }, true))
+        + GetEditorNode<bool>(ProjectEditorNodeCreateInfo<&LLight::bCastShadows>(Info, {
+            .RecordName = "Cast Shadows",
+            .RecordTooltip = "Whether this light casts shadows. Directional lights only cast them up to a distance from the camera.",
+            .UpdateValue = Dummy,
+            }, false))
         + GetEditorNode<f32>(ProjectEditorNodeCreateInfo<&LLight::Intensity>(Info, {
             .RecordName = "Intensity",
             .RecordTooltip = "Intensity of the light.",

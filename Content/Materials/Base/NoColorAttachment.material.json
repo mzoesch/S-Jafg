@@ -1,0 +1,7 @@
+{
+    "pipelineColorBlendState": {
+        "logicOpEnable": false,
+        "logicOp": "eClear",
+        "pipelineColorBlendAttachmentStates": []
+    }
+}
