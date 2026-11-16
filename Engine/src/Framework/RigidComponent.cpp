@@ -3,6 +3,7 @@
 #include "Framework/RigidComponent.h"
 #include "Framework/Actor.h"
 #include "PhysicsForeignCore.h"
+#include "Rhi/StaticMesh.h"
 
 static_assert(std::to_underlying(Jafg::EBodyType::Rigid) == std::to_underlying(JPH::EBodyType::RigidBody));
 static_assert(std::to_underlying(Jafg::EBodyType::Soft) == std::to_underlying(JPH::EBodyType::SoftBody));
@@ -438,6 +439,32 @@ void Jafg::LPhysicsBody::SetUserData(u64 UserData)
     this->GetBody().SetUserData(UserData);
 }
 
+namespace
+{
+
+//#
+//# @return Whether the rigid object was removed from the simulation.
+//#
+bool PrepareRecreation(JPH::BodyInterface& Interface, Jafg::ARigidComponent& Comp)
+{
+    bool bResult{};
+
+    if (Comp.GetRigidObject().IsValid())
+    {
+        if (Comp.IsAddedToSimulation())
+        {
+            Interface.RemoveBody(Comp.GetRigidObject()->GetID());
+        }
+        Comp._DestroyRigidObjectImpl();
+        bResult = true;
+    }
+    check(!Comp.GetRigidObject().IsValid())
+
+    return bResult;
+}
+
+} /* ~Namespace <Anonymous> */
+
 #define INTERFACE this->GetParentPhysicsSystem()->GetBodyInterfaceNoLock()
 
 #if JAFG_DO_CHECKS
@@ -482,18 +509,7 @@ void Jafg::ARigidComponent::MakeSphere(f32 Radius)
     check(Tasks::IsOnMasterThread())
 
     auto& Interface{INTERFACE};
-
-    bool bIsRemoved{true};
-    if (this->RigidObject.IsValid())
-    {
-        if (this->IsAddedToSimulation())
-        {
-            Interface.RemoveBody(this->RigidObject->GetID());
-        }
-        this->DestroyRigidObjectImpl();
-        bIsRemoved = false;
-    }
-    check(!this->RigidObject.IsValid())
+    bool bWasRemoved{::PrepareRecreation(Interface, *this)};
 
     LWorldTrans WorldTransform{this->GetWorldTransformSlow()};
     check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
@@ -508,7 +524,7 @@ void Jafg::ARigidComponent::MakeSphere(f32 Radius)
     check(this->RigidObject.IsValid())
 
     this->UpdateComponentAabb();
-    if (bIsRemoved)
+    if (!bWasRemoved)
     {
         this->AddToWorldRigidComponents();
     }
@@ -519,18 +535,7 @@ void Jafg::ARigidComponent::MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius /* =
     check(Tasks::IsOnMasterThread())
 
     auto& Interface{INTERFACE};
-
-    bool bIsRemoved{true};
-    if (this->RigidObject.IsValid())
-    {
-        if (this->IsAddedToSimulation())
-        {
-            Interface.RemoveBody(this->RigidObject->GetID());
-        }
-        this->DestroyRigidObjectImpl();
-        bIsRemoved = false;
-    }
-    check(!this->RigidObject.IsValid())
+    bool bWasRemoved{::PrepareRecreation(Interface, *this)};
 
     LWorldTrans WorldTransform{this->GetWorldTransformSlow()};
     check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
@@ -545,7 +550,60 @@ void Jafg::ARigidComponent::MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius /* =
     check(this->RigidObject.IsValid())
 
     this->UpdateComponentAabb();
-    if (bIsRemoved)
+    if (!bWasRemoved)
+    {
+        this->AddToWorldRigidComponents();
+    }
+}
+
+void Jafg::ARigidComponent::MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius /* = Physx::DefaultConvexRadius */)
+{
+    check(Tasks::IsOnMasterThread())
+
+    if (!Mesh.HasConvex())
+    {
+        LOG_WARNING(LogPhysics, "[{}]: Mesh has no convex hull. Consider loading the mesh with [EStaticMeshStateBits::Convex]."
+            , Mesh.GetPath()
+            )
+        Mesh.ReloadConvex();
+        check(Mesh.HasConvex())
+    }
+
+    LWorldTrans WorldTransform{this->GetWorldTransformSlow()};
+    check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
+
+    TArray<LVec3F> const& Hull{Mesh.GetConvexHull()};
+    JPH::Array<JPH::Vec3> Points;
+    Points.reserve(Hull.size());
+    for (LVec3F const& Point: Hull)
+    {
+        Points.emplace_back(Point.x * WorldTransform.s.x, Point.y * WorldTransform.s.y, Point.z * WorldTransform.s.z);
+    }
+
+    JPH::ConvexHullShapeSettings const HullSettings{Points, ConvexRadius};
+    JPH::ShapeSettings::ShapeResult const HullResult{HullSettings.Create()};
+    if (HullResult.HasError())
+    {
+        LOG_FATAL(LogPhysics, "[{}]: Failed to create convex hull from [{}] points: {}."
+            , Mesh.GetPath(), Points.size(), HullResult.GetError().c_str()
+            )
+    }
+
+    auto& Interface{INTERFACE};
+    bool bWasRemoved{::PrepareRecreation(Interface, *this)};
+
+    JPH::BodyCreationSettings CreateSettings{
+        HullResult.Get(),
+        JPH::RVec3{WorldTransform.t.x, WorldTransform.t.y, WorldTransform.t.z},
+        {WorldTransform.r.x, WorldTransform.r.y, WorldTransform.r.z, WorldTransform.r.w},
+        JPH::EMotionType{std::to_underlying(this->Motion)},
+        this->Layer,
+        };
+    this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));
+    check(this->RigidObject.IsValid())
+
+    this->UpdateComponentAabb();
+    if (!bWasRemoved)
     {
         this->AddToWorldRigidComponents();
     }
@@ -624,12 +682,18 @@ void Jafg::ARigidComponent::UpdateComponentAabb() noexcept
     {
         auto* Shape{this->RigidObject->GetShape()};
         check(Shape)
-        // TODO: This is not correct. This does not allow for scaling. We have to divide each axis by our scale.
-        check(this->GetLocalScale().x == 1.0f && this->GetLocalScale().y == 1.0f && this->GetLocalScale().z == 1.0f)
         auto Box{Shape->GetLocalBounds()};
         this->Aabb = LWorldAabb3{
-            .min = LWorldVec3{Box.mMin.GetX(), Box.mMin.GetY(), Box.mMin.GetZ()},
-            .max = LWorldVec3{Box.mMax.GetX(), Box.mMax.GetY(), Box.mMax.GetZ()},
+            .min = LWorldVec3{
+                this->GetLocalScale().x == 0.0f ? 0.0f : Box.mMin.GetX() / this->GetLocalScale().x,
+                this->GetLocalScale().y == 0.0f ? 0.0f : Box.mMin.GetY() / this->GetLocalScale().y,
+                this->GetLocalScale().z == 0.0f ? 0.0f : Box.mMin.GetZ() / this->GetLocalScale().z,
+                },
+            .max = LWorldVec3{
+                this->GetLocalScale().x == 0.0f ? 0.0f : Box.mMax.GetX() / this->GetLocalScale().x,
+                this->GetLocalScale().y == 0.0f ? 0.0f : Box.mMax.GetY() / this->GetLocalScale().y,
+                this->GetLocalScale().z == 0.0f ? 0.0f : Box.mMax.GetZ() / this->GetLocalScale().z,
+                },
             };
     }
     else
@@ -653,11 +717,11 @@ void Jafg::ARigidComponent::RemoveFromWorldRigidComponents() noexcept
 
 void Jafg::ARigidComponent::DestroyRigidObject() noexcept
 {
-    this->DestroyRigidObjectImpl();
+    this->_DestroyRigidObjectImpl();
     this->RemoveFromWorldRigidComponents();
 }
 
-void Jafg::ARigidComponent::DestroyRigidObjectImpl() noexcept
+void Jafg::ARigidComponent::_DestroyRigidObjectImpl() noexcept
 {
     check(this->RigidObject.IsValid())
     INTERFACE.DestroyBody(this->RigidObject->GetID());

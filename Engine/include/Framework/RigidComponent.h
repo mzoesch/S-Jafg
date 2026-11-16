@@ -9,6 +9,8 @@
 namespace Jafg
 {
 
+struct LStaticMesh;
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API ARigidComponent : public ASceneComponent
 {
@@ -16,7 +18,10 @@ class ENGINE_API ARigidComponent : public ASceneComponent
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS(ARigidComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(ARigidComponent)
+    {
+        this->SetShouldRender(true);
+    }
 
 public:
 
@@ -33,6 +38,7 @@ public:
 
     void MakeSphere(f32 Radius);
     void MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius = Physx::DefaultConvexRadius);
+    void MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius = Physx::DefaultConvexRadius);
 
     bool IsAddedToSimulation() const noexcept;
     void AddToSimulation(ESimulationAddingBehavior Behavior);
@@ -58,7 +64,11 @@ private:
 
     LPhysicsBody RigidObject;
     void DestroyRigidObject() noexcept;
-    void DestroyRigidObjectImpl() noexcept;
+
+public:
+
+    //# Public private function. Do not use.
+    void _DestroyRigidObjectImpl() noexcept;
 };
 
 } /* ~Namespace Jafg */

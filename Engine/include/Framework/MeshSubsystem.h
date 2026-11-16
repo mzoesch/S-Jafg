@@ -10,7 +10,6 @@
 namespace Jafg
 {
 
-//# A mesh that was loaded by the program and may be used across many different objects.
 DECLARE_JAFG_CLASS()
 class JMeshSubsystem final : public JEngineSubsystem
 {
@@ -29,7 +28,7 @@ public:
     FORCEINLINE constexpr auto const& GetMeshes() const noexcept { return this->Meshes; }
 
     //# Allocate the requested resource from a file.
-    ENGINE_API LStaticMeshRef FromFile(LPath const& Path, EStaticMeshState State = EStaticMeshStateBits::Device) const;
+    ENGINE_API LStaticMeshRef FromFile(LPath const& Path, EStaticMeshState State = EStaticMeshStateBits::Device, std::optional<LStaticMeshCreateInfo> Info = {}) const;
 
 private:
 

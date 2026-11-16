@@ -30,7 +30,11 @@ public:
 
     virtual void OnAttach(AActor& InOwner) override;
 
-    void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
+    void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device, std::optional<LStaticMeshCreateInfo> Info = {});
+    NODISCARD FORCEINLINE constexpr bool IsMeshValid() const noexcept { return !!this->Mesh; }
+    NODISCARD FORCEINLINE constexpr LStaticMeshRef GetMeshRef() const noexcept { return this->Mesh; }
+    NODISCARD FORCEINLINE constexpr LStaticMesh& GetMutableMesh() noexcept { check(this->IsMeshValid()) return *this->Mesh; }
+    NODISCARD FORCEINLINE constexpr LStaticMesh const& GetMesh() const noexcept { check(this->IsMeshValid()) return *this->Mesh; }
     void SetMaterialInstance(LMaterialInstanceRef Instance) noexcept;
     void SetPbrMaterialInstance(LPbrMaterialInstanceRef Instance) noexcept;
 

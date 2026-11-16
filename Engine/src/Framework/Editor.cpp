@@ -2114,6 +2114,7 @@ void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APer
                 || DrawSettings.mDrawSoftBodyPredictedBounds
                 )
             {
+                STAT_CUSTOM_ZONE_FMT("DrawPhysicsBodies{}", this->GetNameAsString())
                 physx::debug_renderer::get()->PrepareFrame(Eye, Comp);
                 Ctrl.GetWorld().GetWorldGlobalPhysicsSystem()->DrawBodies(DrawSettings, physx::debug_renderer::get(), {});
             }

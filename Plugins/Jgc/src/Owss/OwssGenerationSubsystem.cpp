@@ -8,6 +8,7 @@
 #include "Framework/Frontend.h"
 #include "Framework/StaticMeshComponent.h"
 #include "Framework/Actor.h"
+#include "Framework/LightComponent.h"
 #include "Framework/RigidComponent.h"
 #include "Jgc/Framework/Vehicle.h"
 #include "Jgc/Owss/OwssSupremePolicies.h"
@@ -26,10 +27,20 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     }
 
     this->MaterialInstance = World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
-        ->GetPbrInstance(JgcInfo,"Materials/Metal-053C-2k");
+        ->GetPbrInstance(JafgInfo,"Materials/Examples/Scifi");
+
+    auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+    Light.EditorName = "Sun";
+    Light.EmplaceRootComponent<Jafg::ALightComponent>([](Jafg::ALightComponent& Comp)
+    {
+        Comp.SetType(Jafg::ELight::Directional);
+        Comp.SetCastShadows(true);
+        Comp.SetDirection({-0.5f, -0.5f, -1.0f});
+        Comp.SetTint({1.0f, 0.95f, 0.9f});
+    });
 }
 
-void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 Where)
+void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 const& Where)
 {
     if (this->bGeneratedAsteroids)
     {
@@ -45,12 +56,16 @@ void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 Where)
     {
         auto& Asteroid{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{this->GetWorld()})};
         Asteroid.EditorName = algo::sprintf("Asteroid_{}", Idx);
-        Asteroid.EmplaceRootComponent<Jafg::AStaticMeshComponent>([&](Jafg::AStaticMeshComponent& Comp)
+
+        Jafg::ARigidComponent& Rigid{Asteroid.EmplaceRootComponent<Jafg::ARigidComponent>()};
+        Jafg::AStaticMeshComponent& Mesh{Asteroid.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [&](Jafg::AStaticMeshComponent& Comp)
         {
-            Comp.SetMesh(JgcInfo/"Models/Asteroids/Object_16.glb");
+            Comp.SetMesh(JgcInfo/"Models/Asteroids/Object_16.glb", Jafg::EStaticMeshStateBits::PhysicsReady);
             Comp.SetPbrMaterialInstance(this->MaterialInstance);
-        });
-        Asteroid.GetRootComponent().SetLocalTransformByTeleport(Trans);
+        })};
+        Rigid.SetLocalTransformByTeleport(Trans);
+        Rigid.MakeConvex(Mesh.GetMutableMesh());
+        Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Preserve);
     }};
 
     auto Engine{std::default_random_engine{}};
@@ -68,7 +83,7 @@ void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 Where)
     }
 }
 
-Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 Where)
+Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 const& Where)
 {
     STAT_FUNCTION()
     check(!!this->MaterialInstance)
@@ -77,12 +92,11 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 Wher
         Actor.EditorName = "Ship";
         Actor.SetCanEverTick(true);
         Actor.SetCanEverPhysicsTick(true);
+        Actor.EmplaceRootComponent<Jafg::ARigidComponent>();
 
-        Actor.EmplaceRootComponent<Jafg::ARigidComponent>()
-            .SetShouldRender(true);
         Actor.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Actor.GetRootComponent(), [&](Jafg::AStaticMeshComponent& Comp)
         {
-            Comp.SetMesh(JgcInfo/"Models/Ships/MyShip.glb");
+            Comp.SetMesh(JgcInfo/"Vehicles/SVS26/SVS26.glb", Jafg::EStaticMeshStateBits::PhysicsReady);
             Comp.SetPbrMaterialInstance(this->MaterialInstance);
             Comp.SetLocalTranslationByTeleport(Where);
         });

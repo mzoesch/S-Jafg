@@ -24,8 +24,8 @@ protected:
 
 public:
 
-    virtual void GenerateAsteroids(LWorldVec3 Where);
-    virtual AVehicleComponent& SpawnShip(LWorldVec3 Where);
+    virtual void GenerateAsteroids(LWorldVec3 const& Where);
+    virtual AVehicleComponent& SpawnShip(LWorldVec3 const& Where);
 
 private:
 

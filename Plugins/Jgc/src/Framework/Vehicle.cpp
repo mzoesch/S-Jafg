@@ -3,6 +3,7 @@
 #include "Jgc/Framework/Vehicle.h"
 #include "Engine/Engine.h"
 #include "Framework/PhysicsBody.h"
+#include "Framework/StaticMeshComponent.h"
 
 void Jgc::AVehicleComponent::OnAttach(Jafg::AActor& Owner)
 {
@@ -18,11 +19,8 @@ void Jgc::AVehicleComponent::OnAttach(Jafg::AActor& Owner)
             check(!Rigid.IsAddedToSimulation())
             Rigid.SetPhysicsMotion(Jafg::EPhysicsMotion::Dynamic);
             Rigid.SetPhysicsLayer(Jafg::EPhysicsLayer::Dynamic);
-            Rigid.MakeBox(LWorldVec3{5});
-
+            Rigid.MakeConvex(this->GetMutableVehicleMesh().GetMutableMesh());
             Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Activate);
-
-            // Rigid.SetLinearVelocity({0,0,5});
 
             break;
         }
@@ -65,6 +63,16 @@ void Jgc::AVehicleComponent::ParentPhysicsTick(f32 Dt, bool bFollowup)
             }
         }
     }
+}
+
+Jafg::AStaticMeshComponent const& Jgc::AVehicleComponent::GetVehicleMesh() const
+{
+    return this->GetOwningActor().GetRootComponent().GetComponentChecked<Jafg::AStaticMeshComponent>();
+}
+
+Jafg::AStaticMeshComponent& Jgc::AVehicleComponent::GetMutableVehicleMesh()
+{
+    return this->GetOwningActor().GetRootComponent().GetComponentChecked<Jafg::AStaticMeshComponent>();
 }
 
 void Jgc::AVehicleComponent::AddThrust(LVec3F const& Thrust, bool bUserInput)

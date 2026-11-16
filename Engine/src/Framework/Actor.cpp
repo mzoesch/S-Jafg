@@ -48,6 +48,47 @@ void Jafg::AActor::BeginLife()
     return;
 }
 
+void Jafg::AActor::WorldTick(f32 Dt)
+{
+    check(this->bLives && !this->_IsGarbage())
+    check(this->bCanEverTick && this->ShouldTick())
+    for (auto& Comp: this->Components)
+    {
+        if (Comp->bTick)
+        {
+            STAT_CUSTOM_ZONE_FMT("Tick{}", Comp->GetNameAsString())
+            Comp->ParentTick(Dt);
+        }
+    }
+}
+
+void Jafg::AActor::PhysicsTick(f32 Dt, bool bFollowup)
+{
+    check(this->bLives && !this->_IsGarbage())
+    check(this->bCanEverPhysicsTick && this->ShouldPhysicsTick())
+    for (auto& Comp: this->Components)
+    {
+        if (Comp->bPhysicsTick)
+        {
+            STAT_CUSTOM_ZONE_FMT("PhysicsTick{}", Comp->GetNameAsString())
+            Comp->ParentPhysicsTick(Dt, bFollowup);
+        }
+    }
+}
+
+#if JAFG_WITH_EDITOR
+void Jafg::AActor::SelectedTick(WEditorWorldViewer& Viewer, f32 Dt, AActorComponent* Comp)
+{
+    check(this->bLives && !this->_IsGarbage())
+    if (Comp)
+    {
+        check(this->_check_IsComponentAttachedTransitive(*Comp))
+        STAT_CUSTOM_ZONE_FMT("SelectedTick{}", Comp->GetNameAsString())
+        Comp->SelectedTick(Viewer, Dt);
+    }
+}
+#endif /* JAFG_WITH_EDITOR */
+
 void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
@@ -155,11 +196,13 @@ void Jafg::AActor::Tick(f32 Dt)
             {
                 if (this->CanEverTickInDormantTimes())
                 {
+                    STAT_CUSTOM_ZONE_FMT("Tick{}", this->GetNameAsString())
                     this->WorldTick(Dt);
                 }
             }
             else
             {
+                STAT_CUSTOM_ZONE_FMT("Tick{}", this->GetNameAsString())
                 this->WorldTick(Dt);
             }
         }
@@ -167,6 +210,7 @@ void Jafg::AActor::Tick(f32 Dt)
         {
             check(World.IsTimeDesisted())
             check(this->CanEverTickInDormantTimes())
+            STAT_CUSTOM_ZONE_FMT("Tick{}", this->GetNameAsString())
             this->WorldTick(Dt);
         }
     }
@@ -174,7 +218,11 @@ void Jafg::AActor::Tick(f32 Dt)
 
 void Jafg::AActor::FixedTick(f32 Dt, bool bFollowup)
 {
-    this->PhysicsTick(Dt, bFollowup);
+    if (this->bShouldPhysicsTick)
+    {
+        STAT_CUSTOM_ZONE_FMT("PhysicsTick{}", this->GetNameAsString())
+        this->PhysicsTick(Dt, bFollowup);
+    }
 }
 
 #if JAFG_DO_CHECKS

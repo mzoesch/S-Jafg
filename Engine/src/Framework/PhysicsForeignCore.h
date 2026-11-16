@@ -131,12 +131,15 @@ namespace Jafg
 #include <Jolt/Physics/PhysicsSettings.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
 #include <Jolt/Renderer/DebugRenderer.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
+
+#include <Jolt/Geometry/ConvexHullBuilder.h>
 
 static_assert(std::same_as<Jafg::EPhysicsLayer::value_type, JPH::ObjectLayer>);
 static_assert(std::same_as<Jafg::EPhysicsBroadPhase::value_type, JPH::BroadPhaseLayer::Type>);

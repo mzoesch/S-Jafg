@@ -16,9 +16,9 @@ void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
     this->ShaderSubsystem = this->GetMutableLocalEgo().GetFrontend().GetSubsystemChecked<JShaderSubsystem>();
 }
 
-void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
+void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */)
 {
-    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState);
+    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState, std::move(Info));
     this->Aabb = this->Mesh->GetAabb();
 }
 

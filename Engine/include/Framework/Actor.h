@@ -30,48 +30,18 @@ public:
     virtual void BeginLife() override;
 
     //# Called whenever the world is ticked. And this actor is allowed to tick.
-    virtual void WorldTick(f32 Dt)
-    {
-        check(this->bLives && !this->_IsGarbage())
-        check(this->bCanEverTick && this->ShouldTick())
-        for (auto& Comp: this->Components)
-        {
-            if (Comp->bTick)
-            {
-                Comp->ParentTick(Dt);
-            }
-        }
-    }
+    virtual void WorldTick(f32 Dt);
 
     //#
     //# Called whenever the world is physics ticked. And this actor is allowed to physics tick.
     //# Might be called multiple times per frame.
     //#
-    virtual void PhysicsTick(f32 Dt, bool bFollowup)
-    {
-        check(this->bLives && !this->_IsGarbage())
-        check(this->bCanEverPhysicsTick && this->ShouldPhysicsTick())
-        for (auto& Comp: this->Components)
-        {
-            if (Comp->bPhysicsTick)
-            {
-                Comp->ParentPhysicsTick(Dt, bFollowup);
-            }
-        }
-    }
+    virtual void PhysicsTick(f32 Dt, bool bFollowup);
 
 #if JAFG_WITH_EDITOR
     //# Called when this actor is selected in the editor.
     //# @param Comp Might be nullptr.
-    virtual void SelectedTick(WEditorWorldViewer& Viewer, f32 Dt, AActorComponent* Comp)
-    {
-        check(this->bLives && !this->_IsGarbage())
-        if (Comp)
-        {
-            check(this->_check_IsComponentAttachedTransitive(*Comp))
-            Comp->SelectedTick(Viewer, Dt);
-        }
-    }
+    virtual void SelectedTick(WEditorWorldViewer& Viewer, f32 Dt, AActorComponent* Comp);
 #endif /* JAFG_WITH_EDITOR */
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;

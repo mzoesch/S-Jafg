@@ -10,6 +10,7 @@
 #include "Framework/ShaderSubsystem.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
+#include "../Framework/PhysicsForeignCore.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -511,6 +512,10 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                                 {
                                     NewState |= EStaticMeshStateBits::Device;
                                 }
+                                if (Field->HasConvex())
+                                {
+                                    NewState |= EStaticMeshStateBits::Convex;
+                                }
 
                                 Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->FromFile(Path, NewState);
                             }
@@ -533,7 +538,61 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
     ];
 }
 
-Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
+void Jafg::LStaticMesh::BringToState(EStaticMeshState State)
+{
+    bool bWasOnHost{this->IsOnHost()};
+    if (State & EStaticMeshStateBits::Host || ((State & EStaticMeshStateBits::Device) && !this->IsOnDevice()))
+    {
+        if (!this->IsOnHost())
+        {
+            auto Result{this->LoadToHost(false)};
+            jassert(Result == LStaticMesh::EResult::Success)
+        }
+    }
+    if (State & EStaticMeshStateBits::Convex && !this->HasConvex())
+    {
+        this->ReloadConvex();
+    }
+    if (State & EStaticMeshStateBits::Device)
+    {
+        if (!this->IsOnDevice())
+        {
+            this->LoadToDevice();
+            if (!(State & EStaticMeshStateBits::Host) && !bWasOnHost)
+            {
+                this->FreeFromHost();
+            }
+        }
+    }
+}
+
+#if JAFG_WITH_EDITOR
+void Jafg::LStaticMesh::Reload(EStaticMeshState State)
+{
+    if (State & EStaticMeshStateBits::Host || State & EStaticMeshStateBits::Device)
+    {
+        if (auto Result{this->LoadToHost(!!(State & EStaticMeshStateBits::Convex))}; Result != EResult::Success)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to load mesh to host: {}.", this->Path, std::to_underlying(Result))
+        }
+    }
+    else if (!!(State & EStaticMeshStateBits::Convex))
+    {
+        this->ReloadConvex();
+    }
+
+    if (State & EStaticMeshStateBits::Device)
+    {
+        this->LoadToDevice();
+        if (!(State & EStaticMeshStateBits::Host))
+        {
+            this->FreeFromHost();
+        }
+    }
+}
+#endif /* JAFG_WITH_EDITOR */
+
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex)
 {
     STAT_FUNCTION()
 
@@ -572,22 +631,143 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost()
         LOG_TRACE(LogRhi, "[{}]: {}", this->Path, SS.str())
     }
 
-    STAT_NAMED_ZONE(__CalculatingAabb, "LoadToHost::CalculatingAabb")
-    this->Aabb.min = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
-    this->Aabb.max = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
-    for (auto& Mesh: this->HostMeshes)
     {
-        for (auto const& Primitive: Mesh.Primitives)
+        STAT_NAMED_ZONE(__CalculatingAabb, "LoadToHost::CalculatingAabb")
+        this->Aabb.min = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
+        this->Aabb.max = this->HostMeshes[0].Primitives[0].Vertices[0].Position;
+        for (auto& Mesh: this->HostMeshes)
         {
-            for (auto const& Vertex: Primitive.Vertices)
+            for (auto const& Primitive: Mesh.Primitives)
             {
-                this->Aabb.min = maths::min(this->Aabb.min, Vertex.Position);
-                this->Aabb.max = maths::max(this->Aabb.max, Vertex.Position);
+                for (auto const& Vertex: Primitive.Vertices)
+                {
+                    this->Aabb.min = maths::min(this->Aabb.min, Vertex.Position);
+                    this->Aabb.max = maths::max(this->Aabb.max, Vertex.Position);
+                }
             }
         }
     }
 
+    if (bLoadConvex)
+    {
+        this->ReloadConvex();
+    }
+
     return EResult::Success;
+}
+
+void Jafg::LStaticMesh::ReloadConvex()
+{
+    STAT_FUNCTION()
+
+    this->FreeConvex();
+
+    bool const bWasOnHost{this->IsOnHost()};
+    if (!bWasOnHost)
+    {
+        LOG_VERBOSE(LogRhi, "[{}]: Not on host. Temporarily loading from secondary storage to build convex hull.", this->Path)
+        if (auto Result{this->LoadToHost(false)}; Result != EResult::Success)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to load to host for convex hull generation: [{}]."
+                , this->Path, std::to_underlying(Result))
+        }
+    }
+
+    JPH::Array<JPH::Vec3> Positions;
+    {
+        size_t Count{0};
+        for (auto const& Mesh: this->HostMeshes)
+        {
+            for (auto const& Primitive: Mesh.Primitives)
+            {
+                Count += Primitive.Vertices.size();
+            }
+        }
+        Positions.reserve(Count);
+
+        for (auto const& Mesh: this->HostMeshes)
+        {
+            for (auto const& Primitive: Mesh.Primitives)
+            {
+                for (auto const& Vertex: Primitive.Vertices)
+                {
+                    Positions.emplace_back(Vertex.Position.x, Vertex.Position.y, Vertex.Position.z);
+                }
+            }
+        }
+    }
+
+    if (!bWasOnHost)
+    {
+        this->FreeFromHost();
+    }
+
+    char const* Error{nullptr};
+    JPH::ConvexHullBuilder Builder{Positions};
+    auto const Result{Builder.Initialize(this->MaxConvexVertices, this->ConvexTolerance, Error)};
+    if (Result == JPH::ConvexHullBuilder::EResult::MaxVerticesReached)
+    {
+        LOG_TRACE(LogRhi, "[{}]: Convex hull reached the max vertex count of [{}]. The hull is an approximation."
+            , this->Path, this->MaxConvexVertices
+            )
+    }
+    else if (Result != JPH::ConvexHullBuilder::EResult::Success)
+    {
+        if (Result == JPH::ConvexHullBuilder::EResult::TooFewPoints)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. The mesh has too few points: [{}]."
+                , this->Path, Error ? Error : "Unknown error."
+                )
+        }
+        if (Result == JPH::ConvexHullBuilder::EResult::TooFewFaces)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. The mesh has too few faces: [{}]."
+                , this->Path, Error ? Error : "Unknown error."
+                )
+        }
+        if (Result == JPH::ConvexHullBuilder::EResult::Degenerate)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. The mesh is degenerate: [{}]."
+                , this->Path, Error ? Error : "Unknown error."
+                )
+        }
+        LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. Unknown error: [{}]."
+            , this->Path, Error ? Error : "Unknown error."
+            )
+    }
+
+    TArray<u8> bUsed(Positions.size(), 0);
+    for (JPH::ConvexHullBuilder::Face const* Face: Builder.GetFaces())
+    {
+        if (Face->mRemoved)
+        {
+            continue;
+        }
+
+        JPH::ConvexHullBuilder::Edge const* Edge{Face->mFirstEdge};
+        do
+        {
+            if (bUsed[Edge->mStartIdx] == 0)
+            {
+                bUsed[Edge->mStartIdx] = 1;
+                JPH::Vec3 const& P{Positions[Edge->mStartIdx]};
+                this->ConvexHull.emplace_back(P.GetX(), P.GetY(), P.GetZ());
+            }
+            Edge = Edge->mNextEdge;
+        }
+        while (Edge != Face->mFirstEdge);
+    }
+
+    LOG_VERBOSE(LogRhi, "[{}]: Built convex hull with [{}] vertices from [{}] vertices."
+        , this->Path, this->ConvexHull.size(), Positions.size()
+        )
+
+    if (!this->HasConvex())
+    {
+        LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull from [{}] vertices."
+            , this->Path, Positions.size()
+            )
+    }
 }
 
 void Jafg::LStaticMesh::LoadToDevice()

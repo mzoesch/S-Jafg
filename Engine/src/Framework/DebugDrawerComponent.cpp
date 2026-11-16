@@ -35,38 +35,56 @@ void Jafg::ADebugDrawerComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
-    auto Reduce{[Dt=static_cast<f32>(this->GetEngine().DeltaTime)](auto&& Range)
     {
-        for (auto It{Range.begin()}; It != Range.end();)
+        STAT_CUSTOM_ZONE_FMT("Tick::Reduce{}", this->GetNameAsString())
+        auto Reduce{[Dt=static_cast<f32>(this->GetEngine().DeltaTime)](auto&& Range)
         {
-            It->Duration -= Dt;
-            if (It->Duration <= 0.0f)
+            for (auto I{Range.size()}; I-- > 0;)
             {
-                It = Range.erase(It);
+                Range[I].Duration -= Dt;
+                if (Range[I].Duration <= 0.0f)
+                {
+                    if (I != Range.size() - 1)
+                    {
+                        Range[I] = std::move(Range.back());
+                    }
+                    Range.pop_back();
+                }
             }
-            else
-            {
-                ++It;
-            }
-        }
-    }};
+        }};
 
-    Reduce(this->Lines);
-    Reduce(this->Rays);
-    Reduce(this->Aabbs);
-    Reduce(this->Spheres);
-    Reduce(this->Texts);
+        Reduce(this->Lines);
+        Reduce(this->Rays);
+        Reduce(this->Aabbs);
+        Reduce(this->Spheres);
+        Reduce(this->Texts);
+    }
 
-    this->Lines.append_range(this->NextLines);
-    this->NextLines.clear();
-    this->Rays.append_range(this->NextRays);
-    this->NextRays.clear();
-    this->Aabbs.append_range(this->NextAabbs);
-    this->NextAabbs.clear();
-    this->Spheres.append_range(this->NextSpheres);
-    this->NextSpheres.clear();
-    this->Texts.append_range(this->NextTexts);
-    this->NextTexts.clear();
+    {
+        STAT_CUSTOM_ZONE_FMT("Tick::UpdateLines{}", this->GetNameAsString())
+        this->Lines.append_range(this->NextLines);
+        this->NextLines.clear();
+    }
+    {
+        STAT_CUSTOM_ZONE_FMT("Tick::UpdateRays{}", this->GetNameAsString())
+        this->Rays.append_range(this->NextRays);
+        this->NextRays.clear();
+    }
+    {
+        STAT_CUSTOM_ZONE_FMT("Tick::UpdateAabbs{}", this->GetNameAsString())
+        this->Aabbs.append_range(this->NextAabbs);
+        this->NextAabbs.clear();
+    }
+    {
+        STAT_CUSTOM_ZONE_FMT("Tick::UpdateSphers{}", this->GetNameAsString())
+        this->Spheres.append_range(this->NextSpheres);
+        this->NextSpheres.clear();
+    }
+    {
+        STAT_CUSTOM_ZONE_FMT("Tick::UpdateTexts{}", this->GetNameAsString())
+        this->Texts.append_range(this->NextTexts);
+        this->NextTexts.clear();
+    }
 }
 
 void Jafg::ADebugDrawerComponent::Render(LActorRenderInfo const& Info) const

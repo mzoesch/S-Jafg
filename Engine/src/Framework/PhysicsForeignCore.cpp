@@ -529,6 +529,8 @@ bool Jafg::LPhysicsSystem::TryUpdate(TFunction2<void(f32 PhysicsStep)> Callback)
     bool Result{};
     while (this->Accumulator >= this->PhysicsStep)
     {
+        STAT_CUSTOM_ZONE_STR("PhysicsSystem::Update"sv)
+
         /* Can only be updated by this thread. */
         check(!this->_check_IsUpdating())
         checkCode(this->_check_bUpdating.store(true))

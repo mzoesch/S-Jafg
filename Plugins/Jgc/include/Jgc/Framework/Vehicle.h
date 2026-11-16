@@ -7,6 +7,13 @@
 #include "Framework/RigidComponent.h"
 #include "Vehicle.generated.h"
 
+namespace Jafg
+{
+
+class AStaticMeshComponent;
+
+} /* ~Namespace Jafg */
+
 namespace Jgc
 {
 
@@ -41,6 +48,9 @@ public:
         check(this->Vehicle == EVehicle::Identity)
         this->Vehicle = Type;
     }
+
+    NODISCARD Jafg::AStaticMeshComponent const& GetVehicleMesh() const;
+    NODISCARD Jafg::AStaticMeshComponent& GetMutableVehicleMesh();
 
     //# The rigid component that this vehicle manipulates.
     NODISCARD Jafg::ARigidComponent& GetRigidComponent() noexcept

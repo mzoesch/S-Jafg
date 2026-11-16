@@ -18,35 +18,27 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
     // TODO: Do we want to rehash??
 }
 
-Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */) const
+Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromFile(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */) const
 {
     if (auto const& It{this->Meshes.find(Path)}; It != this->Meshes.end())
     {
         LStaticMesh& Mesh{*It->second};
-
-        if (State & EStaticMeshStateBits::Host || ((State & EStaticMeshStateBits::Device) && Mesh.IsOnDevice() == false))
+        if (Info)
         {
-            if (Mesh.IsOnHost() == false)
-            {
-                auto Result{Mesh.LoadToHost()};
-                jassert(Result == LStaticMesh::EResult::Success)
-            }
+            Mesh.MaxConvexVertices = Info->MaxConvexVertices;
+            Mesh.ConvexTolerance = Info->ConvexTolerance;
         }
-        if (State & EStaticMeshStateBits::Device)
-        {
-            if (Mesh.IsOnDevice() == false)
-            {
-                Mesh.LoadToDevice();
-                if ((State & EStaticMeshStateBits::Host) == EStaticMeshStateBits::None)
-                {
-                    Mesh.FreeFromHost();
-                }
-            }
-        }
-
+        Mesh.BringToState(State);
         return It->second;
     }
 
-    this->Meshes[Path] = std::make_shared<LStaticMesh>(Path, State);
-    return this->Meshes[Path];
+    auto Result{std::make_shared<LStaticMesh>(Path)};
+    this->Meshes[Path] = Result;
+    if (Info)
+    {
+        Result->MaxConvexVertices = Info->MaxConvexVertices;
+        Result->ConvexTolerance = Info->ConvexTolerance;
+    }
+    Result->BringToState(State);
+    return Result;
 }

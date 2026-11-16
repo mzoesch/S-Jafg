@@ -195,7 +195,7 @@ LString Jafg::LWorld::GetDetailedHumanReadableName() const noexcept
 
 void Jafg::LWorld::Tick(f64 Dt)
 {
-    STAT_FUNCTION()
+    STAT_CUSTOM_ZONE_FMT("WorldTick::{}", this->GetHumanReadableName())
 
     this->DeltaTime = Dt;
     if (this->ShouldTickPhysics())
@@ -204,21 +204,25 @@ void Jafg::LWorld::Tick(f64 Dt)
         this->PhysicsSystem.Advance(Dt);
     }
 
-    this->AcquireTickableObjectsLock();
-    for (LTickableObject* Tickable: this->TickableObjects)
     {
-        Tickable->Tick(static_cast<f32>(this->DeltaTime));
+        STAT_CUSTOM_ZONE_FMT("WorldTick::TickableObjects::{}", this->GetHumanReadableName())
+        this->AcquireTickableObjectsLock();
+        for (LTickableObject* Tickable: this->TickableObjects)
+        {
+            Tickable->Tick(static_cast<f32>(this->DeltaTime));
+        }
+        this->ReleaseTickableObjectsLock();
+        for (LTickableObject* Tickable: this->DeletedTickableObjects)
+        {
+            algo::erase_once_checked(&this->TickableObjects, Tickable);
+        }
+        this->DeletedTickableObjects.clear();
     }
-    this->ReleaseTickableObjectsLock();
-    for (LTickableObject* Tickable: this->DeletedTickableObjects)
-    {
-        algo::erase_once_checked(&this->TickableObjects, Tickable);
-    }
-    this->DeletedTickableObjects.clear();
 
     bool bFollowup{};
     auto PhysicsUpdate{[&](f32 PhysicsStep)
     {
+        STAT_CUSTOM_ZONE_FMT("WorldTick::PhysicsTick::{}", this->GetHumanReadableName())
         for (auto* Tickable: this->PhysicsTickableObjects)
         {
             Tickable->FixedTick(PhysicsStep, bFollowup);
@@ -227,6 +231,8 @@ void Jafg::LWorld::Tick(f64 Dt)
     }};
     auto PollPhysicsState{[&]
     {
+        STAT_CUSTOM_ZONE_FMT("WorldTick::PollPhysicsState::{}", this->GetHumanReadableName())
+
         auto& Interface{this->PhysicsSystem->GetBodyInterfaceNoLock()};
 
         JPH::RVec3 Position;
