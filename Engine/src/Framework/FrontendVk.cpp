@@ -1119,7 +1119,11 @@ void Jafg::LFrontendVk::Vk_SetSurfaceFormat(vk::SurfaceFormatKHR Format)
 void Jafg::LFrontendVk::_Vk_WaitIdle()
 {
     STAT_FUNCTION()
-    this->Vk_Device.waitIdle();
+    LOG_TRACE(LogFrontend, "Waiting for Vulkan device to become idle.")
+    if (auto Result{this->Vk_Device.waitIdle()}; Result != vk::Result::eSuccess)
+    {
+        LOG_FATAL(LogEditor, "Failed to wait for Vulkan device to become idle. Result: [{}]", vk::to_string(Result))
+    }
 }
 
 #if JAFG_WITH_EDITOR
@@ -1127,7 +1131,11 @@ void Jafg::LFrontendVk::Vk_EditorWaitIdle()
 {
     // TODO: Some mutex checks for rendering??
     STAT_FUNCTION()
-    this->Vk_Device.waitIdle();
+    LOG_TRACE(LogEditor, "Waiting for Vulkan device to become idle.")
+    if (auto Result{this->Vk_Device.waitIdle()}; Result != vk::Result::eSuccess)
+    {
+        LOG_FATAL(LogEditor, "Failed to wait for Vulkan device to become idle. Result: [{}]", vk::to_string(Result))
+    }
 }
 #endif /* JAFG_WITH_EDITOR */
 

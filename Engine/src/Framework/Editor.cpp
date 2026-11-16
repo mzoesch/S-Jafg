@@ -1142,6 +1142,7 @@ void Jafg::WEditorWorldViewer::Construct()
                                 this->RunningInstance = nullptr;
                                 this->TravelTo(*this->EditorReconnectionData->World);
                                 check(&this->GetOwnedPersonaControllerChecked()->GetWorld() != &PieWorld)
+                                Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_EditorWaitIdle();
                                 PieWorld.TearDownWithTrack();
                                 this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
 
