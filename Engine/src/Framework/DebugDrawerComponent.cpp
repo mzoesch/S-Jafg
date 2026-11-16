@@ -54,6 +54,7 @@ void Jafg::ADebugDrawerComponent::ParentTick(f32 Dt)
     Reduce(this->Lines);
     Reduce(this->Rays);
     Reduce(this->Aabbs);
+    Reduce(this->Spheres);
     Reduce(this->Texts);
 
     this->Lines.append_range(this->NextLines);
@@ -62,6 +63,8 @@ void Jafg::ADebugDrawerComponent::ParentTick(f32 Dt)
     this->NextRays.clear();
     this->Aabbs.append_range(this->NextAabbs);
     this->NextAabbs.clear();
+    this->Spheres.append_range(this->NextSpheres);
+    this->NextSpheres.clear();
     this->Texts.append_range(this->NextTexts);
     this->NextTexts.clear();
 }
@@ -125,27 +128,65 @@ void Jafg::ADebugDrawerComponent::RenderRays(LActorRenderInfo const& Info) const
         }
     }
 
-    if (this->Lines.empty() && this->Rays.empty() && this->Aabbs.empty())
+    if (this->Lines.empty() && this->Rays.empty() && this->Aabbs.empty() && this->Spheres.empty())
     {
         return;
     }
 
     auto& Set{this->RayInstance->Vk_GetUniqueDescriptorSet(ShaderSpace, Info.Frame)};
 
-    rhi::object_range<SSBO::Ray> DeviceRays{this->Lines.size() + this->Rays.size() + this->Aabbs.size() * 12, MaxLineCount};
+    rhi::object_range<SSBO::Ray> DeviceRays{
+          this->Lines.size()
+        + this->Rays.size()
+        + this->Aabbs.size() * 12
+        + std::accumulate(this->Spheres.begin(), this->Spheres.end(), 0uz, [](u64 Accumulator, SphereCreateInfo const& Sphere)
+        {
+            return Accumulator + Sphere.RayCount();
+        })
+        , MaxLineCount
+        };
     algo::for_each(this->Lines, [&DeviceRays](auto const& Line)
     {
         DeviceRays->emplace_back(Line->begin, Line->end, Line.Tint);
     });
     algo::for_each(this->Rays, [&DeviceRays](auto const& Ray)
     {
-        DeviceRays->emplace_back(Ray->origin, Ray->direction * Ray->magnitude, Ray.Tint);
+        DeviceRays->emplace_back(Ray->origin, Ray->origin + Ray->direction * Ray->magnitude, Ray.Tint);
     });
     algo::for_each(this->Aabbs, [&DeviceRays](auto const& Aabb)
     {
         for (auto& edge: Aabb->edges())
         {
-            DeviceRays->emplace_back(edge.origin, edge.direction, Aabb.Tint);
+            DeviceRays->emplace_back(edge.begin, edge.end, Aabb.Tint);
+        }
+    });
+    algo::for_each(this->Spheres, [&DeviceRays](auto const& Sphere)
+    {
+        LWorldVec3 const& Center{Sphere.Center};
+        LWorldReal const R{Sphere.Radius};
+
+        /* Latitude / longitude wireframe. Lat walks from pole (+Y) to pole (-Y), Lon walks around the equator. */
+        auto Point{[&Sphere, &Center, R](u32 Lat, u32 Lon) -> LWorldVec3
+        {
+            LWorldReal const Theta{maths::pi_v<LWorldReal> * static_cast<LWorldReal>(Lat) / static_cast<LWorldReal>(Sphere.Rings)};
+            LWorldReal const Phi{maths::two_pi_v<LWorldReal> * static_cast<LWorldReal>(Lon) / static_cast<LWorldReal>(Sphere.Segments)};
+            LWorldReal const SinTheta{maths::sin(Theta)};
+            return Center + R * LWorldVec3{SinTheta * maths::cos(Phi), maths::cos(Theta), SinTheta * maths::sin(Phi)};
+        }};
+
+        for (u32 Lat{0}; Lat < Sphere.Rings; ++Lat)
+        {
+            for (u32 Lon{0}; Lon < Sphere.Segments; ++Lon)
+            {
+                LWorldVec3 const Current{Point(Lat, Lon)};
+                /* Meridian segment down to the next ring. */
+                DeviceRays->emplace_back(Current, Point(Lat + 1, Lon), Sphere.Tint);
+                /* Latitude segment along this ring. The North Pole ring degenerates to a point, so skip it. */
+                if (Lat != 0)
+                {
+                    DeviceRays->emplace_back(Current, Point(Lat, (Lon + 1) % Sphere.Segments), Sphere.Tint);
+                }
+            }
         }
     });
 

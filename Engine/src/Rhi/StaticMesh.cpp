@@ -455,8 +455,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
-        EditorComponentLabel(Info.Viewport, "Mesh", SharedState)
-        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, "Mesh", SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WHParent>()
                 .Anchor(EAnchor::Fill)
@@ -521,7 +521,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                     })
             ]
         ]
-        + EditorResetButton(Info.Viewport, true, [Field=Info.Field](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, true, [Field=Info.Field](WButton& Self)
         {
             check(!!Field)
             check(GEngine)

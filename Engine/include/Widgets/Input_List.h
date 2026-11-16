@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Nodes/TextBox.h"
+#include "Nodes/TextButton.h"
 #include "Input_List.generated.h"
 
 namespace Jafg
@@ -11,7 +11,7 @@ namespace Jafg
 struct LFactoryInput_List;
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryInput_List)
-class ENGINE_API WInput_List : public WTextBoxIconizedRight
+class ENGINE_API WInput_List : public WTextButtonIconizedDouble
 {
     GENERATED_CLASS_BODY()
 
@@ -19,12 +19,11 @@ protected:
 
     DEFAULT_NODE_CONSTRUCTORS_BODY(WInput_List)
     {
-        this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+        this->CtorLogic();
     }
 
 public:
 
-    virtual void Construct() override;
     virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
     TArray<LString> Items;
@@ -34,6 +33,7 @@ public:
 
 private:
 
+    void CtorLogic();
     TClassStorage<WNode> DeferredWidget;
 };
 

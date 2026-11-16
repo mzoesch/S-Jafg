@@ -28,7 +28,7 @@ protected:
         this->Style.Set<EStyleBits::Hover, &LRegionBrush::BorderTint>(LColor{0x1C});
         this->Style.Set<EStyleBits::Press, &LRegionBrush::BorderTint>(LColor{0x24});
         this->Style.Set<EStyleBits::Selected, &LRegionBrush::BorderTint>(LColor{0x24});
-        this->Style.Set<EStyleBits::Disabled, &LRegionBrush::BorderTint>(LColor{0x0F});
+        this->Style.Chain<EStyleBits::Disabled, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(LColor{0x8F}, LColor{0x0F});
     }
 
 public:

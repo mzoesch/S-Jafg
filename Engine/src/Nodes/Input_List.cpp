@@ -5,24 +5,25 @@
 #include "Nodes/TextButton.h"
 #include "User/UserPreferences.h"
 
-void Jafg::WInput_List::Construct()
+void Jafg::WInput_List::CtorLogic()
 {
-    Super::Construct();
+    auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    if (!this->Icon.get())
-    {
-        this->Icon = LTexture2::FromAsset("Icons/ArrowDown");
-        this->IconBrush.bAlwaysPad = true;
-        this->IconBrush.Alignment = LIconBrush::Align::Right;
-    }
+    this->SetVisibility(ENodeVisibility::DerivedHitTestInvisible);
+
+    Prefs.InputPaletteSolid->ApplyOn(this->Style);
+    Prefs.InputPaletteSolid->ApplyOn(this->TextStyle);
+
+    this->Style.SetEverywhere<&LBoxBrush::Padding>(Prefs.InputPadding);
+
+    this->RightIcon = LTexture2::FromAsset("Icons/ArrowDown");
+    this->RightIconStyle.ChainEverywhere<&LIconBrush::bAlwaysPad, &LIconBrush::Alignment>(true, LIconBrush::Align::Right);
+    this->RightIconStyle.Set<ETextButtonIconStyleBits::Disabled, &LIconBrush::Tint>(Colors::Gray);
 }
 
 Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
-    if (auto Reply{Super::OnKeyEventFocused(Info, Event)}; Reply.IsHandled())
-    {
-        return Reply;
-    }
+    auto Reply{Super::OnKeyEventFocused(Info, Event)};
 
     if (Event.Is<ERawInputStateBits::Press>(ELogicalKey::LeftMouseButton))
     {
@@ -77,12 +78,19 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
                             })
                             .Unique());
                     }
-
                 });
         }
 
+        if (Reply.IsHandled())
+        {
+            return Reply;
+        }
         return LNodeReply::Handled();
     }
 
+    if (Reply.IsHandled())
+    {
+        return Reply;
+    }
     return LNodeReply::Unhandled();
 }

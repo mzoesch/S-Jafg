@@ -17,6 +17,7 @@ void Jafg::WInput_Boolean::Construct()
             .Anchor(EAnchor::Fill)
             .Tint(Colors::Black)
             .Checked(*this->bInitialValue)
+            .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true)
             .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
                 if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton)
@@ -42,6 +43,8 @@ void Jafg::WInput_Boolean::Construct()
                 return LNodeReply::Unhandled();
             })
     ];
+
+    this->bInitialEnabledState.reset();
 }
 
 bool Jafg::WInput_Boolean::GetValue() const noexcept

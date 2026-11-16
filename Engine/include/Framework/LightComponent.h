@@ -29,6 +29,9 @@ protected:
 public:
 
     virtual void OnAttach(AActor& Owner) override;
+#if JAFG_WITH_EDITOR
+    virtual void SelectedTick(WEditorWorldViewer& Viewer, f32 Dt) override;
+#endif /* JAFG_WITH_EDITOR */
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     ENGINE_API bool IsRegistered() const noexcept;
@@ -60,8 +63,8 @@ public:
     void SetDirection(LVec3F const& Direction) noexcept;
     NODISCARD FORCEINLINE LVec3F GetDirection() const noexcept { return this->Light.GetDirection(); }
 
-    FORCEINLINE constexpr void SetTint(LLinearColor Tint) noexcept { this->Light.Tint = Tint; }
-    NODISCARD FORCEINLINE constexpr LLinearColor const& GetTint() const noexcept { return this->Light.Tint; }
+    FORCEINLINE constexpr void SetTint(LLinearColor3 Tint) noexcept { this->Light.Tint = Tint; }
+    NODISCARD FORCEINLINE constexpr LLinearColor3 const& GetTint() const noexcept { return this->Light.Tint; }
 
     //# In the unit of the type of this light, see #GetUnits.
     FORCEINLINE constexpr void SetIntensity(f32 Intensity) noexcept { check(Intensity >= 0.0f) this->Light.Intensity = Intensity; }
@@ -75,7 +78,7 @@ public:
     FORCEINLINE constexpr void SetRange(f32 Range) noexcept { check(Range >= 0.0f) this->Light.Range = Range; }
     NODISCARD FORCEINLINE constexpr f32 GetRange() const noexcept { return this->Light.Range; }
 
-    //# Point and spot lights only. In meters.
+    //# Point and spotlights only. In meters.
     FORCEINLINE constexpr void SetSourceRadius(f32 Radius) noexcept { check(Radius >= 0.0f) this->Light.SourceRadius = Radius; }
     NODISCARD FORCEINLINE constexpr f32 GetSourceRadius() const noexcept { return this->Light.SourceRadius; }
 

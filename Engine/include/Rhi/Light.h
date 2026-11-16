@@ -107,7 +107,7 @@ struct LLight final
     bool bCastShadows{};
 
     //# Tint of the light.
-    LLinearColor Tint{ LinearColors::White };
+    LLinearColor3 Tint{ LinearColors3::White };
 
     //#
     //# How bright the light is, in the unit of its type (see #GetUnits). A light without intensity is not rendered.

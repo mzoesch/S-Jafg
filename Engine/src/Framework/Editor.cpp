@@ -56,8 +56,9 @@
 #include "Nodes/Separator.h"
 #include "Framework/FontSubsystem.h"
 #include "Framework/LightComponent.h"
-#include "../Framework/PhysicsForeignCore.h"
+#include "Widgets/Input_Color.h"
 #include "Widgets/Input_List.h"
+#include "../Framework/PhysicsForeignCore.h"
 
 namespace
 {
@@ -82,12 +83,13 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<bool>(TEditorNodeCreateInfo<b
         .Space(1_spt)
         .Tooltip(LString{Info.RecordTooltip})
     [
-        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
-        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WInput_Boolean>().SaveTo(&Input)
                 .Anchor(EAnchor::HFill)
                 .Value(Info.Field)
+                .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnValueChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Boolean& Self)
                 {
                     check(SharedState)
@@ -96,7 +98,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<bool>(TEditorNodeCreateInfo<b
                     SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
                 })
         ]
-        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
         {
             check(Input)
             check(Default)
@@ -116,11 +118,12 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f32>(TEditorNodeCreateInfo<f3
         .Space(1_spt)
         .Tooltip(LString{Info.RecordTooltip})
     [
-        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
-        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WInput_Vector1>(static_cast<f64>(Info.Field)).SaveTo(&Input)
                 .Anchor(EAnchor::HFill)
+                .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
                 {
                     check(SharedState)
@@ -129,7 +132,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f32>(TEditorNodeCreateInfo<f3
                     SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
                 })
         ]
-        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
         {
             check(Input)
             check(Default)
@@ -148,11 +151,12 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f64>(TEditorNodeCreateInfo<f6
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
-        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
-        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WInput_Vector1>(Info.Field).SaveTo(&Input)
                 .Anchor(EAnchor::HFill)
+                .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
                 {
                     check(SharedState)
@@ -161,7 +165,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f64>(TEditorNodeCreateInfo<f6
                     SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
                 })
         ]
-        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, Info.Default && Info.Field != Info.Default, [Input,Default=Info.Default](WButton& Self)
         {
             check(Input)
             check(Default)
@@ -198,7 +202,10 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             .InBrushChained<EStyleBits::ActiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColorVariant, {20_spt, 0, 0, 0})
             .InBrushChained<EStyleBits::InactiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColor, {20_spt, 0, 0, 0})
             .InAllTextBrushes<&LTextBoxBrush::TextVAlign>(ETextVAlign::Center)
+            .InAllTextBrushes<&LTextBoxBrush::Tint>(Colors::White)
+            .InTextBrush<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
             .Content(std::move(Content))
+            .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
             .OnBrushChanged([Pointer](auto& Self, EStyleBits Bit)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
@@ -225,6 +232,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             .Padding({12_spt, 3})
             .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColorVariant)
             .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColor)
+            .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
             .OnBrushChanged([Pointer](auto& Self, EStyleBits Bit)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
@@ -257,7 +265,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
             .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
             .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Reset"))
-            .Enabled(bEnabled)
+            .Enabled(bEnabled && JxxFieldBits::IsEditorEditable(Info.Flags))
             .OnKeyEventFocused([Pointer, Identity](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
                 if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -296,11 +304,12 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
     [
         MakeLabel(Translation, "Translation")
         + MakeContent(Translation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.t}).SaveTo(&Translation->Vector)
-            .OnVectorChanged([Pointer=Translation, Field=&Info.Field](WInput_Vector3& Self)
+            .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+            .OnVectorChanged([Flags=Info.Flags, Pointer=Translation, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
                 Field->t = Self.Get<f64>();
-                Pointer->Reset->SetEnabled(Field->t != maths::zero_vector<LVec3F>);
+                Pointer->Reset->SetEnabled(JxxFieldBits::IsEditorEditable(Flags) && Field->t != maths::zero_vector<LVec3F>);
                 if (ASceneComponent* Comp{DynamicCast<ASceneComponent>(Pointer->Owner)})
                 {
                     Comp->_detail_OnTransformChanged(ETransformChangeBits::Translation);
@@ -315,11 +324,12 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
         MakeLabel(Rotation, "Rotation")
         // TODO: glm::mat3_cast(glm::normalize(q)); normalize before converting to editor?
         + MakeContent(Rotation, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{maths::editor_euler_angles_deg(Info.Field.r)}).SaveTo(&Rotation->Vector)
-            .OnVectorChanged([Pointer=Rotation, Field=&Info.Field](WInput_Vector3& Self)
+            .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+            .OnVectorChanged([Flags=Info.Flags, Pointer=Rotation, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
                 Field->r = maths::rotator_deg(Self.Get<f64>());
-                Pointer->Reset->SetEnabled(Field->r != maths::identity<LWorldQuat>);
+                Pointer->Reset->SetEnabled(JxxFieldBits::IsEditorEditable(Flags) && Field->r != maths::identity<LWorldQuat>);
                 if (ASceneComponent* Comp{DynamicCast<ASceneComponent>(Pointer->Owner)})
                 {
                     Comp->_detail_OnTransformChanged(ETransformChangeBits::Rotator);
@@ -333,17 +343,92 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
     [
         MakeLabel(Scale, "Scale")
         + MakeContent(Scale, NewNode(Info.Viewport).Class<WInput_Vector3>(LVec3D{Info.Field.s}).SaveTo(&Scale->Vector)
-            .OnVectorChanged([Pointer=Scale, Field=&Info.Field](WInput_Vector3& Self)
+            .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+            .OnVectorChanged([Flags=Info.Flags, Pointer=Scale, Field=&Info.Field](WInput_Vector3& Self)
             {
                 check(Pointer.get() && Pointer->Label && Pointer->Content && Pointer->Vector && Pointer->Reset)
                 Field->s = Self.Get<f64>();
-                Pointer->Reset->SetEnabled(Field->s != maths::one_vector<LVec3F>);
+                Pointer->Reset->SetEnabled(JxxFieldBits::IsEditorEditable(Flags) && Field->s != maths::one_vector<LVec3F>);
                 if (ASceneComponent* Comp{DynamicCast<ASceneComponent>(Pointer->Owner)})
                 {
                     Comp->_detail_OnTransformChanged(ETransformChangeBits::Scale);
                 }
             }))
         + MakeReset(Scale, maths::one_vector<LVec3D>, Info.Field.s != maths::one_vector<LVec3F>)
+    ];
+}
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LLinearColor>(TEditorNodeCreateInfo<LLinearColor> const& Info) noexcept
+{
+    struct RowState: LEditorRowStateExt
+    {
+        WInput_Color* Input{};
+    };
+
+    auto SharedState{std::make_shared<RowState>()};
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+    [
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WInput_Color>(Info.Field).SaveTo(&SharedState->Input)
+                .Anchor(EAnchor::HFill)
+                .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+                .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Color& Self)
+                {
+                    check(SharedState)
+                    *Field = Self.Get<LLinearColor>();
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
+                })
+        ]
+        + EditorResetButton(Info.Flags, Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Default=Info.Default](WButton& Self)
+        {
+            check(SharedState)
+            check(Default)
+            SharedState->Input->Set(*Default);
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
+}
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LLinearColor3>(TEditorNodeCreateInfo<LLinearColor3> const& Info) noexcept
+{
+    struct RowState: LEditorRowStateExt
+    {
+        WInput_Color* Input{};
+    };
+
+    auto SharedState{std::make_shared<RowState>()};
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+    [
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WInput_Color>(Info.Field).SaveTo(&SharedState->Input)
+                .Anchor(EAnchor::HFill)
+                .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+                .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Color& Self)
+                {
+                    check(SharedState)
+                    *Field = Self.Get<LLinearColor3>();
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(Default && *Field != *Default);
+                })
+        ]
+        + EditorResetButton(Info.Flags, Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Default=Info.Default](WButton& Self)
+        {
+            check(SharedState)
+            check(Default)
+            SharedState->Input->Set(*Default);
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
     ];
 }
 
@@ -365,8 +450,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
-        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
-        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WEditableTextButton>().SaveTo(&SharedState->EditableTextButton)
                 .Anchor(EAnchor::HFill)
@@ -399,7 +484,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LString>(TEditorNodeCreateInf
                     }
                 })
         ]
-        + EditorResetButton(Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Field=&Info.Field](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, Info.Default && Info.Field != Info.Default, [SharedState, Field=&Info.Field](WButton& Self)
         {
             check(SharedState.get())
             check(SharedState->Default)
@@ -430,12 +515,13 @@ Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCre
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
     [
-        EditorComponentLabel(Info.Viewport, LString{Info.RecordName}, SharedState)
-        + EditorComponentContentWrapper(Info.Viewport, SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
+        + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WInput_List>().SaveTo(&Input)
                 .Content(Info.Getter(Info.Owner))
                 .Items(std::move(Items))
+                .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnValueChanged([Setter=Info.Setter,Owner=Info.Owner](LString const& Value)
                 {
                     Setter(Owner, Value);
@@ -448,7 +534,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCre
                     }
                 })
         ]
-        + EditorResetButton(Info.Viewport
+        + EditorResetButton(Info.Flags, Info.Viewport
             , Info.Default
             && !!Info.Default(Info.Owner)
             && Info.Getter(Info.Owner) != Info.Default(Info.Owner)
@@ -1435,6 +1521,11 @@ void Jafg::WEditorWorldViewer::Construct()
 void Jafg::WEditorWorldViewer::Tick(f32 Dt)
 {
     Super::Tick(Dt);
+
+    for (auto& [Actor, Comp]: this->SelectedActors)
+    {
+        Actor->SelectedTick(*this, Dt, Comp);
+    }
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Surface{this->GetViewport().GetSurface()};
@@ -3115,28 +3206,29 @@ static void LoadGymCollection(Jafg::LWorld& World)
         .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
         {
             Comp.SetType(Jafg::ELight::Directional);
-            Comp.SetDirection({0.3f,-0.8f,0.5f});
+            Comp.SetDirection({0.06,-0.07,0.10});
+            Comp.SetTint({1.0,0.75,0.5});
         })
         .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
         {
             Comp.SetType(Jafg::ELight::Point);
-            Comp.SetTint(LinearColors::White);
+            Comp.SetTint(LinearColors3::White);
         })
         .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
         {
             Comp.SetType(Jafg::ELight::Point);
-            Comp.SetTint(LinearColors::Red);
+            Comp.SetTint(LinearColors3::Red);
         })
         .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
         {
             Comp.SetType(Jafg::ELight::Rect);
-            Comp.SetTint(LinearColors::White);
+            Comp.SetTint(LinearColors3::White);
             Comp.SetLocalRotatorByTeleport(LWorldQuat{maths::radians(LWorldVec3{0.0, 180.0, 0.0})});
         })
         .reflexive_emplace_back([](Jafg::ALightComponent& Comp)
         {
             Comp.SetType(Jafg::ELight::Spot);
-            Comp.SetTint(LinearColors::White);
+            Comp.SetTint(LinearColors3::White);
         })
         );
 

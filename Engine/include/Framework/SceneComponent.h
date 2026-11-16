@@ -343,7 +343,7 @@ private:
         }
     }
 
-    CLASS_FIELD(EditorVisible)
+    CLASS_FIELD(EditorEditable)
     LWorldTrans LocalTransform{ maths::identity<LWorldTrans> };
     ASceneComponent* Parent{};
     TArray<TJxxUnique<ASceneComponent>> Children;

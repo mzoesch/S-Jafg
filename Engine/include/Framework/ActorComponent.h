@@ -11,6 +11,9 @@ namespace Jafg
 
 class AActor;
 class ASceneComponent;
+#if JAFG_WITH_EDITOR
+    class WEditorWorldViewer;
+#endif /* JAFG_WITH_EDITOR */
 
 //#
 //# The origin of the actor.
@@ -93,6 +96,13 @@ public:
     //# can simply inherit from #LFixedTickableObject.
     //#
     virtual void ParentPhysicsTick(f32 Dt, bool bFollowup) { check(this->Owner && this->bPhysicsTick) }
+
+#if JAFG_WITH_EDITOR
+    //#
+    //# Called if this component is selected in the editor.
+    //#
+    virtual void SelectedTick(WEditorWorldViewer& Viewer, f32 Dt) {}
+#endif /* JAFG_WITH_EDITOR */
 
     constexpr void SetShouldRender(bool b) noexcept { this->bRender = b; }
     NODISCARD constexpr bool ShouldRender() const noexcept { return this->bRender; }

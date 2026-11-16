@@ -105,7 +105,7 @@ struct LEditorRowStateExt: LEditorRowState
 };
 
 template<typename T = LEditorRowState>
-inline LFactoryTextButton EditorComponentLabel(LViewport& Viewport, LString Content, auto SharedState)
+inline LFactoryTextButton EditorComponentLabel(EJxxFieldFlags Flags, LViewport& Viewport, LString Content, auto SharedState)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     return NewNode(Viewport).Class<WTextButton>()
@@ -116,11 +116,12 @@ inline LFactoryTextButton EditorComponentLabel(LViewport& Viewport, LString Cont
         .InTextBrushChained<EStyleBits::Disabled, &LTextBoxBrush::Tint>(Colors::Gray)
         .InAllTextBrushes<&LTextBoxBrush::TextVAlign>(ETextVAlign::Center)
         .Content(std::move(Content))
+        .Enabled(JxxFieldBits::IsEditorEditable(Flags))
         .Delegate(T::template Lambda<WTextButton>(std::move(SharedState)));
 }
 
 template<typename T = LEditorRowState>
-inline LFactoryButton EditorComponentContentWrapper(LViewport& Viewport, auto SharedState)
+inline LFactoryButton EditorComponentContentWrapper(EJxxFieldFlags Flags, LViewport& Viewport, auto SharedState)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     return NewNode(Viewport).Class<WButton>()
@@ -129,10 +130,11 @@ inline LFactoryButton EditorComponentContentWrapper(LViewport& Viewport, auto Sh
         .Padding({12_spt, 3})
         .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColorVariant)
         .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::Tint>(*Prefs.ForegroundColor)
+        .Enabled(JxxFieldBits::IsEditorEditable(Flags))
         .Delegate(T::template Lambda<WButton>(SharedState));
 }
 
-inline LFactoryButton EditorResetButton(LViewport& Viewport, bool bEnabled, TFunction2<void(WButton& Self)> OnAction, auto&& Delegate)
+inline LFactoryButton EditorResetButton(EJxxFieldFlags Flags, LViewport& Viewport, bool bEnabled, TFunction2<void(WButton& Self)> OnAction, auto&& Delegate)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     return NewNode(Viewport).Class<WButton>()
@@ -143,8 +145,7 @@ inline LFactoryButton EditorResetButton(LViewport& Viewport, bool bEnabled, TFun
         .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
         .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
         .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Reset"))
-        .Enabled(bEnabled)
-        .Delegate(Delegate)
+        .Enabled(JxxFieldBits::IsEditorEditable(Flags) && bEnabled)
         .OnKeyEventFocused([OnAction=std::move(OnAction)](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event) mutable
         {
             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -154,7 +155,8 @@ inline LFactoryButton EditorResetButton(LViewport& Viewport, bool bEnabled, TFun
                 return LNodeReply::Handled();
             }
             return LNodeReply::Unhandled();
-        });
+        })
+        .Delegate(Delegate);
 }
 
 } /* ~Namespace Jafg */

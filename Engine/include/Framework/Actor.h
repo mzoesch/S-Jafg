@@ -12,6 +12,10 @@
 namespace Jafg
 {
 
+#if JAFG_WITH_EDITOR
+    class WEditorWorldViewer;
+#endif /* JAFG_WITH_EDITOR */
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API AActor : public AWorldObject, private LTickableObject, private LFixedTickableObject
 {
@@ -24,9 +28,12 @@ protected:
 public:
 
     virtual void BeginLife() override;
+
+    //# Called whenever the world is ticked. And this actor is allowed to tick.
     virtual void WorldTick(f32 Dt)
     {
-        check(this->bLives && this->_IsGarbage() == false)
+        check(this->bLives && !this->_IsGarbage())
+        check(this->bCanEverTick && this->ShouldTick())
         for (auto& Comp: this->Components)
         {
             if (Comp->bTick)
@@ -35,9 +42,15 @@ public:
             }
         }
     }
+
+    //#
+    //# Called whenever the world is physics ticked. And this actor is allowed to physics tick.
+    //# Might be called multiple times per frame.
+    //#
     virtual void PhysicsTick(f32 Dt, bool bFollowup)
     {
-        check(this->bLives && this->_IsGarbage() == false)
+        check(this->bLives && !this->_IsGarbage())
+        check(this->bCanEverPhysicsTick && this->ShouldPhysicsTick())
         for (auto& Comp: this->Components)
         {
             if (Comp->bPhysicsTick)
@@ -46,6 +59,21 @@ public:
             }
         }
     }
+
+#if JAFG_WITH_EDITOR
+    //# Called when this actor is selected in the editor.
+    //# @param Comp Might be nullptr.
+    virtual void SelectedTick(WEditorWorldViewer& Viewer, f32 Dt, AActorComponent* Comp)
+    {
+        check(this->bLives && !this->_IsGarbage())
+        if (Comp)
+        {
+            check(this->_check_IsComponentAttachedTransitive(*Comp))
+            Comp->SelectedTick(Viewer, Dt);
+        }
+    }
+#endif /* JAFG_WITH_EDITOR */
+
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     //# Emplace a new actor component to this actor that is not a scene component.

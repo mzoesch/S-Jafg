@@ -137,6 +137,129 @@ struct LLinearColor final
     }
 };
 
+//# Stores normalized device ready color data in linear RGB format with 32 bits of precision per channel.
+struct LLinearColor3 final
+{
+    typedef f32 value_type;
+
+    value_type r;
+    value_type g;
+    value_type b;
+
+    FORCEINLINE constexpr LLinearColor3() noexcept = delete;
+    FORCEINLINE constexpr LLinearColor3(ESkipInit) noexcept {}
+    FORCEINLINE constexpr LLinearColor3(value_type R, value_type G, value_type B) noexcept
+        : r{R}, g{G}, b{B} {}
+    FORCEINLINE constexpr LLinearColor3(value_type Uniform) noexcept
+        : r{Uniform}, g{Uniform}, b{Uniform} {}
+    FORCEINLINE constexpr LLinearColor3(LLinearColor3 const&) noexcept = default;
+    FORCEINLINE constexpr LLinearColor3& operator=(LLinearColor3 const&) noexcept = default;
+    FORCEINLINE constexpr ~LLinearColor3() noexcept = default;
+
+    NODISCARD FORCEINLINE constexpr LVec3F ToDeviceReadyVector3() const noexcept { return {this->r, this->g, this->b}; }
+
+    NODISCARD FORCEINLINE static constexpr LLinearColor3 FromStandardRGB(LColor const& Color) noexcept;
+    NODISCARD FORCEINLINE static constexpr LLinearColor3 FromLinearColor(LLinearColor const& Color) noexcept { return {Color.r, Color.g, Color.b}; }
+
+    FORCEINLINE bool operator==(LLinearColor3 const& Rhs) const noexcept { return std::memcmp(this, &Rhs, sizeof(LLinearColor3)) == 0; }
+
+    FORCEINLINE constexpr LLinearColor3 operator+(LLinearColor3 const& Other) const noexcept
+    {
+        return {this->r + Other.r, this->g + Other.g, this->b + Other.b};
+    }
+    FORCEINLINE constexpr LLinearColor3 operator+(value_type Scalar) const noexcept
+    {
+        return {this->r + Scalar, this->g + Scalar, this->b + Scalar};
+    }
+
+    FORCEINLINE constexpr LLinearColor3& operator+=(LLinearColor3 const& Other) noexcept
+    {
+        this->r += Other.r;
+        this->g += Other.g;
+        this->b += Other.b;
+        return *this;
+    }
+    FORCEINLINE constexpr LLinearColor3& operator+=(value_type Scalar) noexcept
+    {
+        this->r += Scalar;
+        this->g += Scalar;
+        this->b += Scalar;
+        return *this;
+    }
+
+    FORCEINLINE constexpr LLinearColor3 operator-(LLinearColor3 const& Other) const noexcept
+    {
+        return {this->r - Other.r, this->g - Other.g, this->b - Other.b};
+    }
+    FORCEINLINE constexpr LLinearColor3 operator-(value_type Scalar) const noexcept
+    {
+        return {this->r - Scalar, this->g - Scalar, this->b - Scalar};
+    }
+
+    FORCEINLINE constexpr LLinearColor3& operator-=(LLinearColor3 const& Other) noexcept
+    {
+        this->r -=Other.r;
+        this->g -=Other.g;
+        this->b -=Other.b;
+        return *this;
+    }
+    FORCEINLINE constexpr LLinearColor3& operator-=(value_type Scalar) noexcept
+    {
+        this->r -= Scalar;
+        this->g -= Scalar;
+        this->b -= Scalar;
+        return *this;
+    }
+
+    FORCEINLINE constexpr LLinearColor3 operator*(LLinearColor3 const& Other) const noexcept
+    {
+        return {this->r * Other.r, this->g * Other.g, this->b * Other.b};
+    }
+    FORCEINLINE constexpr LLinearColor3 operator*(value_type Scalar) const noexcept
+    {
+        return {this->r * Scalar, this->g * Scalar, this->b * Scalar};
+    }
+
+    FORCEINLINE constexpr LLinearColor3& operator*=(LLinearColor3 const& Other) noexcept
+    {
+        this->r *= Other.r;
+        this->g *= Other.g;
+        this->b *= Other.b;
+        return *this;
+    }
+    FORCEINLINE constexpr LLinearColor3& operator*=(value_type Scalar) noexcept
+    {
+        this->r *= Scalar;
+        this->g *= Scalar;
+        this->b *= Scalar;
+        return *this;
+    }
+
+    FORCEINLINE constexpr LLinearColor3 operator/(LLinearColor3 const& Other) const noexcept
+    {
+        return {this->r / Other.r, this->g / Other.g, this->b / Other.b};
+    }
+    FORCEINLINE constexpr LLinearColor3 operator/(value_type Scalar) const noexcept
+    {
+        return {this->r / Scalar, this->g / Scalar, this->b / Scalar};
+    }
+
+    FORCEINLINE constexpr LLinearColor3& operator/=(LLinearColor3 const& Other) noexcept
+    {
+        this->r /= Other.r;
+        this->g /= Other.g;
+        this->b /= Other.b;
+        return *this;
+    }
+    FORCEINLINE constexpr LLinearColor3& operator/=(value_type Scalar) noexcept
+    {
+        this->r /= Scalar;
+        this->g /= Scalar;
+        this->b /= Scalar;
+        return *this;
+    }
+};
+
 //# Stores device ready color data in standard RGBA format with eight bits of precision per channel.
 struct LColor final
 {
@@ -179,6 +302,25 @@ struct LColor final
         LColor Result{ESkipInit::Here};
         Result.Bits = Color;
         return Result;
+    }
+
+    NODISCARD static FORCEINLINE constexpr LColor FromLinear(LLinearColor const& Color) noexcept
+    {
+        return {
+            static_cast<value_type>(maths::clamp(Color.r * 255.0f, 0.0f, 255.0f)),
+            static_cast<value_type>(maths::clamp(Color.g * 255.0f, 0.0f, 255.0f)),
+            static_cast<value_type>(maths::clamp(Color.b * 255.0f, 0.0f, 255.0f)),
+            static_cast<value_type>(maths::clamp(Color.a * 255.0f, 0.0f, 255.0f))
+            };
+    }
+    NODISCARD static FORCEINLINE constexpr LColor FromLinear(LLinearColor3 const& Color) noexcept
+    {
+        return {
+            static_cast<value_type>(maths::clamp(Color.r * 255.0f, 0.0f, 255.0f)),
+            static_cast<value_type>(maths::clamp(Color.g * 255.0f, 0.0f, 255.0f)),
+            static_cast<value_type>(maths::clamp(Color.b * 255.0f, 0.0f, 255.0f)),
+            0xFF,
+            };
     }
 
     FORCEINLINE constexpr bool operator==(LColor const& Other) const noexcept { return this->Bits == Other.Bits; }
@@ -312,7 +454,7 @@ struct LColor final
     }
 };
 
-FORCEINLINE constexpr LLinearColor LLinearColor::FromStandardRGB(LColor const& Color) noexcept
+NODISCARD FORCEINLINE constexpr LLinearColor LLinearColor::FromStandardRGB(LColor const& Color) noexcept
 {
     return {
         maths::srgb_to_linear_table[Color.r],
@@ -322,21 +464,24 @@ FORCEINLINE constexpr LLinearColor LLinearColor::FromStandardRGB(LColor const& C
         };
 }
 
+NODISCARD FORCEINLINE constexpr LLinearColor3 LLinearColor3::FromStandardRGB(LColor const& Color) noexcept
+{
+    return {
+        maths::srgb_to_linear_table[Color.r],
+        maths::srgb_to_linear_table[Color.g],
+        maths::srgb_to_linear_table[Color.b],
+        };
+}
+
 FORCEINLINE constexpr LLinearColor operator*(LLinearColor::value_type Scalar, LLinearColor const& Color) noexcept { return Color * Scalar; }
 FORCEINLINE constexpr LLinearColor operator+(LLinearColor::value_type Scalar, LLinearColor const& Color) noexcept { return Color + Scalar; }
+FORCEINLINE constexpr LLinearColor3 operator*(LLinearColor3::value_type Scalar, LLinearColor3 const& Color) noexcept { return Color * Scalar; }
+FORCEINLINE constexpr LLinearColor3 operator+(LLinearColor3::value_type Scalar, LLinearColor3 const& Color) noexcept { return Color + Scalar; }
 FORCEINLINE constexpr LColor operator+(LColor::value_type Scalar, LColor const& Color) noexcept { return Color + Scalar; }
 
 static_assert(maths::is_color_v<LColor>);
 static_assert(maths::is_color_v<LLinearColor>);
-
-namespace Colors
-{
-
-#define PRIVATE_JAFG_COLOR_VALUE LColor
-#define PRIVATE_JAFG_COLOR_VALUE_CONV(x,y,z,w) x,y,z,w
-#include "Core/ColorValues.h"
-
-} /* ~Namespace Colors */
+static_assert(maths::is_color3_v<LLinearColor3>);
 
 namespace LinearColors
 {
@@ -346,6 +491,24 @@ namespace LinearColors
 #include "Core/ColorValues.h"
 
 } /* ~Namespace LinearColors */
+
+namespace LinearColors3
+{
+
+#define PRIVATE_JAFG_COLOR_VALUE LLinearColor3
+#define PRIVATE_JAFG_COLOR_VALUE_CONV(x,y,z,w) LLinearColor3::FromStandardRGB(LColor{x,y,z,w})
+#include "Core/ColorValues.h"
+
+} /* ~Namespace LinearColors */
+
+namespace Colors
+{
+
+#define PRIVATE_JAFG_COLOR_VALUE LColor
+#define PRIVATE_JAFG_COLOR_VALUE_CONV(x,y,z,w) x,y,z,w
+#include "Core/ColorValues.h"
+
+} /* ~Namespace Colors */
 
 FORCEINLINE constexpr LColor operator ""_color(unsigned long long Value) noexcept
 {

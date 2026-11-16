@@ -61,6 +61,7 @@ public:
 
 private:
 
+    std::optional<bool> bInitialEnabledState;
     std::optional<bool> bInitialValue;
     WCheckmarkButton* CheckmarkButton{};
 };
@@ -72,6 +73,11 @@ struct LFactoryInput_Boolean: NODE_FACTORY_PARENT(WInput_Boolean)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnToggle, OnToggle)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnValueChanged, OnValueChanged)
 
+    FORCEINLINE decltype(auto) Enabled(this auto&& Self, bool bEnabled) noexcept
+    {
+        NODE_FACTORY_SELF().bInitialEnabledState = bEnabled;
+        return Self;
+    }
     decltype(auto) Value(this auto&& Self, bool Value) noexcept
     {
         NODE_FACTORY_SELF().bInitialValue = Value;

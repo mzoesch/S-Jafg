@@ -88,6 +88,26 @@ public:
     //# Useful for consistent one time draws when draw orders are not guaranteed.
     void AddAabbNextTick(AabbCreateInfo Aabb) noexcept { this->NextAabbs.emplace_back(std::move(Aabb)); }
 
+    struct SphereCreateInfo final
+    {
+        LColor Tint;
+        f32 Duration{ OneTimeDraw };
+        LWorldVec3 Center;
+        f32 Radius;
+
+        //# Wireframe resolution of debug spheres. Segments around the equator, rings from pole to pole.
+        u32 Segments{16};
+        u32 Rings{8};
+
+        NODISCARD FORCEINLINE constexpr u64 RayCount() const noexcept
+        {
+            return this->Segments * this->Rings + this->Segments * (this->Rings - 1);
+        }
+    };
+    void AddSphere(SphereCreateInfo Sphere) noexcept { this->Spheres.emplace_back(std::move(Sphere)); }
+    //# Useful for consistent one time draws when draw orders are not guaranteed.
+    void AddSphereNextTick(SphereCreateInfo Sphere) noexcept { this->NextSpheres.emplace_back(std::move(Sphere)); }
+
     struct TextCreateInfo final
     {
         LColor Tint;
@@ -112,6 +132,8 @@ private:
     TArray<RayCreateInfo> NextRays;
     mutable TArray<AabbCreateInfo> Aabbs;
     TArray<AabbCreateInfo> NextAabbs;
+    mutable TArray<SphereCreateInfo> Spheres;
+    TArray<SphereCreateInfo> NextSpheres;
     mutable TArray<TextCreateInfo> Texts;
     TArray<TextCreateInfo> NextTexts;
 

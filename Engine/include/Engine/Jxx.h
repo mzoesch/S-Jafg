@@ -2324,6 +2324,9 @@ template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<f64>(TEditorNodeCre
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3F>(TEditorNodeCreateInfo<LVec3F> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LVec3D>(TEditorNodeCreateInfo<LVec3D> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LWorldTrans>(TEditorNodeCreateInfo<LWorldTrans> const& Info) noexcept;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LLinearColor>(TEditorNodeCreateInfo<LLinearColor> const& Info) noexcept;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LLinearColor3>(TEditorNodeCreateInfo<LLinearColor3> const& Info) noexcept;
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LColor>(TEditorNodeCreateInfo<LColor> const& Info) noexcept;
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LString>(TEditorNodeCreateInfo<LString> const& Info) noexcept;
 
 //# Enums that specify the get_enum_map adl function, can be used here without issue.

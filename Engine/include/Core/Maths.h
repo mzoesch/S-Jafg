@@ -39,6 +39,17 @@ concept color = requires(T t)
 template<typename T>
 inline constexpr bool is_color_v{color<T>};
 
+template<typename T>
+concept color3 = requires(T t)
+{
+    typename T::value_type;
+    { t.r } -> std::same_as<typename T::value_type&>;
+    { t.g } -> std::same_as<typename T::value_type&>;
+    { t.b } -> std::same_as<typename T::value_type&>;
+};
+template<typename T>
+inline constexpr bool is_color3_v{color3<T>};
+
 using length_t = glm::length_t;
 using qual_t = glm::qualifier;
 
@@ -326,7 +337,7 @@ struct TAabb final
         static constexpr maths::length_t value{(l == 3) ? 12 : (l == 2) ? 4 : 0};
     };
     static constexpr maths::length_t edge_count_v{edge_count<L>::value};
-    NODISCARD constexpr std::array<TRay<L,TReal,Q>, edge_count_v> edges() const noexcept
+    NODISCARD constexpr std::array<TLine<L,TReal,Q>, edge_count_v> edges() const noexcept
     {
         check(!this->empty())
         if constexpr (L == 3)
