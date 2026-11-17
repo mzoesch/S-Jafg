@@ -31,6 +31,7 @@ public:
             LString Value;
         };
 
+        LPath Namespace;
         LPath Path;
         std::vector<LString> IncludeDirs;
         std::vector<CompileTimeDefinition> CompileTimeDefinitions;
@@ -79,24 +80,5 @@ private:
     //#
     TArray<rhi::reflected_shader> ReflectedShaders;
 };
-
-SERDE_JSON_TYPE_ONLY_DESERIALIZE(JShaderSubsystem::Shader2::CompileTimeDefinition, Identifier, Value)
-inline void from_json(json const& j, JShaderSubsystem::Shader2& Shader) noexcept
-{
-    j.at("IncludeDirs").get_to(Shader.IncludeDirs);
-    for (auto& IncludeDir: Shader.IncludeDirs)
-    {
-        IncludeDir = (finder::default_content_dir_postfix()/IncludeDir).string();
-    }
-    j.at("SourceFiles").get_to(Shader.SourceFiles);
-    for (auto& SourceFile: Shader.SourceFiles)
-    {
-        SourceFile = finder::default_content_dir_postfix()/SourceFile;
-    }
-    if (j.contains("CompileTimeDefinitions"))
-    {
-        j.at("CompileTimeDefinitions").get_to(Shader.CompileTimeDefinitions);
-    }
-}
 
 } /* ~Namespace Jafg */

@@ -25,7 +25,7 @@ public:
     //# This function is called when the engine loads your plugin.
     //# Do your initialization here.
     //#
-    virtual void OnStartup(LFetchedPlugin const& Plugin) { }
+    virtual void OnStartup(LLoadedPlugin const& Plugin) { }
 
     //#
     //# This function is called when the engine has finished loading your plugin.

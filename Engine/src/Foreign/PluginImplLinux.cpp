@@ -75,9 +75,6 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
         return EPluginLoadReturnCode::NoLifetime;
     }
 
-    LOG_TRACE(LogForeign, "Waking up plugin lifetime for [{}].", this->GetIdentifier())
-    this->Lifetime->OnStartup(this->Fetched);
-
     return EPluginLoadReturnCode::Success;
 }
 

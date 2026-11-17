@@ -55,6 +55,8 @@ struct LLoadedPlugin;
 
 struct LFetchedPlugin final
 {
+    friend LEngine;
+
     //# The absolute path to the .jafg.root.plugin config file.
     LPath AbsolutePath;
 
@@ -104,7 +106,7 @@ struct LFetchedPlugin final
     LPath Bin;
 
     //# Whether this plugin has content.
-    bool bHasContent{ false };
+    bool bHasContent{};
     //# If #bHasContent is set this will point a the valid content dir of this plugin.
     LPath Content;
 };
@@ -124,11 +126,12 @@ struct LLoadedPlugin final
     FORCEINLINE LLoadedPlugin(LLoadedPlugin const& Other) noexcept = delete;
     FORCEINLINE LLoadedPlugin(LLoadedPlugin&& Other) noexcept
         : Fetched{std::move(Other.Fetched)}, BinPath{std::move(Other.BinPath)}, Uuid{Other.Uuid}
-        , NativeHandle{Other.NativeHandle}, Lifetime{std::move(Other.Lifetime)}
+        , NativeHandle{Other.NativeHandle}, bStarted{std::exchange(Other.bStarted, false)}, Lifetime{std::move(Other.Lifetime)}
+        , ContentOverride{std::exchange(Other.ContentOverride, std::nullopt)}
     {
         Other.Uuid = InvalidUuid;
         Other.NativeHandle = nullptr;
-        check( Other.Lifetime.get() == nullptr )
+        check(Other.Lifetime.get() == nullptr)
     }
 
     FORCEINLINE LLoadedPlugin& operator=(const LLoadedPlugin& Other) noexcept = delete;
@@ -136,12 +139,12 @@ struct LLoadedPlugin final
     {
         this->Fetched = std::move(Other.Fetched);
         this->BinPath = std::move(Other.BinPath);
-        this->Uuid = Other.Uuid;
-        this->NativeHandle = Other.NativeHandle;
+        this->Uuid = std::exchange(Other.Uuid, InvalidUuid);
+        this->NativeHandle = std::exchange(Other.NativeHandle, nullptr);
+        this->bStarted = std::exchange(Other.bStarted, false);
         this->Lifetime = std::move(Other.Lifetime);
-        Other.Uuid = InvalidUuid;
-        Other.NativeHandle = nullptr;
-        check( Other.Lifetime.get() == nullptr )
+        this->ContentOverride = std::exchange(Other.ContentOverride, std::nullopt);
+        check(Other.Lifetime.get() == nullptr)
 
         return *this;
     }
@@ -152,17 +155,56 @@ struct LLoadedPlugin final
 
     FORCEINLINE constexpr bool IsLoaded() const noexcept { return this->NativeHandle != nullptr; }
 
-    NODISCARD FORCEINLINE constexpr bool           IsValid() const noexcept { return this->Fetched.AbsolutePath.empty() == false; }
-    NODISCARD FORCEINLINE constexpr const LPath&   GetAbsolutePath() const noexcept { return this->Fetched.AbsolutePath; }
-    NODISCARD FORCEINLINE constexpr const LString& GetIdentifier() const noexcept { return this->Fetched.Identifier; }
-    NODISCARD FORCEINLINE constexpr const LString& GetFriendlyName() const noexcept { return this->Fetched.FriendlyName; }
-    NODISCARD FORCEINLINE constexpr const LPath&   GetAbsoluteBin() const noexcept { return this->BinPath; }
-    NODISCARD FORCEINLINE constexpr LFetchedPlugin const& GetFetched() const noexcept { return this->Fetched; }
+    NODISCARD FORCEINLINE constexpr bool        IsValid() const noexcept { return !this->Fetched.AbsolutePath.empty(); }
+    NODISCARD FORCEINLINE constexpr auto const& GetAbsolutePath() const noexcept { return this->Fetched.AbsolutePath; }
+    NODISCARD FORCEINLINE constexpr auto const& GetVersion() const noexcept { return this->Fetched.Version; }
+    NODISCARD FORCEINLINE constexpr auto const& GetIdentifier() const noexcept { return this->Fetched.Identifier; }
+    NODISCARD FORCEINLINE constexpr auto const& GetLifetimeIdentifier() const noexcept { return this->Fetched.LifetimeIdentifier; }
+    NODISCARD FORCEINLINE constexpr auto const& GetNativeIdentifier() const noexcept { return this->Fetched.NativeIdentifier; }
+    NODISCARD FORCEINLINE constexpr auto const& GetFriendlyName() const noexcept { return this->Fetched.FriendlyName; }
+    NODISCARD FORCEINLINE constexpr auto const& GetDescription() const noexcept { return this->Fetched.Description; }
+    NODISCARD FORCEINLINE constexpr auto const& GetAuthor() const noexcept { return this->Fetched.Author; }
+    NODISCARD FORCEINLINE constexpr auto        IsDynUnloadable() const noexcept { return this->Fetched.bDynUnloadable; }
+    NODISCARD FORCEINLINE constexpr auto const& GetRelativeBinPath() const noexcept { return this->Fetched.Bin; }
+    NODISCARD FORCEINLINE constexpr auto        HasContent() const noexcept { return this->Fetched.bHasContent; }
+    NODISCARD FORCEINLINE constexpr auto const& GetDefaultContent() const noexcept { return this->Fetched.Content; }
+    NODISCARD FORCEINLINE constexpr auto const& GetFetched() const noexcept { return this->Fetched; }
+
+    NODISCARD FORCEINLINE constexpr auto const& GetAbsoluteBin() const noexcept { return this->BinPath; }
 
     FORCEINLINE constexpr LLoadedPluginHandle GetHandle() const noexcept { return { this->Uuid }; }
 
+    NODISCARD FORCEINLINE constexpr bool IsStarted() const noexcept { return this->bStarted; }
+
     FORCEINLINE LPluginLifetime* GetLifetime() noexcept { return this->Lifetime.get(); }
     FORCEINLINE LPluginLifetime const* GetLifetime() const noexcept { return this->Lifetime.get(); }
+
+    //#
+    //# Overriding is only allowed before startup of said plugin.
+    //# @return True, if override was successful.
+    //#
+    bool OverrideContentDir(LPath Path) const noexcept
+    {
+        if (!this->bStarted)
+        {
+            this->ContentOverride = std::move(Path);
+        }
+        return !this->bStarted;
+    }
+
+    //#
+    //# Whether this plugin dynamically has overridden their content dir or was overridden by the engine.
+    //#
+    NODISCARD FORCEINLINE constexpr bool IsContentOverridden() const noexcept { return !!this->ContentOverride; }
+    NODISCARD LPath const& GetContent() const noexcept
+    {
+        check(this->HasContent())
+        if (this->IsContentOverridden())
+        {
+            return *this->ContentOverride;
+        }
+        return this->GetDefaultContent();
+    }
 
 private:
 
@@ -176,8 +218,14 @@ private:
     u32 Uuid{ LLoadedPlugin::InvalidUuid };
 
     void* NativeHandle{};
+    bool bStarted{};
 
     TUnique<LPluginLifetime> Lifetime;
+    //#
+    //# Some plugins might want to override their content dir at runtime. They may do this with that variable.
+    //# @see OverrideContentDir
+    //#
+    mutable std::optional<LPath> ContentOverride;
 };
 
 } /* ~Namespace Jafg */

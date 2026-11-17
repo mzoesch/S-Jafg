@@ -667,19 +667,22 @@ if(_guard)
     ###############################################################################
     # Content
     message(STATUS "Including jafg content...")
-
-    if(NOT DEFINED JAFG_CONTENT_VERSION)
-        set(JAFG_CONTENT_VERSION "v${_detail_jafg_version}")
+    option(JAFG_SKIP_CONTENT_INITIALIZATION "Whether to not check for content lfs integrity and download content. Default [Off]." OFF)
+    message(STATUS "JAFG_SKIP_CONTENT_INITIALIZATION: ${JAFG_SKIP_CONTENT_INITIALIZATION}")
+    if(JAFG_SKIP_CONTENT_INITIALIZATION)
+        if(NOT DEFINED JAFG_CONTENT_VERSION)
+            set(JAFG_CONTENT_VERSION "v${_detail_jafg_version}")
+        endif()
+        set(JAFG_ENGINE_CONTENT_DIR "${JAFG_ENGINE_ROOT}/Content" CACHE STRING "Local content directory for Jafg content files (Engine only).")
+        set(JAFG_REMOTE_CONTENT_SERVER "https://api.zoeschinger.com/get-jafg-content/${JAFG_CONTENT_VERSION}" CACHE STRING "Remote content server URL for Jafg content files.")
+        message(STATUS "JAFG_CONTENT_VERSION: ${JAFG_CONTENT_VERSION}")
+        message(STATUS "JAFG_ENGINE_CONTENT_DIR: ${JAFG_ENGINE_CONTENT_DIR}")
+        message(STATUS "JAFG_REMOTE_CONTENT_SERVER: ${JAFG_REMOTE_CONTENT_SERVER}")
+        HandleContentDependencies(
+            "${JAFG_ENGINE_CONTENT_DIR}"
+            "${JAFG_REMOTE_CONTENT_SERVER}"
+            )
     endif()
-    set(JAFG_ENGINE_CONTENT_DIR "${JAFG_ENGINE_ROOT}/Content" CACHE STRING "Local content directory for Jafg content files (Engine only).")
-    set(JAFG_REMOTE_CONTENT_SERVER "https://api.zoeschinger.com/get-jafg-content/${JAFG_CONTENT_VERSION}" CACHE STRING "Remote content server URL for Jafg content files.")
-    message(STATUS "JAFG_CONTENT_VERSION: ${JAFG_CONTENT_VERSION}")
-    message(STATUS "JAFG_ENGINE_CONTENT_DIR: ${JAFG_ENGINE_CONTENT_DIR}")
-    message(STATUS "JAFG_REMOTE_CONTENT_SERVER: ${JAFG_REMOTE_CONTENT_SERVER}")
-    HandleContentDependencies(
-        "${JAFG_ENGINE_CONTENT_DIR}"
-        "${JAFG_REMOTE_CONTENT_SERVER}"
-        )
 
     ###############################################################################
     # Libs

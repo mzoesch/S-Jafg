@@ -3081,7 +3081,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/XYZ.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/XYZ.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{0,0,10});
     });
@@ -3089,7 +3089,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_2M.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Plane_2M.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{0,0,4});
     });
@@ -3097,7 +3097,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Cube.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{2,0,4});
     });
@@ -3105,7 +3105,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Sphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{4,0,4});
     });
@@ -3113,7 +3113,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Icosphere.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Icosphere.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{6,0,4});
     });
@@ -3121,7 +3121,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cylinder.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Cylinder.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{8,0,4});
     });
@@ -3129,7 +3129,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Cone.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Cone.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{10,0,4});
     });
@@ -3137,7 +3137,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
     Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})
     ->EmplaceRootComponent<Jafg::AStaticMeshComponent>([MaterialInstance](Jafg::AStaticMeshComponent& Comp)
     {
-        Comp.SetMesh(LITERAL_TEXT("Content/Models/Torus.glb"));
+        Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Torus.glb"));
         Comp.SetMaterialInstance(std::move(MaterialInstance));
         Comp.SetLocalTranslationByTeleport(LWorldVec3{12,0,4});
     });
@@ -3159,7 +3159,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
         Plane.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            Comp.SetMesh(LITERAL_TEXT("Content/Models/Plane_8M.glb"));
+            Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Plane_8M.glb"));
             Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo,"Textures/Editor/GroundGrid_8M"));
             Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3> + (maths::right_vector<LWorldVec3> + maths::forward_vector<LWorldVec3>) * static_cast<LWorldReal>(100.0));
         });
@@ -3179,7 +3179,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
         Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            Comp.SetMesh(LITERAL_TEXT("Content/Models/Cube_1M.glb"));
+            Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Cube_1M.glb"));
             Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, "Textures/Editor/ObjectGrid_1M"));
         });
     }
@@ -3242,7 +3242,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
         {
             auto& Frontend{World.GetMutableFrontend()};
             auto MaterialInstance{Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, Material)};
-            Comp.SetMesh(LITERAL_TEXT("Content/Models/Sphere.glb"));
+            Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Sphere.glb"));
             Comp.SetPbrMaterialInstance(std::move(MaterialInstance));
 
             Comp.SetLocalTranslationByTeleport(Translation);
@@ -4379,46 +4379,46 @@ void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)
     auto& Frontend{this->GetMutableLocalEgo().GetFrontend()};
     check(Frontend.Vk_GetNumberOfFramesInFlight() != 0)
 
-    this->GizmoMeshes[TranslateX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX.glb"));
+    this->GizmoMeshes[TranslateX].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoTranslateX.glb"));
     this->GizmoMeshes[TranslateX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[TranslateY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateY.glb"));
+    this->GizmoMeshes[TranslateY].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoTranslateY.glb"));
     this->GizmoMeshes[TranslateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[TranslateZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateZ.glb"));
+    this->GizmoMeshes[TranslateZ].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoTranslateZ.glb"));
     this->GizmoMeshes[TranslateZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
-    this->GizmoMeshes[TranslateX_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateX-var.glb"));
+    this->GizmoMeshes[TranslateX_Var].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoTranslateX-var.glb"));
     this->GizmoMeshes[TranslateX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[TranslateY_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateY-var.glb"));
+    this->GizmoMeshes[TranslateY_Var].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoTranslateY-var.glb"));
     this->GizmoMeshes[TranslateY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[TranslateZ_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoTranslateZ-var.glb"));
+    this->GizmoMeshes[TranslateZ_Var].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoTranslateZ-var.glb"));
     this->GizmoMeshes[TranslateZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
-    this->GizmoMeshes[RotateR].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorR.glb"));
+    this->GizmoMeshes[RotateR].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoRotatorR.glb"));
     this->GizmoMeshes[RotateR].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[RotateY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorY.glb"));
+    this->GizmoMeshes[RotateY].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoRotatorY.glb"));
     this->GizmoMeshes[RotateY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[RotateP].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoRotatorP.glb"));
+    this->GizmoMeshes[RotateP].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoRotatorP.glb"));
     this->GizmoMeshes[RotateP].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
-    this->GizmoMeshes[ScaleX].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleX.glb"));
+    this->GizmoMeshes[ScaleX].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoScaleX.glb"));
     this->GizmoMeshes[ScaleX].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[ScaleY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleY.glb"));
+    this->GizmoMeshes[ScaleY].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoScaleY.glb"));
     this->GizmoMeshes[ScaleY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[ScaleZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleZ.glb"));
+    this->GizmoMeshes[ScaleZ].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoScaleZ.glb"));
     this->GizmoMeshes[ScaleZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
-    this->GizmoMeshes[ScaleX_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleX-var.glb"));
+    this->GizmoMeshes[ScaleX_Var].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoScaleX-var.glb"));
     this->GizmoMeshes[ScaleX_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[ScaleY_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleY-var.glb"));
+    this->GizmoMeshes[ScaleY_Var].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoScaleY-var.glb"));
     this->GizmoMeshes[ScaleY_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[ScaleZ_Var].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoScaleZ-var.glb"));
+    this->GizmoMeshes[ScaleZ_Var].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoScaleZ-var.glb"));
     this->GizmoMeshes[ScaleZ_Var].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 
-    this->GizmoMeshes[PlaneXY].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXY.glb"));
+    this->GizmoMeshes[PlaneXY].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoPlaneXY.glb"));
     this->GizmoMeshes[PlaneXY].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[PlaneYZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneYZ.glb"));
+    this->GizmoMeshes[PlaneYZ].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoPlaneYZ.glb"));
     this->GizmoMeshes[PlaneYZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
-    this->GizmoMeshes[PlaneXZ].SetMesh(LITERAL_TEXT("Content/Models/Editor/GizmoPlaneXZ.glb"));
+    this->GizmoMeshes[PlaneXZ].SetMesh(JafgInfo/LITERAL_TEXT("Models/Editor/GizmoPlaneXZ.glb"));
     this->GizmoMeshes[PlaneXZ].SetMaterialInstance(Frontend.GetSubsystemChecked<JMaterialSubsystem>()->GetInstanceFromName(JafgInfo, "Materials/Gizmo"));
 }
 

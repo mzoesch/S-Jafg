@@ -982,12 +982,7 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
             LOG_ERROR(LogForeign, "[{}]: Content field is empty.", P.AbsolutePath)
             return false;
         }
-        if (!is_directory(P.Content))
-        {
-            LOG_ERROR(LogForeign, "[{}]: No such directory [{}].", P.AbsolutePath, P.Content)
-            return false;
-        }
-        P.Content = finder::canonical(P.Content);
+        P.Content = finder::weakly_canonical(P.Content);
     }
 
     if (algo::contains(this->FetchedPlugins, P.AbsolutePath, &LFetchedPlugin::AbsolutePath))
@@ -1050,8 +1045,8 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     check(Detail::GetGlobalCxxRecordRegistry().GetPendingPackages().empty())
     Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(true);
 
-    LLoadedPlugin Plugin{ FetchedPlugin, Bin };
-    check( Plugin.GetIdentifier().empty() == false )
+    LLoadedPlugin Plugin{FetchedPlugin, Bin};
+    check(!Plugin.GetIdentifier().empty())
     const EPluginLoadReturnCode::Type Rc{ Plugin.OpenLibrary() };
     Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
 
@@ -1062,7 +1057,15 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
         return Rc;
     }
 
-    LOG_VERBOSE(LogForeign, "Loaded plugin [{}] from [{}]. Now loading contents.", Plugin.GetIdentifier(), Plugin.GetAbsoluteBin())
+    LOG_TRACE(LogForeign, "[{}]: Waking up plugin lifetime.", Plugin.GetIdentifier())
+    Plugin.Lifetime->OnStartup(Plugin);
+    Plugin.bStarted = true;
+    if (Plugin.IsContentOverridden())
+    {
+        LOG_VERBOSE(LogForeign, "[{}]: Has overridden their content dir to [{}].", Plugin.GetIdentifier(), Plugin.GetContent())
+    }
+
+    LOG_VERBOSE(LogForeign, "[{}]: Loaded plugin from [{}]. Now loading contents.", Plugin.GetIdentifier(), Plugin.GetAbsoluteBin())
 
     Plugin.Uuid = this->GetNextPluginUuid();
 
@@ -1071,10 +1074,10 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     Plugin.Lifetime->OnFinishedLoading();
 
     this->LoadedPlugins.emplace_back(std::move(Plugin));
-    auto& Ref{ this->LoadedPlugins.back() };
+    auto& Ref{this->LoadedPlugins.back()};
     this->OnForeignPluginLoaded.Broadcast(Ref);
 
-    LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Ref.GetIdentifier(), Ref.GetAbsoluteBin())
+    LOG_INFO(LogForeign, "[{}]: Successfully loaded plugin from [{}].", Ref.GetIdentifier(), Ref.GetAbsoluteBin())
 
     return EPluginLoadReturnCode::Success;
 }

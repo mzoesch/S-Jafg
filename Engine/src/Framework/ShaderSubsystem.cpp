@@ -5,6 +5,22 @@
 #include "Core/App.h"
 #include "Rhi/Objects.h"
 
+namespace Jafg
+{
+
+SERDE_JSON_TYPE_ONLY_DESERIALIZE(JShaderSubsystem::Shader2::CompileTimeDefinition, Identifier, Value)
+inline void from_json(json const& j, JShaderSubsystem::Shader2& Shader) noexcept
+{
+    j.at("IncludeDirs").get_to(Shader.IncludeDirs);
+    j.at("SourceFiles").get_to(Shader.SourceFiles);
+    if (j.contains("CompileTimeDefinitions"))
+    {
+        j.at("CompileTimeDefinitions").get_to(Shader.CompileTimeDefinitions);
+    }
+}
+
+} /* ~Namespace Jafg */
+
 namespace
 {
 
@@ -86,6 +102,17 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         Shader2& Result{Shaders.emplace_back()};
         json::parse(finder::read_file(Shader), nullptr, false).get_to(Result);
+
+        for (auto& IncludeDir: Result.IncludeDirs)
+        {
+            IncludeDir = *JafgInfo/IncludeDir;
+        }
+        for (auto& SourceFile: Result.SourceFiles)
+        {
+            SourceFile = *JafgInfo/SourceFile;
+        }
+
+        Result.Namespace = *JafgInfo;
         Result.Path = std::move(Shader);
     }
 
@@ -142,7 +169,23 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
 
 LPath Jafg::JShaderSubsystem::Shader2::GetDestination(LPath const& SourceFile) noexcept
 {
-    return LPath{finder::temp_dir()/LITERAL_TEXT("ShaderCache")/SourceFile}.concat(".spv");
+    std::error_code Ec;
+    LPath Source{std::filesystem::absolute(SourceFile, Ec)};
+    Source = (Ec ? SourceFile : Source).lexically_normal();
+
+    LPath Destination{finder::temp_dir()/LITERAL_TEXT("ShaderCache")};
+
+    if (Source.has_root_name())
+    {
+        LPath::string_type Root{Source.root_name().native()};
+        std::erase_if(Root, [](auto const C) { return C == ':' || C == '\\' || C == '/'; });
+        Destination /= Root;
+    }
+
+    Destination /= Source.relative_path();
+    Destination += LITERAL_TEXT(".spv");
+
+    return Destination;
 }
 
 LPath Jafg::JShaderSubsystem::Shader2::GetReflectionFile(LPath const& SourceFile) noexcept

@@ -685,7 +685,7 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         if (Plugin.GetFetched().bHasContent)
         {
-            this->RetrieveMaterialsFrom(Plugin.GetFetched().Content);
+            this->RetrieveMaterialsFrom(Plugin.GetContent());
         }
 
         return false;

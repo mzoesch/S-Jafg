@@ -662,13 +662,21 @@ void Jafg::App::PrettyPrintVersion() noexcept
 
 void Jafg::App::PrettyPrintApiUsage() noexcept
 {
+    TArray<LProgramParameter*> Params{Detail::RegisteredProgramParameters};
+    algo::sort(Params, algo::lexicographical_string_compare, [](LProgramParameter* Param)
+    {
+        check(Param)
+        return Param->Identifier;
+    });
+
     u64 MaxSize{};
-    algo::for_each(Detail::RegisteredProgramParameters, [&MaxSize](LProgramParameter* Param)
+    algo::for_each(Params, [&MaxSize](LProgramParameter* Param)
     {
         MaxSize = maths::max(MaxSize, static_cast<u64>(Param->Identifier.size()));
     });
+
     LOG_INFO(LogHelp, "Available command line parameters:")
-    for (auto& Param: Detail::RegisteredProgramParameters)
+    for (auto& Param: Params)
     {
         std::stringstream SS;
         if (Param->ShortIdentifier)

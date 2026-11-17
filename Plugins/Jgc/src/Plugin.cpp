@@ -4,6 +4,18 @@
 #include "Core/Parameter.h"
 #include "Engine/Engine.h"
 #include "Framework/Editor.h"
+#include "Jgc/Core/Parameters.h"
+
+namespace Jgc::Params
+{
+
+JGC_API Jafg::LProgramParameter ContentDir{{
+    .Identifier = "Jgc.ContentDir",
+    .Description = "The content directory for jgc. Default [Plugin.Content].",
+    .Flags = Jafg::EProgramParameterBits::Value,
+    }};
+
+} /* ~Namespace Jgc::Params */
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
@@ -16,15 +28,31 @@ class LJgcPluginLifetime final : public Jafg::LPluginLifetime
 {
 public:
 
-    virtual void OnStartup(Jafg::LFetchedPlugin const& Plugin) override;
+    virtual void OnStartup(Jafg::LLoadedPlugin const& Plugin) override;
     virtual void OnFinishedLoading() override;
 };
 
-void LJgcPluginLifetime::OnStartup(Jafg::LFetchedPlugin const& Plugin)
+void LJgcPluginLifetime::OnStartup(Jafg::LLoadedPlugin const& Plugin)
 {
     LPluginLifetime::OnStartup(Plugin);
     LOG_VERBOSE(LogJgcLifetime, "Starting Jgc plugin.")
-    JgcInfo.Initialize(Plugin.Content);
+
+    if (auto* ContentDir{Jafg::App::GetCommandLineArgument(Jgc::Params::ContentDir)})
+    {
+        auto& Value{ContentDir->GetValue()};
+        if (Value.empty())
+        {
+            LOG_FATAL(LogJgcLifetime, "[{}]: Must not be empty.", Jgc::Params::ContentDir.Identifier)
+        }
+        if (!Plugin.OverrideContentDir(finder::weakly_canonical(finder::path{Value}).lexically_normal()))
+        {
+            LOG_FATAL(LogJgcLifetime, "[{}]: Failed to override content directory from [{}] to [{}]."
+                , Plugin.GetIdentifier(), Plugin.GetDefaultContent(), Plugin.GetContent()
+                )
+        }
+    }
+    JgcInfo.Initialize(Plugin.GetContent());
+    LOG_VERBOSE(LogInformation, "{}::Content={}", Plugin.GetIdentifier(), *JgcInfo)
 }
 
 void LJgcPluginLifetime::OnFinishedLoading()

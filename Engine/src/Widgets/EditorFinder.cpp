@@ -150,7 +150,7 @@ void Jafg::WFinder::Repopulate()
     this->Container->RemoveChildren();
     auto Counter{0uz};
     auto Where{0uz};
-    this->Populate(Counter, Where, 0uz, finder::path{LITERAL_TEXT("Content")});
+    this->Populate(Counter, Where, 0uz, *JafgInfo);
     this->Repaint();
 
     return;

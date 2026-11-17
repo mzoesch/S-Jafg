@@ -76,7 +76,7 @@ void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         if (Plugin.GetFetched().bHasContent)
         {
-            this->RetrieveTextureViewsFrom(Plugin.GetFetched().Content);
+            this->RetrieveTextureViewsFrom(Plugin.GetContent());
         }
 
         return false;

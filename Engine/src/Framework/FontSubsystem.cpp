@@ -647,8 +647,8 @@ void Jafg::JFontSubsystem::Initialize(LSubsystemCollection& Collection)
 
     check(this->My_Fonts.empty())
     (void)this->ReloadFont({
-        .Source="Content/Fonts/NotoSans-VariableFont_wdth,wght.ttf",
-        .Tags={
+        .Source = *JafgInfo/"Fonts/NotoSans-VariableFont_wdth,wght.ttf",
+        .Tags = {
             {"Weight", 700},
             {"Width", 100},
             },

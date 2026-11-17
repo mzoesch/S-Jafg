@@ -196,6 +196,7 @@ EPlatformExit::Type AgnosticLaunch()
     {
         JafgInfo.Initialize(finder::default_content_dir_postfix());
     }
+    LOG_VERBOSE(LogInformation, "Jafg::Content={}", *JafgInfo)
 
     finder::create_directories(finder::temp_dir());
 
