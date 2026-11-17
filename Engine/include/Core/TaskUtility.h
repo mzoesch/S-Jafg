@@ -87,6 +87,9 @@ enum Type : u8
 
     //# Run whenever possible on the thread (late or early).
     Whenever = Early | Late | NoTick,
+
+    //# Flush. For internal use only.
+    _Flush = std::numeric_limits<u8>::max(),
 };
 
 } /* ~Namespace TaskTime */

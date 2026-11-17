@@ -43,6 +43,8 @@ void EngineExit()
 
     LOG_INFO(LogLaunch, "Engine is exiting ...")
 
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::_Flush, Tasks::RunAllTasks);
+
     if (GEngine)
     {
         Detail::GMutableEngine->TearDown();
