@@ -82,7 +82,7 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
 
     TArray<Shader2> Shaders;
 
-    for (LPath& Shader: finder::retrieve_files<finder::recursive_directory_iterator>(finder::content_dir(), ".*\\.shader\\.json"))
+    for (LPath& Shader: finder::retrieve_files<finder::recursive_directory_iterator>(*JafgInfo, ".*\\.shader\\.json"))
     {
         Shader2& Result{Shaders.emplace_back()};
         json::parse(finder::read_file(Shader), nullptr, false).get_to(Result);
@@ -109,8 +109,8 @@ void Jafg::JShaderSubsystem::Initialize(LSubsystemCollection& Collection)
     for (auto const& Shader: Shaders)
     {
         auto& Result{this->ReflectedShaders.emplace_back()};
-        check(finder::descendant_of(Shader.Path, finder::content_dir()))
-        Result.Identifier = relative(weakly_canonical(Shader.Path), finder::content_dir()).replace_extension().replace_extension().generic_string();
+        check(finder::descendant_of(Shader.Path, *JafgInfo))
+        Result.Identifier = relative(weakly_canonical(Shader.Path), *JafgInfo).replace_extension().replace_extension().generic_string();
         for (auto const& SourceFile: Shader.SourceFiles)
         {
             json::parse(finder::read_file(Shader2::GetReflectionFile(SourceFile)), nullptr, false).get_to(Result);

@@ -23,12 +23,12 @@ concept CTabSelectorCandidate = requires
     { T::TabSelectorCreateInfo() } -> std::same_as<LTabSelectorCreateInfo>;
 };
 
-#define JAFG_DEFAULT_TAB_SELECTOR_CREATE_INFO(InDisplayName, InIcon) \
+#define JAFG_DEFAULT_TAB_SELECTOR_CREATE_INFO(InDisplayName, InIconNamespace, InIconName) \
     inline static LTabSelectorCreateInfo TabSelectorCreateInfo() \
     { \
         return { \
             .DisplayName = InDisplayName, \
-            .Icon = InIcon, \
+            .Icon = std::pair<LString,LString>{InIconNamespace, InIconName}, \
             }; \
     }
 
@@ -89,8 +89,8 @@ public:
         return {}; \
     }
 
-#define JAFG_DEFAULT_TAB_CANDIDATE(InDisplayName, InIcon) \
-    JAFG_DEFAULT_TAB_SELECTOR_CREATE_INFO(InDisplayName, InIcon) \
+#define JAFG_DEFAULT_TAB_CANDIDATE(InDisplayName, InIconNamespace, InIconName) \
+    JAFG_DEFAULT_TAB_SELECTOR_CREATE_INFO(InDisplayName, InIconNamespace, InIconName) \
     JAFG_DEFAULT_TAB_CREATE_INFO() \
     JAFG_DEFAULT_TAB_DYNAMIC_RETRIEVER()
 

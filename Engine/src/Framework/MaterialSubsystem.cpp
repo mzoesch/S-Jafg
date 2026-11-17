@@ -312,6 +312,17 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
     return Result;
 }
 
+struct Property_SampledImage
+{
+    LString Namespace;
+    LString Name;
+};
+SERDE_JSON_TYPE_ONLY_DESERIALIZE_BODY(Property_SampledImage)
+{
+    j.at("namespace").get_to(field.Namespace);
+    j.at("name").get_to(field.Name);
+}
+
 } /* ~Namespace <Anonymous> */
 
 namespace Jafg
@@ -468,7 +479,14 @@ void Jafg::LMaterialInstance::Vk_SetField(LFrontend& Frontend, rhi::vk_binding W
     }
     case vk::DescriptorType::eSampledImage:
     {
-        this->Vk_SetSampledImage(Frontend, Where, *Frontend.GetSubsystemChecked<JTextureSubsystem>()->FromAsset(Value));
+        Property_SampledImage Image;
+        json json = json::parse(Value, nullptr, false);
+        if (json.is_discarded())
+        {
+            LOG_FATAL(LogMaterialSubsystem, "Invalid json: [{}].", Value)
+        }
+        this->Vk_SetSampledImage(Frontend, Where, *Frontend.GetSubsystemChecked<JTextureSubsystem>()
+            ->FromTextureView(Image.Namespace, Image.Name));
         break;
     }
     default:
@@ -1262,17 +1280,26 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
             //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
             //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
-            LPath FallbackAlbedo{(LPath{Namespace}/Name).concat(".png")};
+            LPath const FallbackAlbedo{(LPath{Namespace}/Name).concat(".png")};
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Albedo, *Prefs.TextureQuality)}; !Texture.empty())
             {
-                // Wrong! Do not load the texture but Namespace/Texture instead. Therefore, we also need the namespace for On the fly.
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}));
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
+                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
+                    , Texture
+                    , {.Format=vk::Format::eR8G8B8A8Srgb}
+                    , {.Samples=vk::SampleCountFlagBits::e1}
+                    ));
                 this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
                 Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
             }
             else if (Pbr->IsEmptyAtTexture(LPbrMaterialTemplate::ETextureType::Albedo) && finder::is_regular_file(FallbackAlbedo))
             {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(FallbackAlbedo, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}));
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
+                      this->GetKey(Namespace, LPath{FallbackAlbedo}.replace_extension().generic_string())
+                    , FallbackAlbedo
+                    , {.Format=vk::Format::eR8G8B8A8Srgb}
+                    , {.Samples=vk::SampleCountFlagBits::e1}
+                    ));
                 this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
                 Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
             }
@@ -1283,7 +1310,12 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
 
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Normal, *Prefs.TextureQuality)}; !Texture.empty())
             {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}));
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
+                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
+                    , Texture
+                    , {.Format=vk::Format::eR8G8B8A8Unorm}
+                    , {.Samples=vk::SampleCountFlagBits::e1}
+                    ));
                 this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
                 Result->Data.Normal = Result->LoadedTextures.back()->GetBindlessIndex();
             }
@@ -1294,7 +1326,12 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
 
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Arm, *Prefs.TextureQuality)}; !Texture.empty())
             {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Unorm}, {.Samples=vk::SampleCountFlagBits::e1}));
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
+                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
+                    , Texture
+                    , {.Format=vk::Format::eR8G8B8A8Unorm}
+                    , {.Samples=vk::SampleCountFlagBits::e1}
+                    ));
                 this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
                 Result->Data.Arm = Result->LoadedTextures.back()->GetBindlessIndex();
             }
@@ -1305,7 +1342,12 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
 
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Emissive, *Prefs.TextureQuality)}; !Texture.empty())
             {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(Texture, {.Format=vk::Format::eR8G8B8A8Srgb}, {.Samples=vk::SampleCountFlagBits::e1}));
+                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
+                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
+                    , Texture
+                    , {.Format=vk::Format::eR8G8B8A8Srgb}
+                    , {.Samples=vk::SampleCountFlagBits::e1}
+                    ));
                 this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
                 Result->Data.Emissive = Result->LoadedTextures.back()->GetBindlessIndex();
             }
@@ -1388,6 +1430,8 @@ void Jafg::JMaterialSubsystem::UpdateMaterialsFor(std::size_t Sync)
 
 void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
 {
+    STAT_CUSTOM_ZONE_FMT("RetrieveMaterialsFrom{}", Path.string())
+
     LString Key{canonical(Path).string()};
 
     LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Retrieving materials.", Key)
@@ -1542,6 +1586,9 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
 
         LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Fetched PBR material.", Key, Result.Identifier)
     }
+
+    check(!this->Templates.contains(Key))
+    check(!this->PbrTemplates.contains(Key))
 
     this->Templates[Key] = std::move(Resolved);
     this->PbrTemplates[Key] = std::move(PbrMaterials);

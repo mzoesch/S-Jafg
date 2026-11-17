@@ -80,7 +80,9 @@ static LPath CachedSelfProcDir;
     return CachedSelfProcDir;
 }
 
-ENGINE_API path dump_file{ "unsettling.dump" };
+ENGINE_API path temp_dir{ LITERAL_TEXT("Temp") };
+ENGINE_API path saved_dir{ LITERAL_TEXT("Saved") };
+ENGINE_API path dump_file{ LITERAL_TEXT("unsettling.dump") };
 
 #if JAFG_PLATFORM_LINUX
     ENGINE_API std::optional<path> _lnx_gdb;
@@ -265,6 +267,21 @@ ENGINE_API LProgramParameter PauseBeforeExit{{
 ENGINE_API LProgramParameter SkipTrivialTests{{
     .Identifier = "Jafg.SkipTrivialTests",
     .Description = "Whether to skip trivial tests that are run at startup in development builds.",
+    }};
+ENGINE_API LProgramParameter ContentDir{{
+    .Identifier = "Jafg.ContentDir",
+    .Description = "The content directory for jafg. This is not an override for all plugins. Default [Content].",
+    .Flags = EProgramParameterBits::Value,
+    }};
+ENGINE_API LProgramParameter SavedDir{{
+    .Identifier = "Jafg.SavedDir",
+    .Description = "The directory for saved data. Default [Saved].",
+    .Flags = EProgramParameterBits::Value,
+    }};
+ENGINE_API LProgramParameter TempDir{{
+    .Identifier = "Jafg.TempDir",
+    .Description = "The directory for temporary data. Default [Temp].",
+    .Flags = EProgramParameterBits::Value,
     }};
 
 } /* ~Namespace Jafg::App */

@@ -469,7 +469,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                 + NewNode(Info.Viewport).Class<WTextButtonIconizedDouble>()
                     .Palette(*Prefs.SecondaryPaletteSolid)
                     .Content("Browse")
-                    .LeftIcon("Icons/DirectorySearch")
+                    .LeftIcon({*JafgInfo, "Icons/DirectorySearch"})
                     .OnKeyEventFocused([FieldPtr=&Info.Field](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) && Self.AabbTest(Info))
@@ -485,7 +485,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                             }
                             else
                             {
-                                DefaultPath = finder::content_dir();
+                                DefaultPath = *JafgInfo;
                             }
 
                             if (auto AbsolutePath{Info.Viewport.GetSurface().OpenBlockingDialogForFile({
@@ -497,10 +497,10 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                             else
                             {
                                 LOG_VERBOSE(LogEditor, "Selected path: [{}].", *AbsolutePath)
-                                if (!finder::descendant_of(*AbsolutePath, finder::content_dir()))
+                                if (!finder::descendant_of(*AbsolutePath, *JafgInfo))
                                 {
                                     LOG_FATAL(LogEditor, "[{}]: Path has to be a descendant of [{}].",
-                                        *AbsolutePath, absolute(finder::content_dir()))
+                                        *AbsolutePath, absolute(*JafgInfo))
                                 }
                                 auto Path{finder::relative(*AbsolutePath, finder::current_path())};
                                 EStaticMeshState NewState{EStaticMeshStateBits::None};

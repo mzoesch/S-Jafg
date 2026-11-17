@@ -1,0 +1,7 @@
+{
+    "regex": "^(?:.*/)?.*\\.png$",
+    "recursive": true,
+    "format": "eR8G8B8A8Srgb",
+    "mipLevels": 1,
+    "maxSampleCount": "e1"
+}

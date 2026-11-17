@@ -487,9 +487,9 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32
     /* Move to baseline. */
     Pencil->y += this->Ascender * GeometryScale;
 
-    check(this->AtlasTexture.get())
+    check(this->AtlasTexture.IsOnDevice())
     check(!this->Glyphs.empty())
-    auto AtlasExtend{this->AtlasTexture->GetExtentAsVec2F()};
+    auto AtlasExtend{this->AtlasTexture.GetExtentAsVec2F()};
     Result.GlyphInfos.reserve(GlyphCount);
     for (auto Idx{0uz}; Idx < GlyphCount; ++Idx)
     {
@@ -522,7 +522,7 @@ Jafg::LGlyphCollection Jafg::JFontSubsystem::MyFont::Shape(LStringView Text, f32
                 static_cast<f32>(GlyphUV.AtlasBounds[2]) / AtlasExtend.x,
                 static_cast<f32>(GlyphUV.AtlasBounds[1]) / AtlasExtend.y,
                 },
-            .BindlessTextureIndex = this->AtlasTexture->GetBindlessIndex(),
+            .BindlessTextureIndex = this->AtlasTexture.GetBindlessIndex(),
             .SamplerIndex = std::to_underlying(UBO::Bindless::Sampler::NearestClampToEdge),
             /* TODO: Scale with Retina/HighDPI. */
             .MsdfPixelRange = algo::max(this->PixelRange * (FontSize / this->AtlasGlyphSize), 1.0f),
@@ -600,20 +600,21 @@ void Jafg::JFontSubsystem::MyFont::UploadToDevice()
     // stbi_write_png("Temp/Atlas.png", Bitmap.width, Bitmap.height, Detail::FontAtlasColorChannels, Bitmap.pixels, Bitmap.width * Detail::FontAtlasColorChannels);
 
     this->AtlasTexture = LTexture2::FromMemory(
-        "FontAtlas", std::move(Bulk), vk::Format::eR8G8B8Unorm,
+        std::move(Bulk), vk::Format::eR8G8B8Unorm,
         {static_cast<rhi::extent2::domain_type>(Bitmap.width), static_cast<rhi::extent2::domain_type>(Bitmap.height)},
-        LTexture2::HostInfo{.Format = vk::Format::eR8G8B8A8Unorm/* TODO: is this correct? eR8G8B8A8Srgb looks very different */,}
+        LTexture2::HostInfo{.Format = vk::Format::eR8G8B8A8Unorm/* TODO: is this correct? eR8G8B8A8Srgb looks very different */,},
+        LTexture2::DeviceInfo{.DesiredMipLevels = 1,.Samples = vk::SampleCountFlagBits::e1,}
         );
-    this->AtlasTexture->LoadToDevice(LTexture2::DeviceInfo{.DesiredMipLevels = 1,.Samples = vk::SampleCountFlagBits::e1,});
-    this->AtlasTexture->FreeFromHost();
-    Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&*this->AtlasTexture);
-    check(this->AtlasTexture->IsBindless())
-    check(!this->AtlasTexture->IsOnHost() && this->AtlasTexture->IsOnDevice())
+    this->AtlasTexture.LoadToDevice();
+    this->AtlasTexture.FreeFromHost();
+    Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()->AddTextureToGlobalBindlessArray(&this->AtlasTexture);
+    check(this->AtlasTexture.IsBindless())
+    check(!this->AtlasTexture.IsOnHost() && this->AtlasTexture.IsOnDevice())
     checkCode
     (
 
-        check(this->AtlasTexture->GetExtent().width  == static_cast<u32>(AtlasDimensions.x))
-        check(this->AtlasTexture->GetExtent().height == static_cast<u32>(AtlasDimensions.y))
+        check(this->AtlasTexture.GetExtent().width  == static_cast<u32>(AtlasDimensions.x))
+        check(this->AtlasTexture.GetExtent().height == static_cast<u32>(AtlasDimensions.y))
     )
 }
 

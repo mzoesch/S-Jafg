@@ -2,7 +2,6 @@
 
 #include "Widgets/EditorFinder.h"
 #include "Engine/Engine.h"
-#include "Framework/AssetDiscoverer.h"
 #include "Nodes/ScrollRegion.h"
 #include "Nodes/VParent.h"
 #include "Nodes/TextBox.h"
@@ -15,10 +14,8 @@
 #include "Nodes/VRegion.h"
 #include "Framework/SurfaceGlfw3.h"
 #include "User/UserPreferences.h"
-#include "Widgets/Importer.h"
 #include "Nodes/DropDown.h"
 #include "Nodes/EditableTextButton.h"
-#include "Widgets/AssetInspectors.h"
 #include "Framework/Editor.h"
 
 void Jafg::WFinder::Construct()
@@ -43,8 +40,8 @@ void Jafg::WFinder::Construct()
                     (0_spt, 14_spt, LIconBrush::Align::Center)
                 .InAllRightIconBrushesChained<&LIconBrush::InwardsPadding, &LIconBrush::MinIconSize, &LIconBrush::Alignment>
                     (0_spt, 10_spt, LIconBrush::Align::Center)
-                .LeftIcon("Icons/Filter")
-                .RightIcon("Icons/ExtendDown")
+                .LeftIcon({*JafgInfo, "Icons/Filter"})
+                .RightIcon({*JafgInfo, "Icons/ExtendDown"})
                 .Palette(*Prefs.SecondaryPaletteSolid)
                 .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                 .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
@@ -68,7 +65,7 @@ void Jafg::WFinder::Construct()
                 .Content("Refresh")
                 .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
-                .LeftIcon("Icons/Refresh")
+                .LeftIcon({*JafgInfo, "Icons/Refresh"})
                 .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
                     if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
@@ -234,7 +231,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
             NewStaticNode(WTextIconizedLeft)
                 .Anchor(EAnchor::HFill)
                 .MinDesiredSize(this->NameSize)
-                .Icon(EntryMeta.bExtended ? LString{"Icons/ExtendDown"} : LString{"Icons/ExtendRight"})
+                .Icon(EntryMeta.bExtended ? LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown") : LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight"))
                 .Content(Entry.path().filename().string())
             + NewStaticNode(WText)
                 .MinMaxDesiredSize(this->SizeSize)
@@ -256,45 +253,10 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
             .Anchor(EAnchor::HFill)
             .Padding(this->Indent2Padding(Indent))
             .Palette(Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid))
-            .OnKeyEventFocused([this, SelfPath=Entry.path()](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+            .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
                 if (Info.CursorLocation && Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton)))
                 {
-                    if (SelfPath.has_extension() && SelfPath.extension() == Detail::AssetPostfix)
-                    {
-                        auto& Asset{GetEngine().GetSubsystemChecked<JAssetDiscoverer>()->GetHeader(SelfPath)};
-
-                        CreateDropDownMenu(this->GetViewport(), *Info.CursorLocation, {}, {
-                            LDropDownNodeSeparator{.DisplayName = "INSPECT"},
-                            LDropDownNodeOption{
-                                .Selector = {
-                                    .DisplayName = algo::sprintf("Inspect {}", LexToString(Asset.Type)),
-                                    .Icon = "Icons/Information"
-                                    },
-                                .OnAction = [SelfPath](auto&&...)
-                                {
-                                    check(GetSingleton<JUserPreferences>().Editor)
-                                    CreateTextureInspector(*GetSingleton<JUserPreferences>().Editor, SelfPath);
-                                    return algo::reply::unhandled();
-                                },},
-                            });
-                    }
-                    else
-                    {
-                        CreateDropDownMenu(this->GetViewport(), *Info.CursorLocation, {}, {
-                            LDropDownNodeSeparator{.DisplayName = "IMPORT"},
-                            LDropDownNodeOption{
-                                .Selector = {
-                                    .DisplayName = "Import as Texture",
-                                    .Icon = "Icons/Import"
-                                    },
-                                .OnAction = [this, SelfPath](auto&&...)
-                                {
-                                    CreateImporter(this->GetViewport(), SelfPath, Detail::EAsset::Texture);
-                                    return algo::reply::unhandled();
-                                },},
-                            });
-                    }
                     return LNodeReply::Handled();
                 }
                 return LNodeReply::Unhandled();
@@ -305,7 +267,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
                 .Padding({})
                 .MinDesiredSize(this->NameSize)
                 .SkipBrushDraw(true)
-                .Icon("Icons/File")
+                .Icon({*JafgInfo, "Icons/File"})
                 .Content(Entry.path().filename().string())
             + NewStaticNode(WText)
                 .MinMaxDesiredSize(this->SizeSize)
@@ -326,7 +288,7 @@ void Jafg::WFinder::OnExtendUpdate(finder::path const& Path, LEntry& Entry)
     check(Entry.Node.IsValidFast())
     auto& Parent{Entry.Node->AsStatic<WParent>()};
     Parent.GetChildren()[0]->AsStatic<WTextIconizedLeft>().Icon =
-        Entry.bExtended ? LTexture2::FromAsset("Icons/ExtendDown") : LTexture2::FromAsset("Icons/ExtendRight");
+        Entry.bExtended ? LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown") : LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight");
 
     auto Idx{algo::distance(this->Container->GetChildren(), algo::find_checked(this->Container->GetChildren(), &Parent, algo::unique_raw))};
     auto Indent{static_cast<std::size_t>(this->Padding2Indent(Parent.Padding))};

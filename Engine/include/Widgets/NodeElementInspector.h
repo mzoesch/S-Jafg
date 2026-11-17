@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Node Inspector", "Icons/Information")
+    JAFG_DEFAULT_TAB_CANDIDATE("Node Inspector", *JafgInfo, "Icons/Information")
 
     virtual void Construct() override;
 };

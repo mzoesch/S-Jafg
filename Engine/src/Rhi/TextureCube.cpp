@@ -49,13 +49,18 @@ void Jafg::LTextureCube2::LoadToDevice()
     vk::SampleCountFlagBits Samples{vk::SampleCountFlagBits::e1};
 
     std::array<LTexture2,6> Textures{
-        LTexture2{Custom[0], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}, ETexture2StateBits::Host},
-        LTexture2{Custom[1], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}, ETexture2StateBits::Host},
-        LTexture2{Custom[2], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}, ETexture2StateBits::Host},
-        LTexture2{Custom[3], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}, ETexture2StateBits::Host},
-        LTexture2{Custom[4], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}, ETexture2StateBits::Host},
-        LTexture2{Custom[5], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}, ETexture2StateBits::Host},
+        LTexture2{Custom[0], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
+        LTexture2{Custom[1], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
+        LTexture2{Custom[2], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
+        LTexture2{Custom[3], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
+        LTexture2{Custom[4], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
+        LTexture2{Custom[5], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
         };
+    for (auto& Tex: Textures)
+    {
+        Tex.BringToState(ETexture2StateBits::Host);
+    }
+
     auto Extent{Textures[0].GetExtent()};
     checkCode
     (

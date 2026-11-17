@@ -17,7 +17,7 @@ struct LPluginInfo
     {
         check(this->Content.empty())
         this->Content = canonical(Path);
-        this->ContentString = this->Content.string();
+        this->ContentString = this->Content.generic_string();
     }
 
     NODISCARD FORCEINLINE operator LPath const&() const noexcept

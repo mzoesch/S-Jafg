@@ -19,7 +19,6 @@
 #include "Widgets/Input_Vector3.h"
 #include "Widgets/EditorFinder.h"
 #include "User/UserPreferencesWidget.h"
-#include "Widgets/AssetInspectors.h"
 #include "Nodes/EditableTextButton.h"
 #include "Widgets/EditorFactory.h"
 #include "Framework/SceneComponent.h"
@@ -264,7 +263,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColor)
             .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
             .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
-            .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Reset"))
+            .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon({*JafgInfo, "Icons/Reset"}))
             .Enabled(bEnabled && JxxFieldBits::IsEditorEditable(Info.Flags))
             .OnKeyEventFocused([Pointer, Identity](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
             {
@@ -578,11 +577,11 @@ Jafg::LNodeReply Jafg::WEditorCategorySeparator::OnKeyEventFocused(LNodeKeyEvent
 
         if (this->IsSelected())
         {
-            this->LeftIcon = LTexture2::FromAsset("Icons/ExtendDown");
+            this->LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown");
         }
         else
         {
-            this->LeftIcon = LTexture2::FromAsset("Icons/ExtendRight");
+            this->LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight");
         }
 
         for (auto const& [Visibility, Node]: this->Nodes)
@@ -607,7 +606,7 @@ void Jafg::WEditorCategorySeparator::_ctor_Logic()
 
     this->Anchor = EAnchor::HFill;
     this->Style.SetEverywhere<&LBoxBrush::Tint>(*Prefs.ForegroundColorVariant);
-    this->LeftIcon = LTexture2::FromAsset("Icons/ExtendDown");
+    this->LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown");
     this->SetSelectable(true);
     this->SetSelected(true);
 }
@@ -652,21 +651,21 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Open Engine in Explorer",
-                                    .Icon = "Icons/Directory",
+                                    .Icon = {*JafgInfo, "Icons/Directory"},
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenDirectory(finder::current_path()); return algo::reply::unhandled(); }
                                 },
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Open Engine in Terminal",
-                                    .Icon = "Icons/Terminal",
+                                    .Icon = {*JafgInfo, "Icons/Terminal"},
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenTerminal(finder::current_path()); return algo::reply::unhandled(); }
                                 },
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Launch Profiler",
-                                    .Icon = "Icons/Open",
+                                    .Icon = {*JafgInfo, "Icons/Open"},
                                     },
                                 .OnAction = [](auto&&...){ App::LaunchStandalone(App::Detail::GetProfilerExecutable()); return algo::reply::unhandled(); }
                                 },
@@ -674,7 +673,7 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Exit",
-                                    .Icon = "Icons/Leave",
+                                    .Icon = {*JafgInfo, "Icons/Leave"},
                                     },
                                 .OnAction = [](auto&&...){ App::RequestEngineExit("Invoked by editor."); return algo::reply::handled(); }
                                 },
@@ -690,7 +689,7 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Toggle Fullscreen",
-                                    .Icon = "Icons/Fullscreen",
+                                    .Icon = {*JafgInfo, "Icons/Fullscreen"},
                                     },
                                 .OnAction = [this](auto&&...)
                                 {
@@ -761,7 +760,7 @@ void Jafg::WEditor::Construct()
                             Result.emplace_back(LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = "Visit Homepage",
-                                    .Icon = "Icons/Open",
+                                    .Icon = {*JafgInfo, "Icons/Open"},
                                     },
                                 .OnAction = [this](auto&&...){ this->GetFrontend().OpenUrl(App::Homepage()); return algo::reply::unhandled(); },
                                 });
@@ -1040,7 +1039,7 @@ void Jafg::WEditorWorldViewer::Construct()
         [
             NewStaticNode(WButton)
                 .MinDesiredSize(MinSize)
-                .InAllBrushesChained<&LRegionBrush::Background, &LRegionBrush::Radii>(LRegionBrush::Icon("Icons/Menu"), LVec4F{50.0f})
+                .InAllBrushesChained<&LRegionBrush::Background, &LRegionBrush::Radii>(LRegionBrush::Icon({*JafgInfo, "Icons/Menu"}), LVec4F{50.0f})
                 .InBrushChained<EStyleBits::ActiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(Colors::White, LColor{0x4c})
                 .InBrushChained<EStyleBits::InactiveCombi, &LRegionBrush::Tint, &LRegionBrush::BorderTint>(LColor{0xA0}, LColor{0x3c})
                 .InAllBrushesChained<&LRegionBrush::OutlineThickness, &LRegionBrush::OutlineTint>(1, Colors::Black)
@@ -1061,7 +1060,7 @@ void Jafg::WEditorWorldViewer::Construct()
                 .InAllBrushes<&LBoxBrush::Padding>({4_spt, 2})
                 .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
                 .Content("Visualisation")
-                .LeftIcon(LTexture2::FromAsset("Icons/PointLight"))
+                .LeftIcon(LTexture2::FromTextureView(*JafgInfo, "Icons/PointLight"))
                 .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
                     if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1082,8 +1081,8 @@ void Jafg::WEditorWorldViewer::Construct()
             [
                 NewStaticNode(WButton).SaveTo(&this->StartButton)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Start")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Start")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Start"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Start"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1104,8 +1103,8 @@ void Jafg::WEditorWorldViewer::Construct()
                     })
                 + NewStaticNode(WButton).SaveTo(&this->StepButton)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Step")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Step")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Step"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Step"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1118,8 +1117,8 @@ void Jafg::WEditorWorldViewer::Construct()
                     })
                 + NewStaticNode(WButton).SaveTo(&this->StopButton)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Stop")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Stop")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Stop"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Stop"})
                     .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(*Prefs.DangerColor)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1165,8 +1164,8 @@ void Jafg::WEditorWorldViewer::Construct()
                     })
                     + NewStaticNode(WButton).SaveTo(&this->DetachButton)
                         .MinDesiredSize(MinSize)
-                        .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Detach")
-                        .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Detach")
+                        .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Detach"})
+                        .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Detach"})
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1215,7 +1214,7 @@ void Jafg::WEditorWorldViewer::Construct()
                         })
                     + NewStaticNode(WButton).SaveTo(&this->MoreButton)
                         .MinDesiredSize(MinSize)
-                        .IconPalette(*Prefs.SecondaryPaletteSolid, "Icons/VMore")
+                        .IconPalette(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/VMore"})
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1239,8 +1238,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->SelectButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Cursor")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Cursor")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Cursor"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Cursor"})
                     .Selected(true)
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1254,8 +1253,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->TranslateGizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/TranslationGizmo")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/TranslationGizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/TranslationGizmo"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/TranslationGizmo"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1268,8 +1267,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->RotateGizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/RotationGizmo")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/RotationGizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/RotationGizmo"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/RotationGizmo"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1282,8 +1281,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->ScaleGizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/ScaleGizmo")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/ScaleGizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/ScaleGizmo"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/ScaleGizmo"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1296,8 +1295,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 + NewStaticNode(WButton).SaveTo(&this->GizmoButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Gizmo")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Gizmo")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Gizmo"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Gizmo"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
@@ -1317,20 +1316,20 @@ void Jafg::WEditorWorldViewer::Construct()
             [
                 NewStaticNode(WButton).SaveTo(&this->ToggleGridSpace)
                     .MinDesiredSize(MinSize)
-                    .IconPalette(*Prefs.SecondaryPaletteSolid, "Icons/LocalGrid")
+                    .IconPalette(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/LocalGrid"})
                     .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
                         {
                             if (auto& Btn{Self.AsStatic<WButton>()}; this->IsGridSpaceLocal())
                             {
-                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/Sphere"));
-                                Btn.Brush.Background = LRegionBrush::Icon("Icons/Sphere");
+                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon({*JafgInfo, "Icons/Sphere"}));
+                                Btn.Brush.Background = LRegionBrush::Icon({*JafgInfo, "Icons/Sphere"});
                             }
                             else
                             {
-                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon("Icons/LocalGrid"));
-                                Btn.Brush.Background = LRegionBrush::Icon("Icons/LocalGrid");
+                                Btn.Style.SetEverywhere<&LRegionBrush::Background>(LRegionBrush::Icon({*JafgInfo, "Icons/LocalGrid"}));
+                                Btn.Brush.Background = LRegionBrush::Icon({*JafgInfo, "Icons/LocalGrid"});
                             }
                             return LNodeReply::Handled();
                         }
@@ -1347,8 +1346,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->ToggleTranslationGridSnapButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Grid")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Grid")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Grid"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Grid"})
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1375,8 +1374,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->ToggleRotationGridSnapButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/Angle")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/Angle")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/Angle"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/Angle"})
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1403,8 +1402,8 @@ void Jafg::WEditorWorldViewer::Construct()
                 NewStaticNode(WButton).SaveTo(&this->ToggleScaleGridSnapButton)
                     .MinDesiredSize(MinSize)
                     .Selectable(true)
-                    .IconPalette(*Prefs.PrimaryPaletteSolid, "Icons/ScaleGizmoLight")
-                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, "Icons/ScaleGizmoLight")
+                    .IconPalette(*Prefs.PrimaryPaletteSolid, {*JafgInfo, "Icons/ScaleGizmoLight"})
+                    .IconPaletteFor<EStyleBits::InactiveCombi>(*Prefs.SecondaryPaletteSolid, {*JafgInfo, "Icons/ScaleGizmoLight"})
                     .Selected(true)
                     .OnKeyEventFocused([](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
@@ -1434,7 +1433,7 @@ void Jafg::WEditorWorldViewer::Construct()
                         .InAllBrushes<&LBoxBrush::Padding>({4_spt, 2})
                         .InAllTextBrushesChained<&LTextBoxBrush::TextHAlign,&LTextBoxBrush::TextVAlign>(ETextHAlign::Center,ETextVAlign::Center)
                         .Content(this->GetCameraSpeedString())
-                        .LeftIcon(LTexture2::FromAsset("Icons/Camera"))
+                        .LeftIcon(LTexture2::FromTextureView(*JafgInfo, "Icons/Camera"))
                         .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                         {
                             if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
@@ -2447,7 +2446,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeDeferredSubMenu{
             .Selector = {
                 .DisplayName = "Connect to",
-                .Icon = "Icons/Sphere",
+                .Icon = {*JafgInfo, "Icons/Sphere"},
                 },
             .OnChildren = {[this]
             {
@@ -2471,7 +2470,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                             Result.emplace_back(LDropDownNodeOption{
                                 .Selector = {
                                     .DisplayName = World.GetHumanReadableName(),
-                                    .Icon = "Icons/Sphere",
+                                    .Icon = {*JafgInfo, "Icons/Sphere"},
                                     },
                                 .OnAction = [this, &World](auto&&...)
                                 {
@@ -2544,7 +2543,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                                     : Prefs.EditorLastWorldSupremePolicies.Default.GetClassOrDefault().GetFullyQualifiedName()
                                     };
                                 auto& Registry{Detail::GetGlobalCxxRecordRegistry()};
-                                for (auto* Class: Registry.GetClassesByBase(Registry.GetClassByNameAsserted(Subclass)->AsClass().StaticClass))
+                                for (auto* Class: Registry.GetClassesByBase<ASupremePolicies>())
                                 {
                                     Result.emplace_back(Class->GetFullyQualifiedName());
                                 }
@@ -2625,7 +2624,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Disconnect",
-                .Icon = "Icons/Leave",
+                .Icon = {*JafgInfo, "Icons/Leave"},
                 },
             .IsEnabled = !!this->IsOwnedPersonaControllerValid(),
             .OnAction = [this](auto&&...)
@@ -2636,7 +2635,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Shutdown",
-                .Icon = "Icons/Leave",
+                .Icon = {*JafgInfo, "Icons/Leave"},
                 },
             .IsEnabled = !!this->IsOwnedPersonaControllerValid(),
             .OnAction = [this](auto&&...)
@@ -2868,7 +2867,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Current Viewer",
-                .Icon = "Icons/Start",
+                .Icon = {*JafgInfo, "Icons/Start"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2879,7 +2878,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Detached Viewer",
-                .Icon = "Icons/StartDetached",
+                .Icon = {*JafgInfo, "Icons/StartDetached"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2890,7 +2889,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Spectate (e.g. for Physics)",
-                .Icon = "Icons/Spectate",
+                .Icon = {*JafgInfo, "Icons/Spectate"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2901,7 +2900,7 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Standalone",
-                .Icon = "Icons/Open",
+                .Icon = {*JafgInfo, "Icons/Open"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2937,7 +2936,7 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Rendered",
-                .Icon = "Icons/PointLight",
+                .Icon = {*JafgInfo, "Icons/PointLight"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2947,7 +2946,7 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Preview",
-                .Icon = "Icons/PointLight",
+                .Icon = {*JafgInfo, "Icons/PointLight"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2957,7 +2956,7 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Unlit",
-                .Icon = "Icons/PointLight",
+                .Icon = {*JafgInfo, "Icons/PointLight"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2967,7 +2966,7 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Lighting Only",
-                .Icon = "Icons/PointLight",
+                .Icon = {*JafgInfo, "Icons/PointLight"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -2977,7 +2976,7 @@ void Jafg::WEditorWorldViewer::CreateRenderFlagsDropDown(LVec2F Where)
         LDropDownNodeOption{
             .Selector = {
                 .DisplayName = "Wireframe",
-                .Icon = "Icons/PointLight",
+                .Icon = {*JafgInfo, "Icons/PointLight"},
                 },
             .OnAction = [this](auto&&...)
             {
@@ -3293,18 +3292,18 @@ Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetStartTexture() const
         auto& World{this->RunningInstance->GetOwnedPersonaControllerChecked()->GetWorld()};
         if (World.IsTimeLinear() && World.IsLinearWorldDormant())
         {
-            return LTexture2::FromAsset("Icons/Start");
+            return LTexture2::FromTextureView(*JafgInfo, "Icons/Start");
         }
-        return LTexture2::FromAsset("Icons/Pause");
+        return LTexture2::FromTextureView(*JafgInfo, "Icons/Pause");
     }
 
     switch (this->StartType)
     {
-    case EStartType::Pie: return LTexture2::FromAsset("Icons/Start");
-    case EStartType::NewPie: return LTexture2::FromAsset("Icons/StartDetached");
-    case EStartType::FollowPie: return LTexture2::FromAsset("Icons/StartFollow");
-    case EStartType::Spectate: return LTexture2::FromAsset("Icons/Spectate");
-    case EStartType::Standalone: return LTexture2::FromAsset("Icons/Open");
+    case EStartType::Pie: return LTexture2::FromTextureView(*JafgInfo, "Icons/Start");
+    case EStartType::NewPie: return LTexture2::FromTextureView(*JafgInfo, "Icons/StartDetached");
+    case EStartType::FollowPie: return LTexture2::FromTextureView(*JafgInfo, "Icons/StartFollow");
+    case EStartType::Spectate: return LTexture2::FromTextureView(*JafgInfo, "Icons/Spectate");
+    case EStartType::Standalone: return LTexture2::FromTextureView(*JafgInfo, "Icons/Open");
     }
     std::unreachable();
 }
@@ -3313,9 +3312,9 @@ Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetDetachTexture() const
 {
     if (this->RunningPawnIfDetached)
     {
-        return LTexture2::FromAsset("Icons/Reattach");
+        return LTexture2::FromTextureView(*JafgInfo, "Icons/Reattach");
     }
-    return LTexture2::FromAsset("Icons/Detach");
+    return LTexture2::FromTextureView(*JafgInfo, "Icons/Detach");
 }
 
 void Jafg::WEditorWorldViewer::UpdateStartStopButtons()
@@ -3481,8 +3480,8 @@ void Jafg::WEditorWorldViewerHierarchy::Construct()
                     (0_spt, 14_spt, LIconBrush::Align::Center)
                 .InAllRightIconBrushesChained<&LIconBrush::InwardsPadding, &LIconBrush::MinIconSize, &LIconBrush::Alignment>
                     (0_spt, 10_spt, LIconBrush::Align::Center)
-                .LeftIcon("Icons/Filter")
-                .RightIcon("Icons/ExtendDown")
+                .LeftIcon({*JafgInfo, "Icons/Filter"})
+                .RightIcon({*JafgInfo, "Icons/ExtendDown"})
                 .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                 .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
             +
@@ -3490,7 +3489,7 @@ void Jafg::WEditorWorldViewerHierarchy::Construct()
                 .Anchor(EAnchor::Fill)
                 .Padding(Prefs.InputPadding)
                 .Palette(*Prefs.InputPaletteSolid)
-                .Icon("Icons/Search")
+                .Icon({*JafgInfo, "Icons/Search"})
                 .PlaceholderContent("Search...")
             +
             NewStaticNode(WText).SaveTo(&this->ConnectedText)
@@ -3950,7 +3949,7 @@ void Jafg::WEditorWorldViewerInspector::Construct()
             NewStaticNode(WEditableTextButtonIconizedLeft).SaveTo(&this->ContainerSearch)
                 .Anchor(EAnchor::Fill)
                 .Palette(*Prefs.InputPaletteSolid)
-                .Icon("Icons/Search")
+                .Icon({*JafgInfo, "Icons/Search"})
                 .PlaceholderContent("Search...")
         ]
         +
@@ -4226,7 +4225,7 @@ void Jafg::WEditorWorldViewerInspector::ReloadInnerComponents()
     {
         this->ComponentContainerWrapper->AddChild(NewStaticNode(WTextButtonIconizedDouble)
             .Anchor(EAnchor::HFill)
-            .LeftIcon("Icons/Box")
+            .LeftIcon({*JafgInfo, "Icons/Box"})
             .Palette(Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid))
             .InAllBrushes<&LBoxBrush::Padding>({ENodeSize::StaticPoints, static_cast<f32>(Indent) * 20.0f, 0.0f, 0.0f, 0.0f})
             .Selectable(true)
@@ -4328,7 +4327,7 @@ void Jafg::WEditorWorldViewerInspector::SelectComponent(AActorComponent* Compone
             this->ComponentContainer->AddChild(NewStaticNode(WTextButtonIconizedDouble)
                 .Anchor(EAnchor::HFill)
                 .InAllBrushes<&LBoxBrush::Tint>(*Prefs.ForegroundColorVariant)
-                .LeftIcon("Icons/ExtendDown")
+                .LeftIcon({*JafgInfo, "Icons/ExtendDown"})
                 .Content(Category)
                 .Selectable(true)
                 .Selected(true)
@@ -4343,11 +4342,11 @@ void Jafg::WEditorWorldViewerInspector::SelectComponent(AActorComponent* Compone
 
                         if (Casted.IsSelected())
                         {
-                            Casted.LeftIcon = LTexture2::FromAsset("Icons/ExtendDown");
+                            Casted.LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown");
                         }
                         else
                         {
-                            Casted.LeftIcon = LTexture2::FromAsset("Icons/ExtendRight");
+                            Casted.LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight");
                         }
 
                         for (auto* Node: *CategoryNodes)

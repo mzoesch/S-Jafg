@@ -86,12 +86,12 @@ inline void from_json(json const& j, JShaderSubsystem::Shader2& Shader) noexcept
     j.at("IncludeDirs").get_to(Shader.IncludeDirs);
     for (auto& IncludeDir: Shader.IncludeDirs)
     {
-        IncludeDir = (finder::content_dir()/IncludeDir).string();
+        IncludeDir = (finder::default_content_dir_postfix()/IncludeDir).string();
     }
     j.at("SourceFiles").get_to(Shader.SourceFiles);
     for (auto& SourceFile: Shader.SourceFiles)
     {
-        SourceFile = finder::content_dir()/SourceFile;
+        SourceFile = finder::default_content_dir_postfix()/SourceFile;
     }
     if (j.contains("CompileTimeDefinitions"))
     {

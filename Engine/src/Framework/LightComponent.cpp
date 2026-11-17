@@ -263,7 +263,7 @@ void Jafg::ALightComponent::OnTypeChanged()
         std::unreachable();
     }};
     this->GetComponentChecked<ABillboardComponent>().SetTexture(LTexture2::FromFile(
-          TypeToTexture(this->Light.Type)
+          *JafgInfo, TypeToTexture(this->Light.Type)
         , {.Format=vk::Format::eR8G8B8A8Srgb,}
         , {.Samples=vk::SampleCountFlagBits::e1,}
         ));

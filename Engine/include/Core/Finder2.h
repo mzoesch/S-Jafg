@@ -9,6 +9,18 @@ namespace finder
 
 using namespace std::filesystem;
 
+namespace detail
+{
+
+//#
+//#
+//# Never modify. For internal use only.
+//# Use the getters below.
+//#
+ENGINE_API extern path temp_dir;
+ENGINE_API extern path saved_dir;
+
+} /* ~Namespace detail */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Jafg paths.
@@ -18,7 +30,7 @@ using namespace std::filesystem;
 constexpr path default_config_dir() noexcept { return LITERAL_TEXT("Config"); }
 
 //# Everything that should be saved for a longer period of time. But if they get deleted by the user, it's ok.
-constexpr path temp_dir() noexcept { return LITERAL_TEXT("Temp"); }
+constexpr path const& temp_dir() noexcept { return detail::temp_dir; }
 constexpr path dumps_dir() noexcept { return temp_dir()/LITERAL_TEXT("Dumps"); }
 constexpr path most_recent_mem_dump_file() noexcept { return dumps_dir()/LITERAL_TEXT("proc.dmp"); }
 constexpr path most_recent_stack_trace_file() noexcept { return dumps_dir()/LITERAL_TEXT("stack.trace"); }
@@ -29,11 +41,11 @@ constexpr path most_recent_stack_trace_file() noexcept { return dumps_dir()/LITE
 //# potential reinstallation.
 //# This contains user preferences, progression data, etc.
 //#
-constexpr path saved_dir() noexcept { return LITERAL_TEXT("Saved"); }
+constexpr path const& saved_dir() noexcept { return detail::saved_dir; }
 constexpr path user_preferences_file() noexcept { return saved_dir()/LITERAL_TEXT("MyPreferences.cfg"); }
 
 //# Content path for each module.
-constexpr path content_dir() noexcept { return LITERAL_TEXT("Content"); }
+constexpr path default_content_dir_postfix() noexcept { return LITERAL_TEXT("Content"); }
 
 namespace detail
 {

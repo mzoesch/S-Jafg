@@ -174,7 +174,6 @@ private:
     algo::transparent_unordered_string_map<LMaterialInstanceRef> Instances;
     NODISCARD rhi::material_template const& GetMaterialTemplate(LStringView Namespace, LStringView Identifier) noexcept
     {
-        LString Key{this->GetKey(Namespace, Identifier)};
         if (!this->Templates.contains(Namespace))
         {
             LOG_FATAL(LogMaterialSubsystem, "[{}]: No such namespace.", Namespace)
@@ -183,7 +182,7 @@ private:
         auto It{algo::find(SearchSpace, Identifier, &rhi::material_template::identifier)};
         if (It == SearchSpace.end())
         {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such material.", Key)
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such material.", this->GetKey(Namespace, Identifier))
         }
         return *It;
     }

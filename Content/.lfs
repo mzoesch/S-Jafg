@@ -38,10 +38,10 @@ Materials/Examples/Scifi/Normal_2k.png
 Materials/Examples/Scifi/pbr.json
 Textures/Editor/DirectionalLight.png
 Textures/Editor/DirectionalLight.xcf
-Textures/Editor/GroundGrid_8M.jasset
+Textures/Editor/GroundGrid_8M.view.json
 Textures/Editor/GroundGrid_8M.pbr.json
 Textures/Editor/GroundGrid_8M.png
-Textures/Editor/ObjectGrid_1M.jasset
+Textures/Editor/ObjectGrid_1M.view.json
 Textures/Editor/ObjectGrid_1M.png
 Textures/Editor/ObjectGrid_1M.pbr.json
 Textures/Editor/PointLight.png

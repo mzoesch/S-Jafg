@@ -1,6 +1,7 @@
 *
 !/.gitignore
-!/*.jasset
+!/view.json
+
 !/Angle.png
 !/ArrowDown.png
 !/ArrowLeft.png

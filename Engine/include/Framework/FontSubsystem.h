@@ -289,7 +289,7 @@ private:
         std::unordered_map<LGlyphIndex, GlyphUVs> Glyphs;
 
         //# Device texture handle. For internal purposes only. Do not use.
-        LTexture2Ref AtlasTexture;
+        LTexture2 AtlasTexture;
         //# Host texture generator. For internal purposes only. Do not use.
         algo::exchange_storage<Detail::MyDynamicAtlas*> DynamicAtlas;
         NODISCARD ENGINE_API LVec2i32 GetDynamicAtlasDimensions() const noexcept;

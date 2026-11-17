@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Tag Inspector", "Icons/File")
+    JAFG_DEFAULT_TAB_CANDIDATE("Tag Inspector", *JafgInfo, "Icons/File")
 
     virtual void Construct() override;
 };

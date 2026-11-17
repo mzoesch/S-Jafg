@@ -160,7 +160,42 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* JAFG_WITH_STATS && JAFG_WITH_LOCAL_LAYER */
 
     std::filesystem::current_path(finder::detail::_engine_root_dir_slow());
-    JafgInfo.Initialize(LITERAL_TEXT("Content")); // TODO: Make this an argument of some sort.
+
+    if (auto* TempDir{App::GetCommandLineArgument(App::TempDir)})
+    {
+        auto& Value{TempDir->GetValue()};
+        if (Value.empty())
+        {
+            LOG_FATAL(LogLaunch, "[{}]: Must not be empty.", App::TempDir.Identifier)
+        }
+        finder::detail::temp_dir = finder::weakly_canonical(finder::path{Value});
+    }
+    LOG_VERBOSE(LogInformation, "TempDir={}", finder::temp_dir())
+
+    if (auto* SavedDir{App::GetCommandLineArgument(App::SavedDir)})
+    {
+        auto& Value{SavedDir->GetValue()};
+        if (Value.empty())
+        {
+            LOG_FATAL(LogLaunch, "[{}]: Must not be empty.", App::SavedDir.Identifier)
+        }
+        finder::detail::saved_dir = finder::weakly_canonical(finder::path{Value});
+    }
+    LOG_VERBOSE(LogInformation, "SavedDir={}", finder::saved_dir())
+
+    if (auto* ContentDir{App::GetCommandLineArgument(App::ContentDir)})
+    {
+        auto& Value{ContentDir->GetValue()};
+        if (Value.empty())
+        {
+            LOG_FATAL(LogLaunch, "[{}]: Must not be empty.", App::ContentDir.Identifier)
+        }
+        JafgInfo.Initialize(finder::weakly_canonical(finder::path{Value}).lexically_normal());
+    }
+    else
+    {
+        JafgInfo.Initialize(finder::default_content_dir_postfix());
+    }
 
     finder::create_directories(finder::temp_dir());
 

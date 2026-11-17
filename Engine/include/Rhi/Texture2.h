@@ -48,36 +48,66 @@ struct LTexture2 final
     }
 
     LTexture2() noexcept = default;
-    explicit LTexture2(LPath Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::None) noexcept
-        : Path{std::move(Path)}
+    explicit LTexture2(LPath Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo) noexcept
+        : Path{std::move(Path)}, HostCreateInfo{std::move(HostCreateInfo)}, DeviceCreateInfo{std::move(DeviceCreateInfo)}
     {
-        if (State & ETexture2StateBits::Host || State & ETexture2StateBits::Device)
-        {
-            if (auto Result{this->LoadToHost(HostCreateInfo)}; Result != EResult::Success)
-            {
-                LOG_FATAL(LogRhi, "[{}]: Failed to load texture to host; Reason: [{}].", this->Path, LTexture2::ResultToString(Result))
-            }
-        }
-
-        if (State & ETexture2StateBits::Device)
-        {
-            this->LoadToDevice(DeviceCreateInfo);
-            if ((State & ETexture2StateBits::Host) == ETexture2StateBits::None)
-            {
-                this->FreeFromHost();
-            }
-        }
-
-        return;
     }
-    static LTexture2Ref FromMemory(LStringView HumanReadableName, algo::byte_bulk&& Data, vk::Format SrcFormat, rhi::extent2 Extent, HostInfo Info);
-    static LTexture2Ref FromAsset(LStringView View);
-    static LTexture2Ref FromFile(LPath const& Path, HostInfo HostCreateInfo, DeviceInfo DeviceCreateInfo, ETexture2State State = ETexture2StateBits::Device);
-    PROHIBIT_REALLOC_OF_ANY_FORM(LTexture2)
+    static LTexture2 FromMemory(
+          algo::byte_bulk&& Data
+        , vk::Format SrcFormat
+        , rhi::extent2 Extent
+        , HostInfo HostCreateInfo
+        , DeviceInfo DeviceCreateInfo
+        , ETexture2State State = ETexture2StateBits::Host
+        );
+    static LTexture2Ref FromFile(LStringView Key
+        , LPath const& Path
+        , HostInfo HostCreateInfo
+        , DeviceInfo DeviceCreateInfo
+        , ETexture2State State = ETexture2StateBits::Device
+        );
+    static LTexture2Ref FromFile(LString const& Key
+        , LPath const& Path
+        , HostInfo HostCreateInfo
+        , DeviceInfo DeviceCreateInfo
+        , ETexture2State State = ETexture2StateBits::Device
+        )
+    {
+        return FromFile(LStringView{Key}, Path, HostCreateInfo, DeviceCreateInfo, State);
+    }
+    static LTexture2Ref FromFile(LPath const& Key
+        , LPath const& Path
+        , HostInfo HostCreateInfo
+        , DeviceInfo DeviceCreateInfo
+        , ETexture2State State = ETexture2StateBits::Device
+        )
+    {
+        return FromFile(LStringView{Key.generic_string()}, Path, HostCreateInfo, DeviceCreateInfo, State);
+    }
+    static LTexture2Ref FromTextureView(LStringView Namespace, LStringView Name
+        , ETexture2State State = ETexture2StateBits::Device
+        );
+    static LTexture2Ref FromTextureView(LString const& Namespace, LStringView Name
+        , ETexture2State State = ETexture2StateBits::Device
+        )
+    {
+        return FromTextureView(LStringView{Namespace}, Name, State);
+    }
+    static LTexture2Ref FromTextureView(LPath const& Namespace, LStringView Name
+        , ETexture2State State = ETexture2StateBits::Device
+        )
+    {
+        return FromTextureView(LStringView{Namespace.generic_string()}, Name, State);
+    }
+    PROHIBIT_COPY(LTexture2)
+    LTexture2(LTexture2&& Other) = default;
+    LTexture2& operator=(LTexture2&& Rhs) = default;
     ~LTexture2() = default;
 
+    ENGINE_API void BringToState(ETexture2State State);
+
     FORCEINLINE constexpr bool IsOnHost() const noexcept { return this->MipMap0.allocated(); }
-    ENGINE_API EResult LoadToHost(HostInfo const& Info);
+    ENGINE_API EResult LoadToHost();
     inline void FreeFromHost() noexcept
     {
         if (this->MipMap0.allocated())
@@ -87,7 +117,7 @@ struct LTexture2 final
     }
 
     FORCEINLINE bool IsOnDevice() const noexcept { return !!*this->Handle; }
-    ENGINE_API void LoadToDevice(DeviceInfo const& Info);
+    ENGINE_API void LoadToDevice();
     inline void FreeFromDevice() noexcept
     {
         this->View.clear();
@@ -95,6 +125,8 @@ struct LTexture2 final
     }
 
     FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Path; }
+    FORCEINLINE constexpr HostInfo const& GetHostCreateInfo() const noexcept { return this->HostCreateInfo; }
+    FORCEINLINE constexpr DeviceInfo const& GetDeviceCreateInfo() const noexcept { return this->DeviceCreateInfo; }
 
     FORCEINLINE constexpr auto const& GetMetadata() const noexcept { return this->Meta; }
     FORCEINLINE constexpr auto const& GetExtent() const noexcept { return this->Meta.Extent; }
@@ -133,6 +165,8 @@ private:
     };
 
     LPath Path;
+    HostInfo HostCreateInfo;
+    DeviceInfo DeviceCreateInfo;
     Metadata Meta;
     rhi::resource_index_t BindlessIndex{ rhi::invalid_resource_index };
     algo::byte_bulk MipMap0;
@@ -141,19 +175,24 @@ private:
 };
 
 //#
-//# - std::monostate: No texture.
-//# - LTexture2Ref: The texture will be used (has to be valid).
-//# - LString: Texture view identifier (has to be valid).
+//# - std::monostate:    No texture.
+//# - LTexture2Ref:      The texture will be used (has to be valid).
+//# - <LString,LString>: Texture view namespace+name (has to be valid).
 //#
 struct LOptionalTexture2Ref
 {
-    LOptionalTexture2Ref() noexcept : Variant{std::monostate{}} {}
-    LOptionalTexture2Ref(std::monostate) noexcept : Variant{std::monostate{}} {}
-    LOptionalTexture2Ref(LTexture2Ref Reference) noexcept : Variant{Reference} {}
-    LOptionalTexture2Ref(char const* String) noexcept : Variant{String} {}
-    LOptionalTexture2Ref(LString String) noexcept : Variant{std::move(String)} {}
+    LOptionalTexture2Ref() noexcept
+        : Variant{std::monostate{}} {}
+    LOptionalTexture2Ref(std::monostate) noexcept
+        : Variant{std::monostate{}} {}
+    LOptionalTexture2Ref(LTexture2Ref Reference) noexcept
+        : Variant{Reference} {}
+    LOptionalTexture2Ref(std::pair<LString, LString> Pair) noexcept
+        : Variant{std::move(Pair)} {}
+    LOptionalTexture2Ref(LString Namespace, LString Name) noexcept
+        : Variant{std::pair<LString, LString>{std::move(Namespace), std::move(Name)}} {}
 
-    std::variant<std::monostate, LTexture2Ref, LString> Variant;
+    std::variant<std::monostate, LTexture2Ref, std::pair<LString, LString>> Variant;
 
     inline LTexture2Ref GetResolved() const
     {
@@ -161,20 +200,19 @@ struct LOptionalTexture2Ref
         {
             return std::get<LTexture2Ref>(this->Variant);
         }
-        if (std::holds_alternative<LString>(this->Variant))
+        if (std::holds_alternative<std::pair<LString, LString>>(this->Variant))
         {
-            return LTexture2::FromAsset(std::get<LString>(this->Variant));
+            auto& Pair{std::get<std::pair<LString, LString>>(this->Variant)};
+            return LTexture2::FromTextureView(Pair.first, Pair.second);
         }
         return {};
     }
     inline LTexture2Ref Resolve()
     {
         this->Variant = this->GetResolved();
-        check(std::holds_alternative<LTexture2Ref>(this->Variant))
         if (!std::get<LTexture2Ref>(this->Variant).get())
         {
-            this->Variant = std::monostate{};
-            return {};
+            LOG_FATAL(LogTextureSubsystem, "Failed to resolve texture.")
         }
         return std::get<LTexture2Ref>(this->Variant);
     }

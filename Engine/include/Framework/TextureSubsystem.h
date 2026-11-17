@@ -24,27 +24,46 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTORS(JTextureSubsystem)
 
-public:
-
     virtual void Initialize(LSubsystemCollection& Collection) override;
+
+public:
 
     //# Removes all loaded textures that are not referenced anymore.
     void PurgeUnused() noexcept;
 
-    LTextureView const& GetTextureView(LStringView Asset) const noexcept;
-    void RefetchTextureViews();
+    NODISCARD LString GetKey(LStringView Namespace, LStringView Instance) const noexcept
+    {
+        return algo::sprintf("{}/{}", Namespace, Instance);
+    }
 
-    FORCEINLINE auto GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
-    FORCEINLINE auto const& GetTextures() const noexcept { return this->Textures; }
+    //# All texture views known to this subsystem.
+    NODISCARD FORCEINLINE constexpr auto const& GetTextureViews() const noexcept { return this->TextureViews; }
+    NODISCARD LTextureView const& GetTextureView(LStringView Namespace, LStringView Identifier) const noexcept
+    {
+        if (!this->TextureViews.contains(Namespace))
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such namespace.", Namespace)
+        }
+        auto& SearchSpace{this->TextureViews.at(Namespace)};
+        auto It{algo::find(SearchSpace, Identifier, &LTextureView::Identifier)};
+        if (It == SearchSpace.end())
+        {
+            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such texture view.", this->GetKey(Namespace, Identifier))
+        }
+        return *It;
+    }
 
-    LTexture2Ref FromFile(LPath const& Path
+    NODISCARD FORCEINLINE constexpr std::size_t GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
+    NODISCARD FORCEINLINE constexpr auto const& GetTextures() const noexcept { return this->Textures; }
+
+    NODISCARD LTexture2Ref FromFile(LStringView Key, LPath const& Path
         , LTexture2::HostInfo HostCreateInfo
         , LTexture2::DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Device
         );
-
-    LTexture2Ref FromAsset(LStringView Asset, ETexture2State State = ETexture2StateBits::Device);
-    LTexture2Ref FromTextureView(LTextureView const& View, ETexture2State State = ETexture2StateBits::Device);
+    NODISCARD LTexture2Ref FromTextureView(LStringView Namespace, LStringView Name
+        , ETexture2State State = ETexture2StateBits::Device
+        );
 
     LTextureCube2Ref CubeFromFile(LPath const& Path);
 
@@ -72,16 +91,20 @@ public:
 
 private:
 
+    void RetrieveTextureViewsFrom(LPath const& Path);
+
     inline constexpr static auto BindlessTextureArrayCapacity{ 128uz };
     std::array<vk::raii::Sampler, UBO::Bindless::SamplerCount> Vk_DefaultSamplers JAFG_INIT_EIGHT(nullptr);
     vk::raii::DescriptorPool BindlessTextureArrayDescriptorPool{ nullptr };
     vk::raii::DescriptorSet BindlessTextureArrayDescriptorSet{ nullptr };
     algo::dynamic_bit_set FreeBindlessTextureArraySlots;
 
-    TArray<LTextureView> TextureViews;
+    //# Once populated, texture views will never change their address again. This is guaranteed by jafg.
+    algo::transparent_unordered_string_map<TArray<LTextureView>> TextureViews;
+
     TArray<LTexture2Ref> GuaranteedTextures;
-    std::unordered_map<LPath, std::shared_ptr<LTexture2>> Textures;
-    std::unordered_map<LPath, std::shared_ptr<LTextureCube2>> CubeTextures;
+    algo::transparent_unordered_string_map<LTexture2Ref> Textures;
+    algo::transparent_unordered_string_map<LTextureCube2Ref> CubeTextures;
 };
 
 } /* ~Namespace Jafg */

@@ -3,14 +3,86 @@
 #include "Framework/TextureSubsystem.h"
 #include "Rhi/TextureView.h"
 #include "Engine/Engine.h"
-#include "Framework/AssetDiscoverer.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Rhi/FromString.h"
+
+namespace
+{
+
+struct UnresolvedTextureView final
+{
+    LPath Path;
+    LString Identifier;
+
+    bool bRecursive{};
+    std::variant<std::monostate, LPath, LString> What;
+    vk::Format Format{ vk::Format::eUndefined };
+    std::optional<u32> MipLevels;
+    std::optional<vk::SampleCountFlagBits> MaxSampleCount;
+
+    NODISCARD FORCEINLINE constexpr bool IsFullyResolved() const noexcept
+    {
+        return (std::holds_alternative<LPath>(this->What) && !std::get<LPath>(this->What).empty())
+            || (std::holds_alternative<LString>(this->What) && !std::get<LString>(this->What).empty());
+    }
+};
+
+SERDE_JSON_TYPE_ONLY_DESERIALIZE_BODY(::UnresolvedTextureView)
+{
+    if (j.contains("file"))
+    {
+        j.at("file").get_to(field.What.emplace<LPath>());
+    }
+    if (j.contains("regex"))
+    {
+        j.at("regex").get_to(field.What.emplace<LString>());
+    }
+
+    if (j.contains("recursive"))
+    {
+        j.at("recursive").get_to(field.bRecursive);
+    }
+
+    if (j.contains("format"))
+    {
+        LString FormatStr;
+        j.at("format").get_to(FormatStr);
+        field.Format = serde::from_string<vk::Format>(FormatStr);
+    }
+    else
+    {
+        LOG_FATAL(LogTextureSubsystem, "[format]: No such field.")
+    }
+
+    if (j.contains("mipLevels"))
+    {
+        j.at("mipLevels").get_to(field.MipLevels.emplace());
+    }
+    if (j.contains("maxSampleCount"))
+    {
+        LString SampleCountStr;
+        j.at("maxSampleCount").get_to(SampleCountStr);
+        field.MaxSampleCount = serde::from_string<vk::SampleCountFlagBits>(SampleCountStr);
+    }
+}
+
+} /* ~Namespace <Anonymous> */
 
 void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
-    this->RefetchTextureViews();
+
+    this->GetMutableEngine().OnForeignPluginLoaded.EmplaceStrong([this](LLoadedPlugin& Plugin)
+    {
+        if (Plugin.GetFetched().bHasContent)
+        {
+            this->RetrieveTextureViewsFrom(Plugin.GetFetched().Content);
+        }
+
+        return false;
+    });
+
+    this->RetrieveTextureViewsFrom(*JafgInfo);
 }
 
 void Jafg::JTextureSubsystem::PurgeUnused() noexcept
@@ -29,91 +101,33 @@ void Jafg::JTextureSubsystem::PurgeUnused() noexcept
     // TODO: Do we want to rehash??
 }
 
-Jafg::LTextureView const& Jafg::JTextureSubsystem::GetTextureView(LStringView Asset) const noexcept
-{
-    auto It{algo::find(this->TextureViews, Asset, &LTextureView::Name)};
-    if (It == this->TextureViews.end())
-    {
-        LOG_FATAL(LogTextureSubsystem, "No such texture view [{}].", Asset)
-    }
-    return *It;
-}
-
-void Jafg::JTextureSubsystem::RefetchTextureViews()
-{
-    STAT_FUNCTION()
-    algo::orphan(&this->TextureViews);
-    LOG_VERBOSE(LogTextureSubsystem, "Refetching texture views.")
-
-    for (auto& Assets{*this->GetEngine().GetSubsystemChecked<JAssetDiscoverer>()};
-        auto const& Path: Assets.GetHeaders()
-            | algo::views::filter([](auto const& Pair){ return Pair.second.Type == Detail::EAsset::Texture; })
-            | algo::views::keys)
-    {
-        if constexpr (LogTextureSubsystem.CompilesFor<ELogVerbosity::Trace>)
-        {
-            this->TextureViews.emplace_back(Assets.PullAssetTextureView(Path));
-        }
-        else
-        {
-            this->TextureViews.emplace_back(Assets.PullAssetTextureView(Path));
-        }
-    }
-
-    LOG_VERBOSE(LogTextureSubsystem, "Finished loading [{}] texture views.", this->TextureViews.size())
-}
-
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPath const& Path
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LStringView Key, LPath const& Path
     , LTexture2::HostInfo HostCreateInfo
     , LTexture2::DeviceInfo DeviceCreateInfo
     , ETexture2State State /* = ETexture2StateBits::Device */
     )
 {
-    //# TODO: Do the same with materials namespaces+names. Also add the host-,device-state to the key. We might load
-    //#       the same texture multiple times with different params.
-
-    if (auto const& It{this->Textures.find(Path)}; It != this->Textures.end())
+    if (auto It{this->Textures.find(Key)}; It != this->Textures.end())
     {
-        LTexture2& Texture{*It->second};
-
-        check(Texture.GetFormat() == vk::Format::eUndefined || Texture.GetFormat() == HostCreateInfo.Format)
-        if (State & ETexture2StateBits::Host || ((State & ETexture2StateBits::Device) && Texture.IsOnDevice() == false))
-        {
-            if (Texture.IsOnHost() == false)
-            {
-                auto Result{Texture.LoadToHost(HostCreateInfo)};
-                jassert(Result == LTexture2::EResult::Success)
-            }
-        }
-        if (State & ETexture2StateBits::Device)
-        {
-            if (Texture.IsOnDevice() == false)
-            {
-                Texture.LoadToDevice(DeviceCreateInfo);
-                if ((State & ETexture2StateBits::Host) == ETexture2StateBits::None)
-                {
-                    Texture.FreeFromHost();
-                }
-            }
-        }
-
+        check(It->second->GetHostCreateInfo().Format == HostCreateInfo.Format)
+        check(It->second->GetDeviceCreateInfo().DesiredMipLevels == DeviceCreateInfo.DesiredMipLevels)
+        check(It->second->GetDeviceCreateInfo().Samples == DeviceCreateInfo.Samples)
+        It->second->BringToState(State);
         return It->second;
     }
 
-    this->Textures[Path] = std::make_shared<LTexture2>(Path, HostCreateInfo, DeviceCreateInfo, State);
-    return this->Textures[Path];
+    auto Result{std::make_shared<LTexture2>(Path, HostCreateInfo, DeviceCreateInfo)};
+    this->Textures[LString{Key}] = Result;
+    Result->BringToState(State);
+    return Result;
 }
 
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromAsset(LStringView Asset, ETexture2State State /* = ETexture2StateBits::Device */)
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LStringView Namespace, LStringView Name, ETexture2State State /* = ETexture2StateBits::Device */)
 {
-    return this->FromTextureView(this->GetTextureView(Asset), State);
-}
-
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LTextureView const& View, ETexture2State State /* = ETexture2StateBits::Device */)
-{
-    return this->FromFile(View.Texture
+    auto const& View{this->GetTextureView(Namespace, Name)};
+    return this->FromFile(this->GetKey(Namespace, Name), View.Texture
         , LTexture2::HostInfo{.Format=View.Format}
-        , LTexture2::DeviceInfo{.DesiredMipLevels=View.MipLevels,.Samples=View.MaxSampleCount}
+        , LTexture2::DeviceInfo{.DesiredMipLevels=View.MipLevels, .Samples=View.MaxSampleCount}
         , State
         );
 }
@@ -335,14 +349,14 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
     this->FreeBindlessTextureArraySlots = algo::dynamic_bit_set{BindlessTextureArrayCapacity};
     check(this->FreeBindlessTextureArraySlots.bit_count() == BindlessTextureArrayCapacity)
 
-    TArray<LString> GuaranteedTextureIdentifiers{ "Textures/IdentityMul" };
+    TArray<std::pair<LString, LString>> GuaranteedTextureIdentifiers{ {*JafgInfo, "Textures/IdentityMul"} };
     if (!this->GuaranteedTextures.empty())
     {
         panic("Expected GuaranteedTextures to be empty.")
     }
-    for (auto const& Gti: GuaranteedTextureIdentifiers)
+    for (auto const& [Namespace, Name]: GuaranteedTextureIdentifiers)
     {
-        this->GuaranteedTextures.emplace_back(this->FromAsset(Gti));
+        this->GuaranteedTextures.emplace_back(this->FromTextureView(Namespace, Name));
     }
     for (auto& Gt: this->GuaranteedTextures)
     {
@@ -358,4 +372,123 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
         }
         ++Cursor;
     }
+}
+
+void Jafg::JTextureSubsystem::RetrieveTextureViewsFrom(LPath const& Path)
+{
+    STAT_CUSTOM_ZONE_FMT("RetrieveTextureViewsFrom-{}", Path.string())
+
+    LString Key{canonical(Path).string()};
+
+    LOG_VERBOSE(LogTextureSubsystem, "[{}]: Refetching texture views.", Key)
+
+    TArray<UnresolvedTextureView> Views;
+    for (LPath& TextureView: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^(?:.*/)?(?:[^/]+\\.)?view\\.json$"))
+    {
+        UnresolvedTextureView& Result{Views.emplace_back()};
+        json json = json::parse(finder::read_file(TextureView), nullptr, false);
+        if (json.is_discarded())
+        {
+            LOG_FATAL(LogTextureSubsystem, "[{}]: Invalid JSON.", TextureView)
+        }
+        json.get_to(Result);
+
+        if (LPath Temp{finder::relative(canonical(TextureView), Path).replace_extension()};
+            Temp.native().ends_with(LITERAL_TEXT("/view")))
+        {
+            Result.Identifier = Temp.parent_path().generic_string();
+        }
+        else
+        {
+            Result.Identifier = Temp.replace_extension().generic_string();
+        }
+        Result.Path = std::move(TextureView);
+        check(algo::count(Views, Result.Identifier, &UnresolvedTextureView::Identifier) == 1)
+    }
+
+    for (auto& View: Views)
+    {
+        if (!View.IsFullyResolved())
+        {
+            View.What = LPath{View.Identifier}.stem().concat(".png");
+        }
+
+        if (!View.IsFullyResolved())
+        {
+            LOG_FATAL(LogTextureSubsystem, "[{}]: Texture view is not fully resolved.", View.Path)
+        }
+    }
+
+    TArray<LTextureView> Resolved;
+    for (auto& View: Views)
+    {
+        if (std::holds_alternative<LPath>(View.What))
+        {
+            if constexpr (LogTextureSubsystem.CompilesFor<ELogVerbosity::Warning>)
+            {
+                if (View.bRecursive)
+                {
+                    LOG_WARNING(LogTextureSubsystem
+                        , "[{}]: Has recursive field set but does not use regex."
+                        , View.Path
+                        )
+                }
+            }
+            Resolved.emplace_back(LTextureView{
+                .Path = View.Path,
+                .Identifier = std::move(View.Identifier),
+                .Texture = finder::relative(finder::weakly_canonical(View.Path.parent_path() / std::get<LPath>(View.What)), Path),
+                .Format = View.Format,
+                .MipLevels = View.MipLevels,
+                .MaxSampleCount = View.MaxSampleCount,
+                });
+        }
+        else if (std::holds_alternative<LString>(View.What))
+        {
+            if (View.bRecursive)
+            {
+                for (LPath& Texture: finder::retrieve_files<finder::recursive_directory_iterator>(
+                    View.Path.parent_path(),
+                    std::get<LString>(View.What) // TODO: Is this dangerous??? Yes. How can we protect?
+                    ))
+                {
+                    Resolved.emplace_back(LTextureView{
+                        .Path = View.Path,
+                        .Identifier = finder::relative(Texture, Path).replace_extension().string(),
+                        .Texture = std::move(Texture),
+                        .Format = View.Format,
+                        .MipLevels = View.MipLevels,
+                        .MaxSampleCount = View.MaxSampleCount,
+                        });
+                }
+            }
+            else
+            {
+                for (LPath& Texture: finder::retrieve_files<finder::directory_iterator>(
+                    View.Path.parent_path(),
+                    std::get<LString>(View.What)
+                    ))
+                {
+                    Resolved.emplace_back(LTextureView{
+                        .Path = View.Path,
+                        .Identifier = finder::relative(Texture, Path).replace_extension().string(),
+                        .Texture = std::move(Texture),
+                        .Format = View.Format,
+                        .MipLevels = View.MipLevels,
+                        .MaxSampleCount = View.MaxSampleCount,
+                        });
+                }
+            }
+        }
+        else
+        {
+            std::unreachable();
+        }
+    }
+
+    check(!this->TextureViews.contains(Key))
+    this->TextureViews[Key] = std::move(Resolved);
+    LOG_VERBOSE(LogTextureSubsystem, "[{}]: Fetched [{}] texture views.", Key
+        , this->TextureViews.at(Key).size()
+        )
 }
