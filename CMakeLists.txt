@@ -17,17 +17,6 @@ if(NOT EXISTS "${JAFG_ENGINE_ROOT}/jafg.jafgworkspace")
     message(FATAL_ERROR "[${JAFG_ENGINE_ROOT}/jafg.jafgworkspace]: No such file.")
 endif()
 
-if(DEFINED ENV{JAFG_IS_DOCKER_CONTAINER})
-    message(STATUS "JAFG_IS_DOCKER_CONTAINER: $ENV{JAFG_IS_DOCKER_CONTAINER}")
-    if($ENV{JAFG_IS_DOCKER_CONTAINER} STREQUAL "1")
-        if(DEFINED JAFG_TARGET_PLATFORM)
-            if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-                include(CMake/mingw-ucrt-toolchain.cmake)
-            endif()
-        endif()
-    endif()
-endif()
-
 ###############################################################################
 # Jafg Target Configuration.
 ###############################################################################
@@ -50,6 +39,17 @@ set(JAFG_CONFIG_DEBUG       "dbg")
 set(JAFG_CONFIG_DEVELOPMENT "dev")
 set(JAFG_CONFIG_SHIPPING    "ship")
 set(JAFG_ALLOWED_CONFIGS            ${JAFG_CONFIG_DEBUG} ${JAFG_CONFIG_DEVELOPMENT} ${JAFG_CONFIG_SHIPPING})
+
+if(DEFINED ENV{JAFG_IS_DOCKER_CONTAINER})
+    message(STATUS "JAFG_IS_DOCKER_CONTAINER: $ENV{JAFG_IS_DOCKER_CONTAINER}")
+    if($ENV{JAFG_IS_DOCKER_CONTAINER} STREQUAL "1")
+        if(DEFINED JAFG_TARGET_PLATFORM)
+            if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+                include(CMake/mingw-ucrt.toolchain.cmake)
+            endif()
+        endif()
+    endif()
+endif()
 
 # Default the variables if not defined.
 if(NOT DEFINED JAFG_TARGET_PLATFORM)

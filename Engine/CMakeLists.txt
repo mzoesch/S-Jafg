@@ -132,6 +132,19 @@ if(_guard)
         )
     FetchContent_MakeAvailable(FetchContent_FastNoise2)
     DisableAllWarningsForTarget(FastNoise) # FastNoise2 is an alias of FastNoise
+    # SmartNode.cpp uses std::malloc / std::free without including <cstdlib>. libstdc++ pulls it in
+    # transitively, libc++ (llvm-mingw) does not.
+    if(NOT MSVC)
+        target_compile_options(FastNoise PRIVATE "SHELL:-include cstdlib")
+    endif()
+    # FastSIMD passes a GNU assembler only flag for every MinGW build. It works around GCC not
+    # realigning the stack for AVX on Windows; clang neither understands the flag nor needs it.
+    if(MINGW AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        get_target_property(_fastsimd_options FastSIMD_FastNoise COMPILE_OPTIONS)
+        list(REMOVE_ITEM _fastsimd_options "-Wa,-muse-unaligned-vector-move")
+        set_target_properties(FastSIMD_FastNoise PROPERTIES COMPILE_OPTIONS "${_fastsimd_options}")
+        unset(_fastsimd_options)
+    endif()
     target_link_libraries(${_scoped_module_name} PRIVATE FastNoise2)
 
     ###############################################################################
@@ -458,11 +471,21 @@ if(_guard)
     if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
         set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/libJolt.a")
     elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
-        set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/Debug/Jolt.lib")
+        if(MSVC)
+            set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/Debug/Jolt.lib")
+        else()
+            set(JoltPhysics_LIB "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics/src/joltPhysics-build/libJolt.a")
+        endif()
     else()
         message(FATAL_ERROR "Missing implementation for platform [${JAFG_TARGET_PLATFORM}].")
     endif()
     message(STATUS "JoltPhysics_LIB: ${JoltPhysics_LIB}")
+
+    # An external project configures on its own and would otherwise build for the host when cross compiling.
+    set(JoltPhysics_TOOLCHAIN_ARGS "")
+    if(CMAKE_CROSSCOMPILING AND (JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS))
+        list(APPEND JoltPhysics_TOOLCHAIN_ARGS "-DCMAKE_TOOLCHAIN_FILE=${JAFG_ENGINE_ROOT}/CMake/mingw-ucrt.toolchain.cmake")
+    endif()
 
     ExternalProject_Add(
         joltPhysics
@@ -475,6 +498,7 @@ if(_guard)
         PREFIX              "${CMAKE_CURRENT_BINARY_DIR}/joltPhysics"
 
         CMAKE_ARGS
+            ${JoltPhysics_TOOLCHAIN_ARGS}
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
             -DCMAKE_CXX_STANDARD=17
@@ -664,6 +688,13 @@ if(_guard)
         target_link_libraries(${_scoped_module_name} PRIVATE
             ws2_32
             setupapi
+            dbghelp
+            secur32
+            )
+        # Tracy lives inside the engine library. Without these its symbols are not exported from the dll.
+        target_compile_definitions(${_scoped_module_name}
+            PRIVATE     TRACY_EXPORTS
+            INTERFACE   TRACY_IMPORTS
             )
     endif()
 endif()

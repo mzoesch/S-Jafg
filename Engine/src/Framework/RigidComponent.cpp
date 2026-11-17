@@ -465,6 +465,10 @@ bool PrepareRecreation(JPH::BodyInterface& Interface, Jafg::ARigidComponent& Com
 
 } /* ~Namespace <Anonymous> */
 
+//# COM declarations from Windows headers define INTERFACE...
+#ifdef INTERFACE
+    #undef INTERFACE
+#endif /* INTERFACE */
 #define INTERFACE this->GetParentPhysicsSystem()->GetBodyInterfaceNoLock()
 
 #if JAFG_DO_CHECKS

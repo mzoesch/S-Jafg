@@ -192,7 +192,7 @@ private:
         PROHIBIT_COPY(MyFont)
         explicit MyFont(MyFont&& Rhs) noexcept { *this = std::move(Rhs); }
         ENGINE_API MyFont& operator=(MyFont&& Rhs) noexcept;
-        ENGINE_API ~MyFont() noexcept { this->Orphan(); }
+        ~MyFont() noexcept { this->Orphan(); }
 
         //# Features that are not set, will be defaulted.
         NODISCARD ENGINE_API LGlyphCollection Shape(LStringView Text, f32 FontSize, LVec2F* Pencil

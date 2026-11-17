@@ -121,7 +121,7 @@ i32 main(i32 c, char* v[])
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")
-        Jafg::FlushOutStreams();
+        Jafg::Detail::EmitAndFlushLogs();
 
         std::cin.get();
     }

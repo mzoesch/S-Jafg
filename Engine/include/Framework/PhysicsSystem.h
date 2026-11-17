@@ -318,7 +318,7 @@ class LPhysicsSystem
 public:
 
     LPhysicsSystem() = delete;
-    ENGINE_API explicit LPhysicsSystem(ESkipInit) noexcept: SubSystem{} {}
+    explicit LPhysicsSystem(ESkipInit) noexcept: SubSystem{} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LPhysicsSystem)
     explicit LPhysicsSystem(LPhysicsSystemCreateInfo Info): LPhysicsSystem{ESkipInit::Here} { *this = std::move(Info); }
     ENGINE_API LPhysicsSystem& operator=(LPhysicsSystemCreateInfo Info);

@@ -98,7 +98,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
         }
     }
 
-    Jafg::FlushOutStreams();
+    Jafg::Detail::EmitAndFlushLogs();
 
 #if JAFG_WITH_LOCAL_LAYER
     if (!App::Detail::bSuppressCrashDialog && !IsTracerPidValidVerySlow())
@@ -112,7 +112,7 @@ void Jafg::App::Detail::TrapMeFn::operator()(std::string_view Message) const noe
 #endif /* JAFG_WITH_LOCAL_LAYER */
 
     // Flush, because some streams may be buffered and missing while aborting.
-    Jafg::FlushOutStreams();
+    Jafg::Detail::EmitAndFlushLogs();
 
     ///////////////////////////////////////////////////////////////////////////////
     // The final absolute end.
@@ -135,6 +135,56 @@ void Jafg::App::SleepNoStats(f64 InSeconds)
     {
         std::this_thread::yield();
     }
+}
+
+void Jafg::App::LaunchStandalone(LPath Path, TArray<LString> Args /* = {} */)
+{
+    auto AppendQuoted{[](std::wstring& Out, std::wstring_view Arg)
+    {
+        Out.push_back(LITERAL_WIDE('"'));
+        std::size_t NumBackslashes{0};
+        for (const wchar_t Char: Arg)
+        {
+            if (Char == LITERAL_WIDE('\\'))
+            {
+                ++NumBackslashes;
+            }
+            else
+            {
+                if (Char == LITERAL_WIDE('"'))
+                {
+                    Out.append(NumBackslashes + 1, LITERAL_WIDE('\\'));
+                }
+                NumBackslashes = 0;
+            }
+            Out.push_back(Char);
+        }
+        Out.append(NumBackslashes, LITERAL_WIDE('\\'));
+        Out.push_back(LITERAL_WIDE('"'));
+    }};
+
+    std::wstring CommandLine;
+    AppendQuoted(CommandLine, Path.native());
+    for (auto const& Arg: Args)
+    {
+        CommandLine.push_back(LITERAL_WIDE(' '));
+        AppendQuoted(CommandLine, algo::utf8_to_utf16(Arg));
+    }
+
+    STARTUPINFOW StartupInfo{};
+    StartupInfo.cb = sizeof(StartupInfo);
+    PROCESS_INFORMATION ProcessInfo{};
+
+    if (!::CreateProcessW(
+        Path.c_str(), CommandLine.data(), nullptr, nullptr, FALSE,
+        DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP, nullptr, nullptr, &StartupInfo, &ProcessInfo
+        ))
+    {
+        LOG_FATAL(LogPlatform, "Failed to create process for standalone launch of [{}].", Path)
+    }
+
+    ::CloseHandle(ProcessInfo.hThread);
+    ::CloseHandle(ProcessInfo.hProcess);
 }
 
 bool Jafg::App::Detail::IsTracerPidValidVerySlow()

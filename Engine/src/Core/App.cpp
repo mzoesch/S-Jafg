@@ -306,8 +306,8 @@ namespace Jafg::Detail
 {
 
 ENGINE_API std::size_t GLogMessagesLimit{ 2048 };
-ENGINE_API std::list<LLogMessage> GUnprocessedLogMessages;
-ENGINE_API std::list<LLogMessage> GLogMessages;
+ENGINE_API std::list<LLogMessage> GUnprocessedLogMessages INIT_PRIORITY(200);
+ENGINE_API std::list<LLogMessage> GLogMessages INIT_PRIORITY(200);
 ENGINE_API algo::tas_lock GLogMessagesLock;
 
 ENGINE_API bool GIsQuiet{};

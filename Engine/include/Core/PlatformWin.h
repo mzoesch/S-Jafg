@@ -315,7 +315,7 @@ typedef LPrimitivePlatformTypesWindows LPrimitivePlatformTypes;
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <Windows.h>
+#include <windows.h>
 
 #ifdef TEXT
     #undef TEXT
@@ -331,6 +331,14 @@ typedef LPrimitivePlatformTypesWindows LPrimitivePlatformTypes;
 #ifdef GetCommandLine
     #undef GetCommandLine
 #endif /* GetCommandLine */
+
+//# Legacy 16 bit pointer qualifiers from minwindef.h.
+#ifdef near
+    #undef near
+#endif /* near */
+#ifdef far
+    #undef far
+#endif /* far */
 
 //# Windows Platform
 ///////////////////////////////////////////////////////////////////////////////

@@ -39,7 +39,7 @@ public:
     void SetLight(LLight const& Light);
     NODISCARD FORCEINLINE constexpr LLight const& GetLight() const noexcept { return this->Light; }
 
-    ENGINE_API void SetType(ELight Type) noexcept
+    void SetType(ELight Type) noexcept
     {
         this->Light.Type = Type;
         this->OnTypeChanged();

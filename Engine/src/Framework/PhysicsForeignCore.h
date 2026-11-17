@@ -203,7 +203,7 @@ public:
         this->Map[Jafg::EPhysicsLayer::Dynamic] = JPH::BroadPhaseLayer{Jafg::EPhysicsBroadPhase::Dynamic};
     }
 
-    virtual uint GetNumBroadPhaseLayers() const override { return Jafg::EPhysicsBroadPhase::Count; }
+    virtual JPH::uint GetNumBroadPhaseLayers() const override { return Jafg::EPhysicsBroadPhase::Count; }
 
     virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer Layer) const override
     {

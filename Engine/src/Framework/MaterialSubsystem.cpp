@@ -1450,7 +1450,7 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
 
         if (!Result.Material.second.empty() && Result.Material.first.empty())
         {
-            Result.Material.first = Path;
+            Result.Material.first = Path.string();
         }
         check(Result.Material.first.empty() || !Result.Material.second.empty())
 

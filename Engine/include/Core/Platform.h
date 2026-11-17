@@ -474,6 +474,23 @@ struct LPrimitivePlatformTypesGeneric
     #define NODISCARD                                                   [[nodiscard]]
 #endif /* !NODISCARD */
 
+//#
+//# Init priority.
+//# - 000-100:   Internal
+//# - 101-199:   Third party
+//# - 200-299:   Jafg
+//# - 300-65536: Freely available
+//#
+//# Not respected on all platforms.
+//#
+#ifndef INIT_PRIORITY /* Compiler-dependent feature. */
+    #if defined(__GNUC__) && !defined(_MSC_VER)
+        #define INIT_PRIORITY(Priority)                                 __attribute__((init_priority(Priority)))
+    #else
+        #define INIT_PRIORITY(Priority)
+    #endif
+#endif /* !INIT_PRIORITY */
+
 #ifndef UNUSED /* Compiler-dependent feature. Evaluates to a correct macro for almost all compilers and platforms. */
     #define UNUSED                                                      [[maybe_unused]]
 #endif /* !UNUSED */

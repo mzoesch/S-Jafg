@@ -34,7 +34,7 @@ namespace
 {
 
 #ifdef JPH_ENABLE_ASSERTS
-NODISCARD bool JoltSink(char const* Expr, char const* Msg, char const* File, uint Line) noexcept
+NODISCARD bool JoltSink(char const* Expr, char const* Msg, char const* File, JPH::uint Line) noexcept
 {
     if (Msg)
     {
