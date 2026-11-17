@@ -1,9 +1,30 @@
 #!/bin/bash
 # Copyright mzoesch. All rights reserved.
+#
+# Mirrors every file listed in <src>/.lfs to <mirror>, keeping the relative layout.
+#
+#   --shallow (default)  Skips files whose destination is newer (rsync --update).
+#                        Size + mtime quick check; fast.
+#   --deep               Compares file contents by checksum (rsync --checksum).
+#                        Slower; catches content changes that keep size and mtime.
+
+set -eo pipefail
+
+usage()
+{
+    echo "Usage: $0 [--shallow|--deep] <src> <mirror>"
+    exit 1
+}
+
+MODE="--update"
+case "$1" in
+    --shallow) MODE="--update";   shift ;;
+    --deep)    MODE="--checksum"; shift ;;
+    -*)        usage ;;
+esac
 
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <src> <mirror>"
-    exit 1
+    usage
 fi
 
 SRC="$1"
@@ -21,29 +42,19 @@ if [ ! -f "$LFs" ]; then
     exit 1
 fi
 
-if [ ! -d "$MIRROR" ]; then
-    mkdir -p "$MIRROR"
-fi
-
+# Fail before copying anything if a listed file is missing.
+Missing=0
 while IFS= read -r file; do
     [[ -z "$file" ]] && continue
-
-    src="$SRC/$file"
-    dst="$MIRROR/$file"
-
-    if [ ! -f "$src" ]; then
-        echo "$src: No such file."
-        exit 1
+    if [ ! -f "$SRC/$file" ]; then
+        echo "$SRC/$file: No such file."
+        Missing=1
     fi
-
-    mkdir -p "$(dirname "$dst")"
-
-    # Check if files are different before copying
-    if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
-        continue
-    fi
-    echo "$src -> $dst"
-    cp -p "$src" "$dst"
 done < "$LFs"
+[ "$Missing" -ne 0 ] && exit 1
+
+mkdir -p "$MIRROR"
+
+rsync -av -P "$MODE" --files-from="$LFs" "$SRC/" "$MIRROR/" || exit $?
 
 echo "$MIRROR"
