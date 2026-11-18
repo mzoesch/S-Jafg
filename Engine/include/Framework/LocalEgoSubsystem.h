@@ -10,7 +10,6 @@ namespace Jafg
 
 class LLocalEgo;
 class APersonaController;
-class APawn;
 
 //#
 //# A subsystem that shares its lifetime with the local ego.

@@ -67,7 +67,7 @@ void Jafg::AMovementComponent::OnAttach(AActor& InOwner)
     }
     if (MovementComponents != 1)
     {
-        LOG_FATAL(LogMovement, "[{}]: Owner [{}] has [{}] movement components. Only one may move a pawn."
+        LOG_FATAL(LogMovement, "[{}]: Owner [{}] has [{}] movement components. Only one may move an actor."
             , this->GetNameAsString(), InOwner.GetNameAsString(), MovementComponents
             )
     }
@@ -378,8 +378,8 @@ Jafg::LMovementInput Jafg::AMovementComponent::ConsumeIntent(f32 Dt) noexcept
 void Jafg::AMovementComponent::SimulateRemoteInputs(f32 Dt)
 {
     /*
-     * If no command is available, the pawn waits for its owning client. Clients are expected to send their commands
-     * redundantly, so that a single lost packet does not stall the pawn.
+     * If no command is available, the character waits for its owning client. Clients are expected to send their commands
+     * redundantly, so that a single lost packet does not stall the character.
      */
     std::size_t const Count{this->RemoteInputs.size() > RemoteInputCatchUpThreshold ? 2uz : 1uz};
     for (std::size_t Idx{}; Idx < Count && !this->RemoteInputs.empty(); ++Idx)

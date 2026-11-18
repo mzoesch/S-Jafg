@@ -3,7 +3,7 @@
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 #include "Framework/Frontend.h"
-#include "Framework/Pawn.h"
+#include "Framework/AvatarComponent.h"
 #include "Framework/PersonaController.h"
 #include "Framework/LocalEgoSubsystem.h"
 
@@ -30,11 +30,11 @@ void Jafg::LLocalEgo::Initialize()
                 auto& World{Track.GetWorld()};
                 for (auto& Employee : World.GetEmployees())
                 {
-                    if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
+                    if (AAvatarComponent* Avatar{DynamicCast<AAvatarComponent>(Employee.get())})
                     {
-                        if (Pawn->IsPossessedLocally())
+                        if (Avatar->IsPossessedLocally())
                         {
-                            Pawn->SetNearFrustum(NearFrustum);
+                            Avatar->ForEachEye([NearFrustum](AEyeComponent& Eye) { Eye.NearFrustum = NearFrustum; });
                         }
                     }
                 }
@@ -56,11 +56,11 @@ void Jafg::LLocalEgo::Initialize()
                 auto& World{Track.GetWorld()};
                 for (auto& Employee : World.GetEmployees())
                 {
-                    if (APawn* Pawn{DynamicCast<APawn>(Employee.get())})
+                    if (AAvatarComponent* Avatar{DynamicCast<AAvatarComponent>(Employee.get())})
                     {
-                        if (Pawn->IsPossessedLocally())
+                        if (Avatar->IsPossessedLocally())
                         {
-                            Pawn->SetFarFrustum(FarFrustum);
+                            Avatar->ForEachEye([FarFrustum](AEyeComponent& Eye) { Eye.FarFrustum = FarFrustum; });
                         }
                     }
                 }

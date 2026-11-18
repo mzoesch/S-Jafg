@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Framework/PawnComponent.h"
+#include "Framework/ActorComponent.h"
 #include "JgcCharacterInputComponent.generated.h"
 
 namespace Jafg
@@ -18,7 +18,6 @@ namespace Jgc
 {
 
 class AInteractableComponent;
-class AVehicleComponent;
 
 struct LInteractionTarget final
 {
@@ -28,13 +27,14 @@ struct LInteractionTarget final
 };
 
 //#
-//# Translates the input of a local human into the intent of the movement component of the owning pawn.
+//# Translates the input of a local human into the intent of the movement component of the owning actor. Active while
+//# a local controller possesses the avatar of the actor.
 //#
 //# While the cursor action is held, the mouse no longer looks around but moves a cursor that is kept inside the
 //# view. Clicking an interactable (e.g., a vehicle) under the cursor interacts with it.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcCharacterInputComponent: public Jafg::APawnComponent
+class JGC_API AJgcCharacterInputComponent: public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
@@ -49,7 +49,7 @@ public:
 
     virtual void OnAttach(Jafg::AActor& InOwner) override;
     virtual void OnGarbage(Jafg::EJxxRecordTearDownReason Reason) override;
-    virtual void OnNewPersonaController(Jafg::APersonaController* New) override;
+    virtual void OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New) override;
     virtual void ParentTick(f32 Dt) override;
 
     //# @return Whether the context was activated successfully.
@@ -69,11 +69,6 @@ public:
     //# @return Whether an interaction happened. Interactions may change the active input contexts.
     bool OnInteractPressed() noexcept;
 
-    //# Called by #AVehicleComponent::Enter. The vehicle takes over the input.
-    void OnEnteredVehicle(AVehicleComponent& Vehicle) noexcept;
-    //# Called by #AVehicleComponent::Exit.
-    void OnExitedVehicle() noexcept;
-
     NODISCARD Jafg::AMovementComponent* GetMovementComponent() noexcept;
     NODISCARD Jafg::AMovementComponent const* GetMovementComponent() const noexcept;
 
@@ -82,7 +77,6 @@ public:
     NODISCARD FORCEINLINE constexpr bool AreMagBootsEngaged() const noexcept { return this->bMagBoots; }
     //# Whether the cursor is shown instead of looking around.
     NODISCARD FORCEINLINE constexpr bool IsInCursorMode() const noexcept { return this->bCursorMode; }
-    NODISCARD FORCEINLINE constexpr bool IsInVehicle() const noexcept { return this->bInVehicle; }
 
     //# The interactable under the cursor. Empty outside of cursor mode or if nothing interactable is there.
     NODISCARD std::optional<LInteractionTarget> TraceInteractable() noexcept;
@@ -101,11 +95,13 @@ public:
 
 private:
 
-    NODISCARD Jafg::LLocalLackey* GetLocalLackey() noexcept;
-    void SetCursorMode(bool bEnabled) noexcept;
+    //# The lackey of the controller, if it is a local one.
+    NODISCARD static Jafg::LLocalLackey* GetLocalLackey(Jafg::APersonaController* Ctrl) noexcept;
+    //# @param Lackey The lackey whose input is changed. Null to only change the state.
+    void SetCursorMode(bool bEnabled, Jafg::LLocalLackey* Lackey) noexcept;
     //# Feedback for the interactable under the cursor.
     void UpdateHover() noexcept;
-    void SetHoversInteractable(bool bHovers) noexcept;
+    void SetHoversInteractable(bool bHovers, Jafg::LLocalLackey* Lackey) noexcept;
     void ResetFrameInput() noexcept;
 
     //# Collected while the input is dispatched. Committed and reset once per frame.
@@ -117,7 +113,6 @@ private:
 
     bool bCursorMode{};
     bool bHoversInteractable{};
-    bool bInVehicle{};
 
     bool bJetpack{};
     bool bDampeners{ true };

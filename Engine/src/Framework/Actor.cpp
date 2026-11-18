@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/Actor.h"
+#include "Framework/AvatarComponent.h"
 
 void Jafg::AActor::BeginLife()
 {
@@ -92,6 +93,19 @@ void Jafg::AActor::SelectedTick(WEditorWorldViewer& Viewer, f32 Dt, AActorCompon
 void Jafg::AActor::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
+
+    if (this->HasRootComponent())
+    {
+        /* Everything else is torn down as well. Then only the links have to go. */
+        bool const bKeepWorld{Reason == EJxxRecordTearDownReason::Default};
+        if (this->IsAttached())
+        {
+            auto& Root{*this->RootComponent};
+            algo::erase_once_checked(&Root.AttachParent->AttachedActors, this);
+            Root.AttachParent = nullptr;
+        }
+        this->RootComponent->DetachAttachedActors(bKeepWorld, true);
+    }
 
     for (auto Components{std::exchange(this->Components, {})}; auto& Comp: Components)
     {
@@ -273,3 +287,109 @@ bool Jafg::AActor::_check_IsComponentAttachedTransitive(AActorComponent const& W
     return false;
 }
 #endif /* JAFG_DO_CHECKS */
+
+bool Jafg::AActor::AttachTo(ASceneComponent& Parent, EAttachmentRule Rule /* = EAttachmentRule::KeepWorld */)
+{
+    check(Tasks::IsOnMasterThread())
+
+    if (!this->HasRootComponent())
+    {
+        LOG_ERROR(LogWorld, "[{}]: Cannot attach an actor without a root component to [{}].", this->GetNameAsString(), Parent.GetNameAsString())
+        return false;
+    }
+    if (!Parent.IsOwningActorValid())
+    {
+        LOG_ERROR(LogWorld, "[{}]: Cannot attach to [{}]. It is not part of an actor yet.", this->GetNameAsString(), Parent.GetNameAsString())
+        return false;
+    }
+    for (AActor const* It{&Parent.GetOwningActor()}; It; It = It->GetAttachParentActor())
+    {
+        if (It == this)
+        {
+            LOG_ERROR(LogWorld, "[{}]: Cannot attach to [{}] of [{}]. That would create a cycle."
+                , this->GetNameAsString(), Parent.GetNameAsString(), Parent.GetOwningActor().GetNameAsString()
+                )
+            return false;
+        }
+    }
+
+    auto& Root{*this->RootComponent};
+    if (!Root.CanFollowAttachParent())
+    {
+        LOG_ERROR(LogWorld, "[{}]: Cannot attach to [{}]. The root [{}] cannot follow a parent."
+            , this->GetNameAsString(), Parent.GetNameAsString(), Root.GetNameAsString()
+            )
+        return false;
+    }
+
+    if (Root.AttachParent == &Parent)
+    {
+        return true;
+    }
+
+    LWorldTrans const World{Root.GetWorldTransformSlow()};
+    if (Root.AttachParent)
+    {
+        algo::erase_once_checked(&Root.AttachParent->AttachedActors, this);
+    }
+    Root.AttachParent = &Parent;
+    Parent.AttachedActors.emplace_back(this);
+
+    if (Rule == EAttachmentRule::KeepWorld)
+    {
+        Root.SetWorldTransformByTeleport(World);
+    }
+    else
+    {
+        Root._detail_OnTransformChanged(ETransformChangeBits::Translation|ETransformChangeBits::Rotator|ETransformChangeBits::Scale);
+    }
+
+    LOG_VERBOSE(LogWorld, "[{}]: Attached to [{}] of [{}]."
+        , this->GetNameAsString(), Parent.GetNameAsString(), Parent.GetOwningActor().GetNameAsString()
+        )
+    return true;
+}
+
+void Jafg::AActor::Detach(EAttachmentRule Rule /* = EAttachmentRule::KeepWorld */)
+{
+    check(Tasks::IsOnMasterThread())
+
+    if (!this->IsAttached())
+    {
+        return;
+    }
+
+    auto& Root{*this->RootComponent};
+    LWorldTrans const World{Root.GetWorldTransformSlow()};
+    LOG_VERBOSE(LogWorld, "[{}]: Detaching from [{}].", this->GetNameAsString(), Root.AttachParent->GetNameAsString())
+    algo::erase_once_checked(&Root.AttachParent->AttachedActors, this);
+    Root.AttachParent = nullptr;
+
+    if (Rule == EAttachmentRule::KeepWorld)
+    {
+        Root.SetLocalTransformByTeleport(World);
+    }
+    else
+    {
+        Root._detail_OnTransformChanged(ETransformChangeBits::Translation|ETransformChangeBits::Rotator|ETransformChangeBits::Scale);
+    }
+}
+
+Jafg::AActor* Jafg::AActor::GetAttachParentActor() const noexcept
+{
+    if (auto* Parent{this->GetAttachParent()}; Parent && Parent->IsOwningActorValid())
+    {
+        return &Parent->GetOwningActor();
+    }
+    return nullptr;
+}
+
+Jafg::AAvatarComponent* Jafg::AActor::GetAvatar() noexcept
+{
+    return this->GetComponent<AAvatarComponent>();
+}
+
+Jafg::AAvatarComponent const* Jafg::AActor::GetAvatar() const noexcept
+{
+    return this->GetComponent<AAvatarComponent>();
+}

@@ -15,6 +15,8 @@
 namespace Jafg
 {
 
+class AEyeComponent;
+
 //# A widget to perspectively view a world in a primitive manner.
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WWorldViewer : public WUserWidget, public LLocalLackey
@@ -113,7 +115,7 @@ protected:
 
     virtual void InitializeRenderTarget();
     virtual bool OnPreDrawImpl(LRenderInfo const& Info);
-    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, APawn& Pawn, LWorldEye const& Eye) {}
+    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, AEyeComponent& ViewEye, LWorldEye const& Eye) {}
 
     virtual LTransientPersona::Local GetTransientPersona() noexcept;
     virtual void OnConnect() {}

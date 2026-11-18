@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "Framework/PawnComponent.h"
-#include "Framework/Pawn.h"
+#include "Framework/ActorComponent.h"
+#include "Framework/Actor.h"
 #include "Framework/MovementTypes.h"
 #include "MovementComponent.generated.h"
 
 namespace Jafg
 {
 
-class APawn;
 class APersonaController;
 
 //#
@@ -25,7 +24,7 @@ struct LMovementIntent final
     std::optional<LVec3F> MoveWorldDirection;
     //# Accumulated look delta that was not yet consumed by a command.
     LVec3F PendingLook{ 0.0f };
-    //# If set, the pawn turns towards this world space direction (convenience for bots).
+    //# If set, the actor turns towards this world space direction (convenience for bots).
     std::optional<LVec3F> LookAtDirection;
     //# Turn rate in radians per second that is used for #LookAtDirection.
     f32 LookAtTurnRate{ 2.0f * maths::pi_f };
@@ -34,7 +33,7 @@ struct LMovementIntent final
 };
 
 //#
-//# Base of all movement components. Movement components move the pawn they are attached to.
+//# Base of all movement components. Movement components move the root of the actor they are part of.
 //#
 //# Human and bot controllers both only interact with the intent API (#SetMoveInput, #AddLookInput, #Jump, ...).
 //# Once per physics tick, the intent is sampled into an #LMovementInput command which is then simulated by the
@@ -49,7 +48,7 @@ struct LMovementIntent final
 //# must be a deterministic function of the restored snapshot and the input commands.
 //#
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
-class ENGINE_API AMovementComponent : public APawnComponent
+class ENGINE_API AMovementComponent : public AActorComponent
 {
     GENERATED_CLASS_BODY()
 
@@ -107,8 +106,8 @@ public:
 
     NODISCARD FORCEINLINE constexpr EMovementMode GetMovementMode() const noexcept { return this->Mode; }
     //#
-    //# Freeze the pawn in place (e.g., while seated in a vehicle or during a cutscene). Unfreezing resumes as falling;
-    //# the next tick picks the correct mode. Frozen pawns do not collide and follow their root component, including
+    //# Freeze the actor in place (e.g., while seated in a vehicle or during a cutscene). Unfreezing resumes as falling;
+    //# the next tick picks the correct mode. Frozen actors do not collide and follow their root component, including
     //# its full rotation.
     //#
     void SetFrozen(bool bFrozen);
@@ -116,7 +115,7 @@ public:
     NODISCARD virtual LVec3F GetVelocity() const noexcept PURE_VIRTUAL(return {};)
     //# The up vector of the body.
     NODISCARD virtual LVec3F GetUp() const noexcept PURE_VIRTUAL(return {};)
-    //# Move the pawn instantly to a new location (and optionally rotation). Keeps the velocity.
+    //# Move the actor instantly to a new location (and optionally rotation) in world space. Keeps the velocity.
     virtual void Teleport(LWorldVec3 const& Location, std::optional<LWorldQuat> Rotation = {}) PURE_VIRTUAL()
     //# Overwrite the velocity (e.g., to inherit the velocity of a vehicle that is left).
     virtual void SetVelocity(LVec3F const& Velocity) PURE_VIRTUAL()
@@ -161,7 +160,7 @@ protected:
     virtual void SimulateTick(LMovementInput const& Input, f32 Dt) PURE_VIRTUAL()
     //# Restore the complete simulated state.
     virtual void RestoreSnapshot(LMovementSnapshot const& Snapshot) PURE_VIRTUAL()
-    //# Write the simulated state (and any not yet consumed look input) to the pawn. Called every frame and after ticks.
+    //# Write the simulated state (and any not yet consumed look input) to the actor. Called every frame and after ticks.
     virtual void UpdatePresentation(f32 Dt) {}
 
     //# Converts a world space direction into view-relative move axes using the current state.

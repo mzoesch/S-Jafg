@@ -632,6 +632,7 @@ bool Jafg::ARigidComponent::IsAddedToSimulation() const noexcept
 void Jafg::ARigidComponent::AddToSimulation(ESimulationAddingBehavior Behavior)
 {
     check(!this->IsAddedToSimulation())
+    check(!this->HasAttachParent() && "Simulated bodies cannot follow an attach parent.")
     INTERFACE.AddBody(this->RigidObject->GetID(), JPH::EActivation{std::to_underlying(Behavior)});
 }
 

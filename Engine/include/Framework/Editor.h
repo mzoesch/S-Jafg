@@ -10,7 +10,7 @@
 #include "Nodes/HButton.h"
 #include "Widgets/WorldViewer.h"
 #include "Engine/Engine.h"
-#include "Framework/PawnComponent.h"
+#include "Framework/ActorComponent.h"
 #include "Framework/PersonaControllerComponent.h"
 #include "Framework/SupremePolicies.h"
 #include "Rhi/StaticMeshRenderable.h"
@@ -21,6 +21,8 @@
 namespace Jafg
 {
 
+class AEyeComponent;
+class AAvatarComponent;
 class WTabOverlay;
 class WEditor;
 class WButton;
@@ -287,7 +289,8 @@ public:
         Standalone,
     };
 
-    enum struct EPawnSart: u8
+    //# Where the avatar of a started world starts.
+    enum struct EAvatarStart: u8
     {
         Default,
         EditorEye,
@@ -341,7 +344,7 @@ protected:
 
     virtual void InitializeRenderTarget() override;
     virtual bool OnPreDrawImpl(LRenderInfo const& Info) override;
-    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, APawn& Pawn, LWorldEye const& Eye) override;
+    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, AEyeComponent& ViewEye, LWorldEye const& Eye) override;
 
     virtual LTransientPersona::Local GetTransientPersona() noexcept override;
     virtual void OnConnect() override;
@@ -364,7 +367,7 @@ private:
     LDelegateHandle OnPolygonModeChangedHandle;
 
     EStartType StartType{EStartType::Pie};
-    EPawnSart PawnStart{EPawnSart::Default};
+    EAvatarStart AvatarStart{EAvatarStart::Default};
     ENetMode NetMode{ENetMode::Standalone};
 
     struct LEditorReconnectionData final
@@ -374,7 +377,8 @@ private:
     };
     std::optional<LEditorReconnectionData> EditorReconnectionData;
     WWorldViewer* RunningInstance{};
-    APawn* RunningPawnIfDetached{};
+    //# The avatar of the running world while the editor camera is detached from it.
+    AAvatarComponent* RunningAvatarIfDetached{};
     bool bIsNextPersonaEditorControlled{};
     NODISCARD constexpr bool IsRunning() const noexcept { return !!this->RunningInstance; }
 
@@ -729,7 +733,7 @@ private:
 };
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API AEditorCameraComponent final : public APawnComponent
+class ENGINE_API AEditorCameraComponent final : public AActorComponent
 {
     GENERATED_CLASS_BODY()
 
@@ -744,14 +748,20 @@ public:
         Super::OnAttach(InOwner);
         (void)this->ActivateUserInputContext();
     }
-    virtual void OnNewPersonaController(APersonaController* New) override
+    virtual void OnPossessionChanged(APersonaController* Previous, APersonaController* New) override
     {
-        Super::OnNewPersonaController(New);
-        (void)this->ActivateUserInputContext();
+        Super::OnPossessionChanged(Previous, New);
+        if (New)
+        {
+            (void)this->ActivateUserInputContext();
+        }
     }
 
     //# @return Whether the context was activated successfully.
     bool ActivateUserInputContext() noexcept;
+
+    //# The perspective that the editor sees through.
+    NODISCARD LWorldEye GetEye() const noexcept;
 
     void OnHighlightTrace(WEditorWorldViewer& Viewer, rhi::extent2 Extent, LVec2F Location);
     void OnTrace(WEditorWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin = {});

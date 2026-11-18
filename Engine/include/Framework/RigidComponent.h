@@ -41,7 +41,9 @@ public:
     void MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius = Physx::DefaultConvexRadius);
 
     bool IsAddedToSimulation() const noexcept;
+    //# The simulation moves the body in world space. Attached actors cannot be simulated.
     void AddToSimulation(ESimulationAddingBehavior Behavior);
+    virtual bool CanFollowAttachParent() const noexcept override { return !this->IsAddedToSimulation(); }
     void RemoveFromSimulation();
 
     void SetLinearVelocity(LWorldVec3 const& Velocity);

@@ -10,7 +10,10 @@
 #include "Framework/Actor.h"
 #include "Framework/LightComponent.h"
 #include "Framework/RigidComponent.h"
+#include "Framework/AvatarComponent.h"
+#include "Framework/EyeComponent.h"
 #include "Jgc/Framework/Vehicle.h"
+#include "Jgc/Framework/JgcVehicleInputComponent.h"
 #include "Jgc/Owss/OwssSupremePolicies.h"
 #include "Rhi/TextureCube.h"
 
@@ -102,9 +105,18 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
             Comp.SetPbrMaterialInstance(this->MaterialInstance);
         });
 
+        /* The view while driving. Behind and slightly above the ship. */
+        Actor.EmplaceSceneComponentTo<Jafg::AEyeComponent>(Actor.GetRootComponent(), [](Jafg::AEyeComponent& Eye)
+        {
+            Eye.SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * 2_r - maths::forward_vector<LWorldVec3> * 30_r);
+        });
+
         Actor.EmplaceComponent<AVehicleComponent>([](AVehicleComponent& Comp)
         {
             Comp.SetVehicleType(EVehicle::Dynamic3D);
         });
+        /* After the vehicle, so that a driver leaves before the avatar is torn down. */
+        Actor.EmplaceComponent<Jafg::AAvatarComponent>();
+        Actor.EmplaceComponent<AJgcVehicleInputComponent>();
     })->GetComponentChecked<AVehicleComponent>();
 }

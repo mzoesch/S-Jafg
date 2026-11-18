@@ -11,6 +11,8 @@ namespace Jafg
 
 class AActor;
 class ASceneComponent;
+class AAvatarComponent;
+class APersonaController;
 #if JAFG_WITH_EDITOR
     class WEditorWorldViewer;
 #endif /* JAFG_WITH_EDITOR */
@@ -111,6 +113,21 @@ public:
     NODISCARD constexpr bool IsOwningActorValid() const noexcept { return this->Owner != nullptr; }
     NODISCARD constexpr AActor& GetOwningActor() noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
     NODISCARD constexpr AActor const& GetOwningActor() const noexcept { check(this->IsOwningActorValid()) return *this->Owner; }
+
+    //# The avatar of the owning actor. Null if the actor cannot be possessed. @see #AActor::GetAvatar
+    NODISCARD AAvatarComponent* GetOwningAvatar() noexcept;
+    NODISCARD AAvatarComponent const* GetOwningAvatar() const noexcept;
+    //# The controller that possesses the owning actor. Null if it is not possessed.
+    NODISCARD APersonaController* GetOwningController() noexcept;
+    NODISCARD APersonaController const* GetOwningController() const noexcept;
+    NODISCARD FORCEINLINE APersonaController* GetOwningControllerChecked() noexcept { auto* Out{this->GetOwningController()}; check(Out) return Out; }
+    NODISCARD FORCEINLINE APersonaController const* GetOwningControllerChecked() const noexcept { auto* Out{this->GetOwningController()}; check(Out) return Out; }
+    //#
+    //# Called when the controller that possesses the avatar of the owning actor changed (see #AAvatarComponent).
+    //# @param Previous The controller that possessed the actor until now. Null if it was not possessed.
+    //# @param New The controller that possesses the actor from now on. Null if it is no longer possessed.
+    //#
+    virtual void OnPossessionChanged(APersonaController* Previous, APersonaController* New) {}
 
 #if JAFG_DO_CHECKS
     NODISCARD FORCEINLINE constexpr bool _check_HasExecutedOnAttach() const noexcept { return this->bHasExecutedOnAttach; }

@@ -6,33 +6,33 @@
 #include "User/Input/UserInputRegistry.h"
 #include "Framework/PersonaController.h"
 #include "User/Input/UserInput.h"
-#include "Jgc/Framework/JgcInputComponent.h"
+#include "Jgc/Framework/JgcVehicleInputComponent.h"
 #include "Jgc/Framework/JgcCharacterInputComponent.h"
 
 namespace
 {
 
-//# Calls #Functor with the character input component of the pawn that the acting controller possesses.
+//# Calls #Functor with the character input component of the actor that the acting controller possesses.
 Jafg::LOnUserInputActionResult ForCharacterInput(Jafg::LInputCallback const& Data, auto&& Functor)
 {
-    if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+    if (auto* Possessed{Data.Controller.GetPossessedActor()})
     {
-        if (auto* Comp{Pawn->GetComponent<Jgc::AJgcCharacterInputComponent>()})
+        if (auto* Comp{Possessed->GetComponent<Jgc::AJgcCharacterInputComponent>()})
         {
             Functor(*Comp);
         }
         else
         {
             LOG_WARNING(LogUserInput
-                , "[{}]: Action was triggered but pawn does not posses a [{}]."
-                , Pawn->GetNameAsString(), algo::type_name<Jgc::AJgcCharacterInputComponent>()
+                , "[{}]: Action was triggered but the possessed actor has no [{}]."
+                , Possessed->GetNameAsString(), algo::type_name<Jgc::AJgcCharacterInputComponent>()
                 )
         }
     }
     else
     {
         LOG_WARNING(LogUserInput
-            , "[{}]: Action was triggered but controller does not possess any pawn."
+            , "[{}]: Action was triggered but controller does not possess anything."
             , Data.Controller.GetNameAsString()
             )
     }
@@ -101,24 +101,24 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AJgcInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
                     {
                         Comp->OnVehicleStrafe(Value);
                     }
                     else
                     {
                         LOG_WARNING(LogUserInput,
-                            "[{}]: Action was triggered but pawn does not posses a [{}].",
-                            Pawn->GetNameAsString(), algo::type_name<AJgcInputComponent>()
+                            "[{}]: Action was triggered but the possessed actor has no [{}].",
+                            Possessed->GetNameAsString(), algo::type_name<AJgcVehicleInputComponent>()
                             )
                     }
                 }
                 else
                 {
                     LOG_WARNING(LogUserInput,
-                        "[{}]: Action was triggered but controller does not possess any pawn.",
+                        "[{}]: Action was triggered but controller does not possess anything.",
                         Data.Controller.GetNameAsString()
                         )
                 }
@@ -173,24 +173,24 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AJgcInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
                     {
                         Comp->OnVehicleTorque(Value);
                     }
                     else
                     {
                         LOG_WARNING(LogUserInput,
-                            "[{}]: Action was triggered but pawn does not posses a [{}].",
-                            Pawn->GetNameAsString(), algo::type_name<AJgcInputComponent>()
+                            "[{}]: Action was triggered but the possessed actor has no [{}].",
+                            Possessed->GetNameAsString(), algo::type_name<AJgcVehicleInputComponent>()
                             )
                     }
                 }
                 else
                 {
                     LOG_WARNING(LogUserInput,
-                        "[{}]: Action was triggered but controller does not possess any pawn.",
+                        "[{}]: Action was triggered but controller does not possess anything.",
                         Data.Controller.GetNameAsString()
                         )
                 }
@@ -204,9 +204,9 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {},
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AJgcInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
                     {
                         /* Leaving gives the input back to the character. */
                         return {.bDirty = Comp->OnVehicleExit()};

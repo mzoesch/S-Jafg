@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Framework/Actor.h"
-#include "Framework/Pawn.h"
 #include "Framework/LackeyForward.h"
 #include "PersonaController.generated.h"
 
@@ -12,8 +11,15 @@ namespace Jafg
 
 class LLocalEgo;
 class LUserInput;
+class AAvatarComponent;
+class AEyeComponent;
 
+//#
 //# A pc is the world-entity-bridge possessed by a lackey to allow to interact with a world.
+//#
+//# A pc possesses an avatar (see #AAvatarComponent), not an actor, and sees through the eye of that avatar.
+//# Possession does not own anything. The lifetime of actors can be bound to a pc with #AdoptActor.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API APersonaController : public AActor
 {
@@ -95,20 +101,38 @@ public:
         return nullptr;
     }
 
-    FORCEINLINE bool IsOwnedPawnValid() const noexcept { return this->Pawn.get(); }
-    FORCEINLINE APawn* GetOwnedPawn() noexcept { return this->Pawn.get(); }
-    FORCEINLINE APawn const* GetOwnedPawn() const noexcept { return this->Pawn.get(); }
-    FORCEINLINE APawn* GetOwnedPawnChecked() noexcept { check(this->IsOwnedPawnValid()) return this->Pawn.get(); }
-    FORCEINLINE APawn const* GetOwnedPawnChecked() const noexcept { check(this->IsOwnedPawnValid()) return this->Pawn.get(); }
-    FORCEINLINE APawn* GetOwnedPawnAsserted() noexcept { jassert(this->IsOwnedPawnValid()) return this->Pawn.get(); }
-    FORCEINLINE APawn const* GetOwnedPawnAsserted() const noexcept { jassert(this->IsOwnedPawnValid()) return this->Pawn.get(); }
-    //# @return The old pawn. If bOrphanOld is true then this will always return nullptr as the pawn is no longer valid.
-    TJxxUnique<APawn> PossessPawn(TJxxUnique<APawn> New, bool bOrphanOld = true);
+    NODISCARD FORCEINLINE constexpr bool IsPossessing() const noexcept { return !!this->Avatar; }
+    NODISCARD FORCEINLINE constexpr AAvatarComponent* GetPossessedAvatar() const noexcept { return this->Avatar; }
+    NODISCARD FORCEINLINE AAvatarComponent* GetPossessedAvatarChecked() const noexcept { check(this->IsPossessing()) return this->Avatar; }
+    //# The actor of the possessed avatar. Null if nothing is possessed.
+    NODISCARD AActor* GetPossessedActor() const noexcept;
+    NODISCARD FORCEINLINE AActor* GetPossessedActorChecked() const noexcept { auto* Out{this->GetPossessedActor()}; check(Out) return Out; }
+    //#
+    //# Possess an avatar, or nothing with nullptr. The previously possessed avatar is released but stays in the
+    //# world. An avatar that is possessed by another pc is taken from it.
+    //#
+    void Possess(AAvatarComponent* New);
+
+    //# The eye that this pc sees the world through: The eye of the possessed avatar. Null if there is none.
+    NODISCARD AEyeComponent* GetViewEye() const noexcept;
+
+    //#
+    //# Bind the lifetime of an actor to this pc (e.g., the character that was spawned for it). The actor is
+    //# destroyed with this pc. Adopting does not possess.
+    //#
+    void AdoptActor(TJxxUnique<AActor> Actor);
+    //# @return The actor that is now owned by the caller. Empty if this pc did not adopt it.
+    TJxxUnique<AActor> AbandonActor(AActor& Actor);
+    NODISCARD FORCEINLINE constexpr TArray<AActor*> const& GetAdoptedActors() const noexcept { return this->AdoptedActors; }
+
+    //# Jafg internal method. Do not use. Called when the possessed avatar is torn down.
+    void _OnAvatarGarbage(AAvatarComponent& Garbage) noexcept;
 
 private:
 
     LLackey Lackey;
-    TJxxUnique<APawn> Pawn;
+    AAvatarComponent* Avatar{};
+    TArray<AActor*> AdoptedActors;
 };
 
 } /* ~Namespace Jafg */

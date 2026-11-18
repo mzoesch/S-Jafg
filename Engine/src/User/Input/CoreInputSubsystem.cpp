@@ -191,24 +191,24 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                     }),
             [](LInputCallback const& Data, LInputActionValue& Value) -> LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AEditorCameraComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AEditorCameraComponent>()})
                     {
                         Comp->OnMove(Value);
                     }
                     else
                     {
                         LOG_WARNING(LogUserInput,
-                            "Editor camera action was triggered but pawn [{}] does not possess a [{}].",
-                            Pawn->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
+                            "Editor camera action was triggered but the possessed actor [{}] has no [{}].",
+                            Possessed->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
                             )
                     }
                 }
                 else
                 {
                     LOG_WARNING(LogUserInput,
-                        "Editor camera action was triggered but controller [{}] does not possess any pawn to move.",
+                        "Editor camera action was triggered but controller [{}] does not possess anything to move.",
                         Data.Controller.GetNameAsString()
                         )
                 }
@@ -222,24 +222,24 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {},
             [](LInputCallback const& Data, LInputActionValue& Value) -> LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AEditorCameraComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AEditorCameraComponent>()})
                     {
                         Comp->OnVelocityMultiplierChange(Value);
                     }
                     else
                     {
                         LOG_WARNING(LogUserInput,
-                            "Editor camera action was triggered but pawn [{}] does not possess a [{}].",
-                            Pawn->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
+                            "Editor camera action was triggered but the possessed actor [{}] has no [{}].",
+                            Possessed->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
                             )
                     }
                 }
                 else
                 {
                     LOG_WARNING(LogUserInput,
-                        "Editor camera action was triggered but controller [{}] does not possess any pawn to move.",
+                        "Editor camera action was triggered but controller [{}] does not possess anything to move.",
                         Data.Controller.GetNameAsString()
                         )
                 }
@@ -253,24 +253,24 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {},
             [](LInputCallback const& Data, LInputActionValue& Value) -> LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AEditorCameraComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AEditorCameraComponent>()})
                     {
                         Comp->OnVelocityMultiplierChange(Value);
                     }
                     else
                     {
                         LOG_WARNING(LogUserInput,
-                            "Editor camera action was triggered but pawn [{}] does not possess a [{}].",
-                            Pawn->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
+                            "Editor camera action was triggered but the possessed actor [{}] has no [{}].",
+                            Possessed->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
                             )
                     }
                 }
                 else
                 {
                     LOG_WARNING(LogUserInput,
-                        "Editor camera action was triggered but controller [{}] does not possess any pawn to move.",
+                        "Editor camera action was triggered but controller [{}] does not possess anything to move.",
                         Data.Controller.GetNameAsString()
                         )
                 }
@@ -285,24 +285,24 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {},
             [](LInputCallback const& Data, LInputActionValue& Value) -> LOnUserInputActionResult
             {
-                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Pawn->GetComponent<AEditorCameraComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AEditorCameraComponent>()})
                     {
                         Comp->OnRotate(Value);
                     }
                     else
                     {
                         LOG_WARNING(LogUserInput,
-                            "Editor camera action was triggered but pawn [{}] does not possess a [{}].",
-                            Pawn->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
+                            "Editor camera action was triggered but the possessed actor [{}] has no [{}].",
+                            Possessed->GetNameAsString(), algo::type_name<AEditorCameraComponent>()
                             )
                     }
                 }
                 else
                 {
                     LOG_WARNING(LogUserInput,
-                        "Editor camera action was triggered but controller [{}] does not possess any pawn to move.",
+                        "Editor camera action was triggered but controller [{}] does not possess anything to move.",
                         Data.Controller.GetNameAsString()
                         )
                 }

@@ -1,20 +1,19 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Jgc/Owss/OwssSupremePolicies.h"
-#include "Framework/PawnStart.h"
+#include "Framework/AvatarStart.h"
 #include "Framework/Editor.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/StaticMeshComponent.h"
 #include "Framework/CharacterMovementComponent.h"
 #include "User/UserPreferences.h"
 #include "Jgc/Framework/JgcCharacterInputComponent.h"
-#include "Jgc/Framework/JgcInputComponent.h"
 #include "Jgc/Framework/Vehicle.h"
 #include "Jgc/Owss/OwssGenerationSubsystem.h"
 
 static void LoadGymCollection(Jafg::LWorld& World)
 {
-    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AAvatarStart>{World})
         ->GetRootComponent()
             .SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * 1.71_r);
 
@@ -95,13 +94,13 @@ void Jgc::AOwssSupremePolicies::OnPersonaControllerCreated(Jafg::APersonaControl
     Super::OnPersonaControllerCreated(Pc);
 }
 
-TJxxUnique<Jafg::APawn> Jgc::AOwssSupremePolicies::GetPawnForPersonaController(Jafg::APersonaController const& Pc)
+TJxxUnique<Jafg::AActor> Jgc::AOwssSupremePolicies::SpawnAvatarForPersonaController(Jafg::APersonaController const& Pc)
 {
-    auto Result{Super::GetPawnForPersonaController(Pc)};
+    auto Result{Super::SpawnAvatarForPersonaController(Pc)};
 
     if (Result
 #if JAFG_WITH_EDITOR
-        /* Editor pawns fly freely with their editor camera. */
+        /* Editor cameras fly freely. */
         && !Pc.GetComponent<Jafg::AEditorPersonaControllerComponent>()
 #endif /* JAFG_WITH_EDITOR */
         )
@@ -110,7 +109,6 @@ TJxxUnique<Jafg::APawn> Jgc::AOwssSupremePolicies::GetPawnForPersonaController(J
         if (Pc.IsOwningLackey<Jafg::ELackey::Local>())
         {
             Result->EmplaceComponent<AJgcCharacterInputComponent>();
-            Result->EmplaceComponent<AJgcInputComponent>();
         }
     }
 

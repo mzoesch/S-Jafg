@@ -1,12 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Jgc/Framework/InteractableComponent.h"
-#include "Framework/Pawn.h"
+#include "Framework/Actor.h"
+#include "Framework/AvatarComponent.h"
 
-bool Jgc::AInteractableComponent::CanInteract(Jafg::APawn const& Instigator) const
+bool Jgc::AInteractableComponent::CanInteract(Jafg::AAvatarComponent const& Instigator) const
 {
-    /* Pawns cannot interact with themselves. */
-    return static_cast<Jafg::AActor const*>(&Instigator) != &this->GetOwningActor();
+    /* Nothing interacts with itself. */
+    return !Instigator.IsOwningActorValid() || &Instigator.GetOwningActor() != &this->GetOwningActor();
 }
 
 LString Jgc::AInteractableComponent::GetInteractionText() const

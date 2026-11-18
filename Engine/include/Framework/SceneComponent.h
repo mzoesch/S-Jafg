@@ -43,9 +43,8 @@ public:
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
-#if JAFG_DO_CHECKS
+    //# Also attaches the children.
     virtual void OnAttach(AActor& InOwner) override;
-#endif /* JAFG_DO_CHECKS */
 
     virtual void ParentTick(f32 Dt) override
     {
@@ -70,11 +69,25 @@ public:
         }
     }
 
+    //# The component of the same actor that owns this component. Null for root components.
     NODISCARD FORCEINLINE constexpr bool HasParent() const noexcept { return !!this->Parent; }
     NODISCARD FORCEINLINE constexpr ASceneComponent* GetParent() noexcept { return this->Parent; }
     NODISCARD FORCEINLINE constexpr ASceneComponent const* GetParent() const noexcept { return this->Parent; }
 
-    //# Relative to the parent actor or component.
+    //#
+    //# Root components only. The component of another actor that the owning actor is attached to.
+    //# @see #AActor::AttachTo
+    //#
+    NODISCARD FORCEINLINE constexpr bool HasAttachParent() const noexcept { return !!this->AttachParent; }
+    NODISCARD FORCEINLINE constexpr ASceneComponent* GetAttachParent() noexcept { return this->AttachParent; }
+    NODISCARD FORCEINLINE constexpr ASceneComponent const* GetAttachParent() const noexcept { return this->AttachParent; }
+    //# The component that the local transform is relative to. Either the parent or the attach parent.
+    NODISCARD FORCEINLINE constexpr ASceneComponent* GetTransformParent() noexcept { return this->Parent ? this->Parent : this->AttachParent; }
+    NODISCARD FORCEINLINE constexpr ASceneComponent const* GetTransformParent() const noexcept { return this->Parent ? this->Parent : this->AttachParent; }
+    //# The actors that are attached to this component. They are not owned by this component.
+    NODISCARD FORCEINLINE constexpr TArray<AActor*> const& GetAttachedActors() const noexcept { return this->AttachedActors; }
+
+    //# Relative to the transform parent. See #GetTransformParent. Equal to the world transform if there is none.
     NODISCARD FORCEINLINE constexpr LWorldTrans const& GetLocalTransform() const noexcept { return this->LocalTransform; }
     NODISCARD FORCEINLINE constexpr LWorldVec3 const& GetLocalTranslation() const noexcept { return this->LocalTransform.t; }
     NODISCARD FORCEINLINE constexpr LWorldQuat const& GetLocalRotator() const noexcept { return this->LocalTransform.r; }
@@ -143,9 +156,9 @@ public:
     NODISCARD LWorldTrans GetWorldTransformSlow() const noexcept
     {
         LWorldTrans Result{this->LocalTransform};
-        if (this->Parent)
+        if (auto const* TransformParent{this->GetTransformParent()})
         {
-            LWorldTrans P{this->Parent->GetWorldTransformSlow()};
+            LWorldTrans P{TransformParent->GetWorldTransformSlow()};
             Result.t = P.r * (P.s * Result.t) + P.t;
             Result.r = P.r * Result.r;
             Result.s *= P.s;
@@ -155,29 +168,73 @@ public:
     NODISCARD LWorldVec3 GetWorldTranslationSlow() const noexcept
     {
         LWorldVec3 Result{this->LocalTransform.t};
-        if (this->Parent)
+        if (auto const* TransformParent{this->GetTransformParent()})
         {
-            Result = this->Parent->GetWorldRotationSlow() * (this->Parent->GetWorldScaleSlow() * Result) + this->Parent->GetWorldTranslationSlow();
+            Result = TransformParent->GetWorldRotationSlow() * (TransformParent->GetWorldScaleSlow() * Result) + TransformParent->GetWorldTranslationSlow();
         }
         return Result;
     }
     NODISCARD LWorldQuat GetWorldRotationSlow() const noexcept
     {
         LWorldQuat Result{this->LocalTransform.r};
-        if (this->Parent)
+        if (auto const* TransformParent{this->GetTransformParent()})
         {
-            Result = this->Parent->GetWorldRotationSlow() * Result;
+            Result = TransformParent->GetWorldRotationSlow() * Result;
         }
         return Result;
     }
     NODISCARD LWorldVec3 GetWorldScaleSlow() const noexcept
     {
         LWorldVec3 Result{this->LocalTransform.s};
-        if (this->Parent)
+        if (auto const* TransformParent{this->GetTransformParent()})
         {
-            Result *= this->Parent->GetWorldScaleSlow();
+            Result *= TransformParent->GetWorldScaleSlow();
         }
         return Result;
+    }
+
+    //# Converts a transform in world space into the local space of this component. See #GetTransformParent.
+    NODISCARD LWorldTrans WorldToLocalTransformSlow(LWorldTrans const& World) const noexcept
+    {
+        auto const* TransformParent{this->GetTransformParent()};
+        if (!TransformParent)
+        {
+            return World;
+        }
+        LWorldTrans const P{TransformParent->GetWorldTransformSlow()};
+        LWorldQuat const InverseRotation{maths::inverse(P.r)};
+        return LWorldTrans{
+            .t = (InverseRotation * (World.t - P.t)) / P.s,
+            .r = InverseRotation * World.r,
+            .s = World.s / P.s,
+            };
+    }
+    void SetWorldTransformByTeleport(LWorldTrans const& World) noexcept
+    {
+        this->SetLocalTransformByTeleport(this->WorldToLocalTransformSlow(World));
+    }
+    void SetWorldTranslationByTeleport(LWorldVec3 const& Location) noexcept
+    {
+        if (auto const* TransformParent{this->GetTransformParent()})
+        {
+            LWorldTrans const P{TransformParent->GetWorldTransformSlow()};
+            this->SetLocalTranslationByTeleport((maths::inverse(P.r) * (Location - P.t)) / P.s);
+        }
+        else
+        {
+            this->SetLocalTranslationByTeleport(Location);
+        }
+    }
+    void SetWorldRotatorByTeleport(LWorldQuat const& Rotator) noexcept
+    {
+        if (auto const* TransformParent{this->GetTransformParent()})
+        {
+            this->SetLocalRotatorByTeleport(maths::inverse(TransformParent->GetWorldRotationSlow()) * Rotator);
+        }
+        else
+        {
+            this->SetLocalRotatorByTeleport(Rotator);
+        }
     }
 
     //# The aabb for this component and all it child components.
@@ -307,6 +364,9 @@ public:
         return *Result;
     }
 
+    //# Roots only. Whether the owning actor may be attached to another actor. @see #AActor::AttachTo
+    NODISCARD virtual bool CanFollowAttachParent() const noexcept { return true; }
+
     NODISCARD LPhysicsSystem& GetParentPhysicsSystem() noexcept { return this->GetWorld().GetWorldGlobalPhysicsSystem(); }
     NODISCARD LPhysicsSystem const& GetParentPhysicsSystem() const noexcept { return this->GetWorld().GetWorldGlobalPhysicsSystem(); }
 
@@ -330,6 +390,13 @@ private:
     void _check_EmplaceRuntimeComponentPreCondition();
 #endif /* JAFG_DO_CHECKS */
 
+    //#
+    //# Detach all actors that are attached to this component.
+    //# @param bKeepWorld Whether they stay where they are. Otherwise, they are only unlinked (e.g., during tear down).
+    //# @param bTransitive Whether to also detach the actors attached to the children of this component.
+    //#
+    void DetachAttachedActors(bool bKeepWorld, bool bTransitive);
+
     FORCEINLINE constexpr void GetTransitiveComponentAabbImpl(LWorldAabb3& Result) const noexcept
     {
         if (!this->Aabb.empty())
@@ -347,6 +414,11 @@ private:
     LWorldTrans LocalTransform{ maths::identity<LWorldTrans> };
     ASceneComponent* Parent{};
     TArray<TJxxUnique<ASceneComponent>> Children;
+
+    //# Roots only. Not owning. @see #AActor::AttachTo
+    ASceneComponent* AttachParent{};
+    //# Not owning. The roots of these actors have this component as their #AttachParent.
+    TArray<AActor*> AttachedActors;
 };
 
 } /* ~Namespace Jafg */

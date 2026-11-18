@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Framework/Surface.h"
 #include "Core/App.h"
-#include "Framework/Pawn.h"
+#include "Framework/AvatarComponent.h"
 #include "Framework/PersonaController.h"
 #include "User/LocalEgo.h"
 #include "Framework/SubsystemCollection.h"
@@ -604,7 +604,7 @@ private:
     Jafg::ECollisionChannels Channels;
 };
 
-//# Bodies of pawns are in the pawn channel. All other bodies are in the channel of their layer.
+//# Bodies of characters are in the pawn channel. All other bodies are in the channel of their layer.
 class trace_body_filter final : public JPH::BodyFilter
 {
 public:
@@ -628,7 +628,7 @@ public:
             return false;
         }
 
-        if (Actor.IsA<Jafg::APawn>())
+        if (Body.GetUserData() & Jafg::Detail::CharacterBodyUserDataTag)
         {
             return !!(this->Channels & Jafg::ECollisionChannelBits::Pawn);
         }

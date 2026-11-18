@@ -12,7 +12,6 @@
 namespace Jafg
 {
 
-class APawn;
 class LEngine;
 class LWorld;
 class APersonaController;

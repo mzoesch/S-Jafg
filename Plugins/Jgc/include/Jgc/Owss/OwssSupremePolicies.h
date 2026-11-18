@@ -29,7 +29,7 @@ public:
     virtual void OnWorldPostInit() override;
 
     virtual void OnPersonaControllerCreated(Jafg::APersonaController& Pc) override;
-    virtual TJxxUnique<Jafg::APawn> GetPawnForPersonaController(Jafg::APersonaController const& Pc) override;
+    virtual TJxxUnique<Jafg::AActor> SpawnAvatarForPersonaController(Jafg::APersonaController const& Pc) override;
 
     virtual LVec3F GetPreferredGravity() const noexcept override
     {

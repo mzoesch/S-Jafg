@@ -3,13 +3,12 @@
 #include "Jgc/Framework/Vehicle.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Framework/AvatarComponent.h"
 #include "Framework/MovementComponent.h"
-#include "Framework/Pawn.h"
+#include "Framework/PersonaController.h"
 #include "Framework/PhysicsBody.h"
 #include "Framework/PhysicsSystem.h"
 #include "Framework/StaticMeshComponent.h"
-#include "Jgc/Framework/JgcCharacterInputComponent.h"
-#include "Jgc/Framework/JgcInputComponent.h"
 
 void Jgc::AVehicleComponent::OnAttach(Jafg::AActor& Owner)
 {
@@ -48,16 +47,17 @@ void Jgc::AVehicleComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
     }
     /* Everything else is torn down as well. */
     this->Driver = nullptr;
+    this->DrivenAvatar = nullptr;
 
     Super::OnGarbage(Reason);
 }
 
-bool Jgc::AVehicleComponent::CanInteract(Jafg::APawn const& Instigator) const
+bool Jgc::AVehicleComponent::CanInteract(Jafg::AAvatarComponent const& Instigator) const
 {
-    return Super::CanInteract(Instigator) && !this->HasDriver();
+    return Super::CanInteract(Instigator) && !this->HasDriver() && this->GetOwningAvatar();
 }
 
-bool Jgc::AVehicleComponent::Interact(Jafg::APawn& Instigator)
+bool Jgc::AVehicleComponent::Interact(Jafg::AAvatarComponent& Instigator)
 {
     return this->Enter(Instigator);
 }
@@ -67,42 +67,49 @@ LString Jgc::AVehicleComponent::GetInteractionText() const
     return "Enter";
 }
 
-Jafg::APawn* Jgc::AVehicleComponent::GetDriver() const noexcept
+Jafg::AAvatarComponent* Jgc::AVehicleComponent::GetDriver() const noexcept
 {
     return this->Driver && Jafg::IsValidFast(this->GetOuter(), this->Driver) ? this->Driver : nullptr;
 }
 
-bool Jgc::AVehicleComponent::Enter(Jafg::APawn& Pawn)
+bool Jgc::AVehicleComponent::Enter(Jafg::AAvatarComponent& NewDriver)
 {
     if (this->HasDriver())
     {
-        LOG_VERBOSE(LogJgc, "[{}]: Pawn [{}] cannot enter. The seat is taken by [{}]."
-            , this->GetNameAsString(), Pawn.GetNameAsString(), this->Driver->GetNameAsString()
+        LOG_VERBOSE(LogJgc, "[{}]: [{}] cannot enter. The seat is taken by [{}]."
+            , this->GetNameAsString(), NewDriver.GetOwningActor().GetNameAsString(), this->Driver->GetOwningActor().GetNameAsString()
             )
         return false;
     }
 
-    LOG_VERBOSE(LogJgc, "[{}]: Pawn [{}] enters.", this->GetNameAsString(), Pawn.GetNameAsString())
+    Jafg::AAvatarComponent* const VehicleAvatar{this->GetOwningAvatar()};
+    if (!VehicleAvatar)
+    {
+        LOG_WARNING(LogJgc, "[{}]: Cannot be entered. [{}] has no [{}]."
+            , this->GetNameAsString(), this->GetOwningActor().GetNameAsString(), algo::type_name<Jafg::AAvatarComponent>()
+            )
+        return false;
+    }
 
-    auto const& Root{this->GetRigidComponent()};
-    auto const& PawnRoot{Pawn.GetRootComponent()};
-    LWorldQuat const InverseRotation{maths::inverse(maths::normalize(Root.GetLocalRotator()))};
-    this->DriverEntryLocation = InverseRotation * (PawnRoot.GetLocalTranslation() - Root.GetLocalTranslation());
-    this->DriverEntryRotation = maths::normalize(InverseRotation * PawnRoot.GetLocalRotator());
-    this->Driver = &Pawn;
+    auto& DriverActor{NewDriver.GetOwningActor()};
+    if (!DriverActor.AttachTo(this->GetRigidComponent()))
+    {
+        return false;
+    }
 
-    if (auto* Movement{Pawn.GetComponent<Jafg::AMovementComponent>()})
+    LOG_VERBOSE(LogJgc, "[{}]: [{}] enters.", this->GetNameAsString(), DriverActor.GetNameAsString())
+    this->Driver = &NewDriver;
+    this->DrivenAvatar = VehicleAvatar;
+
+    if (auto* Movement{DriverActor.GetComponent<Jafg::AMovementComponent>()})
     {
         Movement->ClearIntent();
         Movement->SetFrozen(true);
     }
-    if (auto* CharacterInput{Pawn.GetComponent<AJgcCharacterInputComponent>()})
+    /* The driver hands its controls over to the vehicle. */
+    if (auto* Ctrl{NewDriver.GetController()})
     {
-        CharacterInput->OnEnteredVehicle(*this);
-    }
-    if (auto* VehicleInput{Pawn.GetComponent<AJgcInputComponent>()})
-    {
-        (void)VehicleInput->PossessVehicle(this);
+        Ctrl->Possess(VehicleAvatar);
     }
 
     return true;
@@ -110,44 +117,36 @@ bool Jgc::AVehicleComponent::Enter(Jafg::APawn& Pawn)
 
 void Jgc::AVehicleComponent::Exit()
 {
-    Jafg::APawn* Pawn{this->GetDriver()};
+    Jafg::AAvatarComponent* const OldDriver{this->GetDriver()};
     this->Driver = nullptr;
-    if (!Pawn)
+    if (!OldDriver)
     {
         return;
     }
 
-    LOG_VERBOSE(LogJgc, "[{}]: Pawn [{}] exits.", this->GetNameAsString(), Pawn->GetNameAsString())
+    auto& DriverActor{OldDriver->GetOwningActor()};
+    LOG_VERBOSE(LogJgc, "[{}]: [{}] exits.", this->GetNameAsString(), DriverActor.GetNameAsString())
 
-    if (auto* VehicleInput{Pawn->GetComponent<AJgcInputComponent>()}; VehicleInput && VehicleInput->GetVehicle() == this)
+    /* Stays where it sits, which is where it entered relative to this vehicle. */
+    DriverActor.Detach(Jafg::EAttachmentRule::KeepWorld);
+
+    if (auto* Movement{DriverActor.GetComponent<Jafg::AMovementComponent>()})
     {
-        (void)VehicleInput->PossessVehicle(nullptr);
-    }
-
-    auto& Root{this->GetRigidComponent()};
-    LWorldQuat const VehicleRotation{maths::normalize(Root.GetLocalRotator())};
-    LWorldVec3 const Location{Root.GetLocalTranslation() + VehicleRotation * this->DriverEntryLocation};
-    LWorldQuat const Rotation{maths::normalize(VehicleRotation * this->DriverEntryRotation)};
-
-    if (auto* Movement{Pawn->GetComponent<Jafg::AMovementComponent>()})
-    {
-        Movement->Teleport(Location, Rotation);
         Movement->SetFrozen(false);
-        if (Root.IsAddedToSimulation())
+        if (auto const& Root{this->GetRigidComponent()}; Root.IsAddedToSimulation())
         {
-            Movement->SetVelocity(Root.GetParentPhysicsSystem().GetBodyInterfaceNoLock()
-                .GetPointVelocity(Root.GetRigidObject().GetID(), Location));
+            Movement->SetVelocity(const_cast<Jafg::ARigidComponent&>(Root).GetParentPhysicsSystem().GetBodyInterfaceNoLock()
+                .GetPointVelocity(Root.GetRigidObject().GetID(), DriverActor.GetRootComponent().GetWorldTranslationSlow()));
         }
     }
-    else
-    {
-        Pawn->GetRootComponent().SetLocalTranslationByTeleport(Location);
-        Pawn->GetRootComponent().SetLocalRotatorByTeleport(Rotation);
-    }
 
-    if (auto* CharacterInput{Pawn->GetComponent<AJgcCharacterInputComponent>()})
+    Jafg::AAvatarComponent* const VehicleAvatar{std::exchange(this->DrivenAvatar, nullptr)};
+    if (VehicleAvatar && Jafg::IsValidFast(this->GetOuter(), VehicleAvatar))
     {
-        CharacterInput->OnExitedVehicle();
+        if (auto* Ctrl{VehicleAvatar->GetController()})
+        {
+            Ctrl->Possess(OldDriver);
+        }
     }
 }
 

@@ -4,8 +4,9 @@
 #include "Framework/PersonaController.h"
 #include "Framework/Actor.h"
 #include "Framework/Editor.h"
-#include "Framework/Pawn.h"
-#include "Framework/PawnStart.h"
+#include "Framework/AvatarComponent.h"
+#include "Framework/AvatarStart.h"
+#include "Framework/EyeComponent.h"
 
 std::expected<TJxxUnique<Jafg::APersonaController>, LString> Jafg::ASupremePolicies::OnIncomingConnectionRequest(EConnectionRequest Req)
 {
@@ -31,59 +32,99 @@ std::expected<TJxxUnique<Jafg::APersonaController>, LString> Jafg::ASupremePolic
 
 void Jafg::ASupremePolicies::OnPersonaControllerCreated(APersonaController& Pc)
 {
-    if (this->bCreatePawn)
+    if (!this->bCreateAvatar)
     {
-        LOG_VERBOSE(LogWorld, "Creating pawn for controller [{}].", Pc.GetNameAsString())
-
-        auto Pawn{this->GetPawnForPersonaController(Pc)};
-        check(IsValidSlow(&this->GetOuter(), Pawn.get()))
-        LOG_VERBOSE(LogWorld, "Created pawn [{}] for controller [{}]. Starting possess process.",
-            Pawn->GetNameAsString(),
-            Pc.GetNameAsString()
-            )
-        Pc.PossessPawn(std::move(Pawn));
+        return;
     }
+
+    LOG_VERBOSE(LogWorld, "Creating avatar for controller [{}].", Pc.GetNameAsString())
+
+    auto Actor{this->SpawnAvatarForPersonaController(Pc)};
+    if (!Actor)
+    {
+        LOG_VERBOSE(LogWorld, "No avatar for controller [{}].", Pc.GetNameAsString())
+        return;
+    }
+    check(IsValidSlow(&this->GetOuter(), Actor.get()))
+
+    auto* Avatar{Actor->GetAvatar()};
+    if (!Avatar)
+    {
+        LOG_FATAL(LogWorld, "[{}]: Spawned actor [{}] for controller [{}] has no [{}]."
+            , this->GetNameAsString(), Actor->GetNameAsString(), Pc.GetNameAsString(), algo::type_name<AAvatarComponent>()
+            )
+    }
+
+    LOG_VERBOSE(LogWorld, "Created avatar [{}] for controller [{}]. Starting possess process."
+        , Actor->GetNameAsString(), Pc.GetNameAsString())
+    Pc.AdoptActor(std::move(Actor));
+    Pc.Possess(Avatar);
 }
 
-TJxxUnique<Jafg::APawn> Jafg::ASupremePolicies::GetPawnForPersonaController(APersonaController const& Pc)
+TJxxUnique<Jafg::AActor> Jafg::ASupremePolicies::SpawnAvatarForPersonaController(APersonaController const& Pc)
 {
+    TSubclassOf<AActor> Class{this->DefaultAvatarClass};
+    bool bEditor{};
 #if JAFG_WITH_EDITOR
     if (Pc.GetComponent<AEditorPersonaControllerComponent>())
     {
         check(Pc.IsLocallyPossessed())
-        auto Exec{SpawnDeferredObject(CastTo<APawn>{}, {this->GetWorld(), this->EditorDefaultPawnClass.GetClassOrDefault()})};
-        if (!this->bIgnorePawnStarts)
-        {
-            if (APawnStart const* Start{this->GetPawnStartForPawn(*Exec)}) // TODO: Instead of that we should store the last editor location and load it.
-            {
-                Exec->GetRootComponent().SetLocalTransformByTeleport(Start->GetRootComponent().GetLocalTransform());
-            }
-        }
-        TJxxUnique<APawn> Result{&*Exec};
-        Exec.finalize();
-        Result->EmplaceComponent<AEditorCameraComponent>();
-        return Result;
+        Class = this->EditorDefaultAvatarClass;
+        bEditor = true;
     }
 #endif /* JAFG_WITH_EDITOR */
 
-    auto Result{SpawnDeferredObject(CastTo<APawn>{}, {this->GetWorld(), this->DefaultPawnClass.GetClassOrDefault()})};
-    if (!this->bIgnorePawnStarts)
+    auto Exec{SpawnDeferredObject(CastTo<AActor>{}, {this->GetWorld(), Class.GetClassOrDefault()})};
+    /* Components of avatars (e.g., movement or input) usually tick in both. */
+    Exec->SetCanEverTick(true);
+    Exec->SetCanEverPhysicsTick(true);
+
+    if (!Exec->HasRootComponent())
     {
-        if (APawnStart const* Start{this->GetPawnStartForPawn(*Result)})
+        Exec->EmplaceRootComponent<ASceneComponent>();
+    }
+    if (!AEyeComponent::FindFirstEyeIn(Exec->GetRootComponent()))
+    {
+        Exec->EmplaceSceneComponentTo<AEyeComponent>(Exec->GetRootComponent());
+    }
+    if (!Exec->GetAvatar())
+    {
+        Exec->EmplaceComponent<AAvatarComponent>();
+    }
+
+    if (!this->bIgnoreAvatarStarts)
+    {
+        if (AAvatarStart const* Start{this->GetAvatarStartFor(*Exec)})
         {
-            Result->GetRootComponent().SetLocalTranslationByTeleport(Start->GetRootComponent().GetLocalTranslation());
+            if (bEditor)
+            {
+                Exec->GetRootComponent().SetLocalTransformByTeleport(Start->GetRootComponent().GetLocalTransform()); // TODO: Instead of that we should store the last editor location and load it.
+            }
+            else
+            {
+                Exec->GetRootComponent().SetLocalTranslationByTeleport(Start->GetRootComponent().GetLocalTranslation());
+            }
         }
     }
-    return TJxxUnique<APawn>{&*Result};
+
+    TJxxUnique<AActor> Result{&*Exec};
+    Exec.finalize();
+#if JAFG_WITH_EDITOR
+    if (bEditor)
+    {
+        Result->EmplaceComponent<AEditorCameraComponent>();
+    }
+#endif /* JAFG_WITH_EDITOR */
+    return Result;
 }
 
-Jafg::APawnStart const* Jafg::ASupremePolicies::GetPawnStartForPawn(APawn const& Pawn)
+Jafg::AAvatarStart const* Jafg::ASupremePolicies::GetAvatarStartFor(AActor const& Avatar)
 {
     for (auto const& Employee: this->GetWorld().GetEmployees())
     {
-        if (auto* Result{Employee->As<APawnStart>()})
+        if (auto* Result{Employee->As<AAvatarStart>()})
         {
-            if (Result->CanAcceptPawn(Pawn))
+            if (Result->CanAccept(Avatar))
             {
                 return Result;
             }

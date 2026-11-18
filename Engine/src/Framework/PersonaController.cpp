@@ -2,6 +2,7 @@
 
 #include "Framework/PersonaController.h"
 #include "Framework/PersonaControllerComponent.h"
+#include "Framework/AvatarComponent.h"
 #include "Engine/Engine.h"
 
 #if JAFG_DO_CHECKS
@@ -37,33 +38,100 @@ void Jafg::APersonaController::OnGarbage(EJxxRecordTearDownReason Reason)
         algo::leak(this->GetOwningBaseLackey().PossessPersonaController(nullptr, true));
     }
 
-    if (this->IsOwnedPawnValid())
+    if (this->IsPossessing())
     {
-        this->PossessPawn(nullptr);
+        this->Possess(nullptr);
+    }
+
+    for (auto Adopted{std::exchange(this->AdoptedActors, {})}; AActor* Actor: Adopted)
+    {
+        if (IsValidFast(this->GetOuter(), Actor) && !Actor->_IsGarbage())
+        {
+            Actor->MarkAsGarbage_v2(Reason);
+        }
     }
 
     return;
 }
 
-TJxxUnique<Jafg::APawn> Jafg::APersonaController::PossessPawn(TJxxUnique<APawn> New, const bool bOrphanOld /* = true */)
+Jafg::AActor* Jafg::APersonaController::GetPossessedActor() const noexcept
 {
+    return this->Avatar && this->Avatar->IsOwningActorValid() ? &this->Avatar->GetOwningActor() : nullptr;
+}
+
+void Jafg::APersonaController::Possess(AAvatarComponent* New)
+{
+    check(Tasks::IsOnMasterThread())
     check(this->_Lives())
 
-    TJxxUnique<APawn> Result;
-    if (this->Pawn)
+    if (this->Avatar == New)
     {
-        this->Pawn->_SetOwningController(nullptr);
-        if (!bOrphanOld)
-        {
-            Result = std::move(this->Pawn);
-        }
+        return;
     }
 
-    this->Pawn = std::move(New);
-    if (this->Pawn)
+    if (New && New->GetController())
     {
-        this->Pawn->_SetOwningController(this);
+        LOG_VERBOSE(LogEgo, "[{}]: Taking avatar [{}] from [{}]."
+            , this->GetNameAsString(), New->GetNameAsString(), New->GetController()->GetNameAsString()
+            )
+        New->GetController()->Possess(nullptr);
+        check(!New->GetController())
     }
 
-    return Result;
+    if (AAvatarComponent* Previous{std::exchange(this->Avatar, nullptr)})
+    {
+        Previous->_SetController(nullptr);
+    }
+
+    /* A confined cursor belongs to the gameplay of the previous avatar. */
+    if (auto* Local{this->TryGetOwningLackey<ELackey::Local>()})
+    {
+        Local->GetUserInput().SetConfineMouse(false);
+    }
+
+    LOG_VERBOSE(LogEgo, "[{}]: Possessing [{}]."
+        , this->GetNameAsString(), New && New->IsOwningActorValid() ? New->GetOwningActor().GetNameAsString() : LString{"nothing"}
+        )
+
+    this->Avatar = New;
+    if (New)
+    {
+        New->_SetController(this);
+    }
+}
+
+Jafg::AEyeComponent* Jafg::APersonaController::GetViewEye() const noexcept
+{
+    return this->Avatar ? this->Avatar->GetEye() : nullptr;
+}
+
+void Jafg::APersonaController::AdoptActor(TJxxUnique<AActor> Actor)
+{
+    check(Actor)
+    check(!algo::contains(this->AdoptedActors, Actor.get()))
+    this->AdoptedActors.emplace_back(Actor.release());
+}
+
+TJxxUnique<Jafg::AActor> Jafg::APersonaController::AbandonActor(AActor& Actor)
+{
+    if (auto It{algo::find(this->AdoptedActors, &Actor)}; It != this->AdoptedActors.end())
+    {
+        this->AdoptedActors.erase(It);
+        return TJxxUnique<AActor>{&Actor};
+    }
+    return {};
+}
+
+void Jafg::APersonaController::_OnAvatarGarbage(AAvatarComponent& Garbage) noexcept
+{
+    check(this->Avatar == &Garbage)
+    LOG_VERBOSE(LogEgo, "[{}]: Possessed avatar [{}] is torn down.", this->GetNameAsString(), Garbage.GetNameAsString())
+
+    /* Its actor is torn down as well. The components can no longer be notified. */
+    this->Avatar = nullptr;
+    Garbage._SetController(nullptr);
+    if (Garbage.IsOwningActorValid())
+    {
+        algo::erase_once(&this->AdoptedActors, &Garbage.GetOwningActor());
+    }
 }

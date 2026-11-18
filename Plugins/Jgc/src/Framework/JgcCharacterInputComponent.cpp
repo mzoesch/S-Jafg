@@ -13,7 +13,8 @@
 #include "User/Input/InputActionValue.h"
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/InteractableComponent.h"
-#include "Jgc/Framework/Vehicle.h"
+#include "Framework/AvatarComponent.h"
+#include "Framework/EyeComponent.h"
 
 void Jgc::AJgcCharacterInputComponent::OnAttach(Jafg::AActor& InOwner)
 {
@@ -26,41 +27,60 @@ void Jgc::AJgcCharacterInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason 
     /* Give the mouse back. Otherwise, the cursor would stay confined for whatever comes next. */
     if (this->bCursorMode && Reason == Jafg::EJxxRecordTearDownReason::Default)
     {
-        this->SetCursorMode(false);
+        this->SetCursorMode(false, GetLocalLackey(this->GetOwningController()));
     }
 
     Super::OnGarbage(Reason);
 }
 
-void Jgc::AJgcCharacterInputComponent::OnNewPersonaController(Jafg::APersonaController* New)
+void Jgc::AJgcCharacterInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
 {
-    Super::OnNewPersonaController(New);
-    (void)this->ActivateUserInputContext();
+    Super::OnPossessionChanged(Previous, New);
+
+    if (New)
+    {
+        (void)this->ActivateUserInputContext();
+        return;
+    }
+
+    /* Whatever possesses next (e.g., a vehicle) owns the input now. Leave nothing behind. */
+    if (this->bCursorMode)
+    {
+        this->SetCursorMode(false, GetLocalLackey(Previous));
+    }
+    this->ResetFrameInput();
+    if (auto* Movement{this->GetMovementComponent()})
+    {
+        Movement->ClearIntent();
+    }
 }
 
 void Jgc::AJgcCharacterInputComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
-    /* Holding is polled, so that a lost release (e.g., focus loss) never leaves the cursor active. */
-    if (bool const bWantsCursor{this->bFrameCursorHeld && !this->bInVehicle}; bWantsCursor != this->bCursorMode)
+    if (!this->GetOwningController())
     {
-        this->SetCursorMode(bWantsCursor);
+        this->ResetFrameInput();
+        return;
+    }
+
+    /* Holding is polled, so that a lost release (e.g., focus loss) never leaves the cursor active. */
+    if (this->bFrameCursorHeld != this->bCursorMode)
+    {
+        this->SetCursorMode(this->bFrameCursorHeld, GetLocalLackey(this->GetOwningController()));
     }
     this->UpdateHover();
 
-    if (!this->bInVehicle)
+    if (auto* Movement{this->GetMovementComponent()})
     {
-        if (auto* Movement{this->GetMovementComponent()})
-        {
-            Movement->SetMoveInput(this->FrameMove);
-            Movement->SetJumpHeld(this->bFrameJumpHeld);
-            Movement->SetCrouch(this->bFrameCrouch);
-            Movement->SetSprint(this->bFrameSprint);
-            Movement->SetJetpackEngaged(this->bJetpack);
-            Movement->SetDampenersEngaged(this->bDampeners);
-            Movement->SetMagBootsEngaged(this->bMagBoots);
-        }
+        Movement->SetMoveInput(this->FrameMove);
+        Movement->SetJumpHeld(this->bFrameJumpHeld);
+        Movement->SetCrouch(this->bFrameCrouch);
+        Movement->SetSprint(this->bFrameSprint);
+        Movement->SetJetpackEngaged(this->bJetpack);
+        Movement->SetDampenersEngaged(this->bDampeners);
+        Movement->SetMagBootsEngaged(this->bMagBoots);
     }
 
     this->ResetFrameInput();
@@ -68,13 +88,7 @@ void Jgc::AJgcCharacterInputComponent::ParentTick(f32 Dt)
 
 bool Jgc::AJgcCharacterInputComponent::ActivateUserInputContext() noexcept
 {
-    if (this->bInVehicle)
-    {
-        /* The vehicle owns the input until it is left. */
-        return false;
-    }
-
-    if (auto* Lackey{this->GetLocalLackey()})
+    if (auto* Lackey{GetLocalLackey(this->GetOwningController())})
     {
         auto& UserInput{Lackey->GetUserInput()};
         UserInput.DeactivateAllContexts();
@@ -89,7 +103,8 @@ bool Jgc::AJgcCharacterInputComponent::ActivateUserInputContext() noexcept
 
 bool Jgc::AJgcCharacterInputComponent::OnInteractPressed() noexcept
 {
-    if (!this->bCursorMode || this->bInVehicle)
+    auto* Avatar{this->GetOwningAvatar()};
+    if (!this->bCursorMode || !Avatar)
     {
         return false;
     }
@@ -101,31 +116,10 @@ bool Jgc::AJgcCharacterInputComponent::OnInteractPressed() noexcept
             , Target->Interactable->GetNameAsString()
             , Target->Interactable->GetOwningActor().GetNameAsString()
             )
-        return Target->Interactable->Interact(this->GetOwningPawn());
+        return Target->Interactable->Interact(*Avatar);
     }
 
     return false;
-}
-
-void Jgc::AJgcCharacterInputComponent::OnEnteredVehicle(AVehicleComponent& Vehicle) noexcept
-{
-    LOG_VERBOSE(LogJgcInput, "[{}]: Entered vehicle [{}].", this->GetNameAsString(), Vehicle.GetNameAsString())
-
-    if (this->bCursorMode)
-    {
-        this->SetCursorMode(false);
-    }
-    this->bInVehicle = true;
-    this->ResetFrameInput();
-}
-
-void Jgc::AJgcCharacterInputComponent::OnExitedVehicle() noexcept
-{
-    LOG_VERBOSE(LogJgcInput, "[{}]: Exited vehicle.", this->GetNameAsString())
-
-    this->bInVehicle = false;
-    this->ResetFrameInput();
-    (void)this->ActivateUserInputContext();
 }
 
 std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceInteractable() noexcept
@@ -135,8 +129,11 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
         return {};
     }
 
-    auto* Lackey{this->GetLocalLackey()};
-    if (!Lackey)
+    auto* Ctrl{this->GetOwningController()};
+    auto* Avatar{this->GetOwningAvatar()};
+    auto* Lackey{GetLocalLackey(Ctrl)};
+    Jafg::AEyeComponent const* ViewEye{Ctrl ? Ctrl->GetViewEye() : nullptr};
+    if (!Lackey || !Avatar || !ViewEye)
     {
         return {};
     }
@@ -148,13 +145,13 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
         return {};
     }
 
-    auto& Pawn{this->GetOwningPawn()};
-    auto const Eye{Pawn.GetEye()};
+    /* The cursor is over what the controller sees. */
+    auto const Eye{ViewEye->GetEye()};
     auto const Ray{maths::screen_to_world_space(Extent, *Cursor, Eye)};
 
     TArray<Jafg::LHitResult> Hits;
     Jafg::LCollisionQueryParams Params{.bSingleHit = true};
-    Params.IgnoredActors.emplace_back(&Pawn);
+    Params.IgnoredActors.emplace_back(&this->GetOwningActor());
     LWorldVec3 const Begin{Eye.translation};
     LWorldVec3 const End{Begin + LWorldVec3{Ray.direction} * static_cast<LWorldReal>(this->InteractionTraceLength)};
     if (!this->GetWorld().LineTraceByChannel(&Hits, Begin, End
@@ -176,7 +173,7 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
     {
         return {};
     }
-    if (!Interactable->CanInteract(Pawn))
+    if (!Interactable->CanInteract(*Avatar))
     {
         return {};
     }
@@ -184,21 +181,17 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
     return LInteractionTarget{.Interactable = Interactable, .Location = Hit.GlobalWorldLocation};
 }
 
-Jafg::LLocalLackey* Jgc::AJgcCharacterInputComponent::GetLocalLackey() noexcept
+Jafg::LLocalLackey* Jgc::AJgcCharacterInputComponent::GetLocalLackey(Jafg::APersonaController* Ctrl) noexcept
 {
-    if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
-    {
-        return Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>();
-    }
-    return nullptr;
+    return Ctrl ? Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>() : nullptr;
 }
 
-void Jgc::AJgcCharacterInputComponent::SetCursorMode(bool bEnabled) noexcept
+void Jgc::AJgcCharacterInputComponent::SetCursorMode(bool bEnabled, Jafg::LLocalLackey* Lackey) noexcept
 {
     LOG_VERBOSE(LogJgcInput, "[{}]: {} cursor mode.", this->GetNameAsString(), bEnabled ? "Entering" : "Leaving")
     this->bCursorMode = bEnabled;
 
-    if (auto* Lackey{this->GetLocalLackey()})
+    if (Lackey)
     {
         auto& UserInput{Lackey->GetUserInput()};
         if (bEnabled)
@@ -222,19 +215,19 @@ void Jgc::AJgcCharacterInputComponent::SetCursorMode(bool bEnabled) noexcept
 
     if (!bEnabled)
     {
-        this->SetHoversInteractable(false);
+        this->SetHoversInteractable(false, Lackey);
     }
 }
 
 void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
 {
     std::optional<LInteractionTarget> const Target{this->TraceInteractable()};
-    this->SetHoversInteractable(Target.has_value());
+    this->SetHoversInteractable(Target.has_value(), GetLocalLackey(this->GetOwningController()));
 
 #if JAFG_WITH_EDITOR
     if (Target)
     {
-        if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
+        if (auto* Ctrl{this->GetOwningController()}; Ctrl && Ctrl->GetViewEye())
         {
             if (auto* Drawer{Ctrl->GetComponent<Jafg::ADebugDrawerComponent>()})
             {
@@ -242,7 +235,7 @@ void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
                 LWorldAabb3 const Aabb{Actor.GetTransformedActorAabb()};
                 Drawer->AddAabb({.Tint = Colors::Yellow, .Value = Aabb});
 
-                LWorldReal const Distance{maths::magnitude(Target->Location - this->GetOwningPawn().GetEye().translation)};
+                LWorldReal const Distance{maths::magnitude(Target->Location - Ctrl->GetViewEye()->GetWorldTranslationSlow())};
                 Drawer->AddText({
                     .Tint = Colors::Yellow,
                     .Height = maths::max(0.1f, static_cast<f32>(Distance) * 0.03f),
@@ -255,7 +248,7 @@ void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
 #endif /* JAFG_WITH_EDITOR */
 }
 
-void Jgc::AJgcCharacterInputComponent::SetHoversInteractable(bool bHovers) noexcept
+void Jgc::AJgcCharacterInputComponent::SetHoversInteractable(bool bHovers, Jafg::LLocalLackey* Lackey) noexcept
 {
     if (this->bHoversInteractable == bHovers)
     {
@@ -263,7 +256,7 @@ void Jgc::AJgcCharacterInputComponent::SetHoversInteractable(bool bHovers) noexc
     }
     this->bHoversInteractable = bHovers;
 
-    if (auto* Lackey{this->GetLocalLackey()})
+    if (Lackey)
     {
         Lackey->Viewport.GetSurface()._SetMouseCursor(bHovers ? Jafg::ECursor::Hand : Jafg::ECursor::Default);
     }

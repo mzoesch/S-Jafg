@@ -9,8 +9,8 @@
 namespace Jafg
 {
 
-class APawn;
-class APawnStart;
+class AActor;
+class AAvatarStart;
 class APersonaController;
 
 DECLARE_JAFG_CLASS()
@@ -59,27 +59,30 @@ public:
     virtual void OnPersonaControllerCreated(APersonaController& Pc);
 
     //#
-    //# Called whenever a pawn is spawned/used for a persona controller.
-    //# @return A valid pointer to a possessable pawn.
+    //# Called whenever an avatar is spawned for a persona controller. The controller adopts the actor (see
+    //# #APersonaController::AdoptActor) and possesses its avatar.
+    //# The default spawns an actor of #DefaultAvatarClass and adds a root, an eye and an avatar if the class did not.
+    //# @return An actor with an #AAvatarComponent. Empty to not possess anything.
     //#
-    virtual TJxxUnique<APawn> GetPawnForPersonaController(APersonaController const& Pc);
-    //# @return The start for the pawn, or nullptr for default behavior.
-    virtual APawnStart const* GetPawnStartForPawn(APawn const& Pawn);
+    virtual TJxxUnique<AActor> SpawnAvatarForPersonaController(APersonaController const& Pc);
+    //# @param Avatar The actor of the avatar that is about to start.
+    //# @return The start for the avatar, or nullptr for default behavior.
+    virtual AAvatarStart const* GetAvatarStartFor(AActor const& Avatar);
 
-    //# Whether a pawn should be automatically created for a new persona controller.
-    bool bCreatePawn{ true };
-    //# Whether pawn starts should be ignored when spawning pawns for persona controllers.
-    bool bIgnorePawnStarts{ false };
+    //# Whether an avatar should be automatically spawned for a new persona controller.
+    bool bCreateAvatar{ true };
+    //# Whether avatar starts should be ignored when spawning avatars for persona controllers.
+    bool bIgnoreAvatarStarts{ false };
 
     //# The default class for all persona controllers unless overridden by #OnIncomingConnectionRequest.
     TSubclassOf<APersonaController> PersonaControllerClass;
 #if JAFG_WITH_EDITOR
     TSubclassOf<APersonaController> EditorPersonaControllerClass;
 #endif /* JAFG_WITH_EDITOR */
-    //# The default class for all spawned pawns unless overridden by #GetPawnForPersonaController.
-    TSubclassOf<APawn> DefaultPawnClass;
+    //# The class of the actors that #SpawnAvatarForPersonaController spawns.
+    TSubclassOf<AActor> DefaultAvatarClass;
 #if JAFG_WITH_EDITOR
-    TSubclassOf<APawn> EditorDefaultPawnClass;
+    TSubclassOf<AActor> EditorDefaultAvatarClass;
 #endif /* JAFG_WITH_EDITOR */
 
     ///////////////////////////////////////////////////////////////////////////////

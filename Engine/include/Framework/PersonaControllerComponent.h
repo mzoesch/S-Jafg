@@ -9,7 +9,6 @@
 namespace Jafg
 {
 
-class APawn;
 class APersonaController;
 
 DECLARE_JAFG_CLASS()

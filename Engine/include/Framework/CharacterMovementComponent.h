@@ -8,18 +8,20 @@
 namespace Jafg
 {
 
+class AEyeComponent;
+
 namespace Detail
 {
 struct LCharacterMovementProxy;
 } /* ~Namespace Detail */
 
 //#
-//# Moves a pawn as a character. Backed by a Jolt virtual character: a kinematic capsule that collides and slides
+//# Moves an actor as a character. Backed by a Jolt virtual character: a kinematic capsule that collides and slides
 //# through the world, but is not simulated by the physics system itself.
 //#
 //# Supports:
-//#   - Walking on slopes and stairs, sticking to the floor and standing on moving bodies (e.g., ships). The pawn
-//#     inherits the velocity of the ground and turns with it.
+//#   - Walking on slopes and stairs, sticking to the floor and standing on moving bodies (e.g., ships). The
+//#     character inherits the velocity of the ground and turns with it.
 //#   - Falling with air control, coyote time and jump buffering.
 //#   - Crouching. Standing up again is blocked while there is no room for it.
 //#   - Flying with a jetpack in gravity. With engaged dampeners the jetpack hovers and brakes on its own.
@@ -29,8 +31,11 @@ struct LCharacterMovementProxy;
 //#   - Collisions with other characters and pushing of dynamic bodies. Other bodies can collide with and push the
 //#     character through an inner kinematic body.
 //#
-//# The root component of the owning pawn is the location of the feet. Its rotation is the body rotation, which stays
-//# upright in gravity. The view (#APawn::GetViewLocalRotation) additionally pitches relative to the body.
+//# The root component of the owning actor is the location of the feet. Its rotation is the body rotation, which
+//# stays upright in gravity. The head (#GetHeadEye) sits at the eye height and additionally pitches with the view.
+//#
+//# While the actor is attached to another actor (#AActor::AttachTo), nothing is simulated. The character follows
+//# the root and does not collide.
 //#
 DECLARE_JAFG_CLASS()
 class ENGINE_API ACharacterMovementComponent : public AMovementComponent
@@ -71,6 +76,16 @@ public:
 
     //# Change the dimensions of the capsule. The character will stand up if there is room for it.
     void SetCapsuleDimensions(f32 InStandingHeight, f32 InCrouchingHeight, f32 InRadius);
+
+    //#
+    //# The eye at the head. Its local transform (eye height and view pitch) is driven by this component. Defaults
+    //# to the first eye directly below the root. Third person eyes can hang below it.
+    //#
+    NODISCARD AEyeComponent* GetHeadEye() const noexcept;
+    //# @param Eye Must be part of the owning actor. Null for the default.
+    void SetHeadEye(AEyeComponent* Eye) noexcept;
+    //# Whether the owning actor is attached to another one. Then the character only follows its root.
+    NODISCARD bool IsRootAttached() const noexcept;
 
     //# ---------- Tunables ----------
     //# Distances are in meters, speeds in meters per second, accelerations in meters per second squared and angles
@@ -261,6 +276,8 @@ private:
     bool bHasWrittenRoot{};
     LWorldVec3 LastWrittenTranslation{ 0.0f };
     LWorldQuat LastWrittenRotation{ maths::identity<LWorldQuat> };
+
+    AEyeComponent* HeadEye{};
 };
 
 } /* ~Namespace Jafg */

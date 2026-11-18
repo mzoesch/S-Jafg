@@ -25,6 +25,7 @@ enum struct ECollisionChannelBits
     Invalid  = 0x0 << 0,
     Static   = 0x1 << 1,
     Dynamic  = 0x1 << 2,
+    //# Bodies of characters (see #ACharacterMovementComponent).
     Pawn     = 0x1 << 3,
 };
 ENUM_STRUCT_FLAGS(ECollisionChannelBits, ECollisionChannels)
@@ -36,7 +37,7 @@ struct LCollisionQueryParams final
     //# Sort all hits by their distance to the beginning of the trace. Closest first unless #bSortDescending.
     bool bSortByDistance:1{};
     bool bSortDescending:1{};
-    //# Bodies of these actors are never hit (e.g., the pawn that traces).
+    //# Bodies of these actors are never hit (e.g., the actor that traces).
     TArray<AActor const*> IgnoredActors;
 };
 

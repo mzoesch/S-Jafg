@@ -222,8 +222,8 @@ void Jafg::ALightComponent::SetDirection(LVec3F const& Direction) noexcept
     LVec3F const Up{maths::cross(Forward, Right)};
     LWorldQuat const World{glm::quat_cast(LMat3F{Right, Up, Forward})};
 
-    this->SetLocalRotatorByTeleport(this->HasParent()
-        ? maths::inverse(this->GetParent()->GetWorldRotationSlow()) * World
+    this->SetLocalRotatorByTeleport(this->GetTransformParent()
+        ? maths::inverse(this->GetTransformParent()->GetWorldRotationSlow()) * World
         : World
         );
 }

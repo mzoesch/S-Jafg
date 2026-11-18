@@ -7,6 +7,9 @@ void Jafg::ASceneComponent::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
 
+    /* Usually already done by the actor. But components may also be removed on their own. */
+    this->DetachAttachedActors(Reason == EJxxRecordTearDownReason::Default, false);
+
     checkCode
     (
         if (IsValidFast(this->GetOuter(), &this->GetOwningActor()))
@@ -24,7 +27,6 @@ void Jafg::ASceneComponent::OnGarbage(EJxxRecordTearDownReason Reason)
     return;
 }
 
-#if JAFG_DO_CHECKS
 void Jafg::ASceneComponent::OnAttach(AActor& InOwner)
 {
     /*
@@ -55,7 +57,6 @@ void Jafg::ASceneComponent::OnAttach(AActor& InOwner)
         Child->OnAttach(InOwner);
     }
 }
-#endif /* JAFG_DO_CHECKS */
 
 Jafg::AWorldObject& Jafg::ASceneComponent::CloneImpl(AWorldObject* Object) const noexcept
 {
@@ -74,3 +75,28 @@ void Jafg::ASceneComponent::_check_EmplaceRuntimeComponentPreCondition()
     check(this->GetOwningActor()._Lives())
 }
 #endif /* JAFG_DO_CHECKS */
+
+void Jafg::ASceneComponent::DetachAttachedActors(bool bKeepWorld, bool bTransitive)
+{
+    for (auto Attached{std::exchange(this->AttachedActors, {})}; AActor* Actor: Attached)
+    {
+        check(Actor && Actor->HasRootComponent())
+        check(Actor->GetRootComponent().AttachParent == this)
+        auto& Root{Actor->GetRootComponent()};
+        LWorldTrans const World{Root.GetWorldTransformSlow()};
+        Root.AttachParent = nullptr;
+        if (bKeepWorld)
+        {
+            Root.SetLocalTransformByTeleport(World);
+        }
+        LOG_VERBOSE(LogWorld, "[{}]: Detached [{}] because the parent goes away.", this->GetNameAsString(), Actor->GetNameAsString())
+    }
+
+    if (bTransitive)
+    {
+        for (auto& Child: this->Children)
+        {
+            Child->DetachAttachedActors(bKeepWorld, true);
+        }
+    }
+}

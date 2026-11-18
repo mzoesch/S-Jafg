@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/WorldViewer.h"
+#include "Framework/EyeComponent.h"
 #include "Nodes/Text.h"
 #include "Rhi/NodeRenderInfo.h"
 #include "User/UserPreferences.h"
@@ -503,13 +504,13 @@ bool Jafg::WWorldViewer::ShouldDrawAmbientOcclusion() const noexcept
     {
         return false;
     }
-    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->IsOwnedPawnValid();
+    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->GetViewEye();
 }
 
 void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
 {
-    auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
-    auto Eye{Pawn.GetEye()};
+    auto& ViewEye{*this->GetOwnedPersonaControllerChecked()->GetViewEye()};
+    auto Eye{ViewEye.GetEye()};
 
     auto DrawFullscreen{[](LRenderInfo const& Info, LMaterialInstance const& Instance, auto const& PushConstants)
     {
@@ -535,7 +536,7 @@ void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
     this->RenderTarget.RenderSceneDepth(Info, [&](LRenderInfo const& Info)
     {
         std::optional<TArray<AActor*>> Filter;
-        Pawn.GetWorld().Draw(Info, {
+        ViewEye.GetWorld().Draw(Info, {
             .Eye = Eye,
             .Instance = &*this->SceneDepthMaterialInstance,
             .Filter = Filter,
@@ -577,7 +578,7 @@ bool Jafg::WWorldViewer::ShouldDrawShadows() const noexcept
     {
         return false;
     }
-    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->IsOwnedPawnValid();
+    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->GetViewEye();
 }
 
 bool Jafg::WWorldViewer::InitializeShadowAtlas()
@@ -613,8 +614,7 @@ bool Jafg::WWorldViewer::InitializeShadowAtlas()
 
 bool Jafg::WWorldViewer::DrawShadows(LRenderInfo const& Info)
 {
-    auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
-    auto& World{Pawn.GetWorld()};
+    auto& World{this->GetOwnedPersonaControllerChecked()->GetWorld()};
     auto const& Lights{World.GetSubsystemChecked<JLightSubsystem>()->GetLights()};
 
     //# Most worlds have no shadow casting light at all. Do not allocate the atlas for them.
@@ -631,7 +631,7 @@ bool Jafg::WWorldViewer::DrawShadows(LRenderInfo const& Info)
     }
 
     //# The cascades of directional lights are fit around the camera of this viewer.
-    auto const Eye{Pawn.GetEye()};
+    auto const Eye{this->GetOwnedPersonaControllerChecked()->GetViewEye()->GetEye()};
     auto const Extent{this->RenderTarget.GetExtent().ToVec<f32>()};
     this->ShadowAtlas.Gather(Lights, this->ShadowSettings, {
         .Eye = Eye,
@@ -716,10 +716,10 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
 {
     if (this->IsOwnedPersonaControllerValid())
     {
-        if (auto& Ctrl{*this->GetOwnedPersonaControllerChecked()}; Ctrl.IsOwnedPawnValid())
+        auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+        if (AEyeComponent* ViewEye{Ctrl.GetViewEye()})
         {
-            auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
-            auto Eye{Pawn.GetEye()};
+            auto Eye{ViewEye->GetEye()};
             std::optional<TArray<AActor*>> Filter;
 
             algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets;
@@ -731,7 +731,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
             SharedBuffers.emplace(SSBO::BindlessPbrLight::name(), &this->PbrLightBuffers[Info.Frame]);
             SharedBuffers.emplace(SSBO::PbrShadowView::name(), &this->PbrShadowViewBuffers[Info.Frame]);
 
-            Pawn.GetWorld().Draw(Info, {
+            Ctrl.GetWorld().Draw(Info, {
                 .Eye = Eye,
                 .Instance = nullptr,
                 .SharedSets = std::move(SharedSets),
@@ -746,7 +746,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                     ? this->AmbientOcclusionBindlessIndex : rhi::invalid_resource_index,
                 });
 
-            this->OnPostWorldDrawImpl(Info, Ctrl, Pawn, Eye);
+            this->OnPostWorldDrawImpl(Info, Ctrl, *ViewEye, Eye);
         }
     }
     this->RenderTargetViewport.Draw(Info);

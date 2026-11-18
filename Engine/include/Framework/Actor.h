@@ -15,6 +15,16 @@ namespace Jafg
 #if JAFG_WITH_EDITOR
     class WEditorWorldViewer;
 #endif /* JAFG_WITH_EDITOR */
+class AAvatarComponent;
+
+//# What happens with the transform of an actor when it is attached or detached.
+enum struct EAttachmentRule: u8
+{
+    //# The actor stays where it is in the world. Its local transform changes.
+    KeepWorld,
+    //# The local transform stays the same. The actor moves to wherever that is relative to the new parent.
+    KeepRelative,
+};
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API AActor : public AWorldObject, private LTickableObject, private LFixedTickableObject
@@ -334,6 +344,27 @@ public:
         check(Component.Origin == EActorComponentOrigin::Runtime && "Only components that were emplaced at runtime can be removed.")
         this->Components.erase(It);
     }
+
+    //#
+    //# Attach this actor to a scene component of another actor. The root of this actor then follows the parent:
+    //# its local transform becomes relative to it. Both actors keep owning their components, tick and render on
+    //# their own. If the parent is destroyed, this actor is detached and stays where it is.
+    //#
+    //# Fails if this actor has no root, if it would create a cycle, or if the root cannot follow a parent (e.g.,
+    //# a rigid body that is simulated, see #ASceneComponent::CanFollowAttachParent).
+    //# @return Whether this actor is now attached to #Parent.
+    //#
+    bool AttachTo(ASceneComponent& Parent, EAttachmentRule Rule = EAttachmentRule::KeepWorld);
+    //# Detach this actor from its attach parent. Nothing happens if it is not attached.
+    void Detach(EAttachmentRule Rule = EAttachmentRule::KeepWorld);
+    NODISCARD FORCEINLINE constexpr bool IsAttached() const noexcept { return this->RootComponent && this->RootComponent->HasAttachParent(); }
+    //# The component that this actor is attached to. Null if not attached.
+    NODISCARD FORCEINLINE constexpr ASceneComponent* GetAttachParent() const noexcept { return this->RootComponent ? this->RootComponent->AttachParent : nullptr; }
+    NODISCARD AActor* GetAttachParentActor() const noexcept;
+
+    //# The avatar component of this actor. Null if this actor cannot be possessed. @see #AAvatarComponent
+    NODISCARD AAvatarComponent* GetAvatar() noexcept;
+    NODISCARD AAvatarComponent const* GetAvatar() const noexcept;
 
     NODISCARD FORCEINLINE constexpr bool HasRootComponent() const noexcept { return !!this->RootComponent; }
     NODISCARD FORCEINLINE constexpr ASceneComponent& GetRootComponent() const noexcept { check(this->RootComponent) return *this->RootComponent; }

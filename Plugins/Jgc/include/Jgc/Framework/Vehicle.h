@@ -12,7 +12,7 @@ namespace Jafg
 {
 
 class AStaticMeshComponent;
-class APawn;
+class AAvatarComponent;
 
 } /* ~Namespace Jafg */
 
@@ -26,7 +26,11 @@ enum struct EVehicle
 };
 
 //#
-//# A vehicle that one pawn can drive. Interacting with it seats the pawn as the driver.
+//# A vehicle that one driver can drive. Interacting with it seats the instigator as the driver.
+//#
+//# The actor of a vehicle is an avatar of its own: It needs an #Jafg::AAvatarComponent, and usually an
+//# #Jafg::AEyeComponent (the view while driving) and an #AJgcVehicleInputComponent (the controls). While seated,
+//# the actor of the driver is attached to the vehicle and the controller of the driver possesses the vehicle.
 //#
 DECLARE_JAFG_CLASS()
 class JGC_API AVehicleComponent : public AInteractableComponent
@@ -46,21 +50,22 @@ public:
     virtual void OnGarbage(Jafg::EJxxRecordTearDownReason Reason) override;
     virtual void ParentPhysicsTick(f32 Dt, bool bFollowup) override;
 
-    virtual bool CanInteract(Jafg::APawn const& Instigator) const override;
-    virtual bool Interact(Jafg::APawn& Instigator) override;
+    virtual bool CanInteract(Jafg::AAvatarComponent const& Instigator) const override;
+    virtual bool Interact(Jafg::AAvatarComponent& Instigator) override;
     virtual LString GetInteractionText() const override;
 
     NODISCARD FORCEINLINE bool HasDriver() const noexcept { return !!this->GetDriver(); }
-    NODISCARD Jafg::APawn* GetDriver() const noexcept;
+    //# The avatar of the driver. It is not possessed while driving; its controller possesses this vehicle.
+    NODISCARD Jafg::AAvatarComponent* GetDriver() const noexcept;
     //#
-    //# Seat a pawn as the driver. The movement of the pawn is frozen and a local human gets the controls of this
-    //# vehicle (see #AJgcInputComponent).
-    //# @return False if the seat is already taken.
+    //# Seat an avatar as the driver: Its movement is frozen, its actor is attached to this vehicle (where it is),
+    //# and its controller possesses the avatar of this vehicle instead.
+    //# @return False if the seat is taken or this vehicle has no avatar.
     //#
-    bool Enter(Jafg::APawn& Pawn);
+    bool Enter(Jafg::AAvatarComponent& NewDriver);
     //#
-    //# Let the driver leave. The driver is put back where it entered (relative to this vehicle) and keeps the
-    //# velocity of this vehicle.
+    //# Let the driver leave. It is detached where it sits (that is where it entered, relative to this vehicle),
+    //# keeps the velocity of this vehicle, and its controller possesses it again.
     //#
     void Exit();
 
@@ -95,10 +100,9 @@ private:
     std::size_t bLastUserThrust{};
     std::size_t bLastUserTorque{};
 
-    Jafg::APawn* Driver{};
-    //# Where the driver entered. Relative to the root of this vehicle.
-    LWorldVec3 DriverEntryLocation{ maths::zero_vector<LWorldVec3> };
-    LWorldQuat DriverEntryRotation{ maths::identity<LWorldQuat> };
+    Jafg::AAvatarComponent* Driver{};
+    //# The avatar of this vehicle while driven. Kept, because the actor no longer finds it while it is torn down.
+    Jafg::AAvatarComponent* DrivenAvatar{};
 };
 
 } /* ~Namespace Jgc */

@@ -50,7 +50,9 @@
 #include "Rhi/OutlineRendering.h"
 #include "Widgets/Input_Boolean.h"
 #include "Widgets/Input_Vector1.h"
-#include "Framework/PawnStart.h"
+#include "Framework/AvatarStart.h"
+#include "Framework/AvatarComponent.h"
+#include "Framework/EyeComponent.h"
 #include "Framework/RigidComponent.h"
 #include "Nodes/Separator.h"
 #include "Framework/FontSubsystem.h"
@@ -1032,7 +1034,7 @@ void Jafg::WEditorWorldViewer::Construct()
     });
 
     this->StartType = EStartType{static_cast<u8>(*Prefs.EditorStartType)};
-    this->PawnStart = EPawnSart{static_cast<u8>(*Prefs.EditorPawnStart)};
+    this->AvatarStart = EAvatarStart{static_cast<u8>(*Prefs.EditorPawnStart)};
 
     if (!*Prefs.EditorAutoResolveResolution)
     {
@@ -1143,7 +1145,7 @@ void Jafg::WEditorWorldViewer::Construct()
                             {
                                 check(!!this->EditorReconnectionData)
 
-                                this->RunningPawnIfDetached = nullptr;
+                                this->RunningAvatarIfDetached = nullptr;
 
                                 auto& Engine{this->GetEngine()};
                                 if (!Engine.IsWorldValid(this->EditorReconnectionData->World))
@@ -1157,7 +1159,7 @@ void Jafg::WEditorWorldViewer::Construct()
                                 check(&this->GetOwnedPersonaControllerChecked()->GetWorld() != &PieWorld)
                                 Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_EditorWaitIdle();
                                 PieWorld.TearDownWithTrack();
-                                this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
+                                this->GetOwnedPersonaControllerChecked()->GetPossessedActorChecked()->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
 
                                 this->EditorReconnectionData->World->Unpause();
                             }
@@ -1168,7 +1170,7 @@ void Jafg::WEditorWorldViewer::Construct()
                                 Surface.GetMutableFrontend().RemoveSurface(Surface);
                             }
 
-                            check(!this->RunningPawnIfDetached)
+                            check(!this->RunningAvatarIfDetached)
 
                             this->EditorReconnectionData.reset();
                             this->UpdateStartStopButtons();
@@ -1194,30 +1196,50 @@ void Jafg::WEditorWorldViewer::Construct()
                                     LOG_FATAL(LogEditor, "Cannot detach or reattach from a running instance that is not the editor.")
                                 }
 
-                                if (this->RunningPawnIfDetached)
+                                if (this->RunningAvatarIfDetached)
                                 {
                                     Pc.RemoveComponent(Pc.GetComponentChecked<AEditorPersonaControllerComponent>());
-                                    if (!IsValidFast(World, this->RunningPawnIfDetached))
+                                    if (!IsValidFast(World, this->RunningAvatarIfDetached))
                                     {
-                                        LOG_FATAL(LogEditor, "Cannot reattach because old pawn is invalid.")
+                                        LOG_FATAL(LogEditor, "Cannot reattach because the old avatar is invalid.")
                                     }
-                                    Pc.PossessPawn(TJxxUnique<APawn>{std::exchange(this->RunningPawnIfDetached, {})}, true);
+
+                                    /* The editor camera was only spawned for the detached time. */
+                                    AActor* EditorCamera{Pc.GetPossessedActor()};
+                                    Pc.Possess(std::exchange(this->RunningAvatarIfDetached, {}));
+                                    if (EditorCamera)
+                                    {
+                                        (void)Pc.AbandonActor(*EditorCamera);
+                                    }
                                 }
                                 else
                                 {
                                     check(!Pc.GetComponent<AEditorPersonaControllerComponent>())
-                                    Pc.EmplaceComponent<AEditorPersonaControllerComponent>();
-
-                                    auto Pawn{World.GetSupremePoliciesChecked()->GetPawnForPersonaController(Pc)};
-                                    check(Pawn)
-
-                                    Pawn->GetRootComponent().SetLocalTransformByTeleport(Pc.GetOwnedPawnChecked()->GetRootComponent().GetLocalTransform());
-
-                                    this->RunningPawnIfDetached = Pc.PossessPawn(std::move(Pawn), false).release();
-                                    if (!this->RunningPawnIfDetached)
+                                    this->RunningAvatarIfDetached = Pc.GetPossessedAvatar();
+                                    if (!this->RunningAvatarIfDetached)
                                     {
-                                        LOG_FATAL(LogEditor, "Detached. But old pawn is invalid.")
+                                        LOG_FATAL(LogEditor, "Cannot detach. The controller does not possess anything.")
                                     }
+                                    /* Start the editor camera where the view currently is. */
+                                    std::optional<LWorldTrans> ViewTransform;
+                                    if (auto* ViewEye{Pc.GetViewEye()})
+                                    {
+                                        ViewTransform = ViewEye->GetWorldTransformSlow();
+                                    }
+
+                                    Pc.EmplaceComponent<AEditorPersonaControllerComponent>();
+                                    auto EditorCamera{World.GetSupremePoliciesChecked()->SpawnAvatarForPersonaController(Pc)};
+                                    check(EditorCamera && EditorCamera->GetAvatar())
+                                    if (ViewTransform)
+                                    {
+                                        EditorCamera->GetRootComponent().SetLocalTransformByTeleport({
+                                            .t = ViewTransform->t, .r = ViewTransform->r, .s = maths::identity<LWorldTrans>.s,
+                                            });
+                                    }
+
+                                    AAvatarComponent* EditorAvatar{EditorCamera->GetAvatar()};
+                                    Pc.AdoptActor(std::move(EditorCamera));
+                                    Pc.Possess(EditorAvatar);
                                 }
 
                                 this->UpdateStartStopButtons();
@@ -1551,11 +1573,11 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         {
             if (auto* Ctrl{this->GetOwnedPersonaController()})
             {
-                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                if (auto* ViewEye{Ctrl->GetViewEye()})
                 {
                     bSet = true;
                     this->DebugTranslationText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
-                    this->DebugTranslationText->SetContent(maths::to_string(Pawn->GetRootComponent().GetLocalTranslation()));
+                    this->DebugTranslationText->SetContent(maths::to_string(ViewEye->GetWorldTranslationSlow()));
                 }
             }
         }
@@ -1573,22 +1595,23 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         {
             if (auto* Ctrl{this->GetOwnedPersonaController()})
             {
-                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                if (auto* ViewEye{Ctrl->GetViewEye()})
                 {
                     bSet = true;
+                    LWorldVec3 const EyeTranslation{ViewEye->GetWorldTranslationSlow()};
                     if (this->LastTranslation)
                     {
                         this->DebugVelocityText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
-                        LWorldVec3 RelativeVector{(Pawn->GetRootComponent().GetLocalTranslation() - *this->LastTranslation) / Dt};
+                        LWorldVec3 RelativeVector{(EyeTranslation - *this->LastTranslation) / Dt};
                         this->DebugVelocityText->SetContent(algo::sprintf("{} ({})"
                             , maths::to_string(RelativeVector)
                             , maths::magnitude(RelativeVector)
                             ));
-                        this->LastTranslation = Pawn->GetRootComponent().GetLocalTranslation();
+                        this->LastTranslation = EyeTranslation;
                     }
                     else
                     {
-                        this->LastTranslation = Pawn->GetRootComponent().GetLocalTranslation();
+                        this->LastTranslation = EyeTranslation;
                     }
                 }
             }
@@ -1666,9 +1689,9 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         AEditorCameraComponent* Comp{};
         if (auto* Ctrl{this->GetOwnedPersonaController()})
         {
-            if (auto* Pawn{Ctrl->GetOwnedPawn()})
+            if (auto* Possessed{Ctrl->GetPossessedActor()})
             {
-                Comp = Pawn->GetComponent<AEditorCameraComponent>();
+                Comp = Possessed->GetComponent<AEditorCameraComponent>();
             }
         }
 
@@ -1709,10 +1732,10 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
     {
         if (auto* Ctrl{this->GetOwnedPersonaController()})
         {
-            if (auto* Pawn{Ctrl->GetOwnedPawn()})
+            if (auto* Possessed{Ctrl->GetPossessedActor()})
             {
                 auto Diff{algo::time_diff(this->FocusTransition->Start, this->GetEngine().FrameStartTimePoint) / this->FocusTransition->Duration};
-                Pawn->GetRootComponent().SetLocalTranslationByTeleport(maths::linear_lerp(
+                Possessed->GetRootComponent().SetLocalTranslationByTeleport(maths::linear_lerp(
                       this->FocusTransition->Origin
                     , this->FocusTransition->Destination
                     , static_cast<LWorldReal>(maths::clamp(Diff, 0.0, 1.0))
@@ -1769,10 +1792,10 @@ Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo c
         if (this->IsOwnedPersonaControllerValid())
         {
             auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
-            if (Ctrl.IsOwnedPawnValid())
+            if (Ctrl.IsPossessing())
             {
-                auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
-                if (auto* Comp{Pawn.GetComponent<AEditorCameraComponent>()})
+                auto& Possessed{*Ctrl.GetPossessedActorChecked()};
+                if (auto* Comp{Possessed.GetComponent<AEditorCameraComponent>()})
                 {
                     LRect2F Rect{this->GetWorldTargetRectFromMostOuter(Info.Translation)};
                     LVec2F Location{*Info.CursorLocation - Rect.offset};
@@ -1993,10 +2016,16 @@ void Jafg::WEditorWorldViewer::FocusActors()
 
     auto Corners{Aabb->corners()};
 
-    auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
-    auto Origin{Pawn.GetRootComponent().GetLocalTranslation()};
-    Pawn.GetRootComponent().SetLocalTranslationByTeleport(Aabb->center());
-    auto Eye{Pawn.GetEye()};
+    auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+    if (!Ctrl.IsPossessing() || !Ctrl.GetViewEye())
+    {
+        LOG_VERBOSE(LogEditor, "[{}]: Cannot focus actors without a possessed eye.", this->GetNameAsString())
+        return;
+    }
+    auto& Possessed{*Ctrl.GetPossessedActorChecked()};
+    auto Origin{Possessed.GetRootComponent().GetLocalTranslation()};
+    Possessed.GetRootComponent().SetLocalTranslationByTeleport(Aabb->center());
+    auto Eye{Ctrl.GetViewEye()->GetEye()};
     auto EyeRight{cross(Eye.front, Eye.up)};
 
     auto Extent{this->GetWorldRenderTarget().GetExtent()};
@@ -2014,15 +2043,15 @@ void Jafg::WEditorWorldViewer::FocusActors()
             };
         BackwardsMagnitude = maths::max(BackwardsMagnitude, RequiredZ - Vec.z);
     }
-    Pawn.GetRootComponent().AddLocalTranslationByTeleport(Eye.front * -BackwardsMagnitude);
+    Possessed.GetRootComponent().AddLocalTranslationByTeleport(Eye.front * -BackwardsMagnitude);
 
     this->FocusTransition = LFocusTransition{
         .Origin = Origin,
-        .Destination = Pawn.GetRootComponent().GetLocalTranslation(),
+        .Destination = Possessed.GetRootComponent().GetLocalTranslation(),
         .Start = GetEngine().FrameStartTimePoint,
         .Duration = *Prefs.EditorActorFocusTransitionDuration,
         };
-    Pawn.GetRootComponent().SetLocalTranslationByTeleport(this->FocusTransition->Origin);
+    Possessed.GetRootComponent().SetLocalTranslationByTeleport(this->FocusTransition->Origin);
 }
 
 bool Jafg::WEditorWorldViewer::IsGridSpaceLocal() const noexcept
@@ -2072,9 +2101,9 @@ bool Jafg::WEditorWorldViewer::OnPreDrawImpl(LRenderInfo const& Info)
     return Result;
 }
 
-void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, APawn& Pawn, LWorldEye const& Eye)
+void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, AEyeComponent& ViewEye, LWorldEye const& Eye)
 {
-    Super::OnPostWorldDrawImpl(Info, Ctrl, Pawn, Eye);
+    Super::OnPostWorldDrawImpl(Info, Ctrl, ViewEye, Eye);
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -2203,7 +2232,7 @@ void Jafg::WEditorWorldViewer::OnConnect()
 {
     Super::OnConnect();
 
-    check(!this->RunningPawnIfDetached)
+    check(!this->RunningAvatarIfDetached)
 
     if (this->EditorReconnectionData)
     {
@@ -2211,19 +2240,19 @@ void Jafg::WEditorWorldViewer::OnConnect()
         {
             if (Ctrl->GetComponent<AEditorPersonaControllerComponent>())
             {
-                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                if (auto* Possessed{Ctrl->GetPossessedActor()})
                 {
-                    if (Pawn->GetComponent<AEditorCameraComponent>())
+                    if (Possessed->GetComponent<AEditorCameraComponent>())
                     {
-                        Pawn->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
+                        Possessed->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
                     }
                 }
             }
-            else if (this->PawnStart == EPawnSart::EditorEye)
+            else if (this->AvatarStart == EAvatarStart::EditorEye)
             {
-                if (auto* Pawn{Ctrl->GetOwnedPawn()})
+                if (auto* Possessed{Ctrl->GetPossessedActor()})
                 {
-                    Pawn->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
+                    Possessed->GetRootComponent().SetLocalTransformByTeleport(this->EditorReconnectionData->EyeTrans);
                 }
             }
         }
@@ -2251,7 +2280,7 @@ void Jafg::WEditorWorldViewer::OnDisconnect()
 {
     this->SelectActors({});
 
-    check(!this->RunningPawnIfDetached)
+    check(!this->RunningAvatarIfDetached)
 
     Super::OnDisconnect();
 
@@ -2286,13 +2315,13 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
 
     if (!ValidActors.empty())
     {
-        auto& Pawn{*this->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()};
+        auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
 
         algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets;
         SharedSets.emplace(UBO::WorldData::name(), this->Vk_GetWorldDescriptorSet(Info.Frame));
 
-        Pawn.GetWorld().Draw(Info, {
-            .Eye = Pawn.GetEye(),
+        Ctrl.GetWorld().Draw(Info, {
+            .Eye = Ctrl.GetViewEye()->GetEye(),
             .Instance = &*this->SelectionMaterialInstance,
             .SharedSets = std::move(SharedSets),
             .Filter = ValidActors,
@@ -2941,17 +2970,17 @@ void Jafg::WEditorWorldViewer::CreateStartDropDown(LVec2F Where)
                 return algo::reply::unhandled();
             }},
         LDropDownNodeSeparator{.DisplayName="SPAWN PREFERENCES"},
-        CreateDropDownCheckmark("Spawn at current eye", this->PawnStart==EPawnSart::EditorEye, [this]
+        CreateDropDownCheckmark("Spawn at current eye", this->AvatarStart==EAvatarStart::EditorEye, [this]
         {
-            if (this->PawnStart == EPawnSart::EditorEye)
+            if (this->AvatarStart == EAvatarStart::EditorEye)
             {
-                this->PawnStart = EPawnSart::Default;
+                this->AvatarStart = EAvatarStart::Default;
             }
             else
             {
-                this->PawnStart = EPawnSart::EditorEye;
+                this->AvatarStart = EAvatarStart::EditorEye;
             }
-            return this->PawnStart == EPawnSart::EditorEye;
+            return this->AvatarStart == EAvatarStart::EditorEye;
         }),
         LDropDownNodeSeparator{.DisplayName="NET PREFERENCES"},
         LDropDownNodeInformation{.What="Clients 1"},
@@ -3177,7 +3206,7 @@ static void LoadFirstCollection(Jafg::LWorld& World)
 
 static void LoadGymCollection(Jafg::LWorld& World)
 {
-    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::APawnStart>{World})->GetRootComponent().SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
+    Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AAvatarStart>{World})->GetRootComponent().SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * static_cast<LWorldReal>(2.0));
 
     {
         auto& Plane{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
@@ -3346,7 +3375,7 @@ Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetStartTexture() const
 
 Jafg::LTexture2Ref Jafg::WEditorWorldViewer::GetDetachTexture() const
 {
-    if (this->RunningPawnIfDetached)
+    if (this->RunningAvatarIfDetached)
     {
         return LTexture2::FromTextureView(*JafgInfo, "Icons/Reattach");
     }
@@ -3403,7 +3432,7 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
 
     auto& Prefs{GetMutableSingleton<JUserPreferences>()};
     Prefs.EditorStartType = std::byte{std::to_underlying(this->StartType)};
-    Prefs.EditorPawnStart = std::byte{std::to_underlying(this->PawnStart)};
+    Prefs.EditorPawnStart = std::byte{std::to_underlying(this->AvatarStart)};
 
     switch (this->StartType)
     {
@@ -3411,12 +3440,12 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
     {
         this->RunningInstance = this;
         auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
-        auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
+        auto& Possessed{*Ctrl.GetPossessedActorChecked()};
         auto& Engine{Ctrl.GetMutableEngine()};
         check(!this->EditorReconnectionData)
         this->EditorReconnectionData = LEditorReconnectionData{
             .World = &Ctrl.GetWorld(),
-            .EyeTrans = Pawn.GetRootComponent().GetLocalTransform(),
+            .EyeTrans = Possessed.GetRootComponent().GetLocalTransform(),
             };
         this->UserInput.DeactivateAllContexts();
         this->UserInput.SetConsumeMouse(false);
@@ -3464,12 +3493,12 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
         check(!this->bIsNextPersonaEditorControlled)
         this->bIsNextPersonaEditorControlled = true;
         auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
-        auto& Pawn{*Ctrl.GetOwnedPawnChecked()};
+        auto& Possessed{*Ctrl.GetPossessedActorChecked()};
         auto& Engine{Ctrl.GetMutableEngine()};
         check(!this->EditorReconnectionData)
         this->EditorReconnectionData = LEditorReconnectionData{
             .World = &Ctrl.GetWorld(),
-            .EyeTrans = Pawn.GetRootComponent().GetLocalTransform(),
+            .EyeTrans = Possessed.GetRootComponent().GetLocalTransform(),
             };
         this->UserInput.DeactivateAllContexts();
         this->UserInput.SetConsumeMouse(false);
@@ -5021,7 +5050,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 return true;
             }
             auto& Ctrl{*N->GetOwnedPersonaControllerChecked()};
-            if (!Ctrl.IsOwnedPawnValid())
+            if (!Ctrl.GetViewEye())
             {
                 return true;
             }
@@ -5069,7 +5098,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }
 
                 auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
-                    {Extent.width,Extent.height}, Location, Ctrl.GetOwnedPawnChecked()->GetEye()), *Prefs.EditorTraceLength
+                    {Extent.width,Extent.height}, Location, Ctrl.GetViewEye()->GetEye()), *Prefs.EditorTraceLength
                     )};
                 LWorldReal LineDelta{maths::intersection_delta_on_plane(LWorldRay3{.origin=Trace.origin,.direction=Trace.direction}, GizmoPlane)};
                 LWorldVec3 Point{Trace.origin + Trace.direction * LineDelta};
@@ -5126,7 +5155,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }
 
                 auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
-                    {Extent.width,Extent.height}, Location, Ctrl.GetOwnedPawnChecked()->GetEye()), *Prefs.EditorTraceLength
+                    {Extent.width,Extent.height}, Location, Ctrl.GetViewEye()->GetEye()), *Prefs.EditorTraceLength
                     )};
                 LWorldReal LineDelta{maths::closest_delta_on_line(
                     LWorldRay3{this->GizmoMeshes[Mesh].GetTranslation(), GizmoRay}, LWorldRay3{.origin=Trace.origin,.direction=Trace.direction}
@@ -5193,7 +5222,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
             if (Surface.HasPlatformKeyState(*Surface.GetFrontend().GetPhysicalKey(ELogicalKey::LeftShift), ERawInputStateBits::Hold))
             {
                 Surface.SetInputMode(EInputModeBits::HideMouseCursor);
-                Viewer->GetOwnedPersonaControllerChecked()->GetOwnedPawnChecked()->GetRootComponent().AddLocalTranslationByTeleport(Point - this->GizmoMeshes[Mesh].GetTranslation());
+                Viewer->GetOwnedPersonaControllerChecked()->GetPossessedActorChecked()->GetRootComponent().AddLocalTranslationByTeleport(Point - this->GizmoMeshes[Mesh].GetTranslation());
                 Result = true;
             }
             else
@@ -5201,7 +5230,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 Surface.SetInputMode(EInputModeBits::ShowMouseCursor);
             }
 
-            if (auto* Parent{this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetParent()})
+            if (auto* Parent{this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetTransformParent()})
             {
                 auto ParentTranslation{Parent->GetWorldTranslationSlow()};
                 auto RelativePoint{Point - ParentTranslation};
@@ -5627,9 +5656,33 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
     }
 }
 
+LWorldEye Jafg::AEditorCameraComponent::GetEye() const noexcept
+{
+    /* Traces have to match what is rendered. */
+    if (auto* Ctrl{this->GetOwningController()})
+    {
+        if (auto* ViewEye{Ctrl->GetViewEye()})
+        {
+            return ViewEye->GetEye();
+        }
+    }
+    if (auto* Avatar{this->GetOwningAvatar()})
+    {
+        if (auto* Eye{Avatar->GetEye()})
+        {
+            return Eye->GetEye();
+        }
+    }
+    LWorldTrans const Root{this->GetOwningActor().GetRootComponent().GetWorldTransformSlow()};
+    return {
+        .vert_fov = maths::pi_f / 3.0f, .near_frustum = 0.1f, .far_frustum = 1.0f,
+        .translation = Root.t, .front = Root.r * maths::forward_vector<LWorldVec3>, .up = Root.r * maths::up_vector<LWorldVec3>,
+        };
+}
+
 bool Jafg::AEditorCameraComponent::ActivateUserInputContext() noexcept
 {
-    if (auto* Ctrl{this->GetOwningPawn().GetOwningController()})
+    if (auto* Ctrl{this->GetOwningController()})
     {
         if (auto* Lackey{Ctrl->TryGetOwningLackey<ELackey::Local>()})
         {
@@ -5647,13 +5700,12 @@ bool Jafg::AEditorCameraComponent::ActivateUserInputContext() noexcept
 void Jafg::AEditorCameraComponent::OnHighlightTrace(WEditorWorldViewer& Viewer, rhi::extent2 Extent, LVec2F Location)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
-    auto& Pawn{this->GetOwningPawn()};
-    auto Eye{Pawn.GetEye()};
+    auto Eye{this->GetEye()};
 
     auto Ray{LWorldMagRay3::from_ray(maths::screen_to_world_space({Extent.width,Extent.height}, Location, Eye), *Prefs.EditorTraceLength)};
     check(maths::normalized(Ray.direction))
 
-    if (auto* PcComp{Pawn.GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
+    if (auto* PcComp{this->GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
     {
         if (auto Mesh{PcComp->TraceGizmo(Ray, Extent, Eye)}; Mesh != AEditorPersonaControllerComponent::GizmoCount)
         {
@@ -5665,13 +5717,12 @@ void Jafg::AEditorCameraComponent::OnHighlightTrace(WEditorWorldViewer& Viewer, 
 void Jafg::AEditorCameraComponent::OnTrace(WEditorWorldViewer& Viewer, bool bMultiselect, rhi::extent2 Extent, LVec2F Location, std::optional<LEditorTraceOrigin> Origin /* = {} */)
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
-    auto& Pawn{this->GetOwningPawn()};
-    auto Eye{Pawn.GetEye()};
+    auto Eye{this->GetEye()};
 
     auto Ray{LWorldMagRay3::from_ray(maths::screen_to_world_space({Extent.width,Extent.height}, Location, Eye), *Prefs.EditorTraceLength)};
     check(maths::normalized(Ray.direction))
 
-    if (auto* PcComp{Pawn.GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
+    if (auto* PcComp{this->GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
     {
         if (*Prefs.EditorVisualizeTraces)
         {
@@ -5690,7 +5741,7 @@ void Jafg::AEditorCameraComponent::OnTrace(WEditorWorldViewer& Viewer, bool bMul
     }
 
     bool bHit{};
-    for (auto& Hit: Pawn.GetWorld().LineTraceNonPhysical(Ray, {.bSingleHit=true}))
+    for (auto& Hit: this->GetWorld().LineTraceNonPhysical(Ray, {.bSingleHit=true}))
     {
         if (!Hit.Actor.IsEditorHitTestable())
         {
@@ -5700,7 +5751,7 @@ void Jafg::AEditorCameraComponent::OnTrace(WEditorWorldViewer& Viewer, bool bMul
         bHit = true;
         if (*Prefs.EditorVisualizeTraceHits)
         {
-            if (auto* Comp{this->GetOwningPawn().GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
+            if (auto* Comp{this->GetOwningControllerChecked()->GetComponent<AEditorPersonaControllerComponent>()})
             {
                 constexpr auto offset{0.01f};
                 Comp->AddAabb({

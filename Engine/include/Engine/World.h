@@ -31,7 +31,6 @@ class JWorldSubsystem;
 class LTickableObject;
 class LFixedTickableObject;
 class APersonaController;
-class APawn;
 class LCommandLineInterface;
 class LWorld;
 class ASupremePolicies;

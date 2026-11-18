@@ -21,10 +21,10 @@ namespace Jafg
 {
 
 //#
-//# The rule set that is currently used to integrate the motion of a pawn.
+//# The rule set that is currently used to integrate the motion of a character.
 //#
 SERDE_DECLARE_TRIVIAL_ENUM(EMovementMode, u8,
-    //# Not simulated. The pawn is frozen in place.
+    //# Not simulated. The character is frozen in place.
     None,
     //# Standing on walkable ground while being affected by gravity.
     Walking,
@@ -66,7 +66,7 @@ enum struct EMovementNetRole: u8
 {
     //#
     //# Standalone or server. Simulates authoritatively.
-    //# The input either comes from the local intent (local players, bots) or, if the pawn is remotely controlled, from
+    //# The input either comes from the local intent (local players, bots) or, if the character is remotely controlled, from
     //# input commands that were received from the owning client.
     //#
     Authority,
@@ -88,7 +88,7 @@ enum struct EMovementButtonBits: u16
     Crouch       = 1 << 2,
     //# Level.
     Sprint       = 1 << 3,
-    //# State. The jetpack is engaged. Airborne pawns in gravity will then fly instead of fall.
+    //# State. The jetpack is engaged. Airborne characters in gravity will then fly instead of fall.
     Jetpack      = 1 << 4,
     //# State. The inertial dampeners are engaged. Thrusters will then cancel any motion that is not requested.
     Dampeners    = 1 << 5,
@@ -153,7 +153,7 @@ struct LMovementSnapshot final
     f32 JumpBuffer{};
     //# Remaining time in which the magnetic boots will not attach to a surface again.
     f32 MagBootsCooldown{};
-    //# Physics body that the pawn stands on. Used to follow the rotation of moving bases (e.g., ships).
+    //# Physics body that the character stands on. Used to follow the rotation of moving bases (e.g., ships).
     u32 BaseBodyId{ ~0u };
     LWorldQuat BaseRotation{ maths::identity<LWorldQuat> };
     //# Free for subclasses (e.g., jetpack fuel). Must be deterministic for prediction.

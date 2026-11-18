@@ -2,6 +2,7 @@
 
 #include "Framework/CharacterMovementComponent.h"
 #include "Framework/Actor.h"
+#include "Framework/EyeComponent.h"
 #include "Framework/SupremePolicies.h"
 #include "Engine/World.h"
 #include "PhysicsForeignCore.h"
@@ -197,13 +198,18 @@ LVec3F Jafg::ACharacterMovementComponent::GetUp() const noexcept
 
 void Jafg::ACharacterMovementComponent::Teleport(LWorldVec3 const& Location, std::optional<LWorldQuat> Rotation /* = {} */)
 {
-    if (!this->Proxy)
+    /* The root of an attached actor follows its parent. Move it relative to the parent instead. */
+    if (!this->Proxy || this->IsRootAttached())
     {
         auto& Root{this->GetOwningActor().GetRootComponent()};
-        Root.SetLocalTranslationByTeleport(Location);
+        Root.SetWorldTranslationByTeleport(Location);
         if (Rotation)
         {
-            Root.SetLocalRotatorByTeleport(*Rotation);
+            Root.SetWorldRotatorByTeleport(*Rotation);
+        }
+        if (this->Proxy)
+        {
+            this->UpdatePresentation(0.0f);
         }
         return;
     }
@@ -287,7 +293,7 @@ LVec3F Jafg::ACharacterMovementComponent::GetGroundVelocity() const noexcept
 
 LWorldQuat Jafg::ACharacterMovementComponent::GetBodyRotation() const noexcept
 {
-    return this->Proxy ? ::FromJolt(this->Proxy->Character->GetRotation()) : this->GetOwningActor().GetRootComponent().GetLocalRotator();
+    return this->Proxy ? ::FromJolt(this->Proxy->Character->GetRotation()) : this->GetOwningActor().GetRootComponent().GetWorldRotationSlow();
 }
 
 void Jafg::ACharacterMovementComponent::SetCapsuleDimensions(f32 InStandingHeight, f32 InCrouchingHeight, f32 InRadius)
@@ -328,7 +334,7 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
 {
     STAT_FUNCTION()
 
-    if (!this->Proxy || Dt <= 0.0f || this->GetMovementMode() == EMovementMode::None)
+    if (!this->Proxy || Dt <= 0.0f || this->GetMovementMode() == EMovementMode::None || this->IsRootAttached())
     {
         return;
     }
@@ -766,18 +772,18 @@ void Jafg::ACharacterMovementComponent::RestoreSnapshot(LMovementSnapshot const&
 
 void Jafg::ACharacterMovementComponent::UpdatePresentation(f32 Dt)
 {
-    if (!this->Proxy || !this->IsOwningPawnValid())
+    if (!this->Proxy || !this->IsOwningActorValid())
     {
         return;
     }
 
     this->SyncExternalChanges();
-    this->Proxy->SetCollisionEnabled(this->GetMovementMode() != EMovementMode::None);
+    bool const bAttached{this->IsRootAttached()};
+    this->Proxy->SetCollisionEnabled(this->GetMovementMode() != EMovementMode::None && !bAttached);
 
-    auto& Pawn{this->GetOwningPawn()};
-    auto& Root{Pawn.GetRootComponent()};
+    auto& Root{this->GetOwningActor().GetRootComponent()};
     auto const& Character{*this->Proxy->Character};
-    bool const bFreeRotation{::IsFreeRotationMode(this->GetMovementMode())};
+    bool const bFreeRotation{bAttached || ::IsFreeRotationMode(this->GetMovementMode())};
 
     LWorldVec3 Position{::FromJoltR(Character.GetPosition())};
     LWorldQuat Rotation{::FromJolt(Character.GetRotation())};
@@ -811,20 +817,74 @@ void Jafg::ACharacterMovementComponent::UpdatePresentation(f32 Dt)
         this->PresentedEyeHeight += (EyeHeight - this->PresentedEyeHeight) * (1.0f - std::exp(-this->EyeHeightBlendSpeed * Dt));
     }
 
-    if (!this->bHasWrittenRoot || Root.GetLocalTranslation() != Position)
+    if (bAttached)
     {
-        Root.SetLocalTranslationByTeleport(Position);
+        /* The parent moves the root. #SyncExternalChanges made the character follow it. */
+        this->LastWrittenTranslation = Root.GetWorldTranslationSlow();
+        this->LastWrittenRotation = Root.GetWorldRotationSlow();
     }
-    if (!this->bHasWrittenRoot || Root.GetLocalRotator() != Rotation)
+    else
     {
-        Root.SetLocalRotatorByTeleport(Rotation);
+        /* Without a transform parent the local transform of the root is in world space. */
+        check(!Root.GetTransformParent())
+        if (!this->bHasWrittenRoot || Root.GetLocalTranslation() != Position)
+        {
+            Root.SetLocalTranslationByTeleport(Position);
+        }
+        if (!this->bHasWrittenRoot || Root.GetLocalRotator() != Rotation)
+        {
+            Root.SetLocalRotatorByTeleport(Rotation);
+        }
+        this->LastWrittenTranslation = Position;
+        this->LastWrittenRotation = Rotation;
     }
-    this->LastWrittenTranslation = Position;
-    this->LastWrittenRotation = Rotation;
     this->bHasWrittenRoot = true;
 
-    Pawn.SetViewLocalOffset(LWorldVec3{0.0f, this->PresentedEyeHeight, 0.0f});
-    Pawn.SetViewLocalRotation(bFreeRotation ? maths::identity<LWorldQuat> : Movement::PitchToRotation(Pitch));
+    if (auto* Head{this->GetHeadEye()})
+    {
+        LWorldVec3 const HeadOffset{0.0f, this->PresentedEyeHeight, 0.0f};
+        LWorldQuat const HeadRotation{bFreeRotation ? maths::identity<LWorldQuat> : Movement::PitchToRotation(Pitch)};
+        if (Head->GetLocalTranslation() != HeadOffset)
+        {
+            Head->SetLocalTranslationByTeleport(HeadOffset);
+        }
+        if (Head->GetLocalRotator() != HeadRotation)
+        {
+            Head->SetLocalRotatorByTeleport(HeadRotation);
+        }
+    }
+}
+
+Jafg::AEyeComponent* Jafg::ACharacterMovementComponent::GetHeadEye() const noexcept
+{
+    if (this->HeadEye && IsValidFast(this->GetOuter(), this->HeadEye))
+    {
+        return this->HeadEye;
+    }
+    if (!this->IsOwningActorValid() || !this->GetOwningActor().HasRootComponent())
+    {
+        return nullptr;
+    }
+    /* Deeper eyes (e.g., third person cameras) usually hang below the head. */
+    for (auto const& Child: this->GetOwningActor().GetRootComponent().GetChildren())
+    {
+        if (auto* Eye{Child->As<AEyeComponent>()})
+        {
+            return Eye;
+        }
+    }
+    return nullptr;
+}
+
+void Jafg::ACharacterMovementComponent::SetHeadEye(AEyeComponent* Eye) noexcept
+{
+    check(!Eye || !this->IsOwningActorValid() || &Eye->GetOwningActor() == &this->GetOwningActor())
+    this->HeadEye = Eye;
+}
+
+bool Jafg::ACharacterMovementComponent::IsRootAttached() const noexcept
+{
+    return this->IsOwningActorValid() && this->GetOwningActor().IsAttached();
 }
 
 LVec3F Jafg::ACharacterMovementComponent::WorldDirectionToMoveAxes(LVec3F const& Direction) const noexcept
@@ -876,8 +936,8 @@ void Jafg::ACharacterMovementComponent::CreateCharacter()
     this->Proxy = LProxyPtr{new Detail::LCharacterMovementProxy{Subsystem}, &Detail::DestroyCharacterMovementProxy};
     this->RebuildShapes();
 
-    LWorldVec3 const Position{Root.GetLocalTranslation()};
-    LWorldQuat const RootRotation{maths::normalize(Root.GetLocalRotator())};
+    LWorldVec3 const Position{Root.GetWorldTranslationSlow()};
+    LWorldQuat const RootRotation{maths::normalize(Root.GetWorldRotationSlow())};
     LVec3F const Gravity{this->ComputeGravity(Position)};
     f32 const GravityMagnitude{maths::magnitude(Gravity)};
     bool const bWeightless{GravityMagnitude < this->ZeroGravityThreshold};
@@ -999,17 +1059,24 @@ void Jafg::ACharacterMovementComponent::SyncExternalChanges() noexcept
 
     auto& Root{this->GetOwningActor().GetRootComponent()};
     auto& Character{*this->Proxy->Character};
+    /* Attached roots are moved by their parent all the time. */
+    bool const bAttached{this->IsRootAttached()};
+    LWorldVec3 const RootTranslation{Root.GetWorldTranslationSlow()};
+    LWorldQuat const RootRotation{Root.GetWorldRotationSlow()};
 
-    if (Root.GetLocalTranslation() != this->LastWrittenTranslation)
+    if (RootTranslation != this->LastWrittenTranslation)
     {
-        LOG_TRACE(LogMovement, "[{}]: Root was moved externally. Teleporting.", this->GetNameAsString())
-        Character.SetPosition(::ToJoltR(Root.GetLocalTranslation()));
-        this->LastWrittenTranslation = Root.GetLocalTranslation();
+        if (!bAttached)
+        {
+            LOG_TRACE(LogMovement, "[{}]: Root was moved externally. Teleporting.", this->GetNameAsString())
+        }
+        Character.SetPosition(::ToJoltR(RootTranslation));
+        this->LastWrittenTranslation = RootTranslation;
     }
-    if (Root.GetLocalRotator() != this->LastWrittenRotation)
+    if (RootRotation != this->LastWrittenRotation)
     {
-        LWorldQuat const Rotation{maths::normalize(Root.GetLocalRotator())};
-        if (::IsFreeRotationMode(this->GetMovementMode()))
+        LWorldQuat const Rotation{maths::normalize(RootRotation)};
+        if (bAttached || ::IsFreeRotationMode(this->GetMovementMode()))
         {
             Character.SetRotation(::ToJolt(Rotation));
             Character.SetUp(::ToJolt(Rotation * maths::up_vector<LVec3F>));
@@ -1018,7 +1085,7 @@ void Jafg::ACharacterMovementComponent::SyncExternalChanges() noexcept
         {
             Character.SetRotation(::ToJolt(Movement::MakeUpright(Rotation, ::FromJolt(Character.GetUp()))));
         }
-        this->LastWrittenRotation = Root.GetLocalRotator();
+        this->LastWrittenRotation = RootRotation;
     }
 }
 

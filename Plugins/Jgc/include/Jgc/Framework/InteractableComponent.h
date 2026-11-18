@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-class APawn;
+class AAvatarComponent;
 
 } /* ~Namespace Jafg */
 
@@ -16,7 +16,7 @@ namespace Jgc
 {
 
 //#
-//# Something that a pawn can interact with, e.g., by pointing at the owning actor with the cursor and clicking it.
+//# Something that an avatar can interact with, e.g., by pointing at the owning actor with the cursor and clicking it.
 //# The interaction is found by tracing the physics of the world. The owning actor therefore needs a physical body.
 //#
 DECLARE_JAFG_CLASS(::Jafg::EJxxClassBits::Abstract)
@@ -31,12 +31,13 @@ protected:
 public:
 
     //# Whether #Instigator can interact right now (e.g., the seat of a vehicle is still free).
-    NODISCARD virtual bool CanInteract(Jafg::APawn const& Instigator) const;
+    NODISCARD virtual bool CanInteract(Jafg::AAvatarComponent const& Instigator) const;
     //#
     //# Interact with this component. Only called if #CanInteract allowed it.
+    //# @param Instigator The avatar that interacts. Its controller may be null (e.g., a bot without one).
     //# @return Whether the interaction happened.
     //#
-    virtual bool Interact(Jafg::APawn& Instigator) PURE_VIRTUAL(return false;)
+    virtual bool Interact(Jafg::AAvatarComponent& Instigator) PURE_VIRTUAL(return false)
     //# Short description of the interaction for the user (e.g., "Enter").
     NODISCARD virtual LString GetInteractionText() const;
 
