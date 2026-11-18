@@ -47,6 +47,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogLackey,                       JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogLaunch,                       JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogLowLevel,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogMaterialSubsystem,            JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogMovement,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogNames,                        JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogNetwork,                      JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogObjectInternal,               JAFG_LOG_DEFAULT_VERBOSITY                             )

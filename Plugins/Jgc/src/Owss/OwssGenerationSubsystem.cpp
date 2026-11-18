@@ -35,8 +35,8 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     {
         Comp.SetType(Jafg::ELight::Directional);
         Comp.SetCastShadows(true);
-        Comp.SetDirection({-0.5f, -0.5f, -1.0f});
-        Comp.SetTint({1.0f, 0.95f, 0.9f});
+        Comp.SetDirection({-0.5f, -0.5f, 1.0f});
+        Comp.SetTint({1.0f, 0.75f, 0.5f});
     });
 }
 
@@ -83,7 +83,7 @@ void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 const& Where)
     }
 }
 
-Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 const& Where)
+Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 const& Where, LWorldQuat const& Orientation /* = maths::identity<LWorldQuat> */)
 {
     STAT_FUNCTION()
     check(!!this->MaterialInstance)
@@ -92,13 +92,14 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
         Actor.EditorName = "Ship";
         Actor.SetCanEverTick(true);
         Actor.SetCanEverPhysicsTick(true);
-        Actor.EmplaceRootComponent<Jafg::ARigidComponent>();
+        auto& Rigid{Actor.EmplaceRootComponent<Jafg::ARigidComponent>()};
+        Rigid.SetLocalTranslationByTeleport(Where);
+        Rigid.SetLocalRotatorByTeleport(Orientation);
 
         Actor.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Actor.GetRootComponent(), [&](Jafg::AStaticMeshComponent& Comp)
         {
             Comp.SetMesh(JgcInfo/"Vehicles/SVS26/SVS26.glb", Jafg::EStaticMeshStateBits::PhysicsReady);
             Comp.SetPbrMaterialInstance(this->MaterialInstance);
-            Comp.SetLocalTranslationByTeleport(Where);
         });
 
         Actor.EmplaceComponent<AVehicleComponent>([](AVehicleComponent& Comp)

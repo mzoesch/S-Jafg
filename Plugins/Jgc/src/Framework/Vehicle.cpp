@@ -67,11 +67,27 @@ void Jgc::AVehicleComponent::ParentPhysicsTick(f32 Dt, bool bFollowup)
 
 Jafg::AStaticMeshComponent const& Jgc::AVehicleComponent::GetVehicleMesh() const
 {
+    check(std::accumulate(
+          this->GetOwningActor().GetRootComponent().GetChildren().begin()
+        , this->GetOwningActor().GetRootComponent().GetChildren().end()
+        , 0u
+        , [](std::size_t Count, auto const& Comp)
+    {
+        return Count + (Comp->template IsA<Jafg::AStaticMeshComponent>() ? 1u : 0u);
+    }) == 1u)
     return this->GetOwningActor().GetRootComponent().GetComponentChecked<Jafg::AStaticMeshComponent>();
 }
 
 Jafg::AStaticMeshComponent& Jgc::AVehicleComponent::GetMutableVehicleMesh()
 {
+    check(std::accumulate(
+          this->GetOwningActor().GetRootComponent().GetChildren().begin()
+        , this->GetOwningActor().GetRootComponent().GetChildren().end()
+        , 0u
+        , [](std::size_t Count, auto const& Comp)
+    {
+        return Count + (Comp->template IsA<Jafg::AStaticMeshComponent>() ? 1u : 0u);
+    }) == 1u)
     return this->GetOwningActor().GetRootComponent().GetComponentChecked<Jafg::AStaticMeshComponent>();
 }
 

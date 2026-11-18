@@ -7,6 +7,39 @@
 #include "Framework/PersonaController.h"
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/JgcInputComponent.h"
+#include "Jgc/Framework/JgcCharacterInputComponent.h"
+
+namespace
+{
+
+//# Calls #Functor with the character input component of the pawn that the acting controller possesses.
+Jafg::LOnUserInputActionResult ForCharacterInput(Jafg::LInputCallback const& Data, auto&& Functor)
+{
+    if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+    {
+        if (auto* Comp{Pawn->GetComponent<Jgc::AJgcCharacterInputComponent>()})
+        {
+            Functor(*Comp);
+        }
+        else
+        {
+            LOG_WARNING(LogUserInput
+                , "[{}]: Action was triggered but pawn does not posses a [{}]."
+                , Pawn->GetNameAsString(), algo::type_name<Jgc::AJgcCharacterInputComponent>()
+                )
+        }
+    }
+    else
+    {
+        LOG_WARNING(LogUserInput
+            , "[{}]: Action was triggered but controller does not possess any pawn."
+            , Data.Controller.GetNameAsString()
+            )
+    }
+    return {};
+}
+
+} /* ~Namespace <Anonymous> */
 
 void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
@@ -163,5 +196,155 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 }
                 return {};
             });
+    }
+    else
+    {
+        LOG_WARNING(LogJgc, "[Jgc.Vehicle]: Failed to register user input context.")
+    }
+
+    if (auto* Context{Registry.RegisterContext(Jafg::LUserInputContext{"Jgc.Character"})})
+    {
+        Context->MapAction(&Registry,
+            {"CharacterMove", Jafg::EInputActionCategory::Axis3D},
+            TArray<Jafg::LInputTrigger>{}
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Forward",
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::W).value()},
+                    Jafg::EInputActionTriggerBits::Ongoing,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXZModifier>())
+                    })
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Backward",
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::S).value()},
+                    Jafg::EInputActionTriggerBits::Ongoing,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeySwizzleXZModifier>())
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyNegateModifier>())
+                    })
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Right",
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::D).value()},
+                    Jafg::EInputActionTriggerBits::Ongoing,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                    })
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Left",
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::A).value()},
+                    Jafg::EInputActionTriggerBits::Ongoing,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyNegateModifier>())
+                    }),
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [&Value](AJgcCharacterInputComponent& Comp) { Comp.OnMove(Value); });
+            });
+
+        Context->MapAction(&Registry,
+            {"CharacterLook", Jafg::EInputActionCategory::Axis2D},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseXY),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [&Value](AJgcCharacterInputComponent& Comp) { Comp.OnLook(Value); });
+            });
+
+        /* Only has an effect while weightless. */
+        Context->MapAction(&Registry,
+            {"CharacterRoll", Jafg::EInputActionCategory::Axis1D},
+            TArray<Jafg::LInputTrigger>{}
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Roll Right",
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::E).value()},
+                    Jafg::EInputActionTriggerBits::Ongoing,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                    })
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Roll Left",
+                    {Frontend.GetPhysicalKey(Jafg::ELogicalKey::Q).value()},
+                    Jafg::EInputActionTriggerBits::Ongoing,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                        .reflexive_emplace_back(Jafg::MakeInputModifier<Jafg::LInputActionMappedKeyNegateModifier>())
+                    }),
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [&Value](AJgcCharacterInputComponent& Comp) { Comp.OnRoll(Value); });
+            });
+
+        /* Jump when grounded, thrust up when flying or weightless. */
+        Context->MapAction(&Registry,
+            {"CharacterJump", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Space).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnJumpPressed(); });
+            });
+        Context->MapAction(&Registry,
+            {"CharacterJumpHeld", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Space).value(),
+            Jafg::EInputActionTriggerBits::Ongoing,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnJumpHeld(); });
+            });
+
+        /* Crouch when grounded, thrust down when flying or weightless. */
+        Context->MapAction(&Registry,
+            {"CharacterCrouch", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::LeftControl).value(),
+            Jafg::EInputActionTriggerBits::Ongoing,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnCrouchHeld(); });
+            });
+
+        Context->MapAction(&Registry,
+            {"CharacterSprint", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::LeftShift).value(),
+            Jafg::EInputActionTriggerBits::Ongoing,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnSprintHeld(); });
+            });
+
+        Context->MapAction(&Registry,
+            {"CharacterToggleJetpack", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::X).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleJetpack(); });
+            });
+
+        Context->MapAction(&Registry,
+            {"CharacterToggleDampeners", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Z).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleDampeners(); });
+            });
+
+        Context->MapAction(&Registry,
+            {"CharacterToggleMagBoots", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::B).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleMagBoots(); });
+            });
+    }
+    else
+    {
+        LOG_WARNING(LogJgc, "[Jgc.Character] Failed to register user input context.")
     }
 }

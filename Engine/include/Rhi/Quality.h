@@ -34,7 +34,7 @@ SERDE_ENUM_STRUCT_FLAGS(ETextureQualityBits, ETextureQualityFlags)
 //# Which lod to use for a texture. By default, the highest lod is used.
 //# If a lod does not exist, it is clamped to the lowest available.
 //#
-DECLARE_TRIVIAL_SERDE_ENUM(ETextureLodBits, u8,
+SERDE_DECLARE_TRIVIAL_ENUM(ETextureLodBits, u8,
     //# The highest lod and, therefore, the original. This is equal to #Auto.
     e00,
     e01,

@@ -626,6 +626,11 @@ namespace maths
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
+//
+// Jafg is right-handed. Using:
+// - +Z as forward
+// - +Y as up
+//
 //# Global zero vector constant (0, 0, 0, 0).
 MATHS_CONSTANT(zero_vector)
 //# Global one vector constant (1, 1, 1, 1).

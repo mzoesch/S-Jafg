@@ -3304,6 +3304,10 @@ void Jafg::WEditorWorldViewer::InitializeJustSummoned(LWorld& World)
     else if (auto It{Prefs.EditorObjectCollectionsCallbacks.find(*Prefs.EditorLastObjectCollection)};
         It != Prefs.EditorObjectCollectionsCallbacks.end())
     {
+        LOG_VERBOSE(LogEditor
+            , "[{}]: Loading object collection [{}]."
+            , World.GetHumanReadableName(), It->first
+            )
         It->second(World);
     }
     else

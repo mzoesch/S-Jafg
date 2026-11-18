@@ -26,7 +26,18 @@ public:
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
-    LWorldEye GetEye() const noexcept;
+    NODISCARD LWorldEye GetEye() const noexcept;
+
+    //#
+    //# The eye transform relative to the root component.
+    //# Rendering only.
+    //#
+    FORCEINLINE void SetViewLocalOffset(LWorldVec3 const& Offset) noexcept { this->ViewLocalOffset = Offset; }
+    NODISCARD FORCEINLINE constexpr LWorldVec3 const& GetViewLocalOffset() const noexcept { return this->ViewLocalOffset; }
+    FORCEINLINE void SetViewLocalRotation(LWorldQuat const& Rotation) noexcept { this->ViewLocalRotation = Rotation; }
+    NODISCARD FORCEINLINE constexpr LWorldQuat const& GetViewLocalRotation() const noexcept { return this->ViewLocalRotation; }
+    NODISCARD LWorldVec3 GetViewLocation() const noexcept;
+    NODISCARD LWorldQuat GetViewRotation() const noexcept;
 
     bool IsPossessedLocally() const noexcept;
     LLocalEgo* GetLocalEgoIfPossessed() const noexcept;
@@ -58,6 +69,9 @@ public:
 private:
 
     APersonaController* OwningController{};
+
+    LWorldVec3 ViewLocalOffset{ maths::zero_vector<LWorldVec3> };
+    LWorldQuat ViewLocalRotation{ maths::identity<LWorldQuat> };
 
     f32 VertFov{ 1.0471975511965977461542144610931676280657231331250352736583148641026054687620696662093449417807056893273826955044274355490312815f };
     f32 NearFrustum{ 0.1f };

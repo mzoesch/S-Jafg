@@ -48,9 +48,9 @@ template<typename T> inline void get_enum_map(std::unordered_map<T, LStringView>
 //#
 //# Declares a trivial enum that is automatically ready for serialization and deserialization.
 //# Usage example:
-//#     DECLARE_TRIVIAL_SERDE_ENUM(EExample, u8, A, B, C)
+//#     SERDE_DECLARE_TRIVIAL_ENUM(EExample, u8, A, B, C)
 //#
-#define DECLARE_TRIVIAL_SERDE_ENUM(T, U, ...) \
+#define SERDE_DECLARE_TRIVIAL_ENUM(T, U, ...) \
     enum struct T: U \
     { \
         __VA_ARGS__ \

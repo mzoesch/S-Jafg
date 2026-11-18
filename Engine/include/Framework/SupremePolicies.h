@@ -161,6 +161,19 @@ public:
 
     std::optional<LVec3F> PreferredGravity;
     NODISCARD virtual LVec3F GetPreferredGravity() const noexcept { return LVec3F{0.0, -9.81, 0.0}; }
+
+    //#
+    //# The gravity at a specific world translation.
+    //# Must be deterministic for a given world state, as it is part of client prediction.
+    //#
+    //# @note Defaults to the uniform gravity of the physics system.
+    //# @see #GetPreferredGravity
+    //#
+    NODISCARD virtual LVec3F GetGravityAt(LWorldVec3 const& Location) const noexcept
+    {
+        (void)Location;
+        return this->PreferredGravity ? *this->PreferredGravity : this->GetPreferredGravity();
+    }
 };
 
 } /* ~Namespace Jafg */

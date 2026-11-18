@@ -23,6 +23,9 @@ protected:
 
 public:
 
+    static void BeginClassLife(Jafg::LBeginClassLifeInfo const& Info);
+    static void EndClassLife(Jafg::LEndClassLifeInfo const& Info);
+
     virtual void OnWorldPostInit() override;
 
     virtual void OnPersonaControllerCreated(Jafg::APersonaController& Pc) override;

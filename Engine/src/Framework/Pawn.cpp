@@ -29,6 +29,8 @@ void Jafg::APawnComponent::OnAttach(AActor& InOwner)
 void Jafg::APawn::Ctor()
 {
     this->SetCanEverTick(true);
+    /* Pawn components (e.g., movement) are simulated in physics ticks. */
+    this->SetCanEverPhysicsTick(true);
     this->EmplaceDefaultRootComponent<ASceneComponent>();
 }
 
@@ -61,15 +63,29 @@ void Jafg::APawn::OnGarbage(EJxxRecordTearDownReason Reason)
 LWorldEye Jafg::APawn::GetEye() const noexcept
 {
     check(this->HasRootComponent())
+    LWorldQuat const Rotation{this->GetViewRotation()};
     return {
         .vert_fov = this->VertFov,
         .near_frustum = this->NearFrustum,
         .far_frustum = this->FarFrustum,
-        .translation = this->GetRootComponent().GetLocalTranslation(),
-        .front = this->GetRootComponent().GetLocalRotator() * maths::forward_vector<LWorldVec3>,
+        .translation = this->GetViewLocation(),
+        .front = Rotation * maths::forward_vector<LWorldVec3>,
         /* Maybe hard lock this to maths::up_vector? */
-        .up = this->GetRootComponent().GetLocalRotator() * maths::up_vector<LWorldVec3>,
+        .up = Rotation * maths::up_vector<LWorldVec3>,
         };
+}
+
+LWorldVec3 Jafg::APawn::GetViewLocation() const noexcept
+{
+    check(this->HasRootComponent())
+    auto const& Root{this->GetRootComponent()};
+    return Root.GetLocalTranslation() + Root.GetLocalRotator() * this->ViewLocalOffset;
+}
+
+LWorldQuat Jafg::APawn::GetViewRotation() const noexcept
+{
+    check(this->HasRootComponent())
+    return this->GetRootComponent().GetLocalRotator() * this->ViewLocalRotation;
 }
 
 bool Jafg::APawn::IsPossessedLocally() const noexcept

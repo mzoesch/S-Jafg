@@ -12,6 +12,7 @@ class AVehicleComponent;
 
 //#
 //# The core input component for jgc.
+//# TODO: Deprecated. Make new class for vehicles only!
 //#
 DECLARE_JAFG_CLASS()
 class JGC_API AJgcInputComponent : public Jafg::APawnComponent

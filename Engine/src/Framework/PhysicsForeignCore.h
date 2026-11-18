@@ -135,6 +135,12 @@ namespace Jafg
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
 #include <Jolt/Renderer/DebugRenderer.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
@@ -387,6 +393,11 @@ struct LPhysicsSubsystem final
     JPH::TempAllocatorImpl TempAllocator;
     physx::body_activation_listener BodyActivationListener;
     physx::contact_listener ContactListener;
+    //#
+    //# All virtual characters that live in this physics system. Virtual characters are not part of the broad phase,
+    //# so they can only collide with each other through this.
+    //#
+    JPH::CharacterVsCharacterCollisionSimple CharacterVsCharacterCollision;
 
     NODISCARD constexpr JPH::PhysicsSystem* operator->() noexcept { return &this->PhysicsSystem; }
     NODISCARD constexpr JPH::PhysicsSystem const* operator->() const noexcept { return &this->PhysicsSystem; }

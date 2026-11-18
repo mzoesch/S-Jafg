@@ -488,38 +488,38 @@ Jafg::LPhysicsSystem& Jafg::LPhysicsSystem::operator=(LPhysicsSystemCreateInfo I
     this->Accumulator = 0.0;
     this->AccumulatorLimit = Info.AccumulatorLimit;
     this->PhysicsSteps = Info.PhysicsSteps;
-    this->SubSystem = Detail::LPhysicsSubsystem::FromCreateInfo(std::move(Info)).release();
+    this->Subsystem = Detail::LPhysicsSubsystem::FromCreateInfo(std::move(Info)).release();
 
     return *this;
 }
 
 Jafg::LPhysicsSystem::~LPhysicsSystem()
 {
-    delete this->SubSystem;
+    delete this->Subsystem;
 }
 
 JPH::PhysicsSystem* Jafg::LPhysicsSystem::operator->() noexcept
 {
     check(this->IsValid())
-    return &this->SubSystem->PhysicsSystem;
+    return &this->Subsystem->PhysicsSystem;
 }
 
 JPH::PhysicsSystem const* Jafg::LPhysicsSystem::operator->() const noexcept
 {
     check(this->IsValid())
-    return &this->SubSystem->PhysicsSystem;
+    return &this->Subsystem->PhysicsSystem;
 }
 
 JPH::PhysicsSystem& Jafg::LPhysicsSystem::operator*() noexcept
 {
     check(this->IsValid())
-    return this->SubSystem->PhysicsSystem;
+    return this->Subsystem->PhysicsSystem;
 }
 
 JPH::PhysicsSystem const& Jafg::LPhysicsSystem::operator*() const noexcept
 {
     check(this->IsValid())
-    return this->SubSystem->PhysicsSystem;
+    return this->Subsystem->PhysicsSystem;
 }
 
 bool Jafg::LPhysicsSystem::TryUpdate(TFunction2<void(f32 PhysicsStep)> Callback)
@@ -540,8 +540,8 @@ bool Jafg::LPhysicsSystem::TryUpdate(TFunction2<void(f32 PhysicsStep)> Callback)
             Callback(static_cast<f32>(this->PhysicsStep));
         }
 
-        this->SubSystem->PhysicsSystem.Update(static_cast<f32>(this->PhysicsStep) , static_cast<int>(this->PhysicsSteps)
-            , &this->SubSystem->TempAllocator, &this->SubSystem->JobSystem);
+        this->Subsystem->PhysicsSystem.Update(static_cast<f32>(this->PhysicsStep) , static_cast<int>(this->PhysicsSteps)
+            , &this->Subsystem->TempAllocator, &this->Subsystem->JobSystem);
         this->Accumulator -= this->PhysicsStep;
 
         Result = true;
@@ -567,8 +567,8 @@ void Jafg::LPhysicsSystem::Update(std::size_t Steps, TFunction2<void(f32 Physics
                 Callback(static_cast<f32>(this->PhysicsStep));
             }
 
-            this->SubSystem->PhysicsSystem.Update(static_cast<f32>(this->PhysicsStep) , static_cast<int>(this->PhysicsSteps)
-                , &this->SubSystem->TempAllocator, &this->SubSystem->JobSystem);
+            this->Subsystem->PhysicsSystem.Update(static_cast<f32>(this->PhysicsStep) , static_cast<int>(this->PhysicsSteps)
+                , &this->Subsystem->TempAllocator, &this->Subsystem->JobSystem);
         }
         this->Accumulator = 0.0f;
 
@@ -579,5 +579,5 @@ void Jafg::LPhysicsSystem::Update(std::size_t Steps, TFunction2<void(f32 Physics
 Jafg::LPhysicsSystemInterface Jafg::LPhysicsSystem::GetBodyInterfaceNoLock() noexcept
 {
     check(this->IsValid())
-    return LPhysicsSystemInterface{this->SubSystem->PhysicsSystem.GetBodyInterfaceNoLock()};
+    return LPhysicsSystemInterface{this->Subsystem->PhysicsSystem.GetBodyInterfaceNoLock()};
 }

@@ -318,14 +318,14 @@ class LPhysicsSystem
 public:
 
     LPhysicsSystem() = delete;
-    explicit LPhysicsSystem(ESkipInit) noexcept: SubSystem{} {}
+    explicit LPhysicsSystem(ESkipInit) noexcept: Subsystem{} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LPhysicsSystem)
     explicit LPhysicsSystem(LPhysicsSystemCreateInfo Info): LPhysicsSystem{ESkipInit::Here} { *this = std::move(Info); }
     ENGINE_API LPhysicsSystem& operator=(LPhysicsSystemCreateInfo Info);
     ENGINE_API virtual ~LPhysicsSystem();
 
     //# If this returns false. All interactions with this class are UB.
-    NODISCARD constexpr bool IsValid() const noexcept { return !!this->SubSystem; }
+    NODISCARD constexpr bool IsValid() const noexcept { return !!this->Subsystem; }
 
     NODISCARD ENGINE_API JPH::PhysicsSystem* operator->() noexcept;
     NODISCARD ENGINE_API JPH::PhysicsSystem const* operator->() const noexcept;
@@ -350,6 +350,9 @@ public:
 
     NODISCARD ENGINE_API LPhysicsSystemInterface GetBodyInterfaceNoLock() noexcept;
 
+    //# Engine internal. Do not use.
+    NODISCARD FORCEINLINE Detail::LPhysicsSubsystem& _GetSubsystem() noexcept { check(this->IsValid()) return *this->Subsystem; }
+
 private:
 
 #if JAFG_DO_CHECKS
@@ -361,7 +364,7 @@ private:
     f64 AccumulatorLimit;
     std::size_t PhysicsSteps;
 
-    Detail::LPhysicsSubsystem* SubSystem;
+    Detail::LPhysicsSubsystem* Subsystem;
 };
 
 } /* ~Namespace Jafg */

@@ -38,7 +38,7 @@ enum struct EWorldRenderBits: u32 /* Stable across slang. */
 };
 ENUM_STRUCT_FLAGS(EWorldRenderBits, EWorldRenderFlags)
 
-DECLARE_TRIVIAL_SERDE_ENUM(EEditorVisualization, u32,
+SERDE_DECLARE_TRIVIAL_ENUM(EEditorVisualization, u32,
     //# Show as it would be in shipping.
     Rendered,
     //# Show normal lit world but skip complex processing.

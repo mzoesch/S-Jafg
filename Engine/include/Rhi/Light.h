@@ -8,7 +8,7 @@ namespace Jafg
 {
 
 //# The type of lights Jafg supports (stable across slang).
-DECLARE_TRIVIAL_SERDE_ENUM(ELight, u32,
+SERDE_DECLARE_TRIVIAL_ENUM(ELight, u32,
     Directional,
     Point,
     Spot,

@@ -640,42 +640,45 @@ void Jafg::ARigidComponent::OnTransformChanged(ETransformChangeFlags Change)
 {
     Super::OnTransformChanged(Change);
 
-    check(&this->GetOwningActor().GetRootComponent() == this)
-
-    if (!(Change & ETransformChangeBits::PhysicsPoll) && this->RigidObject.IsValid() && this->IsAddedToSimulation())
+    if (this->IsOwningActorValid())
     {
-        auto& Interface{INTERFACE};
-        if ((Change & ETransformChangeBits::Translation) && (Change & ETransformChangeBits::Rotator))
-        {
-            Interface.SetPositionAndRotation(this->RigidObject->GetID()
-                , JPH::RVec3{this->GetLocalTranslation().x, this->GetLocalTranslation().y, this->GetLocalTranslation().z}
-                , JPH::Quat{this->GetLocalRotator().x, this->GetLocalRotator().y, this->GetLocalRotator().z, this->GetLocalRotator().w}
-                , JPH::EActivation::DontActivate
-                );
-        }
-        else if (Change & ETransformChangeBits::Translation)
-        {
-            Interface.SetPosition(this->RigidObject->GetID()
-                , JPH::RVec3{this->GetLocalTranslation().x, this->GetLocalTranslation().y, this->GetLocalTranslation().z}
-                , JPH::EActivation::DontActivate
-                );
-        }
-        else if (Change & ETransformChangeBits::Rotator)
-        {
-            Interface.SetRotation(this->RigidObject->GetID()
-                , JPH::Quat{this->GetLocalRotator().x, this->GetLocalRotator().y, this->GetLocalRotator().z, this->GetLocalRotator().w}
-                , JPH::EActivation::DontActivate
-                );
-        }
+        check(&this->GetOwningActor().GetRootComponent() == this)
 
-        if (Change & ETransformChangeBits::Scale)
+        if (!(Change & ETransformChangeBits::PhysicsPoll) && this->RigidObject.IsValid() && this->IsAddedToSimulation())
         {
-            checkNoEntry()
-            // we should cache the current shape (either outselves or with the jph::sahep) then apply the scale. Maybe only in editor builds?
-            // how much does it need to be extra stroage to save?
-            // this->GetParentPhysicsSystem()->AddConstraint()
-            // this->RigidObject->GetBodyCreationSettings()
-            // this->UpdateComponentAabb();
+            auto& Interface{INTERFACE};
+            if ((Change & ETransformChangeBits::Translation) && (Change & ETransformChangeBits::Rotator))
+            {
+                Interface.SetPositionAndRotation(this->RigidObject->GetID()
+                    , JPH::RVec3{this->GetLocalTranslation().x, this->GetLocalTranslation().y, this->GetLocalTranslation().z}
+                    , JPH::Quat{this->GetLocalRotator().x, this->GetLocalRotator().y, this->GetLocalRotator().z, this->GetLocalRotator().w}
+                    , JPH::EActivation::DontActivate
+                    );
+            }
+            else if (Change & ETransformChangeBits::Translation)
+            {
+                Interface.SetPosition(this->RigidObject->GetID()
+                    , JPH::RVec3{this->GetLocalTranslation().x, this->GetLocalTranslation().y, this->GetLocalTranslation().z}
+                    , JPH::EActivation::DontActivate
+                    );
+            }
+            else if (Change & ETransformChangeBits::Rotator)
+            {
+                Interface.SetRotation(this->RigidObject->GetID()
+                    , JPH::Quat{this->GetLocalRotator().x, this->GetLocalRotator().y, this->GetLocalRotator().z, this->GetLocalRotator().w}
+                    , JPH::EActivation::DontActivate
+                    );
+            }
+
+            if (Change & ETransformChangeBits::Scale)
+            {
+                checkNoEntry()
+                // we should cache the current shape (either outselves or with the jph::sahep) then apply the scale. Maybe only in editor builds?
+                // how much does it need to be extra stroage to save?
+                // this->GetParentPhysicsSystem()->AddConstraint()
+                // this->RigidObject->GetBodyCreationSettings()
+                // this->UpdateComponentAabb();
+            }
         }
     }
 }

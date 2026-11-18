@@ -25,7 +25,7 @@ protected:
 public:
 
     virtual void GenerateAsteroids(LWorldVec3 const& Where);
-    virtual AVehicleComponent& SpawnShip(LWorldVec3 const& Where);
+    virtual AVehicleComponent& SpawnShip(LWorldVec3 const& Where, LWorldQuat const& Orientation = maths::identity<LWorldQuat>);
 
 private:
 
