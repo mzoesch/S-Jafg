@@ -609,7 +609,9 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
 
     if (this->IsShowMouseCursor())
     {
-        glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(this->Handle, GLFW_CURSOR
+            , (this->InputMode & EInputModeBits::ConfineMouseCursor) ? GLFW_CURSOR_CAPTURED : GLFW_CURSOR_NORMAL
+            );
 
         /*
          * This seems very wrong.
@@ -629,6 +631,32 @@ void Jafg::LSurfaceGlfw3::SetInputMode(EInputMode InMode) noexcept
     {
         glfwSetInputMode(this->Handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
+}
+
+bool Jafg::LSurfaceGlfw3::CanWarpMouseCursor() const noexcept
+{
+    /* Wayland does not allow clients to move the pointer. GLFW would raise an error. */
+    return glfwGetPlatform() != GLFW_PLATFORM_WAYLAND;
+}
+
+bool Jafg::LSurfaceGlfw3::WarpMouseCursor(LVec2F Location) noexcept
+{
+    check(this->Handle)
+    check(Tasks::IsOnMasterThread())
+
+    if (!this->CanWarpMouseCursor())
+    {
+        return false;
+    }
+
+    glfwSetCursorPos(this->Handle, static_cast<f64>(Location.x), static_cast<f64>(Location.y));
+    /* The platform may or may not send a cursor event for programmatic moves. */
+    if (this->bMouseInsideSurface)
+    {
+        this->MouseLocation = Location;
+    }
+
+    return true;
 }
 
 void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)

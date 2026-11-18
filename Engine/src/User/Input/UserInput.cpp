@@ -235,7 +235,26 @@ void Jafg::LUserInput::SetConsumeMouse(bool bConsume) noexcept
 
     if (this->_bCurrentlyConsuming)
     {
-        this->Viewport.GetSurface().SetInputMode(this->bConsumeMouse ? EInputModeBits::HideMouseCursor : EInputModeBits::ShowMouseCursor);
+        this->Viewport.GetSurface().SetInputMode(this->GetPreferredInputMode());
+    }
+
+    return;
+}
+
+void Jafg::LUserInput::SetConfineMouse(bool bConfine) noexcept
+{
+    check(Tasks::IsOnMasterThread())
+
+    if (this->bConfineMouse == bConfine)
+    {
+        return;
+    }
+    this->bConfineMouse = bConfine;
+    LOG_TRACE(LogUserInput, "Setting confine mouse to [{}].", bConfine)
+
+    if (this->_bCurrentlyConsuming)
+    {
+        this->Viewport.GetSurface().SetInputMode(this->GetPreferredInputMode());
     }
 
     return;

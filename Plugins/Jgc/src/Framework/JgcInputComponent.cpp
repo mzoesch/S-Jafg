@@ -32,6 +32,12 @@ void Jgc::AJgcInputComponent::ParentTick(f32 Dt)
 
     if (this->IsVehicleValid())
     {
+        if (!Jafg::IsValidFast(this->GetOuter(), this->Vehicle))
+        {
+            LOG_WARNING(LogJgcInput, "[{}]: Possessed vehicle is gone.", this->GetNameAsString())
+            this->Vehicle = nullptr;
+            return;
+        }
         this->ForcePawnToVehicle(*this->Vehicle);
     }
 }
@@ -43,9 +49,23 @@ Jgc::AVehicleComponent* Jgc::AJgcInputComponent::PossessVehicle(AVehicleComponen
     if (this->IsVehicleValid())
     {
         this->ForcePawnToVehicle(*this->Vehicle);
+        (void)this->ActivateUserInputContext();
     }
 
     return Result;
+}
+
+bool Jgc::AJgcInputComponent::OnVehicleExit()
+{
+    if (!this->IsVehicleValid())
+    {
+        return false;
+    }
+
+    check(Jafg::IsValidFast(this->GetOuter(), this->Vehicle))
+    this->Vehicle->Exit();
+    check(!this->IsVehicleValid())
+    return true;
 }
 
 void Jgc::AJgcInputComponent::OnVehicleStrafe(Jafg::LInputActionValue const& Value)

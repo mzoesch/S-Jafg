@@ -196,6 +196,24 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 }
                 return {};
             });
+
+        Context->MapAction(&Registry,
+            {"VehicleExit", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::G).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Pawn{Data.Controller.GetOwnedPawn()})
+                {
+                    if (auto* Comp{Pawn->GetComponent<AJgcInputComponent>()})
+                    {
+                        /* Leaving gives the input back to the character. */
+                        return {.bDirty = Comp->OnVehicleExit()};
+                    }
+                }
+                return {};
+            });
     }
     else
     {
@@ -341,6 +359,34 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
                 return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleMagBoots(); });
+            });
+
+        /* Hold to show the cursor instead of looking around. Also on the press, so that nothing else takes it. */
+        Context->MapAction(&Registry,
+            {"CharacterCursor", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::F).value(),
+            Jafg::EInputActionTriggerBits::Triggered | Jafg::EInputActionTriggerBits::Ongoing,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnCursorHeld(); });
+            });
+
+        /* Interact with whatever is under the cursor. Only while the cursor is shown. */
+        Context->MapAction(&Registry,
+            {"CharacterInteract", Jafg::EInputActionCategory::Boolean},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::LeftMouseButton),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                bool bInteracted{};
+                (void)::ForCharacterInput(Data, [&bInteracted](AJgcCharacterInputComponent& Comp)
+                {
+                    bInteracted = Comp.OnInteractPressed();
+                });
+                /* Interactions (e.g., entering a vehicle) may swap the active contexts. */
+                return {.bDirty = bInteracted};
             });
     }
     else

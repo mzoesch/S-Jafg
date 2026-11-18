@@ -1821,8 +1821,7 @@ Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo c
                 LOG_TRACE(LogWidgetFramework, "[{}]: Entering user input capture.", this->GetNameAsString())
                 check(!this->UserInput._bCurrentlyConsuming)
                 this->UserInput._bCurrentlyConsuming = true;
-                this->GetViewport().GetSurface().SetInputMode(this->UserInput.IsConsumingMouse()
-                    ? EInputModeBits::HideMouseCursor : EInputModeBits::ShowMouseCursor);
+                this->GetViewport().GetSurface().SetInputMode(this->UserInput.GetPreferredInputMode());
 
                 if (!this->GetConsumeHandle().IsValid())
                 {

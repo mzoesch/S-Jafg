@@ -60,7 +60,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
     }
 
     auto& Generation{*World.GetSubsystemChecked<Jgc::JOwssGenerationSubsystem>()};
-    Generation.SpawnShip({10.0f, 3.0f, 15.0f}, LWorldQuat{maths::radians(LWorldVec3{0, -90, 0})}); // Possess with AJgcInputComponent
+    Generation.SpawnShip({10.0f, 3.0f, 15.0f}, LWorldQuat{maths::radians(LWorldVec3{0, -90, 0})});
 }
 
 void Jgc::AOwssSupremePolicies::BeginClassLife(Jafg::LBeginClassLifeInfo const& Info)
@@ -110,6 +110,7 @@ TJxxUnique<Jafg::APawn> Jgc::AOwssSupremePolicies::GetPawnForPersonaController(J
         if (Pc.IsOwningLackey<Jafg::ELackey::Local>())
         {
             Result->EmplaceComponent<AJgcCharacterInputComponent>();
+            Result->EmplaceComponent<AJgcInputComponent>();
         }
     }
 

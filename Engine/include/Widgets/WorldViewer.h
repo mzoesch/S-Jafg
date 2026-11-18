@@ -60,6 +60,15 @@ public:
     NODISCARD ENGINE_API LRect2F GetWorldTargetRectFromMostOuter() const noexcept;
     NODISCARD ENGINE_API LRect2F GetWorldTargetRectFromMostOuter(LVec2F Translation) const noexcept;
 
+    //# Maps a location in surface space to the pixels of the world render target. Empty if outside the world.
+    NODISCARD ENGINE_API std::optional<LVec2F> SurfaceToWorldTargetLocation(LVec2F SurfaceLocation) const noexcept;
+    //# Maps a location in the pixels of the world render target to surface space.
+    NODISCARD ENGINE_API std::optional<LVec2F> WorldTargetToSurfaceLocation(LVec2F TargetLocation) const noexcept;
+
+    virtual LVec2F GetWorldViewExtent() const noexcept override;
+    virtual std::optional<LVec2F> GetCursorLocationInWorldView() const noexcept override;
+    virtual bool SetCursorLocationInWorldView(LVec2F Location) noexcept override;
+
     LColor BorderTint{ Colors::Black };
 
     //#
@@ -120,6 +129,9 @@ private:
 
     bool OnPreDraw(LRenderInfo const& Info);
     void PreDraw(LRenderInfo const& Info);
+
+    //# Keeps a confined mouse cursor inside the world, where the platform allows to move the cursor.
+    void ConfineMouseCursorToWorld();
 
     void _ctor_SetBackgroundTint();
 

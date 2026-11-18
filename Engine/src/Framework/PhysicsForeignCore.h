@@ -141,6 +141,7 @@ namespace Jafg
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 
 #include <Jolt/Renderer/DebugRenderer.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
@@ -176,6 +177,19 @@ static_assert(std::to_underlying(Jafg::Physx::EShapeColor::Material) == std::to_
 static_assert(std::same_as<std::underlying_type_t<Jafg::ESimulationAddingBehavior>, std::underlying_type_t<JPH::EActivation>>);
 static_assert(std::to_underlying(Jafg::ESimulationAddingBehavior::Activate) == std::to_underlying(JPH::EActivation::Activate));
 static_assert(std::to_underlying(Jafg::ESimulationAddingBehavior::Preserve) == std::to_underlying(JPH::EActivation::DontActivate));
+
+namespace Jafg::Detail
+{
+
+//#
+//# The user data of a body is the address of the component that owns it:
+//#  - Bodies of rigid components: The #ARigidComponent.
+//#  - Inner bodies of virtual characters: The #ACharacterMovementComponent, marked with this tag.
+//# Zero for bodies that are not owned by a component.
+//#
+inline constexpr u64 CharacterBodyUserDataTag{ u64{1} << 63 };
+
+} /* ~Namespace Jafg::Detail */
 
 namespace physx
 {

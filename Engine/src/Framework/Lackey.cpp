@@ -28,6 +28,9 @@ TJxxUnique<Jafg::APersonaController> Jafg::LLocalLackey::PossessPersonaControlle
 {
     auto Result{Super::PossessPersonaController(std::move(New), bReleaseOld)};
 
+    /* A confined cursor belongs to the gameplay of the previous controller. */
+    this->UserInput.SetConfineMouse(false);
+
     if (this->IsOwnedPersonaControllerValid())
     {
         check(std::holds_alternative<std::monostate>(this->Controller->Lackey))

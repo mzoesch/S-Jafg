@@ -76,6 +76,25 @@ public:
     FORCEINLINE constexpr bool IsConsumingMouse() const noexcept { return this->bConsumeMouse; }
     ENGINE_API void SetConsumeMouse(bool bConsume) noexcept;
 
+    //#
+    //# Whether a shown mouse cursor is kept inside the surface (and the world view, where the platform allows it).
+    //# Has no effect while the mouse is consumed.
+    //#
+    FORCEINLINE constexpr bool IsConfiningMouse() const noexcept { return this->bConfineMouse; }
+    ENGINE_API void SetConfineMouse(bool bConfine) noexcept;
+
+    //# The input mode of the surface that this user input wants while it is capturing the input.
+    NODISCARD FORCEINLINE constexpr EInputMode GetPreferredInputMode() const noexcept
+    {
+        if (this->bConsumeMouse)
+        {
+            return EInputModeBits::HideMouseCursor;
+        }
+        return this->bConfineMouse
+            ? EInputModeBits::ShowMouseCursor | EInputModeBits::ConfineMouseCursor
+            : EInputMode{EInputModeBits::ShowMouseCursor};
+    }
+
     //# Public internal flag. Do not use!
     bool _bCurrentlyConsuming{};
 
@@ -88,6 +107,7 @@ private:
     LContextStack ContextStack;
     LViewport& Viewport;
     bool bConsumeMouse{};
+    bool bConfineMouse{};
 };
 
 } /* ~Namespace Jafg */

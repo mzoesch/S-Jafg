@@ -128,6 +128,14 @@ public:
     ENGINE_API void SetInputMode(EInputMode InMode) noexcept;
     ENGINE_API void _SetMouseCursor(ECursor Cursor);
 
+    //# Whether the platform allows to move the mouse cursor programmatically (e.g., not on Wayland).
+    NODISCARD ENGINE_API bool CanWarpMouseCursor() const noexcept;
+    //#
+    //# Moves the mouse cursor to a location in surface space.
+    //# @return False if the platform does not support it. See #CanWarpMouseCursor.
+    //#
+    ENGINE_API bool WarpMouseCursor(LVec2F Location) noexcept;
+
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
 

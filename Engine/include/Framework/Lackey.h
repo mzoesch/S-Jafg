@@ -84,6 +84,19 @@ public:
 
     virtual TJxxUnique<APersonaController> PossessPersonaController(TJxxUnique<APersonaController> New, bool bReleaseOld = false) override;
 
+    //#
+    //# The extent in pixels of the world that this lackey sees. The space of the world view is the one that the
+    //# perspective of the pawn is rendered to. Zero if this lackey does not render a world.
+    //#
+    NODISCARD virtual LVec2F GetWorldViewExtent() const noexcept { return LVec2F{0.0f}; }
+    //# The location of the shown mouse cursor in the world view. Empty if the cursor is hidden or not above the world.
+    NODISCARD virtual std::optional<LVec2F> GetCursorLocationInWorldView() const noexcept { return {}; }
+    //#
+    //# Moves the mouse cursor to a location in the world view.
+    //# @return False if the platform does not allow to move the cursor or this lackey does not render a world.
+    //#
+    virtual bool SetCursorLocationInWorldView(LVec2F Location) noexcept { (void)Location; return false; }
+
 protected:
 
     LUserInput UserInput;

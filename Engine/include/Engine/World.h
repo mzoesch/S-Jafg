@@ -248,8 +248,10 @@ public:
     f32 GetRealTimeSecondsSinceWorldLaunch() const noexcept;
 
     //#
-    //# Trace this world for physical hits.
-    //# @return True if a blocking hit was found.
+    //# Trace the physics of this world for hits.
+    //# Bodies that are not owned by a component (rigid components and character movement components) are never hit.
+    //# @param OutHits Hits are appended. Unordered unless sorted with #LCollisionQueryParams.
+    //# @return True if at least one hit was found.
     //#
     bool LineTraceByChannel
     (

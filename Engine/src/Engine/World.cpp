@@ -17,11 +17,12 @@
 #include "Framework/PhysicsSystem.h"
 #include "Framework/PhysicsSystemActor.h"
 #include "Framework/RigidComponent.h"
+#include "Framework/CharacterMovementComponent.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/Skybox.h"
-#include "../Framework/PhysicsForeignCore.h"
 #include "Framework/LightSubsystem.h"
 #include "Rhi/Shadow.h"
+#include "../Framework/PhysicsForeignCore.h"
 
 namespace
 {
@@ -565,6 +566,87 @@ f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const noexcept
     return static_cast<f32>(App::GetElapsedTime()) - this->RealTimeWhenWorldWasLaunched;
 }
 
+namespace
+{
+
+//# @see Jafg::Detail::CharacterBodyUserDataTag
+NODISCARD Jafg::AActorComponent* GetBodyOwner(u64 UserData) noexcept
+{
+    if (UserData == 0)
+    {
+        return nullptr;
+    }
+    if (UserData & Jafg::Detail::CharacterBodyUserDataTag)
+    {
+        return reinterpret_cast<Jafg::ACharacterMovementComponent*>(UserData & ~Jafg::Detail::CharacterBodyUserDataTag);
+    }
+    return reinterpret_cast<Jafg::ARigidComponent*>(UserData);
+}
+
+class trace_object_layer_filter final : public JPH::ObjectLayerFilter
+{
+public:
+
+    explicit trace_object_layer_filter(Jafg::ECollisionChannels InChannels) noexcept : Channels{InChannels} {}
+
+    virtual bool ShouldCollide(JPH::ObjectLayer Layer) const override
+    {
+        switch (Layer)
+        {
+        case Jafg::EPhysicsLayer::Static: return !!(this->Channels & Jafg::ECollisionChannelBits::Static);
+        case Jafg::EPhysicsLayer::Dynamic: return !!(this->Channels & (Jafg::ECollisionChannelBits::Dynamic | Jafg::ECollisionChannelBits::Pawn));
+        default: return false;
+        }
+    }
+
+private:
+
+    Jafg::ECollisionChannels Channels;
+};
+
+//# Bodies of pawns are in the pawn channel. All other bodies are in the channel of their layer.
+class trace_body_filter final : public JPH::BodyFilter
+{
+public:
+
+    trace_body_filter(Jafg::ECollisionChannels InChannels, TArray<Jafg::AActor const*> const& InIgnoredActors) noexcept
+        : Channels{InChannels}, IgnoredActors{InIgnoredActors}
+    {
+    }
+
+    virtual bool ShouldCollideLocked(JPH::Body const& Body) const override
+    {
+        Jafg::AActorComponent const* Owner{::GetBodyOwner(Body.GetUserData())};
+        if (!Owner || !Owner->IsOwningActorValid())
+        {
+            return false;
+        }
+
+        Jafg::AActor const& Actor{Owner->GetOwningActor()};
+        if (algo::contains(this->IgnoredActors, &Actor))
+        {
+            return false;
+        }
+
+        if (Actor.IsA<Jafg::APawn>())
+        {
+            return !!(this->Channels & Jafg::ECollisionChannelBits::Pawn);
+        }
+        if (Body.GetObjectLayer() == Jafg::EPhysicsLayer::Static)
+        {
+            return !!(this->Channels & Jafg::ECollisionChannelBits::Static);
+        }
+        return !!(this->Channels & Jafg::ECollisionChannelBits::Dynamic);
+    }
+
+private:
+
+    Jafg::ECollisionChannels Channels;
+    TArray<Jafg::AActor const*> const& IgnoredActors;
+};
+
+} /* ~Namespace <Anonymous> */
+
 bool Jafg::LWorld::LineTraceByChannel(
     TArray<LHitResult>* OutHits,
     LWorldVec3 const& Begin,
@@ -574,28 +656,77 @@ bool Jafg::LWorld::LineTraceByChannel(
 ) const
 {
     STAT_FUNCTION()
-    check(OutHits )
+    check(OutHits)
+    check(Tasks::IsOnMasterThread())
     check(maths::magnitude(Begin - End) > static_cast<LWorldVec3::value_type>(maths::not_so_small_number_d) && "Why trace small distances.")
 
-    /* TODO: Save (as the tickables) the physics in a separate cached vector. */
-    // LHitResult Dummy;
-    // for (auto& Obj : this->GetEmployees())
-    // {
-        // if (auto* Actor{ Obj->As<AActor>() }; Actor && Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
-        // {
-        //     OutHits.push_back(Dummy);
-        //     Dummy.Reset();
-        //
-        //     if (Params.bSingleHit)
-        //     {
-        //         break;
-        //     }
-        // }
+    if (!this->PhysicsSystem.IsValid() || !Channels)
+    {
+        return false;
+    }
 
-    //     continue;
-    // }
+    JPH::PhysicsSystem const& System{*this->PhysicsSystem};
+    LWorldVec3 const Delta{End - Begin};
+    JPH::RRayCast const Ray{
+          JPH::RVec3{Begin.x, Begin.y, Begin.z}
+        , JPH::Vec3{static_cast<f32>(Delta.x), static_cast<f32>(Delta.y), static_cast<f32>(Delta.z)}
+        };
+    JPH::RayCastSettings const Settings{};
+    ::trace_object_layer_filter const ObjectFilter{Channels};
+    ::trace_body_filter const BodyFilter{Channels, Params.IgnoredActors};
 
-    return OutHits->empty() == false;
+    JPH::Array<JPH::RayCastResult> Results;
+    if (Params.bSingleHit)
+    {
+        JPH::ClosestHitCollisionCollector<JPH::CastRayCollector> Collector;
+        System.GetNarrowPhaseQuery().CastRay(Ray, Settings, Collector, {}, ObjectFilter, BodyFilter);
+        if (Collector.HadHit())
+        {
+            Results.push_back(Collector.mHit);
+        }
+    }
+    else
+    {
+        JPH::AllHitCollisionCollector<JPH::CastRayCollector> Collector;
+        System.GetNarrowPhaseQuery().CastRay(Ray, Settings, Collector, {}, ObjectFilter, BodyFilter);
+        if (Params.bSortByDistance)
+        {
+            Collector.Sort();
+            if (Params.bSortDescending)
+            {
+                std::ranges::reverse(Collector.mHits);
+            }
+        }
+        Results = std::move(Collector.mHits);
+    }
+
+    std::size_t const Previous{OutHits->size()};
+    for (JPH::RayCastResult const& Hit: Results)
+    {
+        JPH::BodyLockRead const Lock{System.GetBodyLockInterface(), Hit.mBodyID};
+        if (!Lock.Succeeded())
+        {
+            continue;
+        }
+
+        JPH::Body const& Body{Lock.GetBody()};
+        AActorComponent* Owner{::GetBodyOwner(Body.GetUserData())};
+        if (!Owner || !Owner->IsOwningActorValid())
+        {
+            continue;
+        }
+
+        JPH::RVec3 const Point{Ray.GetPointOnRay(Hit.mFraction)};
+        JPH::Vec3 const Normal{Body.GetWorldSpaceSurfaceNormal(Hit.mSubShapeID2, Point)};
+        OutHits->push_back({
+            .Actor = Owner->GetOwningActor(),
+            .Component = *Owner,
+            .GlobalWorldLocation = LWorldVec3{Point.GetX(), Point.GetY(), Point.GetZ()},
+            .SurfaceNormal = LWorldVec3{Normal.GetX(), Normal.GetY(), Normal.GetZ()},
+            });
+    }
+
+    return OutHits->size() > Previous;
 }
 
 TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const& Ray, TraceConfig const& Config) const

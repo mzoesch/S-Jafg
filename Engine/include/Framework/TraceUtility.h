@@ -31,9 +31,13 @@ ENUM_STRUCT_FLAGS(ECollisionChannelBits, ECollisionChannels)
 
 struct LCollisionQueryParams final
 {
+    //# Only report the closest hit.
     bool bSingleHit:1{};
+    //# Sort all hits by their distance to the beginning of the trace. Closest first unless #bSortDescending.
     bool bSortByDistance:1{};
     bool bSortDescending:1{};
+    //# Bodies of these actors are never hit (e.g., the pawn that traces).
+    TArray<AActor const*> IgnoredActors;
 };
 
 } /* ~Namespace Jafg */

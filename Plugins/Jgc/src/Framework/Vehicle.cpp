@@ -2,8 +2,14 @@
 
 #include "Jgc/Framework/Vehicle.h"
 #include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Framework/MovementComponent.h"
+#include "Framework/Pawn.h"
 #include "Framework/PhysicsBody.h"
+#include "Framework/PhysicsSystem.h"
 #include "Framework/StaticMeshComponent.h"
+#include "Jgc/Framework/JgcCharacterInputComponent.h"
+#include "Jgc/Framework/JgcInputComponent.h"
 
 void Jgc::AVehicleComponent::OnAttach(Jafg::AActor& Owner)
 {
@@ -28,6 +34,120 @@ void Jgc::AVehicleComponent::OnAttach(Jafg::AActor& Owner)
         {
             checkNoEntry()
         }
+    }
+}
+
+void Jgc::AVehicleComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
+{
+    if (Reason == Jafg::EJxxRecordTearDownReason::Default)
+    {
+        if (this->HasDriver())
+        {
+            this->Exit();
+        }
+    }
+    /* Everything else is torn down as well. */
+    this->Driver = nullptr;
+
+    Super::OnGarbage(Reason);
+}
+
+bool Jgc::AVehicleComponent::CanInteract(Jafg::APawn const& Instigator) const
+{
+    return Super::CanInteract(Instigator) && !this->HasDriver();
+}
+
+bool Jgc::AVehicleComponent::Interact(Jafg::APawn& Instigator)
+{
+    return this->Enter(Instigator);
+}
+
+LString Jgc::AVehicleComponent::GetInteractionText() const
+{
+    return "Enter";
+}
+
+Jafg::APawn* Jgc::AVehicleComponent::GetDriver() const noexcept
+{
+    return this->Driver && Jafg::IsValidFast(this->GetOuter(), this->Driver) ? this->Driver : nullptr;
+}
+
+bool Jgc::AVehicleComponent::Enter(Jafg::APawn& Pawn)
+{
+    if (this->HasDriver())
+    {
+        LOG_VERBOSE(LogJgc, "[{}]: Pawn [{}] cannot enter. The seat is taken by [{}]."
+            , this->GetNameAsString(), Pawn.GetNameAsString(), this->Driver->GetNameAsString()
+            )
+        return false;
+    }
+
+    LOG_VERBOSE(LogJgc, "[{}]: Pawn [{}] enters.", this->GetNameAsString(), Pawn.GetNameAsString())
+
+    auto const& Root{this->GetRigidComponent()};
+    auto const& PawnRoot{Pawn.GetRootComponent()};
+    LWorldQuat const InverseRotation{maths::inverse(maths::normalize(Root.GetLocalRotator()))};
+    this->DriverEntryLocation = InverseRotation * (PawnRoot.GetLocalTranslation() - Root.GetLocalTranslation());
+    this->DriverEntryRotation = maths::normalize(InverseRotation * PawnRoot.GetLocalRotator());
+    this->Driver = &Pawn;
+
+    if (auto* Movement{Pawn.GetComponent<Jafg::AMovementComponent>()})
+    {
+        Movement->ClearIntent();
+        Movement->SetFrozen(true);
+    }
+    if (auto* CharacterInput{Pawn.GetComponent<AJgcCharacterInputComponent>()})
+    {
+        CharacterInput->OnEnteredVehicle(*this);
+    }
+    if (auto* VehicleInput{Pawn.GetComponent<AJgcInputComponent>()})
+    {
+        (void)VehicleInput->PossessVehicle(this);
+    }
+
+    return true;
+}
+
+void Jgc::AVehicleComponent::Exit()
+{
+    Jafg::APawn* Pawn{this->GetDriver()};
+    this->Driver = nullptr;
+    if (!Pawn)
+    {
+        return;
+    }
+
+    LOG_VERBOSE(LogJgc, "[{}]: Pawn [{}] exits.", this->GetNameAsString(), Pawn->GetNameAsString())
+
+    if (auto* VehicleInput{Pawn->GetComponent<AJgcInputComponent>()}; VehicleInput && VehicleInput->GetVehicle() == this)
+    {
+        (void)VehicleInput->PossessVehicle(nullptr);
+    }
+
+    auto& Root{this->GetRigidComponent()};
+    LWorldQuat const VehicleRotation{maths::normalize(Root.GetLocalRotator())};
+    LWorldVec3 const Location{Root.GetLocalTranslation() + VehicleRotation * this->DriverEntryLocation};
+    LWorldQuat const Rotation{maths::normalize(VehicleRotation * this->DriverEntryRotation)};
+
+    if (auto* Movement{Pawn->GetComponent<Jafg::AMovementComponent>()})
+    {
+        Movement->Teleport(Location, Rotation);
+        Movement->SetFrozen(false);
+        if (Root.IsAddedToSimulation())
+        {
+            Movement->SetVelocity(Root.GetParentPhysicsSystem().GetBodyInterfaceNoLock()
+                .GetPointVelocity(Root.GetRigidObject().GetID(), Location));
+        }
+    }
+    else
+    {
+        Pawn->GetRootComponent().SetLocalTranslationByTeleport(Location);
+        Pawn->GetRootComponent().SetLocalRotatorByTeleport(Rotation);
+    }
+
+    if (auto* CharacterInput{Pawn->GetComponent<AJgcCharacterInputComponent>()})
+    {
+        CharacterInput->OnExitedVehicle();
     }
 }
 

@@ -463,6 +463,14 @@ bool PrepareRecreation(JPH::BodyInterface& Interface, Jafg::ARigidComponent& Com
     return bResult;
 }
 
+//# @see Jafg::Detail::CharacterBodyUserDataTag
+NODISCARD u64 MakeBodyUserData(Jafg::ARigidComponent& Comp) noexcept
+{
+    u64 const Result{reinterpret_cast<u64>(&Comp)};
+    check((Result & Jafg::Detail::CharacterBodyUserDataTag) == 0)
+    return Result;
+}
+
 } /* ~Namespace <Anonymous> */
 
 //# COM declarations from Windows headers define INTERFACE...
@@ -524,6 +532,7 @@ void Jafg::ARigidComponent::MakeSphere(f32 Radius)
         JPH::EMotionType{std::to_underlying(this->Motion)},
         this->Layer,
         };
+    CreateSettings.mUserData = ::MakeBodyUserData(*this);
     this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));
     check(this->RigidObject.IsValid())
 
@@ -550,6 +559,7 @@ void Jafg::ARigidComponent::MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius /* =
         JPH::EMotionType{std::to_underlying(this->Motion)},
         this->Layer,
         };
+    CreateSettings.mUserData = ::MakeBodyUserData(*this);
     this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));
     check(this->RigidObject.IsValid())
 
@@ -603,6 +613,7 @@ void Jafg::ARigidComponent::MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius /* = 
         JPH::EMotionType{std::to_underlying(this->Motion)},
         this->Layer,
         };
+    CreateSettings.mUserData = ::MakeBodyUserData(*this);
     this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));
     check(this->RigidObject.IsValid())
 

@@ -108,7 +108,8 @@ public:
     NODISCARD FORCEINLINE constexpr EMovementMode GetMovementMode() const noexcept { return this->Mode; }
     //#
     //# Freeze the pawn in place (e.g., while seated in a vehicle or during a cutscene). Unfreezing resumes as falling;
-    //# the next tick picks the correct mode.
+    //# the next tick picks the correct mode. Frozen pawns do not collide and follow their root component, including
+    //# its full rotation.
     //#
     void SetFrozen(bool bFrozen);
     NODISCARD FORCEINLINE constexpr bool IsFrozen() const noexcept { return this->Mode == EMovementMode::None; }
@@ -117,6 +118,8 @@ public:
     NODISCARD virtual LVec3F GetUp() const noexcept PURE_VIRTUAL(return {};)
     //# Move the pawn instantly to a new location (and optionally rotation). Keeps the velocity.
     virtual void Teleport(LWorldVec3 const& Location, std::optional<LWorldQuat> Rotation = {}) PURE_VIRTUAL()
+    //# Overwrite the velocity (e.g., to inherit the velocity of a vehicle that is left).
+    virtual void SetVelocity(LVec3F const& Velocity) PURE_VIRTUAL()
 
     //# Broadcast after the mode changed. Return true to unbind.
     TMulticastDelegate<bool(AMovementComponent& Comp, EMovementMode Previous, EMovementMode New)> OnMovementModeChanged;

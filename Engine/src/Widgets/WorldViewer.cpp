@@ -156,6 +156,8 @@ void Jafg::WWorldViewer::Tick(f32 Dt)
         check(this->ConsumeHandle.IsValid())
     }
 
+    this->ConfineMouseCursorToWorld();
+
     this->RenderTargetViewport.Tick(Dt);
 }
 
@@ -233,6 +235,115 @@ LRect2F Jafg::WWorldViewer::GetWorldTargetRectFromMostOuter(LVec2F Translation) 
                 .extent=this->RenderTarget.GetExtent().ToVec<f32>()};
     }
     return Rect;
+}
+
+std::optional<LVec2F> Jafg::WWorldViewer::SurfaceToWorldTargetLocation(LVec2F SurfaceLocation) const noexcept
+{
+    if (!this->RenderTarget.IsInitialized())
+    {
+        return {};
+    }
+
+    LRect2F const Rect{this->GetWorldTargetRectFromMostOuter()};
+    LVec2F const Extent{this->RenderTarget.GetExtent().ToVec<f32>()};
+    if (Rect.extent.x <= 0.0f || Rect.extent.y <= 0.0f || Extent.x <= 0.0f || Extent.y <= 0.0f)
+    {
+        return {};
+    }
+
+    LVec2F const Normalized{(SurfaceLocation - Rect.offset) / Rect.extent};
+    if (Normalized.x < 0.0f || Normalized.y < 0.0f || Normalized.x > 1.0f || Normalized.y > 1.0f)
+    {
+        return {};
+    }
+
+    /* Same mapping as the texture coordinates in #Draw. */
+    LVec4F const UVs{rhi::uv::fit(rhi::uv::identity, Extent, this->GetAnchoredSize_v2(), rhi::tex_coord_behavior::FitAspect)};
+    return LVec2F{
+        (UVs.x + Normalized.x * (UVs.z - UVs.x)) * Extent.x,
+        (UVs.y + Normalized.y * (UVs.w - UVs.y)) * Extent.y,
+        };
+}
+
+std::optional<LVec2F> Jafg::WWorldViewer::WorldTargetToSurfaceLocation(LVec2F TargetLocation) const noexcept
+{
+    if (!this->RenderTarget.IsInitialized())
+    {
+        return {};
+    }
+
+    LRect2F const Rect{this->GetWorldTargetRectFromMostOuter()};
+    LVec2F const Extent{this->RenderTarget.GetExtent().ToVec<f32>()};
+    LVec4F const UVs{rhi::uv::fit(rhi::uv::identity, Extent, this->GetAnchoredSize_v2(), rhi::tex_coord_behavior::FitAspect)};
+    LVec2F const UVExtent{UVs.z - UVs.x, UVs.w - UVs.y};
+    if (Extent.x <= 0.0f || Extent.y <= 0.0f || UVExtent.x <= 0.0f || UVExtent.y <= 0.0f)
+    {
+        return {};
+    }
+
+    LVec2F const Normalized{
+        (TargetLocation.x / Extent.x - UVs.x) / UVExtent.x,
+        (TargetLocation.y / Extent.y - UVs.y) / UVExtent.y,
+        };
+    return Rect.offset + Normalized * Rect.extent;
+}
+
+LVec2F Jafg::WWorldViewer::GetWorldViewExtent() const noexcept
+{
+    return this->RenderTarget.IsInitialized() ? this->RenderTarget.GetExtent().ToVec<f32>() : LVec2F{0.0f};
+}
+
+std::optional<LVec2F> Jafg::WWorldViewer::GetCursorLocationInWorldView() const noexcept
+{
+    auto const& Surface{this->GetViewport().GetSurface()};
+    if (!Surface.HasMouseLocationForOrtho())
+    {
+        return {};
+    }
+    return this->SurfaceToWorldTargetLocation(Surface.GetMouseLocationValue());
+}
+
+bool Jafg::WWorldViewer::SetCursorLocationInWorldView(LVec2F Location) noexcept
+{
+    auto& Surface{this->GetViewport().GetSurface()};
+    if (!Surface.IsShowMouseCursor() || !Surface.CanWarpMouseCursor())
+    {
+        return false;
+    }
+
+    if (auto SurfaceLocation{this->WorldTargetToSurfaceLocation(Location)})
+    {
+        return Surface.WarpMouseCursor(*SurfaceLocation);
+    }
+    return false;
+}
+
+void Jafg::WWorldViewer::ConfineMouseCursorToWorld()
+{
+    if (!this->UserInput._bCurrentlyConsuming || this->UserInput.IsConsumingMouse() || !this->UserInput.IsConfiningMouse())
+    {
+        return;
+    }
+
+    auto& Surface{this->GetViewport().GetSurface()};
+    if (!Surface.HasMouseLocationForOrtho() || !Surface.CanWarpMouseCursor() || !this->RenderTarget.IsInitialized())
+    {
+        return;
+    }
+
+    /* The surface itself confines the cursor. This keeps it out of the rest of the surface (e.g., editor panels). */
+    LRect2F const Rect{this->GetWorldTargetRectFromMostOuter()};
+    if (Rect.extent.x < 2.0f || Rect.extent.y < 2.0f)
+    {
+        return;
+    }
+
+    LVec2F const Location{Surface.GetMouseLocationValue()};
+    LVec2F const Clamped{maths::clamp(Location, Rect.offset, Rect.offset + Rect.extent - LVec2F{1.0f})};
+    if (Clamped != Location)
+    {
+        (void)Surface.WarpMouseCursor(Clamped);
+    }
 }
 
 void Jafg::WWorldViewer::TravelTo(LWorld& World)

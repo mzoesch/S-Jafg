@@ -19,7 +19,7 @@ FORCEINLINE LWorldVec3 FromJoltR(JPH::RVec3Arg V) noexcept { return LWorldVec3{V
 FORCEINLINE LWorldQuat FromJolt(JPH::QuatArg Q) noexcept { return LWorldQuat{Q.GetX(), Q.GetY(), Q.GetZ(), Q.GetW()}; }
 
 //# Marks the user data of the inner bodies of all virtual characters.
-inline constexpr u64 CharacterUserDataTag{ u64{1} << 63 };
+inline constexpr u64 CharacterUserDataTag{ Jafg::Detail::CharacterBodyUserDataTag };
 
 //#
 //# Characters collide with each other through #JPH::CharacterVsCharacterCollision. Their inner bodies must therefore
@@ -71,10 +71,13 @@ NODISCARD JPH::RefConst<JPH::Shape> MakeCapsuleShape(f32 Height, f32 Radius, f32
     return Result.Get();
 }
 
+//#
 //# Bodies that are free to rotate in all three axes. All other modes keep the body upright.
+//# Frozen bodies take whatever rotation they are given (e.g., the seat of a vehicle).
+//#
 NODISCARD constexpr bool IsFreeRotationMode(Jafg::EMovementMode Mode) noexcept
 {
-    return Mode == Jafg::EMovementMode::ZeroG;
+    return Mode == Jafg::EMovementMode::ZeroG || Mode == Jafg::EMovementMode::None;
 }
 
 //# The magnetic boots attach to surfaces that are at most this far (cosine) away from the feet (~110 degrees).
@@ -121,6 +124,37 @@ struct LCharacterMovementProxy final : public JPH::CharacterContactListener
         Settings.mCanReceiveImpulses = this->bCanPushBodies;
     }
 
+    //#
+    //# Removes the character from the world while disabled: The inner body leaves the broad phase, and other
+    //# characters no longer collide with it.
+    //#
+    void SetCollisionEnabled(bool bEnabled) noexcept
+    {
+        check(Tasks::IsOnMasterThread())
+        if (this->bCollisionEnabled == bEnabled)
+        {
+            return;
+        }
+        this->bCollisionEnabled = bEnabled;
+
+        JPH::BodyInterface& Interface{this->Subsystem.PhysicsSystem.GetBodyInterfaceNoLock()};
+        JPH::BodyID const Inner{this->Character->GetInnerBodyID()};
+        if (bEnabled)
+        {
+            if (!Inner.IsInvalid() && !Interface.IsAdded(Inner))
+            {
+                Interface.AddBody(Inner, JPH::EActivation::Activate);
+            }
+            this->Subsystem.CharacterVsCharacterCollision.Add(this->Character);
+        }
+        else
+        {
+            /* The destructor of the character removes the inner body again. That is fine for removed bodies. */
+            Interface.RemoveBody(Inner);
+            this->Subsystem.CharacterVsCharacterCollision.Remove(this->Character);
+        }
+    }
+
     LPhysicsSubsystem& Subsystem;
     JPH::Ref<JPH::CharacterVirtual> Character;
     JPH::RefConst<JPH::Shape> StandingShape;
@@ -129,6 +163,7 @@ struct LCharacterMovementProxy final : public JPH::CharacterContactListener
     JPH::RefConst<JPH::Shape> CrouchingInnerShape;
     bool bCanPushBodies{ true };
     bool bCanBePushedByBodies{ true };
+    bool bCollisionEnabled{ true };
 };
 
 void DestroyCharacterMovementProxy(LCharacterMovementProxy* Proxy) noexcept
@@ -193,6 +228,14 @@ void Jafg::ACharacterMovementComponent::Teleport(LWorldVec3 const& Location, std
     Character.RefreshContacts(Filters.BroadPhase, Filters.Object, Filters.Body, Filters.Shape, this->Proxy->Subsystem.TempAllocator);
 
     this->UpdatePresentation(0.0f);
+}
+
+void Jafg::ACharacterMovementComponent::SetVelocity(LVec3F const& Velocity)
+{
+    if (this->Proxy)
+    {
+        this->Proxy->Character->SetLinearVelocity(::ToJolt(Velocity));
+    }
 }
 
 Jafg::LMovementSnapshot Jafg::ACharacterMovementComponent::CaptureSnapshot() const
@@ -729,6 +772,7 @@ void Jafg::ACharacterMovementComponent::UpdatePresentation(f32 Dt)
     }
 
     this->SyncExternalChanges();
+    this->Proxy->SetCollisionEnabled(this->GetMovementMode() != EMovementMode::None);
 
     auto& Pawn{this->GetOwningPawn()};
     auto& Root{Pawn.GetRootComponent()};

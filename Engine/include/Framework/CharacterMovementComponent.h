@@ -49,6 +49,7 @@ public:
     virtual LVec3F GetVelocity() const noexcept override;
     virtual LVec3F GetUp() const noexcept override;
     virtual void Teleport(LWorldVec3 const& Location, std::optional<LWorldQuat> Rotation = {}) override;
+    virtual void SetVelocity(LVec3F const& Velocity) override;
     virtual LMovementSnapshot CaptureSnapshot() const override;
 
     //# ---------- Queries ----------
