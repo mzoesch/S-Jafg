@@ -62,9 +62,7 @@ public:
         LWorldLine3 Value;
         LWorldLine3 const* operator->() const noexcept { return &this->Value; }
     };
-    void AddLine(LineCreateInfo Line) noexcept { this->Lines.emplace_back(std::move(Line)); }
-    //# Useful for consistent one time draws when draw orders are not guaranteed.
-    void AddLineNextTick(LineCreateInfo Line) noexcept { this->NextLines.emplace_back(std::move(Line)); }
+    void AddLine(LineCreateInfo Line) noexcept { this->IncomingLines.emplace_back(std::move(Line)); }
 
     struct RayCreateInfo final
     {
@@ -73,9 +71,7 @@ public:
         LWorldMagRay3 Value;
         LWorldMagRay3 const* operator->() const noexcept { return &this->Value; }
     };
-    void AddRay(RayCreateInfo Ray) noexcept { this->Rays.emplace_back(std::move(Ray)); }
-    //# Useful for consistent one time draws when draw orders are not guaranteed.
-    void AddRayNextTick(RayCreateInfo Ray) noexcept { this->NextRays.emplace_back(std::move(Ray)); }
+    void AddRay(RayCreateInfo Ray) noexcept { this->IncomingRays.emplace_back(std::move(Ray)); }
 
     struct AabbCreateInfo final
     {
@@ -84,9 +80,7 @@ public:
         LWorldAabb3 Value;
         LWorldAabb3 const* operator->() const noexcept { return &this->Value; }
     };
-    void AddAabb(AabbCreateInfo Aabb) noexcept { this->Aabbs.emplace_back(std::move(Aabb)); }
-    //# Useful for consistent one time draws when draw orders are not guaranteed.
-    void AddAabbNextTick(AabbCreateInfo Aabb) noexcept { this->NextAabbs.emplace_back(std::move(Aabb)); }
+    void AddAabb(AabbCreateInfo Aabb) noexcept { this->IncomingAabbs.emplace_back(std::move(Aabb)); }
 
     struct SphereCreateInfo final
     {
@@ -104,9 +98,7 @@ public:
             return this->Segments * this->Rings + this->Segments * (this->Rings - 1);
         }
     };
-    void AddSphere(SphereCreateInfo Sphere) noexcept { this->Spheres.emplace_back(std::move(Sphere)); }
-    //# Useful for consistent one time draws when draw orders are not guaranteed.
-    void AddSphereNextTick(SphereCreateInfo Sphere) noexcept { this->NextSpheres.emplace_back(std::move(Sphere)); }
+    void AddSphere(SphereCreateInfo Sphere) noexcept { this->IncomingSpheres.emplace_back(std::move(Sphere)); }
 
     struct TextCreateInfo final
     {
@@ -117,25 +109,24 @@ public:
         LString Text;
         LWorldVec3 const* operator->() const noexcept { return &this->Location; }
     };
-    void AddText(TextCreateInfo Text) noexcept { this->Texts.emplace_back(std::move(Text)); }
-    //# Useful for consistent one time draws when draw orders are not guaranteed.
-    void AddTextNextTick(TextCreateInfo Text) noexcept { this->NextTexts.emplace_back(std::move(Text)); }
+    void AddText(TextCreateInfo Text) noexcept { this->IncomingTexts.emplace_back(std::move(Text)); }
 
 private:
 
     void RenderRays(LActorRenderInfo const& Info) const;
     void RenderTexts(LActorRenderInfo const& Info) const;
 
+    mutable TArray<LineCreateInfo> IncomingLines;
+    mutable TArray<RayCreateInfo> IncomingRays;
+    mutable TArray<AabbCreateInfo> IncomingAabbs;
+    mutable TArray<SphereCreateInfo> IncomingSpheres;
+    mutable TArray<TextCreateInfo> IncomingTexts;
+
     mutable TArray<LineCreateInfo> Lines;
-    TArray<LineCreateInfo> NextLines;
     mutable TArray<RayCreateInfo> Rays;
-    TArray<RayCreateInfo> NextRays;
     mutable TArray<AabbCreateInfo> Aabbs;
-    TArray<AabbCreateInfo> NextAabbs;
     mutable TArray<SphereCreateInfo> Spheres;
-    TArray<SphereCreateInfo> NextSpheres;
     mutable TArray<TextCreateInfo> Texts;
-    TArray<TextCreateInfo> NextTexts;
 
     LMaterialInstanceRef RayInstance;
     rhi::frame_array<rhi::mapped_device_buffer> RayBuffers;

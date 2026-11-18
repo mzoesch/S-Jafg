@@ -15,7 +15,7 @@ void physx::debug_renderer::DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, J
     LWorldVec3 To{static_cast<LWorldReal>(inTo.GetX()), static_cast<LWorldReal>(inTo.GetY()), static_cast<LWorldReal>(inTo.GetZ())};
     if (maths::squared_magnitude(To - From) > 0.001f)
     {
-        this->Comp->AddLineNextTick({
+        this->Comp->AddLine({
             .Tint = Colors::Red,
             .Value = {.begin=From, .end=To,},
             });
@@ -26,7 +26,7 @@ void physx::debug_renderer::DrawText3D(JPH::RVec3Arg inPosition, std::string_vie
 {
     check(this->Comp)
 
-    this->Comp->AddTextNextTick({
+    this->Comp->AddText({
         .Tint = LColor::FromU32(inColor.GetUInt32()),
         .Height = inHeight,
         .Location = {static_cast<LWorldReal>(inPosition.GetX()), static_cast<LWorldReal>(inPosition.GetY()), static_cast<LWorldReal>(inPosition.GetZ())},

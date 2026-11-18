@@ -35,56 +35,29 @@ void Jafg::ADebugDrawerComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
+    STAT_FUNCTION()
+
+    auto Reduce{[Dt=static_cast<f32>(this->GetEngine().DeltaTime)](auto&& Range)
     {
-        STAT_CUSTOM_ZONE_FMT("Tick::Reduce{}", this->GetNameAsString())
-        auto Reduce{[Dt=static_cast<f32>(this->GetEngine().DeltaTime)](auto&& Range)
+        for (auto Idx{Range.size()}; Idx-- > 0;)
         {
-            for (auto I{Range.size()}; I-- > 0;)
+            Range[Idx].Duration -= Dt;
+            if (Range[Idx].Duration <= 0.0f)
             {
-                Range[I].Duration -= Dt;
-                if (Range[I].Duration <= 0.0f)
+                if (Idx != Range.size() - 1)
                 {
-                    if (I != Range.size() - 1)
-                    {
-                        Range[I] = std::move(Range.back());
-                    }
-                    Range.pop_back();
+                    Range[Idx] = std::move(Range.back());
                 }
+                Range.pop_back();
             }
-        }};
+        }
+    }};
 
-        Reduce(this->Lines);
-        Reduce(this->Rays);
-        Reduce(this->Aabbs);
-        Reduce(this->Spheres);
-        Reduce(this->Texts);
-    }
-
-    {
-        STAT_CUSTOM_ZONE_FMT("Tick::UpdateLines{}", this->GetNameAsString())
-        this->Lines.append_range(this->NextLines);
-        this->NextLines.clear();
-    }
-    {
-        STAT_CUSTOM_ZONE_FMT("Tick::UpdateRays{}", this->GetNameAsString())
-        this->Rays.append_range(this->NextRays);
-        this->NextRays.clear();
-    }
-    {
-        STAT_CUSTOM_ZONE_FMT("Tick::UpdateAabbs{}", this->GetNameAsString())
-        this->Aabbs.append_range(this->NextAabbs);
-        this->NextAabbs.clear();
-    }
-    {
-        STAT_CUSTOM_ZONE_FMT("Tick::UpdateSphers{}", this->GetNameAsString())
-        this->Spheres.append_range(this->NextSpheres);
-        this->NextSpheres.clear();
-    }
-    {
-        STAT_CUSTOM_ZONE_FMT("Tick::UpdateTexts{}", this->GetNameAsString())
-        this->Texts.append_range(this->NextTexts);
-        this->NextTexts.clear();
-    }
+    Reduce(this->Lines);
+    Reduce(this->Rays);
+    Reduce(this->Aabbs);
+    Reduce(this->Spheres);
+    Reduce(this->Texts);
 }
 
 void Jafg::ADebugDrawerComponent::Render(LActorRenderInfo const& Info) const
@@ -104,6 +77,22 @@ void Jafg::ADebugDrawerComponent::Render(LActorRenderInfo const& Info) const
 void Jafg::ADebugDrawerComponent::OnDeferredRender(LActorRenderInfo const& Info) const
 {
     STAT_FUNCTION()
+
+    this->Lines.append_range(std::move(this->IncomingLines));
+    this->IncomingLines.clear();
+
+    this->Rays.append_range(std::move(this->IncomingRays));
+    this->IncomingRays.clear();
+
+    this->Aabbs.append_range(std::move(this->IncomingAabbs));
+    this->IncomingAabbs.clear();
+
+    this->Spheres.append_range(std::move(this->IncomingSpheres));
+    this->IncomingSpheres.clear();
+
+    this->Texts.append_range(std::move(this->IncomingTexts));
+    this->IncomingTexts.clear();
+
     this->RenderRays(Info);
     this->RenderTexts(Info);
 }

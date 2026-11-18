@@ -91,7 +91,7 @@ void Jafg::ALightComponent::SelectedTick(WEditorWorldViewer& Viewer, f32 Dt)
             {
                 if (this->GetType() == ELight::Directional)
                 {
-                    DebugDrawer->AddRayNextTick({
+                    DebugDrawer->AddRay({
                         .Tint=LColor::FromLinear(this->GetTint()),
                         .Value={
                             .origin = this->Light.Translation,
@@ -103,7 +103,7 @@ void Jafg::ALightComponent::SelectedTick(WEditorWorldViewer& Viewer, f32 Dt)
 
                 if (this->GetType() == ELight::Point)
                 {
-                    DebugDrawer->AddSphereNextTick({
+                    DebugDrawer->AddSphere({
                         .Tint=LColor::FromLinear(this->GetTint()),
                         .Center=this->Light.Translation,
                         .Radius=this->Light.Range,
@@ -120,7 +120,7 @@ void Jafg::ALightComponent::SelectedTick(WEditorWorldViewer& Viewer, f32 Dt)
 
                 auto AddLine{[DebugDrawer, &Tint](LWorldVec3 const& Begin, LWorldVec3 const& End)
                 {
-                    DebugDrawer->AddLineNextTick({.Tint=Tint, .Value={.begin=Begin, .end=End}});
+                    DebugDrawer->AddLine({.Tint=Tint, .Value={.begin=Begin, .end=End}});
                 }};
 
                 if (this->GetType() == ELight::Spot)

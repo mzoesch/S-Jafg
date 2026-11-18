@@ -4944,7 +4944,7 @@ Jafg::AEditorPersonaControllerComponent::EGizmoMesh Jafg::AEditorPersonaControll
 
             if (*Prefs.EditorVisualizeGizmoInteractions)
             {
-                this->AddAabbNextTick({
+                this->AddAabb({
                     .Tint = *Prefs.EditorGizmoVisualizationAabbTint,
                     .Value = Aabb,
                     });
@@ -5058,7 +5058,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }
                 if (*Prefs.EditorVisualizeGizmoInteractions)
                 {
-                    this->AddRayNextTick({
+                    this->AddRay({
                         .Tint = *Prefs.EditorGizmoVisualizationTint,
                         .Duration = OneTimeDraw,
                         .Value = LWorldMagRay3{GizmoPlane.origin, GizmoPlane.normal, *Prefs.EditorGizmoVisualizationLength},
@@ -5073,7 +5073,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 if (*Prefs.EditorVisualizeGizmoInteractions)
                 {
                     constexpr LWorldVec3 HitSize{0.2f};
-                    this->AddAabbNextTick({
+                    this->AddAabb({
                         .Tint = *Prefs.EditorGizmoVisualizationHitTint,
                         .Duration = OneTimeDraw,
                         .Value = LWorldAabb3{Point - HitSize, Point + HitSize},
@@ -5115,7 +5115,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }
                 if (*Prefs.EditorVisualizeGizmoInteractions)
                 {
-                    this->AddRayNextTick({
+                    this->AddRay({
                         .Tint = *Prefs.EditorGizmoVisualizationTint,
                         .Duration = OneTimeDraw,
                         .Value = LWorldMagRay3{this->GizmoMeshes[Mesh].GetTranslation(), GizmoRay, *Prefs.EditorGizmoVisualizationLength},
@@ -5132,7 +5132,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 if (*Prefs.EditorVisualizeGizmoInteractions)
                 {
                     constexpr LWorldVec3 HitSize{0.2f};
-                    this->AddAabbNextTick({
+                    this->AddAabb({
                         .Tint = *Prefs.EditorGizmoVisualizationHitTint,
                         .Duration = OneTimeDraw,
                         .Value = LWorldAabb3{Point - HitSize, Point + HitSize},
