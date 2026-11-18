@@ -41,6 +41,13 @@ public:
             this->Frontend.Tick(Dt);
         }
     }
+    void OnRender()
+    {
+        if (!this->Frontend.IsHeadless())
+        {
+            this->Frontend.OnRender();
+        }
+    }
     void TearDown();
 
     FORCEINLINE LFrontend& GetFrontend() noexcept { return this->Frontend; }

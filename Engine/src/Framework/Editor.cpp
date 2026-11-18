@@ -145,6 +145,11 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f64>(TEditorNodeCreateInfo<f6
 {
     auto SharedState{std::make_shared<LEditorRowStateExt>()};
 
+    if (Info.UpdateValue)
+    {
+        check(!*Info.UpdateValue)
+    }
+
     WInput_Vector1* Input{};
     return NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill)
@@ -278,24 +283,29 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LWorldTrans>(TEditorNodeCreat
             ;
     });
 
-    Info.UpdateValue = [T=Translation,R=Rotation,S=Scale,Field=&Info.Field]
+    if (Info.UpdateValue)
     {
-        auto Translation{WInput_Vector3::FloatingVector{Field->t}};
-        if (auto V{T->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Translation)
+        check(!*Info.UpdateValue)
+
+        *Info.UpdateValue = [T=Translation,R=Rotation,S=Scale,Field=&Info.Field]
         {
-            T->Vector->Set(Translation);
-        }
-        auto Rotation{WInput_Vector3::FloatingVector{maths::editor_euler_angles_deg(Field->r)}};
-        if (auto V{R->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Rotation)
-        {
-            R->Vector->Set(Rotation);
-        }
-        auto Scale{WInput_Vector3::FloatingVector{Field->s}};
-        if (auto V{S->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V !=Scale)
-        {
-            S->Vector->Set(Scale);
-        }
-    };
+            auto Translation{WInput_Vector3::FloatingVector{Field->t}};
+            if (auto V{T->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Translation)
+            {
+                T->Vector->Set(Translation);
+            }
+            auto Rotation{WInput_Vector3::FloatingVector{maths::editor_euler_angles_deg(Field->r)}};
+            if (auto V{R->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V != Rotation)
+            {
+                R->Vector->Set(Rotation);
+            }
+            auto Scale{WInput_Vector3::FloatingVector{Field->s}};
+            if (auto V{S->Vector->Get<WInput_Vector3::FloatingVector::value_type>()}; V !=Scale)
+            {
+                S->Vector->Set(Scale);
+            }
+        };
+    }
 
     return NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill) // TODO: 1_spt vpadding?
@@ -717,6 +727,10 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = WEditorWorldViewerInspector::TabSelectorCreateInfo(),
                                 .OnAction = [this](auto&&...){ this->AddWindow<WEditorWorldViewerInspector>(true); return algo::reply::unhandled(); },
+                                },
+                            LDropDownNodeOption{
+                                .Selector = WEditorWorldViewerWorldInspector::TabSelectorCreateInfo(),
+                                .OnAction = [this](auto&&...){ this->AddWindow<WEditorWorldViewerWorldInspector>(true); return algo::reply::unhandled(); },
                                 },
                             LDropDownNodeOption{
                                 .Selector = WWorldsInspector::TabSelectorCreateInfo(),
@@ -1740,6 +1754,12 @@ void Jafg::WEditorWorldViewer::Destruct()
         this->Inspector->_OnWorldViewerDestruct();
         check(!this->Inspector)
     }
+
+    if (this->HasWorldInspector())
+    {
+        this->WorldInspector->_OnWorldViewerDestruct();
+        check(!this->WorldInspector)
+    }
 }
 
 Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
@@ -2216,9 +2236,15 @@ void Jafg::WEditorWorldViewer::OnConnect()
     {
         this->Hierarchy->OnWorldViewerUpdate();
     }
+
     if (this->Inspector)
     {
         this->Inspector->OnWorldViewerUpdate();
+    }
+
+    if (this->WorldInspector)
+    {
+        this->WorldInspector->OnWorldViewerUpdate();
     }
 }
 
@@ -2234,9 +2260,15 @@ void Jafg::WEditorWorldViewer::OnDisconnect()
     {
         this->Hierarchy->OnWorldViewerUpdate();
     }
+
     if (this->Inspector)
     {
         this->Inspector->OnWorldViewerUpdate();
+    }
+
+    if (this->WorldInspector)
+    {
+        this->WorldInspector->OnWorldViewerUpdate();
     }
 }
 
@@ -2474,6 +2506,7 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                                     },
                                 .OnAction = [this, &World](auto&&...)
                                 {
+                                    this->GetMutableFrontend().Vk_EditorWaitIdle();
                                     this->TravelTo(World);
                                     return algo::reply::unhandled();
                                 },});
@@ -3459,10 +3492,14 @@ void Jafg::WEditorWorldViewerHierarchy::Construct()
 
     check(!this->WorldViewer)
     this->WorldViewer = this->FindSmart();
-    check(!this->WorldViewer->HasHierarchy())
-    this->WorldViewer->Hierarchy = this;
-    check(!this->OnActorsSelectedHandle.IsValid())
-    this->OnActorsSelectedHandle = this->WorldViewer->OnActorsSelected.Emplace(this, &WEditorWorldViewerHierarchy::OnActorsSelected);
+    if (this->WorldViewer)
+    {
+        check(!this->WorldViewer->HasHierarchy())
+        this->WorldViewer->Hierarchy = this;
+        check(!this->OnActorsSelectedHandle.IsValid())
+        this->OnActorsSelectedHandle = this->WorldViewer->OnActorsSelected
+            .Emplace(this, &WEditorWorldViewerHierarchy::OnActorsSelected);
+    }
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -3574,7 +3611,10 @@ void Jafg::WEditorWorldViewerHierarchy::_OnWorldViewerDestruct()
 void Jafg::WEditorWorldViewerHierarchy::OnWorldViewerUpdate()
 {
     this->UpdateConnectedArea();
-    this->UpdateWorldObjectList({}, this->WorldViewer ? this->WorldViewer->GetSelectedActors() : TArray<std::pair<AActor*,AActorComponent*>>{});
+    this->UpdateWorldObjectList({}, this->WorldViewer
+        ? this->WorldViewer->GetSelectedActors()
+        : TArray<std::pair<AActor*,AActorComponent*>>{}
+        );
     if (auto* World{this->GetWorld()})
     {
         check(this->WorldViewer)
@@ -3893,10 +3933,14 @@ void Jafg::WEditorWorldViewerInspector::Construct()
 
     check(!this->WorldViewer)
     this->WorldViewer = this->FindSmart();
-    check(!this->WorldViewer->HasInspector())
-    this->WorldViewer->Inspector = this;
-    check(!this->OnActorsSelectedHandle.IsValid())
-    this->OnActorsSelectedHandle = this->WorldViewer->OnActorsSelected.Emplace(this, &WEditorWorldViewerInspector::OnActorsSelected);
+    if (this->WorldViewer)
+    {
+        check(!this->WorldViewer->HasInspector())
+        this->WorldViewer->Inspector = this;
+        check(!this->OnActorsSelectedHandle.IsValid())
+        this->OnActorsSelectedHandle = this->WorldViewer->OnActorsSelected
+            .Emplace(this, &WEditorWorldViewerInspector::OnActorsSelected);
+    }
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -3912,6 +3956,7 @@ void Jafg::WEditorWorldViewerInspector::Construct()
             NewStaticNode(WEditableTextButton).SaveTo(&this->EditableObjectDisplayName)
                 .Anchor(EAnchor::Fill)
                 .Palette(*Prefs.InputPaletteSolid)
+                .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
                 .OnContentCommitted([this](WEditableTextButton& Self, LString const& Content, ETextCommit Commit)
                 {
                     if (this->WorldViewer)
@@ -3949,6 +3994,7 @@ void Jafg::WEditorWorldViewerInspector::Construct()
             NewStaticNode(WEditableTextButtonIconizedLeft).SaveTo(&this->ContainerSearch)
                 .Anchor(EAnchor::Fill)
                 .Palette(*Prefs.InputPaletteSolid)
+                .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
                 .Icon({*JafgInfo, "Icons/Search"})
                 .PlaceholderContent("Search...")
         ]
@@ -4302,7 +4348,7 @@ void Jafg::WEditorWorldViewerInspector::SelectComponent(AActorComponent* Compone
                 TArray<TJxxUnique<WNode>> Xs;
                 check(It->EditorFactory)
                 TFunction2<void()> UpdateValue;
-                Array.emplace_back(It->EditorFactory(this->GetViewport(), *this->SelectedComponent, UpdateValue).UniqueXs(&Xs));
+                Array.emplace_back(It->EditorFactory(this->GetViewport(), *this->SelectedComponent, &UpdateValue).UniqueXs(&Xs));
                 if (UpdateValue)
                 {
                     this->ComponentUpdateFunctions.emplace_back(std::move(UpdateValue));
@@ -4370,6 +4416,378 @@ void Jafg::WEditorWorldViewerInspector::SelectComponent(AActorComponent* Compone
     }
 
     this->ReloadInnerComponents();
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::Construct()
+{
+    Super::Construct();
+
+    check(!this->WorldViewer)
+    this->WorldViewer = this->FindSmart();
+    if (this->WorldViewer)
+    {
+        check(!this->WorldViewer->HasWorldInspector())
+        this->WorldViewer->WorldInspector = this;
+    }
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    BeginStyling(*this).StaticRoot<WVRegion>()
+        .Anchor(EAnchor::Fill)
+        .Tint(*Prefs.ForegroundColor)
+    [
+        NewStaticNode(WHParent)
+            .Anchor(EAnchor::HFill)
+            .Padding({5_spt})
+            .Space(5_spt)
+        [
+            NewStaticNode(WEditableTextButton).SaveTo(&this->WorldIdentifier)
+                .Anchor(EAnchor::Fill)
+                .Palette(*Prefs.InputPaletteSolid)
+                .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
+                .OnContentCommitted([this](WEditableTextButton& Self, LString const& Content, ETextCommit Commit)
+                {
+                    if (this->WorldViewer)
+                    {
+                        if (APersonaController* Pc{this->WorldViewer->GetOwnedPersonaController()})
+                        {
+                            LWorld& World{Pc->GetWorld()};
+                            if (Commit == ETextCommit::OnCleared)
+                            {
+                                Self.SetContent(World.GetHumanReadableName());
+                            }
+                            else
+                            {
+                                World.SetHumanReadableName(Content);
+                            }
+                        }
+                        else
+                        {
+                            this->UpdateWorldIdentifier();
+                        }
+                    }
+                    else
+                    {
+                        this->UpdateWorldIdentifier();
+                    }
+                })
+            +
+            NewStaticNode(WText).SaveTo(&this->ConnectedText)
+                .MinDesiredSize({80_spt, 0})
+                .MaxDesiredSize({80_spt, 0})
+                .TextAlign(ETextHAlign::Center)
+                .TextAlign(ETextVAlign::Center)
+                .TextTint(Colors::Gray)
+        ]
+        +
+        NewStaticNode(WHParent)
+            .Anchor(EAnchor::HFill)
+            .Padding({5_spt})
+            .Space(5_spt)
+        [
+            NewStaticNode(WEditableTextButtonIconizedLeft).SaveTo(&this->ContainerSearch)
+                .Anchor(EAnchor::Fill)
+                .Palette(*Prefs.InputPaletteSolid)
+                .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
+                .Icon({*JafgInfo, "Icons/Search"})
+                .PlaceholderContent("Search...")
+        ]
+        +
+        NewStaticNode(WScrollRegion)
+            .Anchor(EAnchor::Fill)
+            .SkipBrushDraw(true)
+        [
+            NewStaticNode(WEditorBackground).SaveTo(&this->Container)
+        ]
+    ];
+
+    this->OnWorldViewerUpdate();
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::Destruct()
+{
+    Super::Destruct();
+
+    if (this->WorldViewer)
+    {
+        this->DisconnectFromViewer();
+    }
+
+    return;
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::_OnWorldViewerDestruct()
+{
+    check(this->WorldViewer)
+    check(this->WorldViewer->_IsGarbage())
+    this->DisconnectFromViewer();
+    this->OnWorldViewerUpdate();
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::OnWorldViewerUpdate()
+{
+    this->UpdateConnectedArea();
+    this->UpdateWorldIdentifier();
+    this->UpdateContainerValues();
+}
+
+Jafg::WEditorWorldViewer* Jafg::WEditorWorldViewerWorldInspector::FindSmart() const noexcept
+{
+    auto* Result{this->FindInViewport(this->GetViewport())};
+    if (!Result && &this->GetViewport() != &this->GetViewport().GetSurface().GetViewport())
+    {
+        Result = this->FindInViewport(this->GetViewport().GetSurface().GetViewport());
+    }
+    if (!Result)
+    {
+        for (auto& Surface: this->GetViewport().GetSurface().GetFrontend().GetSurfaces())
+        {
+            if (&*Surface == &this->GetViewport().GetSurface())
+            {
+                continue;
+            }
+            if (auto* Found{this->FindInViewport(Surface->GetViewport())})
+            {
+                Result = Found;
+                break;
+            }
+        }
+    }
+
+    return Result;
+}
+
+Jafg::WEditorWorldViewer* Jafg::WEditorWorldViewerWorldInspector::FindInViewport(LViewport const& Viewport) const noexcept
+{
+    for (auto& Node: Viewport.GetTopLevelWidgets())
+    {
+        if (auto* Result{this->FindInNode(*Node)})
+        {
+            return Result;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+Jafg::WEditorWorldViewer* Jafg::WEditorWorldViewerWorldInspector::FindInNode(WNode& Node) const noexcept
+{
+    if (auto* Casted{Node.As<WEditorWorldViewer>()})
+    {
+        if (!Casted->HasWorldInspector())
+        {
+            return Casted;
+        }
+    }
+
+    if (auto* Parent{Node.As<WParent>()})
+    {
+        for (auto& Child: Parent->GetChildren())
+        {
+            if (auto* Result{this->FindInNode(*Child)})
+            {
+                return Result;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::DisconnectFromViewer()
+{
+    check(this->WorldViewer)
+
+    check(this->WorldViewer->WorldInspector == this)
+    this->WorldViewer->WorldInspector = nullptr;
+    this->WorldViewer = nullptr;
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::UpdateWorldIdentifier()
+{
+    check(this->WorldIdentifier)
+
+    if (this->WorldViewer)
+    {
+        if (APersonaController* Pc{this->WorldViewer->GetOwnedPersonaController()})
+        {
+            LWorld& World{Pc->GetWorld()};
+            this->WorldIdentifier->SetEnabled(true);
+            this->WorldIdentifier->SetContent(World.GetHumanReadableName());
+        }
+        else
+        {
+            this->WorldIdentifier->SetEnabled(false);
+            this->WorldIdentifier->EmptyContent();
+            this->WorldIdentifier->PlaceholderContent = "World Identifier";
+        }
+    }
+    else
+    {
+        this->WorldIdentifier->SetEnabled(false);
+        this->WorldIdentifier->EmptyContent();
+        this->WorldIdentifier->PlaceholderContent = "World Identifier";
+    }
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::UpdateConnectedArea()
+{
+    check(this->ConnectedText)
+
+    if (this->WorldViewer)
+    {
+        if (this->WorldViewer->IsOwnedPersonaControllerValid())
+        {
+            this->ConnectedText->SetContent("[connected]");
+        }
+        else
+        {
+            this->ConnectedText->SetContent("[waiting]");
+        }
+    }
+    else
+    {
+        this->ConnectedText->SetContent("[disconnected]");
+    }
+}
+
+void Jafg::WEditorWorldViewerWorldInspector::UpdateContainerValues()
+{
+    check(IsValidFast(this->GetOuter(), this->Container))
+
+    this->UpdateFunctions.clear();
+    this->Container->RemoveChildren();
+
+    if (LWorld* World{this->GetWorld()})
+    {
+        auto& Prefs{GetSingleton<JUserPreferences>()};
+
+        std::unordered_map<LString, TArray<TJxxUnique<WNode>>> Layout;
+
+        auto AddProperty{[this](auto& Array, auto&& CreateInfo)
+        {
+            TFunction2<void()> UpdateFunction;
+
+            check(CreateInfo.UpdateValue == nullptr)
+            CreateInfo.UpdateValue = &UpdateFunction;
+
+            TArray<TJxxUnique<WNode>> Xs;
+            Array.emplace_back(GetEditorNode<typename std::remove_cvref_t<decltype(CreateInfo)>::value_type>(
+                std::forward<decltype(CreateInfo)>(CreateInfo)).UniqueXs(&Xs)
+                );
+            for (auto& X: Xs)
+            {
+                Array.emplace_back(std::move(X));
+            }
+
+            if (UpdateFunction)
+            {
+                this->UpdateFunctions.emplace_back(std::move(UpdateFunction));
+            }
+        }};
+
+        {
+            auto& Array{Layout["Rhi"]};
+            AddProperty(Array, TEditorNodeCreateInfo<LLinearColor3>{
+                .Viewport = this->GetViewport(),
+                .Flags = EJxxFieldBits::EditorEditable,
+                .RecordName = "Ambient",
+                .Field = World->GetMutableAmbientTint(),
+                .Default = LLinearColor3{0.004, 0.006, 0.012},
+                });
+            AddProperty(Array, TEditorNodeCreateInfo<f32>{
+                .Viewport = this->GetViewport(),
+                .Flags = EJxxFieldBits::EditorEditable,
+                .RecordName = "Exposure",
+                .Field = World->GetMutableExposure(),
+                .Default = 1.0f,
+                });
+            AddProperty(Array, TEditorNodeCreateInfo<f32>{
+                .Viewport = this->GetViewport(),
+                .Flags = EJxxFieldBits::EditorEditable,
+                .RecordName = "Gamma",
+                .Field = World->GetMutableGamma(),
+                .Default = 2.2f,
+                });
+            AddProperty(Array, TEditorNodeCreateInfo<f32>{
+                .Viewport = this->GetViewport(),
+                .Flags = EJxxFieldBits::EditorEditable,
+                .RecordName = "IblSpecularMaxLod",
+                .Field = World->GetMutableIblSpecularMaxLod(),
+                .Default = 4.0f,
+                });
+            AddProperty(Array, TEditorNodeCreateInfo<f32>{
+                .Viewport = this->GetViewport(),
+                .Flags = EJxxFieldBits::EditorEditable,
+                .RecordName = "IblDiffuseIntensity",
+                .Field = World->GetMutableIblDiffuseIntensity(),
+                .Default = 1.0f,
+                });
+            AddProperty(Array, TEditorNodeCreateInfo<f32>{
+                .Viewport = this->GetViewport(),
+                .Flags = EJxxFieldBits::EditorEditable,
+                .RecordName = "IblSpecularIntensity",
+                .Field = World->GetMutableIblSpecularIntensity(),
+                .Default = 1.0f,
+                });
+        }
+
+        TArray<LString> Categories; Categories.reserve(Layout.size());
+        for (LString const& Category: Layout | algo::views::keys)
+        {
+            Categories.emplace_back(Category);
+        }
+        algo::sort(Categories, algo::lexicographical_string_compare);
+
+        for (LString const& Category: Categories)
+        {
+            auto CategoryNodes{std::make_shared<TArray<WNode*>>()};
+            this->Container->AddChild(NewStaticNode(WTextButtonIconizedDouble)
+                .Anchor(EAnchor::HFill)
+                .InAllBrushes<&LBoxBrush::Tint>(*Prefs.ForegroundColorVariant)
+                .LeftIcon({*JafgInfo, "Icons/ExtendDown"})
+                .Content(Category)
+                .Selectable(true)
+                .Selected(true)
+                .OnKeyEventFocused([CategoryNodes](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                {
+                    check(CategoryNodes.get())
+
+                    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                    {
+                        auto& Casted{Self.AsStatic<WTextButtonIconizedDouble>()};
+                        Casted.SetSelected(!Casted.IsSelected());
+
+                        if (Casted.IsSelected())
+                        {
+                            Casted.LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown");
+                        }
+                        else
+                        {
+                            Casted.LeftIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight");
+                        }
+
+                        for (auto* Node: *CategoryNodes)
+                        {
+                            check(Node)
+                            Node->SetVisibility(Casted.IsSelected() ? ENodeVisibility::IntransitiveHitTestInvisible : ENodeVisibility::Collapsed);
+                        }
+                        return LNodeReply::Handled();
+                    }
+                    return LNodeReply::Unhandled();
+                })
+                .Unique()
+                );
+            TArray<TJxxUnique<WNode>>& Nodes{Layout.at(Category)};
+            for (auto& Node: Nodes)
+            {
+                CategoryNodes->emplace_back(Node.get());
+                this->Container->AddChild(std::move(Node));
+            }
+        }
+    }
 }
 
 void Jafg::AEditorPersonaControllerComponent::OnAttach(AActor& InOwner)

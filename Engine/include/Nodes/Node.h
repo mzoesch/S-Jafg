@@ -1168,6 +1168,7 @@ private:
 NODISCARD inline decltype(auto) Detail::LNodeFactoryBase::Unique(this auto&& Self) noexcept
 {
     auto& Cache{Self.GetRawNode()};
+    check(Self.GetSiblings().empty())
 #if JAFG_DO_CHECKS
     Self._Release();
     Self._Decommission();

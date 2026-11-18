@@ -108,7 +108,7 @@ inline LFactoryTextButton EditorComponentLabel(EJxxFieldFlags Flags, LViewport& 
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     return NewNode(Viewport).Class<WTextButton>()
-        .MinDesiredSize({128_spt, 0})
+        .MinDesiredSize({160_spt, 0})
         .Anchor(EAnchor::VFill)
         .InBrushChained<EStyleBits::ActiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColorVariant, {20_spt, 0, 0, 0})
         .InBrushChained<EStyleBits::InactiveCombi, &LBoxBrush::Tint, &LBoxBrush::Padding>(*Prefs.ForegroundColor, {20_spt, 0, 0, 0})

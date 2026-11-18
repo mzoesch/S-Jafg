@@ -317,19 +317,12 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
             WorldData.Proj[1][1] *= -1.0f;
         }
 
-        //#
-        //# TODO: Make some preset somewhere. Where in the editor can switch between different states.
-        //#             Ambient             Directional
-        //# Morning:    {0.06,0.07,0.10}    {1.0,0.75,0.5}
-        //# Day:        {0.12,0.15,0.20}    {1.0,0.96,0.9}
-        //# Night:      {0.004,0.006,0.012} {0.6,0.70,1.0}
-        //#
-        WorldData.Ambient = LVec3F{0.003f};
-        WorldData.Exposure = 1.0f;
-        WorldData.Gamma = 2.2f;
-        WorldData.IblSpecularMaxLod = 4.0f;
-        WorldData.IblDiffuseIntensity = 1.0f;
-        WorldData.IblSpecularIntensity = 1.0f;
+        WorldData.Ambient = this->AmbientTint;
+        WorldData.Exposure = this->Exposure;
+        WorldData.Gamma = this->Gamma;
+        WorldData.IblSpecularMaxLod = this->IblSpecularMaxLod;
+        WorldData.IblDiffuseIntensity = this->IblDiffuseIntensity;
+        WorldData.IblSpecularIntensity = this->IblSpecularIntensity;
 
         WorldData.AmbientOcclusionTexture = DrawInfo.AmbientOcclusionTexture;
 

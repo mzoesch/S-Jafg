@@ -8,7 +8,10 @@ void Jafg::ABillboardComponent::Render(LActorRenderInfo const& Info) const
 
     check(this->Billboard.GetTexture())
 
-    this->Billboard.Render(Info, {
-        this->GetWorldTranslationSlow()
-        });
+    Info.PostRenderDelegates.emplace_back([this](LActorRenderInfo const& Info)
+    {
+        this->Billboard.Render(Info, {
+            this->GetWorldTranslationSlow()
+            });
+    });
 }

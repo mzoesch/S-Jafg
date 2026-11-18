@@ -14,7 +14,7 @@ struct WorldData final : rhi::ubo_template<WorldData, vk::ShaderStageFlagBits::e
     LMat4F View;
     LMat4F Proj;
 
-    LVec3F Ambient;
+    LLinearColor3 Ambient{ ESkipInit::Here };
     f32 Exposure;
 
     f32 Gamma;

@@ -30,6 +30,7 @@ class WEditorWorldViewer;
 class WEditorCategorySeparator;
 class WEditorWorldViewerHierarchy;
 class WEditorWorldViewerInspector;
+class WEditorWorldViewerWorldInspector;
 class WEditableTextButton;
 struct LFactoryEditorCategorySeparator;
 struct LEditorLayout;
@@ -269,6 +270,7 @@ class ENGINE_API WEditorWorldViewer : public WWorldViewer
 
     friend WEditorWorldViewerHierarchy;
     friend WEditorWorldViewerInspector;
+    friend WEditorWorldViewerWorldInspector;
 
 protected:
 
@@ -312,6 +314,8 @@ public:
     NODISCARD FORCEINLINE constexpr WEditorWorldViewerHierarchy* GetHierarchy() const noexcept { return this->Hierarchy; }
     NODISCARD FORCEINLINE constexpr bool HasInspector() const noexcept { return this->Inspector != nullptr; }
     NODISCARD FORCEINLINE constexpr WEditorWorldViewerInspector* GetInspector() const noexcept { return this->Inspector; }
+    NODISCARD FORCEINLINE constexpr bool HasWorldInspector() const noexcept { return this->WorldInspector != nullptr; }
+    NODISCARD FORCEINLINE constexpr WEditorWorldViewerWorldInspector* GetWorldInspector() const noexcept { return this->WorldInspector; }
 
     //# Select new actors. All actors must be valid.
     void SelectActors(TArray<std::pair<AActor*,AActorComponent*>> Actors, bool bForce = false);
@@ -441,6 +445,7 @@ private:
 
     WEditorWorldViewerHierarchy* Hierarchy{};
     WEditorWorldViewerInspector* Inspector{};
+    WEditorWorldViewerWorldInspector* WorldInspector{};
 };
 
 //#
@@ -492,7 +497,7 @@ private:
     LNodeReply OnWorldObjectListKeyEventFocus(Detail::WEditorWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
     LNodeReply OnWorldObjectListKeyEventUnfocus(Detail::WEditorWorldViewerHierarchyObjectHButton& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event);
 
-    LWorld* GetWorld() const noexcept
+    NODISCARD LWorld* GetWorld() const noexcept
     {
         if (this->WorldViewer && this->WorldViewer->IsOwnedPersonaControllerValid())
         {
@@ -544,8 +549,8 @@ private:
     void UpdateConnectedArea();
 
     WEditableTextButton* EditableObjectDisplayName{};
-    WParent* Container{};
     WEditableTextButton* ContainerSearch{};
+    WParent* Container{};
     void UpdateObjectDisplayName();
 
     WParent* ComponentContainerWrapper{};
@@ -555,6 +560,58 @@ private:
     void UpdateObjectDetails();
     void ReloadInnerComponents();
     void SelectComponent(AActorComponent* Component);
+};
+
+//#
+//# A widget that displays details about its world.
+//#
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WEditorWorldViewerWorldInspector : public WUserWidget
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_NODE_CONSTRUCTORS(WEditorWorldViewerWorldInspector)
+
+public:
+
+    JAFG_DEFAULT_TAB_CANDIDATE("World Details", *JafgInfo, "Icons/Information")
+
+    virtual void Construct() override;
+    virtual void Destruct() override;
+
+    void _OnWorldViewerDestruct();
+    void OnWorldViewerUpdate();
+
+private:
+
+    WEditorWorldViewer* FindSmart() const noexcept;
+    WEditorWorldViewer* FindInViewport(LViewport const& Viewport) const noexcept;
+    WEditorWorldViewer* FindInNode(WNode& Node) const noexcept;
+
+    WEditorWorldViewer* WorldViewer{};
+    void DisconnectFromViewer();
+
+    WEditableTextButton* WorldIdentifier{};
+    void UpdateWorldIdentifier();
+
+    WText* ConnectedText{};
+    void UpdateConnectedArea();
+
+    WEditableTextButton* ContainerSearch{};
+    WParent* Container{};
+    TArray<TFunction2<void()>> UpdateFunctions;
+    void UpdateContainerValues();
+
+    NODISCARD LWorld* GetWorld() const noexcept
+    {
+        if (this->WorldViewer && this->WorldViewer->IsOwnedPersonaControllerValid())
+        {
+            return &this->WorldViewer->GetOwnedPersonaControllerChecked()->GetWorld();
+        }
+        return nullptr;
+    }
 };
 
 namespace Detail

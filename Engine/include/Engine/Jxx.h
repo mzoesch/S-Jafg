@@ -418,7 +418,7 @@ typedef TFunction2<LString(JCxxClass const& Object)> LGetCxxClassField;
 typedef TFunction2<bool(JCxxClass const& Object)> LIsModifiedCxxClassField;
 typedef TFunction2<void(JCxxClass const& Origin, JCxxClass* Target)> LFastCloneCxxClassField;
 #if JAFG_WITH_EDITOR
-    typedef TFunction2<Detail::LNodeFactoryBase(LViewport& Viewport, JCxxClass& Object, TFunction2<void()>& UpdateValue)> LEditorFieldFactory;
+    typedef TFunction2<Detail::LNodeFactoryBase(LViewport& Viewport, JCxxClass& Object, TFunction2<void()>* UpdateValue)> LEditorFieldFactory;
 #endif /* JAFG_WITH_EDITOR */
 //# A reflected field for a class.
 struct LJxxClassField final
@@ -461,7 +461,7 @@ struct TEditorNodeCreateInfo final
     //# Optional default value.
     std::optional<T> Default;
     //# Optional update function.
-    TFunction2<void()>& UpdateValue;
+    TFunction2<void()>* UpdateValue{};
 };
 
 template<>
@@ -477,7 +477,7 @@ struct TEditorNodeCreateInfo<std::monostate> final
     std::function<LString(JCxxClass* Owner)> Getter;
     //# If this function once evaluates to a non nullopt, it must always evaluate to a non nullopt.
     std::function<std::optional<LString>(JCxxClass* Owner)> Default;
-    TFunction2<void()>& UpdateValue;
+    TFunction2<void()>* UpdateValue{};
 };
 
 enum struct EJxxRecordTearDownReason
@@ -1329,8 +1329,8 @@ public:
     FORCEINLINE constexpr void SetUserData(void* InUserData) noexcept { this->UserData = InUserData;     }
     FORCEINLINE constexpr void* GetUserData() noexcept { return this->UserData; }
 
-    FORCEINLINE void SetHumanReadableName(LStringView const& S) noexcept { this->HumanReadableName = S; }
-    FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
+    FORCEINLINE void SetHumanReadableName(LString S) noexcept { this->HumanReadableName = std::move(S); }
+    NODISCARD FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
 
     //# For internal use only. DO NOT USE.
     FORCEINLINE void _AddEmployee(JCxxClass* Employee) noexcept
@@ -2291,7 +2291,7 @@ struct LProjectionEditorNodeInfo
 {
     LStringView RecordName;
     LStringView RecordTooltip;
-    TFunction2<void()>& UpdateValue;
+    TFunction2<void()>* UpdateValue{};
 };
 template<auto Proj>
 NODISCARD auto ProjectEditorNodeCreateInfo(auto const& Info

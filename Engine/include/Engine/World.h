@@ -329,6 +329,25 @@ public:
     NODISCARD FORCEINLINE constexpr ASkybox* GetSkyboxAsserted() { jassert(this->Skybox) return this->Skybox; }
     NODISCARD FORCEINLINE constexpr ASkybox const* GetSkyboxAsserted() const { jassert(this->Skybox) return this->Skybox; }
 
+    NODISCARD FORCEINLINE constexpr LLinearColor3 const& GetAmbientTint() const noexcept { return this->AmbientTint; }
+    NODISCARD FORCEINLINE constexpr LLinearColor3& GetMutableAmbientTint() noexcept { return this->AmbientTint; }
+    FORCEINLINE constexpr void SetAmbientTint(LLinearColor3 const& Tint) noexcept { this->AmbientTint = Tint; }
+    NODISCARD FORCEINLINE constexpr f32 GetExposure() const noexcept { return this->Exposure; }
+    NODISCARD FORCEINLINE constexpr f32& GetMutableExposure() noexcept { return this->Exposure; }
+    FORCEINLINE constexpr void SetExposure(f32 E) noexcept { this->Exposure = E; }
+    NODISCARD FORCEINLINE constexpr f32 GetGamma() const noexcept { return this->Gamma; }
+    NODISCARD FORCEINLINE constexpr f32& GetMutableGamma() noexcept { return this->Gamma; }
+    FORCEINLINE constexpr void SetGamma(f32 G) noexcept { this->Gamma = G; }
+    NODISCARD FORCEINLINE constexpr f32 GetIblSpecularMaxLod() const noexcept { return this->IblSpecularMaxLod; }
+    NODISCARD FORCEINLINE constexpr f32& GetMutableIblSpecularMaxLod() noexcept { return this->IblSpecularMaxLod; }
+    FORCEINLINE constexpr void SetIblSpecularMaxLod(f32 L) noexcept { this->IblSpecularMaxLod = L; }
+    NODISCARD FORCEINLINE constexpr f32 GetIblDiffuseIntensity() const noexcept { return this->IblDiffuseIntensity; }
+    NODISCARD FORCEINLINE constexpr f32& GetMutableIblDiffuseIntensity() noexcept { return this->IblDiffuseIntensity; }
+    FORCEINLINE constexpr void SetIblDiffuseIntensity(f32 I) noexcept { this->IblDiffuseIntensity = I; }
+    NODISCARD FORCEINLINE constexpr f32 GetIblSpecularIntensity() const noexcept { return this->IblSpecularIntensity; }
+    NODISCARD FORCEINLINE constexpr f32& GetMutableIblSpecularIntensity() noexcept { return this->IblSpecularIntensity; }
+    FORCEINLINE constexpr void SetIblSpecularIntensity(f32 I) noexcept { this->IblSpecularIntensity = I; }
+
     NODISCARD FORCEINLINE constexpr bool ShouldTickPhysics() const noexcept { return !this->IsTimeDesisted() && !this->IsLinearWorldDormant(); }
     NODISCARD LPhysicsSystem& GetWorldGlobalPhysicsSystem() noexcept { return this->PhysicsSystem; }
     NODISCARD LPhysicsSystem const& GetWorldGlobalPhysicsSystem() const noexcept { return this->PhysicsSystem; }
@@ -394,6 +413,21 @@ private:
 
     //# A skybox is optional.
     ASkybox* Skybox{};
+
+    //#
+    //# TODO: Kinda awkward here. Where to move?
+    //# TODO: Make some preset somewhere. Where in the editor can switch between different states.
+    //#             Ambient             Directional
+    //# Morning:    {0.06,0.07,0.10}    {1.0,0.75,0.5}
+    //# Day:        {0.12,0.15,0.20}    {1.0,0.96,0.9}
+    //# Night:      {0.004,0.006,0.012} {0.6,0.70,1.0}
+    //#
+    LLinearColor3 AmbientTint{ 0.004,0.006,0.012 };
+    f32 Exposure{ 1.0f };
+    f32 Gamma{ 2.2f };
+    f32 IblSpecularMaxLod{ 4.0f };
+    f32 IblDiffuseIntensity{ 1.0f };
+    f32 IblSpecularIntensity{ 1.0f };
 
     LPhysicsSystem PhysicsSystem{ ESkipInit::Here };
     TArray<ARigidComponent*> RigidComponents;

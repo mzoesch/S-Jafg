@@ -382,7 +382,7 @@ void Jafg::LEngine::Tick()
     }
 
 #if JAFG_WITH_LOCAL_LAYER
-    this->LocalEgo.GetFrontend().OnRender();
+    this->LocalEgo.OnRender();
 #endif /* JAFG_WITH_LOCAL_LAYER */
 
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
