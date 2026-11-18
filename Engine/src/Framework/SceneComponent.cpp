@@ -100,3 +100,16 @@ void Jafg::ASceneComponent::DetachAttachedActors(bool bKeepWorld, bool bTransiti
         }
     }
 }
+
+void Jafg::ASceneComponent::_TickHierarchy(f32 Dt)
+{
+    if (this->bTick)
+    {
+        this->ParentTick(Dt);
+    }
+    /* Indices, because components may be emplaced while ticking. */
+    for (std::size_t Idx{0}; Idx < this->Children.size(); ++Idx)
+    {
+        this->Children[Idx]->_TickHierarchy(Dt);
+    }
+}

@@ -12,6 +12,7 @@
 #include "Framework/RigidComponent.h"
 #include "Framework/AvatarComponent.h"
 #include "Framework/EyeComponent.h"
+#include "Framework/GimbalComponent.h"
 #include "Jgc/Framework/Vehicle.h"
 #include "Jgc/Framework/JgcVehicleInputComponent.h"
 #include "Jgc/Owss/OwssSupremePolicies.h"
@@ -109,7 +110,9 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
          * The view while driving. Behind and slightly above the ship. It hangs on a spring: Accelerations push it
          * away from where it belongs (at most by the maximums), so that speeding up, braking and strafing are felt.
          */
-        Actor.EmplaceSceneComponentTo<Jafg::AEyeComponent>(Actor.GetRootComponent(), [](Jafg::AEyeComponent& Eye)
+        /* The pivot that free look turns the eye around (see #AJgcVehicleInputComponent). */
+        auto& Gimbal{Actor.EmplaceSceneComponentTo<Jafg::AGimbalComponent>(Actor.GetRootComponent())};
+        Actor.EmplaceSceneComponentTo<Jafg::AEyeComponent>(Gimbal, [](Jafg::AEyeComponent& Eye)
         {
             Eye.SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * 2_r - maths::forward_vector<LWorldVec3> * 30_r);
             Eye.BlendInTime = 0.6f;

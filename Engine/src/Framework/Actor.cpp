@@ -53,9 +53,15 @@ void Jafg::AActor::WorldTick(f32 Dt)
 {
     check(this->bLives && !this->_IsGarbage())
     check(this->bCanEverTick && this->ShouldTick())
-    for (auto& Comp: this->Components)
+    for (std::size_t Idx{0}; Idx < this->Components.size(); ++Idx)
     {
-        if (Comp->bTick)
+        auto& Comp{this->Components[Idx]};
+        if (auto* Scene{Comp->As<ASceneComponent>()})
+        {
+            STAT_CUSTOM_ZONE_FMT("TickHierarchy{}", Comp->GetNameAsString())
+            Scene->_TickHierarchy(Dt);
+        }
+        else if (Comp->bTick)
         {
             STAT_CUSTOM_ZONE_FMT("Tick{}", Comp->GetNameAsString())
             Comp->ParentTick(Dt);

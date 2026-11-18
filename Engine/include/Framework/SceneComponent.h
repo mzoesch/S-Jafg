@@ -46,17 +46,17 @@ public:
     //# Also attaches the children.
     virtual void OnAttach(AActor& InOwner) override;
 
+    //#
+    //# Every scene component in the hierarchy of an actor that wants to tick is ticked by the actor (see
+    //# #TickHierarchy), parents before children. Even if its parents do not tick.
+    //#
     virtual void ParentTick(f32 Dt) override
     {
         Super::ParentTick(Dt);
-        for (auto& Child: this->Children)
-        {
-            if (Child->bTick)
-            {
-                Child->ParentTick(Dt);
-            }
-        }
     }
+
+    //# Jafg internal method. Do not use. Ticks this component (if it wants to) and then its children.
+    void _TickHierarchy(f32 Dt);
 
     virtual void Render(LActorRenderInfo const& Info) const override
     {

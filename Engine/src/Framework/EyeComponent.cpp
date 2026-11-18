@@ -28,7 +28,6 @@ NODISCARD LWorldQuat RotationFromBasis(LVec3F const& Front, LVec3F const& Up) no
 void Jafg::StepEyeSpring(
       LEyeSpringState& State
     , LEyeSpringSettings const& Settings
-    , LWorldVec3 const& Target
     , LWorldQuat const& TargetRotation
     , LVec3F const& TargetVelocity
     , f32 Dt
@@ -45,11 +44,11 @@ void Jafg::StepEyeSpring(
     f32 const Step{Dt / static_cast<f32>(Steps)};
 
     /*
-     * Integrated relative to the target, which moved along its velocity during this frame. The numbers stay small,
-     * so that the spring is as precise far away from the origin as close to it.
-     * A change of the target velocity since the last frame (an acceleration) shows up as relative velocity.
+     * Integrated relative to the target, so that the numbers stay small and the spring is as precise far away from the
+     * origin as close to it. A change of the target velocity since the last frame (an acceleration) shows up as
+     * relative velocity.
      */
-    LVec3F Offset{LVec3F{State.Translation - (Target - LWorldVec3{TargetVelocity * Dt})}};
+    LVec3F Offset{State.Offset};
     LVec3F Relative{State.Velocity - TargetVelocity};
     for (i32 Idx{0}; Idx < Steps; ++Idx)
     {
@@ -73,8 +72,32 @@ void Jafg::StepEyeSpring(
         }
     }
 
-    State.Translation = Target + LWorldVec3{Offset};
+    State.Offset = Offset;
     State.Velocity = TargetVelocity + Relative;
+}
+
+void Jafg::StepEyeRotationLag(LWorldQuat& Lag, LVec3F const& AngularVelocity, f32 Speed, f32 MaxAngle, f32 Dt) noexcept
+{
+    if (Dt <= 0.0f)
+    {
+        return;
+    }
+
+    /* The target turned by this. The presentation does not: Presentation = Lag * Target stays the same. */
+    if (f32 const Rate{maths::magnitude(AngularVelocity)}; Rate > 1.0e-6f)
+    {
+        LWorldQuat const Turn{maths::angle_axis(Rate * Dt, AngularVelocity / Rate)};
+        Lag = maths::normalize(Lag * maths::inverse(Turn));
+    }
+
+    /* Catch up. */
+    Lag = maths::normalize(glm::slerp(Lag, maths::identity<LWorldQuat>, 1.0f - std::exp(-maths::max(Speed, 0.0f) * Dt)));
+
+    f32 const Angle{2.0f * std::acos(maths::clamp(std::abs(Lag.w), 0.0f, 1.0f))};
+    if (Angle > MaxAngle && Angle > 0.0f)
+    {
+        Lag = maths::normalize(glm::slerp(maths::identity<LWorldQuat>, Lag, maths::max(MaxAngle, 0.0f) / Angle));
+    }
 }
 
 LWorldEye Jafg::AEyeComponent::GetEye() const noexcept
@@ -83,7 +106,8 @@ LWorldEye Jafg::AEyeComponent::GetEye() const noexcept
     {
         return this->GetTargetEye();
     }
-    return this->MakeEye(this->Spring.Translation, this->PresentedRotation);
+    LWorldTrans const Target{this->GetWorldTransformSlow()};
+    return this->MakeEye(Target.t + LWorldVec3{this->Spring.Offset}, this->RotationLag * maths::normalize(Target.r));
 }
 
 LWorldEye Jafg::AEyeComponent::GetTargetEye() const noexcept
@@ -132,9 +156,7 @@ void Jafg::AEyeComponent::UpdatePresentation(f32 Dt)
         return;
     }
 
-    LVec3F const TargetVelocity{this->ComputeTargetVelocity(Target.t, Dt)};
-
-    //# ---------- Translation ----------
+    LTargetMotion const Motion{this->ComputeTargetMotion(Target, Dt)};
 
     if (this->IsSprung())
     {
@@ -142,33 +164,21 @@ void Jafg::AEyeComponent::UpdatePresentation(f32 Dt)
             .Frequency = this->SpringFrequency,
             .DampingRatio = this->SpringDampingRatio,
             .MaxOffset = {this->SpringMaxLateral, this->SpringMaxVertical, this->SpringMaxLongitudinal},
-            }, Target.t, TargetRotation, TargetVelocity, Dt);
+            }, TargetRotation, Motion.Linear, Dt);
     }
     else
     {
-        this->Spring = {.Translation = Target.t, .Velocity = TargetVelocity};
+        this->Spring = {.Offset = LVec3F{0.0f}, .Velocity = Motion.Linear};
     }
-
-    //# ---------- Rotation ----------
 
     if (this->IsRotationLagging())
     {
-        f32 const Alpha{1.0f - std::exp(-this->RotationLagSpeed * Dt)};
-        LWorldQuat Rotation{maths::normalize(glm::slerp(this->PresentedRotation, TargetRotation, Alpha))};
-
-        f32 const MaxAngle{maths::radians(maths::clamp(this->MaxRotationLag, 0.0f, 180.0f))};
-        LWorldQuat const Difference{maths::normalize(Rotation * maths::inverse(TargetRotation))};
-        f32 const Angle{2.0f * std::acos(maths::clamp(std::abs(Difference.w), 0.0f, 1.0f))};
-        if (Angle > MaxAngle && Angle > 0.0f)
-        {
-            /* Rotate back from the target by exactly the maximum. */
-            Rotation = maths::normalize(glm::slerp(TargetRotation, Rotation, MaxAngle / Angle));
-        }
-        this->PresentedRotation = Rotation;
+        Jafg::StepEyeRotationLag(this->RotationLag, Motion.Angular, this->RotationLagSpeed
+            , maths::radians(maths::clamp(this->MaxRotationLag, 0.0f, 180.0f)), Dt);
     }
     else
     {
-        this->PresentedRotation = TargetRotation;
+        this->RotationLag = maths::identity<LWorldQuat>;
     }
 }
 
@@ -181,21 +191,25 @@ void Jafg::AEyeComponent::SnapPresentation() noexcept
     }
 
     LWorldTrans const Target{this->GetWorldTransformSlow()};
-    this->Spring.Translation = Target.t;
-    this->PresentedRotation = maths::normalize(Target.r);
     this->LastTargetTranslation = Target.t;
-    this->bHasPresentation = true;
-
-    /* Moves with the target from the start. Otherwise, it would fall behind a moving target right away. */
+    this->LastTargetRotation = maths::normalize(Target.r);
     this->EstimatedTargetVelocity = LVec3F{0.0f};
-    this->Spring.Velocity = this->ComputeTargetVelocity(Target.t, 0.0f);
+    this->RotationLag = maths::identity<LWorldQuat>;
+    /* Moves with the target from the start. Otherwise, it would fall behind a moving target right away. */
+    this->Spring = {.Offset = LVec3F{0.0f}, .Velocity = this->ComputeTargetMotion(Target, 0.0f).Linear};
+    this->bHasPresentation = true;
 }
 
-LVec3F Jafg::AEyeComponent::ComputeTargetVelocity(LWorldVec3 const& Target, f32 Dt) noexcept
+Jafg::AEyeComponent::LTargetMotion Jafg::AEyeComponent::ComputeTargetMotion(LWorldTrans const& Target, f32 Dt) noexcept
 {
+    LWorldQuat const Rotation{maths::normalize(Target.r)};
+    LWorldVec3 const PreviousTranslation{std::exchange(this->LastTargetTranslation, Target.t)};
+    LWorldQuat const PreviousRotation{std::exchange(this->LastTargetRotation, Rotation)};
+
     /*
      * Simulated bodies only move in physics steps, which are usually not in sync with the frames. Their velocity is
-     * exact, while differences of their translation between frames jump.
+     * exact, while differences of their transform between frames jump. They also do not contain moves that are not
+     * physical (e.g., a gimbal that is turned), which the presentation follows rigidly.
      */
     ASceneComponent* Top{this};
     while (ASceneComponent* Parent{Top->GetTransformParent()})
@@ -204,17 +218,33 @@ LVec3F Jafg::AEyeComponent::ComputeTargetVelocity(LWorldVec3 const& Target, f32 
     }
     if (auto* Rigid{Top->As<ARigidComponent>()}; Rigid && Rigid->IsAddedToSimulation())
     {
-        this->LastTargetTranslation = Target;
-        return Rigid->GetParentPhysicsSystem().GetBodyInterfaceNoLock().GetPointVelocity(Rigid->GetRigidObject().GetID(), Target);
+        auto Interface{Rigid->GetParentPhysicsSystem().GetBodyInterfaceNoLock()};
+        auto const Id{Rigid->GetRigidObject().GetID()};
+        return {.Linear = Interface.GetPointVelocity(Id, Target.t), .Angular = Interface.GetAngularVelocity(Id)};
     }
 
-    if (Dt > 0.0f)
+    if (Dt <= 0.0f)
     {
-        LVec3F const Measured{LVec3F{Target - this->LastTargetTranslation} / Dt};
-        this->EstimatedTargetVelocity += (Measured - this->EstimatedTargetVelocity) * (1.0f - std::exp(-Dt / ::TargetVelocitySmoothing));
+        return {.Linear = this->EstimatedTargetVelocity, .Angular = LVec3F{0.0f}};
     }
-    this->LastTargetTranslation = Target;
-    return this->EstimatedTargetVelocity;
+
+    LVec3F const Measured{LVec3F{Target.t - PreviousTranslation} / Dt};
+    this->EstimatedTargetVelocity += (Measured - this->EstimatedTargetVelocity) * (1.0f - std::exp(-Dt / ::TargetVelocitySmoothing));
+
+    /* The turn of this frame as an angular velocity. */
+    LVec3F Angular{0.0f};
+    LWorldQuat Turn{maths::normalize(Rotation * maths::inverse(PreviousRotation))};
+    if (Turn.w < 0.0f)
+    {
+        Turn = -Turn;
+    }
+    if (f32 const Angle{2.0f * std::acos(maths::clamp(Turn.w, 0.0f, 1.0f))}; Angle > 1.0e-6f)
+    {
+        LVec3F const Axis{maths::normalize(LVec3F{Turn.x, Turn.y, Turn.z})};
+        Angular = Axis * (Angle / Dt);
+    }
+
+    return {.Linear = this->EstimatedTargetVelocity, .Angular = Angular};
 }
 
 void Jafg::AEyeComponent::_AddViewer(APersonaController& Viewer)

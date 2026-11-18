@@ -197,6 +197,87 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 return {};
             });
 
+        /* Hold to look around the vehicle with the mouse. Only tapping it centers the view again. */
+        Context->MapAction(&Registry,
+            {"VehicleFreeLook", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::LeftAlt).value(),
+            Jafg::EInputActionTriggerBits::Triggered | Jafg::EInputActionTriggerBits::Ongoing,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
+                {
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    {
+                        Comp->OnFreeLookHeld();
+                    }
+                }
+                return {};
+            });
+
+        Context->MapAction(&Registry,
+            {"VehicleLook", Jafg::EInputActionCategory::Axis2D},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseXY),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
+                {
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    {
+                        Comp->OnVehicleLook(Value);
+                    }
+                }
+                return {};
+            });
+
+        /* While free looking: Pan the center of the view with the mouse. */
+        Context->MapAction(&Registry,
+            {"VehicleFreeLookPan", Jafg::EInputActionCategory::Boolean},
+            Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::RightMouseButton),
+            Jafg::EInputActionTriggerBits::Triggered | Jafg::EInputActionTriggerBits::Ongoing,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
+                {
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    {
+                        Comp->OnFreeLookPanHeld();
+                    }
+                }
+                return {};
+            });
+
+        /* While free looking: Change the distance to the vehicle. Up is positive, down negative. */
+        Context->MapAction(&Registry,
+            {"VehicleZoom", Jafg::EInputActionCategory::Axis1D},
+            TArray<Jafg::LInputTrigger>{}
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Closer",
+                    {Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseWheelUp)},
+                    Jafg::EInputActionTriggerBits::Triggered,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                    })
+                .reflexive_emplace_back(Jafg::LInputTrigger{
+                    "Farther",
+                    {Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseWheelDown)},
+                    Jafg::EInputActionTriggerBits::Triggered,
+                    Jafg::LInputActionMappedTriggerModifiers{}
+                    }),
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
+                {
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    {
+                        Comp->OnVehicleZoom(Value);
+                    }
+                }
+                return {};
+            });
+
         Context->MapAction(&Registry,
             {"VehicleExit", Jafg::EInputActionCategory::Boolean},
             Frontend.GetPhysicalKey(Jafg::ELogicalKey::G).value(),

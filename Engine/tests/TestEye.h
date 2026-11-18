@@ -28,14 +28,20 @@ inline void Simulate(Jafg::LEyeSpringState& State, Jafg::LEyeSpringSettings cons
     for (f32 Time{0.0f}; Time < Seconds; Time += Dt)
     {
         Target.Advance(Dt);
-        Jafg::StepEyeSpring(State, Settings, Target.Translation, Rotation, Target.Velocity, Dt);
+        Jafg::StepEyeSpring(State, Settings, Rotation, Target.Velocity, Dt);
     }
 }
 
 //# Where the eye is relative to the target in the space of the target.
-NODISCARD inline LVec3F LocalOffset(Jafg::LEyeSpringState const& State, LMovingTarget const& Target, LWorldQuat const& Rotation) noexcept
+NODISCARD inline LVec3F LocalOffset(Jafg::LEyeSpringState const& State, LMovingTarget const&, LWorldQuat const& Rotation) noexcept
 {
-    return maths::inverse(Rotation) * LVec3F{State.Translation - Target.Translation};
+    return maths::inverse(Rotation) * State.Offset;
+}
+
+//# The angle of a rotation in radians.
+NODISCARD inline f32 AngleOf(LWorldQuat const& Q) noexcept
+{
+    return 2.0f * std::acos(maths::clamp(std::abs(maths::normalize(Q).w), 0.0f, 1.0f));
 }
 
 } /* ~Namespace TestEye */
@@ -51,7 +57,7 @@ TRIVIAL_TEST_CASE("eye", SpringSettlesAtConstantVelocity)
     /* Moving with the target from the start: Nothing happens. */
     {
         LMovingTarget Target{.Velocity = LVec3F{0.0f, 0.0f, 50.0f}};
-        LEyeSpringState State{.Translation = Target.Translation, .Velocity = Target.Velocity};
+        LEyeSpringState State{.Velocity = Target.Velocity};
         Simulate(State, Settings, Target, Rotation, 5.0f);
         TEST_LESS(maths::magnitude(LocalOffset(State, Target, Rotation)), 1.0e-2f)
     }
@@ -59,7 +65,7 @@ TRIVIAL_TEST_CASE("eye", SpringSettlesAtConstantVelocity)
     /* Starting at rest behind a moving target: Catches up and settles at the target. */
     {
         LMovingTarget Target{.Velocity = LVec3F{10.0f, 0.0f, 50.0f}};
-        LEyeSpringState State{.Translation = Target.Translation};
+        LEyeSpringState State{};
         Simulate(State, Settings, Target, Rotation, 30.0f);
         TEST_LESS(maths::magnitude(LocalOffset(State, Target, Rotation)), 1.0e-2f)
         TEST_LESS(maths::magnitude(State.Velocity - Target.Velocity), 1.0e-2f)
@@ -114,7 +120,7 @@ TRIVIAL_TEST_CASE("eye", SpringStaysInsideMaximums)
         TEST_LESS(Worst, 1.0f + 1.0e-3f)
         /* At the border, behind the acceleration. */
         TEST_GREATER(Worst, 0.999f)
-        TEST_LESS(maths::dot(LVec3F{State.Translation - Target.Translation}, Direction), 0.0f)
+        TEST_LESS(maths::dot(State.Offset, Direction), 0.0f)
 
         /* Once the acceleration ends, it comes back instead of sticking to the border. */
         Target.Acceleration = LVec3F{0.0f};
@@ -162,4 +168,44 @@ TRIVIAL_TEST_CASE("eye", Blend)
     LWorldQuat const Rotation{AEyeComponent::RotationOf(To)};
     TEST_LESS(maths::magnitude(Rotation * maths::forward_vector<LVec3F> - LVec3F{To.front}), Epsilon)
     TEST_LESS(maths::magnitude(Rotation * maths::up_vector<LVec3F> - LVec3F{To.up}), Epsilon)
+}
+
+TRIVIAL_TEST_CASE("eye", RotationLag)
+{
+    using namespace Jafg;
+    using TestEye::AngleOf;
+    constexpr f32 Dt{1.0f / 60.0f};
+
+    /* A constant turn makes it lag about rate / speed behind, against the turn. */
+    {
+        LVec3F const Turn{maths::up_vector<LVec3F> * 1.0f};
+        LWorldQuat Lag{maths::identity<LWorldQuat>};
+        for (i32 Frame{0}; Frame < 600; ++Frame)
+        {
+            StepEyeRotationLag(Lag, Turn, 5.0f, maths::pi_f, Dt);
+        }
+        TEST_LESS(maths::abs(AngleOf(Lag) - 1.0f / 5.0f), 0.015f)
+        TEST_LESS(maths::dot(LVec3F{Lag.x, Lag.y, Lag.z}, Turn), 0.0f)
+
+        /* And catches up once the turn ends. */
+        for (i32 Frame{0}; Frame < 300; ++Frame)
+        {
+            StepEyeRotationLag(Lag, LVec3F{0.0f}, 5.0f, maths::pi_f, Dt);
+        }
+        TEST_LESS(AngleOf(Lag), 1.0e-3f)
+    }
+
+    /* Never more than the maximum. */
+    {
+        f32 const Max{maths::radians(12.0f)};
+        LWorldQuat Lag{maths::identity<LWorldQuat>};
+        f32 Worst{0.0f};
+        for (i32 Frame{0}; Frame < 600; ++Frame)
+        {
+            StepEyeRotationLag(Lag, maths::normalize(LVec3F{1.0f, 2.0f, 0.5f}) * 10.0f, 1.0f, Max, Dt);
+            Worst = maths::max(Worst, AngleOf(Lag));
+        }
+        TEST_LESS(Worst, Max + 1.0e-3f)
+        TEST_GREATER(Worst, Max - 1.0e-3f)
+    }
 }

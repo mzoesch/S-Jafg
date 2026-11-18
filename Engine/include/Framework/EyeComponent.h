@@ -13,7 +13,9 @@ class APersonaController;
 //# The state of the spring of an eye. @see #StepEyeSpring
 struct LEyeSpringState final
 {
-    LWorldVec3 Translation{ maths::zero_vector<LWorldVec3> };
+    //# Where the eye is relative to its target. In world space.
+    LVec3F Offset{ 0.0f };
+    //# The velocity of the eye in world space.
     LVec3F Velocity{ 0.0f };
 };
 
@@ -32,14 +34,24 @@ struct LEyeSpringSettings final
 //# against the acceleration. It never leaves the ellipsoid of #LEyeSpringSettings::MaxOffset around the target (in
 //# the space of #TargetRotation).
 //#
+//# The offset is kept relative to the target. Moves of the target that its velocity does not explain (e.g., a
+//# gimbal that is turned or a teleport) are followed rigidly.
+//#
 ENGINE_API void StepEyeSpring(
       LEyeSpringState& State
     , LEyeSpringSettings const& Settings
-    , LWorldVec3 const& Target
     , LWorldQuat const& TargetRotation
     , LVec3F const& TargetVelocity
     , f32 Dt
     ) noexcept;
+
+//#
+//# Advance the lag of a rotation behind a target that turns with #AngularVelocity (world space, radians per
+//# second). The presentation stays where it was in the world while the target turns, and catches up with #Speed
+//# (1/s). A constant turn rate w makes it lag about w / #Speed behind. Never more than #MaxAngle (radians).
+//# @param Lag The rotation from the target to the presentation, in world space: Presentation = Lag * Target.
+//#
+ENGINE_API void StepEyeRotationLag(LWorldQuat& Lag, LVec3F const& AngularVelocity, f32 Speed, f32 MaxAngle, f32 Dt) noexcept;
 
 //#
 //# A point of view in the world, e.g., the head of a character or a camera behind a ship. It looks along its
@@ -55,9 +67,11 @@ ENGINE_API void StepEyeSpring(
 //#     or its rotation lags (see #RotationLagSpeed). The presentation is advanced by the controllers that view the
 //#     eye, once per frame after the world moved (see #APersonaController::GetView).
 //#
-//# The spring is damped relative to the target. At a constant velocity the eye settles at the target. Accelerations
-//# push it away from the target, at most by the #SpringMaxLateral, #SpringMaxVertical and #SpringMaxLongitudinal
-//# distances (an ellipsoid around the target, in the space of the target).
+//# Spring and lag react to the motion of the body that carries the eye: The spring is damped relative to the target.
+//# At a constant velocity the eye settles at the target. Accelerations push it away from the target, at most by the
+//# #SpringMaxLateral, #SpringMaxVertical and #SpringMaxLongitudinal distances (an ellipsoid around the target, in the
+//# space of the target). Everything else (e.g., turning an #AGimbalComponent above the eye) moves it rigidly. The
+//# motion is exact if a simulated rigid body carries the eye, and estimated from the target otherwise.
 //#
 DECLARE_JAFG_CLASS()
 class ENGINE_API AEyeComponent : public ASceneComponent
@@ -170,10 +184,17 @@ protected:
 private:
 
     //#
-    //# The velocity of the target in world space. Exact if the hierarchy is moved by a simulated rigid body,
+    //# The motion of the target in world space. Exact if the hierarchy is moved by a simulated rigid body,
     //# otherwise estimated from the motion of the target.
     //#
-    NODISCARD LVec3F ComputeTargetVelocity(LWorldVec3 const& Target, f32 Dt) noexcept;
+    struct LTargetMotion final
+    {
+        //# Of the target point.
+        LVec3F Linear;
+        //# Radians per second around the axis.
+        LVec3F Angular;
+    };
+    NODISCARD LTargetMotion ComputeTargetMotion(LWorldTrans const& Target, f32 Dt) noexcept;
     NODISCARD LWorldEye MakeEye(LWorldVec3 const& Translation, LWorldQuat const& Rotation) const noexcept;
 
     u32 ViewerCount{};
@@ -181,10 +202,12 @@ private:
     bool bHasPresentation{};
     u64 LastPresentedFrame{ std::numeric_limits<u64>::max() };
     LEyeSpringState Spring;
-    LWorldQuat PresentedRotation{ maths::identity<LWorldQuat> };
+    //# Presentation = RotationLag * Target. @see #StepEyeRotationLag
+    LWorldQuat RotationLag{ maths::identity<LWorldQuat> };
 
-    //# For the estimation of the target velocity.
+    //# For the estimation of the motion of the target.
     LWorldVec3 LastTargetTranslation{ maths::zero_vector<LWorldVec3> };
+    LWorldQuat LastTargetRotation{ maths::identity<LWorldQuat> };
     LVec3F EstimatedTargetVelocity{ 0.0f };
 };
 
