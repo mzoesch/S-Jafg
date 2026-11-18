@@ -132,8 +132,8 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
     auto* Ctrl{this->GetOwningController()};
     auto* Avatar{this->GetOwningAvatar()};
     auto* Lackey{GetLocalLackey(Ctrl)};
-    Jafg::AEyeComponent const* ViewEye{Ctrl ? Ctrl->GetViewEye() : nullptr};
-    if (!Lackey || !Avatar || !ViewEye)
+    std::optional<LWorldEye> const View{Ctrl ? Ctrl->GetView() : std::nullopt};
+    if (!Lackey || !Avatar || !View)
     {
         return {};
     }
@@ -146,7 +146,7 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
     }
 
     /* The cursor is over what the controller sees. */
-    auto const Eye{ViewEye->GetEye()};
+    LWorldEye const& Eye{*View};
     auto const Ray{maths::screen_to_world_space(Extent, *Cursor, Eye)};
 
     TArray<Jafg::LHitResult> Hits;
@@ -227,7 +227,7 @@ void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
 #if JAFG_WITH_EDITOR
     if (Target)
     {
-        if (auto* Ctrl{this->GetOwningController()}; Ctrl && Ctrl->GetViewEye())
+        if (auto* Ctrl{this->GetOwningController()}; Ctrl && Ctrl->GetView())
         {
             if (auto* Drawer{Ctrl->GetComponent<Jafg::ADebugDrawerComponent>()})
             {
@@ -235,7 +235,7 @@ void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
                 LWorldAabb3 const Aabb{Actor.GetTransformedActorAabb()};
                 Drawer->AddAabb({.Tint = Colors::Yellow, .Value = Aabb});
 
-                LWorldReal const Distance{maths::magnitude(Target->Location - Ctrl->GetViewEye()->GetWorldTranslationSlow())};
+                LWorldReal const Distance{maths::magnitude(Target->Location - Ctrl->GetView()->translation)};
                 Drawer->AddText({
                     .Tint = Colors::Yellow,
                     .Height = maths::max(0.1f, static_cast<f32>(Distance) * 0.03f),

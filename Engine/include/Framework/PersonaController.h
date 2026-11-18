@@ -20,6 +20,9 @@ class AEyeComponent;
 //# A pc possesses an avatar (see #AAvatarComponent), not an actor, and sees through the eye of that avatar.
 //# Possession does not own anything. The lifetime of actors can be bound to a pc with #AdoptActor.
 //#
+//# The view (#GetView) follows the eye. When the eye changes (e.g., when entering a vehicle), the view blends from
+//# where it was to the new eye for the #AEyeComponent::BlendInTime of the new eye.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API APersonaController : public AActor
 {
@@ -41,6 +44,7 @@ public:
 
     friend WWorldNode;
 
+    virtual void BeginLife() override;
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
     FORCEINLINE constexpr bool IsLocallyPossessed() const noexcept;
@@ -115,6 +119,16 @@ public:
 
     //# The eye that this pc sees the world through: The eye of the possessed avatar. Null if there is none.
     NODISCARD AEyeComponent* GetViewEye() const noexcept;
+    //#
+    //# What this pc sees. The presentation of the view eye, or a blend from the previous view while transitioning
+    //# to it. Use this for everything that has to match the screen (rendering, tracing under the cursor).
+    //# @return Empty if there is no view eye.
+    //#
+    NODISCARD std::optional<LWorldEye> GetView() const noexcept;
+    //# Whether the view is currently blending to a new eye.
+    NODISCARD FORCEINLINE constexpr bool IsBlendingView() const noexcept { return this->ViewBlend.has_value(); }
+    //# Cut to the view eye: Stops any blend and snaps the presentation of the eye (e.g., after a teleport).
+    void SnapView() noexcept;
 
     //#
     //# Bind the lifetime of an actor to this pc (e.g., the character that was spawned for it). The actor is
@@ -127,12 +141,33 @@ public:
 
     //# Jafg internal method. Do not use. Called when the possessed avatar is torn down.
     void _OnAvatarGarbage(AAvatarComponent& Garbage) noexcept;
+    //# Jafg internal method. Do not use. Called by the world once per tick after everything moved.
+    void _UpdateView(f32 Dt);
 
 private:
+
+    //# Starts or stops seeing through #NewEye. Blends from the current view.
+    void ChangeViewedEye(AEyeComponent* NewEye, bool bBlend);
+    NODISCARD bool IsViewedEyeValid() const noexcept;
 
     LLackey Lackey;
     AAvatarComponent* Avatar{};
     TArray<AActor*> AdoptedActors;
+
+    //# The eye that this pc currently sees through. Lags behind #GetViewEye until the next view update.
+    AEyeComponent* ViewedEye{};
+    std::optional<LWorldEye> View;
+    struct LViewBlend final
+    {
+        //# Where the blend started. Follows #FromEye while it is valid.
+        LWorldEye From;
+        //# The previously viewed eye. Kept moving during the blend, so that both ends of the blend are alive.
+        AEyeComponent* FromEye{};
+        f32 Elapsed{};
+        f32 Duration{};
+    };
+    std::optional<LViewBlend> ViewBlend;
+    bool bSnapNextView{};
 };
 
 } /* ~Namespace Jafg */

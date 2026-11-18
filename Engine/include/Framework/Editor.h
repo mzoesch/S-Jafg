@@ -344,7 +344,7 @@ protected:
 
     virtual void InitializeRenderTarget() override;
     virtual bool OnPreDrawImpl(LRenderInfo const& Info) override;
-    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, AEyeComponent& ViewEye, LWorldEye const& Eye) override;
+    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, LWorldEye const& Eye) override;
 
     virtual LTransientPersona::Local GetTransientPersona() noexcept override;
     virtual void OnConnect() override;

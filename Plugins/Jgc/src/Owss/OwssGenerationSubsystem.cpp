@@ -105,10 +105,21 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
             Comp.SetPbrMaterialInstance(this->MaterialInstance);
         });
 
-        /* The view while driving. Behind and slightly above the ship. */
+        /*
+         * The view while driving. Behind and slightly above the ship. It hangs on a spring: Accelerations push it
+         * away from where it belongs (at most by the maximums), so that speeding up, braking and strafing are felt.
+         */
         Actor.EmplaceSceneComponentTo<Jafg::AEyeComponent>(Actor.GetRootComponent(), [](Jafg::AEyeComponent& Eye)
         {
             Eye.SetLocalTranslationByTeleport(maths::up_vector<LWorldVec3> * 2_r - maths::forward_vector<LWorldVec3> * 30_r);
+            Eye.BlendInTime = 0.6f;
+            Eye.SpringFrequency = 0.35f;
+            Eye.SpringDampingRatio = 0.8f;
+            Eye.SpringMaxLateral = 3.0f;
+            Eye.SpringMaxVertical = 3.0f;
+            Eye.SpringMaxLongitudinal = 6.0f;
+            Eye.RotationLagSpeed = 5.0f;
+            Eye.MaxRotationLag = 12.0f;
         });
 
         Actor.EmplaceComponent<AVehicleComponent>([](AVehicleComponent& Comp)

@@ -504,13 +504,13 @@ bool Jafg::WWorldViewer::ShouldDrawAmbientOcclusion() const noexcept
     {
         return false;
     }
-    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->GetViewEye();
+    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->GetView().has_value();
 }
 
 void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
 {
-    auto& ViewEye{*this->GetOwnedPersonaControllerChecked()->GetViewEye()};
-    auto Eye{ViewEye.GetEye()};
+    auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
+    auto Eye{*Ctrl.GetView()};
 
     auto DrawFullscreen{[](LRenderInfo const& Info, LMaterialInstance const& Instance, auto const& PushConstants)
     {
@@ -536,7 +536,7 @@ void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
     this->RenderTarget.RenderSceneDepth(Info, [&](LRenderInfo const& Info)
     {
         std::optional<TArray<AActor*>> Filter;
-        ViewEye.GetWorld().Draw(Info, {
+        Ctrl.GetWorld().Draw(Info, {
             .Eye = Eye,
             .Instance = &*this->SceneDepthMaterialInstance,
             .Filter = Filter,
@@ -578,7 +578,7 @@ bool Jafg::WWorldViewer::ShouldDrawShadows() const noexcept
     {
         return false;
     }
-    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->GetViewEye();
+    return this->IsOwnedPersonaControllerValid() && this->GetOwnedPersonaControllerChecked()->GetView().has_value();
 }
 
 bool Jafg::WWorldViewer::InitializeShadowAtlas()
@@ -631,7 +631,7 @@ bool Jafg::WWorldViewer::DrawShadows(LRenderInfo const& Info)
     }
 
     //# The cascades of directional lights are fit around the camera of this viewer.
-    auto const Eye{this->GetOwnedPersonaControllerChecked()->GetViewEye()->GetEye()};
+    auto const Eye{*this->GetOwnedPersonaControllerChecked()->GetView()};
     auto const Extent{this->RenderTarget.GetExtent().ToVec<f32>()};
     this->ShadowAtlas.Gather(Lights, this->ShadowSettings, {
         .Eye = Eye,
@@ -717,9 +717,9 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
     if (this->IsOwnedPersonaControllerValid())
     {
         auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
-        if (AEyeComponent* ViewEye{Ctrl.GetViewEye()})
+        if (std::optional<LWorldEye> const View{Ctrl.GetView()})
         {
-            auto Eye{ViewEye->GetEye()};
+            auto Eye{*View};
             std::optional<TArray<AActor*>> Filter;
 
             algo::transparent_unordered_string_map<vk::DescriptorSet> SharedSets;
@@ -746,7 +746,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                     ? this->AmbientOcclusionBindlessIndex : rhi::invalid_resource_index,
                 });
 
-            this->OnPostWorldDrawImpl(Info, Ctrl, *ViewEye, Eye);
+            this->OnPostWorldDrawImpl(Info, Ctrl, Eye);
         }
     }
     this->RenderTargetViewport.Draw(Info);

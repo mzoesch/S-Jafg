@@ -6,6 +6,7 @@
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/StaticMeshComponent.h"
 #include "Framework/CharacterMovementComponent.h"
+#include "Framework/EyeComponent.h"
 #include "User/UserPreferences.h"
 #include "Jgc/Framework/JgcCharacterInputComponent.h"
 #include "Jgc/Framework/Vehicle.h"
@@ -106,6 +107,11 @@ TJxxUnique<Jafg::AActor> Jgc::AOwssSupremePolicies::SpawnAvatarForPersonaControl
         )
     {
         Result->EmplaceComponent<Jafg::ACharacterMovementComponent>();
+        /* Coming back from another eye (e.g., leaving a vehicle) is blended. */
+        if (auto* Head{Jafg::AEyeComponent::FindFirstEyeIn(Result->GetRootComponent())})
+        {
+            Head->BlendInTime = 0.5f;
+        }
         if (Pc.IsOwningLackey<Jafg::ELackey::Local>())
         {
             Result->EmplaceComponent<AJgcCharacterInputComponent>();

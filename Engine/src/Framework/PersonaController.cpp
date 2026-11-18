@@ -3,6 +3,7 @@
 #include "Framework/PersonaController.h"
 #include "Framework/PersonaControllerComponent.h"
 #include "Framework/AvatarComponent.h"
+#include "Framework/EyeComponent.h"
 #include "Engine/Engine.h"
 
 #if JAFG_DO_CHECKS
@@ -23,9 +24,23 @@ void Jafg::APersonaControllerComponent::OnAttach(AActor& InOwner)
 }
 #endif /* JAFG_DO_CHECKS */
 
+void Jafg::APersonaController::BeginLife()
+{
+    Super::BeginLife();
+    this->GetWorld()._RegisterPersonaController(this);
+}
+
 void Jafg::APersonaController::OnGarbage(EJxxRecordTearDownReason Reason)
 {
     Super::OnGarbage(Reason);
+
+    this->GetWorld()._UnregisterPersonaController(this);
+    if (this->IsViewedEyeValid())
+    {
+        this->ViewedEye->_RemoveViewer(*this);
+    }
+    this->ViewedEye = nullptr;
+    this->ViewBlend.reset();
 
     if (this->IsOwningLackeyValid())
     {
@@ -103,6 +118,128 @@ void Jafg::APersonaController::Possess(AAvatarComponent* New)
 Jafg::AEyeComponent* Jafg::APersonaController::GetViewEye() const noexcept
 {
     return this->Avatar ? this->Avatar->GetEye() : nullptr;
+}
+
+std::optional<LWorldEye> Jafg::APersonaController::GetView() const noexcept
+{
+    AEyeComponent const* const Eye{this->GetViewEye()};
+    if (!Eye)
+    {
+        return {};
+    }
+    if (this->View && this->ViewBlend)
+    {
+        return this->View;
+    }
+    /* The eye changed since the last update, which starts to blend from what was seen last. Do not jump ahead. */
+    if (this->View && this->ViewedEye != Eye && Eye->BlendInTime > 0.0f)
+    {
+        return this->View;
+    }
+    /* Fresh. A sprung eye presents what its last update computed. */
+    return Eye->GetEye();
+}
+
+void Jafg::APersonaController::SnapView() noexcept
+{
+    this->bSnapNextView = true;
+    this->ViewBlend.reset();
+    if (this->IsViewedEyeValid())
+    {
+        this->ViewedEye->SnapPresentation();
+        this->View = this->ViewedEye->GetEye();
+    }
+}
+
+bool Jafg::APersonaController::IsViewedEyeValid() const noexcept
+{
+    return this->ViewedEye && IsValidFast(this->GetOuter(), this->ViewedEye);
+}
+
+void Jafg::APersonaController::ChangeViewedEye(AEyeComponent* NewEye, bool bBlend)
+{
+    AEyeComponent* const Previous{this->IsViewedEyeValid() ? this->ViewedEye : nullptr};
+
+    /* Blend from wherever the view is right now. That also covers changes in the middle of a blend. */
+    if (bBlend && NewEye && this->View && NewEye->BlendInTime > 0.0f)
+    {
+        this->ViewBlend = LViewBlend{
+            .From = *this->View,
+            /* A blend that was interrupted has no single eye to follow. */
+            .FromEye = this->ViewBlend ? nullptr : Previous,
+            .Elapsed = 0.0f,
+            .Duration = NewEye->BlendInTime,
+            };
+    }
+    else
+    {
+        this->ViewBlend.reset();
+    }
+
+    if (Previous)
+    {
+        Previous->_RemoveViewer(*this);
+    }
+    this->ViewedEye = NewEye;
+    if (NewEye)
+    {
+        NewEye->_AddViewer(*this);
+    }
+
+    LOG_VERBOSE(LogEgo, "[{}]: Viewing through [{}]{}."
+        , this->GetNameAsString()
+        , NewEye ? NewEye->GetNameAsString() : LString{"nothing"}
+        , this->ViewBlend ? algo::sprintf(" blending for [{}] seconds", this->ViewBlend->Duration) : LString{}
+        )
+}
+
+void Jafg::APersonaController::_UpdateView(f32 Dt)
+{
+    AEyeComponent* const Target{this->GetViewEye()};
+    bool const bSnap{std::exchange(this->bSnapNextView, false)};
+    if (Target != this->ViewedEye || (Target && !this->IsViewedEyeValid()))
+    {
+        this->ChangeViewedEye(Target, !bSnap);
+    }
+
+    if (!Target)
+    {
+        this->View.reset();
+        this->ViewBlend.reset();
+        return;
+    }
+
+    Target->UpdatePresentation(Dt);
+    LWorldEye const Goal{Target->GetEye()};
+
+    if (!this->ViewBlend)
+    {
+        this->View = Goal;
+        return;
+    }
+
+    auto& Blend{*this->ViewBlend};
+    if (Blend.FromEye && IsValidFast(this->GetOuter(), Blend.FromEye))
+    {
+        /* The previous eye is not viewed anymore. Keep it moving, so that the blend starts from a living view. */
+        Blend.FromEye->UpdatePresentation(Dt);
+        Blend.From = Blend.FromEye->GetEye();
+    }
+    else
+    {
+        Blend.FromEye = nullptr;
+    }
+
+    Blend.Elapsed += Dt;
+    f32 const T{maths::clamp(Blend.Elapsed / maths::max(Blend.Duration, 1.0e-4f), 0.0f, 1.0f)};
+    /* Smootherstep: Starts and ends without a jump in speed. */
+    f32 const Alpha{T * T * T * (T * (T * 6.0f - 15.0f) + 10.0f)};
+    this->View = AEyeComponent::BlendEyes(Blend.From, Goal, Alpha);
+
+    if (T >= 1.0f)
+    {
+        this->ViewBlend.reset();
+    }
 }
 
 void Jafg::APersonaController::AdoptActor(TJxxUnique<AActor> Actor)

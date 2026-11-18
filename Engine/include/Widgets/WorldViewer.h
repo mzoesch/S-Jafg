@@ -115,7 +115,7 @@ protected:
 
     virtual void InitializeRenderTarget();
     virtual bool OnPreDrawImpl(LRenderInfo const& Info);
-    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, AEyeComponent& ViewEye, LWorldEye const& Eye) {}
+    virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, LWorldEye const& Eye) {}
 
     virtual LTransientPersona::Local GetTransientPersona() noexcept;
     virtual void OnConnect() {}

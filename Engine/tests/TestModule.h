@@ -4,3 +4,4 @@
 
 #include "TestMaths.h"
 #include "TestMovement.h"
+#include "TestEye.h"

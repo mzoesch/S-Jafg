@@ -270,6 +270,27 @@ void Jafg::LWorld::Tick(f64 Dt)
         PollPhysicsState();
         checkCode(this->_check_bUpdatingPhysics = false)
     }
+
+    /* Last, so that the views follow everything that moved in this tick, including the physics. */
+    {
+        STAT_CUSTOM_ZONE_FMT("WorldTick::Views::{}", this->GetHumanReadableName())
+        for (TArray<APersonaController*> const Controllers{this->PersonaControllers}; APersonaController* Ctrl: Controllers)
+        {
+            Ctrl->_UpdateView(static_cast<f32>(this->DeltaTime));
+        }
+    }
+}
+
+void Jafg::LWorld::_RegisterPersonaController(APersonaController* Ctrl)
+{
+    check(Ctrl)
+    check(!algo::contains(this->PersonaControllers, Ctrl))
+    this->PersonaControllers.emplace_back(Ctrl);
+}
+
+void Jafg::LWorld::_UnregisterPersonaController(APersonaController* Ctrl)
+{
+    algo::erase_once(&this->PersonaControllers, Ctrl);
 }
 
 void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const

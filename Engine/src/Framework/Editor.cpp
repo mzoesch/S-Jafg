@@ -1222,9 +1222,13 @@ void Jafg::WEditorWorldViewer::Construct()
                                     }
                                     /* Start the editor camera where the view currently is. */
                                     std::optional<LWorldTrans> ViewTransform;
-                                    if (auto* ViewEye{Pc.GetViewEye()})
+                                    if (std::optional<LWorldEye> const View{Pc.GetView()})
                                     {
-                                        ViewTransform = ViewEye->GetWorldTransformSlow();
+                                        ViewTransform = LWorldTrans{
+                                            .t = View->translation,
+                                            .r = AEyeComponent::RotationOf(*View),
+                                            .s = maths::identity<LWorldTrans>.s,
+                                            };
                                     }
 
                                     Pc.EmplaceComponent<AEditorPersonaControllerComponent>();
@@ -1573,11 +1577,11 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         {
             if (auto* Ctrl{this->GetOwnedPersonaController()})
             {
-                if (auto* ViewEye{Ctrl->GetViewEye()})
+                if (std::optional<LWorldEye> const View{Ctrl->GetView()})
                 {
                     bSet = true;
                     this->DebugTranslationText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
-                    this->DebugTranslationText->SetContent(maths::to_string(ViewEye->GetWorldTranslationSlow()));
+                    this->DebugTranslationText->SetContent(maths::to_string(View->translation));
                 }
             }
         }
@@ -1595,10 +1599,10 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         {
             if (auto* Ctrl{this->GetOwnedPersonaController()})
             {
-                if (auto* ViewEye{Ctrl->GetViewEye()})
+                if (std::optional<LWorldEye> const View{Ctrl->GetView()})
                 {
                     bSet = true;
-                    LWorldVec3 const EyeTranslation{ViewEye->GetWorldTranslationSlow()};
+                    LWorldVec3 const EyeTranslation{View->translation};
                     if (this->LastTranslation)
                     {
                         this->DebugVelocityText->SetVisibility(ENodeVisibility::TransitiveHitTestInvisible);
@@ -2101,9 +2105,9 @@ bool Jafg::WEditorWorldViewer::OnPreDrawImpl(LRenderInfo const& Info)
     return Result;
 }
 
-void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, AEyeComponent& ViewEye, LWorldEye const& Eye)
+void Jafg::WEditorWorldViewer::OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, LWorldEye const& Eye)
 {
-    Super::OnPostWorldDrawImpl(Info, Ctrl, ViewEye, Eye);
+    Super::OnPostWorldDrawImpl(Info, Ctrl, Eye);
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
@@ -2321,7 +2325,7 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
         SharedSets.emplace(UBO::WorldData::name(), this->Vk_GetWorldDescriptorSet(Info.Frame));
 
         Ctrl.GetWorld().Draw(Info, {
-            .Eye = Ctrl.GetViewEye()->GetEye(),
+            .Eye = *Ctrl.GetView(),
             .Instance = &*this->SelectionMaterialInstance,
             .SharedSets = std::move(SharedSets),
             .Filter = ValidActors,
@@ -5050,7 +5054,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 return true;
             }
             auto& Ctrl{*N->GetOwnedPersonaControllerChecked()};
-            if (!Ctrl.GetViewEye())
+            if (!Ctrl.GetView())
             {
                 return true;
             }
@@ -5098,7 +5102,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }
 
                 auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
-                    {Extent.width,Extent.height}, Location, Ctrl.GetViewEye()->GetEye()), *Prefs.EditorTraceLength
+                    {Extent.width,Extent.height}, Location, *Ctrl.GetView()), *Prefs.EditorTraceLength
                     )};
                 LWorldReal LineDelta{maths::intersection_delta_on_plane(LWorldRay3{.origin=Trace.origin,.direction=Trace.direction}, GizmoPlane)};
                 LWorldVec3 Point{Trace.origin + Trace.direction * LineDelta};
@@ -5155,7 +5159,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }
 
                 auto Trace{LWorldMagRay3::from_ray(maths::screen_to_world_space(
-                    {Extent.width,Extent.height}, Location, Ctrl.GetViewEye()->GetEye()), *Prefs.EditorTraceLength
+                    {Extent.width,Extent.height}, Location, *Ctrl.GetView()), *Prefs.EditorTraceLength
                     )};
                 LWorldReal LineDelta{maths::closest_delta_on_line(
                     LWorldRay3{this->GizmoMeshes[Mesh].GetTranslation(), GizmoRay}, LWorldRay3{.origin=Trace.origin,.direction=Trace.direction}
@@ -5661,9 +5665,9 @@ LWorldEye Jafg::AEditorCameraComponent::GetEye() const noexcept
     /* Traces have to match what is rendered. */
     if (auto* Ctrl{this->GetOwningController()})
     {
-        if (auto* ViewEye{Ctrl->GetViewEye()})
+        if (std::optional<LWorldEye> const View{Ctrl->GetView()})
         {
-            return ViewEye->GetEye();
+            return *View;
         }
     }
     if (auto* Avatar{this->GetOwningAvatar()})

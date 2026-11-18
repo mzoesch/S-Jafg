@@ -246,6 +246,12 @@ public:
 
     f32 GetRealTimeSecondsSinceWorldLaunch() const noexcept;
 
+    //# All persona controllers that live in this world.
+    NODISCARD FORCEINLINE TArray<APersonaController*> const& GetPersonaControllers() const noexcept { return this->PersonaControllers; }
+    //# Jafg internal methods. Do not use. Called by the persona controllers themselves.
+    void _RegisterPersonaController(APersonaController* Ctrl);
+    void _UnregisterPersonaController(APersonaController* Ctrl);
+
     //#
     //# Trace the physics of this world for hits.
     //# Bodies that are not owned by a component (rigid components and character movement components) are never hit.
@@ -432,6 +438,7 @@ private:
 
     LPhysicsSystem PhysicsSystem{ ESkipInit::Here };
     TArray<ARigidComponent*> RigidComponents;
+    TArray<APersonaController*> PersonaControllers;
 };
 
 //#
