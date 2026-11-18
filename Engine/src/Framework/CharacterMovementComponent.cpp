@@ -383,6 +383,13 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
 
     LVec3F const Gravity{this->ComputeGravity(::FromJoltR(Character.GetPosition()))};
     this->LastGravity = Gravity;
+    f32 const AirDensity{maths::max(this->ComputeAirDensity(::FromJoltR(Character.GetPosition())), 0.0f)};
+    this->LastAirDensity = AirDensity;
+    /* Without air there is nothing to push against while airborne. */
+    f32 const AirControl{Movement::AirControlFactor(AirDensity, this->ReferenceAirDensity)};
+    f32 const AirDrag{this->ReferenceAirDensity > 0.0f
+        ? this->FallingLinearDrag * AirDensity / this->ReferenceAirDensity
+        : 0.0f};
     f32 const GravityMagnitude{maths::magnitude(Gravity)};
     bool const bWeightless{GravityMagnitude < this->ZeroGravityThreshold};
     bool const bMagBoots{Input.Has(EMovementButtonBits::MagBoots)
@@ -544,7 +551,7 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
               Velocity - Vertical
             , Movement::NormalizeOr(Wish, LVec3F{0.0f})
             , maths::magnitude(Wish) * this->AirSpeed
-            , this->AirAcceleration
+            , this->AirAcceleration * AirControl
             , Dt
             );
         if (GroundState == EGroundState::OnSteepGround)
@@ -560,9 +567,9 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
         }
 
         Velocity += Gravity * Dt;
-        if (this->FallingLinearDrag > 0.0f)
+        if (AirDrag > 0.0f)
         {
-            Velocity *= maths::max(1.0f - this->FallingLinearDrag * Dt, 0.0f);
+            Velocity *= maths::max(1.0f - AirDrag * Dt, 0.0f);
         }
         UpdateGravity = Gravity;
         break;
@@ -598,12 +605,26 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
         LVec3F const Direction{Movement::NormalizeOr(Wish, LVec3F{0.0f})};
         LVec3F const Reference{this->GetReferenceFrameVelocity()};
         LVec3F const Before{Velocity - Reference};
-        LVec3F Relative{Movement::Accelerate(Before, Direction, maths::magnitude(Wish) * this->EvaMaxSpeed, this->EvaAcceleration * Efficiency, Dt)};
-        if (bDampeners)
+        LVec3F Relative{Before};
+        if (bJetpack)
         {
-            Relative = Movement::Dampen(Relative, Direction, this->EvaDampenerDeceleration * Efficiency, Dt);
+            /* The thrusters (and the dampeners, which use them) are the jetpack. */
+            Relative = Movement::Accelerate(Relative, Direction, maths::magnitude(Wish) * this->EvaMaxSpeed, this->EvaAcceleration * Efficiency, Dt);
+            if (bDampeners)
+            {
+                Relative = Movement::Dampen(Relative, Direction, this->EvaDampenerDeceleration * Efficiency, Dt);
+            }
+            ThrustDeltaVelocity = maths::magnitude(Relative - Before);
         }
-        ThrustDeltaVelocity = maths::magnitude(Relative - Before);
+        else
+        {
+            /* Swimming through the air, if there is any. */
+            Relative = Movement::Accelerate(Relative, Direction, maths::magnitude(Wish) * this->AirSpeed, this->AirAcceleration * AirControl, Dt);
+        }
+        if (AirDrag > 0.0f)
+        {
+            Relative *= maths::max(1.0f - AirDrag * Dt, 0.0f);
+        }
         if (Surface)
         {
             /* The boots pull towards a surface in reach. */
@@ -914,6 +935,15 @@ LVec3F Jafg::ACharacterMovementComponent::ComputeLookDeltaTowards(LVec3F const& 
         maths::clamp(Pitch, -MaxAngle, MaxAngle),
         0.0f,
         };
+}
+
+f32 Jafg::ACharacterMovementComponent::ComputeAirDensity(LWorldVec3 const& Location) const
+{
+    if (auto const* Policies{this->GetWorld().GetSupremePolicies()})
+    {
+        return Policies->GetAirDensityAt(Location);
+    }
+    return 0.0f;
 }
 
 LVec3F Jafg::ACharacterMovementComponent::ComputeGravity(LWorldVec3 const& Location) const

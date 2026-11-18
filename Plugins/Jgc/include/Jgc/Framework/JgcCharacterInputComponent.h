@@ -18,6 +18,7 @@ namespace Jgc
 {
 
 class AInteractableComponent;
+class WStatusHud;
 
 struct LInteractionTarget final
 {
@@ -102,6 +103,9 @@ private:
     //# Feedback for the interactable under the cursor.
     void UpdateHover() noexcept;
     void SetHoversInteractable(bool bHovers, Jafg::LLocalLackey* Lackey) noexcept;
+    //# Shows the HUD in the viewport of #Lackey. Null removes it.
+    void ShowHud(Jafg::LLocalLackey* Lackey) noexcept;
+    void UpdateHud() noexcept;
     void ResetFrameInput() noexcept;
 
     //# Collected while the input is dispatched. Committed and reset once per frame.
@@ -113,6 +117,12 @@ private:
 
     bool bCursorMode{};
     bool bHoversInteractable{};
+
+    //# Shows the jetpack, the dampeners and the magnetic boots. Lives in a viewport, not in the world (see #WStatusHud).
+    WStatusHud* Hud{};
+    std::size_t HudJetpackRow{};
+    std::size_t HudDampenersRow{};
+    std::size_t HudMagBootsRow{};
 
     bool bJetpack{};
     bool bDampeners{ true };

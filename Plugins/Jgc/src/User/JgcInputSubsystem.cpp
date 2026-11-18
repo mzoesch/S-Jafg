@@ -279,6 +279,23 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             });
 
         Context->MapAction(&Registry,
+            {"VehicleToggleDampeners", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::Z).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                if (auto* Possessed{Data.Controller.GetPossessedActor()})
+                {
+                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    {
+                        Comp->ToggleDampeners();
+                    }
+                }
+                return {};
+            });
+
+        Context->MapAction(&Registry,
             {"VehicleExit", Jafg::EInputActionCategory::Boolean},
             Frontend.GetPhysicalKey(Jafg::ELogicalKey::G).value(),
             Jafg::EInputActionTriggerBits::Triggered,

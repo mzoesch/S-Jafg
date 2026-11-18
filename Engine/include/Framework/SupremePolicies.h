@@ -177,6 +177,24 @@ public:
         (void)Location;
         return this->PreferredGravity ? *this->PreferredGravity : this->GetPreferredGravity();
     }
+
+    //# In kg/m^3. Defaults to the air at sea level on earth. Zero is vacuum.
+    std::optional<f32> PreferredAirDensity;
+    NODISCARD virtual f32 GetPreferredAirDensity() const noexcept { return 1.225f; }
+
+    //#
+    //# The density of the air at a specific world translation. In kg/m^3, zero is vacuum. Without air, nothing can be
+    //# pushed against while airborne: Characters can then only move with their jetpack.
+    //# Must be deterministic for a given world state, as it is part of client prediction.
+    //#
+    //# @note Defaults to a uniform density.
+    //# @see #GetPreferredAirDensity
+    //#
+    NODISCARD virtual f32 GetAirDensityAt(LWorldVec3 const& Location) const noexcept
+    {
+        (void)Location;
+        return maths::max(this->PreferredAirDensity ? *this->PreferredAirDensity : this->GetPreferredAirDensity(), 0.0f);
+    }
 };
 
 } /* ~Namespace Jafg */

@@ -165,6 +165,15 @@ struct LMovementSnapshot final
 namespace Movement
 {
 
+//#
+//# How much of the air control is available in air of #Density (kg/m^3). Full at #ReferenceDensity and above, none
+//# in vacuum.
+//#
+NODISCARD FORCEINLINE constexpr f32 AirControlFactor(f32 Density, f32 ReferenceDensity) noexcept
+{
+    return ReferenceDensity > 0.0f ? maths::clamp(Density / ReferenceDensity, 0.0f, 1.0f) : (Density > 0.0f ? 1.0f : 0.0f);
+}
+
 //# Removes the component of #V that is parallel to the normalized #Normal.
 NODISCARD inline LVec3F ProjectOnPlane(LVec3F const& V, LVec3F const& Normal) noexcept
 {

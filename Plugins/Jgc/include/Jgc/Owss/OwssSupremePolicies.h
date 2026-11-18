@@ -35,6 +35,12 @@ public:
     {
         return maths::zero_vector<LVec3F>;
     }
+
+    //# Space: There is no air.
+    virtual f32 GetPreferredAirDensity() const noexcept override
+    {
+        return 0.0f;
+    }
 };
 
 } /* ~Namespace Jgc */

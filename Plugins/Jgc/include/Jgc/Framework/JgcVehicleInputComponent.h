@@ -17,6 +17,7 @@ namespace Jgc
 {
 
 class AVehicleComponent;
+class WStatusHud;
 
 //#
 //# Translates the input of a local human into the controls of the vehicle of the owning actor. Part of the vehicle,
@@ -44,6 +45,7 @@ protected:
 
 public:
 
+    virtual void OnGarbage(Jafg::EJxxRecordTearDownReason Reason) override;
     virtual void OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New) override;
     virtual void ParentTick(f32 Dt) override;
 
@@ -57,6 +59,7 @@ public:
     void OnVehicleTorque(Jafg::LInputActionValue const& Value);
     //# @return Whether the vehicle was left. Leaving gives the controls back to the driver.
     bool OnVehicleExit();
+    void ToggleDampeners() noexcept;
     void OnFreeLookHeld() noexcept { this->bFrameFreeLookHeld = true; }
     void OnFreeLookPanHeld() noexcept { this->bFramePanHeld = true; }
     void OnVehicleLook(Jafg::LInputActionValue const& Value) noexcept;
@@ -85,6 +88,12 @@ public:
 private:
 
     void ResetFreeLook() noexcept;
+    void UpdateHud() noexcept;
+
+    //# Shows the speed and the dampeners of the vehicle. Lives in a viewport, not in the world (see #WStatusHud).
+    WStatusHud* Hud{};
+    std::size_t HudSpeedRow{};
+    std::size_t HudDampenersRow{};
 
     //# Collected while the input is dispatched. Applied and reset once per frame.
     bool bFrameFreeLookHeld{};

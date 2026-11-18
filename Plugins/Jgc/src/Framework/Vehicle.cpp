@@ -62,6 +62,12 @@ bool Jgc::AVehicleComponent::Interact(Jafg::AAvatarComponent& Instigator)
     return this->Enter(Instigator);
 }
 
+f32 Jgc::AVehicleComponent::GetSpeed() const noexcept
+{
+    auto const& Rigid{this->GetRigidComponent()};
+    return Rigid.IsAddedToSimulation() ? maths::magnitude(Rigid.GetRigidObject().GetLinearVelocity()) : 0.0f;
+}
+
 LString Jgc::AVehicleComponent::GetInteractionText() const
 {
     return "Enter";
@@ -154,7 +160,8 @@ void Jgc::AVehicleComponent::ParentPhysicsTick(f32 Dt, bool bFollowup)
 {
     Super::ParentPhysicsTick(Dt, bFollowup);
 
-    if (auto Rigid{this->GetRigidComponent().GetRigidObject()}; Rigid.IsActive())
+    /* Without dampeners the vehicle keeps drifting and turning. */
+    if (auto Rigid{this->GetRigidComponent().GetRigidObject()}; this->bDampeners && Rigid.IsActive())
     {
         if (this->bLastUserThrust < this->GetEngine().FrameCount)
         {

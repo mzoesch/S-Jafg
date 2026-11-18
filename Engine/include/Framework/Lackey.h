@@ -96,6 +96,11 @@ public:
     //# @return False if the platform does not allow to move the cursor or this lackey does not render a world.
     //#
     virtual bool SetCursorLocationInWorldView(LVec2F Location) noexcept { (void)Location; return false; }
+    //#
+    //# The viewport that is drawn over the rendered world, in the space of the world view (e.g., for HUDs). Null if
+    //# this lackey does not render a world.
+    //#
+    NODISCARD virtual LViewport* GetWorldOverlayViewport() noexcept { return nullptr; }
 
 protected:
 

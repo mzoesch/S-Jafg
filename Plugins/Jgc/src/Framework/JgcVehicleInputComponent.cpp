@@ -9,12 +9,28 @@
 #include "Framework/AvatarComponent.h"
 #include "Framework/GimbalComponent.h"
 #include "Jgc/Framework/Vehicle.h"
+#include "Jgc/User/Frontend/JgcStatusHud.h"
+
+void Jgc::AJgcVehicleInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
+{
+    /* Also when the world goes away. The HUD lives in the viewport, which stays. */
+    WStatusHud::Hide(&this->Hud);
+    Super::OnGarbage(Reason);
+}
 
 void Jgc::AJgcVehicleInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
 {
     Super::OnPossessionChanged(Previous, New);
 
     this->ResetFreeLook();
+    WStatusHud::Hide(&this->Hud);
+    if (auto* Lackey{New ? New->TryGetOwningLackey<Jafg::ELackey::Local>() : nullptr})
+    {
+        WStatusHud& NewHud{WStatusHud::Show(*Lackey, &this->Hud)};
+        this->HudSpeedRow = NewHud.AddRow("Speed");
+        this->HudDampenersRow = NewHud.AddRow("Dampeners");
+        this->UpdateHud();
+    }
     if (New)
     {
         /* Every drive starts looking ahead. */
@@ -35,6 +51,7 @@ void Jgc::AJgcVehicleInputComponent::ParentTick(f32 Dt)
         this->ResetFreeLook();
         return;
     }
+    this->UpdateHud();
 
     /* Holding is polled, so that a lost release (e.g., focus loss) never leaves free look active. */
     bool const bHeld{this->bFrameFreeLookHeld};
@@ -168,6 +185,29 @@ void Jgc::AJgcVehicleInputComponent::OnVehicleTorque(Jafg::LInputActionValue con
             , true
             );
     }
+}
+
+void Jgc::AJgcVehicleInputComponent::ToggleDampeners() noexcept
+{
+    if (auto* Vehicle{this->GetVehicle()})
+    {
+        Vehicle->SetDampenersEngaged(!Vehicle->AreDampenersEngaged());
+        LOG_VERBOSE(LogJgcInput, "[{}]: Inertial dampeners of the vehicle {}."
+            , this->GetNameAsString(), Vehicle->AreDampenersEngaged() ? "engaged" : "disengaged"
+            )
+        this->UpdateHud();
+    }
+}
+
+void Jgc::AJgcVehicleInputComponent::UpdateHud() noexcept
+{
+    auto* Vehicle{this->GetVehicle()};
+    if (!this->Hud || this->Hud->_IsGarbage() || !Vehicle)
+    {
+        return;
+    }
+    this->Hud->SetRow(this->HudSpeedRow, algo::sprintf("{:.1f} m/s", Vehicle->GetSpeed()), Colors::White);
+    this->Hud->SetToggle(this->HudDampenersRow, Vehicle->AreDampenersEngaged());
 }
 
 bool Jgc::AJgcVehicleInputComponent::OnVehicleExit()

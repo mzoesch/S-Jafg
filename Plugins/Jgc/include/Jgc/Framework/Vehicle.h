@@ -94,12 +94,19 @@ public:
     void AddThrust(LVec3F const& Thrust, bool bUserInput);
     void AddTorque(LVec3F const& Torque, bool bUserInput);
 
+    //# Inertial dampeners brake the vehicle while it is not thrusting or turning.
+    NODISCARD FORCEINLINE constexpr bool AreDampenersEngaged() const noexcept { return this->bDampeners; }
+    FORCEINLINE constexpr void SetDampenersEngaged(bool bEngaged) noexcept { this->bDampeners = bEngaged; }
+    //# In meters per second.
+    NODISCARD f32 GetSpeed() const noexcept;
+
 private:
 
     EVehicle Vehicle{ EVehicle::Identity };
     std::size_t bLastUserThrust{};
     std::size_t bLastUserTorque{};
 
+    bool bDampeners{ true };
     Jafg::AAvatarComponent* Driver{};
     //# The avatar of this vehicle while driven. Kept, because the actor no longer finds it while it is torn down.
     Jafg::AAvatarComponent* DrivenAvatar{};

@@ -70,6 +70,8 @@ public:
     NODISCARD FORCEINLINE constexpr f32 GetViewPitch() const noexcept { return this->ViewPitch; }
     //# The gravity that was used in the previous tick.
     NODISCARD FORCEINLINE constexpr LVec3F const& GetGravity() const noexcept { return this->LastGravity; }
+    //# The air density that was used in the previous tick. In kg/m^3.
+    NODISCARD FORCEINLINE constexpr f32 GetAirDensity() const noexcept { return this->LastAirDensity; }
     NODISCARD FORCEINLINE constexpr f32 GetStandingHeight() const noexcept { return this->StandingHeight; }
     NODISCARD FORCEINLINE constexpr f32 GetCrouchingHeight() const noexcept { return this->CrouchingHeight; }
     NODISCARD FORCEINLINE constexpr f32 GetCapsuleRadius() const noexcept { return this->CapsuleRadius; }
@@ -143,12 +145,19 @@ public:
     CLASS_FIELD(EditorEditable)
     f32 JumpBufferTime{ 0.15f };
 
-    //# The maximum horizontal speed that air control accelerates to.
+    //#
+    //# Air control: Without the jetpack, airborne characters (falling or weightless) can only push against the air.
+    //# It scales with the air density (see #ASupremePolicies::GetAirDensityAt) and is gone in vacuum.
+    //#
+    //# The maximum speed that air control accelerates to (horizontally while falling).
     CLASS_FIELD(EditorEditable)
     f32 AirSpeed{ 4.0f };
     CLASS_FIELD(EditorEditable)
     f32 AirAcceleration{ 10.0f };
-    //# Linear drag while falling (e.g., atmosphere). In 1/s. Zero disables drag.
+    //# The air density at which air control is complete. In kg/m^3. Thinner air gives proportionally less.
+    CLASS_FIELD(EditorEditable)
+    f32 ReferenceAirDensity{ 1.225f };
+    //# Linear drag while airborne at the #ReferenceAirDensity. Scales with the density. In 1/s. Zero disables drag.
     CLASS_FIELD(EditorEditable)
     f32 FallingLinearDrag{ 0.0f };
 
@@ -160,7 +169,7 @@ public:
     CLASS_FIELD(EditorEditable)
     f32 JetpackDampenerDeceleration{ 15.0f };
 
-    //# Below this gravity, the character is weightless.
+    //# Below this gravity, the character is weightless. Weightless thrusters and dampeners are part of the jetpack.
     CLASS_FIELD(EditorEditable)
     f32 ZeroGravityThreshold{ 0.05f };
     CLASS_FIELD(EditorEditable)
@@ -207,6 +216,8 @@ protected:
 
     //# The gravity at a location. Defaults to #ASupremePolicies::GetGravityAt.
     NODISCARD virtual LVec3F ComputeGravity(LWorldVec3 const& Location) const;
+    //# The air density at a location in kg/m^3. Defaults to #ASupremePolicies::GetAirDensityAt.
+    NODISCARD virtual f32 ComputeAirDensity(LWorldVec3 const& Location) const;
     //# The velocity of the local reference frame that thrusters and dampeners work relative to. Zero by default.
     NODISCARD virtual LVec3F GetReferenceFrameVelocity() const { return LVec3F{0.0f}; }
     //# Scales all thruster accelerations (jetpack, EVA) for this tick in [0, 1]. Use for fuel. One by default.
@@ -272,6 +283,7 @@ private:
     //# ---------- Cached / presentation state ----------
 
     LVec3F LastGravity{ 0.0f };
+    f32 LastAirDensity{};
     f32 PresentedEyeHeight{ -1.0f };
     bool bHasWrittenRoot{};
     LWorldVec3 LastWrittenTranslation{ 0.0f };

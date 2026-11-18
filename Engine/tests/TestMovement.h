@@ -145,3 +145,19 @@ TRIVIAL_TEST_CASE("movement", Conventions)
     TEST_TRUE(IsGroundedMovementMode(EMovementMode::MagWalking))
     TEST_FALSE(IsGroundedMovementMode(EMovementMode::Flying))
 }
+
+TRIVIAL_TEST_CASE("movement", AirControl)
+{
+    using namespace Jafg;
+    constexpr f32 Epsilon{1.0e-6f};
+
+    /* Vacuum: Nothing to push against. */
+    TEST_LESS(maths::abs(Movement::AirControlFactor(0.0f, 1.225f)), Epsilon)
+    /* Proportional below the reference, complete at and above it. */
+    TEST_LESS(maths::abs(Movement::AirControlFactor(0.6125f, 1.225f) - 0.5f), Epsilon)
+    TEST_LESS(maths::abs(Movement::AirControlFactor(1.225f, 1.225f) - 1.0f), Epsilon)
+    TEST_LESS(maths::abs(Movement::AirControlFactor(10.0f, 1.225f) - 1.0f), Epsilon)
+    /* Without a reference, any air is enough. */
+    TEST_LESS(maths::abs(Movement::AirControlFactor(0.1f, 0.0f) - 1.0f), Epsilon)
+    TEST_LESS(maths::abs(Movement::AirControlFactor(0.0f, 0.0f)), Epsilon)
+}

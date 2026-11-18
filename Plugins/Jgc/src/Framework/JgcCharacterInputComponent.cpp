@@ -13,6 +13,7 @@
 #include "User/Input/InputActionValue.h"
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/InteractableComponent.h"
+#include "Jgc/User/Frontend/JgcStatusHud.h"
 #include "Framework/AvatarComponent.h"
 #include "Framework/EyeComponent.h"
 
@@ -20,6 +21,11 @@ void Jgc::AJgcCharacterInputComponent::OnAttach(Jafg::AActor& InOwner)
 {
     Super::OnAttach(InOwner);
     (void)this->ActivateUserInputContext();
+    /* Already possessed (e.g., emplaced at runtime). */
+    if (auto* Lackey{GetLocalLackey(this->GetOwningController())})
+    {
+        this->ShowHud(Lackey);
+    }
 }
 
 void Jgc::AJgcCharacterInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
@@ -29,6 +35,8 @@ void Jgc::AJgcCharacterInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason 
     {
         this->SetCursorMode(false, GetLocalLackey(this->GetOwningController()));
     }
+    /* Also when the world goes away. The HUD lives in the viewport, which stays. */
+    this->ShowHud(nullptr);
 
     Super::OnGarbage(Reason);
 }
@@ -40,8 +48,11 @@ void Jgc::AJgcCharacterInputComponent::OnPossessionChanged(Jafg::APersonaControl
     if (New)
     {
         (void)this->ActivateUserInputContext();
+        this->ShowHud(GetLocalLackey(New));
         return;
     }
+
+    this->ShowHud(nullptr);
 
     /* Whatever possesses next (e.g., a vehicle) owns the input now. Leave nothing behind. */
     if (this->bCursorMode)
@@ -312,6 +323,7 @@ void Jgc::AJgcCharacterInputComponent::OnJumpPressed() noexcept
 void Jgc::AJgcCharacterInputComponent::ToggleJetpack() noexcept
 {
     this->bJetpack = !this->bJetpack;
+    this->UpdateHud();
     LOG_VERBOSE(LogJgcInput, "[{}]: Jetpack {}."
         , this->GetNameAsString()
         , this->bJetpack ? "engaged" : "disengaged"
@@ -321,6 +333,7 @@ void Jgc::AJgcCharacterInputComponent::ToggleJetpack() noexcept
 void Jgc::AJgcCharacterInputComponent::ToggleDampeners() noexcept
 {
     this->bDampeners = !this->bDampeners;
+    this->UpdateHud();
     LOG_VERBOSE(LogJgcInput, "[{}]: Inertial dampeners {}."
         , this->GetNameAsString()
         , this->bDampeners ? "engaged" : "disengaged"
@@ -330,6 +343,7 @@ void Jgc::AJgcCharacterInputComponent::ToggleDampeners() noexcept
 void Jgc::AJgcCharacterInputComponent::ToggleMagBoots() noexcept
 {
     this->bMagBoots = !this->bMagBoots;
+    this->UpdateHud();
     LOG_VERBOSE(LogJgcInput, "[{}]: Magnetic boots {}."
         , this->GetNameAsString()
         , this->bMagBoots ? "engaged" : "disengaged"
@@ -344,4 +358,29 @@ Jafg::AMovementComponent* Jgc::AJgcCharacterInputComponent::GetMovementComponent
 Jafg::AMovementComponent const* Jgc::AJgcCharacterInputComponent::GetMovementComponent() const noexcept
 {
     return this->GetOwningActor().GetComponent<Jafg::AMovementComponent>();
+}
+
+void Jgc::AJgcCharacterInputComponent::ShowHud(Jafg::LLocalLackey* Lackey) noexcept
+{
+    if (!Lackey)
+    {
+        WStatusHud::Hide(&this->Hud);
+        return;
+    }
+
+    WStatusHud& NewHud{WStatusHud::Show(*Lackey, &this->Hud)};
+    this->HudJetpackRow = NewHud.AddRow("Jetpack");
+    this->HudDampenersRow = NewHud.AddRow("Dampeners");
+    this->HudMagBootsRow = NewHud.AddRow("Mag boots");
+    this->UpdateHud();
+}
+
+void Jgc::AJgcCharacterInputComponent::UpdateHud() noexcept
+{
+    if (this->Hud && !this->Hud->_IsGarbage())
+    {
+        this->Hud->SetToggle(this->HudJetpackRow, this->bJetpack);
+        this->Hud->SetToggle(this->HudDampenersRow, this->bDampeners);
+        this->Hud->SetToggle(this->HudMagBootsRow, this->bMagBoots);
+    }
 }
