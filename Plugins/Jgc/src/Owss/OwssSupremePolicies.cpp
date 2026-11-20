@@ -32,7 +32,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
         Plane.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Plane_8M.glb"));
+            Comp.SetMesh(JgcInfo/LITERAL_TEXT("Models/Plane_8M.glb"));
             Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()
                 ->GetPbrInstance(JafgInfo,"Textures/Editor/GroundGrid_8M"));
             Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3>
@@ -40,24 +40,54 @@ static void LoadGymCollection(Jafg::LWorld& World)
         });
     }
 
+    auto SpawnObject{[&](LPath const& Mesh, TArray<LWorldVec3> const& Translations)
     {
-        auto& Cube{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
-        Cube.EditorName = "Cube"sv;
-        auto& Rigid{Cube.EmplaceRootComponent<Jafg::ARigidComponent>()};
-        Rigid.SetShouldRender(true);
-        Rigid.SetLocalTranslationByTeleport({-4.5, 0.5, 12.5});
-        Rigid.SetPhysicsMotion(Jafg::EPhysicsMotion::Dynamic);
-        Rigid.SetPhysicsLayer(Jafg::EPhysicsLayer::Dynamic);
-        Rigid.MakeBox(LWorldVec3{0.5});
-        Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Activate);
-        Rigid.SetLinearVelocity({-5,10,0});
-        Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
+        auto Idx{0uz};
+        for (auto& Translation: Translations)
         {
-            auto& Frontend{World->GetMutableFrontend()};
-            Comp.SetMesh(JafgInfo/LITERAL_TEXT("Models/Cube_1M.glb"));
-            Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()->GetPbrInstance(JafgInfo, "Textures/Editor/ObjectGrid_1M"));
+            auto& Cube{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+            Cube.EditorName = algo::sprintf("Cube {}", Idx++);
+            auto& Rigid{Cube.EmplaceRootComponent<Jafg::ARigidComponent>([Translation](Jafg::ARigidComponent& Comp)
+            {
+                Comp.SetLocalTranslationByTeleport(Translation);
+            })};
+            Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [&](Jafg::AStaticMeshComponent& Comp)
+            {
+                auto& Frontend{World.GetMutableFrontend()};
+                Comp.SetMesh(Mesh);
+                Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()
+                    ->GetPbrInstance(JafgInfo, "Textures/Editor/ObjectGrid_1M"));
+            });
+            Rigid.MakeConvex();
+            Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Preserve);
+        }
+    }};
+    auto SpawnCubes{[&](TArray<LWorldVec3> const& Translations)
+    {
+        SpawnObject(JgcInfo/LITERAL_TEXT("Models/Cube.glb"), Translations);
+    }};
+    auto SpawnHalfCubes{[&](TArray<LWorldVec3> const& Translations)
+    {
+        SpawnObject(JgcInfo/LITERAL_TEXT("Models/HalfCube.glb"), Translations);
+    }};
+    auto SpawnQuarterCubes{[&](TArray<LWorldVec3> const& Translations)
+    {
+        SpawnObject(JgcInfo/LITERAL_TEXT("Models/QuarterCube.glb"), Translations);
+    }};
+
+    SpawnCubes({
+        {-4.5, 0.0, 12.5},
+        {-4.5, 1.0, 12.5},
+        {-5.5, 0.0, 12.5},
+        {-6.5, 0.0, 12.5},
         });
-    }
+    SpawnHalfCubes({
+        {-7.5, 0.0, 12.5},
+        });
+    SpawnQuarterCubes({
+        {-8.5, 0.0, 12.5},
+        });
+
 
     auto& Generation{*World.GetSubsystemChecked<Jgc::JOwssGenerationSubsystem>()};
     Generation.SpawnShip({10.0f, 3.0f, 15.0f}, LWorldQuat{maths::radians(LWorldVec3{0, -90, 0})});

@@ -31,7 +31,7 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     }
 
     this->MaterialInstance = World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
-        ->GetPbrInstance(JafgInfo,"Materials/Examples/Scifi");
+        ->GetPbrInstance(JgcInfo,"Materials/Scifi");
 
     auto& Light{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
     Light.EditorName = "Sun";
