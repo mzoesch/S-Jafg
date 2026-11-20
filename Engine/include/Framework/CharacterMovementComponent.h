@@ -118,6 +118,10 @@ public:
     f32 MaxSlopeAngle{ 50.0f };
     CLASS_FIELD(EditorEditable)
     f32 MaxStepHeight{ 0.4f };
+    //# How fast the eye catches up after the feet snapped up or down a step, instead of jumping with them. In 1/s.
+    //# Zero disables the smoothing.
+    CLASS_FIELD(EditorEditable)
+    f32 StepSmoothingSpeed{ 15.0f };
     //# How far the character snaps down to stay on the floor when walking down slopes or stairs.
     CLASS_FIELD(EditorEditable)
     f32 StickToFloorDistance{ 0.5f };
@@ -250,6 +254,8 @@ private:
     //# When the body becomes free to rotate, the view pitch becomes a part of the body rotation.
     void FoldViewPitchIntoBody() noexcept;
     NODISCARD f32 GetSimulatedEyeHeight() const noexcept;
+    //# Cosmetic. Detects whether the grounded feet snapped up or down a step by #Moved in this tick.
+    void AccumulateStepSmoothing(LVec3F const& Moved, LVec3F const& GroundVelocity, LVec3F const& Up, f32 Dt) noexcept;
 
     struct LSurface final
     {
@@ -285,6 +291,8 @@ private:
     LVec3F LastGravity{ 0.0f };
     f32 LastAirDensity{};
     f32 PresentedEyeHeight{ -1.0f };
+    //# How far the presented eye is below (negative) or above where the feet put it, after stepping. Decays.
+    f32 StepSmoothingOffset{};
     bool bHasWrittenRoot{};
     LWorldVec3 LastWrittenTranslation{ 0.0f };
     LWorldQuat LastWrittenRotation{ maths::identity<LWorldQuat> };

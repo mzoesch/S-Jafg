@@ -148,8 +148,8 @@ namespace Jafg
 
 #include <Jolt/Geometry/ConvexHullBuilder.h>
 
-static_assert(std::same_as<Jafg::EPhysicsLayer::value_type, JPH::ObjectLayer>);
-static_assert(std::same_as<Jafg::EPhysicsBroadPhase::value_type, JPH::BroadPhaseLayer::Type>);
+static_assert(std::same_as<std::underlying_type_t<Jafg::EPhysicsLayer>, JPH::ObjectLayer>);
+static_assert(std::same_as<std::underlying_type_t<Jafg::EPhysicsBroadPhase>, JPH::BroadPhaseLayer::Type>);
 static_assert(std::same_as<LWorldReal, JPH::Real>);
 
 static_assert(std::same_as<std::underlying_type_t<Jafg::EPhysicsMotion>, std::underlying_type_t<JPH::EMotionType>>);
@@ -202,8 +202,8 @@ public:
     {
         switch (A)
         {
-        case Jafg::EPhysicsLayer::Static: return B == Jafg::EPhysicsLayer::Dynamic;
-        case Jafg::EPhysicsLayer::Dynamic: return true;
+        case std::to_underlying(Jafg::EPhysicsLayer::Static): return B == std::to_underlying(Jafg::EPhysicsLayer::Dynamic);
+        case std::to_underlying(Jafg::EPhysicsLayer::Dynamic): return true;
         default:
         {
             checkNoEntry()
@@ -219,15 +219,15 @@ public:
 
     constexpr broad_phase_layer_interface() noexcept
     {
-        this->Map[Jafg::EPhysicsLayer::Static] = JPH::BroadPhaseLayer{Jafg::EPhysicsBroadPhase::Static};
-        this->Map[Jafg::EPhysicsLayer::Dynamic] = JPH::BroadPhaseLayer{Jafg::EPhysicsBroadPhase::Dynamic};
+        this->Map[std::to_underlying(Jafg::EPhysicsLayer::Static)] = JPH::BroadPhaseLayer{std::to_underlying(Jafg::EPhysicsBroadPhase::Static)};
+        this->Map[std::to_underlying(Jafg::EPhysicsLayer::Dynamic)] = JPH::BroadPhaseLayer{std::to_underlying(Jafg::EPhysicsBroadPhase::Dynamic)};
     }
 
-    virtual JPH::uint GetNumBroadPhaseLayers() const override { return Jafg::EPhysicsBroadPhase::Count; }
+    virtual JPH::uint GetNumBroadPhaseLayers() const override { return std::to_underlying(Jafg::EPhysicsBroadPhase::Count); }
 
     virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer Layer) const override
     {
-        check(Layer < Jafg::EPhysicsLayer::Count)
+        check(Layer < std::to_underlying(Jafg::EPhysicsLayer::Count))
         return this->Map[Layer];
     }
 
@@ -236,8 +236,8 @@ public:
     {
         switch (static_cast<JPH::BroadPhaseLayer::Type>(Layer))
         {
-        case Jafg::EPhysicsBroadPhase::Static: return "Static";
-        case Jafg::EPhysicsBroadPhase::Dynamic: return "Dynamic";
+        case std::to_underlying(Jafg::EPhysicsBroadPhase::Static): return "Static";
+        case std::to_underlying(Jafg::EPhysicsBroadPhase::Dynamic): return "Dynamic";
         default:
         {
             checkNoEntry()
@@ -249,7 +249,7 @@ public:
 
 private:
 
-    JPH::BroadPhaseLayer Map[Jafg::EPhysicsBroadPhase::Count];
+    JPH::BroadPhaseLayer Map[std::to_underlying(Jafg::EPhysicsBroadPhase::Count)];
 };
 
 class broad_phase_layer_filter: public JPH::ObjectVsBroadPhaseLayerFilter
@@ -260,8 +260,8 @@ public:
     {
         switch (A)
         {
-        case Jafg::EPhysicsLayer::Static: return B.GetValue() == Jafg::EPhysicsBroadPhase::Dynamic;
-        case Jafg::EPhysicsLayer::Dynamic: return true;
+        case std::to_underlying(Jafg::EPhysicsLayer::Static): return B.GetValue() == std::to_underlying(Jafg::EPhysicsBroadPhase::Dynamic);
+        case std::to_underlying(Jafg::EPhysicsLayer::Dynamic): return true;
         default:
         {
             checkNoEntry()

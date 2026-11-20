@@ -440,6 +440,11 @@ inline Jafg::LStaticMesh::EResult PullGltfMesh(LPath const& Path, TArray<Jafg::L
 
     Result.shrink_to_fit();
 
+    if (Result.empty())
+    {
+        return Jafg::LStaticMesh::EResult::Empty;
+    }
+
     return Jafg::LStaticMesh::EResult::Success;
 }
 

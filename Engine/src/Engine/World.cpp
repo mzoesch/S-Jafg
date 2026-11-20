@@ -614,8 +614,8 @@ public:
     {
         switch (Layer)
         {
-        case Jafg::EPhysicsLayer::Static: return !!(this->Channels & Jafg::ECollisionChannelBits::Static);
-        case Jafg::EPhysicsLayer::Dynamic: return !!(this->Channels & (Jafg::ECollisionChannelBits::Dynamic | Jafg::ECollisionChannelBits::Pawn));
+        case std::to_underlying(Jafg::EPhysicsLayer::Static): return !!(this->Channels & Jafg::ECollisionChannelBits::Static);
+        case std::to_underlying(Jafg::EPhysicsLayer::Dynamic): return !!(this->Channels & (Jafg::ECollisionChannelBits::Dynamic | Jafg::ECollisionChannelBits::Pawn));
         default: return false;
         }
     }
@@ -653,7 +653,7 @@ public:
         {
             return !!(this->Channels & Jafg::ECollisionChannelBits::Pawn);
         }
-        if (Body.GetObjectLayer() == Jafg::EPhysicsLayer::Static)
+        if (Body.GetObjectLayer() == std::to_underlying(Jafg::EPhysicsLayer::Static))
         {
             return !!(this->Channels & Jafg::ECollisionChannelBits::Static);
         }

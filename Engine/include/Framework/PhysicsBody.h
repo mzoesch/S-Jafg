@@ -293,9 +293,9 @@ struct LPhysicsBody final
     ENGINE_API void SetMotionType(EPhysicsMotion Motion);
 
     //# Get broadphase layer, this determines in which broad phase sub-tree the object is placed
-    NODISCARD ENGINE_API EPhysicsBroadPhase::value_type GetBroadPhaseLayer() const;
+    NODISCARD ENGINE_API EPhysicsBroadPhase GetBroadPhaseLayer() const;
     //# Get object layer, this determines which other objects it collides with
-    NODISCARD ENGINE_API EPhysicsLayer::value_type GetObjectLayer() const;
+    NODISCARD ENGINE_API EPhysicsLayer GetObjectLayer() const;
 
     //# Collision group and sub-group ID, determines which other objects it collides with.
     // ENGINE_API NODISCARD CollisionGroup const& GetCollisionGroup() const;

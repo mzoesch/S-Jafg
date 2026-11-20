@@ -39,8 +39,8 @@ public:
 struct query_filters final
 {
     explicit query_filters(JPH::PhysicsSystem const& System) noexcept
-        : BroadPhase{System.GetDefaultBroadPhaseLayerFilter(Jafg::EPhysicsLayer::Dynamic)}
-        , Object{System.GetDefaultLayerFilter(Jafg::EPhysicsLayer::Dynamic)}
+        : BroadPhase{System.GetDefaultBroadPhaseLayerFilter(std::to_underlying(Jafg::EPhysicsLayer::Dynamic))}
+        , Object{System.GetDefaultLayerFilter(std::to_underlying(Jafg::EPhysicsLayer::Dynamic))}
     {
     }
 
@@ -85,6 +85,10 @@ NODISCARD constexpr bool IsFreeRotationMode(Jafg::EMovementMode Mode) noexcept
 inline constexpr f32 MagBootsMinSurfaceDot{ -0.34f };
 //# Relative speed along up above which a character is considered to move away from the ground (e.g., jumping).
 inline constexpr f32 SeparationSpeed{ 0.1f };
+//# Contacts this far above #ACharacterMovementComponent::MaxStepHeight still count as steps.
+inline constexpr f32 StepHeightTolerance{ 0.02f };
+//# Height changes per tick that exceed what the steepest walkable slope explains by this much are steps.
+inline constexpr f32 StepDetectionThreshold{ 0.02f };
 
 } /* ~Namespace <Anonymous> */
 
@@ -233,6 +237,7 @@ void Jafg::ACharacterMovementComponent::Teleport(LWorldVec3 const& Location, std
     query_filters const Filters{this->Proxy->Subsystem.PhysicsSystem};
     Character.RefreshContacts(Filters.BroadPhase, Filters.Object, Filters.Body, Filters.Shape, this->Proxy->Subsystem.TempAllocator);
 
+    this->StepSmoothingOffset = 0.0f;
     this->UpdatePresentation(0.0f);
 }
 
@@ -663,21 +668,52 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
     JPH::CharacterVirtual::ExtendedUpdateSettings UpdateSettings;
     UpdateSettings.mStickToFloorStepDown = bStickToFloor ? ::ToJolt(-Up * this->StickToFloorDistance) : JPH::Vec3::sZero();
     UpdateSettings.mWalkStairsStepUp = bStickToFloor ? ::ToJolt(Up * this->MaxStepHeight) : JPH::Vec3::sZero();
+    JPH::RVec3 const PositionBeforeUpdate{Character.GetPosition()};
     Character.ExtendedUpdate(Dt, ::ToJolt(UpdateGravity), UpdateSettings
         , Filters.BroadPhase, Filters.Object, Filters.Body, Filters.Shape, Subsystem.TempAllocator);
+
+    if (bStickToFloor && !this->IsReplaying())
+    {
+        this->AccumulateStepSmoothing(::FromJolt(JPH::Vec3{Character.GetPosition() - PositionBeforeUpdate}), GroundVelocity, Up, Dt);
+    }
 
     /*
      * The virtual character slides along contacts but keeps the requested velocity. Remove everything that moves into
      * contacts (relative to their own motion), or the character would stick to ceilings and hulls.
+     *
+     * Grounded characters must never gain height from this: The edges of steps touch the rounded bottom of the capsule,
+     * and their contact normals (like the floor of slopes) point upwards. The removed velocity would lift the character
+     * off the ground and make it fall instead of stepping up. Grounded characters therefore only lose the horizontal
+     * velocity into walls. Contacts within #MaxStepHeight above the feet are steps and keep the velocity, so that the
+     * stair walk continues with full speed in the next tick (Jolt slides along them anyway if they are not climbable).
      */
     LVec3F Constrained{::FromJolt(Character.GetLinearVelocity())};
+    LWorldVec3 const Feet{::FromJoltR(Character.GetPosition())};
     for (JPH::CharacterContact const& Contact: Character.GetActiveContacts())
     {
         if (!Contact.mHadCollision || Contact.mWasDiscarded || Contact.mIsSensorB)
         {
             continue;
         }
-        LVec3F const Normal{::FromJolt(Contact.mContactNormal)};
+        LVec3F Normal{::FromJolt(Contact.mContactNormal)};
+        if (bStickToFloor)
+        {
+            if (!Character.IsSlopeTooSteep(Contact.mSurfaceNormal))
+            {
+                /* Walkable ground. Walking keeps the velocity parallel to the ground on its own. */
+                continue;
+            }
+            if (maths::dot(LVec3F{::FromJoltR(Contact.mPosition) - Feet}, Up) <= this->MaxStepHeight + ::StepHeightTolerance)
+            {
+                continue;
+            }
+            Normal = Movement::NormalizeOr(Movement::ProjectOnPlane(Normal, Up), LVec3F{0.0f});
+            if (Normal == LVec3F{0.0f})
+            {
+                /* A ceiling. */
+                continue;
+            }
+        }
         f32 const Into{maths::dot(Constrained - ::FromJolt(Contact.mLinearVelocity), Normal)};
         if (Into < 0.0f)
         {
@@ -837,6 +873,18 @@ void Jafg::ACharacterMovementComponent::UpdatePresentation(f32 Dt)
     {
         this->PresentedEyeHeight += (EyeHeight - this->PresentedEyeHeight) * (1.0f - std::exp(-this->EyeHeightBlendSpeed * Dt));
     }
+    if (bFreeRotation || this->StepSmoothingSpeed <= 0.0f)
+    {
+        this->StepSmoothingOffset = 0.0f;
+    }
+    else if (Dt > 0.0f)
+    {
+        this->StepSmoothingOffset *= std::exp(-this->StepSmoothingSpeed * Dt);
+        if (std::abs(this->StepSmoothingOffset) < 1.0e-4f)
+        {
+            this->StepSmoothingOffset = 0.0f;
+        }
+    }
 
     if (bAttached)
     {
@@ -863,7 +911,7 @@ void Jafg::ACharacterMovementComponent::UpdatePresentation(f32 Dt)
 
     if (auto* Head{this->GetHeadEye()})
     {
-        LWorldVec3 const HeadOffset{0.0f, this->PresentedEyeHeight, 0.0f};
+        LWorldVec3 const HeadOffset{0.0f, this->PresentedEyeHeight + this->StepSmoothingOffset, 0.0f};
         LWorldQuat const HeadRotation{bFreeRotation ? maths::identity<LWorldQuat> : Movement::PitchToRotation(Pitch)};
         if (Head->GetLocalTranslation() != HeadOffset)
         {
@@ -985,7 +1033,7 @@ void Jafg::ACharacterMovementComponent::CreateCharacter()
     /* Procedural meshes are full of internal edges. */
     Settings->mEnhancedInternalEdgeRemoval = true;
     Settings->mInnerBodyShape = this->Proxy->StandingInnerShape;
-    Settings->mInnerBodyLayer = EPhysicsLayer::Dynamic;
+    Settings->mInnerBodyLayer = std::to_underlying(EPhysicsLayer::Dynamic);
 
     u64 const UserData{::CharacterUserDataTag | static_cast<u64>(reinterpret_cast<std::uintptr_t>(this))};
     auto& Character{*(this->Proxy->Character = new JPH::CharacterVirtual{
@@ -1203,6 +1251,30 @@ void Jafg::ACharacterMovementComponent::FoldViewPitchIntoBody() noexcept
     this->RotateBodyAroundEye(Body * Movement::PitchToRotation(this->ViewPitch) * glm::inverse(Body));
     Character.SetUp(::ToJolt(::FromJolt(Character.GetRotation()) * maths::up_vector<LVec3F>));
     this->ViewPitch = 0.0f;
+}
+
+void Jafg::ACharacterMovementComponent::AccumulateStepSmoothing(LVec3F const& Moved, LVec3F const& GroundVelocity, LVec3F const& Up, f32 Dt) noexcept
+{
+    if (this->StepSmoothingSpeed <= 0.0f)
+    {
+        this->StepSmoothingOffset = 0.0f;
+        return;
+    }
+
+    /* Only the own motion. Moving ground (e.g., an elevator) carries the eye with it. */
+    LVec3F const Own{Moved - GroundVelocity * Dt};
+    f32 const Rise{maths::dot(Own, Up)};
+    f32 const Run{maths::magnitude(Movement::ProjectOnPlane(Own, Up))};
+    f32 const MaxSlopeRise{Run * std::tan(maths::radians(maths::clamp(this->MaxSlopeAngle, 0.0f, 89.0f)))};
+    if (std::abs(Rise) <= MaxSlopeRise + ::StepDetectionThreshold)
+    {
+        /* Walking along the ground, slopes included. */
+        return;
+    }
+
+    /* The feet snapped up (stair walk) or down (stick to floor). The eye follows smoothly from where it was. */
+    f32 const Limit{2.0f * maths::max(this->MaxStepHeight, this->StickToFloorDistance)};
+    this->StepSmoothingOffset = maths::clamp(this->StepSmoothingOffset - Rise, -Limit, Limit);
 }
 
 f32 Jafg::ACharacterMovementComponent::GetSimulatedEyeHeight() const noexcept

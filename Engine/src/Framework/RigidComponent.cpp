@@ -4,6 +4,12 @@
 #include "Framework/Actor.h"
 #include "PhysicsForeignCore.h"
 #include "Rhi/StaticMesh.h"
+#include "Framework/StaticMeshComponent.h"
+#include "Nodes/Node.h"
+#include "Widgets/EditorFactory.h"
+#include "Widgets/Input_Boolean.h"
+#include "Widgets/Input_Vector1.h"
+#include "Widgets/Input_Vector3.h"
 
 static_assert(std::to_underlying(Jafg::EBodyType::Rigid) == std::to_underlying(JPH::EBodyType::RigidBody));
 static_assert(std::to_underlying(Jafg::EBodyType::Soft) == std::to_underlying(JPH::EBodyType::SoftBody));
@@ -134,23 +140,25 @@ void Jafg::LPhysicsBody::SetMotionType(EPhysicsMotion Motion)
     this->GetBody().SetMotionType(static_cast<JPH::EMotionType>(Motion));
 }
 
-Jafg::EPhysicsBroadPhase::value_type Jafg::LPhysicsBody::GetBroadPhaseLayer() const
+Jafg::EPhysicsBroadPhase Jafg::LPhysicsBody::GetBroadPhaseLayer() const
 {
-    return static_cast<EPhysicsBroadPhase::value_type>(this->GetBody().GetBroadPhaseLayer().GetValue());
+    return static_cast<EPhysicsBroadPhase>(this->GetBody().GetBroadPhaseLayer().GetValue());
 }
 
-Jafg::EPhysicsLayer::value_type Jafg::LPhysicsBody::GetObjectLayer() const
+Jafg::EPhysicsLayer Jafg::LPhysicsBody::GetObjectLayer() const
 {
-    return static_cast<EPhysicsLayer::value_type>(this->GetBody().GetObjectLayer());
+    return static_cast<EPhysicsLayer>(this->GetBody().GetObjectLayer());
 }
 
 bool Jafg::LPhysicsBody::GetAllowSleeping() const
 {
-    return this->GetBody().GetAllowSleeping();
+    auto& Body{this->GetBody()};
+    return Body.CanBeKinematicOrDynamic() && Body.GetAllowSleeping();
 }
 
 void Jafg::LPhysicsBody::SetAllowSleeping(bool bAllow)
 {
+    check(this->GetBody().CanBeKinematicOrDynamic())
     this->GetBody().SetAllowSleeping(bAllow);
 }
 
@@ -479,6 +487,433 @@ NODISCARD u64 MakeBodyUserData(Jafg::ARigidComponent& Comp) noexcept
 #endif /* INTERFACE */
 #define INTERFACE this->GetParentPhysicsSystem()->GetBodyInterfaceNoLock()
 
+namespace Jafg
+{
+
+namespace
+{
+
+//#
+//# The body is not a plain data struct. Everything goes through getters and setters on the native body, and the
+//# simulation changes values (velocities, sleeping) behind our back. So every row reads the body directly and
+//# registers a refresher that pulls the current value into its widget each inspector tick.
+//#
+struct LPhysicsBodyEditorState final
+{
+    ARigidComponent* Comp{};
+    //# The field itself, not a copy. The component may recreate the native body while the inspector is open.
+    LPhysicsBody* Body{};
+    TArray<TFunction2<void()>> Refreshers;
+};
+typedef std::shared_ptr<LPhysicsBodyEditorState> LPhysicsBodyEditorStatePtr;
+
+struct LPhysicsBodyBoolRow final: LEditorRowStateExt
+{
+    WInput_Boolean* Input{};
+};
+struct LPhysicsBodyScalarRow final: LEditorRowStateExt
+{
+    WInput_Vector1* Input{};
+};
+struct LPhysicsBodyVectorRow final: LEditorRowStateExt
+{
+    WInput_Vector3* Input{};
+};
+
+NODISCARD EJxxFieldFlags MakeRowFlags(EJxxFieldFlags Flags, bool bEditable) noexcept
+{
+    if (bEditable && JxxFieldBits::IsEditorEditable(Flags))
+    {
+        return Flags;
+    }
+    return EJxxFieldFlags{EJxxFieldBits::EditorVisible};
+}
+
+//# Read-only row that displays a string.
+template<typename TGetter>
+NODISCARD Detail::LNodeFactoryBase MakeTextRow(TEditorNodeCreateInfo<LPhysicsBody> const& Info
+    , LPhysicsBodyEditorStatePtr const& State
+    , LString Name
+    , LStringView Tooltip
+    , TGetter Getter
+    ) noexcept
+{
+    EJxxFieldFlags const Flags{MakeRowFlags(Info.Flags, false)};
+    auto SharedState{std::make_shared<LEditorRowState>()};
+    auto Text{std::make_shared<WText*>()};
+
+    auto Evaluate{[Body=State->Body, Getter]() -> LString
+    {
+        return Body->IsValid() ? LString{Getter(std::as_const(*Body))} : LString{"-"};
+    }};
+    State->Refreshers.emplace_back([Text, Evaluate]
+    {
+        check(*Text)
+        if (LString Value{Evaluate()}; Value != (*Text)->GetContent())
+        {
+            (*Text)->SetContent(std::move(Value));
+        }
+    });
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Tooltip})
+    [
+        EditorComponentLabel(Flags, Info.Viewport, std::move(Name), SharedState)
+        + EditorComponentContentWrapper(Flags, Info.Viewport, SharedState)
+        [
+            NewNode(Info.Viewport).Class<WText>().SaveTo(Text.get())
+                .Anchor(EAnchor::HFill)
+                .TextTint(Colors::Gray)
+                .Content(Evaluate())
+        ]
+        + EditorResetButton(Flags, Info.Viewport, false, [](WButton& Self) {}, LEditorRowState::Lambda<WButton>(SharedState))
+    ];
+}
+
+template<typename TGetter, typename TSetter>
+NODISCARD Detail::LNodeFactoryBase MakeBoolRow(TEditorNodeCreateInfo<LPhysicsBody> const& Info
+    , LPhysicsBodyEditorStatePtr const& State
+    , LString Name
+    , LStringView Tooltip
+    , bool bEditable
+    , std::optional<bool> Default
+    , TGetter Getter
+    , TSetter Setter
+    ) noexcept
+{
+    EJxxFieldFlags const Flags{MakeRowFlags(Info.Flags, bEditable)};
+    bool const bResettable{JxxFieldBits::IsEditorEditable(Flags) && Default.has_value()};
+    auto Row{std::make_shared<LPhysicsBodyBoolRow>()};
+    LPhysicsBody* Body{State->Body};
+    bool const bInitial{Body->IsValid() && Getter(std::as_const(*Body))};
+
+    State->Refreshers.emplace_back([Row, Body, Getter, Default, bResettable]
+    {
+        check(Row->Input && Row->ResetButton)
+        if (!Body->IsValid())
+        {
+            return;
+        }
+        if (bool const bValue{Getter(std::as_const(*Body))}; bValue != Row->Input->GetValue())
+        {
+            Row->Input->SetValue(bValue, false);
+            Row->ResetButton->SetEnabled(bResettable && bValue != *Default);
+        }
+    });
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Tooltip})
+    [
+        EditorComponentLabel(Flags, Info.Viewport, std::move(Name), Row)
+        + EditorComponentContentWrapper(Flags, Info.Viewport, Row)
+        [
+            NewNode(Info.Viewport).Class<WInput_Boolean>().SaveTo(&Row->Input)
+                .Anchor(EAnchor::HFill)
+                .Value(bInitial)
+                .Enabled(JxxFieldBits::IsEditorEditable(Flags))
+                .OnValueChanged([Row, Body, Setter, Default, bResettable](WInput_Boolean& Self)
+                {
+                    if (Body->IsValid())
+                    {
+                        Setter(*Body, Self.GetValue());
+                    }
+                    check(Row->ResetButton)
+                    Row->ResetButton->SetEnabled(bResettable && Self.GetValue() != *Default);
+                })
+        ]
+        + EditorResetButton(Flags, Info.Viewport, bResettable && Body->IsValid() && bInitial != *Default, [Row, Default](WButton& Self)
+        {
+            check(Row->Input)
+            check(Default)
+            Row->Input->SetValue(*Default);
+        }, LEditorRowState::Lambda<WButton>(Row)).SaveTo(&Row->ResetButton)
+    ];
+}
+
+template<typename TGetter, typename TSetter>
+NODISCARD Detail::LNodeFactoryBase MakeScalarRow(TEditorNodeCreateInfo<LPhysicsBody> const& Info
+    , LPhysicsBodyEditorStatePtr const& State
+    , LString Name
+    , LStringView Tooltip
+    , std::optional<f32> Default
+    , TGetter Getter
+    , TSetter Setter
+    ) noexcept
+{
+    EJxxFieldFlags const Flags{MakeRowFlags(Info.Flags, true)};
+    bool const bResettable{JxxFieldBits::IsEditorEditable(Flags) && Default.has_value()};
+    auto Row{std::make_shared<LPhysicsBodyScalarRow>()};
+    LPhysicsBody* Body{State->Body};
+    f32 const Initial{Body->IsValid() ? Getter(std::as_const(*Body)) : 0.0f};
+
+    State->Refreshers.emplace_back([Row, Body, Getter, Default, bResettable]
+    {
+        check(Row->Input && Row->ResetButton)
+        if (!Body->IsValid())
+        {
+            return;
+        }
+        if (f32 const Value{Getter(std::as_const(*Body))}; Value != static_cast<f32>(Row->Input->Get<f64>()))
+        {
+            Row->Input->Set(static_cast<f64>(Value), false);
+            Row->ResetButton->SetEnabled(bResettable && Value != *Default);
+        }
+    });
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Tooltip})
+    [
+        EditorComponentLabel(Flags, Info.Viewport, std::move(Name), Row)
+        + EditorComponentContentWrapper(Flags, Info.Viewport, Row)
+        [
+            NewNode(Info.Viewport).Class<WInput_Vector1>(static_cast<f64>(Initial)).SaveTo(&Row->Input)
+                .Anchor(EAnchor::HFill)
+                .Enabled(JxxFieldBits::IsEditorEditable(Flags))
+                .OnVectorChanged([Row, Body, Setter, Default, bResettable](WInput_Vector1& Self)
+                {
+                    f32 const Value{static_cast<f32>(Self.Get<f64>())};
+                    if (Body->IsValid())
+                    {
+                        Setter(*Body, Value);
+                    }
+                    check(Row->ResetButton)
+                    Row->ResetButton->SetEnabled(bResettable && Value != *Default);
+                })
+        ]
+        + EditorResetButton(Flags, Info.Viewport, bResettable && Body->IsValid() && Initial != *Default, [Row, Default](WButton& Self)
+        {
+            check(Row->Input)
+            check(Default)
+            Row->Input->Set(static_cast<f64>(*Default));
+        }, LEditorRowState::Lambda<WButton>(Row)).SaveTo(&Row->ResetButton)
+    ];
+}
+
+//# Editable row for a vector that the simulation changes every tick. Resetting sets the vector to zero.
+template<typename TGetter, typename TSetter>
+NODISCARD Detail::LNodeFactoryBase MakeVectorRow(TEditorNodeCreateInfo<LPhysicsBody> const& Info
+    , LPhysicsBodyEditorStatePtr const& State
+    , LString Name
+    , LStringView Tooltip
+    , bool bEditable
+    , TGetter Getter
+    , TSetter Setter
+    ) noexcept
+{
+    EJxxFieldFlags const Flags{MakeRowFlags(Info.Flags, bEditable)};
+    bool const bResettable{JxxFieldBits::IsEditorEditable(Flags)};
+    auto Row{std::make_shared<LPhysicsBodyVectorRow>()};
+    LPhysicsBody* Body{State->Body};
+    LVec3D const Initial{Body->IsValid() ? LVec3D{Getter(std::as_const(*Body))} : maths::zero_vector<LVec3D>};
+
+    State->Refreshers.emplace_back([Row, Body, Getter, bResettable]
+    {
+        check(Row->Input && Row->ResetButton)
+        if (!Body->IsValid())
+        {
+            return;
+        }
+        if (LVec3D const Value{Getter(std::as_const(*Body))}; Value != Row->Input->Get<f64>())
+        {
+            Row->Input->Set(Value, false);
+            Row->ResetButton->SetEnabled(bResettable && Value != maths::zero_vector<LVec3D>);
+        }
+    });
+
+    return NewNode(Info.Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Tooltip})
+    [
+        EditorComponentLabel(Flags, Info.Viewport, std::move(Name), Row)
+        + EditorComponentContentWrapper(Flags, Info.Viewport, Row)
+        [
+            NewNode(Info.Viewport).Class<WInput_Vector3>(Initial).SaveTo(&Row->Input)
+                .Anchor(EAnchor::HFill)
+                .Enabled(JxxFieldBits::IsEditorEditable(Flags))
+                .OnVectorChanged([Row, Body, Setter, bResettable](WInput_Vector3& Self)
+                {
+                    LVec3D const Value{Self.Get<f64>()};
+                    if (Body->IsValid())
+                    {
+                        Setter(*Body, LWorldVec3{Value});
+                    }
+                    check(Row->ResetButton)
+                    Row->ResetButton->SetEnabled(bResettable && Value != maths::zero_vector<LVec3D>);
+                })
+        ]
+        + EditorResetButton(Flags, Info.Viewport, bResettable && Initial != maths::zero_vector<LVec3D>, [Row](WButton& Self)
+        {
+            check(Row->Input)
+            Row->Input->Set(maths::zero_vector<LVec3D>);
+        }, LEditorRowState::Lambda<WButton>(Row)).SaveTo(&Row->ResetButton)
+    ];
+}
+
+} /* ~Namespace <Anonymous> */
+
+} /* ~Namespace Jafg */
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LPhysicsBody>(TEditorNodeCreateInfo<LPhysicsBody> const& Info) noexcept
+{
+    check(Info.Owner)
+    ARigidComponent& Comp{Info.Owner->AsStatic<ARigidComponent>()};
+
+    auto State{std::make_shared<LPhysicsBodyEditorState>(LPhysicsBodyEditorState{.Comp = &Comp, .Body = &Info.Field})};
+
+    //# Velocities cannot be set on static bodies. Bodies in the simulation go through the body interface, so that
+    //# they are woken up if they are sleeping.
+    bool const bMovable{Info.Field.IsValid() && !Info.Field.IsStatic()};
+
+    /* Defaults are the ones of JPH::BodyCreationSettings. */
+    auto Factory{
+          MakeTextRow(Info, State, "Body", "Index and sequence number of the native body.", [](LPhysicsBody const& Body)
+            {
+                LPhysicsBodyId const Id{Body.GetID()};
+                return algo::sprintf("{} (seq {})", Id.GetIndex(), Id.GetSequenceNumber());
+            })
+        + MakeTextRow(Info, State, "Body Type", "Whether this is a rigid or a soft body.", [](LPhysicsBody const& Body) -> LString
+            {
+                return Body.IsRigidBody() ? "Rigid" : "Soft";
+            })
+        + MakeTextRow(Info, State, "Motion Type", "Motion type of the native body. Change the component's motion to recreate the body with another one.", [](LPhysicsBody const& Body)
+            {
+                return serde::to_string(Body.GetMotionType());
+            })
+        + MakeTextRow(Info, State, "Object Layer", "Determines which other objects this body collides with.", [](LPhysicsBody const& Body)
+            {
+                return serde::to_string(Body.GetObjectLayer());
+            })
+        + MakeTextRow(Info, State, "Broad Phase Layer", "Determines in which broad phase sub-tree this body is placed.", [](LPhysicsBody const& Body)
+            {
+                return serde::to_string(Body.GetBroadPhaseLayer());
+            })
+        + MakeBoolRow(Info, State, "In Simulation", "Whether this body has been added to the physics system.", false, std::nullopt, [Comp=&Comp](LPhysicsBody const& Body)
+            {
+                return Comp->IsAddedToSimulation();
+            }, [](LPhysicsBody& Body, bool bValue) {})
+        + MakeBoolRow(Info, State, "Active", "Whether this body is currently simulating (true) or sleeping (false).", false, std::nullopt, [](LPhysicsBody const& Body)
+            {
+                return Body.IsActive();
+            }, [](LPhysicsBody& Body, bool bValue) {})
+        + MakeVectorRow(Info, State, "Linear Velocity", "World space linear velocity of the center of mass (m/s).", bMovable, [](LPhysicsBody const& Body)
+            {
+                return Body.GetLinearVelocity();
+            }, [Comp=&Comp](LPhysicsBody& Body, LWorldVec3 const& Velocity)
+            {
+                if (Body.IsStatic())
+                {
+                    return;
+                }
+                if (Comp->IsAddedToSimulation())
+                {
+                    Comp->SetLinearVelocity(Velocity);
+                }
+                else
+                {
+                    Body.SetLinearVelocity(Velocity);
+                }
+            })
+        + MakeVectorRow(Info, State, "Angular Velocity", "World space angular velocity of the center of mass (rad/s).", bMovable, [](LPhysicsBody const& Body)
+            {
+                return Body.GetAngularVelocity();
+            }, [Comp=&Comp](LPhysicsBody& Body, LWorldVec3 const& Velocity)
+            {
+                if (Body.IsStatic())
+                {
+                    return;
+                }
+                if (Comp->IsAddedToSimulation())
+                {
+                    Comp->GetParentPhysicsSystem()->GetBodyInterfaceNoLock().SetAngularVelocity(Body->GetID()
+                        , JPH::Vec3{static_cast<float>(Velocity.x), static_cast<float>(Velocity.y), static_cast<float>(Velocity.z)});
+                }
+                else
+                {
+                    Body.SetAngularVelocity(Velocity);
+                }
+            })
+        + MakeScalarRow(Info, State, "Friction", "Usually between 0 and 1. 0 is no friction, 1 is a friction force equal to the force that presses the two bodies together.", 0.2f, [](LPhysicsBody const& Body)
+            {
+                return Body.GetFriction();
+            }, [](LPhysicsBody& Body, f32 Value)
+            {
+                Body.SetFriction(Value);
+            })
+        + MakeScalarRow(Info, State, "Restitution", "Usually between 0 and 1. 0 is a completely inelastic, 1 a completely elastic collision response.", 0.0f, [](LPhysicsBody const& Body)
+            {
+                return Body.GetRestitution();
+            }, [](LPhysicsBody& Body, f32 Value)
+            {
+                Body.SetRestitution(Value);
+            })
+        + MakeBoolRow(Info, State, "Allow Sleeping", "Whether this body can go to sleep. Disabling it does not wake up a sleeping body.", true, true, [](LPhysicsBody const& Body)
+            {
+                return Body.GetAllowSleeping();
+            }, [](LPhysicsBody& Body, bool bValue)
+            {
+                Body.SetAllowSleeping(bValue);
+            })
+        + MakeBoolRow(Info, State, "Sensor", "A sensor receives collision callbacks but causes no collision response.", true, false, [](LPhysicsBody const& Body)
+            {
+                return Body.IsSensor();
+            }, [](LPhysicsBody& Body, bool bValue)
+            {
+                Body.SetIsSensor(bValue);
+            })
+        + MakeBoolRow(Info, State, "Collide Kinematic vs Non-Dynamic", "Whether kinematic bodies generate contacts against other kinematic or static bodies.", true, false, [](LPhysicsBody const& Body)
+            {
+                return Body.GetCollideKinematicVsNonDynamic();
+            }, [](LPhysicsBody& Body, bool bValue)
+            {
+                Body.SetCollideKinematicVsNonDynamic(bValue);
+            })
+        + MakeBoolRow(Info, State, "Manifold Reduction", "Whether contacts with similar normals from different sub shapes are combined.", true, true, [](LPhysicsBody const& Body)
+            {
+                return Body.GetUseManifoldReduction();
+            }, [](LPhysicsBody& Body, bool bValue)
+            {
+                Body.SetUseManifoldReduction(bValue);
+            })
+        + MakeBoolRow(Info, State, "Gyroscopic Force", "Whether the gyroscopic force is applied to this body (Dzhanibekov effect).", true, false, [](LPhysicsBody const& Body)
+            {
+                return Body.GetApplyGyroscopicForce();
+            }, [](LPhysicsBody& Body, bool bValue)
+            {
+                Body.SetApplyGyroscopicForce(bValue);
+            })
+        + MakeBoolRow(Info, State, "Enhanced Edge Removal", "Extra effort to remove ghost contacts with internal edges of a mesh. More expensive.", true, false, [](LPhysicsBody const& Body)
+            {
+                return Body.GetEnhancedInternalEdgeRemoval();
+            }, [](LPhysicsBody& Body, bool bValue)
+            {
+                Body.SetEnhancedInternalEdgeRemoval(bValue);
+            })
+        };
+
+    if (Info.UpdateValue)
+    {
+        check(!*Info.UpdateValue)
+        *Info.UpdateValue = [State]
+        {
+            for (auto& Refresh: State->Refreshers)
+            {
+                check(!!Refresh)
+                Refresh();
+            }
+        };
+    }
+
+    return Factory;
+}
+
 #if JAFG_DO_CHECKS
 void Jafg::ARigidComponent::OnAttach(AActor& InOwner)
 {
@@ -504,7 +939,7 @@ void Jafg::ARigidComponent::OnGarbage(EJxxRecordTearDownReason Reason)
     }
 }
 
-void Jafg::ARigidComponent::SetPhysicsLayer(EPhysicsLayer::value_type Layer)
+void Jafg::ARigidComponent::SetPhysicsLayer(EPhysicsLayer Layer)
 {
     check(!this->RigidObject.IsValid() && "Not implemented yet.")
     this->Layer = Layer;
@@ -530,7 +965,7 @@ void Jafg::ARigidComponent::MakeSphere(f32 Radius)
         JPH::RVec3{WorldTransform.t.x, WorldTransform.t.y, WorldTransform.t.z},
         {WorldTransform.r.x, WorldTransform.r.y, WorldTransform.r.z, WorldTransform.r.w},
         JPH::EMotionType{std::to_underlying(this->Motion)},
-        this->Layer,
+        std::to_underlying(this->Layer),
         };
     CreateSettings.mUserData = ::MakeBodyUserData(*this);
     this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));
@@ -557,7 +992,7 @@ void Jafg::ARigidComponent::MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius /* =
         JPH::RVec3{WorldTransform.t.x, WorldTransform.t.y, WorldTransform.t.z},
         {WorldTransform.r.x, WorldTransform.r.y, WorldTransform.r.z, WorldTransform.r.w},
         JPH::EMotionType{std::to_underlying(this->Motion)},
-        this->Layer,
+        std::to_underlying(this->Layer),
         };
     CreateSettings.mUserData = ::MakeBodyUserData(*this);
     this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));
@@ -583,23 +1018,118 @@ void Jafg::ARigidComponent::MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius /* = 
         check(Mesh.HasConvex())
     }
 
-    LWorldTrans WorldTransform{this->GetWorldTransformSlow()};
-    check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
+    LWorldVec3 const WorldScale{this->GetWorldScaleSlow()};
+    check(WorldScale.x == WorldScale.y && WorldScale.x == WorldScale.z)
 
     TArray<LVec3F> const& Hull{Mesh.GetConvexHull()};
+    TArray<LVec3F> Points;
+    Points.reserve(Hull.size());
+    for (LVec3F const& Point: Hull)
+    {
+        Points.emplace_back(LVec3F{Point * LVec3F{WorldScale}});
+    }
+
+    this->MakeConvexFromPoints(Points, ConvexRadius);
+}
+
+void Jafg::ARigidComponent::MakeConvex(ERigidComponentConvexWalker Walker, f32 ConvexRadius /* = Physx::DefaultConvexRadius */)
+{
+    check(Tasks::IsOnMasterThread())
+
+    LWorldTrans const WorldTransform{this->GetWorldTransformSlow()};
+    check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
+    LWorldQuat const InverseRotation{maths::inverse(WorldTransform.r)};
+
+    TArray<LVec3F> Points;
+    std::size_t MeshCount{};
+
+    auto AddMesh{[&](AStaticMeshComponent& Comp)
+    {
+        if (!Comp.IsMeshValid())
+        {
+            LOG_WARNING(LogPhysics, "Static mesh component has no mesh.")
+            return;
+        }
+
+        LStaticMesh& Mesh{Comp.GetMutableMesh()};
+        if (!Mesh.HasConvex())
+        {
+            LOG_WARNING(LogPhysics, "[{}]: Mesh has no convex hull. Consider loading the mesh with [EStaticMeshStateBits::Convex]."
+                , Mesh.GetPath()
+                )
+            Mesh.ReloadConvex();
+            check(Mesh.HasConvex())
+        }
+
+        /* Mesh space -> world space -> unrotated and untranslated space of this component (but still scaled). */
+        LWorldTrans const MeshTransform{Comp.GetWorldTransformSlow()};
+        TArray<LVec3F> const& Hull{Mesh.GetConvexHull()};
+        Points.reserve(Points.size() + Hull.size());
+        for (LVec3F const& Point: Hull)
+        {
+            LWorldVec3 const World{MeshTransform.r * (MeshTransform.s * LWorldVec3{Point}) + MeshTransform.t};
+            Points.emplace_back(LVec3F{InverseRotation * (World - WorldTransform.t)});
+        }
+
+        ++MeshCount;
+    }};
+
+    //# Only static mesh components are walked into. @return Whether the walk is done.
+    auto Walk{[&](this auto const& Self, ASceneComponent const& Parent) -> bool
+    {
+        for (auto const& Child: Parent.GetChildren())
+        {
+            auto* Comp{DynamicCast<AStaticMeshComponent>(&*Child)};
+            if (!Comp)
+            {
+                continue;
+            }
+
+            AddMesh(*Comp);
+
+            if (Walker == ERigidComponentConvexWalker::First && MeshCount > 0)
+            {
+                return true;
+            }
+            if (Walker != ERigidComponentConvexWalker::Direct && Self(*Comp))
+            {
+                return true;
+            }
+        }
+        return false;
+    }};
+    Walk(*this);
+
+    if (Points.empty())
+    {
+        LOG_WARNING(LogPhysics, "Found no static mesh with a convex hull while walking [{}]. Keeping the current rigid object."
+            , serde::to_string(Walker)
+            )
+        return;
+    }
+
+    this->MakeConvexFromPoints(Points, ConvexRadius);
+}
+
+void Jafg::ARigidComponent::MakeConvexFromPoints(TArray<LVec3F> const& Hull, f32 ConvexRadius)
+{
+    check(Tasks::IsOnMasterThread())
+
+    LWorldTrans const WorldTransform{this->GetWorldTransformSlow()};
+
     JPH::Array<JPH::Vec3> Points;
     Points.reserve(Hull.size());
     for (LVec3F const& Point: Hull)
     {
-        Points.emplace_back(Point.x * WorldTransform.s.x, Point.y * WorldTransform.s.y, Point.z * WorldTransform.s.z);
+        Points.emplace_back(Point.x, Point.y, Point.z);
     }
 
     JPH::ConvexHullShapeSettings const HullSettings{Points, ConvexRadius};
     JPH::ShapeSettings::ShapeResult const HullResult{HullSettings.Create()};
     if (HullResult.HasError())
     {
-        LOG_FATAL(LogPhysics, "[{}]: Failed to create convex hull from [{}] points: {}."
-            , Mesh.GetPath(), Points.size(), HullResult.GetError().c_str()
+        LOG_FATAL(LogPhysics, "Failed to create convex hull from [{}] points: {}."
+            , Points.size(), HullResult.GetError().c_str()
             )
     }
 
@@ -611,7 +1141,7 @@ void Jafg::ARigidComponent::MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius /* = 
         JPH::RVec3{WorldTransform.t.x, WorldTransform.t.y, WorldTransform.t.z},
         {WorldTransform.r.x, WorldTransform.r.y, WorldTransform.r.z, WorldTransform.r.w},
         JPH::EMotionType{std::to_underlying(this->Motion)},
-        this->Layer,
+        std::to_underlying(this->Layer),
         };
     CreateSettings.mUserData = ::MakeBodyUserData(*this);
     this->RigidObject = LPhysicsBody::FromNative(Interface.CreateBody(CreateSettings));

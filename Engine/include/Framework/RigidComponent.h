@@ -11,6 +11,20 @@ namespace Jafg
 
 struct LStaticMesh;
 
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LPhysicsBody>(TEditorNodeCreateInfo<LPhysicsBody> const& Info) noexcept;
+
+SERDE_DECLARE_TRIVIAL_ENUM(ERigidComponentConvexWalker, u8,
+    //#
+    //# Find all children and make a convex hull from their meshes, recursively.
+    //# Will not walk non-static meshes.
+    //#
+    DirectRecursive,
+    //# Find all direct children and make a convex hull from their meshes.
+    Direct,
+    //# Find the first mesh and make a convex hull from it.
+    First
+    )
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API ARigidComponent : public ASceneComponent
 {
@@ -31,14 +45,15 @@ public:
 
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
 
-    void SetPhysicsLayer(EPhysicsLayer::value_type Layer);
-    NODISCARD FORCEINLINE constexpr EPhysicsLayer::value_type GetPhysicsLayer() const noexcept { return this->Layer; }
+    void SetPhysicsLayer(EPhysicsLayer Layer);
+    NODISCARD FORCEINLINE constexpr EPhysicsLayer GetPhysicsLayer() const noexcept { return this->Layer; }
     void SetPhysicsMotion(EPhysicsMotion Motion);
     NODISCARD FORCEINLINE constexpr EPhysicsMotion GetPhysicsMotion() const noexcept { return this->Motion; }
 
     void MakeSphere(f32 Radius);
     void MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius = Physx::DefaultConvexRadius);
     void MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius = Physx::DefaultConvexRadius);
+    void MakeConvex(ERigidComponentConvexWalker Walker = ERigidComponentConvexWalker::DirectRecursive, f32 ConvexRadius = Physx::DefaultConvexRadius);
 
     bool IsAddedToSimulation() const noexcept;
     //# The simulation moves the body in world space. Attached actors cannot be simulated.
@@ -61,11 +76,22 @@ private:
     void AddToWorldRigidComponents() noexcept;
     void RemoveFromWorldRigidComponents() noexcept;
 
-    EPhysicsLayer::value_type Layer{ EPhysicsLayer::Static };
+    void DestroyRigidObject() noexcept;
+
+    //#
+    //# (Re)creates the rigid object as a convex hull around the given points.
+    //# @param Hull Points relative to the world translation and rotation of this component, but already scaled
+    //#             by its world scale.
+    //#
+    void MakeConvexFromPoints(TArray<LVec3F> const& Hull, f32 ConvexRadius);
+
+    CLASS_FIELD(EditorVisible)
+    EPhysicsLayer Layer{ EPhysicsLayer::Static };
+    CLASS_FIELD(EditorVisible)
     EPhysicsMotion Motion{ EPhysicsMotion::Static };
 
+    CLASS_FIELD(EditorEditable)
     LPhysicsBody RigidObject;
-    void DestroyRigidObject() noexcept;
 
 public:
 

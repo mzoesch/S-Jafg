@@ -12,18 +12,16 @@ struct LPhysicsSubsystem;
 
 } /* ~Namespace Detail */
 
-enum struct EPhysicsMotion: u8
-{
-    //# Non movable.
+SERDE_DECLARE_TRIVIAL_ENUM(EPhysicsMotion, u8,
+    //# Non-movable.
     Static,
     //# Movable using velocities only, does not respond to forces.
     Kinematic,
     //# Responds to forces as a normal physics object.
-    Dynamic,
-};
+    Dynamic
+    )
 
-enum struct EPhysicsMotionQuality: u8
-{
+SERDE_DECLARE_TRIVIAL_ENUM(EPhysicsMotionQuality, u8,
     //# Update the body in discrete steps. Body will tunnel through thin objects if its velocity is high enough.
     //# This is the cheapest way of simulating a body.
     Discrete,
@@ -40,40 +38,29 @@ enum struct EPhysicsMotionQuality: u8
     //# that may in the end not happen. This happens between bodies that are using casting: If bodies A and B collide at t1
     //# and B and C collide at t2 where t2 < t1 and A and C don't collide. In this case you may receive an incorrect contact
     //# point added callback between A and B (which will be removed the next frame).
-    LinearCast,
-};
-
-namespace EPhysicsLayer
-{
+    LinearCast
+    )
 
 #ifndef JAFG_PHYSICS_LAYER_BITS
     #error "JAFG_PHYSICS_LAYER_BITS is not defined."
 #elif JAFG_PHYSICS_LAYER_BITS == 16
-    typedef u16 value_type;
+    typedef u16 PhysicsLayerValueType;
 #elif JAFG_PHYSICS_LAYER_BITS == 32
-    typedef u32 value_type;
+    typedef u32 PhysicsLayerValueType;
 #else /* JAFG_PHYSICS_LAYER_BITS != 16 && JAFG_PHYSICS_LAYER_BITS != 32 */
     #error "JAFG_PHYSICS_LAYER_BITS is invalid."
 #endif /* JAFG_PHYSICS_LAYER_BITS != 16 && JAFG_PHYSICS_LAYER_BITS != 32 */
+SERDE_DECLARE_TRIVIAL_ENUM(EPhysicsLayer, PhysicsLayerValueType,
+    Static,
+    Dynamic,
+    Count
+    )
 
-inline constexpr value_type Static{ 0 };
-inline constexpr value_type Dynamic{ 1 };
-
-inline constexpr value_type Count{ 2 };
-
-} /* ~Namespace PhysicsLayer */
-
-namespace EPhysicsBroadPhase
-{
-
-typedef u8 value_type;
-
-inline constexpr value_type Static{ 0 };
-inline constexpr value_type Dynamic{ 1 };
-
-inline constexpr value_type Count{ 2 };
-
-} /* ~Namespace PhysicsBroadPhase */
+SERDE_DECLARE_TRIVIAL_ENUM(EPhysicsBroadPhase, u8,
+    Static,
+    Dynamic,
+    Count
+    )
 
 namespace Physx
 {

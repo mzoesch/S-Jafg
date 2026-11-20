@@ -110,6 +110,7 @@ struct LStaticMesh final
     enum struct EResult
     {
         Success,
+        Empty,
         FileNotFound,
         FailedToOpen,
         FailedToRead,
