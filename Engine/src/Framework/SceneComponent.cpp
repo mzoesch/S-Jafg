@@ -58,6 +58,19 @@ void Jafg::ASceneComponent::OnAttach(AActor& InOwner)
     }
 }
 
+std::optional<LWorldReal> Jafg::ASceneComponent::TraceNonPhysical(LWorldMagRay3 const& Ray) const
+{
+    if (this->Aabb.empty())
+    {
+        return {};
+    }
+    if (auto const Hit{maths::aabb_intersect_ray(Ray, this->Aabb.apply(this->GetWorldTransformSlow()))}; Hit.bHit)
+    {
+        return Hit.Enter;
+    }
+    return {};
+}
+
 Jafg::AWorldObject& Jafg::ASceneComponent::CloneImpl(AWorldObject* Object) const noexcept
 {
     auto& Result{Super::CloneImpl(Object).AsStatic<AActor>()};

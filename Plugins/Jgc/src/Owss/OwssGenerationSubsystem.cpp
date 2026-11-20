@@ -7,6 +7,8 @@
 #include "Framework/TextureSubsystem.h"
 #include "Framework/Frontend.h"
 #include "Framework/StaticMeshComponent.h"
+#include "Framework/MeshSubsystem.h"
+#include "Framework/MeshSceneProjection.h"
 #include "Framework/Actor.h"
 #include "Framework/LightComponent.h"
 #include "Framework/RigidComponent.h"
@@ -100,11 +102,12 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
         Rigid.SetLocalTranslationByTeleport(Where);
         Rigid.SetLocalRotatorByTeleport(Orientation);
 
-        Actor.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Actor.GetRootComponent(), [&](Jafg::AStaticMeshComponent& Comp)
-        {
-            Comp.SetMesh(JgcInfo/"Vehicles/SVS26/SVS26.glb", Jafg::EStaticMeshStateBits::PhysicsReady);
-            Comp.SetPbrMaterialInstance(this->MaterialInstance);
-        });
+        this->GetMutableEngine().GetSubsystemChecked<Jafg::JMeshSubsystem>()->LoadAndProjectScene(
+              JgcInfo/"Vehicles/SVS26/SVS26.glb"
+            , Rigid
+            , {.PbrMaterialInstance = this->MaterialInstance}
+            , Jafg::EStaticMeshStateBits::PhysicsReady
+            );
 
         /*
          * The view while driving. Behind and slightly above the ship. It hangs on a spring: Accelerations push it

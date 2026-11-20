@@ -1971,26 +1971,35 @@ void Jafg::WEditorWorldViewer::FocusActors()
 
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    auto GetAabb{[](AActor& Actor) noexcept -> std::optional<LWorldAabb3>
+    /* The selected component and everything attached to it. Not necessarily the whole actor. */
+    auto GetAabb{[](std::pair<AActor*,AActorComponent*> const& Selected) noexcept -> std::optional<LWorldAabb3>
     {
-        LWorldAabb3 Aabb{Actor.GetTransformedActorAabb()};
-        if (Aabb.empty())
+        check(Selected.first)
+        ASceneComponent const* Comp{Selected.second ? Selected.second->As<ASceneComponent>() : nullptr};
+        if (!Comp)
         {
-            return {};
+            if (!Selected.first->HasRootComponent())
+            {
+                return {};
+            }
+            Comp = &Selected.first->GetRootComponent();
         }
-        if (Aabb.squared_diagonal_length() < static_cast<LWorldReal>(0.01))
+
+        LWorldAabb3 Aabb{Comp->GetTransitiveComponentAabb()};
+        if (Aabb.empty() || Aabb.squared_diagonal_length() < static_cast<LWorldReal>(0.01))
         {
+            /* Nothing (or nearly nothing) to look at (e.g., an empty scene component). Focus where it is. */
             return LWorldAabb3{
                 .min=LWorldVec3{static_cast<LWorldReal>(-0.1)},
                 .max=LWorldVec3{static_cast<LWorldReal>(0.1)}
-                }.apply(Actor.GetRootComponent().GetLocalTransform());
+                }.apply(Comp->GetWorldTransformSlow());
         }
         return Aabb;
     }};
-    auto Aabb{GetAabb(*this->SelectedActors.front().first)};
+    auto Aabb{GetAabb(this->SelectedActors.front())};
     for (auto Idx{1uz}; Idx < this->SelectedActors.size(); ++Idx)
     {
-        auto Aabb2{GetAabb(*this->SelectedActors[Idx].first)};
+        auto Aabb2{GetAabb(this->SelectedActors[Idx])};
         if (!Aabb)
         {
             Aabb = Aabb2;
@@ -2297,16 +2306,37 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
 {
     check(!this->SelectedActors.empty())
 
-    TArray<AActor*> ValidActors; ValidActors.reserve(this->SelectedActors.size());
-    for (auto& Actor: this->SelectedActors)
+    /*
+     * Only what is selected is outlined: An actor as a whole if its root is selected. Else only the selected
+     * component and what is attached to it (what the gizmos move and what F focuses).
+     */
+    TArray<AActorComponent const*> Components;
+    for (auto const& [Actor, Comp]: this->SelectedActors)
     {
-        if (!Actor.first->IsA<APersonaController>())
+        if (Actor->IsA<APersonaController>())
         {
-            ValidActors.push_back(Actor.first);
+            continue;
+        }
+
+        bool const bWhole{!Comp
+            || !Comp->IsA<ASceneComponent>()
+            || !Actor->HasRootComponent()
+            || Comp == &Actor->GetRootComponent()
+            };
+        if (bWhole)
+        {
+            for (auto const& Each: Actor->GetComponents())
+            {
+                Components.push_back(&*Each);
+            }
+        }
+        else
+        {
+            Components.push_back(Comp);
         }
     }
 
-    if (!ValidActors.empty())
+    if (!Components.empty())
     {
         auto& Ctrl{*this->GetOwnedPersonaControllerChecked()};
 
@@ -2317,7 +2347,8 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
             .Eye = *Ctrl.GetView(),
             .Instance = &*this->SelectionMaterialInstance,
             .SharedSets = std::move(SharedSets),
-            .Filter = ValidActors,
+            .Filter = std::nullopt,
+            .ComponentFilter = &Components,
             .Preferences = this->GetWorldRenderPreferences(),
             .PolygonMode = this->GetPolygonMode(),
             .bUpdateWorldDataSet = false,
@@ -4723,6 +4754,19 @@ std::pair<Jafg::AActor*,Jafg::AActorComponent*> Jafg::AEditorPersonaControllerCo
     return Result;
 }
 
+Jafg::ASceneComponent& Jafg::AEditorPersonaControllerComponent::GetSelectedSceneComponent() const noexcept
+{
+    check(this->IsSelectedActorValid())
+    return this->SelectedActor.Actor.second->AsStatic<ASceneComponent>();
+}
+
+LWorldQuat Jafg::AEditorPersonaControllerComponent::GetLocalGridSpaceRotatorGizmoRotator() const noexcept
+{
+    return this->SelectedActor.Quaternion
+        ? *this->SelectedActor.Quaternion
+        : this->GetSelectedSceneComponent().GetWorldRotationSlow();
+}
+
 void Jafg::AEditorPersonaControllerComponent::SetHighlightedGizmoMesh(EGizmoMesh Mesh) noexcept
 {
     check(GEngine)
@@ -4827,16 +4871,17 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
         check(this->IsSelectedActorValid())
     }
 
-    auto& Comp{this->SelectedActor.Actor.second->AsStatic<ASceneComponent>()};
+    /* Not necessarily the root. Everything below is in world space and converted to the local space of it at the end. */
+    auto& Comp{this->GetSelectedSceneComponent()};
     this->SetTranslationForGizmos(Comp.GetWorldTranslationSlow());
 
     auto HandleGizmo{[&](EGizmoMesh Mesh, auto&& Handler)
     {
         this->UsedGizmoMesh = Mesh;
-        this->SelectedActor.Quaternion = Comp.GetLocalRotator();
+        this->SelectedActor.Quaternion = Comp.GetWorldRotationSlow();
 
         Origin.Node.GetViewport().EmplaceUntil<ERawInputStateBits::Release>(Origin.Event.PhysicalKey,
-        [this,Mesh,Extent=Extent,N=&Origin.Node,Handler,OriginTransform=this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetLocalTransform()
+        [this,Mesh,Extent=Extent,N=&Origin.Node,Handler,OriginTransform=Comp.GetLocalTransform(),OriginWorldRotator=Comp.GetWorldRotationSlow()
             ,MDelta=std::optional<LVec2F>{},LDelta=std::optional<LWorldReal>{},Delta=std::optional<LWorldVec3>{}
             ,LastCursor=std::optional<LVec2F>{},DiscardedCursor=maths::zero_vector<LVec2F>](LRawInput const& Input) mutable
         {
@@ -4890,7 +4935,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }}()};
                 if (N->IsGridSpaceLocal())
                 {
-                    GizmoPlane.normal = OriginTransform.r * GizmoPlane.normal;
+                    GizmoPlane.normal = OriginWorldRotator * GizmoPlane.normal;
                 }
                 if (*Prefs.EditorVisualizeGizmoInteractions)
                 {
@@ -4947,7 +4992,7 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 }}()};
                 if (N->IsGridSpaceLocal())
                 {
-                    GizmoRay = OriginTransform.r * GizmoRay;
+                    GizmoRay = OriginWorldRotator * GizmoRay;
                 }
                 if (*Prefs.EditorVisualizeGizmoInteractions)
                 {
@@ -5015,11 +5060,20 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
         {
             if (Viewer->IsTranslationGridSnapEnabled())
             {
-                f32 Snap{Viewer->GetTranslationGridSnap()};
-                check(Snap > 0.0f)
-                auto Dir{Point - this->GizmoMeshes[Mesh].GetTranslation()};
-                Dir = maths::normalize(Dir) * (maths::round(maths::magnitude(Dir) / Snap) * Snap);
-                Point = this->GizmoMeshes[Mesh].GetTranslation() + Dir;
+                auto const Snap{static_cast<LWorldReal>(Viewer->GetTranslationGridSnap())};
+                check(Snap > 0)
+                /*
+                 * Every axis of the grid (world or local) is snapped on its own, relative to where the component is.
+                 * Snapping only the length of the movement would leave the grid for every movement that is not
+                 * along exactly one axis (e.g., on a plane).
+                 */
+                LWorldQuat const GridRotator{Viewer->IsGridSpaceLocal()
+                    ? this->GetSelectedSceneComponent().GetWorldRotationSlow()
+                    : maths::identity<LWorldQuat>
+                    };
+                LWorldVec3 const Current{this->GizmoMeshes[Mesh].GetTranslation()};
+                LWorldVec3 const Steps{maths::round((maths::inverse(GridRotator) * (Point - Current)) / Snap) * Snap};
+                Point = Current + GridRotator * Steps;
             }
 
             auto& Surface{Viewer->GetViewport().GetSurface()};
@@ -5034,17 +5088,10 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 Surface.SetInputMode(EInputModeBits::ShowMouseCursor);
             }
 
-            if (auto* Parent{this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetTransformParent()})
-            {
-                auto ParentTranslation{Parent->GetWorldTranslationSlow()};
-                auto RelativePoint{Point - ParentTranslation};
-                this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().SetLocalTranslationByTeleport(RelativePoint);
-            }
-            else
-            {
-                this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().SetLocalTranslationByTeleport(Point);
-            }
-            this->SetTranslationForGizmos(this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetWorldTranslationSlow());
+            /* The point is in world space. Respects the rotation and scale of the transform parent (if any). */
+            auto& Selected{this->GetSelectedSceneComponent()};
+            Selected.SetWorldTranslationByTeleport(Point);
+            this->SetTranslationForGizmos(Selected.GetWorldTranslationSlow());
         }
 
         return Result;
@@ -5061,38 +5108,27 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
             Delta = maths::round(Delta / Snap) * Snap;
         }
 
-        if (Mesh == RotateR)
+        LWorldVec3 const Axis{[&]{ switch (Mesh)
         {
-            if (Viewer->IsGridSpaceLocal())
-            {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>));
-            }
-            else
-            {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(maths::angle_axis(maths::radians(Delta), maths::unit_vector_x<LWorldVec3>) * T.r);
-            }
+            case RotateR: return maths::unit_vector_x<LWorldVec3>;
+            case RotateY: return maths::unit_vector_y<LWorldVec3>;
+            case RotateP: return maths::unit_vector_z<LWorldVec3>;
+            default: LOG_FATAL(LogEditor, "Invalid gizmo index [{}].", std::to_underlying(Mesh))
+        }}()};
+        auto const Rotation{maths::angle_axis(maths::radians(Delta), Axis)};
+
+        auto& Selected{this->GetSelectedSceneComponent()};
+        if (Viewer->IsGridSpaceLocal())
+        {
+            /* Around an axis of the component itself. Independent of its transform parent. */
+            Selected.SetLocalRotatorByTeleport(T.r * Rotation);
         }
-        else if (Mesh == RotateY)
+        else
         {
-            if (Viewer->IsGridSpaceLocal())
-            {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>));
-            }
-            else
-            {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(maths::angle_axis(maths::radians(Delta), maths::unit_vector_y<LWorldVec3>) * T.r);
-            }
-        }
-        else if (Mesh == RotateP)
-        {
-            if (Viewer->IsGridSpaceLocal())
-            {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(T.r * maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>));
-            }
-            else
-            {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalRotatorByTeleport(maths::angle_axis(maths::radians(Delta), maths::unit_vector_z<LWorldVec3>) * T.r);
-            }
+            /* Around a world axis. #T is local, so it is lifted into world space first. */
+            auto const* Parent{Selected.GetTransformParent()};
+            LWorldQuat const ParentRotator{Parent ? Parent->GetWorldRotationSlow() : maths::identity<LWorldQuat>};
+            Selected.SetWorldRotatorByTeleport(Rotation * (ParentRotator * T.r));
         }
 
         return {};
@@ -5113,29 +5149,31 @@ void Jafg::AEditorPersonaControllerComponent::TraceForGizmo(EGizmoMesh Mesh, LWo
                 Delta = maths::round(Delta / Snap) * Snap;
             }
 
+            /* Scales are always along the axes of the component itself. */
+            auto& Selected{this->GetSelectedSceneComponent()};
             if (Mesh == ScaleX || Mesh == ScaleX_Var)
             {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,0,0});
+                Selected.SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,0,0});
             }
             else if (Mesh == ScaleY || Mesh == ScaleY_Var)
             {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{0,Delta,0});
+                Selected.SetLocalScaleByTeleport(T.s + LWorldVec3{0,Delta,0});
             }
             else if (Mesh == ScaleZ || Mesh == ScaleZ_Var)
             {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{0,0,Delta});
+                Selected.SetLocalScaleByTeleport(T.s + LWorldVec3{0,0,Delta});
             }
             else if (Mesh == PlaneXY)
             {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,Delta,0});
+                Selected.SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,Delta,0});
             }
             else if (Mesh == PlaneXZ)
             {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,0,Delta});
+                Selected.SetLocalScaleByTeleport(T.s + LWorldVec3{Delta,0,Delta});
             }
             else if (Mesh == PlaneYZ)
             {
-                this->SelectedActor.Actor.first->GetRootComponent().SetLocalScaleByTeleport(T.s + LWorldVec3{0,Delta,Delta});
+                Selected.SetLocalScaleByTeleport(T.s + LWorldVec3{0,Delta,Delta});
             }
             else
             {
@@ -5294,7 +5332,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         {
             for (auto& Mesh: std::array{X,Y,Z,})
             {
-                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator());
+                this->GizmoMeshes[Mesh].SetRotator(this->GetSelectedSceneComponent().GetWorldRotationSlow());
             }
         }
         else
@@ -5317,24 +5355,15 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         maths::octant Octant;
         if (this->SelectedActor.Viewer->IsGridSpaceLocal())
         {
-            LWorldQuat Q;
-            if (this->SelectedActor.Quaternion)
-            {
-                Q = *this->SelectedActor.Quaternion;
-            }
-            else
-            {
-                Q = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator();
-            }
             Octant = maths::get_angled_octant(
-                  this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetWorldTranslationSlow()
-                , Q
+                  this->GetSelectedSceneComponent().GetWorldTranslationSlow()
+                , this->GetLocalGridSpaceRotatorGizmoRotator()
                 , Info.PerspectiveEye.translation
                 );
         }
         else
         {
-            Octant = maths::get_octant(this->SelectedActor.Actor.second->AsStatic<ASceneComponent>().GetWorldTranslationSlow(), Info.PerspectiveEye.translation);
+            Octant = maths::get_octant(this->GetSelectedSceneComponent().GetWorldTranslationSlow(), Info.PerspectiveEye.translation);
         }
 
         auto R{GetGizmoRotation<RotateR,LWorldReal,world_qual>(Octant)};
@@ -5343,18 +5372,10 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
 
         if (this->SelectedActor.Viewer->IsGridSpaceLocal())
         {
-            if (this->SelectedActor.Quaternion)
-            {
-                R = *this->SelectedActor.Quaternion * R;
-                Y = *this->SelectedActor.Quaternion * Y;
-                P = *this->SelectedActor.Quaternion * P;
-            }
-            else
-            {
-                R = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator() * R;
-                Y = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator() * Y;
-                P = this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator() * P;
-            }
+            LWorldQuat const Q{this->GetLocalGridSpaceRotatorGizmoRotator()};
+            R = Q * R;
+            Y = Q * Y;
+            P = Q * P;
         }
 
         UpdateTint(RotateR, *Prefs.EditorAxisTintX);
@@ -5382,7 +5403,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         {
             for (auto& Mesh: std::array{X,Y,Z,})
             {
-                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator());
+                this->GizmoMeshes[Mesh].SetRotator(this->GetSelectedSceneComponent().GetWorldRotationSlow());
             }
         }
         else
@@ -5411,7 +5432,7 @@ void Jafg::AEditorPersonaControllerComponent::RenderGizmo(LActorRenderInfo const
         {
             for (auto& Mesh: std::array{PlaneXY,PlaneXZ,PlaneYZ,})
             {
-                this->GizmoMeshes[Mesh].SetRotator(this->SelectedActor.Actor.first->GetRootComponent().GetLocalRotator());
+                this->GizmoMeshes[Mesh].SetRotator(this->GetSelectedSceneComponent().GetWorldRotationSlow());
             }
         }
         else
@@ -5588,11 +5609,18 @@ void Jafg::AEditorCameraComponent::OnTrace(WEditorWorldViewer& Viewer, bool bMul
         else
         {
             /*
-             * TODO: When hitting an actor. We want to always select said actor, not a subcomponent.
-             *       Only maybe when double clicking a specific sub-component select it.
+             * The first click on an actor selects it as a whole (its root). Clicking it again, while it is the only
+             * selected actor, selects the component under the cursor (e.g., a mesh of it).
              */
-            // if double_click: Viewer.SelectActors({{&Hit.Actor, &Hit.Component.AsStatic<ASceneComponent>()}}); else:
-            Viewer.SelectActors({{&Hit.Actor, &Hit.Actor.GetRootComponent()}});
+            auto const& Selected{Viewer.GetSelectedActors()};
+            if (Selected.size() == 1uz && Selected.front().first == &Hit.Actor)
+            {
+                Viewer.SelectActors({{&Hit.Actor, &Hit.Component}});
+            }
+            else
+            {
+                Viewer.SelectActors({{&Hit.Actor, &Hit.Actor.GetRootComponent()}});
+            }
         }
     }
     if (!bHit && !bMultiselect)

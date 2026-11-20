@@ -246,6 +246,16 @@ public:
     }
     NODISCARD constexpr LWorldAabb3 const& GetAabbForThisComponentOnly() const noexcept { return this->Aabb; }
 
+    //#
+    //# Traces the ray against this component only (not its children) for non-physical traces, e.g., clicks in the
+    //# editor. @see #LWorld::LineTraceNonPhysical
+    //# The default tests the aabb of this component. That is right for components without a geometry of their own
+    //# (e.g., lights). Components with a geometry override this to trace it precisely.
+    //# @return The parameter along the ray (in multiples of its direction) of the closest hit in
+    //#         [0, Ray.magnitude]. Empty if missed.
+    //#
+    NODISCARD virtual std::optional<LWorldReal> TraceNonPhysical(LWorldMagRay3 const& Ray) const;
+
     NODISCARD FORCEINLINE TArray<TJxxUnique<ASceneComponent>> const& GetChildren() const noexcept { return this->Children; }
 
     //# Emplace a new default scene component to this component.
@@ -299,7 +309,7 @@ public:
         if (this->IsOwningActorValid())
         {
             checkCode(this->_check_EmplaceRuntimeComponentPreCondition())
-            Result.OnAttach(*this);
+            Result.OnAttach(this->GetOwningActor());
         }
         return Result;
     }
@@ -319,7 +329,7 @@ public:
         if (this->IsOwningActorValid())
         {
             checkCode(this->_check_EmplaceRuntimeComponentPreCondition())
-            Result.OnAttach(*this);
+            Result.OnAttach(this->GetOwningActor());
         }
         return Result;
     }

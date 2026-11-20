@@ -15,6 +15,7 @@ struct LStaticMeshRenderable
     void Render(LActorRenderInfo const& Info) const;
     void ForceRenderWithOwnedMaterial(LActorRenderInfo const& Info) const;
 
+    //# The only mesh of the file. @see #JMeshSubsystem::LoadMesh
     ENGINE_API void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
     void SetMesh(LStaticMeshRef Mesh) noexcept
     {

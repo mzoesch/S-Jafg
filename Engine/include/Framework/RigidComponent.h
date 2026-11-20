@@ -10,6 +10,7 @@ namespace Jafg
 {
 
 struct LStaticMesh;
+class AStaticMeshComponent;
 
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LPhysicsBody>(TEditorNodeCreateInfo<LPhysicsBody> const& Info) noexcept;
 
@@ -54,6 +55,11 @@ public:
     void MakeBox(LWorldVec3 HalfExtent, f32 ConvexRadius = Physx::DefaultConvexRadius);
     void MakeConvex(LStaticMesh& Mesh, f32 ConvexRadius = Physx::DefaultConvexRadius);
     void MakeConvex(ERigidComponentConvexWalker Walker = ERigidComponentConvexWalker::DirectRecursive, f32 ConvexRadius = Physx::DefaultConvexRadius);
+    //#
+    //# Makes one convex hull around the meshes of all given components. Their current transforms relative to this
+    //# component are respected. They do not have to be children of this component (but usually are).
+    //#
+    void MakeConvex(std::span<AStaticMeshComponent* const> Meshes, f32 ConvexRadius = Physx::DefaultConvexRadius);
 
     bool IsAddedToSimulation() const noexcept;
     //# The simulation moves the body in world space. Attached actors cannot be simulated.
@@ -62,6 +68,13 @@ public:
     void RemoveFromSimulation();
 
     void SetLinearVelocity(LWorldVec3 const& Velocity);
+
+    //#
+    //# The shape of a rigid component usually only approximates the meshes attached to it (e.g., a convex hull).
+    //# They are traced on their own. Therefore, only a rigid component without any static mesh in its hierarchy (an
+    //# invisible collider) is traced; against its shape.
+    //#
+    NODISCARD virtual std::optional<LWorldReal> TraceNonPhysical(LWorldMagRay3 const& Ray) const override;
 
     void SetRigidObject(LPhysicsBody RigidObject) noexcept { this->RigidObject = std::move(RigidObject); }
     NODISCARD FORCEINLINE constexpr LPhysicsBody GetRigidObject() const noexcept { return this->RigidObject; }

@@ -23,6 +23,7 @@ namespace Jafg
 
 class LLocalEgo;
 class AActor;
+class AActorComponent;
 class ASkybox;
 class LViewport;
 class LEngine;
@@ -207,6 +208,11 @@ public:
         algo::transparent_unordered_string_map<rhi::mapped_device_buffer*> SharedBuffers;
         //# An optional filter to only draw a subset of actors.
         std::optional<TArray<AActor*>> const& Filter;
+        //#
+        //# An optional filter to only draw a subset of components (each with what is attached to it), e.g., a single
+        //# selected component of an actor. Mutually exclusive with #Filter. Must outlive the call.
+        //#
+        TArray<AActorComponent const*> const* ComponentFilter{};
 
         EWorldRenderFlags Preferences{ EWorldRenderBits::All };
         EPolygonMode PolygonMode{ EPolygonMode::Fill };
@@ -279,6 +285,10 @@ public:
         //#
         bool bSingleHit:1{};
     };
+    //#
+    //# Traces the ray against what is in the world instead of the physics simulation (e.g., for clicks in the
+    //# editor). Every scene component is traced on its own. @see #ASceneComponent::TraceNonPhysical
+    //#
     NODISCARD TArray<LHitResult> LineTraceNonPhysical(LWorldMagRay3 const& Ray, TraceConfig const& Config) const;
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)

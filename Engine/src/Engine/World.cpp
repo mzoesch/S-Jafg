@@ -418,7 +418,23 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
 
     ActorInfo.CommandBuffer.setPolygonModeEXT(ActorInfo.DefaultPerspectivePolygonMode);
 
-    if (DrawInfo.Filter)
+    if (DrawInfo.ComponentFilter)
+    {
+        check(!DrawInfo.Filter && "Filters are mutually exclusive.")
+        check(!DrawInfo.ComponentFilter->empty())
+        for (AActorComponent const* Comp: *DrawInfo.ComponentFilter)
+        {
+            check(Comp)
+            check(!Comp->_IsGarbage())
+            check(&Comp->GetOwningActor().GetOuter() == this)
+            if (Comp->ShouldRender())
+            {
+                /* Scene components render their children themselves. */
+                Comp->Render(ActorInfo);
+            }
+        }
+    }
+    else if (DrawInfo.Filter)
     {
         check(!DrawInfo.Filter->empty())
         for (auto* Actor: *DrawInfo.Filter)
@@ -472,7 +488,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
     }
 
     //# The skybox cannot be rendered with any other material than its own.
-    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !DrawInfo.Filter && !DrawInfo.Instance)
+    if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !DrawInfo.Filter && !DrawInfo.ComponentFilter && !DrawInfo.Instance)
     {
         this->Skybox->RenderSkybox(ActorInfo);
     }
@@ -776,19 +792,14 @@ TArray<Jafg::LHitResult> Jafg::LWorld::LineTraceNonPhysical(LWorldMagRay3 const&
                     check(Actor->HasRootComponent())
                     auto TraverseActor{[&](this auto&& Self, ASceneComponent& Comp) -> void
                     {
-                        if (!Comp.GetAabbForThisComponentOnly().empty())
+                        /* Every component knows best how to trace itself (meshes precisely, the rest by aabb). */
+                        if (auto const Parameter{Comp.TraceNonPhysical(Ray)})
                         {
-                            if (auto Intersection{maths::aabb_intersect_ray(
-                                Ray,
-                                Comp.GetAabbForThisComponentOnly().apply(Comp.GetWorldTransformSlow())
-                                )}; Intersection.bHit)
-                            {
-                                Results.push_back({
-                                    .Actor = *Actor,
-                                    .Component = Comp,
-                                    .GlobalWorldLocation = Intersection.EnterPoint,
-                                    });
-                            }
+                            Results.push_back({
+                                .Actor = *Actor,
+                                .Component = Comp,
+                                .GlobalWorldLocation = Ray.origin + Ray.direction * *Parameter,
+                                });
                         }
                         for (auto& Child: Comp.GetChildren())
                         {

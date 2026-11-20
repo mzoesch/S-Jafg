@@ -11,6 +11,7 @@
 #include "Framework/TextureSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
 #include "../Framework/PhysicsForeignCore.h"
+#include "Gltf.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -31,8 +32,6 @@
 #endif /* JAFG_WITH_GCC */
     #define TINYOBJLOADER_IMPLEMENTATION
     #include <tiny_obj_loader.h>
-    #define TINYGLTF3_IMPLEMENTATION
-    #include "tiny_gltf_v3.h"
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic pop
 #endif /* JAFG_WITH_CLANG */
@@ -40,413 +39,10 @@
     #pragma GCC diagnostic pop
 #endif /* JAFG_WITH_GCC */
 
-static_assert(sizeof(uint8_t) == sizeof(u8));
-static_assert(sizeof(uint16_t) == sizeof(u16));
-static_assert(sizeof(uint32_t) == sizeof(u32));
-
 namespace
 {
 
 Jafg::LVertexInputRegistrator<Jafg::LStaticMesh::Vertex> _{};
-
-NODISCARD inline f32 ReadComponentAsFloat(uint8_t const* Data, i32 ComponentType, bool Normalized) noexcept
-{
-    switch (ComponentType)
-    {
-        case TG3_COMPONENT_TYPE_BYTE:
-        {
-            i8 Component; std::memcpy(&Component, Data, sizeof(Component));
-            return Normalized
-                ? (Component / 127.0f < -1.0f
-                    ? -1.0f
-                    : Component / 127.0f)
-                : static_cast<f32>(Component);
-        }
-        case TG3_COMPONENT_TYPE_UNSIGNED_BYTE:
-        {
-            u8 Component; std::memcpy(&Component, Data, sizeof(Component));
-            return Normalized
-                ? Component / 255.0f
-                : static_cast<f32>(Component);
-        }
-        case TG3_COMPONENT_TYPE_SHORT:
-        {
-            i16 Component; std::memcpy(&Component, Data, sizeof(Component));
-            return Normalized
-                ? (Component / 32767.0f < -1.0f
-                    ? -1.0f
-                    : Component / 32767.0f)
-                : static_cast<f32>(Component);
-        }
-        case TG3_COMPONENT_TYPE_UNSIGNED_SHORT:
-        {
-            u16 Component; std::memcpy(&Component, Data, sizeof(Component));
-            return Normalized
-                ? Component / 65535.0f
-                : static_cast<f32>(Component);
-        }
-        case TG3_COMPONENT_TYPE_UNSIGNED_INT:
-        {
-            u32 Component; std::memcpy(&Component, Data, sizeof(Component));
-            return static_cast<f32>(Component);
-        }
-        case TG3_COMPONENT_TYPE_FLOAT:
-        {
-            float Component; std::memcpy(&Component, Data, sizeof(f32));
-            return Component;
-        }
-        default:
-        {
-            LOG_FATAL(LogRhi, "Unsupported gltf component type [{}].", ComponentType)
-        }
-    }
-}
-
-NODISCARD inline bool ReadAccessorFloats(
-      tg3_model const& Model, i32 AccessorIdx
-    , i32 TargetComponentCount
-    , TArray<f32>* Result
-    )
-{
-    check(Result)
-
-    if (AccessorIdx < 0 || static_cast<decltype(Model.accessors_count)>(AccessorIdx) >= Model.accessors_count)
-    {
-        return false;
-    }
-
-    tg3_accessor const& Accessor{Model.accessors[AccessorIdx]};
-
-    /* Sparse-only / bufferView-less accessors are not handled here; zero-fill instead
-       of failing so that a mesh with e.g. sparse morph-only data is still allowed to loads. */
-    if (Accessor.buffer_view < 0)
-    {
-        Result->assign(static_cast<size_t>(Accessor.count) * TargetComponentCount, 0.0f);
-        return true;
-    }
-
-    tg3_buffer_view const& BufferView{Model.buffer_views[Accessor.buffer_view]};
-    tg3_buffer const& Buffer{Model.buffers[BufferView.buffer]};
-    if (!Buffer.data.data)
-    {
-        /* Unresolved external buffer. */
-        return false;
-    }
-
-    auto ComponentNumber{tg3_num_components(Accessor.type)};
-    auto ComponentSize{tg3_component_size(Accessor.component_type)};
-    auto Stride{tg3_accessor_byte_stride(&Accessor, &BufferView)};
-    if (ComponentNumber <= 0 || ComponentSize <= 0 || Stride <= 0)
-    {
-        return false;
-    }
-
-    uint8_t const* Base{Buffer.data.data + BufferView.byte_offset + Accessor.byte_offset};
-
-    Result->resize(static_cast<size_t>(Accessor.count) * TargetComponentCount);
-    for (decltype(Accessor.count) Idx{}; Idx < Accessor.count; ++Idx)
-    {
-        uint8_t const* Element{Base + Idx * static_cast<uint64_t>(Stride)};
-        for (i32 ComponentIdx{}; ComponentIdx < TargetComponentCount; ++ComponentIdx)
-        {
-            f32 Value{};
-            if (ComponentIdx < ComponentNumber)
-            {
-                Value = ::ReadComponentAsFloat(Element + ComponentIdx * ComponentSize, Accessor.component_type, Accessor.normalized != 0);
-            }
-            else if (ComponentIdx == 3)
-            {
-                /* Sane default alpha/w for accessors read as a LVec4F. */
-                Value = 1.0f;
-            }
-            (*Result)[Idx * TargetComponentCount + ComponentIdx] = Value;
-        }
-    }
-    return true;
-}
-
-NODISCARD inline bool ReadIndices(tg3_model const& Model, i32 AccessorIndex, TArray<u32>* Result)
-{
-    check(Result)
-
-    if (AccessorIndex < 0 || static_cast<uint32_t>(AccessorIndex) >= Model.accessors_count)
-    {
-        return false;
-    }
-
-    tg3_accessor const& Accessor{Model.accessors[AccessorIndex]};
-    if (Accessor.buffer_view < 0)
-    {
-        return false;
-    }
-
-    tg3_buffer_view const& BufferView{Model.buffer_views[Accessor.buffer_view]};
-    tg3_buffer const& Buffer{Model.buffers[BufferView.buffer]};
-    if (!Buffer.data.data)
-    {
-        return false;
-    }
-
-    auto Stride{tg3_accessor_byte_stride(&Accessor, &BufferView)};
-    if (Stride <= 0)
-    {
-        return false;
-    }
-
-    uint8_t const* Base{Buffer.data.data + BufferView.byte_offset + Accessor.byte_offset};
-
-    Result->resize(Accessor.count);
-    for (auto Idx{0uz}; Idx < Accessor.count; ++Idx)
-    {
-        uint8_t const* Element{Base + Idx * static_cast<uint64_t>(Stride)};
-        switch (Accessor.component_type)
-        {
-            case TG3_COMPONENT_TYPE_UNSIGNED_BYTE:
-            {
-                u8 v; std::memcpy(&v, Element, sizeof(v));
-                (*Result)[Idx] = v;
-                break;
-            }
-            case TG3_COMPONENT_TYPE_UNSIGNED_SHORT:
-            {
-                u16 v; std::memcpy(&v, Element, sizeof(v));
-                (*Result)[Idx] = v;
-                break;
-            }
-            case TG3_COMPONENT_TYPE_UNSIGNED_INT:
-            {
-                u32 v; std::memcpy(&v, Element, sizeof(v));
-                (*Result)[Idx] = v;
-                break;
-            }
-            default:
-            {
-                /* The gltf spec disallows singed/float component types for indices. */
-                (*Result)[Idx] = 0;
-                break;
-            }
-        }
-    }
-    return true;
-}
-
-inline Jafg::LStaticMesh::EResult PullGltfMesh(LPath const& Path, TArray<Jafg::LStaticMesh::HostMesh>& Result)
-{
-    STAT_FUNCTION()
-    check(Result.empty())
-
-    std::ifstream F{Path, std::ios::binary|std::ios::ate};
-    if (!F)
-    {
-        return Jafg::LStaticMesh::EResult::FailedToOpen;
-    }
-    auto FSize{F.tellg()};
-    F.seekg(0, std::ios::beg);
-
-    std::vector<std::byte> Data(static_cast<size_t>(FSize));
-    if (FSize > 0 && !F.read(reinterpret_cast<char*>(Data.data()), FSize))
-    {
-        return Jafg::LStaticMesh::EResult::FailedToRead;
-    }
-
-    tg3_parse_options Options;
-    tg3_parse_options_init(&Options);
-    //# Skip image decoding.
-    Options.images_as_is = 1;
-    //# Parse only what we know.
-    Options.skip_extras_values = 1;
-    //# Only parse valid trees. Maybe disable in shipping?
-    Options.validate_indices = 1;
-
-    tg3_error_stack Errors;
-    tg3_error_stack_init(&Errors);
-
-    tg3_model Model{};
-    Model.default_scene = -1;
-
-    if (tg3_error_code Error{tg3_parse_glb(
-          &Model, &Errors
-        , reinterpret_cast<uint8_t*>(Data.data()), Data.size(),
-        /* base_dir */ "", 0
-        , &Options
-        )};
-        Error != TG3_OK || tg3_errors_has_error(&Errors))
-    {
-        decltype(tg3_errors_count(&Errors)) ErrorCount{tg3_errors_count(&Errors)};
-        for (decltype(tg3_errors_count(&Errors)) Idx{}; Idx < ErrorCount; ++Idx)
-        {
-            const tg3_error_entry* Entry{tg3_errors_get(&Errors, Idx)};
-            if (Entry)
-            {
-                switch (Entry->severity)
-                {
-                case TG3_SEVERITY_INFO:
-                {
-                    LOG_VERBOSE(LogRhi, "[gltf] [{}]: {}", std::to_underlying(Entry->code), Entry->message ? Entry->message  : "Unknown message.")
-                    break;
-                }
-                case TG3_SEVERITY_WARNING:
-                {
-                    LOG_WARNING(LogRhi, "[gltf] [{}]: {}", std::to_underlying(Entry->code), Entry->message ? Entry->message : "Unknown message." )
-                    break;
-                }
-                case TG3_SEVERITY_ERROR:
-                {
-                    LOG_ERROR(LogRhi, "[gltf] [{}]: {}", std::to_underlying(Entry->code), Entry->message ? Entry->message : "Unknown message." )
-                    break;
-                }
-                }
-            }
-            else
-            {
-                LOG_TRACE(LogRhi, "[gltf] unknown error.")
-            }
-        }
-        tg3_error_stack_free(&Errors);
-        tg3_model_free(&Model);
-        return Jafg::LStaticMesh::EResult::LoadingError;
-    }
-
-    Result.reserve(Model.meshes_count);
-
-    for (decltype(Model.meshes_count) MeshIdx{}; MeshIdx < Model.meshes_count; ++MeshIdx)
-    {
-        tg3_mesh const& SrcMesh{Model.meshes[MeshIdx]};
-
-        Jafg::LStaticMesh::HostMesh DstMesh;
-        DstMesh.Name.assign(SrcMesh.name.data, SrcMesh.name.len);
-        DstMesh.Primitives.reserve(SrcMesh.primitives_count);
-
-        for (decltype(SrcMesh.primitives_count) PrimitiveIdx{}; PrimitiveIdx < SrcMesh.primitives_count; ++PrimitiveIdx)
-        {
-            tg3_primitive const& SrcPrimitive{SrcMesh.primitives[PrimitiveIdx]};
-
-            auto PrimitiveMode{SrcPrimitive.mode < 0 ? TG3_MODE_TRIANGLES : SrcPrimitive.mode};
-            if (PrimitiveMode != TG3_MODE_TRIANGLES)
-            {
-                LOG_WARNING(LogRhi, "[{}]: Skipping primitive [{}::{}] with unsupported mode [{}]."
-                    , Path, DstMesh.Name, PrimitiveIdx, PrimitiveMode)
-                continue;
-            }
-
-            static_assert(std::is_signed_v<decltype(SrcPrimitive.attributes[0].value)>);
-            decltype(SrcPrimitive.attributes[0].value) PositionAttributeIdx{-1};
-            decltype(SrcPrimitive.attributes[0].value) NormalAttributeIdx{-1};
-            decltype(SrcPrimitive.attributes[0].value) TexCoordAttributeIdx{-1};
-            decltype(SrcPrimitive.attributes[0].value) TangentAttributeIdx{-1};
-            for (decltype(SrcPrimitive.attributes_count) AttributeIdx{}; AttributeIdx < SrcPrimitive.attributes_count; ++AttributeIdx)
-            {
-                tg3_str_int_pair const& Attribute{SrcPrimitive.attributes[AttributeIdx]};
-                if (tg3_str_equals_cstr(Attribute.key, "POSITION"))
-                {
-                    PositionAttributeIdx  = Attribute.value;
-                }
-                else if (tg3_str_equals_cstr(Attribute.key, "NORMAL"))
-                {
-                    NormalAttributeIdx = Attribute.value;
-                }
-                else if (tg3_str_equals_cstr(Attribute.key, "TEXCOORD_0"))
-                {
-                    TexCoordAttributeIdx  = Attribute.value;
-                }
-                else if (tg3_str_equals_cstr(Attribute.key, "TANGENT"))
-                {
-                    TangentAttributeIdx  = Attribute.value;
-                }
-            }
-
-            if (PositionAttributeIdx < 0)
-            {
-                LOG_WARNING(LogRhi, "[{}]: Skipping primitive [{}::{}] with no POSITION attribute."
-                    , Path, DstMesh.Name, PrimitiveIdx)
-                continue;
-            }
-
-            TArray<f32> Positions;
-            TArray<f32> Normals;
-            TArray<f32> TexCoords;
-            TArray<f32> Tangents;
-            if (!::ReadAccessorFloats(Model, PositionAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::Position)::length(), &Positions))
-            {
-                continue;
-            }
-
-            const bool bValidNormals{NormalAttributeIdx >= 0 &&
-                ::ReadAccessorFloats(Model, NormalAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::Normal)::length(), &Normals)};
-            const bool bValidTexCoords{TexCoordAttributeIdx >= 0 &&
-                ::ReadAccessorFloats(Model, TexCoordAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::TexCoord)::length(), &TexCoords)};
-            const bool bValidTangents{TangentAttributeIdx >= 0 &&
-                ::ReadAccessorFloats(Model, TangentAttributeIdx, decltype(Jafg::LStaticMesh::Vertex::Tangent)::length(), &Tangents)};
-
-            const size_t VertexCount{Positions.size() / 3uz};
-
-            Jafg::LStaticMesh::HostPrimitive Primitive;
-            Primitive.Vertices.resize(VertexCount);
-            for (auto Vertex{0uz}; Vertex < VertexCount; ++Vertex)
-            {
-                Jafg::LStaticMesh::Vertex& DstVertex{Primitive.Vertices[Vertex]};
-                DstVertex.Position = LVec3F{Positions[Vertex * 3 + 0], Positions[Vertex * 3 + 1], Positions[Vertex * 3 + 2]};
-                if (bValidNormals)
-                {
-                    DstVertex.Normal = LVec3F{Normals[Vertex * 3 + 0], Normals[Vertex * 3 + 1], Normals[Vertex * 3 + 2]};
-                }
-                else
-                {
-                    DstVertex.Normal = maths::zero_vector<LVec3F>;
-                }
-                if (bValidTexCoords)
-                {
-                    DstVertex.TexCoord = LVec2F{TexCoords[Vertex * 2 + 0], TexCoords[Vertex * 2 + 1]};
-                }
-                else
-                {
-                    DstVertex.TexCoord = maths::zero_vector<LVec2F>;
-                }
-                if (bValidTangents)
-                {
-                    DstVertex.Tangent = LVec4F{Tangents[Vertex * 4 + 0], Tangents[Vertex * 4 + 1], Tangents[Vertex * 4 + 2], Tangents[Vertex * 4 + 3]};
-                }
-                else
-                {
-                    DstVertex.Tangent = maths::zero_vector<LVec4F>;
-                }
-            }
-
-            if (SrcPrimitive.indices >= 0)
-            {
-                if (!::ReadIndices(Model, SrcPrimitive.indices, &Primitive.Indices))
-                {
-                    Primitive.Indices.clear();
-                }
-            }
-            else
-            {
-                /* TODO: Not optimal. Can we merge verticies maybe? */
-                Primitive.Indices.resize(VertexCount);
-                for (auto VertexIdx{0uz}; VertexIdx < VertexCount; ++VertexIdx)
-                {
-                    Primitive.Indices[VertexIdx] = static_cast<uint32_t>(VertexIdx);
-                }
-            }
-
-            DstMesh.Primitives.push_back(std::move(Primitive));
-        }
-
-        Result.push_back(std::move(DstMesh));
-    }
-
-    tg3_error_stack_free(&Errors);
-    tg3_model_free(&Model);
-
-    Result.shrink_to_fit();
-
-    if (Result.empty())
-    {
-        return Jafg::LStaticMesh::EResult::Empty;
-    }
-
-    return Jafg::LStaticMesh::EResult::Success;
-}
 
 } /* ~Namespace <Anonymous> */
 
@@ -470,7 +66,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                 NewNode(Info.Viewport).Class<WEditableTextButton>()
                     .Anchor(EAnchor::HFill)
                     .Palette(*Prefs.InputPaletteSolid)
-                    .Content(Info.Field ? Info.Field->GetPath().string() : "<not-set>")
+                    .Content(Info.Field ? algo::sprintf("{}", Info.Field->GetSource()) : "<not-set>")
                 + NewNode(Info.Viewport).Class<WTextButtonIconizedDouble>()
                     .Palette(*Prefs.SecondaryPaletteSolid)
                     .Content("Browse")
@@ -522,7 +118,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                                     NewState |= EStaticMeshStateBits::Convex;
                                 }
 
-                                Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->FromFile(Path, NewState);
+                                Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Path, NewState);
                             }
 
                             return LNodeReply::Handled();
@@ -543,32 +139,45 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
     ];
 }
 
-void Jafg::LStaticMesh::BringToState(EStaticMeshState State)
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::BringToState(EStaticMeshState State)
 {
-    bool bWasOnHost{this->IsOnHost()};
-    if (State & EStaticMeshStateBits::Host || ((State & EStaticMeshStateBits::Device) && !this->IsOnDevice()))
+    return this->BringToState(State, [this](TArray<HostMesh>& Out) -> EResult
     {
-        if (!this->IsOnHost())
+        return this->PullHostFromSource(Out);
+    });
+}
+
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::BringToState(EStaticMeshState State, LPullHost const& PullHost)
+{
+    bool const bWasOnHost{this->IsOnHost()};
+    bool const bNeedsHost{
+           (State & EStaticMeshStateBits::Host)
+        || ((State & EStaticMeshStateBits::Device) && !this->IsOnDevice())
+        || ((State & EStaticMeshStateBits::Convex) && !this->HasConvex())
+        };
+
+    if (bNeedsHost && !bWasOnHost)
+    {
+        if (auto Result{this->LoadToHost(false, PullHost)}; Result != EResult::Success)
         {
-            auto Result{this->LoadToHost(false)};
-            jassert(Result == LStaticMesh::EResult::Success)
+            return Result;
         }
     }
-    if (State & EStaticMeshStateBits::Convex && !this->HasConvex())
+    if ((State & EStaticMeshStateBits::Convex) && !this->HasConvex())
     {
         this->ReloadConvex();
     }
-    if (State & EStaticMeshStateBits::Device)
+    if ((State & EStaticMeshStateBits::Device) && !this->IsOnDevice())
     {
-        if (!this->IsOnDevice())
-        {
-            this->LoadToDevice();
-            if (!(State & EStaticMeshStateBits::Host) && !bWasOnHost)
-            {
-                this->FreeFromHost();
-            }
-        }
+        this->LoadToDevice();
     }
+    /* Host memory is orphaned if it was neither requested now nor by another client before. */
+    if (!(State & EStaticMeshStateBits::Host) && !bWasOnHost)
+    {
+        this->FreeFromHost();
+    }
+
+    return EResult::Success;
 }
 
 #if JAFG_WITH_EDITOR
@@ -578,7 +187,7 @@ void Jafg::LStaticMesh::Reload(EStaticMeshState State)
     {
         if (auto Result{this->LoadToHost(!!(State & EStaticMeshStateBits::Convex))}; Result != EResult::Success)
         {
-            LOG_FATAL(LogRhi, "[{}]: Failed to load mesh to host: {}.", this->Path, std::to_underlying(Result))
+            LOG_FATAL(LogRhi, "[{}]: Failed to load mesh to host: {}.", this->Source, std::to_underlying(Result))
         }
     }
     else if (!!(State & EStaticMeshStateBits::Convex))
@@ -597,29 +206,59 @@ void Jafg::LStaticMesh::Reload(EStaticMeshState State)
 }
 #endif /* JAFG_WITH_EDITOR */
 
-Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex)
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::PullHostFromSource(TArray<HostMesh>& Out) const
 {
-    STAT_FUNCTION()
-
-    check(!this->Path.empty())
-    LOG_VERBOSE(LogRhi, "[{}]: Loading static mesh.", this->Path)
-
-    if (!is_regular_file(this->Path))
+    if (!is_regular_file(this->Source.Path))
     {
         return EResult::FileNotFound;
     }
 
-    if (this->IsOnHost())
-    {
-        LOG_VERBOSE(LogRhi, "[{}]: Already loaded to host. Reloading.", this->Path)
-        this->HostMeshes.clear();
-    }
-    check(this->HostMeshes.empty())
-
-    if (auto Result{::PullGltfMesh(this->Path, this->HostMeshes)}; Result != EResult::Success)
+    Gltf::LModel Model;
+    if (auto Result{Gltf::Parse(this->Source.Path, Model)}; Result != EResult::Success)
     {
         return Result;
     }
+
+    return Gltf::PullMesh(Model, this->Source.Path, this->Source.MeshIdx, Out);
+}
+
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex)
+{
+    return this->LoadToHost(bLoadConvex, [this](TArray<HostMesh>& Out) -> EResult
+    {
+        return this->PullHostFromSource(Out);
+    });
+}
+
+Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex, LPullHost const& PullHost)
+{
+    STAT_FUNCTION()
+
+    check(!this->Source.Path.empty())
+    LOG_VERBOSE(LogRhi, "[{}]: Loading static mesh.", this->Source)
+
+    /* Pulled aside first. A failed reload keeps the current host data. */
+    TArray<HostMesh> Meshes;
+    if (auto Result{PullHost(Meshes)}; Result != EResult::Success)
+    {
+        return Result;
+    }
+    if (Meshes.empty())
+    {
+        return EResult::Empty;
+    }
+
+    if (this->IsOnHost())
+    {
+        LOG_VERBOSE(LogRhi, "[{}]: Already loaded to host. Reloading.", this->Source)
+    }
+    if (this->Source.MeshIdx && this->IsOnDevice() && this->DeviceMeshes.front().Name != Meshes.front().Name)
+    {
+        LOG_WARNING(LogRhi, "[{}]: The mesh index now refers to [{}] instead of [{}]. Did a re-export reorder the meshes?"
+            , this->Source, Meshes.front().Name, this->DeviceMeshes.front().Name)
+    }
+
+    this->HostMeshes = std::move(Meshes);
     check(this->IsOnHost())
     if constexpr (LogRhi.CompilesFor<ELogVerbosity::Trace>)
     {
@@ -633,7 +272,7 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex)
                 SS << "    Primitive: Vertices: " << Primitive.Vertices.size() << ", Indices: " << Primitive.Indices.size() << "\n";
             }
         }
-        LOG_TRACE(LogRhi, "[{}]: {}", this->Path, SS.str())
+        LOG_TRACE(LogRhi, "[{}]: {}", this->Source, SS.str())
     }
 
     {
@@ -653,12 +292,113 @@ Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex)
         }
     }
 
+#if JAFG_WITH_EDITOR
+    this->BuildTraceGeometry();
+#endif /* JAFG_WITH_EDITOR */
+
     if (bLoadConvex)
     {
         this->ReloadConvex();
     }
 
     return EResult::Success;
+}
+
+void Jafg::LStaticMesh::BuildTraceGeometry()
+{
+    STAT_FUNCTION()
+    check(this->IsOnHost())
+
+    this->TracePositions.clear();
+    this->TraceIndices.clear();
+
+    {
+        size_t NumPositions{0};
+        size_t NumIndices{0};
+        for (auto const& Mesh: this->HostMeshes)
+        {
+            for (auto const& Primitive: Mesh.Primitives)
+            {
+                NumPositions += Primitive.Vertices.size();
+                NumIndices += Primitive.Indices.size();
+            }
+        }
+        this->TracePositions.reserve(NumPositions);
+        this->TraceIndices.reserve(NumIndices);
+    }
+
+    for (auto const& Mesh: this->HostMeshes)
+    {
+        for (auto const& Primitive: Mesh.Primitives)
+        {
+            auto const Base{static_cast<u32>(this->TracePositions.size())};
+            for (auto const& Vertex: Primitive.Vertices)
+            {
+                this->TracePositions.push_back(Vertex.Position);
+            }
+            for (auto Idx{0uz}; Idx + 2 < Primitive.Indices.size(); Idx += 3)
+            {
+                u32 const A{Primitive.Indices[Idx + 0]};
+                u32 const B{Primitive.Indices[Idx + 1]};
+                u32 const C{Primitive.Indices[Idx + 2]};
+                if (A >= Primitive.Vertices.size() || B >= Primitive.Vertices.size() || C >= Primitive.Vertices.size())
+                {
+                    /* Malformed. Index values are not validated when parsing. */
+                    continue;
+                }
+                this->TraceIndices.push_back(Base + A);
+                this->TraceIndices.push_back(Base + B);
+                this->TraceIndices.push_back(Base + C);
+            }
+        }
+    }
+}
+
+std::optional<f32> Jafg::LStaticMesh::TraceTriangles(LVec3F const& Origin, LVec3F const& Direction, f32 MaxParameter) const noexcept
+{
+    STAT_FUNCTION()
+
+    /* Moeller-Trumbore. Brute force; fine for single traces like clicks. */
+    std::optional<f32> Closest;
+    f32 Best{MaxParameter};
+    for (auto Idx{0uz}; Idx + 2 < this->TraceIndices.size(); Idx += 3)
+    {
+        LVec3F const& A{this->TracePositions[this->TraceIndices[Idx + 0]]};
+        LVec3F const& B{this->TracePositions[this->TraceIndices[Idx + 1]]};
+        LVec3F const& C{this->TracePositions[this->TraceIndices[Idx + 2]]};
+
+        LVec3F const E1{B - A};
+        LVec3F const E2{C - A};
+        LVec3F const P{maths::cross(Direction, E2)};
+        f32 const Det{maths::dot(E1, P)};
+        if (maths::abs(Det) < std::numeric_limits<f32>::min())
+        {
+            /* Parallel to the triangle (or degenerate). */
+            continue;
+        }
+        f32 const InvDet{1.0f / Det};
+
+        LVec3F const S{Origin - A};
+        f32 const U{maths::dot(S, P) * InvDet};
+        if (U < 0.0f || U > 1.0f)
+        {
+            continue;
+        }
+        LVec3F const Q{maths::cross(S, E1)};
+        f32 const V{maths::dot(Direction, Q) * InvDet};
+        if (V < 0.0f || U + V > 1.0f)
+        {
+            continue;
+        }
+
+        if (f32 const T{maths::dot(E2, Q) * InvDet}; T >= 0.0f && T <= Best)
+        {
+            Best = T;
+            Closest = T;
+        }
+    }
+
+    return Closest;
 }
 
 void Jafg::LStaticMesh::ReloadConvex()
@@ -670,11 +410,11 @@ void Jafg::LStaticMesh::ReloadConvex()
     bool const bWasOnHost{this->IsOnHost()};
     if (!bWasOnHost)
     {
-        LOG_VERBOSE(LogRhi, "[{}]: Not on host. Temporarily loading from secondary storage to build convex hull.", this->Path)
+        LOG_VERBOSE(LogRhi, "[{}]: Not on host. Temporarily loading from secondary storage to build convex hull.", this->Source)
         if (auto Result{this->LoadToHost(false)}; Result != EResult::Success)
         {
             LOG_FATAL(LogRhi, "[{}]: Failed to load to host for convex hull generation: [{}]."
-                , this->Path, std::to_underlying(Result))
+                , this->Source, std::to_underlying(Result))
         }
     }
 
@@ -713,7 +453,7 @@ void Jafg::LStaticMesh::ReloadConvex()
     if (Result == JPH::ConvexHullBuilder::EResult::MaxVerticesReached)
     {
         LOG_TRACE(LogRhi, "[{}]: Convex hull reached the max vertex count of [{}]. The hull is an approximation."
-            , this->Path, this->MaxConvexVertices
+            , this->Source, this->MaxConvexVertices
             )
     }
     else if (Result != JPH::ConvexHullBuilder::EResult::Success)
@@ -721,23 +461,23 @@ void Jafg::LStaticMesh::ReloadConvex()
         if (Result == JPH::ConvexHullBuilder::EResult::TooFewPoints)
         {
             LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. The mesh has too few points: [{}]."
-                , this->Path, Error ? Error : "Unknown error."
+                , this->Source, Error ? Error : "Unknown error."
                 )
         }
         if (Result == JPH::ConvexHullBuilder::EResult::TooFewFaces)
         {
             LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. The mesh has too few faces: [{}]."
-                , this->Path, Error ? Error : "Unknown error."
+                , this->Source, Error ? Error : "Unknown error."
                 )
         }
         if (Result == JPH::ConvexHullBuilder::EResult::Degenerate)
         {
             LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. The mesh is degenerate: [{}]."
-                , this->Path, Error ? Error : "Unknown error."
+                , this->Source, Error ? Error : "Unknown error."
                 )
         }
         LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull. Unknown error: [{}]."
-            , this->Path, Error ? Error : "Unknown error."
+            , this->Source, Error ? Error : "Unknown error."
             )
     }
 
@@ -764,25 +504,25 @@ void Jafg::LStaticMesh::ReloadConvex()
     }
 
     LOG_VERBOSE(LogRhi, "[{}]: Built convex hull with [{}] vertices from [{}] vertices."
-        , this->Path, this->ConvexHull.size(), Positions.size()
+        , this->Source, this->ConvexHull.size(), Positions.size()
         )
 
     if (!this->HasConvex())
     {
         LOG_FATAL(LogRhi, "[{}]: Failed to build convex hull from [{}] vertices."
-            , this->Path, Positions.size()
+            , this->Source, Positions.size()
             )
     }
 }
 
 void Jafg::LStaticMesh::LoadToDevice()
 {
-    LOG_TRACE(LogRhi, "[{}]: Loading to device.", this->Path)
+    LOG_TRACE(LogRhi, "[{}]: Loading to device.", this->Source)
     check(this->IsOnHost())
 
     if (this->IsOnDevice())
     {
-        LOG_TRACE(LogRhi, "[{}]: Already loaded to device. Reloading.", this->Path)
+        LOG_TRACE(LogRhi, "[{}]: Already loaded to device. Reloading.", this->Source)
         this->FreeFromDevice();
     }
     check(this->DeviceMeshes.empty())

@@ -18,8 +18,14 @@ void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
 
 void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */)
 {
-    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState, std::move(Info));
+    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Mesh, MeshState, std::move(Info));
     this->Aabb = this->Mesh->GetAabb();
+}
+
+void Jafg::AStaticMeshComponent::SetMesh(LStaticMeshRef InMesh) noexcept
+{
+    this->Mesh = std::move(InMesh);
+    this->Aabb = this->Mesh ? this->Mesh->GetAabb() : maths::identity<LWorldAabb3>;
 }
 
 void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef Instance) noexcept
@@ -90,6 +96,40 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
     {
         this->Mesh->Render(Info, this->GetWorldTransformSlow(), &Preferred);
     }
+
+    /* E.g., meshes of a mesh scene that are attached to this mesh. */
+    Super::Render(Info);
+}
+
+std::optional<LWorldReal> Jafg::AStaticMeshComponent::TraceNonPhysical(LWorldMagRay3 const& Ray) const
+{
+    /* Cheap rejection first. */
+    auto const AabbHit{Super::TraceNonPhysical(Ray)};
+    if (!AabbHit || !this->Mesh || !this->Mesh->HasTraceGeometry())
+    {
+        return AabbHit;
+    }
+
+    LWorldTrans const World{this->GetWorldTransformSlow()};
+    LWorldVec3 const Scale{World.s};
+    if (Scale.x == 0 || Scale.y == 0 || Scale.z == 0)
+    {
+        return {};
+    }
+
+    /*
+     * Into mesh space. The direction is deliberately not normalized there: The parameter along the ray stays the
+     * same in both spaces.
+     */
+    LWorldQuat const InverseRotation{maths::inverse(World.r)};
+    LVec3F const Origin{(InverseRotation * (Ray.origin - World.t)) / Scale};
+    LVec3F const Direction{(InverseRotation * Ray.direction) / Scale};
+
+    if (auto const T{this->Mesh->TraceTriangles(Origin, Direction, static_cast<f32>(Ray.magnitude))})
+    {
+        return static_cast<LWorldReal>(*T);
+    }
+    return {};
 }
 
 void Jafg::LStaticMeshRenderable::Render(LActorRenderInfo const& Info) const
@@ -122,5 +162,5 @@ void Jafg::LStaticMeshRenderable::ForceRenderWithOwnedMaterial(LActorRenderInfo 
 void Jafg::LStaticMeshRenderable::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
 {
     check(GEngine)
-    this->Mesh = GEngine->GetSubsystemChecked<JMeshSubsystem>()->FromFile(Mesh, MeshState);
+    this->Mesh = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Mesh, MeshState);
 }

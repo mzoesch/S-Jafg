@@ -1036,43 +1036,7 @@ void Jafg::ARigidComponent::MakeConvex(ERigidComponentConvexWalker Walker, f32 C
 {
     check(Tasks::IsOnMasterThread())
 
-    LWorldTrans const WorldTransform{this->GetWorldTransformSlow()};
-    check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
-    LWorldQuat const InverseRotation{maths::inverse(WorldTransform.r)};
-
-    TArray<LVec3F> Points;
-    std::size_t MeshCount{};
-
-    auto AddMesh{[&](AStaticMeshComponent& Comp)
-    {
-        if (!Comp.IsMeshValid())
-        {
-            LOG_WARNING(LogPhysics, "Static mesh component has no mesh.")
-            return;
-        }
-
-        LStaticMesh& Mesh{Comp.GetMutableMesh()};
-        if (!Mesh.HasConvex())
-        {
-            LOG_WARNING(LogPhysics, "[{}]: Mesh has no convex hull. Consider loading the mesh with [EStaticMeshStateBits::Convex]."
-                , Mesh.GetPath()
-                )
-            Mesh.ReloadConvex();
-            check(Mesh.HasConvex())
-        }
-
-        /* Mesh space -> world space -> unrotated and untranslated space of this component (but still scaled). */
-        LWorldTrans const MeshTransform{Comp.GetWorldTransformSlow()};
-        TArray<LVec3F> const& Hull{Mesh.GetConvexHull()};
-        Points.reserve(Points.size() + Hull.size());
-        for (LVec3F const& Point: Hull)
-        {
-            LWorldVec3 const World{MeshTransform.r * (MeshTransform.s * LWorldVec3{Point}) + MeshTransform.t};
-            Points.emplace_back(LVec3F{InverseRotation * (World - WorldTransform.t)});
-        }
-
-        ++MeshCount;
-    }};
+    TArray<AStaticMeshComponent*> Meshes;
 
     //# Only static mesh components are walked into. @return Whether the walk is done.
     auto Walk{[&](this auto const& Self, ASceneComponent const& Parent) -> bool
@@ -1085,9 +1049,9 @@ void Jafg::ARigidComponent::MakeConvex(ERigidComponentConvexWalker Walker, f32 C
                 continue;
             }
 
-            AddMesh(*Comp);
+            Meshes.push_back(Comp);
 
-            if (Walker == ERigidComponentConvexWalker::First && MeshCount > 0)
+            if (Walker == ERigidComponentConvexWalker::First && Comp->IsMeshValid())
             {
                 return true;
             }
@@ -1100,10 +1064,60 @@ void Jafg::ARigidComponent::MakeConvex(ERigidComponentConvexWalker Walker, f32 C
     }};
     Walk(*this);
 
+    if (Meshes.empty())
+    {
+        LOG_WARNING(LogPhysics, "Found no static mesh component while walking [{}]. Keeping the current rigid object."
+            , serde::to_string(Walker)
+            )
+        return;
+    }
+
+    this->MakeConvex(Meshes, ConvexRadius);
+}
+
+void Jafg::ARigidComponent::MakeConvex(std::span<AStaticMeshComponent* const> Meshes, f32 ConvexRadius /* = Physx::DefaultConvexRadius */)
+{
+    check(Tasks::IsOnMasterThread())
+
+    LWorldTrans const WorldTransform{this->GetWorldTransformSlow()};
+    check(WorldTransform.s.x == WorldTransform.s.y && WorldTransform.s.x == WorldTransform.s.z)
+    LWorldQuat const InverseRotation{maths::inverse(WorldTransform.r)};
+
+    TArray<LVec3F> Points;
+    for (AStaticMeshComponent* Comp: Meshes)
+    {
+        check(Comp)
+        if (!Comp->IsMeshValid())
+        {
+            LOG_WARNING(LogPhysics, "Static mesh component has no mesh.")
+            continue;
+        }
+
+        LStaticMesh& Mesh{Comp->GetMutableMesh()};
+        if (!Mesh.HasConvex())
+        {
+            LOG_WARNING(LogPhysics, "[{}]: Mesh has no convex hull. Consider loading the mesh with [EStaticMeshStateBits::Convex]."
+                , Mesh.GetSource()
+                )
+            Mesh.ReloadConvex();
+            check(Mesh.HasConvex())
+        }
+
+        /* Mesh space -> world space -> unrotated and untranslated space of this component (but still scaled). */
+        LWorldTrans const MeshTransform{Comp->GetWorldTransformSlow()};
+        TArray<LVec3F> const& Hull{Mesh.GetConvexHull()};
+        Points.reserve(Points.size() + Hull.size());
+        for (LVec3F const& Point: Hull)
+        {
+            LWorldVec3 const World{MeshTransform.r * (MeshTransform.s * LWorldVec3{Point}) + MeshTransform.t};
+            Points.emplace_back(LVec3F{InverseRotation * (World - WorldTransform.t)});
+        }
+    }
+
     if (Points.empty())
     {
-        LOG_WARNING(LogPhysics, "Found no static mesh with a convex hull while walking [{}]. Keeping the current rigid object."
-            , serde::to_string(Walker)
+        LOG_WARNING(LogPhysics, "Found no static mesh with a convex hull among [{}] components. Keeping the current rigid object."
+            , Meshes.size()
             )
         return;
     }
@@ -1176,6 +1190,57 @@ void Jafg::ARigidComponent::SetLinearVelocity(LWorldVec3 const& Velocity)
 {
     check(this->IsAddedToSimulation())
     INTERFACE.SetLinearVelocity(this->RigidObject->GetID(), JPH::Vec3{Velocity.x, Velocity.y, Velocity.z});
+}
+
+std::optional<LWorldReal> Jafg::ARigidComponent::TraceNonPhysical(LWorldMagRay3 const& Ray) const
+{
+    auto const HasStaticMesh{[](this auto const& Self, ASceneComponent const& Parent) -> bool
+    {
+        for (auto const& Child: Parent.GetChildren())
+        {
+            if (auto const* Mesh{DynamicCast<AStaticMeshComponent>(&*Child)}; Mesh && Mesh->IsMeshValid())
+            {
+                return true;
+            }
+            if (Self(*Child))
+            {
+                return true;
+            }
+        }
+        return false;
+    }};
+    if (HasStaticMesh(*this) || !this->RigidObject.IsValid())
+    {
+        return {};
+    }
+
+    /* Cheap rejection first. */
+    if (!Super::TraceNonPhysical(Ray))
+    {
+        return {};
+    }
+
+    /*
+     * The body was created at the world translation and rotation of this component with the scale baked into the
+     * shape (@see #MakeConvexFromPoints). Not from the body itself, it is only moved while being simulated.
+     */
+    LWorldTrans const World{this->GetWorldTransformSlow()};
+    LWorldQuat const InverseRotation{maths::inverse(World.r)};
+    LWorldVec3 const Origin{InverseRotation * (Ray.origin - World.t)};
+    LWorldVec3 const Direction{InverseRotation * (Ray.direction * Ray.magnitude)};
+
+    JPH::Shape const* Shape{this->RigidObject->GetShape()};
+    check(Shape)
+    /* Shapes are relative to their center of mass. */
+    JPH::RayCast const Cast{
+        JPH::Vec3{static_cast<f32>(Origin.x), static_cast<f32>(Origin.y), static_cast<f32>(Origin.z)} - Shape->GetCenterOfMass(),
+        JPH::Vec3{static_cast<f32>(Direction.x), static_cast<f32>(Direction.y), static_cast<f32>(Direction.z)},
+        };
+    if (JPH::RayCastResult Hit; Shape->CastRay(Cast, JPH::SubShapeIDCreator{}, Hit))
+    {
+        return static_cast<LWorldReal>(Hit.mFraction) * Ray.magnitude;
+    }
+    return {};
 }
 
 void Jafg::ARigidComponent::OnTransformChanged(ETransformChangeFlags Change)

@@ -704,6 +704,7 @@ private:
     {
         WEditorWorldViewer* Viewer{};
         std::pair<AActor*,AActorComponent*> Actor{nullptr,nullptr};
+        //# The world rotation of the selected component when the current gizmo drag started. Empty if not dragging.
         std::optional<LWorldQuat> Quaternion;
     };
     LSelectedActor SelectedActor;
@@ -713,6 +714,14 @@ private:
         check(!b || this->SelectedActor.Viewer)
         return b;
     }
+    //# The selected component (not necessarily the root). It has to be valid and a scene component.
+    NODISCARD ASceneComponent& GetSelectedSceneComponent() const noexcept;
+    //#
+    //# The world rotation of the rotator gizmo in local grid space. The world rotation of the selected component, or
+    //# the one from the start of the current drag (so that the rotator does not turn along while rotating).
+    //# All other gizmos follow the world rotation of the selected component.
+    //#
+    NODISCARD LWorldQuat GetLocalGridSpaceRotatorGizmoRotator() const noexcept;
 
     struct LHighlightedGizmoMesh final
     {
