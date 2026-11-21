@@ -6,3 +6,4 @@
 #include "TestMovement.h"
 #include "TestEye.h"
 #include "TestStaticMesh.h"
+#include "TestTextEditing.h"

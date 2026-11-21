@@ -23,8 +23,6 @@ void Jafg::WTextBox::Draw(LNodeRenderInfo const& Info) const
                 .Tint = this->TextBrush.Tint,
                 .OutlineTint = this->TextBrush.OutlineTint,
                 .OutlineThickness = this->TextBrush.OutlineThickness,
-                .LeftThrust = this->TextThrust.x,
-                .bFadeLeftOverdraw = true,
             }
             );
     }
@@ -42,6 +40,7 @@ void Jafg::WTextBox::UpdateDesiredSize() const
             , *this->GetFrontend().GetSubsystemChecked<JFontSubsystem>()
             , this->TextBrush
             , this->GetContent()
+            , this->TextCutoff
             );
     }
 

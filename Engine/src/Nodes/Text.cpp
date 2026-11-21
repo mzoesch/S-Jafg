@@ -40,6 +40,7 @@ void Jafg::WText::UpdateDesiredSize() const
             , *this->GetFrontend().GetSubsystemChecked<JFontSubsystem>()
             , this->TextBrush
             , this->GetContent()
+            , this->TextCutoff
             );
     }
 

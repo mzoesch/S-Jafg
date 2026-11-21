@@ -69,6 +69,12 @@ Jafg::LProgramParameter Glfw_PlatformHint({
 
 void GlfwErrorCallback(i32 Error, char const* Description)
 {
+    if (Error == GLFW_FORMAT_UNAVAILABLE) /* The clipboard does not contain text. */
+    {
+        LOG_VERBOSE(LogPlatform, "GLFW (code {}): {}", Error, Description)
+        return;
+    }
+
     if (Error == GLFW_PLATFORM_ERROR)
     {
         if (Description == LStringView{"Wayland: Failed to encode keysym as UTF-8"}) /* Not an error... */

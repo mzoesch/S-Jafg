@@ -111,7 +111,9 @@ f32 Jafg::LTextScale::InStaticPointsImpl(LViewport const& Viewport, ETextScale T
     return ::TextBoxInStaticPointsImpl(TextScale, Scale);
 }
 
-void Jafg::LFontRenderData::Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text)
+void Jafg::LFontRenderData::Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text
+    , ETextCutoff Cutoff /* = ETextCutoff::NoBounds */
+    )
 {
     this->FontSize = Brush.TextScale.InStaticPoints(Viewport);
     this->bDirty = false;
@@ -119,49 +121,71 @@ void Jafg::LFontRenderData::Update(LViewport const& Viewport, JFontSubsystem con
     LVec2F Pencil{maths::zero_vector<LVec2F>};
     this->Collection = Subsystem.GetGlyphInfos(0, Text, this->FontSize, &Pencil);
 
+    if (Cutoff == ETextCutoff::TribbleDot)
+    {
+        LVec2F EllipsisPencil{maths::zero_vector<LVec2F>};
+        this->Ellipsis = Subsystem.GetGlyphInfos(0, "...", this->FontSize, &EllipsisPencil);
+    }
+    else
+    {
+        this->Ellipsis.reset();
+    }
+
     //# TODO: This for line gaps. LineHeight + line_gap
     this->DesiredSize = {Pencil.x, this->Collection.LineHeight * Brush.Tightening};
 }
 
 void Jafg::LFontRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& Rect, LTextInfo const& TextInfo) const
 {
-    auto AddGlyph{[&](LGlyphCollection::Info const& Glyph)
+    /*
+     * All horizontal locations in here are relative to the pencil origin (Rect.offset.x). The bounds that the text may
+     * occupy are [ClipLeft, ClipRight]. Glyphs that are partially outside are cropped (with their texture coordinates),
+     * glyphs that are completely outside are skipped.
+     */
+    const bool bClips{TextInfo.Cutoff != ETextCutoff::NoBounds};
+    const f32 ClipLeft{bClips && TextInfo.HScroll > 0.0f ? 0.0f : std::numeric_limits<f32>::lowest()};
+    const f32 ClipRight{bClips ? Rect.extent.x : std::numeric_limits<f32>::max()};
+    const bool bOverflowsLeft{bClips && TextInfo.HScroll > 0.0f};
+    const bool bOverflowsRight{bClips && this->Collection.PencilEnd.x - TextInfo.HScroll > ClipRight};
+
+    auto AddGlyph{[&](LGlyphCollection::Info const& Glyph, f32 Origin, f32 Alpha)
     {
-        if (TextInfo.bFadeLeftOverdraw)
+        f32 Left{Origin + Glyph.Rect.x};
+        f32 Width{Glyph.Rect.z};
+        if (Width <= 0.0f || Alpha <= 0.0f)
         {
-            if (Glyph.Pencil.x + TextInfo.LeftThrust < 0.0f)
-            {
-                f32 Missed{Glyph.Pencil.x + Glyph.Rect.z + TextInfo.LeftThrust};
-                if (Missed > 0.0f)
-                {
-                    Info.AddInstance({
-                        .Rect = {
-                            .offset = {Rect.offset.x + Glyph.Rect.x + (Glyph.Rect.z - Missed), Rect.offset.y + Glyph.Rect.y},
-                            .extent = {Missed, Glyph.Rect.w}
-                            },
-                        .TexCoordRect = {
-                            Glyph.TexCoordRect.x + ((Glyph.TexCoordRect.z - Glyph.TexCoordRect.x) * ((Glyph.Rect.z - Missed) / Glyph.Rect.z)),
-                            Glyph.TexCoordRect.y,
-                            Glyph.TexCoordRect.z,
-                            Glyph.TexCoordRect.w
-                            },
-                        .Tint = TextInfo.Tint,
-                        .OutlineTint = TextInfo.OutlineTint,
-                        .OutlineThickness = TextInfo.OutlineThickness,
-                        .TextureIndex = Glyph.BindlessTextureIndex,
-                        .SamplerIndex = Glyph.SamplerIndex,
-                        .MsdfPixelRange = Glyph.MsdfPixelRange,
-                        });
-                }
-                return;
-            }
+            return;
+        }
+
+        LVec4F TexCoordRect{Glyph.TexCoordRect};
+        const f32 CropLeft{maths::max(ClipLeft - Left, 0.0f)};
+        const f32 CropRight{maths::max(Left + Width - ClipRight, 0.0f)};
+        if (CropLeft + CropRight >= Width)
+        {
+            return;
+        }
+        if (CropLeft > 0.0f || CropRight > 0.0f)
+        {
+            const f32 TexCoordWidth{TexCoordRect.z - TexCoordRect.x};
+            TexCoordRect.x += TexCoordWidth * (CropLeft / Width);
+            TexCoordRect.z -= TexCoordWidth * (CropRight / Width);
+            Left += CropLeft;
+            Width -= CropLeft + CropRight;
+        }
+
+        LColor Tint{TextInfo.Tint};
+        LColor OutlineTint{TextInfo.OutlineTint};
+        if (Alpha < 1.0f)
+        {
+            Tint.a = static_cast<LColor::value_type>(static_cast<f32>(Tint.a) * Alpha);
+            OutlineTint.a = static_cast<LColor::value_type>(static_cast<f32>(OutlineTint.a) * Alpha);
         }
 
         Info.AddInstance({
-            .Rect = {{Rect.offset.x + Glyph.Rect.x, Rect.offset.y + Glyph.Rect.y}, {Glyph.Rect.z, Glyph.Rect.w}},
-            .TexCoordRect = Glyph.TexCoordRect,
-            .Tint = TextInfo.Tint,
-            .OutlineTint = TextInfo.OutlineTint,
+            .Rect = {{Rect.offset.x + Left, Rect.offset.y + Glyph.Rect.y}, {Width, Glyph.Rect.w}},
+            .TexCoordRect = TexCoordRect,
+            .Tint = Tint,
+            .OutlineTint = OutlineTint,
             .OutlineThickness = TextInfo.OutlineThickness,
             .TextureIndex = Glyph.BindlessTextureIndex,
             .SamplerIndex = Glyph.SamplerIndex,
@@ -174,38 +198,66 @@ void Jafg::LFontRenderData::Render(LNodeRenderInfo const& Info, LRect2F const& R
     switch (TextInfo.Cutoff)
     {
     case ETextCutoff::Cutoff:
+    case ETextCutoff::NoBounds:
     {
         for (LGlyphCollection::Info const& Glyph: this->Collection)
         {
-            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.extent.x)
-            {
-                break;
-            }
-            AddGlyph(Glyph);
+            AddGlyph(Glyph, -TextInfo.HScroll, 1.0f);
         }
         break;
     }
     case ETextCutoff::Fade:
     {
+        const f32 FadeWidth{maths::min(Rect.extent.x * 0.25f, this->FontSize * 2.0f)};
         for (LGlyphCollection::Info const& Glyph: this->Collection)
         {
-            if (Glyph.Pencil.x + Glyph.Rect.z > Rect.extent.x)
+            f32 Alpha{1.0f};
+            if (FadeWidth > 0.0f)
             {
+                const f32 Center{Glyph.Rect.x + Glyph.Rect.z * 0.5f - TextInfo.HScroll};
+                if (bOverflowsLeft)
+                {
+                    Alpha *= maths::clamp((Center - ClipLeft) / FadeWidth, 0.0f, 1.0f);
+                }
+                if (bOverflowsRight)
+                {
+                    Alpha *= maths::clamp((ClipRight - Center) / FadeWidth, 0.0f, 1.0f);
+                }
+            }
+            AddGlyph(Glyph, -TextInfo.HScroll, Alpha);
+        }
+        break;
+    }
+    case ETextCutoff::TribbleDot:
+    {
+        if (!bOverflowsRight || !this->Ellipsis.has_value())
+        {
+            for (LGlyphCollection::Info const& Glyph: this->Collection)
+            {
+                AddGlyph(Glyph, -TextInfo.HScroll, 1.0f);
+            }
+            break;
+        }
+
+        /* Draw as many glyphs as possible while leaving enough space for the ellipsis behind them. */
+        const f32 Limit{ClipRight - this->Ellipsis->PencilEnd.x};
+        f32 EllipsisOrigin{this->Collection.PencilEnd.x - TextInfo.HScroll};
+        for (auto It{this->Collection.begin()}; It != this->Collection.end(); ++It)
+        {
+            const f32 Advance{(algo::next(It) == this->Collection.end() ? this->Collection.PencilEnd.x : algo::next(It)->Pencil.x) - It->Pencil.x};
+            if (It->Pencil.x + Advance - TextInfo.HScroll > Limit)
+            {
+                EllipsisOrigin = It->Pencil.x - TextInfo.HScroll;
                 break;
             }
-            AddGlyph(Glyph);
+            AddGlyph(*It, -TextInfo.HScroll, 1.0f);
         }
-        break;
-    }
-    case ETextCutoff::NoBounds:
-    {
-        for (LGlyphCollection::Info const& Glyph: this->Collection)
+        for (LGlyphCollection::Info const& Glyph: *this->Ellipsis)
         {
-            AddGlyph(Glyph);
+            AddGlyph(Glyph, EllipsisOrigin, 1.0f);
         }
         break;
     }
-    default: std::unreachable();
     }
 
 #if !JAFG_IN_SHIPPING

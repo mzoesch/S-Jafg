@@ -11,25 +11,38 @@ namespace Jafg
 class JFontSubsystem;
 namespace Detail{ struct TextLocationFn; }
 
-enum struct ETextHAlign : u8 { Left, Center, Right, /* TODO: Justify */ };
-enum struct ETextVAlign : u8 { Top, Center, Bottom };
+SERDE_DECLARE_TRIVIAL_ENUM(ETextHAlign, u8,
+    Left,
+    Center,
+    Right
+    /* TODO: Justify */
+    )
 
-enum struct ETextCutoff : u8
-{
+SERDE_DECLARE_TRIVIAL_ENUM(ETextVAlign, u8,
+    Top,
+    Center,
+    Bottom
+    )
+
+//# How text that is wider than the space it has been given is handled.
+SERDE_DECLARE_TRIVIAL_ENUM(ETextCutoff, u8,
+    //# The text is clipped at the bounds.
     Cutoff,
+    //# The text is clipped at the bounds, and glyphs close to an overflowing bound fade out.
     Fade,
+    //# The overflowing end of the text is replaced with three dots ("...").
     TribbleDot,
-    NoBounds,
-};
+    //# The text is drawn beyond the bounds.
+    NoBounds
+    )
 
-enum struct ETextScale : u8
-{
+SERDE_DECLARE_TRIVIAL_ENUM(ETextScale, u8,
     Header,
     SubHeader,
     Body,
     Compact,
-    Small,
-};
+    Small
+    )
 struct LTextScale final
 {
     FORCEINLINE constexpr LTextScale() noexcept = delete;
@@ -91,6 +104,8 @@ struct LFontRenderData final
     bool bDirty{ true };
     f32 FontSize{};
     LGlyphCollection Collection;
+    //# The shaped "..." for ETextCutoff::TribbleDot. Only available if requested in the last #Update.
+    std::optional<LGlyphCollection> Ellipsis;
     LVec2F DesiredSize{ maths::zero_vector<LVec2F>};
 
     struct LTextInfo final
@@ -99,11 +114,21 @@ struct LFontRenderData final
         LColor Tint;
         LColor OutlineTint;
         f32 OutlineThickness;
-        f32 LeftThrust{};
-        bool bFadeLeftOverdraw{ false };
+        //#
+        //# Horizontal scroll of the text in pixels. Positive values move the text to the left. If the cutoff clips,
+        //# glyphs are then also clipped against the left bound.
+        //#
+        f32 HScroll{};
     };
 
-    ENGINE_API void Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text);
+    //# @param Cutoff The cutoff the text will be rendered with. Used to prepare additional data (e.g., the ellipsis).
+    ENGINE_API void Update(LViewport const& Viewport, JFontSubsystem const& Subsystem, LTextBrushBase const& Brush, LStringView Text
+        , ETextCutoff Cutoff = ETextCutoff::NoBounds
+        );
+    //#
+    //# @param Rect The pencil origin of the text (offset) and the bounds that are available to the text, starting at the
+    //#             origin (extent). Only the horizontal extent is respected.
+    //#
     ENGINE_API void Render(LNodeRenderInfo const& Info, LRect2F const& Rect, LTextInfo const& TextInfo) const;
 };
 
@@ -129,7 +154,6 @@ struct TMutableTextContainer
 
     //# Offset is only for drawing and does not affect the desired size in any way.
     mutable LVec2F TextDrawOffset{ maths::zero_vector<LVec2F> };
-    mutable LVec2F TextThrust{ maths::zero_vector<LVec2F> };
     //# Reduction of the playroom. For rendering only. Does not affect the desired size in any way.
     mutable LVec2F TextPlayroomReduction{ maths::zero_vector<LVec2F> };
 
@@ -143,6 +167,10 @@ protected:
         if (!this->LastTextScale.has_value() || *this->LastTextScale != (this->Owner.*Proj).TextScale)
         {
             this->LastTextScale = (this->Owner.*Proj).TextScale;
+            this->RenderData.bDirty = true;
+        }
+        if ((this->TextCutoff == ETextCutoff::TribbleDot) != this->RenderData.Ellipsis.has_value())
+        {
             this->RenderData.bDirty = true;
         }
         return this->IsTextRenderDataDirtyNoCheck();
@@ -224,6 +252,11 @@ struct TextLocationFn
     NODISCARD FORCEINLINE LVec2F GetRelativeTopLeft(LVec2F Max, TMutableTextContainer<T> const& Who) const noexcept
     {
         LVec2F PlayRoom{Max - Who.RenderData.DesiredSize - Who.TextDrawOffset - Who.TextPlayroomReduction};
+        if (Who.TextCutoff != ETextCutoff::NoBounds)
+        {
+            /* Text that does not fit is always aligned to the left. The cutoff then happens at the end of the text. */
+            PlayRoom.x = maths::max(PlayRoom.x, 0.0f);
+        }
         return Who.TextDrawOffset + LVec2F{
             (Who.Owner.*Proj).IsTextLeftAligned() ? 0.0f : ((Who.Owner.*Proj).IsTextHCenterAligned() ? PlayRoom.x * 0.5f : PlayRoom.x),
             (Who.Owner.*Proj).IsTextTopAligned()  ? 0.0f : ((Who.Owner.*Proj).IsTextVCenterAligned() ? PlayRoom.y * 0.5f : PlayRoom.y)

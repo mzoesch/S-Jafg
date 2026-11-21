@@ -20,6 +20,7 @@ void Jafg::WInput_Vector2::Construct()
         .MaxDesiredSize({64_spt, 0})
         .Padding({2_spt, 0})
         .Palette(*Prefs.InputPaletteSolid)
+        .SelectAllOnFocus(true)
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::X, Content); })
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
     BeginStyling(*this).StaticRoot<WEditableTextButton>().SaveTo(&ButtonY)
@@ -27,6 +28,7 @@ void Jafg::WInput_Vector2::Construct()
         .MaxDesiredSize({64_spt, 0})
         .Padding({2_spt, 0})
         .Palette(*Prefs.InputPaletteSolid)
+        .SelectAllOnFocus(true)
         .OnContentChanged([this](WEditableTextButton&, LString const& Content){ this->OnTextButtonContentChanged(EPart::Y, Content); })
         .Enabled(this->bInitialEnabledState.has_value() ? *this->bInitialEnabledState : true);
 

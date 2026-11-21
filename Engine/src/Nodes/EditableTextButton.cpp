@@ -4,110 +4,183 @@
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 #include "Rhi/NodeRenderInfo.h"
+#include "Framework/Surface.h"
 #include "Framework/FontSubsystem.h"
 #include "User/UserPreferences.h"
 
+namespace Jafg
+{
+namespace
+{
+
+//# The hint for #LFrontend::Glfw_GetPhysicalKeyLocalizedRepr to resolve a key by its scancode only (GLFW_KEY_UNKNOWN).
+inline constexpr i32 ResolveByScancode{ -1 };
+
+NODISCARD bool IsKey(LNodeKeyEventInfo const& Info, LKeyEvent const& Event, ELogicalKey Key) noexcept
+{
+    return Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>(Info.Frontend.GetPhysicalKey(Key));
+}
+
+//#
+//# @return The latin letter (lower case) that the key of the event produces in the keyboard layout of the user. E.g.,
+//#         Ctrl+Z is on a different physical key for QWERTY and QWERTZ layouts. Empty, if the key does not produce a
+//#         latin letter (e.g., for Cyrillic layouts).
+//#
+NODISCARD std::optional<char> GetLayoutLetter(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    if (Event.PhysicalKey.Scancode == INDEX_NONE)
+    {
+        return {};
+    }
+    /* Pressing a modifier while holding Ctrl lands here as well. Do not bother the platform with that. */
+    for (ELogicalKey Modifier: {
+        ELogicalKey::LeftShift, ELogicalKey::RightShift, ELogicalKey::LeftControl, ELogicalKey::RightControl,
+        ELogicalKey::LeftAlt, ELogicalKey::RightAlt, ELogicalKey::LeftCommand, ELogicalKey::RightCommand,
+        })
+    {
+        if (Event.PhysicalKey == Info.Frontend.GetPhysicalKey(Modifier))
+        {
+            return {};
+        }
+    }
+    if (auto Name{Info.Frontend.Glfw_GetPhysicalKeyLocalizedRepr(Event.PhysicalKey, ResolveByScancode)}; Name && Name->size() == 1uz)
+    {
+        char Letter{(*Name)[0]};
+        if (Letter >= 'A' && Letter <= 'Z')
+        {
+            Letter = static_cast<char>(Letter - 'A' + 'a');
+        }
+        if (Letter >= 'a' && Letter <= 'z')
+        {
+            return Letter;
+        }
+    }
+    return {};
+}
+
+//# If the layout does not produce a latin letter, we fall back to the key location of the US layout.
+NODISCARD bool IsShortcut(LNodeKeyEventInfo const& Info, LKeyEvent const& Event, std::optional<char> LayoutLetter, ELogicalKey Key, char Letter)
+{
+    if (LayoutLetter.has_value())
+    {
+        return *LayoutLetter == Letter;
+    }
+    return Event.PhysicalKey == Info.Frontend.GetPhysicalKey(Key);
+}
+
+} /* ~Namespace <Anonymous> */
+} /* ~Namespace Jafg */
+
 void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
 {
-    LVec2F CachedTextDrawOffset{this->TextDrawOffset};
-    LVec2F CachedTextThrust{this->TextThrust};
+    /*
+     * We intentionally skip WTextBox::Draw and only draw the box. The text of an editable text button scrolls, and
+     * it must be drawn on top of the selection highlight.
+     */
+    WBox::Draw(Info);
 
-    LVec2F TopLeftMostOuter{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)};
+    this->EnsureTextLayout();
 
-    if (this->IsFocusWidget() && !(this->GetTextRenderData().Collection.GlyphInfos.empty() || this->TextBrush.bSkipBrushDraw))
+    auto const& RenderData{this->GetTextRenderData()};
+    const bool bFocused{this->IsFocusWidget()};
+    const bool bHasContent{!this->GetContent().empty()};
+
+    const LVec2F TopLeft{this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)};
+    //# Where the pencil of the text starts (alignment is already applied).
+    const LVec2F Origin{TopLeft + this->GetRelativeTextTopLeft()};
+    //# The space that is available to the text.
+    const LVec2F Extent{this->GetAnchoredSize_v2()
+        - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
+        - this->TextDrawOffset
+        - this->TextPlayroomReduction
+        };
+    const f32 ContentLeft{TopLeft.x + this->Brush.Padding.GetLeftOffset().InStaticPoints(this->GetViewport()) + this->TextDrawOffset.x};
+
+    const LVec2F CaretSize{maths::round(LVec2F{2.0f, RenderData.DesiredSize.y} * this->CaretBrush.Size)};
+    const f32 CaretTop{Origin.y + (RenderData.DesiredSize.y - CaretSize.y) * 0.5f};
+
+    this->LastDrawnRect = LRect2F{.offset = TopLeft, .extent = this->GetAnchoredSize_v2()};
+    this->LastTextOriginX = Origin.x;
+
+    /* Scroll the text such that the caret is always visible. */
+    if (bFocused && bHasContent && this->TextCutoff != ETextCutoff::NoBounds)
     {
-        LGlyphCollection::Info& Back{this->GetTextRenderData().Collection.GlyphInfos.back()};
-        LVec2F LastTopRight{this->GetRelativeTextTopLeft() + Back.Pencil + LVec2F{Back.Rect.z, 0.0f}};
-        LVec2F Extent{this->GetAnchoredSize_v2()
-            - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
-            - this->TextDrawOffset
-            - this->TextPlayroomReduction
-            };
-
-        LVec2F Overdraw{LastTopRight - Extent};
-        if (Overdraw.x > 0.0f)
+        const f32 TextWidth{RenderData.Collection.PencilEnd.x};
+        const f32 CaretWidth{CaretSize.x + maths::max(this->CaretBrush.HOffset, 0.0f)};
+        const f32 MaxScroll{TextWidth > Extent.x ? TextWidth + CaretWidth - Extent.x : 0.0f};
+        const f32 CaretX{this->GetCaretPencilLocation(this->CaretCursor)};
+        if (CaretX - this->HScroll < 0.0f)
         {
-            this->TextDrawOffset.x -= Overdraw.x;
-            this->TextThrust.x -= Overdraw.x;
+            this->HScroll = CaretX;
+        }
+        else if (CaretX + CaretWidth - this->HScroll > Extent.x)
+        {
+            this->HScroll = CaretX + CaretWidth - Extent.x;
+        }
+        this->HScroll = maths::clamp(this->HScroll, 0.0f, MaxScroll);
+    }
+    else
+    {
+        this->HScroll = 0.0f;
+    }
+
+    if (bFocused && bHasContent && this->HasSelection())
+    {
+        auto [Begin, End]{this->GetSelectionRange()};
+        f32 Left{maths::round(Origin.x + this->GetCaretPencilLocation(Begin) - this->HScroll)};
+        f32 Right{maths::round(Origin.x + this->GetCaretPencilLocation(End) - this->HScroll)};
+        if (this->TextCutoff != ETextCutoff::NoBounds)
+        {
+            Left = maths::max(Left, ContentLeft);
+            Right = maths::min(Right, ContentLeft + Extent.x);
+        }
+        if (Right > Left)
+        {
+            Info.AddInstance({
+                .Rect = {maths::round(LVec2F{Left, CaretTop}), LVec2F{Right - Left, CaretSize.y}},
+                .Tint = this->CaretBrush.SelectionTint,
+                });
         }
     }
 
-    Super::Draw(Info);
-
-    if (this->GetContent().empty() && !(this->PlaceholderContent.empty() || this->TextBrush.bSkipBrushDraw))
+    if (!this->TextBrush.bSkipBrushDraw)
     {
-        this->GetTextRenderData().Render(Info,
+        if (bHasContent)
+        {
+            ETextCutoff Cutoff{this->TextCutoff};
+            if (bFocused && Cutoff == ETextCutoff::TribbleDot)
             {
-                .offset = TopLeftMostOuter + this->GetRelativeTextTopLeft(),
-                .extent = this->GetAnchoredSize_v2()
-                    - this->Brush.Padding.GetDesiredSize().InStaticPoints(this->GetViewport())
-                    - this->TextDrawOffset
-                    - this->TextPlayroomReduction
-            },
-            {
+                /* While editing, the user has to see the actual content. */
+                Cutoff = ETextCutoff::Cutoff;
+            }
+            RenderData.Render(Info, {.offset = Origin, .extent = Extent}, {
+                .Cutoff = Cutoff,
+                .Tint = this->TextBrush.Tint,
+                .OutlineTint = this->TextBrush.OutlineTint,
+                .OutlineThickness = this->TextBrush.OutlineThickness,
+                .HScroll = this->HScroll,
+                });
+        }
+        else if (!this->PlaceholderContent.empty())
+        {
+            RenderData.Render(Info, {.offset = Origin, .extent = Extent}, {
                 .Cutoff = this->TextCutoff,
                 .Tint = this->PlaceholderTint,
                 .OutlineTint = this->TextBrush.OutlineTint,
                 .OutlineThickness = this->TextBrush.OutlineThickness,
-            }
-            );
+                });
+        }
     }
 
-    if (this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed && this->IsFocusWidget())
+    if (bFocused && this->CaretBlinker < this->CaretBrush.CaretBlinkerSpeed)
     {
-        LVec2F CaretSize{maths::round(LVec2F{2.0, this->GetTextRenderData().DesiredSize.y} * this->CaretBrush.Size)};
-        LVec2F CaretTopLeft{
-              this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation)
-            + LVec2F{this->Brush.Padding.GetLeftOffset().InStaticPoints(this->GetViewport()), 0.0}
-            + LVec2F{0.0, (this->GetDesiredSize_v2().y - CaretSize.y) * 0.5}
-            + this->TextDrawOffset
-            };
-
-        LStringView CaretContent;
-        if (this->CaretCursor < this->GetContent().size())
+        f32 CaretLeft{Origin.x - this->HScroll + this->CaretBrush.HOffset};
+        if (bHasContent)
         {
-            CaretContent = algo::left_sub<LString, LStringView>(this->GetContent(), this->CaretCursor);
+            CaretLeft += this->GetCaretPencilLocation(this->CaretCursor);
         }
-        else
-        {
-            CaretContent = this->GetContent();
-        }
-        if (!CaretContent.empty())
-        {
-            auto& Collection{this->GetTextRenderData().Collection};
-            auto Glyph{Collection.end_string(CaretContent)};
-            if (Glyph != Collection.end())
-            {
-                if (Glyph->Cluster < CaretContent.size())
-                {
-                    for (auto Length{algo::utf8_char_length(CaretContent[Glyph->Cluster])-1}; Length > 0; --Length)
-                    {
-                        if (Glyph != Collection.end())
-                        {
-                            ++Glyph;
-                        }
-                    }
-                }
-                else
-                {
-                    check(Glyph->Cluster == CaretContent.size())
-                }
-            }
-            if (Glyph == Collection.end())
-            {
-                CaretTopLeft.x += Collection.PencilEnd.x;
-            }
-            else
-            {
-                CaretTopLeft.x += Glyph->Pencil.x;
-            }
-        }
-
-        Info.AddInstance({.Rect={maths::round(CaretTopLeft), CaretSize}, .Tint=this->CaretBrush.Tint});
+        Info.AddInstance({.Rect = {maths::round(LVec2F{CaretLeft, CaretTop}), CaretSize}, .Tint = this->CaretBrush.Tint});
     }
-
-    this->TextDrawOffset = CachedTextDrawOffset;
-    this->TextThrust = CachedTextThrust;
 
     return;
 }
@@ -121,6 +194,7 @@ void Jafg::WEditableTextButton::UpdateDesiredSize() const
             , *this->GetFrontend().GetSubsystemChecked<JFontSubsystem>()
             , this->TextBrush
             , this->PlaceholderContent
+            , this->TextCutoff
             );
     }
 
@@ -131,40 +205,50 @@ void Jafg::WEditableTextButton::UpdateDesiredSize() const
 
 bool Jafg::WEditableTextButton::UserInterfaceTick()
 {
-    bool bHandled{};
+    auto& Surface{this->GetViewport().GetSurface()};
 
-    if (this->GetViewport().GetSurface().HasBufferedPlatformInput())
+    if (Surface.HasBufferedPlatformInput())
     {
-        LString BufferedInput{this->GetViewport().GetSurface().ConsumeBufferedPlatformInput()};
+        LString BufferedInput{Surface.ConsumeBufferedPlatformInput()};
         check(!BufferedInput.empty())
-        LString NewContent{this->GetContent()};
-        NewContent.insert(this->CaretCursor, BufferedInput);
-
-        if (this->ContentPredicate.IsValid() && !this->ContentPredicate.Invoke(NewContent))
+        if (this->bEnabled)
         {
-            LOG_VERBOSE(LogWidgets, "Content predicate failed for [{}]. Discarding content change request.", NewContent)
-        }
-        else
-        {
-            bHandled = true;
-
-            auto Writer{this->GetMutableTextContent()};
-            Writer.first = std::move(NewContent);
-            for (auto Idx{0uz}; Idx < BufferedInput.size(); ++Idx)
-            {
-                this->IncreaseCaretCursor();
-            }
-            this->OnContentChanged.InvokeIfBound(*this, this->GetContent());
+            auto [Begin, End]{this->GetSelectionRange()};
+            (void)this->ReplaceRange(Begin, End, BufferedInput, EEditKind::Typing);
+            this->CaretBlinker = 0.0f;
         }
     }
 
-    if (!bHandled)
+    if (this->bMouseSelecting)
     {
-        this->CaretBlinker += static_cast<f32>(GEngine->DeltaTime);
-        if (this->CaretBlinker > this->CaretBrush.CaretBlinkerSpeed * 2.0f)
+        if (!Surface.HasPlatformKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press|ERawInputStateBits::Hold))
         {
-            this->CaretBlinker = 0.0f;
+            this->bMouseSelecting = false;
+            this->PendingMouseSelectionAnchor.reset();
         }
+        /* If the mouse cursor is hidden, someone else uses the drag (e.g., value scrubbing). */
+        else if (Surface.HasMouseLocationForOrtho())
+        {
+            const std::size_t Idx{this->HitTestCaret(Surface.GetMouseLocationValue())};
+            if (this->PendingMouseSelectionAnchor.has_value())
+            {
+                if (Idx != *this->PendingMouseSelectionAnchor)
+                {
+                    this->SetSelection(*this->PendingMouseSelectionAnchor, Idx);
+                    this->PendingMouseSelectionAnchor.reset();
+                }
+            }
+            else if (Idx != this->CaretCursor)
+            {
+                this->SetSelection(this->SelectionAnchor, Idx);
+            }
+        }
+    }
+
+    this->CaretBlinker += static_cast<f32>(GEngine->DeltaTime);
+    if (this->CaretBlinker > this->CaretBrush.CaretBlinkerSpeed * 2.0f)
+    {
+        this->CaretBlinker = 0.0f;
     }
 
     return {};
@@ -200,13 +284,18 @@ void Jafg::WEditableTextButton::OnFocusReceived()
 {
     Super::OnFocusReceived();
     this->CaretBlinker = 0.0f;
+    this->FocusReceivedFrame = GEngine->FrameCount;
+    this->bMouseSelecting = false;
+    this->PendingMouseSelectionAnchor.reset();
+    this->ClickCount = 0;
 
     check(!this->UserInterfaceTickDelegateHandle)
     this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.Emplace(this, &WEditableTextButton::UserInterfaceTick);
 
-    if (this->GetViewport().GetSurface().HasMouseLocationForOrtho())
+    /* If the focus was received by a mouse click, the caret is moved to the click location in #OnMousePressed. */
+    if (this->bSelectAllOnFocus)
     {
-        this->MoveCaretTo(this->GetViewport().GetSurface().GetMouseLocationValue());
+        this->SelectAll();
     }
     else
     {
@@ -224,6 +313,14 @@ void Jafg::WEditableTextButton::OnFocusLost()
     {
         this->GetViewport().OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
     }
+
+    this->bMouseSelecting = false;
+    this->PendingMouseSelectionAnchor.reset();
+    this->ClearSelection();
+    this->HScroll = 0.0f;
+    this->UndoHistory.clear();
+    this->RedoHistory.clear();
+
     this->OnTextCommit(ETextCommit::FocusLost);
 
     return;
@@ -231,71 +328,179 @@ void Jafg::WEditableTextButton::OnFocusLost()
 
 Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
+    if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+    {
+        /* The button base handles mouse presses (brushes and the bound delegate), but the caret must move regardless. */
+        auto Reply{Super::OnKeyEventFocused(Info, Event)};
+        if (this->bEnabled && Info.CursorLocation && this->LastDrawnRect && maths::aabb_point(*this->LastDrawnRect, *Info.CursorLocation))
+        {
+            this->OnMousePressed(Info, Event);
+            if (Reply.IsHandled())
+            {
+                return Reply;
+            }
+            return LNodeReply::Handled();
+        }
+        return Reply;
+    }
+
     if (auto Reply{Super::OnKeyEventFocused(Info, Event)}; Reply.IsHandled())
     {
         return Reply;
     }
 
-    if (!this->bEnabled)
+    if (!this->bEnabled || !Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>())
     {
         return LNodeReply::Unhandled();
     }
 
-    if (Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>(Info.Frontend.GetPhysicalKey(ELogicalKey::BackSpace))) // || PlatformDelete?
+    return this->HandleEditingKey(Info, Event);
+}
+
+Jafg::LNodeReply Jafg::WEditableTextButton::HandleEditingKey(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    LStringView Content{this->GetContent()};
+    const bool bShift{!!(Event.Mods & EModBits::Shift)};
+    const bool bControl{!!(Event.Mods & EModBits::Control)};
+    const bool bAlt{!!(Event.Mods & EModBits::Alt)};
+    /* AltGr is reported as Ctrl+Alt on some platforms. That must never be mistaken as a shortcut. */
+    const bool bShortcut{bControl && !bAlt};
+
+    auto Handled{[this]
     {
-        if (!this->GetContent().empty() && this->CaretCursor > 0)
-        {
-            auto Cursor{this->CaretCursor - 1};
-            while (Cursor > 0uz)
-            {
-                if (algo::utf8_begin_of_sequence(this->GetContent()[Cursor]))
-                {
-                    break;
-                }
-                --Cursor;
-            }
-
-            auto Writer{this->GetMutableTextContent()};
-            Writer.first.erase(
-                Writer.first.begin() + Cursor,
-                Writer.first.begin() + this->CaretCursor
-                );
-            this->SetCaretCursor(Cursor);
-            this->OnContentChanged.InvokeIfBound(*this, this->GetContent());
-        }
-
         this->CaretBlinker = 0.0f;
         return LNodeReply::Handled();
+    }};
+
+    /* Navigation. */
+    if (IsKey(Info, Event, ELogicalKey::Left))
+    {
+        if (this->HasSelection() && !bShift && !bShortcut)
+        {
+            this->SetCaretCursor(this->GetSelectionRange().first);
+        }
+        else
+        {
+            this->MoveCaret(bShortcut
+                ? TextEditing::PrevWordBoundary(Content, this->CaretCursor)
+                : TextEditing::PrevCodePoint(Content, this->CaretCursor)
+                , bShift);
+        }
+        return Handled();
+    }
+    if (IsKey(Info, Event, ELogicalKey::Right))
+    {
+        if (this->HasSelection() && !bShift && !bShortcut)
+        {
+            this->SetCaretCursor(this->GetSelectionRange().second);
+        }
+        else
+        {
+            this->MoveCaret(bShortcut
+                ? TextEditing::NextWordBoundary(Content, this->CaretCursor)
+                : TextEditing::NextCodePoint(Content, this->CaretCursor)
+                , bShift);
+        }
+        return Handled();
+    }
+    if (IsKey(Info, Event, ELogicalKey::Home))
+    {
+        this->MoveCaret(0uz, bShift);
+        return Handled();
+    }
+    if (IsKey(Info, Event, ELogicalKey::End))
+    {
+        this->MoveCaret(Content.size(), bShift);
+        return Handled();
     }
 
-    if (Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>(Info.Frontend.GetPhysicalKey(ELogicalKey::Left)))
+    /* Deletion. */
+    if (IsKey(Info, Event, ELogicalKey::BackSpace))
     {
-        if (algo::valid_index(this->GetContent(), this->CaretCursor - 1))
+        if (this->HasSelection())
         {
-            auto Size{algo::utf8_char_length(this->GetContent()[this->CaretCursor])};
-            for (auto Idx{0uz}; Idx < Size; ++Idx)
-            {
-                this->ReduceCaretCursor();
-            }
+            (void)this->DeleteSelection();
         }
-
-        this->CaretBlinker = 0.0f;
-        return LNodeReply::Handled();
+        else if (this->CaretCursor > 0uz)
+        {
+            const std::size_t Begin{bShortcut
+                ? TextEditing::PrevWordBoundary(Content, this->CaretCursor)
+                : TextEditing::PrevCodePoint(Content, this->CaretCursor)
+                };
+            (void)this->ReplaceRange(Begin, this->CaretCursor, {}, EEditKind::Deletion);
+        }
+        return Handled();
+    }
+    if (IsKey(Info, Event, ELogicalKey::Delete))
+    {
+        if (bShift && !bControl && this->HasSelection())
+        {
+            (void)this->CutSelection();
+        }
+        else if (this->HasSelection())
+        {
+            (void)this->DeleteSelection();
+        }
+        else if (this->CaretCursor < Content.size())
+        {
+            const std::size_t End{bShortcut
+                ? TextEditing::NextWordBoundary(Content, this->CaretCursor)
+                : TextEditing::NextCodePoint(Content, this->CaretCursor)
+                };
+            (void)this->ReplaceRange(this->CaretCursor, End, {}, EEditKind::Deletion);
+        }
+        return Handled();
     }
 
-    if (Event.Is<ERawInputStateBits::Press|ERawInputStateBits::Repeat>(Info.Frontend.GetPhysicalKey(ELogicalKey::Right)))
+    /* Legacy clipboard shortcuts. */
+    if (IsKey(Info, Event, ELogicalKey::Insert))
     {
-        if (algo::valid_index(this->GetContent(), this->CaretCursor))
+        if (bControl && !bShift)
         {
-            auto Size{algo::utf8_char_length(this->GetContent()[this->CaretCursor])};
-            for (auto Idx{0uz}; Idx < Size; ++Idx)
-            {
-                this->IncreaseCaretCursor();
-            }
+            this->CopySelection();
+            return Handled();
         }
+        if (bShift && !bControl)
+        {
+            (void)this->PasteFromClipboard();
+            return Handled();
+        }
+        return LNodeReply::Unhandled();
+    }
 
-        this->CaretBlinker = 0.0f;
-        return LNodeReply::Handled();
+    if (bShortcut)
+    {
+        const std::optional<char> Letter{GetLayoutLetter(Info, Event)};
+        if (IsShortcut(Info, Event, Letter, ELogicalKey::A, 'a'))
+        {
+            this->SelectAll();
+            return Handled();
+        }
+        if (IsShortcut(Info, Event, Letter, ELogicalKey::C, 'c'))
+        {
+            this->CopySelection();
+            return Handled();
+        }
+        if (IsShortcut(Info, Event, Letter, ELogicalKey::X, 'x'))
+        {
+            (void)this->CutSelection();
+            return Handled();
+        }
+        if (IsShortcut(Info, Event, Letter, ELogicalKey::V, 'v'))
+        {
+            (void)this->PasteFromClipboard();
+            return Handled();
+        }
+        if (IsShortcut(Info, Event, Letter, ELogicalKey::Z, 'z'))
+        {
+            (void)(bShift ? this->Redo() : this->Undo());
+            return Handled();
+        }
+        if (IsShortcut(Info, Event, Letter, ELogicalKey::Y, 'y'))
+        {
+            (void)this->Redo();
+            return Handled();
+        }
     }
 
     if (Event.Is<ERawInputStateBits::Press>(
@@ -311,16 +516,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
         }
 
         this->OnTextCommit(ETextCommit::OnEnter);
-        return Super::OnKeyEventFocused(Info, Event);
-    }
-
-    if (Event.Is<ERawInputStateBits::Press>(Info.Frontend.GetPhysicalKey(ELogicalKey::LeftMouseButton)))
-    {
-        if (Info.Surface.HasMouseLocationForOrtho())
-        {
-            this->MoveCaretTo(Info.Surface.GetMouseLocationValue());
-        }
-        return LNodeReply::Handled();
+        return LNodeReply::Unhandled();
     }
 
     if (Event.Is<ERawInputStateBits::Press>(Info.Frontend.GetPhysicalKey(ELogicalKey::Escape)))
@@ -335,53 +531,306 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
     return LNodeReply::Unhandled();
 }
 
+void Jafg::WEditableTextButton::OnMousePressed(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+{
+    check(Info.CursorLocation)
+
+    const LVec2F Location{*Info.CursorLocation};
+    const f64 Now{GEngine->FrameStartElapsedTime};
+    if (this->ClickCount > 0
+        && Now - this->LastClickTime <= WEditableTextButton::MultiClickTime
+        && maths::magnitude(Location - this->LastClickLocation) <= WEditableTextButton::MultiClickDistance)
+    {
+        this->ClickCount = static_cast<u8>(maths::min(this->ClickCount + 1, 3));
+    }
+    else
+    {
+        this->ClickCount = 1;
+    }
+    this->LastClickTime = Now;
+    this->LastClickLocation = Location;
+
+    const std::size_t Idx{this->HitTestCaret(Location)};
+    const bool bFocusingClick{this->FocusReceivedFrame == GEngine->FrameCount};
+
+    this->bMouseSelecting = false;
+    this->PendingMouseSelectionAnchor.reset();
+
+    if (bFocusingClick && this->bSelectAllOnFocus)
+    {
+        /* Keep everything selected, unless the user starts to drag a selection. */
+        this->bMouseSelecting = true;
+        this->PendingMouseSelectionAnchor = Idx;
+        return;
+    }
+
+    switch (this->ClickCount)
+    {
+    case 1:
+    {
+        this->MoveCaret(Idx, !bFocusingClick && !!(Event.Mods & EModBits::Shift));
+        this->bMouseSelecting = true;
+        break;
+    }
+    case 2:
+    {
+        auto [Begin, End]{TextEditing::WordAt(this->GetContent(), Idx)};
+        this->SetSelection(Begin, End);
+        break;
+    }
+    default:
+    {
+        this->SelectAll();
+        break;
+    }
+    }
+
+    return;
+}
+
 void Jafg::WEditableTextButton::OnChangedImpl() noexcept
 {
     this->CaretBlinker = 0.0f;
-    this->CaretCursor = maths::min(this->CaretCursor, this->GetContent().size());
+
+    if (!this->bApplyingUserEdit)
+    {
+        /* The content was changed from the outside. Previous states do not make sense anymore. */
+        auto [Begin, End]{this->GetSelectionRange()};
+        const bool bWasEverythingSelected{this->LastContentSize > 0uz && Begin == 0uz && End >= this->LastContentSize};
+
+        this->UndoHistory.clear();
+        this->RedoHistory.clear();
+        this->LastEditKind = EEditKind::Other;
+
+        if (bWasEverythingSelected)
+        {
+            this->SelectionAnchor = 0uz;
+            this->CaretCursor = this->GetContent().size();
+        }
+        else
+        {
+            this->SelectionAnchor = TextEditing::SnapToCodePoint(this->GetContent(), this->SelectionAnchor);
+            this->CaretCursor = TextEditing::SnapToCodePoint(this->GetContent(), this->CaretCursor);
+        }
+        if (this->PendingMouseSelectionAnchor.has_value())
+        {
+            this->PendingMouseSelectionAnchor = TextEditing::SnapToCodePoint(this->GetContent(), *this->PendingMouseSelectionAnchor);
+        }
+    }
+
+    this->LastContentSize = this->GetContent().size();
 
     Super::OnChangedImpl();
 
     return;
 }
 
+void Jafg::WEditableTextButton::SetSelection(std::size_t Anchor, std::size_t Caret) noexcept
+{
+    this->SelectionAnchor = TextEditing::SnapToCodePoint(this->GetContent(), Anchor);
+    this->CaretCursor = TextEditing::SnapToCodePoint(this->GetContent(), Caret);
+    this->CaretBlinker = 0.0f;
+    /* Moving the caret ends the current undo step. */
+    this->LastEditKind = EEditKind::Other;
+    return;
+}
+
 std::size_t Jafg::WEditableTextButton::MoveCaretTo(LVec2F Location)
 {
+    return this->SetCaretCursor(this->HitTestCaret(Location));
+}
+
+void Jafg::WEditableTextButton::MoveCaret(std::size_t Idx, bool bExtendSelection) noexcept
+{
+    this->SetSelection(bExtendSelection ? this->SelectionAnchor : Idx, Idx);
+    return;
+}
+
+bool Jafg::WEditableTextButton::InsertText(LStringView Text)
+{
+    auto [Begin, End]{this->GetSelectionRange()};
+    return this->ReplaceRange(Begin, End, Text, EEditKind::Other);
+}
+
+bool Jafg::WEditableTextButton::DeleteSelection()
+{
+    if (!this->HasSelection())
+    {
+        return false;
+    }
+    auto [Begin, End]{this->GetSelectionRange()};
+    return this->ReplaceRange(Begin, End, {}, EEditKind::Other);
+}
+
+void Jafg::WEditableTextButton::CopySelection() const
+{
+    if (this->HasSelection())
+    {
+        this->GetViewport().GetSurface().SetClipboardText(LString{this->GetSelectedContent()});
+    }
+    return;
+}
+
+bool Jafg::WEditableTextButton::CutSelection()
+{
+    if (!this->HasSelection())
+    {
+        return false;
+    }
+    this->CopySelection();
+    return this->DeleteSelection();
+}
+
+bool Jafg::WEditableTextButton::PasteFromClipboard()
+{
+    LString Text{TextEditing::SanitizeSingleLine(this->GetViewport().GetSurface().GetClipboardText())};
+    if (Text.empty())
+    {
+        return false;
+    }
+    return this->InsertText(Text);
+}
+
+bool Jafg::WEditableTextButton::Undo()
+{
+    if (this->UndoHistory.empty())
+    {
+        return false;
+    }
+
+    this->RedoHistory.push_back({.Content = this->GetContent(), .CaretCursor = this->CaretCursor, .SelectionAnchor = this->SelectionAnchor});
+    LEditSnapshot Snapshot{std::move(this->UndoHistory.back())};
+    this->UndoHistory.pop_back();
+    this->RestoreSnapshot(std::move(Snapshot));
+
+    return true;
+}
+
+bool Jafg::WEditableTextButton::Redo()
+{
+    if (this->RedoHistory.empty())
+    {
+        return false;
+    }
+
+    this->UndoHistory.push_back({.Content = this->GetContent(), .CaretCursor = this->CaretCursor, .SelectionAnchor = this->SelectionAnchor});
+    LEditSnapshot Snapshot{std::move(this->RedoHistory.back())};
+    this->RedoHistory.pop_back();
+    this->RestoreSnapshot(std::move(Snapshot));
+
+    return true;
+}
+
+bool Jafg::WEditableTextButton::ApplyUserEdit(LString NewContent, std::size_t NewCaret, EEditKind Kind)
+{
+    if (NewContent == this->GetContent())
+    {
+        this->SetCaretCursor(NewCaret);
+        return false;
+    }
+
+    if (this->ContentPredicate.IsValid() && !this->ContentPredicate.Invoke(NewContent))
+    {
+        LOG_VERBOSE(LogWidgets, "Content predicate failed for [{}]. Discarding content change request.", NewContent)
+        return false;
+    }
+
+    /* Consecutive typing (or deleting) is merged into one undo step. */
+    if (Kind == EEditKind::Other || Kind != this->LastEditKind || this->UndoHistory.empty())
+    {
+        this->UndoHistory.push_back({.Content = this->GetContent(), .CaretCursor = this->CaretCursor, .SelectionAnchor = this->SelectionAnchor});
+        if (this->UndoHistory.size() > WEditableTextButton::MaxUndoHistory)
+        {
+            this->UndoHistory.erase(this->UndoHistory.begin());
+        }
+    }
+    this->RedoHistory.clear();
+
+    {
+        this->bApplyingUserEdit = true;
+        algo::raii_leave _{[this]{ this->bApplyingUserEdit = false; }};
+        auto Writer{this->GetMutableTextContent()};
+        Writer.first = std::move(NewContent);
+    }
+
+    this->SetCaretCursor(NewCaret);
+    this->LastEditKind = Kind;
+    this->OnContentChanged.InvokeIfBound(*this, this->GetContent());
+
+    return true;
+}
+
+bool Jafg::WEditableTextButton::ReplaceRange(std::size_t Begin, std::size_t End, LStringView With, EEditKind Kind)
+{
+    Begin = TextEditing::SnapToCodePoint(this->GetContent(), Begin);
+    End = TextEditing::SnapToCodePoint(this->GetContent(), End);
+    if (Begin > End)
+    {
+        std::swap(Begin, End);
+    }
+
+    LString NewContent{this->GetContent()};
+    NewContent.replace(Begin, End - Begin, With);
+    return this->ApplyUserEdit(std::move(NewContent), Begin + With.size(), Kind);
+}
+
+void Jafg::WEditableTextButton::RestoreSnapshot(LEditSnapshot Snapshot)
+{
+    {
+        this->bApplyingUserEdit = true;
+        algo::raii_leave _{[this]{ this->bApplyingUserEdit = false; }};
+        auto Writer{this->GetMutableTextContent()};
+        Writer.first = std::move(Snapshot.Content);
+    }
+
+    this->SetSelection(Snapshot.SelectionAnchor, Snapshot.CaretCursor);
+    this->OnContentChanged.InvokeIfBound(*this, this->GetContent());
+
+    return;
+}
+
+void Jafg::WEditableTextButton::EnsureTextLayout() const
+{
+    if (this->IsTextRenderDataDirty<&WTextBox::TextBrush>())
+    {
+        this->GetTextRenderData().Update(this->GetViewport()
+            , *this->GetFrontend().GetSubsystemChecked<JFontSubsystem>()
+            , this->TextBrush
+            , this->GetContent().empty() ? LStringView{this->PlaceholderContent} : LStringView{this->GetContent()}
+            , this->TextCutoff
+            );
+    }
+    return;
+}
+
+std::size_t Jafg::WEditableTextButton::HitTestCaret(LVec2F Location) const
+{
     /*
-     * This is a workaround and bugprone. We are using the widget location data from the last frame.
-     * Meaning that things could have changed in the meantime... It is maybe safer to update the caret in the
-     * draw method of this widget instead? But who gives a shit right now? The user would need to click / tap keys
-     * in the same frame. I do not think that my users will have the brainpower to actually operate computers fast
-     * and right.
+     * We use the location of the text from the last frame as the node might be translated in ways that we cannot know
+     * here (e.g., inside scroll regions). Things could have changed in the meantime, but the user would need to click
+     * and change the layout in the same frame.
      */
-    const f32 BaseTopLeft
+    if (this->GetContent().empty())
     {
-        this->GetAnchoredTopLeftFromMostOuter().x + this->TextDrawOffset.x// + this->CaretBrush.HOffset
-    };
-
-    f32 RelativeTopLeft{Location.x - BaseTopLeft};
-    if (RelativeTopLeft < 0.0)
-    {
-        this->SetCaretCursorToBegin();
-    }
-    else if (!this->GetContent().empty())
-    {
-        auto& Collection{this->GetTextRenderData().Collection};
-        if (auto It{Collection.end_location({RelativeTopLeft, Location.y})}; It == Collection.end())
-        {
-            this->SetCaretCursorToEnd();
-        }
-        else
-        {
-            this->SetCaretCursor(It->Cluster);
-        }
-    }
-    else
-    {
-        this->SetCaretCursorToEnd();
+        return 0uz;
     }
 
-    return this->CaretCursor;
+    this->EnsureTextLayout();
+
+    const f32 OriginX{this->LastTextOriginX.has_value()
+        ? *this->LastTextOriginX
+        : this->GetAnchoredTopLeftFromMostOuter().x + this->GetRelativeTextTopLeft().x
+        };
+    return this->GetTextRenderData().Collection.caret_index(this->GetContent(), Location.x - OriginX + this->HScroll);
+}
+
+f32 Jafg::WEditableTextButton::GetCaretPencilLocation(std::size_t Idx) const
+{
+    if (this->GetContent().empty())
+    {
+        return 0.0f;
+    }
+    return this->GetTextRenderData().Collection.caret_location(this->GetContent(), Idx);
 }
 
 void Jafg::WEditableTextButtonIconizedLeft::Draw(LNodeRenderInfo const& Info) const

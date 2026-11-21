@@ -136,6 +136,11 @@ public:
     //#
     ENGINE_API bool WarpMouseCursor(LVec2F Location) noexcept;
 
+    //# @return The UTF-8 text content of the platform clipboard. Empty if the clipboard is empty or holds no text.
+    NODISCARD ENGINE_API LString GetClipboardText() const;
+    //# Replaces the content of the platform clipboard with the given UTF-8 text.
+    ENGINE_API void SetClipboardText(LString const& Text) const;
+
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
 

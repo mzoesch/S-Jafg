@@ -659,6 +659,30 @@ bool Jafg::LSurfaceGlfw3::WarpMouseCursor(LVec2F Location) noexcept
     return true;
 }
 
+LString Jafg::LSurfaceGlfw3::GetClipboardText() const
+{
+    check(this->Handle)
+    check(Tasks::IsOnMasterThread())
+
+    /* GLFW raises GLFW_FORMAT_UNAVAILABLE if the clipboard does not contain text. We tolerate that in the error callback. */
+    if (char const* Text{glfwGetClipboardString(this->Handle)})
+    {
+        return LString{Text};
+    }
+
+    return {};
+}
+
+void Jafg::LSurfaceGlfw3::SetClipboardText(LString const& Text) const
+{
+    check(this->Handle)
+    check(Tasks::IsOnMasterThread())
+
+    glfwSetClipboardString(this->Handle, Text.c_str());
+
+    return;
+}
+
 void Jafg::LSurfaceGlfw3::_SetMouseCursor(ECursor Cursor)
 {
     check(Tasks::IsOnMasterThread())
