@@ -305,7 +305,7 @@ public:
 
     enum struct EGizmo: u32{ Select,Translate,Rotate,Scale,Gizmo, };
 
-    JAFG_DEFAULT_TAB_CANDIDATE("World Viewer", *JafgInfo, "Icons/Sphere")
+    JAFG_DEFAULT_TAB_CANDIDATE("World Viewer", JafgInfo, "Icons/Sphere")
 
     virtual void Construct() override;
     virtual void Tick(f32 Dt) override;
@@ -467,7 +467,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Hierarchy", *JafgInfo, "Icons/Hierarchy")
+    JAFG_DEFAULT_TAB_CANDIDATE("Hierarchy", JafgInfo, "Icons/Hierarchy")
 
     virtual void Construct() override;
     virtual void Destruct() override;
@@ -529,7 +529,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Details", *JafgInfo, "Icons/Information")
+    JAFG_DEFAULT_TAB_CANDIDATE("Details", JafgInfo, "Icons/Information")
 
     virtual void Construct() override;
     virtual void Tick(f32 Dt) override;
@@ -580,7 +580,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("World Details", *JafgInfo, "Icons/Information")
+    JAFG_DEFAULT_TAB_CANDIDATE("World Details", JafgInfo, "Icons/Information")
 
     virtual void Construct() override;
     virtual void Destruct() override;

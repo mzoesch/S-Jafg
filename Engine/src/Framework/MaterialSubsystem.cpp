@@ -270,7 +270,7 @@ void TopDownPopulate(TArray<UnresolvedMaterial*> const& Unresolved) noexcept
     }
 }
 
-TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& ShaderSubsystem, LPath const& Key, TArray<UnresolvedMaterial> Materials) noexcept
+TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& ShaderSubsystem, Jafg::LPluginInfo Namespace, TArray<UnresolvedMaterial> Materials) noexcept
 {
     if (Materials.empty())
     {
@@ -286,12 +286,12 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
     ::TopDownPopulate(Unresolved);
 
     TArray<rhi::material_template> Result; Result.reserve(Unresolved.size());
-    algo::for_each(Unresolved, [&Key, &ShaderSubsystem, &Result](UnresolvedMaterial* Material)
+    algo::for_each(Unresolved, [Namespace, &ShaderSubsystem, &Result](UnresolvedMaterial* Material)
     {
         check(Material)
         if (Material->IsFullyResolved())
         {
-            LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Successfully resolved material.", Key, Material->Identifier)
+            LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Successfully resolved material.", *Namespace, Material->Identifier)
             Result.push_back({
                 .my_shader = ShaderSubsystem.GetShader(*Material->Shader),
                 .identifier = std::move(Material->Identifier),
@@ -305,7 +305,7 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
         }
         else
         {
-            LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Material is not fully resolved. Skipping.", Key, Material->Identifier)
+            LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Material is not fully resolved. Skipping.", *Namespace, Material->Identifier)
         }
     });
 
@@ -314,6 +314,7 @@ TArray<rhi::material_template> ResolveInheritance(Jafg::JShaderSubsystem& Shader
 
 struct Property_SampledImage
 {
+    //# The identifier of the namespace. @see Jafg::LEngine::FindPluginInfo
     LString Namespace;
     LString Name;
 };
@@ -485,8 +486,10 @@ void Jafg::LMaterialInstance::Vk_SetField(LFrontend& Frontend, rhi::vk_binding W
         {
             LOG_FATAL(LogMaterialSubsystem, "Invalid json: [{}].", Value)
         }
+        json.get_to(Image);
+        check(GEngine)
         this->Vk_SetSampledImage(Frontend, Where, *Frontend.GetSubsystemChecked<JTextureSubsystem>()
-            ->FromTextureView(Image.Namespace, Image.Name));
+            ->FromTextureView(GEngine->FindPluginInfoChecked(Image.Namespace), Image.Name));
         break;
     }
     default:
@@ -683,9 +686,9 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 
     this->GetMutableEngine().OnForeignPluginLoaded.EmplaceStrong([this](LLoadedPlugin& Plugin)
     {
-        if (Plugin.GetFetched().bHasContent)
+        if (Plugin.HasContent())
         {
-            this->RetrieveMaterialsFrom(Plugin.GetContent());
+            this->RetrieveMaterialsFrom(Plugin.GetInfo());
         }
 
         return false;
@@ -706,7 +709,7 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     this->SharedDescriptorSetLayouts.emplace(SSBO::BindlessPbrLight::name(), SSBO::BindlessPbrLight::build(Frontend.Vk_GetDevice()));
 
     LOG_VERBOSE(LogMaterialSubsystem, "Fetching materials.")
-    this->RetrieveMaterialsFrom(*JafgInfo);
+    this->RetrieveMaterialsFrom(JafgInfo);
 
     Tasks::Make(ENamedThreads::Master, ETaskTime::Early, [this]{ this->PrepareBindless(); });
     // TODO: Kinda awkward here. Is there a way around?
@@ -717,31 +720,92 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 void Jafg::JMaterialSubsystem::PurgeUnused()
 {
     LOG_TRACE(LogMaterialSubsystem, "Purging unreferenced material instances and materials.")
-    std::erase_if(this->Instances, [](auto& E) -> bool
+    for (auto& Cache: this->Instances | std::views::values)
     {
-        if (E.second.use_count() == 1)
+        std::erase_if(Cache, [](auto& E) -> bool
         {
-            LOG_VERBOSE(LogTextureSubsystem, "[{}]: Puring unreferenced material instance.", E.first)
-            return true;
-        }
-        return false;
-    });
-    std::erase_if(this->Materials, [](auto& E) -> bool
+            if (E.second.use_count() == 1)
+            {
+                LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Puring unreferenced material instance.", E.first)
+                return true;
+            }
+            return false;
+        });
+    }
+    for (auto& Cache: this->Materials | std::views::values)
     {
-        if (E.second.use_count() == 1)
+        std::erase_if(Cache, [](auto& E) -> bool
         {
-            LOG_VERBOSE(LogTextureSubsystem, "[{}]: Puring unreferenced material.", E.first)
-            return true;
-        }
-        return false;
-    });
+            if (E.second.use_count() == 1)
+            {
+                LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Puring unreferenced material.", E.first)
+                return true;
+            }
+            return false;
+        });
+    }
 }
 
-Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, LStringView Name) noexcept
+void Jafg::JMaterialSubsystem::RegisterSharedInstance(LPluginInfo Namespace, LStringView Name, LMaterialInstanceRef Instance) noexcept
 {
-    LString Key{this->GetKey(Namespace, Name)};
+    check(Namespace)
 
-    if (auto It{this->Materials.find(Key)}; It != this->Materials.end())
+    auto& Cache{this->Instances[Namespace]};
+    if (Cache.contains(Name))
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}/{}]: Material instance with this name already exists.", *Namespace, Name)
+    }
+    Cache.emplace(LString{Name}, std::move(Instance));
+}
+
+std::optional<Jafg::LMaterialInstanceRef> Jafg::JMaterialSubsystem::FindSharedInstance(LPluginInfo Namespace, LStringView Name) const noexcept
+{
+    check(Namespace)
+
+    if (auto It{this->Instances.find(Namespace)}; It != this->Instances.end())
+    {
+        if (auto Instance{It->second.find(Name)}; Instance != It->second.end())
+        {
+            return Instance->second;
+        }
+    }
+    return {};
+}
+
+Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::FindOrAllocateSharedInstance(LPluginInfo Namespace, LStringView Name) noexcept
+{
+    if (auto Instance{this->FindSharedInstance(Namespace, Name)})
+    {
+        return *Instance;
+    }
+    auto Result{this->GetInstanceFromName(Namespace, Name)};
+    this->RegisterSharedInstance(Namespace, Name, Result);
+    return Result;
+}
+
+rhi::material_template const& Jafg::JMaterialSubsystem::GetMaterialTemplate(LPluginInfo Namespace, LStringView Identifier) const noexcept
+{
+    check(Namespace)
+
+    auto const It{this->Templates.find(Namespace)};
+    if (It == this->Templates.end())
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}]: No such namespace.", *Namespace)
+    }
+    auto const Template{algo::find(It->second, Identifier, &rhi::material_template::identifier)};
+    if (Template == It->second.end())
+    {
+        LOG_FATAL(LogMaterialSubsystem, "[{}/{}]: No such material.", *Namespace, Identifier)
+    }
+    return *Template;
+}
+
+Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LPluginInfo Namespace, LStringView Name) noexcept
+{
+    check(Namespace)
+
+    auto& Cache{this->Materials[Namespace]};
+    if (auto It{Cache.find(Name)}; It != Cache.end())
     {
         return It->second;
     }
@@ -752,7 +816,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
         {
             if (auto Pbr{algo::find(It->second, Name, &LPbrMaterialTemplate::Identifier)}; Pbr != It->second.end())
             {
-                LOG_FATAL(LogMaterialSubsystem, "[{}]: Material is a pbr material. Use JMaterialSubsystem::GetPbrInstance instead.", Key)
+                LOG_FATAL(LogMaterialSubsystem, "[{}/{}]: Material is a pbr material. Use JMaterialSubsystem::GetPbrInstance instead.", *Namespace, Name)
             }
         }
     )
@@ -976,11 +1040,11 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LStringView Namespace, 
     Factory.stencil_attachment_format = vk::Format::eUndefined;
 
     Material.Pipeline = Factory.build(Frontend.Vk_GetDevice());
-    this->Materials.emplace(Key, Result);
+    Cache.emplace(LString{Name}, Result);
     return Result;
 }
 
-Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LStringView Namespace, LStringView Name, LMaterialRef Material)
+Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LMaterialRef Material)
 {
     check(this->ShaderSubsystem)
 
@@ -1231,13 +1295,15 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstance(LStringView Nam
     return Instance;
 }
 
-Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstanceFromName(LStringView Namespace, LStringView Name)
+Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstanceFromName(LPluginInfo Namespace, LStringView Name)
 {
-    return this->GetInstance(Namespace, Name, this->GetMaterial(Namespace, Name));
+    return this->GetInstance(this->GetMaterial(Namespace, Name));
 }
 
-Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringView Namespace, LStringView Name)
+Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginInfo Namespace, LStringView Name)
 {
+    check(Namespace)
+
     if (auto It{this->PbrTemplates.find(Namespace)}; It != this->PbrTemplates.end())
     {
         if (auto Pbr{algo::find(It->second, Name, &LPbrMaterialTemplate::Identifier)}; Pbr != It->second.end())
@@ -1254,16 +1320,22 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             auto& Prefs{GetSingleton<JUserPreferences>()};
 
             LPbrMaterialInstanceRef Result;
-            if (Pbr->Material.first.empty())
+            if (Pbr->Material.second.empty())
             {
-                check(Pbr->Material.second.empty())
+                check(Pbr->Material.first.empty())
                 Result = this->PbrInstances.emplace_back(std::make_shared<LPbrMaterialInstance>(
                     this->FindOrAllocateSharedInstance(JafgInfo, "Materials/Pbr"), *Pbr));
             }
-            else
+            else if (Pbr->Material.first.empty())
             {
                 Result = this->PbrInstances.emplace_back(std::make_shared<LPbrMaterialInstance>(
-                    this->FindOrAllocateSharedInstance(Pbr->Material.first, Pbr->Material.second), *Pbr));
+                    this->FindOrAllocateSharedInstance(Namespace, Pbr->Material.second), *Pbr));
+            }
+            else
+            {
+                check(GEngine)
+                Result = this->PbrInstances.emplace_back(std::make_shared<LPbrMaterialInstance>(
+                    this->FindOrAllocateSharedInstance(GEngine->FindPluginInfoChecked(Pbr->Material.first), Pbr->Material.second), *Pbr));
             }
             check(!Result->IsBindless())
 
@@ -1280,22 +1352,22 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
             //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
             //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
-            LPath const FallbackAlbedo{(LPath{Namespace}/Name).concat(".png")};
+            LString const FallbackAlbedo{algo::sprintf("{}.png", Name)};
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Albedo, *Prefs.TextureQuality)}; !Texture.empty())
             {
                 Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
-                    , Texture
+                      Namespace
+                    , Texture.generic_string()
                     , {.Format=vk::Format::eR8G8B8A8Srgb}
                     , {.Samples=vk::SampleCountFlagBits::e1}
                     ));
                 this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
                 Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
             }
-            else if (Pbr->IsEmptyAtTexture(LPbrMaterialTemplate::ETextureType::Albedo) && finder::is_regular_file(FallbackAlbedo))
+            else if (Pbr->IsEmptyAtTexture(LPbrMaterialTemplate::ETextureType::Albedo) && finder::is_regular_file(*Namespace / FallbackAlbedo))
             {
                 Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      this->GetKey(Namespace, LPath{FallbackAlbedo}.replace_extension().generic_string())
+                      Namespace
                     , FallbackAlbedo
                     , {.Format=vk::Format::eR8G8B8A8Srgb}
                     , {.Samples=vk::SampleCountFlagBits::e1}
@@ -1311,8 +1383,8 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Normal, *Prefs.TextureQuality)}; !Texture.empty())
             {
                 Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
-                    , Texture
+                      Namespace
+                    , Texture.generic_string()
                     , {.Format=vk::Format::eR8G8B8A8Unorm}
                     , {.Samples=vk::SampleCountFlagBits::e1}
                     ));
@@ -1327,8 +1399,8 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Arm, *Prefs.TextureQuality)}; !Texture.empty())
             {
                 Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
-                    , Texture
+                      Namespace
+                    , Texture.generic_string()
                     , {.Format=vk::Format::eR8G8B8A8Unorm}
                     , {.Samples=vk::SampleCountFlagBits::e1}
                     ));
@@ -1343,8 +1415,8 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Emissive, *Prefs.TextureQuality)}; !Texture.empty())
             {
                 Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      this->GetKey(Namespace, LPath{Texture}.replace_extension().generic_string())
-                    , Texture
+                      Namespace
+                    , Texture.generic_string()
                     , {.Format=vk::Format::eR8G8B8A8Srgb}
                     , {.Samples=vk::SampleCountFlagBits::e1}
                     ));
@@ -1366,7 +1438,7 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LStringVi
             return Result;
         }
     }
-    LOG_FATAL(LogMaterialSubsystem, "[{}]: No such PBR material.", this->GetKey(Namespace, Name))
+    LOG_FATAL(LogMaterialSubsystem, "[{}/{}]: No such PBR material.", *Namespace, Name)
 }
 
 void Jafg::JMaterialSubsystem::AddInstanceToGlobalBindlessArray(LPbrMaterialInstance* Instance)
@@ -1428,13 +1500,23 @@ void Jafg::JMaterialSubsystem::UpdateMaterialsFor(std::size_t Sync)
     }
 }
 
-void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
+void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPluginInfo Namespace)
 {
+    check(Namespace)
+
+    if (this->Templates.contains(Namespace))
+    {
+        check(this->PbrTemplates.contains(Namespace))
+        LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Materials are already known. Skipping.", *Namespace)
+        return;
+    }
+    check(!this->PbrTemplates.contains(Namespace))
+
+    LPath const& Path{**Namespace};
+
     STAT_CUSTOM_ZONE_FMT("RetrieveMaterialsFrom{}", Path.string())
 
-    LString Key{canonical(Path).string()};
-
-    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Retrieving materials.", Key)
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Retrieving materials.", *Namespace)
 
     TArray<UnresolvedMaterial> Materials;
     for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^.*\\.material\\.json$"))
@@ -1469,13 +1551,7 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
         }
     }
 
-    if (this->Templates.contains(Key))
-    {
-        LOG_FATAL(LogMaterialSubsystem, "[{}]: Material template already exists. Duplicate path [{}].", Key, Path)
-    }
-    check(!this->PbrTemplates.contains(Key))
-
-    TArray Resolved{::ResolveInheritance(*this->ShaderSubsystem, Key, std::move(Materials))};
+    TArray Resolved{::ResolveInheritance(*this->ShaderSubsystem, Namespace, std::move(Materials))};
     TArray<LPbrMaterialTemplate> PbrMaterials;
 
     for (LPath& Material: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^(?:.*/)?(?:[^/]+\\.)?pbr\\.json$")) // TODO: Make this for windows...
@@ -1492,10 +1568,6 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
         check(Material.has_parent_path())
         LPath Parent{Material.parent_path()};
 
-        if (!Result.Material.second.empty() && Result.Material.first.empty())
-        {
-            Result.Material.first = Path.string();
-        }
         check(Result.Material.first.empty() || !Result.Material.second.empty())
 
         if (Result.Textures.empty())
@@ -1516,27 +1588,16 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
             std::array<std::size_t, 4> Qualities{ 8,4,2,1 };
             for (std::size_t Quality: Qualities)
             {
-                LPath TargetAlbedo{finder::weakly_canonical(Parent/algo::sprintf("Albedo_{}k.png", Quality))};
-                LPath TargetNormal{finder::weakly_canonical(Parent/algo::sprintf("Normal_{}k.png", Quality))};
-                LPath TargetArm{finder::weakly_canonical(Parent/algo::sprintf("Arm_{}k.png", Quality))};
-                LPath TargetEmissive{finder::weakly_canonical(Parent/algo::sprintf("Emissive_{}k.png", Quality))};
-
-                if (!is_regular_file(TargetAlbedo))
+                //# Relative to the content dir. Empty if there is no such file.
+                auto Target{[&Parent, &Path](LString const& File) -> LPath
                 {
-                    TargetAlbedo = LPath{};
-                }
-                if (!is_regular_file(TargetNormal))
-                {
-                    TargetNormal = LPath{};
-                }
-                if (!is_regular_file(TargetArm))
-                {
-                    TargetArm = LPath{};
-                }
-                if (!is_regular_file(TargetEmissive))
-                {
-                    TargetEmissive = LPath{};
-                }
+                    LPath const Absolute{finder::weakly_canonical(Parent/File)};
+                    return is_regular_file(Absolute) ? finder::relative(Absolute, Path) : LPath{};
+                }};
+                LPath TargetAlbedo{Target(algo::sprintf("Albedo_{}k.png", Quality))};
+                LPath TargetNormal{Target(algo::sprintf("Normal_{}k.png", Quality))};
+                LPath TargetArm{Target(algo::sprintf("Arm_{}k.png", Quality))};
+                LPath TargetEmissive{Target(algo::sprintf("Emissive_{}k.png", Quality))};
 
                 if (!(TargetAlbedo.empty() && TargetNormal.empty() && TargetArm.empty() && TargetEmissive.empty()))
                 {
@@ -1551,24 +1612,20 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
         }
         else
         {
+            //# Relative to the content dir.
+            auto ToContent{[&Parent, &Path](LPath& Texture)
+            {
+                if (!Texture.native().empty())
+                {
+                    Texture = finder::relative(finder::weakly_canonical(Parent/Texture), Path);
+                }
+            }};
             for (auto& TextureQuality: Result.Textures | std::views::values)
             {
-                if (!TextureQuality.Albedo.native().empty())
-                {
-                    TextureQuality.Albedo = finder::weakly_canonical(Parent/TextureQuality.Albedo);
-                }
-                if (!TextureQuality.Normal.native().empty())
-                {
-                    TextureQuality.Normal = finder::weakly_canonical(Parent/TextureQuality.Normal);
-                }
-                if (!TextureQuality.Arm.native().empty())
-                {
-                    TextureQuality.Arm = finder::weakly_canonical(Parent/TextureQuality.Arm);
-                }
-                if (!TextureQuality.Emissive.native().empty())
-                {
-                    TextureQuality.Emissive = finder::weakly_canonical(Parent/TextureQuality.Emissive);
-                }
+                ToContent(TextureQuality.Albedo);
+                ToContent(TextureQuality.Normal);
+                ToContent(TextureQuality.Arm);
+                ToContent(TextureQuality.Emissive);
             }
         }
 
@@ -1584,16 +1641,16 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPath const& Path)
 
         check(algo::count(PbrMaterials, Result.Identifier, &LPbrMaterialTemplate::Identifier) == 1)
 
-        LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Fetched PBR material.", Key, Result.Identifier)
+        LOG_VERBOSE(LogMaterialSubsystem, "[{}/{}]: Fetched PBR material.", *Namespace, Result.Identifier)
     }
 
-    check(!this->Templates.contains(Key))
-    check(!this->PbrTemplates.contains(Key))
+    check(!this->Templates.contains(Namespace))
+    check(!this->PbrTemplates.contains(Namespace))
 
-    this->Templates[Key] = std::move(Resolved);
-    this->PbrTemplates[Key] = std::move(PbrMaterials);
-    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Fetched [{}+{}] materials.", Key
-        , this->Templates.at(Key).size(), this->PbrTemplates.at(Key).size()
+    this->Templates[Namespace] = std::move(Resolved);
+    this->PbrTemplates[Namespace] = std::move(PbrMaterials);
+    LOG_VERBOSE(LogMaterialSubsystem, "[{}]: Fetched [{}+{}] materials.", *Namespace
+        , this->Templates.at(Namespace).size(), this->PbrTemplates.at(Namespace).size()
         )
 }
 

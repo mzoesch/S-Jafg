@@ -237,20 +237,19 @@ void Jafg::ALightComponent::CreateDefaultComponents()
 
 void Jafg::ALightComponent::OnTypeChanged()
 {
-    auto TypeToTexture{[](ELight Light)
+    auto TypeToTexture{[](ELight Light) -> LStringView
     {
         switch (Light)
         {
-            case ELight::Directional: return JafgInfo/"Textures/Editor/DirectionalLight.png";
-            case ELight::Point:       return JafgInfo/"Textures/Editor/PointLight.png";
-            case ELight::Spot:        return JafgInfo/"Textures/Editor/SpotLight.png";
-            case ELight::Rect:        return JafgInfo/"Textures/Editor/RectLight.png";
+            case ELight::Directional: return "Textures/Editor/DirectionalLight.png";
+            case ELight::Point:       return "Textures/Editor/PointLight.png";
+            case ELight::Spot:        return "Textures/Editor/SpotLight.png";
+            case ELight::Rect:        return "Textures/Editor/RectLight.png";
         }
         std::unreachable();
     }};
-    LPath Path{TypeToTexture(this->Light.Type)};
     this->GetComponentChecked<ABillboardComponent>().SetTexture(LTexture2::FromFile(
-          LPath{Path}.replace_extension(), Path
+          JafgInfo, TypeToTexture(this->Light.Type)
         , {.Format=vk::Format::eR8G8B8A8Srgb,}
         , {.Samples=vk::SampleCountFlagBits::e1,}
         ));

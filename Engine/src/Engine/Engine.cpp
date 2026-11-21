@@ -710,6 +710,37 @@ bool Jafg::LEngine::TravelTrack(Detail::LWorldTrack& Track)
     return true;
 }
 
+Jafg::LPluginInfo Jafg::LEngine::FindPluginInfo(LStringView Identifier) const
+{
+    if (Identifier == "Jafg"sv)
+    {
+        return JafgInfo;
+    }
+
+#if JAFG_WITH_FOREIGN_SUPPORT
+    for (auto const& Plugin: this->LoadedPlugins)
+    {
+        if (Plugin.GetIdentifier() == Identifier)
+        {
+            return Plugin.HasContent()
+                ? Plugin.GetInfo()
+                : nullptr;
+        }
+    }
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
+
+    return nullptr;
+}
+
+Jafg::LPluginInfo Jafg::LEngine::FindPluginInfoChecked(LStringView Identifier) const
+{
+    if (LPluginInfo const Info{this->FindPluginInfo(Identifier)})
+    {
+        return Info;
+    }
+    LOG_FATAL(LogForeign, "[{}]: No such namespace.", Identifier)
+}
+
 #if JAFG_WITH_FOREIGN_SUPPORT
 void Jafg::LEngine::RefetchPlugins(TArray<LString> const& AdditionalPaths)
 {
@@ -1059,6 +1090,14 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
 
     LOG_TRACE(LogForeign, "[{}]: Waking up plugin lifetime.", Plugin.GetIdentifier())
     Plugin.Lifetime->OnStartup(Plugin);
+
+    if (Plugin.HasContent())
+    {
+        //# Freezes the content dir, if the plugin has not already requested its info during startup.
+        LPluginInfo const Info{Plugin.GetInfo()};
+        LOG_VERBOSE(LogInformation, "{}::Content={}", Plugin.GetIdentifier(), *Info)
+    }
+
     Plugin.bStarted = true;
     if (Plugin.IsContentOverridden())
     {

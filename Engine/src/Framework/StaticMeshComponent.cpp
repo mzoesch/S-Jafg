@@ -16,9 +16,9 @@ void Jafg::AStaticMeshComponent::OnAttach(AActor& InOwner)
     this->ShaderSubsystem = this->GetMutableLocalEgo().GetFrontend().GetSubsystemChecked<JShaderSubsystem>();
 }
 
-void Jafg::AStaticMeshComponent::SetMesh(LPath const& Mesh, EStaticMeshState MeshState /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */)
+void Jafg::AStaticMeshComponent::SetMesh(LPluginInfo Namespace, LStringView Mesh, EStaticMeshState MeshState /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */)
 {
-    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Mesh, MeshState, std::move(Info));
+    this->Mesh = this->GetEngine().GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Namespace, Mesh, MeshState, std::move(Info));
     this->Aabb = this->Mesh->GetAabb();
 }
 
@@ -159,8 +159,8 @@ void Jafg::LStaticMeshRenderable::ForceRenderWithOwnedMaterial(LActorRenderInfo 
     this->Mesh->Render(Info, this->GetTransform(), &*this->MaterialInstance);
 }
 
-void Jafg::LStaticMeshRenderable::SetMesh(LPath const& Mesh, EStaticMeshState MeshState)
+void Jafg::LStaticMeshRenderable::SetMesh(LPluginInfo Namespace, LStringView Mesh, EStaticMeshState MeshState)
 {
     check(GEngine)
-    this->Mesh = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Mesh, MeshState);
+    this->Mesh = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Namespace, Mesh, MeshState);
 }

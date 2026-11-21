@@ -9,11 +9,11 @@ namespace Jafg
 
 struct LTextureView final
 {
-    //# Path to the asset relative to the engine root dir.
+    //# Absolute path to the view file.
     LPath Path;
-    //# The name of the asset which may be overloaded by user preferences.
+    //# The name of the asset which may be overloaded by user preferences. Relative to its namespace.
     LString Identifier;
-    //# The path to the texture file relative to the engine root dir.
+    //# Absolute path to the texture file.
     LPath Texture;
     vk::Format Format{ vk::Format::eUndefined };
     std::optional<u32> MipLevels;

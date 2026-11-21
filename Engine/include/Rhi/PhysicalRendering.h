@@ -39,7 +39,11 @@ struct LPbrMaterialTemplate final
 {
     LString Identifier;
 
-    //# The actual underlying material to use. Defaults to (Jafg, Materials/Pbr) if empty.
+    //#
+    //# The actual underlying material to use as (namespace, name). Defaults to (Jafg, Materials/Pbr) if empty.
+    //# If only the name is set, the namespace of this pbr material is used. The namespace is the identifier of a
+    //# loaded plugin or "Jafg". @see LEngine::FindPluginInfo
+    //#
     std::pair<LString,LString> Material;
     //# TODO: Prob. some enum with translucent, transparent, etc. shaders.
 
@@ -70,6 +74,7 @@ struct LPbrMaterialTemplate final
     };
 
     //# All textures are optional.
+    //# All paths are relative to the content dir of the namespace of this pbr material.
     struct TextureBindings final
     {
         //# The base color map.

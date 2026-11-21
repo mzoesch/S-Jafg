@@ -111,6 +111,9 @@ EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownRea
     this->NativeHandle = nullptr;
     check( this->IsLoaded() == false )
 
+    //# The engine keeps the info alive. If loaded again, the plugin gets the same info back.
+    this->Info.reset();
+
     return EPluginLoadReturnCode::Success;
 }
 

@@ -19,7 +19,7 @@ JGC_API Jafg::LProgramParameter ContentDir{{
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
-JGC_API Jafg::LPluginInfo JgcInfo;
+JGC_API Jafg::LPluginInfo JgcInfo{ nullptr };
 
 namespace
 {
@@ -51,8 +51,8 @@ void LJgcPluginLifetime::OnStartup(Jafg::LLoadedPlugin const& Plugin)
                 )
         }
     }
-    JgcInfo.Initialize(Plugin.GetContent());
-    LOG_VERBOSE(LogInformation, "{}::Content={}", Plugin.GetIdentifier(), *JgcInfo)
+
+    JgcInfo = Plugin.GetInfo();
 }
 
 void LJgcPluginLifetime::OnFinishedLoading()

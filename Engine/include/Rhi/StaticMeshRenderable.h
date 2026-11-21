@@ -16,7 +16,7 @@ struct LStaticMeshRenderable
     void ForceRenderWithOwnedMaterial(LActorRenderInfo const& Info) const;
 
     //# The only mesh of the file. @see #JMeshSubsystem::LoadMesh
-    ENGINE_API void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
+    ENGINE_API void SetMesh(LPluginInfo Namespace, LStringView Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device);
     void SetMesh(LStaticMeshRef Mesh) noexcept
     {
         this->Mesh = std::move(Mesh);

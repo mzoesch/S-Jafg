@@ -60,45 +60,16 @@ struct LTexture2 final
         , DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Host
         );
-    static LTexture2Ref FromFile(LStringView Key
-        , LPath const& Path
+    //# @see JTextureSubsystem::FromFile
+    static LTexture2Ref FromFile(LPluginInfo Namespace, LStringView Path
         , HostInfo HostCreateInfo
         , DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Device
         );
-    static LTexture2Ref FromFile(LString const& Key
-        , LPath const& Path
-        , HostInfo HostCreateInfo
-        , DeviceInfo DeviceCreateInfo
-        , ETexture2State State = ETexture2StateBits::Device
-        )
-    {
-        return FromFile(LStringView{Key}, Path, HostCreateInfo, DeviceCreateInfo, State);
-    }
-    static LTexture2Ref FromFile(LPath const& Key
-        , LPath const& Path
-        , HostInfo HostCreateInfo
-        , DeviceInfo DeviceCreateInfo
-        , ETexture2State State = ETexture2StateBits::Device
-        )
-    {
-        return FromFile(LStringView{Key.generic_string()}, Path, HostCreateInfo, DeviceCreateInfo, State);
-    }
-    static LTexture2Ref FromTextureView(LStringView Namespace, LStringView Name
+    //# @see JTextureSubsystem::FromTextureView
+    static LTexture2Ref FromTextureView(LPluginInfo Namespace, LStringView Name
         , ETexture2State State = ETexture2StateBits::Device
         );
-    static LTexture2Ref FromTextureView(LString const& Namespace, LStringView Name
-        , ETexture2State State = ETexture2StateBits::Device
-        )
-    {
-        return FromTextureView(LStringView{Namespace}, Name, State);
-    }
-    static LTexture2Ref FromTextureView(LPath const& Namespace, LStringView Name
-        , ETexture2State State = ETexture2StateBits::Device
-        )
-    {
-        return FromTextureView(LStringView{Namespace.generic_string()}, Name, State);
-    }
     PROHIBIT_COPY(LTexture2)
     LTexture2(LTexture2&& Other) = default;
     LTexture2& operator=(LTexture2&& Rhs) = default;
@@ -175,9 +146,9 @@ private:
 };
 
 //#
-//# - std::monostate:    No texture.
-//# - LTexture2Ref:      The texture will be used (has to be valid).
-//# - <LString,LString>: Texture view namespace+name (has to be valid).
+//# - std::monostate:         No texture.
+//# - LTexture2Ref:           The texture will be used (has to be valid).
+//# - <LPluginInfo,LString>:  Texture view namespace+name (has to be valid).
 //#
 struct LOptionalTexture2Ref
 {
@@ -187,12 +158,12 @@ struct LOptionalTexture2Ref
         : Variant{std::monostate{}} {}
     LOptionalTexture2Ref(LTexture2Ref Reference) noexcept
         : Variant{Reference} {}
-    LOptionalTexture2Ref(std::pair<LString, LString> Pair) noexcept
+    LOptionalTexture2Ref(std::pair<LPluginInfo, LString> Pair) noexcept
         : Variant{std::move(Pair)} {}
-    LOptionalTexture2Ref(LString Namespace, LString Name) noexcept
-        : Variant{std::pair<LString, LString>{std::move(Namespace), std::move(Name)}} {}
+    LOptionalTexture2Ref(LPluginInfo Namespace, LString Name) noexcept
+        : Variant{std::pair<LPluginInfo, LString>{Namespace, std::move(Name)}} {}
 
-    std::variant<std::monostate, LTexture2Ref, std::pair<LString, LString>> Variant;
+    std::variant<std::monostate, LTexture2Ref, std::pair<LPluginInfo, LString>> Variant;
 
     inline LTexture2Ref GetResolved() const
     {
@@ -200,9 +171,9 @@ struct LOptionalTexture2Ref
         {
             return std::get<LTexture2Ref>(this->Variant);
         }
-        if (std::holds_alternative<std::pair<LString, LString>>(this->Variant))
+        if (std::holds_alternative<std::pair<LPluginInfo, LString>>(this->Variant))
         {
-            auto& Pair{std::get<std::pair<LString, LString>>(this->Variant)};
+            auto& Pair{std::get<std::pair<LPluginInfo, LString>>(this->Variant)};
             return LTexture2::FromTextureView(Pair.first, Pair.second);
         }
         return {};

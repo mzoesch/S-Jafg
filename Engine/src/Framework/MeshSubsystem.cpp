@@ -32,16 +32,9 @@ NODISCARD bool IsNearlyIdentity(LWorldTrans const& Transform) noexcept
 
 } /* ~Namespace <Anonymous> */
 
-LPath Jafg::JMeshSubsystem::NormalizePath(LPath const& Path) noexcept
+LString Jafg::JMeshSubsystem::NormalizePath(LStringView Path) noexcept
 {
-    std::error_code Error;
-    LPath Absolute{std::filesystem::absolute(Path, Error)};
-    if (Error)
-    {
-        LOG_WARNING(LogRhi, "[{}]: Failed to make path absolute: {}.", Path, Error.message())
-        return Path.lexically_normal();
-    }
-    return Absolute.lexically_normal();
+    return LPath{Path}.lexically_normal().generic_string();
 }
 
 Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromSource(LStaticMeshSource const& Source, EStaticMeshState State, std::optional<LStaticMeshCreateInfo> const& Info) const
@@ -57,10 +50,11 @@ Jafg::LStaticMeshRef Jafg::JMeshSubsystem::FromSource(LStaticMeshSource const& S
 
 std::shared_ptr<Jafg::LStaticMesh>& Jafg::JMeshSubsystem::FindOrAllocate(LStaticMeshSource const& Source, std::optional<LStaticMeshCreateInfo> const& Info) const
 {
+    check(Source.Namespace)
     auto& Mesh{this->Meshes[Source]};
     if (!Mesh)
     {
-        Mesh = std::make_shared<LStaticMesh>(Source);
+        Mesh = std::make_shared<LStaticMesh>(Source, *Source.Namespace / Source.Path);
     }
     if (Info)
     {
@@ -70,22 +64,25 @@ std::shared_ptr<Jafg::LStaticMesh>& Jafg::JMeshSubsystem::FindOrAllocate(LStatic
     return Mesh;
 }
 
-Jafg::LStaticMeshRef Jafg::JMeshSubsystem::LoadMesh(LPath const& Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */) const
+Jafg::LStaticMeshRef Jafg::JMeshSubsystem::LoadMesh(LPluginInfo Namespace, LStringView Path, EStaticMeshState State /* = EStaticMeshStateBits::Device */, std::optional<LStaticMeshCreateInfo> Info /* = {} */) const
 {
     STAT_FUNCTION()
 
-    LPath const Normalized{NormalizePath(Path)};
+    check(Namespace)
+
+    LString const Normalized{NormalizePath(Path)};
 
     /* Fast path. Known file; the file is only read if the mesh has to be brought to a new state. */
-    if (auto It{this->SingleMeshIndices.find(Normalized)}; It != this->SingleMeshIndices.end())
+    auto& Indices{this->SingleMeshIndices[Namespace]};
+    if (auto It{Indices.find(Normalized)}; It != Indices.end())
     {
-        return this->FromSource(LStaticMeshSource{.Path = Normalized, .MeshIdx = It->second}, State, Info);
+        return this->FromSource(LStaticMeshSource{.Namespace = Namespace, .Path = Normalized, .MeshIdx = It->second}, State, Info);
     }
 
-    auto Scene{this->LoadScene(Normalized, {}, State, std::move(Info))};
+    auto Scene{this->LoadScene(Namespace, Normalized, {}, State, std::move(Info))};
     if (!Scene)
     {
-        LOG_FATAL(LogRhi, "[{}]: Failed to load mesh: [{}].", Normalized, std::to_underlying(Scene.error()))
+        LOG_FATAL(LogRhi, "[{}/{}]: Failed to load mesh: [{}].", *Namespace, Normalized, std::to_underlying(Scene.error()))
     }
 
     /* Exactly one mesh. Remember the first node that uses it and whether any transform is on the way to it. */
@@ -131,12 +128,13 @@ Jafg::LStaticMeshRef Jafg::JMeshSubsystem::LoadMesh(LPath const& Path, EStaticMe
             , Normalized, MeshNodeCount)
     }
 
-    this->SingleMeshIndices.emplace(Normalized, MeshNode->Mesh->GetSource().MeshIdx);
+    Indices.emplace(Normalized, MeshNode->Mesh->GetSource().MeshIdx);
     return MeshNode->Mesh;
 }
 
 Jafg::LMeshSceneProjection Jafg::JMeshSubsystem::LoadAndProjectScene(
-      LPath const& Path
+      LPluginInfo Namespace
+    , LStringView Path
     , ASceneComponent& Parent
     , LMeshSceneProjectionInfo const& Projection /* = {} */
     , EStaticMeshState State /* = EStaticMeshStateBits::Device */
@@ -144,16 +142,17 @@ Jafg::LMeshSceneProjection Jafg::JMeshSubsystem::LoadAndProjectScene(
     , std::optional<LStaticMeshCreateInfo> Info /* = {} */
     ) const
 {
-    auto Scene{this->LoadScene(Path, SceneIdx, State, std::move(Info))};
+    auto Scene{this->LoadScene(Namespace, Path, SceneIdx, State, std::move(Info))};
     if (!Scene)
     {
-        LOG_FATAL(LogRhi, "[{}]: Failed to load scene: [{}].", Path, std::to_underlying(Scene.error()))
+        LOG_FATAL(LogRhi, "[{}/{}]: Failed to load scene: [{}].", *Namespace, Path, std::to_underlying(Scene.error()))
     }
     return ProjectMeshScene(*Scene, Parent, Projection);
 }
 
 std::expected<Jafg::LMeshScene, Jafg::LStaticMesh::EResult> Jafg::JMeshSubsystem::LoadScene(
-      LPath const& InPath
+      LPluginInfo Namespace
+    , LStringView InPath
     , std::optional<u32> SceneIdx /* = {} */
     , EStaticMeshState State /* = EStaticMeshStateBits::Device */
     , std::optional<LStaticMeshCreateInfo> Info /* = {} */
@@ -161,8 +160,11 @@ std::expected<Jafg::LMeshScene, Jafg::LStaticMesh::EResult> Jafg::JMeshSubsystem
 {
     STAT_FUNCTION()
 
-    /* Everything below (and the cache keys) use the normalized path. */
-    LPath const Path{NormalizePath(InPath)};
+    check(Namespace)
+
+    /* The cache keys use the normalized relative path. The file is read from the absolute path. */
+    LString const Normalized{NormalizePath(InPath)};
+    LPath const Path{*Namespace / Normalized};
     LOG_VERBOSE(LogRhi, "[{}]: Loading scene [{}].", Path, SceneIdx ? algo::sprintf("{}", *SceneIdx) : "<default>")
 
     if (!is_regular_file(Path))
@@ -235,7 +237,7 @@ std::expected<Jafg::LMeshScene, Jafg::LStaticMesh::EResult> Jafg::JMeshSubsystem
             return It->second;
         }
 
-        LStaticMeshSource const Source{.Path = Path, .MeshIdx = MeshIdx};
+        LStaticMeshSource const Source{.Namespace = Namespace, .Path = Normalized, .MeshIdx = MeshIdx};
         auto& Mesh{this->FindOrAllocate(Source, Info)};
         if (auto Result{Mesh->BringToState(State, [&](TArray<LStaticMesh::HostMesh>& Out) -> LStaticMesh::EResult
             {

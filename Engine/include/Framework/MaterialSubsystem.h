@@ -67,11 +67,6 @@ public:
     //# Called automatically by Jafg. Usually you do not want to call this.
     void PurgeUnused();
 
-    NODISCARD LString GetKey(LStringView Namespace, LStringView Instance) const noexcept
-    {
-        return algo::sprintf("{}/{}", Namespace, Instance);
-    }
-
     //# All materials templates known to this subsystem.
     NODISCARD FORCEINLINE constexpr auto const& GetTemplates() const noexcept { return this->Templates; }
     //# All materials allocated by this subsystem.
@@ -83,53 +78,21 @@ public:
     //# objects and draw calls.
     //#
     NODISCARD FORCEINLINE constexpr auto const& GetSharedInstances() const noexcept { return this->Instances; }
-    FORCEINLINE void RegisterSharedInstance(LStringView Key, LMaterialInstanceRef Instance) noexcept
-    {
-        if (this->Instances.contains(Key))
-        {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: Material instance with this key already exists.", Key)
-        }
-        this->Instances.emplace(std::move(Key), std::move(Instance));
-    }
-    FORCEINLINE void RegisterSharedInstance(LStringView Namespace, LStringView Name, LMaterialInstanceRef Instance) noexcept
-    {
-        this->RegisterSharedInstance(this->GetKey(Namespace, Name), std::move(Instance));
-    }
-    NODISCARD std::optional<LMaterialInstanceRef> FindSharedInstance(LStringView Key) noexcept
-    {
-        if (auto It{this->Instances.find(Key)}; It != this->Instances.end())
-        {
-            return It->second;
-        }
-        return {};
-    }
-    NODISCARD std::optional<LMaterialInstanceRef> FindSharedInstance(LStringView Namespace, LStringView Name) noexcept
-    {
-        return this->FindSharedInstance(this->GetKey(Namespace, Name));
-    }
-    NODISCARD LMaterialInstanceRef FindOrAllocateSharedInstance(LStringView Namespace, LStringView Name) noexcept
-    {
-        LString Key{this->GetKey(Namespace, Name)};
-        if (auto Instance{this->FindSharedInstance(Key)})
-        {
-            return *Instance;
-        }
-        auto Result{this->GetInstanceFromName(Namespace, Name)};
-        this->RegisterSharedInstance(Key, Result);
-        return Result;
-    }
+    void RegisterSharedInstance(LPluginInfo Namespace, LStringView Name, LMaterialInstanceRef Instance) noexcept;
+    NODISCARD std::optional<LMaterialInstanceRef> FindSharedInstance(LPluginInfo Namespace, LStringView Name) const noexcept;
+    NODISCARD LMaterialInstanceRef FindOrAllocateSharedInstance(LPluginInfo Namespace, LStringView Name) noexcept;
 
     //# Get a material that is device ready.
-    NODISCARD LMaterialRef GetMaterial(LStringView Namespace, LStringView Name) noexcept;
+    NODISCARD LMaterialRef GetMaterial(LPluginInfo Namespace, LStringView Name) noexcept;
     //#
     //# Get the instance of a material to specify unique data. Completely optional. You can use materials just
     //# as is without any instance.
     //#
-    NODISCARD LMaterialInstanceRef GetInstance(LStringView Namespace, LStringView Name, LMaterialRef Material);
-    NODISCARD LMaterialInstanceRef GetInstanceFromName(LStringView Namespace, LStringView Name);
+    NODISCARD LMaterialInstanceRef GetInstance(LMaterialRef Material);
+    NODISCARD LMaterialInstanceRef GetInstanceFromName(LPluginInfo Namespace, LStringView Name);
 
     //# Get a bindless instance to a pbr material.
-    NODISCARD LPbrMaterialInstanceRef GetPbrInstance(LStringView Namespace, LStringView Name);
+    NODISCARD LPbrMaterialInstanceRef GetPbrInstance(LPluginInfo Namespace, LStringView Name);
     // NODISCARD std::pair<LPbrMaterialInstanceRef, LPbrMaterialTemplate const*> GetOnTheFlyPbrInstance(LPbrMaterialTemplate Template);
 
     //#
@@ -161,31 +124,21 @@ public:
 
 private:
 
-    void RetrieveMaterialsFrom(LPath const& Path);
+    //# Noop, if the materials of the namespace are already known (e.g., shared with another plugin or loaded again).
+    void RetrieveMaterialsFrom(LPluginInfo Namespace);
 
     JTextureSubsystem* TextureSubsystem{};
     JShaderSubsystem* ShaderSubsystem{};
 
     //# Once populated, templates will never change their address again. This is guaranteed by jafg.
-    algo::transparent_unordered_string_map<TArray<rhi::material_template>> Templates;
-    algo::transparent_unordered_string_map<TArray<LPbrMaterialTemplate>> PbrTemplates;
+    std::unordered_map<LPluginInfo, TArray<rhi::material_template>> Templates;
+    std::unordered_map<LPluginInfo, TArray<LPbrMaterialTemplate>> PbrTemplates;
 
-    algo::transparent_unordered_string_map<LMaterialRef> Materials;
-    algo::transparent_unordered_string_map<LMaterialInstanceRef> Instances;
-    NODISCARD rhi::material_template const& GetMaterialTemplate(LStringView Namespace, LStringView Identifier) noexcept
-    {
-        if (!this->Templates.contains(Namespace))
-        {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such namespace.", Namespace)
-        }
-        auto& SearchSpace{this->Templates.at(Namespace)};
-        auto It{algo::find(SearchSpace, Identifier, &rhi::material_template::identifier)};
-        if (It == SearchSpace.end())
-        {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such material.", this->GetKey(Namespace, Identifier))
-        }
-        return *It;
-    }
+    //# Per namespace: The name of the material to the material.
+    std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<LMaterialRef>> Materials;
+    //# Per namespace: The name of the shared instance to the instance.
+    std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<LMaterialInstanceRef>> Instances;
+    NODISCARD rhi::material_template const& GetMaterialTemplate(LPluginInfo Namespace, LStringView Identifier) const noexcept;
 
     algo::transparent_unordered_string_map<vk::raii::DescriptorSetLayout> SharedDescriptorSetLayouts;
 

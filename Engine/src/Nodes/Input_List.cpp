@@ -16,7 +16,7 @@ void Jafg::WInput_List::CtorLogic()
 
     this->Style.SetEverywhere<&LBoxBrush::Padding>(Prefs.InputPadding);
 
-    this->RightIcon = LTexture2::FromTextureView(*JafgInfo, "Icons/ArrowDown");
+    this->RightIcon = LTexture2::FromTextureView(JafgInfo, "Icons/ArrowDown");
     this->RightIconStyle.ChainEverywhere<&LIconBrush::bAlwaysPad, &LIconBrush::Alignment>(true, LIconBrush::Align::Right);
     this->RightIconStyle.Set<ETextButtonIconStyleBits::Disabled, &LIconBrush::Tint>(Colors::Gray);
 }

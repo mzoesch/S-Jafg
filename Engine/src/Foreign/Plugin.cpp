@@ -41,6 +41,16 @@ LLoadedPlugin::~LLoadedPlugin()
     return;
 }
 
+LPluginInfo LLoadedPlugin::GetInfo() const
+{
+    if (!this->Info)
+    {
+        check(Tasks::IsOnMasterThread())
+        this->Info = Detail::LPluginInfoRegistry::FindOrAdd(this->GetContent());
+    }
+    return this->Info.get();
+}
+
 void LLoadedPlugin::PrepareLibraryClose(const EPluginShutdownReason::Type InReason)
 {
     check( Tasks::IsOnMasterThread() )

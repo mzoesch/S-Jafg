@@ -38,8 +38,10 @@ ENUM_STRUCT_FLAGS(EStaticMeshStateBits, EStaticMeshState)
 //# Where the data of a static mesh lives in secondary storage.
 struct LStaticMeshSource final
 {
-    //# A .gltf or .glb file. Normalized (absolute and lexically normal) by #JMeshSubsystem.
-    LPath Path;
+    //# The namespace the file lives in.
+    LPluginInfo Namespace{ nullptr };
+    //# A .gltf or .glb file relative to the content dir of the #Namespace. Lexically normalized by #JMeshSubsystem.
+    LString Path;
     //# The index of the glTF mesh in the file.
     u32 MeshIdx{};
 
@@ -134,7 +136,9 @@ struct LStaticMesh final
     typedef TFunction<EResult(TArray<HostMesh>& Out)> LPullHost;
 
     inline LStaticMesh() = default;
-    inline explicit LStaticMesh(LStaticMeshSource InSource) : Source{std::move(InSource)} {}
+    //# @param InAbsolutePath The file of the source. Read whenever host data has to be pulled from the source.
+    inline explicit LStaticMesh(LStaticMeshSource InSource, LPath InAbsolutePath)
+        : Source{std::move(InSource)}, AbsolutePath{std::move(InAbsolutePath)} {}
     PROHIBIT_REALLOC_OF_ANY_FORM(LStaticMesh)
     ~LStaticMesh() = default;
 
@@ -197,7 +201,8 @@ struct LStaticMesh final
     NODISCARD FORCEINLINE constexpr LWorldAabb3 const& GetAabb() const noexcept { return this->Aabb; }
     //# Vertices of the convex hull in mesh space. Empty if not built, @see #HasConvex.
     NODISCARD FORCEINLINE constexpr TArray<LVec3F> const& GetConvexHull() const noexcept { return this->ConvexHull; }
-    NODISCARD FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->Source.Path; }
+    //# The absolute path to the file of the source.
+    NODISCARD FORCEINLINE constexpr LPath const& GetPath() const noexcept { return this->AbsolutePath; }
     NODISCARD FORCEINLINE constexpr LStaticMeshSource const& GetSource() const noexcept { return this->Source; }
 
     //#
@@ -232,6 +237,8 @@ private:
     TArray<LVec3F> TracePositions;
     TArray<u32> TraceIndices;
     LStaticMeshSource Source;
+    //# Resolved once when allocated. So the namespace of the source never has to be dereferenced again.
+    LPath AbsolutePath;
 };
 
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept;
@@ -249,7 +256,7 @@ struct std::hash<Jafg::LStaticMeshSource>
 {
     FORCEINLINE size_t operator()(Jafg::LStaticMeshSource const& Source) const noexcept
     {
-        return hash<LPath>()(Source.Path) ^ (hash<u32>()(Source.MeshIdx) << 1);
+        return hash<Jafg::LPluginInfo>()(Source.Namespace) ^ (hash<LString>()(Source.Path) << 1) ^ (hash<u32>()(Source.MeshIdx) << 2);
     }
 };
 

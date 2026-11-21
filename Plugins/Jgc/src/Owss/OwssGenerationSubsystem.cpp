@@ -29,7 +29,7 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     if (!World.GetSkybox())
     {
         World.MakeSkybox(this->GetMutableEngine().GetLocalEgo().GetFrontend().GetSubsystemChecked<Jafg::JTextureSubsystem>()
-            ->CubeFromFile(JgcInfo/"Textures/Skies/hiptyc_2020_16k_gal"));
+            ->CubeFromFile(JgcInfo, "Textures/Skies/hiptyc_2020_16k_gal"));
     }
 
     this->MaterialInstance = World.GetMutableFrontend().GetSubsystemChecked<Jafg::JMaterialSubsystem>()
@@ -66,7 +66,7 @@ void Jgc::JOwssGenerationSubsystem::GenerateAsteroids(LWorldVec3 const& Where)
         Jafg::ARigidComponent& Rigid{Asteroid.EmplaceRootComponent<Jafg::ARigidComponent>()};
         Jafg::AStaticMeshComponent& Mesh{Asteroid.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [&](Jafg::AStaticMeshComponent& Comp)
         {
-            Comp.SetMesh(JgcInfo/"Models/Asteroids/Object_16.glb", Jafg::EStaticMeshStateBits::PhysicsReady);
+            Comp.SetMesh(JgcInfo, "Models/Asteroids/Object_16.glb", Jafg::EStaticMeshStateBits::PhysicsReady);
             Comp.SetPbrMaterialInstance(this->MaterialInstance);
         })};
         Rigid.SetLocalTransformByTeleport(Trans);
@@ -103,7 +103,8 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
         Rigid.SetLocalRotatorByTeleport(Orientation);
 
         this->GetMutableEngine().GetSubsystemChecked<Jafg::JMeshSubsystem>()->LoadAndProjectScene(
-              JgcInfo/"Vehicles/SVS26/SVS26.glb"
+              JgcInfo
+            , "Vehicles/SVS26/SVS26.glb"
             , Rigid
             , {.PbrMaterialInstance = this->MaterialInstance}
             , Jafg::EStaticMeshStateBits::PhysicsReady

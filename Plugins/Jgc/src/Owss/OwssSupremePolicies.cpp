@@ -32,7 +32,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
         Plane.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [World=&World](Jafg::AStaticMeshComponent& Comp)
         {
             auto& Frontend{World->GetMutableFrontend()};
-            Comp.SetMesh(JgcInfo/LITERAL_TEXT("Models/Plane_8M.glb"));
+            Comp.SetMesh(JgcInfo, "Models/Plane_8M.glb");
             Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()
                 ->GetPbrInstance(JafgInfo,"Textures/Editor/GroundGrid_8M"));
             Comp.SetLocalScaleByTeleport(maths::up_vector<LWorldVec3>
@@ -40,7 +40,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
         });
     }
 
-    auto SpawnObject{[&](LPath const& Mesh, TArray<LWorldVec3> const& Translations)
+    auto SpawnObject{[&](LStringView Mesh, TArray<LWorldVec3> const& Translations)
     {
         auto Idx{0uz};
         for (auto& Translation: Translations)
@@ -54,7 +54,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
             Cube.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [&](Jafg::AStaticMeshComponent& Comp)
             {
                 auto& Frontend{World.GetMutableFrontend()};
-                Comp.SetMesh(Mesh);
+                Comp.SetMesh(JgcInfo, Mesh);
                 Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()
                     ->GetPbrInstance(JafgInfo, "Textures/Editor/ObjectGrid_1M"));
             });
@@ -64,15 +64,15 @@ static void LoadGymCollection(Jafg::LWorld& World)
     }};
     auto SpawnCubes{[&](TArray<LWorldVec3> const& Translations)
     {
-        SpawnObject(JgcInfo/LITERAL_TEXT("Models/Cube.glb"), Translations);
+        SpawnObject("Models/Cube.glb", Translations);
     }};
     auto SpawnHalfCubes{[&](TArray<LWorldVec3> const& Translations)
     {
-        SpawnObject(JgcInfo/LITERAL_TEXT("Models/HalfCube.glb"), Translations);
+        SpawnObject("Models/HalfCube.glb", Translations);
     }};
     auto SpawnQuarterCubes{[&](TArray<LWorldVec3> const& Translations)
     {
-        SpawnObject(JgcInfo/LITERAL_TEXT("Models/QuarterCube.glb"), Translations);
+        SpawnObject("Models/QuarterCube.glb", Translations);
     }};
 
     SpawnCubes({

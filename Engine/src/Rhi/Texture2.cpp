@@ -83,8 +83,7 @@ Jafg::LTexture2 Jafg::LTexture2::FromMemory(
     return Tex;
 }
 
-Jafg::LTexture2Ref Jafg::LTexture2::FromFile(LStringView Key
-    , LPath const& Path
+Jafg::LTexture2Ref Jafg::LTexture2::FromFile(LPluginInfo Namespace, LStringView Path
     , HostInfo HostCreateInfo
     , DeviceInfo DeviceCreateInfo
     , ETexture2State State /* = = ETexture2StateBits::Device */
@@ -92,10 +91,10 @@ Jafg::LTexture2Ref Jafg::LTexture2::FromFile(LStringView Key
 {
     check(Detail::GMutableEngine)
     return Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()
-        ->FromFile(Key, Path, HostCreateInfo, DeviceCreateInfo, State);
+        ->FromFile(Namespace, Path, HostCreateInfo, DeviceCreateInfo, State);
 }
 
-Jafg::LTexture2Ref Jafg::LTexture2::FromTextureView(LStringView Namespace, LStringView Name, ETexture2State State)
+Jafg::LTexture2Ref Jafg::LTexture2::FromTextureView(LPluginInfo Namespace, LStringView Name, ETexture2State State)
 {
     check(Detail::GMutableEngine)
     return Detail::GMutableEngine->GetLocalEgo().GetFrontend().GetSubsystemChecked<JTextureSubsystem>()

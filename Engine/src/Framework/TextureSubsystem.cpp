@@ -74,40 +74,74 @@ void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
 
     this->GetMutableEngine().OnForeignPluginLoaded.EmplaceStrong([this](LLoadedPlugin& Plugin)
     {
-        if (Plugin.GetFetched().bHasContent)
+        if (Plugin.HasContent())
         {
-            this->RetrieveTextureViewsFrom(Plugin.GetContent());
+            this->RetrieveTextureViewsFrom(Plugin.GetInfo());
         }
 
         return false;
     });
 
-    this->RetrieveTextureViewsFrom(*JafgInfo);
+    this->RetrieveTextureViewsFrom(JafgInfo);
 }
 
 void Jafg::JTextureSubsystem::PurgeUnused() noexcept
 {
-    std::erase_if(this->Textures, [](auto& E) -> bool
+    for (auto& Cache: this->Textures | std::views::values)
     {
-        if (E.second.use_count() == 1)
+        std::erase_if(Cache, [](auto& E) -> bool
         {
-            LOG_VERBOSE(LogTextureSubsystem, "Purging unused texture [{}].", E.first)
-            return true;
-        }
+            if (E.second.use_count() == 1)
+            {
+                LOG_VERBOSE(LogTextureSubsystem, "Purging unused texture [{}].", E.second->GetPath())
+                return true;
+            }
 
-        return false;
-    });
+            return false;
+        });
+    }
 
     // TODO: Do we want to rehash??
 }
 
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LStringView Key, LPath const& Path
+Jafg::LTextureView const& Jafg::JTextureSubsystem::GetTextureView(LPluginInfo Namespace, LStringView Identifier) const noexcept
+{
+    check(Namespace)
+
+    auto const It{this->TextureViews.find(Namespace)};
+    if (It == this->TextureViews.end())
+    {
+        LOG_FATAL(LogTextureSubsystem, "[{}]: No such namespace.", *Namespace)
+    }
+    auto const View{algo::find(It->second, Identifier, &LTextureView::Identifier)};
+    if (View == It->second.end())
+    {
+        LOG_FATAL(LogTextureSubsystem, "[{}/{}]: No such texture view.", *Namespace, Identifier)
+    }
+    return *View;
+}
+
+std::size_t Jafg::JTextureSubsystem::GetLoadedTextureCount() const noexcept
+{
+    auto Count{0uz};
+    for (auto const& Cache: this->Textures | std::views::values)
+    {
+        Count += Cache.size();
+    }
+    return Count;
+}
+
+template<typename TMakePath>
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FindOrLoad(LPluginInfo Namespace, LStringView Key, TMakePath&& MakePath
     , LTexture2::HostInfo HostCreateInfo
     , LTexture2::DeviceInfo DeviceCreateInfo
-    , ETexture2State State /* = ETexture2StateBits::Device */
+    , ETexture2State State
     )
 {
-    if (auto It{this->Textures.find(Key)}; It != this->Textures.end())
+    check(Namespace)
+
+    auto& Cache{this->Textures[Namespace]};
+    if (auto It{Cache.find(Key)}; It != Cache.end())
     {
         check(It->second->GetHostCreateInfo().Format == HostCreateInfo.Format)
         check(It->second->GetDeviceCreateInfo().DesiredMipLevels == DeviceCreateInfo.DesiredMipLevels)
@@ -116,32 +150,48 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LStringView Key, LPath cons
         return It->second;
     }
 
-    auto Result{std::make_shared<LTexture2>(Path, HostCreateInfo, DeviceCreateInfo)};
-    this->Textures[LString{Key}] = Result;
+    auto Result{std::make_shared<LTexture2>(std::forward<TMakePath>(MakePath)(), HostCreateInfo, DeviceCreateInfo)};
+    Cache.emplace(LString{Key}, Result);
     Result->BringToState(State);
     return Result;
 }
 
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LStringView Namespace, LStringView Name, ETexture2State State /* = ETexture2StateBits::Device */)
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPluginInfo Namespace, LStringView Path
+    , LTexture2::HostInfo HostCreateInfo
+    , LTexture2::DeviceInfo DeviceCreateInfo
+    , ETexture2State State /* = ETexture2StateBits::Device */
+    )
+{
+    check(Namespace)
+    return this->FindOrLoad(Namespace, Path, [Namespace, Path]{ return *Namespace / Path; }
+        , HostCreateInfo
+        , DeviceCreateInfo
+        , State
+        );
+}
+
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LPluginInfo Namespace, LStringView Name, ETexture2State State /* = ETexture2StateBits::Device */)
 {
     auto const& View{this->GetTextureView(Namespace, Name)};
-    return this->FromFile(this->GetKey(Namespace, Name), View.Texture
+    return this->FindOrLoad(Namespace, Name, [&View]{ return View.Texture; }
         , LTexture2::HostInfo{.Format=View.Format}
         , LTexture2::DeviceInfo{.DesiredMipLevels=View.MipLevels, .Samples=View.MaxSampleCount}
         , State
         );
 }
 
-Jafg::LTextureCube2Ref Jafg::JTextureSubsystem::CubeFromFile(LPath const& Path)
+Jafg::LTextureCube2Ref Jafg::JTextureSubsystem::CubeFromFile(LPluginInfo Namespace, LStringView Path)
 {
-    if (auto const& It{this->CubeTextures.find(Path)}; It != this->CubeTextures.end())
+    check(Namespace)
+
+    auto& Cache{this->CubeTextures[Namespace]};
+    if (auto const& It{Cache.find(Path)}; It != Cache.end())
     {
         check(!!It->second->GetDeviceHandle().get_allocation())
         return It->second;
     }
 
-    this->CubeTextures[Path] = std::make_shared<LTextureCube2>(LTextureCube2::CubeMap{std::move(Path)});
-    return this->CubeTextures[Path];
+    return Cache.emplace(LString{Path}, std::make_shared<LTextureCube2>(LTextureCube2::CubeMap{*Namespace / Path})).first->second;
 }
 
 void Jafg::JTextureSubsystem::_Vk_UpdateSamplers()
@@ -349,7 +399,7 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
     this->FreeBindlessTextureArraySlots = algo::dynamic_bit_set{BindlessTextureArrayCapacity};
     check(this->FreeBindlessTextureArraySlots.bit_count() == BindlessTextureArrayCapacity)
 
-    TArray<std::pair<LString, LString>> GuaranteedTextureIdentifiers{ {*JafgInfo, "Textures/IdentityMul"} };
+    TArray<std::pair<LPluginInfo, LString>> GuaranteedTextureIdentifiers{ {JafgInfo, "Textures/IdentityMul"} };
     if (!this->GuaranteedTextures.empty())
     {
         panic("Expected GuaranteedTextures to be empty.")
@@ -374,13 +424,21 @@ void Jafg::JTextureSubsystem::_Vk_AllocateBindlessPool()
     }
 }
 
-void Jafg::JTextureSubsystem::RetrieveTextureViewsFrom(LPath const& Path)
+void Jafg::JTextureSubsystem::RetrieveTextureViewsFrom(LPluginInfo Namespace)
 {
+    check(Namespace)
+
+    if (this->TextureViews.contains(Namespace))
+    {
+        LOG_VERBOSE(LogTextureSubsystem, "[{}]: Texture views are already known. Skipping.", *Namespace)
+        return;
+    }
+
+    LPath const& Path{**Namespace};
+
     STAT_CUSTOM_ZONE_FMT("RetrieveTextureViewsFrom-{}", Path.string())
 
-    LString Key{canonical(Path).string()};
-
-    LOG_VERBOSE(LogTextureSubsystem, "[{}]: Refetching texture views.", Key)
+    LOG_VERBOSE(LogTextureSubsystem, "[{}]: Refetching texture views.", *Namespace)
 
     TArray<UnresolvedTextureView> Views;
     for (LPath& TextureView: finder::retrieve_files<finder::recursive_directory_iterator>(Path, "^(?:.*/)?(?:[^/]+\\.)?view\\.json$"))
@@ -437,7 +495,7 @@ void Jafg::JTextureSubsystem::RetrieveTextureViewsFrom(LPath const& Path)
             Resolved.emplace_back(LTextureView{
                 .Path = View.Path,
                 .Identifier = std::move(View.Identifier),
-                .Texture = finder::relative(finder::weakly_canonical(View.Path.parent_path() / std::get<LPath>(View.What)), Path),
+                .Texture = finder::weakly_canonical(View.Path.parent_path() / std::get<LPath>(View.What)),
                 .Format = View.Format,
                 .MipLevels = View.MipLevels,
                 .MaxSampleCount = View.MaxSampleCount,
@@ -486,9 +544,9 @@ void Jafg::JTextureSubsystem::RetrieveTextureViewsFrom(LPath const& Path)
         }
     }
 
-    check(!this->TextureViews.contains(Key))
-    this->TextureViews[Key] = std::move(Resolved);
-    LOG_VERBOSE(LogTextureSubsystem, "[{}]: Fetched [{}] texture views.", Key
-        , this->TextureViews.at(Key).size()
+    check(!this->TextureViews.contains(Namespace))
+    this->TextureViews[Namespace] = std::move(Resolved);
+    LOG_VERBOSE(LogTextureSubsystem, "[{}]: Fetched [{}] texture views.", *Namespace
+        , this->TextureViews.at(Namespace).size()
         )
 }

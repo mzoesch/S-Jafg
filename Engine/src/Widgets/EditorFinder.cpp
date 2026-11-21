@@ -40,8 +40,8 @@ void Jafg::WFinder::Construct()
                     (0_spt, 14_spt, LIconBrush::Align::Center)
                 .InAllRightIconBrushesChained<&LIconBrush::InwardsPadding, &LIconBrush::MinIconSize, &LIconBrush::Alignment>
                     (0_spt, 10_spt, LIconBrush::Align::Center)
-                .LeftIcon({*JafgInfo, "Icons/Filter"})
-                .RightIcon({*JafgInfo, "Icons/ExtendDown"})
+                .LeftIcon({JafgInfo, "Icons/Filter"})
+                .RightIcon({JafgInfo, "Icons/ExtendDown"})
                 .Palette(*Prefs.SecondaryPaletteSolid)
                 .InBrush<EStyleBits::Normal, &LBoxBrush::bSkipBrushDraw>(true)
                 .InAllBrushesChained<&LBoxBrush::Radii, &LBoxBrush::Padding>(LVec4F{5.0f}, {5_spt, 0.0f})
@@ -65,7 +65,7 @@ void Jafg::WFinder::Construct()
                 .Content("Refresh")
                 .Palette(*Prefs.SecondaryPaletteSolid)
                 .InAllBrushes<&LBoxBrush::Radii>(maths::zero_vector<LVec4F>)
-                .LeftIcon({*JafgInfo, "Icons/Refresh"})
+                .LeftIcon({JafgInfo, "Icons/Refresh"})
                 .OnKeyEventFocused([this](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
                     if (Event.Is<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton))
@@ -150,7 +150,7 @@ void Jafg::WFinder::Repopulate()
     this->Container->RemoveChildren();
     auto Counter{0uz};
     auto Where{0uz};
-    this->Populate(Counter, Where, 0uz, *JafgInfo);
+    this->Populate(Counter, Where, 0uz, **JafgInfo);
     this->Repaint();
 
     return;
@@ -231,7 +231,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
             NewStaticNode(WTextIconizedLeft)
                 .Anchor(EAnchor::HFill)
                 .MinDesiredSize(this->NameSize)
-                .Icon(EntryMeta.bExtended ? LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown") : LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight"))
+                .Icon(EntryMeta.bExtended ? LTexture2::FromTextureView(JafgInfo, "Icons/ExtendDown") : LTexture2::FromTextureView(JafgInfo, "Icons/ExtendRight"))
                 .Content(Entry.path().filename().string())
             + NewStaticNode(WText)
                 .MinMaxDesiredSize(this->SizeSize)
@@ -267,7 +267,7 @@ void Jafg::WFinder::Populate(std::size_t& Counter, std::size_t& Where, std::size
                 .Padding({})
                 .MinDesiredSize(this->NameSize)
                 .SkipBrushDraw(true)
-                .Icon({*JafgInfo, "Icons/File"})
+                .Icon({JafgInfo, "Icons/File"})
                 .Content(Entry.path().filename().string())
             + NewStaticNode(WText)
                 .MinMaxDesiredSize(this->SizeSize)
@@ -288,7 +288,7 @@ void Jafg::WFinder::OnExtendUpdate(finder::path const& Path, LEntry& Entry)
     check(Entry.Node.IsValidFast())
     auto& Parent{Entry.Node->AsStatic<WParent>()};
     Parent.GetChildren()[0]->AsStatic<WTextIconizedLeft>().Icon =
-        Entry.bExtended ? LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendDown") : LTexture2::FromTextureView(*JafgInfo, "Icons/ExtendRight");
+        Entry.bExtended ? LTexture2::FromTextureView(JafgInfo, "Icons/ExtendDown") : LTexture2::FromTextureView(JafgInfo, "Icons/ExtendRight");
 
     auto Idx{algo::distance(this->Container->GetChildren(), algo::find_checked(this->Container->GetChildren(), &Parent, algo::unique_raw))};
     auto Indent{static_cast<std::size_t>(this->Padding2Indent(Parent.Padding))};

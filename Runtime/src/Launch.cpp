@@ -192,11 +192,11 @@ EPlatformExit::Type AgnosticLaunch()
         {
             LOG_FATAL(LogLaunch, "[{}]: Must not be empty.", App::ContentDir.Identifier)
         }
-        JafgInfo.Initialize(finder::weakly_canonical(finder::path{Value}).lexically_normal());
+        JafgInfo = Detail::LPluginInfoRegistry::FindOrAdd(finder::weakly_canonical(finder::path{Value}).lexically_normal()).get();
     }
     else
     {
-        JafgInfo.Initialize(finder::default_content_dir_postfix());
+        JafgInfo = Detail::LPluginInfoRegistry::FindOrAdd(finder::default_content_dir_postfix()).get();
     }
     LOG_VERBOSE(LogInformation, "Jafg::Content={}", *JafgInfo)
 

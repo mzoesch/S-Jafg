@@ -143,7 +143,7 @@ inline LFactoryButton EditorResetButton(EJxxFieldFlags Flags, LViewport& Viewpor
         .InBrush<EStyleBits::InactiveCombi, &LRegionBrush::BorderTint>(*Prefs.ForegroundColor)
         .InBrush<EStyleBits::ActiveCombi|EStyleBits::Normal, &LRegionBrush::Tint>(Colors::White)
         .InBrush<EStyleBits::Disabled, &LRegionBrush::Tint>(Colors::Gray)
-        .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon({*JafgInfo, "Icons/Reset"}))
+        .InAllBrushes<&LRegionBrush::Background>(LRegionBrush::Icon({JafgInfo, "Icons/Reset"}))
         .Enabled(JxxFieldBits::IsEditorEditable(Flags) && bEnabled)
         .OnKeyEventFocused([OnAction=std::move(OnAction)](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event) mutable
         {

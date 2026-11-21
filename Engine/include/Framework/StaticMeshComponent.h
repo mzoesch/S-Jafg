@@ -31,7 +31,7 @@ public:
     virtual void OnAttach(AActor& InOwner) override;
 
     //# The only mesh of the file. @see #JMeshSubsystem::LoadMesh
-    void SetMesh(LPath const& Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device, std::optional<LStaticMeshCreateInfo> Info = {});
+    void SetMesh(LPluginInfo Namespace, LStringView Mesh, EStaticMeshState MeshState = EStaticMeshStateBits::Device, std::optional<LStaticMeshCreateInfo> Info = {});
     //# Use an already allocated mesh (e.g., of a #LMeshScene). Its state is not changed.
     void SetMesh(LStaticMeshRef InMesh) noexcept;
     NODISCARD FORCEINLINE constexpr bool IsMeshValid() const noexcept { return !!this->Mesh; }

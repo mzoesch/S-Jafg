@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Color Inspector", *JafgInfo, "Icons/Colors")
+    JAFG_DEFAULT_TAB_CANDIDATE("Color Inspector", JafgInfo, "Icons/Colors")
 
     virtual void Construct() override;
 };

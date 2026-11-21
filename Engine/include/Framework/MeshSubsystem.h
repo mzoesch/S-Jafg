@@ -38,7 +38,9 @@ public:
     //#
     //# Node transforms are ignored. The mesh is returned in its own space.
     //#
-    LStaticMeshRef LoadMesh(LPath const& Path, EStaticMeshState State = EStaticMeshStateBits::Device, std::optional<LStaticMeshCreateInfo> Info = {}) const;
+    //# @param Path Relative to the content dir of the namespace.
+    //#
+    LStaticMeshRef LoadMesh(LPluginInfo Namespace, LStringView Path, EStaticMeshState State = EStaticMeshStateBits::Device, std::optional<LStaticMeshCreateInfo> Info = {}) const;
 
     //#
     //# Loads a scene of a glTF file (.gltf or .glb). The file is read only once: Every mesh the scene references is
@@ -47,13 +49,15 @@ public:
     //#
     //# Meshes that fail to load are logged and left out (their nodes are kept, but without a mesh).
     //#
+    //# @param Path Relative to the content dir of the namespace.
     //# @param SceneIdx Empty: The default scene of the file. If the file declares none, the first scene. If the
     //#                 file has no scenes at all, all nodes without a parent.
     //# @param State The state every mesh of the scene is brought to. #EStaticMeshStateBits::None only allocates
     //#              the meshes. They then read the file on their own once they are brought to a state.
     //#
     std::expected<LMeshScene, LStaticMesh::EResult> LoadScene(
-          LPath const& Path
+          LPluginInfo Namespace
+        , LStringView Path
         , std::optional<u32> SceneIdx = {}
         , EStaticMeshState State = EStaticMeshStateBits::Device
         , std::optional<LStaticMeshCreateInfo> Info = {}
@@ -64,7 +68,8 @@ public:
     //# @param Parent Where the scene is projected to. E.g., the root of an actor.
     //#
     LMeshSceneProjection LoadAndProjectScene(
-          LPath const& Path
+          LPluginInfo Namespace
+        , LStringView Path
         , ASceneComponent& Parent
         , LMeshSceneProjectionInfo const& Projection = {}
         , EStaticMeshState State = EStaticMeshStateBits::Device
@@ -74,7 +79,8 @@ public:
 
 private:
 
-    NODISCARD static LPath NormalizePath(LPath const& Path) noexcept;
+    //# Lexically normal and with forward slashes. So that many spellings of a path share the same cache entries.
+    NODISCARD static LString NormalizePath(LStringView Path) noexcept;
 
     //#
     //# Allocate the requested resource (or reuse it). If it has to be brought to a state, the source file is read
@@ -82,15 +88,15 @@ private:
     //# @param Source Its path must be normalized.
     //#
     LStaticMeshRef FromSource(LStaticMeshSource const& Source, EStaticMeshState State, std::optional<LStaticMeshCreateInfo> const& Info) const;
-    //# @param Source Its path must be normalized.
+    //# @param Source Its path must be normalized. Its namespace is only dereferenced if the mesh has to be allocated.
     NODISCARD std::shared_ptr<LStaticMesh>& FindOrAllocate(LStaticMeshSource const& Source, std::optional<LStaticMeshCreateInfo> const& Info) const;
 
     mutable std::unordered_map<LStaticMeshSource, std::shared_ptr<LStaticMesh>> Meshes;
     //#
-    //# Files loaded with #LoadMesh (normalized) to the index of their only mesh. Indices instead of mesh refs, so
-    //# that #PurgeUnused still sees when a mesh is not used anymore.
+    //# Per namespace: Files loaded with #LoadMesh (normalized) to the index of their only mesh. Indices instead of
+    //# mesh refs, so that #PurgeUnused still sees when a mesh is not used anymore.
     //#
-    mutable std::unordered_map<LPath, u32> SingleMeshIndices;
+    mutable std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<u32>> SingleMeshIndices;
 };
 
 } /* ~Namespace Jafg */

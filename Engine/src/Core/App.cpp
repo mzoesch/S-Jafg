@@ -10,7 +10,71 @@
     #include <fcntl.h>
 #endif /* JAFG_PLATFORM_LINUX */
 
-ENGINE_API Jafg::LPluginInfo JafgInfo;
+ENGINE_API Jafg::LPluginInfo JafgInfo{ nullptr };
+
+namespace
+{
+
+//# Intentionally leaked. Infos are never freed, so that their addresses are never reused. @see Jafg::LPluginInfo
+TArray<std::shared_ptr<Jafg::LPluginInfoImpl>>& GetPluginInfos() noexcept
+{
+    static auto* Infos{new TArray<std::shared_ptr<Jafg::LPluginInfoImpl>>{}};
+    return *Infos;
+}
+
+} /* ~Namespace <Anonymous> */
+
+std::shared_ptr<Jafg::LPluginInfoImpl const> Jafg::Detail::LPluginInfoRegistry::FindOrAdd(LPath const& Content)
+{
+    check(Tasks::IsOnMasterThread())
+
+    std::error_code Error;
+    LPath Canonical{std::filesystem::canonical(Content, Error)};
+    if (Error)
+    {
+        LOG_FATAL(LogForeign, "[{}]: Invalid content dir: {}.", Content, Error.message())
+    }
+
+    auto& Infos{::GetPluginInfos()};
+    for (auto const& Info: Infos)
+    {
+        if (Info->ContentPath == Canonical)
+        {
+            return Info;
+        }
+    }
+
+    std::shared_ptr<LPluginInfoImpl> Info{new LPluginInfoImpl{}};
+    Info->Initialize(std::move(Canonical));
+    LOG_VERBOSE(LogForeign, "[{}]: Registered new plugin info.", *Info)
+    return Infos.emplace_back(std::move(Info));
+}
+
+Jafg::LPluginInfo Jafg::Detail::LPluginInfoRegistry::FindContaining(LPath const& Path)
+{
+    check(Tasks::IsOnMasterThread())
+
+    LPluginInfo Result{ nullptr };
+    for (auto const& Info: ::GetPluginInfos())
+    {
+        if (finder::descendant_of(Path, Info->ContentPath)
+            && (!Result || Info->ContentPathString.size() > Result->ContentPathString.size()))
+        {
+            Result = Info.get();
+        }
+    }
+    return Result;
+}
+
+std::pair<Jafg::LPluginInfo, LString> Jafg::SplitIntoNamespace(LPath const& Path)
+{
+    LPluginInfo const Namespace{Detail::LPluginInfoRegistry::FindContaining(Path)};
+    if (!Namespace)
+    {
+        LOG_FATAL(LogForeign, "[{}]: Path is not inside the content dir of any namespace.", Path)
+    }
+    return {Namespace, finder::relative(finder::weakly_canonical(Path), **Namespace).generic_string()};
+}
 
 namespace finder::detail
 {

@@ -12,7 +12,7 @@ TRIVIAL_TEST_CASE("mesh", TraceTriangles)
     constexpr f32 Miss{-100.0f};
 
     /* A unit quad in the xy plane at z = 0. Two triangles. Pulled from memory instead of a file. */
-    LStaticMesh Mesh{LStaticMeshSource{.Path = "<test-quad>", .MeshIdx = 0}};
+    LStaticMesh Mesh{LStaticMeshSource{.Path = "<test-quad>", .MeshIdx = 0}, "<test-quad>"};
     auto const Result{Mesh.LoadToHost(false, [](TArray<LStaticMesh::HostMesh>& Out) -> LStaticMesh::EResult
     {
         LStaticMesh::HostPrimitive Primitive;

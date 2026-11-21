@@ -70,7 +70,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                 + NewNode(Info.Viewport).Class<WTextButtonIconizedDouble>()
                     .Palette(*Prefs.SecondaryPaletteSolid)
                     .Content("Browse")
-                    .LeftIcon({*JafgInfo, "Icons/DirectorySearch"})
+                    .LeftIcon({JafgInfo, "Icons/DirectorySearch"})
                     .OnKeyEventFocused([FieldPtr=&Info.Field](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
                         if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) && Self.AabbTest(Info))
@@ -86,7 +86,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                             }
                             else
                             {
-                                DefaultPath = *JafgInfo;
+                                DefaultPath = **JafgInfo;
                             }
 
                             if (auto AbsolutePath{Info.Viewport.GetSurface().OpenBlockingDialogForFile({
@@ -98,12 +98,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                             else
                             {
                                 LOG_VERBOSE(LogEditor, "Selected path: [{}].", *AbsolutePath)
-                                if (!finder::descendant_of(*AbsolutePath, *JafgInfo))
-                                {
-                                    LOG_FATAL(LogEditor, "[{}]: Path has to be a descendant of [{}].",
-                                        *AbsolutePath, absolute(*JafgInfo))
-                                }
-                                auto Path{finder::relative(*AbsolutePath, finder::current_path())};
+                                //# Fatal if the path is not inside the content dir of any namespace.
+                                auto const [Namespace, Path]{SplitIntoNamespace(*AbsolutePath)};
                                 EStaticMeshState NewState{EStaticMeshStateBits::None};
                                 if (Field->IsOnHost())
                                 {
@@ -118,7 +114,7 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditor
                                     NewState |= EStaticMeshStateBits::Convex;
                                 }
 
-                                Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Path, NewState);
+                                Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Namespace, Path, NewState);
                             }
 
                             return LNodeReply::Handled();
@@ -208,18 +204,18 @@ void Jafg::LStaticMesh::Reload(EStaticMeshState State)
 
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::PullHostFromSource(TArray<HostMesh>& Out) const
 {
-    if (!is_regular_file(this->Source.Path))
+    if (!is_regular_file(this->AbsolutePath))
     {
         return EResult::FileNotFound;
     }
 
     Gltf::LModel Model;
-    if (auto Result{Gltf::Parse(this->Source.Path, Model)}; Result != EResult::Success)
+    if (auto Result{Gltf::Parse(this->AbsolutePath, Model)}; Result != EResult::Success)
     {
         return Result;
     }
 
-    return Gltf::PullMesh(Model, this->Source.Path, this->Source.MeshIdx, Out);
+    return Gltf::PullMesh(Model, this->AbsolutePath, this->Source.MeshIdx, Out);
 }
 
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::LoadToHost(bool bLoadConvex)

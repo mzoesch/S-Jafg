@@ -27,7 +27,7 @@ protected:
 
 public:
 
-    JAFG_DEFAULT_TAB_CANDIDATE("Preferences", *JafgInfo, "Icons/Preferences")
+    JAFG_DEFAULT_TAB_CANDIDATE("Preferences", JafgInfo, "Icons/Preferences")
 
     virtual void Construct() override;
     virtual void Tick(f32 Dt) override;

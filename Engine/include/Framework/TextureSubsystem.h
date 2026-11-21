@@ -31,41 +31,32 @@ public:
     //# Removes all loaded textures that are not referenced anymore.
     void PurgeUnused() noexcept;
 
-    NODISCARD LString GetKey(LStringView Namespace, LStringView Instance) const noexcept
-    {
-        return algo::sprintf("{}/{}", Namespace, Instance);
-    }
-
     //# All texture views known to this subsystem.
     NODISCARD FORCEINLINE constexpr auto const& GetTextureViews() const noexcept { return this->TextureViews; }
-    NODISCARD LTextureView const& GetTextureView(LStringView Namespace, LStringView Identifier) const noexcept
-    {
-        if (!this->TextureViews.contains(Namespace))
-        {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such namespace.", Namespace)
-        }
-        auto& SearchSpace{this->TextureViews.at(Namespace)};
-        auto It{algo::find(SearchSpace, Identifier, &LTextureView::Identifier)};
-        if (It == SearchSpace.end())
-        {
-            LOG_FATAL(LogMaterialSubsystem, "[{}]: No such texture view.", this->GetKey(Namespace, Identifier))
-        }
-        return *It;
-    }
+    NODISCARD LTextureView const& GetTextureView(LPluginInfo Namespace, LStringView Identifier) const noexcept;
 
-    NODISCARD FORCEINLINE constexpr std::size_t GetLoadedTextureCount() const noexcept { return this->Textures.size(); }
+    NODISCARD std::size_t GetLoadedTextureCount() const noexcept;
     NODISCARD FORCEINLINE constexpr auto const& GetTextures() const noexcept { return this->Textures; }
 
-    NODISCARD LTexture2Ref FromFile(LStringView Key, LPath const& Path
+    //#
+    //# Loads a texture file. Or reuses it, if already loaded.
+    //# @param Path Relative to the content dir of the namespace.
+    //#
+    NODISCARD LTexture2Ref FromFile(LPluginInfo Namespace, LStringView Path
         , LTexture2::HostInfo HostCreateInfo
         , LTexture2::DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Device
         );
-    NODISCARD LTexture2Ref FromTextureView(LStringView Namespace, LStringView Name
+    //# Loads the texture of a texture view. Or reuses it, if already loaded.
+    NODISCARD LTexture2Ref FromTextureView(LPluginInfo Namespace, LStringView Name
         , ETexture2State State = ETexture2StateBits::Device
         );
 
-    LTextureCube2Ref CubeFromFile(LPath const& Path);
+    //#
+    //# Loads a cube map. Or reuses it, if already loaded.
+    //# @param Path Relative to the content dir of the namespace.
+    //#
+    LTextureCube2Ref CubeFromFile(LPluginInfo Namespace, LStringView Path);
 
     NODISCARD FORCEINLINE std::size_t GetBindlessTextureArrayCapacity() const noexcept { return BindlessTextureArrayCapacity; }
     FORCEINLINE auto const& Vk_GetDefaultSamplers() const noexcept { return this->Vk_DefaultSamplers; }
@@ -91,7 +82,18 @@ public:
 
 private:
 
-    void RetrieveTextureViewsFrom(LPath const& Path);
+    //# Noop, if the views of the namespace are already known (e.g., shared with another plugin or loaded again).
+    void RetrieveTextureViewsFrom(LPluginInfo Namespace);
+    //#
+    //# Shared by #FromFile and #FromTextureView.
+    //# @param MakePath Returns the absolute path to the texture file. Only called if not cached.
+    //#
+    template<typename TMakePath>
+    NODISCARD LTexture2Ref FindOrLoad(LPluginInfo Namespace, LStringView Key, TMakePath&& MakePath
+        , LTexture2::HostInfo HostCreateInfo
+        , LTexture2::DeviceInfo DeviceCreateInfo
+        , ETexture2State State
+        );
 
     inline constexpr static auto BindlessTextureArrayCapacity{ 128uz };
     std::array<vk::raii::Sampler, UBO::Bindless::SamplerCount> Vk_DefaultSamplers JAFG_INIT_EIGHT(nullptr);
@@ -100,11 +102,13 @@ private:
     algo::dynamic_bit_set FreeBindlessTextureArraySlots;
 
     //# Once populated, texture views will never change their address again. This is guaranteed by jafg.
-    algo::transparent_unordered_string_map<TArray<LTextureView>> TextureViews;
+    std::unordered_map<LPluginInfo, TArray<LTextureView>> TextureViews;
 
     TArray<LTexture2Ref> GuaranteedTextures;
-    algo::transparent_unordered_string_map<LTexture2Ref> Textures;
-    algo::transparent_unordered_string_map<LTextureCube2Ref> CubeTextures;
+    //# Per namespace: The identifier of the texture view or the file path (relative to the content dir) to the texture.
+    std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<LTexture2Ref>> Textures;
+    //# Per namespace: The file path (relative to the content dir) to the cube texture.
+    std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<LTextureCube2Ref>> CubeTextures;
 };
 
 } /* ~Namespace Jafg */

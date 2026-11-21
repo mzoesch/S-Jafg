@@ -28,7 +28,7 @@ concept CTabSelectorCandidate = requires
     { \
         return { \
             .DisplayName = InDisplayName, \
-            .Icon = std::pair<LString,LString>{InIconNamespace, InIconName}, \
+            .Icon = std::pair<LPluginInfo,LString>{InIconNamespace, InIconName}, \
             }; \
     }
 

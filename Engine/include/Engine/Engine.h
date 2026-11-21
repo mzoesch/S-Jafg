@@ -271,6 +271,14 @@ public:
 
     LConfig Config;
 
+    //#
+    //# The info of the engine ("Jafg") or of the loaded plugin with this identifier.
+    //# Used to resolve namespaces that are given by name, e.g., in content files.
+    //# @return Nullptr, if there is no such namespace or the plugin has no content.
+    //#
+    NODISCARD ENGINE_API LPluginInfo FindPluginInfo(LStringView Identifier) const;
+    NODISCARD ENGINE_API LPluginInfo FindPluginInfoChecked(LStringView Identifier) const;
+
     FORCEINLINE LCommandLineInterface& GetCommandLineInterface() noexcept { return this->CommandLineInterface; }
     FORCEINLINE LCommandLineInterface const& GetCommandLineInterface() const noexcept { return this->CommandLineInterface; }
 

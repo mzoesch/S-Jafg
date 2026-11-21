@@ -127,7 +127,7 @@ struct LLoadedPlugin final
     FORCEINLINE LLoadedPlugin(LLoadedPlugin&& Other) noexcept
         : Fetched{std::move(Other.Fetched)}, BinPath{std::move(Other.BinPath)}, Uuid{Other.Uuid}
         , NativeHandle{Other.NativeHandle}, bStarted{std::exchange(Other.bStarted, false)}, Lifetime{std::move(Other.Lifetime)}
-        , ContentOverride{std::exchange(Other.ContentOverride, std::nullopt)}
+        , ContentOverride{std::exchange(Other.ContentOverride, std::nullopt)}, Info{std::move(Other.Info)}
     {
         Other.Uuid = InvalidUuid;
         Other.NativeHandle = nullptr;
@@ -144,6 +144,7 @@ struct LLoadedPlugin final
         this->bStarted = std::exchange(Other.bStarted, false);
         this->Lifetime = std::move(Other.Lifetime);
         this->ContentOverride = std::exchange(Other.ContentOverride, std::nullopt);
+        this->Info = std::move(Other.Info);
         check(Other.Lifetime.get() == nullptr)
 
         return *this;
@@ -180,16 +181,17 @@ struct LLoadedPlugin final
     FORCEINLINE LPluginLifetime const* GetLifetime() const noexcept { return this->Lifetime.get(); }
 
     //#
-    //# Overriding is only allowed before startup of said plugin.
+    //# Overriding is only allowed before startup of said plugin and before #GetInfo was called the first time.
     //# @return True, if override was successful.
     //#
     bool OverrideContentDir(LPath Path) const noexcept
     {
-        if (!this->bStarted)
+        if (!this->bStarted && !this->Info)
         {
             this->ContentOverride = std::move(Path);
+            return true;
         }
-        return !this->bStarted;
+        return false;
     }
 
     //#
@@ -205,6 +207,17 @@ struct LLoadedPlugin final
         }
         return this->GetDefaultContent();
     }
+
+    //#
+    //# The info of the content dir of this plugin. Use it to request resources from subsystems. @see LPluginInfo
+    //#
+    //# The first call freezes the content dir: #OverrideContentDir fails afterward. So override it before calling
+    //# this, e.g., in #LPluginLifetime::OnStartup. If the plugin did not call it during startup, the engine calls it
+    //# right after #LPluginLifetime::OnStartup.
+    //#
+    //# Requires #HasContent.
+    //#
+    NODISCARD ENGINE_API LPluginInfo GetInfo() const;
 
 private:
 
@@ -226,6 +239,12 @@ private:
     //# @see OverrideContentDir
     //#
     mutable std::optional<LPath> ContentOverride;
+
+    //#
+    //# Set by the first call of #GetInfo. Owned by the engine, which never frees it. Shared with all other plugins
+    //# pointing to the same content dir.
+    //#
+    mutable std::shared_ptr<LPluginInfoImpl const> Info;
 };
 
 } /* ~Namespace Jafg */
