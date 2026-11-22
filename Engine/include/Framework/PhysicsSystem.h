@@ -345,6 +345,14 @@ public:
 
     //# @return True, if physics were updated at least once.
     ENGINE_API bool TryUpdate(TFunction2<void(f32 PhysicsStep)> Callback);
+    //#
+    //# How far the accumulated time is between the last tick and the next one. In [0, 1]. After #TryUpdate, this is
+    //# where presentations interpolate to between the states of the last two ticks.
+    //#
+    NODISCARD f32 GetInterpolationAlpha() const noexcept
+    {
+        return this->PhysicsStep > 0.0 ? static_cast<f32>(maths::clamp(this->Accumulator / this->PhysicsStep, 0.0, 1.0)) : 1.0f;
+    }
     ENGINE_API void Update(std::size_t Steps, TFunction2<void(f32 PhysicsStep)> Callback);
     NODISCARD constexpr bool _check_IsUpdating() const noexcept { return this->_check_bUpdating.load(); }
 

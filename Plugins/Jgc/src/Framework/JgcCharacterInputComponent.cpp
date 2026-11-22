@@ -350,6 +350,47 @@ void Jgc::AJgcCharacterInputComponent::ToggleMagBoots() noexcept
         )
 }
 
+void Jgc::AJgcCharacterInputComponent::ToggleView() noexcept
+{
+    auto* Avatar{this->GetOwningAvatar()};
+    if (!Avatar || !this->GetOwningActor().HasRootComponent())
+    {
+        return;
+    }
+
+    /* The head is the first eye directly below the root (as the movement sees it). */
+    Jafg::AEyeComponent* Head{};
+    for (auto const& Child: this->GetOwningActor().GetRootComponent().GetChildren())
+    {
+        if ((Head = Child->As<Jafg::AEyeComponent>()))
+        {
+            break;
+        }
+    }
+    if (!Head)
+    {
+        return;
+    }
+
+    Jafg::AEyeComponent* Behind{};
+    Jafg::AEyeComponent::ForEachEyeIn(*Head, [Head, &Behind](Jafg::AEyeComponent& Eye)
+    {
+        if (!Behind && &Eye != Head)
+        {
+            Behind = &Eye;
+        }
+    });
+    if (!Behind)
+    {
+        LOG_VERBOSE(LogJgcInput, "[{}]: There is no eye below the head to switch to.", this->GetNameAsString())
+        return;
+    }
+
+    bool const bToBehind{Avatar->GetEye() != Behind};
+    Avatar->SetEye(bToBehind ? Behind : Head);
+    LOG_VERBOSE(LogJgcInput, "[{}]: View switched to [{}].", this->GetNameAsString(), bToBehind ? "third person" : "first person")
+}
+
 Jafg::AMovementComponent* Jgc::AJgcCharacterInputComponent::GetMovementComponent() noexcept
 {
     return this->GetOwningActor().GetComponent<Jafg::AMovementComponent>();

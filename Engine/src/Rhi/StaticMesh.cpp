@@ -542,17 +542,32 @@ void Jafg::LStaticMesh::LoadToDevice()
     }
 }
 
-void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant) const
+Jafg::LMaterialInstance const& Jafg::GetPreferredMaterialInstance(LActorRenderInfo const& Info, LMaterialInstance const* Owned) noexcept
 {
-#if JAFG_WITH_EDITOR
-    /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
-    if (!this->IsOnDevice())
+    LMaterialInstance const* InstancePtr{};
+    if (Info.PreferredMaterial)
     {
-        return;
+        InstancePtr = &*Info.PreferredMaterial;
     }
-#endif /* !JAFG_WITH_EDITOR */
-    check(this->IsOnDevice())
+    else if (Info.UserPreferences.EditorMeshMaterialPreference)
+    {
+        InstancePtr = &**Info.UserPreferences.EditorMeshMaterialPreference;
+    }
+    else if (Owned)
+    {
+        InstancePtr = Owned;
+    }
+    else
+    {
+        LOG_FATAL(LogRhi, " No material given.")
+    }
+    check(InstancePtr)
 
+    return *InstancePtr;
+}
+
+void Jafg::BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant)
+{
     LMaterialInstance const* Instance{};
     if (std::holds_alternative<LMaterialInstance const*>(InstanceVariant))
     {
@@ -656,6 +671,20 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
                 : rhi::invalid_resource_index
             });
     }
+}
+
+void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant) const
+{
+#if JAFG_WITH_EDITOR
+    /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
+    if (!this->IsOnDevice())
+    {
+        return;
+    }
+#endif /* !JAFG_WITH_EDITOR */
+    check(this->IsOnDevice())
+
+    BindActorMeshMaterial(Info, Transform, InstanceVariant);
 
     Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
 

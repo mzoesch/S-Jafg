@@ -7,4 +7,5 @@
 #include "TestEye.h"
 #include "TestFrustum.h"
 #include "TestStaticMesh.h"
+#include "TestSkeletalAnimation.h"
 #include "TestTextEditing.h"

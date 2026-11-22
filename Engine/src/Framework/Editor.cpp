@@ -2408,6 +2408,7 @@ void Jafg::WEditorWorldViewer::PreDrawSelected(LRenderInfo const& Info)
             .Preferences = this->GetWorldRenderPreferences(),
             .PolygonMode = this->GetPolygonMode(),
             .bUpdateWorldDataSet = false,
+            .Viewer = &Ctrl,
             });
     }
 }

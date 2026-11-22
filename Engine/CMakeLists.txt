@@ -5,6 +5,26 @@ if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
 
     ###############################################################################
+    # Hot math that is always optimized. Unoptimized it is too slow even for debugging (e.g., skinning ten thousand
+    # vertices took over 20 ms at -O0, sampling and resolving a pose about 1 ms per character). Debug symbols are kept
+    # if requested.
+    if(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG)
+        #
+        # By default Development already uses -O2, therefore we have to only override this in Debug builds.
+        #
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+            set_source_files_properties(
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/Skinning.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/Animation.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/Skeleton.cpp"
+                PROPERTIES
+                    COMPILE_OPTIONS "-O2" # 03 hinders readability and its performance is comparable to -O2.
+                    SKIP_PRECOMPILE_HEADERS ON
+                )
+        endif()
+    endif()
+
+    ###############################################################################
     # Engine only compile time definitions
     if(NOT DEFINED _detail_jafg_version)
         message(FATAL_ERROR "_detail_jafg_version is not defined.")

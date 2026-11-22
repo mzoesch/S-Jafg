@@ -32,6 +32,7 @@ class LShader;
 class JWorldSubsystem;
 class LTickableObject;
 class LFixedTickableObject;
+class LPresentableObject;
 class APersonaController;
 class LCommandLineInterface;
 class LWorld;
@@ -234,6 +235,9 @@ public:
 
         //# Bindless index of the screen space ambient occlusion for this eye, if any.
         rhi::resource_index_t AmbientOcclusionTexture{ rhi::invalid_resource_index };
+
+        //# The controller whose view is drawn. Null if no controller sees this draw directly (e.g., shadow maps).
+        APersonaController const* Viewer{};
     };
     void Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const;
 
@@ -247,6 +251,11 @@ public:
     void UnregisterTickableObject(LTickableObject* Tickable);
     void RegisterPhysicsTickableObject(LFixedTickableObject* Tickable);
     void UnregisterPhysicsTickableObject(LFixedTickableObject* Tickable);
+    //# @see #LPresentableObject
+    void RegisterPresentableObject(LPresentableObject* Presentable);
+    void UnregisterPresentableObject(LPresentableObject* Presentable);
+    //# @see #LPresentableObject::Present
+    NODISCARD f32 GetPhysicsInterpolationAlpha() const noexcept;
     FORCEINLINE bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     FORCEINLINE TArray<LTickableObject*> const& GetTickableObjects() const noexcept { return this->TickableObjects; }
     FORCEINLINE TArray<LTickableObject*>& GetMutableTickableObjects() noexcept { return this->TickableObjects; }
@@ -408,6 +417,7 @@ private:
     bool _check_bUpdatingPhysics{};
 #endif /* JAFG_DO_CHECKS */
     TArray<LFixedTickableObject*> PhysicsTickableObjects;
+    TArray<LPresentableObject*> PresentableObjects;
 
     EWorldState WorldState{ EWorldState::PreInitializing };
     EWorldTimeBehavior TimeBehavior;

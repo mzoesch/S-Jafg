@@ -31,16 +31,16 @@ public:
     virtual void OnPersonaControllerCreated(Jafg::APersonaController& Pc) override;
     virtual TJxxUnique<Jafg::AActor> SpawnAvatarForPersonaController(Jafg::APersonaController const& Pc) override;
 
-    virtual LVec3F GetPreferredGravity() const noexcept override
-    {
-        return maths::zero_vector<LVec3F>;
-    }
+    // virtual LVec3F GetPreferredGravity() const noexcept override
+    // {
+    //     return maths::zero_vector<LVec3F>;
+    // }
 
     //# Space: There is no air.
-    virtual f32 GetPreferredAirDensity() const noexcept override
-    {
-        return 0.0f;
-    }
+    // virtual f32 GetPreferredAirDensity() const noexcept override
+    // {
+    //     return 0.0f;
+    // }
 };
 
 } /* ~Namespace Jgc */

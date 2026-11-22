@@ -3,6 +3,7 @@
 #include "Framework/MovementComponent.h"
 #include "Framework/Actor.h"
 #include "Framework/RigidComponent.h"
+#include "Engine/World.h"
 
 namespace
 {
@@ -71,6 +72,25 @@ void Jafg::AMovementComponent::OnAttach(AActor& InOwner)
             , this->GetNameAsString(), InOwner.GetNameAsString(), MovementComponents
             )
     }
+
+    this->GetWorld().RegisterPresentableObject(this);
+    this->bPresentable = true;
+}
+
+void Jafg::AMovementComponent::OnGarbage(EJxxRecordTearDownReason Reason)
+{
+    if (this->bPresentable)
+    {
+        this->GetWorld().UnregisterPresentableObject(this);
+        this->bPresentable = false;
+    }
+    Super::OnGarbage(Reason);
+}
+
+void Jafg::AMovementComponent::Present(f32 PhysicsAlpha)
+{
+    this->PresentationAlpha = PhysicsAlpha;
+    this->UpdatePresentation(0.0f);
 }
 
 void Jafg::AMovementComponent::ParentTick(f32 Dt)

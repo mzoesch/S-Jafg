@@ -44,34 +44,6 @@ void Jafg::AStaticMeshComponent::SetPbrMaterialInstance(LPbrMaterialInstanceRef 
     }
 }
 
-namespace
-{
-
-NODISCARD Jafg::LMaterialInstance const& GetPreferredMaterialInstance(Jafg::LActorRenderInfo const& Info, Jafg::LMaterialInstance const* Owned) noexcept
-{
-    Jafg::LMaterialInstance const* InstancePtr{};
-    if (Info.PreferredMaterial)
-    {
-        InstancePtr = &*Info.PreferredMaterial;
-    }
-    else if (Info.UserPreferences.EditorMeshMaterialPreference)
-    {
-        InstancePtr = &**Info.UserPreferences.EditorMeshMaterialPreference;
-    }
-    else if (Owned)
-    {
-        InstancePtr = Owned;
-    }
-    else
-    {
-        LOG_FATAL(LogRhi, " No material given.")
-    }
-    check(InstancePtr)
-
-    return *InstancePtr;
-}
-
-} /* ~Namespace <Anonymous> */
 
 void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
 {

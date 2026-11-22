@@ -459,6 +459,17 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                 return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleMagBoots(); });
             });
 
+        /* Between the head and the view from behind. */
+        Context->MapAction(&Registry,
+            {"CharacterToggleView", Jafg::EInputActionCategory::Boolean},
+            Frontend.GetPhysicalKey(Jafg::ELogicalKey::V).value(),
+            Jafg::EInputActionTriggerBits::Triggered,
+            {},
+            [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleView(); });
+            });
+
         /* Hold to show the cursor instead of looking around. Also on the press, so that nothing else takes it. */
         Context->MapAction(&Registry,
             {"CharacterCursor", Jafg::EInputActionCategory::Boolean},

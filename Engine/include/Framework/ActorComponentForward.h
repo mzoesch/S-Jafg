@@ -9,6 +9,8 @@
 namespace Jafg
 {
 
+class APersonaController;
+
 struct LActorRenderInfo: LRenderInfo
 {
     //# The perspective eye.
@@ -30,6 +32,12 @@ struct LActorRenderInfo: LRenderInfo
     LMaterialInstance* PreferredMaterial{};
 
     UBO::WorldData WorldData;
+
+    //#
+    //# The controller whose view is drawn. Null for draws that are not seen by a controller directly (e.g., shadow
+    //# maps). E.g., to hide the inside of a body from the controller that looks out of it.
+    //#
+    APersonaController const* Viewer{};
 
     //# Delegates called after all employed renderables have been rendered.
     //# You may even add delegates here while already being in a post render delegate.

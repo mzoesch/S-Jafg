@@ -60,6 +60,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogProgramArguments,             JAFG_LOG_DEFAULT_V
 DECLARE_INLINE_LOG_CATEGORY( LogRecipeSystem,                 JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogReST,                         JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogRhi,                          JAFG_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogAnimation,                    JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogRunnable,                     JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogSerialization,                JAFG_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogShaderSubsystem,              JAFG_LOG_DEFAULT_VERBOSITY                             )

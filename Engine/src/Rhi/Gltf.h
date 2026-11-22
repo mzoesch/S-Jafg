@@ -3,6 +3,8 @@
 #pragma once
 
 #include "Rhi/StaticMesh.h"
+#include "Rhi/SkeletalMesh.h"
+#include "Rhi/Animation.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -30,8 +32,8 @@
 #endif /* JAFG_WITH_GCC */
 
 //#
-//# Engine private. Reading of glTF files (.gltf and .glb). Only geometry and the node hierarchy are read. Materials,
-//# textures, cameras, lights, skins and animations are ignored.
+//# Engine private. Reading of glTF files (.gltf and .glb): Geometry, the node hierarchy, skins and animations.
+//# Materials, textures, cameras, lights and morph targets are ignored.
 //#
 namespace Jafg::Gltf
 {
@@ -61,6 +63,22 @@ NODISCARD LStaticMesh::EResult Parse(LPath const& Path, LModel& Out);
 //# @param Out Gets exactly one mesh on success.
 //#
 NODISCARD LStaticMesh::EResult PullMesh(LModel const& Model, LPath const& Path, u32 MeshIdx, TArray<LStaticMesh::HostMesh>& Out);
+
+//#
+//# Pulls the skinned mesh of the default scene (the first one if there is none): The mesh of the first node (depth-first)
+//# that has a mesh and a skin, with the skeleton of the skin. Further nodes with the same skin are merged into it
+//# (e.g., clothes). The transforms of the skinned nodes are ignored, as glTF demands.
+//# @param Path For diagnostics only.
+//# @param Out Gets the primitives and the skeleton on success. Not finalized (@see #LSkeletalMesh::Finalize).
+//#
+NODISCARD LStaticMesh::EResult PullSkeletalMesh(LModel const& Model, LPath const& Path, LSkeletalMesh& Out);
+
+//#
+//# Pulls all animations of a file. Each starts at zero. Channels that animate morph targets or nodes without a name
+//# are dropped, as clips bind to skeletons by joint names.
+//# @param Path For diagnostics only.
+//#
+NODISCARD LStaticMesh::EResult PullAnimations(LModel const& Model, LPath const& Path, TArray<LAnimationClipRef>& Out);
 
 //#
 //# The transform of a node relative to its parent node (or the scene).

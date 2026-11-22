@@ -66,6 +66,11 @@ public:
     void ToggleJetpack() noexcept;
     void ToggleDampeners() noexcept;
     void ToggleMagBoots() noexcept;
+    //#
+    //# Switches between the head (first person) and the first eye below it (e.g., a third person view on a camera
+    //# boom, see #EquipHumanoidBody). Nothing happens if there is no eye below the head.
+    //#
+    void ToggleView() noexcept;
     void OnCursorHeld() noexcept { this->bFrameCursorHeld = true; }
     //# @return Whether an interaction happened. Interactions may change the active input contexts.
     bool OnInteractPressed() noexcept;

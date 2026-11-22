@@ -241,6 +241,17 @@ private:
     LPath AbsolutePath;
 };
 
+//#
+//# The material instance that a mesh of an actor is drawn with: The one the draw call prefers (e.g., the material of
+//# the shadow pass), else the one the editor prefers, else #Owned. Fatal if there is none.
+//#
+NODISCARD ENGINE_API LMaterialInstance const& GetPreferredMaterialInstance(LActorRenderInfo const& Info, LMaterialInstance const* Owned) noexcept;
+//#
+//# Binds the pipeline, the descriptor sets and the push constants of a material instance to draw a mesh of an actor
+//# with #Transform. Everything that draws vertices of #LStaticMesh::Vertex for an actor goes through this.
+//#
+ENGINE_API void BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant);
+
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept;
 
 struct LStaticMeshCreateInfo final

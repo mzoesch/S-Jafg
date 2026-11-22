@@ -2,9 +2,12 @@
 
 #pragma once
 
+#include <deque>
 #include "Engine/Jxx.h"
 #include "Rhi/StaticMesh.h"
 #include "Rhi/MeshScene.h"
+#include "Rhi/SkeletalMesh.h"
+#include "Rhi/Animation.h"
 #include "Framework/MeshSceneProjection.h"
 #include "Framework/EngineSubsystem.h"
 #include "MeshSubsystem.generated.h"
@@ -23,7 +26,7 @@ protected:
 
 public:
 
-    //# Removes all loaded meshes that are not referenced anymore.
+    //# Removes all loaded meshes (static and skeletal) and animations that are not referenced anymore.
     void PurgeUnused() noexcept;
 
     FORCEINLINE auto GetLoadedMeshCount() const noexcept { return this->Meshes.size(); }
@@ -77,6 +80,33 @@ public:
         , std::optional<LStaticMeshCreateInfo> Info = {}
         ) const;
 
+    //#
+    //# Loads the skinned mesh of a glTF file with its skeleton (@see #Gltf::PullSkeletalMesh) and uploads it to the
+    //# device. Cached: Later loads of the same file return the same mesh.
+    //#
+    //# @param Path Relative to the content dir of the namespace.
+    //# @return Null if the file has no usable skinned mesh. Logged.
+    //#
+    LSkeletalMeshRef LoadSkeletalMesh(LPluginInfo Namespace, LStringView Path) const;
+
+    //#
+    //# Loads all animations of a glTF file. Cached: Later loads of the same file return the same library.
+    //#
+    //# @param Path Relative to the content dir of the namespace.
+    //# @return Null if the file has no usable animation. Logged.
+    //#
+    LAnimationLibraryRef LoadAnimations(LPluginInfo Namespace, LStringView Path) const;
+
+    //#
+    //# Frees buffers once the device is done with them: After every frame that is in flight now has finished. For
+    //# buffers that were used for drawing until now (e.g., of a component that is torn down).
+    //#
+    void DeferRelease(TArray<rhi::mapped_device_buffer> Buffers) const;
+    //# Frees the buffers of #DeferRelease that are due. Cheap if there are none. Called by their users once per frame.
+    void ReleaseDeferred() const noexcept;
+    //# Frees all buffers of #DeferRelease at once. Only while the device is idle (e.g., when the frontend is torn down).
+    void ReleaseAllDeferred() const noexcept;
+
 private:
 
     //# Lexically normal and with forward slashes. So that many spellings of a path share the same cache entries.
@@ -97,6 +127,18 @@ private:
     //# mesh refs, so that #PurgeUnused still sees when a mesh is not used anymore.
     //#
     mutable std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<u32>> SingleMeshIndices;
+
+    //# Per namespace: Normalized paths to what was loaded from them. Failed loads are not remembered.
+    mutable std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<LSkeletalMeshRef>> SkeletalMeshes;
+    mutable std::unordered_map<LPluginInfo, algo::transparent_unordered_string_map<std::shared_ptr<LAnimationLibrary>>> AnimationLibraries;
+
+    struct LDeferredRelease final
+    {
+        //# The engine frame from which on the device no longer uses the buffers.
+        u64 Frame;
+        TArray<rhi::mapped_device_buffer> Buffers;
+    };
+    mutable std::deque<LDeferredRelease> DeferredReleases;
 };
 
 } /* ~Namespace Jafg */

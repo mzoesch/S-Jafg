@@ -133,6 +133,14 @@ public:
     CLASS_FIELD(EditorEditable)
     f32 BlendInTime{ 0.0f };
 
+    //#
+    //# Whether this eye sits inside the body of its actor (e.g., the head of a character). Bodies of the same actor
+    //# only draw what is meant to be seen from inside while a controller sees through this eye (@see
+    //# #ASkeletalMeshComponent::FirstPersonBody). Shadows are drawn as usual.
+    //#
+    CLASS_FIELD(EditorEditable)
+    bool bFirstPerson{};
+
     //# Natural frequency of the spring that pulls the eye to the target. In Hz. Zero disables the spring.
     CLASS_FIELD(EditorEditable)
     f32 SpringFrequency{ 0.0f };

@@ -190,6 +190,17 @@ void Jafg::ACharacterMovementComponent::OnGarbage(EJxxRecordTearDownReason Reaso
     Super::OnGarbage(Reason);
 }
 
+void Jafg::ACharacterMovementComponent::ParentPhysicsTick(f32 Dt, bool bFollowup)
+{
+    if (this->Proxy)
+    {
+        this->InterpolationOrigin = ::FromJoltR(this->Proxy->Character->GetPosition());
+        this->bHasInterpolationOrigin = true;
+    }
+    Super::ParentPhysicsTick(Dt, bFollowup);
+    this->InterpolationGroundMove = this->Proxy ? this->GetGroundVelocity() * Dt : LVec3F{0.0f};
+}
+
 LVec3F Jafg::ACharacterMovementComponent::GetVelocity() const noexcept
 {
     return this->Proxy ? ::FromJolt(this->Proxy->Character->GetLinearVelocity()) : LVec3F{0.0f};
@@ -238,6 +249,7 @@ void Jafg::ACharacterMovementComponent::Teleport(LWorldVec3 const& Location, std
     Character.RefreshContacts(Filters.BroadPhase, Filters.Object, Filters.Body, Filters.Shape, this->Proxy->Subsystem.TempAllocator);
 
     this->StepSmoothingOffset = 0.0f;
+    this->bHasInterpolationOrigin = false;
     this->UpdatePresentation(0.0f);
 }
 
@@ -845,6 +857,19 @@ void Jafg::ACharacterMovementComponent::UpdatePresentation(f32 Dt)
     LWorldVec3 Position{::FromJoltR(Character.GetPosition())};
     LWorldQuat Rotation{::FromJolt(Character.GetRotation())};
     f32 Pitch{this->ViewPitch};
+
+    /*
+     * Between the last two physics ticks, so that the character moves smoothly at any frame rate. Only its own motion:
+     * The ground (e.g., a ship) is not interpolated, and the character must stay where it stands on it.
+     */
+    if (this->bInterpolatePresentation && this->bHasInterpolationOrigin && !bAttached)
+    {
+        LWorldVec3 const OwnMove{Position - this->InterpolationOrigin - LWorldVec3{this->InterpolationGroundMove}};
+        if (maths::magnitude(OwnMove) <= static_cast<LWorldReal>(this->MaxInterpolationDistance))
+        {
+            Position -= OwnMove * static_cast<LWorldReal>(1.0f - this->GetPresentationAlpha());
+        }
+    }
     f32 const EyeHeight{this->GetSimulatedEyeHeight()};
 
     /* Show the look input that was not yet simulated, so that the view reacts instantly. */
@@ -1063,6 +1088,7 @@ void Jafg::ACharacterMovementComponent::CreateCharacter()
         )
 
     this->bHasWrittenRoot = false;
+    this->bHasInterpolationOrigin = false;
     this->PresentedEyeHeight = -1.0f;
     this->UpdatePresentation(0.0f);
 }
@@ -1150,6 +1176,8 @@ void Jafg::ACharacterMovementComponent::SyncExternalChanges() noexcept
         }
         Character.SetPosition(::ToJoltR(RootTranslation));
         this->LastWrittenTranslation = RootTranslation;
+        /* Moved on purpose. Do not interpolate from where it was. */
+        this->bHasInterpolationOrigin = false;
     }
     if (RootRotation != this->LastWrittenRotation)
     {

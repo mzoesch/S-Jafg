@@ -579,6 +579,8 @@ void Jafg::LFrontendVk::TearDown()
 
     if (auto* Subsystem{this->GetMutableEngine().GetSubsystem<JMeshSubsystem>()})
     {
+        /* The device is idle. Everything that waits for it can go now, before the allocator does. */
+        Subsystem->ReleaseAllDeferred();
         Subsystem->PurgeUnused();
     }
 

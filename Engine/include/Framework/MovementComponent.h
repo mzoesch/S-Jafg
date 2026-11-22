@@ -5,6 +5,7 @@
 #include "Framework/ActorComponent.h"
 #include "Framework/Actor.h"
 #include "Framework/MovementTypes.h"
+#include "Framework/PresentableObject.h"
 #include "MovementComponent.generated.h"
 
 namespace Jafg
@@ -48,7 +49,7 @@ struct LMovementIntent final
 //# must be a deterministic function of the restored snapshot and the input commands.
 //#
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
-class ENGINE_API AMovementComponent : public AActorComponent
+class ENGINE_API AMovementComponent : public AActorComponent, private LPresentableObject
 {
     GENERATED_CLASS_BODY()
 
@@ -63,6 +64,7 @@ protected:
 public:
 
     virtual void OnAttach(AActor& InOwner) override;
+    virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
     virtual void ParentTick(f32 Dt) override;
     virtual void ParentPhysicsTick(f32 Dt, bool bFollowup) override;
 
@@ -160,8 +162,17 @@ protected:
     virtual void SimulateTick(LMovementInput const& Input, f32 Dt) PURE_VIRTUAL()
     //# Restore the complete simulated state.
     virtual void RestoreSnapshot(LMovementSnapshot const& Snapshot) PURE_VIRTUAL()
-    //# Write the simulated state (and any not yet consumed look input) to the actor. Called every frame and after ticks.
+    //#
+    //# Write the simulated state (and any not yet consumed look input) to the actor. Called every frame, after physics
+    //# ticks and once per world tick after all physics ticks (with Dt zero, @see #GetPresentationAlpha).
+    //#
     virtual void UpdatePresentation(f32 Dt) {}
+    //#
+    //# Where the presentation is between the state before the last physics tick (0) and after it (1). Subclasses
+    //# interpolate their presented state with it, so that they move smoothly between physics ticks. Updated once per
+    //# world tick after the physics ticked. @see #LPresentableObject
+    //#
+    NODISCARD FORCEINLINE constexpr f32 GetPresentationAlpha() const noexcept { return this->PresentationAlpha; }
 
     //# Converts a world space direction into view-relative move axes using the current state.
     NODISCARD virtual LVec3F WorldDirectionToMoveAxes(LVec3F const& Direction) const noexcept { return Direction; }
@@ -189,6 +200,9 @@ protected:
 
 private:
 
+    //# Interpolates the presentation for this world tick. @see #GetPresentationAlpha
+    virtual void Present(f32 PhysicsAlpha) override;
+
     //# Sample the intent into a new command and consume the edges and the pending look.
     NODISCARD LMovementInput ConsumeIntent(f32 Dt) noexcept;
     void SimulateRemoteInputs(f32 Dt);
@@ -201,6 +215,8 @@ private:
     EMovementNetRole NetRole{ EMovementNetRole::Authority };
     bool bRemotelyControlled{};
     bool bReplaying{};
+    bool bPresentable{};
+    f32 PresentationAlpha{ 1.0f };
 
     u32 NextSequence{ 1 };
     u32 LastSimulatedSequence{};

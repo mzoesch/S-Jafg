@@ -125,6 +125,11 @@ public:
     //# @return Empty if there is no view eye.
     //#
     NODISCARD std::optional<LWorldEye> GetView() const noexcept;
+    //#
+    //# The eye that the view is closest to: While blending between two eyes, the previous one until the blend is half
+    //# done, the new one afterward. Otherwise #GetViewEye. E.g., to decide whether the view is inside a body.
+    //#
+    NODISCARD AEyeComponent const* GetDominantViewEye() const noexcept;
     //# Whether the view is currently blending to a new eye.
     NODISCARD FORCEINLINE constexpr bool IsBlendingView() const noexcept { return this->ViewBlend.has_value(); }
     //# Cut to the view eye: Stops any blend and snaps the presentation of the eye (e.g., after a teleport).

@@ -50,6 +50,7 @@ public:
 
     virtual void OnAttach(AActor& InOwner) override;
     virtual void OnGarbage(EJxxRecordTearDownReason Reason) override;
+    virtual void ParentPhysicsTick(f32 Dt, bool bFollowup) override;
 
     virtual LVec3F GetVelocity() const noexcept override;
     virtual LVec3F GetUp() const noexcept override;
@@ -203,6 +204,19 @@ public:
     CLASS_FIELD(EditorEditable)
     f32 MagBootsAlignRate{ 3.0f };
 
+    //#
+    //# Whether the root is presented between the positions of the last two physics ticks, so that the character
+    //# (and everything attached to it, e.g., its eyes and its body) moves smoothly at any frame rate. The presentation
+    //# is then up to one physics tick behind the simulation. Only the motion relative to the ground is interpolated:
+    //# Bodies are not, and a character must not lag behind the ship it stands on. Rotations are not interpolated
+    //# either: The view turns at once.
+    //#
+    CLASS_FIELD(EditorEditable)
+    bool bInterpolatePresentation{ true };
+    //# Moves (relative to the ground) longer than this within one physics tick are snapped to (e.g., teleports). In meters.
+    CLASS_FIELD(EditorEditable)
+    f32 MaxInterpolationDistance{ 2.0f };
+
     //# How fast the body aligns to a changed gravity direction. In radians per second.
     CLASS_FIELD(EditorEditable)
     f32 UpAlignmentRate{ 4.0f };
@@ -294,6 +308,11 @@ private:
     //# How far the presented eye is below (negative) or above where the feet put it, after stepping. Decays.
     f32 StepSmoothingOffset{};
     bool bHasWrittenRoot{};
+    //# The simulated position before the last physics tick. @see #bInterpolatePresentation
+    LWorldVec3 InterpolationOrigin{ 0.0f };
+    //# How far the ground carried the character in the last physics tick.
+    LVec3F InterpolationGroundMove{ 0.0f };
+    bool bHasInterpolationOrigin{};
     LWorldVec3 LastWrittenTranslation{ 0.0f };
     LWorldQuat LastWrittenRotation{ maths::identity<LWorldQuat> };
 

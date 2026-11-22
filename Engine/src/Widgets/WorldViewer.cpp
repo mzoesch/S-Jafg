@@ -543,6 +543,7 @@ void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
             .Instance = &*this->SceneDepthMaterialInstance,
             .Filter = Filter,
             .bUpdateWorldDataSet = false,
+            .Viewer = &Ctrl,
             });
     });
 
@@ -747,6 +748,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 .Shadows = this->bShadowsDrawn ? &this->ShadowAtlas : nullptr,
                 .AmbientOcclusionTexture = this->bAmbientOcclusionDrawn
                     ? this->AmbientOcclusionBindlessIndex : rhi::invalid_resource_index,
+                .Viewer = &Ctrl,
                 });
 
             this->OnPostWorldDrawImpl(Info, Ctrl, Eye);

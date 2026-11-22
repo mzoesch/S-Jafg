@@ -120,6 +120,26 @@ Jafg::AEyeComponent* Jafg::APersonaController::GetViewEye() const noexcept
     return this->Avatar ? this->Avatar->GetEye() : nullptr;
 }
 
+Jafg::AEyeComponent const* Jafg::APersonaController::GetDominantViewEye() const noexcept
+{
+    AEyeComponent const* const Target{this->GetViewEye()};
+    if (!Target)
+    {
+        return nullptr;
+    }
+    /* The eye changed since the last update. The view still shows the previous eye (see #GetView). */
+    if (this->View && this->ViewedEye != Target && Target->BlendInTime > 0.0f && this->IsViewedEyeValid())
+    {
+        return this->ViewedEye;
+    }
+    if (this->ViewBlend && this->ViewBlend->Elapsed < this->ViewBlend->Duration * 0.5f
+        && this->ViewBlend->FromEye && IsValidFast(this->GetOuter(), this->ViewBlend->FromEye))
+    {
+        return this->ViewBlend->FromEye;
+    }
+    return Target;
+}
+
 std::optional<LWorldEye> Jafg::APersonaController::GetView() const noexcept
 {
     AEyeComponent const* const Eye{this->GetViewEye()};

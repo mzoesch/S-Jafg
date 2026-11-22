@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/World.h"
+#include "Framework/PresentableObject.h"
 #include "Engine/Engine.h"
 #include "Framework/Surface.h"
 #include "Core/App.h"
@@ -271,6 +272,16 @@ void Jafg::LWorld::Tick(f64 Dt)
         checkCode(this->_check_bUpdatingPhysics = false)
     }
 
+    /* After the physics, so that interpolations see the state of the last tick. Before the views, which follow them. */
+    {
+        STAT_CUSTOM_ZONE_FMT("WorldTick::Presentation::{}", this->GetHumanReadableName())
+        f32 const Alpha{this->GetPhysicsInterpolationAlpha()};
+        for (TArray<LPresentableObject*> const Presentables{this->PresentableObjects}; LPresentableObject* Presentable: Presentables)
+        {
+            Presentable->Present(Alpha);
+        }
+    }
+
     /* Last, so that the views follow everything that moved in this tick, including the physics. */
     {
         STAT_CUSTOM_ZONE_FMT("WorldTick::Views::{}", this->GetHumanReadableName())
@@ -319,6 +330,7 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
     }
 
     ActorInfo.PreferredMaterial = DrawInfo.Instance;
+    ActorInfo.Viewer = DrawInfo.Viewer;
 
     {
         auto& WorldData{ActorInfo.WorldData};
@@ -586,6 +598,33 @@ void Jafg::LWorld::RegisterPhysicsTickableObject(LFixedTickableObject* Tickable)
         LOG_FATAL(LogWorld, "[{}: Found duplicate fixed tickable object.", this->GetHumanReadableName())
     }
     this->PhysicsTickableObjects.push_back(Tickable);
+}
+
+void Jafg::LWorld::RegisterPresentableObject(LPresentableObject* Presentable)
+{
+    check(Presentable)
+    if (algo::contains(this->PresentableObjects, Presentable))
+    {
+        LOG_FATAL(LogWorld, "[{}]: Found duplicate presentable object.", this->GetHumanReadableName())
+    }
+    this->PresentableObjects.push_back(Presentable);
+}
+
+void Jafg::LWorld::UnregisterPresentableObject(LPresentableObject* Presentable)
+{
+    if (!algo::erase_once(&this->PresentableObjects, Presentable))
+    {
+        LOG_FATAL(LogWorld, "[{}]: Failed to find presentable object.", this->GetHumanReadableName())
+    }
+}
+
+f32 Jafg::LWorld::GetPhysicsInterpolationAlpha() const noexcept
+{
+    if (this->ShouldTickPhysics() && this->PhysicsSystem.IsValid())
+    {
+        return this->PhysicsSystem.GetInterpolationAlpha();
+    }
+    return 1.0f;
 }
 
 void Jafg::LWorld::UnregisterPhysicsTickableObject(LFixedTickableObject* Tickable)

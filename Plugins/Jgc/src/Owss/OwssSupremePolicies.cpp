@@ -10,6 +10,7 @@
 #include "User/UserPreferences.h"
 #include "Jgc/Framework/JgcCharacterInputComponent.h"
 #include "Jgc/Framework/Vehicle.h"
+#include "Jgc/Framework/JgcHumanoid.h"
 #include "Jgc/Owss/OwssGenerationSubsystem.h"
 
 static void LoadGymCollection(Jafg::LWorld& World)
@@ -88,9 +89,30 @@ static void LoadGymCollection(Jafg::LWorld& World)
         {-8.5, 0.0, 12.5},
         });
 
+    {
+        auto& Statue{*Jafg::SpawnObject(Jafg::TWorldStaticInit<Jafg::AActor>{World})};
+        Statue.EditorName = "FacelessMale";
+        auto& Rigid{Statue.EmplaceRootComponent<Jafg::ARigidComponent>([](Jafg::ARigidComponent& Comp)
+        {
+            Comp.SetLocalTranslationByTeleport({-3.0, 0.0, 12.5});
+            Comp.SetLocalRotatorByTeleport(maths::radians(LWorldVec3{0, 180, 0}));
+        })};
+        Statue.EmplaceSceneComponentTo<Jafg::AStaticMeshComponent>(Rigid, [&](Jafg::AStaticMeshComponent& Comp)
+        {
+            auto& Frontend{World.GetMutableFrontend()};
+            Comp.SetMesh(JgcInfo, "Rigged/Human/FacelessMale.glb");
+            Comp.SetPbrMaterialInstance(Frontend.GetSubsystemChecked<Jafg::JMaterialSubsystem>()
+                ->GetPbrInstance(JgcInfo, "Materials/Marble016"));
+        });
+        Rigid.MakeConvex();
+        Rigid.AddToSimulation(Jafg::ESimulationAddingBehavior::Preserve);
+    }
 
     auto& Generation{*World.GetSubsystemChecked<Jgc::JOwssGenerationSubsystem>()};
     Generation.SpawnShip({10.0f, 3.0f, 15.0f}, LWorldQuat{maths::radians(LWorldVec3{0, -90, 0})});
+
+    /* Runs (and every second way sprints) back and forth in front of the start. To look at animations alone. */
+    Jgc::SpawnPatrollingHumanoid(World, {{-6.0, 0.1, 6.0}, {6.0, 0.1, 6.0}});
 }
 
 void Jgc::AOwssSupremePolicies::BeginClassLife(Jafg::LBeginClassLifeInfo const& Info)
@@ -142,10 +164,13 @@ TJxxUnique<Jafg::AActor> Jgc::AOwssSupremePolicies::SpawnAvatarForPersonaControl
         {
             Head->BlendInTime = 0.5f;
         }
-        if (Pc.IsOwningLackey<Jafg::ELackey::Local>())
+        bool const bLocal{Pc.IsOwningLackey<Jafg::ELackey::Local>()};
+        if (bLocal)
         {
             Result->EmplaceComponent<AJgcCharacterInputComponent>();
         }
+        /* Every character has a body. Only local humans can switch to the view from behind. */
+        EquipHumanoidBody(*Result, {.bThirdPersonView = bLocal});
     }
 
     return Result;

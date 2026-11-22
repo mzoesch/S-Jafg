@@ -2,6 +2,8 @@
 
 #include "Framework/MeshSubsystem.h"
 #include "../Rhi/Gltf.h"
+#include "Engine/Engine.h"
+#include "Rhi/MaxFramesInFlight.h"
 
 void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 {
@@ -15,6 +17,24 @@ void Jafg::JMeshSubsystem::PurgeUnused() noexcept
 
         return false;
     });
+
+    auto const PurgeByPath{[](auto& PerNamespace, LStringView What)
+    {
+        for (auto& [Namespace, Paths]: PerNamespace)
+        {
+            std::erase_if(Paths, [&](auto& E) -> bool
+            {
+                if (E.second.use_count() == 1)
+                {
+                    LOG_VERBOSE(LogRhi, "Purging unused {} [{}].", What, E.first)
+                    return true;
+                }
+                return false;
+            });
+        }
+    }};
+    PurgeByPath(this->SkeletalMeshes, "skeletal mesh"sv);
+    PurgeByPath(this->AnimationLibraries, "animations"sv);
 
     // TODO: Do we want to rehash??
 }
@@ -291,4 +311,107 @@ std::expected<Jafg::LMeshScene, Jafg::LStaticMesh::EResult> Jafg::JMeshSubsystem
         , Path, Scene.Name, Scene.Nodes.size(), MeshesOfScene.size())
 
     return Scene;
+}
+
+Jafg::LSkeletalMeshRef Jafg::JMeshSubsystem::LoadSkeletalMesh(LPluginInfo Namespace, LStringView Path) const
+{
+    STAT_FUNCTION()
+    check(Namespace)
+
+    LString const Normalized{NormalizePath(Path)};
+    auto& Loaded{this->SkeletalMeshes[Namespace]};
+    if (auto It{Loaded.find(Normalized)}; It != Loaded.end())
+    {
+        return It->second;
+    }
+
+    LPath const Absolute{*Namespace / Normalized};
+    Gltf::LModel Model;
+    if (auto Result{Gltf::Parse(Absolute, Model)}; Result != LStaticMesh::EResult::Success)
+    {
+        LOG_ERROR(LogRhi, "[{}]: Failed to parse the file of the skeletal mesh: [{}].", Absolute, std::to_underlying(Result))
+        return nullptr;
+    }
+
+    auto Mesh{std::make_shared<LSkeletalMesh>()};
+    Mesh->Path = Normalized;
+    if (auto Result{Gltf::PullSkeletalMesh(Model, Absolute, *Mesh)}; Result != LStaticMesh::EResult::Success)
+    {
+        LOG_ERROR(LogRhi, "[{}]: Failed to load the skeletal mesh: [{}].", Absolute, std::to_underlying(Result))
+        return nullptr;
+    }
+    Mesh->Finalize();
+    Mesh->LoadToDevice();
+
+    LOG_VERBOSE(LogRhi, "[{}]: Loaded skeletal mesh [{}] with [{}] primitives, [{}] vertices and [{}] joints."
+        , Normalized, Mesh->Name, Mesh->Primitives.size(), Mesh->VertexCount, Mesh->Skeleton->GetJointCount())
+
+    Loaded.emplace(Normalized, Mesh);
+    return Mesh;
+}
+
+Jafg::LAnimationLibraryRef Jafg::JMeshSubsystem::LoadAnimations(LPluginInfo Namespace, LStringView Path) const
+{
+    STAT_FUNCTION()
+    check(Namespace)
+
+    LString const Normalized{NormalizePath(Path)};
+    auto& Loaded{this->AnimationLibraries[Namespace]};
+    if (auto It{Loaded.find(Normalized)}; It != Loaded.end())
+    {
+        return It->second;
+    }
+
+    LPath const Absolute{*Namespace / Normalized};
+    Gltf::LModel Model;
+    if (auto Result{Gltf::Parse(Absolute, Model)}; Result != LStaticMesh::EResult::Success)
+    {
+        LOG_ERROR(LogRhi, "[{}]: Failed to parse the file of the animations: [{}].", Absolute, std::to_underlying(Result))
+        return nullptr;
+    }
+
+    auto Library{std::make_shared<LAnimationLibrary>()};
+    Library->Path = Normalized;
+    if (auto Result{Gltf::PullAnimations(Model, Absolute, Library->Clips)}; Result != LStaticMesh::EResult::Success)
+    {
+        LOG_ERROR(LogRhi, "[{}]: The file has no usable animation: [{}].", Absolute, std::to_underlying(Result))
+        return nullptr;
+    }
+
+    for (auto const& Clip: Library->Clips)
+    {
+        LOG_VERBOSE(LogRhi, "[{}]: Loaded animation [{}] of [{:.3f}] seconds with [{}] channels."
+            , Normalized, Clip->Name, Clip->Duration, Clip->Channels.size())
+    }
+
+    Loaded.emplace(Normalized, Library);
+    return Library;
+}
+
+void Jafg::JMeshSubsystem::DeferRelease(TArray<rhi::mapped_device_buffer> Buffers) const
+{
+    if (Buffers.empty())
+    {
+        return;
+    }
+    check(GEngine)
+    /* The frames that are in flight now finish before this many more frames started. */
+    this->DeferredReleases.push_back(LDeferredRelease{
+        .Frame = GEngine->FrameCount + static_cast<u64>(rhi::max_frames_in_flight) + 1u,
+        .Buffers = std::move(Buffers),
+        });
+}
+
+void Jafg::JMeshSubsystem::ReleaseDeferred() const noexcept
+{
+    check(GEngine)
+    while (!this->DeferredReleases.empty() && this->DeferredReleases.front().Frame <= GEngine->FrameCount)
+    {
+        this->DeferredReleases.pop_front();
+    }
+}
+
+void Jafg::JMeshSubsystem::ReleaseAllDeferred() const noexcept
+{
+    this->DeferredReleases.clear();
 }
