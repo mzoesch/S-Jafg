@@ -345,6 +345,7 @@ protected:
     virtual void InitializeRenderTarget() override;
     virtual bool OnPreDrawImpl(LRenderInfo const& Info) override;
     virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, LWorldEye const& Eye) override;
+    NODISCARD virtual std::optional<LFrustum> GetFrustumOverride() const noexcept override { return this->FrustumOverride; }
 
     virtual LTransientPersona::Local GetTransientPersona() noexcept override;
     virtual void OnConnect() override;
@@ -381,6 +382,10 @@ private:
     AAvatarComponent* RunningAvatarIfDetached{};
     bool bIsNextPersonaEditorControlled{};
     NODISCARD constexpr bool IsRunning() const noexcept { return !!this->RunningInstance; }
+
+    std::optional<LFrustum> FrustumOverride;
+    bool ToggleFrustumOverride();
+    void VisualizeFrustumOverride();
 
     NODISCARD LTexture2Ref GetStartTexture() const;
     NODISCARD LTexture2Ref GetDetachTexture() const;

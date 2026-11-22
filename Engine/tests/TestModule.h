@@ -5,5 +5,6 @@
 #include "TestMaths.h"
 #include "TestMovement.h"
 #include "TestEye.h"
+#include "TestFrustum.h"
 #include "TestStaticMesh.h"
 #include "TestTextEditing.h"

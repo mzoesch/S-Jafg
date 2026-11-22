@@ -538,6 +538,8 @@ void Jafg::WWorldViewer::DrawAmbientOcclusion(LRenderInfo const& Info)
         std::optional<TArray<AActor*>> Filter;
         Ctrl.GetWorld().Draw(Info, {
             .Eye = Eye,
+            //# The depth has to contain the same as the scene that samples the occlusion.
+            .FrustumOverride = this->GetFrustumOverride(),
             .Instance = &*this->SceneDepthMaterialInstance,
             .Filter = Filter,
             .bUpdateWorldDataSet = false,
@@ -733,6 +735,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
 
             Ctrl.GetWorld().Draw(Info, {
                 .Eye = Eye,
+                .FrustumOverride = this->GetFrustumOverride(),
                 .Instance = nullptr,
                 .SharedSets = std::move(SharedSets),
                 .SharedBuffers = std::move(SharedBuffers),

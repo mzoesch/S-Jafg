@@ -117,6 +117,8 @@ protected:
     virtual void InitializeRenderTarget();
     virtual bool OnPreDrawImpl(LRenderInfo const& Info);
     virtual void OnPostWorldDrawImpl(LRenderInfo const& Info, APersonaController& Ctrl, LWorldEye const& Eye) {}
+    //# Passed to the world when drawing from the eye of this viewer. @see #LWorld::DrawInfo::FrustumOverride
+    NODISCARD virtual std::optional<LFrustum> GetFrustumOverride() const noexcept { return std::nullopt; }
 
     virtual LTransientPersona::Local GetTransientPersona() noexcept;
     virtual void OnConnect() {}

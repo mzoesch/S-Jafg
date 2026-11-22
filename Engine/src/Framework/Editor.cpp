@@ -1721,6 +1721,11 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         }
     }
 
+    if (this->FrustumOverride)
+    {
+        this->VisualizeFrustumOverride();
+    }
+
     if (this->FocusTransition)
     {
         if (auto* Ctrl{this->GetOwnedPersonaController()})
@@ -2281,6 +2286,8 @@ void Jafg::WEditorWorldViewer::OnConnect()
 void Jafg::WEditorWorldViewer::OnDisconnect()
 {
     this->SelectActors({});
+    //# The frustum belongs to the world that it was frozen in.
+    this->FrustumOverride.reset();
 
     check(!this->RunningAvatarIfDetached)
 
@@ -2299,6 +2306,55 @@ void Jafg::WEditorWorldViewer::OnDisconnect()
     if (this->WorldInspector)
     {
         this->WorldInspector->OnWorldViewerUpdate();
+    }
+}
+
+bool Jafg::WEditorWorldViewer::ToggleFrustumOverride()
+{
+    if (this->FrustumOverride)
+    {
+        LOG_VERBOSE(LogEditor, "[{}]: Releasing frozen frustum.", this->GetNameAsString())
+        this->FrustumOverride.reset();
+        return false;
+    }
+
+    auto* Ctrl{this->GetOwnedPersonaController()};
+    std::optional<LWorldEye> const View{Ctrl ? Ctrl->GetView() : std::nullopt};
+    if (!View)
+    {
+        LOG_WARNING(LogEditor, "[{}]: Cannot freeze the frustum without an eye.", this->GetNameAsString())
+        return false;
+    }
+
+    //# The same aspect that the world derives its projection from when drawing into our render target.
+    auto const Extent{this->GetWorldRenderTarget().GetExtent()};
+    if (Extent.width == 0 || Extent.height == 0)
+    {
+        LOG_WARNING(LogEditor, "[{}]: Cannot freeze the frustum of an empty render target.", this->GetNameAsString())
+        return false;
+    }
+
+    this->FrustumOverride = LFrustum::FromEye(*View, static_cast<f32>(Extent.width) / static_cast<f32>(Extent.height));
+    LOG_VERBOSE(LogEditor, "[{}]: Froze frustum at [{}] with near [{}] and far [{}]."
+        , this->GetNameAsString(), maths::to_string(View->translation), View->near_frustum, View->far_frustum)
+    return true;
+}
+
+void Jafg::WEditorWorldViewer::VisualizeFrustumOverride()
+{
+    check(this->FrustumOverride)
+
+    auto* Ctrl{this->GetOwnedPersonaController()};
+    auto* Drawer{Ctrl ? Ctrl->GetComponent<ADebugDrawerComponent>() : nullptr};
+    if (!Drawer)
+    {
+        return;
+    }
+
+    LColor const Tint{*GetSingleton<JUserPreferences>().EditorFrustumOverrideVisualizationTint};
+    for (LWorldLine3 const& Edge: this->FrustumOverride->GetEdges())
+    {
+        Drawer->AddLine({.Tint = Tint, .Value = Edge});
     }
 }
 
@@ -2792,6 +2848,10 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
             auto& MutablePrefs{GetMutableSingleton<JUserPreferences>()};
             MutablePrefs.EditorVisualizeGizmoInteractions = !*MutablePrefs.EditorVisualizeGizmoInteractions;
             return *MutablePrefs.EditorVisualizeGizmoInteractions;
+        }),
+        CreateDropDownCheckmark("Freeze frustum", this->FrustumOverride.has_value(), [this]
+        {
+            return this->ToggleFrustumOverride();
         }),
         LDropDownNodeDeferredSubMenu{
             .Selector = {.DisplayName = "Visualize physics",},

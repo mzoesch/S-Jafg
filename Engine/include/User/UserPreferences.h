@@ -403,6 +403,8 @@ public:
     TPreference<LColor> EditorGizmoVisualizationAabbTint{ Colors::Crimson };
     CLASS_FIELD(Config)
     TPreference<f32> EditorGizmoVisualizationLength{ 500.0f };
+    CLASS_FIELD(Config)
+    TPreference<LColor> EditorFrustumOverrideVisualizationTint{ Colors::Yellow };
 
     //# ---------- Physics Visualization ----------
 

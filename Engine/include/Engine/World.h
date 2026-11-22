@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Engine/Jxx.h"
+#include "Engine/Frustum.h"
 #include "Core/Arguments.h"
 #include "Framework/TraceUtility.h"
 #include "Framework/SubsystemCollection.h"
@@ -196,6 +197,8 @@ public:
         //# the view of a light. #Eye should still roughly match, as some drawables read it.
         //#
         std::optional<LViewOverride> ViewOverride;
+        //# If set, the volume to cull against instead of the one derived from #Eye and the aspect of the viewport.
+        std::optional<LFrustum> FrustumOverride;
         //# The instance to prefer for all supported drawables.
         LMaterialInstance* Instance{};
         //# Shared named sets free to use for this draw call. Might get modified.
