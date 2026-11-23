@@ -162,6 +162,11 @@ ENGINE_API void RequestEngineExit(LString Reason) noexcept;
 ENGINE_API void RequestEngineExit(i32 CustomExitStatus) noexcept;
 ENGINE_API void RequestEngineExit(i32 CustomExitStatus, LString Reason) noexcept;
 
+ENGINE_API void RequestEngineRestart() noexcept;
+ENGINE_API void RequestEngineRestart(LString Reason) noexcept;
+ENGINE_API void RequestEngineRestart(i32 CustomExitStatus) noexcept;
+ENGINE_API void RequestEngineRestart(i32 CustomExitStatus, LString Reason) noexcept;
+
 FORCEINLINE constexpr bool IsPauseBeforeExit() noexcept { return Detail::PauseBeforeExit; }
 FORCEINLINE constexpr bool IsTracerPidValid() noexcept { return Detail::IsTracerPidValid; }
 FORCEINLINE bool IsTracerPidValidNow()

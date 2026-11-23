@@ -1314,7 +1314,7 @@ Jafg::LPhysicalViewport const& Jafg::LSurfaceGlfw3::GetPreferredPhysicalViewport
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Viewports{this->GetFrontend().GetPhysicalViewports()};
 
-    if (!Prefs.PreferredPhysicalViewport.Value.empty())
+    if (!Prefs.PreferredPhysicalViewport->empty() && !(Prefs.PreferredPhysicalViewport == JUserPreferences::ListAuto))
     {
         auto It{algo::find(Viewports, *Prefs.PreferredPhysicalViewport, &LPhysicalViewport::Name)};
         if (It != Viewports.end())
@@ -1520,7 +1520,31 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
             )
     }
 
-    if (auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(rhi::vk_to_khr_present_mode(*Prefs.DesiredPresentMode))}; !AvailablePresentMode)
+    if (Prefs.DesiredPresentMode == rhi::present_mode::Auto)
+    {
+        LOG_VERBOSE(LogVulkan, "Desired present mode is set to [auto].")
+        if (auto PresentMode{this->Vk_GetSwapchainPresentModeKHR(vk::PresentModeKHR::eMailbox)})
+        {
+            this->Vk_PresentMode = *PresentMode;
+        }
+        else if (auto PresentMode{this->Vk_GetSwapchainPresentModeKHR(vk::PresentModeKHR::eFifoLatestReady)})
+        {
+            this->Vk_PresentMode = *PresentMode;
+        }
+        else if (auto PresentMode{this->Vk_GetSwapchainPresentModeKHR(vk::PresentModeKHR::eFifoRelaxed)})
+        {
+            this->Vk_PresentMode = *PresentMode;
+        }
+        else if (auto PresentMode{this->Vk_GetSwapchainPresentModeKHR(vk::PresentModeKHR::eFifo)})
+        {
+            this->Vk_PresentMode = *PresentMode;
+        }
+        else if (auto PresentMode{this->Vk_GetSwapchainPresentModeKHR(vk::PresentModeKHR::eImmediate)})
+        {
+            this->Vk_PresentMode = *PresentMode;
+        }
+    }
+    else if (auto AvailablePresentMode{this->Vk_GetSwapchainPresentModeKHR(rhi::vk_to_khr_present_mode(*Prefs.DesiredPresentMode))}; !AvailablePresentMode)
     {
         // We may always use FIFO as the std guarantees its existence.
         // https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html

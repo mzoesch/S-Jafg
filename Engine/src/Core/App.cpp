@@ -607,6 +607,26 @@ void Jafg::App::RequestEngineExit(i32 CustomExitStatus, LString Reason) noexcept
     }
 }
 
+void Jafg::App::RequestEngineRestart() noexcept // TODO: Implement
+{
+    App::RequestEngineExit();
+}
+
+void Jafg::App::RequestEngineRestart(LString Reason) noexcept
+{
+    App::RequestEngineExit(Reason);
+}
+
+void Jafg::App::RequestEngineRestart(i32 CustomExitStatus) noexcept
+{
+    App::RequestEngineExit(CustomExitStatus);
+}
+
+void Jafg::App::RequestEngineRestart(i32 CustomExitStatus, LString Reason) noexcept
+{
+    App::RequestEngineExit(CustomExitStatus, Reason);
+}
+
 TArray<Jafg::LProgramArgument> Jafg::App::ReprocessCommandLine(TArray<LString> const& CommandLine) noexcept
 {
     TArray<LProgramArgument> Result;

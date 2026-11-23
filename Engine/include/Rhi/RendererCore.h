@@ -833,9 +833,22 @@ NODISCARD LStringView constexpr to_string(framework Framework) noexcept
     std::unreachable();
 }
 
+//#
 //# Present modes that jafg currently supports.
+//# When requesting Mailbox on x11, it will be hinted to use immediate instead.
+//#
 enum struct present_mode
 {
+    //#
+    //# Automatically chooses the best present mode for the current platform (in order of preference):
+    //# 1. Mailbox (replaced by Immediate on x11)
+    //# 2. FifoLatestReady
+    //# 3. FifoRelaxed
+    //# 4. Fifo
+    //# 5. Immediate (unreachable)
+    //#
+    Auto,
+
     //#
     //# Just goes full throttle.
     //# - VSync:                    No
@@ -878,7 +891,7 @@ enum struct present_mode
     //#
     FifoLatestReady,
 };
-SERDE_ENUM(present_mode, Immediate, Mailbox, Fifo, FifoRelaxed, FifoLatestReady)
+SERDE_ENUM(present_mode, Auto, Immediate, Mailbox, Fifo, FifoRelaxed, FifoLatestReady)
 NODISCARD constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mode mode) noexcept
 {
     switch (mode)
@@ -888,8 +901,8 @@ NODISCARD constexpr vk::PresentModeKHR vk_to_khr_present_mode(present_mode mode)
     case present_mode::Fifo: return vk::PresentModeKHR::eFifo;
     case present_mode::FifoRelaxed: return vk::PresentModeKHR::eFifoRelaxed;
     case present_mode::FifoLatestReady: return vk::PresentModeKHR::eFifoLatestReady;
+    default: LOG_FATAL(LogVulkan, "[{}]: Cannot convert to PresentModeKHR.", serde::to_string(mode));
     }
-    std::unreachable();
 }
 NODISCARD constexpr std::optional<present_mode> vk_from_khr_present_mode(vk::PresentModeKHR mode) noexcept
 {
@@ -912,8 +925,8 @@ NODISCARD constexpr bool does_present_mode_allow_uncapped_tps(present_mode mode)
     case present_mode::Fifo: return false;
     case present_mode::FifoRelaxed: return false;
     case present_mode::FifoLatestReady: return true;
+    default: LOG_FATAL(LogVulkan, "[{}]: Cannot determine if present mode allows uncapped TPS.", serde::to_string(mode));
     }
-    std::unreachable();
 }
 
 //# A two-dimensional extent structure compatible with the current underlying device API used.

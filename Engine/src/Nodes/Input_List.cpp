@@ -70,7 +70,15 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
                                 {
                                     if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
                                     {
-                                        this->SetContent(Item.DisplayName);
+                                        if (Item.DisplayName.empty())
+                                        {
+                                            check(!Item.Identifier.empty())
+                                            this->SetContent(Item.Identifier);
+                                        }
+                                        else
+                                        {
+                                            this->SetContent(Item.DisplayName);
+                                        }
                                         (void)this->OnValueChanged.InvokeIfBound(Item);
                                         FloatingWidget->DestroyFloatingWidgetControlled();
                                         return LNodeReply::Handled();

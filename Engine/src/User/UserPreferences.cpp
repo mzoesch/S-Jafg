@@ -68,7 +68,12 @@ static LFactoryNode CreateList(LViewport& Viewport, TArray<LPreferenceValueChang
         .OutlineTint({0x8F})
         .Padding({5_spt, 5})
         .TextTint(Colors::White)
-        .Selected(Value.empty() ? LString{"<None>"} : std::move(Value))
+        .Selected(Value.empty()
+            ? LString{"<None>"}
+            : (Value == JUserPreferences::ListAuto)
+                ? "Auto"
+                : std::move(Value)
+            )
         .Items(Preference.GetItems())
         .OnValueChanged([Changes=&Changes, Preference=&Preference](LInputListItem const& Value)
         {
@@ -128,7 +133,17 @@ void Jafg::JUserPreferences::BeginLife()
     Collection.Children.emplace_back(std::make_unique<LPreferenceValue_List>(LPreferenceValue_List::CreateInfo{ \
         __VA_ARGS__ \
         .Getter = [this]{ return JUserPreferences:: JAFG_JOIN_OUTER_TWO(_GetField_, Preference) (*this); }, \
-        .Setter = [this](LString const& Value) { JUserPreferences::JAFG_JOIN_OUTER_TWO(_SetField_, Preference)(this, Value); }, \
+        .Setter = [this](LString const& Value) \
+        { \
+            if (Value == ListAuto) \
+            { \
+                this-> Preference .Reset(); \
+            } \
+            else \
+            { \
+                JUserPreferences::JAFG_JOIN_OUTER_TWO(_SetField_, Preference)(this, Value); \
+            } \
+        }, \
         .CreateEditNode = CreateList, \
         }));
 
@@ -168,12 +183,14 @@ void Jafg::JUserPreferences::BeginLife()
             .Tooltip = "Physical devices fulfilling the requirements of this application",
             .bRequiresRestart = true,
             .Items = [this] -> TArray<LPreferenceValue_List::value_type> {
-                TArray<LPreferenceValue_List::value_type> Devices;
-                algo::for_each(this->GetFrontend().Vk_GetAvailablePhysicalDevices(), [Devices=&Devices](LFrontend::LRankedPhysicalDevice const& Device)
+                TArray<LPreferenceValue_List::value_type> Result;
+                Result.emplace_back(ListAuto, "Auto");
+                algo::for_each(this->GetFrontend().Vk_GetAvailablePhysicalDevices()
+                    , [Result=&Result](LFrontend::LRankedPhysicalDevice const& Device)
                 {
-                    Devices->emplace_back(Device.PhysicalDevice.getProperties().deviceName);
+                    Result->emplace_back(Device.PhysicalDevice.getProperties().deviceName);
                 });
-                return Devices;
+                return Result;
             },)
         MAKE_LIST(PreferredPhysicalViewport,
             .Identifier = "PhysicalViewport",
@@ -182,14 +199,16 @@ void Jafg::JUserPreferences::BeginLife()
             // This is complicated. We have to check if we are Wayland, xWayland, etc. and there is currently not API in the surface for that.
             .bSupported = false,
             .Items = [this] -> TArray<LPreferenceValue_List::value_type> {
-                TArray<LPreferenceValue_List::value_type> Viewports;
-                algo::for_each(this->GetFrontend().GetPhysicalViewports(), [Viewports=&Viewports](LPhysicalViewport const& Viewport)
+                TArray<LPreferenceValue_List::value_type> Result;
+                Result.emplace_back(ListAuto, "Auto");
+                algo::for_each(this->GetFrontend().GetPhysicalViewports()
+                    , [Result=&Result](LPhysicalViewport const& Viewport)
                 {
-                    Viewports->emplace_back(Viewport.Name);
+                    Result->emplace_back(Viewport.Name);
                 });
-                return Viewports;
+                return Result;
             },)
-        MAKE_LIST(PreferredPhysicalViewport,
+        MAKE_LIST(DesiredPresentMode,
             .Identifier = "PresentMode",
             .DisplayName = "Present Mode",
             .Tooltip = "How frames are presented",
@@ -198,31 +217,32 @@ void Jafg::JUserPreferences::BeginLife()
 
                 auto AvailableModes{this->GetFrontend().Vk_GetAvailablePresentModes()};
 
-                TArray<LPreferenceValue_List::value_type> PresentModes;
-                PresentModes.reserve(5);
+                TArray<LPreferenceValue_List::value_type> Result;
+                Result.reserve(6);
+                Result.emplace_back(serde::to_string(rhi::present_mode::Auto));
 
-                PresentModes.emplace_back(serde::to_string(rhi::present_mode::Immediate)
+                Result.emplace_back(serde::to_string(rhi::present_mode::Immediate)
                     , serde::to_string(rhi::present_mode::Immediate)
                     , algo::contains(AvailableModes, rhi::present_mode::Immediate)
                     );
-                PresentModes.emplace_back(serde::to_string(rhi::present_mode::Mailbox)
+                Result.emplace_back(serde::to_string(rhi::present_mode::Mailbox)
                     , serde::to_string(rhi::present_mode::Mailbox)
                     , algo::contains(AvailableModes, rhi::present_mode::Mailbox)
                     );
-                PresentModes.emplace_back(serde::to_string(rhi::present_mode::Fifo)
+                Result.emplace_back(serde::to_string(rhi::present_mode::Fifo)
                     , serde::to_string(rhi::present_mode::Fifo)
                     , algo::contains(AvailableModes, rhi::present_mode::Fifo)
                     );
-                PresentModes.emplace_back(serde::to_string(rhi::present_mode::FifoRelaxed)
+                Result.emplace_back(serde::to_string(rhi::present_mode::FifoRelaxed)
                     , serde::to_string(rhi::present_mode::FifoRelaxed)
                     , algo::contains(AvailableModes, rhi::present_mode::FifoRelaxed)
                     );
-                PresentModes.emplace_back(serde::to_string(rhi::present_mode::FifoLatestReady)
+                Result.emplace_back(serde::to_string(rhi::present_mode::FifoLatestReady)
                     , serde::to_string(rhi::present_mode::FifoLatestReady)
                     , algo::contains(AvailableModes, rhi::present_mode::FifoLatestReady)
                     );
 
-                return PresentModes;
+                return Result;
             },)
         MAKE_SCALAR_MINMAX(MaxTps,
             .Identifier = "TpsLimit",

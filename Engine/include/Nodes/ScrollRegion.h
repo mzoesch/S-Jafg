@@ -84,6 +84,14 @@ public:
     virtual void UpdateDesiredSize() const override;
     virtual LVec2F GetTranslationForChildFromMostOuter(WNode const& DirectChild) const noexcept override;
 
+    //# @return The scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
+    NODISCARD FORCEINLINE constexpr LVec2F GetScrollPosition() const noexcept { return this->ScrollPosition; }
+    //# Sets the scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
+    FORCEINLINE void SetScrollPosition(LVec2F Position) noexcept
+    {
+        this->ScrollPosition = {maths::clamp(Position.x, 0.0f, 1.0f), maths::clamp(Position.y, 0.0f, 1.0f)};
+    }
+
     //# The size to use for the whole scroll region if it was not anchored.
     LNodeSize2 ScrollRegionSize;
 

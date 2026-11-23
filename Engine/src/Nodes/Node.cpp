@@ -238,7 +238,7 @@ Jafg::WUserWidget* Jafg::WNode::RequestTooltipNow(LVec2F Position)
             ConstructDeferredWidget(TNodeStaticInit<WDismissibleFloatingWidget>{this->GetViewport()}).Style().SaveToUnique(&Temp)
                 .Decorate(false)
                 .CreateResizeUi(false)
-                .InitialWindowSize({100_pt, 0})
+                .InitialWindowSize({0_spt, 0})
                 .InitialWindowPosition(Position)
                 .Content([Tooltip](WFloatingWidget& FloatingWidget, WParent& Container)
                 {

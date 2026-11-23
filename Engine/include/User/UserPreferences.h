@@ -44,6 +44,9 @@ public:
 
     enum { UnlimitedTps = 0 };
 
+    //# Marks a list entry as auto resolved. Optional.
+    static constexpr LString ListAuto{"_auto"s};
+
     ///////////////////////////////////////////////////////////////////////////////
     // Audio
     ///////////////////////////////////////////////////////////////////////////////
@@ -63,10 +66,10 @@ public:
 
     //# System dependent. But should generally stay consistent.
     CLASS_FIELD(Config)
-    TPreference<LString> PreferredPhysicalDevice;
+    TPreference<LString> PreferredPhysicalDevice{ ListAuto };
     //# System dependent. But should generally stay consistent.
     CLASS_FIELD(Config)
-    TPreference<LString> PreferredPhysicalViewport;
+    TPreference<LString> PreferredPhysicalViewport{ ListAuto };
     //# Preferred bits per pixel. Zero means default. This is a legacy feature as most compositors straight up ignore this.
     CLASS_FIELD(Config)
     TPreference<LVec3i32> PreferredBpp{ maths::zero_vector<LVec3i32> };
@@ -78,7 +81,7 @@ public:
     TPreference<i32> PreferredRefreshRateHz{ 0 };
 
     CLASS_FIELD(Config)
-    TPreference<rhi::present_mode> DesiredPresentMode{ rhi::present_mode::Fifo };
+    TPreference<rhi::present_mode> DesiredPresentMode{ rhi::present_mode::Auto };
     //#
     //# The cap for ticks per second.
     //# If Jafg is running with the local layer then this preference only has an effect if the present mode

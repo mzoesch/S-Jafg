@@ -38,6 +38,13 @@ struct TDefaultPreference
     NODISCARD FORCEINLINE constexpr T const& GetValue() const noexcept { return this->Value; }
     NODISCARD FORCEINLINE constexpr bool IsModified() const noexcept { return !(this->Value == this->Default); }
 
+    T const& Reset() noexcept(std::is_nothrow_copy_assignable_v<T>) requires std::is_copy_assignable_v<T>
+    {
+        this->Value = this->Default;
+        check(!this->IsModified())
+        return this->Value;
+    }
+
     NODISCARD FORCEINLINE explicit constexpr operator T&() noexcept { return this->Value; }
     NODISCARD FORCEINLINE explicit constexpr operator T const&() const noexcept { return this->Value; }
     NODISCARD FORCEINLINE constexpr T& operator*() noexcept { return this->Value; }
@@ -124,6 +131,13 @@ struct TDefaultClampedPreference
     NODISCARD FORCEINLINE constexpr T const& GetMin() const { return this->MinValue.value(); }
     NODISCARD FORCEINLINE constexpr T const& GetMax() const { return this->MaxValue.value(); }
     NODISCARD FORCEINLINE constexpr bool IsModified() const noexcept { return !(this->Value == this->Default); }
+
+    T const& Reset() noexcept(std::is_nothrow_copy_assignable_v<T>) requires std::is_copy_assignable_v<T>
+    {
+        this->Value = this->Default;
+        check(!this->IsModified())
+        return this->Value;
+    }
 
     NODISCARD FORCEINLINE explicit constexpr operator T&() noexcept { return this->Value; }
     NODISCARD FORCEINLINE explicit constexpr operator T const&() const noexcept { return this->Value; }

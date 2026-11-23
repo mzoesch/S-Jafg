@@ -1445,10 +1445,11 @@ void Jafg::LFrontendVk::Vk_PickPhysicalDevice()
     check(this->Vk_AvailablePhysicalDevices.empty() == false)
     if (this->Vk_AvailablePhysicalDevices[0].Rating == 0)
     {
-        panic("Failed to find a suitable physical device.")
+        LOG_FATAL(LogVulkan, "Failed to find a suitable physical device.")
     }
 
-    if (const auto& Prefs{GetSingleton<JUserPreferences>()}; !Prefs.PreferredPhysicalDevice->empty())
+    if (const auto& Prefs{GetSingleton<JUserPreferences>()};
+        !Prefs.PreferredPhysicalDevice->empty() || !(Prefs.PreferredPhysicalDevice == JUserPreferences::ListAuto))
     {
         for (auto const& [Rating, PhysicalDevice] : this->Vk_AvailablePhysicalDevices)
         {
