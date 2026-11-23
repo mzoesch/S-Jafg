@@ -66,7 +66,7 @@ public:
     TPreference<LString> PreferredPhysicalDevice;
     //# System dependent. But should generally stay consistent.
     CLASS_FIELD(Config)
-    TPreference<LString> PreferredMonitor;
+    TPreference<LString> PreferredPhysicalViewport;
     //# Preferred bits per pixel. Zero means default. This is a legacy feature as most compositors straight up ignore this.
     CLASS_FIELD(Config)
     TPreference<LVec3i32> PreferredBpp{ maths::zero_vector<LVec3i32> };

@@ -511,11 +511,11 @@ Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCre
 
     auto SharedState{std::make_shared<LEditorRowStateExt>()};
 
-    TArray<LString> Items;
+    TArray<LInputListItem> Items;
     Items.reserve(Map.size());
     for (auto const& Name: Map | std::views::values)
     {
-        Items.emplace_back(Name);
+        Items.emplace_back(LString{Name});
     }
 
     WInput_List* Input{};
@@ -530,14 +530,14 @@ Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCre
                 .Content(Info.Getter(Info.Owner))
                 .Items(std::move(Items))
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
-                .OnValueChanged([Setter=Info.Setter,Owner=Info.Owner](LString const& Value)
+                .OnValueChanged([Setter=Info.Setter, Owner=Info.Owner](LInputListItem const& Value)
                 {
-                    Setter(Owner, Value);
+                    Setter(Owner, Value.Identifier);
                     if (Owner)
                     {
                         if (ALightComponent* Comp{DynamicCast<ALightComponent>(Owner)})
                         {
-                            Comp->_detail_OnTypeChanged();
+                            Comp->_detail_OnTypeChanged(); // TODO: Remove. Why is this even here?
                         }
                     }
                 })
@@ -2676,28 +2676,24 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                                 ? Prefs.EditorLastWorldSupremePolicies->GetClassOrDefault().GetFullyQualifiedName()
                                 : Prefs.EditorLastWorldSupremePolicies.Default.GetClassOrDefault().GetFullyQualifiedName()
                                 )
-                            .Items([]() -> TArray<LString>
+                            .Items([]() -> TArray<LInputListItem>
                             {
                                 auto& Prefs{GetSingleton<JUserPreferences>()};
-                                TArray<LString> Result;
-                                auto& Subclass{Prefs.EditorLastWorldSupremePolicies.IsModified()
-                                    ? Prefs.EditorLastWorldSupremePolicies->GetClassOrDefault().GetFullyQualifiedName()
-                                    : Prefs.EditorLastWorldSupremePolicies.Default.GetClassOrDefault().GetFullyQualifiedName()
-                                    };
+                                TArray<LInputListItem> Result;
                                 auto& Registry{Detail::GetGlobalCxxRecordRegistry()};
                                 for (auto* Class: Registry.GetClassesByBase<ASupremePolicies>())
                                 {
                                     Result.emplace_back(Class->GetFullyQualifiedName());
                                 }
 
-                                algo::sort(Result, algo::lexicographical_string_compare);
+                                algo::sort(Result, algo::lexicographical_string_compare, &LInputListItem::Identifier);
 
                                 return Result;
                             }())
-                            .OnValueChanged([NewWorldNodes](LString const& Selected)
+                            .OnValueChanged([NewWorldNodes](LInputListItem const& Selected)
                             {
                                 check(!!NewWorldNodes)
-                                NewWorldNodes->SupremePolicy = Selected;
+                                NewWorldNodes->SupremePolicy = Selected.Identifier;
                             })
                     ];},});
                 Result.emplace_back(LDropDownNodeScratch{.OnCreate=[NewWorldNodes]
@@ -2717,9 +2713,9 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                             .MinDesiredSize(MinSizeB)
                             // .Padding(Prefs.InputPadding)
                             .Content(*Prefs.EditorLastObjectCollection)
-                            .Items([]() -> TArray<LString>
+                            .Items([]() -> TArray<LInputListItem>
                             {
-                                TArray<LString> Result;
+                                TArray<LInputListItem> Result;
                                 for (auto& Prefs{GetSingleton<JUserPreferences>()};
                                     auto& Collection: Prefs.EditorObjectCollectionsCallbacks | std::views::keys)
                                 {
@@ -2727,10 +2723,10 @@ void Jafg::WEditorWorldViewer::CreateMenuDropDown(LVec2F Where)
                                 }
                                 return Result;
                             }())
-                            .OnValueChanged([NewWorldNodes](LString const& Selected)
+                            .OnValueChanged([NewWorldNodes](LInputListItem const& Selected)
                             {
                                 check(!!NewWorldNodes)
-                                NewWorldNodes->ObjectCollection = Selected;
+                                NewWorldNodes->ObjectCollection = Selected.Identifier;
                             })
                     ];},});
                 Result.emplace_back(LDropDownNodeOption{

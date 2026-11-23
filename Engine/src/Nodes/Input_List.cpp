@@ -56,20 +56,22 @@ Jafg::LNodeReply Jafg::WInput_List::OnKeyEventFocused(LNodeKeyEventInfo const& I
 
                     for (auto& Item: this->Items)
                     {
+                        check(!Item.Identifier.empty())
                         Target->AddChild(NewNode(Target->GetViewport()).Class<WTextButton>()
                             .Anchor(EAnchor::HFill)
                             .Palette(*Prefs.PrimaryPaletteSolid)
                             .InBrush<EStyleBits::InactiveCombi, &LBoxBrush::bSkipBrushDraw>(true)
                             .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
-                            .Content(Item)
-                            .OnKeyEventFocused([this,Item,FloatingWidget=&FloatingWidget](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                            .Content(Item.DisplayName.empty() ? Item.Identifier : Item.DisplayName)
+                            .Enabled(Item.bSelectable)
+                            .OnKeyEventFocused([this, Item, FloatingWidget=&FloatingWidget](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                             {
                                 if (Info.CursorLocation && Self.AabbTest({.Translation=Info.Translation}, *Info.CursorLocation))
                                 {
                                     if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton))
                                     {
-                                        this->SetContent(Item);
-                                        (void)this->OnValueChanged.InvokeIfBound(this->GetContent());
+                                        this->SetContent(Item.DisplayName);
+                                        (void)this->OnValueChanged.InvokeIfBound(Item);
                                         FloatingWidget->DestroyFloatingWidgetControlled();
                                         return LNodeReply::Handled();
                                     }

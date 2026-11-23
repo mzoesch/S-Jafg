@@ -160,16 +160,13 @@ void Jafg::WUserPreferencesWidget::Rebuild(std::size_t Index)
                     .Anchor(EAnchor::Fill)
                     .Padding({10_pt, 4})
                 [
-                    NewStaticNode(WText)
-                        .Content("Rich Text")
-                        .TextScale(ETextScale::Header)
-                    + NewStaticNode(WSpacer).Size({0_pt,20})
-                    +
                     NewStaticNode(WEditableTextButton)
                         .Palette(*Prefs.InputPaletteSolid)
                         .InAllBrushes<&LBoxBrush::Padding>({3_spt, 1})
                         .Anchor(EAnchor::HFill)
-                    + NewStaticNode(WSpacer).Size({0_pt,20})
+                        .PlaceholderContent("Search...")
+                    +
+                    NewStaticNode(WSpacer).Size({0_pt, 5})
                     +
                     NewStaticNode(WText)
                         .Content(Collection.DisplayName)

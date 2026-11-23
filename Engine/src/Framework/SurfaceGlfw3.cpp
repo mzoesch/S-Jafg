@@ -1314,15 +1314,15 @@ Jafg::LPhysicalViewport const& Jafg::LSurfaceGlfw3::GetPreferredPhysicalViewport
     auto& Prefs{GetSingleton<JUserPreferences>()};
     auto& Viewports{this->GetFrontend().GetPhysicalViewports()};
 
-    if (!Prefs.PreferredMonitor.Value.empty())
+    if (!Prefs.PreferredPhysicalViewport.Value.empty())
     {
-        auto It{algo::find(Viewports, *Prefs.PreferredMonitor, &LPhysicalViewport::Name)};
+        auto It{algo::find(Viewports, *Prefs.PreferredPhysicalViewport, &LPhysicalViewport::Name)};
         if (It != Viewports.end())
         {
             LOG_VERBOSE(LogSurface, "Using preferred monitor [{}-{}].", It->Index, It->Name)
             return *It;
         }
-        LOG_WARNING(LogSurface, "Preferred monitor [{}] not found. Falling back to primary monitor.", *Prefs.PreferredMonitor)
+        LOG_WARNING(LogSurface, "Preferred monitor [{}] not found. Falling back to primary monitor.", *Prefs.PreferredPhysicalViewport)
     }
 
     GLFWmonitor* Monitor{glfwGetPrimaryMonitor()};

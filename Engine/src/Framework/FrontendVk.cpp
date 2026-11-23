@@ -821,6 +821,43 @@ std::optional<rhi::present_mode> Jafg::LFrontendVk::Vk_GetFirstSurfacePresentMod
     return rhi::vk_from_khr_present_mode(this->GetSurfaces()[0]->Vk_GetPresentMode());
 }
 
+TArray<rhi::present_mode> Jafg::LFrontendVk::Vk_GetAvailablePresentModes() const noexcept
+{
+    TArray<rhi::present_mode> Result{};
+
+    if (this->GetSurfaceCount() == 0)
+    {
+        LOG_FATAL(LogVulkan, "No surfaces available to query present modes from.")
+    }
+
+    auto& Surface{this->GetSurfaces()[0]};
+    auto AvailablePresentModes{Surface->Vk_GetAvailablePresentModes()};
+    for (auto const& PresentMode: AvailablePresentModes)
+    {
+        if (auto Mode{rhi::vk_from_khr_present_mode(PresentMode)})
+        {
+            Result.push_back(*Mode);
+        }
+    }
+
+    checkCode
+    (
+        for (auto& Surface: this->GetSurfaces())
+        {
+            auto AvailablePresentModes{Surface->Vk_GetAvailablePresentModes()};
+            for (auto const& PresentMode: AvailablePresentModes)
+            {
+                if (auto Mode{rhi::vk_from_khr_present_mode(PresentMode)})
+                {
+                    check(algo::find(Result, *Mode) != Result.end())
+                }
+            }
+        }
+    )
+
+    return Result;
+}
+
 vk::raii::CommandBuffer Jafg::LFrontendVk::Vk_BeginSingleTimeCommands(vk::CommandPool Pool) const
 {
     if (Pool == nullptr)

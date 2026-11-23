@@ -62,11 +62,21 @@ private:
 //# A nestable collection of preferences.
 struct LPreferenceCollection: LPreference
 {
-    LPreferenceCollection(
-          LString Identifier
-        , LString DisplayName
-        , LString Tooltip = {}
-        ) noexcept: LPreference{EPreference::Collection, std::move(Identifier), std::move(DisplayName), std::move(Tooltip), {}} {}
+    struct CreateInfo
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+    };
+
+    LPreferenceCollection(CreateInfo Info) noexcept
+        : LPreference{EPreference::Collection
+            , std::move(Info.Identifier)
+            , std::move(Info.DisplayName)
+            , std::move(Info.Tooltip)
+            , {}
+        }
+    {}
 
     NODISCARD decltype(auto) begin(this auto&& Self) noexcept { return Self.Children.begin(); }
     NODISCARD decltype(auto) end(this auto&& Self) noexcept { return Self.Children.end(); }

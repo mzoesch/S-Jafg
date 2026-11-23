@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Nodes/TextButton.h"
+#include "Widgets/Input_ListForward.h"
 #include "Input_List.generated.h"
 
 namespace Jafg
@@ -26,10 +27,10 @@ public:
 
     virtual LNodeReply OnKeyEventFocused(LNodeKeyEventInfo const& Info, LKeyEvent const& Event) override;
 
-    TArray<LString> Items;
+    TArray<LInputListItem> Items;
 
     //# Called if the selected item changed.
-    EVENT_DECL(OnValueChanged, void(LString const& Selected))
+    EVENT_DECL(OnValueChanged, void(LInputListItem const& Selected))
 
 private:
 
@@ -45,7 +46,7 @@ struct LFactoryInput_List: NODE_FACTORY_PARENT(WInput_List)
     {
         return std::forward<decltype(Self)>(Self).Content(std::move(Selected));
     }
-    decltype(auto) Items(this auto&& Self, TArray<LString> Items) noexcept
+    decltype(auto) Items(this auto&& Self, TArray<LInputListItem> Items) noexcept
     {
         NODE_FACTORY_SELF().Items = std::move(Items);
         return NODE_FACTORY_RESULT();

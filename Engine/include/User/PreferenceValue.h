@@ -4,6 +4,7 @@
 
 #include "User/PreferenceCollection.h"
 #include "Nodes/Node.h"
+#include "Widgets/Input_ListForward.h"
 
 namespace Jafg
 {
@@ -27,14 +28,25 @@ struct LPreferenceValue: LPreference
         , LPreferenceValue& Preference
         )> LCreateEditNode;
 
-    LPreferenceValue(
-          LString Identifier
-        , LString DisplayName
-        , LString Tooltip
-        , LCreateEditNode CreateEditNode
-        )
-        : LPreference{EPreference::Value, std::move(Identifier), std::move(DisplayName), std::move(Tooltip), {}}
-        , CreateEditNode{std::move(CreateEditNode)}
+    struct CreateInfo
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+
+        bool bSupported{ true };
+        bool bRequiresRestart{};
+        bool bRequiresImminentRestart{};
+
+        LCreateEditNode CreateEditNode;
+    };
+
+    LPreferenceValue(CreateInfo Info) noexcept
+        : LPreference{EPreference::Value, std::move(Info.Identifier), std::move(Info.DisplayName), std::move(Info.Tooltip), {}}
+        , bSupported{Info.bSupported}
+        , bRequiresRestart{Info.bRequiresRestart}
+        , bRequiresImminentRestart{Info.bRequiresImminentRestart}
+        , CreateEditNode{std::move(Info.CreateEditNode)}
     {
         check(!!this->CreateEditNode)
     }
@@ -51,7 +63,31 @@ struct LPreferenceValue: LPreference
     //# Save to value to a persistent storage.
     virtual void SaveValue(LString Value) = 0;
 
+    NODISCARD FORCEINLINE constexpr bool IsSupported() const noexcept { return this->bSupported; }
+    NODISCARD FORCEINLINE constexpr bool RequiresRestart() const noexcept { return this->bRequiresRestart; }
+    NODISCARD FORCEINLINE constexpr bool RequiresImminentRestart() const noexcept { return this->bRequiresImminentRestart; }
+
 private:
+
+    //#
+    //# Whether this preference is currently supported.
+    //# Supported does not mean not implemented.
+    //# Supported means:
+    //# - The platform allows (runtime only)
+    //# - The configuration allows (might also be compile-time)
+    //#
+    bool bSupported{ true };
+    //#
+    //# Changing this preference requires a restart of the application to take effect
+    //# or apply to already existing clients. New clients using this preference might
+    //# use the new one.
+    //#
+    bool bRequiresRestart{};
+    //#
+    //# Whether this preference requires a restart of the application after applying.
+    //# Failing to do a restart will cause undefined behavior.
+    //#
+    bool bRequiresImminentRestart{};
 
     mutable LCreateEditNode CreateEditNode;
 };
@@ -69,17 +105,34 @@ struct LCommonPreferenceValue: LPreferenceValue
     typedef TFunction2<LString()> LGetter;
     typedef TFunction2<void(LString)> LSetter;
 
-    LCommonPreferenceValue(
-          LString Identifier
-        , LString DisplayName
-        , LString Tooltip
-        , LGetter Getter
-        , LSetter Setter
-        , LCreateEditNode CreateEditNode
-        ) noexcept
-        : LPreferenceValue{std::move(Identifier), std::move(DisplayName), std::move(Tooltip), std::move(CreateEditNode)}
-        , Getter{std::move(Getter)}
-        , Setter{std::move(Setter)}
+    struct CreateInfo
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+
+        bool bSupported{ true };
+        bool bRequiresRestart{};
+        bool bRequiresImminentRestart{};
+
+        LGetter Getter;
+        LSetter Setter;
+
+        LCreateEditNode CreateEditNode;
+    };
+
+    LCommonPreferenceValue(CreateInfo Info) noexcept
+        : LPreferenceValue{{
+            .Identifier = std::move(Info.Identifier),
+            .DisplayName = std::move(Info.DisplayName),
+            .Tooltip = std::move(Info.Tooltip),
+            .bSupported = Info.bSupported,
+            .bRequiresRestart = Info.bRequiresRestart,
+            .bRequiresImminentRestart = Info.bRequiresImminentRestart,
+            .CreateEditNode = std::move(Info.CreateEditNode),
+            }}
+        , Getter{std::move(Info.Getter)}
+        , Setter{std::move(Info.Setter)}
     {
         check(!!this->Getter)
         check(!!this->Setter)
@@ -114,61 +167,51 @@ FORCEINLINE constexpr LPreferenceValue const& LPreference::AsValue() const noexc
     return *static_cast<LPreferenceValue const*>(this);
 }
 
-struct LPreferenceValue_Boolean;
-struct LPreferenceValue_BooleanCreateInfo final
-{
-    LString Identifier;
-    LString DisplayName;
-    LString Tooltip;
-
-    LCommonPreferenceValue::LGetter Getter;
-    LCommonPreferenceValue::LSetter Setter;
-    TFunction2<LFactoryNode(LViewport& Viewport
-        , TArray<LPreferenceValueChangeRequest>& Changes
-        , LPreferenceValue_Boolean& Preference
-        )> CreateEditNode;
-};
-
 //# A preference that stores a boolean.
 struct LPreferenceValue_Boolean: LCommonPreferenceValue
 {
     typedef bool value_type;
 
-    LPreferenceValue_Boolean(LPreferenceValue_BooleanCreateInfo Info) noexcept
-        : LCommonPreferenceValue{
-              std::move(Info.Identifier)
-            , std::move(Info.DisplayName)
-            , std::move(Info.Tooltip)
-            , std::move(Info.Getter)
-            , std::move(Info.Setter)
-            , [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
+    struct CreateInfo
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+
+        bool bSupported{ true };
+        bool bRequiresRestart{};
+        bool bRequiresImminentRestart{};
+
+        LGetter Getter;
+        LSetter Setter;
+
+        TFunction2<LFactoryNode(LViewport& Viewport
+            , TArray<LPreferenceValueChangeRequest>& Changes
+            , LPreferenceValue_Boolean& Preference
+            )> CreateEditNode;
+    };
+
+    LPreferenceValue_Boolean(CreateInfo Info) noexcept
+        : LCommonPreferenceValue{{
+            .Identifier = std::move(Info.Identifier),
+            .DisplayName = std::move(Info.DisplayName),
+            .Tooltip = std::move(Info.Tooltip),
+            .bSupported = Info.bSupported,
+            .bRequiresRestart = Info.bRequiresRestart,
+            .bRequiresImminentRestart = Info.bRequiresImminentRestart,
+            .Getter = std::move(Info.Getter),
+            .Setter = std::move(Info.Setter),
+            .CreateEditNode = [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
                 , TArray<LPreferenceValueChangeRequest>& Changes
                 , LPreferenceValue& Preference
                 ) mutable
                 {
                     return std::invoke(CreateEditNode, Viewport, Changes, static_cast<LPreferenceValue_Boolean&>(Preference));
-                }
-            }
-        {}
-};
+                },
+            }}
+    {
+    }
 
-struct LPreferenceValue_Scalar;
-struct LPreferenceValue_ScalarCreateInfo final
-{
-    LString Identifier;
-    LString DisplayName;
-    LString Tooltip;
-
-    f64 Step;
-    std::optional<f64> Minimum;
-    std::optional<f64> Maximum;
-
-    LCommonPreferenceValue::LGetter Getter;
-    LCommonPreferenceValue::LSetter Setter;
-    TFunction2<LFactoryNode(LViewport& Viewport
-        , TArray<LPreferenceValueChangeRequest>& Changes
-        , LPreferenceValue_Scalar& Preference
-        )> CreateEditNode;
 };
 
 //# A preference that stores a scalar.
@@ -176,21 +219,46 @@ struct LPreferenceValue_Scalar: LCommonPreferenceValue
 {
     typedef f64 value_type;
 
-    LPreferenceValue_Scalar(LPreferenceValue_ScalarCreateInfo Info) noexcept
-        : LCommonPreferenceValue{
-              std::move(Info.Identifier)
-            , std::move(Info.DisplayName)
-            , std::move(Info.Tooltip)
-            , std::move(Info.Getter)
-            , std::move(Info.Setter)
-            , [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
+    struct CreateInfo final
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+
+        bool bSupported{ true };
+        bool bRequiresRestart{};
+        bool bRequiresImminentRestart{};
+
+        f64 Step;
+        std::optional<f64> Minimum;
+        std::optional<f64> Maximum;
+
+        LGetter Getter;
+        LSetter Setter;
+        TFunction2<LFactoryNode(LViewport& Viewport
+            , TArray<LPreferenceValueChangeRequest>& Changes
+            , LPreferenceValue_Scalar& Preference
+            )> CreateEditNode;
+    };
+
+    LPreferenceValue_Scalar(CreateInfo Info) noexcept
+        : LCommonPreferenceValue{{
+            .Identifier = std::move(Info.Identifier),
+            .DisplayName = std::move(Info.DisplayName),
+            .Tooltip = std::move(Info.Tooltip),
+            .bSupported = Info.bSupported,
+            .bRequiresRestart = Info.bRequiresRestart,
+            .bRequiresImminentRestart = Info.bRequiresImminentRestart,
+            .Getter = std::move(Info.Getter),
+            .Setter = std::move(Info.Setter),
+            .CreateEditNode = [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
                 , TArray<LPreferenceValueChangeRequest>& Changes
                 , LPreferenceValue& Preference
                 ) mutable
                 {
                     return std::invoke(CreateEditNode, Viewport, Changes, static_cast<LPreferenceValue_Scalar&>(Preference));
-                }
-            }
+                },
+            }}
         , Step{Info.Step}
         , Minimum{Info.Minimum}
         , Maximum{Info.Maximum}
@@ -212,42 +280,48 @@ private:
     std::optional<value_type> Maximum;
 };
 
-struct LPreferenceValue_List;
-struct LPreferenceValue_ListCreateInfo final
-{
-    LString Identifier;
-    LString DisplayName;
-    LString Tooltip;
-
-    TFunction2<TArray<LString>()> Items;
-
-    LCommonPreferenceValue::LGetter Getter;
-    LCommonPreferenceValue::LSetter Setter;
-    TFunction2<LFactoryNode(LViewport& Viewport
-        , TArray<LPreferenceValueChangeRequest>& Changes
-        , LPreferenceValue_List& Preference
-        )> CreateEditNode;
-};
-
 struct LPreferenceValue_List: LCommonPreferenceValue
 {
-    typedef LString value_type;
+    typedef LInputListItem value_type;
 
-    LPreferenceValue_List(LPreferenceValue_ListCreateInfo Info) noexcept
-        : LCommonPreferenceValue{
-              std::move(Info.Identifier)
-            , std::move(Info.DisplayName)
-            , std::move(Info.Tooltip)
-            , std::move(Info.Getter)
-            , std::move(Info.Setter)
-            , [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
+    struct CreateInfo final
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+
+        bool bSupported{ true };
+        bool bRequiresRestart{};
+        bool bRequiresImminentRestart{};
+
+        TFunction2<TArray<value_type>()> Items;
+
+        LGetter Getter;
+        LSetter Setter;
+        TFunction2<LFactoryNode(LViewport& Viewport
+            , TArray<LPreferenceValueChangeRequest>& Changes
+            , LPreferenceValue_List& Preference
+            )> CreateEditNode;
+    };
+
+    LPreferenceValue_List(CreateInfo Info) noexcept
+        : LCommonPreferenceValue{{
+            .Identifier = std::move(Info.Identifier),
+            .DisplayName = std::move(Info.DisplayName),
+            .Tooltip = std::move(Info.Tooltip),
+            .bSupported = Info.bSupported,
+            .bRequiresRestart = Info.bRequiresRestart,
+            .bRequiresImminentRestart = Info.bRequiresImminentRestart,
+            .Getter = std::move(Info.Getter),
+            .Setter = std::move(Info.Setter),
+            .CreateEditNode = [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
                 , TArray<LPreferenceValueChangeRequest>& Changes
                 , LPreferenceValue& Preference
                 ) mutable
                 {
                     return std::invoke(CreateEditNode, Viewport, Changes, static_cast<LPreferenceValue_List&>(Preference));
-                }
-            }
+                },
+            }}
         , Items{std::move(Info.Items)}
         {}
 
@@ -259,7 +333,7 @@ struct LPreferenceValue_List: LCommonPreferenceValue
 
 private:
 
-    mutable TFunction2<TArray<LString>()> Items;
+    mutable TFunction2<TArray<value_type>()> Items;
 };
 
 } /* ~Namespace Jafg */

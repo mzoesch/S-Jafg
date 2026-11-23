@@ -97,6 +97,9 @@ public:
     NODISCARD FORCEINLINE auto const& Vk_GetPhysicalDevice() const noexcept { return this->Vk_PhysicalDevice; }
     NODISCARD FORCEINLINE auto const& Vk_GetPhysicalDeviceMemoryProperties() const noexcept { return this->Vk_PhysicalDeviceMemoryProperties; }
 
+    //# Late function. Only available if at least one surface was created.
+    ENGINE_API TArray<rhi::present_mode> Vk_GetAvailablePresentModes() const noexcept;
+
     FORCEINLINE vk::SampleCountFlagBits Vk_GetMaxMsaaSampleCount() const noexcept { return this->Vk_MaxMsaaSampleCount; }
     FORCEINLINE vk::SampleCountFlags Vk_GetMsaaSampleLimits() const noexcept { return this->Vk_MsaaSampleLimits; }
 
