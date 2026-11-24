@@ -112,7 +112,7 @@ static void LoadGymCollection(Jafg::LWorld& World)
     Generation.SpawnShip({10.0f, 3.0f, 15.0f}, LWorldQuat{maths::radians(LWorldVec3{0, -90, 0})});
 
     /* Runs (and every second way sprints) back and forth in front of the start. To look at animations alone. */
-    Jgc::SpawnPatrollingHumanoid(World, {{-6.0, 0.1, 6.0}, {6.0, 0.1, 6.0}});
+    // Jgc::SpawnPatrollingHumanoid(World, {{-6.0, 0.1, 6.0}, {6.0, 0.1, 6.0}});
 }
 
 void Jgc::AOwssSupremePolicies::BeginClassLife(Jafg::LBeginClassLifeInfo const& Info)

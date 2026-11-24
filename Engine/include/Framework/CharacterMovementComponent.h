@@ -131,11 +131,30 @@ public:
     bool bFollowBaseRotation{ true };
 
     CLASS_FIELD(EditorEditable)
-    f32 WalkSpeed{ 4.0f };
+    f32 WalkSpeed{ 2.4f };
     CLASS_FIELD(EditorEditable)
-    f32 SprintSpeed{ 7.0f };
+    f32 CrouchSpeed{ 1.3f };
+
+    //#
+    //# Sprinting on the ground (neither crouched nor with magnetic boots). The directions are the move axes relative
+    //# to the view. A move sprints if it lies within #SprintConeAngle of an allowed direction and walks otherwise.
+    //# Disallow all directions to disable sprinting.
+    //#
     CLASS_FIELD(EditorEditable)
-    f32 CrouchSpeed{ 2.0f };
+    f32 SprintSpeed{ 6.2f };
+    //# The half angle of the cone around each allowed direction in which a move sprints. At 45 and above, the
+    //# diagonals between two allowed directions sprint as well. In [0, 180].
+    CLASS_FIELD(EditorEditable)
+    f32 SprintConeAngle{ 60.0f };
+    CLASS_FIELD(EditorEditable)
+    bool bCanSprintForward{ true };
+    CLASS_FIELD(EditorEditable)
+    bool bCanSprintBackward{ true };
+    CLASS_FIELD(EditorEditable)
+    bool bCanSprintLeft{ true };
+    CLASS_FIELD(EditorEditable)
+    bool bCanSprintRight{ true };
+
     CLASS_FIELD(EditorEditable)
     f32 GroundAcceleration{ 50.0f };
     //# Deceleration on the ground without input.
@@ -280,6 +299,8 @@ private:
 
     //# The flat (relative to up) direction that the move axes point to. The length is at most one.
     NODISCARD LVec3F GetFlatWishDirection(LVec3F const& Axes) const noexcept;
+    //# Whether a move along the move axes may sprint. @see #SprintConeAngle
+    NODISCARD bool CanSprintTowards(LVec3F const& Axes) const noexcept;
 
     using LProxyPtr = TUnique<Detail::LCharacterMovementProxy, void(*)(Detail::LCharacterMovementProxy*)>;
     LProxyPtr Proxy{nullptr, nullptr};

@@ -532,7 +532,7 @@ void Jafg::ACharacterMovementComponent::SimulateTick(LMovementInput const& Input
         {
             Speed = this->CrouchSpeed;
         }
-        else if (Input.Has(EMovementButtonBits::Sprint) && Input.Move.z > 0.1f)
+        else if (Input.Has(EMovementButtonBits::Sprint) && this->CanSprintTowards(Input.Move))
         {
             Speed = this->SprintSpeed;
         }
@@ -1362,4 +1362,25 @@ LVec3F Jafg::ACharacterMovementComponent::GetFlatWishDirection(LVec3F const& Axe
     /* Right is cross(forward, up) in this right-handed engine. */
     LVec3F const Right{maths::cross(Forward, Up)};
     return Movement::ClampMagnitude(Right * Axes.x + Forward * Axes.z, 1.0f);
+}
+
+bool Jafg::ACharacterMovementComponent::CanSprintTowards(LVec3F const& Axes) const noexcept
+{
+    f32 const Length{maths::sqrt(Axes.x * Axes.x + Axes.z * Axes.z)};
+    if (Length < maths::not_so_small_number_f)
+    {
+        return false;
+    }
+
+    /*
+     * X is right and Z is forward. The cosine of the angle to each direction is the matching component of the
+     * normalized input. The tolerance keeps exact diagonals inside a cone of 45 degrees.
+     */
+    f32 const MinCos{std::cos(maths::radians(maths::clamp(this->SprintConeAngle, 0.0f, 180.0f))) - 1e-4f};
+    f32 const Right{Axes.x / Length};
+    f32 const Forward{Axes.z / Length};
+    return (this->bCanSprintForward  &&  Forward >= MinCos)
+        || (this->bCanSprintBackward && -Forward >= MinCos)
+        || (this->bCanSprintRight    &&  Right   >= MinCos)
+        || (this->bCanSprintLeft     && -Right   >= MinCos);
 }

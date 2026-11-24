@@ -18,7 +18,11 @@ constexpr LStringView SprintingClip{ "Locomotion_Sprinting" };
 constexpr LStringView CrouchIdleClip{ "Locomotion_CrouchIdle" };
 constexpr LStringView CrouchWalkingClip{ "Locomotion_CrouchWalking" };
 constexpr LStringView JumpingClip{ "Air_Jumping" };
+//# A jump from standing. Part of the locomotion set.
+constexpr LStringView IdleJumpingClip{ "Locomotion_IdleJumping" };
 constexpr LStringView FallingClip{ "Air_Falling" };
+//# Falling without moving much. Part of the locomotion set.
+constexpr LStringView IdleFallingClip{ "Locomotion_IdleFalling" };
 constexpr LStringView FlyingClip{ "Air_Flying" };
 constexpr LStringView FloatingClip{ "ZeroG_Floating" };
 constexpr LStringView SeatedClip{ "Vehicle_Seated" };
@@ -32,10 +36,10 @@ NODISCARD std::span<LStringView const> GetClipCandidates(EState State) noexcept
     static constexpr std::array Sprinting{SprintingClip, RunningClip, WalkingClip};
     static constexpr std::array CrouchIdle{CrouchIdleClip, IdleClip};
     static constexpr std::array CrouchWalking{CrouchWalkingClip, WalkingClip, RunningClip};
-    static constexpr std::array Jumping{JumpingClip, FallingClip, IdleClip};
-    static constexpr std::array Falling{FallingClip, IdleClip};
-    static constexpr std::array Flying{FlyingClip, FallingClip, IdleClip};
-    static constexpr std::array Floating{FloatingClip, FallingClip, IdleClip};
+    static constexpr std::array Jumping{JumpingClip, IdleJumpingClip, FallingClip, IdleFallingClip, IdleClip};
+    static constexpr std::array Falling{FallingClip, IdleFallingClip, IdleClip};
+    static constexpr std::array Flying{FlyingClip, FallingClip, IdleFallingClip, IdleClip};
+    static constexpr std::array Floating{FloatingClip, FallingClip, IdleFallingClip, IdleClip};
     static constexpr std::array Seated{SeatedClip, IdleClip};
 
     switch (State)
@@ -151,8 +155,12 @@ void Jgc::AJgcCharacterAnimationComponent::ParentTick(f32 Dt)
 
     if (NewState != this->State || Chosen != this->Clip)
     {
-        LOG_VERBOSE(LogJgc, "[{}]: [{}] -> [{}] with clip [{}]."
-            , this->GetOwningActor().GetNameAsString(), LexToString(this->State), LexToString(NewState), Chosen.empty() ? "<rest pose>"sv : Chosen)
+        LOG_TRACE(LogJgcAnimation, "[{}]: [{}] -> [{}] with clip [{}]."
+            , this->GetNameAsString()
+            , LexToString(this->State)
+            , LexToString(NewState)
+            , Chosen.empty() ? "<rest pose>"sv : Chosen
+            )
 
         this->State = NewState;
         this->Clip = LString{Chosen};
@@ -162,11 +170,13 @@ void Jgc::AJgcCharacterAnimationComponent::ParentTick(f32 Dt)
         }
         else
         {
+            bool const bJumping{NewState == ECharacterAnimationState::Jumping};
             CharacterBody.Play(Chosen, {
                 .BlendTime = this->BlendTime,
                 .Rate = Rate,
-                .bLoop = NewState != ECharacterAnimationState::Jumping,
-                .bRestart = NewState == ECharacterAnimationState::Jumping,
+                .bLoop = !bJumping,
+                .StartTime = bJumping ? std::optional<f32>{maths::max(this->JumpingClipStartTime, 0.0f)} : std::nullopt,
+                .bRestart = bJumping,
                 });
         }
     }
