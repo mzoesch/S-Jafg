@@ -10,6 +10,7 @@
 #include "Framework/ShaderSubsystem.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/MaterialSubsystem.h"
+#include "Framework/StaticMeshComponent.h"
 #include "../Framework/PhysicsForeignCore.h"
 #include "Gltf.h"
 
@@ -44,96 +45,212 @@ namespace
 
 Jafg::LVertexInputRegistrator<Jafg::LStaticMesh::Vertex> _{};
 
+#if JAFG_WITH_EDITOR
+//#
+//# Whether #JMeshSubsystem::LoadMesh can load the file. It is fatal for files that do not have exactly one mesh.
+//# Allocates the meshes of the file, but loads none of them. Logged, if not.
+//#
+NODISCARD bool HasSingleMesh(Jafg::JMeshSubsystem const& Meshes, Jafg::LPluginInfo Namespace, LStringView Path)
+{
+    auto const Scene{Meshes.LoadScene(Namespace, Path, {}, Jafg::EStaticMeshStateBits::None)};
+    if (!Scene)
+    {
+        LOG_ERROR(LogEditor, "[{}]: Failed to read the file: [{}]. Discarding request.", Path, std::to_underlying(Scene.error()))
+        return false;
+    }
+
+    std::unordered_set<Jafg::LStaticMesh const*> Unique;
+    auto const Walk{[&Unique](this auto const& Self, TArray<Jafg::LMeshSceneNode> const& Nodes) -> void
+    {
+        for (auto const& Node: Nodes)
+        {
+            if (Node.Mesh)
+            {
+                Unique.insert(Node.Mesh.get());
+            }
+            Self(Node.Children);
+        }
+    }};
+    Walk(Scene->Nodes);
+
+    if (Unique.size() != 1uz)
+    {
+        LOG_ERROR(LogEditor, "[{}]: Expected exactly one mesh, but the file has [{}]. Discarding request.", Path, Unique.size())
+        return false;
+    }
+    return true;
+}
+#endif /* JAFG_WITH_EDITOR */
+
 } /* ~Namespace <Anonymous> */
 
+#if JAFG_WITH_EDITOR
 template<>
 Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
 
-    auto SharedState(std::make_shared<LEditorRowState>());
+    struct RowState final: LEditorRowStateExt
+    {
+        LStaticMeshRef* Field{};
+        JCxxClass* Owner{};
+        std::optional<LStaticMeshRef> Default;
+        EJxxFieldFlags Flags{ EJxxFieldBits::Identity };
+
+        WEditableTextButton* Source{};
+        //# The mesh that the row shows. The field may also change elsewhere. Weak, to not keep old meshes alive.
+        std::weak_ptr<LStaticMesh> Displayed;
+
+        NODISCARD static LString Describe(LStaticMeshRef const& Mesh)
+        {
+            return Mesh ? algo::sprintf("{}", Mesh->GetSource()) : LString{"<not-set>"};
+        }
+
+        NODISCARD bool IsResettable() const
+        {
+            check(this->Field)
+            return JxxFieldBits::IsEditorEditable(this->Flags) && this->Default && *this->Field != *this->Default;
+        }
+
+        void Refresh()
+        {
+            check(this->Field && this->Source && this->ResetButton)
+            if (std::owner_less<>{}(this->Displayed, *this->Field) || std::owner_less<>{}(*this->Field, this->Displayed))
+            {
+                this->Displayed = *this->Field;
+                this->Source->SetContent(Describe(*this->Field));
+            }
+            if (bool const bResettable{this->IsResettable()}; bResettable != this->ResetButton->IsEnabled())
+            {
+                this->ResetButton->SetEnabled(bResettable);
+            }
+        }
+
+        void Set(LStaticMeshRef Mesh)
+        {
+            check(this->Field)
+            if (auto* Comp{DynamicCast<AStaticMeshComponent>(this->Owner)})
+            {
+                /* Keeps the bounds of the component in sync. */
+                Comp->SetMesh(std::move(Mesh));
+            }
+            else
+            {
+                *this->Field = std::move(Mesh);
+            }
+            this->Refresh();
+        }
+    };
+
+    auto SharedState{std::make_shared<RowState>()};
+    SharedState->Field = &Info.Field;
+    SharedState->Owner = Info.Owner;
+    SharedState->Default = Info.Default;
+    SharedState->Flags = Info.Flags;
+    SharedState->Displayed = Info.Field;
+
+    if (Info.UpdateValue)
+    {
+        check(!*Info.UpdateValue)
+        *Info.UpdateValue = [SharedState]
+        {
+            SharedState->Refresh();
+        };
+    }
 
     return NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
+        .Tooltip(LString{Info.RecordTooltip})
     [
-        EditorComponentLabel(Info.Flags, Info.Viewport, "Mesh", SharedState)
+        EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
         + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
         [
             NewNode(Info.Viewport).Class<WHParent>()
                 .Anchor(EAnchor::Fill)
             [
-                NewNode(Info.Viewport).Class<WEditableTextButton>()
+                NewNode(Info.Viewport).Class<WEditableTextButton>().SaveTo(&SharedState->Source)
                     .Anchor(EAnchor::HFill)
                     .Palette(*Prefs.InputPaletteSolid)
-                    .Content(Info.Field ? algo::sprintf("{}", Info.Field->GetSource()) : "<not-set>")
+                    .Content(RowState::Describe(Info.Field))
+                    .OnContentCommitted([SharedState](WEditableTextButton& Self, LString const& Content, ETextCommit Commit)
+                    {
+                        /* Only shows the source (and lets it be copied). Typed text is discarded. */
+                        Self.SetContent(RowState::Describe(*SharedState->Field));
+                    })
                 + NewNode(Info.Viewport).Class<WTextButtonIconizedDouble>()
                     .Palette(*Prefs.SecondaryPaletteSolid)
+                    .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
                     .Content("Browse")
                     .LeftIcon({JafgInfo, "Icons/DirectorySearch"})
-                    .OnKeyEventFocused([FieldPtr=&Info.Field](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+                    .OnKeyEventFocused([SharedState](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                     {
-                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) && Self.AabbTest(Info))
+                        if (!Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) || !Self.AabbTest(Info))
                         {
-                            check(FieldPtr)
-                            auto& Field{*FieldPtr};
-                            check(Field.get())
+                            return LNodeReply::Unhandled();
+                        }
 
-                            LPath DefaultPath;
-                            if (!Field->GetPath().empty() && Field->GetPath().has_parent_path())
-                            {
-                                DefaultPath = Field->GetPath().parent_path();
-                            }
-                            else
-                            {
-                                DefaultPath = **JafgInfo;
-                            }
+                        check(GEngine && SharedState->Field)
+                        LStaticMesh const* Current{SharedState->Field->get()};
 
-                            if (auto AbsolutePath{Info.Viewport.GetSurface().OpenBlockingDialogForFile({
-                                .Filters = {FileDialogFilterPresets::Models}
-                                }, DefaultPath)}; !AbsolutePath)
-                            {
-                                LOG_INFO(LogEditor, "Directory selection cancelled. No path provided. Discarding request.")
-                            }
-                            else
-                            {
-                                LOG_VERBOSE(LogEditor, "Selected path: [{}].", *AbsolutePath)
-                                //# Fatal if the path is not inside the content dir of any namespace.
-                                auto const [Namespace, Path]{SplitIntoNamespace(*AbsolutePath)};
-                                EStaticMeshState NewState{EStaticMeshStateBits::None};
-                                if (Field->IsOnHost())
-                                {
-                                    NewState |= EStaticMeshStateBits::Host;
-                                }
-                                if (Field->IsOnDevice())
-                                {
-                                    NewState |= EStaticMeshStateBits::Device;
-                                }
-                                if (Field->HasConvex())
-                                {
-                                    NewState |= EStaticMeshStateBits::Convex;
-                                }
+                        LPath DefaultPath;
+                        if (Current && !Current->GetPath().empty() && Current->GetPath().has_parent_path())
+                        {
+                            DefaultPath = Current->GetPath().parent_path();
+                        }
+                        else
+                        {
+                            DefaultPath = **JafgInfo;
+                        }
 
-                                Field = GEngine->GetSubsystemChecked<JMeshSubsystem>()->LoadMesh(Namespace, Path, NewState);
-                            }
-
+                        auto const AbsolutePath{Info.Viewport.GetSurface().OpenBlockingDialogForFile({
+                            .Filters = {FileDialogFilterPresets::Models}
+                            }, DefaultPath)};
+                        if (!AbsolutePath)
+                        {
+                            LOG_INFO(LogEditor, "Mesh selection cancelled. No path provided. Discarding request.")
                             return LNodeReply::Handled();
                         }
-                        return LNodeReply::Unhandled();
+                        LOG_VERBOSE(LogEditor, "Selected path: [{}].", *AbsolutePath)
+
+                        if (!Detail::LPluginInfoRegistry::FindContaining(*AbsolutePath))
+                        {
+                            LOG_ERROR(LogEditor, "[{}]: Path is not inside the content dir of any namespace. Discarding request.", *AbsolutePath)
+                            return LNodeReply::Handled();
+                        }
+                        auto const [Namespace, Path]{SplitIntoNamespace(*AbsolutePath)};
+
+                        auto const& Meshes{*GEngine->GetSubsystemChecked<JMeshSubsystem>()};
+                        if (!::HasSingleMesh(Meshes, Namespace, Path))
+                        {
+                            return LNodeReply::Handled();
+                        }
+
+                        /* The component draws it. And keep what else the current mesh was brought to (e.g., the convex hull). */
+                        EStaticMeshState State{EStaticMeshStateBits::Device};
+                        if (Current && Current->IsOnHost())
+                        {
+                            State |= EStaticMeshStateBits::Host;
+                        }
+                        if (Current && Current->HasConvex())
+                        {
+                            State |= EStaticMeshStateBits::Convex;
+                        }
+
+                        SharedState->Set(Meshes.LoadMesh(Namespace, Path, State));
+                        return LNodeReply::Handled();
                     })
             ]
         ]
-        + EditorResetButton(Info.Flags, Info.Viewport, true, [Field=Info.Field](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, SharedState->IsResettable(), [SharedState](WButton& Self)
         {
-            check(!!Field)
-            check(GEngine)
-            Detail::GMutableEngine->GetLocalEgo().GetFrontend().Vk_EditorWaitIdle();
-            Field->FreeFromHost();
-            Field->FreeFromDevice();
-            return;
-        }, LEditorRowState::Lambda<WButton>(SharedState))
+            check(SharedState->Default)
+            SharedState->Set(*SharedState->Default);
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
     ];
 }
+#endif /* JAFG_WITH_EDITOR */
 
 Jafg::LStaticMesh::EResult Jafg::LStaticMesh::BringToState(EStaticMeshState State)
 {

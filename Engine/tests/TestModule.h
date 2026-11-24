@@ -9,3 +9,5 @@
 #include "TestStaticMesh.h"
 #include "TestSkeletalAnimation.h"
 #include "TestTextEditing.h"
+#include "TestTextSearch.h"
+#include "TestInputRange.h"

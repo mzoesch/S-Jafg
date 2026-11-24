@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Nodes/HParent.h"
+#include "Widgets/InputRange.h"
 #include "Input_Vector2.generated.h"
 
 namespace Jafg
@@ -72,7 +73,7 @@ public:
                 std::unreachable();
             }
         }
-        this->Vector = Value;
+        this->Vector = TVec2<T,maths::defaultp>{this->Range.Clamp(Value.x), this->Range.Clamp(Value.y)};
 
         if (!this->GetChildren().empty())
         {
@@ -107,6 +108,12 @@ public:
 
     void SetInputEnabled(bool bEnabled);
 
+    //# Optional bounds of every axis. @see LInputRange
+    void SetMin(std::optional<f64> InMin) noexcept { this->Range.Min = InMin; this->RefreshFill(); }
+    void SetMax(std::optional<f64> InMax) noexcept { this->Range.Max = InMax; this->RefreshFill(); }
+    NODISCARD FORCEINLINE constexpr std::optional<f64> const& GetMin() const noexcept { return this->Range.Min; }
+    NODISCARD FORCEINLINE constexpr std::optional<f64> const& GetMax() const noexcept { return this->Range.Max; }
+
     EVENT_DECL(OnVectorChanged, void(WInput_Vector2& Self))
     EVENT_DECL(OnDestruct, void(WInput_Vector2& Self))
 
@@ -128,7 +135,10 @@ private:
     enum struct EPart{X,Y,};
     void OnTextButtonContentChanged(EPart Part, LString const& NewValue);
     void OnVectorDataChanged(bool bCallEvent);
+    //# Updates the bars of the axes. @see LInputRange
+    void RefreshFill() noexcept;
     std::variant<std::monostate,LVec2i64,LVec2u64,LVec2D> Vector;
+    LInputRange Range;
     std::optional<bool> bInitialEnabledState;
     bool bIgnoreChangeEvents{};
 };
@@ -143,6 +153,17 @@ struct LFactoryInput_Vector2 : NODE_FACTORY_PARENT(WInput_Vector2)
     FORCEINLINE decltype(auto) Enabled(this auto&& Self, bool bEnabled) noexcept
     {
         NODE_FACTORY_SELF().bInitialEnabledState = bEnabled;
+        return Self;
+    }
+    //# @see LInputRange
+    FORCEINLINE decltype(auto) Min(this auto&& Self, std::optional<f64> InMin) noexcept
+    {
+        NODE_FACTORY_SELF().Range.Min = InMin;
+        return Self;
+    }
+    FORCEINLINE decltype(auto) Max(this auto&& Self, std::optional<f64> InMax) noexcept
+    {
+        NODE_FACTORY_SELF().Range.Max = InMax;
         return Self;
     }
 };

@@ -32,6 +32,7 @@ void Jafg::AStaticMeshComponent::SetMaterialInstance(LMaterialInstanceRef Instan
 {
     this->MaterialInstance = std::move(Instance);
     check(!this->MaterialInstance || !!this->MaterialInstance->Material.get())
+    this->PbrMaterialInstance = nullptr;
 }
 
 void Jafg::AStaticMeshComponent::SetPbrMaterialInstance(LPbrMaterialInstanceRef Instance) noexcept
@@ -40,10 +41,10 @@ void Jafg::AStaticMeshComponent::SetPbrMaterialInstance(LPbrMaterialInstanceRef 
     check(!this->PbrMaterialInstance || !!this->PbrMaterialInstance->Instance.get())
     if (this->PbrMaterialInstance)
     {
-        this->SetMaterialInstance(this->PbrMaterialInstance->Instance);
+        this->MaterialInstance = this->PbrMaterialInstance->Instance;
+        check(!this->MaterialInstance || !!this->MaterialInstance->Material.get())
     }
 }
-
 
 void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
 {

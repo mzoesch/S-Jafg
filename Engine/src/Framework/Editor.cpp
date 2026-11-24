@@ -59,6 +59,7 @@
 #include "Framework/LightComponent.h"
 #include "Widgets/Input_Color.h"
 #include "Widgets/Input_List.h"
+#include "Widgets/PbrMaterialInspector.h"
 #include "../Framework/PhysicsForeignCore.h"
 
 namespace
@@ -121,6 +122,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f32>(TEditorNodeCreateInfo<f3
         [
             NewNode(Info.Viewport).Class<WInput_Vector1>(static_cast<f64>(Info.Field)).SaveTo(&Input)
                 .Anchor(EAnchor::HFill)
+                .Min(Info.Min)
+                .Max(Info.Max)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
                 {
@@ -159,6 +162,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f64>(TEditorNodeCreateInfo<f6
         [
             NewNode(Info.Viewport).Class<WInput_Vector1>(Info.Field).SaveTo(&Input)
                 .Anchor(EAnchor::HFill)
+                .Min(Info.Min)
+                .Max(Info.Max)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
                 {
@@ -385,6 +390,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LLinearColor>(TEditorNodeCrea
         [
             NewNode(Info.Viewport).Class<WInput_Color>(Info.Field).SaveTo(&SharedState->Input)
                 .Anchor(EAnchor::HFill)
+                .Min(Info.Min)
+                .Max(Info.Max)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Color& Self)
                 {
@@ -422,6 +429,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LLinearColor3>(TEditorNodeCre
         [
             NewNode(Info.Viewport).Class<WInput_Color>(Info.Field).SaveTo(&SharedState->Input)
                 .Anchor(EAnchor::HFill)
+                .Min(Info.Min)
+                .Max(Info.Max)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Color& Self)
                 {
@@ -518,10 +527,36 @@ Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCre
         Items.emplace_back(LString{Name});
     }
 
+    //# Whether the value differs from the default.
+    auto const IsResettable{[Getter=Info.Getter, Default=Info.Default, Owner=Info.Owner, Flags=Info.Flags]
+    {
+        if (!JxxFieldBits::IsEditorEditable(Flags) || !Default)
+        {
+            return false;
+        }
+        auto const Value{Default(Owner)};
+        return Value && Getter(Owner) != *Value;
+    }};
+    //# Writes the value to the field.
+    auto const Apply{[Setter=Info.Setter, Owner=Info.Owner, SharedState, IsResettable](LStringView Value)
+    {
+        Setter(Owner, Value);
+        if (Owner)
+        {
+            if (ALightComponent* Comp{DynamicCast<ALightComponent>(Owner)})
+            {
+                Comp->_detail_OnTypeChanged(); // TODO: Remove. Why is this even here?
+            }
+        }
+        check(SharedState->ResetButton)
+        SharedState->ResetButton->SetEnabled(IsResettable());
+    }};
+
     WInput_List* Input{};
     return NewNode(Info.Viewport).Class<WHParent>()
         .Anchor(EAnchor::HFill)
         .Space(1_spt)
+        .Tooltip(LString{Info.RecordTooltip})
     [
         EditorComponentLabel(Info.Flags, Info.Viewport, LString{Info.RecordName}, SharedState)
         + EditorComponentContentWrapper(Info.Flags, Info.Viewport, SharedState)
@@ -530,26 +565,18 @@ Jafg::Detail::LNodeFactoryBase Jafg::Detail::GetEditorNodeForEnum(TEditorNodeCre
                 .Content(Info.Getter(Info.Owner))
                 .Items(std::move(Items))
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
-                .OnValueChanged([Setter=Info.Setter, Owner=Info.Owner](LInputListItem const& Value)
+                .OnValueChanged([Apply](LInputListItem const& Value)
                 {
-                    Setter(Owner, Value.Identifier);
-                    if (Owner)
-                    {
-                        if (ALightComponent* Comp{DynamicCast<ALightComponent>(Owner)})
-                        {
-                            Comp->_detail_OnTypeChanged(); // TODO: Remove. Why is this even here?
-                        }
-                    }
+                    Apply(Value.Identifier);
                 })
         ]
-        + EditorResetButton(Info.Flags, Info.Viewport
-            , Info.Default
-            && !!Info.Default(Info.Owner)
-            && Info.Getter(Info.Owner) != Info.Default(Info.Owner)
-            , [Default=Info.Default, Owner=Info.Owner, Input](WButton& Self)
+        + EditorResetButton(Info.Flags, Info.Viewport, IsResettable(), [Default=Info.Default, Owner=Info.Owner, Input, Apply](WButton& Self)
         {
-            check(Input)
-            Input->SetContent(serde::to_string(Default(Owner).value()));
+            check(Input && Default)
+            /* The list only shows the value. The field has to be written, too. */
+            LString const Value{Default(Owner).value()};
+            Input->SetContent(Value);
+            Apply(Value);
         }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
     ];
 }
@@ -746,6 +773,10 @@ void Jafg::WEditor::Construct()
                             LDropDownNodeOption{
                                 .Selector = WClassInspector::TabSelectorCreateInfo(),
                                 .OnAction = [this](auto&&...){ this->AddWindow<WClassInspector>(true); return algo::reply::unhandled(); },
+                                },
+                            LDropDownNodeOption{
+                                .Selector = WPbrMaterialInspector::TabSelectorCreateInfo(),
+                                .OnAction = [this](auto&&...){ this->AddWindow<WPbrMaterialInspector>(true); return algo::reply::unhandled(); },
                                 },
                             },
                         },

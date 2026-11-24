@@ -278,6 +278,11 @@ public:
     //#
     NODISCARD ENGINE_API LPluginInfo FindPluginInfo(LStringView Identifier) const;
     NODISCARD ENGINE_API LPluginInfo FindPluginInfoChecked(LStringView Identifier) const;
+    //#
+    //# The inverse of #FindPluginInfo: "Jafg" or the identifier of the first started plugin with this content dir.
+    //# @return Empty, if no such namespace is known (yet).
+    //#
+    NODISCARD ENGINE_API LString FindPluginIdentifier(LPluginInfo Info) const;
 
     FORCEINLINE LCommandLineInterface& GetCommandLineInterface() noexcept { return this->CommandLineInterface; }
     FORCEINLINE LCommandLineInterface const& GetCommandLineInterface() const noexcept { return this->CommandLineInterface; }

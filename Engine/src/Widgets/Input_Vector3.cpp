@@ -126,6 +126,7 @@ void Jafg::WInput_Vector3::Construct()
         this->bInitialEnabledState.reset();
     }
 
+    this->RefreshFill();
     return;
 }
 
@@ -174,6 +175,8 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             {
                 serde::from_string(&Vec.z, NewValue);
             }
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->ProjVecL(Part, Vec) = this->Range.Clamp(this->ProjVec(Part, Vec));
             this->Vector.emplace<SignedVector>(Vec);
         }
         else if (std::holds_alternative<UnsignedVector>(this->Vector))
@@ -191,6 +194,8 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             {
                 serde::from_string(&Vec.z, NewValue);
             }
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->ProjVecL(Part, Vec) = this->Range.Clamp(this->ProjVec(Part, Vec));
             this->Vector.emplace<UnsignedVector>(Vec);
         }
         else if (std::holds_alternative<FloatingVector>(this->Vector))
@@ -213,6 +218,8 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             {
                 serde::from_string(&Vec.z, NewValue);
             }
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->ProjVecL(Part, Vec) = this->Range.Clamp(this->ProjVec(Part, Vec));
             this->Vector.emplace<FloatingVector>(Vec);
         }
         else
@@ -220,6 +227,7 @@ void Jafg::WInput_Vector3::OnTextButtonContentChanged(EPart Part, LString const&
             std::unreachable();
         }
 
+        this->RefreshFill();
         this->OnVectorChanged.InvokeIfBound(*this);
     }
 
@@ -276,10 +284,34 @@ void Jafg::WInput_Vector3::OnVectorDataChanged(bool bCallEvent)
 
     check(Count == 3 || this->_IsGarbage())
 
+    this->RefreshFill();
     if (bCallEvent)
     {
         this->OnVectorChanged.InvokeIfBound(*this);
     }
 
     return;
+}
+
+void Jafg::WInput_Vector3::RefreshFill() noexcept
+{
+    auto Part{EPart::X};
+    for (auto& Child: this->GetChildren())
+    {
+        if (auto* Btn{Child->As<WEditableTextButton>()})
+        {
+            Btn->FillFraction = std::visit([this, Part](auto const& Value) -> std::optional<f32>
+            {
+                if constexpr (std::is_same_v<std::remove_cvref_t<decltype(Value)>, std::monostate>)
+                {
+                    return {};
+                }
+                else
+                {
+                    return this->Range.GetFraction(static_cast<f64>(this->ProjVec(Part, Value)));
+                }
+            }, this->Vector);
+            Part = Part == EPart::X ? EPart::Y : EPart::Z;
+        }
+    }
 }

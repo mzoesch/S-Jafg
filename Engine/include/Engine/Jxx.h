@@ -459,6 +459,9 @@ struct TEditorNodeCreateInfo final
     std::optional<T> Default;
     //# Optional update function.
     TFunction2<void()>* UpdateValue{};
+    //# Optional bounds for numeric values (of every axis). Only used by numeric editor nodes. @see LInputRange
+    std::optional<f64> Min;
+    std::optional<f64> Max;
 };
 
 template<>
@@ -2289,6 +2292,9 @@ struct LProjectionEditorNodeInfo
     LStringView RecordName;
     LStringView RecordTooltip;
     TFunction2<void()>* UpdateValue{};
+    //# Optional bounds for numeric values. @see TEditorNodeCreateInfo::Min
+    std::optional<f64> Min;
+    std::optional<f64> Max;
 };
 template<auto Proj>
 NODISCARD auto ProjectEditorNodeCreateInfo(auto const& Info
@@ -2307,7 +2313,9 @@ NODISCARD auto ProjectEditorNodeCreateInfo(auto const& Info
         .RecordTooltip = ProjectionInfo.RecordTooltip,
         .Field = Info.Field.*Proj,
         .Default = std::move(Default),
-        .UpdateValue = ProjectionInfo.UpdateValue
+        .UpdateValue = ProjectionInfo.UpdateValue,
+        .Min = ProjectionInfo.Min,
+        .Max = ProjectionInfo.Max,
     };
 }
 

@@ -28,6 +28,20 @@
 namespace Jafg
 {
 
+//#
+//# How the editor names a resource of a namespace (a material, a texture, ...): "Namespace/Path" with the name of the
+//# namespace (e.g., "Jafg/Materials/Pbr"), or with its content dir if it has no name.
+//#
+NODISCARD inline LString GetEditorResourceName(LPluginInfo Namespace, LStringView Path)
+{
+    check(GEngine && Namespace)
+    if (LString Plugin{GEngine->FindPluginIdentifier(Namespace)}; !Plugin.empty())
+    {
+        return algo::sprintf("{}/{}", Plugin, Path);
+    }
+    return algo::sprintf("{}/{}", *Namespace, Path);
+}
+
 struct LEditorRowState
 {
     constexpr LEditorRowState() noexcept = default;

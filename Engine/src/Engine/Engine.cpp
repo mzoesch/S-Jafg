@@ -742,6 +742,27 @@ Jafg::LPluginInfo Jafg::LEngine::FindPluginInfoChecked(LStringView Identifier) c
     LOG_FATAL(LogForeign, "[{}]: No such namespace.", Identifier)
 }
 
+LString Jafg::LEngine::FindPluginIdentifier(LPluginInfo Info) const
+{
+    if (Info == JafgInfo)
+    {
+        return "Jafg";
+    }
+
+#if JAFG_WITH_FOREIGN_SUPPORT
+    for (auto const& Plugin: this->LoadedPlugins)
+    {
+        /* Only started plugins. Asking others for their info would freeze their content dir. */
+        if (Plugin.HasContent() && Plugin.IsStarted() && Plugin.GetInfo() == Info)
+        {
+            return Plugin.GetIdentifier();
+        }
+    }
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
+
+    return {};
+}
+
 #if JAFG_WITH_FOREIGN_SUPPORT
 void Jafg::LEngine::RefetchPlugins(TArray<LString> const& AdditionalPaths)
 {

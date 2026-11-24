@@ -107,6 +107,7 @@ void Jafg::WInput_Vector1::Construct()
         this->bInitialEnabledState.reset();
     }
 
+    this->RefreshFill();
     return;
 }
 
@@ -143,13 +144,13 @@ void Jafg::WInput_Vector1::OnTextButtonContentChanged(LString const& NewValue)
 
             auto& Vec{std::get<SignedVector>(this->Vector)};
             serde::from_string(&Vec, NewValue);
-            this->Vector.emplace<SignedVector>(Vec);
+            this->Vector.emplace<SignedVector>(this->Range.Clamp(Vec));
         }
         else if (std::holds_alternative<UnsignedVector>(this->Vector))
         {
             auto& Vec{std::get<UnsignedVector>(this->Vector)};
             serde::from_string(&Vec, NewValue);
-            this->Vector.emplace<UnsignedVector>(Vec);
+            this->Vector.emplace<UnsignedVector>(this->Range.Clamp(Vec));
         }
         else if (std::holds_alternative<FloatingVector>(this->Vector))
         {
@@ -160,13 +161,15 @@ void Jafg::WInput_Vector1::OnTextButtonContentChanged(LString const& NewValue)
 
             auto& Vec{std::get<FloatingVector>(this->Vector)};
             serde::from_string(&Vec, NewValue);
-            this->Vector.emplace<FloatingVector>(Vec);
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->Vector.emplace<FloatingVector>(this->Range.Clamp(Vec));
         }
         else
         {
             std::unreachable();
         }
 
+        this->RefreshFill();
         this->OnVectorChanged.InvokeIfBound(*this);
     }
 }
@@ -211,8 +214,30 @@ void Jafg::WInput_Vector1::OnVectorDataChanged(bool bCallEvent)
 
     check(Count == 1 || this->_IsGarbage())
 
+    this->RefreshFill();
     if (bCallEvent)
     {
         this->OnVectorChanged.InvokeIfBound(*this);
+    }
+}
+
+void Jafg::WInput_Vector1::RefreshFill() noexcept
+{
+    for (auto& Child: this->GetChildren())
+    {
+        if (auto* Btn{Child->As<WEditableTextButton>()})
+        {
+            Btn->FillFraction = std::visit([this](auto const& Value) -> std::optional<f32>
+            {
+                if constexpr (std::is_same_v<std::remove_cvref_t<decltype(Value)>, std::monostate>)
+                {
+                    return {};
+                }
+                else
+                {
+                    return this->Range.GetFraction(static_cast<f64>(Value));
+                }
+            }, this->Vector);
+        }
     }
 }

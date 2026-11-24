@@ -12,9 +12,38 @@
 #include "Rhi/RenderTarget.h"
 #include "Engine/WorldData.h"
 #include "User/UserPreferences.h"
+#if JAFG_WITH_EDITOR
+    #include "Framework/StaticMeshComponent.h"
+    #include "Framework/Surface.h"
+    #include "Nodes/Viewport.h"
+    #include "Widgets/EditorFactory.h"
+    #include "Widgets/Input_LargeList.h"
+    #include "Widgets/PbrMaterialInspector.h"
+    #include "Framework/Editor.h"
+#endif /* JAFG_WITH_EDITOR */
 
 namespace
 {
+
+constexpr std::array PbrTextureTypes{
+    Jafg::LPbrMaterialTemplate::ETextureType::Albedo,
+    Jafg::LPbrMaterialTemplate::ETextureType::Normal,
+    Jafg::LPbrMaterialTemplate::ETextureType::Arm,
+    Jafg::LPbrMaterialTemplate::ETextureType::Emissive,
+    };
+
+//# The bindless index of the texture of the type.
+NODISCARD constexpr auto& GetPbrTextureSlot(auto& Data, Jafg::LPbrMaterialTemplate::ETextureType Type) noexcept
+{
+    switch (Type)
+    {
+    case Jafg::LPbrMaterialTemplate::ETextureType::Albedo: return Data.Albedo;
+    case Jafg::LPbrMaterialTemplate::ETextureType::Normal: return Data.Normal;
+    case Jafg::LPbrMaterialTemplate::ETextureType::Arm: return Data.Arm;
+    case Jafg::LPbrMaterialTemplate::ETextureType::Emissive: return Data.Emissive;
+    }
+    std::unreachable();
+}
 
 struct UnresolvedMaterial final
 {
@@ -1317,8 +1346,6 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
                 return *It;
             }
 
-            auto& Prefs{GetSingleton<JUserPreferences>()};
-
             LPbrMaterialInstanceRef Result;
             if (Pbr->Material.second.empty())
             {
@@ -1348,84 +1375,17 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
             Result->Data.AlphaCutoff = Pbr->AlphaCutoff;
             Result->Data.NormalScale = Pbr->NormalScale;
 
-            //# TODO: Optimize later on:
-            //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
-            //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
-            //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
-            LString const FallbackAlbedo{algo::sprintf("{}.png", Name)};
-            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Albedo, *Prefs.TextureQuality)}; !Texture.empty())
+            for (auto const Type: PbrTextureTypes)
             {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      Namespace
-                    , Texture.generic_string()
-                    , {.Format=vk::Format::eR8G8B8A8Srgb}
-                    , {.Samples=vk::SampleCountFlagBits::e1}
-                    ));
-                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
-                Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
-            }
-            else if (Pbr->IsEmptyAtTexture(LPbrMaterialTemplate::ETextureType::Albedo) && finder::is_regular_file(*Namespace / FallbackAlbedo))
-            {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      Namespace
-                    , FallbackAlbedo
-                    , {.Format=vk::Format::eR8G8B8A8Srgb}
-                    , {.Samples=vk::SampleCountFlagBits::e1}
-                    ));
-                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
-                Result->Data.Albedo = Result->LoadedTextures.back()->GetBindlessIndex();
-            }
-            else
-            {
-                Result->Data.Albedo = rhi::invalid_resource_index;
-            }
-
-            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Normal, *Prefs.TextureQuality)}; !Texture.empty())
-            {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      Namespace
-                    , Texture.generic_string()
-                    , {.Format=vk::Format::eR8G8B8A8Unorm}
-                    , {.Samples=vk::SampleCountFlagBits::e1}
-                    ));
-                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
-                Result->Data.Normal = Result->LoadedTextures.back()->GetBindlessIndex();
-            }
-            else
-            {
-                Result->Data.Normal = rhi::invalid_resource_index;
-            }
-
-            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Arm, *Prefs.TextureQuality)}; !Texture.empty())
-            {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      Namespace
-                    , Texture.generic_string()
-                    , {.Format=vk::Format::eR8G8B8A8Unorm}
-                    , {.Samples=vk::SampleCountFlagBits::e1}
-                    ));
-                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
-                Result->Data.Arm = Result->LoadedTextures.back()->GetBindlessIndex();
-            }
-            else
-            {
-                Result->Data.Arm = rhi::invalid_resource_index;
-            }
-
-            if (auto& Texture{Pbr->GetTexture(LPbrMaterialTemplate::ETextureType::Emissive, *Prefs.TextureQuality)}; !Texture.empty())
-            {
-                Result->LoadedTextures.emplace_back(this->TextureSubsystem->FromFile(
-                      Namespace
-                    , Texture.generic_string()
-                    , {.Format=vk::Format::eR8G8B8A8Srgb}
-                    , {.Samples=vk::SampleCountFlagBits::e1}
-                    ));
-                this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Result->LoadedTextures.back());
-                Result->Data.Emissive = Result->LoadedTextures.back()->GetBindlessIndex();
-            }
-            else
-            {
-                Result->Data.Emissive = rhi::invalid_resource_index;
+                if (LString const Texture{this->ResolvePbrTemplateTexture(Namespace, *Pbr, Type)}; !Texture.empty())
+                {
+                    Result->LoadedTextures.emplace_back(this->LoadPbrTexture(Namespace, Texture, Type));
+                    GetPbrTextureSlot(Result->Data, Type) = Result->LoadedTextures.back()->GetBindlessIndex();
+                }
+                else
+                {
+                    GetPbrTextureSlot(Result->Data, Type) = rhi::invalid_resource_index;
+                }
             }
 
             Result->Data.Sampler = Pbr->Sampler;
@@ -1439,6 +1399,106 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
         }
     }
     LOG_FATAL(LogMaterialSubsystem, "[{}/{}]: No such PBR material.", *Namespace, Name)
+}
+
+Jafg::LPluginInfo Jafg::JMaterialSubsystem::FindPbrTemplateNamespace(LPbrMaterialTemplate const& Template) const noexcept
+{
+    for (auto const& [Namespace, Templates]: this->PbrTemplates)
+    {
+        if (algo::any_of(Templates, [&Template](LPbrMaterialTemplate const& Candidate) { return &Candidate == &Template; }))
+        {
+            return Namespace;
+        }
+    }
+    return nullptr;
+}
+
+LString Jafg::JMaterialSubsystem::ResolvePbrTemplateTexture(LPluginInfo Namespace, LPbrMaterialTemplate const& Template, LPbrMaterialTemplate::ETextureType Type) const
+{
+    check(Namespace)
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    if (auto const& Texture{Template.GetTexture(Type, *Prefs.TextureQuality)}; !Texture.empty())
+    {
+        return Texture.generic_string();
+    }
+    /* Without any albedo, a texture next to the template with its name is used. */
+    if (Type == LPbrMaterialTemplate::ETextureType::Albedo && Template.IsEmptyAtTexture(Type))
+    {
+        if (LString Fallback{algo::sprintf("{}.png", Template.Identifier)}; finder::is_regular_file(*Namespace / Fallback))
+        {
+            return Fallback;
+        }
+    }
+    return {};
+}
+
+Jafg::LTexture2Ref Jafg::JMaterialSubsystem::LoadPbrTexture(LPluginInfo Namespace, LStringView Path, LPbrMaterialTemplate::ETextureType Type)
+{
+    check(this->TextureSubsystem)
+
+    //# TODO: Optimize later on:
+    //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
+    //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
+    //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
+    vk::Format const Format{
+           Type == LPbrMaterialTemplate::ETextureType::Albedo
+        || Type == LPbrMaterialTemplate::ETextureType::Emissive
+        ? vk::Format::eR8G8B8A8Srgb
+        : vk::Format::eR8G8B8A8Unorm
+        };
+
+    LTexture2Ref Texture{this->TextureSubsystem->FromFile(Namespace, Path, {.Format=Format}, {.Samples=vk::SampleCountFlagBits::e1})};
+    check(Texture)
+    /* Loaded textures are shared. The texture might already be bound by another material (or another type). */
+    if (!Texture->IsBindless())
+    {
+        this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Texture);
+    }
+    return Texture;
+}
+
+Jafg::LTexture2 const* Jafg::JMaterialSubsystem::FindPbrTexture(LPbrMaterialInstance const& Instance, LPbrMaterialTemplate::ETextureType Type) const noexcept
+{
+    rhi::resource_index_t const Index{GetPbrTextureSlot(Instance.GetData(), Type)};
+    if (Index == rhi::invalid_resource_index)
+    {
+        return nullptr;
+    }
+    for (auto const& Texture: Instance.LoadedTextures)
+    {
+        if (Texture->IsBindless() && Texture->GetBindlessIndex() == Index)
+        {
+            return Texture.get();
+        }
+    }
+    return nullptr;
+}
+
+void Jafg::JMaterialSubsystem::SetPbrTexture(LPbrMaterialInstance& Instance, LPbrMaterialTemplate::ETextureType Type, LTexture2Ref Texture)
+{
+    check(!Texture || Texture->IsBindless())
+
+    LTexture2 const* const Previous{this->FindPbrTexture(Instance, Type)};
+    if (Previous == Texture.get())
+    {
+        return;
+    }
+
+    GetPbrTextureSlot(Instance.MakeDirty(), Type) = Texture ? Texture->GetBindlessIndex() : rhi::invalid_resource_index;
+
+    /*
+     * The instance owns what it binds. The previous texture stays alive in the texture cache, so frames that are
+     * still in flight can keep sampling it.
+     */
+    if (Previous && !algo::any_of(PbrTextureTypes, [this, &Instance, Previous](auto const Other) { return this->FindPbrTexture(Instance, Other) == Previous; }))
+    {
+        std::erase_if(Instance.LoadedTextures, [Previous](LTexture2Ref const& Owned) { return Owned.get() == Previous; });
+    }
+    if (Texture && !algo::any_of(Instance.LoadedTextures, [&Texture](LTexture2Ref const& Owned) { return Owned == Texture; }))
+    {
+        Instance.LoadedTextures.emplace_back(std::move(Texture));
+    }
 }
 
 void Jafg::JMaterialSubsystem::AddInstanceToGlobalBindlessArray(LPbrMaterialInstance* Instance)
@@ -1716,3 +1776,291 @@ void Jafg::JMaterialSubsystem::PrepareBindless()
     }
     Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
 }
+
+#if JAFG_WITH_EDITOR
+
+namespace Jafg
+{
+
+namespace
+{
+
+//# A material that the editor offers to pick.
+struct LEditorMaterialEntry final
+{
+    //# What the editor shows. @see #GetEditorResourceName
+    LString Name;
+    LPluginInfo Namespace{ nullptr };
+    LString Identifier;
+};
+typedef std::shared_ptr<TArray<LEditorMaterialEntry> const> LEditorMaterialEntries;
+
+//#
+//# All templates as entries sorted by their name.
+//# @param Templates Per namespace: The templates. @see JMaterialSubsystem::GetTemplates
+//# @param Proj      The identifier of a template.
+//#
+NODISCARD LEditorMaterialEntries CollectEditorMaterials(auto const& Templates, auto Proj)
+{
+    TArray<LEditorMaterialEntry> Result;
+    for (auto const& [Namespace, Array]: Templates)
+    {
+        for (auto const& Template: Array)
+        {
+            LString const& Identifier{std::invoke(Proj, Template)};
+            Result.push_back({.Name = GetEditorResourceName(Namespace, Identifier), .Namespace = Namespace, .Identifier = Identifier});
+        }
+    }
+    std::ranges::sort(Result, algo::lexicographical_string_compare, &LEditorMaterialEntry::Name);
+    return std::make_shared<TArray<LEditorMaterialEntry> const>(std::move(Result));
+}
+
+//# The name of a template (@see #GetEditorResourceName). Only the identifier, if the template is not known.
+NODISCARD LString FindEditorMaterialName(auto const& Templates, auto const& Template, LStringView Identifier)
+{
+    for (auto const& [Namespace, Array]: Templates)
+    {
+        if (std::ranges::any_of(Array, [&Template](auto const& Candidate) { return &Candidate == &Template; }))
+        {
+            return GetEditorResourceName(Namespace, Identifier);
+        }
+    }
+    return LString{Identifier};
+}
+
+//# @see #MakeMaterialInstanceRow
+template<typename TRef>
+struct LMaterialInstanceRowState final: LEditorRowStateExt
+{
+    TRef* Field{};
+    std::optional<TRef> Default;
+    EJxxFieldFlags Flags{ EJxxFieldBits::Identity };
+    LEditorMaterialEntries Entries;
+    //# The name of a value. Also of null.
+    std::function<LString(TRef const& Value)> Describe;
+    //# The instance to use for an entry.
+    std::function<TRef(LEditorMaterialEntry const& Entry)> Allocate;
+    //# Writes a new value to the field.
+    std::function<void(TRef Value)> Apply;
+    //# Optional. Opens an inspector for a value. Never called with null.
+    std::function<void(TRef const& Value)> Inspect;
+
+    WInput_LargeList* Input{};
+    WTextButtonIconizedDouble* InspectButton{};
+    //# The value that the row shows. The field may also change elsewhere. Weak, to not keep old instances alive.
+    std::weak_ptr<typename TRef::element_type> Displayed;
+
+    NODISCARD bool IsResettable() const
+    {
+        check(this->Field)
+        return JxxFieldBits::IsEditorEditable(this->Flags) && this->Default && *this->Field != *this->Default;
+    }
+
+    void Refresh()
+    {
+        check(this->Field && this->Input && this->ResetButton)
+        if (std::owner_less<>{}(this->Displayed, *this->Field) || std::owner_less<>{}(*this->Field, this->Displayed))
+        {
+            this->Displayed = *this->Field;
+            this->Input->SetContent(this->Describe(*this->Field));
+        }
+        if (bool const bResettable{this->IsResettable()}; bResettable != this->ResetButton->IsEnabled())
+        {
+            this->ResetButton->SetEnabled(bResettable);
+        }
+        if (bool const bInspectable{!!*this->Field}; this->InspectButton && bInspectable != this->InspectButton->IsEnabled())
+        {
+            this->InspectButton->SetEnabled(bInspectable);
+        }
+    }
+
+    void Set(TRef Value)
+    {
+        this->Apply(std::move(Value));
+        this->Refresh();
+    }
+};
+
+//# A row that shows the material of a material instance field and lets the user pick another from all known materials.
+template<typename TRef>
+NODISCARD Detail::LNodeFactoryBase MakeMaterialInstanceRow(TEditorNodeCreateInfo<TRef> const& Info, std::shared_ptr<LMaterialInstanceRowState<TRef>> State) noexcept
+{
+    check(State && State->Entries && State->Describe && State->Allocate && State->Apply)
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    /* Not dependent on the template parameter. So the node factories need no template disambiguator. */
+    LViewport& Viewport{Info.Viewport};
+    State->Field = &Info.Field;
+    State->Default = Info.Default;
+    State->Flags = Info.Flags;
+    State->Displayed = Info.Field;
+
+    TArray<LInputListItem> Items;
+    Items.reserve(State->Entries->size());
+    for (auto const& Entry: *State->Entries)
+    {
+        Items.emplace_back(Entry.Name);
+    }
+
+    if (Info.UpdateValue)
+    {
+        check(!*Info.UpdateValue)
+        *Info.UpdateValue = [State]
+        {
+            State->Refresh();
+        };
+    }
+
+    return NewNode(Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(LString{Info.RecordTooltip})
+    [
+        EditorComponentLabel(Info.Flags, Viewport, LString{Info.RecordName}, State)
+        + EditorComponentContentWrapper(Info.Flags, Viewport, State)
+        [
+            NewNode(Viewport).Class<WHParent>()
+                .Anchor(EAnchor::Fill)
+            [
+                NewNode(Viewport).Class<WInput_LargeList>().SaveTo(&State->Input)
+                    .Anchor(EAnchor::HFill)
+                    .Content(State->Describe(Info.Field))
+                    .Items(std::move(Items))
+                    .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
+                    .OnValueChanged([State](LInputListItem const& Selected)
+                    {
+                        auto const It{std::ranges::find(*State->Entries, Selected.Identifier, &LEditorMaterialEntry::Name)};
+                        check(It != State->Entries->end())
+                        /* Same material. Keep the instance, it might carry data that was set at runtime. */
+                        if (*State->Field && State->Describe(*State->Field) == It->Name)
+                        {
+                            State->Refresh();
+                            return;
+                        }
+                        State->Set(State->Allocate(*It));
+                    })
+                /* Saved last: The state depends on the template parameter. Everything after it in the chain would, too. */
+                + NewNode(Viewport).Class<WTextButtonIconizedDouble>()
+                    .Palette(*Prefs.SecondaryPaletteSolid)
+                    .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
+                    .Content("Inspect")
+                    .LeftIcon({JafgInfo, "Icons/Information"})
+                    .Visibility(State->Inspect ? ENodeVisibility::Visible : ENodeVisibility::Collapsed)
+                    .Enabled(!!Info.Field)
+                    .OnKeyEventFocused([State](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Release>(ELogicalKey::LeftMouseButton) && Self.AabbTest(Info))
+                        {
+                            if (State->Inspect && *State->Field)
+                            {
+                                State->Inspect(*State->Field);
+                            }
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                    .SaveTo(&State->InspectButton)
+            ]
+        ]
+        + EditorResetButton(Info.Flags, Viewport, State->IsResettable(), [State](WButton& Self)
+        {
+            check(State->Default)
+            State->Set(*State->Default);
+        }, LEditorRowState::Lambda<WButton>(State)).SaveTo(&State->ResetButton)
+    ];
+}
+
+} /* ~Namespace <Anonymous> */
+
+} /* ~Namespace Jafg */
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LMaterialInstanceRef>(TEditorNodeCreateInfo<LMaterialInstanceRef> const& Info) noexcept
+{
+    LFrontend* Frontend{&Info.Viewport.GetSurface().GetMutableFrontend()};
+    JMaterialSubsystem* Subsystem{Frontend->GetSubsystemChecked<JMaterialSubsystem>()};
+
+    auto State{std::make_shared<LMaterialInstanceRowState<LMaterialInstanceRef>>()};
+    State->Entries = CollectEditorMaterials(Subsystem->GetTemplates(), &rhi::material_template::identifier);
+    State->Describe = [Subsystem](LMaterialInstanceRef const& Value) -> LString
+    {
+        if (!Value)
+        {
+            return "<not-set>";
+        }
+        check(Value->Material)
+        auto const& Template{Value->Material->Template};
+        return FindEditorMaterialName(Subsystem->GetTemplates(), Template, Template.identifier);
+    };
+    State->Allocate = [Subsystem](LEditorMaterialEntry const& Entry)
+    {
+        return Subsystem->GetInstanceFromName(Entry.Namespace, Entry.Identifier);
+    };
+    State->Apply = [Field=&Info.Field, Owner=Info.Owner, Frontend](LMaterialInstanceRef Value)
+    {
+        /* The previous instance might be freed now, but frames in flight might still use its descriptor sets. */
+        Frontend->Vk_EditorWaitIdle();
+        if (auto* Comp{DynamicCast<AStaticMeshComponent>(Owner)})
+        {
+            /* Keeps the pbr instance consistent. */
+            Comp->SetMaterialInstance(std::move(Value));
+        }
+        else
+        {
+            *Field = std::move(Value);
+        }
+    };
+
+    return MakeMaterialInstanceRow(Info, std::move(State));
+}
+
+template<>
+Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<Jafg::LPbrMaterialInstanceRef>(TEditorNodeCreateInfo<LPbrMaterialInstanceRef> const& Info) noexcept
+{
+    LFrontend* Frontend{&Info.Viewport.GetSurface().GetMutableFrontend()};
+    JMaterialSubsystem* Subsystem{Frontend->GetSubsystemChecked<JMaterialSubsystem>()};
+
+    auto State{std::make_shared<LMaterialInstanceRowState<LPbrMaterialInstanceRef>>()};
+    State->Entries = CollectEditorMaterials(Subsystem->GetPbrTemplates(), &LPbrMaterialTemplate::Identifier);
+    State->Describe = [Subsystem](LPbrMaterialInstanceRef const& Value) -> LString
+    {
+        if (!Value)
+        {
+            return "<not-set>";
+        }
+        return FindEditorMaterialName(Subsystem->GetPbrTemplates(), Value->Template, Value->Template.Identifier);
+    };
+    State->Allocate = [Subsystem](LEditorMaterialEntry const& Entry)
+    {
+        return Subsystem->GetPbrInstance(Entry.Namespace, Entry.Identifier);
+    };
+    State->Apply = [Field=&Info.Field, Owner=Info.Owner, Frontend](LPbrMaterialInstanceRef Value)
+    {
+        /* Pbr instances are cached by the subsystem. But the component also swaps its material instance. */
+        Frontend->Vk_EditorWaitIdle();
+        if (auto* Comp{DynamicCast<AStaticMeshComponent>(Owner)})
+        {
+            /* Also sets the underlying material instance that is drawn with. */
+            Comp->SetPbrMaterialInstance(std::move(Value));
+        }
+        else
+        {
+            *Field = std::move(Value);
+        }
+    };
+
+    State->Inspect = [](LPbrMaterialInstanceRef const& Value)
+    {
+        if (auto* Editor{GetMutableSingleton<JUserPreferences>().Editor})
+        {
+            Editor->AddWindow<WPbrMaterialInspector>(true).Inspect(Value);
+        }
+        else
+        {
+            LOG_WARNING(LogEditor, "There is no editor to open the pbr material inspector in.")
+        }
+    };
+
+    return MakeMaterialInstanceRow(Info, std::move(State));
+}
+
+#endif /* JAFG_WITH_EDITOR */

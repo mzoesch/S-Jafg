@@ -144,6 +144,7 @@ void Jafg::WInput_Color::Construct()
         this->bInitialEnabledState.reset();
     }
 
+    this->RefreshFill();
     return;
 }
 
@@ -188,7 +189,8 @@ void Jafg::WInput_Color::OnTextButtonContentChanged(EPart Part, LString const& N
             {
                 serde::from_string(&Vec.a, NewValue);
             }
-            this->Vector.emplace<LColor>(Vec);
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->Vector.emplace<LColor>(this->ClampColor(Vec));
         }
         else if (std::holds_alternative<LLinearColor>(this->Vector))
         {
@@ -214,7 +216,8 @@ void Jafg::WInput_Color::OnTextButtonContentChanged(EPart Part, LString const& N
             {
                 serde::from_string(&Vec.a, NewValue);
             }
-            this->Vector.emplace<LLinearColor>(Vec);
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->Vector.emplace<LLinearColor>(this->ClampColor(Vec));
         }
         else if (std::holds_alternative<LLinearColor3>(this->Vector))
         {
@@ -240,13 +243,15 @@ void Jafg::WInput_Color::OnTextButtonContentChanged(EPart Part, LString const& N
             {
                 check(Part != EPart::A)
             }
-            this->Vector.emplace<LLinearColor3>(Vec);
+            /* Clamps only the value. The text shows what was typed until it is committed. */
+            this->Vector.emplace<LLinearColor3>(this->ClampColor(Vec));
         }
         else
         {
             std::unreachable();
         }
 
+        this->RefreshFill();
         this->OnVectorChanged.InvokeIfBound(*this);
     }
 
@@ -299,10 +304,34 @@ void Jafg::WInput_Color::OnVectorDataChanged(bool bCallEvent)
         }
     }
 
+    this->RefreshFill();
     if (bCallEvent)
     {
         this->OnVectorChanged.InvokeIfBound(*this);
     }
 
     return;
+}
+
+void Jafg::WInput_Color::RefreshFill() noexcept
+{
+    auto Part{EPart::R};
+    for (auto& Child: this->GetChildren())
+    {
+        if (auto* Btn{Child->As<WEditableTextButton>()})
+        {
+            Btn->FillFraction = std::visit([this, Part](auto const& Value) -> std::optional<f32>
+            {
+                if constexpr (std::is_same_v<std::remove_cvref_t<decltype(Value)>, std::monostate>)
+                {
+                    return {};
+                }
+                else
+                {
+                    return this->Range.GetFraction(static_cast<f64>(this->ProjVec(Part, Value)));
+                }
+            }, this->Vector);
+            Part = Part == EPart::R ? EPart::G : Part == EPart::G ? EPart::B : EPart::A;
+        }
+    }
 }

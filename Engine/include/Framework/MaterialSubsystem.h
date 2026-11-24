@@ -69,6 +69,8 @@ public:
 
     //# All materials templates known to this subsystem.
     NODISCARD FORCEINLINE constexpr auto const& GetTemplates() const noexcept { return this->Templates; }
+    //# All pbr material templates known to this subsystem.
+    NODISCARD FORCEINLINE constexpr auto const& GetPbrTemplates() const noexcept { return this->PbrTemplates; }
     //# All materials allocated by this subsystem.
     NODISCARD FORCEINLINE constexpr auto const& GetMaterials() const noexcept { return this->Materials; }
 
@@ -93,6 +95,29 @@ public:
 
     //# Get a bindless instance to a pbr material.
     NODISCARD LPbrMaterialInstanceRef GetPbrInstance(LPluginInfo Namespace, LStringView Name);
+
+    //# The namespace of a pbr template of this subsystem. Null if it is not one of them.
+    NODISCARD LPluginInfo FindPbrTemplateNamespace(LPbrMaterialTemplate const& Template) const noexcept;
+    //#
+    //# The texture that an instance of the template uses for the type with the current texture quality preference.
+    //# Relative to the content dir of the namespace. Empty if there is none.
+    //# @param Namespace The namespace of the template.
+    //#
+    NODISCARD LString ResolvePbrTemplateTexture(LPluginInfo Namespace, LPbrMaterialTemplate const& Template, LPbrMaterialTemplate::ETextureType Type) const;
+    //#
+    //# Loads a texture (or reuses it if already loaded) in the format that pbr materials expect for the type and makes
+    //# it bindless.
+    //# @param Path Relative to the content dir of the namespace.
+    //#
+    NODISCARD LTexture2Ref LoadPbrTexture(LPluginInfo Namespace, LStringView Path, LPbrMaterialTemplate::ETextureType Type);
+    //# The texture that is bound to the type of the instance. Null if none.
+    NODISCARD LTexture2 const* FindPbrTexture(LPbrMaterialInstance const& Instance, LPbrMaterialTemplate::ETextureType Type) const noexcept;
+    //#
+    //# Binds the texture to the type of the instance. Null unbinds. Everything that is drawn with the instance sees it
+    //# from the next frame on.
+    //# @param Texture Has to be bindless. @see #LoadPbrTexture
+    //#
+    void SetPbrTexture(LPbrMaterialInstance& Instance, LPbrMaterialTemplate::ETextureType Type, LTexture2Ref Texture);
     // NODISCARD std::pair<LPbrMaterialInstanceRef, LPbrMaterialTemplate const*> GetOnTheFlyPbrInstance(LPbrMaterialTemplate Template);
 
     //#

@@ -320,6 +320,14 @@ public:
 
     LCaretBrush CaretBrush;
 
+    //#
+    //# Optional. A bar that fills the box from the left by this fraction [0,1] of its width, behind the text. E.g.,
+    //# where a value is between a min and a max (@see LInputRange). Empty draws nothing.
+    //#
+    std::optional<f32> FillFraction;
+    LColor FillTint{ 0x40, 0x57, 0x6F };
+    LColor DisabledFillTint{ 0x30, 0x30, 0x30 };
+
     //# Whether all content is selected when this node receives focus (as if the user pressed Ctrl+A).
     bool bSelectAllOnFocus{};
 
@@ -487,6 +495,9 @@ private:
     //# Surface space data from the last draw call. Used for hit testing the mouse.
     mutable std::optional<f32> LastTextOriginX;
     mutable std::optional<LRect2F> LastDrawnRect;
+
+    //# @see #FillFraction
+    void DrawFill(LNodeRenderInfo const& Info) const;
 
     LDelegateHandle UserInterfaceTickDelegateHandle;
 };

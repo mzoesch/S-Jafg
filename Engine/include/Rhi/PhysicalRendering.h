@@ -15,6 +15,8 @@ struct LPbrMaterialTemplate;
 struct LPbrMaterialInstance;
 typedef rhi::shared_ref<LPbrMaterialInstance> LPbrMaterialInstanceRef;
 
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LPbrMaterialInstanceRef>(TEditorNodeCreateInfo<LPbrMaterialInstanceRef> const& Info) noexcept;
+
 enum struct EPbrMaterialBits: u32 /* Stable across shader barrier. */
 {
     Identity = 0x0 << 0,

@@ -10,6 +10,7 @@
 #include "Rhi/TextureCube.h"
 #include "Rhi/Bindless.h"
 #include "Rhi/Quality.h"
+#include "Engine/Jxx.h"
 
 namespace rhi
 {
@@ -96,6 +97,8 @@ typedef rhi::shared_ref<LMaterial> LMaterialRef;
 struct LMaterialInstance;
 typedef rhi::shared_ref<LMaterialInstance> LMaterialInstanceRef;
 class JMaterialSubsystem;
+
+template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LMaterialInstanceRef>(TEditorNodeCreateInfo<LMaterialInstanceRef> const& Info) noexcept;
 
 struct LMaterial final
 {

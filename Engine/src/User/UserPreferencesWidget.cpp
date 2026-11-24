@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/UserPreferencesWidget.h"
+#include "Core/TextSearch.h"
 #include "Core/App.h"
 #include "Nodes/Button.h"
 #include "Nodes/EditableTextButton.h"
@@ -66,46 +67,6 @@ NODISCARD LColor GetRestartTint(LRestartInfo const& Info) noexcept
     return Info.bImminent ? *GetSingleton<JUserPreferences>().DangerColor : RestartTint;
 }
 
-NODISCARD LString ToLowerAscii(LStringView Text)
-{
-    LString Result{Text};
-    for (auto& Char: Result)
-    {
-        if (Char >= 'A' && Char <= 'Z')
-        {
-            Char = static_cast<char>(Char - 'A' + 'a');
-        }
-    }
-    return Result;
-}
-
-//# Splits a query at whitespace into lower case tokens.
-NODISCARD TArray<LString> TokenizeQuery(LStringView Query)
-{
-    TArray<LString> Tokens;
-    LString Current;
-    for (char Char: ToLowerAscii(Query))
-    {
-        if (Char == ' ' || Char == '\t' || Char == '\n' || Char == '\r')
-        {
-            if (!Current.empty())
-            {
-                Tokens.push_back(std::move(Current));
-                Current.clear();
-            }
-        }
-        else
-        {
-            Current.push_back(Char);
-        }
-    }
-    if (!Current.empty())
-    {
-        Tokens.push_back(std::move(Current));
-    }
-    return Tokens;
-}
-
 //# The text a search query is matched against. Fields are separated, so that tokens cannot match across them.
 NODISCARD LString MakeHaystack(LPreference const& Preference)
 {
@@ -127,7 +88,7 @@ NODISCARD LString MakeHaystack(LPreference const& Preference)
             Haystack += Restart->Label;
         }
     }
-    return ToLowerAscii(Haystack);
+    return TextSearch::ToLowerAscii(Haystack);
 }
 
 NODISCARD TJxxUnique<WNode> CreateRestartIcon(LViewport& Viewport, LRestartInfo const& Info)
@@ -434,7 +395,7 @@ void Jafg::WUserPreferencesWidget::Rebuild()
     {
         this->SelectedSection = 0uz;
     }
-    this->SearchTokens = TokenizeQuery(this->SearchQuery);
+    this->SearchTokens = TextSearch::Tokenize(this->SearchQuery);
     this->RefreshVisibility();
 
     return;
@@ -723,7 +684,7 @@ void Jafg::WUserPreferencesWidget::OnSearchQueryChanged(LStringView Query)
 {
     this->SearchQuery = LString{Query};
 
-    auto Tokens{TokenizeQuery(Query)};
+    auto Tokens{TextSearch::Tokenize(Query)};
     if (Tokens == this->SearchTokens)
     {
         return;

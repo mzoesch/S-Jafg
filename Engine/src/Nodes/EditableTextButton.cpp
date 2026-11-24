@@ -78,6 +78,7 @@ void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
      * it must be drawn on top of the selection highlight.
      */
     WBox::Draw(Info);
+    this->DrawFill(Info);
 
     this->EnsureTextLayout();
 
@@ -183,6 +184,35 @@ void Jafg::WEditableTextButton::Draw(LNodeRenderInfo const& Info) const
     }
 
     return;
+}
+
+void Jafg::WEditableTextButton::DrawFill(LNodeRenderInfo const& Info) const
+{
+    if (!this->FillFraction || this->Brush.bSkipBrushDraw)
+    {
+        return;
+    }
+
+    /* Inside of the outline of the box. */
+    f32 const Inset{this->Brush.OutlineThickness};
+    LVec2F const Inner{maths::max(this->GetAnchoredSize_v2() - LVec2F{2.0f * Inset}, maths::zero_vector<LVec2F>)};
+    f32 const Width{Inner.x * maths::clamp(*this->FillFraction, 0.0f, 1.0f)};
+    if (Width <= 0.0f || Inner.y <= 0.0f)
+    {
+        return;
+    }
+
+    /* TL => TR => BR => BL. The left corners follow the box. The right ones blend in as the bar reaches its right end. */
+    LVec4F const BoxRadii{maths::max(this->Brush.Radii - LVec4F{Inset}, maths::zero_vector<LVec4F>)};
+    f32 const Remaining{Inner.x - Width};
+    LVec4F Radii{BoxRadii.x, maths::max(BoxRadii.y - Remaining, 0.0f), maths::max(BoxRadii.z - Remaining, 0.0f), BoxRadii.w};
+    Radii = maths::min(Radii, LVec4F{Width, Inner.y, Width, Inner.y} / 2.0f);
+
+    Info.AddInstance({
+        .Rect = {this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Info.Translation) + LVec2F{Inset}, LVec2F{Width, Inner.y}},
+        .Radii = Radii,
+        .Tint = this->IsEnabled() ? this->FillTint : this->DisabledFillTint,
+        });
 }
 
 void Jafg::WEditableTextButton::UpdateDesiredSize() const

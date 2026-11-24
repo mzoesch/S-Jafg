@@ -71,9 +71,13 @@ public:
     //# Below this speed relative to the ground the character stands. In m/s.
     CLASS_FIELD(EditorEditable)
     f32 IdleSpeed{ 0.3f };
+    //#
     //# From this speed on walking turns into running. In m/s.
+    //# Keep #Jafg::ACharacterMovementComponent::WalkSpeed below this times (1 - #SpeedHysteresis), or walking after
+    //# a sprint stays in the running state.
+    //#
     CLASS_FIELD(EditorEditable)
-    f32 RunSpeed{ 2.6f };
+    f32 RunSpeed{ 3.0f };
     //# From this speed on running turns into sprinting. In m/s.
     CLASS_FIELD(EditorEditable)
     f32 SprintSpeed{ 5.5f };
@@ -84,15 +88,24 @@ public:
     CLASS_FIELD(EditorEditable)
     f32 JumpSpeed{ 1.0f };
 
-    //# The speeds at which the locomotion clips play at their authored rate. In m/s.
+    //# The speeds at which the locomotion clips play at their authored rate, i.e., how fast the planted foot slides
+    //# backwards in the clip. In m/s.
     CLASS_FIELD(EditorEditable)
-    f32 WalkingClipSpeed{ 1.6f };
+    f32 WalkingClipSpeed{ 1.8f };
     CLASS_FIELD(EditorEditable)
     f32 RunningClipSpeed{ 4.0f };
     CLASS_FIELD(EditorEditable)
     f32 SprintingClipSpeed{ 7.0f };
     CLASS_FIELD(EditorEditable)
-    f32 CrouchWalkingClipSpeed{ 1.5f };
+    f32 CrouchWalkingClipSpeed{ 0.9f };
+
+    //#
+    //# Where jump clips start. In seconds. The movement leaves the ground at once, so the wind-up of a clip that
+    //# starts on the ground would play in the air: "Locomotion_IdleJumping" crouches for 0.13 s and has pushed off
+    //# by 0.27 s.
+    //#
+    CLASS_FIELD(EditorEditable)
+    f32 JumpingClipStartTime{ 0.2f };
     //# Bounds of the rate that locomotion clips are played at.
     CLASS_FIELD(EditorEditable)
     f32 MinClipRate{ 0.4f };

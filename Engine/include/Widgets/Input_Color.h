@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Nodes/HParent.h"
+#include "Widgets/InputRange.h"
 #include "Input_Color.generated.h"
 
 namespace Jafg
@@ -62,7 +63,7 @@ public:
                 check(std::holds_alternative<T>(this->Vector))
             }
         )
-        this->Vector = Value;
+        this->Vector = this->ClampColor(Value);
 
         if (!this->GetChildren().empty())
         {
@@ -78,6 +79,12 @@ public:
     }
 
     void SetInputEnabled(bool bEnabled);
+
+    //# Optional bounds of every channel. @see LInputRange
+    void SetMin(std::optional<f64> InMin) noexcept { this->Range.Min = InMin; this->RefreshFill(); }
+    void SetMax(std::optional<f64> InMax) noexcept { this->Range.Max = InMax; this->RefreshFill(); }
+    NODISCARD FORCEINLINE constexpr std::optional<f64> const& GetMin() const noexcept { return this->Range.Min; }
+    NODISCARD FORCEINLINE constexpr std::optional<f64> const& GetMax() const noexcept { return this->Range.Max; }
 
     EVENT_DECL(OnVectorChanged, void(WInput_Color& Self))
     EVENT_DECL(OnDestruct, void(WInput_Color& Self))
@@ -163,9 +170,25 @@ private:
         return String;
     }
 
+    //# Every channel clamped into the bounds.
+    NODISCARD FORCEINLINE auto ClampColor(auto Value) const noexcept
+    {
+        Value.r = this->Range.Clamp(Value.r);
+        Value.g = this->Range.Clamp(Value.g);
+        Value.b = this->Range.Clamp(Value.b);
+        if constexpr (requires { Value.a; })
+        {
+            Value.a = this->Range.Clamp(Value.a);
+        }
+        return Value;
+    }
+
     void OnTextButtonContentChanged(EPart Part, LString const& NewValue);
     void OnVectorDataChanged(bool bCallEvent);
+    //# Updates the bars of the channels. @see LInputRange
+    void RefreshFill() noexcept;
     std::variant<std::monostate,LLinearColor, LLinearColor3, LColor> Vector;
+    LInputRange Range;
     std::optional<bool> bInitialEnabledState;
     bool bIgnoreChangeEvents{};
 };
@@ -180,6 +203,17 @@ struct LFactoryInput_Color : NODE_FACTORY_PARENT(WInput_Color)
     FORCEINLINE decltype(auto) Enabled(this auto&& Self, bool bEnabled) noexcept
     {
         NODE_FACTORY_SELF().bInitialEnabledState = bEnabled;
+        return Self;
+    }
+    //# @see LInputRange
+    FORCEINLINE decltype(auto) Min(this auto&& Self, std::optional<f64> InMin) noexcept
+    {
+        NODE_FACTORY_SELF().Range.Min = InMin;
+        return Self;
+    }
+    FORCEINLINE decltype(auto) Max(this auto&& Self, std::optional<f64> InMax) noexcept
+    {
+        NODE_FACTORY_SELF().Range.Max = InMax;
         return Self;
     }
 };

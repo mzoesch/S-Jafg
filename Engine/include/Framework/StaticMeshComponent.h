@@ -52,11 +52,11 @@ public:
 
 private:
 
-    CLASS_FIELD(Identity)
-    LMaterialInstanceRef MaterialInstance;
-    CLASS_FIELD(Identity)
-    LPbrMaterialInstanceRef PbrMaterialInstance;
     CLASS_FIELD(EditorVisible)
+    LMaterialInstanceRef MaterialInstance;
+    CLASS_FIELD(EditorEditable)
+    LPbrMaterialInstanceRef PbrMaterialInstance;
+    CLASS_FIELD(EditorEditable)
     LStaticMeshRef Mesh;
 
     JShaderSubsystem* ShaderSubsystem{};
