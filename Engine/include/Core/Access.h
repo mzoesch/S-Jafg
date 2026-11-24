@@ -579,27 +579,56 @@ struct add_spaces_to_camel_case_fn final
     NODISCARD FORCEINLINE constexpr auto
     operator()(TIter First, TSent Sent) const -> TOut
     {
+        {
+            TIter It{First};
+            while (It != Sent)
+            {
+                if (*It == ' ')
+                {
+                    return TOut{First, Sent};
+                }
+                ++It;
+            }
+        }
+
+        auto is_upper{[](auto Char)
+        {
+            return Char >= 'A' && Char <= 'Z';
+        }};
+        auto is_lower_or_digit{[](auto Char)
+        {
+            return (Char >= 'a' && Char <= 'z') || (Char >= '0' && Char <= '9');
+        }};
+
         TOut Result;
         if constexpr (algo::is_reservable_v<TOut>)
         {
-            Result.reserve(algo::distance(First, Sent));
+            Result.reserve(algo::distance(First, Sent) + 8uz);
         }
         if (First != Sent)
         {
             Result.push_back(*First++);
             while (First != Sent)
             {
-                if (*First >= 'A' && *First <= 'Z')
+                if (is_upper(*First))
                 {
-                    Result.push_back(' ');
+                    auto Prev{Result.back()};
+                    auto Next{First};
+                    ++Next;
+                    if (is_lower_or_digit(Prev)
+                        || (is_upper(Prev) && Next != Sent && *Next >= 'a' && *Next <= 'z')
+                        )
+                    {
+                        Result += ' ';
+                    }
                 }
-                Result.push_back(*First++);
+                Result += *First++;
             }
         }
         return Result;
     }
 
-    template<input_range TRange, typename TOut = std::remove_reference_t<TRange>>
+    template<input_range TRange, typename TOut = std::remove_cvref_t<TRange>>
     NODISCARD FORCEINLINE constexpr auto
     operator()(TRange&& R) const -> TOut
     {

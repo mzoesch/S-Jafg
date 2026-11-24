@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Foreign/ForeignInclude.h"
+#include "Core/App.h"
 #include "Core/Parameter.h"
 #include "Engine/Engine.h"
 #include "Framework/Editor.h"

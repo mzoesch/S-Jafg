@@ -91,15 +91,12 @@ typedef LMasterThreadTagRegistry<LReflectedTag> LReflectedTagRegistry;
 //# Valid at the start of the static storage initialization phase from the runtime until the very end.
 ENGINE_API LReflectedTagRegistry& GetJxxTagRegistry() noexcept;
 
-struct LReflectedTag final : public TTag<u16>
+struct LReflectedTag final: TTag<LReflectedTag, u16>
 {
-    typedef TTag<u16> Super;
+    typedef TTag<LReflectedTag, u16> Super;
     using Super::Super;
 
-    FORCEINLINE LString ToString() const noexcept
-    {
-        return GetJxxTagRegistry().GetReprSafe(*this);
-    }
+    NODISCARD FORCEINLINE static LReflectedTagRegistry& GetMutableRegistry() noexcept { return GetJxxTagRegistry(); }
 };
 
 struct LNodeFactoryBase

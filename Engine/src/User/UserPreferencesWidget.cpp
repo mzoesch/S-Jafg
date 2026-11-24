@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/UserPreferencesWidget.h"
+#include "Core/App.h"
 #include "Nodes/Button.h"
 #include "Nodes/EditableTextButton.h"
 #include "Nodes/HButton.h"
@@ -113,6 +114,11 @@ NODISCARD LString MakeHaystack(LPreference const& Preference)
     Haystack += Preference.Identifier;
     Haystack += '\n';
     Haystack += Preference.Tooltip;
+    if (!Preference.SearchKeywords.empty())
+    {
+        Haystack += '\n';
+        Haystack += Preference.SearchKeywords;
+    }
     if (Preference.IsValue())
     {
         if (auto Restart{GetRestartInfo(Preference.AsValue())})
@@ -138,6 +144,39 @@ NODISCARD TJxxUnique<WNode> CreateRestartIcon(LViewport& Viewport, LRestartInfo 
         .Unique();
 }
 
+NODISCARD TJxxUnique<WNode> CreateReadOnlyIcon(LViewport& Viewport)
+{
+    return NewNode(Viewport).Class<WBox>()
+        /* Hit-testable, so that hovering the icon explains it. */
+        .Visibility(ENodeVisibility::Visible)
+        .Anchor(EAnchor::VFill)
+        .MinDesiredSize({IconGutterWidth, 0})
+        .Icon(LOptionalTexture2Ref{JafgInfo, "Icons/Lock"})
+        .Tint(Colors::Gray)
+        .BorderTint(Colors::Transparent)
+        .Tooltip("Read-only. The application relies on this and it cannot be changed.")
+        .Unique();
+}
+
+NODISCARD LPreferenceValue* FindValue(LPreferenceCollection& Collection, LStringView Identifier) noexcept
+{
+    for (auto& Child: Collection)
+    {
+        if (Child->IsCollection())
+        {
+            if (auto* Value{FindValue(Child->AsCollection(), Identifier)})
+            {
+                return Value;
+            }
+        }
+        else if (Child->Identifier == Identifier)
+        {
+            return &Child->AsValue();
+        }
+    }
+    return nullptr;
+}
+
 } /* ~Namespace <Anonymous> */
 
 } /* ~Namespace Jafg */
@@ -148,9 +187,30 @@ void Jafg::WUserPreferencesWidget::Construct()
     this->Rebuild();
 }
 
+void Jafg::WUserPreferencesWidget::Destruct()
+{
+    for (auto& Collection: GetMutableSingleton<JUserPreferences>().TopLevelCollections)
+    {
+        if (Collection.ReleaseHost)
+        {
+            Collection.ReleaseHost(this->Changes);
+        }
+    }
+
+    Super::Destruct();
+}
+
 void Jafg::WUserPreferencesWidget::Tick(f32 Dt)
 {
     Super::Tick(Dt);
+
+    if (!this->PendingSectionRebuilds.empty())
+    {
+        for (const auto Index: std::exchange(this->PendingSectionRebuilds, {}))
+        {
+            this->RebuildSection(Index);
+        }
+    }
 
     this->DiscardButton->SetEnabled(!this->Changes.empty());
     this->ApplyButton->SetEnabled(!this->Changes.empty());
@@ -195,7 +255,6 @@ void Jafg::WUserPreferencesWidget::Rebuild()
     this->Sections.clear();
 
     WVRegion* TopLevelPreferencesContainer{};
-    WVParent* Content{};
     BeginStyling(*this).StaticRoot<WHParent>()
         .Anchor(EAnchor::Fill)
     [
@@ -239,7 +298,7 @@ void Jafg::WUserPreferencesWidget::Rebuild()
             NewStaticNode(WScrollRegion).SaveTo(&this->ScrollRegion)
                 .Tint(Colors::Transparent)
             [
-                NewStaticNode(WVParent).SaveTo(&Content)
+                NewStaticNode(WVParent).SaveTo(&this->Content)
                     .Anchor(EAnchor::Fill)
                     .Padding({10_pt, 4})
                     .Space(16_pt)
@@ -328,91 +387,13 @@ void Jafg::WUserPreferencesWidget::Rebuild()
         ]
     ];
 
-    //# Adds the nodes for a preference to the target and returns its search entry.
-    auto AddPreference{[Widget=this, Prefs=&Prefs](this auto&& Self, WParent& Target, LPreference& Preference) -> LSearchEntry
-    {
-        auto& Viewport{Target.GetViewport()};
-        LSearchEntry Entry{.Haystack = MakeHaystack(Preference), .bCollection = Preference.IsCollection()};
-
-        if (Preference.IsCollection())
-        {
-            WVParent* Group;
-            Target.AddChild(NewNode(Viewport).Class<WVParent>().SaveTo(&Group)
-                .Anchor(EAnchor::HFill)
-                [
-                    NewNode(Viewport).Class<WText>()
-                        /* Text is not hit-testable by default. Without this, the tooltip would never show. */
-                        .Visibility(ENodeVisibility::Visible)
-                        .Anchor(EAnchor::HFill)
-                        .TextScale(ETextScale::SubHeader)
-                        .Content(Preference.DisplayName)
-                        .Tooltip(Preference.Tooltip)
-                ]
-                .Unique());
-            Entry.Node = Group;
-
-            for (auto& SubPreference: Preference.AsCollection())
-            {
-                Entry.Children.push_back(Self(*Group, *SubPreference));
-            }
-        }
-        else
-        {
-            auto& Value{Preference.AsValue()};
-
-            WHButton* Row;
-            Target.AddChild(NewNode(Viewport).Class<WHButton>().SaveTo(&Row)
-                .Visibility(ENodeVisibility::Visible)
-                .Anchor(EAnchor::HFill)
-                /* No padding on the left. The icon gutter is the indent. */
-                .Padding(LPadding{ENodeSize::Points, 0.0f, 3.0f, 6.0f, 3.0f})
-                .InAllBrushesChained<&LRegionBrush::Tint>(Colors::Transparent)
-                .InBrush<EStyleBits::ActiveCombi, &LRegionBrush::Tint>(Prefs->PrimaryPaletteSolid->Normal.Tint)
-                .Tooltip(Preference.Tooltip)
-                .Unique());
-            if (auto Restart{GetRestartInfo(Value)})
-            {
-                Row->AddChild(CreateRestartIcon(Viewport, *Restart));
-            }
-            else
-            {
-                Row->AddChild(NewNode(Viewport).Class<WSpacer>().MinDesiredSize({IconGutterWidth, 0}).Unique());
-            }
-            Row->AddChild(NewNode(Viewport).Class<WText>()
-                .Anchor(EAnchor::Fill)
-                .TextAlign(ETextVAlign::Center)
-                .Content(Preference.DisplayName)
-                .Unique());
-            Row->AddChild(Value.CreateNode(Viewport, Widget->Changes).Unique());
-            Entry.Node = Row;
-        }
-
-        Entry.ShownVisibility = Entry.Node->GetVisibility();
-        return Entry;
-    }};
-
     for (auto Index{0uz}; Index < Prefs.TopLevelCollections.size(); ++Index)
     {
         auto& Collection{Prefs.TopLevelCollections[Index]};
         check(Collection.IsCollection())
 
-        WVParent* SectionNode;
-        Content->AddChild(NewStaticNode(WVParent).SaveTo(&SectionNode)
-                .Anchor(EAnchor::HFill)
-            [
-                NewStaticNode(WText)
-                    .Content(Collection.DisplayName)
-                    .TextScale(ETextScale::Header)
-                +
-                NewStaticNode(WHSeparator).Thickness(1).Anchor(EAnchor::HFill)
-            ].Unique());
-
-        LSection Section{.Entry = {.Node = SectionNode, .Haystack = MakeHaystack(Collection), .bCollection = true}};
-        for (auto& Preference: Collection)
-        {
-            Section.Entry.Children.push_back(AddPreference(*SectionNode, *Preference));
-        }
-        Section.Entry.ShownVisibility = SectionNode->GetVisibility();
+        this->PrepareCollection(Index);
+        LSection Section{.Entry = this->BuildSectionNode(Index, this->Content->GetChildren().size())};
 
         TopLevelPreferencesContainer->AddChild(NewStaticNode(WTextButton).SaveTo(&Section.Button)
             .Anchor(EAnchor::HFill)
@@ -432,6 +413,11 @@ void Jafg::WUserPreferencesWidget::Rebuild()
                     {
                         this->SearchBox->SetContent(LString{});
                         this->OnSearchQueryChanged({});
+                    }
+                    /* Dynamic collections are refetched every time they are selected. */
+                    if (GetSingleton<JUserPreferences>().TopLevelCollections[Index].Refresh)
+                    {
+                        this->RebuildSection(Index);
                     }
                     this->SelectSection(Index);
                     return LNodeReply::Handled();
@@ -461,6 +447,255 @@ void Jafg::WUserPreferencesWidget::RebuildInPlace()
     this->RemoveChildren();
     this->Rebuild();
     this->ScrollRegion->SetScrollPosition(ScrollPosition);
+}
+
+void Jafg::WUserPreferencesWidget::PrepareCollection(std::size_t Index)
+{
+    auto& Collection{GetMutableSingleton<JUserPreferences>().TopLevelCollections[Index]};
+    if (!Collection.Refresh)
+    {
+        return;
+    }
+
+    Collection.Refresh(Collection, LPreferenceCollectionHost{
+        .Changes = &this->Changes,
+        .RefreshVisibility = [this]{ this->RefreshVisibility(); },
+        .RequestRebuild = [this, Index]
+        {
+            if (!algo::contains(this->PendingSectionRebuilds, Index))
+            {
+                this->PendingSectionRebuilds.push_back(Index);
+            }
+        },
+        });
+
+    return;
+}
+
+Jafg::WUserPreferencesWidget::LSearchEntry Jafg::WUserPreferencesWidget::BuildSectionNode(std::size_t Index, std::size_t Position)
+{
+    auto& Collection{GetMutableSingleton<JUserPreferences>().TopLevelCollections[Index]};
+
+    WVParent* SectionNode;
+    this->Content->AddChildAt(Position, NewStaticNode(WVParent).SaveTo(&SectionNode)
+            .Anchor(EAnchor::HFill)
+        [
+            NewStaticNode(WText)
+                .Content(Collection.DisplayName)
+                .TextScale(ETextScale::Header)
+            +
+            NewStaticNode(WHSeparator).Thickness(1).Anchor(EAnchor::HFill)
+        ].Unique());
+    if (Collection.CreateHeaderNode)
+    {
+        SectionNode->AddChild(Collection.CreateHeaderNode(this->GetViewport(), this->Changes).Unique());
+    }
+
+    LSearchEntry Entry{.Node = SectionNode, .Haystack = MakeHaystack(Collection), .bCollection = true};
+    for (auto& Preference: Collection)
+    {
+        Entry.Children.push_back(this->AddPreference(*SectionNode, *Preference, 1uz, Collection.Identifier));
+    }
+    Entry.ShownVisibility = SectionNode->GetVisibility();
+
+    return Entry;
+}
+
+Jafg::WUserPreferencesWidget::LSearchEntry Jafg::WUserPreferencesWidget::AddPreference(WParent& Target, LPreference& Preference, std::size_t Depth, LStringView ParentKey)
+{
+    check(Depth > 0uz)
+
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    auto& Viewport{Target.GetViewport()};
+    /* Preferences nested deeper than the direct children of a section are indented once more per level. */
+    const f32 Indent{static_cast<f32>(Depth - 1uz) * IconGutterWidth.Size};
+    LSearchEntry Entry{.Haystack = MakeHaystack(Preference), .bCollection = Preference.IsCollection()};
+
+    if (Preference.IsCollection())
+    {
+        Entry.CollapseKey = algo::sprintf("{}/{}", ParentKey, Preference.Identifier);
+
+        WVParent* Group;
+        Target.AddChild(NewNode(Viewport).Class<WVParent>().SaveTo(&Group)
+            .Anchor(EAnchor::HFill)
+            [
+                /* Pressing the header collapses or expands the collection. Like the categories of the inspector. */
+                NewNode(Viewport).Class<WHButton>().SaveTo(&Entry.Row)
+                    .Visibility(ENodeVisibility::Visible)
+                    .Anchor(EAnchor::HFill)
+                    .Padding(LPadding{ENodeSize::Points, 0.0f, 3.0f, 6.0f, 3.0f})
+                    .Palette(Prefs.ProximityPaletteSolid(0uz, *Prefs.PalePrimaryPaletteSolid))
+                    .Tooltip(Preference.Tooltip)
+                    .OnKeyEventFocused([Widget=this, Key=Entry.CollapseKey](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
+                    {
+                        if (Event.Is<ERawInputStateBits::Press>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton)))
+                        {
+                            if (algo::contains(Widget->CollapsedGroups, Key))
+                            {
+                                algo::erase(&Widget->CollapsedGroups, Key);
+                            }
+                            else
+                            {
+                                Widget->CollapsedGroups.push_back(Key);
+                            }
+                            Widget->RefreshVisibility();
+                            return LNodeReply::Handled();
+                        }
+                        return LNodeReply::Unhandled();
+                    })
+                [
+                    NewNode(Viewport).Class<WSpacer>()
+                        .MinDesiredSize({LNodeSize1{ENodeSize::StaticPoints, Indent}, 0})
+                    +
+                    NewNode(Viewport).Class<WBox>().SaveTo(&Entry.CollapseIcon)
+                        .Anchor(EAnchor::VFill)
+                        .MinDesiredSize({IconGutterWidth, 0})
+                        .Icon(LOptionalTexture2Ref{JafgInfo, "Icons/ExtendDown"})
+                        .BorderTint(Colors::Transparent)
+                    +
+                    NewNode(Viewport).Class<WText>()
+                        .Anchor(EAnchor::Fill)
+                        .TextAlign(ETextVAlign::Center)
+                        .TextScale(Depth > 1uz ? ETextScale::Body : ETextScale::SubHeader)
+                        .Content(Preference.DisplayName)
+                ]
+            ]
+            .Unique());
+        Entry.Node = Group;
+
+        for (auto& SubPreference: Preference.AsCollection())
+        {
+            Entry.Children.push_back(this->AddPreference(*Group, *SubPreference, Depth + 1uz, Entry.CollapseKey));
+        }
+
+        /* Closes off the top level groups of a section. E.g., each context in the controls. */
+        if (Depth == 1uz)
+        {
+            Group->AddChild(NewNode(Viewport).Class<WHSeparator>().Thickness(1).Anchor(EAnchor::HFill).Unique());
+        }
+    }
+    else
+    {
+        auto& Value{Preference.AsValue()};
+        Entry.Value = &Value;
+
+        WHButton* Row;
+        Target.AddChild(NewNode(Viewport).Class<WHButton>().SaveTo(&Row)
+            .Visibility(ENodeVisibility::Visible)
+            .Anchor(EAnchor::HFill)
+            /* No padding on the left. The icon gutter is the indent. */
+            .Padding(LPadding{ENodeSize::Points, 0.0f, 3.0f, 6.0f, 3.0f})
+            .Palette(Prefs.ProximityPaletteSolid(0uz, *Prefs.PalePrimaryPaletteSolid))
+            .Tooltip(Preference.Tooltip)
+            .Unique());
+        Entry.Row = Row;
+        if (Indent > 0.0f)
+        {
+            Row->AddChild(NewNode(Viewport).Class<WSpacer>().MinDesiredSize({LNodeSize1{ENodeSize::StaticPoints, Indent}, 0}).Unique());
+        }
+        if (auto Restart{GetRestartInfo(Value)})
+        {
+            Row->AddChild(CreateRestartIcon(Viewport, *Restart));
+        }
+        else if (Value.bReadOnly)
+        {
+            Row->AddChild(CreateReadOnlyIcon(Viewport));
+        }
+        else
+        {
+            Row->AddChild(NewNode(Viewport).Class<WSpacer>().MinDesiredSize({IconGutterWidth, 0}).Unique());
+        }
+        const LColor NameTint{Value.bReadOnly ? Colors::Gray : Colors::White};
+        if (Value.Annotation.empty())
+        {
+            Row->AddChild(NewNode(Viewport).Class<WText>()
+                .Anchor(EAnchor::Fill)
+                .TextAlign(ETextVAlign::Center)
+                .TextTint(NameTint)
+                .Content(Preference.DisplayName)
+                .Unique());
+        }
+        else
+        {
+            /* The annotation follows the display name directly. The rest of the row stays empty. */
+            Row->AddChild(NewNode(Viewport).Class<WText>()
+                .Anchor(EAnchor::VFill)
+                .TextAlign(ETextVAlign::Center)
+                .TextTint(NameTint)
+                .Content(Preference.DisplayName)
+                .Unique());
+            Row->AddChild(NewNode(Viewport).Class<WText>()
+                .Anchor(EAnchor::VFill)
+                .TextAlign(ETextVAlign::Center)
+                .TextScale(ETextScale::Compact)
+                .TextTint(Colors::Gray)
+                .Padding(LPadding{ENodeSize::Points, 4.0f, 0.0f, 0.0f, 0.0f})
+                .Content(Value.Annotation)
+                .Unique());
+            Row->AddChild(NewNode(Viewport).Class<WSpacer>().Anchor(EAnchor::Fill).Unique());
+        }
+        Row->AddChild(Value.CreateNode(Viewport, this->Changes).Unique());
+        Entry.Node = Row;
+    }
+
+    Entry.ShownVisibility = Entry.Node->GetVisibility();
+    return Entry;
+}
+
+void Jafg::WUserPreferencesWidget::RebuildSection(std::size_t Index)
+{
+    check(algo::valid_index(this->Sections, Index))
+
+    auto& Collection{GetMutableSingleton<JUserPreferences>().TopLevelCollections[Index]};
+    auto& Section{this->Sections[Index]};
+
+    /* Refreshing may replace the preferences of the collection. Keep their pending changes by identifier. */
+    TArray<LPreferenceValue const*> Values;
+    auto CollectValues{[&Values](this auto&& Self, LSearchEntry const& Entry) -> void
+    {
+        if (Entry.Value)
+        {
+            Values.push_back(Entry.Value);
+        }
+        for (auto const& Child: Entry.Children)
+        {
+            Self(Child);
+        }
+    }};
+    CollectValues(Section.Entry);
+
+    TArray<std::pair<LString, LString>> Kept;
+    std::erase_if(this->Changes, [&Values, &Kept](LPreferenceValueChangeRequest& Change)
+    {
+        if (algo::contains(Values, static_cast<LPreferenceValue const*>(&Change.Preference)))
+        {
+            Kept.emplace_back(Change.Preference->Identifier, std::move(Change.Value));
+            return true;
+        }
+        return false;
+    });
+
+    const auto Position{static_cast<std::size_t>(algo::distance_to(this->Content->GetChildren(), Section.Entry.Node, algo::unique_raw))};
+    this->Content->RemoveChild(*Section.Entry.Node);
+    Section.Entry = {};
+
+    this->PrepareCollection(Index);
+    for (auto& [Identifier, Value]: Kept)
+    {
+        if (auto* Preference{FindValue(Collection, Identifier)})
+        {
+            this->Changes.emplace_back(*Preference, std::move(Value));
+        }
+        else
+        {
+            LOG_WARNING(LogWidgets, "Dropping the pending change of [{}]. The preference does not exist anymore.", Identifier)
+        }
+    }
+
+    Section.Entry = this->BuildSectionNode(Index, Position);
+    this->RefreshVisibility();
+
+    return;
 }
 
 void Jafg::WUserPreferencesWidget::SelectSection(std::size_t Index)
@@ -527,8 +762,12 @@ void Jafg::WUserPreferencesWidget::RefreshVisibility()
         }
     }};
 
+    auto& Collections{GetMutableSingleton<JUserPreferences>().TopLevelCollections};
+    //# The collection of the section that is currently filtered. It may hide values on its own.
+    LPreferenceCollection* FilteredCollection{};
+
     //# A token matches, if it is found in the entry itself or in any of its ancestors.
-    auto Filter{[Tokens=&this->SearchTokens](this auto&& Self, LSearchEntry& Entry, TArray<bool> Matched) -> bool
+    auto Filter{[Tokens=&this->SearchTokens, Collection=&FilteredCollection, Changes=&this->Changes](this auto&& Self, LSearchEntry& Entry, TArray<bool> Matched) -> bool
     {
         for (auto Idx{0uz}; Idx < Tokens->size(); ++Idx)
         {
@@ -548,7 +787,9 @@ void Jafg::WUserPreferencesWidget::RefreshVisibility()
         }
         else
         {
-            bShown = algo::all_of(Matched, [](bool bMatched){ return bMatched; });
+            check(Entry.Value)
+            bShown = algo::all_of(Matched, [](bool bMatched){ return bMatched; })
+                && (!*Collection || !(*Collection)->IsValueShown || (*Collection)->IsValueShown(*Entry.Value, *Changes));
         }
 
         Entry.Node->SetVisibility(bShown ? Entry.ShownVisibility : ENodeVisibility::Collapsed);
@@ -578,6 +819,7 @@ void Jafg::WUserPreferencesWidget::RefreshVisibility()
     for (auto Idx{0uz}; Idx < this->Sections.size(); ++Idx)
     {
         auto& Section{this->Sections[Idx]};
+        FilteredCollection = &Collections[Idx];
         if (bSearching)
         {
             const bool bMatch{Filter(Section.Entry, TArray<bool>(this->SearchTokens.size(), false))};
@@ -589,10 +831,50 @@ void Jafg::WUserPreferencesWidget::RefreshVisibility()
             const bool bSelected{Idx == this->SelectedSection};
             for (auto& Child: Section.Entry.Children)
             {
-                Reset(Child);
+                if (FilteredCollection->IsValueShown)
+                {
+                    (void)Filter(Child, TArray<bool>{});
+                }
+                else
+                {
+                    Reset(Child);
+                }
             }
             Section.Entry.Node->SetVisibility(bSelected ? Section.Entry.ShownVisibility : ENodeVisibility::Collapsed);
             SetButtonState(*Section.Button, true, bSelected);
+        }
+    }
+
+    /* Collapsed collections keep their header but hide their children. This applies while searching, too. */
+    auto Collapse{[Collapsed=&this->CollapsedGroups](this auto&& Self, LSearchEntry& Entry) -> void
+    {
+        if (!Entry.bCollection)
+        {
+            return;
+        }
+
+        const bool bCollapsed{algo::contains(*Collapsed, Entry.CollapseKey)};
+        if (Entry.CollapseIcon)
+        {
+            Entry.CollapseIcon->Brush.Background = LRegionBrush::Icon({JafgInfo, bCollapsed ? "Icons/ExtendRight" : "Icons/ExtendDown"});
+        }
+        for (auto& Child: Entry.Children)
+        {
+            if (bCollapsed)
+            {
+                Child.Node->SetVisibility(ENodeVisibility::Collapsed);
+            }
+            else
+            {
+                Self(Child);
+            }
+        }
+    }};
+    for (auto& Section: this->Sections)
+    {
+        for (auto& Child: Section.Entry.Children)
+        {
+            Collapse(Child);
         }
     }
 
@@ -604,6 +886,46 @@ void Jafg::WUserPreferencesWidget::RefreshVisibility()
     else
     {
         this->NoResultsText->SetVisibility(ENodeVisibility::Collapsed);
+    }
+
+    this->RepaintRows();
+
+    return;
+}
+
+void Jafg::WUserPreferencesWidget::RepaintRows()
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+
+    auto Paint{[&Prefs](WHButton& Row, std::size_t& Counter)
+    {
+        Prefs.ProximityPaletteSolid(Counter++, *Prefs.PalePrimaryPaletteSolid).ApplyOn(Row.Style);
+        /* Keep the hover state of a row that is under the cursor. */
+        Row._ButtonBase_SetBrush((Row._GetNodeState() & Detail::ENodeStateBits::Dispatched) ? EStyleBits::Hover : EStyleBits::Normal);
+    }};
+    auto Walk{[&Paint](this auto&& Self, LSearchEntry const& Entry, std::size_t& Counter) -> void
+    {
+        if (Entry.Node->GetVisibility() == ENodeVisibility::Collapsed)
+        {
+            return;
+        }
+        if (Entry.Row)
+        {
+            Paint(*Entry.Row, Counter);
+        }
+        for (auto const& Child: Entry.Children)
+        {
+            Self(Child, Counter);
+        }
+    }};
+
+    for (auto const& Section: this->Sections)
+    {
+        auto Counter{0uz};
+        for (auto const& Child: Section.Entry.Children)
+        {
+            Walk(Child, Counter);
+        }
     }
 
     return;

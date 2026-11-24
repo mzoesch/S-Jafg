@@ -7,45 +7,68 @@
 namespace Jafg
 {
 
-template<std::unsigned_integral T, std::size_t Alignment = alignof(T)>
+template<typename Leaf, std::unsigned_integral T, std::size_t Alignment = alignof(T)>
 struct TTag
 {
     template <typename TTag, typename TAllocator>
     friend struct TTagRegistry;
 
-    using SizeType = T;
+    typedef T value_type;
+    typedef Leaf leaf;
 
-    enum : u8 { NO_TAG = 0 };
+    enum: u8 { NO_TAG = 0 };
 
-    FORCEINLINE constexpr TTag() noexcept : Value(NO_TAG) { }
-    FORCEINLINE constexpr TTag(const TTag& Other) noexcept = default;
-    FORCEINLINE constexpr TTag(TTag&& Other) noexcept : Value(Other.Value) { Other.Value = NO_TAG; }
-    FORCEINLINE constexpr TTag& operator=(const TTag& Other) noexcept = default;
-    FORCEINLINE constexpr TTag& operator=(TTag&& Other) noexcept { this->Value = Other.Value; Other.Value = NO_TAG; return *this; }
+    FORCEINLINE constexpr TTag() noexcept : Value{NO_TAG} {}
+    FORCEINLINE constexpr TTag(TTag const& Other) noexcept = default;
+    FORCEINLINE constexpr TTag(TTag&& Other) noexcept : Value{std::exchange(Other.Value, NO_TAG)} {}
+    FORCEINLINE constexpr TTag& operator=(TTag const& Rhs) noexcept = default;
+    FORCEINLINE constexpr TTag& operator=(TTag&& Rhs) noexcept { this->Value = std::exchange(Rhs.Value, NO_TAG); return *this; }
     FORCEINLINE constexpr ~TTag() noexcept = default;
 
-    FORCEINLINE constexpr static bool IsEqual(const TTag& A, const TTag& B) noexcept { return A.Value == B.Value; }
-    FORCEINLINE constexpr bool Equals(const TTag& Other) const noexcept { return TTag::IsEqual(*this, Other); }
-    FORCEINLINE constexpr bool operator==(const TTag& Other) const noexcept { return TTag::IsEqual(*this, Other); }
-    FORCEINLINE constexpr bool operator!=(const TTag& Other) const noexcept = default;
+    //# Convert the range of characters to a tag.
+    NODISCARD static Leaf ToTag(LStringView S) noexcept
+    {
+        return Leaf::GetMutableRegistry().RegisterOrGet(S);
+    }
 
-    FORCEINLINE constexpr bool IsSet() const noexcept { return this->Value != NO_TAG; }
+    //#
+    //# Get the tag version of the range of characters.
+    //# @return NO_TAG if S does not map to a tag.
+    //#
+    NODISCARD ENGINE_API static Leaf AsTag(LStringView S)
+    {
+        return Leaf::GetMutableRegistry().GetTag(S);
+    }
+    NODISCARD FORCEINLINE static Leaf AsTagChecked(LStringView S)
+    {
+        Leaf Tag{Leaf::AsTag(S)};
+        check(Tag.IsSet())
+        return Tag;
+    }
+
+    NODISCARD LString ToString() const noexcept
+    {
+        return Leaf::GetMutableRegistry().GetReprSafe(static_cast<Leaf const&>(*this));
+    }
+
+    NODISCARD FORCEINLINE constexpr bool IsSet() const noexcept { return this->Value != NO_TAG; }
+
+    NODISCARD  FORCEINLINE constexpr static bool AreEqual(TTag A, TTag B) noexcept { return A.Value == B.Value; }
+    NODISCARD  FORCEINLINE constexpr bool Equals(TTag const& Other) const noexcept { return TTag::AreEqual(*this, Other); }
+    NODISCARD  FORCEINLINE constexpr bool operator==(TTag const& Rhs) const noexcept { return TTag::AreEqual(*this, Rhs); }
+
+    NODISCARD FORCEINLINE constexpr T GetUnderlyingValue() const noexcept { return this->Value; }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Hashing only. Do not use.
     // This is meaningless as names are not deterministic.
-    FORCEINLINE std::strong_ordering operator<=>(const TTag& Other) const { return this->Value <=> Other.Value; }
+    NODISCARD FORCEINLINE std::strong_ordering operator<=>(TTag const& Rhs) const { return this->Value <=> Rhs.Value; }
     // ~Hashing only. Do not use.
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE constexpr T GetUnderlyingValue() const noexcept { return this->Value; }
-
 private:
 
-    FORCEINLINE explicit constexpr TTag(const T InValue) noexcept : Value(InValue)
-    {
-        return;
-    }
+    FORCEINLINE explicit constexpr TTag(T V) noexcept: Value{V} {}
 
     alignas(Alignment)
     T Value;
@@ -59,9 +82,9 @@ struct TTagRegistry
     using ReprType  = typename Allocator::value_type;
 
     FORCEINLINE constexpr TTagRegistry() noexcept requires(std::is_default_constructible_v<Allocator>) = default;
-    template <typename... TArgs> requires(std::is_constructible_v<Allocator, TArgs...>)
+    template<typename... TArgs> requires(std::is_constructible_v<Allocator, TArgs...>)
     FORCEINLINE constexpr TTagRegistry(TArgs&&... Args) noexcept(std::is_nothrow_constructible_v<Allocator, TArgs...>)
-        : Tags(std::forward<TArgs>(Args)...)
+        : Tags{std::forward<TArgs>(Args)...}
     {
         return;
     }
@@ -73,7 +96,7 @@ struct TTagRegistry
     {
         if (const auto It{ algo::find(this->Tags, InRepr) }; It != this->Tags.end() )
         {
-            return TagType(static_cast<TagType::SizeType>(std::distance(this->Tags.begin(), It) + 1));
+            return TagType(static_cast<typename TagType::value_type>(std::distance(this->Tags.begin(), It) + 1));
         }
         return TagType{};
     }
@@ -107,7 +130,7 @@ struct TTagRegistry
         this->Tags.emplace_back(std::forward<decltype(InRepr)>(InRepr));
         LOG_TRACE(LogTags, "Registered tag [{}].", this->Tags.back())
 
-        return TagType{static_cast<TagType::SizeType>(this->GetTagCount())};
+        return TagType{static_cast<typename TagType::value_type>(this->GetTagCount())};
     }
 
     template <std::size_t N>
@@ -125,7 +148,7 @@ struct TTagRegistry
         }
 
         /* #IsSet checks for zero. Therefore, the result is always at least zero. And this cast is safe. */
-        if (static_cast<TagType::SizeType>(InTag.GetUnderlyingValue() - 1) < this->Tags.size())
+        if (static_cast<typename TagType::value_type>(InTag.GetUnderlyingValue() - 1) < this->Tags.size())
         {
             return this->GetReprFast(InTag);
         }

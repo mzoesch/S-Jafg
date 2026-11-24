@@ -1662,7 +1662,10 @@ void Jafg::WEditorWorldViewer::Tick(f32 Dt)
         }
     }
 
-    /* Hardcoded escape sequence. To always be able to escape a potential compromised user input state. */
+    /*
+     * Hardcoded escape sequence. To always be able to escape a potential compromised user input state.
+     * Listed in the preferences by the read-only [EditorWorldViewer] input context of #JCoreInputSubsystem. Keep in sync.
+     */
     if (auto It{algo::find(Surface.GetRawInputs(), Surface.GetFrontend().GetPhysicalKey(ELogicalKey::F1).value(), &LRawInput::PhysicalKey)};
         It != Surface.GetRawInputs().end())
     {
@@ -1861,6 +1864,7 @@ Jafg::LNodeReply Jafg::WEditorWorldViewer::OnKeyEventFocused(LNodeKeyEventInfo c
         }
     }
 
+    /* Listed in the preferences by the read-only [EditorWorldViewer] input context of #JCoreInputSubsystem. Keep in sync. */
     if (Event.Is<ERawInputStateBits::Press>(this->GetViewport().GetSurface().GetFrontend().GetPhysicalKey(ELogicalKey::Q)))
     {
         this->SelectGizmo(EGizmo::Select);

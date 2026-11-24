@@ -3,6 +3,7 @@
 #if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
 
 #include "Framework/Surface.h"
+#include "Core/App.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Engine/Engine.h"

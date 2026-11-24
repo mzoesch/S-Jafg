@@ -864,6 +864,59 @@ inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
     }
     return std::forward<decltype(Ar)>(Ar);
 }
+
+//#
+//# Writes the set bits of flags as their enum names, separated by '|'. E.g., "Press|Hold".
+//# Bits without a name are written as hexadecimal numbers. Flags without bits are written as the name of zero, if any.
+//#
+template<typename TArchive, typename U>
+    requires(serde::os_string_archive_v<TArchive> && std::is_base_of_v<::Jafg::Detail::LFlags, std::remove_cvref_t<U>>)
+inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
+{
+    typedef typename std::remove_cvref_t<U>::enum_type enum_type;
+    typedef typename std::remove_cvref_t<U>::mask mask;
+
+    auto& Map{serde::enum_map<enum_type>()};
+    const auto Mask{static_cast<mask>(Field)};
+    if (Mask == mask{0})
+    {
+        if (auto It{Map.find(static_cast<enum_type>(0))}; It != Map.end())
+        {
+            Ar.m_stream << It->second;
+        }
+        else
+        {
+            Ar.m_stream << '0';
+        }
+        return std::forward<decltype(Ar)>(Ar);
+    }
+
+    bool bFirst{true};
+    for (auto Bit{0uz}; Bit < sizeof(mask) * 8uz; ++Bit)
+    {
+        const auto Single{static_cast<mask>(static_cast<std::make_unsigned_t<mask>>(1) << Bit)};
+        if ((Mask & Single) == mask{0})
+        {
+            continue;
+        }
+        if (!bFirst)
+        {
+            Ar.m_stream << '|';
+        }
+        bFirst = false;
+
+        if (auto It{Map.find(static_cast<enum_type>(Single))}; It != Map.end())
+        {
+            Ar.m_stream << It->second;
+        }
+        else
+        {
+            Ar.m_stream << algo::sprintf("0x{:X}", static_cast<std::make_unsigned_t<mask>>(Single));
+        }
+    }
+    return std::forward<decltype(Ar)>(Ar);
+}
+
 template<typename TArchive, typename U> requires serde::string_archive_for_v<TArchive, U> && std::same_as<std::byte, std::remove_cvref_t<U>>
 inline decltype(auto) serde_non_intrusive(TArchive&& Ar, U& Field) noexcept
 {

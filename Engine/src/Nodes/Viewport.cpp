@@ -218,10 +218,14 @@ void Jafg::LViewport::DispatchInputs(f32 Dt)
 
             if (this->FocusedWidget)
             {
+                /*
+                 * The translation of the focused node, e.g., the offset of the scroll regions it is in. Sweeps pass the
+                 * same translation. Without it, aabb tests of a node in a scrolled region miss the cursor.
+                 */
                 if (auto Reply{this->FocusedWidget->OnKeyEventFocused({
                     .Frontend = this->Surface.GetFrontend(), .Surface = this->Surface, .Viewport = *this,
                     .FocusedNode = *this->FocusedWidget,
-                    .CursorLocation = CursorLocation, .Translation = maths::zero_vector<LVec2F>,
+                    .CursorLocation = CursorLocation, .Translation = this->FocusedWidget->GetTranslationFromMostOuter(),
                     }, *It)};
                     Reply.IsHandled())
                 {

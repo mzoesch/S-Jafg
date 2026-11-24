@@ -21,6 +21,13 @@ struct LScrollRegionBehavior
     bool bAlwaysShowHScrollbar:1{};
     //# Requires that #bAlwaysShowHScrollbar is false.
     bool bAlwaysHideHScrollbar:1{};
+
+    //#
+    //# Whether to keep the scrolled distance when the size of the content changes. E.g., when the user collapses a
+    //# section, the rows on screen stay where they are. Otherwise, the relative scroll position is kept, which moves
+    //# the content (but, e.g., keeps a region that is scrolled to the end at the end while the content grows).
+    //#
+    bool bKeepScrollOffsetOnResize:1{ true };
 };
 
 struct LScrollRegionBarBrush
@@ -86,10 +93,14 @@ public:
 
     //# @return The scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
     NODISCARD FORCEINLINE constexpr LVec2F GetScrollPosition() const noexcept { return this->ScrollPosition; }
+    //#
     //# Sets the scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
+    //# The position refers to the content of the next layout, even if #LScrollRegionBehavior::bKeepScrollOffsetOnResize.
+    //#
     FORCEINLINE void SetScrollPosition(LVec2F Position) noexcept
     {
         this->ScrollPosition = {maths::clamp(Position.x, 0.0f, 1.0f), maths::clamp(Position.y, 0.0f, 1.0f)};
+        this->bScrollPositionSetExplicitly = true;
     }
 
     //# The size to use for the whole scroll region if it was not anchored.
@@ -146,7 +157,10 @@ private:
     void HandleMouseWheelDown(f32 Value);
 
     //# The scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
-    LVec2F ScrollPosition{ maths::zero_vector<LVec2F> };
+    //# Mutable, because #UpdateDesiredSize may rescale it (see #LScrollRegionBehavior::bKeepScrollOffsetOnResize).
+    mutable LVec2F ScrollPosition{ maths::zero_vector<LVec2F> };
+    //# Whether #ScrollPosition was set by #SetScrollPosition since the last layout.
+    mutable bool bScrollPositionSetExplicitly{};
 
     mutable LVec2F DesiredSizeOfChildren{ maths::zero_vector<LVec2F> };
 
@@ -190,6 +204,11 @@ struct LFactoryScrollRegion : NODE_FACTORY_PARENT(WScrollRegion)
     decltype(auto) AlwaysHideHScrollbar(this auto&& Self, bool bValue) noexcept
     {
         NODE_FACTORY_SELF().Behavior.bAlwaysHideHScrollbar = bValue;
+        return NODE_FACTORY_RESULT();
+    }
+    decltype(auto) KeepScrollOffsetOnResize(this auto&& Self, bool bValue) noexcept
+    {
+        NODE_FACTORY_SELF().Behavior.bKeepScrollOffsetOnResize = bValue;
         return NODE_FACTORY_RESULT();
     }
 

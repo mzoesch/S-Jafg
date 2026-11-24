@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/LocalEgo.h"
+#include "Core/App.h"
 #include "Engine/Engine.h"
 #include "Framework/Frontend.h"
 #include "Framework/AvatarComponent.h"

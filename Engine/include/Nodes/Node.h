@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Engine/Jxx.h"
-#include "User/Input/Events.h"
+#include "User/Input/RawInput.h"
 #include "Framework/SurfaceForward.h"
 #include "User/UserPreferencesForward.h"
 #include "Framework/FrontendForward.h"
@@ -546,6 +546,8 @@ struct LViewport2OuterProj
 #define NODE_FACTORY_SELF() check(Self._IsDecommissioned() == false) DETAIL_JAFG_NODE_FACTORY_SELF()
 #define NODE_FACTORY_RESULT() std::forward<decltype(Self)>(Self)
 
+typedef LRawInput LKeyEvent;
+
 struct LNodeSweepInfo final
 {
     //# The translation that is recommended for children of a #WParent to use while sweeping.
@@ -726,6 +728,8 @@ struct LFactoryNode : public Detail::LNodeFactoryBase
 
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyEventFocused, OnKeyEventFocusedDelegate)
     JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnKeyEventUnfocused, OnKeyEventUnfocusedDelegate)
+
+    JAFG_NODE_FACTORY_DELEGATE_BINDINGS(OnFocusLost, OnFocusLostEvent)
 };
 
 //# Pass arbitrary data typesafe down the hierarchy. Using this often is a good indicator for bad design.
@@ -859,7 +863,13 @@ public:
         checkCode(this->_check_StateInvariant())
         this->NodeState &= ~Detail::ENodeStateFlags{Detail::ENodeStateBits::Focused};
         checkCode(this->_check_StateInvariant())
+        if (this->OnFocusLostEvent)
+        {
+            this->OnFocusLostEvent(*this);
+        }
     }
+    //# Called from #OnFocusLost. Note that this may be called while the node is being destructed.
+    TFunction2<void(WNode& Self)> OnFocusLostEvent;
 
     //# Sweep an optional cursor location over this node.
     virtual LNodeReply Sweep(LNodeSweepInfo const& Info, std::optional<LVec2F> const& Location);

@@ -4,28 +4,21 @@
 
 #include "Minimal.afx"
 #include "Core/Tag.h"
+#include "Core/TagExt.h"
 
 namespace Jafg
 {
 
-struct LUserInputTag : public Jafg::TTag<u16>
+//#
+//# Tags used for user input actions and contexts.
+//# Not networked.
+//#
+struct LUserInputTag final: TTag<LUserInputTag, u16>
 {
-    using Super = Jafg::TTag<u16>;
+    using Super = TTag<LUserInputTag, u16>;
     using Super::Super;
-    //# Convert the range of characters to a tag.
-    ENGINE_API static LUserInputTag ToTag(LStringView S) noexcept;
-    //#
-    //# Get the tag version of the range of characters.
-    //# @return LUserInputTag::NO_TAG if S does not map to a tag.
-    //#
-    ENGINE_API static LUserInputTag AsTag(LStringView S);
-    FORCEINLINE static LUserInputTag AsTagChecked(LStringView S)
-    {
-        auto Tag{LUserInputTag::AsTag(S)};
-        check(Tag.IsSet())
-        return Tag;
-    }
-    ENGINE_API LString ToString() const noexcept;
+
+    NODISCARD ENGINE_API static LMasterThreadTagRegistry<LUserInputTag>& GetMutableRegistry() noexcept;
 };
 
 enum struct EModBits
@@ -39,38 +32,8 @@ enum struct EModBits
     CapsLock    = 0x01 << 4,
     NumLock     = 0x01 << 5,
 };
+SERDE_ENUM(EModBits, Identity, Shift, Control, Alt, Super, CapsLock, NumLock)
 ENUM_STRUCT_FLAGS(EModBits, EModFlags)
-inline LStringView LexToString(EModBits Bit) noexcept
-{
-    switch (Bit)
-    {
-    case EModBits::Identity: return "Identity";
-    case EModBits::Shift: return "Shift";
-    case EModBits::Control: return "Control";
-    case EModBits::Alt: return "Alt";
-    case EModBits::Super: return "Super";
-    case EModBits::CapsLock: return "CapsLock";
-    case EModBits::NumLock: return "NumLock";
-    }
-    std::unreachable();
-}
-inline LString LexToString(EModFlags Flags) noexcept
-{
-    std::stringstream Stream;
-    if (Flags & EModBits::Shift) { Stream << "Shift|"; }
-    if (Flags & EModBits::Control) { Stream << "Control|"; }
-    if (Flags & EModBits::Alt) { Stream << "Alt|"; }
-    if (Flags & EModBits::Super) { Stream << "Super|"; }
-    if (Flags & EModBits::CapsLock) { Stream << "CapsLock|"; }
-    if (Flags & EModBits::NumLock) { Stream << "NumLock|"; }
-
-    LString Result{Stream.str()};
-    if (Result.empty())
-    {
-        Result = "Identity";
-    }
-    return Result;
-}
 
 //#
 //# Named physical keys. Not all keys might exist on a user's setup.
@@ -131,6 +94,28 @@ struct LPhysicalKey final
     {
         return algo::sprintf("{{Scancode: {}, Logical: {}}}", this->Scancode, this->Logical);
     }
+};
+
+//# The modifiers that a key chord can require. Caps lock and num lock are toggles and never part of a chord.
+inline constexpr EModFlags ChordModifierMask{EModBits::Shift|EModBits::Control|EModBits::Alt|EModBits::Super};
+
+//#
+//# A key together with the modifiers that must be held for it to count (e.g., Ctrl+S).
+//# A chord without modifiers matches regardless of the held modifiers. A chord with modifiers matches only while all
+//# of them are held, and it takes precedence over a chord without modifiers on the same key.
+//#
+struct LKeyChord final
+{
+    FORCEINLINE constexpr LKeyChord() noexcept = default;
+    FORCEINLINE constexpr LKeyChord(LPhysicalKey Key, EModFlags Mods = {}) noexcept : Key{Key}, Mods{Mods & ChordModifierMask} {}
+
+    LPhysicalKey Key;
+    EModFlags Mods;
+
+    NODISCARD FORCEINLINE constexpr bool HasModifiers() const noexcept { return !!this->Mods; }
+    NODISCARD FORCEINLINE constexpr bool AreModifiersHeld(EModFlags Held) const noexcept { return (this->Mods & Held) == this->Mods; }
+
+    FORCEINLINE constexpr bool operator==(LKeyChord const& Other) const noexcept = default;
 };
 
 } /* ~Namespace Jafg */

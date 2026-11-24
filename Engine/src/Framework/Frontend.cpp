@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/Frontend.h"
+#include "Core/App.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/Surface.h"
 #include "Framework/FrontendSubsystem.h"

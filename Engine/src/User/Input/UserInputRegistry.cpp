@@ -4,62 +4,36 @@
 #include "Core/TaskUtility.h"
 #include "Engine/Engine.h"
 
-Jafg::LUserInputTag Jafg::LUserInputTag::ToTag(LStringView S) noexcept
+Jafg::LMasterThreadTagRegistry<Jafg::LUserInputTag>& Jafg::LUserInputTag::GetMutableRegistry() noexcept
 {
     if (Detail::GMutableEngine)
     {
-        return Detail::GMutableEngine->GetLocalEgo().GetUserInputRegistry().GetMutableTagRegistry().RegisterOrGet(S);
+        return Detail::GMutableEngine->GetLocalEgo()
+            .GetUserInputRegistry()
+            .GetMutableTagRegistry();
     }
-
-    LOG_FATAL(LogUserInput, "Attempted to convert string [{}] to user input tag but engine is not valid.", S)
+    LOG_FATAL(LogUserInput, "Engine is invalid.")
 }
 
-Jafg::LUserInputTag Jafg::LUserInputTag::AsTag(LStringView S)
+Jafg::LInputContext* Jafg::LUserInputRegistry::RegisterContext(ContextCreateInfo Info)
 {
-    if (Detail::GMutableEngine)
+    check(Tasks::IsOnMasterThread())
+
+    LUserInputTag Tag{LUserInputTag::ToTag(Info.Identifier)};
+    if (algo::contains(this->Contexts, Tag, &LInputContext::GetTag))
     {
-        return Detail::GMutableEngine->GetLocalEgo().GetUserInputRegistry().GetMutableTagRegistry().GetTag(S);
-    }
-
-    LOG_FATAL(LogUserInput, "Attempted to convert string [{}] to user input tag but engine is not valid.", S)
-}
-
-LString Jafg::LUserInputTag::ToString() const noexcept
-{
-    if (GEngine)
-    {
-        return GEngine->GetLocalEgo().GetUserInputRegistry().GetTagRegistry().GetReprSafe(*this);
-    }
-
-    LOG_FATAL(LogUserInput, "Attempted to convert user input tag [{}] to string but engine is not valid.", *this)
-}
-
-Jafg::LInputAction const* Jafg::LUserInputRegistry::RegisterAction(LInputAction&& InAction)
-{
-    check( Tasks::IsOnMasterThread() )
-
-    if (algo::contains(this->Actions, InAction.GetTag(), &LInputAction::GetTag))
-    {
-        LOG_WARNING(LogUserInput, "Action [{}] was already registered.", InAction.GetTag())
+        LOG_WARNING(LogUserInput, "[{}]: Already registered.", Tag.ToString())
         return nullptr;
     }
 
-    LOG_VERBOSE(LogUserInput, "Registered user input action [{}].", InAction.GetTag())
-    this->Actions.emplace_back(std::move(InAction));
-    return &this->Actions.back();
-}
-
-Jafg::LUserInputContext* Jafg::LUserInputRegistry::RegisterContext(LUserInputContext&& Context)
-{
-    check( Tasks::IsOnMasterThread() )
-
-    if (algo::contains(this->Contexts, Context.GetTag(), &LUserInputContext::GetTag))
+    LOG_VERBOSE(LogUserInput, "[{}]: Registered.", Tag.ToString())
+    if (Info.DisplayName.empty())
     {
-        LOG_WARNING(LogUserInput, "Context [{}] was already registered.", Context.GetTag())
-        return nullptr;
+        this->Contexts.emplace_back(Tag, algo::add_spaces_to_camel_case(Tag.ToString()));
     }
-
-    LOG_VERBOSE(LogUserInput, "Registered user input context [{}].", Context.GetTag())
-    this->Contexts.emplace_back(std::move(Context));
+    else
+    {
+        this->Contexts.emplace_back(Tag, LString{Info.DisplayName});
+    }
     return &this->Contexts.back();
 }

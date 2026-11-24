@@ -357,6 +357,7 @@ Jafg::LNodeReply Jafg::WEditableTextButton::OnKeyEventFocused(LNodeKeyEventInfo 
     return this->HandleEditingKey(Info, Event);
 }
 
+//# The shortcuts are listed in the preferences by the read-only [TextField] input context of #JCoreInputSubsystem. Keep in sync.
 Jafg::LNodeReply Jafg::WEditableTextButton::HandleEditingKey(LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
 {
     LStringView Content{this->GetContent()};

@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-struct LUserInputContext;
+struct LInputContext;
 
 DECLARE_JAFG_WIDGET()
 class WEditorView final : public WUserWidget
@@ -33,7 +33,7 @@ private:
     void OnSecondaryDown();
     void OnSecondaryUp();
 
-    TArray<LUserInputContext*> LastUsedContexts;
+    TArray<LInputContext*> LastUsedContexts;
 };
 
 } /* ~Namespace Jafg */

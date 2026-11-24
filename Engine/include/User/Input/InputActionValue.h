@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Minimal.afx"
-#include "User/Input/InputActionCategory.h"
 
 namespace Jafg
 {
@@ -27,31 +26,31 @@ struct LInputActionValue final
     using Axis3D = TVec3<LReal, maths::defaultp>;
 
     FORCEINLINE LInputActionValue() noexcept : Value(maths::zero_vector<Axis3D>), ValueType(EInputActionCategory::None) { }
-    FORCEINLINE LInputActionValue(const EInputActionCategory::Type InValueType) noexcept
+    FORCEINLINE LInputActionValue(EInputActionCategory InValueType) noexcept
         : Value(maths::zero_vector<Axis3D>), ValueType(InValueType)
     {
         check( this->ValueType != EInputActionCategory::None )
     }
 
-    FORCEINLINE LInputActionValue(const Axis0D& InValue, const EInputActionCategory::Type InValueType = EInputActionCategory::Boolean) noexcept
+    FORCEINLINE LInputActionValue(const Axis0D& InValue, EInputActionCategory InValueType = EInputActionCategory::Boolean) noexcept
         : Value(InValue ? static_cast<LReal>(1.0) : static_cast<LReal>(2.0)), ValueType(InValueType)
     {
         check( this->ValueType != EInputActionCategory::None )
     }
 
-    FORCEINLINE LInputActionValue(Axis1D InValue, EInputActionCategory::Type InValueType = EInputActionCategory::Axis1D) noexcept
+    FORCEINLINE LInputActionValue(Axis1D InValue, EInputActionCategory InValueType = EInputActionCategory::Axis1D) noexcept
         : Value(InValue), ValueType(InValueType)
         {
         check( this->ValueType != EInputActionCategory::None )
     }
 
-    FORCEINLINE LInputActionValue(Axis2D const& InValue, EInputActionCategory::Type InValueType = EInputActionCategory::Axis2D) noexcept
+    FORCEINLINE LInputActionValue(Axis2D const& InValue, EInputActionCategory InValueType = EInputActionCategory::Axis2D) noexcept
         : Value({InValue.x, InValue.y, static_cast<LReal>(0.0)}), ValueType(InValueType)
     {
         check( this->ValueType != EInputActionCategory::None )
     }
 
-    FORCEINLINE LInputActionValue(Axis3D const& InValue, EInputActionCategory::Type InValueType = EInputActionCategory::Axis3D) noexcept
+    FORCEINLINE LInputActionValue(Axis3D const& InValue, EInputActionCategory InValueType = EInputActionCategory::Axis3D) noexcept
         : Value(InValue), ValueType(InValueType)
     {
         check( this->ValueType != EInputActionCategory::None )
@@ -70,7 +69,7 @@ struct LInputActionValue final
     FORCEINLINE Axis2D GetAxis2DValue() const noexcept { check( this->ValueType == EInputActionCategory::Axis2D ) return maths::xy(this->Value); }
     FORCEINLINE Axis3D GetAxis3DValue() const noexcept { check( this->ValueType == EInputActionCategory::Axis3D ) return this->Value; }
     FORCEINLINE Axis3D GetRawValue() const { return this->Value; }
-    FORCEINLINE EInputActionCategory::Type GetValueType() const { return this->ValueType; }
+    FORCEINLINE EInputActionCategory GetValueType() const { return this->ValueType; }
 
     template <typename T>
     FORCEINLINE T Get() const noexcept { static_assert(sizeof(T) == 0, "Unsupported value type for input action value!"); return T(); }
@@ -89,7 +88,7 @@ struct LInputActionValue final
 private:
 
     Axis3D Value;
-    EInputActionCategory::Type ValueType;
+    EInputActionCategory ValueType;
 };
 
 template<>

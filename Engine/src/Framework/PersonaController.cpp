@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Framework/PersonaController.h"
+#include "Core/App.h"
 #include "Framework/PersonaControllerComponent.h"
 #include "Framework/AvatarComponent.h"
 #include "Framework/EyeComponent.h"

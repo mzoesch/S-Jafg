@@ -5,21 +5,24 @@
 #include "Framework/Surface.h"
 #include "Framework/Cursor.h"
 #include "User/LocalEgo.h"
-#include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
 
-LString Jafg::LexToString(EInputActionCategory::Type InType)
+Jafg::EModFlags Jafg::GetHeldChordModifiers(LSurfaceBase const& Surface) noexcept
 {
-    switch (InType)
+    auto IsHeld{[&Surface](ELogicalKey Key) -> bool
     {
-    case EInputActionCategory::None:    { return "None"; }
-    case EInputActionCategory::Boolean: { return "Boolean"; }
-    case EInputActionCategory::Axis1D:  { return "Axis1D"; }
-    case EInputActionCategory::Axis2D:  { return "Axis2D"; }
-    case EInputActionCategory::Axis3D:  { return "Axis3D"; }
-    }
+        auto PhysicalKey{Surface.GetFrontend().GetPhysicalKey(Key)};
+        return PhysicalKey.has_value()
+            && *PhysicalKey != LPhysicalKey{}
+            && Surface.HasPlatformKeyState(*PhysicalKey, ERawInputStateBits::Press|ERawInputStateBits::Hold|ERawInputStateBits::Repeat);
+    }};
 
-    return "Invalid";
+    EModFlags Mods;
+    if (IsHeld(ELogicalKey::LeftShift) || IsHeld(ELogicalKey::RightShift))         { Mods |= EModBits::Shift; }
+    if (IsHeld(ELogicalKey::LeftControl) || IsHeld(ELogicalKey::RightControl))     { Mods |= EModBits::Control; }
+    if (IsHeld(ELogicalKey::LeftAlt) || IsHeld(ELogicalKey::RightAlt))             { Mods |= EModBits::Alt; }
+    if (IsHeld(ELogicalKey::LeftCommand) || IsHeld(ELogicalKey::RightCommand))     { Mods |= EModBits::Super; }
+    return Mods;
 }
 
 void Jafg::LUserInput::_DispatchInputDelegates(APersonaController& ActingController)
@@ -52,11 +55,11 @@ bool Jafg::LUserInput::ActivateContext(LUserInputTag Tag, std::size_t Where /* =
     return true;
 }
 
-bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& Contexts, std::size_t Where /* = INDEX_NONE */) noexcept
+bool Jafg::LUserInput::ActivateContexts(TArray<LInputContext const*> const& Contexts, std::size_t Where /* = INDEX_NONE */) noexcept
 {
     bool bOut{ false };
 
-    algo::for_each(Contexts, [this, &Where, &bOut](LUserInputContext const* Context)
+    algo::for_each(Contexts, [this, &Where, &bOut](LInputContext const* Context)
     {
         if (this->ActivateContext(Context->GetTag(), Where))
         {
@@ -123,11 +126,11 @@ bool Jafg::LUserInput::DeactivateContext(LUserInputTag Tag) noexcept
     return true;
 }
 
-bool Jafg::LUserInput::DeactivateContexts(TArray<LUserInputContext const*> const& Contexts) noexcept
+bool Jafg::LUserInput::DeactivateContexts(TArray<LInputContext const*> const& Contexts) noexcept
 {
     bool bOut { false };
 
-    algo::for_each(Contexts, [this, &bOut](LUserInputContext const* InContext)
+    algo::for_each(Contexts, [this, &bOut](LInputContext const* InContext)
     {
         if (this->DeactivateContext(InContext->GetTag()))
         {
@@ -262,107 +265,135 @@ void Jafg::LUserInput::SetConfineMouse(bool bConfine) noexcept
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& ActingController, TArray<LRawInput>* Inputs, EInputActionTriggerBits TriggerMask)
 {
-    STAT_CUSTOM_ZONE_FMT("DispatchInputDelegatesForKeyCategory-{}", LexToString(TriggerMask))
+    STAT_CUSTOM_ZONE_FMT("DispatchInputDelegatesForKeyCategory-{}", serde::to_string(TriggerMask))
 
     check(Inputs)
     check(TriggerMask != EInputActionTriggerBits::Identity)
 
     LUserInputRegistry const& Registry{this->Viewport.GetSurface().GetLocalEgo().GetUserInputRegistry()};
-    for (auto ContextName : this->ActiveContexts)
+    const EModFlags HeldMods{GetHeldChordModifiers(this->Viewport.GetSurface())};
+
+    //# @return The magnitude, if the chord matches the input.
+    auto Match{[HeldMods](LKeyChord const& Chord, LRawInput const& Input) -> std::optional<LInputActionValue::Axis3D>
     {
-        auto& Context{*Registry.GetContextByNameChecked(ContextName)};
-
-        for (auto const& Action : Context.GetMappedActions())
+        if (!Chord.AreModifiersHeld(HeldMods))
         {
-            for (auto const& Trigger : Action.Triggers)
+            return {};
+        }
+        if (Chord.Key == Input.PhysicalKey)
+        {
+            return LInputActionValue::Axis3D{Input.Value, 0.0f, 0.0f};
+        }
+        if (Chord.Key == LPhysicalKey::FromLogical(ELogicalKey::MouseXY))
+        {
+            if (Input.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseX))
             {
-                if (!(Trigger.TriggerFlags & TriggerMask))
-                {
-                    continue;
-                }
+                return LInputActionValue::Axis3D{Input.Value, 0.0f, 0.0f};
+            }
+            if (Input.PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseY))
+            {
+                return LInputActionValue::Axis3D{0.0f, Input.Value, 0.0f};
+            }
+        }
+        return {};
+    }};
 
-                //# TODO: Check that if a key is doubly bound and triggered: Will this not increase the Value by two?
-                LInputActionValue Value{Registry.GetActionByNameChecked(Action.ActionTag)->GetCategory()};
-                for (auto It{Inputs->begin()}; It != Inputs->end();)
+    //#
+    //# Chords with modifiers are more specific. They get the first chance to consume an input, so that e.g. Ctrl+S
+    //# does not also trigger a binding of a plain S.
+    //#
+    for (const bool bModifiedPass: {true, false})
+    {
+        for (auto ContextName : this->ActiveContexts)
+        {
+            auto& Context{Registry.GetContext(ContextName)};
+
+            for (auto const& Action : Context.GetRegisteredActions())
+            {
+                for (auto const& Trigger : Action.Triggers)
                 {
-                    if (TriggerMask == EInputActionTriggerBits::Triggered)
+                    if (!(Trigger.TriggerFlags & TriggerMask))
                     {
-                        if ((It->State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
-                        {
-                            ++It;
-                            continue;
-                        }
+                        continue;
                     }
-                    else if (TriggerMask == EInputActionTriggerBits::Ongoing)
+                    if (!algo::any_of(Trigger.Keys, [bModifiedPass](LKeyChord const& Chord){ return Chord.HasModifiers() == bModifiedPass; }))
                     {
-                        if ((It->State & ERawInputStateBits::Hold) == ERawInputStateBits::Identity)
-                        {
-                            ++It;
-                            continue;
-                        }
-                    }
-                    else if (TriggerMask == EInputActionTriggerBits::Completed)
-                    {
-                        if ((It->State & ERawInputStateBits::Release) == ERawInputStateBits::Identity)
-                        {
-                            ++It;
-                            continue;
-                        }
+                        continue;
                     }
 
-                    LInputActionValue::Axis3D Magnitude;
-                    if (algo::contains(Trigger.Keys, It->PhysicalKey))
+                    //# TODO: Check that if a key is doubly bound and triggered: Will this not increase the Value by two?
+                    LInputActionValue Value{Action.Category};
+                    for (auto It{Inputs->begin()}; It != Inputs->end();)
                     {
-                        Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
-                    }
-                    else
-                    {
-                        if (algo::contains(Trigger.Keys, LPhysicalKey::FromLogical(ELogicalKey::MouseXY)))
+                        if (TriggerMask == EInputActionTriggerBits::Triggered)
                         {
-                            if (It->PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseX))
-                            {
-                                Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
-                            }
-                            else if (It->PhysicalKey == LPhysicalKey::FromLogical(ELogicalKey::MouseY))
-                            {
-                                Magnitude = LInputActionValue::Axis3D{0.0f, It->Value, 0.0f};
-                            }
-                            else
+                            if ((It->State & ERawInputStateBits::Press) == ERawInputStateBits::Identity)
                             {
                                 ++It;
                                 continue;
                             }
                         }
-                        else
+                        else if (TriggerMask == EInputActionTriggerBits::Ongoing)
+                        {
+                            if ((It->State & ERawInputStateBits::Hold) == ERawInputStateBits::Identity)
+                            {
+                                ++It;
+                                continue;
+                            }
+                        }
+                        else if (TriggerMask == EInputActionTriggerBits::Completed)
+                        {
+                            if ((It->State & ERawInputStateBits::Release) == ERawInputStateBits::Identity)
+                            {
+                                ++It;
+                                continue;
+                            }
+                        }
+
+                        std::optional<LInputActionValue::Axis3D> Magnitude;
+                        for (auto const& Chord : Trigger.Keys)
+                        {
+                            if (Chord.HasModifiers() != bModifiedPass)
+                            {
+                                continue;
+                            }
+                            if ((Magnitude = Match(Chord, *It)))
+                            {
+                                break;
+                            }
+                        }
+                        if (!Magnitude)
                         {
                             ++It;
                             continue;
                         }
+
+                        for (auto& Modifier : Trigger.Modifiers)
+                        {
+                            *Magnitude = Modifier->ApplyModifier(*Magnitude);
+                        }
+                        Value += *Magnitude;
+
+                        // TODO: Add bConsumes as an option?
+                        It = Inputs->erase(It);
+
+                        continue;
                     }
 
-                    for (auto& Modifier : Trigger.Modifiers)
+                    if (Value.IsNonZero())
                     {
-                        Magnitude = Modifier->ApplyModifier(Magnitude);
+                        if (auto Result{Action.Callback({
+                            .Viewport = this->Viewport,
+                            .Controller = ActingController,
+                            .UserInput = *this,
+                            }, Value)}; Result.bDirty)
+                        {
+                            /* Do not proces any further. This is not optimal, as this can result in discarded inputs. */
+                            return;
+                        }
                     }
-                    Value += Magnitude;
-
-                    // TODO: Add bConsumes as an option?
-                    It = Inputs->erase(It);
 
                     continue;
-                }
-
-                if (Value.IsNonZero())
-                {
-                    if (auto Result{Action.Callback({
-                        .Viewport = this->Viewport,
-                        .Controller = ActingController,
-                        .UserInput = *this,
-                        }, Value)}; Result.bDirty)
-                    {
-                        /* Do not proces any further. This is not optimal, as this can result in discarded inputs. */
-                        return;
-                    }
                 }
 
                 continue;
@@ -370,8 +401,6 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(APersonaController& 
 
             continue;
         }
-
-        continue;
     }
 
     return;

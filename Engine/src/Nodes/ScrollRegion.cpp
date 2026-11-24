@@ -301,7 +301,35 @@ Jafg::LNodeReply Jafg::WScrollRegion::OnKeyEventUnfocused(LNodeKeyEventInfo cons
 void Jafg::WScrollRegion::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
+    const LVec2F OldSizeOfChildren{this->DesiredSizeOfChildren};
     this->DesiredSizeOfChildren = this->GetDesiredSize_v2();
+
+    if (this->Behavior.bKeepScrollOffsetOnResize && !this->bScrollPositionSetExplicitly)
+    {
+        //# @return The position that results in the same scrolled distance with the new content size.
+        auto KeepOffset{[](f32 Position, f32 OldContent, f32 NewContent, f32 Visible) -> f32
+        {
+            if (maths::eq_e(OldContent, NewContent))
+            {
+                return Position;
+            }
+            const f32 OldMaxScroll{maths::max(OldContent - Visible, 0.0f)};
+            const f32 NewMaxScroll{maths::max(NewContent - Visible, 0.0f)};
+            if (OldMaxScroll <= 0.0f || NewMaxScroll <= 0.0f)
+            {
+                /* Nothing was scrolled, or nothing can be scrolled anymore. */
+                return 0.0f;
+            }
+            return maths::clamp(Position * OldMaxScroll / NewMaxScroll, 0.0f, 1.0f);
+        }};
+        const LVec2F Visible{this->GetAnchoredSize_v2()};
+        this->ScrollPosition = {
+            KeepOffset(this->ScrollPosition.x, OldSizeOfChildren.x, this->DesiredSizeOfChildren.x, Visible.x),
+            KeepOffset(this->ScrollPosition.y, OldSizeOfChildren.y, this->DesiredSizeOfChildren.y, Visible.y),
+            };
+    }
+    this->bScrollPositionSetExplicitly = false;
+
     this->SetDesiredSizeInSpt(
           this->ScrollRegionSize.InStaticPoints(this->GetViewport())
         + this->Padding.GetDesiredSize().InStaticPoints(this->GetViewport())

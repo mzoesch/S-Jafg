@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/Engine.h"
+#include "Core/App.h"
 #include "Framework/TextureSubsystem.h"
 #include "Framework/MeshSubsystem.h"
 #include "Core/TaskUtility.h"

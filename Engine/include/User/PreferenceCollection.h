@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Minimal.afx"
+#include "Nodes/Node.h"
 
 namespace Jafg
 {
@@ -10,6 +11,10 @@ namespace Jafg
 struct LPreference;
 struct LPreferenceValue;
 struct LPreferenceCollection;
+struct LPreferenceValueChangeRequest;
+
+//# The pending changes of a user interface that displays preferences.
+typedef TArray<LPreferenceValueChangeRequest> LPreferenceChanges;
 
 namespace Detail
 {
@@ -45,6 +50,8 @@ struct LPreference
     LString Identifier;
     LString DisplayName;
     LString Tooltip;
+    //# Additional text that a search matches against. Not displayed.
+    LString SearchKeywords;
 
     NODISCARD FORCEINLINE bool IsValue() const noexcept { return this->Type == EPreference::Value; }
     NODISCARD FORCEINLINE bool IsCollection() const noexcept { return this->Type == EPreference::Collection; }
@@ -57,6 +64,17 @@ struct LPreference
 private:
 
     EPreference Type;
+};
+
+//# What a user interface that displays a collection offers to it.
+struct LPreferenceCollectionHost
+{
+    //# The pending changes of the host. Also identifies the host.
+    LPreferenceChanges* Changes{};
+    //# Re-evaluates which preferences are shown. E.g., after #LPreferenceCollection::IsValueShown changed its mind.
+    TFunction2<void()> RefreshVisibility;
+    //# Refreshes the collection and rebuilds its nodes later this tick. Pending changes are kept.
+    TFunction2<void()> RequestRebuild;
 };
 
 //# A nestable collection of preferences.
@@ -84,10 +102,23 @@ struct LPreferenceCollection: LPreference
     LPreferenceCollection& EmplaceCollection(auto&&... Args) noexcept
         requires std::constructible_from<LPreferenceCollection, decltype(Args)...>
     {
-        return *this->Children.emplace_back(std::make_unique<LPreferenceCollection>(std::forward<decltype(Args)>(Args)...));
+        return static_cast<LPreferenceCollection&>(*this->Children.emplace_back(std::make_unique<LPreferenceCollection>(std::forward<decltype(Args)>(Args)...)));
     }
 
     TArray<std::unique_ptr<LPreference>> Children;
+
+    //#
+    //# Optional hooks for top level collections with dynamic content.
+    //#
+
+    //# Regenerates #Children. Called before a host builds the nodes of this collection and whenever it is selected.
+    TFunction2<void(LPreferenceCollection& Self, LPreferenceCollectionHost Host)> Refresh;
+    //# Called when a host that called #Refresh goes away.
+    TFunction2<void(LPreferenceChanges const& HostChanges)> ReleaseHost;
+    //# A node shown below the title of the collection.
+    TFunction2<LFactoryNode(LViewport& Viewport, LPreferenceChanges& Changes)> CreateHeaderNode;
+    //# Hides the value rows that do not pass. Hosts call #LPreferenceCollectionHost::RefreshVisibility to re-evaluate.
+    TFunction2<bool(LPreferenceValue const& Value, LPreferenceChanges const& Changes)> IsValueShown;
 };
 
 FORCEINLINE constexpr LPreferenceCollection& LPreference::AsCollection() noexcept

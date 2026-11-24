@@ -20,31 +20,8 @@ enum struct ERawInputStateBits
     //# The key was just released inbetween this and the last frame.
     Release = 0x01 << 3,
 };
+SERDE_ENUM(ERawInputStateBits, Identity, Press, Hold, Repeat, Release)
 ENUM_STRUCT_FLAGS(ERawInputStateBits, ERawInputStateFlags)
-inline LStringView LexToString(ERawInputStateBits Bits) noexcept
-{
-    switch (Bits)
-    {
-    case ERawInputStateBits::Identity: return "Identity";
-    case ERawInputStateBits::Press:    return "Press";
-    case ERawInputStateBits::Hold:     return "Hold";
-    case ERawInputStateBits::Repeat:   return "Repeat";
-    case ERawInputStateBits::Release:  return "Release";
-    }
-    std::unreachable();
-}
-inline LString LexToString(ERawInputStateFlags Flags) noexcept
-{
-    std::stringstream Stream;
-    if (Flags & ERawInputStateBits::Press)   { Stream << "Press|"; }
-    if (Flags & ERawInputStateBits::Hold)    { Stream << "Hold|"; }
-    if (Flags & ERawInputStateBits::Repeat)  { Stream << "Repeat|"; }
-    if (Flags & ERawInputStateBits::Release) { Stream << "Release|"; }
-
-    LString Result{Stream.str()};
-    if (Result.empty()) { Result = "Identity"; }
-    return Result;
-}
 
 struct LRawInput final
 {
@@ -82,7 +59,7 @@ struct LRawInput final
     NODISCARD LString ToString() const noexcept
     {
         return algo::sprintf("{{{}: {:.2f} M:{} S:{}}}"
-            , this->PhysicalKey.ToString(), this->Value, LexToString(this->Mods), LexToString(this->State));
+            , this->PhysicalKey.ToString(), this->Value, serde::to_string(this->Mods), serde::to_string(this->State));
     }
 };
 

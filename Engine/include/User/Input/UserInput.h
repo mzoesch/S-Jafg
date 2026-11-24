@@ -14,6 +14,13 @@ class LLocalEgo;
 class APersonaController;
 
 //#
+//# The chord modifiers whose keys are currently held on the surface.
+//# This is derived from the key states, because the modifiers reported with an event only reflect the state when that
+//# specific key last changed.
+//#
+NODISCARD ENGINE_API EModFlags GetHeldChordModifiers(LSurfaceBase const& Surface) noexcept;
+
+//#
 //# Proxy for the raw platform physical input data and the dispatching of input delegates.
 //#
 class LUserInput final
@@ -36,9 +43,9 @@ public:
     //# @return True if the context was activated.
     //#
     ENGINE_API  bool ActivateContext(LUserInputTag Tag, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept;
-    FORCEINLINE bool ActivateContext(LUserInputContext const& Context, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept { return this->ActivateContext(Context.GetTag(), Where); }
+    FORCEINLINE bool ActivateContext(LInputContext const& Context, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept { return this->ActivateContext(Context.GetTag(), Where); }
     FORCEINLINE bool ActivateContext(LStringView Name, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept { return this->ActivateContext(LUserInputTag::ToTag(Name), Where); }
-    ENGINE_API  bool ActivateContexts(TArray<LUserInputContext const*> const& Contexts, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept;
+    ENGINE_API  bool ActivateContexts(TArray<LInputContext const*> const& Contexts, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept;
     ENGINE_API  bool ActivateContexts(TArray<LUserInputTag> const& Tags, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept;
     ENGINE_API  bool ActivateContexts(TArray<LStringView> const& Names, std::size_t Where = static_cast<std::size_t>(INDEX_NONE)) noexcept;
 
@@ -46,10 +53,10 @@ public:
     //# Deactivate a context. Nullptr is ok to pass.
     //# @return True if the context / at least one context was deactivated.
     //#
-    FORCEINLINE bool DeactivateContext(LUserInputContext const& Context) noexcept { return this->DeactivateContext(Context.GetTag()); }
+    FORCEINLINE bool DeactivateContext(LInputContext const& Context) noexcept { return this->DeactivateContext(Context.GetTag()); }
     ENGINE_API  bool DeactivateContext(LUserInputTag Tag) noexcept;
     FORCEINLINE bool DeactivateContext(LStringView Name) noexcept { return this->DeactivateContext(LUserInputTag::ToTag(Name)); }
-    ENGINE_API  bool DeactivateContexts(TArray<LUserInputContext const*> const& Contexts) noexcept;
+    ENGINE_API  bool DeactivateContexts(TArray<LInputContext const*> const& Contexts) noexcept;
     ENGINE_API  bool DeactivateContexts(TArray<LUserInputTag> const& Names) noexcept;
     ENGINE_API  bool DeactivateContexts(TArray<LStringView> const& Names) noexcept;
     ENGINE_API  bool DeactivateAllContexts() noexcept;

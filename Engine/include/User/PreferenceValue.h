@@ -63,6 +63,11 @@ struct LPreferenceValue: LPreference
     //# Save to value to a persistent storage.
     virtual void SaveValue(LString Value) = 0;
 
+    //# Optional short text that user interfaces show right after the display name.
+    LString Annotation;
+    //# The user cannot change this preference. User interfaces show it, but mark it as read-only.
+    bool bReadOnly{};
+
     NODISCARD FORCEINLINE constexpr bool IsSupported() const noexcept { return this->bSupported; }
     NODISCARD FORCEINLINE constexpr bool RequiresRestart() const noexcept { return this->bRequiresRestart; }
     NODISCARD FORCEINLINE constexpr bool RequiresImminentRestart() const noexcept { return this->bRequiresImminentRestart; }

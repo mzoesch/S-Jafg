@@ -5,6 +5,7 @@
 
 #define VMA_IMPLEMENTATION
 #include "Framework/FrontendVk.h"
+#include "Core/App.h"
 
 #include "Framework/MeshSubsystem.h"
 #include "Framework/TextureSubsystem.h"

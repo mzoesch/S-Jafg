@@ -15,7 +15,7 @@ namespace Jafg
 enum struct ETextureQualityBits: u8
 {
     //# Usually less than 512 sized textures.
-    Potato      = 0x0 << 0,
+    Potato      = 0x1 << 0,
     //# Usually less than 1k sized textures.
     Toaster     = 0x1 << 1,
     //# Usually 1k sized textures.

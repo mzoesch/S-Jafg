@@ -4,6 +4,7 @@
 #include "Framework/Frontend.h"
 #include "User/PreferenceCollection.h"
 #include "User/PreferenceValue.h"
+#include "User/ControlsPreferences.h"
 #include "Widgets/Input_Slider.h"
 #include "Widgets/Input_List.h"
 #include "Widgets/Input_Boolean.h"
@@ -278,7 +279,11 @@ void Jafg::JUserPreferences::BeginLife()
     }
 
     {
-        auto& ControlsCollection{this->TopLevelCollections.emplace_back(LPreferenceCollection::CreateInfo{"Controls", "Controls"})};
+        Controls::InstallControlsCollection(this->TopLevelCollections.emplace_back(LPreferenceCollection::CreateInfo{
+            .Identifier = "Controls",
+            .DisplayName = "Controls",
+            .Tooltip = "The keys of all user input contexts",
+            }));
     }
 
     {
