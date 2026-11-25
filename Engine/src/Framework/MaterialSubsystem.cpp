@@ -1329,6 +1329,42 @@ Jafg::LMaterialInstanceRef Jafg::JMaterialSubsystem::GetInstanceFromName(LPlugin
     return this->GetInstance(this->GetMaterial(Namespace, Name));
 }
 
+namespace
+{
+
+NODISCARD Jafg::JTextureSubsystem::LFileRequest MakePbrTextureRequest(Jafg::LPluginInfo Namespace, LString Path, Jafg::LPbrMaterialTemplate::ETextureType Type)
+{
+    using namespace Jafg;
+    //# TODO: Optimize later on:
+    //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
+    //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
+    //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
+    vk::Format const Format{
+           Type == LPbrMaterialTemplate::ETextureType::Albedo
+        || Type == LPbrMaterialTemplate::ETextureType::Emissive
+        ? vk::Format::eR8G8B8A8Srgb
+        : vk::Format::eR8G8B8A8Unorm
+        };
+    return {
+        .Namespace = Namespace,
+        .Path = std::move(Path),
+        .HostCreateInfo = {.Format=Format},
+        .DeviceCreateInfo = {.Samples=vk::SampleCountFlagBits::e1},
+        };
+}
+
+void MakePbrTextureBindless(Jafg::JTextureSubsystem& TextureSubsystem, Jafg::LTexture2Ref const& Texture)
+{
+    check(Texture)
+    /* Loaded textures are shared. The texture might already be bound by another material (or another type). */
+    if (!Texture->IsBindless())
+    {
+        TextureSubsystem.AddTextureToGlobalBindlessArray(&*Texture);
+    }
+}
+
+} /* ~Namespace */
+
 Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginInfo Namespace, LStringView Name)
 {
     check(Namespace)
@@ -1375,17 +1411,25 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
             Result->Data.AlphaCutoff = Pbr->AlphaCutoff;
             Result->Data.NormalScale = Pbr->NormalScale;
 
+            /* All textures of the material are requested at once, so that they are decoded in parallel. */
+            TArray<LPbrMaterialTemplate::ETextureType> RequestedTypes;
+            TArray<JTextureSubsystem::LFileRequest> Requests;
             for (auto const Type: PbrTextureTypes)
             {
-                if (LString const Texture{this->ResolvePbrTemplateTexture(Namespace, *Pbr, Type)}; !Texture.empty())
+                GetPbrTextureSlot(Result->Data, Type) = rhi::invalid_resource_index;
+                if (LString Texture{this->ResolvePbrTemplateTexture(Namespace, *Pbr, Type)}; !Texture.empty())
                 {
-                    Result->LoadedTextures.emplace_back(this->LoadPbrTexture(Namespace, Texture, Type));
-                    GetPbrTextureSlot(Result->Data, Type) = Result->LoadedTextures.back()->GetBindlessIndex();
+                    RequestedTypes.push_back(Type);
+                    Requests.push_back(MakePbrTextureRequest(Namespace, std::move(Texture), Type));
                 }
-                else
-                {
-                    GetPbrTextureSlot(Result->Data, Type) = rhi::invalid_resource_index;
-                }
+            }
+            check(this->TextureSubsystem)
+            auto Textures{this->TextureSubsystem->FromFiles(Requests)};
+            for (std::size_t I{0}; I < Textures.size(); ++I)
+            {
+                MakePbrTextureBindless(*this->TextureSubsystem, Textures[I]);
+                GetPbrTextureSlot(Result->Data, RequestedTypes[I]) = Textures[I]->GetBindlessIndex();
+                Result->LoadedTextures.emplace_back(std::move(Textures[I]));
             }
 
             Result->Data.Sampler = Pbr->Sampler;
@@ -1436,25 +1480,8 @@ LString Jafg::JMaterialSubsystem::ResolvePbrTemplateTexture(LPluginInfo Namespac
 Jafg::LTexture2Ref Jafg::JMaterialSubsystem::LoadPbrTexture(LPluginInfo Namespace, LStringView Path, LPbrMaterialTemplate::ETextureType Type)
 {
     check(this->TextureSubsystem)
-
-    //# TODO: Optimize later on:
-    //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
-    //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
-    //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
-    vk::Format const Format{
-           Type == LPbrMaterialTemplate::ETextureType::Albedo
-        || Type == LPbrMaterialTemplate::ETextureType::Emissive
-        ? vk::Format::eR8G8B8A8Srgb
-        : vk::Format::eR8G8B8A8Unorm
-        };
-
-    LTexture2Ref Texture{this->TextureSubsystem->FromFile(Namespace, Path, {.Format=Format}, {.Samples=vk::SampleCountFlagBits::e1})};
-    check(Texture)
-    /* Loaded textures are shared. The texture might already be bound by another material (or another type). */
-    if (!Texture->IsBindless())
-    {
-        this->TextureSubsystem->AddTextureToGlobalBindlessArray(&*Texture);
-    }
+    LTexture2Ref Texture{std::move(this->TextureSubsystem->FromFiles(std::array{MakePbrTextureRequest(Namespace, LString{Path}, Type)}).front())};
+    MakePbrTextureBindless(*this->TextureSubsystem, Texture);
     return Texture;
 }
 

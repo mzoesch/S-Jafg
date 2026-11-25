@@ -178,7 +178,7 @@ std::expected<Jafg::LMeshScene, Jafg::LStaticMesh::EResult> Jafg::JMeshSubsystem
     , std::optional<LStaticMeshCreateInfo> Info /* = {} */
     ) const
 {
-    STAT_FUNCTION()
+    STAT_CUSTOM_ZONE_FMT("LoadScene::{}#{}", InPath, SceneIdx ? algo::sprintf("{}", *SceneIdx) : "<default>")
 
     check(Namespace)
 

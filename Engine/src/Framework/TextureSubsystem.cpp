@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Rhi/FromString.h"
+#include "Core/TaskUtility.h"
 
 namespace
 {
@@ -132,10 +133,9 @@ std::size_t Jafg::JTextureSubsystem::GetLoadedTextureCount() const noexcept
 }
 
 template<typename TMakePath>
-Jafg::LTexture2Ref Jafg::JTextureSubsystem::FindOrLoad(LPluginInfo Namespace, LStringView Key, TMakePath&& MakePath
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FindOrAdd(LPluginInfo Namespace, LStringView Key, TMakePath&& MakePath
     , LTexture2::HostInfo HostCreateInfo
     , LTexture2::DeviceInfo DeviceCreateInfo
-    , ETexture2State State
     )
 {
     check(Namespace)
@@ -146,12 +146,22 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FindOrLoad(LPluginInfo Namespace, LS
         check(It->second->GetHostCreateInfo().Format == HostCreateInfo.Format)
         check(It->second->GetDeviceCreateInfo().DesiredMipLevels == DeviceCreateInfo.DesiredMipLevels)
         check(It->second->GetDeviceCreateInfo().Samples == DeviceCreateInfo.Samples)
-        It->second->BringToState(State);
         return It->second;
     }
 
     auto Result{std::make_shared<LTexture2>(std::forward<TMakePath>(MakePath)(), HostCreateInfo, DeviceCreateInfo)};
     Cache.emplace(LString{Key}, Result);
+    return Result;
+}
+
+template<typename TMakePath>
+Jafg::LTexture2Ref Jafg::JTextureSubsystem::FindOrLoad(LPluginInfo Namespace, LStringView Key, TMakePath&& MakePath
+    , LTexture2::HostInfo HostCreateInfo
+    , LTexture2::DeviceInfo DeviceCreateInfo
+    , ETexture2State State
+    )
+{
+    auto Result{this->FindOrAdd(Namespace, Key, std::forward<TMakePath>(MakePath), HostCreateInfo, DeviceCreateInfo)};
     Result->BringToState(State);
     return Result;
 }
@@ -168,6 +178,58 @@ Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromFile(LPluginInfo Namespace, LStr
         , DeviceCreateInfo
         , State
         );
+}
+
+TArray<Jafg::LTexture2Ref> Jafg::JTextureSubsystem::FromFiles(std::span<LFileRequest const> Requests)
+{
+    STAT_FUNCTION()
+
+    TArray<LTexture2Ref> Result;
+    Result.reserve(Requests.size());
+    /* Unique textures that have to be decoded to host memory to reach their requested state. */
+    TArray<LTexture2*> Decode;
+    for (auto const& Request: Requests)
+    {
+        check(Request.Namespace)
+        auto Texture{this->FindOrAdd(Request.Namespace, Request.Path, [&Request]{ return *Request.Namespace / Request.Path; }
+            , Request.HostCreateInfo
+            , Request.DeviceCreateInfo
+            )};
+        bool const bNeedsHost{(Request.State & ETexture2StateBits::Host) || ((Request.State & ETexture2StateBits::Device) && !Texture->IsOnDevice())};
+        if (bNeedsHost && !Texture->IsOnHost() && !std::ranges::contains(Decode, Texture.get()))
+        {
+            Decode.push_back(Texture.get());
+        }
+        Result.push_back(std::move(Texture));
+    }
+
+    Tasks::ParallelFor(Decode.size(), [&Decode](std::size_t const I)
+    {
+        if (auto const Status{Decode[I]->LoadToHost()}; Status != LTexture2::EResult::Success)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to load texture to host: [{}].", Decode[I]->GetPath(), LTexture2::ResultToString(Status))
+        }
+    });
+
+    for (std::size_t I{0}; I < Requests.size(); ++I)
+    {
+        Result[I]->BringToState(Requests[I].State);
+    }
+
+    /* Free the host copies that were only decoded for the device upload, as #LTexture2::BringToState would. */
+    for (LTexture2* Texture: Decode)
+    {
+        bool const bKeepOnHost{algo::any_of(std::views::iota(0uz, Requests.size()), [&](std::size_t const I)
+        {
+            return Result[I].get() == Texture && (Requests[I].State & ETexture2StateBits::Host);
+        })};
+        if (!bKeepOnHost && Texture->IsOnDevice())
+        {
+            Texture->FreeFromHost();
+        }
+    }
+
+    return Result;
 }
 
 Jafg::LTexture2Ref Jafg::JTextureSubsystem::FromTextureView(LPluginInfo Namespace, LStringView Name, ETexture2State State /* = ETexture2StateBits::Device */)

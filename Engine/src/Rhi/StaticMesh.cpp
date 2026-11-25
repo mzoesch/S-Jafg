@@ -516,7 +516,7 @@ std::optional<f32> Jafg::LStaticMesh::TraceTriangles(LVec3F const& Origin, LVec3
 
 void Jafg::LStaticMesh::ReloadConvex()
 {
-    STAT_FUNCTION()
+    STAT_CUSTOM_ZONE_FMT("ReloadConvex::{}", this->Source)
 
     this->FreeConvex();
 

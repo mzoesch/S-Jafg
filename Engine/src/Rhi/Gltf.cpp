@@ -854,7 +854,7 @@ void FreeExternalFile(uint8_t* Data, uint64_t /* Size */, void* /* UserData */)
 
 Jafg::LStaticMesh::EResult Jafg::Gltf::Parse(LPath const& Path, LModel& Out)
 {
-    STAT_FUNCTION()
+    STAT_CUSTOM_ZONE_FMT("Gltf::Parse::{}", Path.generic_string())
     check(!Out.Native.arena_ && "Model was already parsed.")
 
     std::ifstream F{Path, std::ios::binary|std::ios::ate};

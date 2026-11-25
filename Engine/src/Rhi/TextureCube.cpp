@@ -3,6 +3,7 @@
 #include "Rhi/TextureCube.h"
 #include "Engine/Engine.h"
 #include "Framework/TextureSubsystem.h"
+#include "Core/TaskUtility.h"
 
 #include "Definitions/PushNoWarnings.h"
     #define STBI_ONLY_PNG
@@ -56,10 +57,14 @@ void Jafg::LTextureCube2::LoadToDevice()
         LTexture2{Custom[4], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
         LTexture2{Custom[5], {.Format=Format}, {.DesiredMipLevels=MipLevels,.Samples=Samples}},
         };
-    for (auto& Tex: Textures)
+    /* The faces are independent and large. Decode them in parallel. */
+    Tasks::ParallelFor(Textures.size(), [&Textures](std::size_t const I)
     {
-        Tex.BringToState(ETexture2StateBits::Host);
-    }
+        if (auto const Status{Textures[I].LoadToHost()}; Status != LTexture2::EResult::Success)
+        {
+            LOG_FATAL(LogRhi, "[{}]: Failed to load cube face to host: [{}].", Textures[I].GetPath(), LTexture2::ResultToString(Status))
+        }
+    });
 
     auto Extent{Textures[0].GetExtent()};
     checkCode

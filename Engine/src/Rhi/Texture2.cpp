@@ -129,6 +129,8 @@ void Jafg::LTexture2::BringToState(ETexture2State State)
 
 Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost()
 {
+    STAT_CUSTOM_ZONE_FMT("LoadToHost::{}", this->Path)
+
     check(this->Path.empty() == false)
     LOG_VERBOSE(LogRhi, "Loading texture2 from path [{}].", this->Path)
 
@@ -149,13 +151,15 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost()
     auto Bin{finder::read_binary_file(this->Path)};
     LVec2i32 StbiExtent;
     i32 NrChannels;
-    ::stbi_set_flip_vertically_on_load(false);
+    /* Per thread. Textures may be decoded concurrently (see JTextureSubsystem::FromFiles). */
+    ::stbi_set_flip_vertically_on_load_thread(false);
     u8* Data{::stbi_load_from_memory(
           reinterpret_cast<stbi_uc const*>(Bin.data()), static_cast<int>(Bin.size())
         , &StbiExtent.x, &StbiExtent.y, &NrChannels
         , static_cast<i32>(rhi::vk_channels_per_pixel(this->Meta.Format))
         )};
-    if (stbi_failure_reason())
+    /* The failure reason is never reset, so it may be stale from an earlier failure on this thread. */
+    if (Data == nullptr)
     {
         LOG_FATAL(LogRhi, "Failed to load texture2 [{}] from disk. Reason: [{}].", this->Path, stbi_failure_reason())
     }
@@ -180,6 +184,8 @@ Jafg::LTexture2::EResult Jafg::LTexture2::LoadToHost()
 
 void Jafg::LTexture2::LoadToDevice()
 {
+    STAT_CUSTOM_ZONE_FMT("LoadToDevice::{}", this->Path)
+
     check(this->IsOnHost())
     LOG_TRACE(LogRhi, "Loading texture2 [{}] to device.", this->Path)
     auto& Frontend{GEngine->GetLocalEgo().GetFrontend()};

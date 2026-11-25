@@ -47,6 +47,21 @@ public:
         , LTexture2::DeviceInfo DeviceCreateInfo
         , ETexture2State State = ETexture2StateBits::Device
         );
+    struct LFileRequest final
+    {
+        LPluginInfo Namespace;
+        //# Relative to the content dir of the namespace.
+        LString Path;
+        LTexture2::HostInfo HostCreateInfo;
+        LTexture2::DeviceInfo DeviceCreateInfo;
+        ETexture2State State{ ETexture2StateBits::Device };
+    };
+    //#
+    //# Like #FromFile for many textures at once. The files are decoded in parallel, the device uploads happen on the
+    //# calling thread. Prefer this over repeated #FromFile calls when loading multiple textures at once.
+    //# @return The textures in the order of the requests.
+    //#
+    NODISCARD TArray<LTexture2Ref> FromFiles(std::span<LFileRequest const> Requests);
     //# Loads the texture of a texture view. Or reuses it, if already loaded.
     NODISCARD LTexture2Ref FromTextureView(LPluginInfo Namespace, LStringView Name
         , ETexture2State State = ETexture2StateBits::Device
@@ -93,6 +108,12 @@ private:
         , LTexture2::HostInfo HostCreateInfo
         , LTexture2::DeviceInfo DeviceCreateInfo
         , ETexture2State State
+        );
+    //# Like #FindOrLoad, but does not bring the texture into any state.
+    template<typename TMakePath>
+    NODISCARD LTexture2Ref FindOrAdd(LPluginInfo Namespace, LStringView Key, TMakePath&& MakePath
+        , LTexture2::HostInfo HostCreateInfo
+        , LTexture2::DeviceInfo DeviceCreateInfo
         );
 
     inline constexpr static auto BindlessTextureArrayCapacity{ 128uz };

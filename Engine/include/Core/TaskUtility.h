@@ -4,6 +4,10 @@
 
 #include "Core/TaskForward.h"
 #include "Framework/Runnable.h"
+#if !JAFG_PLATFORM_WASM
+    #include <atomic>
+    #include <thread>
+#endif /* !JAFG_PLATFORM_WASM */
 
 namespace Jafg
 {
@@ -149,6 +153,14 @@ enum ERunAllTasks : i32 { RunAllTasks = 0, };
 //# @return The number of tasks that were run.
 ENGINE_API i32 TryRunTasks(ENamedThreads::Type Which, ETaskTime::Type Time, i32 MaxTasks);
 
+//#
+//# Calls Fn(I) for every I in [0, Count) on up to hardware-concurrency many threads (the calling thread included)
+//# and returns once every call has returned. Meant for short-lived, independent and heavy work, e.g., decoding files.
+//# Fn has to be safe to call concurrently for different indices. Runs serially on platforms without threads.
+//#
+template<typename TFn>
+void ParallelFor(std::size_t Count, TFn&& Fn);
+
 ENGINE_API void StopThread(ENamedThreads::Type ThreadName);
 ENGINE_API void JoinThread(ENamedThreads::Type ThreadName);
 
@@ -211,6 +223,45 @@ FORCEINLINE ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit, Args
     i32 JafgThreadId = Private::MakeNewCustomNamedThreadId();
     *OutExit = LaunchNamedThread<T>(static_cast<ENamedThreads::Type>(JafgThreadId), std::forward<Args>(InArgs)...);
     return static_cast<ENamedThreads::Type>(JafgThreadId);
+}
+
+template<typename TFn>
+void ParallelFor(std::size_t const Count, TFn&& Fn)
+{
+#if JAFG_PLATFORM_WASM
+    for (std::size_t I{0}; I < Count; ++I)
+    {
+        Fn(I);
+    }
+#else /* JAFG_PLATFORM_WASM */
+    if (Count <= 1)
+    {
+        if (Count == 1)
+        {
+            Fn(0uz);
+        }
+        return;
+    }
+
+    std::size_t const Workers{std::min<std::size_t>(Count, std::max(1u, std::thread::hardware_concurrency()))};
+    std::atomic<std::size_t> Next{0};
+    auto Work{[&Next, &Fn, Count]
+    {
+        for (std::size_t I; (I = Next.fetch_add(1, std::memory_order_relaxed)) < Count;)
+        {
+            Fn(I);
+        }
+    }};
+
+    std::vector<std::jthread> Threads;
+    Threads.reserve(Workers - 1);
+    for (std::size_t I{1}; I < Workers; ++I)
+    {
+        Threads.emplace_back(Work);
+    }
+    Work();
+    /* Joined by the destructors of the threads. */
+#endif /* !JAFG_PLATFORM_WASM */
 }
 
 FORCEINLINE ENamedThreads::Type Private::MakeNewCustomNamedThreadId()

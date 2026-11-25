@@ -781,12 +781,12 @@ void Jafg::App::PrettyPrintApiUsage() noexcept
             bFirst = false;
         }
 
-        LOG_INFO(LogHelp, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description)
+        LOG_INFO(LogHelp, "  --{:<{}} : {}", Param->Identifier, MaxSize, Param->Description)
         if (auto Str{SS.str()}; !Str.empty())
         {
-            LOG_INFO(LogHelp, "   {:<{}}   Variations: {}", "", MaxSize, Str)
+            LOG_INFO(LogHelp, "    {:<{}}   Variations: {}", "", MaxSize, Str)
         }
-        LOG_INFO(LogHelp, "   {:<{}}   Flags: {}", "", MaxSize, LexToString(Param->Flags))
+        LOG_INFO(LogHelp, "    {:<{}}   Flags: {}", "", MaxSize, LexToString(Param->Flags))
     }
 }
 
