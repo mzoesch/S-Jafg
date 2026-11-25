@@ -13,6 +13,7 @@
 #include "Framework/StaticMeshComponent.h"
 #include "../Framework/PhysicsForeignCore.h"
 #include "Gltf.h"
+#include "UniquePositions.h"
 
 #if JAFG_WITH_CLANG
     #pragma clang diagnostic push
@@ -531,29 +532,17 @@ void Jafg::LStaticMesh::ReloadConvex()
         }
     }
 
-    JPH::Array<JPH::Vec3> Positions;
+    std::size_t VertexCount{};
+    if constexpr (LogRhi.CompilesFor<ELogVerbosity::Verbose>)
+    for (auto const& Mesh: this->HostMeshes)
     {
-        size_t Count{0};
-        for (auto const& Mesh: this->HostMeshes)
+        for (auto const& Primitive: Mesh.Primitives)
         {
-            for (auto const& Primitive: Mesh.Primitives)
-            {
-                Count += Primitive.Vertices.size();
-            }
-        }
-        Positions.reserve(Count);
-
-        for (auto const& Mesh: this->HostMeshes)
-        {
-            for (auto const& Primitive: Mesh.Primitives)
-            {
-                for (auto const& Vertex: Primitive.Vertices)
-                {
-                    Positions.emplace_back(Vertex.Position.x, Vertex.Position.y, Vertex.Position.z);
-                }
-            }
+            VertexCount += Primitive.Vertices.size();
         }
     }
+    /* Duplicates do not change the hull, but make building it a lot slower. */
+    JPH::Array<JPH::Vec3> const Positions{Detail::GatherUniquePositions(this->HostMeshes)};
 
     if (!bWasOnHost)
     {
@@ -616,8 +605,8 @@ void Jafg::LStaticMesh::ReloadConvex()
         while (Edge != Face->mFirstEdge);
     }
 
-    LOG_VERBOSE(LogRhi, "[{}]: Built convex hull with [{}] vertices from [{}] vertices."
-        , this->Source, this->ConvexHull.size(), Positions.size()
+    LOG_VERBOSE(LogRhi, "[{}]: Built convex hull with [{}] vertices from [{}] vertices ([{}] unique positions)."
+        , this->Source, this->ConvexHull.size(), VertexCount, Positions.size()
         )
 
     if (!this->HasConvex())

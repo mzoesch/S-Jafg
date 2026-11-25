@@ -17,6 +17,7 @@ if(_guard)
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/Skinning.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/Animation.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/Skeleton.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/Rhi/UniquePositions.cpp"
                 PROPERTIES
                     COMPILE_OPTIONS "-O2" # 03 hinders readability and its performance is comparable to -O2.
                     SKIP_PRECOMPILE_HEADERS ON
@@ -502,6 +503,28 @@ if(_guard)
     message(STATUS "JoltPhysics_LIB: ${JoltPhysics_LIB}")
 
     # An external project configures on its own and would otherwise build for the host when cross compiling.
+    #
+    # Like the hot math above, Jolt is too slow unoptimized even for debugging (e.g., the convex hull of a mesh with
+    # 2.5 million vertices took 4.3 s at -O0 and 0.17 s at -O2). Jolt stays in its Debug configuration, so that its
+    # defines (no NDEBUG, therefore JPH_DEBUG) still match what the engine sees in the Jolt headers. Only the
+    # optimization level changes. Assertions and debug symbols are kept.
+    #
+    option(JoltPhysics_OPTIMIZE_IN_DEBUG "Compile the physics engine with -O2 in debug builds." ON)
+    message(STATUS "JoltPhysics_OPTIMIZE_IN_DEBUG: ${JoltPhysics_OPTIMIZE_IN_DEBUG}")
+    set(JoltPhysics_CXX_FLAGS_ARGS "-DOVERRIDE_CXX_FLAGS=ON")
+    if(JoltPhysics_OPTIMIZE_IN_DEBUG AND (JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG) AND (NOT MSVC))
+        #
+        # Overriding would reset CMAKE_CXX_FLAGS_DEBUG to nothing (-O0). Debug symbols are added by Jolt itself
+        # (GENERATE_DEBUG_SYMBOLS). At -O2, GCC reports a false positive -Warray-bounds in Jolt/Math/Vector.h (from
+        # MassProperties.cpp), and Jolt compiles with -Werror.
+        #
+        set(JoltPhysics_CXX_FLAGS_ARGS
+            "-DOVERRIDE_CXX_FLAGS=OFF"
+            "-DCMAKE_CXX_FLAGS_DEBUG=-O2 -Wno-array-bounds"
+            )
+    endif()
+    message(STATUS "JoltPhysics_CXX_FLAGS_ARGS: ${JoltPhysics_CXX_FLAGS_ARGS}")
+
     set(JoltPhysics_TOOLCHAIN_ARGS "")
     if(CMAKE_CROSSCOMPILING AND (JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS))
         list(APPEND JoltPhysics_TOOLCHAIN_ARGS "-DCMAKE_TOOLCHAIN_FILE=${JAFG_ENGINE_ROOT}/CMake/mingw-ucrt.toolchain.cmake")
@@ -528,7 +551,7 @@ if(_guard)
             -DUSE_ASSERTS=${JoltPhysics_USE_ASSERTS}
             -DDOUBLE_PRECISION=${JoltPhysics_DOUBLE_PRECISION}
             -DGENERATE_DEBUG_SYMBOLS=${JoltPhysics_GENERATE_DEBUG_SYMBOLS}
-            -DOVERRIDE_CXX_FLAGS=ON
+            ${JoltPhysics_CXX_FLAGS_ARGS}
             -DCROSS_PLATFORM_DETERMINISTIC=${JoltPhysics_CROSS_PLATFORM_DETERMINISTIC}
             -DINTERPROCEDURAL_OPTIMIZATION=ON
             -DFLOATING_POINT_EXCEPTIONS_ENABLED=${JoltPhysics_FLOATING_POINT_EXCEPTIONS_ENABLED}

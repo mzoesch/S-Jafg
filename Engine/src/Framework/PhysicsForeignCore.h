@@ -5,6 +5,7 @@
 #include "Minimal.afx"
 #include "Framework/PhysicsCore.h"
 #include "Framework/PhysicsBody.h"
+#include "Framework/PhysicsSystem.h"
 
 #ifndef JoltPhysics_USE_ASSERTS
     #error "JoltPhysics_USE_ASSERTS is not defined."
