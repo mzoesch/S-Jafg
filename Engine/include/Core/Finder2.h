@@ -43,6 +43,8 @@ constexpr path most_recent_stack_trace_file() noexcept { return dumps_dir()/LITE
 //#
 constexpr path const& saved_dir() noexcept { return detail::saved_dir; }
 constexpr path user_preferences_file() noexcept { return saved_dir()/LITERAL_TEXT("MyPreferences.cfg"); }
+//# Where screenshots are saved to (@see #Jafg::JScreenshotSubsystem).
+constexpr path screenshots_dir() noexcept { return saved_dir()/LITERAL_TEXT("Screenshots"); }
 
 //# Content path for each module.
 constexpr path default_content_dir_postfix() noexcept { return LITERAL_TEXT("Content"); }

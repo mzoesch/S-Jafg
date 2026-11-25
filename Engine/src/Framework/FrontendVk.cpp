@@ -965,6 +965,33 @@ rhi::mapped_device_buffer Jafg::LFrontendVk::Vk_CreateMappedBuffer(vk::BufferCre
     return { Buffer, Allocation, AllocationInfo.pMappedData };
 }
 
+rhi::mapped_device_buffer Jafg::LFrontendVk::Vk_CreateReadbackBuffer(vk::BufferCreateInfo Info) const
+{
+    VkBuffer Buffer;
+    VmaAllocation Allocation;
+    VmaAllocationCreateInfo AllocationCreateInfo{
+        /* Random access makes VMA prefer cached memory. Reading uncached memory from the host is very slow. */
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO,
+        .requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        .preferredFlags = VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+        };
+
+    VmaAllocationInfo AllocationInfo{};
+    auto Res{vmaCreateBuffer(
+        this->Vk_VmaAllocator,
+        Info,
+        &AllocationCreateInfo,
+        &Buffer,
+        &Allocation,
+        &AllocationInfo
+        )};
+    check( Res == VK_SUCCESS )
+    check( AllocationInfo.pMappedData )
+
+    return { Buffer, Allocation, AllocationInfo.pMappedData };
+}
+
 void Jafg::LFrontendVk::Vk_CopyBuffer(vk::Buffer Src, vk::Buffer Dst, vk::BufferCopy BufferCopy, vk::CommandPool Pool /* = nullptr */) const
 {
     check( Src && Dst )

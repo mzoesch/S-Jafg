@@ -152,6 +152,8 @@ public:
         , vk::MemoryPropertyFlags Flags
         , VmaMemoryUsage Usage = VMA_MEMORY_USAGE_AUTO) const;
     NODISCARD ENGINE_API rhi::mapped_device_buffer Vk_CreateMappedBuffer(vk::BufferCreateInfo Info) const;
+    //# A mapped and coherent buffer that the device writes and the host reads (e.g., to copy an image back).
+    NODISCARD ENGINE_API rhi::mapped_device_buffer Vk_CreateReadbackBuffer(vk::BufferCreateInfo Info) const;
 
     NODISCARD rhi::frame_array<rhi::mapped_device_buffer> Vk_CreateFrequentMappedBuffer(vk::BufferCreateInfo Info) const
     {

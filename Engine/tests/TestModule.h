@@ -11,3 +11,4 @@
 #include "TestTextEditing.h"
 #include "TestTextSearch.h"
 #include "TestInputRange.h"
+#include "TestScreenshot.h"

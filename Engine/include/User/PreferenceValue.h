@@ -285,6 +285,60 @@ private:
     std::optional<value_type> Maximum;
 };
 
+//# A preference that stores a single line of text.
+struct LPreferenceValue_Text: LCommonPreferenceValue
+{
+    typedef LString value_type;
+
+    struct CreateInfo final
+    {
+        LString Identifier;
+        LString DisplayName;
+        LString Tooltip;
+
+        bool bSupported{ true };
+        bool bRequiresRestart{};
+        bool bRequiresImminentRestart{};
+
+        //# Shown while the text is empty (e.g., the default).
+        LString Placeholder;
+
+        LGetter Getter;
+        LSetter Setter;
+        TFunction2<LFactoryNode(LViewport& Viewport
+            , TArray<LPreferenceValueChangeRequest>& Changes
+            , LPreferenceValue_Text& Preference
+            )> CreateEditNode;
+    };
+
+    LPreferenceValue_Text(CreateInfo Info) noexcept
+        : LCommonPreferenceValue{{
+            .Identifier = std::move(Info.Identifier),
+            .DisplayName = std::move(Info.DisplayName),
+            .Tooltip = std::move(Info.Tooltip),
+            .bSupported = Info.bSupported,
+            .bRequiresRestart = Info.bRequiresRestart,
+            .bRequiresImminentRestart = Info.bRequiresImminentRestart,
+            .Getter = std::move(Info.Getter),
+            .Setter = std::move(Info.Setter),
+            .CreateEditNode = [CreateEditNode=std::move(Info.CreateEditNode)](LViewport& Viewport
+                , TArray<LPreferenceValueChangeRequest>& Changes
+                , LPreferenceValue& Preference
+                ) mutable
+                {
+                    return std::invoke(CreateEditNode, Viewport, Changes, static_cast<LPreferenceValue_Text&>(Preference));
+                },
+            }}
+        , Placeholder{std::move(Info.Placeholder)}
+        {}
+
+    NODISCARD FORCEINLINE constexpr LString const& GetPlaceholder() const noexcept { return this->Placeholder; }
+
+private:
+
+    LString Placeholder;
+};
+
 struct LPreferenceValue_List: LCommonPreferenceValue
 {
     typedef LInputListItem value_type;

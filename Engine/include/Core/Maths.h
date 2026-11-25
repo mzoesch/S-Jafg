@@ -1617,22 +1617,37 @@ NODISCARD constexpr TQua<LWorldReal,defaultp> rotator_deg(T pitch, T yaw, T roll
 template<typename T, qualifier Q>
 NODISCARD constexpr TVec3<T,Q> editor_euler_angles(TQua<T, Q> const& q, T e = not_so_small_number_v<T>) noexcept
 {
+    /*
+     * M = Ry(yaw) * Rx(pitch) * Rz(roll) (@see #rotator). Column major, m[c][r] is M(r,c):
+     *   M(0,2) = sin(yaw) cos(pitch)   M(1,2) = -sin(pitch)   M(2,2) = cos(yaw) cos(pitch)
+     */
     TMat<3,3,T,Q> m{glm::mat3_cast(q)};
 
-    T s{clamp(-m[2][1], T{-1}, T{1})};
-    T pitch{asin(s)};
-    T cp{std::cos(pitch)};
+    /*
+     * The cosine of the pitch is measured from the entries the yaw is taken from, and not derived from asin(sin).
+     * Near +-90 deg, one rounding step of a sine near one becomes 3e-4 rad through the asin (single precision). The
+     * derived cosine then claimed that the yaw entries are usable while they were only rounding noise.
+     */
+    T cp{std::sqrt(m[2][0] * m[2][0] + m[2][2] * m[2][2])};
+    T pitch{std::atan2(-m[2][1], cp)};
 
     T yaw;
     T roll;
-    if (abs(cp) > e)
+    if (cp > e)
     {
-        yaw = atan2(m[2][0], m[2][2]);
-        roll = atan2(m[0][1], m[1][1]);
+        yaw = std::atan2(m[2][0], m[2][2]);
+        /*
+         * From the first row of Ry(-yaw) * M = Rx(pitch) * Rz(roll), which is (cos(roll), -sin(roll), 0). These entries
+         * are large, so the roll always matches the yaw, even if both are poorly determined close to the gimbal lock.
+         */
+        const T sy{std::sin(yaw)};
+        const T cy{std::cos(yaw)};
+        roll = std::atan2(sy * m[1][2] - cy * m[1][0], cy * m[0][0] - sy * m[0][2]);
     }
     else /* Gimbal lock */
     {
-        yaw = atan2(-m[0][2], m[0][0]);
+        /* Only yaw - roll (pitch +90 deg) or yaw + roll (pitch -90 deg) is defined. The yaw takes all of it. */
+        yaw = std::atan2(-m[0][2], m[0][0]);
         roll = T{0};
     }
 

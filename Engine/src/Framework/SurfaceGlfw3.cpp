@@ -262,6 +262,13 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
     this->GetMutableFrontend()._Vk_WaitIdle();
 
+    if (auto const Count{this->RequestedCaptures.size() + this->Vk_PendingCaptures.size()}; Count > 0uz)
+    {
+        LOG_WARNING(LogSurface, "[{}]: Discarding [{}] captures, as the surface closes.", this->GetHumanReadableName(), Count)
+    }
+    this->RequestedCaptures.clear();
+    this->Vk_PendingCaptures.clear();
+
     if (this->Cursor)
     {
         LOG_VERBOSE(LogSurface, "Destroying glfw cursor.")
@@ -350,6 +357,8 @@ void Jafg::LSurfaceGlfw3::OnRender()
         while (Frontend.Vk_GetDevice().waitForFences(*this->Vk_FlightFences[*this->Vk_CurrentFrameInFlightIndex], vk::True, UINT64_MAX) == vk::Result::eTimeout)
             ;
     }
+    /* What this frame in flight copied last time is done now. */
+    this->Vk_FinishCaptures(*this->Vk_CurrentFrameInFlightIndex);
 
     auto [Result, ImageIndex] = this->Vk_VkMySwapchain.acquireNextImage(
         std::numeric_limits<u64>::max(), this->Vk_ImageAvailableSemaphores[*this->Vk_CurrentFrameInFlightIndex], nullptr
@@ -532,24 +541,40 @@ void Jafg::LSurfaceGlfw3::OnRender()
     this->GetViewport().Draw(Info);
     Info.CommandBuffer.endRendering();
 
-    Vk_TransitionImageLayout({
-        .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
-        .dstStageMask = vk::PipelineStageFlagBits2::eBottomOfPipe,
-        .dstAccessMask = {},
-        .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
-        .newLayout = vk::ImageLayout::ePresentSrcKHR,
-        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image = this->Vk_SwapchainImages[ImageIndex],
-        .subresourceRange = {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-            },
-        });
+    if (!this->RequestedCaptures.empty() && !this->bVk_CanCapture)
+    {
+        /* E.g., the swapchain was recreated with another format. */
+        LOG_WARNING(LogSurface, "[{}]: Discarding [{}] captures, as the surface cannot capture anymore."
+            , this->GetHumanReadableName(), this->RequestedCaptures.size()
+            )
+        this->RequestedCaptures.clear();
+    }
+
+    if (!this->RequestedCaptures.empty())
+    {
+        this->Vk_RecordCapture(Info);
+    }
+    else
+    {
+        Vk_TransitionImageLayout({
+            .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+            .dstStageMask = vk::PipelineStageFlagBits2::eBottomOfPipe,
+            .dstAccessMask = {},
+            .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .newLayout = vk::ImageLayout::ePresentSrcKHR,
+            .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+            .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+            .image = this->Vk_SwapchainImages[ImageIndex],
+            .subresourceRange = {
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+                },
+            });
+    }
 
     if (auto Result{Info.CommandBuffer.end()}; Result != vk::Result::eSuccess)
     {
@@ -855,6 +880,202 @@ void Jafg::LSurfaceGlfw3::Vk_TransitionImageLayout(vk::ImageMemoryBarrier2 const
         };
 
     this->Vk_CommandBuffers[*this->Vk_CurrentFrameInFlightIndex].pipelineBarrier2(DependencyInfo);
+}
+
+bool Jafg::LSurfaceCapture::IsSupportedFormat(vk::Format Format) noexcept
+{
+    switch (Format)
+    {
+    case vk::Format::eB8G8R8A8Unorm:
+    case vk::Format::eB8G8R8A8Srgb:
+    case vk::Format::eR8G8B8A8Unorm:
+    case vk::Format::eR8G8B8A8Srgb:
+    /* Packed into 32 bits from the alpha down to the red. So, in memory (little endian), these are RGBA as well. */
+    case vk::Format::eA8B8G8R8UnormPack32:
+    case vk::Format::eA8B8G8R8SrgbPack32:
+    {
+        return true;
+    }
+    default:
+    {
+        return false;
+    }
+    }
+}
+
+void Jafg::LSurfaceCapture::ToRgba8() noexcept
+{
+    check(IsSupportedFormat(this->Format))
+    check(this->Bytes.size() == static_cast<std::size_t>(this->Extent.width) * this->Extent.height * BytesPerPixel)
+
+    const bool bSrgb{this->Format == vk::Format::eB8G8R8A8Srgb
+        || this->Format == vk::Format::eR8G8B8A8Srgb
+        || this->Format == vk::Format::eA8B8G8R8SrgbPack32
+        };
+    const bool bBgra{this->Format == vk::Format::eB8G8R8A8Unorm || this->Format == vk::Format::eB8G8R8A8Srgb};
+
+    u8* const Data{this->Bytes.data()};
+    for (std::size_t Idx{0}; Idx < this->Bytes.size(); Idx += BytesPerPixel)
+    {
+        if (bBgra)
+        {
+            std::swap(Data[Idx], Data[Idx + 2uz]);
+        }
+        /* The surface is opaque. Whatever the frame wrote to the alpha was never shown. */
+        Data[Idx + 3uz] = 0xFF;
+    }
+
+    this->Format = bSrgb ? vk::Format::eR8G8B8A8Srgb : vk::Format::eR8G8B8A8Unorm;
+}
+
+bool Jafg::LSurfaceGlfw3::RequestCapture(LOnSurfaceCaptured OnCaptured)
+{
+    check(Tasks::IsOnMasterThread())
+    check(!!OnCaptured)
+
+    if (!this->bVk_CanCapture)
+    {
+        return false;
+    }
+
+    this->RequestedCaptures.push_back(std::move(OnCaptured));
+    return true;
+}
+
+void Jafg::LSurfaceGlfw3::Vk_RecordCapture(LRenderInfo const& Info)
+{
+    check(!this->RequestedCaptures.empty())
+    check(this->bVk_CanCapture)
+
+    auto const& Frontend{this->GetFrontend()};
+    const vk::Image Image{this->Vk_SwapchainImages[Info.Image]};
+    const vk::Format Format{Frontend.Vk_GetSurfaceFormat().format};
+    const vk::DeviceSize Size{
+        static_cast<vk::DeviceSize>(this->SurfaceExtent.width) * this->SurfaceExtent.height * LSurfaceCapture::BytesPerPixel
+        };
+
+    LVk_PendingCapture Pending{
+        .Frame = Info.Frame,
+        .Extent = this->SurfaceExtent,
+        .Format = Format,
+        .Buffer = Frontend.Vk_CreateReadbackBuffer({.size = Size, .usage = vk::BufferUsageFlagBits::eTransferDst}),
+        .Callbacks = std::move(this->RequestedCaptures),
+        };
+    this->RequestedCaptures.clear();
+
+    constexpr vk::ImageSubresourceRange Range{
+        .aspectMask = vk::ImageAspectFlagBits::eColor,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+        };
+
+    this->Vk_TransitionImageLayout({
+        .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eCopy,
+        .dstAccessMask = vk::AccessFlagBits2::eTransferRead,
+        .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .newLayout = vk::ImageLayout::eTransferSrcOptimal,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = Image,
+        .subresourceRange = Range,
+        });
+
+    Info.CommandBuffer.copyImageToBuffer(Image, vk::ImageLayout::eTransferSrcOptimal, *Pending.Buffer, vk::BufferImageCopy{
+        /* Tightly packed. */
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            },
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {this->SurfaceExtent.width, this->SurfaceExtent.height, 1},
+        });
+
+    const vk::ImageMemoryBarrier2 ToPresent{
+        .srcStageMask = vk::PipelineStageFlagBits2::eCopy,
+        .srcAccessMask = {},
+        .dstStageMask = vk::PipelineStageFlagBits2::eBottomOfPipe,
+        .dstAccessMask = {},
+        .oldLayout = vk::ImageLayout::eTransferSrcOptimal,
+        .newLayout = vk::ImageLayout::ePresentSrcKHR,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = Image,
+        .subresourceRange = Range,
+        };
+    /* The host reads the copy after the fence of this frame has signaled (@see #Vk_FinishCaptures). */
+    const vk::BufferMemoryBarrier2 ToHost{
+        .srcStageMask = vk::PipelineStageFlagBits2::eCopy,
+        .srcAccessMask = vk::AccessFlagBits2::eTransferWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eHost,
+        .dstAccessMask = vk::AccessFlagBits2::eHostRead,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .buffer = *Pending.Buffer,
+        .offset = 0,
+        .size = vk::WholeSize,
+        };
+    Info.CommandBuffer.pipelineBarrier2(vk::DependencyInfo{
+        .dependencyFlags = {},
+        .bufferMemoryBarrierCount = 1,
+        .pBufferMemoryBarriers = &ToHost,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &ToPresent,
+        });
+
+    LOG_VERBOSE(LogSurface, "[{}]: Capturing frame [{}x{}] in frame in flight [{}]."
+        , this->GetHumanReadableName(), Pending.Extent.width, Pending.Extent.height, Pending.Frame
+        )
+    this->Vk_PendingCaptures.push_back(std::move(Pending));
+}
+
+void Jafg::LSurfaceGlfw3::Vk_FinishCaptures(std::optional<u32> Frame)
+{
+    if (this->Vk_PendingCaptures.empty())
+    {
+        return;
+    }
+
+    /* Out of the array first. The callbacks may request new captures. */
+    TArray<LVk_PendingCapture> Finished;
+    for (auto It{this->Vk_PendingCaptures.begin()}; It != this->Vk_PendingCaptures.end();)
+    {
+        if (Frame && It->Frame != *Frame)
+        {
+            ++It;
+            continue;
+        }
+        Finished.push_back(std::move(*It));
+        It = this->Vk_PendingCaptures.erase(It);
+    }
+
+    for (auto& Pending: Finished)
+    {
+        LSurfaceCapture Capture{.Extent = Pending.Extent, .Format = Pending.Format};
+        auto const* const Data{static_cast<u8 const*>(Pending.Buffer.data())};
+        Capture.Bytes.assign(Data, Data + static_cast<std::size_t>(Pending.Extent.width) * Pending.Extent.height * LSurfaceCapture::BytesPerPixel);
+        Pending.Buffer.free();
+
+        for (auto Idx{0uz}; Idx < Pending.Callbacks.size(); ++Idx)
+        {
+            if (Idx + 1uz == Pending.Callbacks.size())
+            {
+                Pending.Callbacks[Idx](std::move(Capture));
+            }
+            else
+            {
+                Pending.Callbacks[Idx](LSurfaceCapture{Capture});
+            }
+        }
+    }
 }
 
 //# We have to use this instead of a function because of sso.
@@ -1456,6 +1677,8 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     }
 
     Frontend._Vk_WaitIdle();
+    /* Before the fences of the frames in flight go. The device is idle, so every copy is done. */
+    this->Vk_FinishCaptures({});
 
     this->Vk_SwapchainImageViews.clear();
     this->Vk_SwapchainImages.clear();
@@ -1606,6 +1829,16 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
     check( Frontend.Vk_GetNumberOfFramesInFlight() >= this->Vk_SurfaceCapabilities.minImageCount
         && Frontend.Vk_GetNumberOfFramesInFlight() <= this->Vk_SurfaceCapabilities.maxImageCount )
 
+    /* Captures copy the swapchain images (@see #RequestCapture). */
+    const bool bCanCopySwapchainImages{!!(this->Vk_SurfaceCapabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferSrc)};
+    this->bVk_CanCapture = bCanCopySwapchainImages && LSurfaceCapture::IsSupportedFormat(Frontend.Vk_GetSurfaceFormat().format);
+    if (!this->bVk_CanCapture)
+    {
+        LOG_VERBOSE(LogVulkan, "The surface cannot capture its frames (copyable [{}], format [{}]).",
+            bCanCopySwapchainImages, vk::to_string(Frontend.Vk_GetSurfaceFormat().format)
+            )
+    }
+
     vk::SwapchainCreateInfoKHR SwapChainCreateInfo{
         .flags = vk::SwapchainCreateFlagsKHR{},
         .surface = this->Vk_Surface,
@@ -1614,7 +1847,9 @@ void Jafg::LSurfaceGlfw3::Vk_CreateSwapchain()
         .imageColorSpace = Frontend.Vk_GetSurfaceFormat().colorSpace,
         .imageExtent = this->SurfaceExtent,
         .imageArrayLayers = 1,
-        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageUsage = bCanCopySwapchainImages
+            ? vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc
+            : vk::ImageUsageFlags{vk::ImageUsageFlagBits::eColorAttachment},
         .imageSharingMode = vk::SharingMode::eExclusive,
         .queueFamilyIndexCount = 0, /* Optional */
         .pQueueFamilyIndices = nullptr, /* Optional */

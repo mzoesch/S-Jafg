@@ -8,6 +8,8 @@
 #include "Widgets/Input_Slider.h"
 #include "Widgets/Input_List.h"
 #include "Widgets/Input_Boolean.h"
+#include "Nodes/EditableTextButton.h"
+#include "Core/Finder2.h"
 #include "Serialization/StringStatements.h"
 #include "User/PreferenceCollection.h"
 
@@ -15,6 +17,21 @@ namespace Jafg
 {
 
 constexpr LNodeSize2 MinSize{99_spt, 0};
+constexpr LNodeSize2 TextMinSize{160_spt, 0};
+
+//# Adds the change of the preference, or updates its pending one.
+static void RecordChange(TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue& Preference, LString Value)
+{
+    if (auto It{algo::find(Changes, &Preference, [](LPreferenceValueChangeRequest const& Change){ return &Change.Preference; })};
+        It == Changes.end())
+    {
+        Changes.emplace_back(Preference, std::move(Value));
+    }
+    else
+    {
+        It->Value = std::move(Value);
+    }
+}
 
 static LFactoryNode CreateCheckmark(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue& Preference)
 {
@@ -22,15 +39,7 @@ static LFactoryNode CreateCheckmark(LViewport& Viewport, TArray<LPreferenceValue
         .Value(serde::from_string<bool>(Preference.GetValue()))
         .OnValueChanged([Changes=&Changes,Preference=&Preference](WInput_Boolean& Self)
         {
-            if (auto It{algo::find(*Changes, Preference, [](LPreferenceValueChangeRequest const& Change){ return &Change.Preference; })};
-                It == Changes->end())
-            {
-                Changes->emplace_back(*Preference, serde::to_string(Self.GetValue()));
-            }
-            else
-            {
-                It->Value = serde::to_string(Self.GetValue());
-            }
+            RecordChange(*Changes, *Preference, serde::to_string(Self.GetValue()));
         });
 }
 
@@ -46,15 +55,7 @@ static LFactoryNode CreateSlider(LViewport& Viewport, TArray<LPreferenceValueCha
         .Maximum(Preference.GetMaximum())
         .OnValueChanged([Changes=&Changes,Preference=&Preference](f64 Value)
         {
-            if (auto It{algo::find(*Changes, Preference, [](LPreferenceValueChangeRequest const& Change){ return &Change.Preference; })};
-                It == Changes->end())
-            {
-                Changes->emplace_back(*Preference, serde::to_string(Value));
-            }
-            else
-            {
-                It->Value = serde::to_string(Value);
-            }
+            RecordChange(*Changes, *Preference, serde::to_string(Value));
         });
 }
 
@@ -62,6 +63,18 @@ static LFactoryNode CreateList(LViewport& Viewport, TArray<LPreferenceValueChang
 {
     auto& Prefs{GetSingleton<JUserPreferences>()};
     LString Value{Preference.GetValue()};
+    TArray<LInputListItem> Items{Preference.GetItems()};
+    LString Selected{Value.empty()
+        ? LString{"<None>"}
+        : (Value == JUserPreferences::ListAuto)
+            ? "Auto"
+            : Value
+        };
+    /* Shown as the list shows the item. */
+    if (auto It{algo::find(Items, Value, &LInputListItem::Identifier)}; It != Items.end() && !It->DisplayName.empty())
+    {
+        Selected = It->DisplayName;
+    }
     return NewNode(Viewport).Class<WInput_List>()
         .MinDesiredSize(MinSize)
         .Tint(*Prefs.InputColor)
@@ -69,24 +82,28 @@ static LFactoryNode CreateList(LViewport& Viewport, TArray<LPreferenceValueChang
         .OutlineTint({0x8F})
         .Padding({5_spt, 5})
         .TextTint(Colors::White)
-        .Selected(Value.empty()
-            ? LString{"<None>"}
-            : (Value == JUserPreferences::ListAuto)
-                ? "Auto"
-                : std::move(Value)
-            )
-        .Items(Preference.GetItems())
+        .Selected(std::move(Selected))
+        .Items(std::move(Items))
         .OnValueChanged([Changes=&Changes, Preference=&Preference](LInputListItem const& Value)
         {
-            if (auto It{algo::find(*Changes, Preference, [](LPreferenceValueChangeRequest const& Change){ return &Change.Preference; })};
-                It == Changes->end())
-            {
-                Changes->emplace_back(*Preference, Value.Identifier);
-            }
-            else
-            {
-                It->Value = Value.Identifier;
-            }
+            RecordChange(*Changes, *Preference, Value.Identifier);
+        });
+}
+
+static LFactoryNode CreateTextField(LViewport& Viewport, TArray<LPreferenceValueChangeRequest>& Changes, LPreferenceValue_Text& Preference)
+{
+    auto& Prefs{GetSingleton<JUserPreferences>()};
+    return NewNode(Viewport).Class<WEditableTextButton>()
+        /* Not filling the row (its default), so that it lines up with the other inputs on the right. */
+        .Anchor(EAnchor::Identity)
+        .MinDesiredSize(TextMinSize)
+        .Palette(*Prefs.InputPaletteSolid)
+        .InAllBrushes<&LBoxBrush::Padding>(Prefs.InputPadding)
+        .Content(Preference.GetValue())
+        .PlaceholderContent(Preference.GetPlaceholder())
+        .OnContentChanged([Changes=&Changes, Preference=&Preference](WEditableTextButton&, LString const& Content)
+        {
+            RecordChange(*Changes, *Preference, Content);
         });
 }
 
@@ -146,6 +163,15 @@ void Jafg::JUserPreferences::BeginLife()
             } \
         }, \
         .CreateEditNode = CreateList, \
+        }));
+#define MAKE_TEXT(Preference, ...) \
+    (void)Preference; \
+    Collection.Children.emplace_back(std::make_unique<LPreferenceValue_Text>(LPreferenceValue_Text::CreateInfo{ \
+        __VA_ARGS__ \
+        .Placeholder = this-> Preference .GetDefault(), \
+        .Getter = [this]{ return JUserPreferences:: JAFG_JOIN_OUTER_TWO(_GetField_, Preference) (*this); }, \
+        .Setter = [this](LString const& Value) { JUserPreferences::JAFG_JOIN_OUTER_TWO(_SetField_, Preference)(this, Value); }, \
+        .CreateEditNode = CreateTextField, \
         }));
 
     {
@@ -276,6 +302,45 @@ void Jafg::JUserPreferences::BeginLife()
                 .Maximum = 5.0,
                 )
         }
+
+        {
+            MAKE_SUBCOLLECTION(
+                .Identifier = "Screenshots",
+                .DisplayName = "Screenshots",
+                .Tooltip = algo::sprintf(
+                    "Taken with the screenshot key (see the controls) of everything that the window shows. Saved as PNG to [{}].",
+                    finder::screenshots_dir().string()
+                    ),
+                )
+            MAKE_TEXT(ScreenshotNamePattern,
+                .Identifier = "ScreenshotNamePattern",
+                .DisplayName = "Name Pattern",
+                .Tooltip =
+                    "The file name, without the extension. %Y, %m, %d, %H, %M and %S become the year, month, day, hour, "
+                    "minute and second. If the file exists, _1, _2, ... is appended.",
+                )
+            MAKE_LIST(ScreenshotMaxHeight,
+                .Identifier = "ScreenshotMaxResolution",
+                .DisplayName = "Max Resolution",
+                .Tooltip =
+                    "The largest height in pixels. Taller windows are scaled down, keeping their aspect ratio, so 1080p "
+                    "makes a 3840x2160 window 1920x1080. Smaller windows are saved as they are.",
+                .Items = [this] -> TArray<LPreferenceValue_List::value_type> {
+                    TArray<LPreferenceValue_List::value_type> Result;
+                    Result.emplace_back(serde::to_string(0u), "None");
+                    for (const u32 Height: {720u, 1080u, 1440u, 2160u})
+                    {
+                        Result.emplace_back(serde::to_string(Height), Height == 2160u ? "2160p (4K)" : algo::sprintf("{}p", Height));
+                    }
+                    /* A height that was set in the config file. */
+                    if (LString Current{serde::to_string(*this->ScreenshotMaxHeight)};
+                        !algo::contains(Result, Current, &LInputListItem::Identifier))
+                    {
+                        Result.emplace_back(Current, algo::sprintf("{}p", *this->ScreenshotMaxHeight));
+                    }
+                    return Result;
+                },)
+        }
     }
 
     {
@@ -319,4 +384,5 @@ void Jafg::JUserPreferences::BeginLife()
 #undef MAKE_SCALAR
 #undef MAKE_SCALAR_MINMAX
 #undef MAKE_LIST
+#undef MAKE_TEXT
 }

@@ -124,6 +124,23 @@ public:
     LColor FontRectHighlightColor{ 0xFF000030_color };
 
     ///////////////////////////////////////////////////////////////////////////////
+    // Screenshots
+    ///////////////////////////////////////////////////////////////////////////////
+
+    //#
+    //# The file name of a screenshot, without the extension (@see #Screenshots::FormatName). %Y, %m, %d, %H, %M and %S
+    //# become the date and time. If the file exists, _1, _2, ... is appended.
+    //#
+    CLASS_FIELD(Config)
+    TPreference<LString> ScreenshotNamePattern{ "%Y-%m-%d-%H-%M" };
+    //#
+    //# The largest height of a screenshot in pixels. Taller surfaces are scaled down, keeping their aspect ratio (so
+    //# 1080 makes a 3840x2160 surface 1920x1080). Smaller ones stay as they are. Zero: No limit.
+    //#
+    CLASS_FIELD(Config)
+    TPreference<u32> ScreenshotMaxHeight{ 0u };
+
+    ///////////////////////////////////////////////////////////////////////////////
     // Controls
     ///////////////////////////////////////////////////////////////////////////////
 

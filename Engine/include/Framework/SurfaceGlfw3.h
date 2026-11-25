@@ -100,6 +100,30 @@ struct LGlfw3Bridge;
 
 struct LRenderInfo;
 
+//# The pixels of one frame that a surface presented (@see #LSurfaceGlfw3::RequestCapture).
+struct LSurfaceCapture final
+{
+    //# In physical pixels.
+    rhi::extent2 Extent;
+    //# The format of the swapchain. It describes #Bytes until #ToRgba8 was called.
+    vk::Format Format{ vk::Format::eUndefined };
+    //# #BytesPerPixel bytes per pixel. Rows from top to bottom without padding.
+    TArray<u8> Bytes;
+
+    //# Of every supported format (@see #IsSupportedFormat).
+    static constexpr std::size_t BytesPerPixel{ 4uz };
+
+    //# Whether #ToRgba8 understands the format. Only these formats can be captured.
+    NODISCARD ENGINE_API static bool IsSupportedFormat(vk::Format Format) noexcept;
+    //#
+    //# Rewrites #Bytes as 8 bit RGBA with an opaque alpha. The values stay as the surface showed them (e.g., sRGB
+    //# encoded). May be called on any thread.
+    //#
+    ENGINE_API void ToRgba8() noexcept;
+};
+
+typedef TFunction2<void(LSurfaceCapture Capture)> LOnSurfaceCaptured;
+
 //#
 //# Vk methods are only available if vulkan is enabled for a given platform.
 //# _ methods are platform dependent, and it should be avoided to use them outside of platform specific code.
@@ -140,6 +164,17 @@ public:
     NODISCARD ENGINE_API LString GetClipboardText() const;
     //# Replaces the content of the platform clipboard with the given UTF-8 text.
     ENGINE_API void SetClipboardText(LString const& Text) const;
+
+    //# Whether #RequestCapture can copy what this surface presents (the platform and the surface format allow it).
+    NODISCARD FORCEINLINE bool CanCapture() const noexcept { return this->bVk_CanCapture; }
+    //#
+    //# Copies the next frame that this surface presents: all of it, in its extent. #OnCaptured is called on the
+    //# renderer thread once the device has finished the copy, usually some frames later. It is not called if the
+    //# surface closes before it presents another frame.
+    //#
+    //# @return False if the surface cannot capture (@see #CanCapture). #OnCaptured is not called then.
+    //#
+    ENGINE_API bool RequestCapture(LOnSurfaceCaptured OnCaptured);
 
     FORCEINLINE GLFWcursor* _GetNativeCursorHandleDangerous() const noexcept { return this->Cursor; }
     FORCEINLINE GLFWwindow* _GetNativeHandleDangerous() const noexcept { return this->Handle; }
@@ -235,6 +270,17 @@ private:
     void Vk_CreateCommandBuffers();
     void Vk_CreateDescriptorPools();
 
+    //#
+    //# Records the copy of the swapchain image that the current frame draws to, for the requested captures. Takes care
+    //# of the transition of the image to the present layout as well.
+    //#
+    void Vk_RecordCapture(LRenderInfo const& Info);
+    //#
+    //# Hands the finished copies to their callbacks. Only the ones of the given frame in flight, whose fence has to have
+    //# been waited for. Empty: All of them, the device has to be idle.
+    //#
+    void Vk_FinishCaptures(std::optional<u32> Frame);
+
     GLFWcursor* Cursor{};
     GLFWwindow* Handle{};
 
@@ -274,6 +320,21 @@ private:
 
     rhi::frame_array<vk::raii::CommandBuffer> Vk_CommandBuffers JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<vk::raii::DescriptorPool> Vk_DescriptorPools JAFG_VK_FRAME_ARRAY_INIT(nullptr);
+
+    //# Whether the swapchain images can be copied from, and their format is understood (@see #LSurfaceCapture).
+    bool bVk_CanCapture{};
+    //# Waiting for the next frame that is presented.
+    TArray<LOnSurfaceCaptured> RequestedCaptures;
+    //# A copy that the device makes in the frame in flight #Frame.
+    struct LVk_PendingCapture final
+    {
+        u32 Frame;
+        rhi::extent2 Extent;
+        vk::Format Format;
+        rhi::mapped_device_buffer Buffer;
+        TArray<LOnSurfaceCaptured> Callbacks;
+    };
+    TArray<LVk_PendingCapture> Vk_PendingCaptures;
 };
 
 } /* ~Namespace Jafg */
