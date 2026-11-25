@@ -71,6 +71,8 @@ public:
     virtual std::optional<LVec2F> GetCursorLocationInWorldView() const noexcept override;
     virtual bool SetCursorLocationInWorldView(LVec2F Location) noexcept override;
     virtual LViewport* GetWorldOverlayViewport() noexcept override { return &this->RenderTargetViewport; }
+    virtual LViewport& GetHostViewport() noexcept override { return this->GetViewport(); }
+    virtual std::optional<LRect2F> GetWorldViewRectInHostViewport() const noexcept override;
 
     LColor BorderTint{ Colors::Black };
 

@@ -101,6 +101,13 @@ public:
     //# this lackey does not render a world.
     //#
     NODISCARD virtual LViewport* GetWorldOverlayViewport() noexcept { return nullptr; }
+    //#
+    //# The viewport that the world view of this lackey is part of. Unlike #GetWorldOverlayViewport (which only
+    //# draws), its widgets take input like any other (e.g., a window over the world).
+    //#
+    NODISCARD virtual LViewport& GetHostViewport() noexcept { return this->Viewport; }
+    //# Where the world view is in #GetHostViewport. Empty if this lackey does not render a world.
+    NODISCARD virtual std::optional<LRect2F> GetWorldViewRectInHostViewport() const noexcept { return {}; }
 
 protected:
 

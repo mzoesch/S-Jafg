@@ -44,6 +44,8 @@ void Jafg::ASkeletalMeshComponent::SetMesh(LSkeletalMeshRef InMesh)
     this->Mesh = std::move(InMesh);
     this->bPoseValid = false;
     this->FirstPersonSubset = nullptr;
+    /* They were made for the joints of the previous skeleton. */
+    this->Proportions.clear();
 
     if (!this->Mesh)
     {
@@ -153,6 +155,30 @@ void Jafg::ASkeletalMeshComponent::SetFirstPersonJoints(TArray<LString> NamePref
     this->RebuildFirstPersonSubset();
 }
 
+void Jafg::ASkeletalMeshComponent::SetProportions(TArray<LJointProportion> InProportions)
+{
+    if (!InProportions.empty() && (!this->Mesh || InProportions.size() != this->Mesh->Skeleton->GetJointCount()))
+    {
+        LOG_WARNING(LogAnimation, "[{}]: Ignoring [{}] proportions. The skeleton has [{}] joints."
+            , this->GetNameAsString(), InProportions.size(), this->Mesh ? this->Mesh->Skeleton->GetJointCount() : 0uz)
+        return;
+    }
+    /* All ones are the authored proportions. Skip them every frame. */
+    if (algo::all_of(InProportions, [](LJointProportion const& Proportion){ return Proportion == LJointProportion{}; }))
+    {
+        InProportions.clear();
+    }
+    if (InProportions == this->Proportions)
+    {
+        return;
+    }
+
+    this->Proportions = std::move(InProportions);
+    /* Also if this component does not tick (e.g., the world is not running). The clips do not advance. */
+    this->bPoseValid = false;
+    this->UpdatePose(0.0f);
+}
+
 void Jafg::ASkeletalMeshComponent::UpdatePose(f32 Dt)
 {
     if (!this->Mesh)
@@ -177,13 +203,14 @@ void Jafg::ASkeletalMeshComponent::UpdatePose(f32 Dt)
     {
         this->PoseModifier(*this, this->LocalPose);
     }
+    Skeleton.ApplyProportions(this->LocalPose, this->Proportions);
 
     this->ModelPose.resize(Skeleton.GetJointCount());
     this->SkinMatrices.resize(Skeleton.GetJointCount());
     Skeleton.LocalToModel(this->LocalPose, this->ModelPose);
-    Skeleton.ModelToSkin(this->ModelPose, this->SkinMatrices);
+    Skeleton.ModelToSkin(this->ModelPose, this->SkinMatrices, this->Proportions);
 
-    this->Aabb = this->Mesh->ComputePosedAabb(this->ModelPose);
+    this->Aabb = this->Mesh->ComputePosedAabb(this->ModelPose, this->SkinMatrices);
     ++this->PoseVersion;
     this->bPoseValid = true;
 }

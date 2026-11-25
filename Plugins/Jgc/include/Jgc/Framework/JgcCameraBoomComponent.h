@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Framework/SceneComponent.h"
+#include "Framework/TraceUtility.h"
 #include "JgcCameraBoomComponent.generated.h"
 
 namespace Jgc
@@ -44,6 +45,12 @@ public:
     //# shoulder (right is -X). Shrinks with the arm, so that it does not reach into walls.
     //#
     LVec3F SocketOffset{ -0.4f, 0.15f, 0.0f };
+    //#
+    //# What pulls the arm in. The owning actor never does. E.g., without the pawn channel for an arm whose pivot is
+    //# inside of a character of another actor.
+    //#
+    Jafg::ECollisionChannels Channels{
+        Jafg::ECollisionChannelBits::Static | Jafg::ECollisionChannelBits::Dynamic | Jafg::ECollisionChannelBits::Pawn };
 
 private:
 

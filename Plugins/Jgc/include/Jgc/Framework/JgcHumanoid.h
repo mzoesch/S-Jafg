@@ -32,7 +32,8 @@ struct LHumanoidBodyInfo final
 
 //#
 //# Gives a character a body: A skeletal mesh below the root that is animated from the movement of the character
-//# (#AJgcCharacterAnimationComponent). The head eye becomes a first-person eye, from which only the arms are seen.
+//# (#AJgcCharacterAnimationComponent) and can be reshaped (#AJgcHumanoidShapeComponent). The head eye becomes a
+//# first-person eye, from which only the arms are seen.
 //#
 //# The character must have its root at the feet, a head eye (the first eye directly below the root) and a
 //# #Jafg::ACharacterMovementComponent. Works for living actors and inside the callback of a deferred spawn.

@@ -289,6 +289,15 @@ std::optional<LVec2F> Jafg::WWorldViewer::WorldTargetToSurfaceLocation(LVec2F Ta
     return Rect.offset + Normalized * Rect.extent;
 }
 
+std::optional<LRect2F> Jafg::WWorldViewer::GetWorldViewRectInHostViewport() const noexcept
+{
+    if (!this->RenderTarget.IsInitialized())
+    {
+        return {};
+    }
+    return this->GetWorldTargetRectFromMostOuter();
+}
+
 LVec2F Jafg::WWorldViewer::GetWorldViewExtent() const noexcept
 {
     return this->RenderTarget.IsInitialized() ? this->RenderTarget.GetExtent().ToVec<f32>() : LVec2F{0.0f};

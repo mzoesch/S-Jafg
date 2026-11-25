@@ -111,6 +111,49 @@ void Jafg::LSkeleton::ModelToSkin(std::span<LMat4F const> Model, std::span<LMat4
     }
 }
 
+void Jafg::LSkeleton::ModelToSkin(std::span<LMat4F const> Model, std::span<LMat4F> OutSkin, std::span<LJointProportion const> Proportions) const noexcept
+{
+    if (Proportions.empty())
+    {
+        this->ModelToSkin(Model, OutSkin);
+        return;
+    }
+
+    check(Model.size() == this->Joints.size())
+    check(OutSkin.size() == this->Joints.size())
+    check(Proportions.size() == this->Joints.size())
+
+    for (auto Idx{0uz}; Idx < this->Joints.size(); ++Idx)
+    {
+        /* Into the space of the joint, deformed there around its origin, and posed. */
+        LMat3F const& Mesh{Proportions[Idx].Mesh};
+        OutSkin[Idx] = Mesh == LMat3F{1.0f}
+            ? Model[Idx] * this->Joints[Idx].InverseBind
+            : Model[Idx] * LMat4F{Mesh} * this->Joints[Idx].InverseBind;
+    }
+}
+
+void Jafg::LSkeleton::ApplyProportions(std::span<LJointTransform> Local, std::span<LJointProportion const> Proportions) const noexcept
+{
+    if (Proportions.empty())
+    {
+        return;
+    }
+
+    check(Local.size() == this->Joints.size())
+    check(Proportions.size() == this->Joints.size())
+
+    for (auto Idx{0uz}; Idx < this->Joints.size(); ++Idx)
+    {
+        /* The origin of the joint is a point in the space of its parent. It stays where the deformed vertices are. */
+        if (i32 const Parent{this->Joints[Idx].Parent}; Parent >= 0)
+        {
+            Local[Idx].T = Proportions[static_cast<std::size_t>(Parent)].Mesh * Local[Idx].T;
+        }
+        Local[Idx].S *= Proportions[Idx].Scale;
+    }
+}
+
 LQuatF Jafg::LSkeleton::GetModelRotation(std::span<LJointTransform const> Local, u32 Joint) const noexcept
 {
     check(Local.size() == this->Joints.size())

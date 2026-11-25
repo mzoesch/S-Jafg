@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Framework/ActorComponent.h"
+#include "Jgc/Framework/JgcGimbalFreeLook.h"
 #include "JgcVehicleInputComponent.generated.h"
 
 namespace Jafg
@@ -25,7 +26,7 @@ class WStatusHud;
 //# #AVehicleComponent::Enter).
 //#
 //# Free look: While the free look action is held, the gimbal above the eye of the vehicle can be changed (see
-//# #Jafg::AGimbalComponent). The view stays wherever it was moved to.
+//# #Jafg::AGimbalComponent and #LGimbalFreeLook). The view stays wherever it was moved to.
 //#   - Mouse: Turns the view around the vehicle.
 //#   - Pan held and mouse: Moves the center that the view turns around (e.g., to have the vehicle on the left).
 //#   - Mouse wheel: Changes the distance to the vehicle.
@@ -60,15 +61,15 @@ public:
     //# @return Whether the vehicle was left. Leaving gives the controls back to the driver.
     bool OnVehicleExit();
     void ToggleDampeners() noexcept;
-    void OnFreeLookHeld() noexcept { this->bFrameFreeLookHeld = true; }
-    void OnFreeLookPanHeld() noexcept { this->bFramePanHeld = true; }
+    void OnFreeLookHeld() noexcept { this->FreeLook.OnHeld(); }
+    void OnFreeLookPanHeld() noexcept { this->FreeLook.OnPanHeld(); }
     void OnVehicleLook(Jafg::LInputActionValue const& Value) noexcept;
     //# Positive zooms in (closer to the vehicle).
     void OnVehicleZoom(Jafg::LInputActionValue const& Value) noexcept;
 
     //# The gimbal that free look turns: The first one above the eye of the vehicle.
     NODISCARD Jafg::AGimbalComponent* GetFreeLookGimbal() const noexcept;
-    NODISCARD FORCEINLINE constexpr bool IsFreeLooking() const noexcept { return this->bFreeLook; }
+    NODISCARD FORCEINLINE constexpr bool IsFreeLooking() const noexcept { return this->FreeLook.IsActive(); }
 
     //# Radians per pixel.
     CLASS_FIELD(EditorEditable)
@@ -87,7 +88,6 @@ public:
 
 private:
 
-    void ResetFreeLook() noexcept;
     void UpdateHud() noexcept;
 
     //# Shows the speed and the dampeners of the vehicle. Lives in a viewport, not in the world (see #WStatusHud).
@@ -95,15 +95,7 @@ private:
     std::size_t HudSpeedRow{};
     std::size_t HudDampenersRow{};
 
-    //# Collected while the input is dispatched. Applied and reset once per frame.
-    bool bFrameFreeLookHeld{};
-    bool bFramePanHeld{};
-    LVec2F FrameLook{ 0.0f };
-    f32 FrameZoom{};
-
-    bool bFreeLook{};
-    //# How far the mouse moved during the current free look. In pixels.
-    f32 FreeLookTravel{};
+    LGimbalFreeLook FreeLook;
 };
 
 } /* ~Namespace Jgc */

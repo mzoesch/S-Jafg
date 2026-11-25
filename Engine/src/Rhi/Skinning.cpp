@@ -171,15 +171,24 @@ LWorldAabb3 Jafg::LSkeletalMesh::ComputePosedAabb(std::span<LMat4F const> Model)
 {
     check(Model.size() == this->JointRadii.size())
 
+    TArray<LMat4F> Skin(Model.size());
+    this->Skeleton->ModelToSkin(Model, Skin);
+    return this->ComputePosedAabb(Model, Skin);
+}
+
+LWorldAabb3 Jafg::LSkeletalMesh::ComputePosedAabb(std::span<LMat4F const> Model, std::span<LMat4F const> Skin) const noexcept
+{
+    check(Model.size() == this->JointRadii.size())
+    check(Skin.size() == this->JointRadii.size())
+
     LWorldAabb3 Result{maths::identity<LWorldAabb3>};
     for (auto Idx{0uz}; Idx < Model.size(); ++Idx)
     {
         if (f32 const Radius{this->JointRadii[Idx]}; Radius > 0.0f)
         {
             /* The skinning matrix of the joint maps its bind origin to its posed origin and stretches like the joint. */
-            LMat4F const Skin{Model[Idx] * this->Skeleton->Joints[Idx].InverseBind};
             LVec3F const Center{Model[Idx][3]};
-            LVec3F const Extent{Radius * ::GetMaxStretch(Skin)};
+            LVec3F const Extent{Radius * ::GetMaxStretch(Skin[Idx])};
             Result.inline_merge(LWorldAabb3{.min = LWorldVec3{Center - Extent}, .max = LWorldVec3{Center + Extent}});
         }
     }

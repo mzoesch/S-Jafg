@@ -11,6 +11,7 @@
 #include "Jgc/Framework/JgcCharacterInputComponent.h"
 #include "Jgc/Framework/Vehicle.h"
 #include "Jgc/Framework/JgcHumanoid.h"
+#include "Jgc/Framework/CustomizationStation.h"
 #include "Jgc/Owss/OwssGenerationSubsystem.h"
 
 static void LoadGymCollection(Jafg::LWorld& World)
@@ -111,6 +112,8 @@ static void LoadGymCollection(Jafg::LWorld& World)
     auto& Generation{*World.GetSubsystemChecked<Jgc::JOwssGenerationSubsystem>()};
     Generation.SpawnShip({10.0f, 3.0f, 15.0f}, LWorldQuat{maths::radians(LWorldVec3{0, -90, 0})});
 
+    Jgc::SpawnCustomizationStation(World, {-3.5, 0.0, 7.5}, LWorldQuat{maths::radians(LWorldVec3{0, 180, 0})});
+
     /* Runs (and every second way sprints) back and forth in front of the start. To look at animations alone. */
     // Jgc::SpawnPatrollingHumanoid(World, {{-6.0, 0.1, 6.0}, {6.0, 0.1, 6.0}});
 }
@@ -121,13 +124,13 @@ void Jgc::AOwssSupremePolicies::BeginClassLife(Jafg::LBeginClassLifeInfo const& 
 
     LOG_TRACE(LogOwss, "Registering owss gym callback.")
     auto& Prefs{Jafg::GetMutableSingleton<Jafg::JUserPreferences>()};
-    if (Prefs.EditorObjectCollectionsCallbacks.contains("JgcGym"))
+    if (Prefs.EditorObjectCollectionsCallbacks.contains("Gym"))
     {
-        LOG_VERBOSE(LogOwss, "JgcGym callback was registered by another client.")
+        LOG_VERBOSE(LogOwss, "Gym callback was registered by another client.")
     }
     else
     {
-        Prefs.EditorObjectCollectionsCallbacks["JgcGym"] = &LoadGymCollection;
+        Prefs.EditorObjectCollectionsCallbacks["Gym"] = &LoadGymCollection;
     }
 }
 

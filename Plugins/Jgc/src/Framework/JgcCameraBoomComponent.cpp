@@ -31,10 +31,7 @@ void Jgc::AJgcCameraBoomComponent::ParentTick(f32 Dt)
         TArray<Jafg::LHitResult> Hits;
         Jafg::LCollisionQueryParams Params{.bSingleHit = true, .bSortByDistance = true};
         Params.IgnoredActors.emplace_back(&this->GetOwningActor());
-        if (this->GetWorld().LineTraceByChannel(&Hits, Begin, End
-            , Jafg::ECollisionChannelBits::Static | Jafg::ECollisionChannelBits::Dynamic | Jafg::ECollisionChannelBits::Pawn
-            , Params
-            ) && !Hits.empty())
+        if (this->GetWorld().LineTraceByChannel(&Hits, Begin, End, this->Channels, Params) && !Hits.empty())
         {
             f32 const Full{static_cast<f32>(maths::distance(Begin, End))};
             f32 const Hit{static_cast<f32>(maths::distance(Begin, Hits.front().GlobalWorldLocation))};

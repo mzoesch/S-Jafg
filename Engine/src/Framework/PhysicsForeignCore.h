@@ -123,6 +123,14 @@ namespace Jafg
 
 } /* ~Namespace Jafg */
 
+//#
+//# Jolt's instruction set definitions (and flags) come with the imported Jolt target (see Engine/CMakeLists.txt).
+//# Without them, Jolt's inline functions (e.g., its vector math) differ between the engine and the Jolt library.
+//#
+#if !JAFG_PLATFORM_WASM && !defined(JPH_USE_SSE4_1)
+    #error "The instruction set definitions of Jolt are missing. See the imported Jolt target in Engine/CMakeLists.txt."
+#endif /* !JAFG_PLATFORM_WASM && !defined(JPH_USE_SSE4_1) */
+
 #include <Jolt/Jolt.h>
 
 #include <Jolt/RegisterTypes.h>

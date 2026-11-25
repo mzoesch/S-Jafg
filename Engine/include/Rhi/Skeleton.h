@@ -29,6 +29,28 @@ struct LJointTransform final
 };
 
 //#
+//# Changes the proportions of one joint on top of every pose (e.g., the longer arms of a customized character). All
+//# ones change nothing. @see #LSkeleton::ApplyProportions, #LSkeleton::ModelToSkin
+//#
+struct LJointProportion final
+{
+    //#
+    //# Multiplies the scale of the joint. Like every scale of a joint, it carries over to the joints below it (their
+    //# translations and the vertices they move). Keep it uniform if the joint has children, they are skewed otherwise.
+    //#
+    LVec3F Scale{ 1.0f };
+    //#
+    //# Deforms the vertices that the joint moves with a linear map in the space of the joint (of its bind pose), around
+    //# its origin. The joints directly below it move along with the deformed vertices, but are not deformed themselves.
+    //# Unlike #Scale, it may be anything. E.g., a scale along the bone (Y in skeletons from Blender) makes the bone
+    //# longer and moves the joint at its end, or a scale along the axes of the model makes the body wider.
+    //#
+    LMat3F Mesh{ 1.0f };
+
+    NODISCARD bool operator==(LJointProportion const&) const = default;
+};
+
+//#
 //# The joints of a skinned mesh (a glTF skin). Joints are sorted parents first, so that a pose can be resolved from
 //# the first to the last joint in one pass.
 //#
@@ -71,6 +93,17 @@ struct LSkeleton final
     //# @param OutSkin Must have the size of #Model.
     //#
     ENGINE_API void ModelToSkin(std::span<LMat4F const> Model, std::span<LMat4F> OutSkin) const noexcept;
+    //#
+    //# Like #ModelToSkin, but the vertices of every joint are additionally deformed by its #LJointProportion::Mesh.
+    //# @param Proportions One per joint, or empty for none.
+    //#
+    ENGINE_API void ModelToSkin(std::span<LMat4F const> Model, std::span<LMat4F> OutSkin, std::span<LJointProportion const> Proportions) const noexcept;
+    //#
+    //# Applies #LJointProportion::Scale to a local pose, and moves every joint along with the #LJointProportion::Mesh
+    //# of its parent. Before the pose is resolved with #LocalToModel.
+    //# @param Proportions One per joint, or empty for none.
+    //#
+    ENGINE_API void ApplyProportions(std::span<LJointTransform> Local, std::span<LJointProportion const> Proportions) const noexcept;
 
     //# The rotation of a joint in model space, resolved from a local pose. Scale is ignored.
     NODISCARD ENGINE_API LQuatF GetModelRotation(std::span<LJointTransform const> Local, u32 Joint) const noexcept;

@@ -22,7 +22,7 @@ void Jgc::AJgcVehicleInputComponent::OnPossessionChanged(Jafg::APersonaControlle
 {
     Super::OnPossessionChanged(Previous, New);
 
-    this->ResetFreeLook();
+    this->FreeLook.Reset();
     WStatusHud::Hide(&this->Hud);
     if (auto* Lackey{New ? New->TryGetOwningLackey<Jafg::ELackey::Local>() : nullptr})
     {
@@ -48,74 +48,29 @@ void Jgc::AJgcVehicleInputComponent::ParentTick(f32 Dt)
 
     if (!this->GetOwningController())
     {
-        this->ResetFreeLook();
+        this->FreeLook.Reset();
         return;
     }
     this->UpdateHud();
 
-    /* Holding is polled, so that a lost release (e.g., focus loss) never leaves free look active. */
-    bool const bHeld{this->bFrameFreeLookHeld};
-    if (bHeld)
-    {
-        if (!this->bFreeLook)
-        {
-            this->bFreeLook = true;
-            this->FreeLookTravel = 0.0f;
-        }
-        auto* Gimbal{this->GetFreeLookGimbal()};
-        if (this->FrameLook != LVec2F{0.0f})
-        {
-            this->FreeLookTravel += maths::magnitude(this->FrameLook);
-            if (Gimbal && this->bFramePanHeld)
-            {
-                /* The vehicle follows the mouse: Moving it right pans the view left. */
-                LVec2F const Delta{this->FrameLook * (this->FreeLookPanSensitivity * Gimbal->GetZoom())};
-                Gimbal->AddPan(LVec2F{-Delta.x, -Delta.y});
-            }
-            else if (Gimbal)
-            {
-                LVec2F const Delta{this->FrameLook * this->FreeLookSensitivity};
-                /* Same as looking around with a character (#AJgcCharacterInputComponent::OnLook). */
-                Gimbal->AddRotation(Delta.x, this->bInvertFreeLookPitch ? -Delta.y : Delta.y);
-            }
-        }
-        if (this->FrameZoom != 0.0f)
-        {
-            /* Changing anything is not a tap. */
-            this->FreeLookTravel += this->FreeLookRecenterThreshold;
-            if (Gimbal)
-            {
-                Gimbal->MultiplyZoom(std::pow(maths::max(this->FreeLookZoomStep, 1.0f), -this->FrameZoom));
-            }
-        }
-    }
-    else if (this->bFreeLook)
-    {
-        this->bFreeLook = false;
-        /* Only tapped: Back to the center. */
-        if (this->FreeLookTravel < this->FreeLookRecenterThreshold)
-        {
-            if (auto* Gimbal{this->GetFreeLookGimbal()})
-            {
-                Gimbal->Recenter();
-            }
-        }
-    }
-
-    this->bFrameFreeLookHeld = false;
-    this->bFramePanHeld = false;
-    this->FrameLook = LVec2F{0.0f};
-    this->FrameZoom = 0.0f;
+    this->FreeLook.Apply(this->GetFreeLookGimbal(), {
+        .Sensitivity = this->FreeLookSensitivity,
+        .bInvertPitch = this->bInvertFreeLookPitch,
+        .PanSensitivity = this->FreeLookPanSensitivity,
+        .ZoomStep = this->FreeLookZoomStep,
+        .bZoomOnlyWhileHeld = true,
+        .RecenterThreshold = this->FreeLookRecenterThreshold,
+        });
 }
 
 void Jgc::AJgcVehicleInputComponent::OnVehicleLook(Jafg::LInputActionValue const& Value) noexcept
 {
-    this->FrameLook += Value.GetAxis2DValue();
+    this->FreeLook.OnLook(Value.GetAxis2DValue());
 }
 
 void Jgc::AJgcVehicleInputComponent::OnVehicleZoom(Jafg::LInputActionValue const& Value) noexcept
 {
-    this->FrameZoom += Value.GetAxis1DValue();
+    this->FreeLook.OnZoom(Value.GetAxis1DValue());
 }
 
 Jafg::AGimbalComponent* Jgc::AJgcVehicleInputComponent::GetFreeLookGimbal() const noexcept
@@ -128,16 +83,6 @@ Jafg::AGimbalComponent* Jgc::AJgcVehicleInputComponent::GetFreeLookGimbal() cons
         }
     }
     return nullptr;
-}
-
-void Jgc::AJgcVehicleInputComponent::ResetFreeLook() noexcept
-{
-    this->bFrameFreeLookHeld = false;
-    this->bFramePanHeld = false;
-    this->FrameLook = LVec2F{0.0f};
-    this->FrameZoom = 0.0f;
-    this->bFreeLook = false;
-    this->FreeLookTravel = 0.0f;
 }
 
 bool Jgc::AJgcVehicleInputComponent::ActivateUserInputContext() noexcept

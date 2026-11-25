@@ -106,6 +106,19 @@ public:
     CLASS_FIELD(EditorEditable)
     f32 PlayRate{ 1.0f };
 
+    //# ---------- Proportions ----------
+
+    //#
+    //# Changes the proportions of the body on top of every pose, after the pose modifier (e.g., the longer arms of a
+    //# customized character). Applied at once. @see #LJointProportion
+    //# @param InProportions One per joint of the skeleton, in its order. Empty keeps the authored proportions.
+    //#                      Ignored (logged) if the count does not match.
+    //# The proportions belong to the skeleton of the current mesh. Setting another mesh removes them.
+    //#
+    void SetProportions(TArray<LJointProportion> InProportions);
+    //# One per joint, or empty.
+    NODISCARD FORCEINLINE std::span<LJointProportion const> GetProportions() const noexcept { return this->Proportions; }
+
     //# ---------- Pose ----------
 
     //# Of the last tick. Relative to the parent joints. Empty without a mesh.
@@ -148,6 +161,7 @@ private:
     mutable std::unordered_map<LAnimationClip const*, LAnimationClipBinding> Bindings;
     LAnimationPlayer Player;
     LPoseModifier PoseModifier;
+    TArray<LJointProportion> Proportions;
 
     TArray<LJointTransform> LocalPose;
     TArray<LMat4F> ModelPose;

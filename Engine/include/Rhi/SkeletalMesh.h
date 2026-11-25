@@ -95,6 +95,12 @@ struct LSkeletalMesh final
     //# @param Model The model space transforms of all joints.
     //#
     NODISCARD ENGINE_API LWorldAabb3 ComputePosedAabb(std::span<LMat4F const> Model) const noexcept;
+    //#
+    //# Like the other overload, for skinning matrices that do not come from #Model alone (e.g., with the
+    //# #LJointProportion::Mesh of #LSkeleton::ModelToSkin).
+    //# @param Skin The skinning matrices of all joints.
+    //#
+    NODISCARD ENGINE_API LWorldAabb3 ComputePosedAabb(std::span<LMat4F const> Model, std::span<LMat4F const> Skin) const noexcept;
 
 private:
 

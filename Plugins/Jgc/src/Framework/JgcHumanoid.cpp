@@ -12,6 +12,7 @@
 #include "Engine/World.h"
 #include "Jgc/Framework/JgcCharacterAnimationComponent.h"
 #include "Jgc/Framework/JgcCameraBoomComponent.h"
+#include "Jgc/Framework/JgcHumanoidShapeComponent.h"
 #include "Jgc/Framework/JgcPatrolComponent.h"
 
 Jafg::ASkeletalMeshComponent* Jgc::EquipHumanoidBody(Jafg::AActor& Character, LHumanoidBodyInfo const& Info /* = {} */)
@@ -43,6 +44,8 @@ Jafg::ASkeletalMeshComponent* Jgc::EquipHumanoidBody(Jafg::AActor& Character, LH
     })};
 
     Character.EmplaceComponent<AJgcCharacterAnimationComponent>();
+    /* The proportions of the body (e.g., changed at a customization station). */
+    Character.EmplaceComponent<AJgcHumanoidShapeComponent>();
 
     /* The movement drives the first eye directly below the root (see #ACharacterMovementComponent::GetHeadEye). */
     Jafg::AEyeComponent* Head{};

@@ -54,7 +54,7 @@ struct LScrollRegionBarBrush
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(LFactoryScrollRegion)
-class WScrollRegion final : public WRegion
+class ENGINE_API WScrollRegion final : public WRegion
 {
     GENERATED_CLASS_BODY()
 

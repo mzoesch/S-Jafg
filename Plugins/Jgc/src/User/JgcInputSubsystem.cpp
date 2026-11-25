@@ -8,6 +8,7 @@
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/JgcVehicleInputComponent.h"
 #include "Jgc/Framework/JgcCharacterInputComponent.h"
+#include "Jgc/Framework/JgcCustomizationInputComponent.h"
 
 namespace
 {
@@ -35,6 +36,19 @@ Jafg::LOnUserInputActionResult ForCharacterInput(Jafg::LInputCallback const& Dat
             , "[{}]: Action was triggered but controller does not possess anything."
             , Data.Controller.GetNameAsString()
             )
+    }
+    return {};
+}
+
+//# Calls #Functor with the customization input component of the actor that the acting controller possesses.
+Jafg::LOnUserInputActionResult ForCustomizationInput(Jafg::LInputCallback const& Data, auto&& Functor)
+{
+    if (auto* Possessed{Data.Controller.GetPossessedActor()})
+    {
+        if (auto* Comp{Possessed->GetComponent<Jgc::AJgcCustomizationInputComponent>()})
+        {
+            Functor(*Comp);
+        }
     }
     return {};
 }
@@ -330,6 +344,50 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
     else
     {
         LOG_WARNING(LogJgc, "[Jgc.Vehicle]: Failed to register user input context.")
+    }
+
+    if (auto* Context{Registry.RegisterContext("Jgc.Customization", "Customization")})
+    {
+        /*
+         * Hold to orbit the view around the customized character by dragging the cursor. No look action: The cursor
+         * is shown, and the surface does not report the motion of a shown cursor.
+         */
+        Context->MapAction({
+            .Tag = Jafg::LUserInputTag::ToTag("Orbit"),
+            .Category = Jafg::EInputActionCategory::Boolean,
+            .Triggers = TArray<Jafg::LInputTrigger>{}
+                .reflexive_emplace_back(Jafg::LInputTrigger::CreateInfo{
+                    .TriggerFlags = Jafg::EInputActionTriggerBits::Triggered | Jafg::EInputActionTriggerBits::Ongoing,
+                    .DefaultKeys = {Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::RightMouseButton)},
+                    }),
+            .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCustomizationInput(Data, [](AJgcCustomizationInputComponent& Comp) { Comp.OnOrbitHeld(); });
+            },});
+
+        /* Closer to or farther from the character. Up is positive, down negative. */
+        Context->MapAction({
+            .Tag = Jafg::LUserInputTag::ToTag("Zoom"),
+            .Category = Jafg::EInputActionCategory::Axis1D,
+            .Triggers = TArray<Jafg::LInputTrigger>{}
+                .reflexive_emplace_back(Jafg::LInputTrigger::CreateInfo{
+                    .DisplayName = "Closer",
+                    .TriggerFlags = Jafg::EInputActionTriggerBits::Triggered,
+                    .DefaultKeys = {Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseWheelUp)},
+                    })
+                .reflexive_emplace_back(Jafg::LInputTrigger::CreateInfo{
+                    .DisplayName = "Farther",
+                    .TriggerFlags = Jafg::EInputActionTriggerBits::Triggered,
+                    .DefaultKeys = {Jafg::LPhysicalKey::FromLogical(Jafg::ELogicalKey::MouseWheelDown)},
+                    }),
+            .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
+            {
+                return ::ForCustomizationInput(Data, [&Value](AJgcCustomizationInputComponent& Comp) { Comp.OnOrbitZoom(Value); });
+            },});
+    }
+    else
+    {
+        LOG_WARNING(LogJgc, "[Jgc.Customization]: Failed to register user input context.")
     }
 
     if (auto* Context{Registry.RegisterContext("Jgc.Character", "Character")})

@@ -518,12 +518,35 @@ if(_guard)
         # (GENERATE_DEBUG_SYMBOLS). At -O2, GCC reports a false positive -Warray-bounds in Jolt/Math/Vector.h (from
         # MassProperties.cpp), and Jolt compiles with -Werror.
         #
+        # Jolt compiles with -ffp-contract=fast. Optimized, the compiler then fuses multiplications and additions into
+        # FMAs differently wherever an inline function is inlined. But with JPH_DEBUG, Jolt asserts that bounds
+        # computed in different places are bitwise equal (Body::ValidateCachedBounds), and that fails after a few
+        # simulation steps. Without contraction every operation is rounded on its own and the results are the same
+        # everywhere. Jolt's explicit FMA intrinsics are kept (like Jolt does itself for deterministic builds).
+        #
         set(JoltPhysics_CXX_FLAGS_ARGS
             "-DOVERRIDE_CXX_FLAGS=OFF"
-            "-DCMAKE_CXX_FLAGS_DEBUG=-O2 -Wno-array-bounds"
+            "-DCMAKE_CXX_FLAGS_DEBUG=-O2 -ffp-contract=off -Wno-array-bounds"
             )
     endif()
     message(STATUS "JoltPhysics_CXX_FLAGS_ARGS: ${JoltPhysics_CXX_FLAGS_ARGS}")
+
+    #
+    # The instruction sets Jolt is compiled with. Jolt's inline functions (e.g., its vector math) differ by them, so the
+    # engine has to compile the Jolt headers with the same ones (see the imported Jolt target below). Otherwise every
+    # such inline function has two different definitions (an ODR violation), and which one runs depends on what the
+    # compiler inlined and which copy the linker kept.
+    #
+    set(JoltPhysics_INSTRUCTION_SETS SSE4_1 SSE4_2 AVX AVX2 LZCNT TZCNT F16C FMADD)
+    message(STATUS "JoltPhysics_INSTRUCTION_SETS: ${JoltPhysics_INSTRUCTION_SETS}")
+    set(JoltPhysics_INSTRUCTION_SET_ARGS "")
+    foreach(_set IN ITEMS SSE4_1 SSE4_2 AVX AVX2 AVX512 LZCNT TZCNT F16C FMADD)
+        if(_set IN_LIST JoltPhysics_INSTRUCTION_SETS)
+            list(APPEND JoltPhysics_INSTRUCTION_SET_ARGS "-DUSE_${_set}=ON")
+        else()
+            list(APPEND JoltPhysics_INSTRUCTION_SET_ARGS "-DUSE_${_set}=OFF")
+        endif()
+    endforeach()
 
     set(JoltPhysics_TOOLCHAIN_ARGS "")
     if(CMAKE_CROSSCOMPILING AND (JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS))
@@ -559,15 +582,7 @@ if(_guard)
             -DCPP_RTTI_ENABLED=OFF
             -DOBJECT_LAYER_BITS=${JoltPhysics_OBJECT_LAYER_BITS}
 
-            -DUSE_SSE4_1=ON
-            -DUSE_SSE4_2=ON
-            -DUSE_AVX=ON
-            -DUSE_AVX2=ON
-            -DUSE_AVX512=OFF
-            -DUSE_LZCNT=ON
-            -DUSE_TZCNT=ON
-            -DUSE_F16C=ON
-            -DUSE_FMADD=ON
+            ${JoltPhysics_INSTRUCTION_SET_ARGS}
 
             -DUSE_WASM_SIMD=OFF
             -DJPH_USE_WASM64=OFF
@@ -607,6 +622,67 @@ if(_guard)
         IMPORTED_LOCATION "${JoltPhysics_LIB}"
         INTERFACE_INCLUDE_DIRECTORIES "${JAFG_ENGINE_ROOT}/Vendor/joltPhysics"
         )
+    #
+    # Jolt's own CMake target would carry the instruction set defines and compiler flags to its users (see
+    # EMIT_X86_INSTRUCTION_SET_DEFINITIONS and the flags after it in Vendor/joltPhysics/Jolt/Jolt.cmake). This imported
+    # target mirrors them. They apply to the whole engine, because the precompiled header has to match every translation
+    # unit, and Jolt already requires these instruction sets at runtime anyway. Under Emscripten Jolt uses none.
+    #
+    if(NOT (JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM))
+        set(_jolt_sets ${JoltPhysics_INSTRUCTION_SETS})
+        if(JoltPhysics_CROSS_PLATFORM_DETERMINISTIC)
+            list(REMOVE_ITEM _jolt_sets FMADD)
+        endif()
+
+        set(_jolt_definitions "")
+        foreach(_set IN LISTS _jolt_sets)
+            list(APPEND _jolt_definitions "JPH_USE_${_set}")
+        endforeach()
+
+        set(_jolt_options "")
+        if(MSVC)
+            if("AVX512" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options "/arch:AVX512")
+            elseif("AVX2" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options "/arch:AVX2")
+            elseif("AVX" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options "/arch:AVX")
+            endif()
+        else()
+            if("AVX512" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mavx512f -mavx512vl -mavx512dq -mavx2 -mbmi -mpopcnt -mlzcnt -mf16c)
+            elseif("AVX2" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mavx2 -mbmi -mpopcnt -mlzcnt -mf16c)
+            elseif("AVX" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mavx -mpopcnt)
+            elseif("SSE4_2" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -msse4.2 -mpopcnt)
+            elseif("SSE4_1" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -msse4.1)
+            else()
+                list(APPEND _jolt_options -msse2)
+            endif()
+            if("LZCNT" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mlzcnt)
+            endif()
+            if("TZCNT" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mbmi)
+            endif()
+            if("F16C" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mf16c)
+            endif()
+            if("FMADD" IN_LIST _jolt_sets)
+                list(APPEND _jolt_options -mfma)
+            endif()
+            list(APPEND _jolt_options -mfpmath=sse)
+        endif()
+        list(REMOVE_DUPLICATES _jolt_options)
+
+        message(STATUS "Jolt interface definitions: ${_jolt_definitions}")
+        message(STATUS "Jolt interface options: ${_jolt_options}")
+        set_property(TARGET Jolt APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS ${_jolt_definitions})
+        set_property(TARGET Jolt APPEND PROPERTY INTERFACE_COMPILE_OPTIONS ${_jolt_options})
+    endif()
     add_dependencies(Jolt joltPhysics)
     target_link_libraries(${_scoped_module_name} PRIVATE Jolt)
 
