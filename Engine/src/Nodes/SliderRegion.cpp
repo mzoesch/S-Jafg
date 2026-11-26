@@ -46,20 +46,21 @@ Jafg::LNodeReply Jafg::WSliderRegion::OnKeyEventFocused(LNodeKeyEventInfo const&
         Info.Viewport.EmplaceUntil<ERawInputStateBits::Release>(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton),
         [this,LastLocation=Info.CursorLocation->x,LastValue=std::optional<f64>{}](auto&&...) mutable
         {
-            auto& Surface{this->GetViewport().GetSurface()};
-            if (!Surface.HasMouseLocation())
+            /* E.g., outside of a nested viewport. The drag ends with the release, wherever the cursor is. */
+            std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+            if (!Cursor)
             {
-                return true;
+                return false;
             }
 
-            auto Delta{(Surface.GetMouseLocation()->x - LastLocation) * 0.01};
-            LastLocation = Surface.GetMouseLocation()->x;
+            auto Delta{(Cursor->x - LastLocation) * 0.01};
+            LastLocation = Cursor->x;
             if (!LastValue || Delta != 0.0f)
             {
                 LastValue = this->Value;
 
                 if (auto TranslatedMouse{
-                    Surface.GetMouseLocationValue()
+                    *Cursor
                     - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetTranslationFromMostOuter())
                     };
                     TranslatedMouse.x < 0.0f)

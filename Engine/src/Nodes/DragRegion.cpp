@@ -263,7 +263,7 @@ Jafg::LNodeReply Jafg::WDragRegion::OnKeyEventFocused(LNodeKeyEventInfo const& I
     {
         check(!this->UiTickMoveHandle.IsValid())
         this->UiTickMoveHandle = Info.Viewport.OnLateTick.Emplace(this, &WDragRegion::UiTickMove);
-        this->InitialDragLocation = Info.Surface.GetMouseLocation();
+        this->InitialDragLocation = Info.CursorLocation;
         return LNodeReply::Handled();
     }
 
@@ -554,7 +554,7 @@ bool Jafg::WDragRegion::UiTickMove()
 {
     if (!this->InitialDragLocation)
     {
-        this->InitialDragLocation = this->GetViewport().GetSurface().GetMouseLocation();
+        this->InitialDragLocation = this->GetViewport().GetCursorLocation();
         return {};
     }
 
@@ -565,19 +565,20 @@ bool Jafg::WDragRegion::UiTickMove()
     }
     if (!this->DragHint)
     {
-        if (!this->GetViewport().GetSurface().HasMouseLocationForOrtho())
+        std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+        if (!Cursor)
         {
             return {};
         }
-        (void)this->IsLocationOverDragRect(Translation, this->GetViewport().GetSurface().GetMouseLocationValue());
+        (void)this->IsLocationOverDragRect(Translation, *Cursor);
     }
     if (!this->DragHint)
     {
         return {};
     }
 
-    auto& Surface{this->GetViewport().GetSurface()};
-    if (!Surface.HasMouseLocationForOrtho())
+    std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+    if (!Cursor)
     {
         return {};
     }
@@ -615,8 +616,8 @@ bool Jafg::WDragRegion::UiTickMove()
     //     Remaining += SpaceSpt + this->ProjVec((*It)->GetDesiredSize_v2());
     // }
 
-    // auto Delta = *this->InitialDragLocation - Surface.GetMouseLocationValue(); // TODO: How??
-    f32 DesiredSize = this->ProjVec(Surface.GetMouseLocationValue() - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)) // TODO: fix trans.
+    // auto Delta = *this->InitialDragLocation - *Cursor; // TODO: How??
+    f32 DesiredSize = this->ProjVec(*Cursor - this->GetAnchoredAndTranslatedTopLeftFromMostOuter(maths::zero_vector<LVec2F>)) // TODO: fix trans.
         - Offset - (SpaceSpt * 0.5f);
 
     if (DesiredSize < this->ProjVec(DragChild.GetAnchoredSize_v2()))

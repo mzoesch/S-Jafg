@@ -257,9 +257,9 @@ bool Jafg::WEditableTextButton::UserInterfaceTick()
             this->PendingMouseSelectionAnchor.reset();
         }
         /* If the mouse cursor is hidden, someone else uses the drag (e.g., value scrubbing). */
-        else if (Surface.HasMouseLocationForOrtho())
+        else if (std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()})
         {
-            const std::size_t Idx{this->HitTestCaret(Surface.GetMouseLocationValue())};
+            const std::size_t Idx{this->HitTestCaret(*Cursor)};
             if (this->PendingMouseSelectionAnchor.has_value())
             {
                 if (Idx != *this->PendingMouseSelectionAnchor)

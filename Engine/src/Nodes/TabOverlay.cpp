@@ -583,14 +583,15 @@ bool Jafg::WTabOverlay::MouseTabMoveTick(WTabOverlaySelector& Selector)
 
     this->LastMouseFlags = It->Mods;
 
-    if (!this->GetViewport().GetSurface().HasMouseLocationForOrtho())
+    std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+    if (!Cursor)
     {
         ResetDrawOption();
         ResetTempBox();
         return {};
     }
 
-    auto Location{this->GetViewport().GetSurface().GetMouseLocationValue()};
+    LVec2F const Location{*Cursor};
     LVec2F Translation{this->GetTranslationFromMostOuter()};
 
     // Identity op; just discard.

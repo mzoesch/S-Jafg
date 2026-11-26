@@ -97,17 +97,19 @@ public:
     //#
     virtual bool SetCursorLocationInWorldView(LVec2F Location) noexcept { (void)Location; return false; }
     //#
-    //# The viewport that is drawn over the rendered world, in the space of the world view (e.g., for HUDs). Null if
-    //# this lackey does not render a world.
+    //# The viewport of the world view: Drawn over the rendered world, in the space of the world view. For the widgets
+    //# of the world (e.g., HUDs and windows of the game). Like the world, they stay inside of the world view, as in a
+    //# game without the editor. They get the inputs before the user input contexts of this lackey. Null if this lackey
+    //# does not render a world.
     //#
-    NODISCARD virtual LViewport* GetWorldOverlayViewport() noexcept { return nullptr; }
+    NODISCARD virtual LViewport* GetWorldViewport() noexcept { return nullptr; }
     //#
-    //# The viewport that the world view of this lackey is part of. Unlike #GetWorldOverlayViewport (which only
-    //# draws), its widgets take input like any other (e.g., a window over the world).
+    //# The viewport that the world view of this lackey is shown in, e.g., the editor around it (the parent of
+    //# #GetWorldViewport, @see #LViewport::GetParent).
     //#
-    NODISCARD virtual LViewport& GetHostViewport() noexcept { return this->Viewport; }
-    //# Where the world view is in #GetHostViewport. Empty if this lackey does not render a world.
-    NODISCARD virtual std::optional<LRect2F> GetWorldViewRectInHostViewport() const noexcept { return {}; }
+    NODISCARD virtual LViewport& GetParentViewport() noexcept { return this->Viewport; }
+    //# Where the world view is in #GetParentViewport. Empty if this lackey does not render a world.
+    NODISCARD virtual std::optional<LRect2F> GetWorldViewRectInParentViewport() const noexcept { return {}; }
 
 protected:
 

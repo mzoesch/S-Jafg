@@ -10,12 +10,12 @@
 #include "User/Input/InputActionValue.h"
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/CustomizationStation.h"
-#include "Jgc/User/Frontend/JgcCustomizationWindow.h"
+#include "Jgc/User/Frontend/JgcCustomizationPanel.h"
 
 void Jgc::AJgcCustomizationInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
 {
-    /* Also when the world goes away. The window lives in the viewport, which stays. */
-    this->CloseWindow();
+    /* Also when the world goes away. The panel lives in the world viewport, which stays. */
+    this->ClosePanel();
     Super::OnGarbage(Reason);
 }
 
@@ -25,7 +25,7 @@ void Jgc::AJgcCustomizationInputComponent::OnPossessionChanged(Jafg::APersonaCon
 
     this->Orbit.Reset();
     this->LastCursorLocation.reset();
-    this->CloseWindow();
+    this->ClosePanel();
 
     if (New)
     {
@@ -38,7 +38,7 @@ void Jgc::AJgcCustomizationInputComponent::OnPossessionChanged(Jafg::APersonaCon
         (void)this->ActivateUserInputContext();
         if (auto* Lackey{New->TryGetOwningLackey<Jafg::ELackey::Local>()})
         {
-            this->OpenWindow(*Lackey);
+            this->OpenPanel(*Lackey);
         }
         return;
     }
@@ -64,7 +64,7 @@ void Jgc::AJgcCustomizationInputComponent::ParentTick(f32 Dt)
     /* E.g., the occupant was destroyed. There is nothing left to change. */
     if (auto* Station{this->GetStation()}; !Station || !Station->HasOccupant())
     {
-        this->CloseWindow();
+        this->ClosePanel();
     }
     /* The view may have been resized. */
     this->AimEye();
@@ -100,7 +100,7 @@ bool Jgc::AJgcCustomizationInputComponent::ActivateUserInputContext() noexcept
             auto& UserInput{Lackey->GetUserInput()};
             UserInput.DeactivateAllContexts();
             bool const bActivated{UserInput.ActivateContext(Jafg::LUserInputTag::AsTagChecked("Jgc.Customization"))};
-            /* The cursor is always shown, for the window. */
+            /* The cursor is always shown, for the panel. */
             UserInput.SetConsumeMouse(false);
             UserInput.SetConfineMouse(false);
             return bActivated;
@@ -129,8 +129,8 @@ Jafg::AGimbalComponent* Jgc::AJgcCustomizationInputComponent::GetOrbitGimbal() c
 
 void Jgc::AJgcCustomizationInputComponent::OnOrbitHeld() noexcept
 {
-    /* Pressing on the window is not meant for the view. Once orbiting, the window does not stop it. */
-    if (this->Orbit.IsActive() || !this->IsCursorOverWindow())
+    /* Pressing on the panel is not meant for the view. Once orbiting, the panel does not stop it. */
+    if (this->Orbit.IsActive() || !this->IsCursorOverPanel())
     {
         this->Orbit.OnHeld();
     }
@@ -138,7 +138,7 @@ void Jgc::AJgcCustomizationInputComponent::OnOrbitHeld() noexcept
 
 void Jgc::AJgcCustomizationInputComponent::OnOrbitZoom(Jafg::LInputActionValue const& Value) noexcept
 {
-    if (!this->IsCursorOverWindow())
+    if (!this->IsCursorOverPanel())
     {
         this->Orbit.OnZoom(Value.GetAxis1DValue());
     }
@@ -160,9 +160,9 @@ void Jgc::AJgcCustomizationInputComponent::Discard()
     }
 }
 
-bool Jgc::AJgcCustomizationInputComponent::IsWindowOpen() const noexcept
+bool Jgc::AJgcCustomizationInputComponent::IsPanelOpen() const noexcept
 {
-    return this->Window.IsValidSlow();
+    return this->Panel.IsValidSlow();
 }
 
 void Jgc::AJgcCustomizationInputComponent::AimEye() noexcept
@@ -194,7 +194,7 @@ void Jgc::AJgcCustomizationInputComponent::AimEye() noexcept
     }
 }
 
-void Jgc::AJgcCustomizationInputComponent::OpenWindow(Jafg::LLocalLackey& Lackey)
+void Jgc::AJgcCustomizationInputComponent::OpenPanel(Jafg::LLocalLackey& Lackey)
 {
     auto* Station{this->GetStation()};
     auto* Shape{Station ? Station->GetOccupantShape() : nullptr};
@@ -204,17 +204,18 @@ void Jgc::AJgcCustomizationInputComponent::OpenWindow(Jafg::LLocalLackey& Lackey
         return;
     }
 
-    /* The part of the world view left of the band that the occupant is shown in the center of. */
-    std::optional<LRect2F> Area{Lackey.GetWorldViewRectInHostViewport()};
-    if (Area)
+    /* UI of the game. Like the world, it stays inside of the world view, as in a game without the editor. */
+    Jafg::LViewport* const WorldViewport{Lackey.GetWorldViewport()};
+    if (!WorldViewport)
     {
-        Area->extent.x *= 2.0f * maths::clamp(this->OccupantViewX, 0.5f, 1.0f) - 1.0f;
+        LOG_WARNING(LogJgcInput, "[{}]: Possessed by a lackey that does not show a world.", this->GetNameAsString())
+        return;
     }
 
-    /* The window takes clicks. The overlay of the world view would only draw it. */
-    Jafg::WFloatingWidget& NewWindow{OpenCustomizationWindow(Lackey.GetHostViewport(), {
+    Jafg::WUserWidget& NewPanel{OpenCustomizationPanel(*WorldViewport, {
         .Shape = Shape->GetShape(),
-        .Area = Area,
+        /* The part of the view left of the band that the occupant is shown in the center of. */
+        .Width = 2.0f * maths::clamp(this->OccupantViewX, 0.5f, 1.0f) - 1.0f,
         .OnChanged = [this](LHumanoidShape const& Changed)
         {
             if (auto* Station{this->GetStation()})
@@ -228,16 +229,16 @@ void Jgc::AJgcCustomizationInputComponent::OpenWindow(Jafg::LLocalLackey& Lackey
         .OnApply = [this]{ this->Apply(); },
         .OnDiscard = [this]{ this->Discard(); },
         })};
-    this->Window = &NewWindow;
+    this->Panel = &NewPanel;
 }
 
-void Jgc::AJgcCustomizationInputComponent::CloseWindow() noexcept
+void Jgc::AJgcCustomizationInputComponent::ClosePanel() noexcept
 {
-    if (this->Window.IsValidSlow())
+    if (this->Panel.IsValidSlow())
     {
-        this->Window->MarkAsGarbage_v2();
+        this->Panel->MarkAsGarbage_v2();
     }
-    this->Window.Reset();
+    this->Panel.Reset();
 }
 
 std::optional<LVec2F> Jgc::AJgcCustomizationInputComponent::GetCursorLocation() const noexcept
@@ -253,19 +254,15 @@ std::optional<LVec2F> Jgc::AJgcCustomizationInputComponent::GetCursorLocation() 
     return Surface.HasMouseLocationForOrtho() ? std::optional<LVec2F>{Surface.GetMouseLocationValue()} : std::nullopt;
 }
 
-bool Jgc::AJgcCustomizationInputComponent::IsCursorOverWindow() const noexcept
+bool Jgc::AJgcCustomizationInputComponent::IsCursorOverPanel() const noexcept
 {
-    if (!this->Window.IsValidSlow())
+    if (!this->Panel.IsValidSlow())
     {
         return false;
     }
 
-    Jafg::WFloatingWidget const& FloatingWidget{*this->Window};
-    auto const& Surface{FloatingWidget.GetViewport().GetSurface()};
-    if (!Surface.HasMouseLocationForOrtho())
-    {
-        return false;
-    }
-    Jafg::WNode const& Content{FloatingWidget.GetWindow()};
-    return Content.AabbTest({.Translation = Content.GetTranslationFromMostOuter()}, Surface.GetMouseLocationValue());
+    Jafg::WUserWidget const& Widget{*this->Panel};
+    /* In the world viewport. Empty where something of the editor is over the world view. */
+    std::optional<LVec2F> const Cursor{Widget.GetViewport().GetCursorLocation()};
+    return Cursor && Widget.AabbTest({.Translation = Widget.GetTranslationFromMostOuter()}, *Cursor);
 }

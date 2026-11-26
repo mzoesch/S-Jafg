@@ -171,12 +171,13 @@ Jafg::LNodeReply Jafg::WScrollRegion::Sweep(LNodeSweepInfo const& Info, std::opt
 
 bool Jafg::WScrollRegion::UserInterfaceTick()
 {
-    if (this->GetViewport().GetSurface().GetMouseLocation().has_value() == false)
+    std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+    if (!Cursor)
     {
         return {};
     }
 
-    auto MouseLocation{this->GetViewport().GetSurface().GetMouseLocationValue()};
+    LVec2F const MouseLocation{*Cursor};
 
     if (this->bUiTickV)
     {

@@ -9,6 +9,46 @@
 #include "Framework/StaticMeshComponent.h"
 #include "Framework/MaterialSubsystem.h"
 #include "Framework/LightSubsystem.h"
+#include "Nodes/ScrollRegion.h"
+
+namespace
+{
+
+//#
+//# The node of the tree that a click at the location goes to, as #Jafg::LViewport::DispatchInputs finds it: The
+//# topmost drawn node that can be hit there. Children are over their parent, later children over earlier ones.
+//# Null if there is none.
+//#
+Jafg::WNode const* FindHitTestableNodeAt(Jafg::WNode const& Node, LVec2F Location) noexcept
+{
+    if (!Node.ShouldNowDraw())
+    {
+        return nullptr;
+    }
+
+    /* Scroll regions only show and sweep their content inside of them. */
+    if (auto const* Parent{Node.As<Jafg::WParent>()};
+        Parent && Parent->CanChildrenBeHitTestable()
+        && (!Node.As<Jafg::WScrollRegion>() || Node.AabbTest({.Translation = Node.GetTranslationFromMostOuter()}, Location)))
+    {
+        for (auto It{Parent->GetChildren().rbegin()}; It != Parent->GetChildren().rend(); ++It)
+        {
+            check(It->get())
+            if (Jafg::WNode const* Hit{FindHitTestableNodeAt(**It, Location)})
+            {
+                return Hit;
+            }
+        }
+    }
+
+    if (Node.IsHitTestable() && Node.AabbTest({.Translation = Node.GetTranslationFromMostOuter()}, Location))
+    {
+        return &Node;
+    }
+    return nullptr;
+}
+
+} /* ~Namespace <Anonymous> */
 
 Jafg::WWorldViewer::~WWorldViewer()
 {
@@ -22,6 +62,11 @@ void Jafg::WWorldViewer::Construct()
     this->PolygonMode = *GetSingleton<JUserPreferences>().PolygonMode;
 
     this->RenderTargetViewport.Vk_OnLateInit();
+    this->WorldViewportInputHandle = LRaiiViewportHandle::Make(this->GetViewport().OnEarlyTick, [this]
+    {
+        this->DispatchWorldViewportInputs();
+        return false;
+    });
     BeginStyling(*this).StaticRoot<WText>().SaveTo(&this->Placeholder)
         .Visibility(ENodeVisibility::Visible)
         .Anchor(EAnchor::Fill)
@@ -159,6 +204,7 @@ void Jafg::WWorldViewer::Tick(f32 Dt)
 
     this->ConfineMouseCursorToWorld();
 
+    this->LastDt = Dt;
     this->RenderTargetViewport.Tick(Dt);
 }
 
@@ -289,7 +335,7 @@ std::optional<LVec2F> Jafg::WWorldViewer::WorldTargetToSurfaceLocation(LVec2F Ta
     return Rect.offset + Normalized * Rect.extent;
 }
 
-std::optional<LRect2F> Jafg::WWorldViewer::GetWorldViewRectInHostViewport() const noexcept
+std::optional<LRect2F> Jafg::WWorldViewer::GetWorldViewRectInParentViewport() const noexcept
 {
     if (!this->RenderTarget.IsInitialized())
     {
@@ -354,6 +400,44 @@ void Jafg::WWorldViewer::ConfineMouseCursorToWorld()
     {
         (void)Surface.WarpMouseCursor(Clamped);
     }
+}
+
+void Jafg::WWorldViewer::DispatchWorldViewportInputs()
+{
+    /* E.g., in a tab that is not shown. Nothing of the world can be seen or used then. */
+    if (!this->RenderTarget.IsInitialized() || !this->GetMostOuterParent().IsNodeInVisiblePath(*this))
+    {
+        this->RenderTargetViewport.SetCursorLocation({});
+        return;
+    }
+
+    std::optional<LVec2F> Cursor;
+    /* Only widgets that can be hit use the cursor (e.g., not a HUD). #IsTopmostAt walks every widget of our viewport. */
+    bool const bCanBeHit{algo::any_of(this->RenderTargetViewport.GetTopLevelWidgets(), [](WUserWidget const* Widget)
+    {
+        return Widget->ShouldNowDraw() && Widget->ShouldCheckForInputs();
+    })};
+    if (std::optional<LVec2F> const Location{this->GetViewport().GetCursorLocation()};
+        bCanBeHit && Location && this->IsTopmostAt(*Location))
+    {
+        Cursor = this->SurfaceToWorldTargetLocation(*Location);
+    }
+    this->RenderTargetViewport.SetCursorLocation(Cursor);
+    this->RenderTargetViewport.DispatchInputs(this->LastDt);
+}
+
+bool Jafg::WWorldViewer::IsTopmostAt(LVec2F Location) const noexcept
+{
+    auto const& TopLevelWidgets{this->GetViewport().GetTopLevelWidgets()};
+    for (auto It{TopLevelWidgets.rbegin()}; It != TopLevelWidgets.rend(); ++It)
+    {
+        check(*It)
+        if (WNode const* Hit{::FindHitTestableNodeAt(**It, Location)})
+        {
+            return Hit == this;
+        }
+    }
+    return false;
 }
 
 void Jafg::WWorldViewer::TravelTo(LWorld& World)

@@ -144,20 +144,20 @@ void Jafg::WFloatingWidget::Construct()
 
 bool Jafg::WFloatingWidget::UiTickMove()
 {
-    auto& Surface{this->GetViewport().GetSurface()};
-    if (!Surface.HasMouseLocationForOrtho())
+    std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+    if (!Cursor)
     {
         return {};
     }
 
     if (!this->MoveDragOffset.has_value())
     {
-        this->MoveDragOffset = Surface.GetMouseLocationValue()
+        this->MoveDragOffset = *Cursor
                 - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(this->GetWindow().GetTranslationFromMostOuter());
         return {};
     }
 
-    LVec2F NewPos{Surface.GetMouseLocationValue() - this->MoveDragOffset.value()};
+    LVec2F NewPos{*Cursor - this->MoveDragOffset.value()};
 
     if (NewPos.x + 25.0f > static_cast<f32>(this->GetViewport().GetExtent().width))
     {
@@ -184,21 +184,27 @@ bool Jafg::WFloatingWidget::UiTickMove()
 
 bool Jafg::WFloatingWidget::UiTickResize()
 {
+    std::optional<LVec2F> const Cursor{this->GetViewport().GetCursorLocation()};
+    if (!Cursor)
+    {
+        return {};
+    }
+
     LVec2F WindowTranslation{this->GetWindow().GetTranslationFromMostOuter()};
 
     if (!this->ResizeDragOffset.has_value())
     {
         this->ResizeDragOffset =
-            this->GetViewport().GetSurface().GetMouseLocationValue()
+            *Cursor
                 - (this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(WindowTranslation)
                     + this->GetWindow().GetDesiredSize_v2());
         return {};
     }
 
     LVec2F NewSize{
-        this->GetViewport().GetSurface().GetMouseLocationValue().x
+        Cursor->x
         - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(WindowTranslation).x - this->ResizeDragOffset.value().x,
-        this->GetViewport().GetSurface().GetMouseLocationValue().y
+        Cursor->y
         - this->GetWindow().GetAnchoredAndTranslatedTopLeftFromMostOuter(WindowTranslation).y - this->ResizeDragOffset.value().y
         };
 

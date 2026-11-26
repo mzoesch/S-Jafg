@@ -27,7 +27,7 @@ protected:
 
     explicit WWorldViewer(LNodeDynamicInit const& Init) noexcept
         : Super{Init}, LLocalLackey{this->RenderTargetViewport}
-    , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
+    , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue(), &Init.Outer}
     {
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetShouldTick(true);
@@ -36,7 +36,7 @@ protected:
     template<typename TCxxClass>
     explicit WWorldViewer(TNodeStaticInit<TCxxClass> const& Init) noexcept
         : Super{Init}, LLocalLackey{Init.Outer}
-    , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue()}
+    , RenderTarget{}, RenderTargetViewport{Init.Outer.GetSurface(), this->RenderTarget.GetExtentAsLValue(), &Init.Outer}
     {
         this->SetVisibility(ENodeVisibility::Visible);
         this->SetShouldTick(true);
@@ -70,9 +70,9 @@ public:
     virtual LVec2F GetWorldViewExtent() const noexcept override;
     virtual std::optional<LVec2F> GetCursorLocationInWorldView() const noexcept override;
     virtual bool SetCursorLocationInWorldView(LVec2F Location) noexcept override;
-    virtual LViewport* GetWorldOverlayViewport() noexcept override { return &this->RenderTargetViewport; }
-    virtual LViewport& GetHostViewport() noexcept override { return this->GetViewport(); }
-    virtual std::optional<LRect2F> GetWorldViewRectInHostViewport() const noexcept override;
+    virtual LViewport* GetWorldViewport() noexcept override { return &this->RenderTargetViewport; }
+    virtual LViewport& GetParentViewport() noexcept override { return this->GetViewport(); }
+    virtual std::optional<LRect2F> GetWorldViewRectInParentViewport() const noexcept override;
 
     LColor BorderTint{ Colors::Black };
 
@@ -140,6 +140,14 @@ private:
     //# Keeps a confined mouse cursor inside the world, where the platform allows to move the cursor.
     void ConfineMouseCursorToWorld();
 
+    //#
+    //# Lets the widgets of the world viewport (@see #GetWorldViewport) handle the inputs, before our viewport and the
+    //# user input contexts do. They see the cursor only where nothing of our viewport is over the world view.
+    //#
+    void DispatchWorldViewportInputs();
+    //# Whether a click at the location in our viewport would go to us, and not to something over us (e.g., a menu).
+    NODISCARD bool IsTopmostAt(LVec2F Location) const noexcept;
+
     void _ctor_SetBackgroundTint();
 
     //# Points the materials of the ambient occlusion to the (new) targets of the render target.
@@ -167,6 +175,10 @@ private:
     LRaiiPreDrawHandle OnPreDrawHandle{this->GetViewport().GetSurface().OnPreRender};
 
     LRaiiViewportHandle ConsumeHandle{this->GetViewport().OnEarlyTick};
+    //# Bound before #ConsumeHandle, so that the widgets of the world viewport get the inputs before the user input.
+    LRaiiViewportHandle WorldViewportInputHandle{this->GetViewport().OnEarlyTick};
+    //# Of the last #Tick. The inputs of the world viewport are dispatched before we tick.
+    f32 LastDt{};
 
     EWorldRenderFlags WorldRenderPreferences{ EWorldRenderBits::All };
     EPolygonMode PolygonMode{ EPolygonMode::Fill };

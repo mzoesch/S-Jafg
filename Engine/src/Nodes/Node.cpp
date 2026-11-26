@@ -165,7 +165,7 @@ Jafg::LNodeReply Jafg::WNode::OnCursorEnter()
         }, [this]
         {
             this->RequestTooltipNow(
-                this->GetViewport().GetSurface().GetMouseLocation().value_or(maths::zero_vector<LVec2F>)
+                this->GetViewport().GetCursorLocation().value_or(maths::zero_vector<LVec2F>)
                 + LVec2F{8} /* Slight offset so that the tooltip is not under the cursor. */
                 );
         });

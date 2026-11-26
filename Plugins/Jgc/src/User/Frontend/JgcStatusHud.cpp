@@ -64,8 +64,8 @@ Jgc::WStatusHud& Jgc::WStatusHud::Show(Jafg::LLocalLackey& Lackey, WStatusHud** 
     Hide(Slot);
 
     /* Over the rendered world, so that it sits in the corner of the view and not of the window. */
-    Jafg::LViewport* const Overlay{Lackey.GetWorldOverlayViewport()};
-    WStatusHud& Result{*Jafg::ConstructWidget(Jafg::TNodeStaticInit<WStatusHud>{Overlay ? *Overlay : Lackey.Viewport})};
+    Jafg::LViewport* const WorldViewport{Lackey.GetWorldViewport()};
+    WStatusHud& Result{*Jafg::ConstructWidget(Jafg::TNodeStaticInit<WStatusHud>{WorldViewport ? *WorldViewport : Lackey.Viewport})};
     Result.OwnerSlot = Slot;
     *Slot = &Result;
     return Result;

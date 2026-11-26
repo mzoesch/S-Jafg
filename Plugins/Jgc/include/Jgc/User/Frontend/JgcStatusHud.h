@@ -20,7 +20,7 @@ namespace Jgc
 
 //#
 //# A heads-up display in the bottom right of the view: A list of rows, each a label and a value (e.g., "Jetpack ON").
-//# It lives in the viewport over the rendered world of a local lackey (see #Jafg::LLocalLackey::GetWorldOverlayViewport).
+//# It lives in the world viewport of a local lackey, over the rendered world (see #Jafg::LLocalLackey::GetWorldViewport).
 //#
 //# Owners keep it in a slot (see #Show and #Hide). The viewport may be destroyed before the owner or the other way
 //# around, therefore each side unlinks itself before it goes away: The HUD nulls the slot when it is destroyed.

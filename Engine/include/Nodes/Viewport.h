@@ -22,7 +22,7 @@ struct LNodeReply;
 //# Represents a viewport that can contain widgets.
 //# A viewport has in most cases a handle to some sort of platform-specific window instance.
 //#
-//# Viewports may be nested inside each other.
+//# Viewports may be nested inside each other (@see #GetParent).
 //# @warning Therefore, this will most likely *not* hold:
 //#     Viewport.GetExtent() == Viewport.GetSurface().GetSurfaceExtent()
 //#
@@ -32,13 +32,18 @@ class LViewport final
 
 public:
 
-    explicit LViewport(LSurface& Owner, rhi::extent2 const& Extent) noexcept
-        : Surface{Owner}, Extent{Extent} { this->Outer.SetUserData(this); }
+    //# @param Parent Null for the viewport of a surface. @see #GetParent
+    explicit LViewport(LSurface& Owner, rhi::extent2 const& Extent, LViewport* Parent = nullptr) noexcept
+        : Surface{Owner}, Extent{Extent}, Parent{Parent} { this->Outer.SetUserData(this); }
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() { this->TearDown(); }
 
     void Vk_OnLateInit();
 
+    //#
+    //# Lets the widgets handle the inputs of the surface. #Tick does this for a viewport of a surface. The owner of a
+    //# nested viewport calls this itself, after #SetCursorLocation (@see #GetParent).
+    //#
     void DispatchInputs(f32 Dt);
     void Tick(f32 Dt);
     void Draw(LRenderInfo const& Info);
@@ -48,6 +53,29 @@ public:
 
     FORCEINLINE constexpr LSurface const& GetSurface() const noexcept { return this->Surface; }
     FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
+
+    //#
+    //# The viewport that this one is shown in, e.g., for the world view of a #WWorldViewer, the viewport of the
+    //# viewer. Null for the viewport of a surface.
+    //#
+    //# A nested viewport only sees the cursor where its owner says so (#SetCursorLocation), and its owner dispatches
+    //# its inputs (#DispatchInputs), before the parent does. So its widgets, which are drawn over what the parent
+    //# shows there, also get the inputs first.
+    //#
+    NODISCARD FORCEINLINE constexpr LViewport* GetParent() noexcept { return this->Parent; }
+    NODISCARD FORCEINLINE constexpr LViewport const* GetParent() const noexcept { return this->Parent; }
+
+    //#
+    //# Where the shown mouse cursor is, in the space of this viewport. Empty if it is hidden or not over this viewport.
+    //# Widgets use this instead of the location on the surface, so that they also work in nested viewports.
+    //#
+    NODISCARD ENGINE_API std::optional<LVec2F> GetCursorLocation() const noexcept;
+    //# For nested viewports only: Where the cursor is in this viewport, from now on. @see #GetCursorLocation
+    FORCEINLINE void SetCursorLocation(std::optional<LVec2F> Location) noexcept
+    {
+        check(this->Parent && "Only nested viewports are told where the cursor is.")
+        this->NestedCursorLocation = Location;
+    }
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
     FORCEINLINE constexpr EApplicationScale GetMaxAllowApplicationScale() const noexcept
     {
@@ -203,6 +231,8 @@ private:
 
     LSurface& Surface;
     rhi::extent2 const& Extent;
+    LViewport* Parent;
+    std::optional<LVec2F> NestedCursorLocation;
 
     //# The factor with which the entire orthographic projection is scaled.
     f32 ScaleFactor{ 1.0f };

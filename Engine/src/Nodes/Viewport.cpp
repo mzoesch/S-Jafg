@@ -49,6 +49,8 @@ void Jafg::LViewport::DispatchInputs(f32 Dt)
     STAT_FUNCTION()
 
     if constexpr (LogWidgetFramework.CompilesFor<ELogVerbosity::Verbose>)
+    /* Nested viewports dispatch first, before the user input contexts. They would take the key from them. */
+    if (!this->Parent)
     if (auto Key{this->Surface.GetFrontend().GetPhysicalKey(ELogicalKey::P)})
     {
         if (this->Surface.HasConsumableKeyState(*Key, ERawInputStateBits::Press))
@@ -99,11 +101,7 @@ void Jafg::LViewport::DispatchInputs(f32 Dt)
         }
     }
 
-    std::optional<LVec2F> CursorLocation;
-    if (this->Surface.HasMouseLocationForOrtho())
-    {
-        CursorLocation = this->Surface.GetMouseLocationValue();
-    }
+    std::optional<LVec2F> const CursorLocation{this->GetCursorLocation()};
 
     for (auto It{this->KeyDelegates.begin()}; It != this->KeyDelegates.end();)
     {
@@ -177,6 +175,16 @@ void Jafg::LViewport::DispatchInputs(f32 Dt)
                 this->HandleReply({TClassStorage<WNode>{}});
             }
         }
+    }
+    /*
+     * Pressed somewhere else on the surface (e.g., in the parent viewport). The focus would otherwise keep getting the
+     * keys first, as a nested viewport dispatches before its parent.
+     */
+    else if (this->Parent && this->FocusedWidget
+        && (   this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::LeftMouseButton), ERawInputStateBits::Press)
+            || this->Surface.HasConsumableKeyState(LPhysicalKey::FromLogical(ELogicalKey::RightMouseButton), ERawInputStateBits::Press)))
+    {
+        this->HandleReply({TClassStorage<WNode>{}});
     }
 
     if (this->FocusedWidget)
@@ -290,7 +298,11 @@ void Jafg::LViewport::Tick(f32 Dt)
 
     this->OnEarlyTick.Broadcast();
 
-    this->DispatchInputs(Dt);
+    /* The owner of a nested viewport dispatches its inputs, before the parent viewport does (@see #GetParent). */
+    if (!this->Parent)
+    {
+        this->DispatchInputs(Dt);
+    }
 
     for (WUserWidget* Widget: this->TopLevelWidgets)
     {
@@ -303,6 +315,19 @@ void Jafg::LViewport::Tick(f32 Dt)
     this->OnLateTick.Broadcast();
 
     checkCode(this->_check_PrintTickTrace = false)
+}
+
+std::optional<LVec2F> Jafg::LViewport::GetCursorLocation() const noexcept
+{
+    if (this->Parent)
+    {
+        return this->NestedCursorLocation;
+    }
+    if (this->Surface.HasMouseLocationForOrtho())
+    {
+        return this->Surface.GetMouseLocationValue();
+    }
+    return {};
 }
 
 void Jafg::LViewport::Draw(LRenderInfo const& Info)
