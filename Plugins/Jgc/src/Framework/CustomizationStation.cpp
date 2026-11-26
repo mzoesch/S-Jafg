@@ -13,8 +13,8 @@
 #include "Framework/PersonaController.h"
 #include "Framework/RigidComponent.h"
 #include "Framework/StaticMeshComponent.h"
-#include "Jgc/Framework/JgcCameraBoomComponent.h"
-#include "Jgc/Framework/JgcCustomizationInputComponent.h"
+#include "Jgc/Framework/CameraBoomComponent.h"
+#include "Jgc/Framework/CustomizationInputComponent.h"
 
 void Jgc::ACustomizationStationComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
 {
@@ -39,7 +39,7 @@ bool Jgc::ACustomizationStationComponent::CanInteract(Jafg::AAvatarComponent con
         && !this->HasOccupant()
         && this->GetOwningAvatar()
         && Instigator.IsOwningActorValid()
-        && Instigator.GetOwningActor().GetComponent<AJgcHumanoidShapeComponent>();
+        && Instigator.GetOwningActor().GetComponent<AHumanoidShapeComponent>();
 }
 
 bool Jgc::ACustomizationStationComponent::Interact(Jafg::AAvatarComponent& Instigator)
@@ -57,10 +57,10 @@ Jafg::AAvatarComponent* Jgc::ACustomizationStationComponent::GetOccupant() const
     return this->Occupant && Jafg::IsValidFast(this->GetOuter(), this->Occupant) ? this->Occupant : nullptr;
 }
 
-Jgc::AJgcHumanoidShapeComponent* Jgc::ACustomizationStationComponent::GetOccupantShape() const noexcept
+Jgc::AHumanoidShapeComponent* Jgc::ACustomizationStationComponent::GetOccupantShape() const noexcept
 {
     Jafg::AAvatarComponent* const Avatar{this->GetOccupant()};
-    return Avatar && Avatar->IsOwningActorValid() ? Avatar->GetOwningActor().GetComponent<AJgcHumanoidShapeComponent>() : nullptr;
+    return Avatar && Avatar->IsOwningActorValid() ? Avatar->GetOwningActor().GetComponent<AHumanoidShapeComponent>() : nullptr;
 }
 
 bool Jgc::ACustomizationStationComponent::Enter(Jafg::AAvatarComponent& NewOccupant)
@@ -83,11 +83,11 @@ bool Jgc::ACustomizationStationComponent::Enter(Jafg::AAvatarComponent& NewOccup
     }
 
     auto& Actor{NewOccupant.GetOwningActor()};
-    auto* Shape{Actor.GetComponent<AJgcHumanoidShapeComponent>()};
+    auto* Shape{Actor.GetComponent<AHumanoidShapeComponent>()};
     if (!Shape)
     {
         LOG_VERBOSE(LogJgc, "[{}]: [{}] cannot enter. It has no [{}]."
-            , this->GetNameAsString(), Actor.GetNameAsString(), algo::type_name<AJgcHumanoidShapeComponent>()
+            , this->GetNameAsString(), Actor.GetNameAsString(), algo::type_name<AHumanoidShapeComponent>()
             )
         return false;
     }
@@ -143,7 +143,7 @@ void Jgc::ACustomizationStationComponent::Leave(bool bApply)
 
     if (!bApply && Original)
     {
-        if (auto* Shape{Actor.GetComponent<AJgcHumanoidShapeComponent>()})
+        if (auto* Shape{Actor.GetComponent<AHumanoidShapeComponent>()})
         {
             Shape->SetShape(*Original);
         }
@@ -200,7 +200,7 @@ Jafg::AActor& Jgc::SpawnCustomizationStation(Jafg::LWorld& World, LWorldVec3 con
 
         /*
          * The view: From the front, at the height of the chest of the occupant, looking back at it. The gimbal turns
-         * the view around the occupant (see #AJgcCustomizationInputComponent). The boom is turned around, so that
+         * the view around the occupant (see #ACustomizationInputComponent). The boom is turned around, so that
          * its arm points forward. It pulls the eye in where the ground or walls are in the way, but not for
          * characters: Its pivot is inside of the occupant. The eye is turned aside by the input component, so that
          * the occupant is shown off-center. A narrow field of view keeps it from being stretched there.
@@ -212,7 +212,7 @@ Jafg::AActor& Jgc::SpawnCustomizationStation(Jafg::LWorld& World, LWorldVec3 con
             Comp.MinZoom = 0.4f;
             Comp.MaxZoom = 2.0f;
         })};
-        auto& Boom{Station.EmplaceSceneComponentTo<AJgcCameraBoomComponent>(Gimbal, [](AJgcCameraBoomComponent& Comp)
+        auto& Boom{Station.EmplaceSceneComponentTo<ACameraBoomComponent>(Gimbal, [](ACameraBoomComponent& Comp)
         {
             Comp.SetLocalRotatorByTeleport(maths::radians(LWorldVec3{0, 180, 0}));
             Comp.ArmLength = 4.0f;
@@ -228,7 +228,7 @@ Jafg::AActor& Jgc::SpawnCustomizationStation(Jafg::LWorld& World, LWorldVec3 con
         Station.EmplaceComponent<ACustomizationStationComponent>();
         /* After the station, so that an occupant leaves before the avatar is torn down. */
         Station.EmplaceComponent<Jafg::AAvatarComponent>();
-        Station.EmplaceComponent<AJgcCustomizationInputComponent>();
+        Station.EmplaceComponent<ACustomizationInputComponent>();
     })};
 
     auto& Rigid{Actor.GetRootComponent<Jafg::ARigidComponent>()};

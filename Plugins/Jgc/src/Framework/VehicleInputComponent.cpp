@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcVehicleInputComponent.h"
+#include "Jgc/Framework/VehicleInputComponent.h"
 #include "Engine/Engine.h"
 #include "Framework/PersonaController.h"
 #include "User/LocalEgo.h"
@@ -9,16 +9,16 @@
 #include "Framework/AvatarComponent.h"
 #include "Framework/GimbalComponent.h"
 #include "Jgc/Framework/Vehicle.h"
-#include "Jgc/User/Frontend/JgcStatusHud.h"
+#include "Jgc/User/Frontend/StatusHud.h"
 
-void Jgc::AJgcVehicleInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
+void Jgc::AVehicleInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
 {
     /* Also when the world goes away. The HUD lives in the viewport, which stays. */
     WStatusHud::Hide(&this->Hud);
     Super::OnGarbage(Reason);
 }
 
-void Jgc::AJgcVehicleInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
+void Jgc::AVehicleInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
 {
     Super::OnPossessionChanged(Previous, New);
 
@@ -42,7 +42,7 @@ void Jgc::AJgcVehicleInputComponent::OnPossessionChanged(Jafg::APersonaControlle
     }
 }
 
-void Jgc::AJgcVehicleInputComponent::ParentTick(f32 Dt)
+void Jgc::AVehicleInputComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
@@ -63,17 +63,17 @@ void Jgc::AJgcVehicleInputComponent::ParentTick(f32 Dt)
         });
 }
 
-void Jgc::AJgcVehicleInputComponent::OnVehicleLook(Jafg::LInputActionValue const& Value) noexcept
+void Jgc::AVehicleInputComponent::OnVehicleLook(Jafg::LInputActionValue const& Value) noexcept
 {
     this->FreeLook.OnLook(Value.GetAxis2DValue());
 }
 
-void Jgc::AJgcVehicleInputComponent::OnVehicleZoom(Jafg::LInputActionValue const& Value) noexcept
+void Jgc::AVehicleInputComponent::OnVehicleZoom(Jafg::LInputActionValue const& Value) noexcept
 {
     this->FreeLook.OnZoom(Value.GetAxis1DValue());
 }
 
-Jafg::AGimbalComponent* Jgc::AJgcVehicleInputComponent::GetFreeLookGimbal() const noexcept
+Jafg::AGimbalComponent* Jgc::AVehicleInputComponent::GetFreeLookGimbal() const noexcept
 {
     if (auto* Avatar{this->GetOwningAvatar()})
     {
@@ -85,7 +85,7 @@ Jafg::AGimbalComponent* Jgc::AJgcVehicleInputComponent::GetFreeLookGimbal() cons
     return nullptr;
 }
 
-bool Jgc::AJgcVehicleInputComponent::ActivateUserInputContext() noexcept
+bool Jgc::AVehicleInputComponent::ActivateUserInputContext() noexcept
 {
     if (auto* Ctrl{this->GetOwningController()})
     {
@@ -103,12 +103,12 @@ bool Jgc::AJgcVehicleInputComponent::ActivateUserInputContext() noexcept
     return false;
 }
 
-Jgc::AVehicleComponent* Jgc::AJgcVehicleInputComponent::GetVehicle() const noexcept
+Jgc::AVehicleComponent* Jgc::AVehicleInputComponent::GetVehicle() const noexcept
 {
     return this->GetOwningActor().GetComponent<AVehicleComponent>();
 }
 
-void Jgc::AJgcVehicleInputComponent::OnVehicleStrafe(Jafg::LInputActionValue const& Value)
+void Jgc::AVehicleInputComponent::OnVehicleStrafe(Jafg::LInputActionValue const& Value)
 {
     if (auto* Vehicle{this->GetVehicle()})
     {
@@ -120,7 +120,7 @@ void Jgc::AJgcVehicleInputComponent::OnVehicleStrafe(Jafg::LInputActionValue con
     }
 }
 
-void Jgc::AJgcVehicleInputComponent::OnVehicleTorque(Jafg::LInputActionValue const& Value)
+void Jgc::AVehicleInputComponent::OnVehicleTorque(Jafg::LInputActionValue const& Value)
 {
     if (auto* Vehicle{this->GetVehicle()})
     {
@@ -132,7 +132,7 @@ void Jgc::AJgcVehicleInputComponent::OnVehicleTorque(Jafg::LInputActionValue con
     }
 }
 
-void Jgc::AJgcVehicleInputComponent::ToggleDampeners() noexcept
+void Jgc::AVehicleInputComponent::ToggleDampeners() noexcept
 {
     if (auto* Vehicle{this->GetVehicle()})
     {
@@ -144,7 +144,7 @@ void Jgc::AJgcVehicleInputComponent::ToggleDampeners() noexcept
     }
 }
 
-void Jgc::AJgcVehicleInputComponent::UpdateHud() noexcept
+void Jgc::AVehicleInputComponent::UpdateHud() noexcept
 {
     auto* Vehicle{this->GetVehicle()};
     if (!this->Hud || this->Hud->_IsGarbage() || !Vehicle)
@@ -155,7 +155,7 @@ void Jgc::AJgcVehicleInputComponent::UpdateHud() noexcept
     this->Hud->SetToggle(this->HudDampenersRow, Vehicle->AreDampenersEngaged());
 }
 
-bool Jgc::AJgcVehicleInputComponent::OnVehicleExit()
+bool Jgc::AVehicleInputComponent::OnVehicleExit()
 {
     if (auto* Vehicle{this->GetVehicle()}; Vehicle && Vehicle->HasDriver())
     {

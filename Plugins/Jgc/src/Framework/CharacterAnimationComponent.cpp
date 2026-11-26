@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcCharacterAnimationComponent.h"
+#include "Jgc/Framework/CharacterAnimationComponent.h"
 #include "Framework/CharacterMovementComponent.h"
 #include "Framework/SkeletalMeshComponent.h"
 #include "Framework/MovementTypes.h"
@@ -99,7 +99,7 @@ LStringView Jgc::LexToString(ECharacterAnimationState State) noexcept
     std::unreachable();
 }
 
-void Jgc::AJgcCharacterAnimationComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
+void Jgc::ACharacterAnimationComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
 {
     /* The modifier refers to this component. */
     if (this->bModifierInstalled && this->Body && Jafg::IsValidFast(this->GetOuter(), this->Body))
@@ -110,7 +110,7 @@ void Jgc::AJgcCharacterAnimationComponent::OnGarbage(Jafg::EJxxRecordTearDownRea
     Super::OnGarbage(Reason);
 }
 
-void Jgc::AJgcCharacterAnimationComponent::ParentTick(f32 Dt)
+void Jgc::ACharacterAnimationComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
@@ -186,7 +186,7 @@ void Jgc::AJgcCharacterAnimationComponent::ParentTick(f32 Dt)
     }
 }
 
-bool Jgc::AJgcCharacterAnimationComponent::ResolveComponents() noexcept
+bool Jgc::ACharacterAnimationComponent::ResolveComponents() noexcept
 {
     auto& Outer{this->GetOuter()};
     if (!this->Movement || !Jafg::IsValidFast(Outer, this->Movement))
@@ -216,7 +216,7 @@ bool Jgc::AJgcCharacterAnimationComponent::ResolveComponents() noexcept
     return true;
 }
 
-Jgc::ECharacterAnimationState Jgc::AJgcCharacterAnimationComponent::ComputeState(
+Jgc::ECharacterAnimationState Jgc::ACharacterAnimationComponent::ComputeState(
       Jafg::ACharacterMovementComponent const& CharacterMovement
     , f32 Speed
     , f32 UpSpeed
@@ -296,7 +296,7 @@ Jgc::ECharacterAnimationState Jgc::AJgcCharacterAnimationComponent::ComputeState
     return ByRank[static_cast<std::size_t>(Rank)];
 }
 
-std::optional<f32> Jgc::AJgcCharacterAnimationComponent::GetClipSpeed(LStringView ClipName) const noexcept
+std::optional<f32> Jgc::ACharacterAnimationComponent::GetClipSpeed(LStringView ClipName) const noexcept
 {
     if (ClipName == WalkingClip)
     {
@@ -317,7 +317,7 @@ std::optional<f32> Jgc::AJgcCharacterAnimationComponent::GetClipSpeed(LStringVie
     return {};
 }
 
-void Jgc::AJgcCharacterAnimationComponent::ApplyHeadPitch(Jafg::ASkeletalMeshComponent& Comp, std::span<Jafg::LJointTransform> Pose) const
+void Jgc::ACharacterAnimationComponent::ApplyHeadPitch(Jafg::ASkeletalMeshComponent& Comp, std::span<Jafg::LJointTransform> Pose) const
 {
     if (this->HeadPitchFollow == 0.0f || !this->Movement || !Jafg::IsValidFast(this->GetOuter(), this->Movement))
     {

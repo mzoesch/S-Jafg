@@ -4,7 +4,7 @@
 
 #include "JgcMinimal.afx"
 #include "Nodes/UserWidget.h"
-#include "JgcPauseScreen.generated.h"
+#include "PauseScreen.generated.h"
 
 namespace Jgc
 {

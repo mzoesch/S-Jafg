@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcCharacterInputComponent.h"
+#include "Jgc/Framework/CharacterInputComponent.h"
 #include "Engine/World.h"
 #include "Framework/Cursor.h"
 #include "Framework/DebugDrawerComponent.h"
@@ -13,11 +13,11 @@
 #include "User/Input/InputActionValue.h"
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/InteractableComponent.h"
-#include "Jgc/User/Frontend/JgcStatusHud.h"
+#include "Jgc/User/Frontend/StatusHud.h"
 #include "Framework/AvatarComponent.h"
 #include "Framework/EyeComponent.h"
 
-void Jgc::AJgcCharacterInputComponent::OnAttach(Jafg::AActor& InOwner)
+void Jgc::ACharacterInputComponent::OnAttach(Jafg::AActor& InOwner)
 {
     Super::OnAttach(InOwner);
     (void)this->ActivateUserInputContext();
@@ -28,7 +28,7 @@ void Jgc::AJgcCharacterInputComponent::OnAttach(Jafg::AActor& InOwner)
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
+void Jgc::ACharacterInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
 {
     /* Give the mouse back. Otherwise, the cursor would stay confined for whatever comes next. */
     if (this->bCursorMode && Reason == Jafg::EJxxRecordTearDownReason::Default)
@@ -41,7 +41,7 @@ void Jgc::AJgcCharacterInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason 
     Super::OnGarbage(Reason);
 }
 
-void Jgc::AJgcCharacterInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
+void Jgc::ACharacterInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
 {
     Super::OnPossessionChanged(Previous, New);
 
@@ -66,7 +66,7 @@ void Jgc::AJgcCharacterInputComponent::OnPossessionChanged(Jafg::APersonaControl
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::ParentTick(f32 Dt)
+void Jgc::ACharacterInputComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
@@ -97,7 +97,7 @@ void Jgc::AJgcCharacterInputComponent::ParentTick(f32 Dt)
     this->ResetFrameInput();
 }
 
-bool Jgc::AJgcCharacterInputComponent::ActivateUserInputContext() noexcept
+bool Jgc::ACharacterInputComponent::ActivateUserInputContext() noexcept
 {
     if (auto* Lackey{GetLocalLackey(this->GetOwningController())})
     {
@@ -112,7 +112,7 @@ bool Jgc::AJgcCharacterInputComponent::ActivateUserInputContext() noexcept
     return false;
 }
 
-bool Jgc::AJgcCharacterInputComponent::OnInteractPressed() noexcept
+bool Jgc::ACharacterInputComponent::OnInteractPressed() noexcept
 {
     auto* Avatar{this->GetOwningAvatar()};
     if (!this->bCursorMode || !Avatar)
@@ -133,7 +133,7 @@ bool Jgc::AJgcCharacterInputComponent::OnInteractPressed() noexcept
     return false;
 }
 
-std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceInteractable() noexcept
+std::optional<Jgc::LInteractionTarget> Jgc::ACharacterInputComponent::TraceInteractable() noexcept
 {
     if (!this->bCursorMode)
     {
@@ -192,12 +192,12 @@ std::optional<Jgc::LInteractionTarget> Jgc::AJgcCharacterInputComponent::TraceIn
     return LInteractionTarget{.Interactable = Interactable, .Location = Hit.GlobalWorldLocation};
 }
 
-Jafg::LLocalLackey* Jgc::AJgcCharacterInputComponent::GetLocalLackey(Jafg::APersonaController* Ctrl) noexcept
+Jafg::LLocalLackey* Jgc::ACharacterInputComponent::GetLocalLackey(Jafg::APersonaController* Ctrl) noexcept
 {
     return Ctrl ? Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>() : nullptr;
 }
 
-void Jgc::AJgcCharacterInputComponent::SetCursorMode(bool bEnabled, Jafg::LLocalLackey* Lackey) noexcept
+void Jgc::ACharacterInputComponent::SetCursorMode(bool bEnabled, Jafg::LLocalLackey* Lackey) noexcept
 {
     LOG_VERBOSE(LogJgcInput, "[{}]: {} cursor mode.", this->GetNameAsString(), bEnabled ? "Entering" : "Leaving")
     this->bCursorMode = bEnabled;
@@ -230,7 +230,7 @@ void Jgc::AJgcCharacterInputComponent::SetCursorMode(bool bEnabled, Jafg::LLocal
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
+void Jgc::ACharacterInputComponent::UpdateHover() noexcept
 {
     std::optional<LInteractionTarget> const Target{this->TraceInteractable()};
     this->SetHoversInteractable(Target.has_value(), GetLocalLackey(this->GetOwningController()));
@@ -259,7 +259,7 @@ void Jgc::AJgcCharacterInputComponent::UpdateHover() noexcept
 #endif /* JAFG_WITH_EDITOR */
 }
 
-void Jgc::AJgcCharacterInputComponent::SetHoversInteractable(bool bHovers, Jafg::LLocalLackey* Lackey) noexcept
+void Jgc::ACharacterInputComponent::SetHoversInteractable(bool bHovers, Jafg::LLocalLackey* Lackey) noexcept
 {
     if (this->bHoversInteractable == bHovers)
     {
@@ -273,7 +273,7 @@ void Jgc::AJgcCharacterInputComponent::SetHoversInteractable(bool bHovers, Jafg:
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::ResetFrameInput() noexcept
+void Jgc::ACharacterInputComponent::ResetFrameInput() noexcept
 {
     this->FrameMove = LVec3F{0.0f};
     this->bFrameJumpHeld = false;
@@ -282,12 +282,12 @@ void Jgc::AJgcCharacterInputComponent::ResetFrameInput() noexcept
     this->bFrameCursorHeld = false;
 }
 
-void Jgc::AJgcCharacterInputComponent::OnMove(Jafg::LInputActionValue const& Value) noexcept
+void Jgc::ACharacterInputComponent::OnMove(Jafg::LInputActionValue const& Value) noexcept
 {
     this->FrameMove += Value.GetAxis3DValue();
 }
 
-void Jgc::AJgcCharacterInputComponent::OnLook(Jafg::LInputActionValue const& Value) noexcept
+void Jgc::ACharacterInputComponent::OnLook(Jafg::LInputActionValue const& Value) noexcept
 {
     if (this->bCursorMode)
     {
@@ -302,7 +302,7 @@ void Jgc::AJgcCharacterInputComponent::OnLook(Jafg::LInputActionValue const& Val
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::OnRoll(Jafg::LInputActionValue const& Value) noexcept
+void Jgc::ACharacterInputComponent::OnRoll(Jafg::LInputActionValue const& Value) noexcept
 {
     if (auto* Movement{this->GetMovementComponent()})
     {
@@ -311,7 +311,7 @@ void Jgc::AJgcCharacterInputComponent::OnRoll(Jafg::LInputActionValue const& Val
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::OnJumpPressed() noexcept
+void Jgc::ACharacterInputComponent::OnJumpPressed() noexcept
 {
     this->bFrameJumpHeld = true;
     if (auto* Movement{this->GetMovementComponent()})
@@ -320,7 +320,7 @@ void Jgc::AJgcCharacterInputComponent::OnJumpPressed() noexcept
     }
 }
 
-void Jgc::AJgcCharacterInputComponent::ToggleJetpack() noexcept
+void Jgc::ACharacterInputComponent::ToggleJetpack() noexcept
 {
     this->bJetpack = !this->bJetpack;
     this->UpdateHud();
@@ -330,7 +330,7 @@ void Jgc::AJgcCharacterInputComponent::ToggleJetpack() noexcept
         )
 }
 
-void Jgc::AJgcCharacterInputComponent::ToggleDampeners() noexcept
+void Jgc::ACharacterInputComponent::ToggleDampeners() noexcept
 {
     this->bDampeners = !this->bDampeners;
     this->UpdateHud();
@@ -340,7 +340,7 @@ void Jgc::AJgcCharacterInputComponent::ToggleDampeners() noexcept
         )
 }
 
-void Jgc::AJgcCharacterInputComponent::ToggleMagBoots() noexcept
+void Jgc::ACharacterInputComponent::ToggleMagBoots() noexcept
 {
     this->bMagBoots = !this->bMagBoots;
     this->UpdateHud();
@@ -350,7 +350,7 @@ void Jgc::AJgcCharacterInputComponent::ToggleMagBoots() noexcept
         )
 }
 
-void Jgc::AJgcCharacterInputComponent::ToggleView() noexcept
+void Jgc::ACharacterInputComponent::ToggleView() noexcept
 {
     auto* Avatar{this->GetOwningAvatar()};
     if (!Avatar || !this->GetOwningActor().HasRootComponent())
@@ -391,17 +391,17 @@ void Jgc::AJgcCharacterInputComponent::ToggleView() noexcept
     LOG_VERBOSE(LogJgcInput, "[{}]: View switched to [{}].", this->GetNameAsString(), bToBehind ? "third person" : "first person")
 }
 
-Jafg::AMovementComponent* Jgc::AJgcCharacterInputComponent::GetMovementComponent() noexcept
+Jafg::AMovementComponent* Jgc::ACharacterInputComponent::GetMovementComponent() noexcept
 {
     return this->GetOwningActor().GetComponent<Jafg::AMovementComponent>();
 }
 
-Jafg::AMovementComponent const* Jgc::AJgcCharacterInputComponent::GetMovementComponent() const noexcept
+Jafg::AMovementComponent const* Jgc::ACharacterInputComponent::GetMovementComponent() const noexcept
 {
     return this->GetOwningActor().GetComponent<Jafg::AMovementComponent>();
 }
 
-void Jgc::AJgcCharacterInputComponent::ShowHud(Jafg::LLocalLackey* Lackey) noexcept
+void Jgc::ACharacterInputComponent::ShowHud(Jafg::LLocalLackey* Lackey) noexcept
 {
     if (!Lackey)
     {
@@ -416,7 +416,7 @@ void Jgc::AJgcCharacterInputComponent::ShowHud(Jafg::LLocalLackey* Lackey) noexc
     this->UpdateHud();
 }
 
-void Jgc::AJgcCharacterInputComponent::UpdateHud() noexcept
+void Jgc::ACharacterInputComponent::UpdateHud() noexcept
 {
     if (this->Hud && !this->Hud->_IsGarbage())
     {

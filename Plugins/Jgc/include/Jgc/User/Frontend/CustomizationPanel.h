@@ -3,7 +3,7 @@
 #pragma once
 
 #include "JgcMinimal.afx"
-#include "Jgc/Framework/JgcHumanoidShapeComponent.h"
+#include "Jgc/Framework/HumanoidShapeComponent.h"
 
 namespace Jafg
 {

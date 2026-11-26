@@ -24,15 +24,15 @@ struct LHumanoidBodyInfo final
     //# The joints that are drawn in first person (prefixes of their names). Rigify names by default.
     TArray<LString> FirstPersonJoints{ "DEF-upper_arm", "DEF-forearm", "DEF-hand", "DEF-palm", "DEF-thumb", "DEF-f_" };
     //#
-    //# Whether to add a third person view behind the head (an eye on a camera boom, #AJgcCameraBoomComponent).
-    //# Only worth it for characters that humans possess. @see #AJgcCharacterInputComponent::ToggleView
+    //# Whether to add a third person view behind the head (an eye on a camera boom, #ACameraBoomComponent).
+    //# Only worth it for characters that humans possess. @see #ACharacterInputComponent::ToggleView
     //#
     bool bThirdPersonView{};
 };
 
 //#
 //# Gives a character a body: A skeletal mesh below the root that is animated from the movement of the character
-//# (#AJgcCharacterAnimationComponent) and can be reshaped (#AJgcHumanoidShapeComponent). The head eye becomes a
+//# (#ACharacterAnimationComponent) and can be reshaped (#AHumanoidShapeComponent). The head eye becomes a
 //# first-person eye, from which only the arms are seen.
 //#
 //# The character must have its root at the feet, a head eye (the first eye directly below the root) and a
@@ -43,7 +43,7 @@ struct LHumanoidBodyInfo final
 JGC_API Jafg::ASkeletalMeshComponent* EquipHumanoidBody(Jafg::AActor& Character, LHumanoidBodyInfo const& Info = {});
 
 //#
-//# Spawns a humanoid character that runs between #Waypoints (#AJgcPatrolComponent). E.g., to see animations without
+//# Spawns a humanoid character that runs between #Waypoints (#APatrolComponent). E.g., to see animations without
 //# a second player.
 //#
 //# @param Waypoints At least one. The character starts at the first one, with its feet there.

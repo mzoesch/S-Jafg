@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/User/Frontend/JgcCustomizationPanel.h"
+#include "Jgc/User/Frontend/CustomizationPanel.h"
 #include "Nodes/HParent.h"
 #include "Nodes/ScrollRegion.h"
 #include "Nodes/Spacer.h"

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "Framework/ActorComponent.h"
-#include "Jgc/Framework/JgcGimbalFreeLook.h"
-#include "JgcVehicleInputComponent.generated.h"
+#include "Jgc/Framework/GimbalFreeLook.h"
+#include "VehicleInputComponent.generated.h"
 
 namespace Jafg
 {
@@ -33,13 +33,13 @@ class WStatusHud;
 //# Holding the free look action without changing anything centers the view again.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcVehicleInputComponent : public Jafg::AActorComponent
+class JGC_API AVehicleInputComponent : public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(AJgcVehicleInputComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(AVehicleInputComponent)
     {
         this->bTick = true;
     }

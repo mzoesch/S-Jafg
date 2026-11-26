@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Jgc/Framework/InteractableComponent.h"
-#include "Jgc/Framework/JgcHumanoidShapeComponent.h"
+#include "Jgc/Framework/HumanoidShapeComponent.h"
 #include "CustomizationStation.generated.h"
 
 namespace Jafg
@@ -19,16 +19,16 @@ namespace Jgc
 {
 
 //#
-//# A place where a humanoid changes the shape of its body (#AJgcHumanoidShapeComponent). Interacting with it puts the
+//# A place where a humanoid changes the shape of its body (#AHumanoidShapeComponent). Interacting with it puts the
 //# instigator into its center, facing forward, and its controller possesses the avatar of the station instead. The
 //# view comes from the front (an eye of the station), and the shape is changed with a window
-//# (#AJgcCustomizationInputComponent).
+//# (#ACustomizationInputComponent).
 //#
 //# Changes are shown at once. They are kept if they are applied, and taken back if they are discarded or the
 //# occupant leaves in another way (e.g., the station is destroyed).
 //#
 //# The actor of a station is an avatar of its own: It needs an #Jafg::AAvatarComponent, an #Jafg::AEyeComponent and
-//# an #AJgcCustomizationInputComponent. @see #SpawnCustomizationStation
+//# an #ACustomizationInputComponent. @see #SpawnCustomizationStation
 //#
 DECLARE_JAFG_CLASS()
 class JGC_API ACustomizationStationComponent : public AInteractableComponent
@@ -51,7 +51,7 @@ public:
     //# The avatar that is customized. It is not possessed meanwhile; its controller possesses this station.
     NODISCARD Jafg::AAvatarComponent* GetOccupant() const noexcept;
     //# The shape of the occupant. Null without an occupant.
-    NODISCARD AJgcHumanoidShapeComponent* GetOccupantShape() const noexcept;
+    NODISCARD AHumanoidShapeComponent* GetOccupantShape() const noexcept;
     //# The shape of the occupant when it entered. Empty without an occupant.
     NODISCARD FORCEINLINE std::optional<LHumanoidShape> const& GetOriginalShape() const noexcept { return this->OriginalShape; }
 

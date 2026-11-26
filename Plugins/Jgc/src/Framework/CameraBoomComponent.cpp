@@ -1,12 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcCameraBoomComponent.h"
+#include "Jgc/Framework/CameraBoomComponent.h"
 #include "Framework/EyeComponent.h"
 #include "Framework/TraceUtility.h"
 #include "Framework/Actor.h"
 #include "Engine/World.h"
 
-void Jgc::AJgcCameraBoomComponent::ParentTick(f32 Dt)
+void Jgc::ACameraBoomComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 

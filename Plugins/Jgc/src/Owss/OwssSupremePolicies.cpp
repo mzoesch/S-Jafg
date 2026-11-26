@@ -8,9 +8,9 @@
 #include "Framework/CharacterMovementComponent.h"
 #include "Framework/EyeComponent.h"
 #include "User/UserPreferences.h"
-#include "Jgc/Framework/JgcCharacterInputComponent.h"
+#include "Jgc/Framework/CharacterInputComponent.h"
 #include "Jgc/Framework/Vehicle.h"
-#include "Jgc/Framework/JgcHumanoid.h"
+#include "Jgc/Framework/Humanoid.h"
 #include "Jgc/Framework/CustomizationStation.h"
 #include "Jgc/Owss/OwssGenerationSubsystem.h"
 
@@ -170,7 +170,7 @@ TJxxUnique<Jafg::AActor> Jgc::AOwssSupremePolicies::SpawnAvatarForPersonaControl
         bool const bLocal{Pc.IsOwningLackey<Jafg::ELackey::Local>()};
         if (bLocal)
         {
-            Result->EmplaceComponent<AJgcCharacterInputComponent>();
+            Result->EmplaceComponent<ACharacterInputComponent>();
         }
         /* Every character has a body. Only local humans can switch to the view from behind. */
         EquipHumanoidBody(*Result, {.bThirdPersonView = bLocal});

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/User/Frontend/JgcPauseScreen.h"
+#include "Jgc/User/Frontend/PauseScreen.h"
 #include "Framework/Frontend.h"
 #include "Nodes/Region.h"
 #include "Nodes/Box.h"

@@ -16,7 +16,7 @@
 #include "Framework/EyeComponent.h"
 #include "Framework/GimbalComponent.h"
 #include "Jgc/Framework/Vehicle.h"
-#include "Jgc/Framework/JgcVehicleInputComponent.h"
+#include "Jgc/Framework/VehicleInputComponent.h"
 #include "Jgc/Owss/OwssSupremePolicies.h"
 #include "Rhi/TextureCube.h"
 
@@ -114,7 +114,7 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
          * The view while driving. Behind and slightly above the ship. It hangs on a spring: Accelerations push it
          * away from where it belongs (at most by the maximums), so that speeding up, braking and strafing are felt.
          */
-        /* The pivot that free look turns the eye around (see #AJgcVehicleInputComponent). */
+        /* The pivot that free look turns the eye around (see #AVehicleInputComponent). */
         auto& Gimbal{Actor.EmplaceSceneComponentTo<Jafg::AGimbalComponent>(Actor.GetRootComponent())};
         Actor.EmplaceSceneComponentTo<Jafg::AEyeComponent>(Gimbal, [](Jafg::AEyeComponent& Eye)
         {
@@ -135,6 +135,6 @@ Jgc::AVehicleComponent& Jgc::JOwssGenerationSubsystem::SpawnShip(LWorldVec3 cons
         });
         /* After the vehicle, so that a driver leaves before the avatar is torn down. */
         Actor.EmplaceComponent<Jafg::AAvatarComponent>();
-        Actor.EmplaceComponent<AJgcVehicleInputComponent>();
+        Actor.EmplaceComponent<AVehicleInputComponent>();
     })->GetComponentChecked<AVehicleComponent>();
 }

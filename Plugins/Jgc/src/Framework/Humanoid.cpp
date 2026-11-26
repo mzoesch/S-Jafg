@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcHumanoid.h"
+#include "Jgc/Framework/Humanoid.h"
 #include "Framework/Actor.h"
 #include "Framework/EyeComponent.h"
 #include "Framework/MeshSubsystem.h"
@@ -10,10 +10,10 @@
 #include "Framework/Frontend.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "Jgc/Framework/JgcCharacterAnimationComponent.h"
-#include "Jgc/Framework/JgcCameraBoomComponent.h"
-#include "Jgc/Framework/JgcHumanoidShapeComponent.h"
-#include "Jgc/Framework/JgcPatrolComponent.h"
+#include "Jgc/Framework/CharacterAnimationComponent.h"
+#include "Jgc/Framework/CameraBoomComponent.h"
+#include "Jgc/Framework/HumanoidShapeComponent.h"
+#include "Jgc/Framework/PatrolComponent.h"
 
 Jafg::ASkeletalMeshComponent* Jgc::EquipHumanoidBody(Jafg::AActor& Character, LHumanoidBodyInfo const& Info /* = {} */)
 {
@@ -43,9 +43,9 @@ Jafg::ASkeletalMeshComponent* Jgc::EquipHumanoidBody(Jafg::AActor& Character, LH
         Comp.SetFirstPersonJoints(Info.FirstPersonJoints);
     })};
 
-    Character.EmplaceComponent<AJgcCharacterAnimationComponent>();
+    Character.EmplaceComponent<ACharacterAnimationComponent>();
     /* The proportions of the body (e.g., changed at a customization station). */
-    Character.EmplaceComponent<AJgcHumanoidShapeComponent>();
+    Character.EmplaceComponent<AHumanoidShapeComponent>();
 
     /* The movement drives the first eye directly below the root (see #ACharacterMovementComponent::GetHeadEye). */
     Jafg::AEyeComponent* Head{};
@@ -65,7 +65,7 @@ Jafg::ASkeletalMeshComponent* Jgc::EquipHumanoidBody(Jafg::AActor& Character, LH
 
     if (Info.bThirdPersonView)
     {
-        auto& Boom{Character.EmplaceSceneComponentTo<AJgcCameraBoomComponent>(*Head)};
+        auto& Boom{Character.EmplaceSceneComponentTo<ACameraBoomComponent>(*Head)};
         Character.EmplaceSceneComponentTo<Jafg::AEyeComponent>(Boom, [Head](Jafg::AEyeComponent& Eye)
         {
             Eye.VertFov = Head->VertFov;
@@ -95,7 +95,7 @@ Jafg::AActor& Jgc::SpawnPatrollingHumanoid(Jafg::LWorld& World, TArray<LWorldVec
 
         EquipHumanoidBody(Actor, Info);
 
-        Actor.EmplaceComponent<AJgcPatrolComponent>([&](AJgcPatrolComponent& Comp)
+        Actor.EmplaceComponent<APatrolComponent>([&](APatrolComponent& Comp)
         {
             Comp.Waypoints = std::move(Waypoints);
         });

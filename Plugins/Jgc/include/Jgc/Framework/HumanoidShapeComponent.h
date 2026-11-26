@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/ActorComponent.h"
-#include "JgcHumanoidShapeComponent.generated.h"
+#include "HumanoidShapeComponent.generated.h"
 
 namespace Jafg
 {
@@ -16,7 +16,7 @@ namespace Jgc
 {
 
 //#
-//# The proportions of a humanoid body (@see #AJgcHumanoidShapeComponent). Every value is a factor of the authored
+//# The proportions of a humanoid body (@see #AHumanoidShapeComponent). Every value is a factor of the authored
 //# body: One keeps it as it is. Only the mesh changes, nothing else of the look (e.g., the materials), and nothing of
 //# the movement.
 //#
@@ -77,13 +77,13 @@ NODISCARD JGC_API std::span<LHumanoidShapeParameter const> GetHumanoidShapeParam
 //# The shape is not saved. It lives as long as the actor.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcHumanoidShapeComponent : public Jafg::AActorComponent
+class JGC_API AHumanoidShapeComponent : public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS(AJgcHumanoidShapeComponent)
+    DEFAULT_WORLD_CONSTRUCTORS(AHumanoidShapeComponent)
 
 public:
 

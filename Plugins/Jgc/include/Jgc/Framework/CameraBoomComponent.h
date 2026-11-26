@@ -4,7 +4,7 @@
 
 #include "Framework/SceneComponent.h"
 #include "Framework/TraceUtility.h"
-#include "JgcCameraBoomComponent.generated.h"
+#include "CameraBoomComponent.generated.h"
 
 namespace Jgc
 {
@@ -16,13 +16,13 @@ namespace Jgc
 //# Only traces while one of its eyes is viewed.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcCameraBoomComponent : public Jafg::ASceneComponent
+class JGC_API ACameraBoomComponent : public Jafg::ASceneComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(AJgcCameraBoomComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(ACameraBoomComponent)
     {
         this->bTick = true;
     }

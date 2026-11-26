@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/ActorComponent.h"
-#include "JgcCharacterInputComponent.generated.h"
+#include "CharacterInputComponent.generated.h"
 
 namespace Jafg
 {
@@ -35,13 +35,13 @@ struct LInteractionTarget final
 //# view. Clicking an interactable (e.g., a vehicle) under the cursor interacts with it.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcCharacterInputComponent: public Jafg::AActorComponent
+class JGC_API ACharacterInputComponent: public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(AJgcCharacterInputComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(ACharacterInputComponent)
     {
         this->bTick = true;
     }

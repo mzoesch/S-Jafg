@@ -4,8 +4,8 @@
 
 #include "Framework/ActorComponent.h"
 #include "Nodes/UserWidget.h"
-#include "Jgc/Framework/JgcGimbalFreeLook.h"
-#include "JgcCustomizationInputComponent.generated.h"
+#include "Jgc/Framework/GimbalFreeLook.h"
+#include "CustomizationInputComponent.generated.h"
 
 namespace Jafg
 {
@@ -34,13 +34,13 @@ class ACustomizationStationComponent;
 //#   - Mouse wheel: Changes the distance to the occupant.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcCustomizationInputComponent : public Jafg::AActorComponent
+class JGC_API ACustomizationInputComponent : public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(AJgcCustomizationInputComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(ACustomizationInputComponent)
     {
         this->bTick = true;
     }

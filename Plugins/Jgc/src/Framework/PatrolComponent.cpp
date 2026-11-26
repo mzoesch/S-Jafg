@@ -1,12 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcPatrolComponent.h"
+#include "Jgc/Framework/PatrolComponent.h"
 #include "Framework/CharacterMovementComponent.h"
 #include "Framework/Actor.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogPatrol, JAFG_LOG_DEFAULT_VERBOSITY)
 
-void Jgc::AJgcPatrolComponent::ParentTick(f32 Dt)
+void Jgc::APatrolComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 

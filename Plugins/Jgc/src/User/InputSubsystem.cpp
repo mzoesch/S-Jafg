@@ -1,14 +1,14 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/User/JgcInputSubsystem.h"
+#include "Jgc/User/InputSubsystem.h"
 #include "User/LocalEgo.h"
 #include "User/Input/CoreInputSubsystem.h"
 #include "User/Input/UserInputRegistry.h"
 #include "Framework/PersonaController.h"
 #include "User/Input/UserInput.h"
-#include "Jgc/Framework/JgcVehicleInputComponent.h"
-#include "Jgc/Framework/JgcCharacterInputComponent.h"
-#include "Jgc/Framework/JgcCustomizationInputComponent.h"
+#include "Jgc/Framework/VehicleInputComponent.h"
+#include "Jgc/Framework/CharacterInputComponent.h"
+#include "Jgc/Framework/CustomizationInputComponent.h"
 
 namespace
 {
@@ -18,7 +18,7 @@ Jafg::LOnUserInputActionResult ForCharacterInput(Jafg::LInputCallback const& Dat
 {
     if (auto* Possessed{Data.Controller.GetPossessedActor()})
     {
-        if (auto* Comp{Possessed->GetComponent<Jgc::AJgcCharacterInputComponent>()})
+        if (auto* Comp{Possessed->GetComponent<Jgc::ACharacterInputComponent>()})
         {
             Functor(*Comp);
         }
@@ -26,7 +26,7 @@ Jafg::LOnUserInputActionResult ForCharacterInput(Jafg::LInputCallback const& Dat
         {
             LOG_WARNING(LogUserInput
                 , "[{}]: Action was triggered but the possessed actor has no [{}]."
-                , Possessed->GetNameAsString(), algo::type_name<Jgc::AJgcCharacterInputComponent>()
+                , Possessed->GetNameAsString(), algo::type_name<Jgc::ACharacterInputComponent>()
                 )
         }
     }
@@ -45,7 +45,7 @@ Jafg::LOnUserInputActionResult ForCustomizationInput(Jafg::LInputCallback const&
 {
     if (auto* Possessed{Data.Controller.GetPossessedActor()})
     {
-        if (auto* Comp{Possessed->GetComponent<Jgc::AJgcCustomizationInputComponent>()})
+        if (auto* Comp{Possessed->GetComponent<Jgc::ACustomizationInputComponent>()})
         {
             Functor(*Comp);
         }
@@ -55,7 +55,7 @@ Jafg::LOnUserInputActionResult ForCustomizationInput(Jafg::LInputCallback const&
 
 } /* ~Namespace <Anonymous> */
 
-void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
+void Jgc::JInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
     Collection.InitializeDependency<Jafg::JCoreInputSubsystem>(this);
@@ -117,7 +117,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->OnVehicleStrafe(Value);
                     }
@@ -125,7 +125,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     {
                         LOG_WARNING(LogUserInput
                             , "[{}]: Action was triggered but the possessed actor has no [{}]."
-                            , Possessed->GetNameAsString(), algo::type_name<AJgcVehicleInputComponent>()
+                            , Possessed->GetNameAsString(), algo::type_name<AVehicleInputComponent>()
                             )
                     }
                 }
@@ -189,7 +189,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->OnVehicleTorque(Value);
                     }
@@ -197,7 +197,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     {
                         LOG_WARNING(LogUserInput
                             , "[{}]: Action was triggered but the possessed actor has no [{}]."
-                            , Possessed->GetNameAsString(), algo::type_name<AJgcVehicleInputComponent>()
+                            , Possessed->GetNameAsString(), algo::type_name<AVehicleInputComponent>()
                             )
                     }
                 }
@@ -224,7 +224,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->OnFreeLookHeld();
                     }
@@ -244,7 +244,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->OnVehicleLook(Value);
                     }
@@ -265,7 +265,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->OnFreeLookPanHeld();
                     }
@@ -292,7 +292,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->OnVehicleZoom(Value);
                     }
@@ -312,7 +312,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         Comp->ToggleDampeners();
                     }
@@ -332,7 +332,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             {
                 if (auto* Possessed{Data.Controller.GetPossessedActor()})
                 {
-                    if (auto* Comp{Possessed->GetComponent<AJgcVehicleInputComponent>()})
+                    if (auto* Comp{Possessed->GetComponent<AVehicleInputComponent>()})
                     {
                         /* Leaving gives the input back to the character. */
                         return {.bDirty = Comp->OnVehicleExit()};
@@ -362,7 +362,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCustomizationInput(Data, [](AJgcCustomizationInputComponent& Comp) { Comp.OnOrbitHeld(); });
+                return ::ForCustomizationInput(Data, [](ACustomizationInputComponent& Comp) { Comp.OnOrbitHeld(); });
             },});
 
         /* Closer to or farther from the character. Up is positive, down negative. */
@@ -382,7 +382,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCustomizationInput(Data, [&Value](AJgcCustomizationInputComponent& Comp) { Comp.OnOrbitZoom(Value); });
+                return ::ForCustomizationInput(Data, [&Value](ACustomizationInputComponent& Comp) { Comp.OnOrbitZoom(Value); });
             },});
     }
     else
@@ -425,7 +425,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [&Value](AJgcCharacterInputComponent& Comp) { Comp.OnMove(Value); });
+                return ::ForCharacterInput(Data, [&Value](ACharacterInputComponent& Comp) { Comp.OnMove(Value); });
             },});
 
         Context->MapAction({
@@ -438,7 +438,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [&Value](AJgcCharacterInputComponent& Comp) { Comp.OnLook(Value); });
+                return ::ForCharacterInput(Data, [&Value](ACharacterInputComponent& Comp) { Comp.OnLook(Value); });
             },});
 
         /* Only has an effect while weightless. */
@@ -460,7 +460,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue& Value) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [&Value](AJgcCharacterInputComponent& Comp) { Comp.OnRoll(Value); });
+                return ::ForCharacterInput(Data, [&Value](ACharacterInputComponent& Comp) { Comp.OnRoll(Value); });
             },});
 
         /* Jump when grounded, thrust up when flying or weightless. */
@@ -474,7 +474,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnJumpPressed(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.OnJumpPressed(); });
             },});
         Context->MapAction({
             .Tag = Jafg::LUserInputTag::ToTag("JumpHeld"),
@@ -486,7 +486,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnJumpHeld(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.OnJumpHeld(); });
             },});
 
         /* Crouch when grounded, thrust down when flying or weightless. */
@@ -500,7 +500,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnCrouchHeld(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.OnCrouchHeld(); });
             },});
 
         Context->MapAction({
@@ -513,7 +513,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnSprintHeld(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.OnSprintHeld(); });
             },});
 
         Context->MapAction({
@@ -526,7 +526,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleJetpack(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.ToggleJetpack(); });
             },});
 
         Context->MapAction({
@@ -539,7 +539,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleDampeners(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.ToggleDampeners(); });
             },});
 
         Context->MapAction({
@@ -552,7 +552,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleMagBoots(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.ToggleMagBoots(); });
             },});
 
         /* Between the head and the view from behind. */
@@ -566,7 +566,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.ToggleView(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.ToggleView(); });
             },});
 
         /* Hold to show the cursor instead of looking around. Also on the press, so that nothing else takes it. */
@@ -580,7 +580,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
                     }),
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
-                return ::ForCharacterInput(Data, [](AJgcCharacterInputComponent& Comp) { Comp.OnCursorHeld(); });
+                return ::ForCharacterInput(Data, [](ACharacterInputComponent& Comp) { Comp.OnCursorHeld(); });
             },});
 
         /* Interact with whatever is under the cursor. Only while the cursor is shown. */
@@ -595,7 +595,7 @@ void Jgc::JgcInputSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
             .Callback = [](Jafg::LInputCallback const& Data, Jafg::LInputActionValue&) -> Jafg::LOnUserInputActionResult
             {
                 bool bInteracted{};
-                (void)::ForCharacterInput(Data, [&bInteracted](AJgcCharacterInputComponent& Comp)
+                (void)::ForCharacterInput(Data, [&bInteracted](ACharacterInputComponent& Comp)
                 {
                     bInteracted = Comp.OnInteractPressed();
                 });

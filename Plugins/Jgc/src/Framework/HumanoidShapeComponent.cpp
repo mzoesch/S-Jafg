@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcHumanoidShapeComponent.h"
+#include "Jgc/Framework/HumanoidShapeComponent.h"
 #include "Framework/Actor.h"
 #include "Framework/SkeletalMeshComponent.h"
 
@@ -56,7 +56,7 @@ std::span<Jgc::LHumanoidShapeParameter const> Jgc::GetHumanoidShapeParameters() 
     return ::Parameters;
 }
 
-void Jgc::AJgcHumanoidShapeComponent::OnAttach(Jafg::AActor& InOwner)
+void Jgc::AHumanoidShapeComponent::OnAttach(Jafg::AActor& InOwner)
 {
     Super::OnAttach(InOwner);
     if (this->Shape != LHumanoidShape{})
@@ -65,7 +65,7 @@ void Jgc::AJgcHumanoidShapeComponent::OnAttach(Jafg::AActor& InOwner)
     }
 }
 
-void Jgc::AJgcHumanoidShapeComponent::SetShape(LHumanoidShape const& NewShape)
+void Jgc::AHumanoidShapeComponent::SetShape(LHumanoidShape const& NewShape)
 {
     LHumanoidShape Clamped{NewShape};
     for (LHumanoidShapeParameter const& Parameter: ::Parameters)
@@ -81,7 +81,7 @@ void Jgc::AJgcHumanoidShapeComponent::SetShape(LHumanoidShape const& NewShape)
     this->Apply();
 }
 
-Jafg::ASkeletalMeshComponent* Jgc::AJgcHumanoidShapeComponent::GetBody() const noexcept
+Jafg::ASkeletalMeshComponent* Jgc::AHumanoidShapeComponent::GetBody() const noexcept
 {
     if (!this->IsOwningActorValid() || !this->GetOwningActor().HasRootComponent())
     {
@@ -90,7 +90,7 @@ Jafg::ASkeletalMeshComponent* Jgc::AJgcHumanoidShapeComponent::GetBody() const n
     return ::FindBody(const_cast<Jafg::ASceneComponent&>(this->GetOwningActor().GetRootComponent()));
 }
 
-void Jgc::AJgcHumanoidShapeComponent::Apply()
+void Jgc::AHumanoidShapeComponent::Apply()
 {
     Jafg::ASkeletalMeshComponent* const Body{this->GetBody()};
     Jafg::LSkeleton const* const Skeleton{Body ? Body->GetSkeleton() : nullptr};

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcCustomizationInputComponent.h"
+#include "Jgc/Framework/CustomizationInputComponent.h"
 #include "Framework/AvatarComponent.h"
 #include "Framework/EyeComponent.h"
 #include "Framework/GimbalComponent.h"
@@ -10,16 +10,16 @@
 #include "User/Input/InputActionValue.h"
 #include "User/Input/UserInput.h"
 #include "Jgc/Framework/CustomizationStation.h"
-#include "Jgc/User/Frontend/JgcCustomizationPanel.h"
+#include "Jgc/User/Frontend/CustomizationPanel.h"
 
-void Jgc::AJgcCustomizationInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
+void Jgc::ACustomizationInputComponent::OnGarbage(Jafg::EJxxRecordTearDownReason Reason)
 {
     /* Also when the world goes away. The panel lives in the world viewport, which stays. */
     this->ClosePanel();
     Super::OnGarbage(Reason);
 }
 
-void Jgc::AJgcCustomizationInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
+void Jgc::ACustomizationInputComponent::OnPossessionChanged(Jafg::APersonaController* Previous, Jafg::APersonaController* New)
 {
     Super::OnPossessionChanged(Previous, New);
 
@@ -50,7 +50,7 @@ void Jgc::AJgcCustomizationInputComponent::OnPossessionChanged(Jafg::APersonaCon
     }
 }
 
-void Jgc::AJgcCustomizationInputComponent::ParentTick(f32 Dt)
+void Jgc::ACustomizationInputComponent::ParentTick(f32 Dt)
 {
     Super::ParentTick(Dt);
 
@@ -91,7 +91,7 @@ void Jgc::AJgcCustomizationInputComponent::ParentTick(f32 Dt)
         });
 }
 
-bool Jgc::AJgcCustomizationInputComponent::ActivateUserInputContext() noexcept
+bool Jgc::ACustomizationInputComponent::ActivateUserInputContext() noexcept
 {
     if (auto* Ctrl{this->GetOwningController()})
     {
@@ -110,12 +110,12 @@ bool Jgc::AJgcCustomizationInputComponent::ActivateUserInputContext() noexcept
     return false;
 }
 
-Jgc::ACustomizationStationComponent* Jgc::AJgcCustomizationInputComponent::GetStation() const noexcept
+Jgc::ACustomizationStationComponent* Jgc::ACustomizationInputComponent::GetStation() const noexcept
 {
     return this->GetOwningActor().GetComponent<ACustomizationStationComponent>();
 }
 
-Jafg::AGimbalComponent* Jgc::AJgcCustomizationInputComponent::GetOrbitGimbal() const noexcept
+Jafg::AGimbalComponent* Jgc::ACustomizationInputComponent::GetOrbitGimbal() const noexcept
 {
     if (auto* Avatar{this->GetOwningAvatar()})
     {
@@ -127,7 +127,7 @@ Jafg::AGimbalComponent* Jgc::AJgcCustomizationInputComponent::GetOrbitGimbal() c
     return nullptr;
 }
 
-void Jgc::AJgcCustomizationInputComponent::OnOrbitHeld() noexcept
+void Jgc::ACustomizationInputComponent::OnOrbitHeld() noexcept
 {
     /* Pressing on the panel is not meant for the view. Once orbiting, the panel does not stop it. */
     if (this->Orbit.IsActive() || !this->IsCursorOverPanel())
@@ -136,7 +136,7 @@ void Jgc::AJgcCustomizationInputComponent::OnOrbitHeld() noexcept
     }
 }
 
-void Jgc::AJgcCustomizationInputComponent::OnOrbitZoom(Jafg::LInputActionValue const& Value) noexcept
+void Jgc::ACustomizationInputComponent::OnOrbitZoom(Jafg::LInputActionValue const& Value) noexcept
 {
     if (!this->IsCursorOverPanel())
     {
@@ -144,7 +144,7 @@ void Jgc::AJgcCustomizationInputComponent::OnOrbitZoom(Jafg::LInputActionValue c
     }
 }
 
-void Jgc::AJgcCustomizationInputComponent::Apply()
+void Jgc::ACustomizationInputComponent::Apply()
 {
     if (auto* Station{this->GetStation()})
     {
@@ -152,7 +152,7 @@ void Jgc::AJgcCustomizationInputComponent::Apply()
     }
 }
 
-void Jgc::AJgcCustomizationInputComponent::Discard()
+void Jgc::ACustomizationInputComponent::Discard()
 {
     if (auto* Station{this->GetStation()})
     {
@@ -160,12 +160,12 @@ void Jgc::AJgcCustomizationInputComponent::Discard()
     }
 }
 
-bool Jgc::AJgcCustomizationInputComponent::IsPanelOpen() const noexcept
+bool Jgc::ACustomizationInputComponent::IsPanelOpen() const noexcept
 {
     return this->Panel.IsValidSlow();
 }
 
-void Jgc::AJgcCustomizationInputComponent::AimEye() noexcept
+void Jgc::ACustomizationInputComponent::AimEye() noexcept
 {
     auto* Ctrl{this->GetOwningController()};
     auto* Lackey{Ctrl ? Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>() : nullptr};
@@ -194,7 +194,7 @@ void Jgc::AJgcCustomizationInputComponent::AimEye() noexcept
     }
 }
 
-void Jgc::AJgcCustomizationInputComponent::OpenPanel(Jafg::LLocalLackey& Lackey)
+void Jgc::ACustomizationInputComponent::OpenPanel(Jafg::LLocalLackey& Lackey)
 {
     auto* Station{this->GetStation()};
     auto* Shape{Station ? Station->GetOccupantShape() : nullptr};
@@ -232,7 +232,7 @@ void Jgc::AJgcCustomizationInputComponent::OpenPanel(Jafg::LLocalLackey& Lackey)
     this->Panel = &NewPanel;
 }
 
-void Jgc::AJgcCustomizationInputComponent::ClosePanel() noexcept
+void Jgc::ACustomizationInputComponent::ClosePanel() noexcept
 {
     if (this->Panel.IsValidSlow())
     {
@@ -241,7 +241,7 @@ void Jgc::AJgcCustomizationInputComponent::ClosePanel() noexcept
     this->Panel.Reset();
 }
 
-std::optional<LVec2F> Jgc::AJgcCustomizationInputComponent::GetCursorLocation() const noexcept
+std::optional<LVec2F> Jgc::ACustomizationInputComponent::GetCursorLocation() const noexcept
 {
     auto* Ctrl{this->GetOwningController()};
     auto* Lackey{Ctrl ? Ctrl->TryGetOwningLackey<Jafg::ELackey::Local>() : nullptr};
@@ -254,7 +254,7 @@ std::optional<LVec2F> Jgc::AJgcCustomizationInputComponent::GetCursorLocation() 
     return Surface.HasMouseLocationForOrtho() ? std::optional<LVec2F>{Surface.GetMouseLocationValue()} : std::nullopt;
 }
 
-bool Jgc::AJgcCustomizationInputComponent::IsCursorOverPanel() const noexcept
+bool Jgc::ACustomizationInputComponent::IsCursorOverPanel() const noexcept
 {
     if (!this->Panel.IsValidSlow())
     {

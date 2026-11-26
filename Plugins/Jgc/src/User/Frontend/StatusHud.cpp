@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/User/Frontend/JgcStatusHud.h"
+#include "Jgc/User/Frontend/StatusHud.h"
 #include "Framework/Lackey.h"
 #include "Nodes/Text.h"
 #include "Nodes/VParent.h"

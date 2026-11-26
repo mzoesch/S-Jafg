@@ -29,7 +29,7 @@ enum struct EVehicle
 //# A vehicle that one driver can drive. Interacting with it seats the instigator as the driver.
 //#
 //# The actor of a vehicle is an avatar of its own: It needs an #Jafg::AAvatarComponent, and usually an
-//# #Jafg::AEyeComponent (the view while driving) and an #AJgcVehicleInputComponent (the controls). While seated,
+//# #Jafg::AEyeComponent (the view while driving) and an #AVehicleInputComponent (the controls). While seated,
 //# the actor of the driver is attached to the vehicle and the controller of the driver possesses the vehicle.
 //#
 DECLARE_JAFG_CLASS()

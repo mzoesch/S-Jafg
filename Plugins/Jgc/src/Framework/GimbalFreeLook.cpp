@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Jgc/Framework/JgcGimbalFreeLook.h"
+#include "Jgc/Framework/GimbalFreeLook.h"
 #include "Framework/GimbalComponent.h"
 
 void Jgc::LGimbalFreeLook::Apply(Jafg::AGimbalComponent* Gimbal, LGimbalFreeLookSettings const& Settings) noexcept
@@ -25,7 +25,7 @@ void Jgc::LGimbalFreeLook::Apply(Jafg::AGimbalComponent* Gimbal, LGimbalFreeLook
             else if (Gimbal)
             {
                 LVec2F const Delta{this->FrameLook * Settings.Sensitivity};
-                /* Same as looking around with a character (#AJgcCharacterInputComponent::OnLook). */
+                /* Same as looking around with a character (#ACharacterInputComponent::OnLook). */
                 Gimbal->AddRotation(Delta.x, Settings.bInvertPitch ? -Delta.y : Delta.y);
             }
         }

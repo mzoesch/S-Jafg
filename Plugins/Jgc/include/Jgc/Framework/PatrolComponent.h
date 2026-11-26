@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Framework/ActorComponent.h"
-#include "JgcPatrolComponent.generated.h"
+#include "PatrolComponent.generated.h"
 
 namespace Jgc
 {
@@ -13,13 +13,13 @@ namespace Jgc
 //# and starts over after the last one. Through the same intent API that humans use. For tests and showcases.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcPatrolComponent : public Jafg::AActorComponent
+class JGC_API APatrolComponent : public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(AJgcPatrolComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(APatrolComponent)
     {
         this->bTick = true;
     }

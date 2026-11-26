@@ -4,7 +4,7 @@
 
 #include "Framework/ActorComponent.h"
 #include "Rhi/Skeleton.h"
-#include "JgcCharacterAnimationComponent.generated.h"
+#include "CharacterAnimationComponent.generated.h"
 
 namespace Jafg
 {
@@ -50,13 +50,13 @@ NODISCARD JGC_API LStringView LexToString(ECharacterAnimationState State) noexce
 //# Purely cosmetic: Reads the movement, never changes it.
 //#
 DECLARE_JAFG_CLASS()
-class JGC_API AJgcCharacterAnimationComponent: public Jafg::AActorComponent
+class JGC_API ACharacterAnimationComponent: public Jafg::AActorComponent
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_WORLD_CONSTRUCTORS_BODY(AJgcCharacterAnimationComponent)
+    DEFAULT_WORLD_CONSTRUCTORS_BODY(ACharacterAnimationComponent)
     {
         this->bTick = true;
     }

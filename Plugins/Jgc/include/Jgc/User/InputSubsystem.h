@@ -4,19 +4,19 @@
 
 #include "JgcMinimal.afx"
 #include "Framework/FrontendSubsystem.h"
-#include "JgcInputSubsystem.generated.h"
+#include "InputSubsystem.generated.h"
 
 namespace Jgc
 {
 
 DECLARE_JAFG_CLASS()
-class JgcInputSubsystem final : public Jafg::JFrontendSubsystem
+class JInputSubsystem final : public Jafg::JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTORS(JgcInputSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS(JInputSubsystem)
 
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
 };

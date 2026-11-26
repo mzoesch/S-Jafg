@@ -4,7 +4,7 @@
 
 #include "JgcMinimal.afx"
 #include "Nodes/UserWidget.h"
-#include "JgcStatusHud.generated.h"
+#include "StatusHud.generated.h"
 
 namespace Jafg
 {
