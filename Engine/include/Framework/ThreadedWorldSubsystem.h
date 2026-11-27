@@ -16,39 +16,25 @@ namespace Jafg
 //# If you desire synchronization, use the #JSynchronizedThreadedWorldSubsystem class instead.
 //#
 DECLARE_JAFG_CLASS(EJxxClassBits::Abstract)
-class JThreadedWorldSubsystem : public JWorldSubsystem, public LTickedRunnable
+class JThreadedWorldSubsystem: public JWorldSubsystem, public LTickedRunnable
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTORS(JThreadedWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTORS_BODY(JThreadedWorldSubsystem)
+    {
+        this->SetPriorityTearDown(true);
+        this->SetThreadName(this->GetHumanReadableName());
+    }
+
+    virtual void Initialize(LSubsystemCollection& Collection) override final;
+    virtual void FixedTick(f32 RunnableDeltaTime) override {}
+    virtual void TearDown() override;
 
 public:
 
-    //# Use this method for initialization instead of the normal subsystems one.
-    virtual void OnInitialize(LSubsystemCollection& Collection) { }
-    virtual void Initialize(LSubsystemCollection& Collection) override final;
-    virtual void TearDown() override final;
-
-    //# Called on the master thread, *after* the thread has been terminated.
-    virtual void OnTearDown() { }
-
-    // LTickedRunnable implementation
-    //# Do not use this here. Initialization is done on the aggregating thread. For initialization use #OnInitialize.
-    virtual auto Initialize() -> ETaskExit::Type override final { return LTickedRunnable::Initialize(); }
-    //# Override this method to gain access to your tick functionality.
-    virtual void FixedTick(const float RunnableDeltaTime) override { }
-    //# Use this instead of the normal subsystems #TearDown method. Called on separate thread.
-    //# If you need to tear down engine things, use #OnTearDown instead as it is called on the engine thread.
-    virtual void Exit() override { LTickedRunnable::Exit(); }
-    // ~LTickedRunnable implementation
-
-    FORCEINLINE auto GetThisSubsystemsThreadName() const -> ENamedThreads::Type { return this->ThisSubsystemsThreadName; }
-
-private:
-
-    ENamedThreads::Type ThisSubsystemsThreadName{ ENamedThreads::Custom };
+    virtual Tasks::EExit::Type Initialize() override { return LTickedRunnable::Initialize(); }
 };
 
 } /* ~Namespace Jafg */

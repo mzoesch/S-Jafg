@@ -46,6 +46,14 @@
 #include <print>
 #include <random>
 #include <list>
+#include <atomic>
+#include <deque>
+#include <thread>
+#include <future>
+#if JAFG_PLATFORM_WASM
+    #include <emscripten/threading.h>
+    // #include <c++/v1/__threading_support>
+#endif /* JAFG_PLATFORM_WASM */
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;

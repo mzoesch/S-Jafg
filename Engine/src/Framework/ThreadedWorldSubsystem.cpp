@@ -8,41 +8,26 @@ void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)
     STAT_FUNCTION()
 
     Super::Initialize(Collection);
-    this->SetPriorityTearDown(true);
-    this->OnInitialize(Collection);
 
-    this->ThisSubsystemsThreadName = Tasks::Private::MakeNewCustomNamedThreadId();
-    const ETaskExit::Type ErrorLevel = Tasks::Private::LaunchNamedThread(this->ThisSubsystemsThreadName, this, false);
-    if (ErrorLevel != ETaskExit::Success)
+    if (auto Rc{Tasks::LaunchRunnable(*this)}; Rc != Tasks::EExit::Success)
     {
-        LOG_ERROR(
-            LogTaskSystem,
-            "Failed to launch the thread for subsystem {}[{}].",
-            this->GetHumanReadableName(), LexToString(this->ThisSubsystemsThreadName)
-        )
+        LOG_FATAL(LogTaskSystem
+            , "[{}]: Failed to associated thread."
+            , this->GetHumanReadableName()
+            )
     }
-
-    return;
 }
 
 void Jafg::JThreadedWorldSubsystem::TearDown()
 {
-    STAT_FUNCTION()
-
     Super::TearDown();
 
-    if (this->ShouldTickRunnable())
-    {
-        this->Stop(ERunnableStopReason::RequestedStop);
-        LOG_SCOPED_DURATION(LogTasks, Verbose, "Joining thread")
-        Tasks::JoinThread(this->ThisSubsystemsThreadName);
-    }
-    else
-    {
-        LOG_WARNING(LogTasks, "Teared down a threaded subsystem that is not ticking.")
-    }
+    STAT_CUSTOM_ZONE_FMT("TearDown::{}", this->GetHumanReadableName())
 
-    this->OnTearDown();
+    this->Stop(ERunnableStopReason::RequestedStop);
 
-    return;
+    {
+        LOG_SCOPED_DURATION(LogTasks, Verbose, "Joining associated thread")
+        this->Join();
+    }
 }

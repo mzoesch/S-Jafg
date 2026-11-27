@@ -80,11 +80,42 @@ bool Jafg::LWorldStorage::IsValid() const noexcept
 Jafg::LEngine::LEngine()
 {
     STAT_FUNCTION()
-    if (ETaskExit::Type const Rc{Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread")};
-        Rc != ETaskExit::Success
-        )
+
+    std::size_t Workers{std::thread::hardware_concurrency()};
+    if (Workers > 1)
     {
-        LOG_FATAL(LogLaunch, "Failed to create worker thread: [{}].", static_cast<i32>(Rc))
+        /* Reserve at least one for the master thread. */
+        --Workers;
+    }
+#if JAFG_WITH_STATS
+    if (Workers > 1)
+    {
+        /* Reserve at least one for the stats thread. */
+        --Workers;
+    }
+    if (Workers > 1) // Our stats system for now only allows for localhost, therefore, this is an okay assumption,
+    {                // that the stats server is also running on the same machine.
+        /* Reserve at least one for the stats server. */
+        --Workers;
+    }
+#endif /* JAFG_WITH_STATS */
+
+    if (auto* Requested{App::GetCommandLineArgument(App::Workers)})
+    {
+        serde::from_string(&Workers, Requested->GetValue());
+    }
+
+    /* Jafg requires at least one worker thread. */
+    Workers = maths::max(Workers, 1uz);
+
+    for (std::size_t Idx{0}; Idx < Workers; ++Idx)
+    {
+        if (Tasks::LaunchRunnable(*this->Workers.emplace_back(
+            std::make_unique<LEngineRunnable>(algo::sprintf("Jafg::Worker-{}", Idx))
+            )) != Tasks::EExit::Success)
+        {
+            LOG_FATAL(LogEngine, "[{}]: Failed to aggregate worker.", this->Workers.back()->GetHumanReadableName())
+        }
     }
 }
 
@@ -307,7 +338,7 @@ void Jafg::LEngine::Initialize()
             check(Args.GetArgCount() == 0)
             OutResponse.Rc = ECommandReturnCode::Success;
             OutResponse.StdOut = "Send request to trap another thread";
-            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever, []{JAFG_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")});
+            Tasks::Master.Task([]{JAFG_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")});
         })});
 
         this->GetCommandLineInterface().RegisterCommandChecked({"_ThrowAccessViolation", "Causes a C access violation.",
@@ -355,7 +386,7 @@ void Jafg::LEngine::Tick()
 {
     STAT_FUNCTION()
 
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
+    Tasks::Master.ConsumeFor(0.035); // Avoid starving the master thread for too long.
 
 #if JAFG_WITH_LOCAL_LAYER
     this->LocalEgo.Tick(static_cast<f32>(this->DeltaTime));
@@ -386,9 +417,7 @@ void Jafg::LEngine::Tick()
     this->LocalEgo.OnRender();
 #endif /* JAFG_WITH_LOCAL_LAYER */
 
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
-
-    return;
+    Tasks::Master.ConsumeFor(0.035); // Avoid starving the master thread for too long.
 }
 
 void Jafg::LEngine::TearDown()
@@ -398,7 +427,8 @@ void Jafg::LEngine::TearDown()
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
 #if JAFG_WITH_REST_CLS
-    if (this->GetReSTCli().IsServerRunning())
+    /* Joinable, not running: The thread might have exited on its own and still needs to be joined. */
+    if (this->GetReSTCli().Joinable())
     {
         this->StopReSTCliServer();
     }
@@ -435,7 +465,17 @@ void Jafg::LEngine::TearDown()
     this->Collection.TearDownSubsystems();
     this->Outer.TearDown();
 
-    Tasks::Private::StopAndJoinRemainingThreads();
+    for (auto const& Worker: this->Workers)
+    {
+        Worker->Stop(ERunnableStopReason::EngineTermination);
+    }
+    for (auto const& Worker: this->Workers)
+    {
+        Worker->Join();
+    }
+    this->Workers.clear();
+    /* Workers exit without consuming their pending tasks. */
+    Tasks::Worker.Drain();
 
     LOG_VERBOSE(LogPhysics, "Tearing down physics system globals.")
     JPH::UnregisterTypes();
@@ -1260,24 +1300,15 @@ void Jafg::LEngine::StartReSTCliServer()
     }
 
     LOG_VERBOSE(LogEngine, "Starting ReST CLI server...")
-
-    if (Tasks::HasReSTCliThread())
-    {
-        LOG_WARNING(LogEngine, "ReST CLI server is already running.")
-        return;
-    }
-
-    if
-    (
-        ETaskExit::Type const Rc{ Tasks::Private::LaunchNamedThread(ENamedThreads::ReSTCli, &this->ReSTCli, false) };
-        Rc != ETaskExit::Success
-    )
+    check(!this->ReSTCli.Joinable())
+    check(!this->ReSTCli.IsServerRunning())
+    if (auto Rc{Tasks::LaunchRunnable(this->ReSTCli)}; Rc != Tasks::EExit::Success)
     {
         LOG_FATAL(LogEngine, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc))
     }
 }
 
-void Jafg::LEngine::StopReSTCliServer(ERunnableStopReason::Type Reason /* = ERunnableStopReason::EngineTermination */)
+void Jafg::LEngine::StopReSTCliServer(ERunnableStopReason Reason /* = ERunnableStopReason::EngineTermination */)
 {
     LOG_VERBOSE(LogEngine, "Trying to stop ReST CLI server...")
     this->ReSTCli.Stop(Reason);

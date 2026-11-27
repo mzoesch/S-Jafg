@@ -7,17 +7,14 @@
 namespace Jafg
 {
 
-class LEngineRunnable final : public LRunnable
+class LEngineRunnable final: public LRunnable
 {
 public:
 
-    LEngineRunnable() = default;
-    LEngineRunnable(const LString& InHumanReadableName)
-        : LRunnable(InHumanReadableName)
-    {
-    }
+    LEngineRunnable() = delete;
+    LEngineRunnable(LString InHumanReadableName): LRunnable{std::move(InHumanReadableName)} {}
 
-    virtual ETaskExit::Type Run() override;
+    Tasks::EExit::Type Run(std::stop_token const& Stoken) override;
 };
 
 } /* ~Namespace Jafg */

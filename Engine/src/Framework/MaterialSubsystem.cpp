@@ -699,7 +699,7 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     LOG_VERBOSE(LogMaterialSubsystem, "Fetching materials.")
     this->RetrieveMaterialsFrom(JafgInfo);
 
-    Tasks::Make(ENamedThreads::Master, ETaskTime::Early, [this]{ this->PrepareBindless(); });
+    Tasks::Master.Task([this]{ this->PrepareBindless(); });
     // TODO: Kinda awkward here. Is there a way around?
     this->TextureSubsystem->_Vk_AllocateBindlessPool();
     this->TextureSubsystem->_Vk_UpdateSamplers();

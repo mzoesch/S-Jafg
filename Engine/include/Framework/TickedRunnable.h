@@ -10,17 +10,14 @@ namespace Jafg
 //#
 //# A runnable that has a fixed tick interval and defines common boilerplate logic for ticking and stopping.
 //#
-class LTickedRunnable : public LRunnable
+class LTickedRunnable: public LRunnable
 {
 public:
 
-    virtual auto Initialize() -> ETaskExit::Type override { return LRunnable::Initialize(); }
-    virtual auto Run() -> ETaskExit::Type override final;
-    virtual void OnStop(const ERunnableStopReason::Type InType) override final;
-    virtual auto Exit() -> void override { LRunnable::Exit(); }
+    virtual auto Run(std::stop_token const& Stoken) -> Tasks::EExit::Type override final;
 
-    FORCEINLINE f64  GetTickInterval() const { return this->TickInterval; }
-    FORCEINLINE void SetTickInterval(const f64 Interval) { this->TickInterval = Interval; }
+    NODISCARD FORCEINLINE f64 GetTickInterval() const noexcept { return this->TickInterval; }
+    FORCEINLINE void SetTickInterval(f64 Interval) noexcept { this->TickInterval = Interval; }
 
 protected:
 
@@ -32,19 +29,12 @@ protected:
     //# @param RunnableDeltaTime The delta time since the last call of #FixedTick. NOT the delta time of the current
     //#                          frame from the engine.
     //#
-    virtual void FixedTick(const float RunnableDeltaTime) = 0;
-
-    FORCEINLINE bool ShouldTickRunnable() const { return this->bShouldTick; }
+    virtual void FixedTick(f32 RunnableDeltaTime) = 0;
 
 private:
 
-    //#
     //# The tick interval in seconds. Zero means no interval -> tick always (not recommended).
-    //#
     f64 TickInterval{ 0.1 };
-
-    bool bShouldTick{ true };
-    ERunnableStopReason::Type StopReason{ ERunnableStopReason::Custom };
 };
 
 } /* ~Namespace Jafg */

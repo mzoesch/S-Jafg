@@ -7,6 +7,7 @@
 #include "Engine/Jxx.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
+#include "Framework/Runnable.h"
 #include "Foreign/PluginForward.h"
 #include "Framework/EngineSubsystem.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
@@ -290,7 +291,7 @@ public:
 #if JAFG_WITH_REST_CLS
     ENGINE_API void SetReSTCliCorePaths();
     ENGINE_API void StartReSTCliServer();
-    ENGINE_API void StopReSTCliServer(ERunnableStopReason::Type Reason = ERunnableStopReason::EngineTermination);
+    ENGINE_API void StopReSTCliServer(ERunnableStopReason Reason = ERunnableStopReason::EngineTermination);
 
     FORCEINLINE constexpr LReStCli& GetReSTCli() noexcept { return this->ReSTCli; }
     FORCEINLINE constexpr LReStCli const& GetReSTCli() const noexcept { return this->ReSTCli; }
@@ -298,6 +299,7 @@ public:
 
 private:
 
+    TArray<std::unique_ptr<LRunnable>> Workers;
     LCommandLineInterface CommandLineInterface;
 #if JAFG_WITH_REST_CLS
     LReStCli ReSTCli;

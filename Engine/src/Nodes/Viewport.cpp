@@ -40,7 +40,7 @@ void Jafg::LViewport::Vk_OnLateInit()
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [SetInstance]{ SetInstance(nullptr); });
+        Tasks::Master.Task([SetInstance]{ SetInstance(nullptr); });
     }
 }
 

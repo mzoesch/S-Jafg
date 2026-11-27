@@ -102,7 +102,7 @@ Jafg::LNodeReply Jafg::WDropDownTabBar::OnMouseEnterInRoot(WNode& Node, LDropDow
 
     TArray<TJxxUnique<WFloatingWidget>> SubmenusToClose; SubmenusToClose.reserve(this->OpenSubmenus.size());
     for (auto& FloatingWidget: this->OpenSubmenus | std::views::values) { SubmenusToClose.push_back(std::move(FloatingWidget)); }
-    Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [SubmenusToClose = std::move(SubmenusToClose)]() mutable{});
+    Tasks::Master.Task([SubmenusToClose = std::move(SubmenusToClose)]() mutable{});
     this->OpenSubmenus.clear();
 
     WDismissibleFloatingWidget* FloatingWidget;

@@ -317,11 +317,10 @@ bool Jafg::JScreenshotSubsystem::TakeScreenshot(LSurface& Surface)
         };
     if (!Surface.RequestCapture([Request=std::move(Request)](LSurfaceCapture Capture) mutable
         {
-            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever
-                , [Request=std::move(Request), Capture=std::move(Capture)]() mutable
-                {
-                    ::SaveScreenshot(Request, std::move(Capture));
-                });
+            Tasks::Worker.Task([Request=std::move(Request), Capture=std::move(Capture)]() mutable
+            {
+                ::SaveScreenshot(Request, std::move(Capture));
+            });
         }))
     {
         LOG_WARNING(LogFrontend, "[{}]: Cannot take a screenshot, as the surface cannot capture its frames.", Surface.GetHumanReadableName())

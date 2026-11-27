@@ -81,7 +81,7 @@ namespace finder::detail
 
 path _engine_root_dir_slow()
 {
-    check(Jafg::Tasks::IsOnMasterThread())
+    check(Tasks::IsOnMasterThread())
     LPath RealRootDir{self_proc_dir_slow()};
     while (!RealRootDir.empty())
     {
@@ -109,12 +109,12 @@ path _engine_root_dir_slow()
 
 path self_proc_slow()
 {
-    check(Jafg::Tasks::IsOnMasterThread())
+    check(Tasks::IsOnMasterThread())
 
 static LPath CachedSelfProcDir;
     if (CachedSelfProcDir.empty())
     {
-        check(Jafg::Tasks::IsOnMasterThread())
+        check(Tasks::IsOnMasterThread())
 #if JAFG_PLATFORM_LINUX
     #if JAFG_WITH_CLANG
         #pragma clang diagnostic push
@@ -327,6 +327,11 @@ ENGINE_API LProgramParameter WaitForProfiler{{
 ENGINE_API LProgramParameter PauseBeforeExit{{
     .Identifier = "Jafg.PauseBeforeExit",
     .Description = "Whether to pause before exiting the application.",
+    }};
+ENGINE_API LProgramParameter Workers{{
+    .Identifier = "Jafg.Workers",
+    .Description = "Number of workers.",
+    .Flags = EProgramParameterBits::Value,
     }};
 ENGINE_API LProgramParameter SkipTrivialTests{{
     .Identifier = "Jafg.SkipTrivialTests",

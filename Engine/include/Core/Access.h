@@ -1102,7 +1102,7 @@ using months_ratio = months::period;
 using years_ratio = years::period;
 
 template<typename T = f64, typename TRatio = seconds_ratio>
-NODISCARD inline T time_diff(clock::time_point A, clock::time_point B) noexcept
+NODISCARD inline T time_diff(clock::time_point A, clock::time_point B = now()) noexcept
 {
     return std::chrono::duration_cast<std::chrono::duration<T, TRatio>>(B - A).count();
 }

@@ -3400,7 +3400,7 @@ void Jafg::WEditorWorldViewer::OnLaunchAll()
         LWorldCreateInfo CreateInfo{Ctrl.GetWorld().GetCreateInfo()};
         CreateInfo.HumanReadableName = algo::sprintf("{}-pie", Ctrl.GetWorld().GetHumanReadableName());
         CreateInfo.TimeBehavior = EWorldTimeBehavior::Linear;
-        Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [CreateInfo=std::move(CreateInfo),this]
+        Tasks::Master.Task([CreateInfo=std::move(CreateInfo),this]
         {
             check(Detail::GMutableEngine)
 

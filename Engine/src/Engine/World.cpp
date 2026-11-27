@@ -948,17 +948,11 @@ void Jafg::LWorld::OnTearDown()
     this->WorldState = EWorldState::TearingDown;
 
     LOG_VERBOSE(LogWorld, "Tearing down world subsystems for world [{}].", this->GetHumanReadableName())
-    this->Collection.TearDownSubsystems([](void) -> void
+    this->Collection.TearDownSubsystems([] -> void
     {
-        /* Preserve order. */
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
+        Tasks::Master.ConsumeAll();
     });
-    /* Preserve order. */
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
+    Tasks::Master.ConsumeAll();
 
     LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
     for (auto Idx{0uz}; Idx < this->GetEmployees().size();)

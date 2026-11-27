@@ -43,7 +43,7 @@ void EngineExit()
 
     LOG_INFO(LogLaunch, "Engine is exiting ...")
 
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::_Flush, Tasks::RunAllTasks);
+    Tasks::Master.ConsumeAll();
 
     if (GEngine)
     {
@@ -95,6 +95,11 @@ void EngineExit()
 EPlatformExit::Type AgnosticLaunch()
 {
     LOG_INFO(LogLaunch, "Finished static storage initialization after [{}] seconds.", App::GetElapsedTime())
+
+    if (!Tasks::IsOnMasterThread())
+    {
+        LOG_FATAL(LogLaunch, "Failed to acquire master thread.")
+    }
 
 #if !JAFG_PLATFORM_USES_NON_GENERIC_EXIT
     algo::raii_leave _{&EngineExit};
@@ -232,7 +237,6 @@ EPlatformExit::Type AgnosticLaunch()
 #endif /* JAFG_WITH_STATS */
     STAT_FUNCTION()
 
-    Tasks::RegisterThread(ENamedThreads::Master);
     finder::create_directories(finder::dumps_dir());
     finder::create_directories(finder::saved_dir());
     LOG_VERBOSE(LogInformation, "EngineDir={}", finder::detail::_engine_root_dir_slow())
@@ -265,7 +269,7 @@ EPlatformExit::Type AgnosticLaunch()
         GEngine = Detail::GMutableEngine;
         check(GEngine)
         if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
+        Tasks::Master.ConsumeAll(); /* BeforeEngineInitButAfterAlloc */
         if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
 
         {
@@ -273,12 +277,12 @@ EPlatformExit::Type AgnosticLaunch()
             Detail::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
             Detail::GetGlobalCxxRecordRegistry().LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
             if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
-            Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::RunAllTasks);
+            Tasks::Master.ConsumeAll(); /* AfterCorePackageLoad */
             if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
         }
 
         Detail::GMutableEngine->Initialize();
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
+        Tasks::Master.ConsumeAll(); /* AfterEngineInit */
         if (App::IsEngineExitRequested()) { return ::GetMostSignificantExitReason(); }
     }
 
@@ -330,6 +334,8 @@ EPlatformExit::Type AgnosticLaunch()
         return ::GetMostSignificantExitReason();
     }
 
+    Tasks::Master.ConsumeAll(); /* BeforeJumpStart */
+
     Detail::GMutableEngine->DefaultJumpStart();
 
 #if JAFG_PLATFORM_USES_NON_GENERIC_LOOP
@@ -348,7 +354,7 @@ EPlatformExit::Type AgnosticLaunch()
 
         if (algo::time_diff(GEngine->LastStdoutFlush, GEngine->FrameStartTimePoint) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
         {
-            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever, &Detail::EmitAndFlushLogs);
+            Tasks::Worker += Detail::EmitAndFlushLogs;
             Detail::GMutableEngine->LastStdoutFlush = algo::now();
         }
 

@@ -3,12 +3,12 @@
 #include "Framework/TickedRunnable.h"
 #include "Core/App.h"
 
-Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
+Tasks::EExit::Type Jafg::LTickedRunnable::Run(std::stop_token const& Stoken)
 {
     STAT_FUNCTION()
 
     f64 LastTickTime{App::GetElapsedTime()};
-    while (this->bShouldTick)
+    while (!Stoken.stop_requested())
     {
         const f64 Now{App::GetElapsedTime()};
         const f64 DeltaTime{Now - LastTickTime};
@@ -28,28 +28,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
             }
         }
 #endif /* !JAFG_PLATFORM_WASM */
-
-        continue;
     }
 
-    return ETaskExit::Success;
-}
-
-void Jafg::LTickedRunnable::OnStop(const ERunnableStopReason::Type InType)
-{
-    STAT_FUNCTION()
-
-    LOG_TRACE(LogTasks, "Stopping ticked runnable.")
-
-    if (this->bShouldTick == false)
-    {
-        LOG_WARNING(LogTasks, "Ticked runnable already stopped.")
-        return;
-    }
-
-    LRunnable::OnStop(InType);
-    this->bShouldTick = false;
-    this->StopReason  = InType;
-
-    return;
+    return Tasks::EExit::Success;
 }

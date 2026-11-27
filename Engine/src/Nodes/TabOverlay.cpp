@@ -458,7 +458,7 @@ void Jafg::WTabOverlay::CreateTabMenu(std::optional<LVec2F> Hint, WTabOverlaySel
                     },
                 .OnAction = [Possibilities=this->Possibilities](WNode& Self, LNodeKeyEventInfo const& Info, LKeyEvent const& Event)
                 {
-                    Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [Frontend=&Self.GetMutableFrontend(),Possibilities]
+                    Tasks::Master.Task([Frontend=&Self.GetMutableFrontend(),Possibilities]
                     {
                         auto& Surface{Frontend->AddSurface(std::make_unique<LSurface>(LSurfaceCreateInfo{
                             .DesiredDimensionsPx = {855, 475},

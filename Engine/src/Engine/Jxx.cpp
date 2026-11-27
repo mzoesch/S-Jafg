@@ -765,15 +765,12 @@ void Jafg::LClassOuter::RegisterToEngine()
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this]
+        Tasks::Master.Task([this]
         {
             check(Detail::GMutableEngine)
             Detail::GMutableEngine->RegisterClassOuter(this);
-            return;
         });
     }
-
-    return;
 }
 
 void Jafg::LClassOuter::UnregisterFromEngine()

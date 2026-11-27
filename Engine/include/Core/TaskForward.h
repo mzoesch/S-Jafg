@@ -4,14 +4,14 @@
 
 #include "Minimal.afx"
 
-namespace Jafg
+namespace Tasks
 {
 
 typedef u8 LTaskExit;
-namespace ETaskExit
+namespace EExit
 {
 
-enum Type : LTaskExit
+enum Type: LTaskExit
 {
     //# Ok. Nothing to do.
     Success             = 0,
@@ -54,20 +54,26 @@ enum Type : LTaskExit
 
 } /* ~Namespace TaskExit */
 
-inline LString LexToString(const ETaskExit::Type Exit)
+NODISCARD inline LString LexToString(EExit::Type Exit)
 {
-    if (Exit == ETaskExit::Success) { return "Success"; }
-    if (Exit == ETaskExit::Illformed) { return "Illformed"; }
-    if (Exit == ETaskExit::TransientFailure) { return "TransientFailure"; }
-    if (Exit  > ETaskExit::TransientFailure && Exit < ETaskExit::SanitizedFailure) { return "CustomTransientFailure"; }
-    if (Exit == ETaskExit::SanitizedFailure) { return "SanitizedFailure"; }
-    if (Exit  > ETaskExit::SanitizedFailure && Exit < ETaskExit::Failure) { return "CustomSanitizedFailure"; }
-    if (Exit == ETaskExit::Failure) { return "Failure"; }
-    if (Exit  > ETaskExit::Failure) { return "CustomFailure"; }
+    if (Exit == EExit::Success) { return "Success"; }
+    if (Exit == EExit::Illformed) { return "Illformed"; }
+    if (Exit == EExit::TransientFailure) { return "TransientFailure"; }
+    if (Exit  > EExit::TransientFailure && Exit < EExit::SanitizedFailure) { return "CustomTransientFailure"; }
+    if (Exit == EExit::SanitizedFailure) { return "SanitizedFailure"; }
+    if (Exit  > EExit::SanitizedFailure && Exit < EExit::Failure) { return "CustomSanitizedFailure"; }
+    if (Exit == EExit::Failure) { return "Failure"; }
+    if (Exit  > EExit::Failure) { return "CustomFailure"; }
 
     checkNoEntry()
-
     return "Unknown";
 }
 
-} /* ~Namespace Jafg */
+namespace Detail
+{
+
+struct LRunnableLauncher;
+
+} /* ~Namespace Detail */
+
+} /* ~Namespace Tasks */

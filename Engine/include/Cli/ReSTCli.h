@@ -132,7 +132,7 @@ ENGINE_API extern LProgramParameter ReST_Port;
 
 } /* ~Namespace Params */
 
-class ENGINE_API LReStCli final : public LRunnable
+class ENGINE_API LReStCli final: public LRunnable
 {
 public:
 
@@ -140,9 +140,8 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LReStCli)
     ~LReStCli() noexcept override = default;
 
-    virtual ETaskExit::Type Initialize() override;
-    virtual ETaskExit::Type Run() override;
-
+    virtual Tasks::EExit::Type Initialize() override;
+    virtual Tasks::EExit::Type Run(std::stop_token const& Stoken) override;
     virtual void Exit() override;
 
     LReStCli& Get(std::string&& Pattern, ReST::LCallback&& Callback) noexcept;
@@ -152,7 +151,7 @@ public:
 
 protected:
 
-    virtual void OnStop(const ERunnableStopReason::Type InType) override;
+    virtual void OnStop(ERunnableStopReason Reason) override;
 
     struct LReSTPattern
     {

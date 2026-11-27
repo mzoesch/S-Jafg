@@ -105,9 +105,9 @@ Jafg::LReStCli::LReStCli() noexcept : LRunnable("ReSTCli")
     return;
 }
 
-Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
+Tasks::EExit::Type Jafg::LReStCli::Initialize()
 {
-    if (ETaskExit::Type SuperRet{LRunnable::Initialize()}; SuperRet != ETaskExit::Success)
+    if (Tasks::EExit::Type SuperRet{LRunnable::Initialize()}; SuperRet != Tasks::EExit::Success)
     {
         return SuperRet;
     }
@@ -214,17 +214,15 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
         return;
     });
 
-    return ETaskExit::Success;
+    return Tasks::EExit::Success;
 }
 
-Jafg::ETaskExit::Type Jafg::LReStCli::Run()
+Tasks::EExit::Type Jafg::LReStCli::Run(std::stop_token const& Stoken)
 {
-    check(Tasks::IsOnReSTCliThread())
-
     if (::Server.get() == nullptr)
     {
-        LOG_WARNING(LogReST, "Started ReSTCli thread without its server being initialized.")
-        return ETaskExit::Success;
+        LOG_ERROR(LogReST, "Started ReSTCli thread without its server being initialized.")
+        return Tasks::EExit::SanitizedFailure;
     }
     check(::Server->is_running() == false)
 
@@ -267,15 +265,13 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Run()
 
     ::Server->listen(Host, 8080);
 
-    check( ::Server->is_running() == false )
+    check(!::Server->is_running())
     LOG_VERBOSE(LogReST, "ReSTCli stopped.")
-    return ETaskExit::Success;
+    return Tasks::EExit::Success;
 }
 
 void Jafg::LReStCli::Exit()
 {
-    check(Tasks::IsOnReSTCliThread())
-
     LRunnable::Exit();
 
     if (::Server.get())
@@ -314,15 +310,14 @@ bool Jafg::LReStCli::IsServerRunning() const noexcept
     return ::Server.get() && ::Server->is_running();
 }
 
-void Jafg::LReStCli::OnStop(const ERunnableStopReason::Type InType)
+void Jafg::LReStCli::OnStop(ERunnableStopReason Reason)
 {
     LOG_VERBOSE(LogReST, "Stopping ReSTCli.")
-    LRunnable::OnStop(InType);
+    LRunnable::OnStop(Reason);
     if (::Server.get() && ::Server->is_running())
     {
         ::Server->stop();
     }
-    return;
 }
 
 void Jafg::LReStCli::RegisterPattern(TArray<LReSTPattern>::iterator It)

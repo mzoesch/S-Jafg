@@ -38,21 +38,21 @@ constexpr LStringView SlangProfile{ "spirv_1_5" };
 
 TArray<Jafg::LVertexInputProvider>& GetStaticVertexInputProviders() noexcept
 {
-    check(Jafg::Tasks::IsOnMasterThread())
+    check(Tasks::IsOnMasterThread())
     static TArray<Jafg::LVertexInputProvider> Providers;
     return Providers;
 }
 
 TArray<Jafg::LPushConstantProvider>& GetStaticPushConstantProviders() noexcept
 {
-    check(Jafg::Tasks::IsOnMasterThread())
+    check(Tasks::IsOnMasterThread())
     static TArray<Jafg::LPushConstantProvider> Providers;
     return Providers;
 }
 
 TArray<Jafg::LBufferObjectProvider>& GetStaticBufferObjectProviders() noexcept
 {
-    check(Jafg::Tasks::IsOnMasterThread())
+    check(Tasks::IsOnMasterThread())
     static TArray<Jafg::LBufferObjectProvider> Providers;
     return Providers;
 }

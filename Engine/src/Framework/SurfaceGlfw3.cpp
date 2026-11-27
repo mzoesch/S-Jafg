@@ -249,7 +249,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceCreateInfo const& Info) : Super{Info}
 
     if (Info.bFullscreen)
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]{ this->SetFullscreen(true); });
+        Tasks::Master.Task([this]{ this->SetFullscreen(true); });
     }
 
     if (this->GetFrontend().GetCollection()->GetClass().HasClass())
@@ -309,10 +309,7 @@ void Jafg::LSurfaceGlfw3::PollPlatformEvents()
         }
         else
         {
-            Tasks::Make(ENamedThreads::Master, ETaskTime::Late, [this]
-            {
-                this->GetMutableFrontend().RemoveSurface(*this);
-            });
+            Tasks::Master.Task([this]{ this->GetMutableFrontend().RemoveSurface(*this); });
         }
     }
 }

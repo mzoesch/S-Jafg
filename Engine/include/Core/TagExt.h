@@ -17,7 +17,7 @@ struct LMasterThreadTagRegistry: TTagRegistry<TTag, TAllocator>
 
     FORCEINLINE typename Super::TagType RegisterOrGet(auto&& InRepr) noexcept requires std::is_constructible_v<LStringView, decltype(InRepr)>
     {
-        check(!Tasks::HasMasterThread() || Tasks::IsOnMasterThread())
+        check(Tasks::IsOnMasterThread())
         return Super::RegisterOrGet(std::forward<decltype(InRepr)>(InRepr));
     }
     template<std::size_t N>

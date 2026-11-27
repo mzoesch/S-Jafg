@@ -4,19 +4,15 @@
 #include "Core/App.h"
 #include "Core/TaskUtility.h"
 
-Jafg::ETaskExit::Type Jafg::LEngineRunnable::Run()
+Tasks::EExit::Type Jafg::LEngineRunnable::Run(std::stop_token const& Stoken)
 {
-    STAT_FUNCTION()
+    STAT_CUSTOM_ZONE_FMT("Run::{}", this->GetHumanReadableName())
 
-    while (!this->IsStopped())
-    {
-        if (Tasks::TryRunTasks(ENamedThreads::WorkerThread, ETaskTime::Whenever, 1) == 0)
-        {
-            App::SleepNoStats(0.2);
-        }
+    check(!Tasks::IsOnWorkerThread())
 
-        continue;
-    }
+    Tasks::Detail::SetIsWorkerThread(true);
+    Tasks::Worker.ConsumeAndWaitUntil(Stoken);
+    Tasks::Detail::SetIsWorkerThread(false);
 
-    return ETaskExit::Success;
+    return Tasks::EExit::Success;
 }

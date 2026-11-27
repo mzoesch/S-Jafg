@@ -78,6 +78,7 @@ ENGINE_API extern LProgramParameter AlwaysReportCrash;
 ENGINE_API extern LProgramParameter DumpStack;
 ENGINE_API extern LProgramParameter WaitForProfiler;
 ENGINE_API extern LProgramParameter PauseBeforeExit;
+ENGINE_API extern LProgramParameter Workers;
 ENGINE_API extern LProgramParameter SkipTrivialTests;
 ENGINE_API extern LProgramParameter ContentDir;
 ENGINE_API extern LProgramParameter TempDir;
