@@ -21,12 +21,12 @@ Models/Editor/GizmoTranslateZ.glb
 Models/Editor/GizmoTranslateZ-var.glb
 Textures/Editor/DirectionalLight.png
 Textures/Editor/DirectionalLight.xcf
-Textures/Editor/GroundGrid_8M.view.json
 Textures/Editor/GroundGrid_8M.pbr.json
 Textures/Editor/GroundGrid_8M.png
-Textures/Editor/ObjectGrid_1M.view.json
-Textures/Editor/ObjectGrid_1M.png
+Textures/Editor/GroundGrid_8M.view.json
 Textures/Editor/ObjectGrid_1M.pbr.json
+Textures/Editor/ObjectGrid_1M.png
+Textures/Editor/ObjectGrid_1M.view.json
 Textures/Editor/PointLight.png
 Textures/Editor/RectLight.png
 Textures/Editor/RectLight.xcf
