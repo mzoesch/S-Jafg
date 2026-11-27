@@ -25,24 +25,10 @@
 namespace
 {
 
-constexpr std::array PbrTextureTypes{
-    Jafg::LPbrMaterialTemplate::ETextureType::Albedo,
-    Jafg::LPbrMaterialTemplate::ETextureType::Normal,
-    Jafg::LPbrMaterialTemplate::ETextureType::Arm,
-    Jafg::LPbrMaterialTemplate::ETextureType::Emissive,
-    };
-
 //# The bindless index of the texture of the type.
-NODISCARD constexpr auto& GetPbrTextureSlot(auto& Data, Jafg::LPbrMaterialTemplate::ETextureType Type) noexcept
+NODISCARD constexpr decltype(auto) GetPbrTextureSlot(auto& Data, Jafg::LPbrMaterialTemplate::ETextureType Type) noexcept
 {
-    switch (Type)
-    {
-    case Jafg::LPbrMaterialTemplate::ETextureType::Albedo: return Data.Albedo;
-    case Jafg::LPbrMaterialTemplate::ETextureType::Normal: return Data.Normal;
-    case Jafg::LPbrMaterialTemplate::ETextureType::Arm: return Data.Arm;
-    case Jafg::LPbrMaterialTemplate::ETextureType::Emissive: return Data.Emissive;
-    }
-    std::unreachable();
+    return Data.GetTexture(Type);
 }
 
 struct UnresolvedMaterial final
@@ -361,7 +347,6 @@ namespace Jafg
 template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0>
 static void from_json(BasicJsonType const& j, LPbrMaterialTemplate& Material)
 {
-    const LPbrMaterialTemplate nlohmann_json_default_obj{};
 
     if (j.contains("material"))
     {
@@ -376,60 +361,43 @@ static void from_json(BasicJsonType const& j, LPbrMaterialTemplate& Material)
         }
     }
 
-    if (j.contains("albedo_factor"))
-    {
-        LVec4F AlbedoFactor;
-        j.at("albedo_factor").get_to(AlbedoFactor);
-        Material.AlbedoFactor = LLinearColor{AlbedoFactor.x, AlbedoFactor.y, AlbedoFactor.z, AlbedoFactor.w};
-    }
-    if (j.contains("occlusion_factor"))
-    {
-        j.at("occlusion_factor").get_to(Material.OcclusionFactor);
-    }
-    if (j.contains("roughness_factor"))
-    {
-        j.at("roughness_factor").get_to(Material.RoughnessFactor);
-    }
-    if (j.contains("metallic_factor"))
-    {
-        j.at("metallic_factor").get_to(Material.MetallicFactor);
-    }
-    if (j.contains("emissive_factor"))
-    {
-        j.at("emissive_factor").get_to(Material.EmissiveFactor);
-    }
-
-    if (j.contains("alpha_cutoff"))
-    {
-        j.at("alpha_cutoff").get_to(Material.AlphaCutoff);
-    }
-    if (j.contains("normal_scale"))
-    {
-        j.at("normal_scale").get_to(Material.NormalScale);
-    }
-
     if (j.contains("textures"))
     {
         j.at("textures").get_to(Material.Textures);
     }
-
     if (j.contains("sampler"))
     {
         j.at("sampler").get_to(Material.Sampler);
     }
-
     if (j.contains("flags"))
     {
         j.at("flags").get_to(Material.Flags);
     }
 
-    if (j.contains("uv_scale"))
+    /* Every parameter by its key. Values outside of the range of a parameter are clamped into it. */
+    TArray<LStringView> Known{"material", "textures", "sampler", "flags", /* Metadata. */ "author", "tags", "description",};
+    LPbrMaterialParameters::ForEachParameter(Material, [&j, &Known]<typename T>(TPbrParameter<T> const& Info, T& Field)
     {
-        j.at("uv_scale").get_to(Material.UVScale);
-    }
-    if (j.contains("uv_offset"))
+        Known.push_back(Info.Key);
+        if (!j.contains(Info.Key))
+        {
+            return;
+        }
+        j.at(Info.Key).get_to(Field);
+        if (T const Clamped{Info.Clamp(Field)}; Clamped != Field)
+        {
+            LOG_WARNING(LogMaterialSubsystem, "[{}]: Out of range. Clamped into it. {}", Info.Key, Info.DescribeValues())
+            Field = Clamped;
+        }
+    });
+
+    /* Most likely a typo or a key of an older version. Silently ignoring it would hide the mistake. */
+    for (auto const& [Key, Value]: j.items())
     {
-        j.at("uv_offset").get_to(Material.UVOffset);
+        if (!algo::contains(Known, LStringView{Key}))
+        {
+            LOG_WARNING(LogMaterialSubsystem, "[{}]: Unknown key in pbr material. Ignoring it.", Key)
+        }
     }
 }
 
@@ -623,13 +591,7 @@ LPath const& Jafg::LPbrMaterialTemplate::GetTexture(ETextureType Type, ETextureQ
         {
             if (!!(CandidateQuality & Q))
             {
-                switch (Type)
-                {
-                case ETextureType::Albedo:   return &Bindings.Albedo;
-                case ETextureType::Normal:   return &Bindings.Normal;
-                case ETextureType::Arm:      return &Bindings.Arm;
-                case ETextureType::Emissive: return &Bindings.Emissive;
-                }
+                return &Bindings.Get(Type);
             }
         }
         return std::nullopt;
@@ -676,12 +638,9 @@ bool Jafg::LPbrMaterialTemplate::IsEmptyAtTexture(ETextureType Type) const noexc
 {
     for (auto const& Bindings: this->Textures | std::views::values)
     {
-        switch (Type)
+        if (!Bindings.Get(Type).empty())
         {
-        case ETextureType::Albedo:   if (!Bindings.Albedo.empty())   { return false; } break;
-        case ETextureType::Normal:   if (!Bindings.Normal.empty())   { return false; } break;
-        case ETextureType::Arm:      if (!Bindings.Arm.empty())      { return false; } break;
-        case ETextureType::Emissive: if (!Bindings.Emissive.empty()) { return false; } break;
+            return false;
         }
     }
 
@@ -922,7 +881,7 @@ Jafg::LMaterialRef Jafg::JMaterialSubsystem::GetMaterial(LPluginInfo Namespace, 
         {
             return vk::Format::eR8Unorm;
         }
-        if (Identifier == "Shaders/Jafg.Mesh.Depth")
+        if (Identifier == "Shaders/Jafg.Mesh.Depth" || Identifier == "Shaders/Jafg.Mesh.BackDepth")
         {
             return LRenderTarget::SceneDepthFormat;
         }
@@ -1339,12 +1298,7 @@ NODISCARD Jafg::JTextureSubsystem::LFileRequest MakePbrTextureRequest(Jafg::LPlu
     //      - albedo: VK_FORMAT_BC7_SRGB_BLOCK
     //      - normal: VK_FORMAT_BC5_UNORM_BLOCK
     //      - metallic-roughness: VK_FORMAT_BC7_UNORM_BLOCK (better quality) or VK_FORMAT_BC1_RGB_UNORM_BLOCK (lower memory usage)
-    vk::Format const Format{
-           Type == LPbrMaterialTemplate::ETextureType::Albedo
-        || Type == LPbrMaterialTemplate::ETextureType::Emissive
-        ? vk::Format::eR8G8B8A8Srgb
-        : vk::Format::eR8G8B8A8Unorm
-        };
+    vk::Format const Format{LPbrMaterialTemplate::IsSrgbTexture(Type) ? vk::Format::eR8G8B8A8Srgb : vk::Format::eR8G8B8A8Unorm};
     return {
         .Namespace = Namespace,
         .Path = std::move(Path),
@@ -1388,6 +1342,10 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
                 check(Pbr->Material.first.empty())
                 Result = this->PbrInstances.emplace_back(std::make_shared<LPbrMaterialInstance>(
                     this->FindOrAllocateSharedInstance(JafgInfo, "Materials/Pbr"), *Pbr));
+                /* Only the default material has variants. Every other one is drawn as it is. */
+                Result->DoubleSided = this->FindOrAllocateSharedInstance(JafgInfo, "Materials/Pbr.DoubleSided");
+                Result->Translucent = this->FindOrAllocateSharedInstance(JafgInfo, "Materials/Pbr.Translucent");
+                Result->TranslucentBackFaces = this->FindOrAllocateSharedInstance(JafgInfo, "Materials/Pbr.Translucent.BackFaces");
             }
             else if (Pbr->Material.first.empty())
             {
@@ -1402,19 +1360,12 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
             }
             check(!Result->IsBindless())
 
-            Result->Data.AlbedoFactor = Pbr->AlbedoFactor.ToDeviceReadyVector4();
-            Result->Data.OcclusionFactor = Pbr->OcclusionFactor;
-            Result->Data.RoughnessFactor = Pbr->RoughnessFactor;
-            Result->Data.MetallicFactor = Pbr->MetallicFactor;
-            Result->Data.EmissiveFactor = Pbr->EmissiveFactor;
-
-            Result->Data.AlphaCutoff = Pbr->AlphaCutoff;
-            Result->Data.NormalScale = Pbr->NormalScale;
+            Pbr->ToDevice(Result->Data);
 
             /* All textures of the material are requested at once, so that they are decoded in parallel. */
             TArray<LPbrMaterialTemplate::ETextureType> RequestedTypes;
             TArray<JTextureSubsystem::LFileRequest> Requests;
-            for (auto const Type: PbrTextureTypes)
+            for (auto const Type: Jafg::LPbrMaterialTemplate::TextureTypes)
             {
                 GetPbrTextureSlot(Result->Data, Type) = rhi::invalid_resource_index;
                 if (LString Texture{this->ResolvePbrTemplateTexture(Namespace, *Pbr, Type)}; !Texture.empty())
@@ -1431,12 +1382,6 @@ Jafg::LPbrMaterialInstanceRef Jafg::JMaterialSubsystem::GetPbrInstance(LPluginIn
                 GetPbrTextureSlot(Result->Data, RequestedTypes[I]) = Textures[I]->GetBindlessIndex();
                 Result->LoadedTextures.emplace_back(std::move(Textures[I]));
             }
-
-            Result->Data.Sampler = Pbr->Sampler;
-            Result->Data.Flags = Pbr->Flags;
-
-            Result->Data.UVScale = Pbr->UVScale;
-            Result->Data.UVOffset = Pbr->UVOffset;
 
             this->AddInstanceToGlobalBindlessArray(Result.get());
             return Result;
@@ -1466,8 +1411,8 @@ LString Jafg::JMaterialSubsystem::ResolvePbrTemplateTexture(LPluginInfo Namespac
     {
         return Texture.generic_string();
     }
-    /* Without any albedo, a texture next to the template with its name is used. */
-    if (Type == LPbrMaterialTemplate::ETextureType::Albedo && Template.IsEmptyAtTexture(Type))
+    /* Without any base color, a texture next to the template with its name is used. */
+    if (Type == LPbrMaterialTemplate::ETextureType::BaseColor && Template.IsEmptyAtTexture(Type))
     {
         if (LString Fallback{algo::sprintf("{}.png", Template.Identifier)}; finder::is_regular_file(*Namespace / Fallback))
         {
@@ -1518,7 +1463,7 @@ void Jafg::JMaterialSubsystem::SetPbrTexture(LPbrMaterialInstance& Instance, LPb
      * The instance owns what it binds. The previous texture stays alive in the texture cache, so frames that are
      * still in flight can keep sampling it.
      */
-    if (Previous && !algo::any_of(PbrTextureTypes, [this, &Instance, Previous](auto const Other) { return this->FindPbrTexture(Instance, Other) == Previous; }))
+    if (Previous && !algo::any_of(Jafg::LPbrMaterialTemplate::TextureTypes, [this, &Instance, Previous](auto const Other) { return this->FindPbrTexture(Instance, Other) == Previous; }))
     {
         std::erase_if(Instance.LoadedTextures, [Previous](LTexture2Ref const& Owned) { return Owned.get() == Previous; });
     }
@@ -1672,7 +1617,7 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPluginInfo Namespace)
                 LOG_FATAL(LogMaterialSubsystem, "Unsupported texture quality [{}].", Q)
             }};
 
-            std::array<std::size_t, 4> Qualities{ 8,4,2,1 };
+            std::array<std::size_t, 4> Qualities{ 8, 4, 2, 1 };
             for (std::size_t Quality: Qualities)
             {
                 //# Relative to the content dir. Empty if there is no such file.
@@ -1681,19 +1626,34 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPluginInfo Namespace)
                     LPath const Absolute{finder::weakly_canonical(Parent/File)};
                     return is_regular_file(Absolute) ? finder::relative(Absolute, Path) : LPath{};
                 }};
-                LPath TargetAlbedo{Target(algo::sprintf("Albedo_{}k.png", Quality))};
-                LPath TargetNormal{Target(algo::sprintf("Normal_{}k.png", Quality))};
-                LPath TargetArm{Target(algo::sprintf("Arm_{}k.png", Quality))};
-                LPath TargetEmissive{Target(algo::sprintf("Emissive_{}k.png", Quality))};
-
-                if (!(TargetAlbedo.empty() && TargetNormal.empty() && TargetArm.empty() && TargetEmissive.empty()))
+                /* E.g., "Albedo_2k.png" for the base color in the standard quality. */
+                auto FilePrefix{[](LPbrMaterialTemplate::ETextureType Type) -> LStringView
                 {
-                    Result.Textures.emplace_back(TextureSizeToQuality(Quality), LPbrMaterialTemplate::TextureBindings{
-                        .Albedo = std::move(TargetAlbedo),
-                        .Normal = std::move(TargetNormal),
-                        .Arm = std::move(TargetArm),
-                        .Emissive = std::move(TargetEmissive),
-                        });
+                    switch (Type)
+                    {
+                    case LPbrMaterialTemplate::ETextureType::BaseColor:  return "Albedo";
+                    case LPbrMaterialTemplate::ETextureType::Normal:     return "Normal";
+                    case LPbrMaterialTemplate::ETextureType::Arm:        return "Arm";
+                    case LPbrMaterialTemplate::ETextureType::Emission:   return "Emissive";
+                    case LPbrMaterialTemplate::ETextureType::Specular:   return "Specular";
+                    case LPbrMaterialTemplate::ETextureType::Anisotropy: return "Anisotropy";
+                    case LPbrMaterialTemplate::ETextureType::ThinFilm:   return "ThinFilm";
+                    case LPbrMaterialTemplate::ETextureType::Subsurface: return "Subsurface";
+                    case LPbrMaterialTemplate::ETextureType::CoatNormal: return "CoatNormal";
+                    }
+                    std::unreachable();
+                }};
+
+                LPbrMaterialTemplate::TextureBindings Bindings;
+                bool bAny{};
+                for (auto const Type: LPbrMaterialTemplate::TextureTypes)
+                {
+                    Bindings.Get(Type) = Target(algo::sprintf("{}_{}k.png", FilePrefix(Type), Quality));
+                    bAny = bAny || !Bindings.Get(Type).empty();
+                }
+                if (bAny)
+                {
+                    Result.Textures.emplace_back(TextureSizeToQuality(Quality), std::move(Bindings));
                 }
             }
         }
@@ -1704,15 +1664,26 @@ void Jafg::JMaterialSubsystem::RetrieveMaterialsFrom(LPluginInfo Namespace)
             {
                 if (!Texture.native().empty())
                 {
-                    Texture = finder::relative(finder::weakly_canonical(Parent/Texture), Path);
+                    check(!Texture.is_absolute())
+                    if (Texture.native().starts_with(LITERAL_TEXT("@")))
+                    {
+                        /* Path is relative to the containing content dir file. */
+                        check(finder::descendant_of(Path/Texture.native().substr(1), Path))
+                        Texture = finder::weakly_canonical(Texture.native().substr(1uz));
+                    }
+                    else
+                    {
+                        /* Path is relative to the material file. */
+                        Texture = finder::relative(finder::weakly_canonical(Parent/Texture), Path);
+                    }
                 }
             }};
             for (auto& TextureQuality: Result.Textures | std::views::values)
             {
-                ToContent(TextureQuality.Albedo);
-                ToContent(TextureQuality.Normal);
-                ToContent(TextureQuality.Arm);
-                ToContent(TextureQuality.Emissive);
+                for (auto const Type: LPbrMaterialTemplate::TextureTypes)
+                {
+                    ToContent(TextureQuality.Get(Type));
+                }
             }
         }
 

@@ -293,6 +293,11 @@ void from_json(json const& j, reflected_shader::entry_point& entry)
             }
             else if (parameter_type_kind == "scalar"sv)
             {
+                /* System values next to the varyings of a fragment shader, e.g. SV_IsFrontFace. Only vertex inputs matter. */
+                if (entry.Stage == vk::ShaderStageFlagBits::eFragment)
+                {
+                    continue;
+                }
                 if (!std::holds_alternative<reflected_shader::entry_point::generated_type>(entry.Parameters))
                 {
                     LOG_FATAL(LogSerialization, "Entry point parameter type kind [{}] is not supported with mixed custom types."

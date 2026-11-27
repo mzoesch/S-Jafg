@@ -15,8 +15,9 @@ class WInput_LargeList;
 class JMaterialSubsystem;
 
 //#
-//# Inspects a pbr material: Its factors, textures, sampling and flags. Everything is editable and visible from the next
-//# frame on to everything that is drawn with the material. Pbr instances are shared per material (@see
+//# Inspects a pbr material: Its parameters, textures, sampling and flags. Everything is editable and visible from the
+//# next frame on to everything that is drawn with the material. Sliders span the typical values (the norm) of a
+//# parameter, typed values may use its whole range. Pbr instances are shared per material (@see
 //# JMaterialSubsystem::GetPbrInstance), so this edits the material for all of its users. Every field can be reset to
 //# the value of the template of the material. Changes are not written back to the material file.
 //#
@@ -44,31 +45,7 @@ public:
     NODISCARD FORCEINLINE constexpr LPbrMaterialInstanceRef const& GetInspected() const noexcept { return this->Instance; }
 
     //# What the rows edit. Everything but the textures, which are bound right away.
-    struct LEditState final
-    {
-        LLinearColor AlbedoFactor{ LinearColors::White };
-        f32 OcclusionFactor{};
-        f32 RoughnessFactor{};
-        f32 MetallicFactor{};
-        LLinearColor3 EmissiveFactor{ 0.0f };
-
-        f32 AlphaCutoff{};
-        f32 NormalScale{};
-
-        UBO::Bindless::Sampler Sampler{ UBO::Bindless::Sampler::LinearRepeat };
-        LVec2F UVScale{ maths::one_vector<LVec2F> };
-        LVec2F UVOffset{ maths::zero_vector<LVec2F> };
-
-        bool bAlphaMask{};
-        bool bDoubleSided{};
-        bool bDirectXNormals{};
-
-        NODISCARD bool operator==(LEditState const&) const = default;
-
-        NODISCARD static LEditState FromData(SSBO::BindlessPbrMaterial const& Data) noexcept;
-        NODISCARD static LEditState FromTemplate(LPbrMaterialTemplate const& Template) noexcept;
-        void ApplyTo(SSBO::BindlessPbrMaterial& Data) const noexcept;
-    };
+    typedef LPbrMaterialParameters LEditState;
 
 private:
 

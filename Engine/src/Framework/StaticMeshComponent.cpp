@@ -60,14 +60,21 @@ void Jafg::AStaticMeshComponent::Render(LActorRenderInfo const& Info) const
     //#       E.g. Render(LActorRenderInfo const&, LWorldTrans* World); Then check
     //#             if (World) World apply with local trans else use local trans.
     auto& Preferred{GetPreferredMaterialInstance(Info, this->MaterialInstance.get())};
+    LWorldTrans const Transform{this->GetWorldTransformSlow()};
     if (this->PbrMaterialInstance.get() && this->MaterialInstance.get() == &Preferred)
     {
         check(this->PbrMaterialInstance->Instance.get() == this->MaterialInstance.get())
-        this->Mesh->Render(Info, this->GetWorldTransformSlow(), &*this->PbrMaterialInstance);
+        DrawWithPbrMaterial(Info, this->PbrMaterialInstance, GetWorldCenter(this->Mesh->GetAabb(), Transform)
+            , [Mesh=this->Mesh, Transform, Pbr=this->PbrMaterialInstance.get()](LActorRenderInfo const& Info, LMaterialInstance const& Instance)
+            {
+                Mesh->Render(Info, Transform, Instance, Pbr->GetBindlessIndex());
+            });
     }
     else
     {
-        this->Mesh->Render(Info, this->GetWorldTransformSlow(), &Preferred);
+        /* The preferred material (e.g., of the shadows) might still want to know the pbr material. */
+        this->Mesh->Render(Info, Transform, Preferred
+            , this->PbrMaterialInstance ? this->PbrMaterialInstance->GetBindlessIndex() : rhi::invalid_resource_index);
     }
 
     /* E.g., meshes of a mesh scene that are attached to this mesh. */

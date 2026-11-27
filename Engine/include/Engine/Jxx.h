@@ -462,6 +462,9 @@ struct TEditorNodeCreateInfo final
     //# Optional bounds for numeric values (of every axis). Only used by numeric editor nodes. @see LInputRange
     std::optional<f64> Min;
     std::optional<f64> Max;
+    //# Optional soft bounds (the typical values) for numeric values. Only used by numeric editor nodes. @see LInputRange
+    std::optional<f64> SoftMin;
+    std::optional<f64> SoftMax;
 };
 
 template<>

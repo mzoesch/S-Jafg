@@ -10,6 +10,24 @@ namespace Jafg
 {
 
 class APersonaController;
+struct LActorRenderInfo;
+
+//#
+//# A draw that is translucent: It is drawn after everything opaque, from the farthest to the closest, and might see
+//# a copy of what is opaque behind it. @see LActorRenderInfo::TranslucentDraws
+//#
+struct LTranslucentDraw final
+{
+    //# Squared distance of the drawable from the eye.
+    f64 DistanceSqr{};
+    //# Whether the draw needs the thickness of the drawable (from its back faces on screen).
+    bool bThickness{};
+    //#
+    //# Draws with the materials of the drawable. If an override is given, it draws only (the back faces of the
+    //# drawable) with it instead, e.g. for the thickness.
+    //#
+    TFunction2<void(LActorRenderInfo const& Info, LMaterialInstance const* Override)> Draw;
+};
 
 struct LActorRenderInfo: LRenderInfo
 {
@@ -42,6 +60,14 @@ struct LActorRenderInfo: LRenderInfo
     //# Delegates called after all employed renderables have been rendered.
     //# You may even add delegates here while already being in a post render delegate.
     mutable TArray<TFunction2<void(LActorRenderInfo const& Info)>> PostRenderDelegates;
+
+    //#
+    //# Whether translucent drawables should be queued into #TranslucentDraws instead of being drawn right away. Not
+    //# for draws with a preferred material (e.g., shadows), which draw everything the same way.
+    //#
+    bool bDeferTranslucent{};
+    //# Drawn after everything opaque (and the skybox), from the farthest to the closest. @see LTranslucentDraw
+    mutable TArray<LTranslucentDraw> TranslucentDraws;
 };
 
 } /* ~Namespace Jafg */

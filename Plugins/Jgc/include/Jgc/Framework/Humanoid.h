@@ -20,7 +20,7 @@ struct LHumanoidBodyInfo final
     LStringView Mesh{ "Rigged/Human/FacelessMale.glb" };
     //# The files with the clips. @see Documentation/Animation.md
     TArray<LStringView> Animations{ "Rigged/Human/FacelessMale_Locomotion.glb" };
-    LStringView PbrMaterial{ "Materials/Marble016" };
+    LStringView PbrMaterial{ "Materials/Skin" };
     //# The joints that are drawn in first person (prefixes of their names). Rigify names by default.
     TArray<LString> FirstPersonJoints{ "DEF-upper_arm", "DEF-forearm", "DEF-hand", "DEF-palm", "DEF-thumb", "DEF-f_" };
     //#

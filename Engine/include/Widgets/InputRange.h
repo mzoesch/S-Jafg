@@ -12,13 +12,51 @@ namespace Jafg
 //# Values that are set or entered afterward are clamped into them. If both are set, every axis shows a bar of where
 //# its value is between them (@see WEditableTextButton::FillFraction).
 //#
+//# The optional soft bounds are the typical values inside of them (e.g., the norm of a parameter). If both are set,
+//# the bar spans them instead and dragging stays inside of them, scaled to their span. Entered values may still go
+//# up to the (hard) bounds.
+//#
 struct LInputRange final
 {
     std::optional<f64> Min;
     std::optional<f64> Max;
+    std::optional<f64> SoftMin;
+    std::optional<f64> SoftMax;
 
     //# Whether there are both bounds that span a range.
     NODISCARD constexpr bool IsBounded() const noexcept { return this->Min && this->Max && *this->Max > *this->Min; }
+    //# Whether there are both soft bounds that span a range.
+    NODISCARD constexpr bool IsSoftBounded() const noexcept { return this->SoftMin && this->SoftMax && *this->SoftMax > *this->SoftMin; }
+
+    //# How much a value changes per pixel of dragging: The acceleration, scaled by the soft span if soft bounded.
+    NODISCARD constexpr f64 GetDragScale(f64 Acceleration) const noexcept
+    {
+        return this->IsSoftBounded() ? Acceleration * (*this->SoftMax - *this->SoftMin) : Acceleration;
+    }
+
+    //#
+    //# @return The value that was dragged from Start, clamped into the bounds. Dragging stays inside of the soft
+    //#         bounds, but a value outside of them is never moved further away.
+    //#
+    template<typename T> requires std::is_arithmetic_v<T>
+    NODISCARD T ClampDragged(T Start, T Value) const noexcept
+    {
+        if (this->IsSoftBounded())
+        {
+            f64 const Lower{std::min(*this->SoftMin, static_cast<f64>(Start))};
+            f64 const Upper{std::max(*this->SoftMax, static_cast<f64>(Start))};
+            f64 const AsFloat{static_cast<f64>(Value)};
+            if (AsFloat < Lower)
+            {
+                return this->Clamp(Saturate<T>(std::is_floating_point_v<T> ? Lower : std::ceil(Lower)));
+            }
+            if (AsFloat > Upper)
+            {
+                return this->Clamp(Saturate<T>(std::is_floating_point_v<T> ? Upper : std::floor(Upper)));
+            }
+        }
+        return this->Clamp(Value);
+    }
 
     //# @return The value clamped into the bounds. Integral values are clamped to the closest integral inside of them.
     template<typename T> requires std::is_arithmetic_v<T>
@@ -51,9 +89,13 @@ struct LInputRange final
         }
     }
 
-    //# @return Where the value is between the bounds in [0,1]. Empty if not bounded.
+    //# @return Where the value is between the soft bounds, else the bounds, in [0,1]. Empty if neither are bounded.
     NODISCARD std::optional<f32> GetFraction(f64 Value) const noexcept
     {
+        if (this->IsSoftBounded())
+        {
+            return static_cast<f32>(std::clamp((Value - *this->SoftMin) / (*this->SoftMax - *this->SoftMin), 0.0, 1.0));
+        }
         if (!this->IsBounded())
         {
             return {};

@@ -4,21 +4,44 @@
 /// Shadow pass: Writes only the depth of the scene as seen from a light into its tile of the shadow atlas.
 /// The pipeline has no color attachment. @see Engine/include/Rhi/Shadow.h
 ///
+/// Respects the coverage of the pbr materials: Alpha masks cut out their shadows. Translucent surfaces (transmissive
+/// or not fully opaque) block only a part of the light, which a shadow map cannot store. They are dithered instead,
+/// which the filter of the lookup softens into a lighter shadow.
+///
 
 #include "Jafg.slang"
-#include "Jafg/MVP.slang"
-#include "Jafg/StaticMeshVertex.slang"
+#include "Jafg/MeshPbr.slang"
 
-[[vk::push_constant]] MVP mvp;
+struct FRInput
+{
+    float4 pos: SV_POSITION;
+    float2 uv: TEXCOORD0;
+};
 
 [[shader("vertex")]]
-float4 vertMain(Jafg::StaticMeshVertex input): SV_POSITION
+FRInput vertMain(Jafg::StaticMeshVertex input)
 {
-    return mul(mvp.proj, mul(mvp.view, mul(mvp.model, float4(input.pos, 1.0))));
+    FRInput result;
+    result.pos = mul(mesh.proj, mul(mesh.view, mul(mesh.model, float4(input.pos, 1.0))));
+    result.uv = input.uv;
+    return result;
 }
 
-/// Nothing to shade. Present so that the push constant range covers the same stages as on the host (see PC::MVP).
 [[shader("fragment")]]
-void fragMain()
+void fragMain(FRInput input)
 {
+    float coverage;
+    Jafg::PbrMaterial material;
+    if (!Jafg::mesh_pbr_coverage(input.uv, coverage, material))
+    {
+        discard;
+    }
+    if (mesh.material != INVALID_INDEX)
+    {
+        float blocked = Jafg::pbr_material_shadow_coverage(material, coverage);
+        if (blocked < 1.0 && Jafg::interleaved_gradient_noise(input.pos.xy) >= blocked)
+        {
+            discard;
+        }
+    }
 }

@@ -41,7 +41,7 @@ void Jgc::JOwssGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Colle
     {
         Comp.SetType(Jafg::ELight::Directional);
         Comp.SetCastShadows(true);
-        Comp.SetDirection({-0.5f, -0.5f, 1.0f});
+        Comp.SetDirection({-0.75f, -0.5f, 1.0f});
         Comp.SetTint({1.0f, 0.75f, 0.5f});
     });
 }

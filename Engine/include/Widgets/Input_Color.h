@@ -85,6 +85,9 @@ public:
     void SetMax(std::optional<f64> InMax) noexcept { this->Range.Max = InMax; this->RefreshFill(); }
     NODISCARD FORCEINLINE constexpr std::optional<f64> const& GetMin() const noexcept { return this->Range.Min; }
     NODISCARD FORCEINLINE constexpr std::optional<f64> const& GetMax() const noexcept { return this->Range.Max; }
+    //# Optional soft bounds of every channel, e.g. the typical values. @see LInputRange
+    void SetSoftMin(std::optional<f64> InMin) noexcept { this->Range.SoftMin = InMin; this->RefreshFill(); }
+    void SetSoftMax(std::optional<f64> InMax) noexcept { this->Range.SoftMax = InMax; this->RefreshFill(); }
 
     EVENT_DECL(OnVectorChanged, void(WInput_Color& Self))
     EVENT_DECL(OnDestruct, void(WInput_Color& Self))
@@ -214,6 +217,17 @@ struct LFactoryInput_Color : NODE_FACTORY_PARENT(WInput_Color)
     FORCEINLINE decltype(auto) Max(this auto&& Self, std::optional<f64> InMax) noexcept
     {
         NODE_FACTORY_SELF().Range.Max = InMax;
+        return Self;
+    }
+    //# @see LInputRange
+    FORCEINLINE decltype(auto) SoftMin(this auto&& Self, std::optional<f64> InMin) noexcept
+    {
+        NODE_FACTORY_SELF().Range.SoftMin = InMin;
+        return Self;
+    }
+    FORCEINLINE decltype(auto) SoftMax(this auto&& Self, std::optional<f64> InMax) noexcept
+    {
+        NODE_FACTORY_SELF().Range.SoftMax = InMax;
         return Self;
     }
 };

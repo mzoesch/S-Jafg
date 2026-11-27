@@ -15,6 +15,8 @@
 #include "Nodes/Viewport.h"
 #include "User/UserPreferences.h"
 #include "Widgets/EditorFactory.h"
+#include "Widgets/Input_Boolean.h"
+#include "Widgets/Input_Color.h"
 #include "Widgets/Input_LargeList.h"
 #include "Widgets/Input_Vector2.h"
 
@@ -25,6 +27,11 @@ namespace
 {
 
 typedef LPbrMaterialTemplate::ETextureType ETextureType;
+
+NODISCARD constexpr LLinearColor3 ToColor(LVec3F const& Vector) noexcept
+{
+    return LLinearColor3{Vector.x, Vector.y, Vector.z};
+}
 
 template<typename T>
 NODISCARD TEditorNodeCreateInfo<T> MakeInfo(LViewport& Viewport, LStringView Name, LStringView Tooltip, T& Field, std::type_identity_t<T> Default
@@ -43,6 +50,141 @@ NODISCARD TEditorNodeCreateInfo<T> MakeInfo(LViewport& Viewport, LStringView Nam
         .Min = Min,
         .Max = Max,
         };
+}
+
+//# E.g., "base_diffuse_roughness" to "Base Diffuse Roughness". Abbreviations are upper case ("specular_ior" to "Specular IOR").
+NODISCARD LString MakeDisplayName(LStringView Key)
+{
+    LString Result;
+    for (auto Part: Key | std::views::split('_'))
+    {
+        LString Word{Part.begin(), Part.end()};
+        if (Word == "ior" || Word == "uv")
+        {
+            std::ranges::transform(Word, Word.begin(), [](char C) { return static_cast<char>(std::toupper(C)); });
+        }
+        else if (!Word.empty())
+        {
+            Word[0] = static_cast<char>(std::toupper(Word[0]));
+        }
+        Result += (Result.empty() ? "" : " ") + Word;
+    }
+    return Result;
+}
+
+//# What the parameter does, its values and where it comes from.
+template<typename T>
+NODISCARD LString MakeTooltip(TPbrParameter<T> const& Info)
+{
+    return algo::sprintf("{}\n{}\n{} \"{}\".", Info.Description, Info.DescribeValues()
+        , Info.bOpenPbr ? "OpenPBR parameter" : "Jafg extension", Info.Key);
+}
+
+//# Infinite bounds are no bounds.
+NODISCARD std::optional<f64> MakeBound(f32 Value) noexcept
+{
+    return std::isinf(Value) ? std::nullopt : std::optional<f64>{static_cast<f64>(Value)};
+}
+
+//# A row of a parameter. The slider spans its norm, typed values its whole range.
+NODISCARD Detail::LNodeFactoryBase MakeParameterRow(LViewport& Viewport, TPbrParameter<f32> const& Info, f32& Field, f32 Default)
+{
+    LString const Name{MakeDisplayName(Info.Key)};
+    LString const Tooltip{MakeTooltip(Info)};
+    auto CreateInfo{MakeInfo(Viewport, Name, Tooltip, Field, Default, MakeBound(Info.GetMin()), MakeBound(Info.Max))};
+    CreateInfo.SoftMin = MakeBound(Info.NormMin);
+    CreateInfo.SoftMax = MakeBound(Info.NormMax);
+    return GetEditorNode<f32>(CreateInfo);
+}
+
+NODISCARD Detail::LNodeFactoryBase MakeParameterRow(LViewport& Viewport, TPbrParameter<bool> const& Info, bool& Field, bool Default)
+{
+    LString const Name{MakeDisplayName(Info.Key)};
+    LString const Tooltip{MakeTooltip(Info)};
+    return GetEditorNode<bool>(MakeInfo(Viewport, Name, Tooltip, Field, Default));
+}
+
+//# Colors (and the other color3 parameters of OpenPBR, e.g. subsurface_radius_scale).
+NODISCARD Detail::LNodeFactoryBase MakeParameterRow(LViewport& Viewport, TPbrParameter<LVec3F> const& Info, LVec3F& Field, LVec3F Default)
+{
+    EJxxFieldFlags const Flags{EJxxFieldBits::EditorEditable};
+    struct LRowState final: LEditorRowStateExt
+    {
+        WInput_Color* Input{};
+    };
+    auto SharedState{std::make_shared<LRowState>()};
+
+    return NewNode(Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(MakeTooltip(Info))
+    [
+        EditorComponentLabel(Flags, Viewport, MakeDisplayName(Info.Key), SharedState)
+        + EditorComponentContentWrapper(Flags, Viewport, SharedState)
+        [
+            NewNode(Viewport).Class<WInput_Color>(ToColor(Field)).SaveTo(&SharedState->Input)
+                .Anchor(EAnchor::HFill)
+                .Min(MakeBound(Info.GetMin()))
+                .Max(MakeBound(Info.Max))
+                .SoftMin(MakeBound(Info.NormMin))
+                .SoftMax(MakeBound(Info.NormMax))
+                .OnVectorChanged([SharedState, Default, Field=&Field](WInput_Color& Self)
+                {
+                    *Field = Self.Get<LLinearColor3>().ToDeviceReadyVector3();
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(*Field != Default);
+                })
+        ]
+        + EditorResetButton(Flags, Viewport, Field != Default, [SharedState, Default](WButton& Self)
+        {
+            check(SharedState->Input)
+            SharedState->Input->Set(ToColor(Default));
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
+}
+
+//# A row of a single bit of the flags.
+NODISCARD Detail::LNodeFactoryBase MakeFlagRow(LViewport& Viewport, LString Name, LString Tooltip, EPbrMaterialFlags& Flags, EPbrMaterialBits Bit, EPbrMaterialFlags Default)
+{
+    EJxxFieldFlags const FieldFlags{EJxxFieldBits::EditorEditable};
+    struct LRowState final: LEditorRowStateExt
+    {
+        WInput_Boolean* Input{};
+    };
+    auto SharedState{std::make_shared<LRowState>()};
+    bool const bDefault{!!(Default & Bit)};
+
+    return NewNode(Viewport).Class<WHParent>()
+        .Anchor(EAnchor::HFill)
+        .Space(1_spt)
+        .Tooltip(std::move(Tooltip))
+    [
+        EditorComponentLabel(FieldFlags, Viewport, std::move(Name), SharedState)
+        + EditorComponentContentWrapper(FieldFlags, Viewport, SharedState)
+        [
+            NewNode(Viewport).Class<WInput_Boolean>().SaveTo(&SharedState->Input)
+                .Anchor(EAnchor::HFill)
+                .Value(!!(Flags & Bit))
+                .OnValueChanged([SharedState, bDefault, Bit, Flags=&Flags](WInput_Boolean& Self)
+                {
+                    if (Self.GetValue())
+                    {
+                        *Flags |= Bit;
+                    }
+                    else
+                    {
+                        *Flags &= ~EPbrMaterialFlags{Bit};
+                    }
+                    check(SharedState->ResetButton)
+                    SharedState->ResetButton->SetEnabled(Self.GetValue() != bDefault);
+                })
+        ]
+        + EditorResetButton(FieldFlags, Viewport, !!(Flags & Bit) != bDefault, [SharedState, bDefault](WButton& Self)
+        {
+            check(SharedState->Input)
+            SharedState->Input->SetValue(bDefault);
+        }, LEditorRowState::Lambda<WButton>(SharedState)).SaveTo(&SharedState->ResetButton)
+    ];
 }
 
 //# A row that only shows a text.
@@ -274,73 +416,6 @@ NODISCARD Detail::LNodeFactoryBase MakeTextureRow(LViewport& Viewport
 
 } /* ~Namespace Jafg */
 
-Jafg::WPbrMaterialInspector::LEditState Jafg::WPbrMaterialInspector::LEditState::FromData(SSBO::BindlessPbrMaterial const& Data) noexcept
-{
-    return {
-        .AlbedoFactor = LLinearColor{Data.AlbedoFactor.x, Data.AlbedoFactor.y, Data.AlbedoFactor.z, Data.AlbedoFactor.w},
-        .OcclusionFactor = Data.OcclusionFactor,
-        .RoughnessFactor = Data.RoughnessFactor,
-        .MetallicFactor = Data.MetallicFactor,
-        .EmissiveFactor = LLinearColor3{Data.EmissiveFactor.x, Data.EmissiveFactor.y, Data.EmissiveFactor.z},
-        .AlphaCutoff = Data.AlphaCutoff,
-        .NormalScale = Data.NormalScale,
-        .Sampler = Data.Sampler,
-        .UVScale = Data.UVScale,
-        .UVOffset = Data.UVOffset,
-        .bAlphaMask = !!(Data.Flags & EPbrMaterialBits::AlphaMask),
-        .bDoubleSided = !!(Data.Flags & EPbrMaterialBits::DoubleSided),
-        .bDirectXNormals = !!(Data.Flags & EPbrMaterialBits::DirectXNormals),
-        };
-}
-
-Jafg::WPbrMaterialInspector::LEditState Jafg::WPbrMaterialInspector::LEditState::FromTemplate(LPbrMaterialTemplate const& Template) noexcept
-{
-    return {
-        .AlbedoFactor = Template.AlbedoFactor,
-        .OcclusionFactor = Template.OcclusionFactor,
-        .RoughnessFactor = Template.RoughnessFactor,
-        .MetallicFactor = Template.MetallicFactor,
-        .EmissiveFactor = LLinearColor3{Template.EmissiveFactor.x, Template.EmissiveFactor.y, Template.EmissiveFactor.z},
-        .AlphaCutoff = Template.AlphaCutoff,
-        .NormalScale = Template.NormalScale,
-        .Sampler = Template.Sampler,
-        .UVScale = Template.UVScale,
-        .UVOffset = Template.UVOffset,
-        .bAlphaMask = !!(Template.Flags & EPbrMaterialBits::AlphaMask),
-        .bDoubleSided = !!(Template.Flags & EPbrMaterialBits::DoubleSided),
-        .bDirectXNormals = !!(Template.Flags & EPbrMaterialBits::DirectXNormals),
-        };
-}
-
-void Jafg::WPbrMaterialInspector::LEditState::ApplyTo(SSBO::BindlessPbrMaterial& Data) const noexcept
-{
-    Data.AlbedoFactor = this->AlbedoFactor.ToDeviceReadyVector4();
-    Data.OcclusionFactor = this->OcclusionFactor;
-    Data.RoughnessFactor = this->RoughnessFactor;
-    Data.MetallicFactor = this->MetallicFactor;
-    Data.EmissiveFactor = this->EmissiveFactor.ToDeviceReadyVector3();
-    Data.AlphaCutoff = this->AlphaCutoff;
-    Data.NormalScale = this->NormalScale;
-    Data.Sampler = this->Sampler;
-    Data.UVScale = this->UVScale;
-    Data.UVOffset = this->UVOffset;
-
-    EPbrMaterialFlags Flags{EPbrMaterialBits::Identity};
-    if (this->bAlphaMask)
-    {
-        Flags |= EPbrMaterialBits::AlphaMask;
-    }
-    if (this->bDoubleSided)
-    {
-        Flags |= EPbrMaterialBits::DoubleSided;
-    }
-    if (this->bDirectXNormals)
-    {
-        Flags |= EPbrMaterialBits::DirectXNormals;
-    }
-    Data.Flags = Flags;
-}
-
 void Jafg::WPbrMaterialInspector::Construct()
 {
     Super::Construct();
@@ -402,9 +477,9 @@ void Jafg::WPbrMaterialInspector::Tick(f32 Dt)
     Super::Tick(Dt);
 
     /* Pushes the edits of the rows. The data is shared by everything that is drawn with the instance. */
-    if (this->Instance && this->Edit && LEditState::FromData(this->Instance->GetData()) != *this->Edit)
+    if (this->Instance && this->Edit && LEditState::FromDevice(this->Instance->GetData()) != *this->Edit)
     {
-        this->Edit->ApplyTo(this->Instance->MakeDirty());
+        this->Edit->ToDevice(this->Instance->MakeDirty());
     }
 }
 
@@ -461,10 +536,14 @@ void Jafg::WPbrMaterialInspector::Rebuild()
         }
     }
 
-    this->Edit = std::make_unique<LEditState>(LEditState::FromData(this->Instance->GetData()));
+    this->Edit = std::make_unique<LEditState>(LEditState::FromDevice(this->Instance->GetData()));
     auto& E{*this->Edit};
-    LEditState const T{LEditState::FromTemplate(Template)};
+    LEditState const& T{Template};
     auto& S{*this->Subsystem};
+
+    /* A row for the parameter of the info. The default is the value of the template. */
+    #define JAFG_PBR_ROW(Member) MakeParameterRow(Viewport, LPbrMaterialParameters::Member##Info, E.Member, T.Member)
+    #define JAFG_PBR_TEXTURE_ROW(Type, Name, Tooltip) MakeTextureRow(Viewport, S, this->Instance, Namespace, ETextureType::Type, Name, Tooltip)
 
     auto Factory{
         NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Material"})
@@ -472,39 +551,108 @@ void Jafg::WPbrMaterialInspector::Rebuild()
             MakeTextRow(Viewport, "Name", "The pbr material. Edits are visible to everything that is drawn with it, but are not saved.", Name)
             + MakeTextRow(Viewport, "Base Material", "The material that the pbr material is drawn with.", BaseMaterial)
         ]
-        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Factors"})
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Base"})
         [
-            GetEditorNode<LLinearColor>(MakeInfo(Viewport, "Albedo", "Multiplied with the albedo texture, or the base color without one.", E.AlbedoFactor, T.AlbedoFactor, 0.0, 1.0))
-            + GetEditorNode<f32>(MakeInfo(Viewport, "Occlusion", "Range [0,1] with 0 = completely occluded and 1 = lit.", E.OcclusionFactor, T.OcclusionFactor, 0.0, 1.0))
-            + GetEditorNode<f32>(MakeInfo(Viewport, "Roughness", "Range [0,1] with 0 = smooth and 1 = rough.", E.RoughnessFactor, T.RoughnessFactor, 0.0, 1.0))
-            + GetEditorNode<f32>(MakeInfo(Viewport, "Metallic", "Range [0,1] with 0 = dielectric and 1 = metallic.", E.MetallicFactor, T.MetallicFactor, 0.0, 1.0))
-            + GetEditorNode<LLinearColor3>(MakeInfo(Viewport, "Emissive", "The color of the emission. Multiplied with the emissive texture. Not bound above: Lights are physical, so emission may be brighter than 1.", E.EmissiveFactor, T.EmissiveFactor, 0.0))
+            JAFG_PBR_ROW(BaseWeight)
+            + JAFG_PBR_ROW(BaseColor)
+            + JAFG_PBR_ROW(BaseMetalness)
+            + JAFG_PBR_ROW(BaseDiffuseRoughness)
         ]
-        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Alpha & Normals"})
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Specular"})
         [
-            GetEditorNode<f32>(MakeInfo(Viewport, "Alpha Cutoff", "Discards below this alpha if alpha masked. Range [0,1].", E.AlphaCutoff, T.AlphaCutoff, 0.0, 1.0))
-            + GetEditorNode<f32>(MakeInfo(Viewport, "Normal Scale", "Strength of the normal map. 0 = no normal mapping.", E.NormalScale, T.NormalScale, 0.0))
+            JAFG_PBR_ROW(SpecularWeight)
+            + JAFG_PBR_ROW(SpecularColor)
+            + JAFG_PBR_ROW(SpecularRoughness)
+            + JAFG_PBR_ROW(SpecularRoughnessAnisotropy)
+            + JAFG_PBR_ROW(SpecularIor)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Transmission"})
+        [
+            JAFG_PBR_ROW(TransmissionWeight)
+            + JAFG_PBR_ROW(TransmissionColor)
+            + JAFG_PBR_ROW(TransmissionDepth)
+            + JAFG_PBR_ROW(TransmissionScatter)
+            + JAFG_PBR_ROW(TransmissionScatterAnisotropy)
+            + JAFG_PBR_ROW(TransmissionDispersionScale)
+            + JAFG_PBR_ROW(TransmissionDispersionAbbeNumber)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Subsurface"})
+        [
+            JAFG_PBR_ROW(SubsurfaceWeight)
+            + JAFG_PBR_ROW(SubsurfaceColor)
+            + JAFG_PBR_ROW(SubsurfaceRadius)
+            + JAFG_PBR_ROW(SubsurfaceRadiusScale)
+            + JAFG_PBR_ROW(SubsurfaceScatterAnisotropy)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Coat"})
+        [
+            JAFG_PBR_ROW(CoatWeight)
+            + JAFG_PBR_ROW(CoatColor)
+            + JAFG_PBR_ROW(CoatRoughness)
+            + JAFG_PBR_ROW(CoatRoughnessAnisotropy)
+            + JAFG_PBR_ROW(CoatIor)
+            + JAFG_PBR_ROW(CoatDarkening)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Fuzz"})
+        [
+            JAFG_PBR_ROW(FuzzWeight)
+            + JAFG_PBR_ROW(FuzzColor)
+            + JAFG_PBR_ROW(FuzzRoughness)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Emission"})
+        [
+            JAFG_PBR_ROW(EmissionLuminance)
+            + JAFG_PBR_ROW(EmissionColor)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Thin Film"})
+        [
+            JAFG_PBR_ROW(ThinFilmWeight)
+            + JAFG_PBR_ROW(ThinFilmThickness)
+            + JAFG_PBR_ROW(ThinFilmIor)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Geometry"})
+        [
+            JAFG_PBR_ROW(GeometryOpacity)
+            + JAFG_PBR_ROW(GeometryThinWalled)
+            + JAFG_PBR_ROW(NormalScale)
+            + JAFG_PBR_ROW(CoatNormalScale)
+            + JAFG_PBR_ROW(GeometryTangentRotation)
+            + JAFG_PBR_ROW(GeometryCoatTangentRotation)
+        ]
+        + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Jafg"})
+        [
+            JAFG_PBR_ROW(OcclusionFactor)
+            + JAFG_PBR_ROW(AlphaCutoff)
         ]
         + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Textures"})
         [
-            MakeTextureRow(Viewport, S, this->Instance, Namespace, ETextureType::Albedo, "Albedo Map", "The base color map.")
-            + MakeTextureRow(Viewport, S, this->Instance, Namespace, ETextureType::Normal, "Normal Map", "The normal map. OpenGl standard unless DirectX Normals is set.")
-            + MakeTextureRow(Viewport, S, this->Instance, Namespace, ETextureType::Arm, "ARM Map", "R: Ambient occlusion, G: Roughness, B: Metallic.")
-            + MakeTextureRow(Viewport, S, this->Instance, Namespace, ETextureType::Emissive, "Emissive Map", "The emissive map.")
+            JAFG_PBR_TEXTURE_ROW(BaseColor, "Base Color Map", "rgb: base_color. a: geometry_opacity (if alpha masked or blended).")
+            + JAFG_PBR_TEXTURE_ROW(Normal, "Normal Map", "geometry_normal in tangent space. OpenGl standard unless DirectX Normals is set.")
+            + JAFG_PBR_TEXTURE_ROW(Arm, "ARM Map", "r: Ambient occlusion. g: specular_roughness. b: base_metalness.")
+            + JAFG_PBR_TEXTURE_ROW(Emission, "Emission Map", "rgb: emission_color.")
+            + JAFG_PBR_TEXTURE_ROW(Specular, "Specular Map", "rgb: specular_color. a: specular_weight.")
+            + JAFG_PBR_TEXTURE_ROW(Anisotropy, "Anisotropy Map", "rg: Direction of the anisotropy in tangent space (geometry_tangent), [-1,1] mapped to [0,1]. b: specular_roughness_anisotropy.")
+            + JAFG_PBR_TEXTURE_ROW(ThinFilm, "Thin Film Map", "r: thin_film_weight. g: thin_film_thickness.")
+            + JAFG_PBR_TEXTURE_ROW(Subsurface, "Subsurface Map", "rgb: subsurface_color. a: subsurface_weight.")
+            + JAFG_PBR_TEXTURE_ROW(CoatNormal, "Coat Normal Map", "geometry_coat_normal in tangent space. Same standard as the normal map.")
         ]
         + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Sampling"})
         [
             GetEditorNode<UBO::Bindless::Sampler>(MakeInfo(Viewport, "Sampler", "How the textures are sampled.", E.Sampler, T.Sampler))
-            + MakeVec2Row(Viewport, "UV Scale", "Multiplied with the texture coordinates.", E.UVScale, T.UVScale)
-            + MakeVec2Row(Viewport, "UV Offset", "Added to the texture coordinates.", E.UVOffset, T.UVOffset)
+            + MakeVec2Row(Viewport, "UV Scale", MakeTooltip(LPbrMaterialParameters::UVScaleInfo), E.UVScale, T.UVScale)
+            + MakeVec2Row(Viewport, "UV Offset", MakeTooltip(LPbrMaterialParameters::UVOffsetInfo), E.UVOffset, T.UVOffset)
         ]
         + NewNode(Viewport).Class<WEditorCategorySeparator>(LString{"Flags"})
         [
-            GetEditorNode<bool>(MakeInfo(Viewport, "Alpha Mask", "Discard below the alpha cutoff.", E.bAlphaMask, T.bAlphaMask))
-            + GetEditorNode<bool>(MakeInfo(Viewport, "Double Sided", "Flip normals on back faces. The base material has to support it.", E.bDoubleSided, T.bDoubleSided))
-            + GetEditorNode<bool>(MakeInfo(Viewport, "DirectX Normals", "The normal map uses the DirectX standard (Y flipped).", E.bDirectXNormals, T.bDirectXNormals))
+            MakeFlagRow(Viewport, "Alpha Mask", "Discard where the coverage (geometry_opacity times the alpha of the base color map) is below the alpha cutoff.", E.Flags, EPbrMaterialBits::AlphaMask, T.Flags)
+            + MakeFlagRow(Viewport, "Alpha Blend", "Blend by the coverage (geometry_opacity times the alpha of the base color map), even if geometry_opacity is one.", E.Flags, EPbrMaterialBits::AlphaBlend, T.Flags)
+            + MakeFlagRow(Viewport, "Double Sided", "Draw both faces. Back faces are shaded with flipped normals. Implied by geometry_thin_walled.", E.Flags, EPbrMaterialBits::DoubleSided, T.Flags)
+            + MakeFlagRow(Viewport, "DirectX Normals", "The normal maps use the DirectX standard (Y flipped).", E.Flags, EPbrMaterialBits::DirectXNormals, T.Flags)
         ]
         };
+
+    #undef JAFG_PBR_TEXTURE_ROW
+    #undef JAFG_PBR_ROW
 
     TArray<TJxxUnique<WNode>> Xs;
     this->Container->AddChild(std::move(Factory).UniqueXs(&Xs));

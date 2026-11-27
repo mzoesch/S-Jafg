@@ -12,3 +12,4 @@
 #include "TestTextSearch.h"
 #include "TestInputRange.h"
 #include "TestScreenshot.h"
+#include "TestPbrMaterial.h"

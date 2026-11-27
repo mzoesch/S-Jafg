@@ -46,7 +46,7 @@ void Jafg::WInput_Color::Construct()
                             return true;
                         }
 
-                        auto Delta{(Surface.GetMouseLocation()->x - LastLocation) * 0.01};
+                        auto Delta{(Surface.GetMouseLocation()->x - LastLocation) * this->Range.GetDragScale(0.01)};
                         LastLocation = Surface.GetMouseLocation()->x;
                         if (Delta != 0.0f)
                         {
@@ -54,19 +54,22 @@ void Jafg::WInput_Color::Construct()
                             if (std::holds_alternative<LColor>(this->Vector))
                             {
                                 auto Vec{std::get<LColor>(this->Vector)};
-                                this->ProjVecL(Part, Vec) += static_cast<LColor::value_type>(Delta);
+                                auto const Start{this->ProjVec(Part, Vec)};
+                                this->ProjVecL(Part, Vec) = this->Range.ClampDragged(Start, static_cast<LColor::value_type>(Start + static_cast<LColor::value_type>(Delta)));
                                 this->Set(Vec);
                             }
                             else if (std::holds_alternative<LLinearColor>(this->Vector))
                             {
                                 auto Vec{std::get<LLinearColor>(this->Vector)};
-                                this->ProjVecL(Part, Vec) += static_cast<LLinearColor::value_type>(Delta);
+                                auto const Start{this->ProjVec(Part, Vec)};
+                                this->ProjVecL(Part, Vec) = this->Range.ClampDragged(Start, static_cast<LLinearColor::value_type>(Start + static_cast<LLinearColor::value_type>(Delta)));
                                 this->Set(Vec);
                             }
                             else if (std::holds_alternative<LLinearColor3>(this->Vector))
                             {
                                 auto Vec{std::get<LLinearColor3>(this->Vector)};
-                                this->ProjVecL(Part, Vec) += static_cast<LLinearColor3::value_type>(Delta);
+                                auto const Start{this->ProjVec(Part, Vec)};
+                                this->ProjVecL(Part, Vec) = this->Range.ClampDragged(Start, static_cast<LLinearColor3::value_type>(Start + static_cast<LLinearColor3::value_type>(Delta)));
                                 this->Set(Vec);
                             }
                             else

@@ -25,9 +25,11 @@ FRInput vertMain(Jafg::StaticMeshVertex input)
 
     result.pos = mul(world_data.proj, mul(world_data.view, world_pos));
     result.translation = world_pos.xyz;
-    result.normal = normalize(mul((float3x3)request.model, input.normal));
+    float3x3 model = (float3x3)request.model;
+    result.normal = normalize(mul(model, input.normal));
     result.uv = input.uv;
-    result.tangent = input.tangent;
+    /* Not normalized: Meshes without tangents have zero ones. Mirroring flips the handedness of the frame. */
+    result.tangent = float4(mul(model, input.tangent.xyz), determinant(model) < 0.0 ? -input.tangent.w : input.tangent.w);
 
     result.face_normal = input.normal;
     /* TODO: We may want to provide the scale as a host input. */

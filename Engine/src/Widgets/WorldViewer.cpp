@@ -144,6 +144,8 @@ void Jafg::WWorldViewer::Construct()
     check(this->AmbientOcclusionBlurMaterialInstance.get())
     this->ShadowMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Mesh.Shadow");
     check(this->ShadowMaterialInstance.get())
+    this->ThicknessMaterialInstance = MutableMaterialSubsystem.GetInstanceFromName(JafgInfo, "Materials/Mesh.BackDepth");
+    check(this->ThicknessMaterialInstance.get())
 }
 
 void Jafg::WWorldViewer::Tick(f32 Dt)
@@ -514,8 +516,10 @@ void Jafg::WWorldViewer::InitializeRenderTarget()
         .bDepthTest = *GetSingleton<JUserPreferences>().EditorPerspectiveDepthTestHint,
         .bAllowSelection = true,
         .bAmbientOcclusion = true,
+        .bTranslucency = true,
         });
     this->InitializeAmbientOcclusion();
+    this->InitializeTranslucency();
 
     if (!this->OnPreDrawHandle)
     {
@@ -583,6 +587,65 @@ void Jafg::WWorldViewer::InitializeAmbientOcclusion()
             },};
         Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
     }
+}
+
+void Jafg::WWorldViewer::InitializeTranslucency()
+{
+    check(this->RenderTarget.HasTranslucency())
+
+    auto& Frontend{this->GetViewport().GetSurface().GetMutableFrontend()};
+    auto& TextureSubsystem{*Frontend.GetSubsystemChecked<JTextureSubsystem>()};
+
+    /* The translucent draws sample the targets through the global bindless array. Our slots stay ours. */
+    auto Bind{[&](rhi::resource_index_t& Index, vk::ImageView View, LStringView What)
+    {
+        if (Index == rhi::invalid_resource_index)
+        {
+            Index = TextureSubsystem._Vk_AddTransientImageToGlobalBindlessArray(View).value_or(rhi::invalid_resource_index);
+            if (Index == rhi::invalid_resource_index)
+            {
+                LOG_WARNING(LogVulkan, "[{}]: Failed to make the {} bindless. Out of binding points. Translucent draws "
+                    "will not see it.", this->GetNameAsString(), What)
+            }
+            return;
+        }
+
+        //# Reuse our slot, as the old image view is gone.
+        vk::DescriptorImageInfo Info{
+            .imageView = View,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            };
+        std::array Writes{vk::WriteDescriptorSet{
+            .dstSet = *TextureSubsystem.Vk_GetBindlessTextureArrayDescriptorSet(),
+            .dstBinding = UBO::Bindless::ArrayBinding,
+            .dstArrayElement = Index,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampledImage,
+            .pImageInfo = &Info,
+            },};
+        Frontend.Vk_GetDevice().updateDescriptorSets(Writes, {});
+    }};
+    Bind(this->SceneColorBindlessIndex, this->RenderTarget.GetSceneColorImageView(), "scene color");
+    Bind(this->ThicknessBindlessIndex, this->RenderTarget.GetThicknessImageView(), "thickness");
+}
+
+void Jafg::WWorldViewer::PrepareTranslucency(LActorRenderInfo const& Info) const
+{
+    this->RenderTarget.InterruptRendering(Info, [this, &Info](LRenderInfo const& Between)
+    {
+        this->RenderTarget.CopySceneColor(Between);
+        /* Always, so that the thickness is never the one of the last frame. */
+        this->RenderTarget.RenderThickness(Between, [this, &Info](LRenderInfo const&)
+        {
+            for (auto& Translucent: Info.TranslucentDraws)
+            {
+                if (Translucent.bThickness)
+                {
+                    Translucent.Draw(Info, this->ThicknessMaterialInstance.get());
+                }
+            }
+        });
+    });
 }
 
 bool Jafg::WWorldViewer::ShouldDrawAmbientOcclusion() const noexcept
@@ -827,6 +890,16 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
             SharedBuffers.emplace(SSBO::BindlessPbrLight::name(), &this->PbrLightBuffers[Info.Frame]);
             SharedBuffers.emplace(SSBO::PbrShadowView::name(), &this->PbrShadowViewBuffers[Info.Frame]);
 
+            /* Wireframes are drawn as they are. */
+            LWorld::DrawInfo::LTranslucency const Translucency{
+                .SceneColorTexture = this->SceneColorBindlessIndex,
+                .SceneThicknessTexture = this->ThicknessBindlessIndex,
+                .Prepare = [this](LActorRenderInfo const& Info) { this->PrepareTranslucency(Info); },
+                };
+            bool const bTranslucency{this->PolygonMode == EPolygonMode::Fill && this->RenderTarget.HasTranslucency()
+                && this->SceneColorBindlessIndex != rhi::invalid_resource_index
+                && this->ThicknessBindlessIndex != rhi::invalid_resource_index};
+
             Ctrl.GetWorld().Draw(Info, {
                 .Eye = Eye,
                 .FrustumOverride = this->GetFrustumOverride(),
@@ -841,6 +914,7 @@ void Jafg::WWorldViewer::PreDraw(LRenderInfo const& Info)
                 .Shadows = this->bShadowsDrawn ? &this->ShadowAtlas : nullptr,
                 .AmbientOcclusionTexture = this->bAmbientOcclusionDrawn
                     ? this->AmbientOcclusionBindlessIndex : rhi::invalid_resource_index,
+                .Translucency = bTranslucency ? &Translucency : nullptr,
                 .Viewer = &Ctrl,
                 });
 

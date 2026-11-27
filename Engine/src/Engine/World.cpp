@@ -331,6 +331,8 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
 
     ActorInfo.PreferredMaterial = DrawInfo.Instance;
     ActorInfo.Viewer = DrawInfo.Viewer;
+    /* With a preferred material everything is drawn the same way. Nothing is translucent then. */
+    ActorInfo.bDeferTranslucent = !DrawInfo.Instance;
 
     {
         auto& WorldData{ActorInfo.WorldData};
@@ -359,6 +361,8 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
         WorldData.IblSpecularIntensity = this->IblSpecularIntensity;
 
         WorldData.AmbientOcclusionTexture = DrawInfo.AmbientOcclusionTexture;
+        WorldData.SceneColorTexture = DrawInfo.Translucency ? DrawInfo.Translucency->SceneColorTexture : rhi::invalid_resource_index;
+        WorldData.SceneThicknessTexture = DrawInfo.Translucency ? DrawInfo.Translucency->SceneThicknessTexture : rhi::invalid_resource_index;
 
         WorldData.Flags = DrawInfo.Preferences;
 
@@ -503,6 +507,22 @@ void Jafg::LWorld::Draw(LRenderInfo const& Info, DrawInfo DrawInfo) const
     if (this->Skybox && !!this->Skybox->GetSkyboxTexture() && !DrawInfo.Filter && !DrawInfo.ComponentFilter && !DrawInfo.Instance)
     {
         this->Skybox->RenderSkybox(ActorInfo);
+    }
+
+    //# Translucent drawables see everything opaque behind them. Blended from the farthest to the closest.
+    if (!ActorInfo.TranslucentDraws.empty())
+    {
+        STAT_ZONE("Jafg::LWorld::Draw::Translucent")
+        std::ranges::stable_sort(ActorInfo.TranslucentDraws, std::ranges::greater{}, &LTranslucentDraw::DistanceSqr);
+        if (DrawInfo.Translucency && DrawInfo.Translucency->Prepare)
+        {
+            DrawInfo.Translucency->Prepare(ActorInfo);
+        }
+        for (auto& Translucent: ActorInfo.TranslucentDraws)
+        {
+            Translucent.Draw(ActorInfo, nullptr);
+        }
+        ActorInfo.TranslucentDraws.clear();
     }
 
     while (!ActorInfo.PostRenderDelegates.empty())

@@ -1,0 +1,20 @@
+{
+    "inherits": [
+        "Materials/Base/TriangleList",
+        "Materials/Base/DepthTested",
+        "Materials/Base/SolidColorAttachment"
+    ],
+    "pipelineRasterizationState": {
+        "depthClampEnable": false,
+        "rasterizerDiscardEnable": false,
+        "polygonMode": "eFill",
+        "cullMode": "eFront",
+        "frontFace": "eCounterClockwise",
+        "depthBiasEnable": false,
+        "depthBiasConstantFactor": 0.0,
+        "depthBiasClamp": 0.0,
+        "depthBiasSlopeFactor": 0.0,
+        "lineWidth": 1.0
+    },
+    "shader": "Shaders/Jafg.Mesh.BackDepth"
+}

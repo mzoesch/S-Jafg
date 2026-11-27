@@ -41,28 +41,25 @@ void Jafg::WInput_Vector1::Construct()
                             return true;
                         }
 
-                        auto Delta{(Surface.GetMouseLocation()->x - LastLocation) * this->Acceleration};
+                        auto Delta{(Surface.GetMouseLocation()->x - LastLocation) * this->Range.GetDragScale(this->Acceleration)};
                         LastLocation = Surface.GetMouseLocation()->x;
                         if (Delta != 0.0f)
                         {
                             this->GetViewport().GetSurface().SetInputMode(EInputModeBits::HideMouseCursor);
                             if (std::holds_alternative<SignedVector>(this->Vector))
                             {
-                                auto Vec{std::get<SignedVector>(this->Vector)};
-                                Vec += static_cast<SignedVector>(Delta);
-                                this->Set(Vec);
+                                auto const Start{std::get<SignedVector>(this->Vector)};
+                                this->Set(this->Range.ClampDragged(Start, static_cast<SignedVector>(Start + static_cast<SignedVector>(Delta))));
                             }
                             else if (std::holds_alternative<UnsignedVector>(this->Vector))
                             {
-                                auto Vec{std::get<UnsignedVector>(this->Vector)};
-                                Vec += static_cast<UnsignedVector>(Delta);
-                                this->Set(Vec);
+                                auto const Start{std::get<UnsignedVector>(this->Vector)};
+                                this->Set(this->Range.ClampDragged(Start, static_cast<UnsignedVector>(Start + static_cast<UnsignedVector>(Delta))));
                             }
                             else if (std::holds_alternative<FloatingVector>(this->Vector))
                             {
-                                auto Vec{std::get<FloatingVector>(this->Vector)};
-                                Vec += static_cast<FloatingVector>(Delta);
-                                this->Set(Vec);
+                                auto const Start{std::get<FloatingVector>(this->Vector)};
+                                this->Set(this->Range.ClampDragged(Start, static_cast<FloatingVector>(Start + static_cast<FloatingVector>(Delta))));
                             }
                             else
                             {

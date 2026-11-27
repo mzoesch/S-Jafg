@@ -24,6 +24,8 @@ struct LRenderTarget
         bool bDepthTest{};
         bool bAllowSelection{};
         bool bAmbientOcclusion{};
+        //# Whether translucent draws can see the opaque scene behind them. @see #CopySceneColor and #RenderThickness
+        bool bTranslucency{};
     };
 
     NODISCARD FORCEINLINE constexpr bool IsInitialized() const noexcept { return this->Extent.width > 0; }
@@ -41,6 +43,26 @@ struct LRenderTarget
     ENGINE_API void RenderSceneDepth(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
     ENGINE_API void RenderAmbientOcclusion(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
     ENGINE_API void RenderAmbientOcclusionBlur(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
+
+    //#
+    //# Only inside of #Render: Ends the rendering, calls #Between outside of any rendering and then continues to render
+    //# where it ended. E.g., to copy what has been rendered so far.
+    //#
+    ENGINE_API void InterruptRendering(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> Between) const;
+
+    //#
+    //# The passes of the translucency. Only outside of any rendering (@see #InterruptRendering), after everything
+    //# opaque has been rendered:
+    //# 1. A copy of what has been rendered so far, with blurred mips. Translucent draws see it behind themselves.
+    //# 2. The linear view space depth of the closest back faces of the translucent draws that need their thickness.
+    //#    Cleared to zero (no back face) before.
+    //#
+    ENGINE_API void CopySceneColor(LRenderInfo const& Info) const;
+    ENGINE_API void RenderThickness(LRenderInfo const& Info, TFunction2<void(LRenderInfo const& Info)> What) const;
+
+    NODISCARD FORCEINLINE constexpr bool HasTranslucency() const noexcept { return !!*this->SceneColorTarget.Image; }
+    NODISCARD FORCEINLINE constexpr auto const& GetSceneColorImageView() const noexcept { return this->SceneColorTarget.ImageView; }
+    NODISCARD FORCEINLINE constexpr auto const& GetThicknessImageView() const noexcept { return this->ThicknessTarget.ImageView; }
 
     NODISCARD FORCEINLINE constexpr rhi::extent2 GetExtent() const noexcept { return this->Extent; }
     NODISCARD FORCEINLINE constexpr rhi::extent2 const& GetExtentAsLValue() const noexcept { return this->Extent; }
@@ -120,6 +142,24 @@ protected:
     Target SceneDepthBufferTarget;
     Target AmbientOcclusionTarget;
     Target AmbientOcclusionBlurTarget;
+
+    //# A copy of the opaque scene with a full chain of blurred mips. @see #CopySceneColor
+    Target SceneColorTarget;
+    u32 SceneColorMipLevels{};
+    //# Linear view space depth of the back faces of translucent draws. @see #RenderThickness
+    Target ThicknessTarget;
+    Target ThicknessDepthBufferTarget;
+
+    vk::SampleCountFlagBits Samples{ vk::SampleCountFlagBits::e1 };
+
+    //# The attachments of the running #Render, so that it can be interrupted. @see #InterruptRendering
+    struct LRunning final
+    {
+        bool bRendering{};
+        vk::RenderingAttachmentInfo Color;
+        vk::RenderingAttachmentInfo Depth;
+    };
+    mutable LRunning Running;
 
 private:
 

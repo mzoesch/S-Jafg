@@ -124,6 +124,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f32>(TEditorNodeCreateInfo<f3
                 .Anchor(EAnchor::HFill)
                 .Min(Info.Min)
                 .Max(Info.Max)
+                .SoftMin(Info.SoftMin)
+                .SoftMax(Info.SoftMax)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
                 {
@@ -164,6 +166,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<f64>(TEditorNodeCreateInfo<f6
                 .Anchor(EAnchor::HFill)
                 .Min(Info.Min)
                 .Max(Info.Max)
+                .SoftMin(Info.SoftMin)
+                .SoftMax(Info.SoftMax)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Vector1& Self)
                 {
@@ -392,6 +396,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LLinearColor>(TEditorNodeCrea
                 .Anchor(EAnchor::HFill)
                 .Min(Info.Min)
                 .Max(Info.Max)
+                .SoftMin(Info.SoftMin)
+                .SoftMax(Info.SoftMax)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Color& Self)
                 {
@@ -431,6 +437,8 @@ Jafg::Detail::LNodeFactoryBase Jafg::GetEditorNode<LLinearColor3>(TEditorNodeCre
                 .Anchor(EAnchor::HFill)
                 .Min(Info.Min)
                 .Max(Info.Max)
+                .SoftMin(Info.SoftMin)
+                .SoftMax(Info.SoftMax)
                 .Enabled(JxxFieldBits::IsEditorEditable(Info.Flags))
                 .OnVectorChanged([SharedState,Default=Info.Default,Field=&Info.Field](WInput_Color& Self)
                 {

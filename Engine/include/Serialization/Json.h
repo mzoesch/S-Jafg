@@ -212,6 +212,14 @@ NLOHMANN_JSON_NAMESPACE_END
 namespace serde
 {
 
+FORCEINLINE void parse_optional(json const& j, auto&& Identifier, auto& Field) noexcept
+{
+    if (j.contains(Identifier))
+    {
+        j.at(Identifier).get_to(Field);
+    }
+}
+
 template<typename T>
 [[noreturn]]
 inline void NlohmannSink(T const& Error) noexcept
@@ -379,7 +387,7 @@ namespace Jafg::Detail
 {
 
 template<typename T> requires std::is_enum_v<T> && serde::serde_for_v<serde::is_string_archive<serde::behavior::panic>, T>
-void FlagsFromJson(json const& Json, TFlags<T> Field)
+void FlagsFromJson(json const& Json, TFlags<T>& Field)
 {
     LStringView JsonStr{Json.get<LStringView>()};
 

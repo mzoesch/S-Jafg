@@ -42,6 +42,7 @@ class ARigidComponent;
 class LShadowAtlas;
 struct LSubsystemCollection;
 struct LRenderInfo;
+struct LActorRenderInfo;
 struct LNodeRenderInfo;
 struct LMaterialInstance;
 struct LTextureCube2;
@@ -235,6 +236,24 @@ public:
 
         //# Bindless index of the screen space ambient occlusion for this eye, if any.
         rhi::resource_index_t AmbientOcclusionTexture{ rhi::invalid_resource_index };
+
+        //#
+        //# What translucent drawables can see behind them. Without it, they are still drawn after everything opaque,
+        //# but only let through what is on the target behind them, without refracting it.
+        //#
+        struct LTranslucency final
+        {
+            //# Bindless index of the copy of the opaque scene (with blurred mips) that #Prepare makes.
+            rhi::resource_index_t SceneColorTexture{ rhi::invalid_resource_index };
+            //# Bindless index of the depth of the back faces of the drawables that need their thickness.
+            rhi::resource_index_t SceneThicknessTexture{ rhi::invalid_resource_index };
+            //#
+            //# Called after everything opaque was drawn and before the first translucent drawable, if there is one.
+            //# Copies the opaque scene and draws the thickness of the queued drawables (@see LTranslucentDraw).
+            //#
+            mutable TFunction2<void(LActorRenderInfo const& Info)> Prepare;
+        };
+        LTranslucency const* Translucency{};
 
         //# The controller whose view is drawn. Null if no controller sees this draw directly (e.g., shadow maps).
         APersonaController const* Viewer{};
@@ -452,7 +471,7 @@ private:
     //# Day:        {0.12,0.15,0.20}    {1.0,0.96,0.9}
     //# Night:      {0.004,0.006,0.012} {0.6,0.70,1.0}
     //#
-    LLinearColor3 AmbientTint{ 0.004,0.006,0.012 };
+    LLinearColor3 AmbientTint{ 0.12, 0.15, 0.20 };
     f32 Exposure{ 1.0f };
     f32 Gamma{ 2.2f };
     f32 IblSpecularMaxLod{ 4.0f };

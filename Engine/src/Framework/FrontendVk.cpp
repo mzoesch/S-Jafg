@@ -1774,6 +1774,8 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
         > RequiredFeaturesChain;
     RequiredFeaturesChain FeaturesChain{
             /* vk::PhysicalDeviceFeatures2 */ {.features = {
+                /* Translucent pbr materials blend what they let through per color channel. */
+                .dualSrcBlend = vk::True,
                 .fillModeNonSolid = vk::True,
                 .samplerAnisotropy = vk::True,
             }},
@@ -1808,6 +1810,7 @@ void Jafg::LFrontendVk::Vk_CreateLogicalDevice(LSurface const& QuerySurface)
         #error "ASSERT_FEATURE is defined."
     #endif /* ASSERT_FEATURE */
     #define ASSERT_FEATURE(A, R, P) ::AssertAvailablePhysicalDeviceFeature(A, R, P, #P);
+    ASSERT_FEATURE(A1.features, R1.features, &vk::PhysicalDeviceFeatures::dualSrcBlend)
     ASSERT_FEATURE(A1.features, R1.features, &vk::PhysicalDeviceFeatures::fillModeNonSolid)
     ASSERT_FEATURE(A1.features, R1.features, &vk::PhysicalDeviceFeatures::samplerAnisotropy)
     ASSERT_FEATURE(A2, R2, &vk::PhysicalDeviceVulkan11Features::shaderDrawParameters)

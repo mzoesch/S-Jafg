@@ -16,6 +16,7 @@ namespace Jafg
 {
 
 class AEyeComponent;
+struct LActorRenderInfo;
 
 //# A widget to perspectively view a world in a primitive manner.
 DECLARE_JAFG_WIDGET()
@@ -152,6 +153,10 @@ private:
 
     //# Points the materials of the ambient occlusion to the (new) targets of the render target.
     void InitializeAmbientOcclusion();
+    //# Puts the (new) targets of the translucency of the render target into the global bindless array.
+    void InitializeTranslucency();
+    //# After everything opaque: Copies the scene and draws the thickness of the translucent draws. @see LWorld::DrawInfo::LTranslucency
+    void PrepareTranslucency(LActorRenderInfo const& Info) const;
     NODISCARD bool ShouldDrawAmbientOcclusion() const noexcept;
     void DrawAmbientOcclusion(LRenderInfo const& Info);
 
@@ -199,6 +204,11 @@ private:
     bool bShadowAtlasFailed{};
     LShadowAtlas ShadowAtlas;
     LMaterialInstanceRef ShadowMaterialInstance;
+
+    //# Stay the same for our whole lifetime, even if the render target gets recreated.
+    rhi::resource_index_t SceneColorBindlessIndex{ rhi::invalid_resource_index };
+    rhi::resource_index_t ThicknessBindlessIndex{ rhi::invalid_resource_index };
+    LMaterialInstanceRef ThicknessMaterialInstance;
 
     rhi::frame_array<vk::raii::DescriptorSet> WorldDescriptorSets JAFG_VK_FRAME_ARRAY_INIT(nullptr);
     rhi::frame_array<rhi::mapped_device_buffer> WorldBuffers;

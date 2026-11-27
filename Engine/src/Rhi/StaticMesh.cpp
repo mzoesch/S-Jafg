@@ -674,19 +674,77 @@ Jafg::LMaterialInstance const& Jafg::GetPreferredMaterialInstance(LActorRenderIn
 
 void Jafg::BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant)
 {
-    LMaterialInstance const* Instance{};
     if (std::holds_alternative<LMaterialInstance const*>(InstanceVariant))
     {
-        Instance = std::get<LMaterialInstance const*>(InstanceVariant);
+        check(std::get<LMaterialInstance const*>(InstanceVariant))
+        BindActorMeshMaterial(Info, Transform, *std::get<LMaterialInstance const*>(InstanceVariant), rhi::invalid_resource_index);
     }
     else if (std::holds_alternative<LPbrMaterialInstance const*>(InstanceVariant))
     {
-        Instance = std::get<LPbrMaterialInstance const*>(InstanceVariant)->Instance.get();
+        auto const* Pbr{std::get<LPbrMaterialInstance const*>(InstanceVariant)};
+        check(Pbr && Pbr->Instance)
+        BindActorMeshMaterial(Info, Transform, *Pbr->Instance, Pbr->GetBindlessIndex());
     }
-    check(Instance)
-    check(Instance->Material.get())
+    else
+    {
+        std::unreachable();
+    }
+}
 
-    auto& Material{*Instance->Material};
+LWorldVec3 Jafg::GetWorldCenter(LWorldAabb3 const& Aabb, LWorldTrans const& Transform) noexcept
+{
+    if (Aabb.empty())
+    {
+        return Transform.t;
+    }
+    LVec3F const Local{Aabb.center()};
+    return Transform.t + LWorldVec3{Transform.r * (Transform.s * Local)};
+}
+
+void Jafg::DrawWithPbrMaterial(LActorRenderInfo const& Info, LPbrMaterialInstanceRef const& Pbr, LWorldVec3 const& Center
+    , TFunction2<void(LActorRenderInfo const& Info, LMaterialInstance const& Instance)> Draw)
+{
+    check(Pbr && Draw)
+
+    LPbrDrawPlan const Plan{Pbr->GetDrawPlan()};
+    check(Plan.Front)
+    if (!Plan.bTranslucent || !Info.bDeferTranslucent)
+    {
+        if (Plan.Back)
+        {
+            Draw(Info, *Plan.Back);
+        }
+        Draw(Info, *Plan.Front);
+        return;
+    }
+
+    LWorldVec3 const ToEye{Center - Info.PerspectiveEye.translation};
+    Info.TranslucentDraws.push_back({
+        .DistanceSqr = static_cast<f64>(maths::dot(ToEye, ToEye)),
+        .bThickness = Plan.bThickness,
+        /* The plan points into the materials of the instance, which is kept alive. */
+        .Draw = [Pbr, Plan, Draw=std::move(Draw)](LActorRenderInfo const& Info, LMaterialInstance const* Override) mutable
+        {
+            if (Override)
+            {
+                Draw(Info, *Override);
+                return;
+            }
+            if (Plan.Back)
+            {
+                Draw(Info, *Plan.Back);
+            }
+            Draw(Info, *Plan.Front);
+        },
+        });
+}
+
+void Jafg::BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance, rhi::resource_index_t PbrMaterial)
+{
+    check(Instance.Material.get())
+    LMaterialInstance const* const InstancePtr{&Instance};
+
+    auto& Material{*Instance.Material};
     auto& Pipeline{Material.Pipeline};
     auto& MaterialTemplate{Material.Template};
     auto& Shader{MaterialTemplate.my_shader};
@@ -706,7 +764,7 @@ void Jafg::BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const
                 }
             )
 
-            if (auto* Set{Instance->Vk_FindUniqueDescriptorSet(*It, Info.Frame)}; Set)
+            if (auto* Set{InstancePtr->Vk_FindUniqueDescriptorSet(*It, Info.Frame)}; Set)
             {
                 DescriptorSetsToBind[*It] = **Set;
             }
@@ -772,9 +830,7 @@ void Jafg::BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const
         check(Pc.PushForActor)
         Pc.PushForActor(Info, Material, {
             .Transform=Transform,
-            .PbrMaterial=std::holds_alternative<LPbrMaterialInstance const*>(InstanceVariant)
-                ? std::get<LPbrMaterialInstance const*>(InstanceVariant)->GetBindlessIndex()
-                : rhi::invalid_resource_index
+            .PbrMaterial=PbrMaterial,
             });
     }
 }
@@ -791,6 +847,24 @@ void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& 
     check(this->IsOnDevice())
 
     BindActorMeshMaterial(Info, Transform, InstanceVariant);
+
+    Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
+
+    this->DrawIndexed(Info);
+}
+
+void Jafg::LStaticMesh::Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance, rhi::resource_index_t PbrMaterial) const
+{
+#if JAFG_WITH_EDITOR
+    /* Ok, but only in the editor. Else we should cull this comp from rendering beforehand; because performance. */
+    if (!this->IsOnDevice())
+    {
+        return;
+    }
+#endif /* !JAFG_WITH_EDITOR */
+    check(this->IsOnDevice())
+
+    BindActorMeshMaterial(Info, Transform, Instance, PbrMaterial);
 
     Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
 

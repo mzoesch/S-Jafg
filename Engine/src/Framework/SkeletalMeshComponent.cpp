@@ -364,28 +364,37 @@ void Jafg::ASkeletalMeshComponent::DrawSkinned(LActorRenderInfo const& Info, LSk
         Frame.SkinnedVersion = this->PoseVersion;
     }
 
+    LWorldTrans const Transform{this->GetWorldTransformSlow()};
+    rhi::resource_index_t const PbrIndex{this->PbrMaterialInstance ? this->PbrMaterialInstance->GetBindlessIndex() : rhi::invalid_resource_index};
+    /* Called later in the same draw of the world if translucent. The skinned vertices of the frame stay until then. */
+    auto Draw{[this, Subset, Transform, PbrIndex, Vertices=Frame.Vertices.get_buffer()](LActorRenderInfo const& Info, LMaterialInstance const& Instance)
+    {
+        BindActorMeshMaterial(Info, Transform, Instance, PbrIndex);
+
+        Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
+        Info.CommandBuffer.bindVertexBuffers(0, Vertices, {0});
+        for (auto Idx{0uz}; Idx < this->Mesh->Primitives.size(); ++Idx)
+        {
+            auto const& Primitive{this->Mesh->Primitives[Idx]};
+            vk::Buffer const Indices{Subset ? *Subset->Parts[Idx].Indices : *Primitive.DeviceIndices};
+            u32 const IndexCount{Subset ? Subset->Parts[Idx].IndexCount : static_cast<u32>(Primitive.Indices.size())};
+            if (IndexCount == 0)
+            {
+                continue;
+            }
+            Info.CommandBuffer.bindIndexBuffer(Indices, 0, vk::IndexType::eUint32);
+            Info.CommandBuffer.drawIndexed(IndexCount, 1, 0, static_cast<i32>(Primitive.FirstVertex), 0);
+        }
+    }};
+
     auto const& Preferred{GetPreferredMaterialInstance(Info, this->MaterialInstance.get())};
     if (this->PbrMaterialInstance.get() && this->MaterialInstance.get() == &Preferred)
     {
-        BindActorMeshMaterial(Info, this->GetWorldTransformSlow(), &*this->PbrMaterialInstance);
+        DrawWithPbrMaterial(Info, this->PbrMaterialInstance, GetWorldCenter(this->Aabb, Transform), std::move(Draw));
     }
     else
     {
-        BindActorMeshMaterial(Info, this->GetWorldTransformSlow(), &Preferred);
-    }
-
-    Info.CommandBuffer.setPolygonModeEXT(Info.DefaultPerspectivePolygonMode);
-    Info.CommandBuffer.bindVertexBuffers(0, Frame.Vertices.get_buffer(), {0});
-    for (auto Idx{0uz}; Idx < this->Mesh->Primitives.size(); ++Idx)
-    {
-        auto const& Primitive{this->Mesh->Primitives[Idx]};
-        vk::Buffer const Indices{Subset ? *Subset->Parts[Idx].Indices : *Primitive.DeviceIndices};
-        u32 const IndexCount{Subset ? Subset->Parts[Idx].IndexCount : static_cast<u32>(Primitive.Indices.size())};
-        if (IndexCount == 0)
-        {
-            continue;
-        }
-        Info.CommandBuffer.bindIndexBuffer(Indices, 0, vk::IndexType::eUint32);
-        Info.CommandBuffer.drawIndexed(IndexCount, 1, 0, static_cast<i32>(Primitive.FirstVertex), 0);
+        /* The preferred material (e.g., of the shadows) might still want to know the pbr material. */
+        Draw(Info, Preferred);
     }
 }

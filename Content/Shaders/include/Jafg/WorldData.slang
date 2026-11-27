@@ -55,6 +55,17 @@ struct WorldData
 
     float viewport_height;
     float vertical_fov;
+
+    /// Bindless index of a copy of everything opaque that was drawn for this view, with blurred mips, or INVALID_INDEX.
+    /// Translucent draws see it through themselves.
+    uint scene_color_texture;
+    ///
+    /// Bindless index of the linear view space depth (m) of the closest back faces of the translucent draws that need
+    /// the thickness of their volume, or INVALID_INDEX. Zero where there is no back face.
+    ///
+    uint scene_thickness_texture;
+    uint _pad3;
+    uint _pad4;
 };
 
 } /* ~Namespace Jafg */

@@ -50,3 +50,35 @@ TRIVIAL_TEST_CASE("widgets", InputRangeFraction)
     TEST_FALSE((LInputRange{.Min = 1.0, .Max = 1.0}).GetFraction(1.0).has_value())
     TEST_FALSE(LInputRange{}.IsBounded())
 }
+
+TRIVIAL_TEST_CASE("widgets", InputRangeSoftBounds)
+{
+    using namespace Jafg;
+
+    /* E.g., an index of refraction: Valid above zero, typical between one and three. */
+    LInputRange const Range{.Min = 0.0, .SoftMin = 1.0, .SoftMax = 3.0};
+    TEST_TRUE(Range.IsSoftBounded())
+    TEST_FALSE(Range.IsBounded())
+
+    /* The bar spans the soft bounds. */
+    TEST_EQUAL(Range.GetFraction(1.0).value_or(-1.0f), 0.0f)
+    TEST_EQUAL(Range.GetFraction(2.0).value_or(-1.0f), 0.5f)
+    TEST_EQUAL(Range.GetFraction(5.0).value_or(-1.0f), 1.0f)
+
+    /* Entered values may leave the soft bounds, but not the bounds. */
+    TEST_EQUAL(Range.Clamp(5.0), 5.0)
+    TEST_EQUAL(Range.Clamp(-1.0), 0.0)
+
+    /* Dragging stays inside of the soft bounds. */
+    TEST_EQUAL(Range.ClampDragged(2.0, 3.5), 3.0)
+    TEST_EQUAL(Range.ClampDragged(2.0, 0.5), 1.0)
+    TEST_EQUAL(Range.ClampDragged(2.0, 2.5), 2.5)
+    /* But never moves a value that is outside of them further away. Back towards them is fine. */
+    TEST_EQUAL(Range.ClampDragged(5.0, 6.0), 5.0)
+    TEST_EQUAL(Range.ClampDragged(5.0, 4.0), 4.0)
+    TEST_EQUAL(Range.ClampDragged(0.5, 0.2), 0.5)
+
+    /* Dragging is scaled to the span of the soft bounds. */
+    TEST_EQUAL(Range.GetDragScale(0.01), 0.02)
+    TEST_EQUAL(LInputRange{}.GetDragScale(0.01), 0.01)
+}

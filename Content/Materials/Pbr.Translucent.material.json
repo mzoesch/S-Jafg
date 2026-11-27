@@ -1,0 +1,61 @@
+{
+    "inherits": [
+        "Materials/Base/TriangleList"
+    ],
+    "pipelineRasterizationState": {
+        "depthClampEnable": false,
+        "rasterizerDiscardEnable": false,
+        "polygonMode": "eFill",
+        "cullMode": "eBack",
+        "frontFace": "eCounterClockwise",
+        "depthBiasEnable": false,
+        "depthBiasConstantFactor": 0.0,
+        "depthBiasClamp": 0.0,
+        "depthBiasSlopeFactor": 0.0,
+        "lineWidth": 1.0
+    },
+    "pipelineDepthStencilState": {
+        "depthTestEnable": true,
+        "depthWriteEnable": false,
+        "depthCompareOp": "eLess",
+        "depthBoundsTestEnable": false,
+        "stencilTestEnable": false,
+        "front": {
+            "failOp": "eKeep",
+            "passOp": "eKeep",
+            "depthFailOp": "eKeep",
+            "compareOp": "eAlways",
+            "compareMask": 0,
+            "writeMask": 0,
+            "reference": 0
+        },
+        "back": {
+            "failOp": "eKeep",
+            "passOp": "eKeep",
+            "depthFailOp": "eKeep",
+            "compareOp": "eAlways",
+            "compareMask": 0,
+            "writeMask": 0,
+            "reference": 0
+        },
+        "minDepthBounds": 0.0,
+        "maxDepthBounds": 0.0
+    },
+    "pipelineColorBlendState": {
+        "logicOpEnable": false,
+        "logicOp": "eClear",
+        "pipelineColorBlendAttachmentStates": [
+            {
+                "blendEnable": true,
+                "srcColorBlendFactor": "eOne",
+                "dstColorBlendFactor": "eSrc1Color",
+                "colorBlendOp": "eAdd",
+                "srcAlphaBlendFactor": "eOne",
+                "dstAlphaBlendFactor": "eSrc1Alpha",
+                "alphaBlendOp": "eAdd",
+                "colorWriteMask": "eR|eG|eB|eA"
+            }
+        ]
+    },
+    "shader": "Shaders/Jafg.Pbr.Translucent"
+}

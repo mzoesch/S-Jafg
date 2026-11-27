@@ -14,6 +14,7 @@ namespace Jafg
 struct LRenderInfo;
 struct LMaterialInstance;
 struct LPbrMaterialInstance;
+typedef rhi::shared_ref<LPbrMaterialInstance> LPbrMaterialInstanceRef;
 
 struct LStaticMesh;
 typedef rhi::shared_ref<LStaticMesh> LStaticMeshRef;
@@ -196,6 +197,11 @@ struct LStaticMesh final
     inline void FreeFromDevice() noexcept { this->DeviceMeshes.clear(); }
 
     ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant) const;
+    //#
+    //# Draws with the material instance. The pbr material (or #rhi::invalid_resource_index) is the bindless index
+    //# that is pushed with it, e.g. the one the mesh is drawn with otherwise if the instance is a preferred one.
+    //#
+    ENGINE_API void Render(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance, rhi::resource_index_t PbrMaterial) const;
     ENGINE_API void DrawIndexed(LRenderInfo const& Info) const;
 
     NODISCARD FORCEINLINE constexpr LWorldAabb3 const& GetAabb() const noexcept { return this->Aabb; }
@@ -251,6 +257,19 @@ NODISCARD ENGINE_API LMaterialInstance const& GetPreferredMaterialInstance(LActo
 //# with #Transform. Everything that draws vertices of #LStaticMesh::Vertex for an actor goes through this.
 //#
 ENGINE_API void BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const& Transform, std::variant<LMaterialInstance const*,LPbrMaterialInstance const*> InstanceVariant);
+//# The pbr material (or #rhi::invalid_resource_index) is the bindless index that is pushed with the material instance.
+ENGINE_API void BindActorMeshMaterial(LActorRenderInfo const& Info, LWorldTrans const& Transform, LMaterialInstance const& Instance, rhi::resource_index_t PbrMaterial);
+//#
+//# Draws a mesh of an actor with its own pbr material: Right away with the planned materials (@see
+//# LPbrMaterialInstance::GetDrawPlan) if it is opaque, else queued into #LActorRenderInfo::TranslucentDraws if the
+//# draw defers them. #Draw has to bind the given instance (with the bindless index of the pbr material) and draw the
+//# mesh. It might be called later in the same draw of the world, so it must not refer to anything that does not live
+//# until then. #Center is the center of the bounds of the mesh in the world, by which the translucent draws are sorted.
+//#
+ENGINE_API void DrawWithPbrMaterial(LActorRenderInfo const& Info, LPbrMaterialInstanceRef const& Pbr, LWorldVec3 const& Center
+    , TFunction2<void(LActorRenderInfo const& Info, LMaterialInstance const& Instance)> Draw);
+//# The center of the bounds in mesh space in the world.
+NODISCARD ENGINE_API LWorldVec3 GetWorldCenter(LWorldAabb3 const& Aabb, LWorldTrans const& Transform) noexcept;
 
 template<> ENGINE_API Detail::LNodeFactoryBase GetEditorNode<LStaticMeshRef>(TEditorNodeCreateInfo<LStaticMeshRef> const& Info) noexcept;
 

@@ -37,9 +37,16 @@ struct WorldData final : rhi::ubo_template<WorldData, vk::ShaderStageFlagBits::e
 
     f32 ViewportHeight;
     f32 VerticalFov;
+
+    //# Bindless index of a copy of the opaque scene with blurred mips or #rhi::invalid_resource_index.
+    rhi::resource_index_t SceneColorTexture{ rhi::invalid_resource_index };
+    //# Bindless index of the depth of the back faces for the thickness of translucent draws or #rhi::invalid_resource_index.
+    rhi::resource_index_t SceneThicknessTexture{ rhi::invalid_resource_index };
+    u32 _pad3{};
+    u32 _pad4{};
 };
 static_assert(rhi::ubo<WorldData>);
 static_assert(sizeof(WorldData) % 16 == 0);
-static_assert(sizeof(WorldData) == 192);
+static_assert(sizeof(WorldData) == 208);
 
 } /* ~Namespace Jafg::UBO */
